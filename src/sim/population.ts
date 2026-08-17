@@ -1,8 +1,24 @@
-// Population buying (Docs/05).
+// Population buying and the shared worker pool (Docs/05; harvest-loop §2).
 
-import { CITY_DEF } from './data/definitions';
-import { maxPopulation } from './recalc';
+import { CITY_DEF, DISTRICTS } from './data/definitions';
 import { addToWallet, getWallet, type GameState } from './state';
+
+/** Max population = Σ PopulationCapacity over active (Built) districts. */
+export function maxPopulation(state: GameState): number {
+  let total = 0;
+  for (const d of state.city.districts) {
+    if (d.state !== 'Built') continue;
+    total += DISTRICTS[d.definitionId].populationCapacity;
+  }
+  return total;
+}
+
+/** AvailableWorkers = Population − Σ AssignedWorkers. */
+export function availableWorkers(state: GameState): number {
+  let assigned = 0;
+  for (const d of state.city.districts) assigned += d.assignedWorkers;
+  return state.city.population - assigned;
+}
 
 /** cost = round(base × growth^(currentPopulation − 1)) Food. */
 export const populationCost = (currentPopulation: number): number =>
@@ -18,5 +34,5 @@ export function buyPopulation(state: GameState): BuyPopulationResult {
   if (getWallet(state.city.wallet, 'Food') < cost) return 'NotEnoughResources';
   addToWallet(state.city.wallet, 'Food', -cost);
   state.city.population += 1;
-  return 'Success'; // caller must trigger a production recalc (Townhall tax)
+  return 'Success';
 }

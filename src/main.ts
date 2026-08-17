@@ -29,9 +29,8 @@ async function boot(): Promise<void> {
   const savedFile = await saveManager.load();
 
   const now = Date.now();
-  const state = savedFile
-    ? deserialize(savedFile, map, now, Math.random)
-    : newGame(map, now, Math.random);
+  // v1 saves come back null → fresh game (save format changed with the harvest loop).
+  const state = (savedFile ? deserialize(savedFile, map, now) : null) ?? newGame(map, now);
 
   const canvas = document.getElementById('map') as HTMLCanvasElement;
   const camera = new Camera(canvas);
@@ -117,11 +116,21 @@ async function boot(): Promise<void> {
   // Dev time-warp (?dev): shift every timestamp back N minutes to demo offline catch-up.
   if (new URLSearchParams(location.search).has('dev')) {
     const warp = (minutes: number) => {
+      // Shift every stored timestamp into the past, then let the unified
+      // advance replay the "absence".
       const delta = minutes * 60_000;
+      game.state.lastAdvance -= delta;
+      game.state.kingdom.manaLastProduction -= delta;
       for (const d of game.state.city.districts) {
-        for (const g of d.generators) g.lastProduction -= delta;
+        if (d.cycleStartedAt !== undefined) d.cycleStartedAt -= delta;
       }
-      for (const g of game.state.kingdom.generators) g.lastProduction -= delta;
+      for (const w of game.state.workers) {
+        w.stateStartedAt -= delta;
+        if (w.stateUntil !== null) w.stateUntil -= delta;
+      }
+      for (const [, h] of Object.entries(game.state.harvest)) {
+        if (h.exhaustedUntil !== null) h.exhaustedUntil -= delta;
+      }
       for (const q of game.state.city.queue) {
         if (q.startedAt !== null) q.startedAt -= delta;
       }

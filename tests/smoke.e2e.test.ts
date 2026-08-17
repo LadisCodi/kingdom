@@ -1,151 +1,117 @@
-// Headless end-to-end smoke: plays the full core loop through the sim command
-// API, mirroring the manual checklist in the plan.
-
+// Headless end-to-end smoke of the harvest loop: reveal → build → workers →
+// tap → exhaust → rain → recover → population → army → upgrade → offline.
 import { describe, expect, it } from 'vitest';
-import { armyPower } from '../src/sim/army';
+import { armyPower, maxArmyPower, trainUnit } from '../src/sim/army';
 import {
-  collectFromDistrict, enqueueBuild, changeWorkers, finishWithGems, upgradeDistrict,
+  changeWorkers, enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
 } from '../src/sim/commands';
-import { generationPerMinute } from '../src/sim/economy';
+import { isExhausted, tapCell } from '../src/sim/harvest';
+import { buyPopulation, maxPopulation } from '../src/sim/population';
 import { revealTap } from '../src/sim/fog';
-import { buyPopulation } from '../src/sim/population';
-import { maxPopulation, recalculateCityProduction } from '../src/sim/recalc';
 import { deserialize, serialize } from '../src/sim/save';
-import { castSpell, canTarget } from '../src/sim/spells';
-import { coordKey, getWallet, townhall } from '../src/sim/state';
-import { trainUnit } from '../src/sim/army';
-import { freshGame, fund, map, rng, T0, tickAt } from './helpers';
+import { castSpell } from '../src/sim/spells';
+import { getWallet, townhall } from '../src/sim/state';
+import { freshGame, fund, map, T0, tickAt } from './helpers';
 
-describe('full core loop (headless smoke)', () => {
-  it('plays reveal → build → staff → collect → magic → population → army → upgrade → offline', () => {
+describe('full harvest-loop playthrough (headless smoke)', () => {
+  it('plays the whole loop', () => {
     const state = freshGame();
-    state.city.population = 5; // test setup: enough workers to staff Lumber + Farm
+    state.city.population = 5; // test setup: enough workers on hand
     let now = T0;
 
-    // --- Reveal 3 fog cells at distance 2 (3 Silver each: taps of 1).
-    const targets = [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }];
-    for (const cell of targets) {
-      let result: string = 'Paid';
-      while (result === 'Paid') result = revealTap(state, map, cell);
-      expect(result).toBe('Revealed');
-      recalculateCityProduction(state, map, now, rng);
+    // --- Reveal 3 fog cells at distance 2 (3 Silver each, tap by tap).
+    for (const cell of [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }]) {
+      let r: string = 'Paid';
+      while (r === 'Paid') r = revealTap(state, map, cell);
+      expect(r).toBe('Revealed');
     }
     expect(getWallet(state.city.wallet, 'Silver')).toBe(50 - 9);
 
-    // --- Build a Lumber next to the revealed Trees at (2,2); 50 Silver blocked → collect tax first.
-    fund(state, { Silver: 50 }); // stand-in for tap-collecting the Townhall vault
-    expect(enqueueBuild(state, map, 'Lumber', { x: 1, y: 1 }, now, rng)).toBe('Started');
+    // --- Tap the revealed Forest for Wood, free.
+    for (let i = 0; i < 5; i++) expect(tapCell(state, map, { x: 2, y: 2 }, now)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
 
-    // --- Queue-full gate: a second enqueue is rejected (capacity 1).
+    // --- Tap the Townhall to rush its tax cycle (10s cycle, 2s per tap).
+    const silverBefore = getWallet(state.city.wallet, 'Silver');
+    let paid = 0;
+    for (let i = 0; i < 5; i++) paid += townhallTap(state, now);
+    expect(paid).toBe(25); // 5 taps × 2s = one full cycle at 5 × pop 5
+    expect(getWallet(state.city.wallet, 'Silver')).toBe(silverBefore + 25);
+
+    // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Silver: 500, Wood: 500 });
-    expect(enqueueBuild(state, map, 'Housing', { x: 0, y: 1 }, now, rng)).toBe('QueueFull');
+    expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 1 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Housing', { x: 0, y: 1 })).toBe('QueueFull');
+    tickAt(state, now);
+    expect(finishWithGems(state, state.city.queue[0].uniqueId, now)).toBe('Success');
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    expect(sawmill.state).toBe('Built');
 
-    // --- Gem rush the Lumber build: identical outcome to the timer.
-    tickAt(state, now); // stamp start
-    const item = state.city.queue[0];
-    expect(finishWithGems(state, map, item.uniqueId, now, rng)).toBe('Success');
-    const lumber = state.city.districts.find((d) => d.definitionId === 'Lumber')!;
-    expect(lumber.state).toBe('Built');
-    expect(getWallet(state.player.wallet, 'Gems')).toBeLessThan(10);
+    // --- Staff it; the worker harvests; the shared tap pool exhausts the cell.
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
+    now += 60_000;
+    tickAt(state, now);
+    const woodAfterCycles = getWallet(state.city.wallet, 'Wood');
+    expect(woodAfterCycles).toBeGreaterThan(5); // deliveries landed
+    // Player finishes off the cell's remaining taps.
+    while (tapCell(state, map, { x: 2, y: 2 }, now) === 'Harvested') { /* drain */ }
+    expect(isExhausted(state, { x: 2, y: 2 }, now)).toBe(true);
 
-    // --- Staff it; wood flows into its vault; tap-collect one unit.
-    expect(changeWorkers(state, map, lumber.uniqueId, 1, now, rng)).toBe('Assigned');
-    now += 5 * 60_000;
-    tickAt(state, now); // 5.5 min at 5/min (30s creation stagger with rng=0.5) = 27 wood
-    const woodGen = lumber.generators.find((g) => g.currencyId === 'Wood')!;
-    expect(woodGen.vaultStored).toBe(27);
-    const woodBefore = getWallet(state.city.wallet, 'Wood');
-    collectFromDistrict(state, lumber.uniqueId);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 1);
-    expect(woodGen.vaultStored).toBe(26);
+    // --- Rain halves the covered recovery wait; the worker resumes after.
+    expect(castSpell(state, 'Rain', { x: 2, y: 2 }, now)).toBe('Cast');
+    now += 61_000; // 90s − boost → recovered by 60s
+    tickAt(state, now);
+    expect(isExhausted(state, { x: 2, y: 2 }, now)).toBe(false);
 
-    // --- Build a Farm on grassland, then a FarmLands next to it.
-    expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 }, now, rng)).toBe('Started');
+    // --- Build a Farm, then FarmLands inside its influence; farm worker harvests it.
+    expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);
     const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
     expect(farm.state).toBe('Built');
-    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 }, now, rng)).toBe('Started');
+    expect(enqueueBuild(state, map, 'FarmLands', { x: -2, y: 5 })).toBe('InvalidCell'); // outside influence
+    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);
-    changeWorkers(state, map, farm.uniqueId, 1, now, rng);
-    changeWorkers(state, map, farm.uniqueId, 1, now, rng);
-    const foodGen = farm.generators.find((g) => g.currencyId === 'Food')!;
-    expect(generationPerMinute(foodGen)).toBe(8); // 5 base + 3 × 1 worked FarmLands
-
-    // --- Rain the Farm: ×5 Food while active, gone after expiry.
-    expect(castSpell(state, map, 'Rain', farm.location, now, rng)).toBe('Cast');
-    expect(generationPerMinute(foodGen)).toBe(40);
-    // A recalc mid-rain must NOT cancel the boost.
-    recalculateCityProduction(state, map, now, rng);
-    expect(generationPerMinute(foodGen)).toBe(40);
-    now += 31_000;
+    expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
+    const food = getWallet(state.city.wallet, 'Food');
+    now += 60_000;
     tickAt(state, now);
-    expect(generationPerMinute(foodGen)).toBe(8);
+    expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(food);
 
-    // --- Tap a Trees cell to destruction; the Lumber loses its worked tile.
-    const treesCell = { x: 2, y: 2 };
-    changeWorkers(state, map, lumber.uniqueId, 1, now, rng); // 2 workers: base + 1 tile
-    expect(generationPerMinute(woodGen)).toBe(8);
-    fund(state, {});
-    state.kingdom.wallet.Mana = 100;
-    let taps = 0;
-    while (state.features[coordKey(treesCell)]?.featureId === 'Trees') {
-      expect(castSpell(state, map, 'Tap', treesCell, now, rng)).toBe('Cast');
-      taps += 1;
-      expect(taps).toBeLessThanOrEqual(12);
-    }
-    expect(taps).toBeGreaterThanOrEqual(5); // durability 5–12
-    expect(state.features[coordKey(treesCell)].featureId).toBe('TreesCut');
-    expect(generationPerMinute(woodGen)).toBe(5); // worked tile lost
-
-    // --- Rain the stump: regrows to Trees when the rain ends.
-    expect(canTarget(state, 'Rain', treesCell)).toBe(true);
-    expect(castSpell(state, map, 'Rain', treesCell, now, rng)).toBe('Cast');
-    now += 31_000;
-    tickAt(state, now);
-    expect(state.features[coordKey(treesCell)].featureId).toBe('Trees');
-    expect(generationPerMinute(woodGen)).toBe(8); // worked tile back
-
-    // --- Buy population to the TH1 cap of 7 (needs Housing beyond the Townhall's 3).
+    // --- Population to the TH1 cap of 7 via Housing.
     fund(state, { Food: 10_000, Silver: 10_000, Wood: 10_000 });
-    expect(maxPopulation(state)).toBe(3); // Townhall only — already over via test setup
-    expect(buyPopulation(state)).toBe('AtMax');
+    expect(maxPopulation(state)).toBe(3);
+    expect(buyPopulation(state)).toBe('AtMax'); // already 5 via test setup
     for (const cell of [{ x: 0, y: 1 }, { x: 0, y: -1 }]) {
-      expect(enqueueBuild(state, map, 'Housing', cell, now, rng)).toBe('Started');
+      expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
       tickAt(state, now);
       now += 120_000;
       tickAt(state, now);
     }
-    expect(maxPopulation(state)).toBe(7); // 3 + 2×2
-    while (buyPopulation(state) === 'Success') { /* buy to max */ }
+    expect(maxPopulation(state)).toBe(7);
+    while (buyPopulation(state) === 'Success') { /* to max */ }
     expect(state.city.population).toBe(7);
-    recalculateCityProduction(state, map, now, rng);
 
-    // --- Recruit to the TH1 power cap of 10.
-    expect(trainUnit(state, 'Cavalry')).toBe('Trained'); // 5
-    expect(trainUnit(state, 'Cavalry')).toBe('Trained'); // 10
+    // --- Army to the TH1 power cap.
+    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
+    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
     expect(trainUnit(state, 'Archer')).toBe('ArmyAtCapacity');
     expect(armyPower(state)).toBe(10);
 
-    // --- Upgrade the Townhall: 200 Silver + 25 Wood, instant (completes next tick).
+    // --- Instant Townhall upgrade raises the army cap.
     expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
     tickAt(state, now);
     expect(townhall(state).level).toBe(2);
-    expect(maxPopulation(state)).toBe(7); // still 2 Housing
-    expect(trainUnitCap(state)).toBe(20); // TH2 army cap
+    expect(maxArmyPower(state)).toBe(20);
 
-    // --- Offline: save, come back 10 minutes later; Townhall vault capped at 50.
+    // --- Offline: 10 minutes away pays Townhall cycles and worker deliveries.
     const save = serialize(state, now);
-    now += 600_000;
-    const restored = deserialize(save, map, now, rng);
-    tickAt(restored, now);
-    const thGen = townhall(restored).generators.find((g) => g.currencyId === 'Silver')!;
-    expect(thGen.vaultStored).toBe(50); // 35/min × 10 min ≫ 50 — overflow lost
+    const silver = getWallet(state.city.wallet, 'Silver');
+    const restored = deserialize(save, map, now + 600_000)!;
+    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 60 * 5 * 7); // 60 cycles
+    expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(getWallet(state.city.wallet, 'Wood'));
   });
 });
-
-import { maxArmyPower } from '../src/sim/army';
-const trainUnitCap = maxArmyPower;

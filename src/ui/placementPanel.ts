@@ -24,6 +24,11 @@ export function renderPlacementPanel(game: Game): HTMLElement {
       el('div', { class: 'row' }, el('span', {}, 'Cell'),
         el('span', { class: 'muted' }, `(${info.cell.x}, ${info.cell.y}) — tap the map to move`)),
     );
+    if (def.harvestSource) {
+      rows.append(el('div', { class: 'row' },
+        el('span', {}, `${def.harvestSource} cells captured`),
+        el('span', { class: info.captured === 0 ? 'blocked' : '' }, `${info.captured}`)));
+    }
     panel.append(rows);
   }
 

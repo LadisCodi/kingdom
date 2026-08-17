@@ -2,31 +2,32 @@
 // targeting / inspection), the tap-handler chain, and change notification.
 
 import {
-  canAfford, cancelQueueItem, changeWorkers, collectFromDistrict, enqueueBuild,
-  finishWithGems, tick, upgradeDistrict,
+  advance, canAfford, cancelQueueItem, changeWorkers, enqueueBuild, finishWithGems,
+  tapCell, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
   type AssignWorkerResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, SPELLS } from './sim/data/definitions';
+import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, SPELLS } from './sim/data/definitions';
 import {
-  buildCostForCell, buildDurationForCell, districtCount, maxCountForTownhallLevel,
-  validPlacementCells,
+  buildCostForCell, buildDurationForCell, districtCount, hasPlacementRestriction,
+  maxCountForTownhallLevel, validPlacementCells,
 } from './sim/districts';
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
-import { townhallDistance, type MapData } from './sim/grid';
+import { cellsWithinRadius, townhallDistance, type MapData } from './sim/grid';
+import { harvestSourceAt } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { buyPopulation } from './sim/population';
-import { recalculateCityProduction } from './sim/recalc';
+import { availableWorkers, buyPopulation } from './sim/population';
 import { canTarget, castSpell } from './sim/spells';
 import {
-  coordKey, districtAt, getWallet, townhall,
-  type Coord, type CurrencyId, type DistrictId, type GameState, type SpellId, type UnitId,
+  coordKey, districtAt, districtById, getWallet, townhall,
+  type Coord, type CurrencyId, type District, type DistrictId, type GameState,
+  type SpellId, type UnitId,
 } from './sim/state';
+import { influenceCells, workableCells } from './sim/workers';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
-import { staffedWorkedCells } from './sim/workedUnits';
 
 export type Mode =
   | { kind: 'normal' }
@@ -42,7 +43,6 @@ export class Game {
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
-  readonly rng = Math.random;
 
   constructor(
     public state: GameState,
@@ -80,17 +80,16 @@ export class Game {
   // ------------------------------------------------------------------- ticking
 
   tick(): void {
-    const result = tick(this.state, this.map, this.now(), this.rng);
-    for (const [districtId, report] of result.production) {
-      const district = this.state.city.districts.find((d) => d.uniqueId === districtId);
-      if (district) {
-        for (const [c, n] of Object.entries(report)) this.floaters.add(district.location, `+${n} ${icon(c as CurrencyId)}`);
-      }
+    const result = advance(this.state, this.map, this.now());
+    for (const d of result.deposits) {
+      this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
+    }
+    if (result.townhallPaid > 0) {
+      this.floaters.add(townhall(this.state).location, `+${result.townhallPaid} ${icon('Silver')}`);
     }
     for (const item of result.completedItems) {
       this.toast(item.kind === 'build' ? 'Construction complete!' : 'Upgrade complete!');
     }
-    for (const cell of result.regrownCells) this.floaters.add(cell, 'Grow trees 🌲');
     this.notify();
   }
 
@@ -117,14 +116,10 @@ export class Game {
         if (this.mode.kind !== 'targeting') return false;
         const spellId = this.mode.spellId;
         if (canTarget(this.state, spellId, cell)) {
-          const result = castSpell(this.state, this.map, spellId, cell, this.now(), this.rng);
+          const result = castSpell(this.state, spellId, cell, this.now());
           if (result === 'Cast') {
             this.floaters.add(cell, SPELLS[spellId].glyph);
-            if (SPELLS[spellId].levels[0].durationSeconds === 0 && this.mode.kind === 'targeting') {
-              // Instant spells (Tap) stay in targeting mode — they're stackable.
-            } else {
-              this.mode = { kind: 'normal' };
-            }
+            this.mode = { kind: 'normal' };
           } else if (result === 'NotEnoughMana') {
             this.shake(['Mana']);
           } else {
@@ -146,25 +141,44 @@ export class Game {
         const result = revealTap(this.state, this.map, cell);
         if (result === 'NotEnoughSilver') this.shake(['Silver']);
         else if (result === 'Revealed') {
-          recalculateCityProduction(this.state, this.map, this.now(), this.rng);
+          wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
           this.floaters.add(cell, 'Revealed!');
         } else if (result === 'Paid') {
-          this.floaters.add(cell, `-1 🪙`);
+          this.floaters.add(cell, `-1 ${icon('Silver')}`);
         }
         this.notify();
         return true;
       },
     });
-    // 0 — cell info / vault collection.
+    // 0 — the harvest tap / cell info.
     this.tapChain.register({
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
-        if (district) {
-          const collected = collectFromDistrict(this.state, district.uniqueId);
-          for (const c of Object.keys(collected)) {
-            this.floaters.add(cell, `+1 ${icon(c as CurrencyId)}`);
+        // Townhall: tapping adds cycle progress (and opens/keeps its card).
+        if (district?.definitionId === 'Townhall' && district.state === 'Built') {
+          const paid = townhallTap(this.state, this.now());
+          this.floaters.add(cell, paid > 0 ? `+${paid} ${icon('Silver')}` : '⏩');
+          this.inspectedDistrictId = district.uniqueId;
+          this.notify();
+          return true;
+        }
+        // Resource cells (Forest, built Crops): free harvest tap.
+        const source = harvestSourceAt(this.state, cell);
+        if (source !== null && this.state.fog.revealed[coordKey(cell)]) {
+          const result = tapCell(this.state, this.map, cell, this.now());
+          if (result === 'Harvested') {
+            const currency = source === 'Forest' ? 'Wood' : 'Food';
+            this.floaters.add(cell, `+1 ${icon(currency)}`);
+          } else if (result === 'Exhausted') {
+            this.floaters.add(cell, '💤');
           }
+          // A crop plot is also a district — inspecting it stays useful.
+          this.inspectedDistrictId = district?.uniqueId ?? null;
+          this.notify();
+          return true;
+        }
+        if (district) {
           this.inspectedDistrictId = district.uniqueId; // open/switch the card
         } else {
           this.inspectedDistrictId = null; // empty ground closes the card
@@ -200,7 +214,7 @@ export class Game {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
     const cost = buildCostForCell(this.state, definitionId, selected, this.map);
-    const result = enqueueBuild(this.state, this.map, definitionId, selected, this.now(), this.rng);
+    const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
       this.mode = { kind: 'normal' };
     } else if (result === 'NotEnoughResources') {
@@ -234,19 +248,14 @@ export class Game {
 
   doBuyPopulation(): void {
     const result = buyPopulation(this.state);
-    if (result === 'Success') {
-      recalculateCityProduction(this.state, this.map, this.now(), this.rng);
-    } else if (result === 'NotEnoughResources') {
-      this.shake(['Food']);
-    } else {
-      this.toast('Population at max — build more Housing');
-    }
+    if (result === 'NotEnoughResources') this.shake(['Food']);
+    else if (result === 'AtMax') this.toast('Population at max — build more Housing');
     this.notify();
   }
 
   doChangeWorkers(districtId: string, delta: 1 | -1): AssignWorkerResult {
-    const result = changeWorkers(this.state, this.map, districtId, delta, this.now(), this.rng);
-    if (result === 'NoMoreTiles') this.toast('No more tiles available to work');
+    const result = changeWorkers(this.state, this.map, districtId, delta, this.now());
+    if (result === 'NoMoreTiles') this.toast('No more cells available to work');
     if (result === 'NoFreeWorkers') this.toast('No free workers — buy population');
     this.notify();
     return result;
@@ -255,7 +264,7 @@ export class Game {
   doUpgrade(districtId: string): UpgradeResult {
     const result = upgradeDistrict(this.state, districtId);
     if (result === 'NotEnoughResources') {
-      const d = this.state.city.districts.find((x) => x.uniqueId === districtId)!;
+      const d = districtById(this.state, districtId)!;
       this.shake(Object.keys(DISTRICTS[d.definitionId].upgradeCost) as CurrencyId[]);
     } else if (result !== 'Started') {
       this.toast(result);
@@ -265,7 +274,7 @@ export class Game {
   }
 
   doRush(itemId: string): void {
-    const result = finishWithGems(this.state, this.map, itemId, this.now(), this.rng);
+    const result = finishWithGems(this.state, itemId, this.now());
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
@@ -305,26 +314,52 @@ export class Game {
     });
   }
 
+  /** Resource cells a worker building at `cell` (level 1) would capture. */
+  capturedCells(definitionId: DistrictId, cell: Coord): Coord[] {
+    const def = DISTRICTS[definitionId];
+    if (!def.harvestSource || def.influenceRadiusPerLevel.length === 0) return [];
+    return cellsWithinRadius(this.map, cell, def.influenceRadiusPerLevel[0]).filter(
+      (c) =>
+        this.state.fog.revealed[coordKey(c)] === true &&
+        harvestSourceAt(this.state, c) === def.harvestSource,
+    );
+  }
+
   markers(): MarkerLayer {
     const layer: MarkerLayer = {
       selected: null,
       validCells: [],
       validColor: PALETTE.validTarget,
-      workedCells: [],
+      influenceCells: [],
+      claimedCells: [],
+      yieldCells: [],
       previewCell: null,
       previewGlyph: null,
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
-      const yieldLabel = Object.entries(def.baseGeneration)
-        .map(([c, n]) => `+${n}${icon(c as CurrencyId)}`)
-        .join(' ');
-      layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
-        (cell) => ({ cell, label: yieldLabel }),
-      );
+      // Outline valid spots only for restricted buildings (Housing/Farm/
+      // FarmLands); an unrestricted one would just outline most of the map.
+      // The RANGE and per-cell yields are shown for the selected placement.
+      if (hasPlacementRestriction(this.mode.definitionId)) {
+        layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
+          (cell) => ({ cell, label: '' }),
+        );
+      }
       layer.selected = this.mode.selected;
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
+      if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
+        layer.influenceCells = cellsWithinRadius(
+          this.map, this.mode.selected, def.influenceRadiusPerLevel[0],
+        );
+        if (def.harvestSource) {
+          const spec = HARVEST[def.harvestSource];
+          layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
+            (cell) => ({ cell, label: `+${spec.yieldPerTap} ${icon(spec.currencyId)}` }),
+          );
+        }
+      }
     } else if (this.mode.kind === 'targeting') {
       const spellId = this.mode.spellId;
       layer.validColor = PALETTE.spellTarget;
@@ -332,12 +367,15 @@ export class Game {
         .filter((c) => canTarget(this.state, spellId, c))
         .map((cell) => ({ cell, label: SPELLS[spellId].glyph }));
     } else if (this.inspectedDistrictId) {
-      const district = this.state.city.districts.find(
-        (d) => d.uniqueId === this.inspectedDistrictId,
-      );
+      const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
         layer.selected = district.location;
-        layer.workedCells = staffedWorkedCells(this.state, this.map, district);
+        if (district.state === 'Built') {
+          layer.influenceCells = influenceCells(this.map, district);
+          layer.claimedCells = this.state.workers
+            .filter((w) => w.buildingId === district.uniqueId && w.claimedCell !== null)
+            .map((w) => w.claimedCell!);
+        }
       }
     }
     return layer;
@@ -353,10 +391,13 @@ export class Game {
     cost: ReturnType<typeof buildCostForCell>;
     duration: number;
     affordable: boolean;
+    captured: number;
   } | null {
     if (this.mode.kind !== 'placing') return null;
     const { definitionId, selected } = this.mode;
-    if (!selected) return { definitionId, cell: null, cost: {}, duration: 0, affordable: false };
+    if (!selected) {
+      return { definitionId, cell: null, cost: {}, duration: 0, affordable: false, captured: 0 };
+    }
     const cost = buildCostForCell(this.state, definitionId, selected, this.map);
     return {
       definitionId,
@@ -364,13 +405,20 @@ export class Game {
       cost,
       duration: buildDurationForCell(this.state, definitionId, selected, this.map),
       affordable: canAfford(this.state.city.wallet, cost),
+      captured: this.capturedCells(definitionId, selected).length,
     };
   }
 
   freeWorkers(): number {
-    let assigned = 0;
-    for (const d of this.state.city.districts) assigned += d.assignedWorkers;
-    return this.state.city.population - assigned;
+    return availableWorkers(this.state);
+  }
+
+  workableCellsOf(district: District): Coord[] {
+    return workableCells(this.state, this.map, district);
+  }
+
+  townhallCycleInfo() {
+    return townhallCycle(this.state, this.now());
   }
 
   handleTap(sx: number, sy: number): void {

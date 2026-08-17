@@ -1,7 +1,8 @@
-// All balancing data transcribed from Docs/03, 04, 05, 07, 08.
+// All balancing data. Costs/times/caps transcribed from Docs/04–05; the
+// harvest-loop values from Docs/features/harvest-loop.md §7.
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 
-import type { CurrencyId, DistrictId, FeatureId, SpellId, UnitId, Wallet } from '../state';
+import type { CurrencyId, DistrictId, FeatureId, HarvestSourceId, SpellId, UnitId, Wallet } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
 export const levelIndexed = <T>(list: readonly T[], level: number): T =>
@@ -25,11 +26,35 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Gems: { scope: 'player', cap: null, start: 10 },
 };
 
-// ----------------------------------------------------------------- districts
+// -------------------------------------------------------------- harvest loop
 
-export type WorkedSource =
-  | { kind: 'feature'; featureId: FeatureId } // Lumber → connected revealed Trees
-  | { kind: 'district'; districtId: DistrictId }; // Farm → adjacent built FarmLands
+export interface HarvestSpec {
+  currencyId: CurrencyId;
+  yieldPerTap: number;
+  tapsToExhaust: number;
+  recoverySeconds: number;
+}
+
+export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
+  Forest: { currencyId: 'Wood', yieldPerTap: 1, tapsToExhaust: 10, recoverySeconds: 90 },
+  Crops: { currencyId: 'Food', yieldPerTap: 1, tapsToExhaust: 10, recoverySeconds: 60 },
+};
+
+export const WORKER = {
+  moveSpeedTilesPerSecond: 1,
+  workSeconds: 8,
+  carry: 1, // units per cycle; each delivered unit = 1 tap on the source cell
+};
+
+export const TOWNHALL_CYCLE = {
+  cycleSeconds: 10,
+  tapBoostSeconds: 2, // progress added per tap on the Townhall cell
+  silverPerPopulation: 5, // payout per cycle = this × population
+};
+
+export const OFFLINE_CAP_HOURS = 8;
+
+// ----------------------------------------------------------------- districts
 
 export interface DistrictDef {
   id: DistrictId;
@@ -38,14 +63,14 @@ export interface DistrictDef {
   buildable: boolean;
   glyph: string; // placeholder art
   populationCapacity: number;
-  silverPerPopulation: number; // per minute per population point
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
-  baseGeneration: Wallet; // per minute
-  baseGenerationPerLevel: number; // 0 everywhere today
-  workedSource: WorkedSource | null;
-  yieldPerWorkedTile: Wallet; // per minute per staffed worked unit
-  vaultCapacity: number;
+  /** Chebyshev radius of the area of influence, by level. Empty = no area. */
+  influenceRadiusPerLevel: readonly number[];
+  /** What resource cells this building's workers harvest. */
+  harvestSource: HarvestSourceId | null;
+  /** This district's own cell IS a resource cell of this type (FarmLands → Crops). */
+  providesHarvestSource: HarvestSourceId | null;
   maxLevel: number;
   buildCost: Wallet;
   buildCostMultiplier: number;
@@ -64,14 +89,11 @@ export interface DistrictDef {
 const base: Omit<DistrictDef, 'id' | 'name' | 'description' | 'glyph'> = {
   buildable: true,
   populationCapacity: 0,
-  silverPerPopulation: 0,
   maxWorkersPerLevel: [],
   maxCountPerTownhallLevel: [],
-  baseGeneration: {},
-  baseGenerationPerLevel: 0,
-  workedSource: null,
-  yieldPerWorkedTile: {},
-  vaultCapacity: 0,
+  influenceRadiusPerLevel: [],
+  harvestSource: null,
+  providesHarvestSource: null,
   maxLevel: 1,
   buildCost: {},
   buildCostMultiplier: 1,
@@ -92,12 +114,11 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...base,
     id: 'Townhall',
     name: 'Townhall',
-    description: 'Heart of the city. Houses 3, taxes population into Silver, gates everything.',
+    description:
+      'Heart of the city. Houses 3 and taxes population each cycle — tap it to speed the cycle up.',
     glyph: '🏛️',
     buildable: false,
     populationCapacity: 3,
-    silverPerPopulation: 5,
-    vaultCapacity: 50,
     maxLevel: 2,
     buildCostMultiplier: 2,
     buildCostExponentialGrowth: 1.2,
@@ -122,14 +143,12 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...base,
     id: 'Farm',
     name: 'Farm',
-    description: 'Produces Food. Works adjacent FarmLands for bonus Food.',
+    description: 'Sends workers to harvest Crops within its area of influence.',
     glyph: '🌾',
-    maxWorkersPerLevel: [3, 5, 7],
+    maxWorkersPerLevel: [3, 5],
     maxCountPerTownhallLevel: [1, 1, 2],
-    baseGeneration: { Food: 5 },
-    workedSource: { kind: 'district', districtId: 'FarmLands' },
-    yieldPerWorkedTile: { Food: 3 },
-    vaultCapacity: 50,
+    influenceRadiusPerLevel: [1, 2],
+    harvestSource: 'Crops',
     maxLevel: 2,
     buildCost: { Silver: 50, Wood: 10 },
     buildCostMultiplier: 2,
@@ -143,27 +162,25 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...base,
     id: 'FarmLands',
     name: 'FarmLands',
-    description: 'Cheap filler: drips Food, and is worked by an adjacent Farm.',
+    description: 'A crop plot: tap it for Food, or let Farm workers harvest it.',
     glyph: '🟩',
     maxCountPerTownhallLevel: [6, 6, 12],
-    baseGeneration: { Food: 3 }, // wallet-direct: no vault
+    providesHarvestSource: 'Crops',
     buildCost: { Wood: 20 },
     buildCostMultiplier: 2,
     buildCostExponentialGrowth: 1.2,
     buildDurationSeconds: 10,
   },
-  Lumber: {
+  Sawmill: {
     ...base,
-    id: 'Lumber',
-    name: 'Lumber',
-    description: 'Produces Wood. Works nearby Trees for bonus Wood.',
-    glyph: '🪓',
+    id: 'Sawmill',
+    name: 'Sawmill',
+    description: 'Sends workers to harvest Forest cells within its area of influence.',
+    glyph: '🪚',
     maxWorkersPerLevel: [3, 5, 7],
     maxCountPerTownhallLevel: [1, 2],
-    baseGeneration: { Wood: 5 },
-    workedSource: { kind: 'feature', featureId: 'Trees' },
-    yieldPerWorkedTile: { Wood: 3 },
-    vaultCapacity: 50,
+    influenceRadiusPerLevel: [1, 2, 3],
+    harvestSource: 'Forest',
     maxLevel: 3,
     buildCost: { Silver: 50 },
     buildCostMultiplier: 4,
@@ -175,7 +192,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
   },
 };
 
-export const BUILDABLE_DISTRICTS: DistrictId[] = ['Housing', 'Farm', 'FarmLands', 'Lumber'];
+export const BUILDABLE_DISTRICTS: DistrictId[] = ['Housing', 'Farm', 'FarmLands', 'Sawmill'];
 
 // ------------------------------------------------------------------ features
 
@@ -183,37 +200,16 @@ export interface FeatureDef {
   id: FeatureId;
   name: string;
   glyph: string;
-  // Fidelity fix (a): Trees get a Wood BaseYield so the Tap spell has valid
-  // targets (the Unity data left this empty, making Tap unreachable).
-  baseYield: Wallet;
-  tapMinDurability: number;
-  tapMaxDurability: number; // 0/0 = indestructible
-  destroyedReplacement: FeatureId | null;
-  upgradedReplacement: FeatureId | null; // via Rain regrowth
+  exhaustedGlyph: string;
+  source: HarvestSourceId;
 }
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
-  Trees: {
-    id: 'Trees',
-    name: 'Trees',
-    glyph: '🌲',
-    baseYield: { Wood: 1 },
-    tapMinDurability: 5,
-    tapMaxDurability: 12,
-    destroyedReplacement: 'TreesCut',
-    upgradedReplacement: null,
-  },
-  TreesCut: {
-    id: 'TreesCut',
-    name: 'Felled forest',
-    glyph: '🪵',
-    baseYield: {},
-    tapMinDurability: 0,
-    tapMaxDurability: 0,
-    destroyedReplacement: null,
-    upgradedReplacement: 'Trees',
-  },
+  Trees: { id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵', source: 'Forest' },
 };
+
+/** Exhausted-crops visual (FarmLands districts have no feature). */
+export const CROPS_EXHAUSTED_GLYPH = '🥀';
 
 // -------------------------------------------------------------- fog settings
 
@@ -247,8 +243,7 @@ export const KINGDOM_DEF = {
   name: 'PlayerKingdom',
   startBuilders: 1,
   maxBuilders: 4,
-  // {currencyId, perHour} generators
-  production: [{ currencyId: 'Mana' as CurrencyId, perHour: 300 }],
+  manaPerHour: 300, // 5/min trickle into the capped kingdom wallet
 };
 
 // ------------------------------------------------------------------- spells
@@ -274,16 +269,19 @@ export const SPELLS: Record<SpellId, SpellDef> = {
   Rain: {
     id: 'Rain',
     name: 'Rain',
-    description: 'Multiplies a cell’s Food generation ×{value} for {duration}. Regrows felled forests.',
+    description:
+      'For {duration}, the rained cell recovers from exhaustion at ×{value} speed.',
     glyph: '🌧️',
     unlockedFromStart: true,
     stackable: false,
-    levels: [{ manaCost: 10, durationSeconds: 30, effectMagnitude: 5, upgradeCost: 0 }],
+    levels: [{ manaCost: 10, durationSeconds: 30, effectMagnitude: 2, upgradeCost: 0 }],
   },
+  // Dormant pending the spell rework: free player taps superseded its effect,
+  // so it has no valid targets (kept listed, exactly like the original build).
   Tap: {
     id: 'Tap',
     name: 'Tap',
-    description: 'Extract one resource from a wilderness feature. Risks wearing it out.',
+    description: 'Extract one resource from a wilderness feature. (Being reworked.)',
     glyph: '👆',
     unlockedFromStart: true,
     stackable: true,
@@ -341,4 +339,5 @@ export const UNITS: Record<UnitId, UnitDef> = {
 
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
-export const GAME_VERSION = '0.1.0-web';
+export const GAME_VERSION = '0.1.0';
+export const SAVE_VERSION = 2; // v1 saves (generator/vault era) are discarded

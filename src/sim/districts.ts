@@ -1,9 +1,10 @@
-// Placement conditions and build/upgrade cost & time formulas (Docs/04).
+// Placement conditions and build/upgrade cost & time formulas. Cost/time
+// formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { neighbors, townhallDistance, type MapData } from './grid';
+import { cellsWithinRadius, neighbors, townhallDistance, type MapData } from './grid';
 import {
-  coordKey, districtAt, townhall,
+  coordKey, districtAt, sameCell, townhall,
   type Coord, type DistrictId, type GameState, type Wallet,
 } from './state';
 
@@ -22,7 +23,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'CountLimit'
-  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmAdjacency' | 'NeedsTreesAdjacency';
+  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence';
 
 /** All placement conditions ANDed; null = buildable on this cell. */
 export function placementBlock(
@@ -54,29 +55,33 @@ export function placementBlock(
       if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
       break;
     case 'FarmLands': {
-      // Adjacent to an ACTIVE (built) Farm.
-      const ok = neighbors(map, cell).some((n) => {
-        const d = districtAt(state, n);
-        return d !== undefined && d.definitionId === 'Farm' && d.state === 'Built';
-      });
-      if (!ok) return 'NeedsFarmAdjacency';
-      break;
-    }
-    case 'Lumber': {
-      // At least one neighbor is a REVEALED cell carrying Trees.
-      const ok = neighbors(map, cell).some(
-        (n) =>
-          state.features[coordKey(n)]?.featureId === 'Trees' &&
-          state.fog.revealed[coordKey(n)] === true,
+      // On Grassland, inside a BUILT Farm's area of influence.
+      if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
+      const inFarmArea = state.city.districts.some(
+        (d) =>
+          d.definitionId === 'Farm' &&
+          d.state === 'Built' &&
+          cellsWithinRadius(
+            map,
+            d.location,
+            levelIndexed(DISTRICTS.Farm.influenceRadiusPerLevel, d.level),
+          ).some((c) => sameCell(c, cell)),
       );
-      if (!ok) return 'NeedsTreesAdjacency';
+      if (!inFarmArea) return 'NeedsFarmInfluence';
       break;
     }
+    case 'Sawmill': // no placement restriction — the influence range guides placement
     case 'Townhall':
       break;
   }
   return null;
 }
+
+/** True if the type has placement rules beyond the universal ones — only then
+ *  is highlighting valid cells informative (an unrestricted building like the
+ *  Sawmill would just outline most of the map). */
+export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
+  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands';
 
 export const validPlacementCells = (
   state: GameState,

@@ -15,10 +15,10 @@ describe('build cost by instance (Docs/04 table)', () => {
     expect(buildCost('Farm', 1, 0)).toEqual({ Silver: 282, Wood: 56 });
     expect(buildCost('Farm', 2, 0)).toEqual({ Silver: 1039, Wood: 207 });
   });
-  it('Lumber: 50 → 546 → 1967', () => {
-    expect(buildCost('Lumber', 0, 0)).toEqual({ Silver: 50 });
-    expect(buildCost('Lumber', 1, 0)).toEqual({ Silver: 546 });
-    expect(buildCost('Lumber', 2, 0)).toEqual({ Silver: 1967 });
+  it('Sawmill: 50 → 546 → 1967', () => {
+    expect(buildCost('Sawmill', 0, 0)).toEqual({ Silver: 50 });
+    expect(buildCost('Sawmill', 1, 0)).toEqual({ Silver: 546 });
+    expect(buildCost('Sawmill', 2, 0)).toEqual({ Silver: 1967 });
   });
   it('FarmLands: 20 → 91 → 298 → 633 → 1103 → 1717', () => {
     const expected = [20, 91, 298, 633, 1103, 1717];
@@ -40,14 +40,14 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
     expect(upgradeCost('Farm', 1, 1)).toEqual({ Silver: 300, Wood: 50 });
     expect(upgradeDuration('Farm', 1)).toBe(30);
   });
-  it('single Lumber L1→L2 = 300 / 30 s, L2→L3 = 450 / 45 s', () => {
-    expect(upgradeCost('Lumber', 1, 1)).toEqual({ Silver: 300 });
-    expect(upgradeDuration('Lumber', 1)).toBe(30);
-    expect(upgradeCost('Lumber', 1, 2)).toEqual({ Silver: 450 });
-    expect(upgradeDuration('Lumber', 2)).toBe(45);
+  it('single Sawmill L1→L2 = 300 / 30 s, L2→L3 = 450 / 45 s', () => {
+    expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Silver: 300 });
+    expect(upgradeDuration('Sawmill', 1)).toBe(30);
+    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Silver: 450 });
+    expect(upgradeDuration('Sawmill', 2)).toBe(45);
   });
-  it('with TWO Lumber camps, each L1→L2 = 3278 Silver (count multiplier applies)', () => {
-    expect(upgradeCost('Lumber', 2, 1)).toEqual({ Silver: 3278 });
+  it('with TWO Sawmill camps, each L1→L2 = 3278 Silver (count multiplier applies)', () => {
+    expect(upgradeCost('Sawmill', 2, 1)).toEqual({ Silver: 3278 });
   });
   it('Townhall L1→L2 = 200 Silver + 25 Wood, instant', () => {
     expect(upgradeCost('Townhall', 1, 1)).toEqual({ Silver: 200, Wood: 25 });
