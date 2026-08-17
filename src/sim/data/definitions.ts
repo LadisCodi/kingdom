@@ -339,5 +339,5 @@ export const UNITS: Record<UnitId, UnitDef> = {
 
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
-export const GAME_VERSION = '0.2.0-web';
+export const GAME_VERSION = '0.1.0';
 export const SAVE_VERSION = 2; // v1 saves (generator/vault era) are discarded
