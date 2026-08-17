@@ -219,8 +219,8 @@ Army, fog of war, build queue, population buying, Housing: **unchanged**.
 | Worker `moveSpeed` | 1 tile/s | Readable movement at tile size 72 px |
 | Worker `workSeconds` | 8 s | Adjacent-cell cycle ≈ 11 s → ~5.5 units/min/worker, close to the old 3–5/min feel |
 | Worker carry | 1 unit | One tap-equivalent per cycle |
-| Townhall `cycleSeconds` | 60 s | Pays 5 × pop, matching the old tax rate |
-| Townhall `tapBoostSeconds` | 1 s per tap | ~60 taps to force a full cycle |
+| Townhall `cycleSeconds` | 10 s | Pays 5 × pop (tuned down from 60 s in review) |
+| Townhall `tapBoostSeconds` | 2 s per tap | 5 taps force a full cycle |
 | Offline cap | 8 h | Return-visit nudge |
 | Radius by level — Sawmill | 1 / 2 / 3 | — |
 | Radius by level — Farm | 1 / 2 | — |

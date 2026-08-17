@@ -47,8 +47,8 @@ export const WORKER = {
 };
 
 export const TOWNHALL_CYCLE = {
-  cycleSeconds: 60,
-  tapBoostSeconds: 1, // progress added per tap on the Townhall cell
+  cycleSeconds: 10,
+  tapBoostSeconds: 2, // progress added per tap on the Townhall cell
   silverPerPopulation: 5, // payout per cycle = this × population
 };
 

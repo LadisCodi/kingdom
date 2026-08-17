@@ -146,26 +146,26 @@ describe('the harvest cycle', () => {
 });
 
 describe('Townhall cycle', () => {
-  it('pays 5 × population Silver per 60s cycle, straight to the wallet', () => {
+  it('pays 5 × population Silver per 10s cycle, straight to the wallet', () => {
     const state = freshGame(); // population 2
     const silver = getWallet(state.city.wallet, 'Silver');
-    tickAt(state, T0 + 59_000);
+    tickAt(state, T0 + 9_000);
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silver);
-    tickAt(state, T0 + 60_000);
+    tickAt(state, T0 + 10_000);
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silver + 10);
-    tickAt(state, T0 + 10 * 60_000); // 9 more cycles
+    tickAt(state, T0 + 100_000); // 9 more cycles
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silver + 100);
   });
 
-  it('taps add 1s of progress and can complete a cycle early; never exhausts', () => {
+  it('taps add 2s of progress and can complete a cycle early; never exhausts', () => {
     const state = freshGame();
     const silver = getWallet(state.city.wallet, 'Silver');
-    tickAt(state, T0 + 30_000); // halfway through the cycle
+    tickAt(state, T0 + 4_000); // 4s into the 10s cycle
     let paid = 0;
-    for (let i = 0; i < 30; i++) paid += townhallTap(state, T0 + 30_000);
-    expect(paid).toBe(10); // 30s elapsed + 30 tapped seconds = full cycle
+    for (let i = 0; i < 3; i++) paid += townhallTap(state, T0 + 4_000);
+    expect(paid).toBe(10); // 4s elapsed + 3 taps × 2s = full cycle
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silver + 10);
-    expect(townhallCycle(state, T0 + 30_000).progress).toBeLessThan(0.02);
+    expect(townhallCycle(state, T0 + 4_000).progress).toBeLessThan(0.02);
   });
 });
 

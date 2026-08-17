@@ -31,11 +31,11 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, { x: 2, y: 2 }, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
 
-    // --- Tap the Townhall to rush its tax cycle.
+    // --- Tap the Townhall to rush its tax cycle (10s cycle, 2s per tap).
     const silverBefore = getWallet(state.city.wallet, 'Silver');
     let paid = 0;
-    for (let i = 0; i < 60; i++) paid += townhallTap(state, now);
-    expect(paid).toBe(25); // 5 × pop 5
+    for (let i = 0; i < 5; i++) paid += townhallTap(state, now);
+    expect(paid).toBe(25); // 5 taps × 2s = one full cycle at 5 × pop 5
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silverBefore + 25);
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
@@ -111,7 +111,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const save = serialize(state, now);
     const silver = getWallet(state.city.wallet, 'Silver');
     const restored = deserialize(save, map, now + 600_000)!;
-    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 10 * 5 * 7);
+    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 60 * 5 * 7); // 60 cycles
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(getWallet(state.city.wallet, 'Wood'));
   });
 });

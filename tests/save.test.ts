@@ -53,7 +53,7 @@ describe('save v2 round-trip', () => {
     const silver = getWallet(state.city.wallet, 'Silver');
     const wood = getWallet(state.city.wallet, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 10 * 5 * 4); // 10 cycles × 5 × pop 4
+    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 60 * 5 * 4); // 60 cycles × 5 × pop 4
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 
