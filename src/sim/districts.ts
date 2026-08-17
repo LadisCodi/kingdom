@@ -23,7 +23,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'CountLimit'
-  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence' | 'NeedsForestNearby';
+  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence';
 
 /** All placement conditions ANDed; null = buildable on this cell. */
 export function placementBlock(
@@ -70,15 +70,7 @@ export function placementBlock(
       if (!inFarmArea) return 'NeedsFarmInfluence';
       break;
     }
-    case 'Sawmill': {
-      // At least one revealed Forest cell within radius 1.
-      const ok = neighbors(map, cell).some(
-        (n) =>
-          state.features[coordKey(n)] === 'Trees' && state.fog.revealed[coordKey(n)] === true,
-      );
-      if (!ok) return 'NeedsForestNearby';
-      break;
-    }
+    case 'Sawmill': // no placement restriction — the influence range guides placement
     case 'Townhall':
       break;
   }

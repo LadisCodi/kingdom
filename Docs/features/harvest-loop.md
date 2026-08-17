@@ -80,7 +80,7 @@ system** (one worker per cell) prevents double-working.
 
 | Building | Works | Radius by level | Max workers by level | Notes |
 |---|---|---|---|---|
-| **Sawmill** (ex-Lumber) | Forest cells | 1 / 2 / 3 | 3 / 5 / 7 | Placement: ≥1 revealed Forest cell within radius 1 |
+| **Sawmill** (ex-Lumber) | Forest cells | 1 / 2 / 3 | 3 / 5 / 7 | Placement: unrestricted — the visible influence range guides the player toward forests |
 | **Farm** | Crops cells | 1 / 2 | 3 / 5 | Placement: on Grassland (unchanged) |
 | **FarmLands** (crop plot) | — (is the resource) | — | — | Placement: on Grassland, **inside a built Farm's area of influence** |
 | **Townhall** | — | — | — | Cycle timer → Silver (below) |
