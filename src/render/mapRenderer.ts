@@ -173,10 +173,13 @@ export function drawMap(
   }
 
   // Pass 3: markers.
+  // Working-area cells: a white square at 75% of the tile size.
   for (const cell of markers.influenceCells) {
     const { x, y } = cellRect(cell);
-    ctx.fillStyle = PALETTE.influenceFill;
-    ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+    const inset = size * 0.125;
+    ctx.strokeStyle = PALETTE.influenceSquare;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + inset, y + inset, size * 0.75, size * 0.75);
   }
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
@@ -198,16 +201,15 @@ export function drawMap(
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
   }
+  // Cells that WILL be worked: green "positive" yield label (the white
+  // working-area square is already drawn above).
   for (const { cell, label } of markers.yieldCells) {
     const { x, y } = cellRect(cell);
-    ctx.strokeStyle = PALETTE.workedTile;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
-    ctx.fillStyle = PALETTE.label;
+    ctx.fillStyle = PALETTE.yieldPositive;
     ctx.font = `bold ${Math.max(10, size * 0.18)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(label, x + size / 2, y + size - 4);
+    ctx.fillText(label, x + size / 2, y + size - 5);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
@@ -254,10 +256,15 @@ function drawGlyph(
   size: number,
   fontSize: number,
 ): void {
+  // Emoji ink rarely matches the font's line box, so center on the measured
+  // bounding box instead of relying on textBaseline: 'middle'.
   ctx.font = `${fontSize}px system-ui`;
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(glyph, x + size / 2, y + size / 2 + fontSize * 0.06);
+  ctx.textBaseline = 'alphabetic';
+  const m = ctx.measureText(glyph);
+  const cx = x + size / 2 + (m.actualBoundingBoxLeft - m.actualBoundingBoxRight) / 2;
+  const cy = y + size / 2 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  ctx.fillText(glyph, cx, cy);
 }
 
 function drawBar(
