@@ -21,6 +21,7 @@ export const PALETTE = {
   workedTile: 'rgba(255, 226, 122, 0.75)',
   influenceSquare: 'rgba(255, 255, 255, 0.85)',
   yieldPositive: '#7fd07f',
+  labelPill: 'rgba(0, 0, 0, 0.5)',
   exhaustedOverlay: 'rgba(40, 30, 20, 0.45)',
   recoveryFill: '#8ab4d8',
   progressBg: 'rgba(0, 0, 0, 0.55)',

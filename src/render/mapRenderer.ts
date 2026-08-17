@@ -197,15 +197,26 @@ export function drawMap(
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
   }
-  // Cells that WILL be worked: green "positive" yield label (the white
-  // working-area square is already drawn above).
+  // Cells that WILL be worked: green "positive" yield label on a dark pill
+  // (the white working-area square is already drawn above).
   for (const { cell, label } of markers.yieldCells) {
     const { x, y } = cellRect(cell);
+    const fontSize = Math.max(10, size * 0.18);
+    ctx.font = `bold ${fontSize}px system-ui`;
+    const textWidth = ctx.measureText(label).width;
+    const padX = fontSize * 0.5;
+    const pillW = textWidth + padX * 2;
+    const pillH = fontSize * 1.4;
+    const pillX = x + size / 2 - pillW / 2;
+    const pillY = y + size - 5 - pillH;
+    ctx.fillStyle = PALETTE.labelPill;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
     ctx.fillStyle = PALETTE.yieldPositive;
-    ctx.font = `bold ${Math.max(10, size * 0.18)}px system-ui`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(label, x + size / 2, y + size - 5);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + size / 2, pillY + pillH / 2 + fontSize * 0.05);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
