@@ -14,7 +14,7 @@
 | Trees are destroyed permanently after 5–12 taps (→ TreesCut) | Cells **exhaust** after X taps and **auto-recover** after a timer |
 | Workers are a number on the district; "worker #1 runs the base" | Workers are **units that move on the map**: walk → work → walk back → deposit |
 | Worked tiles via adjacency/BFS connectivity | Buildings have an **area of influence** (radius by level) |
-| Tap spell (Mana) extracts from features | **Removed** — player taps are free |
+| Rain boosts Food ×5 / regrows forests | Rain **doubles recovery speed** of exhausted cells while active |
 | Offline: vaults fill to cap from timestamps | Offline: worker cycles are **simulated**, capped at 8 h |
 
 ## Resolved decisions (from design review, 2026-08-17)
@@ -28,7 +28,8 @@
    (Food), exactly like a Forest cell is for Wood.
 3. **Exhaustion replaces destruction.** Trees→TreesCut permanent destruction is
    gone; TreesCut becomes the *visual* for an exhausted Forest. Player taps are
-   free; the **Tap spell is removed**; **Rain is repurposed** (see Spells).
+   free. **The spell system is out of scope for this feature** (reworked later);
+   the only spell change is Rain's effect (see Spells).
 4. **Offline is simulated**: full worker cycles, cell exhaustion/recovery
    windows and Townhall cycles are replayed deterministically, **capped at 8
    hours** per absence (the return-visit nudge the vault caps used to provide).
@@ -159,14 +160,26 @@ build-queue completions up to `toTime`.
 This replaces the generator accrual algorithm; one code path serves both cases
 (same as the old build-queue design).
 
-## 4. Spells
+## 4. Spells (minimal scope — full rework deferred)
 
-- **Tap spell: removed** (player taps are free now).
-- **Rain → "Revitalize"**: cast on an **exhausted** resource cell → it recovers
-  **instantly**. Cost 10 Mana, instant, no duration. (The old ×5 Food boost and
-  forest regrowth die with the generator model and permanent destruction.)
-- Mana economy (100 cap, 5/min regen) is unchanged and now exists solely for
-  Revitalize — acceptable for this iteration; more spells later.
+The spell system (spellbook, targeting, Mana, active-spell casts) is untouched
+by this feature. Two effect-level consequences only:
+
+- **Rain (adjusted effect)**: unchanged shell — 10 Mana, 30 s duration,
+  non-stackable, cast on a cell. New effect: while the rain is active on a
+  **resource cell** (Forest or Crops), that cell's **recovery runs at ×2
+  speed**. Cast on an already-exhausted cell it halves the remaining wait
+  covered by the rain window; if the cell exhausts *during* the rain, the
+  boost applies for the remaining window. (Formally: with remaining recovery
+  `R` and rain time remaining `D`, the new completion is
+  `now + max(R/2, R − D)`.) `CanTarget` = any revealed resource cell. The old
+  ×5 Food boost and forest regrowth disappear with the systems they hooked
+  into (generators, permanent destruction).
+- **Tap spell**: left in the spellbook untouched, but its extraction machinery
+  (feature BaseYield + durability destruction) is superseded by free player
+  taps, so it has **no valid targets** until the spell rework — the same
+  dormant state it shipped in originally (see Docs/11). Not removed, not
+  redesigned here.
 
 ## 5. UI & input changes
 
@@ -190,7 +203,7 @@ This replaces the generator accrual algorithm; one code path serves both cases
 Generators, modifiers, vaults and the accrual algorithm; the recalc pass
 (replaced by claim/limit recomputation on: build complete, upgrade, reveal,
 assignment, exhaustion/recovery); worked-unit BFS; Trees→TreesCut destruction;
-the Tap spell; FarmLands passive drip; Townhall vault.
+FarmLands passive drip; Townhall vault.
 
 Army, fog of war, build queue, population buying, Housing: **unchanged**.
 
@@ -220,14 +233,17 @@ game). Changes:
 - Districts lose `Generators`; Townhall gains `CycleStartedAt`.
 - New module `kingdom.cellHarvest`: `[{Coord, Taps, ExhaustedUntil}]`.
 - New module `kingdom.workers`: the Worker records above.
-- `kingdom.spells` drops Tap; `kingdom.activeSpells` becomes vestigial
-  (Revitalize is instant) but the module stays for future spells.
+- `kingdom.spells` and `kingdom.activeSpells` keep their shape; active Rain
+  casts persist as today (offline-expired casts are still dropped without
+  side effects — with the ×2 effect, an offline-expired rain simply
+  contributes its window to the offline recovery replay before expiring).
 - `LastSaved` anchors the offline-simulation window.
 
 ## 9. Implementation plan (separate commits on `feature/harvest-loop`)
 
 1. `feat(sim):` cell harvest state, exhaustion/recovery, free tap command;
-   remove Tap spell & destruction. Tests: exhaust/recover timing, tap yields.
+   remove permanent destruction; adjust Rain's effect to ×2 recovery. Tests:
+   exhaust/recover timing, tap yields, rained-recovery math.
 2. `feat(sim):` worker units + claims + the event-driven `advance`; remove
    generators/vaults/recalc. Tests: cycle math, claim rules, race rule,
    offline replay capped at 8 h (the docs' worked-example tests for costs/
@@ -241,7 +257,8 @@ game). Changes:
 ## 10. Out of scope (explicitly)
 
 Pathfinding/obstacle avoidance; worker carry upgrades; per-cell yield variety;
-new spells; Sawmill/Farm art; migrating v1 saves; server-side validation.
+the spell-system rework (deferred — only Rain's effect changes here);
+Sawmill/Farm art; migrating v1 saves; server-side validation.
 
 ## Open questions
 
