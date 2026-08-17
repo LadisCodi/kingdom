@@ -1,10 +1,13 @@
 # Kingdom — Web Prototype
 
-A cozy square-grid city-builder / idle game: reveal the fog with Silver, build
-districts, grow and staff a population, harvest resources that accrue in real
-time (including while away), and shape the land with magic.
+A cozy square-grid city-builder / idle game: reveal the fog with Silver, tap
+resource cells to harvest them (they exhaust and recover), build districts
+whose workers walk out to harvest for you, grow a population, and shape the
+land with magic. Progress continues while away (simulated, capped at 8h).
 
-Web reimplementation of the Unity prototype, built from the spec in [`Docs/`](Docs/).
+Web reimplementation of the Unity prototype, built from the spec in [`Docs/`](Docs/),
+with the harvest-loop rework described in
+[`Docs/features/harvest-loop.md`](Docs/features/harvest-loop.md).
 Vite + TypeScript, Canvas 2D, no framework. The simulation core (`src/sim/`) is
 pure TS — no DOM, no clock, injectable randomness — so it can later run
 server-side (e.g. to validate player-to-player trades).
@@ -62,13 +65,15 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 
 - **Square grid, 8-neighbor adjacency** (was hex / 6) — user decision; balance
   data unchanged, the fog seed reveals 8 neighbors instead of 6.
-- **Trees yield 1 Wood** so the Tap spell has valid targets (the Unity data
-  left `BaseYield` empty, making Tap unreachable).
+- **The harvest loop** (see the feature doc): the generator/vault economy is
+  replaced by tappable resource cells with exhaustion/recovery, workers as
+  moving units, a tap-boostable Townhall tax cycle, and radius-by-level areas
+  of influence. Lumber is renamed Sawmill; Rain now doubles a rained cell's
+  recovery speed; the Tap spell is dormant pending a spell rework.
 - **Single tick driver** (the Unity build double-ticked its timer).
-- Save format adds `kingdom.features` (feature destruction is now reachable and
-  must persist) and folds Gems into the same file (`player.currencies`).
+- Save format v2; incompatible older saves start a fresh game.
 - Placeholder art: flat-color tiles + emoji glyphs; state-driven rendering so
   real pixel art can slot in without logic changes.
 
-Everything else follows the docs as-built, including tap-per-unit vault
-collection and FarmLands' uncapped wallet-direct income.
+Costs, times, count caps, fog, population, the build queue and the army follow
+the docs as-built.

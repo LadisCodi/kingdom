@@ -6,7 +6,6 @@ import { coordKey, getWallet } from '../src/sim/state';
 
 const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
-const rng = () => 0.5;
 
 describe('map data', () => {
   it('loads 155 terrain cells (98 Grassland, 57 Water) and 13 Trees', () => {
@@ -28,7 +27,7 @@ describe('reveal cost curve (Docs/02 table)', () => {
 });
 
 describe('fog state & seeding', () => {
-  const state = newGame(map, NOW, rng);
+  const state = newGame(map, NOW);
   it('seeds the Townhall + its 8 neighbors as Revealed', () => {
     expect(Object.keys(state.fog.revealed).length).toBe(9);
     expect(fogState(state, map, TOWNHALL_ORIGIN)).toBe('Revealed');
@@ -44,7 +43,7 @@ describe('fog state & seeding', () => {
 
 describe('paying to reveal', () => {
   it('accumulates 1 Silver per tap and reveals when total cost is met', () => {
-    const state = newGame(map, NOW, rng);
+    const state = newGame(map, NOW);
     const cell = { x: 2, y: 0 }; // distance 2 → cost 3
     const silverBefore = getWallet(state.city.wallet, 'Silver');
     expect(revealTap(state, map, cell)).toBe('Paid');
@@ -56,7 +55,7 @@ describe('paying to reveal', () => {
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silverBefore - 3);
   });
   it('rejects taps on Undiscovered cells', () => {
-    const state = newGame(map, NOW, rng);
+    const state = newGame(map, NOW);
     expect(revealTap(state, map, { x: 5, y: 5 })).toBe('NotDiscovered');
   });
 });

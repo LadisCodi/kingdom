@@ -1,31 +1,32 @@
-// Save format (Docs/10): {LastSaved, GameVersion, Modules: {kingdom.* ...}}.
-// Rates are never saved — only LastProduction timestamps + vault balances; the
-// production recalc rebuilds rates after load, which is what makes offline
-// income work. Deliberate deltas vs Unity (per plan): Gems live in a
-// `player.currencies` module, and `kingdom.features` persists feature
-// replacement + tap durability (reachable now that Trees have a yield).
+// Save format v2 (harvest loop). v1 saves (the generator/vault era) are
+// discarded — deserialize returns null and the caller starts a fresh game.
+// Offline catch-up: the unified advance replays the absence up to the 8h cap;
+// time beyond the cap pauses workers/townhall/mana (queue timers and cell
+// recovery keep running in real time).
 
-import { GAME_VERSION } from './data/definitions';
+import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
+import { advance } from './commands';
 import type { MapData } from './grid';
 import { newGame } from './newGame';
-import { recalculateCityProduction } from './recalc';
-import { dropOfflineExpiredSpells } from './spells';
 import {
   coordKey, parseCoordKey,
-  type ActiveSpell, type Coord, type CurrencyId, type District, type FeatureCell,
-  type GameState, type Generator, type QueueItem, type Rng, type SpellId, type Wallet,
+  type ActiveSpell, type Coord, type District, type GameState, type QueueItem,
+  type Wallet, type Worker,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
 const ms = (isoDate: string): number => Date.parse(isoDate);
+const isoOrNull = (v: number | null): string | null => (v === null ? null : iso(v));
+const msOrNull = (v: string | null | undefined): number | null =>
+  v === null || v === undefined ? null : ms(v);
 
-interface GeneratorDto {
-  UniqueID: string;
-  CurrencyID: string;
-  LastProduction: string;
-  VaultStored: number;
-  VaultCapacity: number;
+export interface SaveFile {
+  SaveVersion?: number;
+  LastSaved: string;
+  GameVersion: string;
+  Modules: Record<string, unknown>;
 }
+
 interface DistrictDto {
   UniqueID: string;
   DefinitionID: string;
@@ -34,8 +35,9 @@ interface DistrictDto {
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
-  Generators: GeneratorDto[];
+  CycleStartedAt?: string;
 }
+
 interface QueueItemDto {
   UniqueID: string;
   DistrictID: string;
@@ -44,30 +46,19 @@ interface QueueItemDto {
   TargetLevel?: number;
 }
 
-export interface SaveFile {
-  LastSaved: string;
-  GameVersion: string;
-  Modules: Record<string, unknown>;
+interface WorkerDto {
+  ID: string;
+  BuildingID: string;
+  Activity: string;
+  ClaimedCell: Coord | null;
+  Carrying: boolean;
+  StateStartedAt: string;
+  StateUntil: string | null;
 }
-
-const genToDto = (g: Generator): GeneratorDto => ({
-  UniqueID: g.id,
-  CurrencyID: g.currencyId,
-  LastProduction: iso(g.lastProduction),
-  VaultStored: g.vaultStored,
-  VaultCapacity: g.vaultCapacity,
-});
-const genFromDto = (d: GeneratorDto): Generator => ({
-  id: d.UniqueID,
-  currencyId: d.CurrencyID as CurrencyId,
-  modifiers: [], // rates are rebuilt by the recalc after load
-  lastProduction: ms(d.LastProduction),
-  vaultStored: d.VaultStored,
-  vaultCapacity: d.VaultCapacity,
-});
 
 export function serialize(state: GameState, now: number): SaveFile {
   return {
+    SaveVersion: SAVE_VERSION,
     LastSaved: iso(now),
     GameVersion: GAME_VERSION,
     Modules: {
@@ -86,34 +77,24 @@ export function serialize(state: GameState, now: number): SaveFile {
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
-                Generators: d.generators.map(genToDto),
+                ...(d.cycleStartedAt !== undefined ? { CycleStartedAt: iso(d.cycleStartedAt) } : {}),
               }),
             ),
-            BuildQueueItems: state.city.queue
-              .filter((q) => q.kind === 'build')
-              .map((q): QueueItemDto => ({
-                UniqueID: q.uniqueId,
-                DistrictID: q.districtUniqueId,
-                DurationSeconds: q.durationSeconds,
-                StartedAtUtc: q.startedAt === null ? null : iso(q.startedAt),
-              })),
-            UpgradeQueueItems: state.city.queue
-              .filter((q) => q.kind === 'upgrade')
-              .map((q): QueueItemDto => ({
-                UniqueID: q.uniqueId,
-                DistrictID: q.districtUniqueId,
-                DurationSeconds: q.durationSeconds,
-                StartedAtUtc: q.startedAt === null ? null : iso(q.startedAt),
-                TargetLevel: q.targetLevel,
-              })),
-            QueueOrder: state.city.queue.map((q) => q.uniqueId),
+            QueueItems: state.city.queue.map((q): QueueItemDto => ({
+              UniqueID: q.uniqueId,
+              DistrictID: q.districtUniqueId,
+              DurationSeconds: q.durationSeconds,
+              StartedAtUtc: isoOrNull(q.startedAt),
+              ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
+            })),
+            QueueKinds: state.city.queue.map((q) => q.kind),
           },
         ],
       },
       'kingdom.kingdoms': {
         MaxBuilders: state.kingdom.maxBuilders,
         Currencies: state.kingdom.wallet,
-        Generators: state.kingdom.generators.map(genToDto),
+        ManaLastProduction: iso(state.kingdom.manaLastProduction),
       },
       'kingdom.spells': Object.fromEntries(
         Object.entries(state.spellbook).map(([id, s]) => [
@@ -137,16 +118,34 @@ export function serialize(state: GameState, now: number): SaveFile {
           Silver: silver,
         })),
       },
+      'kingdom.features': {
+        Cells: Object.entries(state.features).map(([k, id]) => ({
+          Coord: parseCoordKey(k),
+          FeatureID: id,
+        })),
+      },
+      'kingdom.cellHarvest': {
+        Cells: Object.entries(state.harvest)
+          .filter(([, s]) => s.taps > 0 || s.exhaustedUntil !== null)
+          .map(([k, s]) => ({
+            Coord: parseCoordKey(k),
+            Taps: s.taps,
+            ExhaustedUntil: isoOrNull(s.exhaustedUntil),
+          })),
+      },
+      'kingdom.workers': {
+        Workers: state.workers.map((w): WorkerDto => ({
+          ID: w.id,
+          BuildingID: w.buildingId,
+          Activity: w.activity,
+          ClaimedCell: w.claimedCell,
+          Carrying: w.carrying,
+          StateStartedAt: iso(w.stateStartedAt),
+          StateUntil: isoOrNull(w.stateUntil),
+        })),
+      },
       'kingdom.army': {
         Units: state.army.map((u) => ({ UniqueID: u.uniqueId, DefinitionID: u.definitionId })),
-      },
-      'kingdom.features': {
-        Cells: Object.entries(state.features).map(([k, f]) => ({
-          Coord: parseCoordKey(k),
-          FeatureID: f.featureId,
-          Taps: f.taps,
-          Threshold: f.threshold,
-        })),
       },
       'player.currencies': state.player.wallet,
       'meta.nextId': state.nextId,
@@ -155,15 +154,13 @@ export function serialize(state: GameState, now: number): SaveFile {
 }
 
 /**
- * Rebuild a GameState from a save. Follows the load order from Docs/10:
- * restore entities → re-derive rates via recalc → drop offline-expired spells
- * WITHOUT their removal effects → re-apply still-active spell modifiers.
- * The caller must not tick before this returns (rates are stale until recalc).
+ * Rebuild a GameState from a v2 save and replay the absence (capped at 8h).
+ * Returns null for incompatible (v1) saves — caller starts a fresh game.
  */
-export function deserialize(save: SaveFile, map: MapData, now: number, rng: Rng): GameState {
-  // Start from a fresh state so definitions/initial features are in place,
-  // then overwrite everything the save owns.
-  const state = newGame(map, now, rng);
+export function deserialize(save: SaveFile, map: MapData, now: number): GameState | null {
+  if ((save.SaveVersion ?? 1) !== SAVE_VERSION) return null;
+  const lastSaved = ms(save.LastSaved);
+  const state = newGame(map, lastSaved);
   const modules = save.Modules as Record<string, any>;
 
   const cityDto = modules['kingdom.cities']?.Cities?.[0];
@@ -179,32 +176,19 @@ export function deserialize(save: SaveFile, map: MapData, now: number, rng: Rng)
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
-        generators: (d.Generators ?? []).map(genFromDto),
+        ...(d.CycleStartedAt !== undefined ? { cycleStartedAt: ms(d.CycleStartedAt) } : {}),
       }),
     );
-    const builds = ((cityDto.BuildQueueItems ?? []) as QueueItemDto[]).map(
-      (q): QueueItem => ({
+    const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
+    state.city.queue = ((cityDto.QueueItems ?? []) as QueueItemDto[]).map(
+      (q, i): QueueItem => ({
         uniqueId: q.UniqueID,
-        kind: 'build',
-        districtUniqueId: q.DistrictID,
-        durationSeconds: q.DurationSeconds,
-        startedAt: q.StartedAtUtc === null ? null : ms(q.StartedAtUtc),
-      }),
-    );
-    const upgrades = ((cityDto.UpgradeQueueItems ?? []) as QueueItemDto[]).map(
-      (q): QueueItem => ({
-        uniqueId: q.UniqueID,
-        kind: 'upgrade',
+        kind: kinds[i] ?? (q.TargetLevel !== undefined ? 'upgrade' : 'build'),
         districtUniqueId: q.DistrictID,
         targetLevel: q.TargetLevel,
         durationSeconds: q.DurationSeconds,
-        startedAt: q.StartedAtUtc === null ? null : ms(q.StartedAtUtc),
+        startedAt: msOrNull(q.StartedAtUtc),
       }),
-    );
-    const all = [...builds, ...upgrades];
-    const order = (cityDto.QueueOrder ?? []) as string[];
-    state.city.queue = all.sort(
-      (a, b) => order.indexOf(a.uniqueId) - order.indexOf(b.uniqueId),
     );
   }
 
@@ -212,21 +196,17 @@ export function deserialize(save: SaveFile, map: MapData, now: number, rng: Rng)
   if (kingdomDto) {
     state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
-    if (kingdomDto.Generators) {
-      state.kingdom.generators = (kingdomDto.Generators as GeneratorDto[]).map(genFromDto);
-      // Kingdom rates come from the definition, not the save.
-      for (const gen of state.kingdom.generators) {
-        gen.modifiers = [
-          { category: 'Building', source: 'kingdom', kind: 'Flat', value: 300 / 60 },
-        ];
-      }
+    if (kingdomDto.ManaLastProduction) {
+      state.kingdom.manaLastProduction = ms(kingdomDto.ManaLastProduction);
     }
   }
 
   const spellsDto = modules['kingdom.spells'];
   if (spellsDto) {
     for (const [id, s] of Object.entries(spellsDto as Record<string, any>)) {
-      state.spellbook[id] = { unlocked: !!s.IsUnlocked, level: s.Level ?? 1 };
+      if (state.spellbook[id]) {
+        state.spellbook[id] = { unlocked: !!s.IsUnlocked, level: s.Level ?? 1 };
+      }
     }
   }
 
@@ -234,12 +214,12 @@ export function deserialize(save: SaveFile, map: MapData, now: number, rng: Rng)
   if (activeDto) {
     state.activeSpells = (activeDto as any[]).map(
       (s): ActiveSpell => ({
-        spellId: s.SpellID as SpellId,
+        spellId: s.SpellID,
         cell: s.TargetCell,
         level: s.Level,
         magnitude: s.Magnitude,
         expiresAt: ms(s.ExpiresAt),
-        sourceId: s.SourceID ?? `spell_restored_${s.SpellID}`,
+        sourceId: s.SourceID,
       }),
     );
   }
@@ -253,6 +233,37 @@ export function deserialize(save: SaveFile, map: MapData, now: number, rng: Rng)
     }
   }
 
+  const featuresDto = modules['kingdom.features']?.Cells;
+  if (featuresDto) {
+    state.features = {};
+    for (const f of featuresDto as any[]) state.features[coordKey(f.Coord)] = f.FeatureID;
+  }
+
+  const harvestDto = modules['kingdom.cellHarvest']?.Cells;
+  if (harvestDto) {
+    for (const c of harvestDto as any[]) {
+      state.harvest[coordKey(c.Coord)] = {
+        taps: c.Taps ?? 0,
+        exhaustedUntil: msOrNull(c.ExhaustedUntil),
+      };
+    }
+  }
+
+  const workersDto = modules['kingdom.workers']?.Workers;
+  if (workersDto) {
+    state.workers = (workersDto as WorkerDto[]).map(
+      (w): Worker => ({
+        id: w.ID,
+        buildingId: w.BuildingID,
+        activity: w.Activity as Worker['activity'],
+        claimedCell: w.ClaimedCell,
+        carrying: !!w.Carrying,
+        stateStartedAt: ms(w.StateStartedAt),
+        stateUntil: msOrNull(w.StateUntil),
+      }),
+    );
+  }
+
   const armyDto = modules['kingdom.army']?.Units;
   if (armyDto) {
     state.army = (armyDto as any[]).map((u) => ({
@@ -261,39 +272,28 @@ export function deserialize(save: SaveFile, map: MapData, now: number, rng: Rng)
     }));
   }
 
-  const featuresDto = modules['kingdom.features']?.Cells;
-  if (featuresDto) {
-    state.features = {};
-    for (const f of featuresDto as any[]) {
-      state.features[coordKey(f.Coord)] = {
-        featureId: f.FeatureID,
-        taps: f.Taps ?? 0,
-        threshold: f.Threshold ?? 0,
-      } satisfies FeatureCell;
-    }
-  }
-
   const playerDto = modules['player.currencies'];
   if (playerDto) state.player.wallet = { ...(playerDto as Wallet) };
 
   state.nextId = Math.max(state.nextId, (modules['meta.nextId'] as number) ?? 1);
+  state.lastAdvance = lastSaved;
 
-  // Casts that expired while away are dropped WITHOUT running removal effects
-  // (an offline-expired Rain does not regrow its forest).
-  dropOfflineExpiredSpells(state, now);
-
-  // Rebuild rates (recalc preserves only Spell modifiers — of which restored
-  // generators have none), then re-apply still-active Rain boosts.
-  recalculateCityProduction(state, map, now, rng);
-  for (const spell of state.activeSpells) {
-    if (spell.spellId !== 'Rain') continue;
-    const district = state.city.districts.find(
-      (d) => d.location.x === spell.cell.x && d.location.y === spell.cell.y,
-    );
-    const gen = district?.generators.find((g) => g.currencyId === 'Food');
-    gen?.modifiers.push({
-      category: 'Spell', source: spell.sourceId, kind: 'Percentage', value: spell.magnitude - 1,
-    });
+  // ---- Offline catch-up: replay up to the cap, pause beyond it. -------------
+  const capEnd = Math.min(now, lastSaved + OFFLINE_CAP_HOURS * 3_600_000);
+  advance(state, map, capEnd);
+  if (capEnd < now) {
+    const gap = now - capEnd;
+    for (const w of state.workers) {
+      w.stateStartedAt += gap;
+      if (w.stateUntil !== null) w.stateUntil += gap;
+    }
+    for (const d of state.city.districts) {
+      if (d.cycleStartedAt !== undefined) d.cycleStartedAt += gap;
+    }
+    state.kingdom.manaLastProduction += gap;
+    // Cell recovery and build-queue timers run in real time (NOT paused).
+    state.lastAdvance = capEnd;
+    advance(state, map, now); // completes remaining queue work; workers resume at now
   }
   return state;
 }

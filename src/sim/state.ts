@@ -3,9 +3,10 @@
 // injectable rng so the sim stays deterministic and portable to a server.
 
 export type CurrencyId = 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Mana' | 'Knowledge' | 'Gems';
-export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Lumber';
+export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
-export type FeatureId = 'Trees' | 'TreesCut';
+export type FeatureId = 'Trees';
+export type HarvestSourceId = 'Forest' | 'Crops';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
 export type SpellId = 'Rain' | 'Tap';
 
@@ -15,25 +16,9 @@ export const parseCoordKey = (k: string): Coord => {
   const [x, y] = k.split(',').map(Number);
   return { x, y };
 };
+export const sameCell = (a: Coord, b: Coord): boolean => a.x === b.x && a.y === b.y;
 
 export type Wallet = Partial<Record<CurrencyId, number>>;
-
-export type ModifierCategory = 'Building' | 'Feature' | 'Population' | 'Spell' | 'Terrain';
-export interface Modifier {
-  category: ModifierCategory;
-  source: string;
-  kind: 'Flat' | 'Percentage';
-  value: number; // Flat: units/min; Percentage: fraction added
-}
-
-export interface Generator {
-  id: string; // `${districtUniqueId}_${currencyId}` (or kingdom id)
-  currencyId: CurrencyId;
-  modifiers: Modifier[];
-  lastProduction: number; // epoch ms UTC
-  vaultStored: number;
-  vaultCapacity: number; // 0 = wallet-direct
-}
 
 export type ConstructionState = 'UnderConstruction' | 'Built';
 
@@ -45,7 +30,8 @@ export interface District {
   location: Coord;
   state: ConstructionState;
   visualVariant: number;
-  generators: Generator[];
+  /** Townhall only: start of the current tax cycle (epoch ms). */
+  cycleStartedAt?: number;
 }
 
 export interface QueueItem {
@@ -74,10 +60,22 @@ export interface City {
   queue: QueueItem[];
 }
 
-export interface FeatureCell {
-  featureId: FeatureId;
+/** Per-resource-cell harvest state. Absent entry = fresh cell (0 taps). */
+export interface CellHarvestState {
   taps: number;
-  threshold: number; // 0 = not rolled yet; rolled on first tap
+  exhaustedUntil: number | null; // epoch ms; recovery is lazy (derived from time)
+}
+
+export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';
+
+export interface Worker {
+  id: string;
+  buildingId: string; // district uniqueId
+  activity: WorkerActivity;
+  claimedCell: Coord | null;
+  carrying: boolean; // true on the way home with a harvested unit
+  stateStartedAt: number; // epoch ms — for render interpolation
+  stateUntil: number | null; // event time; null while Idle
 }
 
 export interface ActiveSpell {
@@ -86,7 +84,7 @@ export interface ActiveSpell {
   level: number;
   magnitude: number;
   expiresAt: number; // epoch ms
-  sourceId: string; // modifier source for removal
+  sourceId: string;
 }
 
 export interface ArmyUnit {
@@ -99,7 +97,7 @@ export interface GameState {
   kingdom: {
     maxBuilders: number;
     wallet: Wallet;
-    generators: Generator[];
+    manaLastProduction: number; // epoch ms — the 5/min trickle's timestamp
   };
   player: { wallet: Wallet };
   spellbook: Record<string, { unlocked: boolean; level: number }>;
@@ -108,9 +106,12 @@ export interface GameState {
     revealed: Record<string, true>; // coordKey → revealed
     progress: Record<string, number>; // coordKey → silver paid so far
   };
-  features: Record<string, FeatureCell>; // coordKey → current feature (dynamic: Trees ↔ TreesCut)
+  features: Record<string, FeatureId>; // coordKey → authored feature (static)
+  harvest: Record<string, CellHarvestState>; // coordKey → taps/exhaustion
+  workers: Worker[];
   army: ArmyUnit[];
   nextId: number; // monotonic counter for unique ids
+  lastAdvance: number; // epoch ms — where the unified advance left off
 }
 
 export type Rng = () => number; // [0, 1)
@@ -123,7 +124,10 @@ export const addToWallet = (w: Wallet, c: CurrencyId, amount: number): void => {
 };
 
 export const districtAt = (state: GameState, cell: Coord): District | undefined =>
-  state.city.districts.find((d) => d.location.x === cell.x && d.location.y === cell.y);
+  state.city.districts.find((d) => sameCell(d.location, cell));
+
+export const districtById = (state: GameState, uniqueId: string): District | undefined =>
+  state.city.districts.find((d) => d.uniqueId === uniqueId);
 
 export const townhall = (state: GameState): District =>
   state.city.districts.find((d) => d.definitionId === 'Townhall')!;

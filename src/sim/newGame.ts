@@ -1,16 +1,12 @@
 // Initial game state: Oakville with its Townhall at (0,0), starting wallets,
-// fog seed, spellbook, initial map features (Docs/01, 03, 10).
+// fog seed, spellbook, authored map features.
 
-import { CITY_DEF, CURRENCIES, KINGDOM_DEF, SPELLS, DISTRICTS } from './data/definitions';
-import { makeGenerator } from './economy';
+import { CITY_DEF, CURRENCIES, KINGDOM_DEF, SPELLS } from './data/definitions';
 import { seedFog } from './fog';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
-import { recalculateCityProduction } from './recalc';
-import {
-  coordKey, type CurrencyId, type GameState, type Rng, type Wallet,
-} from './state';
+import { coordKey, type CurrencyId, type GameState, type Wallet } from './state';
 
-export function newGame(map: MapData, now: number, rng: Rng): GameState {
+export function newGame(map: MapData, now: number): GameState {
   const kingdomWallet: Wallet = {};
   const playerWallet: Wallet = {};
   for (const [id, def] of Object.entries(CURRENCIES)) {
@@ -29,37 +25,31 @@ export function newGame(map: MapData, now: number, rng: Rng): GameState {
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
-      generators: [],
+      manaLastProduction: now,
     },
     player: { wallet: playerWallet },
     spellbook: {},
     activeSpells: [],
     fog: { revealed: {}, progress: {} },
     features: {},
+    harvest: {},
+    workers: [],
     army: [],
     nextId: 1,
+    lastAdvance: now,
   };
-
-  // Kingdom generators from {currencyId, perHour} entries (Mana 300/h = 5/min).
-  for (const p of KINGDOM_DEF.production) {
-    const gen = makeGenerator(`kingdom_${p.currencyId}`, p.currencyId, 0, now, rng);
-    gen.modifiers.push({
-      category: 'Building', source: 'kingdom', kind: 'Flat', value: p.perHour / 60,
-    });
-    state.kingdom.generators.push(gen);
-  }
 
   // Spellbook: one runtime spell per definition; unlock those flagged from start.
   for (const def of Object.values(SPELLS)) {
     state.spellbook[def.id] = { unlocked: def.unlockedFromStart, level: 1 };
   }
 
-  // Initial features from the authored map (dynamic afterwards: Trees ↔ TreesCut).
+  // Authored features from the map (static under the harvest model).
   for (const [key, featureId] of map.initialFeatures) {
-    state.features[key] = { featureId, taps: 0, threshold: 0 };
+    state.features[key] = featureId;
   }
 
-  // The Townhall, pre-built at the origin.
+  // The Townhall, pre-built at the origin, with its tax cycle running.
   state.city.districts.push({
     uniqueId: `district_Townhall_${state.nextId++}`,
     definitionId: 'Townhall',
@@ -68,15 +58,11 @@ export function newGame(map: MapData, now: number, rng: Rng): GameState {
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
-    generators: [
-      makeGenerator(`townhall_Silver`, 'Silver', DISTRICTS.Townhall.vaultCapacity, now, rng),
-    ],
+    cycleStartedAt: now,
   });
 
   seedFog(state, map);
-  recalculateCityProduction(state, map, now, rng);
 
-  // Sanity: the Townhall cell must be revealed grassland per the authored map.
   if (!state.fog.revealed[coordKey(TOWNHALL_ORIGIN)]) {
     throw new Error('New game seed failed: Townhall cell not revealed');
   }

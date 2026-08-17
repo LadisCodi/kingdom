@@ -1,11 +1,18 @@
-// Canvas 2D world renderer: terrain, fog, features, districts, bars, markers,
-// floaters. Redraws every frame — 155 cells is trivial.
+// Canvas 2D world renderer: terrain, fog, resource cells (with exhaustion),
+// districts, worker units, bars, markers, floaters. Redraws every frame —
+// 155 cells is trivial.
 
-import { DISTRICTS, FEATURES } from '../sim/data/definitions';
-import { vaultFillFraction } from '../sim/economy';
+import {
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, TOWNHALL_CYCLE,
+} from '../sim/data/definitions';
 import { fogState, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
-import { queueProgress, remainingSeconds, coordKey, type Coord, type GameState } from '../sim/state';
+import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
+import { workerPosition } from '../sim/workers';
+import {
+  queueProgress, remainingSeconds, coordKey, sameCell,
+  type Coord, type GameState,
+} from '../sim/state';
 import type { Camera } from './camera';
 import type { Floaters } from './floaters';
 import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from './palette';
@@ -14,7 +21,10 @@ export interface MarkerLayer {
   selected: Coord | null;
   validCells: Array<{ cell: Coord; label: string }>; // placement or spell targets
   validColor: string;
-  workedCells: Coord[];
+  influenceCells: Coord[]; // area-of-influence outline
+  claimedCells: Coord[]; // cells claimed by the inspected building's workers
+  /** Workable cells inside the previewed building's range, with their yield. */
+  yieldCells: Array<{ cell: Coord; label: string }>;
   previewCell: Coord | null;
   previewGlyph: string | null;
 }
@@ -48,7 +58,7 @@ export function drawMap(
 
   const cellRect = (cell: Coord) => camera.cellToScreen(cell);
 
-  // Pass 1: terrain + fog + features + districts.
+  // Pass 1: terrain + fog + resource cells + districts.
   for (let cy = topLeft.y - pad; cy <= bottomRight.y + pad; cy++) {
     for (let cx = topLeft.x - pad; cx <= bottomRight.x + pad; cx++) {
       const cell = { x: cx, y: cy };
@@ -66,12 +76,15 @@ export function drawMap(
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
 
       const feature = state.features[key];
-      const district = state.city.districts.find(
-        (d) => d.location.x === cx && d.location.y === cy,
-      );
+      const district = state.city.districts.find((d) => sameCell(d.location, cell));
+      const source = harvestSourceAt(state, cell);
+      const recovery = source !== null ? recoversAt(state, cell, now) : null;
+      const exhausted = recovery !== null;
 
+      // Features (Forest): normal or exhausted glyph.
       if (feature && !district) {
-        drawGlyph(ctx, FEATURES[feature.featureId].glyph, x, y, size, size * 0.5);
+        const def = FEATURES[feature];
+        drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
       }
 
       if (district && fog === 'Revealed') {
@@ -82,7 +95,6 @@ export function drawMap(
           ctx.fillRect(x, y, size, size);
           drawGlyph(ctx, '🚧', x, y - size * 0.22, size, size * 0.3);
         } else {
-          // Level pips.
           if (district.level > 1) {
             ctx.fillStyle = PALETTE.label;
             ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
@@ -90,34 +102,53 @@ export function drawMap(
             ctx.textBaseline = 'top';
             ctx.fillText(`L${district.level}`, x + size - 3, y + 3);
           }
-          // Vault bar.
-          const fill = vaultFillFraction(district.generators);
-          if (fill > 0) {
-            drawBar(ctx, x + size * 0.12, y + size - 7, size * 0.76, 4, fill,
-              fill >= 1 ? PALETTE.vaultFull : PALETTE.vaultFill);
+          // Exhausted crop plot: withered overlay.
+          if (district.definitionId === 'FarmLands' && exhausted) {
+            drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, x, y - size * 0.18, size, size * 0.3);
+          }
+          // Townhall: tax-cycle progress bar.
+          if (district.definitionId === 'Townhall' && district.cycleStartedAt !== undefined) {
+            const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
+            const progress = Math.min(1, Math.max(0, (now - district.cycleStartedAt) / cycleMs));
+            drawBar(ctx, x + size * 0.12, y + size - 7, size * 0.76, 4, progress, PALETTE.progressFill);
           }
           // Needs-workers warning.
-          const usesWorkers = def.maxWorkersPerLevel.length > 0;
-          if (usesWorkers && district.assignedWorkers === 0) {
+          if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {
             drawGlyph(ctx, '⚠️', x + size * 0.28, y - size * 0.26, size, size * 0.26);
           }
         }
       }
 
+      // Resource-cell state: exhaustion dim + recovery countdown, or tap wear.
+      if (source !== null && fog === 'Revealed') {
+        const spec = HARVEST[source];
+        if (exhausted) {
+          ctx.fillStyle = PALETTE.exhaustedOverlay;
+          ctx.fillRect(x, y, size, size);
+          const remaining = (recovery - now) / (spec.recoverySeconds * 1000);
+          drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, 1 - Math.min(1, remaining), PALETTE.recoveryFill);
+        } else {
+          const fraction = tapFraction(state, cell, spec, now);
+          if (fraction < 1) {
+            drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, fraction, PALETTE.vaultFill);
+          }
+        }
+      }
+
+      // Active Rain on this cell.
+      if (state.activeSpells.some((s) => sameCell(s.cell, cell) && s.expiresAt > now)) {
+        drawGlyph(ctx, '🌧️', x + size * 0.3, y - size * 0.28, size, size * 0.28);
+      }
+
       if (fog === 'Discovered') {
         ctx.fillStyle = PALETTE.fogDiscovered;
         ctx.fillRect(x, y, size, size);
-        // Reveal cost / partial progress.
-        const total = revealCostForCell(map, cell);
+        // Reveal progress only — the total cost is deliberately not shown.
         const paid = state.fog.progress[key] ?? 0;
         if (paid > 0) {
+          const total = revealCostForCell(map, cell);
           drawBar(ctx, x + size * 0.15, y + size * 0.62, size * 0.7, 5, paid / total, PALETTE.progressFill);
         }
-        ctx.fillStyle = PALETTE.label;
-        ctx.font = `${Math.max(10, size * 0.2)}px system-ui`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`🪙${total}`, x + size / 2, y + size * 0.42);
       }
     }
   }
@@ -138,6 +169,14 @@ export function drawMap(
   }
 
   // Pass 3: markers.
+  // Working-area cells: a white square at 75% of the tile size.
+  for (const cell of markers.influenceCells) {
+    const { x, y } = cellRect(cell);
+    const inset = size * 0.125;
+    ctx.strokeStyle = PALETTE.influenceSquare;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + inset, y + inset, size * 0.75, size * 0.75);
+  }
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
     const { x, y } = cellRect(cell);
@@ -152,11 +191,32 @@ export function drawMap(
       ctx.fillText(label, x + size / 2, y + size - 4);
     }
   }
-  for (const cell of markers.workedCells) {
+  for (const cell of markers.claimedCells) {
     const { x, y } = cellRect(cell);
     ctx.strokeStyle = PALETTE.workedTile;
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
+  }
+  // Cells that WILL be worked: green "positive" yield label on a dark pill
+  // (the white working-area square is already drawn above).
+  for (const { cell, label } of markers.yieldCells) {
+    const { x, y } = cellRect(cell);
+    const fontSize = Math.max(10, size * 0.18);
+    ctx.font = `bold ${fontSize}px system-ui`;
+    const textWidth = ctx.measureText(label).width;
+    const padX = fontSize * 0.5;
+    const pillW = textWidth + padX * 2;
+    const pillH = fontSize * 1.4;
+    const pillX = x + size / 2 - pillW / 2;
+    const pillY = y + size - 5 - pillH;
+    ctx.fillStyle = PALETTE.labelPill;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = PALETTE.yieldPositive;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + size / 2, pillY + pillH / 2 + fontSize * 0.05);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
@@ -171,7 +231,18 @@ export function drawMap(
     ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
   }
 
-  // Pass 4: floaters.
+  // Pass 4: worker units.
+  for (const worker of state.workers) {
+    const pos = workerPosition(state, worker, now);
+    if (!pos) continue;
+    const { x, y } = cellRect(pos);
+    drawGlyph(ctx, '🧑‍🌾', x + size * 0.18, y + size * 0.18, size * 0.6, size * 0.34);
+    if (worker.carrying) {
+      drawGlyph(ctx, '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
+    }
+  }
+
+  // Pass 5: floaters.
   for (const f of floaters.alive()) {
     const { x, y } = cellRect(f.cell);
     ctx.globalAlpha = 1 - f.t;
@@ -192,10 +263,15 @@ function drawGlyph(
   size: number,
   fontSize: number,
 ): void {
+  // Emoji ink rarely matches the font's line box, so center on the measured
+  // bounding box instead of relying on textBaseline: 'middle'.
   ctx.font = `${fontSize}px system-ui`;
   ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(glyph, x + size / 2, y + size / 2 + fontSize * 0.06);
+  ctx.textBaseline = 'alphabetic';
+  const m = ctx.measureText(glyph);
+  const cx = x + size / 2 + (m.actualBoundingBoxLeft - m.actualBoundingBoxRight) / 2;
+  const cy = y + size / 2 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  ctx.fillText(glyph, cx, cy);
 }
 
 function drawBar(
