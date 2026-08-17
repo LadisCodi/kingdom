@@ -3,7 +3,7 @@
 > Design doc for replacing the generator/vault economy with a physical harvest
 > loop: tappable resource cells, exhaustion/recovery, and workers as real units
 > that walk between their building and the cells they work.
-> Status: **design approved pending review — not implemented**.
+> Status: **implemented** on `feature/harvest-loop` (2026-08-17).
 
 ## Summary of the change
 
