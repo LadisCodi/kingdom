@@ -6,7 +6,7 @@ import {
   tapCell, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
   type AssignWorkerResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, SPELLS } from './sim/data/definitions';
+import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, SPELLS } from './sim/data/definitions';
 import {
   buildCostForCell, buildDurationForCell, districtCount, maxCountForTownhallLevel,
   validPlacementCells,
@@ -332,16 +332,16 @@ export class Game {
       validColor: PALETTE.validTarget,
       influenceCells: [],
       claimedCells: [],
+      yieldCells: [],
       previewCell: null,
       previewGlyph: null,
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
+      // Valid spots get a plain outline; the RANGE and per-cell yields are
+      // shown only for the currently selected placement.
       layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
-        (cell) => {
-          const captured = this.capturedCells(this.mode.kind === 'placing' ? this.mode.definitionId : def.id, cell);
-          return { cell, label: def.harvestSource ? `${captured.length} ⛏` : '' };
-        },
+        (cell) => ({ cell, label: '' }),
       );
       layer.selected = this.mode.selected;
       layer.previewCell = this.mode.selected;
@@ -350,6 +350,12 @@ export class Game {
         layer.influenceCells = cellsWithinRadius(
           this.map, this.mode.selected, def.influenceRadiusPerLevel[0],
         );
+        if (def.harvestSource) {
+          const spec = HARVEST[def.harvestSource];
+          layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
+            (cell) => ({ cell, label: `+${spec.yieldPerTap} ${icon(spec.currencyId)}` }),
+          );
+        }
       }
     } else if (this.mode.kind === 'targeting') {
       const spellId = this.mode.spellId;

@@ -23,6 +23,8 @@ export interface MarkerLayer {
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
   claimedCells: Coord[]; // cells claimed by the inspected building's workers
+  /** Workable cells inside the previewed building's range, with their yield. */
+  yieldCells: Array<{ cell: Coord; label: string }>;
   previewCell: Coord | null;
   previewGlyph: string | null;
 }
@@ -195,6 +197,17 @@ export function drawMap(
     ctx.strokeStyle = PALETTE.workedTile;
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
+  }
+  for (const { cell, label } of markers.yieldCells) {
+    const { x, y } = cellRect(cell);
+    ctx.strokeStyle = PALETTE.workedTile;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
+    ctx.fillStyle = PALETTE.label;
+    ctx.font = `bold ${Math.max(10, size * 0.18)}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(label, x + size / 2, y + size - 4);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
