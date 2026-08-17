@@ -2,8 +2,8 @@
 // builders, free workers. Shakes a currency when the player can't afford something.
 
 import { icon, type Game } from '../game';
-import { CURRENCIES } from '../sim/data/definitions';
-import { maxPopulation } from '../sim/recalc';
+import { CURRENCIES, KINGDOM_DEF } from '../sim/data/definitions';
+import { maxPopulation } from '../sim/population';
 import type { CurrencyId } from '../sim/state';
 import { el } from './format';
 
@@ -50,12 +50,11 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     const mana = game.walletValue('Mana');
     const manaCap = CURRENCIES.Mana.cap ?? 100;
     manaFill.style.width = `${(mana / manaCap) * 100}%`;
-    // Regen countdown: Mana ticks 5/min → +1 every 12 s, aligned to the generator timestamp.
-    const gen = game.state.kingdom.generators.find((g) => g.currencyId === 'Mana');
+    // Regen countdown: Mana ticks 5/min → +1 every 12 s, from the trickle timestamp.
     let regen = '';
-    if (gen && mana < manaCap) {
-      const rate = 5; // per minute
-      const elapsed = (game.now() - gen.lastProduction) / 1000;
+    if (mana < manaCap) {
+      const rate = KINGDOM_DEF.manaPerHour / 60; // per minute
+      const elapsed = (game.now() - game.state.kingdom.manaLastProduction) / 1000;
       const secsPerUnit = 60 / rate;
       const wait = Math.max(1, Math.ceil(secsPerUnit - (elapsed % secsPerUnit)));
       regen = ` (+1 in ${wait}s)`;
