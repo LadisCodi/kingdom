@@ -1,5 +1,21 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+*.tsbuildinfo
+
+# Local env (Supabase keys live here)
 .env.local
 .env*.local
+
+# Test / tooling caches
+coverage/
+.vite/
+*.log
+
+# Editors & OS
 .DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

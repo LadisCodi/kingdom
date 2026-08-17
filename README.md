@@ -43,7 +43,7 @@ One-time setup:
 2. (Optional, for cloud saves) **Settings → Secrets and variables → Actions →
    Variables**: add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 
-The game is served at `https://<user>.github.io/Kingdom/` — share that URL
+The game is served at `https://ladiscodi.github.io/kingdom/` — share that URL
 with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 
 ## Where things live
