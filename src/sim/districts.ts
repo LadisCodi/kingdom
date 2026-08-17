@@ -1,9 +1,10 @@
-// Placement conditions and build/upgrade cost & time formulas (Docs/04).
+// Placement conditions and build/upgrade cost & time formulas. Cost/time
+// formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { neighbors, townhallDistance, type MapData } from './grid';
+import { cellsWithinRadius, neighbors, townhallDistance, type MapData } from './grid';
 import {
-  coordKey, districtAt, townhall,
+  coordKey, districtAt, sameCell, townhall,
   type Coord, type DistrictId, type GameState, type Wallet,
 } from './state';
 
@@ -22,7 +23,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'CountLimit'
-  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmAdjacency' | 'NeedsTreesAdjacency';
+  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence' | 'NeedsForestNearby';
 
 /** All placement conditions ANDed; null = buildable on this cell. */
 export function placementBlock(
@@ -54,22 +55,28 @@ export function placementBlock(
       if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
       break;
     case 'FarmLands': {
-      // Adjacent to an ACTIVE (built) Farm.
-      const ok = neighbors(map, cell).some((n) => {
-        const d = districtAt(state, n);
-        return d !== undefined && d.definitionId === 'Farm' && d.state === 'Built';
-      });
-      if (!ok) return 'NeedsFarmAdjacency';
+      // On Grassland, inside a BUILT Farm's area of influence.
+      if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
+      const inFarmArea = state.city.districts.some(
+        (d) =>
+          d.definitionId === 'Farm' &&
+          d.state === 'Built' &&
+          cellsWithinRadius(
+            map,
+            d.location,
+            levelIndexed(DISTRICTS.Farm.influenceRadiusPerLevel, d.level),
+          ).some((c) => sameCell(c, cell)),
+      );
+      if (!inFarmArea) return 'NeedsFarmInfluence';
       break;
     }
-    case 'Lumber': {
-      // At least one neighbor is a REVEALED cell carrying Trees.
+    case 'Sawmill': {
+      // At least one revealed Forest cell within radius 1.
       const ok = neighbors(map, cell).some(
         (n) =>
-          state.features[coordKey(n)]?.featureId === 'Trees' &&
-          state.fog.revealed[coordKey(n)] === true,
+          state.features[coordKey(n)] === 'Trees' && state.fog.revealed[coordKey(n)] === true,
       );
-      if (!ok) return 'NeedsTreesAdjacency';
+      if (!ok) return 'NeedsForestNearby';
       break;
     }
     case 'Townhall':

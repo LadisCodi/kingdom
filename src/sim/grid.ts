@@ -74,3 +74,23 @@ export function neighbors(map: MapData, cell: Coord): Coord[] {
 /** BFS distance from the Townhall; unreachable or off-map → 0 (no penalty, as built). */
 export const townhallDistance = (map: MapData, cell: Coord): number =>
   map.distanceFromTownhall.get(coordKey(cell)) ?? 0;
+
+/** Existing cells within Chebyshev distance ≤ radius of `center`, excluding it.
+ *  Ordered nearest-first (then reading order) so "claim the nearest cell" is a
+ *  simple first-match. */
+export function cellsWithinRadius(map: MapData, center: Coord, radius: number): Coord[] {
+  const out: Coord[] = [];
+  for (let r = 1; r <= radius; r++) {
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; // ring r only
+        const c = { x: center.x + dx, y: center.y + dy };
+        if (map.terrain.has(coordKey(c))) out.push(c);
+      }
+    }
+  }
+  return out;
+}
+
+export const euclideanTiles = (a: Coord, b: Coord): number =>
+  Math.hypot(a.x - b.x, a.y - b.y);

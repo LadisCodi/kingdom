@@ -1,19 +1,21 @@
-// The sim's public command API: plain functions (state, args, now, rng) → result
-// enums. The UI layer calls only these (plus the query helpers they re-export).
+// The sim's public command API and the unified advance: one event-ordered pass
+// serves both the live once-per-second tick and offline replay.
 
-import { CITY_DEF, DISTRICTS } from './data/definitions';
-import { accrueAll, collectFromDistrict, type ProductionReport } from './economy';
+import {
+  CITY_DEF, CURRENCIES, DISTRICTS, KINGDOM_DEF, TOWNHALL_CYCLE,
+} from './data/definitions';
 import {
   buildCostForCell, buildDurationForCell, buildCost as buildCostFormula,
   districtCount, placementBlock, requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from './districts';
 import { townhallDistance, type MapData } from './grid';
-import { recalculateCityProduction } from './recalc';
+import { tapCell, type TapCellResult } from './harvest';
 import { advanceQueue } from './queue';
-import { expireSpells } from './spells';
-import { assignableWorkerLimit } from './workedUnits';
 import {
-  addToWallet, getWallet, newId, remainingSeconds, townhall,
+  addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
+} from './workers';
+import {
+  addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
   type QueueItem, type Rng, type Wallet,
 } from './state';
@@ -40,10 +42,7 @@ export function enqueueBuild(
   map: MapData,
   definitionId: DistrictId,
   cell: Coord,
-  now: number,
-  rng: Rng,
 ): EnqueueBuildResult {
-  void now; void rng;
   if (state.city.queue.length >= CITY_DEF.buildQueueCapacity) return 'QueueFull';
   if (placementBlock(state, map, definitionId, cell) !== null) return 'InvalidCell';
   const cost = buildCostForCell(state, definitionId, cell, map);
@@ -57,7 +56,6 @@ export function enqueueBuild(
     location: cell,
     state: 'UnderConstruction',
     visualVariant: 1,
-    generators: [],
   };
   const duration = buildDurationForCell(state, definitionId, cell, map);
   state.city.districts.push(district);
@@ -76,7 +74,7 @@ export type UpgradeResult =
   | 'QueueFull' | 'NotEnoughResources';
 
 export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
-  const district = state.city.districts.find((d) => d.uniqueId === districtUniqueId);
+  const district = districtById(state, districtUniqueId);
   if (!district) return 'RequirementsNotMet';
   const def = DISTRICTS[district.definitionId];
   if (district.level >= def.maxLevel) return 'AtMaxLevel';
@@ -109,7 +107,7 @@ export function cancelQueueItem(state: GameState, map: MapData, itemId: string):
   const item = state.city.queue.find((q) => q.uniqueId === itemId);
   if (!item) return 'NotFound';
   if (item.kind !== 'build') return 'NotCancellable';
-  const district = state.city.districts.find((d) => d.uniqueId === item.districtUniqueId);
+  const district = districtById(state, item.districtUniqueId);
   state.city.queue.splice(state.city.queue.indexOf(item), 1);
   if (district) {
     state.city.districts.splice(state.city.districts.indexOf(district), 1);
@@ -125,12 +123,19 @@ export function cancelQueueItem(state: GameState, map: MapData, itemId: string):
 
 // --------------------------------------------------------------- completions
 
-function completeQueueItem(state: GameState, map: MapData, item: QueueItem, now: number, rng: Rng): void {
-  const district = state.city.districts.find((d) => d.uniqueId === item.districtUniqueId);
+/** Idle workers re-check availability from `t` (never retroactively earlier). */
+export function wakeIdleWorkersAt(state: GameState, t: number): void {
+  for (const w of state.workers) {
+    if (w.activity === 'Idle') w.stateStartedAt = Math.max(w.stateStartedAt, t);
+  }
+}
+
+function completeQueueItem(state: GameState, item: QueueItem, t: number): void {
+  const district = districtById(state, item.districtUniqueId);
   if (!district) return;
   if (item.kind === 'build') district.state = 'Built';
   else district.level = item.targetLevel ?? district.level + 1;
-  recalculateCityProduction(state, map, now, rng);
+  wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
 }
 
 export type RushResult = 'Success' | 'NotFound' | 'NotEnoughGems';
@@ -139,27 +144,21 @@ export type RushResult = 'Success' | 'NotFound' | 'NotEnoughGems';
 export const gemRushCost = (item: QueueItem, now: number): number =>
   Math.max(1, Math.ceil(remainingSeconds(item, now) / 10));
 
-export function finishWithGems(
-  state: GameState,
-  map: MapData,
-  itemId: string,
-  now: number,
-  rng: Rng,
-): RushResult {
+export function finishWithGems(state: GameState, itemId: string, now: number): RushResult {
   const item = state.city.queue.find((q) => q.uniqueId === itemId);
   if (!item) return 'NotFound';
   const cost = gemRushCost(item, now);
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
-  // Remove from the queue FIRST so the per-second driver can't double-complete it.
+  // Remove from the queue FIRST so the advance can't double-complete it.
   state.city.queue.splice(state.city.queue.indexOf(item), 1);
-  completeQueueItem(state, map, item, now, rng);
+  completeQueueItem(state, item, now);
   return 'Success';
 }
 
 // ------------------------------------------------------------------- workers
 
-export type AssignWorkerResult = 'Assigned' | 'Unassigned' | 'NoFreeWorkers' | 'NoMoreTiles' | 'NotAWorkerDistrict';
+export type AssignWorkerResult = 'Assigned' | 'Unassigned' | 'NoFreeWorkers' | 'NoMoreTiles' | 'NotAWorkerDistrict' | 'NoWorkers';
 
 export function changeWorkers(
   state: GameState,
@@ -167,9 +166,8 @@ export function changeWorkers(
   districtUniqueId: string,
   delta: 1 | -1,
   now: number,
-  rng: Rng,
 ): AssignWorkerResult {
-  const district = state.city.districts.find((d) => d.uniqueId === districtUniqueId);
+  const district = districtById(state, districtUniqueId);
   if (!district || DISTRICTS[district.definitionId].maxWorkersPerLevel.length === 0) {
     return 'NotAWorkerDistrict';
   }
@@ -177,32 +175,119 @@ export function changeWorkers(
     const assigned = state.city.districts.reduce((s, d) => s + d.assignedWorkers, 0);
     if (state.city.population - assigned < 1) return 'NoFreeWorkers';
     if (district.assignedWorkers >= assignableWorkerLimit(state, map, district)) return 'NoMoreTiles';
-    district.assignedWorkers += 1;
-    recalculateCityProduction(state, map, now, rng);
+    addWorker(state, map, district, now);
     return 'Assigned';
   }
-  if (district.assignedWorkers > 0) {
-    district.assignedWorkers -= 1;
-    recalculateCityProduction(state, map, now, rng);
-  }
+  if (district.assignedWorkers === 0) return 'NoWorkers';
+  removeWorker(state, district);
+  wakeIdleWorkersAt(state, now); // a freed claim may unblock an Idle worker
   return 'Unassigned';
 }
 
-// ---------------------------------------------------------------------- tick
+// -------------------------------------------------------------- townhall tap
 
-export interface TickResult {
-  production: Map<string, ProductionReport>; // wallet-direct deposits, for "+N" floaters
+export interface TownhallCycle {
+  progress: number; // 0..1
+  remainingSeconds: number;
+  payout: number;
+}
+
+export function townhallCycle(state: GameState, now: number): TownhallCycle {
+  const th = townhall(state);
+  const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
+  const startedAt = th.cycleStartedAt ?? now;
+  const elapsed = Math.min(cycleMs, Math.max(0, now - startedAt));
+  return {
+    progress: elapsed / cycleMs,
+    remainingSeconds: (cycleMs - elapsed) / 1000,
+    payout: TOWNHALL_CYCLE.silverPerPopulation * state.city.population,
+  };
+}
+
+function advanceTownhall(state: GameState, toTime: number): number {
+  const th = townhall(state);
+  if (th.cycleStartedAt === undefined) th.cycleStartedAt = toTime;
+  const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
+  let paid = 0;
+  while (th.cycleStartedAt + cycleMs <= toTime) {
+    const payout = TOWNHALL_CYCLE.silverPerPopulation * state.city.population;
+    addToWallet(state.city.wallet, 'Silver', payout);
+    paid += payout;
+    th.cycleStartedAt += cycleMs;
+  }
+  return paid;
+}
+
+/** Tap the Townhall: add tapBoostSeconds of progress to the current cycle
+ *  (paying out immediately if that completes it). Never exhausts. */
+export function townhallTap(state: GameState, now: number): number {
+  const th = townhall(state);
+  th.cycleStartedAt = (th.cycleStartedAt ?? now) - TOWNHALL_CYCLE.tapBoostSeconds * 1000;
+  return advanceTownhall(state, now);
+}
+
+// ---------------------------------------------------------------- mana trickle
+
+function accrueMana(state: GameState, toTime: number): void {
+  const rate = KINGDOM_DEF.manaPerHour / 60; // per minute
+  const cap = CURRENCIES.Mana.cap!;
+  const current = getWallet(state.kingdom.wallet, 'Mana');
+  if (current >= cap) {
+    state.kingdom.manaLastProduction = toTime; // overflow lost, as before
+    return;
+  }
+  const minutes = (toTime - state.kingdom.manaLastProduction) / 60_000;
+  const produced = Math.trunc(rate * minutes);
+  if (produced <= 0) return; // keep the sub-unit remainder
+  state.kingdom.manaLastProduction += (produced / rate) * 60_000;
+  addToWallet(state.kingdom.wallet, 'Mana', Math.min(produced, cap - current));
+}
+
+// ------------------------------------------------------------------- advance
+
+export interface AdvanceResult {
+  deposits: DepositEvent[];
   completedItems: QueueItem[];
-  regrownCells: Coord[];
+  townhallPaid: number;
 }
 
-/** The single once-per-second tick (fidelity fix b: exactly one driver). */
-export function tick(state: GameState, map: MapData, now: number, rng: Rng): TickResult {
-  const production = accrueAll(state, now);
-  const completedItems = advanceQueue(state.city.queue, now, Math.max(1, state.kingdom.maxBuilders));
-  for (const item of completedItems) completeQueueItem(state, map, item, now, rng);
-  const regrownCells = expireSpells(state, map, now, rng);
-  return { production, completedItems, regrownCells };
+/**
+ * Advance the whole sim from state.lastAdvance to `toTime`. Queue completions
+ * are interleaved chronologically with the worker simulation so a FarmLands
+ * finishing mid-absence starts being worked at its completion time, not at
+ * load time. Also used verbatim by the live once-per-second tick.
+ */
+export function advance(state: GameState, map: MapData, toTime: number): AdvanceResult {
+  const result: AdvanceResult = { deposits: [], completedItems: [], townhallPaid: 0 };
+  let cursor = Math.min(state.lastAdvance, toTime);
+  const builders = Math.max(1, state.kingdom.maxBuilders);
+  for (;;) {
+    // Stamp/complete queue work due at the cursor (items enqueued since the
+    // last advance get stamped here — within one tick of their enqueue).
+    const done = advanceQueue(state.city.queue, cursor, builders);
+    for (const item of done) {
+      completeQueueItem(state, item, Math.min(completesAt(item), cursor));
+      result.completedItems.push(item);
+    }
+    // Next queue completion inside the window?
+    let tNext = Infinity;
+    for (const item of state.city.queue.slice(0, builders)) {
+      if (item.startedAt !== null) tNext = Math.min(tNext, completesAt(item));
+    }
+    if (tNext > toTime) break;
+    result.deposits.push(...advanceWorkers(state, map, tNext));
+    cursor = tNext;
+  }
+  result.deposits.push(...advanceWorkers(state, map, toTime));
+  result.townhallPaid = advanceTownhall(state, toTime);
+  accrueMana(state, toTime);
+  // Expired spells just lapse — Rain's boost was applied when it mattered.
+  state.activeSpells = state.activeSpells.filter((s) => s.expiresAt > toTime);
+  state.lastAdvance = toTime;
+  return result;
 }
 
-export { collectFromDistrict };
+export { tapCell, assignableWorkerLimit };
+export type { TapCellResult };
+
+export type { Rng };

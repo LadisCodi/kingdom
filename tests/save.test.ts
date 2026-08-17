@@ -1,65 +1,87 @@
 import { describe, expect, it } from 'vitest';
-import { enqueueBuild } from '../src/sim/commands';
+import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
-import { coordKey, townhall } from '../src/sim/state';
-import { freshGame, fund, map, reveal, rng, T0, tickAt } from './helpers';
+import { getWallet } from '../src/sim/state';
+import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
-describe('save round-trip', () => {
-  it('restores wallets, population, districts, queue, fog, features, army', () => {
-    const state = freshGame();
-    fund(state, { Silver: 500, Wood: 500, Food: 42 });
-    reveal(state, [{ x: 2, y: 2 }]);
-    state.fog.progress['3,0'] = 2;
-    state.city.population = 5;
-    state.army.push({ uniqueId: 'unit_1', definitionId: 'Archer' });
-    state.features['2,2'].taps = 3;
-    state.features['2,2'].threshold = 7;
-    expect(enqueueBuild(state, map, 'Lumber', { x: 1, y: 1 }, T0, rng)).toBe('Started');
-    tickAt(state, T0); // start the build so StartedAtUtc is persisted
+const FOREST = { x: 2, y: 2 };
+const SAWMILL = { x: 1, y: 1 };
 
-    const restored = deserialize(serialize(state, T0 + 1000), map, T0 + 2000, rng);
+const workingGame = () => {
+  const state = freshGame();
+  state.city.population = 4;
+  fund(state, { Silver: 500, Wood: 500, Food: 42 });
+  reveal(state, [FOREST]);
+  enqueueBuild(state, map, 'Sawmill', SAWMILL);
+  tickAt(state, T0);
+  tickAt(state, T0 + 30_000); // sawmill built (23s)
+  changeWorkers(state, map, state.city.districts[1].uniqueId, 1, T0 + 30_000);
+  state.army.push({ uniqueId: 'unit_1', definitionId: 'Archer' });
+  return state;
+};
 
+describe('save v2 round-trip', () => {
+  it('restores wallets, districts, workers, harvest state, fog, army', () => {
+    const state = workingGame();
+    const t = T0 + 60_000;
+    tickAt(state, t); // a few harvest cycles happened
+    const woodAtSave = getWallet(state.city.wallet, 'Wood');
+    expect(state.harvest['2,2'].taps).toBeGreaterThan(0);
+
+    const restored = deserialize(serialize(state, t), map, t)!;
+    expect(restored).not.toBeNull();
     expect(restored.city.wallet).toEqual(state.city.wallet);
-    expect(restored.city.population).toBe(5);
-    expect(restored.city.districts.map((d) => d.definitionId).sort()).toEqual(['Lumber', 'Townhall']);
-    expect(restored.city.queue).toHaveLength(1);
-    expect(restored.city.queue[0].startedAt).toBe(state.city.queue[0].startedAt);
-    expect(Object.keys(restored.fog.revealed).sort()).toEqual(Object.keys(state.fog.revealed).sort());
-    expect(restored.fog.progress['3,0']).toBe(2);
-    expect(restored.features['2,2']).toEqual({ featureId: 'Trees', taps: 3, threshold: 7 });
+    expect(restored.city.population).toBe(4);
+    expect(restored.city.districts.map((d) => d.definitionId).sort()).toEqual(['Sawmill', 'Townhall']);
+    expect(restored.workers).toHaveLength(1);
+    expect(restored.workers[0].activity).toBe(state.workers[0].activity);
+    expect(restored.harvest['2,2']).toEqual(state.harvest['2,2']);
     expect(restored.army).toEqual([{ uniqueId: 'unit_1', definitionId: 'Archer' }]);
     expect(restored.player.wallet.Gems).toBe(10);
+    expect(getWallet(restored.city.wallet, 'Wood')).toBe(woodAtSave); // zero-time load adds nothing
   });
 
-  it('rates are rebuilt after load (never saved): Townhall tax reflects population', () => {
-    const state = freshGame();
-    state.city.population = 7;
-    const restored = deserialize(serialize(state, T0), map, T0, rng);
-    const gen = townhall(restored).generators.find((g) => g.currencyId === 'Silver')!;
-    const flat = gen.modifiers.filter((m) => m.kind === 'Flat').reduce((s, m) => s + m.value, 0);
-    expect(flat).toBe(35); // 5 Silver/min × 7 population
+  it('v1 saves are rejected (fresh game)', () => {
+    expect(
+      deserialize({ LastSaved: new Date(T0).toISOString(), GameVersion: 'x', Modules: {} }, map, T0),
+    ).toBeNull();
   });
 
-  it('a save aged 10 minutes pays out on the first tick, clamped at the vault cap', () => {
-    const state = freshGame();
-    state.city.population = 7; // 35 Silver/min
-    const save = serialize(state, T0);
-    const restored = deserialize(save, map, T0 + 600_000, rng);
-    tickAt(restored, T0 + 600_000);
-    const gen = townhall(restored).generators.find((g) => g.currencyId === 'Silver')!;
-    expect(gen.vaultStored).toBe(50); // 350 produced, vault cap 50 — overflow lost
+  it('offline replay: an aged save pays worker cycles and Townhall cycles', () => {
+    const state = workingGame();
+    const saveAt = T0 + 30_000;
+    const silver = getWallet(state.city.wallet, 'Silver');
+    const wood = getWallet(state.city.wallet, 'Wood');
+    const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
+    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 10 * 5 * 4); // 10 cycles × 5 × pop 4
+    expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 
-  it('offline-expired active spells are dropped without removal effects', () => {
-    const state = freshGame();
-    state.features['5,5'] = { featureId: 'TreesCut', taps: 0, threshold: 0 };
-    state.activeSpells.push({
-      spellId: 'Rain', cell: { x: 5, y: 5 }, level: 1, magnitude: 5,
-      expiresAt: T0 + 30_000, sourceId: 'spell_test',
-    });
-    const restored = deserialize(serialize(state, T0), map, T0 + 600_000, rng);
-    expect(restored.activeSpells).toHaveLength(0);
-    // The forest did NOT regrow (removal effects skipped for offline expiry).
-    expect(restored.features[coordKey({ x: 5, y: 5 })].featureId).toBe('TreesCut');
+  it('offline replay matches a live-ticked session exactly (same horizon)', () => {
+    const horizon = 20 * 60_000;
+    const saveAt = T0 + 30_000;
+    const offline = deserialize(serialize(workingGame(), saveAt), map, saveAt + horizon)!;
+    const live = workingGame();
+    for (let t = 1000; t <= horizon; t += 1000) tickAt(live, saveAt + t);
+    expect(getWallet(offline.city.wallet, 'Wood')).toBe(getWallet(live.city.wallet, 'Wood'));
+    expect(getWallet(offline.city.wallet, 'Silver')).toBe(getWallet(live.city.wallet, 'Silver'));
+  });
+
+  it('the 8h offline cap: a 20h absence earns exactly what 8h earns; queue still completes', () => {
+    const mk = () => {
+      const s = workingGame();
+      fund(s, { Silver: 5000, Wood: 5000 });
+      enqueueBuild(s, map, 'Housing', { x: 0, y: 1 });
+      return serialize(s, T0 + 30_000);
+    };
+    const capped = deserialize(mk(), map, T0 + 30_000 + 20 * 3_600_000)!;
+    const exact8h = deserialize(mk(), map, T0 + 30_000 + 8 * 3_600_000)!;
+    expect(getWallet(capped.city.wallet, 'Wood')).toBe(getWallet(exact8h.city.wallet, 'Wood'));
+    expect(getWallet(capped.city.wallet, 'Silver')).toBe(getWallet(exact8h.city.wallet, 'Silver'));
+    // The queued Housing finished regardless of the cap.
+    expect(capped.city.districts.find((d) => d.definitionId === 'Housing')!.state).toBe('Built');
+    // Workers resume from "now", not from 12h ago.
+    const w = capped.workers[0];
+    expect(w.stateUntil === null || w.stateUntil > T0 + 30_000 + 20 * 3_600_000 - 60_000).toBe(true);
   });
 });
