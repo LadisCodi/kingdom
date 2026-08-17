@@ -77,6 +77,12 @@ export function placementBlock(
   return null;
 }
 
+/** True if the type has placement rules beyond the universal ones — only then
+ *  is highlighting valid cells informative (an unrestricted building like the
+ *  Sawmill would just outline most of the map). */
+export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
+  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands';
+
 export const validPlacementCells = (
   state: GameState,
   map: MapData,

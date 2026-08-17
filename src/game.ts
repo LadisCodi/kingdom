@@ -8,8 +8,8 @@ import {
 } from './sim/commands';
 import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, SPELLS } from './sim/data/definitions';
 import {
-  buildCostForCell, buildDurationForCell, districtCount, maxCountForTownhallLevel,
-  validPlacementCells,
+  buildCostForCell, buildDurationForCell, districtCount, hasPlacementRestriction,
+  maxCountForTownhallLevel, validPlacementCells,
 } from './sim/districts';
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadius, townhallDistance, type MapData } from './sim/grid';
@@ -338,11 +338,14 @@ export class Game {
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
-      // Valid spots get a plain outline; the RANGE and per-cell yields are
-      // shown only for the currently selected placement.
-      layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
-        (cell) => ({ cell, label: '' }),
-      );
+      // Outline valid spots only for restricted buildings (Housing/Farm/
+      // FarmLands); an unrestricted one would just outline most of the map.
+      // The RANGE and per-cell yields are shown for the selected placement.
+      if (hasPlacementRestriction(this.mode.definitionId)) {
+        layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
+          (cell) => ({ cell, label: '' }),
+        );
+      }
       layer.selected = this.mode.selected;
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
