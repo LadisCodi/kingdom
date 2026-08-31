@@ -66,7 +66,12 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     tickAt(state, now);
     expect(isExhausted(state, { x: 2, y: 2 }, now)).toBe(false);
 
-    // --- FarmLands stands alone now: build one, tap it by hand for Food.
+    // --- Crop plots are gated behind Agriculture.
+    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('InvalidCell'); // locked
+    expect(startTech(state, 'Agriculture', now)).toBe('Started');
+    now += 60_000; // research takes 45s
+    tickAt(state, now);
+    expect(isTechComplete(state, 'Agriculture')).toBe(true);
     expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
@@ -75,12 +80,12 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(tapCell(state, map, { x: -1, y: 1 }, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Food')).toBe(foodBeforeTap + 1);
 
-    // --- The Farm is gated behind the first research (Agriculture).
+    // --- The Farm needs the follow-up tech, Irrigation.
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('InvalidCell'); // locked
-    expect(startTech(state, 'Agriculture', now)).toBe('Started');
-    now += 60_000; // research takes 45s
+    expect(startTech(state, 'Irrigation', now)).toBe('Started');
+    now += 70_000; // research takes 60s
     tickAt(state, now);
-    expect(isTechComplete(state, 'Agriculture')).toBe(true);
+    expect(isTechComplete(state, 'Irrigation')).toBe(true);
 
     // --- Build the Farm next to the plot; its worker harvests it automatically.
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');

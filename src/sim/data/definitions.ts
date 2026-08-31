@@ -163,7 +163,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🌾',
     sprite: 'farm',
     harvestSource: 'Crops',
-    requiredTech: 'Agriculture',
+    requiredTech: 'Irrigation',
     ...balance.districts.Farm,
   },
   FarmLands: {
@@ -174,6 +174,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🟩',
     sprite: 'farmlands',
     providesHarvestSource: 'Crops',
+    requiredTech: 'Agriculture',
     ...balance.districts.FarmLands,
   },
   Sawmill: {
@@ -265,10 +266,17 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Agriculture: tech({
     id: 'Agriculture',
     name: 'Agriculture',
-    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
+    description: 'Unlocks crop plots (FarmLands) — tap them for Food.',
     glyph: '🌱',
     node: { x: -1, y: 0 },
   }, balance.technologies.Agriculture),
+  Irrigation: tech({
+    id: 'Irrigation',
+    name: 'Irrigation',
+    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
+    glyph: '💧',
+    node: { x: -2, y: 1 },
+  }, balance.technologies.Irrigation),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
@@ -285,7 +293,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   }, balance.technologies.CavalryTraining),
 };
 
-export const TECH_ORDER: TechId[] = ['Agriculture', 'Archery', 'CavalryTraining'];
+export const TECH_ORDER: TechId[] = ['Agriculture', 'Irrigation', 'Archery', 'CavalryTraining'];
 
 // Slots & gem pricing for extra slots.
 export const RESEARCH_SETTINGS = balance.research;

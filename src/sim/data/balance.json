@@ -293,6 +293,16 @@
       "durationSeconds": 45,
       "requires": []
     },
+    "Irrigation": {
+      "cost": {
+        "Gold": 250,
+        "Wood": 50
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Agriculture"
+      ]
+    },
     "Archery": {
       "cost": {
         "Gold": 150,

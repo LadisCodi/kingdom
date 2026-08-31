@@ -14,12 +14,16 @@ import { buyUpgrade } from '../src/sim/upgrades';
 import { completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
+const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('technology basics', () => {
-  it('locks the Farm until Agriculture completes', () => {
+  it('the farming chain: Agriculture unlocks FarmLands, Irrigation unlocks the Farm', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
+    expect(startTech(state, 'Irrigation', T0)).toBe('MissingRequirement'); // needs Agriculture
+
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
     expect(startTech(state, 'Agriculture', T0)).toBe('AlreadyActive');
     const durationMs = TECHNOLOGIES.Agriculture.durationSeconds * 1000;
@@ -28,6 +32,11 @@ describe('technology basics', () => {
     tickAt(state, T0 + durationMs);
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
     expect(startTech(state, 'Agriculture', T0 + durationMs)).toBe('AlreadyDone');
+
+    // Crop plots open up; the Farm still needs the follow-up tech.
+    expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe(null);
+    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
+    completeTech(state, 'Irrigation');
     expect(enqueueBuild(state, map, 'Farm', FARM_CELL)).toBe('Started');
   });
 
