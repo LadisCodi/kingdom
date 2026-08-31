@@ -19,3 +19,6 @@ coverage/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# LibreOffice lock files
+.~lock.*#
