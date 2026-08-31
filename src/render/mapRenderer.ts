@@ -15,6 +15,7 @@ import {
 } from '../sim/state';
 import type { Camera } from './camera';
 import type { Floaters } from './floaters';
+import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from './palette';
 import { drawSprite } from './sprites';
 
@@ -40,6 +41,7 @@ export function drawMap(
   map: MapData,
   markers: MarkerLayer,
   floaters: Floaters,
+  villagers: Villagers,
   now: number,
 ): void {
   const dpr = camera.dpr;
@@ -263,6 +265,17 @@ export function drawMap(
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 1.5, y + 1.5, sw - 3, sh - 3);
+  }
+
+  // Pass 3.9: ambient villagers — unassigned population strolling around
+  // the Townhall and Housing. Under the workers, so busy people read on top.
+  for (const pos of villagers.positions(state, map, now)) {
+    const { x, y } = cellRect(pos);
+    const sx = x + size * 0.18;
+    const sy = y + size * 0.18;
+    if (!drawSprite(ctx, 'worker', sx, sy, size * 0.6, size * 0.6)) {
+      drawGlyph(ctx, '🧍', sx, sy, size * 0.6, size * 0.34);
+    }
   }
 
   // Pass 4: worker units (sprite with carrying variant, emoji fallback).

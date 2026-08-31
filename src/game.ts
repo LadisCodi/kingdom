@@ -32,6 +32,7 @@ import {
 import { influenceCells, workableCells } from './sim/workers';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
+import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
@@ -45,6 +46,7 @@ export class Game {
   inspectedDistrictId: string | null = null;
   openOverlay: string | null = null; // 'build' | 'army' | 'research'
   readonly floaters = new Floaters();
+  readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
