@@ -67,8 +67,8 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
   border-top: 1px solid #3a4757; padding: 12px 14px; font-size: 14px;
 }
 #panel h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-#panel .rows { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
-#panel .row { display: flex; justify-content: space-between; gap: 12px; }
+#panel .rows, .menu .rows { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
+#panel .row, .menu .row { display: flex; justify-content: space-between; gap: 12px; }
 #panel .delta { color: #7fd07f; }
 #panel .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 /* Action row: [description + cost ......... verb button] */

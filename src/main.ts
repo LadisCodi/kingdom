@@ -19,6 +19,7 @@ import { renderDistrictCard } from './ui/districtCard';
 import { renderArmyMenu } from './ui/armyMenu';
 import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
+import { renderSettingsMenu } from './ui/settingsMenu';
 import { button, el } from './ui/format';
 
 const AUTOSAVE_TICKS = 30;
@@ -44,7 +45,10 @@ async function boot(): Promise<void> {
   // ------------------------------------------------------------------- UI
   mountHeader(game, document.getElementById('header')!);
   mountNavbar(game, document.getElementById('navbar')!);
-  setCloudBadge(saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only');
+  const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
+  setCloudBadge(saveModeLabel);
+  // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
+  const resetSave = () => void saveManager.reset().then(() => location.reload());
 
   const panelRoot = document.getElementById('panel')!;
   const overlayRoot = document.getElementById('overlay')!;
@@ -67,6 +71,9 @@ async function boot(): Promise<void> {
     else if (game.openOverlay === 'market') overlayRoot.append(renderMarketMenu(game));
     else if (game.openOverlay === 'army') overlayRoot.append(renderArmyMenu(game));
     else if (game.openOverlay === 'research') overlayRoot.append(renderResearchMenu(game));
+    else if (game.openOverlay === 'settings') {
+      overlayRoot.append(renderSettingsMenu(game, { saveModeLabel, onReset: resetSave }));
+    }
   };
   game.onChange(refreshScreens);
   game.onToast((msg) => {
@@ -130,10 +137,7 @@ async function boot(): Promise<void> {
     };
     const devBar = el('div', { class: 'cast-banner', style: 'top:auto;bottom:120px' },
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
-      button('🗑 reset save', () => {
-        localStorage.removeItem('kingdom.save');
-        location.reload();
-      }));
+      button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }
 

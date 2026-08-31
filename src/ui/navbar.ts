@@ -14,12 +14,13 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const buildBtn = button('🔨 Build', toggle('build'));
   const armyBtn = button('🛡️ Army', toggle('army'));
   const researchBtn = button('🔬 Research', toggle('research'));
+  const settingsBtn = button('⚙️', toggle('settings'));
   const closeBtn = button('✕ Close', () => game.dismiss(), 'close');
 
   const refresh = () => {
     buildBtn.classList.toggle('cta', game.buildCtaLit());
     if (game.dismissible()) root.replaceChildren(closeBtn);
-    else root.replaceChildren(buildBtn, armyBtn, researchBtn);
+    else root.replaceChildren(buildBtn, armyBtn, researchBtn, settingsBtn);
   };
   game.onChange(refresh);
   refresh();
