@@ -20,6 +20,7 @@ Expected filenames (see `Docs/art/sprite-prompts.md` for the prompts):
 | `wild_animals.png` | 🐗 |
 | `worker.png` | 🧑‍🌾 |
 | `worker_carrying.png` | 🧑‍🌾 + 🎒 |
+| `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water) | flat `TERRAIN_COLORS` |
 
 District sprites are keyed by the `sprite` field in
 `src/sim/data/definitions.ts`; `_exhausted` variants are derived from it.

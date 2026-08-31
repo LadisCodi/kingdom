@@ -94,8 +94,11 @@ export function drawMap(
       if (fog === 'Undiscovered') continue; // opaque background already drawn
       const { x, y } = cellRect(cell);
 
-      ctx.fillStyle = TERRAIN_COLORS[terrain];
-      ctx.fillRect(x, y, size, size);
+      // Terrain texture (terrain_<id>.png), flat color while art is missing.
+      if (!drawSprite(ctx, `terrain_${terrain.toLowerCase()}`, x, y, size, size)) {
+        ctx.fillStyle = TERRAIN_COLORS[terrain];
+        ctx.fillRect(x, y, size, size);
+      }
       ctx.strokeStyle = PALETTE.gridLine;
       ctx.lineWidth = 1;
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
