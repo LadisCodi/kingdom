@@ -32,10 +32,8 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     panel.append(rows);
   }
 
-  const actions = el('div', { class: 'actions' });
   const buildBtn = button('Build', () => game.confirmBuild(), 'cta');
   buildBtn.disabled = info.cell === null || !info.affordable;
-  actions.append(buildBtn);
-  panel.append(actions);
+  panel.append(el('div', { class: 'action-row' }, el('span', { class: 'info' }), buildBtn));
   return panel;
 }

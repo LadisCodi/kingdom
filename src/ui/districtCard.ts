@@ -55,12 +55,12 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('span', {}, '👥 housing'), el('span', {}, `+${def.populationCapacity}`))));
       const pop = game.state.city.population;
       const atMax = pop >= maxPopulation(game.state);
-      const buyBtn = button(
-        atMax ? 'Population at max' : `Buy population — ${populationCost(pop)} ${icon('Food')}`,
-        () => game.doBuyPopulation(),
-      );
+      const buyBtn = button('Buy', () => game.doBuyPopulation());
       buyBtn.disabled = atMax;
-      panel.append(el('div', { class: 'actions' }, buyBtn));
+      panel.append(el('div', { class: 'action-row' },
+        el('span', { class: 'info' },
+          atMax ? 'Population at max' : `Buy population — ${populationCost(pop)} ${icon('Food')}`),
+        buyBtn));
     }
 
     // Worker buildings: area, workers ±, live worker states.
@@ -109,15 +109,14 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         queueItem.startedAt === null ? 'waiting for a builder' : `${formatDuration(remaining)} left`));
     (bar.querySelector('.fill') as HTMLElement).style.width = `${progress * 100}%`;
     panel.append(bar);
-    const actions = el('div', { class: 'actions' });
-    actions.append(
-      button(`Finish now — ${gemRushCost(queueItem, now)} ${icon('Gems')}`, () =>
-        game.doRush(queueItem.uniqueId)),
-    );
+    panel.append(el('div', { class: 'action-row' },
+      el('span', { class: 'info' }, `Finish now — ${gemRushCost(queueItem, now)} ${icon('Gems')}`),
+      button('Finish', () => game.doRush(queueItem.uniqueId))));
     if (queueItem.kind === 'build') {
-      actions.append(button('Cancel & refund', () => game.doCancelItem(queueItem.uniqueId), 'danger'));
+      panel.append(el('div', { class: 'action-row' },
+        el('span', { class: 'info' }, 'Cancel construction — full refund'),
+        button('Cancel', () => game.doCancelItem(queueItem.uniqueId), 'danger')));
     }
-    panel.append(actions);
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // Upgrade widget (with radius/worker-cap deltas for worker buildings).
     const n = districtCount(game.state, district.definitionId);
@@ -127,20 +126,19 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     const thLevel = townhall(game.state).level;
     const affordable = canAfford(game.state.city.wallet, cost);
     const blocked = thLevel < requiredTh;
-    const upBtn = button(
-      `Upgrade to lvl ${district.level + 1} — ${formatCost(cost)} (${formatDuration(duration)})`,
-      () => game.doUpgrade(district.uniqueId),
-    );
+    const upBtn = button('Upgrade', () => game.doUpgrade(district.uniqueId));
     upBtn.disabled = blocked || !affordable;
-    const actions = el('div', { class: 'actions' }, upBtn);
+    const info = el('div', { class: 'info' },
+      el('div', { class: affordable ? '' : 'blocked' },
+        `Upgrade to lvl ${district.level + 1} — ${formatCost(cost)} (${formatDuration(duration)})`));
     if (def.influenceRadiusPerLevel.length > 0) {
       const nextRadius = levelIndexed(def.influenceRadiusPerLevel, district.level + 1);
       const nextCap = levelIndexed(def.maxWorkersPerLevel, district.level + 1);
-      actions.append(el('span', { class: 'muted' },
-        el('span', { class: 'delta' }, `radius ${influenceRadius(district)}→${nextRadius}, worker cap →${nextCap}`)));
+      info.append(el('div', { class: 'sub delta' },
+        `radius ${influenceRadius(district)}→${nextRadius}, worker cap →${nextCap}`));
     }
-    if (blocked) actions.append(el('span', { class: 'blocked' }, `Townhall lvl ${requiredTh} required`));
-    panel.append(actions);
+    if (blocked) info.append(el('div', { class: 'sub blocked' }, `Townhall lvl ${requiredTh} required`));
+    panel.append(el('div', { class: 'action-row' }, info, upBtn));
   }
 
   return panel;

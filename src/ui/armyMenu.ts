@@ -15,16 +15,17 @@ export function renderArmyMenu(game: Game): HTMLElement {
     const def = UNITS[id];
     const owned = game.state.army.filter((u) => u.definitionId === id).length;
     const capBlocked = power + def.power > max;
-    const trainBtn = button(`Train — ${formatCost(def.recruitCost)}`, () => game.doTrain(id));
+    const trainBtn = button('Train', () => game.doTrain(id));
     trainBtn.disabled = capBlocked;
     list.append(
       el('div', { class: 'menu-row' },
         el('span', { class: 'icon' }, def.glyph),
         el('div', { class: 'body' },
           el('div', { class: 'name' }, `${def.name} ×${owned}`),
-          el('div', { class: 'desc' }, `Power ${def.power} · ${def.tags.join(', ')} — ${def.description}`)),
-        el('div', { class: 'meta' }, trainBtn,
-          capBlocked ? el('div', { class: 'blocked' }, 'At power cap') : ''),
+          el('div', { class: 'desc' }, `Power ${def.power} · ${def.tags.join(', ')} — ${def.description}`),
+          el('div', { class: capBlocked ? 'blocked' : 'desc' },
+            capBlocked ? 'At power cap' : formatCost(def.recruitCost))),
+        el('div', { class: 'meta' }, trainBtn),
       ),
     );
   }

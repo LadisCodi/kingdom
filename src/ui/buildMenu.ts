@@ -5,7 +5,7 @@ import { CITY_DEF, DISTRICTS } from '../sim/data/definitions';
 import { buildCost, buildDuration, districtCount, maxCountForTownhallLevel } from '../sim/districts';
 import { townhall } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatCost, formatDuration } from './format';
+import { button, el, formatCost, formatDuration } from './format';
 
 export function renderBuildMenu(game: Game): HTMLElement {
   const menu = el('div', { class: 'menu' });
@@ -30,24 +30,24 @@ export function renderBuildMenu(game: Game): HTMLElement {
       blockedMsg = nextLevel > 0 ? `Townhall lvl ${nextLevel} required` : 'Maxed out';
     }
 
+    const selectBtn = button('Select', () => game.startPlacement(id));
+    selectBtn.disabled = capped;
     const row = el(
-      'button',
+      'div',
       { class: `menu-row${capped || !affordable ? ' disabled' : ''}` },
       el('span', { class: 'icon' }, def.glyph),
       el('div', { class: 'body' },
         el('div', { class: 'name' }, def.name),
         el('div', { class: 'desc' }, def.description),
+        el('div', { class: affordable ? 'desc' : 'blocked' },
+          `${formatCost(cost)} · ⏱ ${formatDuration(buildDuration(id, count, 0))}`),
       ),
       el('div', { class: 'meta' },
-        el('div', { class: affordable ? '' : 'blocked' }, formatCost(cost)),
-        el('div', { class: 'muted' }, `⏱ ${formatDuration(buildDuration(id, count, 0))}`),
+        selectBtn,
         el('div', { class: capped ? 'blocked' : 'muted' },
           blockedMsg || `${count}/${maxCount === Infinity ? '∞' : maxCount}`),
       ),
     );
-    if (!capped) {
-      row.addEventListener('click', () => game.startPlacement(id));
-    }
     list.append(row);
   }
   menu.append(list);

@@ -15,18 +15,18 @@ export function renderSpellbook(game: Game): HTMLElement {
     const desc = def.description
       .replace('{value}', String(levelDef.effectMagnitude))
       .replace('{duration}', `${levelDef.durationSeconds}s`);
+    const castBtn = button('Cast', () => game.startTargeting(def.id as SpellId));
+    castBtn.disabled = !spell?.unlocked;
     const row = el(
-      'button',
+      'div',
       { class: `menu-row${spell?.unlocked ? '' : ' disabled'}` },
       el('span', { class: 'icon' }, def.glyph),
       el('div', { class: 'body' },
         el('div', { class: 'name' }, def.name, spell?.unlocked ? '' : ' 🔒'),
-        el('div', { class: 'desc' }, desc)),
-      el('div', { class: 'meta' }, `${levelDef.manaCost} ${icon('Mana')}`),
+        el('div', { class: 'desc' }, desc),
+        el('div', { class: 'desc' }, `${levelDef.manaCost} ${icon('Mana')}`)),
+      el('div', { class: 'meta' }, castBtn),
     );
-    if (spell?.unlocked) {
-      row.addEventListener('click', () => game.startTargeting(def.id as SpellId));
-    }
     list.append(row);
   }
   menu.append(list);

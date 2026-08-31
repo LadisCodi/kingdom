@@ -63,8 +63,13 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
 #panel h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 #panel .rows { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
 #panel .row { display: flex; justify-content: space-between; gap: 12px; }
-#panel .row .delta { color: #7fd07f; }
+#panel .delta { color: #7fd07f; }
 #panel .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+/* Action row: [description + cost ......... verb button] */
+.action-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.action-row .info { flex: 1; min-width: 0; }
+.action-row .info .sub { font-size: 12px; opacity: 0.7; }
+.action-row button { white-space: nowrap; }
 .muted { opacity: 0.65; }
 .blocked { color: #ff9d8a; }
 .progress { position: relative; height: 14px; background: #223; border-radius: 7px; overflow: hidden; margin: 6px 0; }
@@ -84,9 +89,8 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
 .menu-row {
   display: flex; gap: 12px; align-items: center; text-align: left;
   background: #1c2430; border: 1px solid #313d4d; border-radius: 10px; padding: 12px;
-  cursor: pointer; width: 100%; font: inherit; color: inherit;
+  width: 100%; font: inherit; color: inherit;
 }
-.menu-row:hover { background: #232d3c; }
 .menu-row .icon { font-size: 30px; width: 42px; text-align: center; }
 .menu-row .body { flex: 1; }
 .menu-row .body .name { font-weight: 600; }
