@@ -108,6 +108,9 @@ export interface GameState {
   activeSpells: ActiveSpell[];
   fog: {
     revealed: Record<string, true>; // coordKey → revealed
+    /** coordKey → discovered by a building's discover radius. (Cells adjacent
+     *  to a revealed cell are ALSO Discovered — that part stays derived.) */
+    discovered: Record<string, true>;
     progress: Record<string, number>; // coordKey → silver paid so far
   };
   features: Record<string, FeatureId>; // coordKey → authored feature (static)

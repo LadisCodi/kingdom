@@ -58,6 +58,7 @@ const SETTINGS = [
 
 const DISTRICT_COLUMNS = [
   'id', 'size_x', 'size_y', 'max_level', 'population_capacity',
+  'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'build_cost_silver', 'build_cost_wood', 'build_cost_food',
@@ -221,6 +222,8 @@ async function importXlsx() {
       size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
       maxLevel: num(r, 'max_level'),
       populationCapacity: num(r, 'population_capacity'),
+      fogRevealRadius: num(r, 'fog_reveal_radius'),
+      fogDiscoverRadius: num(r, 'fog_discover_radius'),
       maxWorkersPerLevel: list(r, 'max_workers_per_level'),
       maxCountPerTownhallLevel: list(r, 'max_count_per_townhall_level'),
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
@@ -340,6 +343,7 @@ async function exportXlsx() {
     const d = b.districts[id];
     return [
       id, d.size.x, d.size.y, d.maxLevel, d.populationCapacity,
+      d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       ...costCells(d.buildCost),

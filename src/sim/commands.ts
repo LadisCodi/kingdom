@@ -8,6 +8,7 @@ import {
   buildCostForCell, buildDurationForCell, buildCost as buildCostFormula,
   districtCount, placementBlock, requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from './districts';
+import { revealAroundDistrict } from './fog';
 import { townhallDistance, type MapData } from './grid';
 import { tapCell, type TapCellResult } from './harvest';
 import { advanceQueue } from './queue';
@@ -131,11 +132,15 @@ export function wakeIdleWorkersAt(state: GameState, t: number): void {
   }
 }
 
-function completeQueueItem(state: GameState, item: QueueItem, t: number): void {
+function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: number): void {
   const district = districtById(state, item.districtUniqueId);
   if (!district) return;
-  if (item.kind === 'build') district.state = 'Built';
-  else district.level = item.targetLevel ?? district.level + 1;
+  if (item.kind === 'build') {
+    district.state = 'Built';
+    revealAroundDistrict(state, map, district); // the new building pushes back the fog
+  } else {
+    district.level = item.targetLevel ?? district.level + 1;
+  }
   wakeIdleWorkersAt(state, t); // new workable cells / bigger radius from t on
 }
 
@@ -145,7 +150,12 @@ export type RushResult = 'Success' | 'NotFound' | 'NotEnoughGems';
 export const gemRushCost = (item: QueueItem, now: number): number =>
   Math.max(1, Math.ceil(remainingSeconds(item, now) / 10));
 
-export function finishWithGems(state: GameState, itemId: string, now: number): RushResult {
+export function finishWithGems(
+  state: GameState,
+  map: MapData,
+  itemId: string,
+  now: number,
+): RushResult {
   const item = state.city.queue.find((q) => q.uniqueId === itemId);
   if (!item) return 'NotFound';
   const cost = gemRushCost(item, now);
@@ -153,7 +163,7 @@ export function finishWithGems(state: GameState, itemId: string, now: number): R
   addToWallet(state.player.wallet, 'Gems', -cost);
   // Remove from the queue FIRST so the advance can't double-complete it.
   state.city.queue.splice(state.city.queue.indexOf(item), 1);
-  completeQueueItem(state, item, now);
+  completeQueueItem(state, map, item, now);
   return 'Success';
 }
 
@@ -270,7 +280,7 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
     // last advance get stamped here — within one tick of their enqueue).
     const done = advanceQueue(state.city.queue, cursor, builders);
     for (const item of done) {
-      completeQueueItem(state, item, Math.min(completesAt(item), cursor));
+      completeQueueItem(state, map, item, Math.min(completesAt(item), cursor));
       result.completedItems.push(item);
     }
     // Next queue completion inside the window?

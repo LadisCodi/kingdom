@@ -64,6 +64,10 @@ export interface DistrictDef {
   sprite: string; // asset filename stem in src/render/assets (e.g. 'townhall' → townhall.png)
   /** Footprint in cells; `location` is the top-left (anchor) cell. */
   size: { x: number; y: number };
+  /** Fog fully revealed this far around the footprint (at seed / build completion). */
+  fogRevealRadius: number;
+  /** Fog turned Discovered (payable frontier) this far around the footprint. */
+  fogDiscoverRadius: number;
   /** Research that must be completed before this district can be built. */
   requiredResearch: ResearchId | null;
   populationCapacity: number;

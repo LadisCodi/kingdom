@@ -8,10 +8,10 @@ import { getWallet, type GameState } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
-// (1,1) is inside the 2x2 Townhall footprint now — the sawmill sits at (1,2).
-const SAWMILL_CELL = { x: 1, y: 2 };
-const FOREST_A = { x: 2, y: 2 }; // radius-1 neighbor of the sawmill
-const FOREST_B = { x: 3, y: 3 }; // radius-2 — needs a level-2 sawmill
+// (2,1)'s only adjacent tree is (2,2); (2,3) sits at radius 2.
+const SAWMILL_CELL = { x: 2, y: 1 };
+const FOREST_A = { x: 2, y: 2 }; // the sawmill's ONLY radius-1 tree
+const FOREST_B = { x: 2, y: 3 }; // radius-2 — needs a level-2 sawmill
 
 // One harvest cycle from an adjacent (orthogonal) cell:
 // 2 × (1 / speed) move + workSeconds.
@@ -19,7 +19,12 @@ const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSe
 
 const builtSawmill = (state: GameState) => {
   fund(state, { Silver: 500, Wood: 500 });
-  reveal(state, [FOREST_A, FOREST_B]);
+  // Fog-independent setup: the Townhall's fog radius would reveal every tree
+  // near the origin, so start from black fog and reveal only the test cells.
+  // (The sawmill's own completion re-reveals its radius-1 ring.)
+  state.fog.revealed = {};
+  state.fog.discovered = {};
+  reveal(state, [SAWMILL_CELL, FOREST_A, FOREST_B]);
   expect(enqueueBuild(state, map, 'Sawmill', SAWMILL_CELL)).toBe('Started');
   tickAt(state, T0);
   tickAt(state, T0 + 30_000); // build takes 23s

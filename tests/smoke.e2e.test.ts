@@ -20,14 +20,14 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     state.city.population = 5; // test setup: enough workers on hand
     let now = T0;
 
-    // --- Reveal 3 fog cells at distance 2 (3 Silver each, tap by tap).
-    // (The 2x2 Townhall seed already reveals the x=2 column up to y=2.)
-    for (const cell of [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }]) {
+    // --- Reveal 3 fog cells at distance 4 (10 Silver each, tap by tap).
+    // (The Townhall's fog radius 3 already reveals everything closer.)
+    for (const cell of [{ x: 5, y: 0 }, { x: 5, y: 2 }, { x: 5, y: 3 }]) {
       let r: string = 'Paid';
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r).toBe('Revealed');
     }
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(50 - 9);
+    expect(getWallet(state.city.wallet, 'Silver')).toBe(50 - 30);
 
     // --- Tap the (seed-revealed) Forest for Wood, free.
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, { x: 2, y: 2 }, now)).toBe('Harvested');
@@ -45,7 +45,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('Started');
     expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('QueueFull');
     tickAt(state, now);
-    expect(finishWithGems(state, state.city.queue[0].uniqueId, now)).toBe('Success');
+    expect(finishWithGems(state, map, state.city.queue[0].uniqueId, now)).toBe('Success');
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
     expect(sawmill.state).toBe('Built');
 

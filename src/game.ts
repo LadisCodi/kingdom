@@ -268,7 +268,7 @@ export class Game {
   }
 
   doRush(itemId: string): void {
-    const result = finishWithGems(this.state, itemId, this.now());
+    const result = finishWithGems(this.state, this.map, itemId, this.now());
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }

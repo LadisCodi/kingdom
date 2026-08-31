@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fogState, revealCost, revealTap } from '../src/sim/fog';
-import { buildMapData, neighbors, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
+import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { coordKey, getWallet } from '../src/sim/state';
 
@@ -30,36 +30,38 @@ describe('reveal cost curve (balance.xlsx FogRings)', () => {
 
 describe('fog state & seeding', () => {
   const state = newGame(map, NOW);
-  it('seeds the 2x2 Townhall footprint + all its neighbors as Revealed (4x4 block)', () => {
-    expect(Object.keys(state.fog.revealed).length).toBe(16);
-    for (const cell of [TOWNHALL_ORIGIN, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }]) {
+  it('seeds the Townhall fog radii: reveal 3 around the 2x2 footprint (8x8 block)', () => {
+    expect(Object.keys(state.fog.revealed).length).toBe(64); // every cell exists here
+    for (const cell of [TOWNHALL_ORIGIN, { x: 1, y: 1 }, { x: -3, y: -3 }, { x: 4, y: 4 }]) {
       expect(fogState(state, map, cell)).toBe('Revealed');
-      for (const n of neighbors(map, cell)) {
-        expect(fogState(state, map, n)).toBe('Revealed');
-      }
     }
   });
-  it('derives Discovered for unrevealed cells with a revealed neighbor', () => {
-    expect(fogState(state, map, { x: 3, y: 0 })).toBe('Discovered');
-    expect(fogState(state, map, { x: 5, y: 5 })).toBe('Undiscovered');
+  it('marks Discovered out to the discover radius (5), even beyond tap-adjacency', () => {
+    expect(fogState(state, map, { x: 5, y: 0 })).toBe('Discovered'); // adjacent + in radius
+    expect(fogState(state, map, { x: 6, y: 0 })).toBe('Discovered'); // NOT adjacent — discover radius only
+    expect(fogState(state, map, { x: -6, y: -3 })).toBe('Undiscovered'); // beyond radius 5
   });
 });
 
 describe('paying to reveal', () => {
   it('accumulates 1 Silver per tap and reveals when total cost is met', () => {
     const state = newGame(map, NOW);
-    const cell = { x: 3, y: 0 }; // distance 2 from the footprint → cost 3
+    const cell = { x: 5, y: 0 }; // distance 4 from the footprint → cost 10
     const silverBefore = getWallet(state.city.wallet, 'Silver');
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(state.fog.progress[coordKey(cell)]).toBe(2);
-    expect(revealTap(state, map, cell)).toBe('Revealed');
+    let taps = 2;
+    let r: string = 'Paid';
+    while (r === 'Paid') { r = revealTap(state, map, cell); taps++; }
+    expect(r).toBe('Revealed');
+    expect(taps).toBe(10);
     expect(state.fog.revealed[coordKey(cell)]).toBe(true);
     expect(state.fog.progress[coordKey(cell)]).toBeUndefined();
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(silverBefore - 3);
+    expect(getWallet(state.city.wallet, 'Silver')).toBe(silverBefore - 10);
   });
   it('rejects taps on Undiscovered cells', () => {
     const state = newGame(map, NOW);
-    expect(revealTap(state, map, { x: 5, y: 5 })).toBe('NotDiscovered');
+    expect(revealTap(state, map, { x: -6, y: -3 })).toBe('NotDiscovered');
   });
 });

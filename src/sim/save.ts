@@ -113,6 +113,7 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
+        Discovered: Object.keys(state.fog.discovered).map(parseCoordKey),
         Progress: Object.entries(state.fog.progress).map(([k, silver]) => ({
           Coord: parseCoordKey(k),
           Silver: silver,
@@ -233,8 +234,9 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
 
   const fogDto = modules['kingdom.fogOfWar'];
   if (fogDto) {
-    state.fog = { revealed: {}, progress: {} };
+    state.fog = { revealed: {}, discovered: {}, progress: {} };
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
+    for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
     for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Silver: number }[]) {
       state.fog.progress[coordKey(p.Coord)] = p.Silver;
     }

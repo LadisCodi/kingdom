@@ -42,8 +42,8 @@ describe('tapping', () => {
 
   it('rejects unrevealed and non-resource cells', () => {
     const state = freshGame();
-    // (2,2) is seed-revealed now that the Townhall spans 2x2 — use a farther tree.
-    expect(tapCell(state, map, { x: 2, y: 3 }, T0)).toBe('NotRevealed');
+    // (2,5) is a tree beyond the Townhall's fog reveal radius (3).
+    expect(tapCell(state, map, { x: 2, y: 5 }, T0)).toBe('NotRevealed');
     expect(tapCell(state, map, { x: 2, y: 0 }, T0)).toBe('NotHarvestable'); // revealed empty grass
   });
 });

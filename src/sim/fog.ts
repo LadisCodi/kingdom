@@ -1,13 +1,17 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/02).
 
-import { FOG } from './data/definitions';
-import { neighbors, townhallDistance, type MapData } from './grid';
-import { addToWallet, coordKey, districtCells, getWallet, type Coord, type GameState } from './state';
+import { DISTRICTS, FOG } from './data/definitions';
+import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
+import {
+  addToWallet, coordKey, districtCells, getWallet,
+  type Coord, type District, type GameState,
+} from './state';
 
 export type FogState = 'Revealed' | 'Discovered' | 'Undiscovered';
 
 export function fogState(state: GameState, map: MapData, cell: Coord): FogState {
   if (state.fog.revealed[coordKey(cell)]) return 'Revealed';
+  if (state.fog.discovered[coordKey(cell)]) return 'Discovered';
   for (const n of neighbors(map, cell)) {
     if (state.fog.revealed[coordKey(n)]) return 'Discovered';
   }
@@ -51,6 +55,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   const nowPaid = paid + payment;
   if (nowPaid >= total) {
     delete state.fog.progress[key];
+    delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
     return 'Revealed'; // caller must trigger a production recalc
   }
@@ -58,12 +63,23 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   return 'Paid';
 }
 
-/** New-game seed: every cell of every district footprint plus all their neighbors. */
-export function seedFog(state: GameState, map: MapData): void {
-  for (const d of state.city.districts) {
-    for (const cell of districtCells(d)) {
-      state.fog.revealed[coordKey(cell)] = true;
-      for (const n of neighbors(map, cell)) state.fog.revealed[coordKey(n)] = true;
-    }
+/** Apply a district's fog radii: reveal fogRevealRadius around the footprint
+ *  (footprint included), mark Discovered out to fogDiscoverRadius. Called at
+ *  the new-game seed and when a build completes. */
+export function revealAroundDistrict(state: GameState, map: MapData, district: District): void {
+  const def = DISTRICTS[district.definitionId];
+  for (const cell of districtCells(district)) {
+    if (map.terrain.has(coordKey(cell))) state.fog.revealed[coordKey(cell)] = true;
   }
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogRevealRadius)) {
+    state.fog.revealed[coordKey(cell)] = true;
+  }
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogDiscoverRadius)) {
+    if (!state.fog.revealed[coordKey(cell)]) state.fog.discovered[coordKey(cell)] = true;
+  }
+}
+
+/** New-game seed: every district applies its fog radii. */
+export function seedFog(state: GameState, map: MapData): void {
+  for (const d of state.city.districts) revealAroundDistrict(state, map, d);
 }
