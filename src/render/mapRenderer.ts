@@ -16,6 +16,7 @@ import {
 import type { Camera } from './camera';
 import type { Floaters } from './floaters';
 import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from './palette';
+import { drawSprite } from './sprites';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -27,6 +28,7 @@ export interface MarkerLayer {
   yieldCells: Array<{ cell: Coord; label: string }>;
   previewCell: Coord | null;
   previewGlyph: string | null;
+  previewSprite: string | null;
 }
 
 export function drawMap(
@@ -48,6 +50,7 @@ export function drawMap(
   }
   const ctx = canvas.getContext('2d')!;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false; // crisp pixel-art scaling
   ctx.fillStyle = PALETTE.fogUndiscovered;
   ctx.fillRect(0, 0, w, h);
 
@@ -81,15 +84,25 @@ export function drawMap(
       const recovery = source !== null ? recoversAt(state, cell, now) : null;
       const exhausted = recovery !== null;
 
-      // Features (Forest): normal or exhausted glyph.
+      // Features (Forest): normal or exhausted sprite, emoji fallback.
       if (feature && !district) {
         const def = FEATURES[feature];
-        drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
+        if (!drawSprite(ctx, exhausted ? `${def.sprite}_exhausted` : def.sprite, x, y, size, size)) {
+          drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
+        }
       }
 
       if (district && fog === 'Revealed') {
         const def = DISTRICTS[district.definitionId];
-        drawGlyph(ctx, def.glyph, x, y, size, size * 0.52);
+        // Exhausted crop plot gets its own base sprite when available;
+        // otherwise the normal sprite (or glyph) plus the withered overlay.
+        const exhaustedPlot = district.definitionId === 'FarmLands' &&
+          exhausted && district.state !== 'UnderConstruction';
+        const drewExhaustedPlot =
+          exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, size, size);
+        if (!drewExhaustedPlot && !drawSprite(ctx, def.sprite, x, y, size, size)) {
+          drawGlyph(ctx, def.glyph, x, y, size, size * 0.52);
+        }
         if (district.state === 'UnderConstruction') {
           ctx.fillStyle = PALETTE.constructionHatch;
           ctx.fillRect(x, y, size, size);
@@ -102,8 +115,8 @@ export function drawMap(
             ctx.textBaseline = 'top';
             ctx.fillText(`L${district.level}`, x + size - 3, y + 3);
           }
-          // Exhausted crop plot: withered overlay.
-          if (district.definitionId === 'FarmLands' && exhausted) {
+          // Exhausted crop plot: withered overlay (unless its sprite covers it).
+          if (exhaustedPlot && !drewExhaustedPlot) {
             drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, x, y - size * 0.18, size, size * 0.3);
           }
           // Townhall: tax-cycle progress bar.
@@ -221,7 +234,9 @@ export function drawMap(
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
     ctx.globalAlpha = 0.6;
-    drawGlyph(ctx, markers.previewGlyph, x, y, size, size * 0.52);
+    if (!(markers.previewSprite && drawSprite(ctx, markers.previewSprite, x, y, size, size))) {
+      drawGlyph(ctx, markers.previewGlyph, x, y, size, size * 0.52);
+    }
     ctx.globalAlpha = 1;
   }
   if (markers.selected) {
@@ -231,12 +246,19 @@ export function drawMap(
     ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
   }
 
-  // Pass 4: worker units.
+  // Pass 4: worker units (sprite with carrying variant, emoji fallback).
   for (const worker of state.workers) {
     const pos = workerPosition(state, worker, now);
     if (!pos) continue;
     const { x, y } = cellRect(pos);
-    drawGlyph(ctx, '🧑‍🌾', x + size * 0.18, y + size * 0.18, size * 0.6, size * 0.34);
+    const sx = x + size * 0.18;
+    const sy = y + size * 0.18;
+    if (worker.carrying && drawSprite(ctx, 'worker_carrying', sx, sy, size * 0.6, size * 0.6)) {
+      continue;
+    }
+    if (!drawSprite(ctx, 'worker', sx, sy, size * 0.6, size * 0.6)) {
+      drawGlyph(ctx, '🧑‍🌾', sx, sy, size * 0.6, size * 0.34);
+    }
     if (worker.carrying) {
       drawGlyph(ctx, '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
     }

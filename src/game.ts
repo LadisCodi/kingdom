@@ -340,6 +340,7 @@ export class Game {
       yieldCells: [],
       previewCell: null,
       previewGlyph: null,
+      previewSprite: null,
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
@@ -354,6 +355,7 @@ export class Game {
       layer.selected = this.mode.selected;
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
+      layer.previewSprite = def.sprite;
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
         layer.influenceCells = cellsWithinRadius(
           this.map, this.mode.selected, def.influenceRadiusPerLevel[0],

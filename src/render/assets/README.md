@@ -1,0 +1,23 @@
+# Sprite assets
+
+Drop PNGs here (transparent background, ~128×128, nearest-neighbor
+downscaled). They're picked up automatically by filename — no code changes.
+Any sprite that's missing simply keeps its emoji placeholder.
+
+Expected filenames (see `Docs/art/sprite-prompts.md` for the prompts):
+
+| File | Replaces |
+|---|---|
+| `townhall.png` | 🏛️ |
+| `housing.png` | 🏠 |
+| `farm.png` | 🌾 |
+| `farmlands.png` | 🟩 |
+| `farmlands_exhausted.png` | 🟩 + 🥀 |
+| `sawmill.png` | 🪚 |
+| `forest.png` | 🌲 |
+| `forest_exhausted.png` | 🪵 |
+| `worker.png` | 🧑‍🌾 |
+| `worker_carrying.png` | 🧑‍🌾 + 🎒 |
+
+District sprites are keyed by the `sprite` field in
+`src/sim/data/definitions.ts`; `_exhausted` variants are derived from it.

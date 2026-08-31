@@ -61,7 +61,8 @@ export interface DistrictDef {
   name: string;
   description: string;
   buildable: boolean;
-  glyph: string; // placeholder art
+  glyph: string; // placeholder art (fallback when no sprite image is present)
+  sprite: string; // asset filename stem in src/render/assets (e.g. 'townhall' → townhall.png)
   populationCapacity: number;
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
@@ -86,7 +87,7 @@ export interface DistrictDef {
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
 }
 
-const base: Omit<DistrictDef, 'id' | 'name' | 'description' | 'glyph'> = {
+const base: Omit<DistrictDef, 'id' | 'name' | 'description' | 'glyph' | 'sprite'> = {
   buildable: true,
   populationCapacity: 0,
   maxWorkersPerLevel: [],
@@ -117,6 +118,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description:
       'Heart of the city. Houses 3 and taxes population each cycle — tap it to speed the cycle up.',
     glyph: '🏛️',
+    sprite: 'townhall',
     buildable: false,
     populationCapacity: 3,
     maxLevel: 2,
@@ -132,6 +134,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     name: 'Housing',
     description: 'Provides homes — raises max population.',
     glyph: '🏠',
+    sprite: 'housing',
     populationCapacity: 2,
     maxCountPerTownhallLevel: [2, 4],
     buildCost: { Silver: 75, Wood: 20 },
@@ -145,6 +148,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     name: 'Farm',
     description: 'Sends workers to harvest Crops within its area of influence.',
     glyph: '🌾',
+    sprite: 'farm',
     maxWorkersPerLevel: [3, 5],
     maxCountPerTownhallLevel: [1, 1, 2],
     influenceRadiusPerLevel: [1, 2],
@@ -164,6 +168,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     name: 'FarmLands',
     description: 'A crop plot: tap it for Food, or let Farm workers harvest it.',
     glyph: '🟩',
+    sprite: 'farmlands',
     maxCountPerTownhallLevel: [6, 6, 12],
     providesHarvestSource: 'Crops',
     buildCost: { Wood: 20 },
@@ -177,6 +182,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     name: 'Sawmill',
     description: 'Sends workers to harvest Forest cells within its area of influence.',
     glyph: '🪚',
+    sprite: 'sawmill',
     maxWorkersPerLevel: [3, 5, 7],
     maxCountPerTownhallLevel: [1, 2],
     influenceRadiusPerLevel: [1, 2, 3],
@@ -201,11 +207,15 @@ export interface FeatureDef {
   name: string;
   glyph: string;
   exhaustedGlyph: string;
+  sprite: string; // asset filename stem; `${sprite}_exhausted` for the exhausted state
   source: HarvestSourceId;
 }
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
-  Trees: { id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵', source: 'Forest' },
+  Trees: {
+    id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵',
+    sprite: 'forest', source: 'Forest',
+  },
 };
 
 /** Exhausted-crops visual (FarmLands districts have no feature). */
