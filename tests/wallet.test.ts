@@ -8,8 +8,8 @@ import { buyPopulation, populationCost } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
 import { freshGame, fund, map, T0 } from './helpers';
 
-const BERRY_BUSH = { x: 3, y: 1 }; // seed-revealed
-const WILD_ANIMALS = { x: -2, y: -4 }; // beyond the fog reveal radius
+const BERRY_BUSH = { x: 3, y: 1 }; // outside the fog reveal radius (1)
+const WILD_ANIMALS = { x: -2, y: -4 }; // also unrevealed
 
 describe('food-valued currencies', () => {
   it('effectiveAmount and canAfford count Berries (×1) and Meat (×3) as Food', () => {
@@ -34,23 +34,25 @@ describe('food-valued currencies', () => {
   });
 
   it('population and units can be bought with food-valued currencies', () => {
-    const state = freshGame(); // population 2, Food 5
+    const state = freshGame(); // rebalanced start: 0 population, empty wallet
     state.city.wallet = { Berries: 4, Meat: 2 }; // 10 effective Food
-    expect(populationCost(2)).toBe(7);
-    expect(buyPopulation(state)).toBe('Success'); // 4 berries + 1 meat (3) = 7 exact
-    expect(state.city.wallet).toEqual({ Berries: 0, Meat: 1 });
+    expect(populationCost(0)).toBe(3);
+    expect(buyPopulation(state)).toBe('Success'); // pays 3 Berries
+    expect(state.city.wallet).toEqual({ Berries: 1, Meat: 2 });
 
-    fund(state, { Silver: 100, Meat: 7 }); // Swordsman: 50 Silver + 20 Food
-    expect(trainUnit(state, 'Swordsman')).toBe('Trained');
-    // 1 leftover meat + 7 = 8 meat = 24; 20 paid → 1 Food change, 0 meat left.
+    fund(state, { Silver: 100, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
+    expect(trainUnit(state, 'Swordsman')).toBe('Trained'); // 50 Silver + 20 Food
+    // 1 Berry + all 7 Meat (21) cover the 20 → 2 Food back as change.
+    expect(getWallet(state.city.wallet, 'Berries')).toBe(0);
     expect(getWallet(state.city.wallet, 'Meat')).toBe(0);
-    expect(getWallet(state.city.wallet, 'Food')).toBe(1);
+    expect(getWallet(state.city.wallet, 'Food')).toBe(2);
   });
 });
 
 describe('finite map features', () => {
   it('a berry bush yields Berries and vanishes for good when drained', () => {
     const state = freshGame();
+    state.fog.revealed[coordKey(BERRY_BUSH)] = true;
     expect(harvestSourceAt(state, BERRY_BUSH)).toBe('Berries');
     for (let i = 0; i < 10; i++) expect(tapCell(state, map, BERRY_BUSH, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Berries')).toBe(10);

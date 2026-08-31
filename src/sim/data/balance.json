@@ -8,8 +8,8 @@
       },
       "maxLevel": 2,
       "populationCapacity": 3,
-      "fogRevealRadius": 3,
-      "fogDiscoverRadius": 5,
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 3,
       "maxWorkersPerLevel": [],
       "maxCountPerTownhallLevel": [],
       "influenceRadiusPerLevel": [],
@@ -352,10 +352,10 @@
   },
   "city": {
     "initialCurrencies": {
-      "Silver": 50,
-      "Food": 5
+      "Silver": 0,
+      "Food": 0
     },
-    "initialPopulation": 2,
+    "initialPopulation": 0,
     "populationCostBase": 5,
     "populationCostGrowth": 1.45,
     "buildQueueCapacity": 1,

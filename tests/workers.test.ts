@@ -153,7 +153,8 @@ describe('the harvest cycle', () => {
 
 describe('Townhall cycle', () => {
   it('pays 5 × population Silver per 10s cycle, straight to the wallet', () => {
-    const state = freshGame(); // population 2
+    const state = freshGame();
+    state.city.population = 2; // the rebalanced start has 0 population
     const silver = getWallet(state.city.wallet, 'Silver');
     tickAt(state, T0 + 9_000);
     expect(getWallet(state.city.wallet, 'Silver')).toBe(silver);
@@ -165,6 +166,7 @@ describe('Townhall cycle', () => {
 
   it('taps add 2s of progress and can complete a cycle early; never exhausts', () => {
     const state = freshGame();
+    state.city.population = 2;
     const silver = getWallet(state.city.wallet, 'Silver');
     tickAt(state, T0 + 4_000); // 4s into the 10s cycle
     let paid = 0;
