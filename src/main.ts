@@ -74,7 +74,11 @@ async function boot(): Promise<void> {
   });
 
   // ----------------------------------------------------------------- input
-  wireInput(canvas, camera, (sx, sy) => game.handleTap(sx, sy));
+  wireInput(
+    canvas, camera,
+    (sx, sy) => game.handleTap(sx, sy),
+    (sx, sy) => game.handleHold(sx, sy),
+  );
 
   // ------------------------------------------------------- the single tick
   let ticks = 0;

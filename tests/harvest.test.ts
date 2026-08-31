@@ -1,7 +1,9 @@
-// Cell harvest: tap yields, exhaustion, lazy recovery.
+// Cell harvest: tap yields, exhaustion, lazy recovery, the collect cooldown.
 import { describe, expect, it } from 'vitest';
-import { HARVEST } from '../src/sim/data/definitions';
-import { harvestSourceAt, isExhausted, tapCell, tapFraction } from '../src/sim/harvest';
+import { HARVEST, TAP } from '../src/sim/data/definitions';
+import {
+  collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
+} from '../src/sim/harvest';
 import { getWallet } from '../src/sim/state';
 import { freshGame, map, reveal, T0 } from './helpers';
 
@@ -35,6 +37,23 @@ describe('tapping', () => {
     expect(isExhausted(state, FOREST, recoverAt)).toBe(false);
     expect(tapFraction(state, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // taps reset
     expect(tapCell(state, map, FOREST, recoverAt)).toBe('Harvested');
+  });
+
+  it('the player collect tap has a cooldown (holds retry against the same gate)', () => {
+    const state = freshGame();
+    const cooldownMs = TAP.collectCooldownSeconds * 1000;
+    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
+    // Retries inside the window (what hold-to-collect does) are rejected…
+    expect(collectTap(state, map, FOREST, T0 + 100)).toBe('OnCooldown');
+    expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1)).toBe('OnCooldown');
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(1); // nothing collected meanwhile
+    // …and the first retry at/after the cooldown collects again.
+    expect(collectTap(state, map, FOREST, T0 + cooldownMs)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(2);
+    // A failed collect (exhausted cell) does NOT reset the cooldown anchor.
+    for (let i = 0; i < 8; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // exhaust (10 taps total)
+    expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs)).toBe('Exhausted');
+    expect(state.lastCollectTapAt).toBe(T0 + cooldownMs);
   });
 
   it('rejects unrevealed and non-resource cells', () => {

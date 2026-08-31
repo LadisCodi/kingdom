@@ -110,6 +110,9 @@ export interface GameState {
   };
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
+  /** Epoch ms of the last successful player collect tap (cooldown anchor).
+   *  Transient — not persisted; resets on load. */
+  lastCollectTapAt: number;
 }
 
 export type Rng = () => number; // [0, 1)

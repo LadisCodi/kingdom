@@ -36,6 +36,7 @@ const SETTINGS = [
   // [sheet key, json path, kind]
   ['worker.move_speed_tiles_per_second', 'worker.moveSpeedTilesPerSecond'],
   ['worker.work_seconds', 'worker.workSeconds'],
+  ['tap.collect_cooldown_seconds', 'tap.collectCooldownSeconds'],
   ['townhall_cycle.cycle_seconds', 'townhallCycle.cycleSeconds'],
   ['townhall_cycle.tap_boost_seconds', 'townhallCycle.tapBoostSeconds'],
   ['townhall_cycle.silver_per_population', 'townhallCycle.silverPerPopulation'],
@@ -207,7 +208,7 @@ async function importXlsx() {
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, harvest: {}, currencies: {}, units: {}, research: {},
-    worker: {}, townhallCycle: {},
+    worker: {}, tap: {}, townhallCycle: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
     offlineCapHours: 0,

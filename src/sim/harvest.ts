@@ -1,7 +1,7 @@
 // Resource cells: tapping, exhaustion, lazy recovery
 // (Docs/features/harvest-loop.md §1, §4).
 
-import { FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { FEATURES, HARVEST, TAP, type HarvestSpec } from './data/definitions';
 import type { MapData } from './grid';
 import {
   addToWallet, coordKey, districtAt,
@@ -84,8 +84,10 @@ export function registerTap(
 }
 
 export type TapCellResult = 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed';
+export type CollectTapResult = TapCellResult | 'OnCooldown';
 
-/** Free player tap on a resource cell: +yield to the city wallet, +1 tap. */
+/** Free player tap on a resource cell: +yield to the city wallet, +1 tap.
+ *  No cooldown — the raw primitive (also handy for test setup). */
 export function tapCell(
   state: GameState,
   map: MapData,
@@ -101,4 +103,18 @@ export function tapCell(
   addToWallet(state.city.wallet, spec.currencyId, spec.yieldPerTap);
   registerTap(state, cell, spec, now);
   return 'Harvested';
+}
+
+/** The PLAYER's collect tap: tapCell gated by the collect cooldown. The same
+ *  gate paces hold-to-collect — the input layer retries and this decides. */
+export function collectTap(
+  state: GameState,
+  map: MapData,
+  cell: Coord,
+  now: number,
+): CollectTapResult {
+  if (now - state.lastCollectTapAt < TAP.collectCooldownSeconds * 1000) return 'OnCooldown';
+  const result = tapCell(state, map, cell, now);
+  if (result === 'Harvested') state.lastCollectTapAt = now;
+  return result;
 }

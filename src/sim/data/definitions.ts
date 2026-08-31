@@ -50,6 +50,9 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
 export const WORKER = balance.worker;
 
+// Player collect taps: cooldown between collects (upgradeable later).
+export const TAP = balance.tap;
+
 // tapBoostSeconds = progress per tap; payout per cycle = silverPerPopulation × population.
 export const TOWNHALL_CYCLE = balance.townhallCycle;
 

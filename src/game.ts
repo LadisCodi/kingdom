@@ -2,9 +2,9 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, enqueueBuild, finishWithGems,
-  tapCell, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
-  type AssignWorkerResult, type UpgradeResult,
+  advance, canAfford, cancelQueueItem, changeWorkers, collectTap, enqueueBuild,
+  finishWithGems, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
+  type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH } from './sim/data/definitions';
 import {
@@ -13,7 +13,7 @@ import {
 } from './sim/districts';
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
-import { harvestSourceAt } from './sim/harvest';
+import { harvestSourceAt, isExhausted } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
 import { availableWorkers, buyPopulation } from './sim/population';
 import { startResearch } from './sim/research';
@@ -144,16 +144,10 @@ export class Game {
           this.notify();
           return true;
         }
-        // Resource cells (Forest, built Crops): free harvest tap.
+        // Resource cells (Forest, built Crops): cooldown-gated collect tap.
         const source = harvestSourceAt(this.state, cell);
         if (source !== null && this.state.fog.revealed[coordKey(cell)]) {
-          const result = tapCell(this.state, this.map, cell, this.now());
-          if (result === 'Harvested') {
-            const currency = source === 'Forest' ? 'Wood' : 'Food';
-            this.floaters.add(cell, `+1 ${icon(currency)}`);
-          } else if (result === 'Exhausted') {
-            this.floaters.add(cell, '💤');
-          }
+          this.collectAt(cell);
           // A crop plot is also a district — inspecting it stays useful.
           this.inspectedDistrictId = district?.uniqueId ?? null;
           this.notify();
@@ -168,6 +162,31 @@ export class Game {
         return true;
       },
     });
+  }
+
+  /** One cooldown-gated collect on a resource cell, with feedback.
+   *  'OnCooldown' is silent — hold-to-collect retries until the gate opens. */
+  private collectAt(cell: Coord): CollectTapResult {
+    const source = harvestSourceAt(this.state, cell);
+    const result = collectTap(this.state, this.map, cell, this.now());
+    if (result === 'Harvested' && source) {
+      const spec = HARVEST[source];
+      this.floaters.add(cell, `+${spec.yieldPerTap} ${icon(spec.currencyId)}`);
+    } else if (result === 'Exhausted') {
+      this.floaters.add(cell, '💤');
+    }
+    return result;
+  }
+
+  /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place). */
+  handleHold(sx: number, sy: number): void {
+    if (this.mode.kind !== 'normal' || this.openOverlay !== null) return;
+    const cell = this.camera.screenToCell(sx, sy);
+    if (!this.map.terrain.has(coordKey(cell))) return;
+    if (harvestSourceAt(this.state, cell) === null) return;
+    if (!this.state.fog.revealed[coordKey(cell)]) return;
+    if (isExhausted(this.state, cell, this.now())) return; // quiet — no 💤 spam
+    if (this.collectAt(cell) === 'Harvested') this.notify();
   }
 
   // ------------------------------------------------------------ placement mode

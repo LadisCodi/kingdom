@@ -8,7 +8,7 @@ import {
 } from './districts';
 import { revealAroundDistrict } from './fog';
 import type { MapData } from './grid';
-import { tapCell, type TapCellResult } from './harvest';
+import { collectTap, tapCell, type CollectTapResult, type TapCellResult } from './harvest';
 import { advanceQueue } from './queue';
 import { advanceResearch } from './research';
 import {
@@ -278,7 +278,7 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   return result;
 }
 
-export { tapCell, assignableWorkerLimit };
-export type { TapCellResult };
+export { collectTap, tapCell, assignableWorkerLimit };
+export type { CollectTapResult, TapCellResult };
 
 export type { Rng };

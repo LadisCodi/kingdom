@@ -254,6 +254,9 @@
     "moveSpeedTilesPerSecond": 1,
     "workSeconds": 8
   },
+  "tap": {
+    "collectCooldownSeconds": 0.5
+  },
   "townhallCycle": {
     "cycleSeconds": 10,
     "tapBoostSeconds": 2,

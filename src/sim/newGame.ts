@@ -35,6 +35,7 @@ export function newGame(map: MapData, now: number): GameState {
     research: { completed: [], active: null },
     nextId: 1,
     lastAdvance: now,
+    lastCollectTapAt: 0,
   };
 
   // Authored features from the map (static under the harvest model).
