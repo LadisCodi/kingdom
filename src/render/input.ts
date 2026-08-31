@@ -41,7 +41,12 @@ export function wireInput(
   });
 
   canvas.addEventListener('pointerup', (e) => {
-    if (pointerDown && !dragged) onTap(e.clientX, e.clientY);
+    if (pointerDown && !dragged) {
+      // Camera math expects canvas-relative coords; the canvas sits inside
+      // the centered #app frame, so clientX/Y are offset from it.
+      const rect = canvas.getBoundingClientRect();
+      onTap(e.clientX - rect.left, e.clientY - rect.top);
+    }
     pointerDown = false;
   });
 
