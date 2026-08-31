@@ -1,21 +1,5 @@
 {
-  "_comment": "Region_01 map extracted from Assets/Codigames/Scenes/Region_01.unity. Coordinates are Unity hex-tilemap cell coordinates (x = column, y = row, pointy-top hexagon layout, odd rows offset). The game's HexCoordinates maps as X = x, Y = 0, Z = y. Grid cell size: 4 x 3.5 world units. The Townhall of a new game sits at cell (0, 0).",
-  "grid": {
-    "layout": "hexagon",
-    "cellSize": {
-      "x": 4,
-      "y": 3.5
-    }
-  },
   "terrain": {
-    "origin": {
-      "x": -6,
-      "y": -8
-    },
-    "size": {
-      "x": 13,
-      "y": 43
-    },
     "cells": [
       {
         "x": -3,
@@ -795,15 +779,22 @@
     ]
   },
   "features": {
-    "origin": {
-      "x": -3,
-      "y": -2
-    },
-    "size": {
-      "x": 9,
-      "y": 37
-    },
     "cells": [
+      {
+        "x": -2,
+        "y": -4,
+        "id": "WildAnimals"
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "id": "BerryBush"
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "id": "BerryBush"
+      },
       {
         "x": 2,
         "y": 2,
@@ -868,21 +859,6 @@
         "x": 3,
         "y": 5,
         "id": "Trees"
-      },
-      {
-        "x": 3,
-        "y": 1,
-        "id": "BerryBush"
-      },
-      {
-        "x": -3,
-        "y": 0,
-        "id": "BerryBush"
-      },
-      {
-        "x": -2,
-        "y": -4,
-        "id": "WildAnimals"
       },
       {
         "x": 4,

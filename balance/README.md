@@ -21,6 +21,7 @@ the script.
 | `Currencies` | Starting amounts and caps (blank cap = uncapped) |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, tax cycle, offline cap, population costs… |
+| `Map` | The world itself — one spreadsheet cell per map cell (see below) |
 
 Format notes:
 
@@ -39,5 +40,26 @@ Format notes:
 - The cost/time **formulas** consuming these values are documented in
   `Docs/03` and `Docs/04`.
 
-`npm run balance:export` regenerates the workbook from `balance.json` if it
-ever gets mangled.
+## The Map sheet
+
+The grid IS the map (`npm run balance` writes it to
+`src/sim/data/region-map.json`). Row 1 holds x coordinates, column A holds
+y coordinates (y grows downward); each cell is one map cell:
+
+- **Terrain** (lowercase): `g` Grassland · `w` Water · `p` Plains ·
+  `d` Desert · `s` Snow · `u` Tundra. **Blank = void** (outside the world).
+- **Features** (uppercase): `T` Trees · `B` Berry bush · `A` Wild animals.
+  A bare feature letter implies Grassland; `pT` puts Trees on Plains.
+- Cells are color-coded by conditional formatting, so the map stays visible
+  as you type.
+- The Townhall anchors at (0,0) and occupies (0,0)–(1,1) — those four cells
+  must be feature-free `g` (the importer refuses otherwise).
+- To grow the world, add new coordinate labels in row 1 / column A and fill
+  cells. Mind that gameplay near the origin (fog seed, reveal costs, the
+  starting economy) derives from this map, and a few tests pin cells close
+  to the Townhall.
+- Map edits don't reach existing saves cleanly — bump `SAVE_VERSION` after
+  a map change that matters.
+
+`npm run balance:export` regenerates the workbook from `balance.json` +
+`region-map.json` if it ever gets mangled.
