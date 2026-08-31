@@ -49,22 +49,24 @@ const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
 const RESEARCH_IDS = ['Agriculture'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
-const CURRENCY_IDS = ['Food', 'Silver', 'Wood', 'Berries', 'Meat', 'Gold', 'Knowledge', 'Gems'];
-const COST_CURRENCIES = ['Silver', 'Wood', 'Food'];
+// Order matters: it is the Currencies sheet order AND the Market's sell order.
+const CURRENCY_IDS = ['Gold', 'Food', 'Wood', 'Berries', 'Meat', 'Knowledge', 'Gems'];
+const COST_CURRENCIES = ['Gold', 'Wood', 'Food'];
 
 const SETTINGS = [
   // [sheet key, json path, kind]
   ['worker.move_speed_tiles_per_second', 'worker.moveSpeedTilesPerSecond'],
   ['worker.work_seconds', 'worker.workSeconds'],
   ['tap.collect_cooldown_seconds', 'tap.collectCooldownSeconds'],
-  ['townhall_cycle.cycle_seconds', 'townhallCycle.cycleSeconds'],
-  ['townhall_cycle.tap_boost_seconds', 'townhallCycle.tapBoostSeconds'],
-  ['townhall_cycle.silver_per_population', 'townhallCycle.silverPerPopulation'],
+  ['training.seconds', 'training.seconds'],
+  ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
+  ['market.sell_interval_seconds', 'market.sellIntervalSeconds'],
+  ['market.capacity', 'market.capacity'],
   ['offline_cap_hours', 'offlineCapHours'],
-  ['fog.silver_per_tap', 'fog.silverPerTap'],
+  ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
   ['city.initial_population', 'city.initialPopulation'],
-  ['city.initial_silver', 'city.initialCurrencies.Silver'],
+  ['city.initial_gold', 'city.initialCurrencies.Gold'],
   ['city.initial_food', 'city.initialCurrencies.Food'],
   ['city.population_cost_base', 'city.populationCostBase'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
@@ -79,10 +81,10 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'build_cost_silver', 'build_cost_wood', 'build_cost_food',
+  'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_multiplier', 'build_cost_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
-  'upgrade_cost_silver', 'upgrade_cost_wood', 'upgrade_cost_food',
+  'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
 ];
 const DISTRICT_LIST_COLUMNS = [
@@ -92,12 +94,12 @@ const DISTRICT_LIST_COLUMNS = [
 
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
-  Units: ['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood', 'recruit_cost_food',
+  Units: ['id', 'power', 'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds'],
-  Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value'],
+  Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  Research: ['id', 'cost_silver', 'cost_wood', 'cost_food', 'duration_seconds'],
+  Research: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds'],
   Settings: ['key', 'value'],
 };
 
@@ -343,7 +345,7 @@ async function importXlsx() {
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, harvest: {}, currencies: {}, units: {}, research: {},
-    worker: {}, tap: {}, townhallCycle: {},
+    worker: {}, tap: {}, training: {}, market: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
     offlineCapHours: 0,
@@ -386,30 +388,31 @@ async function importXlsx() {
   for (const [id, r] of currencyRows) {
     // primary = shown in the top resource bar; blank/0 = hidden.
     const primary = num(r, 'primary', { blankAs: 0 }) === 1;
+    // gold_value = the Market sells 1 unit for this much Gold; blank = not sellable.
+    const goldValue = (r.gold_value === '' || r.gold_value === undefined)
+      ? null : num(r, 'gold_value');
+    if (goldValue !== null && (goldValue <= 0 || id === 'Gold')) {
+      fail(where(r), 'gold_value must be positive and not on Gold itself');
+    }
     const countsAs = (r.counts_as === '' || r.counts_as === undefined) ? null : r.counts_as;
+    let countsAsOut = null;
     if (countsAs !== null) {
       if (!CURRENCY_IDS.includes(countsAs)) fail(where(r), `unknown counts_as currency "${countsAs}"`);
       const baseRow = currencyRows.get(countsAs);
       if (baseRow && baseRow.counts_as) fail(where(r), `counts_as chains are not allowed ("${countsAs}" is itself equivalent)`);
       const value = num(r, 'unit_value');
       if (value <= 0) fail(where(r), 'unit_value must be positive');
-      out.currencies[id] = {
-        cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
-        start: num(r, 'start'),
-        primary,
-        countsAs: { currency: countsAs, value },
-      };
-    } else {
-      if (r.unit_value !== '' && r.unit_value !== undefined) {
-        fail(where(r), 'unit_value without counts_as');
-      }
-      out.currencies[id] = {
-        cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
-        start: num(r, 'start'),
-        primary,
-        countsAs: null,
-      };
+      countsAsOut = { currency: countsAs, value };
+    } else if (r.unit_value !== '' && r.unit_value !== undefined) {
+      fail(where(r), 'unit_value without counts_as');
     }
+    out.currencies[id] = {
+      cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
+      start: num(r, 'start'),
+      primary,
+      countsAs: countsAsOut,
+      goldValue,
+    };
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
@@ -505,7 +508,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
     const c = b.currencies[id];
     return [id, c.cap ?? '', c.start, c.primary ? 1 : '',
-      c.countsAs?.currency ?? '', c.countsAs?.value ?? ''];
+      c.countsAs?.currency ?? '', c.countsAs?.value ?? '', c.goldValue ?? ''];
   }));
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));

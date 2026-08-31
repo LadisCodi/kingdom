@@ -21,7 +21,7 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Silver": 200,
+        "Gold": 200,
         "Wood": 25
       },
       "upgradeCostLevelGrowth": 1.5,
@@ -45,7 +45,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "buildCost": {
-        "Silver": 75,
+        "Gold": 75,
         "Wood": 20
       },
       "buildCostMultiplier": 0.75,
@@ -85,7 +85,7 @@
         2
       ],
       "buildCost": {
-        "Silver": 50,
+        "Gold": 50,
         "Wood": 10
       },
       "buildCostMultiplier": 2,
@@ -94,7 +94,7 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Silver": 300,
+        "Gold": 300,
         "Wood": 50
       },
       "upgradeCostLevelGrowth": 1.5,
@@ -160,7 +160,7 @@
         2
       ],
       "buildCost": {
-        "Silver": 50
+        "Gold": 50
       },
       "buildCostMultiplier": 4,
       "buildCostExponentialGrowth": 1.45,
@@ -168,7 +168,7 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Silver": 300
+        "Gold": 300
       },
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
@@ -202,23 +202,26 @@
     }
   },
   "currencies": {
+    "Gold": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": null
+    },
     "Food": {
       "cap": null,
       "start": 5,
       "primary": true,
-      "countsAs": null
-    },
-    "Silver": {
-      "cap": null,
-      "start": 50,
-      "primary": true,
-      "countsAs": null
+      "countsAs": null,
+      "goldValue": 1
     },
     "Wood": {
       "cap": null,
       "start": 0,
       "primary": true,
-      "countsAs": null
+      "countsAs": null,
+      "goldValue": 2
     },
     "Berries": {
       "cap": null,
@@ -227,7 +230,8 @@
       "countsAs": {
         "currency": "Food",
         "value": 1
-      }
+      },
+      "goldValue": 1
     },
     "Meat": {
       "cap": null,
@@ -236,32 +240,29 @@
       "countsAs": {
         "currency": "Food",
         "value": 3
-      }
-    },
-    "Gold": {
-      "cap": null,
-      "start": 100,
-      "primary": false,
-      "countsAs": null
+      },
+      "goldValue": 3
     },
     "Knowledge": {
       "cap": null,
       "start": 0,
       "primary": false,
-      "countsAs": null
+      "countsAs": null,
+      "goldValue": null
     },
     "Gems": {
       "cap": null,
       "start": 10,
       "primary": true,
-      "countsAs": null
+      "countsAs": null,
+      "goldValue": null
     }
   },
   "units": {
     "Archer": {
       "power": 2,
       "recruitCost": {
-        "Silver": 40,
+        "Gold": 40,
         "Wood": 20
       },
       "trainDurationSeconds": 25
@@ -269,7 +270,7 @@
     "Swordsman": {
       "power": 3,
       "recruitCost": {
-        "Silver": 50,
+        "Gold": 50,
         "Food": 20
       },
       "trainDurationSeconds": 30
@@ -277,7 +278,7 @@
     "Cavalry": {
       "power": 5,
       "recruitCost": {
-        "Silver": 100,
+        "Gold": 100,
         "Food": 40
       },
       "trainDurationSeconds": 60
@@ -286,7 +287,7 @@
   "research": {
     "Agriculture": {
       "cost": {
-        "Silver": 100,
+        "Gold": 100,
         "Wood": 25
       },
       "durationSeconds": 45
@@ -299,13 +300,16 @@
   "tap": {
     "collectCooldownSeconds": 0.5
   },
-  "townhallCycle": {
-    "cycleSeconds": 10,
-    "tapBoostSeconds": 2,
-    "silverPerPopulation": 5
+  "training": {
+    "seconds": 20,
+    "tapBoostSeconds": 2
+  },
+  "market": {
+    "sellIntervalSeconds": 5,
+    "capacity": 50
   },
   "fog": {
-    "silverPerTap": 1,
+    "silverPerTap": 0,
     "rings": [
       {
         "distance": 1,
@@ -348,11 +352,12 @@
         "cost": 640
       }
     ],
-    "fallbackGrowth": 1.25
+    "fallbackGrowth": 1.25,
+    "goldPerTap": 1
   },
   "city": {
     "initialCurrencies": {
-      "Silver": 0,
+      "Gold": 0,
       "Food": 0
     },
     "initialPopulation": 0,

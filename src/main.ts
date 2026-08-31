@@ -17,6 +17,7 @@ import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderArmyMenu } from './ui/armyMenu';
+import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { button, el } from './ui/format';
 
@@ -63,6 +64,7 @@ async function boot(): Promise<void> {
     // Overlays.
     overlayRoot.replaceChildren();
     if (game.openOverlay === 'build') overlayRoot.append(renderBuildMenu(game));
+    else if (game.openOverlay === 'market') overlayRoot.append(renderMarketMenu(game));
     else if (game.openOverlay === 'army') overlayRoot.append(renderArmyMenu(game));
     else if (game.openOverlay === 'research') overlayRoot.append(renderResearchMenu(game));
   };
@@ -110,9 +112,8 @@ async function boot(): Promise<void> {
       // advance replay the "absence".
       const delta = minutes * 60_000;
       game.state.lastAdvance -= delta;
-      for (const d of game.state.city.districts) {
-        if (d.cycleStartedAt !== undefined) d.cycleStartedAt -= delta;
-      }
+      if (game.state.city.training) game.state.city.training.startedAt -= delta;
+      game.state.market.lastSaleAt -= delta;
       for (const w of game.state.workers) {
         w.stateStartedAt -= delta;
         if (w.stateUntil !== null) w.stateUntil -= delta;

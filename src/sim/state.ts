@@ -6,7 +6,7 @@
 import { DISTRICTS } from './data/definitions';
 
 export type CurrencyId =
-  | 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Knowledge' | 'Gems'
+  | 'Gold' | 'Food' | 'Wood' | 'Knowledge' | 'Gems'
   | 'Berries' | 'Meat'; // food-valued (see CurrencyDef.countsAs)
 export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
@@ -35,8 +35,6 @@ export interface District {
   location: Coord;
   state: ConstructionState;
   visualVariant: number;
-  /** Townhall only: start of the current tax cycle (epoch ms). */
-  cycleStartedAt?: number;
 }
 
 export interface QueueItem {
@@ -63,6 +61,8 @@ export interface City {
   population: number;
   districts: District[];
   queue: QueueItem[];
+  /** Villager in training at the Townhall (one at a time); null = idle. */
+  training: { startedAt: number } | null;
 }
 
 /** Per-resource-cell harvest state. Absent entry = fresh cell (0 taps). */
@@ -100,7 +100,7 @@ export interface GameState {
     /** coordKey → discovered by a building's discover radius. (Cells adjacent
      *  to a revealed cell are ALSO Discovered — that part stays derived.) */
     discovered: Record<string, true>;
-    progress: Record<string, number>; // coordKey → silver paid so far
+    progress: Record<string, number>; // coordKey → gold paid so far
   };
   features: Record<string, FeatureId>; // coordKey → authored feature (static)
   harvest: Record<string, CellHarvestState>; // coordKey → taps/exhaustion
@@ -109,6 +109,11 @@ export interface GameState {
   research: {
     completed: ResearchId[];
     active: { id: ResearchId; startedAt: number } | null; // one at a time
+  };
+  /** The Market's sell queue: units drip-sell for Gold, one per interval. */
+  market: {
+    queue: Wallet; // units up for sale (escrowed out of the city wallet)
+    lastSaleAt: number; // epoch ms anchor; advances only by time paid out
   };
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off

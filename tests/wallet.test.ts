@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
-import { buyPopulation, populationCost } from '../src/sim/population';
+import { populationCost, startTraining } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
 import { freshGame, fund, map, T0 } from './helpers';
 
@@ -17,7 +17,7 @@ describe('food-valued currencies', () => {
     expect(effectiveAmount(wallet, 'Food')).toBe(2 + 4 + 3);
     expect(canAfford(wallet, { Food: 9 })).toBe(true);
     expect(canAfford(wallet, { Food: 10 })).toBe(false);
-    expect(effectiveAmount(wallet, 'Silver')).toBe(0); // no cross-talk
+    expect(effectiveAmount(wallet, 'Gold')).toBe(0); // no cross-talk
   });
 
   it('pays base first, then Berries, then Meat — with change for a broken Meat', () => {
@@ -37,11 +37,11 @@ describe('food-valued currencies', () => {
     const state = freshGame(); // rebalanced start: 0 population, empty wallet
     state.city.wallet = { Berries: 4, Meat: 2 }; // 10 effective Food
     expect(populationCost(0)).toBe(3);
-    expect(buyPopulation(state)).toBe('Success'); // pays 3 Berries
+    expect(startTraining(state, T0)).toBe('Started'); // pays 3 Berries up front
     expect(state.city.wallet).toEqual({ Berries: 1, Meat: 2 });
 
-    fund(state, { Silver: 100, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
-    expect(trainUnit(state, 'Swordsman')).toBe('Trained'); // 50 Silver + 20 Food
+    fund(state, { Gold: 100, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
+    expect(trainUnit(state, 'Swordsman')).toBe('Trained'); // 50 Gold + 20 Food
     // 1 Berry + all 7 Meat (21) cover the 20 → 2 Food back as change.
     expect(getWallet(state.city.wallet, 'Berries')).toBe(0);
     expect(getWallet(state.city.wallet, 'Meat')).toBe(0);

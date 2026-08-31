@@ -13,13 +13,13 @@ const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('the Agriculture research gates the Farm', () => {
   it('cannot start without the resources', () => {
-    const state = freshGame(); // 50 Silver < the 100 cost
+    const state = freshGame(); // the start has 0 Gold
     expect(startResearch(state, 'Agriculture', T0)).toBe('NotEnoughResources');
   });
 
   it('locks the Farm until completed; only one research at a time', () => {
     const state = freshGame();
-    fund(state, { Silver: 500, Wood: 500 });
+    fund(state, { Gold: 500, Wood: 500 });
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(enqueueBuild(state, map, 'Farm', FARM_CELL)).toBe('InvalidCell');
 
@@ -39,9 +39,9 @@ describe('the Agriculture research gates the Farm', () => {
 
   it('costs are paid up front', () => {
     const state = freshGame();
-    fund(state, { Silver: 500, Wood: 500 });
+    fund(state, { Gold: 500, Wood: 500 });
     startResearch(state, 'Agriculture', T0);
-    expect(state.city.wallet.Silver).toBe(500 - 100);
+    expect(state.city.wallet.Gold).toBe(500 - 100);
     expect(state.city.wallet.Wood).toBe(500 - 25);
   });
 });
@@ -49,7 +49,7 @@ describe('the Agriculture research gates the Farm', () => {
 describe('free-standing FarmLands', () => {
   it('placeable on any revealed Grassland with no Farm anywhere', () => {
     const state = freshGame();
-    fund(state, { Silver: 500, Wood: 500 });
+    fund(state, { Gold: 500, Wood: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe(null);
     expect(enqueueBuild(state, map, 'FarmLands', PLOT_CELL)).toBe('Started');
   });
@@ -58,7 +58,7 @@ describe('free-standing FarmLands', () => {
 describe('research in the save round-trip', () => {
   it('restores completed research and finishes an in-progress one in real time', () => {
     const state = freshGame();
-    fund(state, { Silver: 500, Wood: 500 });
+    fund(state, { Gold: 500, Wood: 500 });
     startResearch(state, 'Agriculture', T0);
     tickAt(state, T0 + 10_000); // mid-research at save time
 

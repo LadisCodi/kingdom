@@ -1,7 +1,8 @@
 // Worker units: claims, the harvest cycle, exhaustion interplay, determinism,
-// plus the Townhall cycle that shares the unified advance.
+// plus Townhall villager training that shares the unified advance.
 import { describe, expect, it } from 'vitest';
-import { changeWorkers, enqueueBuild, townhallCycle, townhallTap } from '../src/sim/commands';
+import { changeWorkers, enqueueBuild, townhallTap } from '../src/sim/commands';
+import { startTraining } from '../src/sim/population';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { getWallet, type GameState } from '../src/sim/state';
@@ -18,7 +19,7 @@ const FOREST_B = { x: 2, y: 3 }; // radius-2 — needs a level-2 sawmill
 const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSeconds * 1000;
 
 const builtSawmill = (state: GameState) => {
-  fund(state, { Silver: 500, Wood: 500 });
+  fund(state, { Gold: 500, Wood: 500 });
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
   // near the origin, so start from black fog and reveal only the test cells.
   // (The sawmill's own completion re-reveals its radius-1 ring.)
@@ -151,29 +152,36 @@ describe('the harvest cycle', () => {
   });
 });
 
-describe('Townhall cycle', () => {
-  it('pays 5 × population Silver per 10s cycle, straight to the wallet', () => {
+describe('Townhall villager training', () => {
+  it('pays the Food cost up front and completes after 20s', () => {
     const state = freshGame();
-    state.city.population = 2; // the rebalanced start has 0 population
-    const silver = getWallet(state.city.wallet, 'Silver');
-    tickAt(state, T0 + 9_000);
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(silver);
-    tickAt(state, T0 + 10_000);
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(silver + 10);
-    tickAt(state, T0 + 100_000); // 9 more cycles
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(silver + 100);
+    fund(state, { Food: 100 });
+    expect(startTraining(state, T0)).toBe('Started'); // populationCost(0) = 3
+    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
+    expect(startTraining(state, T0)).toBe('AlreadyTraining');
+    tickAt(state, T0 + 19_000);
+    expect(state.city.population).toBe(0);
+    tickAt(state, T0 + 20_000);
+    expect(state.city.population).toBe(1);
+    expect(state.city.training).toBe(null);
   });
 
-  it('taps add 2s of progress and can complete a cycle early; never exhausts', () => {
+  it('taps add 2s of training each and can complete it early', () => {
     const state = freshGame();
-    state.city.population = 2;
-    const silver = getWallet(state.city.wallet, 'Silver');
-    tickAt(state, T0 + 4_000); // 4s into the 10s cycle
-    let paid = 0;
-    for (let i = 0; i < 3; i++) paid += townhallTap(state, T0 + 4_000);
-    expect(paid).toBe(10); // 4s elapsed + 3 taps × 2s = full cycle
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(silver + 10);
-    expect(townhallCycle(state, T0 + 4_000).progress).toBeLessThan(0.02);
+    fund(state, { Food: 100 });
+    expect(townhallTap(state, T0)).toBe('NoTraining');
+    startTraining(state, T0);
+    tickAt(state, T0 + 10_000); // halfway
+    for (let i = 0; i < 4; i++) expect(townhallTap(state, T0 + 10_000)).toBe('Boosted');
+    expect(townhallTap(state, T0 + 10_000)).toBe('TrainingComplete'); // 10s + 5 × 2s
+    expect(state.city.population).toBe(1);
+  });
+
+  it('is blocked at the housing cap', () => {
+    const state = freshGame();
+    fund(state, { Food: 100 });
+    state.city.population = 3; // the Townhall houses exactly 3
+    expect(startTraining(state, T0)).toBe('AtMax');
   });
 });
 

@@ -18,6 +18,10 @@
 
 ## Resolved decisions (from design review, 2026-08-17)
 
+> **Since removed from the web build:** the population tax is gone — money
+> (now Gold, merged with Silver) comes from drip-selling resources at the
+> Market, and the Townhall trains villagers over time instead.
+
 1. **Townhall** keeps generating Silver, but via a **visible cycle timer** paying
    directly to the wallet (no internal warehouse). **Tapping the Townhall adds
    progress to the timer** — an accelerator, not a collector. The Townhall never

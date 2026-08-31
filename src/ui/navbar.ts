@@ -12,6 +12,7 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
     game.setOverlay(game.openOverlay === name ? null : name);
 
   const buildBtn = button('🔨 Build', toggle('build'));
+  const marketBtn = button('🛒 Market', toggle('market'));
   const armyBtn = button('🛡️ Army', toggle('army'));
   const researchBtn = button('🔬 Research', toggle('research'));
   const closeBtn = button('✕ Close', () => game.dismiss(), 'close');
@@ -19,7 +20,7 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const refresh = () => {
     buildBtn.classList.toggle('cta', game.buildCtaLit());
     if (game.dismissible()) root.replaceChildren(closeBtn);
-    else root.replaceChildren(buildBtn, armyBtn, researchBtn);
+    else root.replaceChildren(buildBtn, marketBtn, armyBtn, researchBtn);
   };
   game.onChange(refresh);
   refresh();

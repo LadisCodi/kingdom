@@ -3,11 +3,11 @@
 
 import {
   advance, canAfford, cancelQueueItem, changeWorkers, collectTap, effectiveAmount,
-  enqueueBuild, finishWithGems, townhallCycle, townhallTap, upgradeDistrict,
+  enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH } from './sim/data/definitions';
+import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH, TRAINING } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
@@ -16,7 +16,10 @@ import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { availableWorkers, buyPopulation } from './sim/population';
+import { addToSale, removeFromSale } from './sim/market';
+import {
+  availableWorkers, maxPopulation, populationCost, startTraining, trainingCompletesAt,
+} from './sim/population';
 import { startResearch } from './sim/research';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
@@ -84,8 +87,11 @@ export class Game {
     for (const d of result.deposits) {
       this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
     }
-    if (result.townhallPaid > 0) {
-      this.floaters.add(townhall(this.state).location, `+${result.townhallPaid} ${icon('Silver')}`);
+    if (result.goldEarned > 0) {
+      this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);
+    }
+    if (result.trainedPopulation > 0) {
+      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation} 👥`);
     }
     for (const item of result.completedItems) {
       this.toast(item.kind === 'build' ? 'Construction complete!' : 'Upgrade complete!');
@@ -121,12 +127,12 @@ export class Game {
         if (fog === 'Undiscovered') return true; // swallowed
         if (fog !== 'Discovered') return false;
         const result = revealTap(this.state, this.map, cell);
-        if (result === 'NotEnoughSilver') this.shake(['Silver']);
+        if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
           this.floaters.add(cell, 'Revealed!');
         } else if (result === 'Paid') {
-          this.floaters.add(cell, `-1 ${icon('Silver')}`);
+          this.floaters.add(cell, `-1 ${icon('Gold')}`);
         }
         this.notify();
         return true;
@@ -139,8 +145,9 @@ export class Game {
         const district = districtAt(this.state, cell);
         // Townhall: tapping adds cycle progress (and opens/keeps its card).
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
-          const paid = townhallTap(this.state, this.now());
-          this.floaters.add(cell, paid > 0 ? `+${paid} ${icon('Silver')}` : '⏩');
+          const tap = townhallTap(this.state, this.now());
+          if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
+          else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -228,10 +235,22 @@ export class Game {
 
   // -------------------------------------------------------------- UI commands
 
-  doBuyPopulation(): void {
-    const result = buyPopulation(this.state);
+  doAddToSale(c: CurrencyId, amount: number): void {
+    const result = addToSale(this.state, c, amount, this.now());
+    if (result === 'MarketFull') this.toast('The market stall is full');
+    this.notify();
+  }
+
+  doRemoveFromSale(c: CurrencyId, amount: number): void {
+    removeFromSale(this.state, c, amount);
+    this.notify();
+  }
+
+  doStartTraining(): void {
+    const result = startTraining(this.state, this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
     else if (result === 'AtMax') this.toast('Population at max — build more Housing');
+    else if (result === 'AlreadyTraining') this.toast('A villager is already in training');
     this.notify();
   }
 
@@ -279,7 +298,7 @@ export class Game {
 
   doTrain(unitId: UnitId): void {
     const result = trainUnit(this.state, unitId);
-    if (result === 'NotEnoughResources') this.shake(['Silver', 'Wood', 'Food']);
+    if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
     if (result === 'ArmyAtCapacity') this.toast(`Army at capacity (${armyPower(this.state)}/${maxArmyPower(this.state)})`);
     this.notify();
   }
@@ -425,8 +444,20 @@ export class Game {
     return workableCells(this.state, this.map, district);
   }
 
-  townhallCycleInfo() {
-    return townhallCycle(this.state, this.now());
+  /** Villager-training snapshot for the Townhall card & map bar. */
+  trainingInfo(): {
+    active: boolean; progress: number; remainingSeconds: number; cost: number; atMax: boolean;
+  } {
+    const now = this.now();
+    const completesAt = trainingCompletesAt(this.state);
+    const total = TRAINING.seconds * 1000;
+    return {
+      active: completesAt !== null,
+      progress: completesAt === null ? 0 : Math.min(1, Math.max(0, 1 - (completesAt - now) / total)),
+      remainingSeconds: completesAt === null ? 0 : Math.max(0, (completesAt - now) / 1000),
+      cost: populationCost(this.state.city.population),
+      atMax: this.state.city.population >= maxPopulation(this.state),
+    };
   }
 
   handleTap(sx: number, sy: number): void {
@@ -444,7 +475,7 @@ export class Game {
 
   walletValue(c: CurrencyId): number {
     if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
+    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return getWallet(this.state.city.wallet, c);
   }
 
@@ -452,15 +483,15 @@ export class Game {
    *  Food + Berries + Meat×3). Same number every Food cost checks against. */
   effectiveWalletValue(c: CurrencyId): number {
     if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
+    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return effectiveAmount(this.state.city.wallet, c);
   }
 }
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Food: '🍎', Silver: '🪙', Wood: '🪵', Berries: '🫐', Meat: '🍖',
-    Gold: '🏅', Knowledge: '📜', Gems: '💎',
+    Gold: '🪙', Food: '🍎', Wood: '🪵', Berries: '🫐', Meat: '🍖',
+    Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }

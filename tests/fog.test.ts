@@ -44,9 +44,9 @@ describe('fog state & seeding', () => {
 });
 
 describe('paying to reveal', () => {
-  it('accumulates 1 Silver per tap and reveals when total cost is met', () => {
+  it('accumulates 1 Gold per tap and reveals when total cost is met', () => {
     const state = newGame(map, NOW);
-    state.city.wallet.Silver = 50; // the rebalanced start has 0 Silver
+    state.city.wallet.Gold = 50; // the start has 0 Gold
     const cell = { x: 3, y: 0 }; // distance 2 from the footprint → cost 3
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(revealTap(state, map, cell)).toBe('Paid');
@@ -54,11 +54,11 @@ describe('paying to reveal', () => {
     expect(revealTap(state, map, cell)).toBe('Revealed');
     expect(state.fog.revealed[coordKey(cell)]).toBe(true);
     expect(state.fog.progress[coordKey(cell)]).toBeUndefined();
-    expect(getWallet(state.city.wallet, 'Silver')).toBe(50 - 3);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 3);
   });
   it('rejects taps on Undiscovered cells', () => {
     const state = newGame(map, NOW);
-    state.city.wallet.Silver = 50;
+    state.city.wallet.Gold = 50;
     expect(revealTap(state, map, { x: -6, y: -3 })).toBe('NotDiscovered');
   });
 });

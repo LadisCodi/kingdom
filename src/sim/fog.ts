@@ -18,7 +18,7 @@ export function fogState(state: GameState, map: MapData, cell: Coord): FogState 
   return 'Undiscovered';
 }
 
-/** Total Silver to reveal a cell at BFS distance d (FogOfWarSettings.GetTotalCost). */
+/** Total Gold to reveal a cell at BFS distance d (FogOfWarSettings.GetTotalCost). */
 export function revealCost(d: number): number {
   const rings = FOG.rings;
   let cost: number;
@@ -35,23 +35,23 @@ export function revealCost(d: number): number {
       cost = Math.round(last.cost * Math.max(1, FOG.fallbackGrowth) ** (d - last.distance));
     }
   }
-  return Math.max(cost, FOG.silverPerTap);
+  return Math.max(cost, FOG.goldPerTap);
 }
 
 export const revealCostForCell = (map: MapData, cell: Coord): number =>
   revealCost(townhallDistance(map, cell));
 
-export type RevealTapResult = 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotEnoughSilver';
+export type RevealTapResult = 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotEnoughGold';
 
-/** One tap on a Discovered cell: pay min(silverPerTap, remaining) toward its reveal. */
+/** One tap on a Discovered cell: pay min(goldPerTap, remaining) toward its reveal. */
 export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTapResult {
   if (fogState(state, map, cell) !== 'Discovered') return 'NotDiscovered';
   const key = coordKey(cell);
   const total = revealCostForCell(map, cell);
   const paid = state.fog.progress[key] ?? 0;
-  const payment = Math.min(FOG.silverPerTap, total - paid);
-  if (getWallet(state.city.wallet, 'Silver') < payment) return 'NotEnoughSilver';
-  addToWallet(state.city.wallet, 'Silver', -payment);
+  const payment = Math.min(FOG.goldPerTap, total - paid);
+  if (getWallet(state.city.wallet, 'Gold') < payment) return 'NotEnoughGold';
+  addToWallet(state.city.wallet, 'Gold', -payment);
   const nowPaid = paid + payment;
   if (nowPaid >= total) {
     delete state.fog.progress[key];

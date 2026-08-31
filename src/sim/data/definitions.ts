@@ -24,24 +24,30 @@ export interface CurrencyDef {
   /** This currency is stored separately but pays costs of another one at a
    *  fixed rate (a Berry counts as 1 Food, a Meat as 3). Null = plain. */
   countsAs: { currency: CurrencyId; value: number } | null;
+  /** The Market sells 1 unit for this much Gold; null = not sellable. */
+  goldValue: number | null;
 }
 
-interface CurrencyBalance { cap: number | null; start: number; primary?: boolean; countsAs?: unknown }
+interface CurrencyBalance {
+  cap: number | null; start: number; primary?: boolean; countsAs?: unknown;
+  goldValue?: number | null;
+}
 const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef => ({
   scope,
   cap: b.cap,
   start: b.start,
   primary: b.primary ?? false,
   countsAs: (b.countsAs ?? null) as CurrencyDef['countsAs'],
+  goldValue: b.goldValue ?? null,
 });
 
+// Object order = header widget order AND the Market's sell order.
 export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
+  Gold: currency('city', balance.currencies.Gold),
   Food: currency('city', balance.currencies.Food),
-  Silver: currency('city', balance.currencies.Silver),
   Wood: currency('city', balance.currencies.Wood),
   Berries: currency('city', balance.currencies.Berries),
   Meat: currency('city', balance.currencies.Meat),
-  Gold: currency('kingdom', balance.currencies.Gold),
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Gems: currency('player', balance.currencies.Gems),
 };
@@ -73,8 +79,12 @@ export const WORKER = balance.worker;
 // Player collect taps: cooldown between collects (upgradeable later).
 export const TAP = balance.tap;
 
-// tapBoostSeconds = progress per tap; payout per cycle = silverPerPopulation × population.
-export const TOWNHALL_CYCLE = balance.townhallCycle;
+
+// Villager training at the Townhall: duration + tap boost (upgradeable later).
+export const TRAINING = balance.training;
+
+// The Market's drip sale: one unit per interval, queue capacity (both upgradeable).
+export const MARKET = balance.market;
 
 export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
@@ -130,7 +140,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     id: 'Townhall',
     name: 'Townhall',
     description:
-      'Heart of the city. Houses 3 and taxes population each cycle — tap it to speed the cycle up.',
+      'Heart of the city. Houses 3 and trains new villagers — tap it to speed training up.',
     glyph: '🏛️',
     sprite: 'townhall',
     buildable: false,
@@ -299,4 +309,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 6; // v5 saves predate Berries/Meat + finite map features; discarded
+export const SAVE_VERSION = 7; // v6 saves predate the Market economy (Silver→Gold, training); discarded

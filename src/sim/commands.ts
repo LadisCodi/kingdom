@@ -1,7 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { CITY_DEF, DISTRICTS, TOWNHALL_CYCLE } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TRAINING } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
   districtCount, placementBlock, requiredTownhallLevel, upgradeCost, upgradeDuration,
@@ -9,6 +9,8 @@ import {
 import { revealAroundDistrict } from './fog';
 import type { MapData } from './grid';
 import { collectTap, tapCell, type CollectTapResult, type TapCellResult } from './harvest';
+import { advanceMarket } from './market';
+import { advanceTraining } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch } from './research';
 import { canAfford, effectiveAmount, pay, refund } from './wallet';
@@ -180,44 +182,14 @@ export function changeWorkers(
 
 // -------------------------------------------------------------- townhall tap
 
-export interface TownhallCycle {
-  progress: number; // 0..1
-  remainingSeconds: number;
-  payout: number;
-}
+export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining';
 
-export function townhallCycle(state: GameState, now: number): TownhallCycle {
-  const th = townhall(state);
-  const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
-  const startedAt = th.cycleStartedAt ?? now;
-  const elapsed = Math.min(cycleMs, Math.max(0, now - startedAt));
-  return {
-    progress: elapsed / cycleMs,
-    remainingSeconds: (cycleMs - elapsed) / 1000,
-    payout: TOWNHALL_CYCLE.silverPerPopulation * state.city.population,
-  };
-}
-
-function advanceTownhall(state: GameState, toTime: number): number {
-  const th = townhall(state);
-  if (th.cycleStartedAt === undefined) th.cycleStartedAt = toTime;
-  const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
-  let paid = 0;
-  while (th.cycleStartedAt + cycleMs <= toTime) {
-    const payout = TOWNHALL_CYCLE.silverPerPopulation * state.city.population;
-    addToWallet(state.city.wallet, 'Silver', payout);
-    paid += payout;
-    th.cycleStartedAt += cycleMs;
-  }
-  return paid;
-}
-
-/** Tap the Townhall: add tapBoostSeconds of progress to the current cycle
- *  (paying out immediately if that completes it). Never exhausts. */
-export function townhallTap(state: GameState, now: number): number {
-  const th = townhall(state);
-  th.cycleStartedAt = (th.cycleStartedAt ?? now) - TOWNHALL_CYCLE.tapBoostSeconds * 1000;
-  return advanceTownhall(state, now);
+/** Tap the Townhall: add tapBoostSeconds of progress to the villager in
+ *  training (completing it early when the boost covers the remainder). */
+export function townhallTap(state: GameState, now: number): TownhallTapResult {
+  if (state.city.training === null) return 'NoTraining';
+  state.city.training.startedAt -= TRAINING.tapBoostSeconds * 1000;
+  return advanceTraining(state, now) ? 'TrainingComplete' : 'Boosted';
 }
 
 // ------------------------------------------------------------------- advance
@@ -226,7 +198,8 @@ export interface AdvanceResult {
   deposits: DepositEvent[];
   completedItems: QueueItem[];
   completedResearch: ResearchId[];
-  townhallPaid: number;
+  goldEarned: number; // Market drip sales in this window
+  trainedPopulation: number; // villagers who finished training
 }
 
 /**
@@ -237,7 +210,7 @@ export interface AdvanceResult {
  */
 export function advance(state: GameState, map: MapData, toTime: number): AdvanceResult {
   const result: AdvanceResult = {
-    deposits: [], completedItems: [], completedResearch: [], townhallPaid: 0,
+    deposits: [], completedItems: [], completedResearch: [], goldEarned: 0, trainedPopulation: 0,
   };
   let cursor = Math.min(state.lastAdvance, toTime);
   const builders = Math.max(1, state.kingdom.maxBuilders);
@@ -259,7 +232,8 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
     cursor = tNext;
   }
   result.deposits.push(...advanceWorkers(state, map, toTime));
-  result.townhallPaid = advanceTownhall(state, toTime);
+  result.goldEarned = advanceMarket(state, toTime);
+  if (advanceTraining(state, toTime)) result.trainedPopulation += 1;
   const finishedResearch = advanceResearch(state, toTime);
   if (finishedResearch) result.completedResearch.push(finishedResearch);
   state.lastAdvance = toTime;

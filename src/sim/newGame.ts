@@ -21,6 +21,7 @@ export function newGame(map: MapData, now: number): GameState {
       population: CITY_DEF.initialPopulation,
       districts: [],
       queue: [],
+      training: null,
     },
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
@@ -33,6 +34,7 @@ export function newGame(map: MapData, now: number): GameState {
     workers: [],
     army: [],
     research: { completed: [], active: null },
+    market: { queue: {}, lastSaleAt: now },
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,
@@ -52,7 +54,6 @@ export function newGame(map: MapData, now: number): GameState {
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
-    cycleStartedAt: now,
   });
 
   seedFog(state, map);

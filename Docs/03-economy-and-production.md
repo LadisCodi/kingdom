@@ -5,7 +5,7 @@
 | Currency | Scope (wallet) | Capped | Start | Notes |
 |---|---|---|---|---|
 | Food | City | no | 5 | Buys population |
-| Silver | City | no | 50 | Main build/reveal currency; taxed from population by the Townhall |
+| Silver | City | no | 50 | Main build/reveal currency; taxed from population by the Townhall *(web build: merged into Gold, earned at the Market)* |
 | Wood | City | no | 0 | Secondary build material |
 | Gold | Kingdom | no | 100 | No source or sink yet |
 | Knowledge | Kingdom | no | 0 | Reserved for research; no source or sink |

@@ -1,12 +1,11 @@
 // Tile / district card: identity, level, harvest info, workers ±, Townhall
-// cycle, upgrade, and — while a build/upgrade is in progress — progress + gem
-// finish.
+// villager training, upgrade, and — while a build/upgrade is in progress —
+// progress + gem finish.
 
 import { icon, type Game } from '../game';
 import { canAfford, gemRushCost } from '../sim/commands';
-import { DISTRICTS, HARVEST, TOWNHALL_CYCLE, WORKER, levelIndexed } from '../sim/data/definitions';
+import { DISTRICTS, HARVEST, TRAINING, WORKER, levelIndexed } from '../sim/data/definitions';
 import { districtCount, requiredTownhallLevel, upgradeCost, upgradeDuration } from '../sim/districts';
-import { maxPopulation, populationCost } from '../sim/population';
 import {
   queueProgress, remainingSeconds, townhall,
   type District,
@@ -29,17 +28,28 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   if (district.state === 'UnderConstruction') {
     panel.append(el('div', { class: 'muted' }, 'Under construction.'));
   } else {
-    // Townhall: the tap-boostable tax cycle.
+    // Townhall: villager training (tap-boostable).
     if (district.definitionId === 'Townhall') {
-      const cycle = game.townhallCycleInfo();
-      const bar = el('div', { class: 'progress' },
-        el('div', { class: 'fill' }),
-        el('div', { class: 'label' },
-          `+${cycle.payout} ${icon('Silver')} in ${Math.ceil(cycle.remainingSeconds)}s`));
-      (bar.querySelector('.fill') as HTMLElement).style.width = `${cycle.progress * 100}%`;
-      panel.append(bar);
-      panel.append(el('div', { class: 'muted' },
-        `Tap the Townhall to add +${TOWNHALL_CYCLE.tapBoostSeconds}s of progress per tap.`));
+      const training = game.trainingInfo();
+      if (training.active) {
+        const bar = el('div', { class: 'progress' },
+          el('div', { class: 'fill' }),
+          el('div', { class: 'label' }, `+1 👥 in ${Math.ceil(training.remainingSeconds)}s`));
+        (bar.querySelector('.fill') as HTMLElement).style.width = `${training.progress * 100}%`;
+        panel.append(bar);
+        panel.append(el('div', { class: 'muted' },
+          `Tap the Townhall to add +${TRAINING.tapBoostSeconds}s of training per tap.`));
+      } else {
+        const trainBtn = button('Train', () => game.doStartTraining());
+        const affordable = canAfford(game.state.city.wallet, { Food: training.cost });
+        trainBtn.disabled = training.atMax || !affordable;
+        panel.append(el('div', { class: 'action-row' },
+          el('span', { class: `info${training.atMax || affordable ? '' : ' blocked'}` },
+            training.atMax
+              ? 'Population at max — build more Housing'
+              : `Train villager — ${training.cost} ${icon('Food')} (${formatDuration(TRAINING.seconds)})`),
+          trainBtn));
+      }
     }
 
     // Crop plot: it's a resource cell.
@@ -53,14 +63,6 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       panel.append(el('div', { class: 'rows' },
         el('div', { class: 'row' },
           el('span', {}, '👥 housing'), el('span', {}, `+${def.populationCapacity}`))));
-      const pop = game.state.city.population;
-      const atMax = pop >= maxPopulation(game.state);
-      const buyBtn = button('Buy', () => game.doBuyPopulation());
-      buyBtn.disabled = atMax;
-      panel.append(el('div', { class: 'action-row' },
-        el('span', { class: 'info' },
-          atMax ? 'Population at max' : `Buy population — ${populationCost(pop)} ${icon('Food')}`),
-        buyBtn));
     }
 
     // Worker buildings: area, workers ±, live worker states.

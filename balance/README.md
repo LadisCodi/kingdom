@@ -18,9 +18,9 @@ the script.
 | `Districts` | One row per building: footprint, levels, workers, costs, times, growth exponents |
 | `Units` | Army units: power, recruit costs |
 | `Harvest` | Resource cells: yield per tap, taps to exhaust, recovery |
-| `Currencies` | Starting amounts and caps (blank cap = uncapped) |
+| `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market sell price; blank = not sellable) |
 | `FogRings` | Fog reveal cost by distance ring |
-| `Settings` | Everything singleton: worker speed, tax cycle, offline cap, population costs… |
+| `Settings` | Everything singleton: worker speed, collect cooldown, training time, market interval/capacity, offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |
 
 Format notes:

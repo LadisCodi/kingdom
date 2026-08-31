@@ -68,9 +68,14 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
   data unchanged, the fog seed reveals 8 neighbors instead of 6.
 - **The harvest loop** (see the feature doc): the generator/vault economy is
   replaced by tappable resource cells with exhaustion/recovery, workers as
-  moving units, a tap-boostable Townhall tax cycle, and radius-by-level areas
+  moving units, and radius-by-level areas
   of influence. Lumber is renamed Sawmill. Spells (and Mana) are removed for
   now, pending a future rework.
+- **The Market economy**: Silver and Gold are merged into one money (Gold),
+  earned only by drip-selling resources at the Market (1 unit per interval,
+  each resource has a gold value; keeps selling offline within the 8h cap).
+  The Townhall no longer taxes population — it trains villagers over time
+  (tap-boostable), replacing the instant population purchase.
 - **Single tick driver** (the Unity build double-ticked its timer).
 - Save format v2; incompatible older saves start a fresh game.
 - Placeholder art: flat-color tiles + emoji glyphs; state-driven rendering so

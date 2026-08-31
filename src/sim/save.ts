@@ -35,7 +35,6 @@ interface DistrictDto {
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
-  CycleStartedAt?: string;
 }
 
 interface QueueItemDto {
@@ -77,7 +76,6 @@ export function serialize(state: GameState, now: number): SaveFile {
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
-                ...(d.cycleStartedAt !== undefined ? { CycleStartedAt: iso(d.cycleStartedAt) } : {}),
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -88,8 +86,14 @@ export function serialize(state: GameState, now: number): SaveFile {
               ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
             })),
             QueueKinds: state.city.queue.map((q) => q.kind),
+            TrainingStartedAt: state.city.training === null
+              ? null : iso(state.city.training.startedAt),
           },
         ],
+      },
+      'kingdom.market': {
+        Queue: state.market.queue,
+        LastSaleAt: iso(state.market.lastSaleAt),
       },
       'kingdom.kingdoms': {
         MaxBuilders: state.kingdom.maxBuilders,
@@ -98,9 +102,9 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
         Discovered: Object.keys(state.fog.discovered).map(parseCoordKey),
-        Progress: Object.entries(state.fog.progress).map(([k, silver]) => ({
+        Progress: Object.entries(state.fog.progress).map(([k, gold]) => ({
           Coord: parseCoordKey(k),
-          Silver: silver,
+          Gold: gold,
         })),
       },
       'kingdom.features': {
@@ -168,7 +172,6 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
-        ...(d.CycleStartedAt !== undefined ? { cycleStartedAt: ms(d.CycleStartedAt) } : {}),
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -182,6 +185,16 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
         startedAt: msOrNull(q.StartedAtUtc),
       }),
     );
+    state.city.training = cityDto.TrainingStartedAt
+      ? { startedAt: ms(cityDto.TrainingStartedAt) } : null;
+  }
+
+  const marketDto = modules['kingdom.market'];
+  if (marketDto) {
+    state.market = {
+      queue: { ...(marketDto.Queue as Wallet) },
+      lastSaleAt: marketDto.LastSaleAt ? ms(marketDto.LastSaleAt) : lastSaved,
+    };
   }
 
   const kingdomDto = modules['kingdom.kingdoms'];
@@ -195,8 +208,8 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
     state.fog = { revealed: {}, discovered: {}, progress: {} };
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
     for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
-    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Silver: number }[]) {
-      state.fog.progress[coordKey(p.Coord)] = p.Silver;
+    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Gold: number }[]) {
+      state.fog.progress[coordKey(p.Coord)] = p.Gold;
     }
   }
 
@@ -267,9 +280,8 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
       w.stateStartedAt = w.activity === 'Idle' ? now : w.stateStartedAt + gap;
       if (w.stateUntil !== null) w.stateUntil += gap;
     }
-    for (const d of state.city.districts) {
-      if (d.cycleStartedAt !== undefined) d.cycleStartedAt += gap;
-    }
+    if (state.city.training) state.city.training.startedAt += gap;
+    state.market.lastSaleAt += gap;
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     advance(state, map, now); // completes remaining queue work; workers resume at now

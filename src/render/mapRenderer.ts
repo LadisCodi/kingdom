@@ -3,7 +3,7 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, TOWNHALL_CYCLE,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, TRAINING,
 } from '../sim/data/definitions';
 import { fogState, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
@@ -167,10 +167,10 @@ export function drawMap(
       }
       // A district that is itself a resource cell (FarmLands): wear/recovery bar.
       if (district.definitionId === 'FarmLands') drawResourceState(district.location, x, y);
-      // Townhall: tax-cycle progress bar.
-      if (district.definitionId === 'Townhall' && district.cycleStartedAt !== undefined) {
-        const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
-        const progress = Math.min(1, Math.max(0, (now - district.cycleStartedAt) / cycleMs));
+      // Townhall: villager-training progress bar.
+      if (district.definitionId === 'Townhall' && state.city.training !== null) {
+        const totalMs = TRAINING.seconds * 1000;
+        const progress = Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
         drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
       }
       // Needs-workers warning.
