@@ -90,16 +90,16 @@ export const validPlacementCells = (
 
 // ------------------------------------------------------------- cost formulas
 
-/** Build cost for the (n+1)th instance at BFS distance d. Rounding: floor. */
-export function buildCost(definitionId: DistrictId, n: number, d: number): Wallet {
+/** Build cost for the (n+1)th instance — count-scaled only, no distance term.
+ *  Rounding: floor. */
+export function buildCost(definitionId: DistrictId, n: number): Wallet {
   const def = DISTRICTS[definitionId];
   const i = n + 1;
   const expGrowth = i ** def.buildCostExponentialGrowth;
   const countMult = Math.max(def.buildCostMultiplier * (i - 1) * expGrowth, 1);
-  const distMult = def.buildCostDistanceGrowth ** d;
   const out: Wallet = {};
   for (const [c, base] of Object.entries(def.buildCost)) {
-    out[c as keyof Wallet] = Math.floor(base * countMult * distMult);
+    out[c as keyof Wallet] = Math.floor(base * countMult);
   }
   return out;
 }
@@ -135,8 +135,9 @@ export const upgradeDuration = (definitionId: DistrictId, currentLevel: number):
   );
 };
 
-export const buildCostForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): Wallet =>
-  buildCost(definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
+/** Cost of the NEXT instance of a type (distance no longer affects cost). */
+export const nextBuildCost = (state: GameState, definitionId: DistrictId): Wallet =>
+  buildCost(definitionId, districtCount(state, definitionId));
 
 export const buildDurationForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): number =>
   buildDuration(definitionId, districtCount(state, definitionId), townhallDistance(map, cell));

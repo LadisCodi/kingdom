@@ -5,11 +5,11 @@ import {
   CITY_DEF, CURRENCIES, DISTRICTS, KINGDOM_DEF, TOWNHALL_CYCLE,
 } from './data/definitions';
 import {
-  buildCostForCell, buildDurationForCell, buildCost as buildCostFormula,
+  buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
   districtCount, placementBlock, requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from './districts';
 import { revealAroundDistrict } from './fog';
-import { townhallDistance, type MapData } from './grid';
+import type { MapData } from './grid';
 import { tapCell, type TapCellResult } from './harvest';
 import { advanceQueue } from './queue';
 import { advanceResearch } from './research';
@@ -47,7 +47,7 @@ export function enqueueBuild(
 ): EnqueueBuildResult {
   if (state.city.queue.length >= CITY_DEF.buildQueueCapacity) return 'QueueFull';
   if (placementBlock(state, map, definitionId, cell) !== null) return 'InvalidCell';
-  const cost = buildCostForCell(state, definitionId, cell, map);
+  const cost = nextBuildCost(state, definitionId);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   pay(state.city.wallet, cost);
   const district: District = {
@@ -105,7 +105,7 @@ export type CancelResult = 'Cancelled' | 'NotFound' | 'NotCancellable';
 
 /** Cancel a queued BUILD: remove item + district, refund the cost recomputed
  *  after removal so the count multiplier matches what was actually paid. */
-export function cancelQueueItem(state: GameState, map: MapData, itemId: string): CancelResult {
+export function cancelQueueItem(state: GameState, itemId: string): CancelResult {
   const item = state.city.queue.find((q) => q.uniqueId === itemId);
   if (!item) return 'NotFound';
   if (item.kind !== 'build') return 'NotCancellable';
@@ -113,11 +113,8 @@ export function cancelQueueItem(state: GameState, map: MapData, itemId: string):
   state.city.queue.splice(state.city.queue.indexOf(item), 1);
   if (district) {
     state.city.districts.splice(state.city.districts.indexOf(district), 1);
-    const cost = buildCostFormula(
-      district.definitionId,
-      districtCount(state, district.definitionId), // count AFTER removal
-      townhallDistance(map, district.location),
-    );
+    // Refund recomputed with the count AFTER removal, matching what was paid.
+    const cost = buildCostFormula(district.definitionId, districtCount(state, district.definitionId));
     refund(state.city.wallet, cost);
   }
   return 'Cancelled';

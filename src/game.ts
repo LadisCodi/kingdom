@@ -8,8 +8,8 @@ import {
 } from './sim/commands';
 import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH, SPELLS } from './sim/data/definitions';
 import {
-  buildCostForCell, buildDurationForCell, districtCount, hasPlacementRestriction,
-  maxCountForTownhallLevel, validPlacementCells,
+  buildDurationForCell, districtCount, hasPlacementRestriction,
+  maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
 } from './sim/districts';
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
@@ -217,7 +217,7 @@ export class Game {
   confirmBuild(): void {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
-    const cost = buildCostForCell(this.state, definitionId, selected, this.map);
+    const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
       this.mode = { kind: 'normal' };
@@ -274,7 +274,7 @@ export class Game {
   }
 
   doCancelItem(itemId: string): void {
-    cancelQueueItem(this.state, this.map, itemId);
+    cancelQueueItem(this.state, itemId);
     this.inspectedDistrictId = null;
     this.notify();
   }
@@ -328,8 +328,7 @@ export class Game {
       if (capped) return false;
       const cells = validPlacementCells(this.state, this.map, id);
       if (cells.length === 0) return false;
-      const cost = buildCostForCell(this.state, id, cells[0], this.map);
-      return canAfford(this.state.city.wallet, cost);
+      return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
     });
   }
 
@@ -414,7 +413,7 @@ export class Game {
   placementInfo(): {
     definitionId: DistrictId;
     cell: Coord | null;
-    cost: ReturnType<typeof buildCostForCell>;
+    cost: ReturnType<typeof nextBuildCost>;
     duration: number;
     affordable: boolean;
     captured: number;
@@ -424,7 +423,7 @@ export class Game {
     if (!selected) {
       return { definitionId, cell: null, cost: {}, duration: 0, affordable: false, captured: 0 };
     }
-    const cost = buildCostForCell(this.state, definitionId, selected, this.map);
+    const cost = nextBuildCost(this.state, definitionId);
     return {
       definitionId,
       cell: selected,

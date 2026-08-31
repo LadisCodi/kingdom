@@ -83,7 +83,6 @@ export interface DistrictDef {
   buildCost: Wallet;
   buildCostMultiplier: number;
   buildCostExponentialGrowth: number;
-  buildCostDistanceGrowth: number;
   buildDurationSeconds: number;
   buildDurationDistrictGrowth: number;
   buildDurationDistanceGrowth: number;

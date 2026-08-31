@@ -5,27 +5,24 @@ import { gemRushCost } from '../src/sim/commands';
 
 describe('build cost by instance (Docs/04 table)', () => {
   it('Housing: 75/20 → 133/35 → 444/118 → 954/254', () => {
-    expect(buildCost('Housing', 0, 0)).toEqual({ Silver: 75, Wood: 20 });
-    expect(buildCost('Housing', 1, 0)).toEqual({ Silver: 133, Wood: 35 });
-    expect(buildCost('Housing', 2, 0)).toEqual({ Silver: 444, Wood: 118 });
-    expect(buildCost('Housing', 3, 0)).toEqual({ Silver: 954, Wood: 254 });
+    expect(buildCost('Housing', 0)).toEqual({ Silver: 75, Wood: 20 });
+    expect(buildCost('Housing', 1)).toEqual({ Silver: 133, Wood: 35 });
+    expect(buildCost('Housing', 2)).toEqual({ Silver: 444, Wood: 118 });
+    expect(buildCost('Housing', 3)).toEqual({ Silver: 954, Wood: 254 });
   });
   it('Farm: 50/10 → 282/56 → 1039/207', () => {
-    expect(buildCost('Farm', 0, 0)).toEqual({ Silver: 50, Wood: 10 });
-    expect(buildCost('Farm', 1, 0)).toEqual({ Silver: 282, Wood: 56 });
-    expect(buildCost('Farm', 2, 0)).toEqual({ Silver: 1039, Wood: 207 });
+    expect(buildCost('Farm', 0)).toEqual({ Silver: 50, Wood: 10 });
+    expect(buildCost('Farm', 1)).toEqual({ Silver: 282, Wood: 56 });
+    expect(buildCost('Farm', 2)).toEqual({ Silver: 1039, Wood: 207 });
   });
   it('Sawmill: 50 → 546 → 1967', () => {
-    expect(buildCost('Sawmill', 0, 0)).toEqual({ Silver: 50 });
-    expect(buildCost('Sawmill', 1, 0)).toEqual({ Silver: 546 });
-    expect(buildCost('Sawmill', 2, 0)).toEqual({ Silver: 1967 });
+    expect(buildCost('Sawmill', 0)).toEqual({ Silver: 50 });
+    expect(buildCost('Sawmill', 1)).toEqual({ Silver: 546 });
+    expect(buildCost('Sawmill', 2)).toEqual({ Silver: 1967 });
   });
   it('FarmLands: 20 → 91 → 298 → 633 → 1103 → 1717', () => {
     const expected = [20, 91, 298, 633, 1103, 1717];
-    expected.forEach((wood, n) => expect(buildCost('FarmLands', n, 0)).toEqual({ Wood: wood }));
-  });
-  it('distance growth is off for all buildables (distMult = 1)', () => {
-    expect(buildCost('Housing', 0, 7)).toEqual(buildCost('Housing', 0, 0));
+    expected.forEach((wood, n) => expect(buildCost('FarmLands', n)).toEqual({ Wood: wood }));
   });
 });
 

@@ -19,8 +19,8 @@ export function renderBuildMenu(game: Game): HTMLElement {
     const count = districtCount(game.state, id);
     const maxCount = maxCountForTownhallLevel(def, thLevel);
     const capped = count >= maxCount;
-    // Indicative cost & time at distance 0.
-    const cost = buildCost(id, count, 0);
+    // Exact cost (no distance term); time shown indicatively at distance 0.
+    const cost = buildCost(id, count);
     const affordable = canAfford(game.state.city.wallet, cost);
 
     const lockedByResearch =
