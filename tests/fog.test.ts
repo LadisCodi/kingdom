@@ -21,9 +21,9 @@ describe('map data', () => {
   });
 });
 
-describe('reveal cost curve (Docs/02 table)', () => {
-  it('d 1–10 → 3,3,4,5,6,8,10,12,15,19', () => {
-    const expected = [3, 3, 4, 5, 6, 8, 10, 12, 15, 19];
+describe('reveal cost curve (balance.xlsx FogRings)', () => {
+  it('d 1–10 → 1,3,5,10,20,40,80,160,320,640 (doubling from d4)', () => {
+    const expected = [1, 3, 5, 10, 20, 40, 80, 160, 320, 640];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));
   });
 });
