@@ -24,6 +24,9 @@ describe('technology basics', () => {
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(startTech(state, 'Irrigation', T0)).toBe('MissingRequirement'); // needs Agriculture
 
+    // Everything hangs off Forestry — the intended first research.
+    expect(startTech(state, 'Agriculture', T0)).toBe('MissingRequirement');
+    completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
     expect(startTech(state, 'Agriculture', T0)).toBe('AlreadyActive');
     const durationMs = TECHNOLOGIES.Agriculture.durationSeconds * 1000;
@@ -60,6 +63,7 @@ describe('technology basics', () => {
   it('costs are paid up front', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
+    completeTech(state, 'Forestry');
     startTech(state, 'Archery', T0); // 150 Gold + 20 Wood
     expect(state.city.wallet.Gold).toBe(1000 - 150);
     expect(state.city.wallet.Wood).toBe(500 - 20);
@@ -71,6 +75,7 @@ describe('research slots', () => {
     const state = freshGame(); // 10 Gems
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
+    completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
     expect(startTech(state, 'Archery', T0)).toBe('NoFreeSlot');
 
@@ -98,6 +103,7 @@ describe('research slots', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    completeTech(state, 'Forestry');
     buySlot(state);
     startTech(state, 'Archery', T0); // 60s
     startTech(state, 'Agriculture', T0 + 5_000); // 45s → done at 50s
@@ -115,6 +121,7 @@ describe('save round-trip', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
     fund(state, { Gold: 10_000, Wood: 500, Food: 500 });
+    completeTech(state, 'Forestry');
     completeTech(state, 'Agriculture');
     buySlot(state);
     startTech(state, 'Archery', T0);

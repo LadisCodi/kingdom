@@ -291,7 +291,9 @@
         "Wood": 25
       },
       "durationSeconds": 45,
-      "requires": []
+      "requires": [
+        "Forestry"
+      ]
     },
     "Irrigation": {
       "cost": {
@@ -316,7 +318,9 @@
         "Wood": 20
       },
       "durationSeconds": 60,
-      "requires": []
+      "requires": [
+        "Forestry"
+      ]
     },
     "CavalryTraining": {
       "cost": {

@@ -283,7 +283,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     name: 'Forestry',
     description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
     glyph: '🪓',
-    node: { x: 0, y: -1 },
+    node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
   Archery: tech({
     id: 'Archery',
