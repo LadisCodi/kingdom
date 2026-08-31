@@ -68,7 +68,7 @@ async function boot(): Promise<void> {
     else if (game.openOverlay === 'research') {
       overlayRoot.append(
         el('div', { class: 'menu' },
-          el('h2', {}, 'Research', button('✕', () => game.setOverlay(null))),
+          el('h2', {}, 'Research'),
           el('p', { class: 'muted' }, 'Coming soon…')),
       );
     }

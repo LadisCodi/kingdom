@@ -9,9 +9,7 @@ export function renderArmyMenu(game: Game): HTMLElement {
   const menu = el('div', { class: 'menu' });
   const power = armyPower(game.state);
   const max = maxArmyPower(game.state);
-  menu.append(
-    el('h2', {}, `Army — Power ${power}/${max}`, button('✕', () => game.setOverlay(null))),
-  );
+  menu.append(el('h2', {}, `Army — Power ${power}/${max}`));
   const list = el('div', { class: 'menu-list' });
   for (const id of UNIT_ORDER) {
     const def = UNITS[id];

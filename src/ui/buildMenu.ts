@@ -5,13 +5,11 @@ import { CITY_DEF, DISTRICTS } from '../sim/data/definitions';
 import { buildCost, buildDuration, districtCount, maxCountForTownhallLevel } from '../sim/districts';
 import { townhall } from '../sim/state';
 import type { Game } from '../game';
-import { button, el, formatCost, formatDuration } from './format';
+import { el, formatCost, formatDuration } from './format';
 
 export function renderBuildMenu(game: Game): HTMLElement {
   const menu = el('div', { class: 'menu' });
-  menu.append(
-    el('h2', {}, 'Build', button('✕', () => game.setOverlay(null))),
-  );
+  menu.append(el('h2', {}, 'Build'));
   const list = el('div', { class: 'menu-list' });
   const thLevel = townhall(game.state).level;
 

@@ -7,7 +7,7 @@ import { button, el } from './format';
 
 export function renderSpellbook(game: Game): HTMLElement {
   const menu = el('div', { class: 'menu' });
-  menu.append(el('h2', {}, 'Spellbook', button('✕', () => game.setOverlay(null))));
+  menu.append(el('h2', {}, 'Spellbook'));
   const list = el('div', { class: 'menu-list' });
   for (const def of Object.values(SPELLS)) {
     const spell = game.state.spellbook[def.id];
