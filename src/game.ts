@@ -16,7 +16,7 @@ import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { addToSale, removeFromSale } from './sim/market';
+import { addToSale, queuedGoldValue, removeFromSale, rushSale } from './sim/market';
 import {
   availableWorkers, maxPopulation, populationCost, startTraining, trainingCompletesAt,
 } from './sim/population';
@@ -243,6 +243,16 @@ export class Game {
 
   doRemoveFromSale(c: CurrencyId, amount: number): void {
     removeFromSale(this.state, c, amount);
+    this.notify();
+  }
+
+  doRushSale(): void {
+    const payout = queuedGoldValue(this.state);
+    const result = rushSale(this.state, this.now());
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    else if (result === 'Success') {
+      this.floaters.add(townhall(this.state).location, `+${payout} ${icon('Gold')}`);
+    }
     this.notify();
   }
 

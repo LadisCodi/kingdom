@@ -2,7 +2,10 @@
 // capacity, timing, sell order, offline replay, determinism.
 import { describe, expect, it } from 'vitest';
 import { MARKET } from '../src/sim/data/definitions';
-import { addToSale, queuedGoldValue, queuedUnits, removeFromSale } from '../src/sim/market';
+import {
+  addToSale, nextSaleInSeconds, queuedGoldValue, queuedUnits, removeFromSale,
+  rushSale, rushSaleCost,
+} from '../src/sim/market';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
 import { freshGame, fund, T0, map, tickAt } from './helpers';
@@ -84,6 +87,37 @@ describe('drip selling', () => {
     for (let t = 1000; t <= horizon; t += 1000) tickAt(stepped, T0 + t);
     expect(getWallet(oneCall.city.wallet, 'Gold')).toBe(getWallet(stepped.city.wallet, 'Gold'));
     expect(oneCall.market.queue).toEqual(stepped.market.queue);
+  });
+
+  it('reports the time to the next sale', () => {
+    const state = freshGame();
+    expect(nextSaleInSeconds(state, T0)).toBe(null); // empty queue
+    fund(state, { Wood: 2 });
+    addToSale(state, 'Wood', 2, T0);
+    expect(nextSaleInSeconds(state, T0)).toBe(5);
+    tickAt(state, T0 + 3_000);
+    expect(nextSaleInSeconds(state, T0 + 3_000)).toBe(2);
+    tickAt(state, T0 + INTERVAL); // one sold, clock rolls over
+    expect(nextSaleInSeconds(state, T0 + INTERVAL)).toBe(5);
+  });
+
+  it('gems rush sells the whole queue instantly (10s per gem, min 1)', () => {
+    const state = freshGame(); // 10 Gems
+    fund(state, { Wood: 12, Meat: 2 });
+    expect(rushSale(state, T0)).toBe('NothingQueued');
+    addToSale(state, 'Wood', 12, T0);
+    addToSale(state, 'Meat', 2, T0);
+    // 14 units × 5s = 70s remaining → 7 gems; payout 12×2 + 2×3 = 30.
+    expect(rushSaleCost(state, T0)).toBe(7);
+    expect(rushSale(state, T0)).toBe('Success');
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(30);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(3);
+    expect(queuedUnits(state)).toBe(0);
+
+    fund(state, { Wood: 12 });
+    addToSale(state, 'Wood', 12, T0); // 60s → 6 gems > the 3 left
+    expect(rushSale(state, T0)).toBe('NotEnoughGems');
+    expect(queuedUnits(state)).toBe(12); // untouched
   });
 
   it('survives the save round-trip and sells during the absence', () => {

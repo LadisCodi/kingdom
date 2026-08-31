@@ -4,7 +4,7 @@
 // hooks for later: sell interval (speed), gold values (price), capacity.
 
 import { CURRENCIES, MARKET } from './data/definitions';
-import { addToWallet, getWallet, type CurrencyId, type GameState, type Wallet } from './state';
+import { addToWallet, getWallet, type CurrencyId, type GameState } from './state';
 
 /** Sellable currencies in sell order (= Currencies sheet order). */
 export const SELLABLE: CurrencyId[] = (Object.keys(CURRENCIES) as CurrencyId[])
@@ -73,5 +73,37 @@ export function advanceMarket(state: GameState, toTime: number): number {
   }
 }
 
-/** Snapshot for the Market menu. */
-export const marketQueue = (state: GameState): Wallet => state.market.queue;
+/** Seconds until the next unit sells; null when nothing is queued. */
+export function nextSaleInSeconds(state: GameState, now: number): number | null {
+  if (queuedUnits(state) === 0) return null;
+  const intervalMs = MARKET.sellIntervalSeconds * 1000;
+  return Math.max(0, (state.market.lastSaleAt + intervalMs - now) / 1000);
+}
+
+/** Seconds the queue still needs to drain at the current interval. */
+export function queueRemainingSeconds(state: GameState, now: number): number {
+  const units = queuedUnits(state);
+  if (units === 0) return 0;
+  const elapsedIntoInterval = Math.min(
+    now - state.market.lastSaleAt, MARKET.sellIntervalSeconds * 1000);
+  return (units * MARKET.sellIntervalSeconds * 1000 - Math.max(0, elapsedIntoInterval)) / 1000;
+}
+
+/** Gem cost to sell the whole queue instantly — same rule as the build rush:
+ *  10 seconds per gem, minimum 1. */
+export const rushSaleCost = (state: GameState, now: number): number =>
+  Math.max(1, Math.ceil(queueRemainingSeconds(state, now) / 10));
+
+export type RushSaleResult = 'Success' | 'NotEnoughGems' | 'NothingQueued';
+
+/** Pay Gems to sell everything queued right now. */
+export function rushSale(state: GameState, now: number): RushSaleResult {
+  if (queuedUnits(state) === 0) return 'NothingQueued';
+  const cost = rushSaleCost(state, now);
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  addToWallet(state.city.wallet, 'Gold', queuedGoldValue(state));
+  state.market.queue = {};
+  state.market.lastSaleAt = now;
+  return 'Success';
+}
