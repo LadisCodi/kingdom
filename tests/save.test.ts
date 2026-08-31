@@ -50,12 +50,12 @@ describe('save round-trip', () => {
 
   it('offline replay: an aged save accrues housing taxes and pays deliveries', () => {
     const state = workingGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // 2 of the 4 villagers move in
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // 1 of the 4 villagers moves in
     const saveAt = T0 + 30_000; // tax clock already anchored here by the ticks
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = getWallet(state.city.wallet, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 40); // 2 housed × 2/min × 10 min
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 300); // 1 housed × 30/min × 10 min
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 

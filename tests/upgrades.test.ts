@@ -90,10 +90,10 @@ describe('effects reach the sim', () => {
     state.city.population = 1;
     fund(state, { Gold: 1000 });
     completeTech(state, 'Commerce');
-    expect(effectiveTaxRate(state)).toBe(2);
-    buyUpgrade(state, 'TradeRoutes'); // +10% → 2.2/min
-    expect(effectiveTaxRate(state)).toBeCloseTo(2.2);
-    tickAt(state, T0 + 301_000); // ~5 min × 2.2/min → 11 gold (10 unboosted)
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - 150 + 11);
+    expect(effectiveTaxRate(state)).toBe(30);
+    buyUpgrade(state, 'TradeRoutes'); // +10% → 33/min
+    expect(effectiveTaxRate(state)).toBeCloseTo(33);
+    tickAt(state, T0 + 301_000); // ~5 min × 33/min → 165 gold (150 unboosted)
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - 150 + 165);
   });
 });

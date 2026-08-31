@@ -156,7 +156,8 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity 2 to train into
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity 1 each
+    addBuilt(state, 'Housing', { x: 0, y: -1 });
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
@@ -177,6 +178,7 @@ describe('Townhall villager training', () => {
   it('taps boost the CURRENT villager; the next starts at its completion', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addBuilt(state, 'Housing', { x: 0, y: -1 });
     fund(state, { Food: 100 });
     expect(townhallTap(state, T0)).toBe('NoTraining');
     queueTraining(state, T0);
@@ -197,7 +199,7 @@ describe('Townhall villager training', () => {
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('AtMax'); // no Housing yet
     addBuilt(state, 'Housing', { x: 2, y: 0 });
-    state.city.population = 2; // the Housing is full
+    state.city.population = 1; // the Housing (capacity 1) is full
     expect(queueTraining(state, T0)).toBe('AtMax');
   });
 });

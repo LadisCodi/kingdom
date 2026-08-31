@@ -33,7 +33,7 @@
         "y": 1
       },
       "maxLevel": 1,
-      "populationCapacity": 2,
+      "populationCapacity": 1,
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
@@ -46,8 +46,8 @@
       "buildCost": {
         "Wood": 10
       },
-      "buildCostMultiplier": 1.5,
-      "buildCostExponentialGrowth": 1.25,
+      "buildCostMultiplier": 1.25,
+      "buildCostExponentialGrowth": 1.1,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
@@ -432,7 +432,7 @@
     "tapBoostSeconds": 2
   },
   "taxes": {
-    "goldPerPopulationPerMinute": 2,
+    "goldPerPopulationPerMinute": 30,
     "tapBoostSeconds": 5
   },
   "adjacency": [

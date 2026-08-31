@@ -4,11 +4,11 @@ import { buildCost, buildDuration, upgradeCost, upgradeDuration } from '../src/s
 import { gemRushCost } from '../src/sim/commands';
 
 describe('build cost by instance (Docs/04 table)', () => {
-  it('Housing: 10 → 35 → 118 → 254 Wood', () => {
+  it('Housing: 10 → 26 → 83 → 172 Wood', () => {
     expect(buildCost('Housing', 0)).toEqual({ Wood: 10 });
-    expect(buildCost('Housing', 1)).toEqual({ Wood: 35 });
-    expect(buildCost('Housing', 2)).toEqual({ Wood: 118 });
-    expect(buildCost('Housing', 3)).toEqual({ Wood: 254 });
+    expect(buildCost('Housing', 1)).toEqual({ Wood: 26 });
+    expect(buildCost('Housing', 2)).toEqual({ Wood: 83 });
+    expect(buildCost('Housing', 3)).toEqual({ Wood: 172 });
   });
   it('Farm: 10 → 56 → 207 Wood', () => {
     expect(buildCost('Farm', 0)).toEqual({ Wood: 10 });
