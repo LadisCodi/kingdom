@@ -185,6 +185,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🪚',
     sprite: 'sawmill',
     harvestSource: 'Forest',
+    requiredTech: 'Forestry',
     ...balance.districts.Sawmill,
   },
 };
@@ -277,6 +278,13 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '💧',
     node: { x: -2, y: 1 },
   }, balance.technologies.Irrigation),
+  Forestry: tech({
+    id: 'Forestry',
+    name: 'Forestry',
+    description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
+    glyph: '🪓',
+    node: { x: 0, y: -1 },
+  }, balance.technologies.Forestry),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
@@ -293,7 +301,8 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   }, balance.technologies.CavalryTraining),
 };
 
-export const TECH_ORDER: TechId[] = ['Agriculture', 'Irrigation', 'Archery', 'CavalryTraining'];
+export const TECH_ORDER: TechId[] =
+  ['Agriculture', 'Irrigation', 'Forestry', 'Archery', 'CavalryTraining'];
 
 // Slots & gem pricing for extra slots.
 export const RESEARCH_SETTINGS = balance.research;

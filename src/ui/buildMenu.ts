@@ -1,7 +1,7 @@
 // Full-screen build menu: one row per buildable district (Docs/09).
 
 import { canAfford } from '../sim/commands';
-import { CITY_DEF, DISTRICTS, TECHNOLOGIES } from '../sim/data/definitions';
+import { CITY_DEF, DISTRICTS } from '../sim/data/definitions';
 import { buildCost, buildDuration, districtCount, maxCountForTownhallLevel } from '../sim/districts';
 import { isTechComplete } from '../sim/research';
 import { townhall } from '../sim/state';
@@ -23,24 +23,23 @@ export function renderBuildMenu(game: Game): HTMLElement {
     const cost = buildCost(id, count);
     const affordable = canAfford(game.state.city.wallet, cost);
 
-    const lockedByResearch =
-      def.requiredTech !== null && !isTechComplete(game.state, def.requiredTech);
+    // Buildings locked behind a technology are HIDDEN, not greyed —
+    // the tech tree is where players discover them.
+    if (def.requiredTech !== null && !isTechComplete(game.state, def.requiredTech)) continue;
 
-    // When locked/capped, say what unlocks it.
+    // When count-capped, say what unlocks more.
     let blockedMsg = '';
-    if (lockedByResearch) {
-      blockedMsg = `🔒 ${TECHNOLOGIES[def.requiredTech!].name} research`;
-    } else if (capped) {
+    if (capped) {
       const list = def.maxCountPerTownhallLevel;
       const nextLevel = list.findIndex((n) => n > count) + 1;
       blockedMsg = nextLevel > 0 ? `Townhall lvl ${nextLevel} required` : 'Maxed out';
     }
 
     const selectBtn = button('Select', () => game.startPlacement(id));
-    selectBtn.disabled = capped || lockedByResearch;
+    selectBtn.disabled = capped;
     const row = el(
       'div',
-      { class: `menu-row${capped || lockedByResearch || !affordable ? ' disabled' : ''}` },
+      { class: `menu-row${capped || !affordable ? ' disabled' : ''}` },
       el('span', { class: 'icon' }, def.glyph),
       el('div', { class: 'body' },
         el('div', { class: 'name' }, def.name),
@@ -50,7 +49,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
       ),
       el('div', { class: 'meta' },
         selectBtn,
-        el('div', { class: capped || lockedByResearch ? 'blocked' : 'muted' },
+        el('div', { class: capped ? 'blocked' : 'muted' },
           blockedMsg || `${count}/${maxCount === Infinity ? '∞' : maxCount}`),
       ),
     );

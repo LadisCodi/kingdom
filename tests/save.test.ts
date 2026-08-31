@@ -3,7 +3,7 @@ import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { addToSale } from '../src/sim/market';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
-import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const FOREST = { x: 2, y: 2 };
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -12,6 +12,7 @@ const workingGame = () => {
   const state = freshGame();
   state.city.population = 4;
   fund(state, { Gold: 500, Wood: 500, Food: 42 });
+  completeTech(state, 'Forestry');
   reveal(state, [FOREST]);
   enqueueBuild(state, map, 'Sawmill', SAWMILL);
   tickAt(state, T0);

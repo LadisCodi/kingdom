@@ -44,6 +44,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500 });
+    expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('InvalidCell'); // behind Forestry
+    completeTech(state, 'Forestry');
     expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('Started');
     expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('QueueFull');
     tickAt(state, now);

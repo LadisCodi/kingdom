@@ -303,6 +303,13 @@
         "Agriculture"
       ]
     },
+    "Forestry": {
+      "cost": {
+        "Gold": 75
+      },
+      "durationSeconds": 30,
+      "requires": []
+    },
     "Archery": {
       "cost": {
         "Gold": 150,

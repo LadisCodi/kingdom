@@ -7,7 +7,7 @@ import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { getWallet, type GameState } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
-import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 // (2,1)'s only adjacent tree is (2,2); (2,3) sits at radius 2.
 const SAWMILL_CELL = { x: 2, y: 1 };
@@ -20,6 +20,7 @@ const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSe
 
 const builtSawmill = (state: GameState) => {
   fund(state, { Gold: 500, Wood: 500 });
+  completeTech(state, 'Forestry'); // the Sawmill sits behind this tech now
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
   // near the origin, so start from black fog and reveal only the test cells.
   // (The sawmill's own completion re-reveals its radius-1 ring.)

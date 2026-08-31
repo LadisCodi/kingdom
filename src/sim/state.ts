@@ -13,7 +13,7 @@ export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals';
 export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
-export type TechId = 'Agriculture' | 'Irrigation' | 'Archery' | 'CavalryTraining';
+export type TechId = 'Agriculture' | 'Irrigation' | 'Forestry' | 'Archery' | 'CavalryTraining';
 export type UpgradeId = 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes';
 
 export interface Coord { x: number; y: number }
