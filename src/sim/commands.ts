@@ -11,13 +11,14 @@ import {
 import { townhallDistance, type MapData } from './grid';
 import { tapCell, type TapCellResult } from './harvest';
 import { advanceQueue } from './queue';
+import { advanceResearch } from './research';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
 } from './workers';
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type QueueItem, type Rng, type Wallet,
+  type QueueItem, type ResearchId, type Rng, type Wallet,
 } from './state';
 
 // ------------------------------------------------------------------- wallets
@@ -248,6 +249,7 @@ function accrueMana(state: GameState, toTime: number): void {
 export interface AdvanceResult {
   deposits: DepositEvent[];
   completedItems: QueueItem[];
+  completedResearch: ResearchId[];
   townhallPaid: number;
 }
 
@@ -258,7 +260,9 @@ export interface AdvanceResult {
  * load time. Also used verbatim by the live once-per-second tick.
  */
 export function advance(state: GameState, map: MapData, toTime: number): AdvanceResult {
-  const result: AdvanceResult = { deposits: [], completedItems: [], townhallPaid: 0 };
+  const result: AdvanceResult = {
+    deposits: [], completedItems: [], completedResearch: [], townhallPaid: 0,
+  };
   let cursor = Math.min(state.lastAdvance, toTime);
   const builders = Math.max(1, state.kingdom.maxBuilders);
   for (;;) {
@@ -280,6 +284,8 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   }
   result.deposits.push(...advanceWorkers(state, map, toTime));
   result.townhallPaid = advanceTownhall(state, toTime);
+  const finishedResearch = advanceResearch(state, toTime);
+  if (finishedResearch) result.completedResearch.push(finishedResearch);
   accrueMana(state, toTime);
   // Expired spells just lapse — Rain's boost was applied when it mattered.
   state.activeSpells = state.activeSpells.filter((s) => s.expiresAt > toTime);

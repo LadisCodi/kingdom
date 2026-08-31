@@ -17,6 +17,7 @@ import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderArmyMenu } from './ui/armyMenu';
+import { renderResearchMenu } from './ui/researchMenu';
 import { renderCastBanner, renderSpellbook } from './ui/spellbook';
 import { button, el } from './ui/format';
 
@@ -66,13 +67,7 @@ async function boot(): Promise<void> {
     if (game.openOverlay === 'build') overlayRoot.append(renderBuildMenu(game));
     else if (game.openOverlay === 'spellbook') overlayRoot.append(renderSpellbook(game));
     else if (game.openOverlay === 'army') overlayRoot.append(renderArmyMenu(game));
-    else if (game.openOverlay === 'research') {
-      overlayRoot.append(
-        el('div', { class: 'menu' },
-          el('h2', {}, 'Research'),
-          el('p', { class: 'muted' }, 'Coming soon…')),
-      );
-    }
+    else if (game.openOverlay === 'research') overlayRoot.append(renderResearchMenu(game));
     // Cast banner.
     castBanner?.remove();
     castBanner = null;
@@ -136,6 +131,7 @@ async function boot(): Promise<void> {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
       for (const s of game.state.activeSpells) s.expiresAt -= delta;
+      if (game.state.research.active) game.state.research.active.startedAt -= delta;
       runTick();
     };
     const devBar = el('div', { class: 'cast-banner', style: 'top:auto;bottom:120px' },

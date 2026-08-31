@@ -35,6 +35,7 @@ export function newGame(map: MapData, now: number): GameState {
     harvest: {},
     workers: [],
     army: [],
+    research: { completed: [], active: null },
     nextId: 1,
     lastAdvance: now,
   };

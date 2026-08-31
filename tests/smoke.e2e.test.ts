@@ -7,6 +7,7 @@ import {
 } from '../src/sim/commands';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { buyPopulation, maxPopulation } from '../src/sim/population';
+import { isResearched, startResearch } from '../src/sim/research';
 import { revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
 import { castSpell } from '../src/sim/spells';
@@ -64,18 +65,30 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     tickAt(state, now);
     expect(isExhausted(state, { x: 2, y: 2 }, now)).toBe(false);
 
-    // --- Build a Farm, then FarmLands inside its influence; farm worker harvests it.
+    // --- FarmLands stands alone now: build one, tap it by hand for Food.
+    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('Started');
+    tickAt(state, now);
+    now += 60_000;
+    tickAt(state, now);
+    const foodBeforeTap = getWallet(state.city.wallet, 'Food');
+    expect(tapCell(state, map, { x: -1, y: 1 }, now)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Food')).toBe(foodBeforeTap + 1);
+
+    // --- The Farm is gated behind the first research (Agriculture).
+    expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('InvalidCell'); // locked
+    expect(startResearch(state, 'Agriculture', now)).toBe('Started');
+    now += 60_000; // research takes 45s
+    tickAt(state, now);
+    expect(isResearched(state, 'Agriculture')).toBe(true);
+
+    // --- Build the Farm next to the plot; its worker harvests it automatically.
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);
     const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
     expect(farm.state).toBe('Built');
-    expect(enqueueBuild(state, map, 'FarmLands', { x: -2, y: 5 })).toBe('InvalidCell'); // outside influence
-    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('Started');
-    tickAt(state, now);
-    now += 60_000;
-    tickAt(state, now);
+    expect(enqueueBuild(state, map, 'FarmLands', { x: -2, y: 5 })).toBe('InvalidCell'); // not revealed
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     const food = getWallet(state.city.wallet, 'Food');
     now += 60_000;

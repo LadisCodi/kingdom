@@ -12,6 +12,7 @@ export type FeatureId = 'Trees';
 export type HarvestSourceId = 'Forest' | 'Crops';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
 export type SpellId = 'Rain' | 'Tap';
+export type ResearchId = 'Agriculture';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -113,6 +114,10 @@ export interface GameState {
   harvest: Record<string, CellHarvestState>; // coordKey → taps/exhaustion
   workers: Worker[];
   army: ArmyUnit[];
+  research: {
+    completed: ResearchId[];
+    active: { id: ResearchId; startedAt: number } | null; // one at a time
+  };
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
 }

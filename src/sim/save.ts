@@ -11,7 +11,7 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type ActiveSpell, type Coord, type District, type GameState, type QueueItem,
-  type Wallet, type Worker,
+  type ResearchId, type Wallet, type Worker,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -147,6 +147,13 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.army': {
         Units: state.army.map((u) => ({ UniqueID: u.uniqueId, DefinitionID: u.definitionId })),
       },
+      'kingdom.research': {
+        Completed: state.research.completed,
+        Active: state.research.active === null ? null : {
+          ID: state.research.active.id,
+          StartedAtUtc: iso(state.research.active.startedAt),
+        },
+      },
       'player.currencies': state.player.wallet,
       'meta.nextId': state.nextId,
     },
@@ -270,6 +277,16 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
       uniqueId: u.UniqueID,
       definitionId: u.DefinitionID,
     }));
+  }
+
+  const researchDto = modules['kingdom.research'];
+  if (researchDto) {
+    state.research = {
+      completed: [...((researchDto.Completed ?? []) as ResearchId[])],
+      active: researchDto.Active
+        ? { id: researchDto.Active.ID as ResearchId, startedAt: ms(researchDto.Active.StartedAtUtc) }
+        : null,
+    };
   }
 
   const playerDto = modules['player.currencies'];

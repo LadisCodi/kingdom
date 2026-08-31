@@ -26,6 +26,7 @@ const XLSX_PATH = join(ROOT, 'balance/balance.xlsx');
 const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 
 const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
+const RESEARCH_IDS = ['Agriculture'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
 const SPELL_IDS = ['Rain', 'Tap'];
 const HARVEST_IDS = ['Forest', 'Crops'];
@@ -78,6 +79,7 @@ const SHEETS = {
   Harvest: ['source', 'yield_per_tap', 'taps_to_exhaust', 'recovery_seconds'],
   Currencies: ['id', 'cap', 'start'],
   FogRings: ['distance', 'cost'],
+  Research: ['id', 'cost_silver', 'cost_wood', 'cost_food', 'duration_seconds'],
   Settings: ['key', 'value'],
 };
 
@@ -207,7 +209,7 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, harvest: {}, currencies: {}, units: {}, spells: {},
+    districts: {}, harvest: {}, currencies: {}, units: {}, spells: {}, research: {},
     worker: {}, townhallCycle: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -276,6 +278,13 @@ async function importXlsx() {
   }
   for (const id of SPELL_IDS) {
     if (out.spells[id].length === 0) fail('Spells', `no levels for spell "${id}"`);
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Research'), RESEARCH_IDS)) {
+    out.research[id] = {
+      cost: wallet(r, 'cost'),
+      durationSeconds: num(r, 'duration_seconds'),
+    };
   }
 
   let lastDistance = 0;
@@ -361,6 +370,11 @@ async function exportXlsx() {
   }));
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
+
+  addSheet(workbook, 'Research', RESEARCH_IDS.map((id) => {
+    const r = b.research[id];
+    return [id, ...costCells(r.cost), r.durationSeconds];
+  }));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;

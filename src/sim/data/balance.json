@@ -256,6 +256,15 @@
       }
     ]
   },
+  "research": {
+    "Agriculture": {
+      "cost": {
+        "Silver": 100,
+        "Wood": 25
+      },
+      "durationSeconds": 45
+    }
+  },
   "worker": {
     "moveSpeedTilesPerSecond": 1,
     "workSeconds": 8,

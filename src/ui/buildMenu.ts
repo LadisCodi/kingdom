@@ -1,8 +1,9 @@
 // Full-screen build menu: one row per buildable district (Docs/09).
 
 import { canAfford } from '../sim/commands';
-import { CITY_DEF, DISTRICTS } from '../sim/data/definitions';
+import { CITY_DEF, DISTRICTS, RESEARCH } from '../sim/data/definitions';
 import { buildCost, buildDuration, districtCount, maxCountForTownhallLevel } from '../sim/districts';
+import { isResearched } from '../sim/research';
 import { townhall } from '../sim/state';
 import type { Game } from '../game';
 import { button, el, formatCost, formatDuration } from './format';
@@ -22,19 +23,24 @@ export function renderBuildMenu(game: Game): HTMLElement {
     const cost = buildCost(id, count, 0);
     const affordable = canAfford(game.state.city.wallet, cost);
 
-    // When count-capped, does a higher Townhall level unlock more?
+    const lockedByResearch =
+      def.requiredResearch !== null && !isResearched(game.state, def.requiredResearch);
+
+    // When locked/capped, say what unlocks it.
     let blockedMsg = '';
-    if (capped) {
+    if (lockedByResearch) {
+      blockedMsg = `🔒 ${RESEARCH[def.requiredResearch!].name} research`;
+    } else if (capped) {
       const list = def.maxCountPerTownhallLevel;
       const nextLevel = list.findIndex((n) => n > count) + 1;
       blockedMsg = nextLevel > 0 ? `Townhall lvl ${nextLevel} required` : 'Maxed out';
     }
 
     const selectBtn = button('Select', () => game.startPlacement(id));
-    selectBtn.disabled = capped;
+    selectBtn.disabled = capped || lockedByResearch;
     const row = el(
       'div',
-      { class: `menu-row${capped || !affordable ? ' disabled' : ''}` },
+      { class: `menu-row${capped || lockedByResearch || !affordable ? ' disabled' : ''}` },
       el('span', { class: 'icon' }, def.glyph),
       el('div', { class: 'body' },
         el('div', { class: 'name' }, def.name),
@@ -44,7 +50,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
       ),
       el('div', { class: 'meta' },
         selectBtn,
-        el('div', { class: capped ? 'blocked' : 'muted' },
+        el('div', { class: capped || lockedByResearch ? 'blocked' : 'muted' },
           blockedMsg || `${count}/${maxCount === Infinity ? '∞' : maxCount}`),
       ),
     );

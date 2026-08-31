@@ -6,7 +6,7 @@ import {
   tapCell, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
   type AssignWorkerResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, SPELLS } from './sim/data/definitions';
+import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH, SPELLS } from './sim/data/definitions';
 import {
   buildCostForCell, buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, validPlacementCells,
@@ -16,11 +16,12 @@ import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/g
 import { harvestSourceAt } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
 import { availableWorkers, buyPopulation } from './sim/population';
+import { startResearch } from './sim/research';
 import { canTarget, castSpell } from './sim/spells';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type SpellId, type UnitId,
+  type ResearchId, type SpellId, type UnitId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { Camera } from './render/camera';
@@ -89,6 +90,9 @@ export class Game {
     }
     for (const item of result.completedItems) {
       this.toast(item.kind === 'build' ? 'Construction complete!' : 'Upgrade complete!');
+    }
+    for (const id of result.completedResearch) {
+      this.toast(`Research complete: ${RESEARCH[id].name}!`);
     }
     this.notify();
   }
@@ -272,6 +276,16 @@ export class Game {
   doCancelItem(itemId: string): void {
     cancelQueueItem(this.state, this.map, itemId);
     this.inspectedDistrictId = null;
+    this.notify();
+  }
+
+  doResearch(id: ResearchId): void {
+    const result = startResearch(this.state, id, this.now());
+    if (result === 'NotEnoughResources') {
+      this.shake(Object.keys(RESEARCH[id].cost) as CurrencyId[]);
+    } else if (result === 'AlreadyResearching') {
+      this.toast('Another research is already in progress');
+    }
     this.notify();
   }
 

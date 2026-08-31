@@ -2,9 +2,10 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { cellExists, cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
+import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
+import { isResearched } from './research';
 import {
-  cellsOfRect, coordKey, districtAt, sameCell, townhall,
+  cellsOfRect, coordKey, districtAt, townhall,
   type Coord, type DistrictId, type GameState, type Wallet,
 } from './state';
 
@@ -23,7 +24,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence';
+  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland';
 
 /** All placement conditions ANDed over the full footprint (cell = anchor,
  *  top-left); null = buildable here. */
@@ -45,6 +46,7 @@ export function placementBlock(
   if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
     return 'CountLimit';
   }
+  if (def.requiredResearch && !isResearched(state, def.requiredResearch)) return 'NeedsResearch';
   // Per-type rules: terrain must hold on every footprint cell; adjacency /
   // influence must hold for at least one.
   switch (definitionId) {
@@ -62,23 +64,11 @@ export function placementBlock(
     case 'Farm':
       if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       break;
-    case 'FarmLands': {
-      // On Grassland, inside a BUILT Farm's area of influence.
+    case 'FarmLands':
+      // Any revealed Grassland — the player taps it by hand until a Farm
+      // is built nearby to send workers.
       if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
-      const inFarmArea = state.city.districts.some(
-        (d) =>
-          d.definitionId === 'Farm' &&
-          d.state === 'Built' &&
-          cellsWithinRadiusOfRect(
-            map,
-            d.location,
-            DISTRICTS.Farm.size,
-            levelIndexed(DISTRICTS.Farm.influenceRadiusPerLevel, d.level),
-          ).some((c) => footprint.some((fc) => sameCell(c, fc))),
-      );
-      if (!inFarmArea) return 'NeedsFarmInfluence';
       break;
-    }
     case 'Sawmill': // no placement restriction — the influence range guides placement
     case 'Townhall':
       break;

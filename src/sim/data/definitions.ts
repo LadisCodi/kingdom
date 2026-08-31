@@ -5,7 +5,9 @@
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 
 import balance from './balance.json';
-import type { CurrencyId, DistrictId, FeatureId, HarvestSourceId, SpellId, UnitId, Wallet } from '../state';
+import type {
+  CurrencyId, DistrictId, FeatureId, HarvestSourceId, ResearchId, SpellId, UnitId, Wallet,
+} from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
 export const levelIndexed = <T>(list: readonly T[], level: number): T =>
@@ -62,6 +64,8 @@ export interface DistrictDef {
   sprite: string; // asset filename stem in src/render/assets (e.g. 'townhall' → townhall.png)
   /** Footprint in cells; `location` is the top-left (anchor) cell. */
   size: { x: number; y: number };
+  /** Research that must be completed before this district can be built. */
+  requiredResearch: ResearchId | null;
   populationCapacity: number;
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
@@ -88,7 +92,9 @@ export interface DistrictDef {
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
 // balance.json; only identity, art, and rules wiring is authored here.
-const rules = { buildable: true, harvestSource: null, providesHarvestSource: null } as const;
+const rules = {
+  buildable: true, harvestSource: null, providesHarvestSource: null, requiredResearch: null,
+} as const;
 
 export const DISTRICTS: Record<DistrictId, DistrictDef> = {
   Townhall: {
@@ -119,13 +125,14 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🌾',
     sprite: 'farm',
     harvestSource: 'Crops',
+    requiredResearch: 'Agriculture',
     ...balance.districts.Farm,
   },
   FarmLands: {
     ...rules,
     id: 'FarmLands',
     name: 'FarmLands',
-    description: 'A crop plot: tap it for Food, or let Farm workers harvest it.',
+    description: 'A crop plot: tap it for Food. Build a Farm nearby to have workers harvest it.',
     glyph: '🟩',
     sprite: 'farmlands',
     providesHarvestSource: 'Crops',
@@ -231,6 +238,29 @@ export const SPELLS: Record<SpellId, SpellDef> = {
   },
 };
 
+// ----------------------------------------------------------------- research
+
+export interface ResearchDef {
+  id: ResearchId;
+  name: string;
+  description: string;
+  glyph: string;
+  cost: Wallet; // city currencies
+  durationSeconds: number;
+}
+
+export const RESEARCH: Record<ResearchId, ResearchDef> = {
+  Agriculture: {
+    id: 'Agriculture',
+    name: 'Agriculture',
+    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
+    glyph: '🌱',
+    ...balance.research.Agriculture,
+  },
+};
+
+export const RESEARCH_ORDER: ResearchId[] = ['Agriculture'];
+
 // -------------------------------------------------------------------- units
 
 export type UnitTag = 'Melee' | 'Distance' | 'Mounted';
@@ -276,4 +306,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 3; // v2 saves predate multi-cell footprints (2x2 Townhall) and are discarded
+export const SAVE_VERSION = 4; // v3 saves predate research + free-standing FarmLands; discarded
