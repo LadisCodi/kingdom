@@ -6,7 +6,7 @@ import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { populationCost, startTraining } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
-import { freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, freshGame, fund, map, T0 } from './helpers';
 
 const BERRY_BUSH = { x: 3, y: 1 }; // outside the fog reveal radius (1)
 const WILD_ANIMALS = { x: -2, y: -4 }; // also unrevealed
@@ -35,6 +35,7 @@ describe('food-valued currencies', () => {
 
   it('population and units can be bought with food-valued currencies', () => {
     const state = freshGame(); // rebalanced start: 0 population, empty wallet
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity to train into
     state.city.wallet = { Berries: 4, Meat: 2 }; // 10 effective Food
     expect(populationCost(0)).toBe(3);
     expect(startTraining(state, T0)).toBe('Started'); // pays 3 Berries up front

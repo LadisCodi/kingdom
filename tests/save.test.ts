@@ -52,11 +52,11 @@ describe('save v7 round-trip', () => {
   it('offline replay: an aged save drip-sells the market queue and pays deliveries', () => {
     const state = workingGame();
     const saveAt = T0 + 30_000;
-    expect(addToSale(state, 'Wood', 20, saveAt)).toBe('Added'); // 20 × 2 Gold
+    expect(addToSale(state, 'Wood', 20, saveAt)).toBe('Added'); // 20 × 3 Gold
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = getWallet(state.city.wallet, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 20 * 2); // queue sold out
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 20 * 3); // queue sold out
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 

@@ -17,7 +17,7 @@ import { completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
 describe('full harvest-loop playthrough (headless smoke)', () => {
   it('plays the whole loop', () => {
     const state = freshGame();
-    state.city.population = 5; // test setup: enough workers on hand
+    state.city.population = 2; // test setup: enough workers on hand
     let now = T0;
 
     // --- Reveal 3 fog cells at distance 2 (3 Gold each, tap by tap).
@@ -34,13 +34,13 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, { x: 2, y: 2 }, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
 
-    // --- Sell the wood at the Market: 1 unit / 5s, 2 Gold each.
+    // --- Sell the wood at the Market: 1 unit / 5s, 3 Gold each.
     const goldBefore = getWallet(state.city.wallet, 'Gold');
     expect(addToSale(state, 'Wood', 5, now)).toBe('Added');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(0); // escrowed in the queue
     now += 26_000; // 5 sells at 5s each
     tickAt(state, now);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBefore + 5 * 2);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBefore + 5 * 3);
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500 });
@@ -103,27 +103,27 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     tickAt(state, now);
     expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(food);
 
-    // --- Population to the TH1 cap of 7 via Housing + timed training.
+    // --- Population lives in Housing now (the Townhall houses nobody).
     fund(state, { Food: 10_000, Gold: 10_000, Wood: 10_000 });
-    expect(maxPopulation(state)).toBe(3);
-    expect(startTraining(state, now)).toBe('AtMax'); // already 5 via test setup
+    expect(maxPopulation(state)).toBe(0);
+    expect(startTraining(state, now)).toBe('AtMax'); // nowhere to live yet
     for (const cell of [{ x: 2, y: 0 }, { x: 0, y: -1 }]) {
       expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
       tickAt(state, now);
       now += 120_000;
       tickAt(state, now);
     }
-    expect(maxPopulation(state)).toBe(7);
-    // Train villager 6 (taps boost it) and villager 7 (waits it out).
+    expect(maxPopulation(state)).toBe(4);
+    // Train villager 3 (taps boost it) and villager 4 (waits it out).
     expect(startTraining(state, now)).toBe('Started');
     expect(townhallTap(state, now)).toBe('Boosted');
     now += 20_000;
     tickAt(state, now);
-    expect(state.city.population).toBe(6);
+    expect(state.city.population).toBe(3);
     expect(startTraining(state, now)).toBe('Started');
     now += 20_000;
     tickAt(state, now);
-    expect(state.city.population).toBe(7);
+    expect(state.city.population).toBe(4);
     expect(startTraining(state, now)).toBe('AtMax');
 
     // --- Army to the TH1 power cap (Cavalry sits behind two techs).
@@ -146,7 +146,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const save = serialize(state, now);
     const gold = getWallet(state.city.wallet, 'Gold');
     const restored = deserialize(save, map, now + 600_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 30 * 2); // queue sold out
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 30 * 3); // queue sold out
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(getWallet(state.city.wallet, 'Wood'));
   });
 });

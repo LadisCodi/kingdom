@@ -4,21 +4,21 @@ import { buildCost, buildDuration, upgradeCost, upgradeDuration } from '../src/s
 import { gemRushCost } from '../src/sim/commands';
 
 describe('build cost by instance (Docs/04 table)', () => {
-  it('Housing: 75/20 → 133/35 → 444/118 → 954/254', () => {
-    expect(buildCost('Housing', 0)).toEqual({ Gold: 75, Wood: 20 });
-    expect(buildCost('Housing', 1)).toEqual({ Gold: 133, Wood: 35 });
-    expect(buildCost('Housing', 2)).toEqual({ Gold: 444, Wood: 118 });
-    expect(buildCost('Housing', 3)).toEqual({ Gold: 954, Wood: 254 });
+  it('Housing: 10 → 35 → 118 → 254 Wood', () => {
+    expect(buildCost('Housing', 0)).toEqual({ Wood: 10 });
+    expect(buildCost('Housing', 1)).toEqual({ Wood: 35 });
+    expect(buildCost('Housing', 2)).toEqual({ Wood: 118 });
+    expect(buildCost('Housing', 3)).toEqual({ Wood: 254 });
   });
-  it('Farm: 50/10 → 282/56 → 1039/207', () => {
-    expect(buildCost('Farm', 0)).toEqual({ Gold: 50, Wood: 10 });
-    expect(buildCost('Farm', 1)).toEqual({ Gold: 282, Wood: 56 });
-    expect(buildCost('Farm', 2)).toEqual({ Gold: 1039, Wood: 207 });
+  it('Farm: 10 → 56 → 207 Wood', () => {
+    expect(buildCost('Farm', 0)).toEqual({ Wood: 10 });
+    expect(buildCost('Farm', 1)).toEqual({ Wood: 56 });
+    expect(buildCost('Farm', 2)).toEqual({ Wood: 207 });
   });
-  it('Sawmill: 50 → 546 → 1967', () => {
-    expect(buildCost('Sawmill', 0)).toEqual({ Gold: 50 });
-    expect(buildCost('Sawmill', 1)).toEqual({ Gold: 546 });
-    expect(buildCost('Sawmill', 2)).toEqual({ Gold: 1967 });
+  it('Sawmill: 20 → 218 → 786 Wood', () => {
+    expect(buildCost('Sawmill', 0)).toEqual({ Wood: 20 });
+    expect(buildCost('Sawmill', 1)).toEqual({ Wood: 218 });
+    expect(buildCost('Sawmill', 2)).toEqual({ Wood: 786 });
   });
   it('FarmLands: 20 → 91 → 298 → 633 → 1103 → 1717', () => {
     const expected = [20, 91, 298, 633, 1103, 1717];
@@ -33,21 +33,18 @@ describe('build time (Docs/04 examples)', () => {
 });
 
 describe('upgrade cost & time (Docs/04 examples)', () => {
-  it('single Farm L1→L2 = 300 Gold + 50 Wood, 30 s', () => {
-    expect(upgradeCost('Farm', 1, 1)).toEqual({ Gold: 300, Wood: 50 });
+  it('single Farm L1→L2 = 50 Wood, 30 s', () => {
+    expect(upgradeCost('Farm', 1, 1)).toEqual({ Wood: 50 });
     expect(upgradeDuration('Farm', 1)).toBe(30);
   });
-  it('single Sawmill L1→L2 = 300 / 30 s, L2→L3 = 450 / 45 s', () => {
-    expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Gold: 300 });
+  it('Sawmill upgrades are free (for now), 30 s then 45 s', () => {
+    expect(upgradeCost('Sawmill', 1, 1)).toEqual({});
     expect(upgradeDuration('Sawmill', 1)).toBe(30);
-    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Gold: 450 });
+    expect(upgradeCost('Sawmill', 1, 2)).toEqual({});
     expect(upgradeDuration('Sawmill', 2)).toBe(45);
   });
-  it('with TWO Sawmill camps, each L1→L2 = 3278 Gold (count multiplier applies)', () => {
-    expect(upgradeCost('Sawmill', 2, 1)).toEqual({ Gold: 3278 });
-  });
-  it('Townhall L1→L2 = 200 Gold + 25 Wood, instant', () => {
-    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Gold: 200, Wood: 25 });
+  it('Townhall L1→L2 = 25 Wood, instant', () => {
+    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 25 });
     expect(upgradeDuration('Townhall', 1)).toBe(0);
   });
 });

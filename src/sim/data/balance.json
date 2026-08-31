@@ -7,7 +7,7 @@
         "y": 2
       },
       "maxLevel": 2,
-      "populationCapacity": 3,
+      "populationCapacity": 0,
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 3,
       "maxWorkersPerLevel": [],
@@ -21,7 +21,6 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Gold": 200,
         "Wood": 25
       },
       "upgradeCostLevelGrowth": 1.5,
@@ -45,10 +44,9 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "buildCost": {
-        "Gold": 75,
-        "Wood": 20
+        "Wood": 10
       },
-      "buildCostMultiplier": 0.75,
+      "buildCostMultiplier": 1.5,
       "buildCostExponentialGrowth": 1.25,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
@@ -85,7 +83,6 @@
         2
       ],
       "buildCost": {
-        "Gold": 50,
         "Wood": 10
       },
       "buildCostMultiplier": 2,
@@ -94,7 +91,6 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Gold": 300,
         "Wood": 50
       },
       "upgradeCostLevelGrowth": 1.5,
@@ -160,16 +156,14 @@
         2
       ],
       "buildCost": {
-        "Gold": 50
+        "Wood": 20
       },
       "buildCostMultiplier": 4,
       "buildCostExponentialGrowth": 1.45,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Gold": 300
-      },
+      "upgradeCost": {},
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5
@@ -225,7 +219,7 @@
       "start": 0,
       "primary": true,
       "countsAs": null,
-      "goldValue": 2
+      "goldValue": 3
     },
     "Berries": {
       "cap": null,

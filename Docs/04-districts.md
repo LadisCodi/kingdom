@@ -9,25 +9,24 @@ visual variant in `[1, VariantCount]` at creation (all currently 1).
 
 | | Townhall | Housing | Farm | FarmLands | Lumber |
 |---|---|---|---|---|---|
-| Role | City heart: houses 3, taxes population into Silver, its level gates everything | Raises max population | Produces Food; works adjacent FarmLands | Cheap filler: drips Food, is worked by Farms | Produces Wood; works connected Trees |
+| Role | City heart: trains villagers, its level gates everything | Houses the population | Produces Food; works adjacent FarmLands | Cheap filler: drips Food, is worked by Farms | Produces Wood; works connected Trees |
 | Buildable | no (city starts with it) | yes | yes | yes | yes |
-| PopulationCapacity | 3 | 2 | 0 | 0 | 0 |
-| SilverPerPopulation | 5 /min | 0 | 0 | 0 | 0 |
+| PopulationCapacity | 0 | 2 | 0 | 0 | 0 |
 | MaxWorkersPerLevel | — | — | [3, 5, 7] | — | [3, 5, 7] |
 | MaxCountPerTownhallLevel | — (n/a) | [2, 4] | [1, 1, 2] | [6, 6, 12] | [1, 2] |
-| BaseGeneration | — (tax only) | — | 5 Food/min | 3 Food/min | 5 Wood/min |
+| BaseGeneration | — | — | 5 Food/min | 3 Food/min | 5 Wood/min |
 | Worked source | — | — | adjacent **FarmLands** districts | — | connected revealed **Trees** cells |
 | YieldPerWorkedTile | — | — | 3 Food/min | — | 3 Wood/min |
 | VaultCapacity | 50 | 0 | 50 | 0 (wallet-direct) | 50 |
 | MaxLevel | 2 | 1 | 2 | 1 | 3 |
-| BuildCost | — | 75 Silver + 20 Wood | 50 Silver + 10 Wood | 20 Wood | 50 Silver |
-| BuildCostMultiplier | 2 | 0.75 | 2 | 2 | 4 |
+| BuildCost | — | 10 Wood | 10 Wood | 20 Wood | 20 Wood |
+| BuildCostMultiplier | 2 | 1.5 | 2 | 2 | 4 |
 | BuildCostExponentialGrowth | 1.2 | 1.25 | 1.5 | 1.2 | 1.45 |
 | BuildCostDistanceGrowth | 1.15 | **1** (off) | **1** (off) | **1** (off) | **1** (off) |
 | BuildDurationSeconds | 0 | 20 | 20 | 10 | 20 |
 | BuildDurationDistrictGrowth | 1.2 | 1.2 | 1.2 | 1.2 | 1.2 |
 | BuildDurationDistanceGrowth | 1.15 | 1.15 | 1.15 | 1.15 | 1.15 |
-| UpgradeCost | 200 Silver + 25 Wood | — | 300 Silver + 50 Wood | — | 300 Silver |
+| UpgradeCost | 25 Wood | — | 50 Wood | — | — (free, for now) |
 | UpgradeCostLevelGrowth | 1.5 | — | 1.5 | — | 1.5 |
 | UpgradeDurationSeconds | **0 (instant)** | — | 30 | — | 30 |
 | UpgradeDurationLevelGrowth | 1.5 | — | 1.5 | — | 1.5 |
@@ -46,8 +45,8 @@ lists is currently unreachable):
 
 | TH level | Housing | Farm | FarmLands | Lumber | Max population | Max army power |
 |---|---|---|---|---|---|---|
-| 1 | 2 | 1 | 6 | 1 | 3 + 2×2 = **7** | 10 |
-| 2 | 4 | 1 | 6 | 2 | 3 + 4×2 = **11** | 20 |
+| 1 | 2 | 1 | 6 | 1 | 0 + 2×2 = **4** | 10 |
+| 2 | 4 | 1 | 6 | 2 | 0 + 4×2 = **8** | 20 |
 
 ## Placement rules (build conditions)
 
@@ -111,12 +110,12 @@ cost       = floor(base × countMult × levelMult)
 
 Build costs by instance (distance-independent — all buildables have distance growth 1):
 
-| Instance | Housing (S/W) | Farm (S/W) | Lumber (S) | FarmLands (W) |
+| Instance | Housing (W) | Farm (W) | Lumber (W) | FarmLands (W) |
 |---|---|---|---|---|
-| 1st | 75 / 20 | 50 / 10 | 50 | 20 |
-| 2nd | 133 / 35 | 282 / 56 | 546 | 91 |
-| 3rd | 444 / 118 | 1039 / 207 | 1967 | 298 |
-| 4th | 954 / 254 | — | — | 633 |
+| 1st | 10 | 10 | 20 | 20 |
+| 2nd | 35 | 56 | 218 | 91 |
+| 3rd | 118 | 207 | 786 | 298 |
+| 4th | 254 | — | — | 633 |
 | 5th | — | — | — | 1103 |
 | 6th | — | — | — | 1717 |
 
@@ -124,11 +123,11 @@ Build times: the 1st Housing 2 tiles out = `round(20 × 1 × 1.15²) = 26 s`; th
 Housing 3 tiles out = `round(20 × 1.2 × 1.15³) = 37 s`; the 1st FarmLands 2 tiles out
 = `round(10 × 1.15²) = 13 s`.
 
-Upgrade costs: with a single Farm, L1→L2 = 300 Silver + 50 Wood, 30 s. A single
-Lumber: L1→L2 = 300 Silver / 30 s, L2→L3 = 450 Silver / 45 s. With **two** Lumber
-camps, each one's L1→L2 jumps to `floor(300 × 4×1×2^1.45) = 3278` Silver (the count
-multiplier applies to upgrades too). Townhall L1→L2 = 200 Silver + 25 Wood,
-**instant** (0 s duration — the queue item completes on the next tick).
+Upgrade costs: with a single Farm, L1→L2 = 50 Wood, 30 s. Lumber upgrades are
+currently **free** (no cost set in the workbook), 30 s for L1→L2 and 45 s for
+L2→L3; the count multiplier still applies to upgrade costs in general — it just
+has nothing to multiply here. Townhall L1→L2 = 25 Wood, **instant** (0 s
+duration — the queue item completes on the next tick).
 
 ## Placement flow (as the player experiences it)
 

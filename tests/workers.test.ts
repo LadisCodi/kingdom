@@ -7,7 +7,7 @@ import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { getWallet, type GameState } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
-import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 // (2,1)'s only adjacent tree is (2,2); (2,3) sits at radius 2.
 const SAWMILL_CELL = { x: 2, y: 1 };
@@ -156,6 +156,7 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('pays the Food cost up front and completes after 20s', () => {
     const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity to train into
     fund(state, { Food: 100 });
     expect(startTraining(state, T0)).toBe('Started'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
@@ -169,6 +170,7 @@ describe('Townhall villager training', () => {
 
   it('taps add 2s of training each and can complete it early', () => {
     const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
     fund(state, { Food: 100 });
     expect(townhallTap(state, T0)).toBe('NoTraining');
     startTraining(state, T0);
@@ -178,10 +180,12 @@ describe('Townhall villager training', () => {
     expect(state.city.population).toBe(1);
   });
 
-  it('is blocked at the housing cap', () => {
+  it('is blocked at the housing cap (the Townhall houses nobody)', () => {
     const state = freshGame();
     fund(state, { Food: 100 });
-    state.city.population = 3; // the Townhall houses exactly 3
+    expect(startTraining(state, T0)).toBe('AtMax'); // no Housing yet
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    state.city.population = 2; // the Housing is full
     expect(startTraining(state, T0)).toBe('AtMax');
   });
 });

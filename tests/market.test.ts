@@ -19,7 +19,7 @@ describe('the sell queue', () => {
     expect(addToSale(state, 'Wood', 4, T0)).toBe('Added');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(6);
     expect(queuedUnits(state)).toBe(4);
-    expect(queuedGoldValue(state)).toBe(4 * 2); // Wood sells for 2
+    expect(queuedGoldValue(state)).toBe(4 * 3); // Wood sells for 3
   });
 
   it('is capped at MARKET.capacity units (adds clamp to the free space)', () => {
@@ -40,11 +40,11 @@ describe('drip selling', () => {
     tickAt(state, T0 + INTERVAL - 1);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
     tickAt(state, T0 + INTERVAL);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(2); // 1 Wood = 2 Gold
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(3); // 1 Wood = 3 Gold
     tickAt(state, T0 + 3 * INTERVAL + 500); // partial interval carries over
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(6);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(9);
     tickAt(state, T0 + 3 * INTERVAL + INTERVAL); // ...and completes on schedule
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(8);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(12);
   });
 
   it('sells in currency order and stops when the queue empties (no banked time)', () => {
@@ -56,16 +56,16 @@ describe('drip selling', () => {
     // Food precedes Wood in the sell order → the first sale pays 1 Gold.
     expect(getWallet(state.city.wallet, 'Gold')).toBe(1);
     tickAt(state, T0 + 2 * INTERVAL);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(3);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(4);
     expect(queuedUnits(state)).toBe(0);
     // A long empty stretch banks nothing: the next add re-anchors the clock.
     tickAt(state, T0 + 100 * INTERVAL);
     fund(state, { Wood: 1 });
     addToSale(state, 'Wood', 1, T0 + 100 * INTERVAL);
     tickAt(state, T0 + 100 * INTERVAL + INTERVAL - 1);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(3); // not yet
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(4); // not yet
     tickAt(state, T0 + 101 * INTERVAL);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(5);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(7);
   });
 
   it('one-call offline replay equals second-by-second ticking', () => {
@@ -103,10 +103,10 @@ describe('drip selling', () => {
     expect(rushSale(state, T0)).toBe('NothingQueued');
     addToSale(state, 'Wood', 12, T0);
     addToSale(state, 'Meat', 2, T0);
-    // 14 units × 5s = 70s remaining → 7 gems; payout 12×2 + 2×3 = 30.
+    // 14 units × 5s = 70s remaining → 7 gems; payout 12×3 + 2×3 = 42.
     expect(rushSaleCost(state, T0)).toBe(7);
     expect(rushSale(state, T0)).toBe('Success');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(30);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(42);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(3);
     expect(queuedUnits(state)).toBe(0);
 

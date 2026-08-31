@@ -91,6 +91,6 @@ describe('effects reach the sim', () => {
     expect(effectiveSellIntervalMs(state)).toBe(4500);
     addToSale(state, 'Wood', 10, T0);
     advanceMarket(state, T0 + 9_000); // two sales at 4.5s
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - 150 + 4);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - 150 + 6);
   });
 });
