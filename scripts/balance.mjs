@@ -45,11 +45,12 @@ const MAP_COLORS = { // conditional-formatting fills, keyed by code
 // The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
-const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
-const TECH_IDS = ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Archery', 'CavalryTraining'];
+const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market'];
+const TECH_IDS =
+  ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining'];
 const UPGRADE_IDS = ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
-const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
+const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Taxes'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const CURRENCY_IDS = ['Gold', 'Food', 'Wood', 'Berries', 'Meat', 'Knowledge', 'Gems'];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food'];
@@ -61,8 +62,7 @@ const SETTINGS = [
   ['tap.collect_cooldown_seconds', 'tap.collectCooldownSeconds'],
   ['training.seconds', 'training.seconds'],
   ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
-  ['market.sell_interval_seconds', 'market.sellIntervalSeconds'],
-  ['market.capacity', 'market.capacity'],
+  ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
@@ -353,7 +353,7 @@ async function importXlsx() {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
-    worker: {}, tap: {}, training: {}, market: {},
+    worker: {}, tap: {}, training: {}, taxes: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
     offlineCapHours: 0,

@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
-import { populationCost, startTraining } from '../src/sim/population';
+import { populationCost, queueTraining } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
-import { addBuilt, freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, T0 } from './helpers';
 
-const BERRY_BUSH = { x: 3, y: 1 }; // outside the fog reveal radius (1)
+const BERRY_BUSH = { x: 0, y: 2 }; // the authored bush below the Townhall
 const WILD_ANIMALS = { x: -2, y: -4 }; // also unrevealed
 
 describe('food-valued currencies', () => {
@@ -38,10 +38,11 @@ describe('food-valued currencies', () => {
     addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity to train into
     state.city.wallet = { Berries: 4, Meat: 2 }; // 10 effective Food
     expect(populationCost(0)).toBe(3);
-    expect(startTraining(state, T0)).toBe('Started'); // pays 3 Berries up front
+    expect(queueTraining(state, T0)).toBe('Queued'); // pays 3 Berries up front
     expect(state.city.wallet).toEqual({ Berries: 1, Meat: 2 });
 
     fund(state, { Gold: 100, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
+    completeTech(state, 'Militia'); // the Swordsman sits behind it now
     expect(trainUnit(state, 'Swordsman')).toBe('Trained'); // 50 Gold + 20 Food
     // 1 Berry + all 7 Meat (21) cover the 20 → 2 Food back as change.
     expect(getWallet(state.city.wallet, 'Berries')).toBe(0);

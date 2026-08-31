@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { addToSale } from '../src/sim/market';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
-import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const FOREST = { x: 2, y: 2 };
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -22,7 +21,7 @@ const workingGame = () => {
   return state;
 };
 
-describe('save v7 round-trip', () => {
+describe('save round-trip', () => {
   it('restores wallets, districts, workers, harvest state, fog, army', () => {
     const state = workingGame();
     const t = T0 + 60_000;
@@ -49,14 +48,14 @@ describe('save v7 round-trip', () => {
     ).toBeNull();
   });
 
-  it('offline replay: an aged save drip-sells the market queue and pays deliveries', () => {
+  it('offline replay: an aged save accrues housing taxes and pays deliveries', () => {
     const state = workingGame();
-    const saveAt = T0 + 30_000;
-    expect(addToSale(state, 'Wood', 20, saveAt)).toBe('Added'); // 20 × 3 Gold
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // 2 of the 4 villagers move in
+    const saveAt = T0 + 30_000; // tax clock already anchored here by the ticks
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = getWallet(state.city.wallet, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 20 * 3); // queue sold out
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 40); // 2 housed × 2/min × 10 min
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 

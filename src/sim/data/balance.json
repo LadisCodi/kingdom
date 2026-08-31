@@ -167,6 +167,34 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5
+    },
+    "Market": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacity": 0,
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "buildCost": {
+        "Wood": 40
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 30,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5
     }
   },
   "harvest": {
@@ -197,6 +225,13 @@
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 180
+    },
+    "Taxes": {
+      "yieldPerTap": 2,
+      "yieldPerWorker": 0,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 60,
+      "respawnSeconds": 0
     }
   },
   "currencies": {
@@ -319,6 +354,15 @@
         "Forestry"
       ]
     },
+    "Militia": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "Forestry"
+      ]
+    },
     "Archery": {
       "cost": {
         "Gold": 150,
@@ -366,14 +410,14 @@
       "costBase": 100,
       "costGrowth": 2,
       "maxLevel": 4,
-      "effectPerLevel": 25,
+      "effectPerLevel": 0.05,
       "requiredTech": "Commerce"
     },
     "TradeRoutes": {
       "costBase": 150,
       "costGrowth": 2,
       "maxLevel": 5,
-      "effectPerLevel": 0.5,
+      "effectPerLevel": 0.1,
       "requiredTech": "Commerce"
     }
   },
@@ -394,9 +438,8 @@
     "seconds": 20,
     "tapBoostSeconds": 2
   },
-  "market": {
-    "sellIntervalSeconds": 5,
-    "capacity": 50
+  "taxes": {
+    "goldPerPopulationPerMinute": 2
   },
   "fog": {
     "silverPerTap": 0,

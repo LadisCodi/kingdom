@@ -75,6 +75,8 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   Crops: { currencyId: 'Food', ...balance.harvest.Crops },
   Berries: { currencyId: 'Berries', ...balance.harvest.Berries },
   Meat: { currencyId: 'Meat', ...balance.harvest.Meat },
+  // A lived-in house is a gold cell: tap it for a tax bonus.
+  Taxes: { currencyId: 'Gold', ...balance.harvest.Taxes },
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -87,8 +89,8 @@ export const TAP = balance.tap;
 // Villager training at the Townhall: duration + tap boost (upgradeable later).
 export const TRAINING = balance.training;
 
-// The Market's drip sale: one unit per interval, queue capacity (both upgradeable).
-export const MARKET = balance.market;
+// Passive taxes: gold per housed villager per minute (boostable by TradeRoutes).
+export const TAXES = balance.taxes;
 
 export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
@@ -144,7 +146,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     id: 'Townhall',
     name: 'Townhall',
     description:
-      'Heart of the city. Houses 3 and trains new villagers — tap it to speed training up.',
+      'Heart of the city. Trains new villagers — tap it to speed training up.',
     glyph: '🏛️',
     sprite: 'townhall',
     buildable: false,
@@ -154,9 +156,10 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Housing',
     name: 'Housing',
-    description: 'Provides homes — raises max population.',
+    description: 'Provides homes. Residents pay taxes in Gold — tap the house for a bonus.',
     glyph: '🏠',
     sprite: 'housing',
+    providesHarvestSource: 'Taxes',
     ...balance.districts.Housing,
   },
   Farm: {
@@ -192,9 +195,20 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     requiredTech: 'Forestry',
     ...balance.districts.Sawmill,
   },
+  Market: {
+    ...rules,
+    id: 'Market',
+    name: 'Market',
+    description: 'Trade surplus goods for Gold — tap it to open the trade screen.',
+    glyph: '🏪',
+    sprite: 'market',
+    requiredTech: 'Commerce',
+    ...balance.districts.Market,
+  },
 };
 
-export const BUILDABLE_DISTRICTS: DistrictId[] = ['Housing', 'Farm', 'FarmLands', 'Sawmill'];
+export const BUILDABLE_DISTRICTS: DistrictId[] =
+  ['Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market'];
 
 // ------------------------------------------------------------------ features
 
@@ -296,24 +310,31 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🤝',
     node: { x: 0, y: 2 },
   }, balance.technologies.Commerce),
+  Militia: tech({
+    id: 'Militia',
+    name: 'Militia',
+    description: 'Unlocks the Swordsman — a sturdy front line for your army.',
+    glyph: '🗡️',
+    node: { x: 1, y: 1 },
+  }, balance.technologies.Militia),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
     description: 'Unlocks the Archer — ranged support for your army.',
     glyph: '🏹',
-    node: { x: 1, y: 0 },
+    node: { x: 2, y: 0 },
   }, balance.technologies.Archery),
   CavalryTraining: tech({
     id: 'CavalryTraining',
     name: 'Cavalry Training',
     description: 'Unlocks the Cavalry — fast, hard-hitting mounted units.',
     glyph: '🐎',
-    node: { x: 2, y: 1 },
+    node: { x: 3, y: 1 },
   }, balance.technologies.CavalryTraining),
 };
 
 export const TECH_ORDER: TechId[] =
-  ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Archery', 'CavalryTraining'];
+  ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining'];
 
 // Slots & gem pricing for extra slots.
 export const RESEARCH_SETTINGS = balance.research;
@@ -353,11 +374,11 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   }, balance.upgrades.WorkerLoad),
   MarketStall: upgrade({
     id: 'MarketStall', name: 'Market Stall', glyph: '🛒',
-    description: '+25 Market queue capacity',
+    description: '+5% Market sale prices',
   }, balance.upgrades.MarketStall),
   TradeRoutes: upgrade({
     id: 'TradeRoutes', name: 'Trade Routes', glyph: '⛵',
-    description: '−0.5s between Market sales',
+    description: '+10% tax income',
   }, balance.upgrades.TradeRoutes),
 };
 
@@ -397,7 +418,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
     description: 'Sturdy front line.',
     glyph: '⚔️',
     tags: ['Melee'],
-    requiredTech: null,
+    requiredTech: 'Militia',
     ...balance.units.Swordsman,
   },
   Cavalry: {
@@ -414,4 +435,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 9; // v8 saves predate feature respawning; discarded
+export const SAVE_VERSION = 10; // v9 saves predate the tax economy; discarded

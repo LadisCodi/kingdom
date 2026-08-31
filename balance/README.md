@@ -17,12 +17,12 @@ the script.
 |---|---|
 | `Districts` | One row per building: footprint, levels, workers, costs, times, growth exponents |
 | `Units` | Army units: power, recruit costs |
-| `Harvest` | Resource cells: yield per tap, taps to exhaust, recovery |
-| `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market sell price; blank = not sellable) |
+| `Harvest` | Resource cells (incl. `Taxes` = tapping a lived-in house): yield per tap, taps to exhaust, recovery |
+| `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market instant-sell price; blank = not sellable) |
 | `Technologies` | One-time researches: costs, duration, `requires` (comma-separated tech ids) |
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `FogRings` | Fog reveal cost by distance ring |
-| `Settings` | Everything singleton: worker speed, collect cooldown, training time, market interval/capacity, offline cap, population costs… |
+| `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate (`taxes.gold_per_population_per_minute`), offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |
 
 Format notes:

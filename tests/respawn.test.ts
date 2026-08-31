@@ -8,7 +8,7 @@ import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, parseCoordKey, type Coord, type GameState } from '../src/sim/state';
 import { freshGame, map, reveal, T0, tickAt } from './helpers';
 
-const ORIGIN = { x: 3, y: 1 }; // authored BerryBush
+const ORIGIN = { x: 0, y: 2 }; // authored BerryBush (below the Townhall)
 const RESPAWN_MS = HARVEST.Berries.respawnSeconds * 1000; // 120s
 
 const chebyshev = (a: Coord, b: Coord) =>
@@ -59,10 +59,11 @@ describe('feature respawning', () => {
 
   it('with no valid neighbor left, the feature is removed for good', () => {
     const state = freshGame();
-    // Block every neighbor of the origin (the Trees at (2,2) already block one).
+    // Block every open neighbor of the origin (the Townhall footprint and
+    // the authored Trees at (1,3) already block the other three).
     for (const c of [
-      { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 2, y: 1 },
-      { x: 4, y: 1 }, { x: 3, y: 2 }, { x: 4, y: 2 },
+      { x: -1, y: 1 }, { x: -1, y: 2 }, { x: 1, y: 2 },
+      { x: -1, y: 3 }, { x: 0, y: 3 },
     ]) {
       state.features[coordKey(c)] = 'Trees';
     }

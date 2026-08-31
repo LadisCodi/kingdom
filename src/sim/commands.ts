@@ -11,8 +11,7 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { advanceMarket } from './market';
-import { advanceTraining } from './population';
+import { advanceCityLife } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch } from './research';
 import { canAfford, effectiveAmount, pay, refund } from './wallet';
@@ -186,12 +185,13 @@ export function changeWorkers(
 
 export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining';
 
-/** Tap the Townhall: add tapBoostSeconds of progress to the villager in
- *  training (completing it early when the boost covers the remainder). */
+/** Tap the Townhall: add tapBoostSeconds of progress to the villager
+ *  currently in training (completing it early when the boost covers the
+ *  remainder — the next queued villager then starts immediately). */
 export function townhallTap(state: GameState, now: number): TownhallTapResult {
   if (state.city.training === null) return 'NoTraining';
   state.city.training.startedAt -= TRAINING.tapBoostSeconds * 1000;
-  return advanceTraining(state, now) ? 'TrainingComplete' : 'Boosted';
+  return advanceCityLife(state, now).trained > 0 ? 'TrainingComplete' : 'Boosted';
 }
 
 // ------------------------------------------------------------------- advance
@@ -200,7 +200,7 @@ export interface AdvanceResult {
   deposits: DepositEvent[];
   completedItems: QueueItem[];
   completedResearch: TechId[];
-  goldEarned: number; // Market drip sales in this window
+  goldEarned: number; // passive tax gold accrued in this window
   trainedPopulation: number; // villagers who finished training
 }
 
@@ -232,12 +232,18 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
     if (tNext > toTime) break;
     advanceRespawns(state, map, tNext);
     result.deposits.push(...advanceWorkers(state, map, tNext));
+    // Taxes/training up to the cursor too: a Housing completing mid-absence
+    // starts collecting taxes at its completion time, not at load time.
+    const life = advanceCityLife(state, tNext);
+    result.goldEarned += life.gold;
+    result.trainedPopulation += life.trained;
     cursor = tNext;
   }
   advanceRespawns(state, map, toTime);
   result.deposits.push(...advanceWorkers(state, map, toTime));
-  result.goldEarned = advanceMarket(state, toTime);
-  if (advanceTraining(state, toTime)) result.trainedPopulation += 1;
+  const life = advanceCityLife(state, toTime);
+  result.goldEarned += life.gold;
+  result.trainedPopulation += life.trained;
   result.completedResearch.push(...advanceResearch(state, toTime));
   state.lastAdvance = toTime;
   return result;

@@ -3,7 +3,7 @@
 // read these instead of raw balance values, so each upgrade level is applied
 // in exactly one place.
 
-import { MARKET, TAP, UPGRADES, type HarvestSpec } from './data/definitions';
+import { TAP, TAXES, UPGRADES, type HarvestSpec } from './data/definitions';
 import type { GameState, UpgradeId } from './state';
 import { isTechComplete } from './research';
 import { canAfford, pay } from './wallet';
@@ -46,10 +46,10 @@ export const effectiveCollectCooldownMs = (state: GameState): number =>
 export const effectiveWorkerYield = (state: GameState, spec: HarvestSpec): number =>
   spec.yieldPerWorker + effect(state, 'WorkerLoad');
 
-/** Market queue capacity (MarketStall). */
-export const effectiveMarketCapacity = (state: GameState): number =>
-  MARKET.capacity + effect(state, 'MarketStall');
+/** Multiplier on Market sale prices (MarketStall: +5%/level). */
+export const effectiveSalePriceMultiplier = (state: GameState): number =>
+  1 + effect(state, 'MarketStall');
 
-/** Time between Market sales, ms (TradeRoutes; floor 0.5s). */
-export const effectiveSellIntervalMs = (state: GameState): number =>
-  Math.max(500, (MARKET.sellIntervalSeconds - effect(state, 'TradeRoutes')) * 1000);
+/** Tax gold per housed villager per minute (TradeRoutes: +10%/level). */
+export const effectiveTaxRate = (state: GameState): number =>
+  TAXES.goldPerPopulationPerMinute * (1 + effect(state, 'TradeRoutes'));

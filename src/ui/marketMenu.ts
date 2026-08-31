@@ -1,14 +1,10 @@
-// Market overlay: queue resources and they drip-sell for Gold, one unit per
-// interval. Selling is ONE-WAY — queued units can't be taken back, only sold
-// (or gem-rushed). An amount selector at the top decides what each row's
-// Sell button queues. Below the rows: the live sale queue (next-unit timer,
-// one card per queued resource) and the gem rush.
+// Market trade screen (opened by tapping the built Market district):
+// pick an amount, sell instantly for Gold. MarketStall upgrades raise the
+// prices; taxes remain the city's idle income — this is the surplus outlet.
 
 import { icon, type Game } from '../game';
-import { CURRENCIES, MARKET } from '../sim/data/definitions';
-import {
-  nextSaleInSeconds, queuedGoldValue, queuedUnits, rushSaleCost, SELLABLE,
-} from '../sim/market';
+import { SELLABLE } from '../sim/market';
+import { effectiveSalePriceMultiplier } from '../sim/upgrades';
 import { getWallet } from '../sim/state';
 import { button, el } from './format';
 
@@ -24,88 +20,42 @@ const AMOUNTS: Array<{ label: string; value: number | 'All' }> = [
 
 export function renderMarketMenu(game: Game): HTMLElement {
   const menu = el('div', { class: 'menu' });
-  const queued = queuedUnits(game.state);
-  const full = queued >= MARKET.capacity;
   menu.append(el('h2', {}, 'Market'));
+  const bonus = Math.round((effectiveSalePriceMultiplier(game.state) - 1) * 100);
   menu.append(el('p', { class: 'muted' },
-    `Sells 1 unit every ${MARKET.sellIntervalSeconds}s, even while you are away. ` +
-    'Once queued, goods cannot be taken back.'));
+    'Trade surplus goods for Gold — sales are instant.' +
+    (bonus > 0 ? ` Market Stall bonus: +${bonus}% prices.` : '')));
 
-  // Order usage vs capacity.
-  const capBar = el('div', { class: 'progress' },
-    el('div', { class: 'fill' }),
-    el('div', { class: 'label' }, `${queued}/${MARKET.capacity} capacity`));
-  (capBar.querySelector('.fill') as HTMLElement).style.width =
-    `${(queued / MARKET.capacity) * 100}%`;
-  menu.append(capBar);
-
-  // Amount selector: what each row's Sell button queues.
+  // Amount selector: what each row's Sell button trades.
   const selector = el('div', { class: 'amount-row' }, el('span', { class: 'muted' }, 'Sell'));
   for (const a of AMOUNTS) {
-    const b = button(a.label, () => {
+    selector.append(button(a.label, () => {
       sellAmount = a.value;
       game.notify(); // re-render with the new selection
-    }, sellAmount === a.value ? 'selected' : '');
-    selector.append(b);
+    }, sellAmount === a.value ? 'selected' : ''));
   }
   menu.append(selector);
 
   const list = el('div', { class: 'menu-list' });
   for (const c of SELLABLE) {
     const have = getWallet(game.state.city.wallet, c);
-    const inQueue = getWallet(game.state.market.queue, c);
-    const value = CURRENCIES[c].goldValue!;
+    const amount = Math.min(sellAmount === 'All' ? have : sellAmount, have);
+    const payout = game.marketPayout(c, amount);
 
-    const amount = sellAmount === 'All' ? have : sellAmount;
-    const sellBtn = button('Sell', () => game.doAddToSale(c, amount));
-    sellBtn.disabled = have === 0 || amount === 0 || full;
+    const sellBtn = button('Sell', () => game.doSell(c, amount));
+    sellBtn.disabled = amount === 0;
 
-    list.append(el('div', { class: 'menu-row' },
+    list.append(el('div', { class: `menu-row${have === 0 ? ' disabled' : ''}` },
       el('span', { class: 'icon' }, icon(c)),
       el('div', { class: 'body' },
-        el('div', { class: 'name' }, `${c} — ${value} ${icon('Gold')} each`),
-        el('div', { class: 'desc' }, `You have ${have} · selling ${inQueue}`)),
+        el('div', { class: 'name' },
+          `${c} — ${game.marketPayout(c, 1)} ${icon('Gold')} each`),
+        el('div', { class: 'desc' },
+          `You have ${have}` +
+          (amount > 0 ? ` · selling ${amount} pays ${payout} ${icon('Gold')}` : ''))),
       el('div', { class: 'meta' }, sellBtn),
     ));
   }
   menu.append(list);
-
-  // ------------------------------------------------ the live sale queue
-  menu.append(el('h2', { style: 'margin-top:16px' }, 'Selling now'));
-  if (queued === 0) {
-    menu.append(el('p', { class: 'muted' }, 'Nothing queued — add resources above.'));
-    return menu;
-  }
-
-  const now = game.now();
-  const wait = nextSaleInSeconds(game.state, now)!;
-  const progress = 1 - wait / MARKET.sellIntervalSeconds;
-  const bar = el('div', { class: 'progress' },
-    el('div', { class: 'fill' }),
-    el('div', { class: 'label' }, `next unit in ${Math.ceil(wait)}s`));
-  (bar.querySelector('.fill') as HTMLElement).style.width =
-    `${Math.min(100, Math.max(0, progress * 100))}%`;
-  menu.append(bar);
-
-  // One card per queued resource, in sell order.
-  const cards = el('div', { class: 'queue-cards' });
-  for (const c of SELLABLE) {
-    const n = getWallet(game.state.market.queue, c);
-    if (n === 0) continue;
-    cards.append(el('div', { class: 'queue-card' },
-      el('span', { class: 'big' }, icon(c)),
-      el('span', {}, `×${n}`),
-      el('span', { class: 'muted' }, `${n * CURRENCIES[c].goldValue!} ${icon('Gold')}`)));
-  }
-  menu.append(cards);
-
-  // Gem rush: sell the whole queue instantly.
-  const rushBtn = button('Sell now', () => game.doRushSale());
-  rushBtn.disabled = getWallet(game.state.player.wallet, 'Gems') < rushSaleCost(game.state, now);
-  menu.append(el('div', { class: 'action-row' },
-    el('span', { class: 'info' },
-      `Sell everything now — ${rushSaleCost(game.state, now)} ${icon('Gems')} ` +
-      `(+${queuedGoldValue(game.state)} ${icon('Gold')})`),
-    rushBtn));
   return menu;
 }

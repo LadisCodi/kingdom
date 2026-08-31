@@ -18,9 +18,10 @@
 
 ## Resolved decisions (from design review, 2026-08-17)
 
-> **Since removed from the web build:** the population tax is gone — money
-> (now Gold, merged with Silver) comes from drip-selling resources at the
-> Market, and the Townhall trains villagers over time instead.
+> **Since reworked in the web build:** money (now Gold, merged with Silver)
+> comes from HOUSING TAXES — housed villagers pay passively, and a lived-in
+> house is itself a tappable gold cell (see
+> `economy-taxes-and-market.md`). The Townhall trains villagers over time.
 
 1. **Townhall** keeps generating Silver, but via a **visible cycle timer** paying
    directly to the wallet (no internal warehouse). **Tapping the Townhall adds

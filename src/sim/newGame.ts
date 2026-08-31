@@ -22,6 +22,7 @@ export function newGame(map: MapData, now: number): GameState {
       districts: [],
       queue: [],
       training: null,
+      lastTaxAt: now,
     },
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
@@ -37,7 +38,6 @@ export function newGame(map: MapData, now: number): GameState {
     army: [],
     research: { completed: [], active: [], slotsPurchased: 0 },
     upgrades: {},
-    market: { queue: {}, lastSaleAt: now },
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,

@@ -1,15 +1,15 @@
 // Upgrades: instant gold purchases, the cost curve, tech-parent gating, and
 // the effective-value helpers actually changing sim behavior.
 import { describe, expect, it } from 'vitest';
-import { MARKET, TAP, UPGRADES } from '../src/sim/data/definitions';
+import { TAP, UPGRADES } from '../src/sim/data/definitions';
 import { collectTap } from '../src/sim/harvest';
-import { addToSale, advanceMarket, queuedUnits } from '../src/sim/market';
+import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
 import {
-  buyUpgrade, effectiveCollectCooldownMs, effectiveMarketCapacity,
-  effectiveSellIntervalMs, upgradeCost, upgradeLevel,
+  buyUpgrade, effectiveCollectCooldownMs, effectiveSalePriceMultiplier,
+  effectiveTaxRate, upgradeCost, upgradeLevel,
 } from '../src/sim/upgrades';
-import { completeTech, freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
 
 const FOREST = { x: 2, y: 2 }; // seed-revealed Trees cell
 
@@ -73,24 +73,27 @@ describe('effects reach the sim', () => {
     expect(collectTap(state, map, FOREST, T0 + baseMs - 50)).toBe('Harvested'); // base would still be cooling
   });
 
-  it('MarketStall raises the queue capacity', () => {
+  it('MarketStall raises the Market sale prices', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500 });
+    addBuilt(state, 'Market', { x: 2, y: 0 });
+    fund(state, { Gold: 1000, Wood: 100 });
     completeTech(state, 'Commerce');
-    buyUpgrade(state, 'MarketStall'); // +25
-    expect(effectiveMarketCapacity(state)).toBe(MARKET.capacity + 25);
-    addToSale(state, 'Wood', 500, T0);
-    expect(queuedUnits(state)).toBe(MARKET.capacity + 25);
+    expect(salePayout(state, 'Wood', 100)).toBe(300);
+    buyUpgrade(state, 'MarketStall'); // +5%
+    expect(effectiveSalePriceMultiplier(state)).toBeCloseTo(1.05);
+    expect(sellGoods(state, 'Wood', 100).gold).toBe(315);
   });
 
-  it('TradeRoutes speeds up the drip', () => {
+  it('TradeRoutes boosts the passive tax rate', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 10 });
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    state.city.population = 1;
+    fund(state, { Gold: 1000 });
     completeTech(state, 'Commerce');
-    buyUpgrade(state, 'TradeRoutes'); // 5s → 4.5s
-    expect(effectiveSellIntervalMs(state)).toBe(4500);
-    addToSale(state, 'Wood', 10, T0);
-    advanceMarket(state, T0 + 9_000); // two sales at 4.5s
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - 150 + 6);
+    expect(effectiveTaxRate(state)).toBe(2);
+    buyUpgrade(state, 'TradeRoutes'); // +10% → 2.2/min
+    expect(effectiveTaxRate(state)).toBeCloseTo(2.2);
+    tickAt(state, T0 + 301_000); // ~5 min × 2.2/min → 11 gold (10 unboosted)
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - 150 + 11);
   });
 });

@@ -1,7 +1,8 @@
 // Resource cells: tapping, exhaustion, lazy recovery
 // (Docs/features/harvest-loop.md §1, §4).
 
-import { FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { residentsOf } from './population';
 import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import {
@@ -13,9 +14,12 @@ import {
 export function harvestSourceAt(state: GameState, cell: Coord): HarvestSourceId | null {
   const district = districtAt(state, cell);
   if (district) {
-    // A built crop plot (FarmLands) IS a Crops cell; any other district blocks.
-    if (district.definitionId === 'FarmLands' && district.state === 'Built') return 'Crops';
-    return null;
+    // Some districts ARE resource cells: a built crop plot (FarmLands) is a
+    // Crops cell; a built house with residents is a Taxes (gold) cell.
+    const provides = DISTRICTS[district.definitionId].providesHarvestSource;
+    if (provides === null || district.state !== 'Built') return null;
+    if (provides === 'Taxes' && residentsOf(state, district) === 0) return null;
+    return provides;
   }
   const feature = state.features[coordKey(cell)];
   if (feature) return FEATURES[feature].source;

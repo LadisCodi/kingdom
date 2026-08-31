@@ -18,9 +18,10 @@ import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { addToSale, queuedGoldValue, rushSale } from './sim/market';
+import { salePayout, sellGoods } from './sim/market';
 import {
-  availableWorkers, maxPopulation, populationCost, startTraining, trainingCompletesAt,
+  availableWorkers, maxPopulation, populationCost, queuedTraining, queueTraining,
+  residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { buySlot, startTech } from './sim/research';
 import { buyUpgrade, effectiveTapYield, effectiveWorkerYield } from './sim/upgrades';
@@ -148,6 +149,11 @@ export class Game {
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
+        // Market: tapping the built Market opens its trade screen.
+        if (district?.definitionId === 'Market' && district.state === 'Built') {
+          this.setOverlay('market');
+          return true;
+        }
         // Townhall: tapping adds cycle progress (and opens/keeps its card).
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
           const tap = townhallTap(this.state, this.now());
@@ -240,27 +246,20 @@ export class Game {
 
   // -------------------------------------------------------------- UI commands
 
-  doAddToSale(c: CurrencyId, amount: number): void {
-    const result = addToSale(this.state, c, amount, this.now());
-    if (result === 'MarketFull') this.toast('The market stall is full');
-    this.notify();
-  }
-
-  doRushSale(): void {
-    const payout = queuedGoldValue(this.state);
-    const result = rushSale(this.state, this.now());
-    if (result === 'NotEnoughGems') this.shake(['Gems']);
-    else if (result === 'Success') {
-      this.floaters.add(townhall(this.state).location, `+${payout} ${icon('Gold')}`);
+  doSell(c: CurrencyId, amount: number): void {
+    const { result, gold } = sellGoods(this.state, c, amount);
+    if (result === 'Sold') {
+      const market = this.state.city.districts.find(
+        (d) => d.definitionId === 'Market' && d.state === 'Built');
+      if (market) this.floaters.add(market.location, `+${gold} ${icon('Gold')}`);
     }
     this.notify();
   }
 
-  doStartTraining(): void {
-    const result = startTraining(this.state, this.now());
+  doQueueTraining(): void {
+    const result = queueTraining(this.state, this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
     else if (result === 'AtMax') this.toast('Population at max — build more Housing');
-    else if (result === 'AlreadyTraining') this.toast('A villager is already in training');
     this.notify();
   }
 
@@ -473,18 +472,29 @@ export class Game {
 
   /** Villager-training snapshot for the Townhall card & map bar. */
   trainingInfo(): {
-    active: boolean; progress: number; remainingSeconds: number; cost: number; atMax: boolean;
+    active: boolean; progress: number; remainingSeconds: number; queued: number;
+    cost: number; atMax: boolean;
   } {
     const now = this.now();
     const completesAt = trainingCompletesAt(this.state);
     const total = TRAINING.seconds * 1000;
+    const queued = queuedTraining(this.state);
     return {
       active: completesAt !== null,
       progress: completesAt === null ? 0 : Math.min(1, Math.max(0, 1 - (completesAt - now) / total)),
       remainingSeconds: completesAt === null ? 0 : Math.max(0, (completesAt - now) / 1000),
-      cost: populationCost(this.state.city.population),
-      atMax: this.state.city.population >= maxPopulation(this.state),
+      queued,
+      cost: populationCost(this.state.city.population + queued),
+      atMax: this.state.city.population + queued >= maxPopulation(this.state),
     };
+  }
+
+  residentsIn(district: District): number {
+    return residentsOf(this.state, district);
+  }
+
+  marketPayout(c: CurrencyId, amount: number): number {
+    return salePayout(this.state, c, amount);
   }
 
   handleTap(sx: number, sy: number): void {

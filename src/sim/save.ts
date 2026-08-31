@@ -88,12 +88,10 @@ export function serialize(state: GameState, now: number): SaveFile {
             QueueKinds: state.city.queue.map((q) => q.kind),
             TrainingStartedAt: state.city.training === null
               ? null : iso(state.city.training.startedAt),
+            TrainingQueued: state.city.training?.queued ?? 0,
+            LastTaxAt: iso(state.city.lastTaxAt),
           },
         ],
-      },
-      'kingdom.market': {
-        Queue: state.market.queue,
-        LastSaleAt: iso(state.market.lastSaleAt),
       },
       'kingdom.kingdoms': {
         MaxBuilders: state.kingdom.maxBuilders,
@@ -198,15 +196,8 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
       }),
     );
     state.city.training = cityDto.TrainingStartedAt
-      ? { startedAt: ms(cityDto.TrainingStartedAt) } : null;
-  }
-
-  const marketDto = modules['kingdom.market'];
-  if (marketDto) {
-    state.market = {
-      queue: { ...(marketDto.Queue as Wallet) },
-      lastSaleAt: marketDto.LastSaleAt ? ms(marketDto.LastSaleAt) : lastSaved,
-    };
+      ? { queued: cityDto.TrainingQueued ?? 1, startedAt: ms(cityDto.TrainingStartedAt) } : null;
+    state.city.lastTaxAt = cityDto.LastTaxAt ? ms(cityDto.LastTaxAt) : lastSaved;
   }
 
   const kingdomDto = modules['kingdom.kingdoms'];
@@ -307,7 +298,7 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
       if (w.stateUntil !== null) w.stateUntil += gap;
     }
     if (state.city.training) state.city.training.startedAt += gap;
-    state.market.lastSaleAt += gap;
+    state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     advance(state, map, now); // completes remaining queue work; workers resume at now

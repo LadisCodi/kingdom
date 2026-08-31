@@ -8,13 +8,14 @@ import { DISTRICTS } from './data/definitions';
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Knowledge' | 'Gems'
   | 'Berries' | 'Meat'; // food-valued (see CurrencyDef.countsAs)
-export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
+export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals';
-export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat';
+export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Taxes';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
 export type TechId =
-  'Agriculture' | 'Irrigation' | 'Forestry' | 'Commerce' | 'Archery' | 'CavalryTraining';
+  | 'Agriculture' | 'Irrigation' | 'Forestry' | 'Commerce'
+  | 'Militia' | 'Archery' | 'CavalryTraining';
 export type UpgradeId = 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes';
 
 export interface Coord { x: number; y: number }
@@ -63,8 +64,11 @@ export interface City {
   population: number;
   districts: District[];
   queue: QueueItem[];
-  /** Villager in training at the Townhall (one at a time); null = idle. */
-  training: { startedAt: number } | null;
+  /** Villager training queue at the Townhall: `queued` villagers are paid
+   *  for; the current one started at `startedAt`, the rest follow. */
+  training: { queued: number; startedAt: number } | null;
+  /** Epoch ms anchor for passive tax gold (whole units only). */
+  lastTaxAt: number;
 }
 
 /** Per-resource-cell harvest state. Absent entry = fresh cell (0 taps). */
@@ -124,11 +128,6 @@ export interface GameState {
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   upgrades: Partial<Record<UpgradeId, number>>;
-  /** The Market's sell queue: units drip-sell for Gold, one per interval. */
-  market: {
-    queue: Wallet; // units up for sale (escrowed out of the city wallet)
-    lastSaleAt: number; // epoch ms anchor; advances only by time paid out
-  };
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
   /** Epoch ms of the last successful player collect tap (cooldown anchor).

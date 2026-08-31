@@ -29,28 +29,30 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   if (district.state === 'UnderConstruction') {
     panel.append(el('div', { class: 'muted' }, 'Under construction.'));
   } else {
-    // Townhall: villager training (tap-boostable).
+    // Townhall: the villager-training queue (tap-boostable).
     if (district.definitionId === 'Townhall') {
       const training = game.trainingInfo();
       if (training.active) {
         const bar = el('div', { class: 'progress' },
           el('div', { class: 'fill' }),
-          el('div', { class: 'label' }, `+1 👥 in ${Math.ceil(training.remainingSeconds)}s`));
+          el('div', { class: 'label' },
+            `+1 👥 in ${Math.ceil(training.remainingSeconds)}s` +
+            (training.queued > 1 ? ` · ${training.queued - 1} more queued` : '')));
         (bar.querySelector('.fill') as HTMLElement).style.width = `${training.progress * 100}%`;
         panel.append(bar);
         panel.append(el('div', { class: 'muted' },
           `Tap the Townhall to add +${TRAINING.tapBoostSeconds}s of training per tap.`));
-      } else {
-        const trainBtn = button('Train', () => game.doStartTraining());
-        const affordable = canAfford(game.state.city.wallet, { Food: training.cost });
-        trainBtn.disabled = training.atMax || !affordable;
-        panel.append(el('div', { class: 'action-row' },
-          el('span', { class: `info${training.atMax || affordable ? '' : ' blocked'}` },
-            training.atMax
-              ? 'Population at max — build more Housing'
-              : `Train villager — ${training.cost} ${icon('Food')} (${formatDuration(TRAINING.seconds)})`),
-          trainBtn));
       }
+      // Queue the next villager — allowed while one is already training.
+      const trainBtn = button('Train', () => game.doQueueTraining());
+      const affordable = canAfford(game.state.city.wallet, { Food: training.cost });
+      trainBtn.disabled = training.atMax || !affordable;
+      panel.append(el('div', { class: 'action-row' },
+        el('span', { class: `info${training.atMax || affordable ? '' : ' blocked'}` },
+          training.atMax
+            ? 'Population at max — build more Housing'
+            : `Train villager — ${training.cost} ${icon('Food')} (${formatDuration(TRAINING.seconds)})`),
+        trainBtn));
     }
 
     // Crop plot: it's a resource cell.
@@ -60,10 +62,19 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         `${HARVEST.Crops.tapsToExhaust} taps, recovers in ${HARVEST.Crops.recoverySeconds}s.`));
     }
 
+    // Housing: residents (auto-assigned) pay taxes; the house is a gold cell.
     if (def.populationCapacity > 0) {
+      const residents = game.residentsIn(district);
       panel.append(el('div', { class: 'rows' },
         el('div', { class: 'row' },
-          el('span', {}, '👥 housing'), el('span', {}, `+${def.populationCapacity}`))));
+          el('span', {}, '👥 residents'),
+          el('span', {}, `${residents}/${def.populationCapacity}`))));
+      if (def.providesHarvestSource === 'Taxes') {
+        panel.append(el('div', { class: 'muted' }, residents === 0
+          ? 'Nobody lives here yet — train villagers at the Townhall.'
+          : `Tap for +${effectiveTapYield(game.state, HARVEST.Taxes)} ${icon('Gold')} — exhausts after ` +
+            `${HARVEST.Taxes.tapsToExhaust} taps, recovers in ${HARVEST.Taxes.recoverySeconds}s.`));
+      }
     }
 
     // Worker buildings: area, workers ±, live worker states.

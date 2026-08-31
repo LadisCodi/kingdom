@@ -2,7 +2,7 @@
 // plus Townhall villager training that shares the unified advance.
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild, townhallTap } from '../src/sim/commands';
-import { startTraining } from '../src/sim/population';
+import { populationCost, queueTraining } from '../src/sim/population';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { getWallet, type GameState } from '../src/sim/state';
@@ -154,39 +154,51 @@ describe('the harvest cycle', () => {
 });
 
 describe('Townhall villager training', () => {
-  it('pays the Food cost up front and completes after 20s', () => {
+  it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity to train into
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity 2 to train into
     fund(state, { Food: 100 });
-    expect(startTraining(state, T0)).toBe('Started'); // populationCost(0) = 3
+    expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
-    expect(startTraining(state, T0)).toBe('AlreadyTraining');
+    expect(queueTraining(state, T0)).toBe('Queued'); // second one queues behind
+    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3 - populationCost(1));
+    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);
     tickAt(state, T0 + 20_000);
     expect(state.city.population).toBe(1);
+    tickAt(state, T0 + 39_000);
+    expect(state.city.population).toBe(1);
+    tickAt(state, T0 + 40_000);
+    expect(state.city.population).toBe(2);
     expect(state.city.training).toBe(null);
   });
 
-  it('taps add 2s of training each and can complete it early', () => {
+  it('taps boost the CURRENT villager; the next starts at its completion', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 });
     fund(state, { Food: 100 });
     expect(townhallTap(state, T0)).toBe('NoTraining');
-    startTraining(state, T0);
-    tickAt(state, T0 + 10_000); // halfway
+    queueTraining(state, T0);
+    queueTraining(state, T0);
+    tickAt(state, T0 + 10_000); // halfway through villager 1
     for (let i = 0; i < 4; i++) expect(townhallTap(state, T0 + 10_000)).toBe('Boosted');
     expect(townhallTap(state, T0 + 10_000)).toBe('TrainingComplete'); // 10s + 5 × 2s
     expect(state.city.population).toBe(1);
+    // Villager 2 started at the boosted completion, not back at T0.
+    tickAt(state, T0 + 29_000);
+    expect(state.city.population).toBe(1);
+    tickAt(state, T0 + 30_000);
+    expect(state.city.population).toBe(2);
   });
 
-  it('is blocked at the housing cap (the Townhall houses nobody)', () => {
+  it('is blocked at the housing cap (queued villagers count)', () => {
     const state = freshGame();
     fund(state, { Food: 100 });
-    expect(startTraining(state, T0)).toBe('AtMax'); // no Housing yet
+    expect(queueTraining(state, T0)).toBe('AtMax'); // no Housing yet
     addBuilt(state, 'Housing', { x: 2, y: 0 });
     state.city.population = 2; // the Housing is full
-    expect(startTraining(state, T0)).toBe('AtMax');
+    expect(queueTraining(state, T0)).toBe('AtMax');
   });
 });
 

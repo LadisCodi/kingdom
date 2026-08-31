@@ -113,7 +113,7 @@ async function boot(): Promise<void> {
       const delta = minutes * 60_000;
       game.state.lastAdvance -= delta;
       if (game.state.city.training) game.state.city.training.startedAt -= delta;
-      game.state.market.lastSaleAt -= delta;
+      game.state.city.lastTaxAt -= delta;
       for (const w of game.state.workers) {
         w.stateStartedAt -= delta;
         if (w.stateUntil !== null) w.stateUntil -= delta;

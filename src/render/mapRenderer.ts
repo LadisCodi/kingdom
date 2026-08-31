@@ -167,8 +167,9 @@ export function drawMap(
       if (exhaustedPlot && !drewExhaustedPlot) {
         drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, x, y - size * 0.18, fw, size * 0.3, fh);
       }
-      // A district that is itself a resource cell (FarmLands): wear/recovery bar.
-      if (district.definitionId === 'FarmLands') drawResourceState(district.location, x, y);
+      // A district that is itself a resource cell (FarmLands → Crops,
+      // lived-in Housing → Taxes): wear/recovery bar.
+      if (def.providesHarvestSource !== null) drawResourceState(district.location, x, y);
       // Townhall: villager-training progress bar.
       if (district.definitionId === 'Townhall' && state.city.training !== null) {
         const totalMs = TRAINING.seconds * 1000;

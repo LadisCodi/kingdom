@@ -44,7 +44,7 @@ The tree is discovered like the map:
 - Cost at level L (0-based): `round(cost_base × cost_growth^L)` Gold.
 - Effects apply through **effective-value helpers** in `src/sim/upgrades.ts`
   (`effectiveTapYield`, `effectiveCollectCooldownMs`, `effectiveWorkerYield`,
-  `effectiveMarketCapacity`, `effectiveSellIntervalMs`): consumers read
+  `effectiveSalePriceMultiplier`, `effectiveTaxRate`): consumers read
   those instead of raw balance values, so every level is one sheet row away.
 - UI: circle with the upgrade glyph and a corner badge showing the current
   level (gold border affordable, green maxed). Tapping opens the same info
@@ -64,7 +64,9 @@ Initial tree (all roads lead from Forestry):
 
 - **Forestry** (root; Sawmill) → upgrades TapPower, QuickHands, WorkerLoad
 - **Agriculture** (requires Forestry; FarmLands) → **Irrigation** (Farm)
-- **Commerce** (requires Forestry) → upgrades MarketStall, TradeRoutes
+- **Commerce** (requires Forestry; Market building) → upgrades MarketStall
+  (+5% sale prices), TradeRoutes (+10% tax income)
+- **Militia** (requires Forestry; Swordsman)
 - **Archery** (requires Forestry; Archer) → **CavalryTraining** (Cavalry)
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —

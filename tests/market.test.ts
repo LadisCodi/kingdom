@@ -1,129 +1,50 @@
-// The Market: drip-selling queued resources for Gold — add/withdraw,
-// capacity, timing, sell order, offline replay, determinism.
+// The Market: an instant-sell trade building (Commerce tech). Optional gold
+// on top of housing taxes — no queue, no timers.
 import { describe, expect, it } from 'vitest';
-import { MARKET } from '../src/sim/data/definitions';
-import {
-  addToSale, nextSaleInSeconds, queuedGoldValue, queuedUnits, rushSale, rushSaleCost,
-} from '../src/sim/market';
-import { deserialize, serialize } from '../src/sim/save';
+import { hasMarket, salePayout, sellGoods, SELLABLE } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
-import { freshGame, fund, T0, map, tickAt } from './helpers';
+import { addBuilt, freshGame, fund } from './helpers';
 
-const INTERVAL = MARKET.sellIntervalSeconds * 1000; // 5s
+const MARKET_CELL = { x: 2, y: 0 }; // revealed grassland
 
-describe('the sell queue', () => {
-  it('escrows added units (one-way — no withdrawals), rejects non-sellables', () => {
-    const state = freshGame();
-    fund(state, { Wood: 10, Gold: 5 });
-    expect(addToSale(state, 'Gold', 5, T0)).toBe('NotSellable');
-    expect(addToSale(state, 'Wood', 4, T0)).toBe('Added');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(6);
-    expect(queuedUnits(state)).toBe(4);
-    expect(queuedGoldValue(state)).toBe(4 * 3); // Wood sells for 3
-  });
-
-  it('is capped at MARKET.capacity units (adds clamp to the free space)', () => {
-    const state = freshGame();
-    fund(state, { Wood: 200 });
-    expect(addToSale(state, 'Wood', 200, T0)).toBe('Added'); // clamped
-    expect(queuedUnits(state)).toBe(MARKET.capacity);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(200 - MARKET.capacity);
-    expect(addToSale(state, 'Wood', 1, T0)).toBe('MarketFull');
-  });
-});
-
-describe('drip selling', () => {
-  it('sells exactly 1 unit per interval, whole units only', () => {
+describe('instant selling', () => {
+  it('requires a built Market district', () => {
     const state = freshGame();
     fund(state, { Wood: 10 });
-    addToSale(state, 'Wood', 10, T0);
-    tickAt(state, T0 + INTERVAL - 1);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
-    tickAt(state, T0 + INTERVAL);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(3); // 1 Wood = 3 Gold
-    tickAt(state, T0 + 3 * INTERVAL + 500); // partial interval carries over
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(9);
-    tickAt(state, T0 + 3 * INTERVAL + INTERVAL); // ...and completes on schedule
+    expect(hasMarket(state)).toBe(false);
+    expect(sellGoods(state, 'Wood', 10).result).toBe('NoMarket');
+    addBuilt(state, 'Market', MARKET_CELL);
+    expect(hasMarket(state)).toBe(true);
+    expect(sellGoods(state, 'Wood', 10).result).toBe('Sold');
+  });
+
+  it('pays gold_value per unit, instantly, clamped to what is on hand', () => {
+    const state = freshGame();
+    addBuilt(state, 'Market', MARKET_CELL);
+    fund(state, { Wood: 10, Meat: 2 });
+    expect(sellGoods(state, 'Wood', 4)).toEqual({ result: 'Sold', units: 4, gold: 12 }); // 3 each
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(6);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(12);
+    expect(sellGoods(state, 'Wood', 999)).toEqual({ result: 'Sold', units: 6, gold: 18 });
+    expect(sellGoods(state, 'Wood', 1).result).toBe('NothingToSell');
+    expect(sellGoods(state, 'Meat', 2)).toEqual({ result: 'Sold', units: 2, gold: 6 });
   });
 
-  it('sells in currency order and stops when the queue empties (no banked time)', () => {
+  it('rejects non-sellable currencies and Gold itself', () => {
     const state = freshGame();
-    fund(state, { Food: 1, Wood: 1 });
-    addToSale(state, 'Wood', 1, T0);
-    addToSale(state, 'Food', 1, T0);
-    tickAt(state, T0 + INTERVAL);
-    // Food precedes Wood in the sell order → the first sale pays 1 Gold.
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1);
-    tickAt(state, T0 + 2 * INTERVAL);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(4);
-    expect(queuedUnits(state)).toBe(0);
-    // A long empty stretch banks nothing: the next add re-anchors the clock.
-    tickAt(state, T0 + 100 * INTERVAL);
-    fund(state, { Wood: 1 });
-    addToSale(state, 'Wood', 1, T0 + 100 * INTERVAL);
-    tickAt(state, T0 + 100 * INTERVAL + INTERVAL - 1);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(4); // not yet
-    tickAt(state, T0 + 101 * INTERVAL);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(7);
+    addBuilt(state, 'Market', MARKET_CELL);
+    fund(state, { Gold: 100 });
+    state.kingdom.wallet.Knowledge = 5;
+    expect(SELLABLE).not.toContain('Gold');
+    expect(SELLABLE).not.toContain('Knowledge');
+    expect(sellGoods(state, 'Gold', 10).result).toBe('NotSellable');
+    expect(sellGoods(state, 'Knowledge', 5).result).toBe('NotSellable');
   });
 
-  it('one-call offline replay equals second-by-second ticking', () => {
-    const mk = () => {
-      const s = freshGame();
-      fund(s, { Wood: 12, Meat: 3 });
-      addToSale(s, 'Wood', 12, T0);
-      addToSale(s, 'Meat', 3, T0);
-      return s;
-    };
-    const horizon = 90_000; // sells 15 of the 15 queued units? no — 18 slots, 15 units
-    const oneCall = mk();
-    tickAt(oneCall, T0 + horizon);
-    const stepped = mk();
-    for (let t = 1000; t <= horizon; t += 1000) tickAt(stepped, T0 + t);
-    expect(getWallet(oneCall.city.wallet, 'Gold')).toBe(getWallet(stepped.city.wallet, 'Gold'));
-    expect(oneCall.market.queue).toEqual(stepped.market.queue);
-  });
-
-  it('reports the time to the next sale', () => {
+  it('salePayout floors the boosted total, not each unit', () => {
     const state = freshGame();
-    expect(nextSaleInSeconds(state, T0)).toBe(null); // empty queue
-    fund(state, { Wood: 2 });
-    addToSale(state, 'Wood', 2, T0);
-    expect(nextSaleInSeconds(state, T0)).toBe(5);
-    tickAt(state, T0 + 3_000);
-    expect(nextSaleInSeconds(state, T0 + 3_000)).toBe(2);
-    tickAt(state, T0 + INTERVAL); // one sold, clock rolls over
-    expect(nextSaleInSeconds(state, T0 + INTERVAL)).toBe(5);
-  });
-
-  it('gems rush sells the whole queue instantly (10s per gem, min 1)', () => {
-    const state = freshGame(); // 10 Gems
-    fund(state, { Wood: 12, Meat: 2 });
-    expect(rushSale(state, T0)).toBe('NothingQueued');
-    addToSale(state, 'Wood', 12, T0);
-    addToSale(state, 'Meat', 2, T0);
-    // 14 units × 5s = 70s remaining → 7 gems; payout 12×3 + 2×3 = 42.
-    expect(rushSaleCost(state, T0)).toBe(7);
-    expect(rushSale(state, T0)).toBe('Success');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(42);
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(3);
-    expect(queuedUnits(state)).toBe(0);
-
-    fund(state, { Wood: 12 });
-    addToSale(state, 'Wood', 12, T0); // 60s → 6 gems > the 3 left
-    expect(rushSale(state, T0)).toBe('NotEnoughGems');
-    expect(queuedUnits(state)).toBe(12); // untouched
-  });
-
-  it('survives the save round-trip and sells during the absence', () => {
-    const state = freshGame();
-    fund(state, { Berries: 8 });
-    addToSale(state, 'Berries', 8, T0);
-    tickAt(state, T0 + 2 * INTERVAL); // 2 sold before saving
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(2);
-    const restored = deserialize(serialize(state, T0 + 2 * INTERVAL), map, T0 + 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(8); // all 8 sold by 40s
-    expect(queuedUnits(restored)).toBe(0);
+    state.upgrades.MarketStall = 1; // +5% prices
+    expect(salePayout(state, 'Wood', 1)).toBe(3); // floor(3.15)
+    expect(salePayout(state, 'Wood', 10)).toBe(31); // floor(31.5)
   });
 });
