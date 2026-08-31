@@ -16,7 +16,8 @@ import {
 } from './sim/districts';
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
-import { harvestSourceAt, isExhausted } from './sim/harvest';
+import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
+import { placementAdjacency, type AdjacencyEffect } from './sim/adjacency';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
 import { salePayout, sellGoods } from './sim/market';
 import {
@@ -24,7 +25,7 @@ import {
   residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { buySlot, startTech } from './sim/research';
-import { buyUpgrade, effectiveTapYield, effectiveWorkerYield } from './sim/upgrades';
+import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
@@ -187,10 +188,10 @@ export class Game {
    *  'OnCooldown' is silent — hold-to-collect retries until the gate opens. */
   private collectAt(cell: Coord): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
+    const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
     const result = collectTap(this.state, this.map, cell, this.now());
     if (result === 'Harvested' && source) {
-      const spec = HARVEST[source];
-      this.floaters.add(cell, `+${effectiveTapYield(this.state, spec)} ${icon(spec.currencyId)}`);
+      this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
     } else if (result === 'Exhausted') {
       this.floaters.add(cell, '💤');
     }
@@ -403,6 +404,23 @@ export class Game {
       layer.previewGlyph = def.glyph;
       layer.previewSprite = def.sprite;
       layer.previewSize = def.size;
+      // Adjacency preview: a label over every neighbor the new building
+      // would modify, and over the ghost itself (what it would receive).
+      if (this.mode.selected) {
+        const adj = placementAdjacency(this.state, this.mode.definitionId, this.mode.selected);
+        for (const g of adj.given) {
+          layer.yieldCells.push({
+            cell: g.district.location, label: formatAdjacency(g), tone: adjacencyTone(g),
+          });
+        }
+        if (adj.received.goldPerMinute !== 0 || adj.received.goldPerTap !== 0) {
+          layer.yieldCells.push({
+            cell: this.mode.selected,
+            label: formatAdjacency(adj.received),
+            tone: adjacencyTone(adj.received),
+          });
+        }
+      }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
         layer.influenceCells = cellsWithinRadiusOfRect(
           this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
@@ -524,6 +542,20 @@ export class Game {
     return effectiveAmount(this.state.city.wallet, c);
   }
 }
+
+const signedNumber = (n: number): string =>
+  `${n > 0 ? '+' : '\u2212'}${Math.abs(Number.isInteger(n) ? n : Number(n.toFixed(1)))}`;
+
+/** "−1🪙/min −1🪙/tap" — the placement-label / card format for adjacency. */
+export function formatAdjacency(e: AdjacencyEffect): string {
+  const parts: string[] = [];
+  if (e.goldPerMinute !== 0) parts.push(`${signedNumber(e.goldPerMinute)}🪙/min`);
+  if (e.goldPerTap !== 0) parts.push(`${signedNumber(e.goldPerTap)}🪙/tap`);
+  return parts.join(' ');
+}
+
+const adjacencyTone = (e: AdjacencyEffect): 'good' | 'bad' =>
+  (e.goldPerMinute !== 0 ? e.goldPerMinute : e.goldPerTap) < 0 ? 'bad' : 'good';
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {

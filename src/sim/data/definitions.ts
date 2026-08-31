@@ -92,6 +92,16 @@ export const TRAINING = balance.training;
 // Passive taxes: gold per housed villager per minute (boostable by TradeRoutes).
 export const TAXES = balance.taxes;
 
+// Adjacency rules (Adjacency sheet): flat gold a district gains — or loses —
+// per adjacent neighbor of a given type. Directional: (district, neighbor).
+export interface AdjacencyRule {
+  district: DistrictId;
+  neighbor: DistrictId;
+  goldPerMinute: number;
+  goldPerTap: number;
+}
+export const ADJACENCY = balance.adjacency as unknown as AdjacencyRule[];
+
 export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
 // ----------------------------------------------------------------- districts

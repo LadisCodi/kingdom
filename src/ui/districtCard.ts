@@ -2,10 +2,13 @@
 // villager training, upgrade, and — while a build/upgrade is in progress —
 // progress + gem finish.
 
-import { icon, type Game } from '../game';
+import { formatAdjacency, icon, type Game } from '../game';
 import { canAfford, gemRushCost } from '../sim/commands';
 import { DISTRICTS, HARVEST, TRAINING, WORKER, levelIndexed } from '../sim/data/definitions';
+import { districtAdjacency } from '../sim/adjacency';
 import { districtCount, requiredTownhallLevel, upgradeCost, upgradeDuration } from '../sim/districts';
+import { tapYieldAt } from '../sim/harvest';
+import { houseGoldPerMinute } from '../sim/population';
 import {
   queueProgress, remainingSeconds, townhall,
   type District,
@@ -65,14 +68,28 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // Housing: residents (auto-assigned) pay taxes; the house is a gold cell.
     if (def.populationCapacity > 0) {
       const residents = game.residentsIn(district);
-      panel.append(el('div', { class: 'rows' },
+      const perMinute = houseGoldPerMinute(game.state, district);
+      const adjacency = districtAdjacency(game.state, district);
+      const crowded = adjacency.goldPerMinute < 0 || adjacency.goldPerTap < 0;
+      const rows = el('div', { class: 'rows' },
         el('div', { class: 'row' },
           el('span', {}, '👥 residents'),
-          el('span', {}, `${residents}/${def.populationCapacity}`))));
+          el('span', {}, `${residents}/${def.populationCapacity}`)));
+      if (residents > 0) {
+        rows.append(el('div', { class: 'row' },
+          el('span', {}, '💰 taxes'),
+          el('span', {}, `${Number.isInteger(perMinute) ? perMinute : perMinute.toFixed(1)} ${icon('Gold')}/min`)));
+      }
+      if (adjacency.goldPerMinute !== 0 || adjacency.goldPerTap !== 0) {
+        rows.append(el('div', { class: 'row' },
+          el('span', {}, 'Neighbors'),
+          el('span', { class: crowded ? 'blocked' : 'delta' }, formatAdjacency(adjacency))));
+      }
+      panel.append(rows);
       if (def.providesHarvestSource === 'Taxes') {
         panel.append(el('div', { class: 'muted' }, residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall.'
-          : `Tap for +${effectiveTapYield(game.state, HARVEST.Taxes)} ${icon('Gold')} — exhausts after ` +
+          : `Tap for +${tapYieldAt(game.state, district.location)} ${icon('Gold')} — exhausts after ` +
             `${HARVEST.Taxes.tapsToExhaust} taps, recovers in ${HARVEST.Taxes.recoverySeconds}s.`));
       }
     }

@@ -2,6 +2,7 @@
 // Townhall's villager-training queue.
 
 import { CITY_DEF, DISTRICTS, TRAINING } from './data/definitions';
+import { districtAdjacency } from './adjacency';
 import { effectiveTaxRate } from './upgrades';
 import { addToWallet, type District, type GameState } from './state';
 import { canAfford, pay } from './wallet';
@@ -28,6 +29,26 @@ export function availableWorkers(state: GameState): number {
 /** Everyone with a roof: taxes only come from housed villagers. */
 export const housedPopulation = (state: GameState): number =>
   Math.min(state.city.population, maxPopulation(state));
+
+/** Gold per minute ONE house pays: residents × the (TradeRoutes-boosted)
+ *  rate, plus flat adjacency bonuses/penalties from its built neighbors.
+ *  Empty (or fully crowded-out) houses pay nothing — clamped at 0. */
+export function houseGoldPerMinute(state: GameState, district: District): number {
+  const residents = residentsOf(state, district);
+  if (residents === 0) return 0;
+  const adjacency = districtAdjacency(state, district).goldPerMinute;
+  return Math.max(0, residents * effectiveTaxRate(state) + adjacency);
+}
+
+/** City-wide tax income, gold per minute, over every built house. */
+export function cityGoldPerMinute(state: GameState): number {
+  let total = 0;
+  for (const d of state.city.districts) {
+    if (d.state !== 'Built' || DISTRICTS[d.definitionId].populationCapacity === 0) continue;
+    total += houseGoldPerMinute(state, d);
+  }
+  return total;
+}
 
 /** Residents are AUTO-assigned: houses fill in build order, no player input
  *  (which house someone lives in has no mechanical effect beyond its tap). */
@@ -96,7 +117,7 @@ export function advanceCityLife(
     if (t === toTime && (completes === null || completes > toTime)) break;
     // One villager finished: +1 population, the next starts immediately.
     const training = state.city.training!;
-    const housedBefore = housedPopulation(state);
+    const rateBefore = cityGoldPerMinute(state);
     state.city.population += 1;
     result.trained += 1;
     training.queued -= 1;
@@ -104,22 +125,21 @@ export function advanceCityLife(
     else state.city.training = null;
     // The tax rate just changed: rescale the partial progress since the
     // anchor so the elapsed stretch isn't repriced at the new rate.
-    const housedAfter = housedPopulation(state);
-    if (housedAfter !== housedBefore && housedBefore > 0) {
-      state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * housedBefore) / housedAfter;
+    const rateAfter = cityGoldPerMinute(state);
+    if (rateAfter !== rateBefore && rateBefore > 0 && rateAfter > 0) {
+      state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * rateBefore) / rateAfter;
     }
   }
   return result;
 }
 
 function accrueTaxes(state: GameState, toTime: number, out: { gold: number }): void {
-  const housed = housedPopulation(state);
-  const rate = effectiveTaxRate(state); // gold per housed villager per minute
-  if (housed <= 0 || rate <= 0) {
+  const rate = cityGoldPerMinute(state); // all houses, adjacency included
+  if (rate <= 0) {
     state.city.lastTaxAt = Math.max(state.city.lastTaxAt, toTime); // nobody pays: no banking
     return;
   }
-  const msPerGold = 60_000 / (rate * housed);
+  const msPerGold = 60_000 / rate;
   const units = Math.floor((toTime - state.city.lastTaxAt) / msPerGold);
   if (units <= 0) return;
   addToWallet(state.city.wallet, 'Gold', units);

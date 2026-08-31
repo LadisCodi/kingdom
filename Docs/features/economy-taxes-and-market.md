@@ -22,6 +22,15 @@ surplus resources, not a chore you must visit to earn money.
   cooldown, `yield_per_tap` Gold per tap, `taps_to_exhaust`, then a
   `recovery_seconds` cooldown with the usual bar. An empty house is not
   tappable.
+- **Adjacency** (`Adjacency` sheet, `src/sim/adjacency.ts`): a house gains
+  or LOSES flat gold per adjacent district of a given type — footprints
+  touching, diagonals included. Rules are directional `(district,
+  neighbor)` rows with `gold_per_minute` and `gold_per_tap` (negatives
+  allowed). Initial content: Housing next to Housing = **−1/min and
+  −1/tap per neighbor** — crowded rows of houses tax worse, so spreading
+  out pays. Both per-house taxes and taps clamp at 0. While PLACING a
+  building, every affected neighbor and the ghost itself get a label
+  (green positive / red negative) showing the modifier.
 
 ## Villager training (Townhall queue)
 

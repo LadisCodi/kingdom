@@ -21,6 +21,7 @@ the script.
 | `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market instant-sell price; blank = not sellable) |
 | `Technologies` | One-time researches: costs, duration, `requires` (comma-separated tech ids) |
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
+| `Adjacency` | Flat gold a district gains **or loses** per adjacent neighbor of a given type (negative = crowding penalty); columns `district`, `neighbor`, `gold_per_minute`, `gold_per_tap` — negatives allowed, one row per pair |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate (`taxes.gold_per_population_per_minute`), offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |

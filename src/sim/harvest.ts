@@ -2,6 +2,7 @@
 // (Docs/features/harvest-loop.md §1, §4).
 
 import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { districtAdjacency } from './adjacency';
 import { residentsOf } from './population';
 import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
@@ -30,6 +31,20 @@ export const harvestSpecAt = (state: GameState, cell: Coord): HarvestSpec | null
   const source = harvestSourceAt(state, cell);
   return source === null ? null : HARVEST[source];
 };
+
+/** What ONE player collect tap on this cell pays. House (Taxes) cells apply
+ *  the adjacency gold_per_tap modifier on top of the spec + TapPower yield,
+ *  clamped at 0 — a crowded house can tap down to nothing. */
+export function tapYieldAt(state: GameState, cell: Coord): number {
+  const source = harvestSourceAt(state, cell);
+  if (source === null) return 0;
+  let units = effectiveTapYield(state, HARVEST[source]);
+  if (source === 'Taxes') {
+    const district = districtAt(state, cell);
+    if (district) units += districtAdjacency(state, district).goldPerTap;
+  }
+  return Math.max(0, units);
+}
 
 const cellState = (state: GameState, key: string): CellHarvestState => {
   let s = state.harvest[key];
@@ -158,7 +173,7 @@ export function tapCell(
   if (source === null) return 'NotHarvestable';
   if (isExhausted(state, cell, now)) return 'Exhausted';
   const spec = HARVEST[source];
-  addToWallet(state.city.wallet, spec.currencyId, effectiveTapYield(state, spec));
+  addToWallet(state.city.wallet, spec.currencyId, tapYieldAt(state, cell));
   registerTap(state, cell, spec, now);
   return 'Harvested';
 }

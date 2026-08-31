@@ -107,6 +107,7 @@ const SHEETS = {
   FogRings: ['distance', 'cost'],
   Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
+  Adjacency: ['district', 'neighbor', 'gold_per_minute', 'gold_per_tap'],
   Settings: ['key', 'value'],
 };
 
@@ -180,6 +181,15 @@ function num(row, col, { blankAs = null } = {}) {
   }
   const n = typeof raw === 'number' ? raw : Number(raw);
   if (!Number.isFinite(n) || n < 0) fail(where(row), `"${col}" is not a non-negative number (got "${raw}")`);
+  return n;
+}
+
+/** Like num() but negatives are allowed (adjacency penalties); blank = 0. */
+function signedNum(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) return 0;
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n)) fail(where(row), `"${col}" is not a number (got "${raw}")`);
   return n;
 }
 
@@ -353,7 +363,7 @@ async function importXlsx() {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
-    worker: {}, tap: {}, training: {}, taxes: {},
+    worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
     offlineCapHours: 0,
@@ -461,6 +471,22 @@ async function importXlsx() {
     };
   }
 
+  const adjacencySeen = new Set();
+  for (const r of readSheet(workbook, 'Adjacency')) {
+    for (const col of ['district', 'neighbor']) {
+      if (!DISTRICT_IDS.includes(r[col])) fail(where(r), `unknown ${col} "${r[col]}"`);
+    }
+    const pair = `${r.district}+${r.neighbor}`;
+    if (adjacencySeen.has(pair)) fail(where(r), `duplicate adjacency rule ${pair}`);
+    adjacencySeen.add(pair);
+    out.adjacency.push({
+      district: r.district,
+      neighbor: r.neighbor,
+      goldPerMinute: signedNum(r, 'gold_per_minute'),
+      goldPerTap: signedNum(r, 'gold_per_tap'),
+    });
+  }
+
   let lastDistance = 0;
   for (const r of readSheet(workbook, 'FogRings')) {
     const distance = num(r, 'distance');
@@ -554,6 +580,9 @@ async function exportXlsx() {
     const u = b.upgrades[id];
     return [id, u.costBase, u.costGrowth, u.maxLevel, u.effectPerLevel, u.requiredTech ?? ''];
   }));
+
+  addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
+    [a.district, a.neighbor, a.goldPerMinute, a.goldPerTap]));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;

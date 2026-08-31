@@ -441,6 +441,14 @@
   "taxes": {
     "goldPerPopulationPerMinute": 2
   },
+  "adjacency": [
+    {
+      "district": "Housing",
+      "neighbor": "Housing",
+      "goldPerMinute": -1,
+      "goldPerTap": -1
+    }
+  ],
   "fog": {
     "silverPerTap": 0,
     "rings": [

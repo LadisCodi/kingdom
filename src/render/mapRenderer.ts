@@ -26,8 +26,9 @@ export interface MarkerLayer {
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
   claimedCells: Coord[]; // cells claimed by the inspected building's workers
-  /** Workable cells inside the previewed building's range, with their yield. */
-  yieldCells: Array<{ cell: Coord; label: string }>;
+  /** Workable cells inside the previewed building's range, with their yield;
+   *  'bad' tone renders the label red (negative adjacency). */
+  yieldCells: Array<{ cell: Coord; label: string; tone?: 'good' | 'bad' }>;
   previewCell: Coord | null;
   previewGlyph: string | null;
   previewSprite: string | null;
@@ -230,7 +231,7 @@ export function drawMap(
   }
   // Cells that WILL be worked: green "positive" yield label on a dark pill
   // (the white working-area square is already drawn above).
-  for (const { cell, label } of markers.yieldCells) {
+  for (const { cell, label, tone } of markers.yieldCells) {
     const { x, y } = cellRect(cell);
     const fontSize = Math.max(10, size * 0.18);
     ctx.font = `bold ${fontSize}px system-ui`;
@@ -244,7 +245,7 @@ export function drawMap(
     ctx.beginPath();
     ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
     ctx.fill();
-    ctx.fillStyle = PALETTE.yieldPositive;
+    ctx.fillStyle = tone === 'bad' ? PALETTE.yieldNegative : PALETTE.yieldPositive;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, x + size / 2, pillY + pillH / 2 + fontSize * 0.05);
