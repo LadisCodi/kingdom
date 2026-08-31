@@ -75,7 +75,7 @@ const SHEETS = {
   Units: ['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood', 'recruit_cost_food',
     'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds'],
-  Currencies: ['id', 'cap', 'start', 'counts_as', 'unit_value'],
+  Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value'],
   FogRings: ['distance', 'cost'],
   Research: ['id', 'cost_silver', 'cost_wood', 'cost_food', 'duration_seconds'],
   Settings: ['key', 'value'],
@@ -249,6 +249,8 @@ async function importXlsx() {
 
   const currencyRows = byId(readSheet(workbook, 'Currencies'), CURRENCY_IDS);
   for (const [id, r] of currencyRows) {
+    // primary = shown in the top resource bar; blank/0 = hidden.
+    const primary = num(r, 'primary', { blankAs: 0 }) === 1;
     const countsAs = (r.counts_as === '' || r.counts_as === undefined) ? null : r.counts_as;
     if (countsAs !== null) {
       if (!CURRENCY_IDS.includes(countsAs)) fail(where(r), `unknown counts_as currency "${countsAs}"`);
@@ -259,6 +261,7 @@ async function importXlsx() {
       out.currencies[id] = {
         cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
         start: num(r, 'start'),
+        primary,
         countsAs: { currency: countsAs, value },
       };
     } else {
@@ -268,6 +271,7 @@ async function importXlsx() {
       out.currencies[id] = {
         cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
         start: num(r, 'start'),
+        primary,
         countsAs: null,
       };
     }
@@ -364,7 +368,8 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
     const c = b.currencies[id];
-    return [id, c.cap ?? '', c.start, c.countsAs?.currency ?? '', c.countsAs?.value ?? ''];
+    return [id, c.cap ?? '', c.start, c.primary ? 1 : '',
+      c.countsAs?.currency ?? '', c.countsAs?.value ?? ''];
   }));
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));

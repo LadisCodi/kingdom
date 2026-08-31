@@ -205,21 +205,25 @@
     "Food": {
       "cap": null,
       "start": 5,
+      "primary": true,
       "countsAs": null
     },
     "Silver": {
       "cap": null,
       "start": 50,
+      "primary": true,
       "countsAs": null
     },
     "Wood": {
       "cap": null,
       "start": 0,
+      "primary": true,
       "countsAs": null
     },
     "Berries": {
       "cap": null,
       "start": 0,
+      "primary": false,
       "countsAs": {
         "currency": "Food",
         "value": 1
@@ -228,6 +232,7 @@
     "Meat": {
       "cap": null,
       "start": 0,
+      "primary": false,
       "countsAs": {
         "currency": "Food",
         "value": 3
@@ -236,16 +241,19 @@
     "Gold": {
       "cap": null,
       "start": 100,
+      "primary": false,
       "countsAs": null
     },
     "Knowledge": {
       "cap": null,
       "start": 0,
+      "primary": false,
       "countsAs": null
     },
     "Gems": {
       "cap": null,
       "start": 10,
+      "primary": true,
       "countsAs": null
     }
   },

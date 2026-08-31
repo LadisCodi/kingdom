@@ -4,13 +4,15 @@
 // costs actually check — with a hover/tap tooltip breaking it down.
 
 import { icon, type Game } from '../game';
+import { CURRENCIES } from '../sim/data/definitions';
 import { getWallet, type CurrencyId } from '../sim/state';
 import { equivalentsOf } from '../sim/wallet';
 import { maxPopulation } from '../sim/population';
 import { el } from './format';
 
-const SHOWN: CurrencyId[] = ['Silver', 'Wood', 'Food', 'Berries', 'Meat', 'Gems'];
-const HIDDEN_WHEN_ZERO: CurrencyId[] = ['Berries', 'Meat'];
+// Only PRIMARY currencies get a widget (flagged in the balance workbook's
+// Currencies sheet); the rest surface through effective totals + tooltips.
+const SHOWN = (Object.keys(CURRENCIES) as CurrencyId[]).filter((c) => CURRENCIES[c].primary);
 
 export function mountHeader(game: Game, root: HTMLElement): void {
   const widgets = new Map<CurrencyId, HTMLElement>();
@@ -51,7 +53,6 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const refresh = () => {
     for (const [c, w] of widgets) {
       w.querySelector('b')!.textContent = String(game.effectiveWalletValue(c));
-      if (HIDDEN_WHEN_ZERO.includes(c)) w.hidden = game.walletValue(c) === 0;
     }
     // Breakdown tooltip, e.g. Food: base + each equivalent's contribution.
     for (const [c, tip] of tooltips) {

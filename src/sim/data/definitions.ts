@@ -19,16 +19,19 @@ export interface CurrencyDef {
   scope: 'city' | 'kingdom' | 'player';
   cap: number | null;
   start: number;
+  /** Shown as a widget in the top resource bar. */
+  primary: boolean;
   /** This currency is stored separately but pays costs of another one at a
    *  fixed rate (a Berry counts as 1 Food, a Meat as 3). Null = plain. */
   countsAs: { currency: CurrencyId; value: number } | null;
 }
 
-interface CurrencyBalance { cap: number | null; start: number; countsAs?: unknown }
+interface CurrencyBalance { cap: number | null; start: number; primary?: boolean; countsAs?: unknown }
 const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef => ({
   scope,
   cap: b.cap,
   start: b.start,
+  primary: b.primary ?? false,
   countsAs: (b.countsAs ?? null) as CurrencyDef['countsAs'],
 });
 
