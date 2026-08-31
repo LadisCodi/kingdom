@@ -30,6 +30,8 @@ export function newGame(map: MapData, now: number): GameState {
     player: { wallet: playerWallet },
     fog: { revealed: {}, discovered: {}, progress: {} },
     features: {},
+    featureMeta: {},
+    featureRespawns: [],
     harvest: {},
     workers: [],
     army: [],

@@ -111,6 +111,16 @@ export function serialize(state: GameState, now: number): SaveFile {
         Cells: Object.entries(state.features).map(([k, id]) => ({
           Coord: parseCoordKey(k),
           FeatureID: id,
+          ...(state.featureMeta[k] !== undefined ? {
+            Origin: parseCoordKey(state.featureMeta[k].origin),
+            Generation: state.featureMeta[k].generation,
+          } : {}),
+        })),
+        Respawns: state.featureRespawns.map((r) => ({
+          Origin: parseCoordKey(r.origin),
+          FeatureID: r.feature,
+          ReadyAtUtc: iso(r.readyAt),
+          Generation: r.generation,
         })),
       },
       'kingdom.cellHarvest': {
@@ -215,10 +225,23 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
     }
   }
 
-  const featuresDto = modules['kingdom.features']?.Cells;
-  if (featuresDto) {
+  const featuresDto = modules['kingdom.features'];
+  if (featuresDto?.Cells) {
     state.features = {};
-    for (const f of featuresDto as any[]) state.features[coordKey(f.Coord)] = f.FeatureID;
+    state.featureMeta = {};
+    for (const f of featuresDto.Cells as any[]) {
+      const key = coordKey(f.Coord);
+      state.features[key] = f.FeatureID;
+      if (f.Origin !== undefined) {
+        state.featureMeta[key] = { origin: coordKey(f.Origin), generation: f.Generation ?? 0 };
+      }
+    }
+    state.featureRespawns = ((featuresDto.Respawns ?? []) as any[]).map((r) => ({
+      origin: coordKey(r.Origin),
+      feature: r.FeatureID,
+      readyAt: ms(r.ReadyAtUtc),
+      generation: r.Generation ?? 0,
+    }));
   }
 
   const harvestDto = modules['kingdom.cellHarvest']?.Cells;

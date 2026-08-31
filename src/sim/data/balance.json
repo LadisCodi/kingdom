@@ -180,25 +180,29 @@
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
-      "recoverySeconds": 90
+      "recoverySeconds": 90,
+      "respawnSeconds": 0
     },
     "Crops": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
-      "recoverySeconds": 60
+      "recoverySeconds": 60,
+      "respawnSeconds": 0
     },
     "Berries": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
-      "recoverySeconds": 0
+      "recoverySeconds": 0,
+      "respawnSeconds": 120
     },
     "Meat": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
-      "recoverySeconds": 0
+      "recoverySeconds": 0,
+      "respawnSeconds": 180
     }
   },
   "currencies": {

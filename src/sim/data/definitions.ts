@@ -64,6 +64,10 @@ export interface HarvestSpec {
   /** Seconds to recover after exhausting; 0 = FINITE — the feature is
    *  consumed and vanishes from the map when drained. */
   recoverySeconds: number;
+  /** FINITE sources only: seconds after depletion until the feature
+   *  reappears in a random tile adjacent to its ORIGINAL map cell
+   *  (0 = never — removed for good). */
+  respawnSeconds: number;
 }
 
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
@@ -403,4 +407,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 8; // v7 saves predate technologies/upgrades; discarded
+export const SAVE_VERSION = 9; // v8 saves predate feature respawning; discarded

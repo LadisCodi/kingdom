@@ -101,7 +101,8 @@ const SHEETS = {
   Districts: DISTRICT_COLUMNS,
   Units: ['id', 'power', 'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'train_duration_seconds'],
-  Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds'],
+  Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
+    'respawn_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
   Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds', 'requires'],
@@ -388,6 +389,7 @@ async function importXlsx() {
       yieldPerWorker: num(r, 'yield_per_worker'),
       tapsToExhaust: num(r, 'taps_to_exhaust'),
       recoverySeconds: num(r, 'recovery_seconds'),
+      respawnSeconds: num(r, 'respawn_seconds', { blankAs: 0 }),
     };
   }
 
@@ -531,7 +533,8 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];
-    return [id, h.yieldPerTap, h.yieldPerWorker, h.tapsToExhaust, h.recoverySeconds];
+    return [id, h.yieldPerTap, h.yieldPerWorker, h.tapsToExhaust, h.recoverySeconds,
+      h.respawnSeconds || ''];
   }));
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {

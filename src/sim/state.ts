@@ -103,7 +103,14 @@ export interface GameState {
     discovered: Record<string, true>;
     progress: Record<string, number>; // coordKey → gold paid so far
   };
-  features: Record<string, FeatureId>; // coordKey → authored feature (static)
+  features: Record<string, FeatureId>; // coordKey → feature at its CURRENT cell
+  /** Respawning features: current cell → its map-authored ORIGIN + respawn
+   *  generation (drives the deterministic "random" adjacent placement). */
+  featureMeta: Record<string, { origin: string; generation: number }>;
+  /** Depleted features waiting to reappear next to their origin. */
+  featureRespawns: Array<{
+    origin: string; feature: FeatureId; readyAt: number; generation: number;
+  }>;
   harvest: Record<string, CellHarvestState>; // coordKey → taps/exhaustion
   workers: Worker[];
   army: ArmyUnit[];

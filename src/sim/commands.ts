@@ -8,7 +8,9 @@ import {
 } from './districts';
 import { revealAroundDistrict } from './fog';
 import type { MapData } from './grid';
-import { collectTap, tapCell, type CollectTapResult, type TapCellResult } from './harvest';
+import {
+  advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
+} from './harvest';
 import { advanceMarket } from './market';
 import { advanceTraining } from './population';
 import { advanceQueue } from './queue';
@@ -228,9 +230,11 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
       if (item.startedAt !== null) tNext = Math.min(tNext, completesAt(item));
     }
     if (tNext > toTime) break;
+    advanceRespawns(state, map, tNext);
     result.deposits.push(...advanceWorkers(state, map, tNext));
     cursor = tNext;
   }
+  advanceRespawns(state, map, toTime);
   result.deposits.push(...advanceWorkers(state, map, toTime));
   result.goldEarned = advanceMarket(state, toTime);
   if (advanceTraining(state, toTime)) result.trainedPopulation += 1;
