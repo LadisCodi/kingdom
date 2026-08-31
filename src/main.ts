@@ -18,7 +18,6 @@ import { renderPlacementPanel } from './ui/placementPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderArmyMenu } from './ui/armyMenu';
 import { renderResearchMenu } from './ui/researchMenu';
-import { renderCastBanner, renderSpellbook } from './ui/spellbook';
 import { button, el } from './ui/format';
 
 const AUTOSAVE_TICKS = 30;
@@ -49,7 +48,6 @@ async function boot(): Promise<void> {
   const panelRoot = document.getElementById('panel')!;
   const overlayRoot = document.getElementById('overlay')!;
   const toastRoot = document.getElementById('toast')!;
-  let castBanner: HTMLElement | null = null;
 
   const refreshScreens = () => {
     // Bottom panel: placement > district card > empty.
@@ -65,16 +63,8 @@ async function boot(): Promise<void> {
     // Overlays.
     overlayRoot.replaceChildren();
     if (game.openOverlay === 'build') overlayRoot.append(renderBuildMenu(game));
-    else if (game.openOverlay === 'spellbook') overlayRoot.append(renderSpellbook(game));
     else if (game.openOverlay === 'army') overlayRoot.append(renderArmyMenu(game));
     else if (game.openOverlay === 'research') overlayRoot.append(renderResearchMenu(game));
-    // Cast banner.
-    castBanner?.remove();
-    castBanner = null;
-    if (game.mode.kind === 'targeting') {
-      castBanner = renderCastBanner(game);
-      document.getElementById('ui')!.append(castBanner);
-    }
   };
   game.onChange(refreshScreens);
   game.onToast((msg) => {
@@ -116,7 +106,6 @@ async function boot(): Promise<void> {
       // advance replay the "absence".
       const delta = minutes * 60_000;
       game.state.lastAdvance -= delta;
-      game.state.kingdom.manaLastProduction -= delta;
       for (const d of game.state.city.districts) {
         if (d.cycleStartedAt !== undefined) d.cycleStartedAt -= delta;
       }
@@ -130,7 +119,6 @@ async function boot(): Promise<void> {
       for (const q of game.state.city.queue) {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
-      for (const s of game.state.activeSpells) s.expiresAt -= delta;
       if (game.state.research.active) game.state.research.active.startedAt -= delta;
       runTick();
     };

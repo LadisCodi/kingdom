@@ -1,10 +1,10 @@
-// Resource cells: tapping, exhaustion, lazy recovery, and Rain's ×2 recovery
-// boost (Docs/features/harvest-loop.md §1, §4).
+// Resource cells: tapping, exhaustion, lazy recovery
+// (Docs/features/harvest-loop.md §1, §4).
 
 import { FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
 import type { MapData } from './grid';
 import {
-  addToWallet, coordKey, districtAt, sameCell,
+  addToWallet, coordKey, districtAt,
   type CellHarvestState, type Coord, type GameState, type HarvestSourceId,
 } from './state';
 
@@ -66,17 +66,6 @@ export function tapFraction(state: GameState, cell: Coord, spec: HarvestSpec, no
   return 1 - s.taps / spec.tapsToExhaust;
 }
 
-const activeRainOn = (state: GameState, cell: Coord, now: number) =>
-  state.activeSpells.find(
-    (s) => s.spellId === 'Rain' && sameCell(s.cell, cell) && s.expiresAt > now,
-  );
-
-/** Rain math: with remaining recovery R and rain window D, completion moves to
- *  now + max(R/2, R − D) — the covered window counts double (magnitude 2). */
-export function rainAdjustedRecovery(remainingMs: number, rainWindowMs: number): number {
-  return Math.max(remainingMs / 2, remainingMs - rainWindowMs);
-}
-
 /** Register one extraction (player tap or worker delivery) against the cell.
  *  Returns true if this tap exhausted the cell. Caller has verified the cell
  *  is a live resource cell. */
@@ -90,18 +79,8 @@ export function registerTap(
   recoverIfDue(s, now);
   s.taps += 1;
   if (s.taps < spec.tapsToExhaust) return false;
-  let recoveryMs = spec.recoverySeconds * 1000;
-  const rain = activeRainOn(state, cell, now);
-  if (rain) recoveryMs = rainAdjustedRecovery(recoveryMs, rain.expiresAt - now);
-  s.exhaustedUntil = now + recoveryMs;
+  s.exhaustedUntil = now + spec.recoverySeconds * 1000;
   return true;
-}
-
-/** Rain cast on an already-exhausted cell: apply the boost immediately. */
-export function applyRainToExhausted(state: GameState, cell: Coord, rainWindowMs: number, now: number): void {
-  const s = state.harvest[coordKey(cell)];
-  if (!s || s.exhaustedUntil === null || s.exhaustedUntil <= now) return;
-  s.exhaustedUntil = now + rainAdjustedRecovery(s.exhaustedUntil - now, rainWindowMs);
 }
 
 export type TapCellResult = 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed';

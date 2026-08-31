@@ -1,9 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import {
-  CITY_DEF, CURRENCIES, DISTRICTS, KINGDOM_DEF, TOWNHALL_CYCLE,
-} from './data/definitions';
+import { CITY_DEF, DISTRICTS, TOWNHALL_CYCLE } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
   districtCount, placementBlock, requiredTownhallLevel, upgradeCost, upgradeDuration,
@@ -234,23 +232,6 @@ export function townhallTap(state: GameState, now: number): number {
   return advanceTownhall(state, now);
 }
 
-// ---------------------------------------------------------------- mana trickle
-
-function accrueMana(state: GameState, toTime: number): void {
-  const rate = KINGDOM_DEF.manaPerHour / 60; // per minute
-  const cap = CURRENCIES.Mana.cap!;
-  const current = getWallet(state.kingdom.wallet, 'Mana');
-  if (current >= cap) {
-    state.kingdom.manaLastProduction = toTime; // overflow lost, as before
-    return;
-  }
-  const minutes = (toTime - state.kingdom.manaLastProduction) / 60_000;
-  const produced = Math.trunc(rate * minutes);
-  if (produced <= 0) return; // keep the sub-unit remainder
-  state.kingdom.manaLastProduction += (produced / rate) * 60_000;
-  addToWallet(state.kingdom.wallet, 'Mana', Math.min(produced, cap - current));
-}
-
 // ------------------------------------------------------------------- advance
 
 export interface AdvanceResult {
@@ -293,9 +274,6 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   result.townhallPaid = advanceTownhall(state, toTime);
   const finishedResearch = advanceResearch(state, toTime);
   if (finishedResearch) result.completedResearch.push(finishedResearch);
-  accrueMana(state, toTime);
-  // Expired spells just lapse — Rain's boost was applied when it mattered.
-  state.activeSpells = state.activeSpells.filter((s) => s.expiresAt > toTime);
   state.lastAdvance = toTime;
   return result;
 }

@@ -1,7 +1,7 @@
 // Save format v2 (harvest loop). v1 saves (the generator/vault era) are
 // discarded — deserialize returns null and the caller starts a fresh game.
 // Offline catch-up: the unified advance replays the absence up to the 8h cap;
-// time beyond the cap pauses workers/townhall/mana (queue timers and cell
+// time beyond the cap pauses workers/townhall (queue timers and cell
 // recovery keep running in real time).
 
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
@@ -10,7 +10,7 @@ import type { MapData } from './grid';
 import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
-  type ActiveSpell, type Coord, type District, type GameState, type QueueItem,
+  type Coord, type District, type GameState, type QueueItem,
   type ResearchId, type Wallet, type Worker,
 } from './state';
 
@@ -94,22 +94,6 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.kingdoms': {
         MaxBuilders: state.kingdom.maxBuilders,
         Currencies: state.kingdom.wallet,
-        ManaLastProduction: iso(state.kingdom.manaLastProduction),
-      },
-      'kingdom.spells': Object.fromEntries(
-        Object.entries(state.spellbook).map(([id, s]) => [
-          id, { IsUnlocked: s.unlocked, Level: s.level },
-        ]),
-      ),
-      'kingdom.activeSpells': {
-        Casts: state.activeSpells.map((s) => ({
-          SpellID: s.spellId,
-          TargetCell: s.cell,
-          Level: s.level,
-          Magnitude: s.magnitude,
-          ExpiresAt: iso(s.expiresAt),
-          SourceID: s.sourceId,
-        })),
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -204,32 +188,6 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
   if (kingdomDto) {
     state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
-    if (kingdomDto.ManaLastProduction) {
-      state.kingdom.manaLastProduction = ms(kingdomDto.ManaLastProduction);
-    }
-  }
-
-  const spellsDto = modules['kingdom.spells'];
-  if (spellsDto) {
-    for (const [id, s] of Object.entries(spellsDto as Record<string, any>)) {
-      if (state.spellbook[id]) {
-        state.spellbook[id] = { unlocked: !!s.IsUnlocked, level: s.Level ?? 1 };
-      }
-    }
-  }
-
-  const activeDto = modules['kingdom.activeSpells']?.Casts;
-  if (activeDto) {
-    state.activeSpells = (activeDto as any[]).map(
-      (s): ActiveSpell => ({
-        spellId: s.SpellID,
-        cell: s.TargetCell,
-        level: s.Level,
-        magnitude: s.Magnitude,
-        expiresAt: ms(s.ExpiresAt),
-        sourceId: s.SourceID,
-      }),
-    );
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
@@ -312,7 +270,6 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
     for (const d of state.city.districts) {
       if (d.cycleStartedAt !== undefined) d.cycleStartedAt += gap;
     }
-    state.kingdom.manaLastProduction += gap;
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     advance(state, map, now); // completes remaining queue work; workers resume at now

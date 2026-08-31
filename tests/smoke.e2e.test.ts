@@ -10,7 +10,6 @@ import { buyPopulation, maxPopulation } from '../src/sim/population';
 import { isResearched, startResearch } from '../src/sim/research';
 import { revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
-import { castSpell } from '../src/sim/spells';
 import { getWallet, townhall } from '../src/sim/state';
 import { freshGame, fund, map, T0, tickAt } from './helpers';
 
@@ -59,9 +58,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     while (tapCell(state, map, { x: 2, y: 2 }, now) === 'Harvested') { /* drain */ }
     expect(isExhausted(state, { x: 2, y: 2 }, now)).toBe(true);
 
-    // --- Rain halves the covered recovery wait; the worker resumes after.
-    expect(castSpell(state, 'Rain', { x: 2, y: 2 }, now)).toBe('Cast');
-    now += 61_000; // 90s − boost → recovered by 60s
+    // --- The cell recovers on its own after 90s; the worker resumes after.
+    now += 91_000;
     tickAt(state, now);
     expect(isExhausted(state, { x: 2, y: 2 }, now)).toBe(false);
 

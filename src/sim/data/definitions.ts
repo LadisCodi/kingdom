@@ -6,7 +6,7 @@
 
 import balance from './balance.json';
 import type {
-  CurrencyId, DistrictId, FeatureId, HarvestSourceId, ResearchId, SpellId, UnitId, Wallet,
+  CurrencyId, DistrictId, FeatureId, HarvestSourceId, ResearchId, UnitId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -26,7 +26,6 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Silver: { scope: 'city', ...balance.currencies.Silver },
   Wood: { scope: 'city', ...balance.currencies.Wood },
   Gold: { scope: 'kingdom', ...balance.currencies.Gold },
-  Mana: { scope: 'kingdom', ...balance.currencies.Mana },
   Knowledge: { scope: 'kingdom', ...balance.currencies.Knowledge },
   Gems: { scope: 'player', ...balance.currencies.Gems },
 };
@@ -192,53 +191,9 @@ export const CITY_DEF = {
 
 // --------------------------------------------------------------- kingdom def
 
-// manaPerHour: trickle into the capped kingdom wallet.
 export const KINGDOM_DEF = {
   name: 'PlayerKingdom',
   ...balance.kingdom,
-};
-
-// ------------------------------------------------------------------- spells
-
-export interface SpellLevelDef {
-  manaCost: number;
-  durationSeconds: number;
-  effectMagnitude: number;
-  upgradeCost: number;
-}
-
-export interface SpellDef {
-  id: SpellId;
-  name: string;
-  description: string;
-  glyph: string;
-  unlockedFromStart: boolean;
-  stackable: boolean;
-  levels: SpellLevelDef[];
-}
-
-export const SPELLS: Record<SpellId, SpellDef> = {
-  Rain: {
-    id: 'Rain',
-    name: 'Rain',
-    description:
-      'For {duration}, the rained cell recovers from exhaustion at ×{value} speed.',
-    glyph: '🌧️',
-    unlockedFromStart: true,
-    stackable: false,
-    levels: balance.spells.Rain,
-  },
-  // Dormant pending the spell rework: free player taps superseded its effect,
-  // so it has no valid targets (kept listed, exactly like the original build).
-  Tap: {
-    id: 'Tap',
-    name: 'Tap',
-    description: 'Extract one resource from a wilderness feature. (Being reworked.)',
-    glyph: '👆',
-    unlockedFromStart: true,
-    stackable: true,
-    levels: balance.spells.Tap,
-  },
 };
 
 // ----------------------------------------------------------------- research
@@ -309,4 +264,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 4; // v3 saves predate research + free-standing FarmLands; discarded
+export const SAVE_VERSION = 5; // v4 saves still carried spells/Mana; discarded

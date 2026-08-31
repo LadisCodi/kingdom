@@ -17,7 +17,6 @@ the script.
 |---|---|
 | `Districts` | One row per building: footprint, levels, workers, costs, times, growth exponents |
 | `Units` | Army units: power, recruit costs |
-| `Spells` | One row per spell level: mana cost, duration, magnitude |
 | `Harvest` | Resource cells: yield per tap, taps to exhaust, recovery |
 | `Currencies` | Starting amounts and caps (blank cap = uncapped) |
 | `FogRings` | Fog reveal cost by distance ring |

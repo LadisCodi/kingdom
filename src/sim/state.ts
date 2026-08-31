@@ -5,13 +5,12 @@
 
 import { DISTRICTS } from './data/definitions';
 
-export type CurrencyId = 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Mana' | 'Knowledge' | 'Gems';
+export type CurrencyId = 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Knowledge' | 'Gems';
 export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
 export type FeatureId = 'Trees';
 export type HarvestSourceId = 'Forest' | 'Crops';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
-export type SpellId = 'Rain' | 'Tap';
 export type ResearchId = 'Agriculture';
 
 export interface Coord { x: number; y: number }
@@ -82,15 +81,6 @@ export interface Worker {
   stateUntil: number | null; // event time; null while Idle
 }
 
-export interface ActiveSpell {
-  spellId: SpellId;
-  cell: Coord;
-  level: number;
-  magnitude: number;
-  expiresAt: number; // epoch ms
-  sourceId: string;
-}
-
 export interface ArmyUnit {
   uniqueId: string;
   definitionId: UnitId;
@@ -101,11 +91,8 @@ export interface GameState {
   kingdom: {
     maxBuilders: number;
     wallet: Wallet;
-    manaLastProduction: number; // epoch ms — the 5/min trickle's timestamp
   };
   player: { wallet: Wallet };
-  spellbook: Record<string, { unlocked: boolean; level: number }>;
-  activeSpells: ActiveSpell[];
   fog: {
     revealed: Record<string, true>; // coordKey → revealed
     /** coordKey → discovered by a building's discover radius. (Cells adjacent

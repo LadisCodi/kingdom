@@ -10,7 +10,7 @@ import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
 import { workerPosition } from '../sim/workers';
 import {
-  queueProgress, remainingSeconds, coordKey, districtOccupies, sameCell,
+  queueProgress, remainingSeconds, coordKey, districtOccupies,
   type Coord, type GameState,
 } from '../sim/state';
 import type { Camera } from './camera';
@@ -21,7 +21,7 @@ import { drawSprite } from './sprites';
 export interface MarkerLayer {
   selected: Coord | null;
   selectedSize: { x: number; y: number } | null; // footprint the selection outline spans
-  validCells: Array<{ cell: Coord; label: string }>; // placement or spell targets
+  validCells: Array<{ cell: Coord; label: string }>; // valid placement cells
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
   claimedCells: Coord[]; // cells claimed by the inspected building's workers
@@ -81,9 +81,6 @@ export function drawMap(
       }
     }
   };
-  const rainingOn = (cell: Coord): boolean =>
-    state.activeSpells.some((s) => sameCell(s.cell, cell) && s.expiresAt > now);
-
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
   // separate pass — a multi-cell sprite drawn here would be overpainted by
   // the terrain fill of the following footprint cells.
@@ -117,9 +114,6 @@ export function drawMap(
       }
 
       if (fog === 'Revealed') drawResourceState(cell, x, y);
-      if (rainingOn(cell)) {
-        drawGlyph(ctx, '🌧️', x + size * 0.3, y - size * 0.28, size, size * 0.28);
-      }
 
       if (fog === 'Discovered') {
         ctx.fillStyle = PALETTE.fogDiscovered;
@@ -180,9 +174,6 @@ export function drawMap(
       if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {
         drawGlyph(ctx, '⚠️', x + fw * 0.28, y - fh * 0.26, fw, size * 0.26, fh);
       }
-    }
-    if (rainingOn(district.location)) {
-      drawGlyph(ctx, '🌧️', x + size * 0.3, y - size * 0.28, size, size * 0.28);
     }
   }
 

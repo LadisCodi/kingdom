@@ -152,4 +152,4 @@ this after buildings look good; tileability is the hard part:
 | terrain set | `TERRAIN_COLORS` | terrain pass |
 
 Overlay icons stay emoji for now: 🚧 construction, ⚠️ needs workers,
-🌧️ rain, and all UI/menu glyphs.
+and all UI/menu glyphs.

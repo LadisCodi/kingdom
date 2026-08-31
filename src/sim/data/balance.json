@@ -204,10 +204,6 @@
       "cap": null,
       "start": 100
     },
-    "Mana": {
-      "cap": 100,
-      "start": 50
-    },
     "Knowledge": {
       "cap": null,
       "start": 0
@@ -242,24 +238,6 @@
       },
       "trainDurationSeconds": 60
     }
-  },
-  "spells": {
-    "Rain": [
-      {
-        "manaCost": 10,
-        "durationSeconds": 30,
-        "effectMagnitude": 2,
-        "upgradeCost": 0
-      }
-    ],
-    "Tap": [
-      {
-        "manaCost": 1,
-        "durationSeconds": 0,
-        "effectMagnitude": 5,
-        "upgradeCost": 0
-      }
-    ]
   },
   "research": {
     "Agriculture": {
@@ -343,8 +321,7 @@
   },
   "kingdom": {
     "startBuilders": 1,
-    "maxBuilders": 4,
-    "manaPerHour": 300
+    "maxBuilders": 4
   },
   "offlineCapHours": 8
 }

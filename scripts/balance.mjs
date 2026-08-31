@@ -8,7 +8,7 @@
 // Import fails loudly on unknown columns/ids, missing rows, or bad numbers.
 //
 // Workbook conventions:
-//   - one sheet per table: Districts, Units, Spells, Harvest, Currencies,
+//   - one sheet per table: Districts, Units, Harvest, Currencies,
 //     FogRings, Settings
 //   - per-level LISTS are comma-separated in one cell:  3,5,7
 //     (list cells are text-formatted on export so Excel never turns "3,5"
@@ -28,9 +28,8 @@ const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
 const RESEARCH_IDS = ['Agriculture'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
-const SPELL_IDS = ['Rain', 'Tap'];
 const HARVEST_IDS = ['Forest', 'Crops'];
-const CURRENCY_IDS = ['Food', 'Silver', 'Wood', 'Gold', 'Mana', 'Knowledge', 'Gems'];
+const CURRENCY_IDS = ['Food', 'Silver', 'Wood', 'Gold', 'Knowledge', 'Gems'];
 const COST_CURRENCIES = ['Silver', 'Wood', 'Food'];
 
 const SETTINGS = [
@@ -53,7 +52,6 @@ const SETTINGS = [
   ['city.max_army_power_per_townhall_level', 'city.maxArmyPowerPerTownhallLevel', 'list'],
   ['kingdom.start_builders', 'kingdom.startBuilders'],
   ['kingdom.max_builders', 'kingdom.maxBuilders'],
-  ['kingdom.mana_per_hour', 'kingdom.manaPerHour'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -76,7 +74,6 @@ const SHEETS = {
   Districts: DISTRICT_COLUMNS,
   Units: ['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood', 'recruit_cost_food',
     'train_duration_seconds'],
-  Spells: ['spell', 'level', 'mana_cost', 'duration_seconds', 'effect_magnitude', 'upgrade_cost'],
   Harvest: ['source', 'yield_per_tap', 'taps_to_exhaust', 'recovery_seconds'],
   Currencies: ['id', 'cap', 'start'],
   FogRings: ['distance', 'cost'],
@@ -210,7 +207,7 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, harvest: {}, currencies: {}, units: {}, spells: {}, research: {},
+    districts: {}, harvest: {}, currencies: {}, units: {}, research: {},
     worker: {}, townhallCycle: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -262,24 +259,6 @@ async function importXlsx() {
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
-  }
-
-  for (const id of SPELL_IDS) out.spells[id] = [];
-  for (const r of readSheet(workbook, 'Spells')) {
-    if (!SPELL_IDS.includes(r.spell)) fail(where(r), `unknown spell "${r.spell}"`);
-    const level = num(r, 'level');
-    if (level !== out.spells[r.spell].length + 1) {
-      fail(where(r), `${r.spell} levels must be contiguous from 1 (got ${level})`);
-    }
-    out.spells[r.spell].push({
-      manaCost: num(r, 'mana_cost'),
-      durationSeconds: num(r, 'duration_seconds'),
-      effectMagnitude: num(r, 'effect_magnitude'),
-      upgradeCost: num(r, 'upgrade_cost'),
-    });
-  }
-  for (const id of SPELL_IDS) {
-    if (out.spells[id].length === 0) fail('Spells', `no levels for spell "${id}"`);
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Research'), RESEARCH_IDS)) {
@@ -357,10 +336,6 @@ async function exportXlsx() {
     const u = b.units[id];
     return [id, u.power, ...costCells(u.recruitCost), u.trainDurationSeconds];
   }));
-
-  addSheet(workbook, 'Spells', SPELL_IDS.flatMap((id) =>
-    b.spells[id].map((l, i) => [id, i + 1, l.manaCost, l.durationSeconds, l.effectMagnitude, l.upgradeCost]),
-  ));
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];

@@ -1,12 +1,12 @@
-// Game orchestrator: owns the sim state, UI modes (placement / spell
-// targeting / inspection), the tap-handler chain, and change notification.
+// Game orchestrator: owns the sim state, UI modes (placement / inspection),
+// the tap-handler chain, and change notification.
 
 import {
   advance, canAfford, cancelQueueItem, changeWorkers, enqueueBuild, finishWithGems,
   tapCell, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
   type AssignWorkerResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH, SPELLS } from './sim/data/definitions';
+import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
@@ -17,11 +17,10 @@ import { harvestSourceAt } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
 import { availableWorkers, buyPopulation } from './sim/population';
 import { startResearch } from './sim/research';
-import { canTarget, castSpell } from './sim/spells';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type ResearchId, type SpellId, type UnitId,
+  type ResearchId, type UnitId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { Camera } from './render/camera';
@@ -32,13 +31,12 @@ import { TapChain } from './render/tapChain';
 
 export type Mode =
   | { kind: 'normal' }
-  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
-  | { kind: 'targeting'; spellId: SpellId };
+  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null };
 
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
-  openOverlay: string | null = null; // 'build' | 'spellbook' | 'army' | 'research'
+  openOverlay: string | null = null; // 'build' | 'army' | 'research'
   readonly floaters = new Floaters();
   readonly tapChain = new TapChain();
   private changeListeners: Array<() => void> = [];
@@ -111,27 +109,6 @@ export class Game {
           this.notify();
         }
         return true; // placement mode swallows all map taps
-      },
-    });
-    // 200 — spell targeting.
-    this.tapChain.register({
-      priority: 200,
-      handle: (cell) => {
-        if (this.mode.kind !== 'targeting') return false;
-        const spellId = this.mode.spellId;
-        if (canTarget(this.state, spellId, cell)) {
-          const result = castSpell(this.state, spellId, cell, this.now());
-          if (result === 'Cast') {
-            this.floaters.add(cell, SPELLS[spellId].glyph);
-            this.mode = { kind: 'normal' };
-          } else if (result === 'NotEnoughMana') {
-            this.shake(['Mana']);
-          } else {
-            this.toast(result);
-          }
-          this.notify();
-        }
-        return true; // swallow taps outside valid cells
       },
     });
     // 50 — fog reveal (blocked while a full overlay is open; the tile card doesn't count).
@@ -226,15 +203,6 @@ export class Game {
     } else {
       this.toast(result === 'QueueFull' ? 'Build queue is full' : result);
     }
-    this.notify();
-  }
-
-  // ------------------------------------------------------------ targeting mode
-
-  startTargeting(spellId: SpellId): void {
-    this.mode = { kind: 'targeting', spellId };
-    this.openOverlay = null;
-    this.inspectedDistrictId = null;
     this.notify();
   }
 
@@ -384,12 +352,6 @@ export class Game {
           );
         }
       }
-    } else if (this.mode.kind === 'targeting') {
-      const spellId = this.mode.spellId;
-      layer.validColor = PALETTE.spellTarget;
-      layer.validCells = this.map.cells
-        .filter((c) => canTarget(this.state, spellId, c))
-        .map((cell) => ({ cell, label: SPELLS[spellId].glyph }));
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
@@ -461,14 +423,14 @@ export class Game {
 
   walletValue(c: CurrencyId): number {
     if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Mana' || c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
+    if (c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return getWallet(this.state.city.wallet, c);
   }
 }
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Food: '🍎', Silver: '🪙', Wood: '🪵', Gold: '🏅', Mana: '💧', Knowledge: '📜', Gems: '💎',
+    Food: '🍎', Silver: '🪙', Wood: '🪵', Gold: '🏅', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }

@@ -8,18 +8,16 @@ described at the end for reference.)
 
 | Screen | Kind | Contents & behavior |
 |---|---|---|
-| **Header** | persistent top bar | Currency widgets (Silver, Wood, Food, Gold, Knowledge — which ones show depends on the active screen's currency context), a Gems widget with an add button (currently a no-op), a **Mana bar** (current/max plus a "+1 in Xs" regen countdown), **Population** `current/max` (Filling/Full states), **Builders** `available/max` (available = max − min(queuedItems, max)), and **Free workers**. Also plays a shake feedback on a currency when the player can't afford something. |
-| **Main** | base playing state | The map view plus a Spellbook shortcut button. |
-| **Nav bar** | persistent bottom bar | Buttons: Army, Spellbook, Build; tab groups: Spells → Spellbook, Research → Research. A per-second driver lights the **Build CTA** when at least one uncapped district type is both affordable and has a legal cell. Overlay menus opened from here close via a close button/back. |
+| **Header** | persistent top bar | Currency widgets (Silver, Wood, Food, Gold, Knowledge — which ones show depends on the active screen's currency context), a Gems widget with an add button (currently a no-op), **Population** `current/max` (Filling/Full states), **Builders** `available/max` (available = max − min(queuedItems, max)), and **Free workers**. Also plays a shake feedback on a currency when the player can't afford something. |
+| **Main** | base playing state | The map view. |
+| **Nav bar** | persistent bottom bar | Buttons: Build, Army, Research. A per-second driver lights the **Build CTA** when at least one uncapped district type is both affordable and has a legal cell. Overlay menus opened from here close via a close button/back. |
 | **Build** | full-screen overlay | One row per buildable district (Housing, Farm, FarmLands, Lumber): icon, name, description, indicative cost & time at distance 0, `count/maxCount`, affordability, and blocked message "Townhall lvl N" when the count cap needs a higher Townhall. Selecting a row enters placement. |
 | **Place district** | bottom panel + map mode | Ghost preview on the auto-selected cell (closest legal cell to the Townhall, camera centered), all legal cells marked with projected yield labels; panel shows icon/name/description, exact cost & duration for the selected cell, projected stat rows, terrain/feature tags, and the **Build** button. |
 | **Tile / district card** | bottom panel | For a built district: identity, `level/maxLevel`, per-stat rows with green next-level deltas, a Total production row, upgrade cost/duration/affordability/requirement message, and — while a build/upgrade is in progress — progress, remaining time, and the gem finish cost/button. Conditional widgets: **Buy Population** (on districts with population capacity; shows the Food cost and "+5 Silver each"), **Workers +/−** (on worker districts, with per-worker yield text). Opening the card highlights the district's worked tiles on the map (own cell = base yield, nearest `workers−1` worked units = per-unit yield). |
-| **Spellbook** | overlay | Spell list with Locked/Unlocked states and template-formatted descriptions; picking one starts targeting. |
-| **Cast spell** | overlay + map mode | Targeting mode: valid cells highlighted with per-cell info labels; tap a valid cell to cast. |
 | **Army** | overlay | Unit buttons (icon, owned count, selection state), selected-unit info (name, power, tags, description, cost, Train button), header `Power current/max`. |
 | **Research** | overlay | Placeholder — close button only. |
 
-Currency context per screen (what the header shows): always Gems + Mana + Silver;
+Currency context per screen (what the header shows): always Gems + Silver;
 Main adds Food and Wood; Build shows Silver/Wood/Food; Place District adds Builders;
 the district card also toggles the Free Workers widget.
 
@@ -34,7 +32,7 @@ the district card also toggles the Free Workers widget.
 - Floating feedback: "+N currency" on production/collection, reveal cost on fog taps,
   trees destroyed/grown effects.
 - Tile markers: selected tile, worked tiles, valid expand/build targets (with yield
-  labels), spell targets, spell cell-info labels.
+  labels).
 
 ## Input model
 
@@ -46,7 +44,6 @@ that consumes the tap wins:
 | Priority | Handler | Consumes when |
 |---|---|---|
 | 300 | District placement | placement mode is active (selects/moves the preview to any legal cell) |
-| 200 | Spell targeting | targeting mode is active (casts on a valid cell; swallows invalid taps) |
 | 100 | City-expansion trigger | (helper for entering expansion from map affordances) |
 | 50 | Fog reveal | Discovered cell → pay 1 Silver toward reveal; Undiscovered → swallowed. Blocked while a full overlay is open (tile card excepted) |
 | 0 | Cell info (default) | tapping the currently inspected district **collects its vault (1/currency)**; tapping another district opens/switches its card *and* collects once; tapping empty ground closes the card |

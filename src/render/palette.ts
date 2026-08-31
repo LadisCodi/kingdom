@@ -17,7 +17,6 @@ export const PALETTE = {
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
-  spellTarget: 'rgba(120, 140, 255, 0.9)',
   workedTile: 'rgba(255, 226, 122, 0.75)',
   influenceSquare: 'rgba(255, 255, 255, 0.85)',
   yieldPositive: '#7fd07f',

@@ -1,5 +1,5 @@
 // Worker units: claims, the harvest cycle, exhaustion interplay, determinism,
-// plus the Townhall cycle and Mana trickle that share the unified advance.
+// plus the Townhall cycle that shares the unified advance.
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild, townhallCycle, townhallTap } from '../src/sim/commands';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
@@ -175,12 +175,3 @@ describe('Townhall cycle', () => {
   });
 });
 
-describe('Mana trickle', () => {
-  it('5/min into the capped kingdom wallet; overflow lost at the cap', () => {
-    const state = freshGame(); // 50 Mana
-    tickAt(state, T0 + 60_000);
-    expect(getWallet(state.kingdom.wallet, 'Mana')).toBe(55);
-    tickAt(state, T0 + 3 * 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Mana')).toBe(100);
-  });
-});

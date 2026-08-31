@@ -18,7 +18,6 @@ in these files.
 | 4 | [04-districts.md](04-districts.md) | District types, all balancing data, placement rules, cost/time formulas |
 | 5 | [05-city-population-workers.md](05-city-population-workers.md) | City, population buying, worker pool, builders |
 | 6 | [06-construction-queue.md](06-construction-queue.md) | Build queue engine, offline cascade, cancel/refund, gem rush |
-| 7 | [07-spells.md](07-spells.md) | Spellbook, Rain, Tap, forest wear-out & regrowth |
 | 8 | [08-army.md](08-army.md) | Units, recruiting, power cap |
 | 9 | [09-ui-and-input.md](09-ui-and-input.md) | Every screen's data & behavior, world UI, the tap-handler chain |
 | 10 | [10-persistence.md](10-persistence.md) | Save format, autosave, load order, offline progress |

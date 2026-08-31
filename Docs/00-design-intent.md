@@ -32,7 +32,7 @@ in mockups: "mini civ".
    gate: raising it lifts caps and unlocks more and bigger districts.
 7. **Push control** — advance the region toward domination (long-term goal).
 
-Woven around this: **magic** (Mana spells you cast on tiles) and a **premium currency**
+Woven around this: a **premium currency**
 (Gems) that skips waiting.
 
 ---
@@ -45,7 +45,7 @@ Woven around this: **magic** (Mana spells you cast on tiles) and a **premium cur
 - **Features:** Trees (harvestable) and TreesCut (a forest that's been felled).
 - **Tile markers** communicate affordances at a glance: what's selected, which tiles a
   district is actively working, valid build/expand spots (with the projected yield shown as
-  a label), and valid spell targets.
+  a label).
 
 ### Fog of War — buying back the map
 
@@ -71,9 +71,8 @@ Resources are grouped by who owns them:
 
 **Kingdom-wide** (shared across the realm):
 - **Gold** — kingdom-level currency.
-- **Mana** — powers spells; regenerates over time (the kingdom produces a steady trickle).
 - **Knowledge** — reserved for a future research tree (unlock kingdom improvements and new
-  spells). Not yet spent anywhere.
+  future systems). Not yet spent anywhere.
 
 **Player / premium:**
 - **Gems** — hard currency. Its main use is to **finish a build or upgrade instantly**,
@@ -147,21 +146,6 @@ nudging return visits.
 
 ---
 
-## Magic — spells
-
-You have a **Spellbook** of unlockable, levelable spells. Spells cost **Mana** and are cast
-by **tapping a target hex**. Magic is the tactile, hands-on layer over the idle economy.
-
-- **Rain** — multiplies a cell's Food generation for a duration; also **regrows felled
-  forests** (cast on a TreesCut cell and it grows back to Trees when the rain ends).
-- **Tap** — extract one unit of a resource from a wilderness feature (instant, stackable).
-  There's no per-cell cap, but each cast risks **wearing the resource out and destroying it**
-  (Trees → TreesCut). Only works on wilderness feature cells with no district.
-
-The tension: over-tapping destroys the land; Rain replenishes and boosts it.
-
----
-
 ## Regions, kingdom & the long game
 
 - A **Region** is a self-contained playable area hosting one city. Its long-term goal is
@@ -170,22 +154,20 @@ The tension: over-tapping destroys the land; Rain replenishes and boosts it.
   pay a cost, complete a prerequisite objective, or clear a point with your army (combat).
   *This quest-chain / claim / army system is designed but still largely a future feature.*
 - A **Kingdom** is the top-level meta-entity that owns your regions and produces kingdom-wide
-  currency over time (a steady Mana trickle). There's a single player kingdom.
+  currency over time. There's a single player kingdom.
 
 ---
 
 ## Screens the player sees
 
-- **Header** — top resource bar: currencies plus Gems (with a buy button), a Mana regen bar,
+- **Header** — top resource bar: currencies plus Gems (with a buy button),
   Population, Builders, and Free Workers.
-- **Nav bar** — bottom navigation, grouped into Spells and Research.
+- **Nav bar** — bottom navigation, grouped into Build, Army and Research.
 - **Build menu** — full-screen scroll list, one row per buildable district type.
 - **Place district** — bottom panel during placement, with a ghost preview and highlighted
   valid cells on the map, ending in a Build button.
 - **Tile / district card** — info + stats + upgrade for a built district, with Buy Population
   (Housing), worker +/- (worker districts), Upgrade, and Finish-now (pay Gems).
-- **Spellbook** — list of spells (locked/unlocked); pick one to cast.
-- **Cast spell** — targeting overlay while choosing a hex.
 - **Research** — placeholder for a future research screen.
 
 ---

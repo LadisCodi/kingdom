@@ -10,7 +10,7 @@ during a reimplementation: keep the as-is behavior, or fix it to match intent.
    generation with no workers and no vault** — it drips straight into the uncapped
    city wallet (also making it an unlimited offline earner). The worked-by-a-Farm
    bonus (+3 Food/min per staffed FarmLands, via the Farm) exists *in addition*.
-2. **The Tap spell has no valid targets.** Extraction draws a random currency from the
+2. **(Historical) The Tap spell had no valid targets.** Extraction drew a random currency from the
    target feature's `BaseYield`, but both `Trees` and `TreesCut` have an **empty
    BaseYield**, so no cell is ever targetable. The full machinery — extraction,
    per-cell random durability (Trees: destroyed after 5–12 taps), feature destruction,
@@ -41,8 +41,6 @@ during a reimplementation: keep the as-is behavior, or fix it to match intent.
   pending at a time in practice.
 - **Gold and Gems have no faucets**: Gold is granted once (100) and never spent; the
   Gems "add" button in the header is a no-op.
-- **Spell upgrades**: the upgrade flow and `UpgradeCost` per level exist, but both
-  spells have a single authored level.
 
 ## Unreachable data
 

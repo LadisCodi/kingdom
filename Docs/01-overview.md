@@ -12,14 +12,14 @@ A cozy **hex city-builder / idle-management** game. The player is a wizard-monar
 growing a city (**Oakville**) from a single Townhall on a fog-shrouded hex map in the
 starter region (**Region_01**): reveal fog with Silver, place districts on hexes, buy
 population with Food, staff districts with workers, collect resources that accrue in
-real time (including while away), upgrade through the Townhall gate, cast Mana spells
-on tiles, and recruit an army.
+real time (including while away), upgrade through the Townhall gate, and recruit
+an army.
 
 ## Entity hierarchy
 
 ```
 Player                        (premium wallet: Gems)
-└── Kingdom "PlayerKingdom"   (kingdom wallet: Gold, Mana, Knowledge; MaxBuilders; kingdom generators)
+└── Kingdom "PlayerKingdom"   (kingdom wallet: Gold, Knowledge; MaxBuilders)
     └── Region "Region_01"    (one playable hex map; domination goal — designed, not implemented)
         └── City "Oakville"   (city wallet: Food, Silver, Wood; population; build queue; districts)
             └── District      (one per hex tile: Townhall, Housing, Farm, FarmLands, Lumber)
@@ -47,9 +47,7 @@ The army (`ArmyRegistry`) is a single shared collection at kingdom/player scope.
    Districts without a vault credit the city wallet directly.
 6. **Reinvest** — upgrade districts and the Townhall. The Townhall level gates how many
    of each district can exist and how high each can level.
-7. **Magic** — cast Rain (Food boost / forest regrowth) or Tap (resource extraction)
-   with Mana. See `07-spells.md`.
-8. **Army** — recruit Swordsman/Archer/Cavalry for city resources, capped by total
+7. **Army** — recruit Swordsman/Archer/Cavalry for city resources, capped by total
    power per Townhall level. Training is instant. See `08-army.md`.
 
 ## Currencies at a glance
@@ -60,7 +58,6 @@ The army (`ArmyRegistry`) is a single shared collection at kingdom/player scope.
 | Silver | City | no | 50 | Townhall population tax (vaulted) | Building, upgrades, fog reveal, recruits |
 | Wood | City | no | 0 | Lumber camps | Build/upgrade costs, Archer recruit |
 | Gold | Kingdom | no | 100 | nothing (granted at start) | nothing yet |
-| Mana | Kingdom | **yes, 100** | 50 | Kingdom trickle: 300/hour = 5/min | Spells |
 | Knowledge | Kingdom | no | 0 | nothing yet | nothing yet (future research) |
 | Gems | Player | no | 10 | nothing yet (buy button is a no-op) | Finishing builds/upgrades instantly |
 
@@ -77,13 +74,12 @@ it exists but is an empty TODO).
 
 Fully working: hex map + fog of war, district placement/conditions, production +
 vaults + worked units, population/workers, build queue with builders + gem rush +
-cancel/refund, Rain spell, army recruiting, save/load with offline catch-up, all
-10 UI screens except Research.
+cancel/refund, army recruiting, save/load with offline catch-up, all UI screens
+except Research.
 
 Designed but stubbed or unreachable (details in `11-gaps-and-discrepancies.md`):
-research/Knowledge, region claim + domination + combat, city↔region binding, the Tap
-spell's targets (data gap), timed unit training, builder count growth, Gold/Gems
-sources.
+research/Knowledge, region claim + domination + combat, city↔region binding,
+timed unit training, builder count growth, Gold/Gems sources.
 
 ## Doc map
 
@@ -95,7 +91,6 @@ sources.
 | `04-districts.md` | District types, balancing data, placement rules, cost/time formulas |
 | `05-city-population-workers.md` | City, population buying, worker pool |
 | `06-construction-queue.md` | Build queue engine, builders, rush, cancel |
-| `07-spells.md` | Spellbook, Rain, Tap, feature wear-out/regrowth |
 | `08-army.md` | Units, recruiting, power cap |
 | `09-ui-and-input.md` | Screens, widgets, tap-input handler chain |
 | `10-persistence.md` | Save format, autosave, offline behavior |

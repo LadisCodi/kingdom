@@ -29,9 +29,6 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
 .res b { font-variant-numeric: tabular-nums; }
 .res.shake { animation: shake 0.4s; color: #ff7a6e; }
 @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-.manabar { position: relative; width: 90px; height: 16px; background: #223; border-radius: 8px; overflow: hidden; }
-.manabar .fill { position: absolute; inset: 0; width: 50%; background: #3d6ff0; }
-.manabar .label { position: absolute; inset: 0; text-align: center; font-size: 11px; line-height: 16px; color: #fff; }
 #cloud-badge { margin-left: auto; font-size: 11px; opacity: 0.7; }
 
 /* ---------- nav bar ---------- */
@@ -76,7 +73,7 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
 .progress .fill { position: absolute; inset: 0; background: #d9a536; transition: width 0.5s linear; }
 .progress .label { position: absolute; inset: 0; text-align: center; font-size: 10px; line-height: 14px; color: #fff; }
 
-/* ---------- overlays (build / spellbook / army / research) ---------- */
+/* ---------- overlays (build / army / research) ---------- */
 #overlay:empty { display: none; }
 #overlay {
   position: absolute; inset: 0; background: rgba(10, 13, 18, 0.88);

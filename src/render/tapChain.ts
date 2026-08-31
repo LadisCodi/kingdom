@@ -1,5 +1,5 @@
 // Priority-ordered chain of cell-tap handlers: the first handler that consumes
-// the tap wins (Docs/09). Priorities: placement 300, spell targeting 200,
+// the tap wins (Docs/09). Priorities: placement 300,
 // expansion 100, fog reveal 50, cell info 0.
 
 import type { Coord } from '../sim/state';
