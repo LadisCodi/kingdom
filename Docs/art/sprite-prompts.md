@@ -105,6 +105,18 @@ stubble rows, cracked pale soil, one wilted plant."
 *Exhausted variant:* "Same spot after logging: two tree stumps, one small
 pile of logs, a single tiny sapling regrowing."
 
+## 6b. Berry bush (`berry_bush.png`)
+
+> [style block] Subject: a plump round berry bush — dense green foliage built
+> from clustered blobs like the reference trees, dotted with bright blue-purple
+> berries, low and wide, a few leaves on the ground around it.
+
+## 6c. Wild animals (`wild_animals.png`)
+
+> [style block] Subject: a small group of wild boars — two or three chunky
+> round-bodied boars, brown with lighter snouts, standing in a huddle on a
+> patch of trampled grass. Cute, not menacing.
+
 ## 7. Worker (`worker.png` + `worker_carrying.png`)
 
 Drawn at ~60% of a tile, so keep it extra simple:
@@ -148,6 +160,8 @@ this after buildings look good; tileability is the hard part:
 | `farmlands.png` / `_exhausted` | 🟩 / 🥀 | 〃 |
 | `sawmill.png` | 🪚 | 〃 |
 | `forest.png` / `_exhausted` | 🌲 / 🪵 | feature pass |
+| `berry_bush.png` | 🫐 | 〃 (finite — no exhausted variant) |
+| `wild_animals.png` | 🐗 | 〃 (finite — no exhausted variant) |
 | `worker.png` / `_carrying` | 🧑‍🌾 / 🎒 | worker pass |
 | terrain set | `TERRAIN_COLORS` | terrain pass |
 

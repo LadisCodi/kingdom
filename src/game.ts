@@ -2,8 +2,9 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, collectTap, enqueueBuild,
-  finishWithGems, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
+  advance, canAfford, cancelQueueItem, changeWorkers, collectTap, effectiveAmount,
+  enqueueBuild, finishWithGems, townhallCycle, townhallTap, upgradeDistrict,
+  wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH } from './sim/data/definitions';
@@ -446,11 +447,20 @@ export class Game {
     if (c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return getWallet(this.state.city.wallet, c);
   }
+
+  /** Widget value: base amount plus everything that counts as it (Food shows
+   *  Food + Berries + Meat×3). Same number every Food cost checks against. */
+  effectiveWalletValue(c: CurrencyId): number {
+    if (c === 'Gems') return getWallet(this.state.player.wallet, c);
+    if (c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
+    return effectiveAmount(this.state.city.wallet, c);
+  }
 }
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Food: '🍎', Silver: '🪙', Wood: '🪵', Gold: '🏅', Knowledge: '📜', Gems: '💎',
+    Food: '🍎', Silver: '🪙', Wood: '🪵', Berries: '🫐', Meat: '🍖',
+    Gold: '🏅', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }

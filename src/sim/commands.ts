@@ -11,27 +11,15 @@ import type { MapData } from './grid';
 import { collectTap, tapCell, type CollectTapResult, type TapCellResult } from './harvest';
 import { advanceQueue } from './queue';
 import { advanceResearch } from './research';
+import { canAfford, effectiveAmount, pay, refund } from './wallet';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
 } from './workers';
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
-  type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type QueueItem, type ResearchId, type Rng, type Wallet,
+  type Coord, type District, type DistrictId, type GameState,
+  type QueueItem, type ResearchId, type Rng,
 } from './state';
-
-// ------------------------------------------------------------------- wallets
-
-export const canAfford = (wallet: Wallet, cost: Wallet): boolean =>
-  Object.entries(cost).every(([c, amount]) => getWallet(wallet, c as CurrencyId) >= amount);
-
-const pay = (wallet: Wallet, cost: Wallet): void => {
-  for (const [c, amount] of Object.entries(cost)) addToWallet(wallet, c as CurrencyId, -amount);
-};
-
-const refund = (wallet: Wallet, cost: Wallet): void => {
-  for (const [c, amount] of Object.entries(cost)) addToWallet(wallet, c as CurrencyId, amount);
-};
 
 // ------------------------------------------------------------------ building
 
@@ -278,7 +266,7 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   return result;
 }
 
-export { collectTap, tapCell, assignableWorkerLimit };
+export { canAfford, effectiveAmount, collectTap, tapCell, assignableWorkerLimit };
 export type { CollectTapResult, TapCellResult };
 
 export type { Rng };

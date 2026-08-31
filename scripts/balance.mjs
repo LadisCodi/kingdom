@@ -28,8 +28,8 @@ const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
 const RESEARCH_IDS = ['Agriculture'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
-const HARVEST_IDS = ['Forest', 'Crops'];
-const CURRENCY_IDS = ['Food', 'Silver', 'Wood', 'Gold', 'Knowledge', 'Gems'];
+const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
+const CURRENCY_IDS = ['Food', 'Silver', 'Wood', 'Berries', 'Meat', 'Gold', 'Knowledge', 'Gems'];
 const COST_CURRENCIES = ['Silver', 'Wood', 'Food'];
 
 const SETTINGS = [
@@ -75,7 +75,7 @@ const SHEETS = {
   Units: ['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood', 'recruit_cost_food',
     'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds'],
-  Currencies: ['id', 'cap', 'start'],
+  Currencies: ['id', 'cap', 'start', 'counts_as', 'unit_value'],
   FogRings: ['distance', 'cost'],
   Research: ['id', 'cost_silver', 'cost_wood', 'cost_food', 'duration_seconds'],
   Settings: ['key', 'value'],
@@ -247,11 +247,30 @@ async function importXlsx() {
     };
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Currencies'), CURRENCY_IDS)) {
-    out.currencies[id] = {
-      cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
-      start: num(r, 'start'),
-    };
+  const currencyRows = byId(readSheet(workbook, 'Currencies'), CURRENCY_IDS);
+  for (const [id, r] of currencyRows) {
+    const countsAs = (r.counts_as === '' || r.counts_as === undefined) ? null : r.counts_as;
+    if (countsAs !== null) {
+      if (!CURRENCY_IDS.includes(countsAs)) fail(where(r), `unknown counts_as currency "${countsAs}"`);
+      const baseRow = currencyRows.get(countsAs);
+      if (baseRow && baseRow.counts_as) fail(where(r), `counts_as chains are not allowed ("${countsAs}" is itself equivalent)`);
+      const value = num(r, 'unit_value');
+      if (value <= 0) fail(where(r), 'unit_value must be positive');
+      out.currencies[id] = {
+        cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
+        start: num(r, 'start'),
+        countsAs: { currency: countsAs, value },
+      };
+    } else {
+      if (r.unit_value !== '' && r.unit_value !== undefined) {
+        fail(where(r), 'unit_value without counts_as');
+      }
+      out.currencies[id] = {
+        cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
+        start: num(r, 'start'),
+        countsAs: null,
+      };
+    }
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
@@ -345,7 +364,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
     const c = b.currencies[id];
-    return [id, c.cap ?? '', c.start];
+    return [id, c.cap ?? '', c.start, c.countsAs?.currency ?? '', c.countsAs?.value ?? ''];
   }));
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));

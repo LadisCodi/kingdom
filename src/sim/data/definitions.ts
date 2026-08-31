@@ -19,15 +19,28 @@ export interface CurrencyDef {
   scope: 'city' | 'kingdom' | 'player';
   cap: number | null;
   start: number;
+  /** This currency is stored separately but pays costs of another one at a
+   *  fixed rate (a Berry counts as 1 Food, a Meat as 3). Null = plain. */
+  countsAs: { currency: CurrencyId; value: number } | null;
 }
 
+interface CurrencyBalance { cap: number | null; start: number; countsAs?: unknown }
+const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef => ({
+  scope,
+  cap: b.cap,
+  start: b.start,
+  countsAs: (b.countsAs ?? null) as CurrencyDef['countsAs'],
+});
+
 export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
-  Food: { scope: 'city', ...balance.currencies.Food },
-  Silver: { scope: 'city', ...balance.currencies.Silver },
-  Wood: { scope: 'city', ...balance.currencies.Wood },
-  Gold: { scope: 'kingdom', ...balance.currencies.Gold },
-  Knowledge: { scope: 'kingdom', ...balance.currencies.Knowledge },
-  Gems: { scope: 'player', ...balance.currencies.Gems },
+  Food: currency('city', balance.currencies.Food),
+  Silver: currency('city', balance.currencies.Silver),
+  Wood: currency('city', balance.currencies.Wood),
+  Berries: currency('city', balance.currencies.Berries),
+  Meat: currency('city', balance.currencies.Meat),
+  Gold: currency('kingdom', balance.currencies.Gold),
+  Knowledge: currency('kingdom', balance.currencies.Knowledge),
+  Gems: currency('player', balance.currencies.Gems),
 };
 
 // -------------------------------------------------------------- harvest loop
@@ -39,12 +52,16 @@ export interface HarvestSpec {
   /** Units per worker delivery (auto collection) — upgradeable separately. */
   yieldPerWorker: number;
   tapsToExhaust: number;
+  /** Seconds to recover after exhausting; 0 = FINITE — the feature is
+   *  consumed and vanishes from the map when drained. */
   recoverySeconds: number;
 }
 
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   Forest: { currencyId: 'Wood', ...balance.harvest.Forest },
   Crops: { currencyId: 'Food', ...balance.harvest.Crops },
+  Berries: { currencyId: 'Berries', ...balance.harvest.Berries },
+  Meat: { currencyId: 'Meat', ...balance.harvest.Meat },
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -176,6 +193,15 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
     id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵',
     sprite: 'forest', source: 'Forest',
   },
+  // Finite sources (recovery 0): consumed and removed from the map when drained.
+  BerryBush: {
+    id: 'BerryBush', name: 'Berry bush', glyph: '🫐', exhaustedGlyph: '🍂',
+    sprite: 'berry_bush', source: 'Berries',
+  },
+  WildAnimals: {
+    id: 'WildAnimals', name: 'Wild animals', glyph: '🐗', exhaustedGlyph: '🦴',
+    sprite: 'wild_animals', source: 'Meat',
+  },
 };
 
 /** Exhausted-crops visual (FarmLands districts have no feature). */
@@ -270,4 +296,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 5; // v4 saves still carried spells/Mana; discarded
+export const SAVE_VERSION = 6; // v5 saves predate Berries/Meat + finite map features; discarded

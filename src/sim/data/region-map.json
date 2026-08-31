@@ -1,874 +1,894 @@
 {
- "_comment": "Region_01 map extracted from Assets/Codigames/Scenes/Region_01.unity. Coordinates are Unity hex-tilemap cell coordinates (x = column, y = row, pointy-top hexagon layout, odd rows offset). The game's HexCoordinates maps as X = x, Y = 0, Z = y. Grid cell size: 4 x 3.5 world units. The Townhall of a new game sits at cell (0, 0).",
- "grid": {
-  "layout": "hexagon",
-  "cellSize": {
-   "x": 4,
-   "y": 3.5
+  "_comment": "Region_01 map extracted from Assets/Codigames/Scenes/Region_01.unity. Coordinates are Unity hex-tilemap cell coordinates (x = column, y = row, pointy-top hexagon layout, odd rows offset). The game's HexCoordinates maps as X = x, Y = 0, Z = y. Grid cell size: 4 x 3.5 world units. The Townhall of a new game sits at cell (0, 0).",
+  "grid": {
+    "layout": "hexagon",
+    "cellSize": {
+      "x": 4,
+      "y": 3.5
+    }
+  },
+  "terrain": {
+    "origin": {
+      "x": -6,
+      "y": -8
+    },
+    "size": {
+      "x": 13,
+      "y": 43
+    },
+    "cells": [
+      {
+        "x": -3,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": -2,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": -1,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": 0,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": 1,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": 2,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": 3,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": 4,
+        "y": -6,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": -5,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": -5,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": -5,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": -5,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": -5,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": -5,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": -5,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": -5,
+        "id": "Water"
+      },
+      {
+        "x": 3,
+        "y": -5,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": -5,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": -4,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": -4,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": -4,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": -4,
+        "id": "Water"
+      },
+      {
+        "x": -6,
+        "y": -3,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": -4,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": -3,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": -3,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": -3,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": -2,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": -2,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": -2,
+        "id": "Water"
+      },
+      {
+        "x": -2,
+        "y": -2,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": -2,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": -2,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": -2,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": -2,
+        "id": "Water"
+      },
+      {
+        "x": 3,
+        "y": -2,
+        "id": "Water"
+      },
+      {
+        "x": 4,
+        "y": -2,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": -2,
+        "id": "Grassland"
+      },
+      {
+        "x": 6,
+        "y": -2,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": -1,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": -1,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": -1,
+        "id": "Water"
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": -1,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": -1,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": -1,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": -1,
+        "id": "Water"
+      },
+      {
+        "x": 3,
+        "y": -1,
+        "id": "Water"
+      },
+      {
+        "x": 4,
+        "y": -1,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": -1,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 0,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "id": "Water"
+      },
+      {
+        "x": -2,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "id": "Water"
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 0,
+        "id": "Grassland"
+      },
+      {
+        "x": 6,
+        "y": 0,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": 1,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 1,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": 1,
+        "id": "Water"
+      },
+      {
+        "x": -2,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 1,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": 2,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": -3,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 2,
+        "id": "Grassland"
+      },
+      {
+        "x": 6,
+        "y": 2,
+        "id": "Water"
+      },
+      {
+        "x": -6,
+        "y": 3,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": -4,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": -3,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 3,
+        "id": "Grassland"
+      },
+      {
+        "x": 6,
+        "y": 3,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": 4,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": -3,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 4,
+        "id": "Grassland"
+      },
+      {
+        "x": 6,
+        "y": 4,
+        "id": "Water"
+      },
+      {
+        "x": -5,
+        "y": 5,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": -3,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 5,
+        "id": "Grassland"
+      },
+      {
+        "x": 6,
+        "y": 5,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 6,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": -2,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": -1,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": 0,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": 1,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": 2,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": 3,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": 4,
+        "y": 6,
+        "id": "Grassland"
+      },
+      {
+        "x": 5,
+        "y": 6,
+        "id": "Water"
+      },
+      {
+        "x": 6,
+        "y": 6,
+        "id": "Water"
+      },
+      {
+        "x": -4,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": -3,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": -2,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": -1,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": 0,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": 1,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": 2,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": 3,
+        "y": 7,
+        "id": "Water"
+      },
+      {
+        "x": 4,
+        "y": 7,
+        "id": "Water"
+      }
+    ]
+  },
+  "features": {
+    "origin": {
+      "x": -3,
+      "y": -2
+    },
+    "size": {
+      "x": 9,
+      "y": 37
+    },
+    "cells": [
+      {
+        "x": 2,
+        "y": 2,
+        "id": "Trees"
+      },
+      {
+        "x": -3,
+        "y": 3,
+        "id": "Trees"
+      },
+      {
+        "x": -2,
+        "y": 3,
+        "id": "Trees"
+      },
+      {
+        "x": 1,
+        "y": 3,
+        "id": "Trees"
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "id": "Trees"
+      },
+      {
+        "x": 3,
+        "y": 3,
+        "id": "Trees"
+      },
+      {
+        "x": -3,
+        "y": 4,
+        "id": "Trees"
+      },
+      {
+        "x": -2,
+        "y": 4,
+        "id": "Trees"
+      },
+      {
+        "x": -1,
+        "y": 4,
+        "id": "Trees"
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "id": "Trees"
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "id": "Trees"
+      },
+      {
+        "x": 2,
+        "y": 5,
+        "id": "Trees"
+      },
+      {
+        "x": 3,
+        "y": 5,
+        "id": "Trees"
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "id": "BerryBush"
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "id": "BerryBush"
+      },
+      {
+        "x": -2,
+        "y": -4,
+        "id": "WildAnimals"
+      },
+      {
+        "x": 4,
+        "y": 6,
+        "id": "WildAnimals"
+      }
+    ]
   }
- },
- "terrain": {
-  "origin": {
-   "x": -6,
-   "y": -8
-  },
-  "size": {
-   "x": 13,
-   "y": 43
-  },
-  "cells": [
-   {
-    "x": -3,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": -2,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": -1,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": 0,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": 1,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": 2,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": 3,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": 4,
-    "y": -6,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": -5,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": -5,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": -5,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": -5,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": -5,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": -5,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": -5,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": -5,
-    "id": "Water"
-   },
-   {
-    "x": 3,
-    "y": -5,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": -5,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": -4,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": -4,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": -4,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": -4,
-    "id": "Water"
-   },
-   {
-    "x": -6,
-    "y": -3,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": -4,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": -3,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": -3,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": -3,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": -2,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": -2,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": -2,
-    "id": "Water"
-   },
-   {
-    "x": -2,
-    "y": -2,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": -2,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": -2,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": -2,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": -2,
-    "id": "Water"
-   },
-   {
-    "x": 3,
-    "y": -2,
-    "id": "Water"
-   },
-   {
-    "x": 4,
-    "y": -2,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": -2,
-    "id": "Grassland"
-   },
-   {
-    "x": 6,
-    "y": -2,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": -1,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": -1,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": -1,
-    "id": "Water"
-   },
-   {
-    "x": -2,
-    "y": -1,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": -1,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": -1,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": -1,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": -1,
-    "id": "Water"
-   },
-   {
-    "x": 3,
-    "y": -1,
-    "id": "Water"
-   },
-   {
-    "x": 4,
-    "y": -1,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": -1,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 0,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": 0,
-    "id": "Water"
-   },
-   {
-    "x": -2,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 0,
-    "id": "Water"
-   },
-   {
-    "x": 4,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 0,
-    "id": "Grassland"
-   },
-   {
-    "x": 6,
-    "y": 0,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": 1,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 1,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": 1,
-    "id": "Water"
-   },
-   {
-    "x": -2,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": 1,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 1,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": 2,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": -3,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 2,
-    "id": "Grassland"
-   },
-   {
-    "x": 6,
-    "y": 2,
-    "id": "Water"
-   },
-   {
-    "x": -6,
-    "y": 3,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": -4,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": -3,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 3,
-    "id": "Grassland"
-   },
-   {
-    "x": 6,
-    "y": 3,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": 4,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": -3,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 4,
-    "id": "Grassland"
-   },
-   {
-    "x": 6,
-    "y": 4,
-    "id": "Water"
-   },
-   {
-    "x": -5,
-    "y": 5,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": -3,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 5,
-    "id": "Grassland"
-   },
-   {
-    "x": 6,
-    "y": 5,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 6,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": -2,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": -1,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": 0,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": 1,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": 2,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": 3,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": 4,
-    "y": 6,
-    "id": "Grassland"
-   },
-   {
-    "x": 5,
-    "y": 6,
-    "id": "Water"
-   },
-   {
-    "x": 6,
-    "y": 6,
-    "id": "Water"
-   },
-   {
-    "x": -4,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": -3,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": -2,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": -1,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": 0,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": 1,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": 2,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": 3,
-    "y": 7,
-    "id": "Water"
-   },
-   {
-    "x": 4,
-    "y": 7,
-    "id": "Water"
-   }
-  ]
- },
- "features": {
-  "origin": {
-   "x": -3,
-   "y": -2
-  },
-  "size": {
-   "x": 9,
-   "y": 37
-  },
-  "cells": [
-   {
-    "x": 2,
-    "y": 2,
-    "id": "Trees"
-   },
-   {
-    "x": -3,
-    "y": 3,
-    "id": "Trees"
-   },
-   {
-    "x": -2,
-    "y": 3,
-    "id": "Trees"
-   },
-   {
-    "x": 1,
-    "y": 3,
-    "id": "Trees"
-   },
-   {
-    "x": 2,
-    "y": 3,
-    "id": "Trees"
-   },
-   {
-    "x": 3,
-    "y": 3,
-    "id": "Trees"
-   },
-   {
-    "x": -3,
-    "y": 4,
-    "id": "Trees"
-   },
-   {
-    "x": -2,
-    "y": 4,
-    "id": "Trees"
-   },
-   {
-    "x": -1,
-    "y": 4,
-    "id": "Trees"
-   },
-   {
-    "x": 0,
-    "y": 4,
-    "id": "Trees"
-   },
-   {
-    "x": 4,
-    "y": 4,
-    "id": "Trees"
-   },
-   {
-    "x": 2,
-    "y": 5,
-    "id": "Trees"
-   },
-   {
-    "x": 3,
-    "y": 5,
-    "id": "Trees"
-   }
-  ]
- }
 }

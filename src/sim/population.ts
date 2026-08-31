@@ -1,7 +1,8 @@
 // Population buying and the shared worker pool (Docs/05; harvest-loop §2).
 
 import { CITY_DEF, DISTRICTS } from './data/definitions';
-import { addToWallet, getWallet, type GameState } from './state';
+import type { GameState } from './state';
+import { canAfford, pay } from './wallet';
 
 /** Max population = Σ PopulationCapacity over active (Built) districts. */
 export function maxPopulation(state: GameState): number {
@@ -30,9 +31,9 @@ export type BuyPopulationResult = 'Success' | 'AtMax' | 'NotEnoughResources';
 
 export function buyPopulation(state: GameState): BuyPopulationResult {
   if (state.city.population >= maxPopulation(state)) return 'AtMax';
-  const cost = populationCost(state.city.population);
-  if (getWallet(state.city.wallet, 'Food') < cost) return 'NotEnoughResources';
-  addToWallet(state.city.wallet, 'Food', -cost);
+  const cost = { Food: populationCost(state.city.population) };
+  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
+  pay(state.city.wallet, cost);
   state.city.population += 1;
   return 'Success';
 }

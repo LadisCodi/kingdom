@@ -1,18 +1,29 @@
 // Top resource bar: currencies, population, builders, free workers.
-// Shakes a currency when the player can't afford something.
+// Shakes a currency when the player can't afford something. Currencies with
+// equivalents (Food ← Berries/Meat) show the EFFECTIVE total — the number
+// costs actually check — with a hover/tap tooltip breaking it down.
 
 import { icon, type Game } from '../game';
+import { getWallet, type CurrencyId } from '../sim/state';
+import { equivalentsOf } from '../sim/wallet';
 import { maxPopulation } from '../sim/population';
-import type { CurrencyId } from '../sim/state';
 import { el } from './format';
 
-const SHOWN: CurrencyId[] = ['Silver', 'Wood', 'Food', 'Gems'];
+const SHOWN: CurrencyId[] = ['Silver', 'Wood', 'Food', 'Berries', 'Meat', 'Gems'];
+const HIDDEN_WHEN_ZERO: CurrencyId[] = ['Berries', 'Meat'];
 
 export function mountHeader(game: Game, root: HTMLElement): void {
   const widgets = new Map<CurrencyId, HTMLElement>();
+  const tooltips = new Map<CurrencyId, HTMLElement>();
   for (const c of SHOWN) {
     const value = el('b', {}, '0');
     const w = el('span', { class: 'res', 'data-currency': c }, icon(c), value);
+    if (equivalentsOf(c).length > 0) {
+      const tip = el('div', { class: 'tip' });
+      w.append(tip);
+      tooltips.set(c, tip);
+      w.addEventListener('click', () => w.classList.toggle('open')); // touch has no hover
+    }
     widgets.set(c, w);
     root.append(w);
   }
@@ -39,7 +50,23 @@ export function mountHeader(game: Game, root: HTMLElement): void {
 
   const refresh = () => {
     for (const [c, w] of widgets) {
-      w.querySelector('b')!.textContent = String(game.walletValue(c));
+      w.querySelector('b')!.textContent = String(game.effectiveWalletValue(c));
+      if (HIDDEN_WHEN_ZERO.includes(c)) w.hidden = game.walletValue(c) === 0;
+    }
+    // Breakdown tooltip, e.g. Food: base + each equivalent's contribution.
+    for (const [c, tip] of tooltips) {
+      const wallet = game.state.city.wallet;
+      const rows = [
+        el('div', { class: 'row' },
+          el('span', {}, `${icon(c)} ${c}`), el('span', {}, String(getWallet(wallet, c)))),
+        ...equivalentsOf(c).map((m) =>
+          el('div', { class: 'row' },
+            el('span', {}, `${icon(m.id)} ${getWallet(wallet, m.id)} × ${m.value}`),
+            el('span', {}, String(getWallet(wallet, m.id) * m.value)))),
+        el('div', { class: 'row total' },
+          el('span', {}, 'Total'), el('span', {}, String(game.effectiveWalletValue(c)))),
+      ];
+      tip.replaceChildren(...rows);
     }
     popW.textContent = `${game.state.city.population}/${maxPopulation(game.state)}`;
     const max = game.state.kingdom.maxBuilders;

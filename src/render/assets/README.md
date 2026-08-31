@@ -16,6 +16,8 @@ Expected filenames (see `Docs/art/sprite-prompts.md` for the prompts):
 | `sawmill.png` | 🪚 |
 | `forest.png` | 🌲 |
 | `forest_exhausted.png` | 🪵 |
+| `berry_bush.png` | 🫐 |
+| `wild_animals.png` | 🐗 |
 | `worker.png` | 🧑‍🌾 |
 | `worker_carrying.png` | 🧑‍🌾 + 🎒 |
 

@@ -75,10 +75,18 @@ export function registerTap(
   spec: HarvestSpec,
   now: number,
 ): boolean {
-  const s = cellState(state, coordKey(cell));
+  const key = coordKey(cell);
+  const s = cellState(state, key);
   recoverIfDue(s, now);
   s.taps += 1;
   if (s.taps < spec.tapsToExhaust) return false;
+  if (spec.recoverySeconds <= 0) {
+    // Finite source (Berry bush, Wild animals): consumed — the feature
+    // vanishes from the map for good.
+    delete state.features[key];
+    delete state.harvest[key];
+    return true;
+  }
   s.exhaustedUntil = now + spec.recoverySeconds * 1000;
   return true;
 }

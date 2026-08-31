@@ -187,32 +187,66 @@
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 60
+    },
+    "Berries": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 0
+    },
+    "Meat": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 0
     }
   },
   "currencies": {
     "Food": {
       "cap": null,
-      "start": 5
+      "start": 5,
+      "countsAs": null
     },
     "Silver": {
       "cap": null,
-      "start": 50
+      "start": 50,
+      "countsAs": null
     },
     "Wood": {
       "cap": null,
-      "start": 0
+      "start": 0,
+      "countsAs": null
+    },
+    "Berries": {
+      "cap": null,
+      "start": 0,
+      "countsAs": {
+        "currency": "Food",
+        "value": 1
+      }
+    },
+    "Meat": {
+      "cap": null,
+      "start": 0,
+      "countsAs": {
+        "currency": "Food",
+        "value": 3
+      }
     },
     "Gold": {
       "cap": null,
-      "start": 100
+      "start": 100,
+      "countsAs": null
     },
     "Knowledge": {
       "cap": null,
-      "start": 0
+      "start": 0,
+      "countsAs": null
     },
     "Gems": {
       "cap": null,
-      "start": 10
+      "start": 10,
+      "countsAs": null
     }
   },
   "units": {

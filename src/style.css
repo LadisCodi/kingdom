@@ -25,8 +25,17 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
   padding: 8px 12px; background: rgba(16, 21, 28, 0.92);
   border-bottom: 1px solid #2a3442; font-size: 14px;
 }
-.res { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.res { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; position: relative; }
 .res b { font-variant-numeric: tabular-nums; }
+/* Breakdown tooltip for currencies with equivalents (hover, or tap to pin). */
+.res .tip {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
+  min-width: 130px; padding: 8px 10px; font-size: 12px;
+  background: rgba(20, 26, 35, 0.97); border: 1px solid #3a4757; border-radius: 8px;
+}
+.res:hover .tip, .res.open .tip { display: block; }
+.res .tip .row { display: flex; justify-content: space-between; gap: 14px; }
+.res .tip .row.total { border-top: 1px solid #3a4757; margin-top: 4px; padding-top: 4px; font-weight: 600; }
 .res.shake { animation: shake 0.4s; color: #ff7a6e; }
 @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 #cloud-badge { margin-left: auto; font-size: 11px; opacity: 0.7; }

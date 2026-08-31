@@ -3,7 +3,8 @@
 // One research runs at a time; completion happens in the unified advance.
 
 import { RESEARCH } from './data/definitions';
-import { addToWallet, getWallet, type CurrencyId, type GameState, type ResearchId } from './state';
+import type { GameState, ResearchId } from './state';
+import { canAfford, pay } from './wallet';
 
 export const isResearched = (state: GameState, id: ResearchId): boolean =>
   state.research.completed.includes(id);
@@ -15,12 +16,8 @@ export function startResearch(state: GameState, id: ResearchId, now: number): St
   if (isResearched(state, id)) return 'AlreadyDone';
   if (state.research.active !== null) return 'AlreadyResearching';
   const cost = RESEARCH[id].cost;
-  for (const [c, amount] of Object.entries(cost)) {
-    if (getWallet(state.city.wallet, c as CurrencyId) < amount) return 'NotEnoughResources';
-  }
-  for (const [c, amount] of Object.entries(cost)) {
-    addToWallet(state.city.wallet, c as CurrencyId, -amount);
-  }
+  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
+  pay(state.city.wallet, cost);
   state.research.active = { id, startedAt: now };
   return 'Started';
 }

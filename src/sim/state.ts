@@ -5,11 +5,13 @@
 
 import { DISTRICTS } from './data/definitions';
 
-export type CurrencyId = 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Knowledge' | 'Gems';
+export type CurrencyId =
+  | 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Knowledge' | 'Gems'
+  | 'Berries' | 'Meat'; // food-valued (see CurrencyDef.countsAs)
 export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
-export type FeatureId = 'Trees';
-export type HarvestSourceId = 'Forest' | 'Crops';
+export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals';
+export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
 export type ResearchId = 'Agriculture';
 
