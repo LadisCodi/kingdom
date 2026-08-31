@@ -8,13 +8,6 @@ import {
   districtSize, type Coord, type District, type DistrictId, type GameState,
 } from './state';
 
-export interface AdjacencyEffect {
-  goldPerMinute: number;
-  goldPerTap: number;
-}
-
-const NONE: AdjacencyEffect = { goldPerMinute: 0, goldPerTap: 0 };
-
 /** The rule for what `district` receives per adjacent `neighbor` (directional). */
 const rule = (district: DistrictId, neighbor: DistrictId) =>
   ADJACENCY.find((r) => r.district === district && r.neighbor === neighbor);
@@ -47,34 +40,29 @@ export function adjacencyEffect(
   definitionId: DistrictId,
   loc: Coord,
   excludeId: string | null = null,
-): AdjacencyEffect {
-  const out = { ...NONE };
+): number {
+  let goldPerMinute = 0;
   for (const n of adjacentBuilt(state, loc, DISTRICTS[definitionId].size, excludeId)) {
-    const r = rule(definitionId, n.definitionId);
-    if (r) {
-      out.goldPerMinute += r.goldPerMinute;
-      out.goldPerTap += r.goldPerTap;
-    }
+    goldPerMinute += rule(definitionId, n.definitionId)?.goldPerMinute ?? 0;
   }
-  return out;
+  return goldPerMinute;
 }
 
-export const districtAdjacency = (state: GameState, district: District): AdjacencyEffect =>
+/** The gold/min modifier this district's built neighbors currently apply. */
+export const districtAdjacency = (state: GameState, district: District): number =>
   adjacencyEffect(state, district.definitionId, district.location, district.uniqueId);
 
-/** Placement preview: what each existing neighbor would GAIN from the new
- *  building, and what the new building would RECEIVE from them. */
+/** Placement preview: the gold/min each existing neighbor would GAIN from
+ *  the new building, and what the new building would RECEIVE from them. */
 export function placementAdjacency(
   state: GameState,
   definitionId: DistrictId,
   cell: Coord,
-): { given: Array<{ district: District } & AdjacencyEffect>; received: AdjacencyEffect } {
-  const given: Array<{ district: District } & AdjacencyEffect> = [];
+): { given: Array<{ district: District; goldPerMinute: number }>; received: number } {
+  const given: Array<{ district: District; goldPerMinute: number }> = [];
   for (const n of adjacentBuilt(state, cell, DISTRICTS[definitionId].size)) {
     const r = rule(n.definitionId, definitionId);
-    if (r && (r.goldPerMinute !== 0 || r.goldPerTap !== 0)) {
-      given.push({ district: n, goldPerMinute: r.goldPerMinute, goldPerTap: r.goldPerTap });
-    }
+    if (r && r.goldPerMinute !== 0) given.push({ district: n, goldPerMinute: r.goldPerMinute });
   }
   return { given, received: adjacencyEffect(state, definitionId, cell) };
 }

@@ -17,20 +17,21 @@ surplus resources, not a chore you must visit to earn money.
   beyond the cap the tax clock pauses like workers do).
 - Roofless villagers (population over capacity) pay nothing, and empty
   minutes are never banked: no housing, no income.
-- **Tap bonus**: a lived-in house is a gold RESOURCE CELL (`Taxes` row in
-  the Harvest sheet), reusing the tree mechanics end to end — collect
-  cooldown, `yield_per_tap` Gold per tap, `taps_to_exhaust`, then a
-  `recovery_seconds` cooldown with the usual bar. An empty house is not
-  tappable.
+- **Tap boost**: tapping (or holding) a lived-in house FAST-FORWARDS the
+  tax clock by `taxes.tap_boost_seconds` — the same verb as tapping the
+  Townhall to speed training. Buildings never exhaust: extraction +
+  exhaustion is reserved for natural cells (trees, berries, animals,
+  crops). Paced by the shared collect cooldown, so QuickHands helps.
 - **Adjacency** (`Adjacency` sheet, `src/sim/adjacency.ts`): a house gains
-  or LOSES flat gold per adjacent district of a given type — footprints
+  or LOSES gold/min per adjacent district of a given type — footprints
   touching, diagonals included. Rules are directional `(district,
-  neighbor)` rows with `gold_per_minute` and `gold_per_tap` (negatives
-  allowed). Initial content: Housing next to Housing = **−1/min and
-  −1/tap per neighbor** — crowded rows of houses tax worse, so spreading
-  out pays. Both per-house taxes and taps clamp at 0. While PLACING a
-  building, every affected neighbor and the ghost itself get a label
-  (green positive / red negative) showing the modifier.
+  neighbor)` rows with a single `gold_per_minute` (negatives allowed);
+  since the tap only advances the same production clock, one number
+  covers both mechanics. Initial content: Housing next to Housing =
+  **−1/min per neighbor** — crowded rows tax worse, spreading out pays.
+  A house clamps at 0, never negative. While PLACING a building, every
+  affected neighbor and the ghost itself get a compact label ("−1 🪙",
+  green positive / red negative).
 
 ## Villager training (Townhall queue)
 

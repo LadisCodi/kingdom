@@ -1,11 +1,15 @@
 // Housing taxes: passive gold from housed villagers (the idle income), plus
-// the house tap — a lived-in house is a gold resource cell like a tree.
+// the house tap — tapping fast-forwards the tax clock (buildings never
+// exhaust; that mechanic is for natural cells only).
 import { describe, expect, it } from 'vitest';
 import { TAXES } from '../src/sim/data/definitions';
-import { collectTap, isExhausted, tapCell } from '../src/sim/harvest';
-import { queueTraining } from '../src/sim/population';
-import { getWallet } from '../src/sim/state';
+import { tapCell } from '../src/sim/harvest';
+import { houseTap, queueTraining } from '../src/sim/population';
+import { getWallet, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
+
+const house = (state: GameState) =>
+  state.city.districts.find((d) => d.definitionId === 'Housing')!;
 
 const HOUSE = { x: 2, y: 0 }; // revealed grassland
 
@@ -54,21 +58,25 @@ describe('passive tax gold', () => {
 });
 
 describe('tapping a house', () => {
-  it('a lived-in house pays a gold bonus per tap, then exhausts and recovers', () => {
+  it('fast-forwards the tax clock — no extraction, no exhaustion', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
-    state.city.population = 1;
-    expect(collectTap(state, map, HOUSE, T0)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(2); // yield_per_tap
-    for (let i = 1; i < 5; i++) expect(tapCell(state, map, HOUSE, T0)).toBe('Harvested');
-    expect(isExhausted(state, HOUSE, T0)).toBe(true); // 5 taps spent
-    expect(tapCell(state, map, HOUSE, T0 + 59_000)).toBe('Exhausted');
-    expect(tapCell(state, map, HOUSE, T0 + 60_000)).toBe('Harvested'); // recovered
+    state.city.population = 2; // 4/min → 15s per gold; boost = 5s per tap
+    expect(TAXES.tapBoostSeconds).toBe(5);
+    expect(houseTap(state, house(state), T0)).toEqual({ result: 'Boosted', gold: 0 });
+    // Paced by the shared collect cooldown (0.5s).
+    expect(houseTap(state, house(state), T0).result).toBe('OnCooldown');
+    expect(houseTap(state, house(state), T0 + 500)).toEqual({ result: 'Boosted', gold: 0 });
+    // Third boost: 15s boosted + 1s real = 16s elapsed → 1 whole gold matures.
+    expect(houseTap(state, house(state), T0 + 1000)).toEqual({ result: 'Boosted', gold: 1 });
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(1);
   });
 
-  it('an EMPTY house is not tappable', () => {
+  it('an empty house cannot be boosted, and houses are not harvest cells', () => {
     const state = freshGame(); // population 0
     addBuilt(state, 'Housing', HOUSE);
-    expect(tapCell(state, map, HOUSE, T0)).toBe('NotHarvestable');
+    expect(houseTap(state, house(state), T0).result).toBe('NoResidents');
+    state.city.population = 2;
+    expect(tapCell(state, map, HOUSE, T0)).toBe('NotHarvestable'); // no extraction
   });
 });

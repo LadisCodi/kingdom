@@ -70,13 +70,13 @@ export interface HarvestSpec {
   respawnSeconds: number;
 }
 
+// Exhaustion/recovery applies to NATURAL sources only — buildings (Townhall,
+// Housing) are tapped to advance their timers instead, and never exhaust.
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   Forest: { currencyId: 'Wood', ...balance.harvest.Forest },
   Crops: { currencyId: 'Food', ...balance.harvest.Crops },
   Berries: { currencyId: 'Berries', ...balance.harvest.Berries },
   Meat: { currencyId: 'Meat', ...balance.harvest.Meat },
-  // A lived-in house is a gold cell: tap it for a tax bonus.
-  Taxes: { currencyId: 'Gold', ...balance.harvest.Taxes },
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -89,7 +89,8 @@ export const TAP = balance.tap;
 // Villager training at the Townhall: duration + tap boost (upgradeable later).
 export const TRAINING = balance.training;
 
-// Passive taxes: gold per housed villager per minute (boostable by TradeRoutes).
+// Passive taxes: gold per housed villager per minute (boostable by
+// TradeRoutes); tapping a lived-in house adds tapBoostSeconds to the clock.
 export const TAXES = balance.taxes;
 
 // Adjacency rules (Adjacency sheet): flat gold a district gains — or loses —
@@ -98,7 +99,6 @@ export interface AdjacencyRule {
   district: DistrictId;
   neighbor: DistrictId;
   goldPerMinute: number;
-  goldPerTap: number;
 }
 export const ADJACENCY = balance.adjacency as unknown as AdjacencyRule[];
 
@@ -166,10 +166,9 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Housing',
     name: 'Housing',
-    description: 'Provides homes. Residents pay taxes in Gold — tap the house for a bonus.',
+    description: 'Provides homes. Residents pay taxes in Gold — tap to speed collection up.',
     glyph: '🏠',
     sprite: 'housing',
-    providesHarvestSource: 'Taxes',
     ...balance.districts.Housing,
   },
   Farm: {

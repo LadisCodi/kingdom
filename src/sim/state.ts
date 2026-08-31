@@ -11,7 +11,7 @@ export type CurrencyId =
 export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals';
-export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Taxes';
+export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
 export type TechId =
   | 'Agriculture' | 'Irrigation' | 'Forestry' | 'Commerce'

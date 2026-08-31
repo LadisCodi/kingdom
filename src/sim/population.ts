@@ -1,9 +1,9 @@
 // Population: housing, auto-assigned residents, passive tax gold, and the
 // Townhall's villager-training queue.
 
-import { CITY_DEF, DISTRICTS, TRAINING } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TAXES, TRAINING } from './data/definitions';
 import { districtAdjacency } from './adjacency';
-import { effectiveTaxRate } from './upgrades';
+import { effectiveCollectCooldownMs, effectiveTaxRate } from './upgrades';
 import { addToWallet, type District, type GameState } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -36,8 +36,7 @@ export const housedPopulation = (state: GameState): number =>
 export function houseGoldPerMinute(state: GameState, district: District): number {
   const residents = residentsOf(state, district);
   if (residents === 0) return 0;
-  const adjacency = districtAdjacency(state, district).goldPerMinute;
-  return Math.max(0, residents * effectiveTaxRate(state) + adjacency);
+  return Math.max(0, residents * effectiveTaxRate(state) + districtAdjacency(state, district));
 }
 
 /** City-wide tax income, gold per minute, over every built house. */
@@ -98,6 +97,29 @@ export const trainingCompletesAt = (state: GameState): number | null =>
   state.city.training === null
     ? null
     : state.city.training.startedAt + TRAINING.seconds * 1000;
+
+// ---------------------------------------------------------------- house tap
+
+export type HouseTapResult = 'Boosted' | 'NoResidents' | 'OnCooldown';
+
+/** Tap a lived-in house: fast-forward the CITY tax clock by
+ *  taxes.tap_boost_seconds — the building-timer twin of the Townhall's
+ *  training boost. Paced by the shared collect cooldown (QuickHands helps),
+ *  and houses never exhaust — that mechanic is for natural cells only.
+ *  Returns any gold that matured from the boost. */
+export function houseTap(
+  state: GameState,
+  district: District,
+  now: number,
+): { result: HouseTapResult; gold: number } {
+  if (residentsOf(state, district) === 0) return { result: 'NoResidents', gold: 0 };
+  if (now - state.lastCollectTapAt < effectiveCollectCooldownMs(state)) {
+    return { result: 'OnCooldown', gold: 0 };
+  }
+  state.lastCollectTapAt = now;
+  state.city.lastTaxAt -= TAXES.tapBoostSeconds * 1000;
+  return { result: 'Boosted', gold: advanceCityLife(state, now).gold };
+}
 
 // ------------------------------------------------------- taxes + training tick
 

@@ -2,8 +2,6 @@
 // (Docs/features/harvest-loop.md §1, §4).
 
 import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
-import { districtAdjacency } from './adjacency';
-import { residentsOf } from './population';
 import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import {
@@ -15,12 +13,11 @@ import {
 export function harvestSourceAt(state: GameState, cell: Coord): HarvestSourceId | null {
   const district = districtAt(state, cell);
   if (district) {
-    // Some districts ARE resource cells: a built crop plot (FarmLands) is a
-    // Crops cell; a built house with residents is a Taxes (gold) cell.
+    // Some districts ARE resource cells (a built FarmLands is a Crops cell);
+    // every other district blocks. Buildings with timers (Townhall, Housing)
+    // are NOT harvest sources — tapping them boosts their timers instead.
     const provides = DISTRICTS[district.definitionId].providesHarvestSource;
-    if (provides === null || district.state !== 'Built') return null;
-    if (provides === 'Taxes' && residentsOf(state, district) === 0) return null;
-    return provides;
+    return district.state === 'Built' ? provides : null;
   }
   const feature = state.features[coordKey(cell)];
   if (feature) return FEATURES[feature].source;
@@ -32,18 +29,10 @@ export const harvestSpecAt = (state: GameState, cell: Coord): HarvestSpec | null
   return source === null ? null : HARVEST[source];
 };
 
-/** What ONE player collect tap on this cell pays. House (Taxes) cells apply
- *  the adjacency gold_per_tap modifier on top of the spec + TapPower yield,
- *  clamped at 0 — a crowded house can tap down to nothing. */
+/** What ONE player collect tap on this cell pays (0 = not harvestable). */
 export function tapYieldAt(state: GameState, cell: Coord): number {
   const source = harvestSourceAt(state, cell);
-  if (source === null) return 0;
-  let units = effectiveTapYield(state, HARVEST[source]);
-  if (source === 'Taxes') {
-    const district = districtAt(state, cell);
-    if (district) units += districtAdjacency(state, district).goldPerTap;
-  }
-  return Math.max(0, units);
+  return source === null ? 0 : effectiveTapYield(state, HARVEST[source]);
 }
 
 const cellState = (state: GameState, key: string): CellHarvestState => {

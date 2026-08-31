@@ -225,13 +225,6 @@
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 180
-    },
-    "Taxes": {
-      "yieldPerTap": 2,
-      "yieldPerWorker": 0,
-      "tapsToExhaust": 5,
-      "recoverySeconds": 60,
-      "respawnSeconds": 0
     }
   },
   "currencies": {
@@ -439,14 +432,14 @@
     "tapBoostSeconds": 2
   },
   "taxes": {
-    "goldPerPopulationPerMinute": 2
+    "goldPerPopulationPerMinute": 2,
+    "tapBoostSeconds": 5
   },
   "adjacency": [
     {
       "district": "Housing",
       "neighbor": "Housing",
-      "goldPerMinute": -1,
-      "goldPerTap": -1
+      "goldPerMinute": -1
     }
   ],
   "fog": {

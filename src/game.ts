@@ -17,12 +17,12 @@ import {
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
-import { placementAdjacency, type AdjacencyEffect } from './sim/adjacency';
+import { placementAdjacency } from './sim/adjacency';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
 import { salePayout, sellGoods } from './sim/market';
 import {
-  availableWorkers, maxPopulation, populationCost, queuedTraining, queueTraining,
-  residentsOf, trainingCompletesAt,
+  availableWorkers, houseTap, maxPopulation, populationCost, queuedTraining,
+  queueTraining, residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { buySlot, startTech } from './sim/research';
 import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
@@ -155,6 +155,17 @@ export class Game {
           this.setOverlay('market');
           return true;
         }
+        // Housing: tapping fast-forwards tax collection (and opens the card).
+        if (district && district.state === 'Built' &&
+            DISTRICTS[district.definitionId].populationCapacity > 0) {
+          const { result, gold } = houseTap(this.state, district, this.now());
+          if (result === 'Boosted') {
+            this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+          }
+          this.inspectedDistrictId = district.uniqueId;
+          this.notify();
+          return true;
+        }
         // Townhall: tapping adds cycle progress (and opens/keeps its card).
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
           const tap = townhallTap(this.state, this.now());
@@ -190,7 +201,7 @@ export class Game {
     const source = harvestSourceAt(this.state, cell);
     const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
     const result = collectTap(this.state, this.map, cell, this.now());
-    if (result === 'Harvested' && source) {
+    if (result === 'Harvested' && source !== null) {
       this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
     } else if (result === 'Exhausted') {
       this.floaters.add(cell, '💤');
@@ -203,6 +214,17 @@ export class Game {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return;
+    // Holding a lived-in house keeps boosting its tax clock, same cooldown.
+    const district = districtAt(this.state, cell);
+    if (district && district.state === 'Built' &&
+        DISTRICTS[district.definitionId].populationCapacity > 0) {
+      const { result, gold } = houseTap(this.state, district, this.now());
+      if (result === 'Boosted') {
+        this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+        this.notify();
+      }
+      return;
+    }
     if (harvestSourceAt(this.state, cell) === null) return;
     if (!this.state.fog.revealed[coordKey(cell)]) return;
     if (isExhausted(this.state, cell, this.now())) return; // quiet — no 💤 spam
@@ -410,14 +432,16 @@ export class Game {
         const adj = placementAdjacency(this.state, this.mode.definitionId, this.mode.selected);
         for (const g of adj.given) {
           layer.yieldCells.push({
-            cell: g.district.location, label: formatAdjacency(g), tone: adjacencyTone(g),
+            cell: g.district.location,
+            label: formatAdjacency(g.goldPerMinute),
+            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
           });
         }
-        if (adj.received.goldPerMinute !== 0 || adj.received.goldPerTap !== 0) {
+        if (adj.received !== 0) {
           layer.yieldCells.push({
             cell: this.mode.selected,
             label: formatAdjacency(adj.received),
-            tone: adjacencyTone(adj.received),
+            tone: adj.received < 0 ? 'bad' : 'good',
           });
         }
       }
@@ -543,19 +567,12 @@ export class Game {
   }
 }
 
-const signedNumber = (n: number): string =>
-  `${n > 0 ? '+' : '\u2212'}${Math.abs(Number.isInteger(n) ? n : Number(n.toFixed(1)))}`;
-
-/** "−1🪙/min −1🪙/tap" — the placement-label / card format for adjacency. */
-export function formatAdjacency(e: AdjacencyEffect): string {
-  const parts: string[] = [];
-  if (e.goldPerMinute !== 0) parts.push(`${signedNumber(e.goldPerMinute)}🪙/min`);
-  if (e.goldPerTap !== 0) parts.push(`${signedNumber(e.goldPerTap)}🪙/tap`);
-  return parts.join(' ');
+/** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */
+export function formatAdjacency(goldPerMinute: number): string {
+  const n = Math.abs(Number.isInteger(goldPerMinute)
+    ? goldPerMinute : Number(goldPerMinute.toFixed(1)));
+  return `${goldPerMinute > 0 ? '+' : '\u2212'}${n} 🪙`;
 }
-
-const adjacencyTone = (e: AdjacencyEffect): 'good' | 'bad' =>
-  (e.goldPerMinute !== 0 ? e.goldPerMinute : e.goldPerTap) < 0 ? 'bad' : 'good';
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {

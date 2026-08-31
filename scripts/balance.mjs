@@ -50,7 +50,7 @@ const TECH_IDS =
   ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining'];
 const UPGRADE_IDS = ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
-const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Taxes'];
+const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const CURRENCY_IDS = ['Gold', 'Food', 'Wood', 'Berries', 'Meat', 'Knowledge', 'Gems'];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food'];
@@ -63,6 +63,7 @@ const SETTINGS = [
   ['training.seconds', 'training.seconds'],
   ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
+  ['taxes.tap_boost_seconds', 'taxes.tapBoostSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
@@ -107,7 +108,7 @@ const SHEETS = {
   FogRings: ['distance', 'cost'],
   Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
-  Adjacency: ['district', 'neighbor', 'gold_per_minute', 'gold_per_tap'],
+  Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Settings: ['key', 'value'],
 };
 
@@ -483,7 +484,6 @@ async function importXlsx() {
       district: r.district,
       neighbor: r.neighbor,
       goldPerMinute: signedNum(r, 'gold_per_minute'),
-      goldPerTap: signedNum(r, 'gold_per_tap'),
     });
   }
 
@@ -582,7 +582,7 @@ async function exportXlsx() {
   }));
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
-    [a.district, a.neighbor, a.goldPerMinute, a.goldPerTap]));
+    [a.district, a.neighbor, a.goldPerMinute]));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
