@@ -54,8 +54,9 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 | Path | What |
 |---|---|
 | `Docs/` | The complete game spec the port was built from |
+| `balance/` | Editable CSV balance sheets — tweak, then `npm run balance` (see its README) |
 | `src/sim/` | Pure simulation core (state, economy, queue, fog, spells, army, save format) |
-| `src/sim/data/` | All balancing data transcribed from the docs + the region map |
+| `src/sim/data/` | Definitions + generated `balance.json` + the region map |
 | `src/render/` | Canvas renderer, camera, input, tap-handler chain |
 | `src/ui/` | HTML/CSS screens (header, build menu, district card, spellbook, army) |
 | `src/persist/` | localStorage + Supabase save orchestration |

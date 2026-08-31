@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "balance": "node scripts/balance.mjs import",
+    "balance:export": "node scripts/balance.mjs export"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"

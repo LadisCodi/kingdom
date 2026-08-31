@@ -1,7 +1,10 @@
-// All balancing data. Costs/times/caps transcribed from Docs/04–05; the
-// harvest-loop values from Docs/features/harvest-loop.md §7.
+// Game data definitions. Identity/content (names, descriptions, glyphs,
+// sprites, rules wiring) lives here; every balancing NUMBER comes from
+// balance.json, which is generated from the editable balance/*.csv sheets
+// (edit those, then run: npm run balance).
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 
+import balance from './balance.json';
 import type { CurrencyId, DistrictId, FeatureId, HarvestSourceId, SpellId, UnitId, Wallet } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -17,13 +20,13 @@ export interface CurrencyDef {
 }
 
 export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
-  Food: { scope: 'city', cap: null, start: 5 },
-  Silver: { scope: 'city', cap: null, start: 50 },
-  Wood: { scope: 'city', cap: null, start: 0 },
-  Gold: { scope: 'kingdom', cap: null, start: 100 },
-  Mana: { scope: 'kingdom', cap: 100, start: 50 },
-  Knowledge: { scope: 'kingdom', cap: null, start: 0 },
-  Gems: { scope: 'player', cap: null, start: 10 },
+  Food: { scope: 'city', ...balance.currencies.Food },
+  Silver: { scope: 'city', ...balance.currencies.Silver },
+  Wood: { scope: 'city', ...balance.currencies.Wood },
+  Gold: { scope: 'kingdom', ...balance.currencies.Gold },
+  Mana: { scope: 'kingdom', ...balance.currencies.Mana },
+  Knowledge: { scope: 'kingdom', ...balance.currencies.Knowledge },
+  Gems: { scope: 'player', ...balance.currencies.Gems },
 };
 
 // -------------------------------------------------------------- harvest loop
@@ -36,23 +39,17 @@ export interface HarvestSpec {
 }
 
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
-  Forest: { currencyId: 'Wood', yieldPerTap: 1, tapsToExhaust: 10, recoverySeconds: 90 },
-  Crops: { currencyId: 'Food', yieldPerTap: 1, tapsToExhaust: 10, recoverySeconds: 60 },
+  Forest: { currencyId: 'Wood', ...balance.harvest.Forest },
+  Crops: { currencyId: 'Food', ...balance.harvest.Crops },
 };
 
-export const WORKER = {
-  moveSpeedTilesPerSecond: 1,
-  workSeconds: 8,
-  carry: 1, // units per cycle; each delivered unit = 1 tap on the source cell
-};
+// carry = units per cycle; each delivered unit = 1 tap on the source cell.
+export const WORKER = balance.worker;
 
-export const TOWNHALL_CYCLE = {
-  cycleSeconds: 10,
-  tapBoostSeconds: 2, // progress added per tap on the Townhall cell
-  silverPerPopulation: 5, // payout per cycle = this × population
-};
+// tapBoostSeconds = progress per tap; payout per cycle = silverPerPopulation × population.
+export const TOWNHALL_CYCLE = balance.townhallCycle;
 
-export const OFFLINE_CAP_HOURS = 8;
+export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
 // ----------------------------------------------------------------- districts
 
@@ -89,116 +86,60 @@ export interface DistrictDef {
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
 }
 
-const base: Omit<DistrictDef, 'id' | 'name' | 'description' | 'glyph' | 'sprite'> = {
-  buildable: true,
-  size: { x: 1, y: 1 },
-  populationCapacity: 0,
-  maxWorkersPerLevel: [],
-  maxCountPerTownhallLevel: [],
-  influenceRadiusPerLevel: [],
-  harvestSource: null,
-  providesHarvestSource: null,
-  maxLevel: 1,
-  buildCost: {},
-  buildCostMultiplier: 1,
-  buildCostExponentialGrowth: 1,
-  buildCostDistanceGrowth: 1,
-  buildDurationSeconds: 0,
-  buildDurationDistrictGrowth: 1.2,
-  buildDurationDistanceGrowth: 1.15,
-  upgradeCost: {},
-  upgradeCostLevelGrowth: 1.5,
-  upgradeDurationSeconds: 0,
-  upgradeDurationLevelGrowth: 1.5,
-  requiredTownhallLevelPerLevel: [],
-};
+// Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
+// balance.json; only identity, art, and rules wiring is authored here.
+const rules = { buildable: true, harvestSource: null, providesHarvestSource: null } as const;
 
 export const DISTRICTS: Record<DistrictId, DistrictDef> = {
   Townhall: {
-    ...base,
+    ...rules,
     id: 'Townhall',
     name: 'Townhall',
     description:
       'Heart of the city. Houses 3 and taxes population each cycle — tap it to speed the cycle up.',
     glyph: '🏛️',
     sprite: 'townhall',
-    size: { x: 2, y: 2 },
     buildable: false,
-    populationCapacity: 3,
-    maxLevel: 2,
-    buildCostMultiplier: 2,
-    buildCostExponentialGrowth: 1.2,
-    buildCostDistanceGrowth: 1.15,
-    upgradeCost: { Silver: 200, Wood: 25 },
-    upgradeDurationSeconds: 0, // instant — completes on the next tick
+    ...balance.districts.Townhall,
   },
   Housing: {
-    ...base,
+    ...rules,
     id: 'Housing',
     name: 'Housing',
     description: 'Provides homes — raises max population.',
     glyph: '🏠',
     sprite: 'housing',
-    populationCapacity: 2,
-    maxCountPerTownhallLevel: [2, 4],
-    buildCost: { Silver: 75, Wood: 20 },
-    buildCostMultiplier: 0.75,
-    buildCostExponentialGrowth: 1.25,
-    buildDurationSeconds: 20,
+    ...balance.districts.Housing,
   },
   Farm: {
-    ...base,
+    ...rules,
     id: 'Farm',
     name: 'Farm',
     description: 'Sends workers to harvest Crops within its area of influence.',
     glyph: '🌾',
     sprite: 'farm',
-    maxWorkersPerLevel: [3, 5],
-    maxCountPerTownhallLevel: [1, 1, 2],
-    influenceRadiusPerLevel: [1, 2],
     harvestSource: 'Crops',
-    maxLevel: 2,
-    buildCost: { Silver: 50, Wood: 10 },
-    buildCostMultiplier: 2,
-    buildCostExponentialGrowth: 1.5,
-    buildDurationSeconds: 20,
-    upgradeCost: { Silver: 300, Wood: 50 },
-    upgradeDurationSeconds: 30,
-    requiredTownhallLevelPerLevel: [2, 2],
+    ...balance.districts.Farm,
   },
   FarmLands: {
-    ...base,
+    ...rules,
     id: 'FarmLands',
     name: 'FarmLands',
     description: 'A crop plot: tap it for Food, or let Farm workers harvest it.',
     glyph: '🟩',
     sprite: 'farmlands',
-    maxCountPerTownhallLevel: [6, 6, 12],
     providesHarvestSource: 'Crops',
-    buildCost: { Wood: 20 },
-    buildCostMultiplier: 2,
-    buildCostExponentialGrowth: 1.2,
-    buildDurationSeconds: 10,
+    ...balance.districts.FarmLands,
   },
   Sawmill: {
-    ...base,
+    ...rules,
     id: 'Sawmill',
     name: 'Sawmill',
     description: 'Sends workers to harvest Forest cells within its area of influence.',
     glyph: '🪚',
     sprite: 'sawmill',
-    maxWorkersPerLevel: [3, 5, 7],
-    maxCountPerTownhallLevel: [1, 2],
-    influenceRadiusPerLevel: [1, 2, 3],
     harvestSource: 'Forest',
-    maxLevel: 3,
-    buildCost: { Silver: 50 },
-    buildCostMultiplier: 4,
-    buildCostExponentialGrowth: 1.45,
-    buildDurationSeconds: 20,
-    upgradeCost: { Silver: 300 },
-    upgradeDurationSeconds: 30,
-    requiredTownhallLevelPerLevel: [1, 1, 2],
+    ...balance.districts.Sawmill,
   },
 };
 
@@ -227,37 +168,24 @@ export const CROPS_EXHAUSTED_GLYPH = '🥀';
 
 // -------------------------------------------------------------- fog settings
 
-export const FOG = {
-  silverPerTap: 1,
-  // authored rings: distance → total Silver cost
-  rings: [
-    { distance: 2, cost: 3 },
-    { distance: 3, cost: 4 },
-    { distance: 4, cost: 5 },
-  ],
-  fallbackGrowth: 1.25,
-};
+// rings: authored distance → total Silver cost.
+export const FOG = balance.fog;
 
 // ----------------------------------------------------------------- city def
 
 export const CITY_DEF = {
   name: 'Oakville',
-  initialPopulation: 2,
-  initialCurrencies: { Silver: 50, Food: 5 } as Wallet,
-  populationCostBase: 5,
-  populationCostGrowth: 1.45,
-  buildQueueCapacity: 1,
-  maxArmyPowerPerTownhallLevel: [10, 20, 30],
+  ...balance.city,
+  initialCurrencies: balance.city.initialCurrencies as Wallet,
   buildMenuOrder: BUILDABLE_DISTRICTS,
 };
 
 // --------------------------------------------------------------- kingdom def
 
+// manaPerHour: trickle into the capped kingdom wallet.
 export const KINGDOM_DEF = {
   name: 'PlayerKingdom',
-  startBuilders: 1,
-  maxBuilders: 4,
-  manaPerHour: 300, // 5/min trickle into the capped kingdom wallet
+  ...balance.kingdom,
 };
 
 // ------------------------------------------------------------------- spells
@@ -288,7 +216,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     glyph: '🌧️',
     unlockedFromStart: true,
     stackable: false,
-    levels: [{ manaCost: 10, durationSeconds: 30, effectMagnitude: 2, upgradeCost: 0 }],
+    levels: balance.spells.Rain,
   },
   // Dormant pending the spell rework: free player taps superseded its effect,
   // so it has no valid targets (kept listed, exactly like the original build).
@@ -299,7 +227,7 @@ export const SPELLS: Record<SpellId, SpellDef> = {
     glyph: '👆',
     unlockedFromStart: true,
     stackable: true,
-    levels: [{ manaCost: 1, durationSeconds: 0, effectMagnitude: 5, upgradeCost: 0 }],
+    levels: balance.spells.Tap,
   },
 };
 
@@ -324,30 +252,24 @@ export const UNITS: Record<UnitId, UnitDef> = {
     name: 'Archer',
     description: 'Ranged support.',
     glyph: '🏹',
-    power: 2,
     tags: ['Distance'],
-    recruitCost: { Silver: 40, Wood: 20 },
-    trainDurationSeconds: 25,
+    ...balance.units.Archer,
   },
   Swordsman: {
     id: 'Swordsman',
     name: 'Swordsman',
     description: 'Sturdy front line.',
     glyph: '⚔️',
-    power: 3,
     tags: ['Melee'],
-    recruitCost: { Silver: 50, Food: 20 },
-    trainDurationSeconds: 30,
+    ...balance.units.Swordsman,
   },
   Cavalry: {
     id: 'Cavalry',
     name: 'Cavalry',
     description: 'Fast and hard-hitting.',
     glyph: '🐎',
-    power: 5,
     tags: ['Mounted', 'Melee'],
-    recruitCost: { Silver: 100, Food: 40 },
-    trainDurationSeconds: 60,
+    ...balance.units.Cavalry,
   },
 };
 

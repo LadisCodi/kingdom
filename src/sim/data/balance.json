@@ -1,0 +1,308 @@
+{
+  "_note": "GENERATED from balance/*.csv — edit the CSVs and run: npm run balance",
+  "districts": {
+    "Townhall": {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "maxLevel": 2,
+      "populationCapacity": 3,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "buildCost": {},
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildCostDistanceGrowth": 1.15,
+      "buildDurationSeconds": 0,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Silver": 200,
+        "Wood": 25
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Housing": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacity": 2,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        2,
+        4
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "buildCost": {
+        "Silver": 75,
+        "Wood": 20
+      },
+      "buildCostMultiplier": 0.75,
+      "buildCostExponentialGrowth": 1.25,
+      "buildCostDistanceGrowth": 1,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Farm": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacity": 0,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [
+        1,
+        2
+      ],
+      "requiredTownhallLevelPerLevel": [
+        2,
+        2
+      ],
+      "buildCost": {
+        "Silver": 50,
+        "Wood": 10
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.5,
+      "buildCostDistanceGrowth": 1,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Silver": 300,
+        "Wood": 50
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "FarmLands": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacity": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        6,
+        6,
+        12
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "buildCost": {
+        "Wood": 20
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildCostDistanceGrowth": 1,
+      "buildDurationSeconds": 10,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Sawmill": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 3,
+      "populationCapacity": 0,
+      "maxWorkersPerLevel": [
+        3,
+        5,
+        7
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [
+        1,
+        2,
+        3
+      ],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        1,
+        2
+      ],
+      "buildCost": {
+        "Silver": 50
+      },
+      "buildCostMultiplier": 4,
+      "buildCostExponentialGrowth": 1.45,
+      "buildCostDistanceGrowth": 1,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Silver": 300
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    }
+  },
+  "harvest": {
+    "Forest": {
+      "yieldPerTap": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 90
+    },
+    "Crops": {
+      "yieldPerTap": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 60
+    }
+  },
+  "currencies": {
+    "Food": {
+      "cap": null,
+      "start": 5
+    },
+    "Silver": {
+      "cap": null,
+      "start": 50
+    },
+    "Wood": {
+      "cap": null,
+      "start": 0
+    },
+    "Gold": {
+      "cap": null,
+      "start": 100
+    },
+    "Mana": {
+      "cap": 100,
+      "start": 50
+    },
+    "Knowledge": {
+      "cap": null,
+      "start": 0
+    },
+    "Gems": {
+      "cap": null,
+      "start": 10
+    }
+  },
+  "units": {
+    "Archer": {
+      "power": 2,
+      "recruitCost": {
+        "Silver": 40,
+        "Wood": 20
+      },
+      "trainDurationSeconds": 25
+    },
+    "Swordsman": {
+      "power": 3,
+      "recruitCost": {
+        "Silver": 50,
+        "Food": 20
+      },
+      "trainDurationSeconds": 30
+    },
+    "Cavalry": {
+      "power": 5,
+      "recruitCost": {
+        "Silver": 100,
+        "Food": 40
+      },
+      "trainDurationSeconds": 60
+    }
+  },
+  "spells": {
+    "Rain": [
+      {
+        "manaCost": 10,
+        "durationSeconds": 30,
+        "effectMagnitude": 2,
+        "upgradeCost": 0
+      }
+    ],
+    "Tap": [
+      {
+        "manaCost": 1,
+        "durationSeconds": 0,
+        "effectMagnitude": 5,
+        "upgradeCost": 0
+      }
+    ]
+  },
+  "worker": {
+    "moveSpeedTilesPerSecond": 1,
+    "workSeconds": 8,
+    "carry": 1
+  },
+  "townhallCycle": {
+    "cycleSeconds": 10,
+    "tapBoostSeconds": 2,
+    "silverPerPopulation": 5
+  },
+  "fog": {
+    "silverPerTap": 1,
+    "rings": [
+      {
+        "distance": 2,
+        "cost": 3
+      },
+      {
+        "distance": 3,
+        "cost": 4
+      },
+      {
+        "distance": 4,
+        "cost": 5
+      }
+    ],
+    "fallbackGrowth": 1.25
+  },
+  "city": {
+    "initialCurrencies": {
+      "Silver": 50,
+      "Food": 5
+    },
+    "initialPopulation": 2,
+    "populationCostBase": 5,
+    "populationCostGrowth": 1.45,
+    "buildQueueCapacity": 1,
+    "maxArmyPowerPerTownhallLevel": [
+      10,
+      20,
+      30
+    ]
+  },
+  "kingdom": {
+    "startBuilders": 1,
+    "maxBuilders": 4,
+    "manaPerHour": 300
+  },
+  "offlineCapHours": 8
+}

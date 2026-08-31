@@ -1,0 +1,3 @@
+source,yield_per_tap,taps_to_exhaust,recovery_seconds
+Forest,1,10,90
+Crops,1,10,60
