@@ -78,7 +78,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('span', {}, `${cells.length}`)),
         el('div', { class: 'row' },
           el('span', {}, 'Per delivery'),
-          el('span', {}, `+${WORKER.carry} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
+          el('span', {}, `+${spec.yieldPerWorker} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
       ));
       const minus = button('−', () => game.doChangeWorkers(district.uniqueId, -1));
       minus.disabled = district.assignedWorkers === 0;

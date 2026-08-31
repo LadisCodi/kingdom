@@ -348,7 +348,8 @@ export class Game {
         if (def.harvestSource) {
           const spec = HARVEST[def.harvestSource];
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
-            (cell) => ({ cell, label: `+${spec.yieldPerTap} ${icon(spec.currencyId)}` }),
+            // The placement preview shows what WORKERS will fetch per delivery.
+            (cell) => ({ cell, label: `+${spec.yieldPerWorker} ${icon(spec.currencyId)}` }),
           );
         }
       }

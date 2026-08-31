@@ -178,11 +178,13 @@
   "harvest": {
     "Forest": {
       "yieldPerTap": 1,
+      "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 90
     },
     "Crops": {
       "yieldPerTap": 1,
+      "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 60
     }
@@ -250,8 +252,7 @@
   },
   "worker": {
     "moveSpeedTilesPerSecond": 1,
-    "workSeconds": 8,
-    "carry": 1
+    "workSeconds": 8
   },
   "townhallCycle": {
     "cycleSeconds": 10,

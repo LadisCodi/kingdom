@@ -142,9 +142,11 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
         const source = harvestSourceAt(state, w.claimedCell);
         if (source) {
           const spec = HARVEST[source];
-          addToWallet(state.city.wallet, spec.currencyId, WORKER.carry);
+          addToWallet(state.city.wallet, spec.currencyId, spec.yieldPerWorker);
           registerTap(state, w.claimedCell, spec, t);
-          deposits.push({ cell: building.location, currencyId: spec.currencyId, amount: WORKER.carry });
+          deposits.push({
+            cell: building.location, currencyId: spec.currencyId, amount: spec.yieldPerWorker,
+          });
         }
       }
       w.carrying = false;
@@ -206,7 +208,7 @@ export function addWorker(state: GameState, map: MapData, district: District, no
 }
 
 /** Despawn the last worker of the building; its claim is released and any
- *  carried unit is lost (design decision — carry is 1). */
+ *  carried load is lost (design decision). */
 export function removeWorker(state: GameState, district: District): void {
   for (let i = state.workers.length - 1; i >= 0; i--) {
     if (state.workers[i].buildingId === district.uniqueId) {

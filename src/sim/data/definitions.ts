@@ -34,7 +34,10 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
 
 export interface HarvestSpec {
   currencyId: CurrencyId;
+  /** Units per player tap (click collection). */
   yieldPerTap: number;
+  /** Units per worker delivery (auto collection) — upgradeable separately. */
+  yieldPerWorker: number;
   tapsToExhaust: number;
   recoverySeconds: number;
 }
@@ -44,7 +47,7 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   Crops: { currencyId: 'Food', ...balance.harvest.Crops },
 };
 
-// carry = units per cycle; each delivered unit = 1 tap on the source cell.
+// Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
 export const WORKER = balance.worker;
 
 // tapBoostSeconds = progress per tap; payout per cycle = silverPerPopulation × population.
