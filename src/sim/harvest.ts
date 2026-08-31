@@ -1,7 +1,8 @@
 // Resource cells: tapping, exhaustion, lazy recovery
 // (Docs/features/harvest-loop.md §1, §4).
 
-import { FEATURES, HARVEST, TAP, type HarvestSpec } from './data/definitions';
+import { FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
 import type { MapData } from './grid';
 import {
   addToWallet, coordKey, districtAt,
@@ -108,7 +109,7 @@ export function tapCell(
   if (source === null) return 'NotHarvestable';
   if (isExhausted(state, cell, now)) return 'Exhausted';
   const spec = HARVEST[source];
-  addToWallet(state.city.wallet, spec.currencyId, spec.yieldPerTap);
+  addToWallet(state.city.wallet, spec.currencyId, effectiveTapYield(state, spec));
   registerTap(state, cell, spec, now);
   return 'Harvested';
 }
@@ -121,7 +122,7 @@ export function collectTap(
   cell: Coord,
   now: number,
 ): CollectTapResult {
-  if (now - state.lastCollectTapAt < TAP.collectCooldownSeconds * 1000) return 'OnCooldown';
+  if (now - state.lastCollectTapAt < effectiveCollectCooldownMs(state)) return 'OnCooldown';
   const result = tapCell(state, map, cell, now);
   if (result === 'Harvested') state.lastCollectTapAt = now;
   return result;

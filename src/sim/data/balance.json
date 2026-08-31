@@ -284,14 +284,76 @@
       "trainDurationSeconds": 60
     }
   },
-  "research": {
+  "technologies": {
     "Agriculture": {
       "cost": {
         "Gold": 100,
         "Wood": 25
       },
-      "durationSeconds": 45
+      "durationSeconds": 45,
+      "requires": []
+    },
+    "Archery": {
+      "cost": {
+        "Gold": 150,
+        "Wood": 20
+      },
+      "durationSeconds": 60,
+      "requires": []
+    },
+    "CavalryTraining": {
+      "cost": {
+        "Gold": 400,
+        "Food": 30
+      },
+      "durationSeconds": 90,
+      "requires": [
+        "Archery"
+      ]
     }
+  },
+  "upgrades": {
+    "TapPower": {
+      "costBase": 50,
+      "costGrowth": 2.2,
+      "maxLevel": 5,
+      "effectPerLevel": 1,
+      "requiredTech": null
+    },
+    "QuickHands": {
+      "costBase": 75,
+      "costGrowth": 2,
+      "maxLevel": 5,
+      "effectPerLevel": 0.05,
+      "requiredTech": null
+    },
+    "WorkerLoad": {
+      "costBase": 200,
+      "costGrowth": 2.5,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": null
+    },
+    "MarketStall": {
+      "costBase": 100,
+      "costGrowth": 2,
+      "maxLevel": 4,
+      "effectPerLevel": 25,
+      "requiredTech": null
+    },
+    "TradeRoutes": {
+      "costBase": 150,
+      "costGrowth": 2,
+      "maxLevel": 5,
+      "effectPerLevel": 0.5,
+      "requiredTech": null
+    }
+  },
+  "research": {
+    "techSlots": 1,
+    "maxSlots": 3,
+    "slotGemCostBase": 10,
+    "slotGemCostGrowth": 3
   },
   "worker": {
     "moveSpeedTilesPerSecond": 1,

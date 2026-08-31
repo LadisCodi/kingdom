@@ -3,7 +3,7 @@
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
 import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
-import { isResearched } from './research';
+import { isTechComplete } from './research';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
   type Coord, type DistrictId, type GameState, type Wallet,
@@ -46,7 +46,7 @@ export function placementBlock(
   if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
     return 'CountLimit';
   }
-  if (def.requiredResearch && !isResearched(state, def.requiredResearch)) return 'NeedsResearch';
+  if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
   // Per-type rules: terrain must hold on every footprint cell; adjacency /
   // influence must hold for at least one.
   switch (definitionId) {

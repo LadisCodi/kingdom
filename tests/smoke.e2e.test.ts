@@ -8,11 +8,11 @@ import {
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { addToSale } from '../src/sim/market';
 import { maxPopulation, startTraining } from '../src/sim/population';
-import { isResearched, startResearch } from '../src/sim/research';
+import { isTechComplete, startTech } from '../src/sim/research';
 import { revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
-import { freshGame, fund, map, T0, tickAt } from './helpers';
+import { completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
 
 describe('full harvest-loop playthrough (headless smoke)', () => {
   it('plays the whole loop', () => {
@@ -77,10 +77,10 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
 
     // --- The Farm is gated behind the first research (Agriculture).
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('InvalidCell'); // locked
-    expect(startResearch(state, 'Agriculture', now)).toBe('Started');
+    expect(startTech(state, 'Agriculture', now)).toBe('Started');
     now += 60_000; // research takes 45s
     tickAt(state, now);
-    expect(isResearched(state, 'Agriculture')).toBe(true);
+    expect(isTechComplete(state, 'Agriculture')).toBe(true);
 
     // --- Build the Farm next to the plot; its worker harvests it automatically.
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');
@@ -119,7 +119,10 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(state.city.population).toBe(7);
     expect(startTraining(state, now)).toBe('AtMax');
 
-    // --- Army to the TH1 power cap.
+    // --- Army to the TH1 power cap (Cavalry sits behind two techs).
+    expect(trainUnit(state, 'Cavalry')).toBe('TechRequired');
+    completeTech(state, 'Archery');
+    completeTech(state, 'CavalryTraining');
     expect(trainUnit(state, 'Cavalry')).toBe('Trained');
     expect(trainUnit(state, 'Cavalry')).toBe('Trained');
     expect(trainUnit(state, 'Archer')).toBe('ArmyAtCapacity');

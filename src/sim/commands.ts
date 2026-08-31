@@ -20,7 +20,7 @@ import {
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type ResearchId, type Rng,
+  type QueueItem, type Rng, type TechId,
 } from './state';
 
 // ------------------------------------------------------------------ building
@@ -197,7 +197,7 @@ export function townhallTap(state: GameState, now: number): TownhallTapResult {
 export interface AdvanceResult {
   deposits: DepositEvent[];
   completedItems: QueueItem[];
-  completedResearch: ResearchId[];
+  completedResearch: TechId[];
   goldEarned: number; // Market drip sales in this window
   trainedPopulation: number; // villagers who finished training
 }
@@ -234,8 +234,7 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   result.deposits.push(...advanceWorkers(state, map, toTime));
   result.goldEarned = advanceMarket(state, toTime);
   if (advanceTraining(state, toTime)) result.trainedPopulation += 1;
-  const finishedResearch = advanceResearch(state, toTime);
-  if (finishedResearch) result.completedResearch.push(finishedResearch);
+  result.completedResearch.push(...advanceResearch(state, toTime));
   state.lastAdvance = toTime;
   return result;
 }

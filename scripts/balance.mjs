@@ -46,7 +46,8 @@ const MAP_COLORS = { // conditional-formatting fills, keyed by code
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
 const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
-const RESEARCH_IDS = ['Agriculture'];
+const TECH_IDS = ['Agriculture', 'Archery', 'CavalryTraining'];
+const UPGRADE_IDS = ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
@@ -74,6 +75,10 @@ const SETTINGS = [
   ['city.max_army_power_per_townhall_level', 'city.maxArmyPowerPerTownhallLevel', 'list'],
   ['kingdom.start_builders', 'kingdom.startBuilders'],
   ['kingdom.max_builders', 'kingdom.maxBuilders'],
+  ['research.tech_slots', 'research.techSlots'],
+  ['research.max_slots', 'research.maxSlots'],
+  ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
+  ['research.slot_gem_cost_growth', 'research.slotGemCostGrowth'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -99,7 +104,8 @@ const SHEETS = {
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  Research: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds'],
+  Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds', 'requires'],
+  Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Settings: ['key', 'value'],
 };
 
@@ -344,7 +350,8 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, harvest: {}, currencies: {}, units: {}, research: {},
+    districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
+    research: {},
     worker: {}, tap: {}, training: {}, market: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -423,10 +430,32 @@ async function importXlsx() {
     };
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Research'), RESEARCH_IDS)) {
-    out.research[id] = {
+  for (const [id, r] of byId(readSheet(workbook, 'Technologies'), TECH_IDS)) {
+    const requires = (r.requires === '' || r.requires === undefined)
+      ? [] : String(r.requires).split(/[,;]/).map((part) => part.trim());
+    for (const req of requires) {
+      if (!TECH_IDS.includes(req)) fail(where(r), `unknown required tech "${req}"`);
+      if (req === id) fail(where(r), 'a technology cannot require itself');
+    }
+    out.technologies[id] = {
       cost: wallet(r, 'cost'),
       durationSeconds: num(r, 'duration_seconds'),
+      requires,
+    };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Upgrades'), UPGRADE_IDS)) {
+    const requiredTech = (r.required_tech === '' || r.required_tech === undefined)
+      ? null : r.required_tech;
+    if (requiredTech !== null && !TECH_IDS.includes(requiredTech)) {
+      fail(where(r), `unknown required_tech "${requiredTech}"`);
+    }
+    out.upgrades[id] = {
+      costBase: num(r, 'cost_base'),
+      costGrowth: num(r, 'cost_growth'),
+      maxLevel: num(r, 'max_level'),
+      effectPerLevel: num(r, 'effect_per_level'),
+      requiredTech,
     };
   }
 
@@ -513,9 +542,14 @@ async function exportXlsx() {
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
 
-  addSheet(workbook, 'Research', RESEARCH_IDS.map((id) => {
-    const r = b.research[id];
-    return [id, ...costCells(r.cost), r.durationSeconds];
+  addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
+    const t = b.technologies[id];
+    return [id, ...costCells(t.cost), t.durationSeconds, t.requires.join(',')];
+  }), (col) => col === 'requires');
+
+  addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
+    const u = b.upgrades[id];
+    return [id, u.costBase, u.costGrowth, u.maxLevel, u.effectPerLevel, u.requiredTech ?? ''];
   }));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {

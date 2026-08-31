@@ -124,7 +124,7 @@ async function boot(): Promise<void> {
       for (const q of game.state.city.queue) {
         if (q.startedAt !== null) q.startedAt -= delta;
       }
-      if (game.state.research.active) game.state.research.active.startedAt -= delta;
+      for (const a of game.state.research.active) a.startedAt -= delta;
       runTick();
     };
     const devBar = el('div', { class: 'cast-banner', style: 'top:auto;bottom:120px' },

@@ -10,6 +10,7 @@ import {
   queueProgress, remainingSeconds, townhall,
   type District,
 } from '../sim/state';
+import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { button, el, formatCost, formatDuration } from './format';
 
@@ -55,7 +56,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // Crop plot: it's a resource cell.
     if (district.definitionId === 'FarmLands') {
       panel.append(el('div', { class: 'muted' },
-        `Tap for +${HARVEST.Crops.yieldPerTap} ${icon('Food')} — exhausts after ` +
+        `Tap for +${effectiveTapYield(game.state, HARVEST.Crops)} ${icon('Food')} — exhausts after ` +
         `${HARVEST.Crops.tapsToExhaust} taps, recovers in ${HARVEST.Crops.recoverySeconds}s.`));
     }
 
@@ -80,7 +81,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('span', {}, `${cells.length}`)),
         el('div', { class: 'row' },
           el('span', {}, 'Per delivery'),
-          el('span', {}, `+${spec.yieldPerWorker} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
+          el('span', {}, `+${effectiveWorkerYield(game.state, spec)} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
       ));
       const minus = button('−', () => game.doChangeWorkers(district.uniqueId, -1));
       minus.disabled = district.assignedWorkers === 0;

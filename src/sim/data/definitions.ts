@@ -6,7 +6,7 @@
 
 import balance from './balance.json';
 import type {
-  CurrencyId, DistrictId, FeatureId, HarvestSourceId, ResearchId, UnitId, Wallet,
+  CurrencyId, DistrictId, FeatureId, HarvestSourceId, TechId, UnitId, UpgradeId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -103,8 +103,8 @@ export interface DistrictDef {
   fogRevealRadius: number;
   /** Fog turned Discovered (payable frontier) this far around the footprint. */
   fogDiscoverRadius: number;
-  /** Research that must be completed before this district can be built. */
-  requiredResearch: ResearchId | null;
+  /** Technology that must be completed before this district can be built. */
+  requiredTech: TechId | null;
   populationCapacity: number;
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
@@ -131,7 +131,7 @@ export interface DistrictDef {
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
 // balance.json; only identity, art, and rules wiring is authored here.
 const rules = {
-  buildable: true, harvestSource: null, providesHarvestSource: null, requiredResearch: null,
+  buildable: true, harvestSource: null, providesHarvestSource: null, requiredTech: null,
 } as const;
 
 export const DISTRICTS: Record<DistrictId, DistrictDef> = {
@@ -163,7 +163,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🌾',
     sprite: 'farm',
     harvestSource: 'Crops',
-    requiredResearch: 'Agriculture',
+    requiredTech: 'Agriculture',
     ...balance.districts.Farm,
   },
   FarmLands: {
@@ -241,28 +241,100 @@ export const KINGDOM_DEF = {
   ...balance.kingdom,
 };
 
-// ----------------------------------------------------------------- research
+// ------------------------------------------------------------- technologies
 
-export interface ResearchDef {
-  id: ResearchId;
+export interface TechnologyDef {
+  id: TechId;
   name: string;
   description: string;
   glyph: string;
+  /** Hand-authored tree grid position (the layout IS content). */
+  node: { x: number; y: number };
   cost: Wallet; // city currencies
   durationSeconds: number;
+  requires: TechId[]; // tree edges — all must be completed first
 }
 
-export const RESEARCH: Record<ResearchId, ResearchDef> = {
-  Agriculture: {
+const tech = (
+  content: Omit<TechnologyDef, 'cost' | 'durationSeconds' | 'requires'>,
+  b: { cost: Wallet; durationSeconds: number; requires: unknown },
+): TechnologyDef => ({ ...content, cost: b.cost, durationSeconds: b.durationSeconds,
+  requires: b.requires as TechId[] });
+
+export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
+  Agriculture: tech({
     id: 'Agriculture',
     name: 'Agriculture',
     description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
     glyph: '🌱',
-    ...balance.research.Agriculture,
-  },
+    node: { x: -1, y: 0 },
+  }, balance.technologies.Agriculture),
+  Archery: tech({
+    id: 'Archery',
+    name: 'Archery',
+    description: 'Unlocks the Archer — ranged support for your army.',
+    glyph: '🏹',
+    node: { x: 1, y: 0 },
+  }, balance.technologies.Archery),
+  CavalryTraining: tech({
+    id: 'CavalryTraining',
+    name: 'Cavalry Training',
+    description: 'Unlocks the Cavalry — fast, hard-hitting mounted units.',
+    glyph: '🐎',
+    node: { x: 2, y: 1 },
+  }, balance.technologies.CavalryTraining),
 };
 
-export const RESEARCH_ORDER: ResearchId[] = ['Agriculture'];
+export const TECH_ORDER: TechId[] = ['Agriculture', 'Archery', 'CavalryTraining'];
+
+// Slots & gem pricing for extra slots.
+export const RESEARCH_SETTINGS = balance.research;
+
+// ----------------------------------------------------------------- upgrades
+
+export interface UpgradeDef {
+  id: UpgradeId;
+  name: string;
+  description: string; // include the per-level effect, player-facing
+  glyph: string;
+  costBase: number; // gold; level L costs round(costBase * costGrowth^L)
+  costGrowth: number;
+  maxLevel: number;
+  effectPerLevel: number; // applied by src/sim/upgrades.ts effective helpers
+  requiredTech: TechId | null;
+}
+
+const upgrade = (
+  content: Pick<UpgradeDef, 'id' | 'name' | 'description' | 'glyph'>,
+  b: Omit<UpgradeDef, 'id' | 'name' | 'description' | 'glyph' | 'requiredTech'>
+    & { requiredTech: unknown },
+): UpgradeDef => ({ ...content, ...b, requiredTech: (b.requiredTech ?? null) as TechId | null });
+
+export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
+  TapPower: upgrade({
+    id: 'TapPower', name: 'Tap Power', glyph: '👆',
+    description: '+1 resource per collect tap',
+  }, balance.upgrades.TapPower),
+  QuickHands: upgrade({
+    id: 'QuickHands', name: 'Quick Hands', glyph: '⚡',
+    description: '−0.05s collect cooldown',
+  }, balance.upgrades.QuickHands),
+  WorkerLoad: upgrade({
+    id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
+    description: '+1 resource per worker delivery',
+  }, balance.upgrades.WorkerLoad),
+  MarketStall: upgrade({
+    id: 'MarketStall', name: 'Market Stall', glyph: '🛒',
+    description: '+25 Market queue capacity',
+  }, balance.upgrades.MarketStall),
+  TradeRoutes: upgrade({
+    id: 'TradeRoutes', name: 'Trade Routes', glyph: '⛵',
+    description: '−0.5s between Market sales',
+  }, balance.upgrades.TradeRoutes),
+};
+
+export const UPGRADE_ORDER: UpgradeId[] =
+  ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
 
 // -------------------------------------------------------------------- units
 
@@ -277,6 +349,8 @@ export interface UnitDef {
   tags: UnitTag[];
   recruitCost: Wallet; // city currencies
   trainDurationSeconds: number; // authored but unused — training is instant
+  /** Technology that must be completed before this unit can be recruited. */
+  requiredTech: TechId | null;
 }
 
 export const UNITS: Record<UnitId, UnitDef> = {
@@ -286,6 +360,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
     description: 'Ranged support.',
     glyph: '🏹',
     tags: ['Distance'],
+    requiredTech: 'Archery',
     ...balance.units.Archer,
   },
   Swordsman: {
@@ -294,6 +369,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
     description: 'Sturdy front line.',
     glyph: '⚔️',
     tags: ['Melee'],
+    requiredTech: null,
     ...balance.units.Swordsman,
   },
   Cavalry: {
@@ -302,6 +378,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
     description: 'Fast and hard-hitting.',
     glyph: '🐎',
     tags: ['Mounted', 'Melee'],
+    requiredTech: 'CavalryTraining',
     ...balance.units.Cavalry,
   },
 };
@@ -309,4 +386,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 7; // v6 saves predate the Market economy (Silver→Gold, training); discarded
+export const SAVE_VERSION = 8; // v7 saves predate technologies/upgrades; discarded

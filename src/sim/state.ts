@@ -13,7 +13,8 @@ export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals';
 export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
-export type ResearchId = 'Agriculture';
+export type TechId = 'Agriculture' | 'Archery' | 'CavalryTraining';
+export type UpgradeId = 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -107,9 +108,14 @@ export interface GameState {
   workers: Worker[];
   army: ArmyUnit[];
   research: {
-    completed: ResearchId[];
-    active: { id: ResearchId; startedAt: number } | null; // one at a time
+    completed: TechId[];
+    /** Technologies in progress — length is capped by techSlots(). */
+    active: Array<{ id: TechId; startedAt: number }>;
+    /** Extra concurrent slots bought with Gems (escalating price). */
+    slotsPurchased: number;
   };
+  /** Upgrade levels (instant, gold-bought); absent = level 0. */
+  upgrades: Partial<Record<UpgradeId, number>>;
   /** The Market's sell queue: units drip-sell for Gold, one per interval. */
   market: {
     queue: Wallet; // units up for sale (escrowed out of the city wallet)

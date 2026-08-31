@@ -11,7 +11,7 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ResearchId, type Wallet, type Worker,
+  type TechId, type UpgradeId, type Wallet, type Worker,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -138,10 +138,12 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.research': {
         Completed: state.research.completed,
-        Active: state.research.active === null ? null : {
-          ID: state.research.active.id,
-          StartedAtUtc: iso(state.research.active.startedAt),
-        },
+        Active: state.research.active.map((a) => ({
+          ID: a.id,
+          StartedAtUtc: iso(a.startedAt),
+        })),
+        SlotsPurchased: state.research.slotsPurchased,
+        UpgradeLevels: state.upgrades,
       },
       'player.currencies': state.player.wallet,
       'meta.nextId': state.nextId,
@@ -255,11 +257,12 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
   const researchDto = modules['kingdom.research'];
   if (researchDto) {
     state.research = {
-      completed: [...((researchDto.Completed ?? []) as ResearchId[])],
-      active: researchDto.Active
-        ? { id: researchDto.Active.ID as ResearchId, startedAt: ms(researchDto.Active.StartedAtUtc) }
-        : null,
+      completed: [...((researchDto.Completed ?? []) as TechId[])],
+      active: ((researchDto.Active ?? []) as Array<{ ID: TechId; StartedAtUtc: string }>).map(
+        (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
+      slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
+    state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
   }
 
   const playerDto = modules['player.currencies'];

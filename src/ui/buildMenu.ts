@@ -1,9 +1,9 @@
 // Full-screen build menu: one row per buildable district (Docs/09).
 
 import { canAfford } from '../sim/commands';
-import { CITY_DEF, DISTRICTS, RESEARCH } from '../sim/data/definitions';
+import { CITY_DEF, DISTRICTS, TECHNOLOGIES } from '../sim/data/definitions';
 import { buildCost, buildDuration, districtCount, maxCountForTownhallLevel } from '../sim/districts';
-import { isResearched } from '../sim/research';
+import { isTechComplete } from '../sim/research';
 import { townhall } from '../sim/state';
 import type { Game } from '../game';
 import { button, el, formatCost, formatDuration } from './format';
@@ -24,12 +24,12 @@ export function renderBuildMenu(game: Game): HTMLElement {
     const affordable = canAfford(game.state.city.wallet, cost);
 
     const lockedByResearch =
-      def.requiredResearch !== null && !isResearched(game.state, def.requiredResearch);
+      def.requiredTech !== null && !isTechComplete(game.state, def.requiredTech);
 
     // When locked/capped, say what unlocks it.
     let blockedMsg = '';
     if (lockedByResearch) {
-      blockedMsg = `🔒 ${RESEARCH[def.requiredResearch!].name} research`;
+      blockedMsg = `🔒 ${TECHNOLOGIES[def.requiredTech!].name} research`;
     } else if (capped) {
       const list = def.maxCountPerTownhallLevel;
       const nextLevel = list.findIndex((n) => n > count) + 1;

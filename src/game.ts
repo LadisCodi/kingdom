@@ -7,7 +7,9 @@ import {
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, RESEARCH, TRAINING } from './sim/data/definitions';
+import {
+  BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING,
+} from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
@@ -20,11 +22,12 @@ import { addToSale, queuedGoldValue, rushSale } from './sim/market';
 import {
   availableWorkers, maxPopulation, populationCost, startTraining, trainingCompletesAt,
 } from './sim/population';
-import { startResearch } from './sim/research';
+import { buySlot, startTech } from './sim/research';
+import { buyUpgrade, effectiveTapYield, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type ResearchId, type UnitId,
+  type TechId, type UnitId, type UpgradeId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { Camera } from './render/camera';
@@ -97,7 +100,7 @@ export class Game {
       this.toast(item.kind === 'build' ? 'Construction complete!' : 'Upgrade complete!');
     }
     for (const id of result.completedResearch) {
-      this.toast(`Research complete: ${RESEARCH[id].name}!`);
+      this.toast(`Research complete: ${TECHNOLOGIES[id].name}!`);
     }
     this.notify();
   }
@@ -179,7 +182,7 @@ export class Game {
     const result = collectTap(this.state, this.map, cell, this.now());
     if (result === 'Harvested' && source) {
       const spec = HARVEST[source];
-      this.floaters.add(cell, `+${spec.yieldPerTap} ${icon(spec.currencyId)}`);
+      this.floaters.add(cell, `+${effectiveTapYield(this.state, spec)} ${icon(spec.currencyId)}`);
     } else if (result === 'Exhausted') {
       this.floaters.add(cell, '💤');
     }
@@ -291,13 +294,27 @@ export class Game {
     this.notify();
   }
 
-  doResearch(id: ResearchId): void {
-    const result = startResearch(this.state, id, this.now());
+  doStartTech(id: TechId): void {
+    const result = startTech(this.state, id, this.now());
     if (result === 'NotEnoughResources') {
-      this.shake(Object.keys(RESEARCH[id].cost) as CurrencyId[]);
-    } else if (result === 'AlreadyResearching') {
-      this.toast('Another research is already in progress');
+      this.shake(Object.keys(TECHNOLOGIES[id].cost) as CurrencyId[]);
+    } else if (result === 'NoFreeSlot') {
+      this.toast('All research slots are busy');
+    } else if (result === 'MissingRequirement') {
+      this.toast('Requires another technology first');
     }
+    this.notify();
+  }
+
+  doBuyUpgrade(id: UpgradeId): void {
+    const result = buyUpgrade(this.state, id);
+    if (result === 'NotEnoughResources') this.shake(['Gold']);
+    this.notify();
+  }
+
+  doBuySlot(): void {
+    const result = buySlot(this.state);
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 
@@ -393,7 +410,10 @@ export class Game {
           const spec = HARVEST[def.harvestSource];
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
             // The placement preview shows what WORKERS will fetch per delivery.
-            (cell) => ({ cell, label: `+${spec.yieldPerWorker} ${icon(spec.currencyId)}` }),
+            (cell) => ({
+              cell,
+              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
+            }),
           );
         }
       }

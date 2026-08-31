@@ -19,6 +19,8 @@ the script.
 | `Units` | Army units: power, recruit costs |
 | `Harvest` | Resource cells: yield per tap, taps to exhaust, recovery |
 | `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market sell price; blank = not sellable) |
+| `Technologies` | One-time researches: costs, duration, `requires` (comma-separated tech ids) |
+| `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, market interval/capacity, offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |

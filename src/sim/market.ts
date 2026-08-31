@@ -3,7 +3,8 @@
 // escrowed out of the city wallet; unsold units can be withdrawn. Upgrade
 // hooks for later: sell interval (speed), gold values (price), capacity.
 
-import { CURRENCIES, MARKET } from './data/definitions';
+import { CURRENCIES } from './data/definitions';
+import { effectiveMarketCapacity, effectiveSellIntervalMs } from './upgrades';
 import { addToWallet, getWallet, type CurrencyId, type GameState } from './state';
 
 /** Sellable currencies in sell order (= Currencies sheet order). */
@@ -32,7 +33,7 @@ export function addToSale(
   if (CURRENCIES[currency].goldValue === null) return 'NotSellable';
   const n = Math.min(amount, getWallet(state.city.wallet, currency));
   if (n <= 0) return 'NotEnoughResources';
-  const space = MARKET.capacity - queuedUnits(state);
+  const space = effectiveMarketCapacity(state) - queuedUnits(state);
   if (space <= 0) return 'MarketFull';
   const moved = Math.min(n, space);
   if (queuedUnits(state) === 0) state.market.lastSaleAt = now;
@@ -45,7 +46,7 @@ export function addToSale(
  *  The anchor advances only by time paid out (whole units only), so partial
  *  intervals carry over. Returns the Gold earned. */
 export function advanceMarket(state: GameState, toTime: number): number {
-  const intervalMs = MARKET.sellIntervalSeconds * 1000;
+  const intervalMs = effectiveSellIntervalMs(state);
   let earned = 0;
   for (;;) {
     if (queuedUnits(state) === 0) return earned; // idle queue banks no time
@@ -62,17 +63,16 @@ export function advanceMarket(state: GameState, toTime: number): number {
 /** Seconds until the next unit sells; null when nothing is queued. */
 export function nextSaleInSeconds(state: GameState, now: number): number | null {
   if (queuedUnits(state) === 0) return null;
-  const intervalMs = MARKET.sellIntervalSeconds * 1000;
-  return Math.max(0, (state.market.lastSaleAt + intervalMs - now) / 1000);
+  return Math.max(0, (state.market.lastSaleAt + effectiveSellIntervalMs(state) - now) / 1000);
 }
 
 /** Seconds the queue still needs to drain at the current interval. */
 export function queueRemainingSeconds(state: GameState, now: number): number {
   const units = queuedUnits(state);
   if (units === 0) return 0;
-  const elapsedIntoInterval = Math.min(
-    now - state.market.lastSaleAt, MARKET.sellIntervalSeconds * 1000);
-  return (units * MARKET.sellIntervalSeconds * 1000 - Math.max(0, elapsedIntoInterval)) / 1000;
+  const intervalMs = effectiveSellIntervalMs(state);
+  const elapsedIntoInterval = Math.min(now - state.market.lastSaleAt, intervalMs);
+  return (units * intervalMs - Math.max(0, elapsedIntoInterval)) / 1000;
 }
 
 /** Gem cost to sell the whole queue instantly — same rule as the build rush:
