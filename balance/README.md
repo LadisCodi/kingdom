@@ -31,7 +31,9 @@ Format notes:
   ever happens (the importer will tell you), format the cell as Text and
   re-enter it.
 - **Blank cost cells mean 0** (that currency isn't part of the cost).
-- Formulas are fine — the computed value is what gets imported.
+- Per-cell formulas are fine — the computed value is what gets imported.
+  **Array/spill formulas (`SEQUENCE`, …) are not**: only their first cell has
+  a readable value, so the importer rejects them.
 - Don't add or rename columns/sheets/ids — the importer rejects anything it
   doesn't recognize, on purpose. New buildings/units need code
   (`definitions.ts`) anyway.

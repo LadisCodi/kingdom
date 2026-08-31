@@ -124,6 +124,13 @@ function readSheet(workbook, name) {
     let hasContent = false;
     row.eachCell({ includeEmpty: false }, (cell, col) => {
       if (!header[col]) return;
+      // Spill/array formulas (SEQUENCE, ...) can't be read: only the master
+      // cell has a cached result — the spilled cells arrive blank.
+      if (cell.value && typeof cell.value === 'object' && cell.value.shareType === 'array') {
+        fail(`${name} row ${rowNumber}`,
+          `"${header[col]}" uses an array formula (${cell.value.formula}) — ` +
+          'spilled values cannot be imported; use plain values or per-cell formulas');
+      }
       const v = cellValue(cell.value);
       if (v !== '') hasContent = true;
       out[header[col]] = v;
