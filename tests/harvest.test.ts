@@ -15,7 +15,8 @@ describe('harvest sources', () => {
     const state = freshGame();
     expect(harvestSourceAt(state, FOREST)).toBe('Forest');
     expect(harvestSourceAt(state, { x: 0, y: 0 })).toBe(null); // Townhall
-    expect(harvestSourceAt(state, { x: 1, y: 0 })).toBe(null); // empty grass
+    expect(harvestSourceAt(state, { x: 1, y: 0 })).toBe(null); // Townhall footprint cell
+    expect(harvestSourceAt(state, { x: 3, y: 0 })).toBe(null); // empty grass
   });
 });
 
@@ -41,8 +42,9 @@ describe('tapping', () => {
 
   it('rejects unrevealed and non-resource cells', () => {
     const state = freshGame();
-    expect(tapCell(state, map, FOREST, T0)).toBe('NotRevealed');
-    expect(tapCell(state, map, { x: 1, y: 0 }, T0)).toBe('NotHarvestable');
+    // (2,2) is seed-revealed now that the Townhall spans 2x2 — use a farther tree.
+    expect(tapCell(state, map, { x: 2, y: 3 }, T0)).toBe('NotRevealed');
+    expect(tapCell(state, map, { x: 2, y: 0 }, T0)).toBe('NotHarvestable'); // revealed empty grass
   });
 });
 

@@ -284,7 +284,10 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
   if (capEnd < now) {
     const gap = now - capEnd;
     for (const w of state.workers) {
-      w.stateStartedAt += gap;
+      // A blocked-Idle worker resumes AT `now`: keeping its pre-cap offset
+      // (stateStartedAt + gap < now) would let the final advance below fit a
+      // whole harvest cycle inside the paused window and over-pay the cap.
+      w.stateStartedAt = w.activity === 'Idle' ? now : w.stateStartedAt + gap;
       if (w.stateUntil !== null) w.stateUntil += gap;
     }
     for (const d of state.city.districts) {

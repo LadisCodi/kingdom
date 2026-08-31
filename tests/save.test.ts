@@ -5,7 +5,7 @@ import { getWallet } from '../src/sim/state';
 import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const FOREST = { x: 2, y: 2 };
-const SAWMILL = { x: 1, y: 1 };
+const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
 
 const workingGame = () => {
   const state = freshGame();
@@ -20,7 +20,7 @@ const workingGame = () => {
   return state;
 };
 
-describe('save v2 round-trip', () => {
+describe('save v3 round-trip', () => {
   it('restores wallets, districts, workers, harvest state, fog, army', () => {
     const state = workingGame();
     const t = T0 + 60_000;
@@ -71,7 +71,7 @@ describe('save v2 round-trip', () => {
     const mk = () => {
       const s = workingGame();
       fund(s, { Silver: 5000, Wood: 5000 });
-      enqueueBuild(s, map, 'Housing', { x: 0, y: 1 });
+      enqueueBuild(s, map, 'Housing', { x: 2, y: 0 });
       return serialize(s, T0 + 30_000);
     };
     const capped = deserialize(mk(), map, T0 + 30_000 + 20 * 3_600_000)!;

@@ -63,6 +63,8 @@ export interface DistrictDef {
   buildable: boolean;
   glyph: string; // placeholder art (fallback when no sprite image is present)
   sprite: string; // asset filename stem in src/render/assets (e.g. 'townhall' → townhall.png)
+  /** Footprint in cells; `location` is the top-left (anchor) cell. */
+  size: { x: number; y: number };
   populationCapacity: number;
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
@@ -89,6 +91,7 @@ export interface DistrictDef {
 
 const base: Omit<DistrictDef, 'id' | 'name' | 'description' | 'glyph' | 'sprite'> = {
   buildable: true,
+  size: { x: 1, y: 1 },
   populationCapacity: 0,
   maxWorkersPerLevel: [],
   maxCountPerTownhallLevel: [],
@@ -119,6 +122,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
       'Heart of the city. Houses 3 and taxes population each cycle — tap it to speed the cycle up.',
     glyph: '🏛️',
     sprite: 'townhall',
+    size: { x: 2, y: 2 },
     buildable: false,
     populationCapacity: 3,
     maxLevel: 2,
@@ -350,4 +354,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 2; // v1 saves (generator/vault era) are discarded
+export const SAVE_VERSION = 3; // v2 saves predate multi-cell footprints (2x2 Townhall) and are discarded

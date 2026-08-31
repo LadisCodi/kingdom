@@ -12,7 +12,7 @@ import {
   maxCountForTownhallLevel, validPlacementCells,
 } from './sim/districts';
 import { fogState, revealCostForCell, revealTap } from './sim/fog';
-import { cellsWithinRadius, townhallDistance, type MapData } from './sim/grid';
+import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt } from './sim/harvest';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
 import { availableWorkers, buyPopulation } from './sim/population';
@@ -323,7 +323,7 @@ export class Game {
   capturedCells(definitionId: DistrictId, cell: Coord): Coord[] {
     const def = DISTRICTS[definitionId];
     if (!def.harvestSource || def.influenceRadiusPerLevel.length === 0) return [];
-    return cellsWithinRadius(this.map, cell, def.influenceRadiusPerLevel[0]).filter(
+    return cellsWithinRadiusOfRect(this.map, cell, def.size, def.influenceRadiusPerLevel[0]).filter(
       (c) =>
         this.state.fog.revealed[coordKey(c)] === true &&
         harvestSourceAt(this.state, c) === def.harvestSource,
@@ -341,6 +341,8 @@ export class Game {
       previewCell: null,
       previewGlyph: null,
       previewSprite: null,
+      previewSize: null,
+      selectedSize: null,
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
@@ -353,12 +355,14 @@ export class Game {
         );
       }
       layer.selected = this.mode.selected;
+      layer.selectedSize = def.size;
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
       layer.previewSprite = def.sprite;
+      layer.previewSize = def.size;
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
-        layer.influenceCells = cellsWithinRadius(
-          this.map, this.mode.selected, def.influenceRadiusPerLevel[0],
+        layer.influenceCells = cellsWithinRadiusOfRect(
+          this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
         );
         if (def.harvestSource) {
           const spec = HARVEST[def.harvestSource];
@@ -377,6 +381,7 @@ export class Game {
       const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
         layer.selected = district.location;
+        layer.selectedSize = DISTRICTS[district.definitionId].size;
         if (district.state === 'Built') {
           layer.influenceCells = influenceCells(this.map, district);
           layer.claimedCells = this.state.workers

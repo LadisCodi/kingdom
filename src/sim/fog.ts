@@ -2,7 +2,7 @@
 
 import { FOG } from './data/definitions';
 import { neighbors, townhallDistance, type MapData } from './grid';
-import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
+import { addToWallet, coordKey, districtCells, getWallet, type Coord, type GameState } from './state';
 
 export type FogState = 'Revealed' | 'Discovered' | 'Undiscovered';
 
@@ -58,10 +58,12 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   return 'Paid';
 }
 
-/** New-game seed: every district cell of the city plus all its neighbors. */
+/** New-game seed: every cell of every district footprint plus all their neighbors. */
 export function seedFog(state: GameState, map: MapData): void {
   for (const d of state.city.districts) {
-    state.fog.revealed[coordKey(d.location)] = true;
-    for (const n of neighbors(map, d.location)) state.fog.revealed[coordKey(n)] = true;
+    for (const cell of districtCells(d)) {
+      state.fog.revealed[coordKey(cell)] = true;
+      for (const n of neighbors(map, cell)) state.fog.revealed[coordKey(n)] = true;
+    }
   }
 }

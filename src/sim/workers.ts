@@ -3,7 +3,7 @@
 // (Docs/features/harvest-loop.md §3).
 
 import { DISTRICTS, HARVEST, WORKER, levelIndexed } from './data/definitions';
-import { cellsWithinRadius, euclideanTiles, type MapData } from './grid';
+import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { harvestSourceAt, isExhausted, recoversAt, registerTap } from './harvest';
 import {
   addToWallet, coordKey, districtById, newId, sameCell,
@@ -18,7 +18,9 @@ export function influenceRadius(district: District): number {
 }
 
 export const influenceCells = (map: MapData, district: District): Coord[] =>
-  cellsWithinRadius(map, district.location, influenceRadius(district));
+  cellsWithinRadiusOfRect(
+    map, district.location, DISTRICTS[district.definitionId].size, influenceRadius(district),
+  );
 
 /** Revealed resource cells of the building's source type in its area
  *  (exhausted cells count — workers wait for them to recover). */

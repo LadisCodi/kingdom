@@ -13,9 +13,11 @@ describe('map data', () => {
     expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(98);
     expect(map.initialFeatures.size).toBe(13);
   });
-  it('8-neighbor adjacency: diagonal distance = 1', () => {
-    expect(townhallDistance(map, { x: 1, y: 1 })).toBe(1);
+  it('8-neighbor adjacency: distance 0 across the 2x2 footprint, 1 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);
+    expect(townhallDistance(map, { x: 1, y: 1 })).toBe(0); // inside the footprint
+    expect(townhallDistance(map, { x: 2, y: 2 })).toBe(1); // diagonal from its corner
+    expect(townhallDistance(map, { x: -1, y: -1 })).toBe(1);
   });
 });
 
@@ -28,15 +30,17 @@ describe('reveal cost curve (Docs/02 table)', () => {
 
 describe('fog state & seeding', () => {
   const state = newGame(map, NOW);
-  it('seeds the Townhall + its 8 neighbors as Revealed', () => {
-    expect(Object.keys(state.fog.revealed).length).toBe(9);
-    expect(fogState(state, map, TOWNHALL_ORIGIN)).toBe('Revealed');
-    for (const n of neighbors(map, TOWNHALL_ORIGIN)) {
-      expect(fogState(state, map, n)).toBe('Revealed');
+  it('seeds the 2x2 Townhall footprint + all its neighbors as Revealed (4x4 block)', () => {
+    expect(Object.keys(state.fog.revealed).length).toBe(16);
+    for (const cell of [TOWNHALL_ORIGIN, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }]) {
+      expect(fogState(state, map, cell)).toBe('Revealed');
+      for (const n of neighbors(map, cell)) {
+        expect(fogState(state, map, n)).toBe('Revealed');
+      }
     }
   });
   it('derives Discovered for unrevealed cells with a revealed neighbor', () => {
-    expect(fogState(state, map, { x: 2, y: 0 })).toBe('Discovered');
+    expect(fogState(state, map, { x: 3, y: 0 })).toBe('Discovered');
     expect(fogState(state, map, { x: 5, y: 5 })).toBe('Undiscovered');
   });
 });
@@ -44,7 +48,7 @@ describe('fog state & seeding', () => {
 describe('paying to reveal', () => {
   it('accumulates 1 Silver per tap and reveals when total cost is met', () => {
     const state = newGame(map, NOW);
-    const cell = { x: 2, y: 0 }; // distance 2 → cost 3
+    const cell = { x: 3, y: 0 }; // distance 2 from the footprint → cost 3
     const silverBefore = getWallet(state.city.wallet, 'Silver');
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(revealTap(state, map, cell)).toBe('Paid');

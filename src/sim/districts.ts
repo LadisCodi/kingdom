@@ -2,9 +2,9 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { cellsWithinRadius, neighbors, townhallDistance, type MapData } from './grid';
+import { cellExists, cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import {
-  coordKey, districtAt, sameCell, townhall,
+  cellsOfRect, coordKey, districtAt, sameCell, townhall,
   type Coord, type DistrictId, type GameState, type Wallet,
 } from './state';
 
@@ -22,10 +22,11 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 // ----------------------------------------------------------------- placement
 
 export type PlacementBlock =
-  | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'CountLimit'
+  | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
   | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence';
 
-/** All placement conditions ANDed; null = buildable on this cell. */
+/** All placement conditions ANDed over the full footprint (cell = anchor,
+ *  top-left); null = buildable here. */
 export function placementBlock(
   state: GameState,
   map: MapData,
@@ -33,39 +34,47 @@ export function placementBlock(
   cell: Coord,
 ): PlacementBlock | null {
   const def = DISTRICTS[definitionId];
-  // Universal rules.
-  if (state.features[coordKey(cell)]) return 'HasFeature';
-  if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
-  if (districtAt(state, cell)) return 'Occupied';
+  const footprint = cellsOfRect(cell, def.size);
+  // Universal rules — every footprint cell must pass.
+  for (const c of footprint) {
+    if (!cellExists(map, c)) return 'OffMap';
+    if (state.features[coordKey(c)]) return 'HasFeature';
+    if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
+    if (districtAt(state, c)) return 'Occupied';
+  }
   if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
     return 'CountLimit';
   }
-  // Per-type rules.
+  // Per-type rules: terrain must hold on every footprint cell; adjacency /
+  // influence must hold for at least one.
   switch (definitionId) {
     case 'Housing': {
       // Adjacent to a Townhall or another Housing (under-construction Housing counts).
-      const ok = neighbors(map, cell).some((n) => {
-        const d = districtAt(state, n);
-        return d !== undefined && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
-      });
+      const ok = footprint.some((fc) =>
+        neighbors(map, fc).some((n) => {
+          const d = districtAt(state, n);
+          return d !== undefined && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
+        }),
+      );
       if (!ok) return 'NeedsHousingAdjacency';
       break;
     }
     case 'Farm':
-      if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
+      if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       break;
     case 'FarmLands': {
       // On Grassland, inside a BUILT Farm's area of influence.
-      if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
+      if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       const inFarmArea = state.city.districts.some(
         (d) =>
           d.definitionId === 'Farm' &&
           d.state === 'Built' &&
-          cellsWithinRadius(
+          cellsWithinRadiusOfRect(
             map,
             d.location,
+            DISTRICTS.Farm.size,
             levelIndexed(DISTRICTS.Farm.influenceRadiusPerLevel, d.level),
-          ).some((c) => sameCell(c, cell)),
+          ).some((c) => footprint.some((fc) => sameCell(c, fc))),
       );
       if (!inFarmArea) return 'NeedsFarmInfluence';
       break;

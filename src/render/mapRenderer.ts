@@ -10,7 +10,7 @@ import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
 import { workerPosition } from '../sim/workers';
 import {
-  queueProgress, remainingSeconds, coordKey, sameCell,
+  queueProgress, remainingSeconds, coordKey, districtOccupies, sameCell,
   type Coord, type GameState,
 } from '../sim/state';
 import type { Camera } from './camera';
@@ -20,6 +20,7 @@ import { drawSprite } from './sprites';
 
 export interface MarkerLayer {
   selected: Coord | null;
+  selectedSize: { x: number; y: number } | null; // footprint the selection outline spans
   validCells: Array<{ cell: Coord; label: string }>; // placement or spell targets
   validColor: string;
   influenceCells: Coord[]; // area-of-influence outline
@@ -29,6 +30,7 @@ export interface MarkerLayer {
   previewCell: Coord | null;
   previewGlyph: string | null;
   previewSprite: string | null;
+  previewSize: { x: number; y: number } | null; // footprint of the previewed building
 }
 
 export function drawMap(
@@ -61,7 +63,30 @@ export function drawMap(
 
   const cellRect = (cell: Coord) => camera.cellToScreen(cell);
 
-  // Pass 1: terrain + fog + resource cells + districts.
+  // The per-cell resource-state overlay (exhaustion dim + recovery/tap bar).
+  const drawResourceState = (cell: Coord, x: number, y: number) => {
+    const source = harvestSourceAt(state, cell);
+    if (source === null) return;
+    const recovery = recoversAt(state, cell, now);
+    const spec = HARVEST[source];
+    if (recovery !== null) {
+      ctx.fillStyle = PALETTE.exhaustedOverlay;
+      ctx.fillRect(x, y, size, size);
+      const remaining = (recovery - now) / (spec.recoverySeconds * 1000);
+      drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, 1 - Math.min(1, remaining), PALETTE.recoveryFill);
+    } else {
+      const fraction = tapFraction(state, cell, spec, now);
+      if (fraction < 1) {
+        drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, fraction, PALETTE.vaultFill);
+      }
+    }
+  };
+  const rainingOn = (cell: Coord): boolean =>
+    state.activeSpells.some((s) => sameCell(s.cell, cell) && s.expiresAt > now);
+
+  // Pass 1: terrain + fog + features + resource cells. Districts come in a
+  // separate pass — a multi-cell sprite drawn here would be overpainted by
+  // the terrain fill of the following footprint cells.
   for (let cy = topLeft.y - pad; cy <= bottomRight.y + pad; cy++) {
     for (let cx = topLeft.x - pad; cx <= bottomRight.x + pad; cx++) {
       const cell = { x: cx, y: cy };
@@ -79,77 +104,20 @@ export function drawMap(
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
 
       const feature = state.features[key];
-      const district = state.city.districts.find((d) => sameCell(d.location, cell));
-      const source = harvestSourceAt(state, cell);
-      const recovery = source !== null ? recoversAt(state, cell, now) : null;
-      const exhausted = recovery !== null;
+      const district = state.city.districts.find((d) => districtOccupies(d, cell));
+      if (district) continue; // drawn (with its overlays) in the district pass
 
       // Features (Forest): normal or exhausted sprite, emoji fallback.
-      if (feature && !district) {
+      if (feature) {
         const def = FEATURES[feature];
+        const exhausted = recoversAt(state, cell, now) !== null;
         if (!drawSprite(ctx, exhausted ? `${def.sprite}_exhausted` : def.sprite, x, y, size, size)) {
           drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
         }
       }
 
-      if (district && fog === 'Revealed') {
-        const def = DISTRICTS[district.definitionId];
-        // Exhausted crop plot gets its own base sprite when available;
-        // otherwise the normal sprite (or glyph) plus the withered overlay.
-        const exhaustedPlot = district.definitionId === 'FarmLands' &&
-          exhausted && district.state !== 'UnderConstruction';
-        const drewExhaustedPlot =
-          exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, size, size);
-        if (!drewExhaustedPlot && !drawSprite(ctx, def.sprite, x, y, size, size)) {
-          drawGlyph(ctx, def.glyph, x, y, size, size * 0.52);
-        }
-        if (district.state === 'UnderConstruction') {
-          ctx.fillStyle = PALETTE.constructionHatch;
-          ctx.fillRect(x, y, size, size);
-          drawGlyph(ctx, '🚧', x, y - size * 0.22, size, size * 0.3);
-        } else {
-          if (district.level > 1) {
-            ctx.fillStyle = PALETTE.label;
-            ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
-            ctx.fillText(`L${district.level}`, x + size - 3, y + 3);
-          }
-          // Exhausted crop plot: withered overlay (unless its sprite covers it).
-          if (exhaustedPlot && !drewExhaustedPlot) {
-            drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, x, y - size * 0.18, size, size * 0.3);
-          }
-          // Townhall: tax-cycle progress bar.
-          if (district.definitionId === 'Townhall' && district.cycleStartedAt !== undefined) {
-            const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
-            const progress = Math.min(1, Math.max(0, (now - district.cycleStartedAt) / cycleMs));
-            drawBar(ctx, x + size * 0.12, y + size - 7, size * 0.76, 4, progress, PALETTE.progressFill);
-          }
-          // Needs-workers warning.
-          if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {
-            drawGlyph(ctx, '⚠️', x + size * 0.28, y - size * 0.26, size, size * 0.26);
-          }
-        }
-      }
-
-      // Resource-cell state: exhaustion dim + recovery countdown, or tap wear.
-      if (source !== null && fog === 'Revealed') {
-        const spec = HARVEST[source];
-        if (exhausted) {
-          ctx.fillStyle = PALETTE.exhaustedOverlay;
-          ctx.fillRect(x, y, size, size);
-          const remaining = (recovery - now) / (spec.recoverySeconds * 1000);
-          drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, 1 - Math.min(1, remaining), PALETTE.recoveryFill);
-        } else {
-          const fraction = tapFraction(state, cell, spec, now);
-          if (fraction < 1) {
-            drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, fraction, PALETTE.vaultFill);
-          }
-        }
-      }
-
-      // Active Rain on this cell.
-      if (state.activeSpells.some((s) => sameCell(s.cell, cell) && s.expiresAt > now)) {
+      if (fog === 'Revealed') drawResourceState(cell, x, y);
+      if (rainingOn(cell)) {
         drawGlyph(ctx, '🌧️', x + size * 0.3, y - size * 0.28, size, size * 0.28);
       }
 
@@ -166,19 +134,72 @@ export function drawMap(
     }
   }
 
+  // Pass 1.5: districts, each drawn once spanning its full footprint.
+  for (const district of state.city.districts) {
+    if (fogState(state, map, district.location) !== 'Revealed') continue;
+    const { x, y } = cellRect(district.location);
+    const def = DISTRICTS[district.definitionId];
+    const fw = size * def.size.x;
+    const fh = size * def.size.y;
+    if (x + fw < 0 || y + fh < 0 || x > w || y > h) continue; // offscreen
+    const exhausted = recoversAt(state, district.location, now) !== null;
+    // Exhausted crop plot gets its own base sprite when available;
+    // otherwise the normal sprite (or glyph) plus the withered overlay.
+    const exhaustedPlot = district.definitionId === 'FarmLands' &&
+      exhausted && district.state !== 'UnderConstruction';
+    const drewExhaustedPlot =
+      exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh);
+    if (!drewExhaustedPlot && !drawSprite(ctx, def.sprite, x, y, fw, fh)) {
+      drawGlyph(ctx, def.glyph, x, y, fw, size * 0.52 * Math.min(def.size.x, def.size.y), fh);
+    }
+    if (district.state === 'UnderConstruction') {
+      ctx.fillStyle = PALETTE.constructionHatch;
+      ctx.fillRect(x, y, fw, fh);
+      drawGlyph(ctx, '🚧', x, y - fh * 0.22, fw, size * 0.3, fh);
+    } else {
+      if (district.level > 1) {
+        ctx.fillStyle = PALETTE.label;
+        ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`L${district.level}`, x + fw - 3, y + 3);
+      }
+      // Exhausted crop plot: withered overlay (unless its sprite covers it).
+      if (exhaustedPlot && !drewExhaustedPlot) {
+        drawGlyph(ctx, CROPS_EXHAUSTED_GLYPH, x, y - size * 0.18, fw, size * 0.3, fh);
+      }
+      // A district that is itself a resource cell (FarmLands): wear/recovery bar.
+      if (district.definitionId === 'FarmLands') drawResourceState(district.location, x, y);
+      // Townhall: tax-cycle progress bar.
+      if (district.definitionId === 'Townhall' && district.cycleStartedAt !== undefined) {
+        const cycleMs = TOWNHALL_CYCLE.cycleSeconds * 1000;
+        const progress = Math.min(1, Math.max(0, (now - district.cycleStartedAt) / cycleMs));
+        drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+      }
+      // Needs-workers warning.
+      if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {
+        drawGlyph(ctx, '⚠️', x + fw * 0.28, y - fh * 0.26, fw, size * 0.26, fh);
+      }
+    }
+    if (rainingOn(district.location)) {
+      drawGlyph(ctx, '🌧️', x + size * 0.3, y - size * 0.28, size, size * 0.28);
+    }
+  }
+
   // Pass 2: queue progress bars over districts.
   for (const item of state.city.queue) {
     const district = state.city.districts.find((d) => d.uniqueId === item.districtUniqueId);
     if (!district) continue;
     const { x, y } = cellRect(district.location);
+    const fw = size * DISTRICTS[district.definitionId].size.x;
     const progress = queueProgress(item, now);
     const remaining = Math.ceil(remainingSeconds(item, now));
-    drawBar(ctx, x + size * 0.1, y + size * 0.1, size * 0.8, 6, progress, PALETTE.progressFill);
+    drawBar(ctx, x + fw * 0.1, y + size * 0.1, fw * 0.8, 6, progress, PALETTE.progressFill);
     ctx.fillStyle = PALETTE.label;
     ctx.font = `${Math.max(9, size * 0.15)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, x + size / 2, y + size * 0.1 + 8);
+    ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, x + fw / 2, y + size * 0.1 + 8);
   }
 
   // Pass 3: markers.
@@ -233,17 +254,21 @@ export function drawMap(
   }
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
+    const pw = size * (markers.previewSize?.x ?? 1);
+    const ph = size * (markers.previewSize?.y ?? 1);
     ctx.globalAlpha = 0.6;
-    if (!(markers.previewSprite && drawSprite(ctx, markers.previewSprite, x, y, size, size))) {
-      drawGlyph(ctx, markers.previewGlyph, x, y, size, size * 0.52);
+    if (!(markers.previewSprite && drawSprite(ctx, markers.previewSprite, x, y, pw, ph))) {
+      drawGlyph(ctx, markers.previewGlyph, x, y, pw, size * 0.52, ph);
     }
     ctx.globalAlpha = 1;
   }
   if (markers.selected) {
     const { x, y } = cellRect(markers.selected);
+    const sw = size * (markers.selectedSize?.x ?? 1);
+    const sh = size * (markers.selectedSize?.y ?? 1);
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
-    ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
+    ctx.strokeRect(x + 1.5, y + 1.5, sw - 3, sh - 3);
   }
 
   // Pass 4: worker units (sprite with carrying variant, emoji fallback).
@@ -284,6 +309,7 @@ function drawGlyph(
   y: number,
   size: number,
   fontSize: number,
+  height = size, // multi-cell footprints center over a non-square box
 ): void {
   // Emoji ink rarely matches the font's line box, so center on the measured
   // bounding box instead of relying on textBaseline: 'middle'.
@@ -292,7 +318,7 @@ function drawGlyph(
   ctx.textBaseline = 'alphabetic';
   const m = ctx.measureText(glyph);
   const cx = x + size / 2 + (m.actualBoundingBoxLeft - m.actualBoundingBoxRight) / 2;
-  const cy = y + size / 2 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+  const cy = y + height / 2 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
   ctx.fillText(glyph, cx, cy);
 }
 

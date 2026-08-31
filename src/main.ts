@@ -34,7 +34,8 @@ async function boot(): Promise<void> {
 
   const canvas = document.getElementById('map') as HTMLCanvasElement;
   const camera = new Camera(canvas);
-  camera.centerOnCell(TOWNHALL_ORIGIN);
+  // Center on the middle of the Townhall's 2x2 footprint (fractional cell).
+  camera.centerOnCell({ x: TOWNHALL_ORIGIN.x + 0.5, y: TOWNHALL_ORIGIN.y + 0.5 });
   const game = new Game(state, map, camera);
 
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately

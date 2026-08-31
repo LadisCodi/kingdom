@@ -1,6 +1,9 @@
 // Core simulation state types. This module (and everything under src/sim/) is
 // pure TypeScript: no DOM, no Date.now() — callers pass `now` (epoch ms) and an
 // injectable rng so the sim stays deterministic and portable to a server.
+// (The DISTRICTS import is safe: definitions.ts only imports types from here.)
+
+import { DISTRICTS } from './data/definitions';
 
 export type CurrencyId = 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Mana' | 'Knowledge' | 'Gems';
 export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
@@ -123,8 +126,33 @@ export const addToWallet = (w: Wallet, c: CurrencyId, amount: number): void => {
   w[c] = getWallet(w, c) + amount;
 };
 
+// ------------------------------------------------------------- footprints
+
+/** The cells of a size.x × size.y rectangle anchored (top-left) at `anchor`. */
+export function cellsOfRect(anchor: Coord, size: { x: number; y: number }): Coord[] {
+  const out: Coord[] = [];
+  for (let dy = 0; dy < size.y; dy++) {
+    for (let dx = 0; dx < size.x; dx++) out.push({ x: anchor.x + dx, y: anchor.y + dy });
+  }
+  return out;
+}
+
+export const districtSize = (d: District): { x: number; y: number } =>
+  DISTRICTS[d.definitionId].size;
+
+/** All cells a district occupies (location = top-left anchor). */
+export const districtCells = (d: District): Coord[] => cellsOfRect(d.location, districtSize(d));
+
+export const districtOccupies = (d: District, cell: Coord): boolean => {
+  const size = districtSize(d);
+  return (
+    cell.x >= d.location.x && cell.x < d.location.x + size.x &&
+    cell.y >= d.location.y && cell.y < d.location.y + size.y
+  );
+};
+
 export const districtAt = (state: GameState, cell: Coord): District | undefined =>
-  state.city.districts.find((d) => sameCell(d.location, cell));
+  state.city.districts.find((d) => districtOccupies(d, cell));
 
 export const districtById = (state: GameState, uniqueId: string): District | undefined =>
   state.city.districts.find((d) => d.uniqueId === uniqueId);

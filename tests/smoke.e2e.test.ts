@@ -20,14 +20,15 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     let now = T0;
 
     // --- Reveal 3 fog cells at distance 2 (3 Silver each, tap by tap).
-    for (const cell of [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }]) {
+    // (The 2x2 Townhall seed already reveals the x=2 column up to y=2.)
+    for (const cell of [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }]) {
       let r: string = 'Paid';
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r).toBe('Revealed');
     }
     expect(getWallet(state.city.wallet, 'Silver')).toBe(50 - 9);
 
-    // --- Tap the revealed Forest for Wood, free.
+    // --- Tap the (seed-revealed) Forest for Wood, free.
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, { x: 2, y: 2 }, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
 
@@ -40,8 +41,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Silver: 500, Wood: 500 });
-    expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 1 })).toBe('Started');
-    expect(enqueueBuild(state, map, 'Housing', { x: 0, y: 1 })).toBe('QueueFull');
+    expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('QueueFull');
     tickAt(state, now);
     expect(finishWithGems(state, state.city.queue[0].uniqueId, now)).toBe('Success');
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
@@ -85,7 +86,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     fund(state, { Food: 10_000, Silver: 10_000, Wood: 10_000 });
     expect(maxPopulation(state)).toBe(3);
     expect(buyPopulation(state)).toBe('AtMax'); // already 5 via test setup
-    for (const cell of [{ x: 0, y: 1 }, { x: 0, y: -1 }]) {
+    for (const cell of [{ x: 2, y: 0 }, { x: 0, y: -1 }]) {
       expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
       tickAt(state, now);
       now += 120_000;

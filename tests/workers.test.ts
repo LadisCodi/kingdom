@@ -8,13 +8,14 @@ import { getWallet, type GameState } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
-const SAWMILL_CELL = { x: 1, y: 1 };
+// (1,1) is inside the 2x2 Townhall footprint now — the sawmill sits at (1,2).
+const SAWMILL_CELL = { x: 1, y: 2 };
 const FOREST_A = { x: 2, y: 2 }; // radius-1 neighbor of the sawmill
-const FOREST_B = { x: 2, y: 3 }; // radius-2 — needs a level-2 sawmill
+const FOREST_B = { x: 3, y: 3 }; // radius-2 — needs a level-2 sawmill
 
-// One harvest cycle from an adjacent (diagonal) cell:
-// 2 × (√2 / speed) move + workSeconds.
-const CYCLE_MS = 2 * (Math.SQRT2 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSeconds * 1000;
+// One harvest cycle from an adjacent (orthogonal) cell:
+// 2 × (1 / speed) move + workSeconds.
+const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSeconds * 1000;
 
 const builtSawmill = (state: GameState) => {
   fund(state, { Silver: 500, Wood: 500 });
