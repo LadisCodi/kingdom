@@ -1,4 +1,0 @@
-id,power,recruit_cost_silver,recruit_cost_wood,recruit_cost_food,train_duration_seconds
-Archer,2,40,20,,25
-Swordsman,3,50,,20,30
-Cavalry,5,100,,40,60

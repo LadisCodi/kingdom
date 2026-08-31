@@ -1,24 +1,28 @@
-// Balance data bridge: balance/*.csv  ⇄  src/sim/data/balance.json
+// Balance data bridge: balance/balance.xlsx  ⇄  src/sim/data/balance.json
 //
-//   node scripts/balance.mjs import   CSVs → balance.json (validates; the normal flow)
-//   node scripts/balance.mjs export   balance.json → CSVs (regenerate the sheets)
+//   node scripts/balance.mjs import   xlsx → balance.json (validates; the normal flow)
+//   node scripts/balance.mjs export   balance.json → xlsx (regenerate the workbook)
 //
-// The CSVs are the human-edited source of truth (Excel / LibreOffice / Sheets);
-// the JSON is generated and consumed by src/sim/data/definitions.ts.
-// Import fails loudly on unknown columns/ids, missing rows, or non-numbers.
+// The workbook is the human-edited source of truth (Excel / LibreOffice /
+// Google Sheets); the JSON is generated and consumed by definitions.ts.
+// Import fails loudly on unknown columns/ids, missing rows, or bad numbers.
 //
-// CSV conventions:
-//   - lists are pipe-separated:  3|5|7      (blank = empty list)
+// Workbook conventions:
+//   - one sheet per table: Districts, Units, Spells, Harvest, Currencies,
+//     FogRings, Settings
+//   - per-level LISTS are comma-separated in one cell:  3,5,7
+//     (list cells are text-formatted on export so Excel never turns "3,5"
+//     into the number 3.5; pipes "3|5|7" are accepted too)
 //   - blank cost cells mean 0 (the currency isn't part of the cost)
-//   - both "," and ";" delimiters are accepted (";" is what Spanish-locale
-//     Excel/LibreOffice writes); with ";", decimal commas ("1,25") work too.
+//   - formulas are fine — the computed value is what gets imported
 
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ExcelJS from 'exceljs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const CSV_DIR = join(ROOT, 'balance');
+const XLSX_PATH = join(ROOT, 'balance/balance.xlsx');
 const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 
 const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
@@ -29,7 +33,7 @@ const CURRENCY_IDS = ['Food', 'Silver', 'Wood', 'Gold', 'Mana', 'Knowledge', 'Ge
 const COST_CURRENCIES = ['Silver', 'Wood', 'Food'];
 
 const SETTINGS = [
-  // [csv key, json path]
+  // [sheet key, json path, kind]
   ['worker.move_speed_tiles_per_second', 'worker.moveSpeedTilesPerSecond'],
   ['worker.work_seconds', 'worker.workSeconds'],
   ['worker.carry', 'worker.carry'],
@@ -61,100 +65,141 @@ const DISTRICT_COLUMNS = [
   'upgrade_cost_silver', 'upgrade_cost_wood', 'upgrade_cost_food',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
 ];
+const DISTRICT_LIST_COLUMNS = [
+  'max_workers_per_level', 'max_count_per_townhall_level',
+  'influence_radius_per_level', 'required_townhall_level_per_level',
+];
 
-// ------------------------------------------------------------------ CSV I/O
+const SHEETS = {
+  Districts: DISTRICT_COLUMNS,
+  Units: ['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood', 'recruit_cost_food',
+    'train_duration_seconds'],
+  Spells: ['spell', 'level', 'mana_cost', 'duration_seconds', 'effect_magnitude', 'upgrade_cost'],
+  Harvest: ['source', 'yield_per_tap', 'taps_to_exhaust', 'recovery_seconds'],
+  Currencies: ['id', 'cap', 'start'],
+  FogRings: ['distance', 'cost'],
+  Settings: ['key', 'value'],
+};
 
-function fail(file, msg) {
-  console.error(`balance: ${file}: ${msg}`);
+// -------------------------------------------------------------- xlsx reading
+
+function fail(where, msg) {
+  console.error(`balance: ${where}: ${msg}`);
   process.exit(1);
 }
 
-/** Parse a whole CSV file into row objects keyed by header. */
-function readCsv(name, expectedColumns) {
-  const file = join(CSV_DIR, name);
-  let text;
-  try {
-    text = readFileSync(file, 'utf8');
-  } catch {
-    fail(name, 'file not found — run "node scripts/balance.mjs export" to regenerate the sheets');
+/** A cell's raw value as either a number (kept exact) or a trimmed string. */
+function cellValue(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'number' || typeof v === 'boolean') return v;
+  if (typeof v === 'object') {
+    if (v.richText) return v.richText.map((t) => t.text).join('').trim();
+    if (v.result !== undefined && v.result !== null) return cellValue(v.result); // formula
+    if (v.formula !== undefined) return ''; // formula with no cached result
+    if (v.text !== undefined) return String(v.text).trim(); // hyperlink
+    return String(v).trim();
   }
-  text = text.replace(/^﻿/, ''); // Excel BOM
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '');
-  if (lines.length < 2) fail(name, 'no data rows');
-  // Delimiter: whichever of ; or , splits the header into more fields.
-  const delim = (lines[0].split(';').length > lines[0].split(',').length) ? ';' : ',';
-  const split = (line) => line.split(delim).map((c) => c.trim().replace(/^"|"$/g, ''));
-  const header = split(lines[0]);
-  for (const col of header) {
-    if (!expectedColumns.includes(col)) fail(name, `unknown column "${col}"`);
-  }
-  for (const col of expectedColumns) {
-    if (!header.includes(col)) fail(name, `missing column "${col}"`);
-  }
-  return lines.slice(1).map((line, i) => {
-    const cells = split(line);
-    if (cells.length !== header.length) {
-      fail(name, `row ${i + 2}: expected ${header.length} cells, got ${cells.length}`);
-    }
-    const row = {};
-    header.forEach((h, c) => { row[h] = cells[c]; });
-    row._line = i + 2;
-    row._delim = delim;
-    return row;
-  });
+  return String(v).trim();
 }
 
-function num(row, file, col, { blankAs = null } = {}) {
-  let raw = row[col];
+/** Read one sheet into row objects keyed by header. */
+function readSheet(workbook, name) {
+  const ws = workbook.getWorksheet(name);
+  if (!ws) fail(name, 'sheet not found — run "npm run balance:export" to regenerate the workbook');
+  const expected = SHEETS[name];
+  const header = [];
+  ws.getRow(1).eachCell({ includeEmpty: false }, (cell, col) => {
+    header[col] = String(cellValue(cell.value));
+  });
+  for (const col of header.filter(Boolean)) {
+    if (!expected.includes(col)) fail(name, `unknown column "${col}"`);
+  }
+  for (const col of expected) {
+    if (!header.includes(col)) fail(name, `missing column "${col}"`);
+  }
+  const rows = [];
+  ws.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const out = { _row: rowNumber, _sheet: name };
+    let hasContent = false;
+    row.eachCell({ includeEmpty: false }, (cell, col) => {
+      if (!header[col]) return;
+      const v = cellValue(cell.value);
+      if (v !== '') hasContent = true;
+      out[header[col]] = v;
+    });
+    if (hasContent) rows.push(out);
+  });
+  if (rows.length === 0) fail(name, 'no data rows');
+  return rows;
+}
+
+const where = (row) => `${row._sheet} row ${row._row}`;
+
+function num(row, col, { blankAs = null } = {}) {
+  const raw = row[col];
   if (raw === '' || raw === undefined) {
     if (blankAs !== null) return blankAs;
-    fail(file, `row ${row._line}: "${col}" is blank`);
+    fail(where(row), `"${col}" is blank`);
   }
-  // Spanish-locale sheets write decimal commas when the delimiter is ";".
-  if (row._delim === ';' && /^\d+,\d+$/.test(raw)) raw = raw.replace(',', '.');
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) fail(file, `row ${row._line}: "${col}" is not a non-negative number (got "${raw}")`);
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n) || n < 0) fail(where(row), `"${col}" is not a non-negative number (got "${raw}")`);
   return n;
 }
 
-function list(row, file, col) {
+function list(row, col) {
   const raw = row[col];
   if (raw === '' || raw === undefined) return [];
-  return raw.split('|').map((part) => {
+  if (typeof raw === 'number') {
+    // A one-entry list arrives as a number; a NON-integer one usually means
+    // Excel turned "3,5" into 3.5 because the cell lost its Text format.
+    if (!Number.isInteger(raw)) {
+      fail(where(row), `"${col}" is ${raw} — if you meant a list, format the cell as Text and re-enter it (e.g. 3,5)`);
+    }
+    return [raw];
+  }
+  return String(raw).split(/[,|;]/).map((part) => {
     const n = Number(part.trim());
-    if (!Number.isFinite(n) || n < 0) fail(file, `row ${row._line}: "${col}" has a bad list entry ("${part}")`);
+    if (!Number.isFinite(n) || n < 0) fail(where(row), `"${col}" has a bad list entry ("${part}")`);
     return n;
   });
 }
 
-function wallet(row, file, prefix) {
+function wallet(row, prefix) {
   const out = {};
   for (const c of COST_CURRENCIES) {
-    const v = num(row, file, `${prefix}_${c.toLowerCase()}`, { blankAs: 0 });
+    const v = num(row, `${prefix}_${c.toLowerCase()}`, { blankAs: 0 });
     if (v > 0) out[c] = v;
   }
   return out;
 }
 
-function byId(rows, file, expectedIds, idColumn = 'id') {
+function byId(rows, expectedIds, idColumn = 'id') {
   const seen = new Map();
   for (const row of rows) {
     const id = row[idColumn];
-    if (!expectedIds.includes(id)) fail(file, `row ${row._line}: unknown ${idColumn} "${id}"`);
-    if (seen.has(id)) fail(file, `row ${row._line}: duplicate ${idColumn} "${id}"`);
+    if (!expectedIds.includes(id)) fail(where(row), `unknown ${idColumn} "${id}"`);
+    if (seen.has(id)) fail(where(row), `duplicate ${idColumn} "${id}"`);
     seen.set(id, row);
   }
   for (const id of expectedIds) {
-    if (!seen.has(id)) fail(file, `missing row for ${idColumn} "${id}"`);
+    if (!seen.has(id)) fail(rows[0]._sheet, `missing row for ${idColumn} "${id}"`);
   }
   return seen;
 }
 
 // ------------------------------------------------------------------- import
 
-function importCsvs() {
+async function importXlsx() {
+  const workbook = new ExcelJS.Workbook();
+  try {
+    await workbook.xlsx.readFile(XLSX_PATH);
+  } catch {
+    fail('balance.xlsx', 'cannot read the workbook — run "npm run balance:export" to regenerate it');
+  }
+
   const out = {
-    _note: 'GENERATED from balance/*.csv — edit the CSVs and run: npm run balance',
+    _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, harvest: {}, currencies: {}, units: {}, spells: {},
     worker: {}, townhallCycle: {},
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
@@ -162,99 +207,82 @@ function importCsvs() {
     offlineCapHours: 0,
   };
 
-  const districts = byId(readCsv('districts.csv', DISTRICT_COLUMNS), 'districts.csv', DISTRICT_IDS);
-  for (const [id, r] of districts) {
+  for (const [id, r] of byId(readSheet(workbook, 'Districts'), DISTRICT_IDS)) {
     out.districts[id] = {
-      size: { x: num(r, 'districts.csv', 'size_x'), y: num(r, 'districts.csv', 'size_y') },
-      maxLevel: num(r, 'districts.csv', 'max_level'),
-      populationCapacity: num(r, 'districts.csv', 'population_capacity'),
-      maxWorkersPerLevel: list(r, 'districts.csv', 'max_workers_per_level'),
-      maxCountPerTownhallLevel: list(r, 'districts.csv', 'max_count_per_townhall_level'),
-      influenceRadiusPerLevel: list(r, 'districts.csv', 'influence_radius_per_level'),
-      requiredTownhallLevelPerLevel: list(r, 'districts.csv', 'required_townhall_level_per_level'),
-      buildCost: wallet(r, 'districts.csv', 'build_cost'),
-      buildCostMultiplier: num(r, 'districts.csv', 'build_cost_multiplier'),
-      buildCostExponentialGrowth: num(r, 'districts.csv', 'build_cost_exponential_growth'),
-      buildCostDistanceGrowth: num(r, 'districts.csv', 'build_cost_distance_growth'),
-      buildDurationSeconds: num(r, 'districts.csv', 'build_duration_seconds'),
-      buildDurationDistrictGrowth: num(r, 'districts.csv', 'build_duration_district_growth'),
-      buildDurationDistanceGrowth: num(r, 'districts.csv', 'build_duration_distance_growth'),
-      upgradeCost: wallet(r, 'districts.csv', 'upgrade_cost'),
-      upgradeCostLevelGrowth: num(r, 'districts.csv', 'upgrade_cost_level_growth'),
-      upgradeDurationSeconds: num(r, 'districts.csv', 'upgrade_duration_seconds'),
-      upgradeDurationLevelGrowth: num(r, 'districts.csv', 'upgrade_duration_level_growth'),
+      size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
+      maxLevel: num(r, 'max_level'),
+      populationCapacity: num(r, 'population_capacity'),
+      maxWorkersPerLevel: list(r, 'max_workers_per_level'),
+      maxCountPerTownhallLevel: list(r, 'max_count_per_townhall_level'),
+      influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
+      requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
+      buildCost: wallet(r, 'build_cost'),
+      buildCostMultiplier: num(r, 'build_cost_multiplier'),
+      buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
+      buildCostDistanceGrowth: num(r, 'build_cost_distance_growth'),
+      buildDurationSeconds: num(r, 'build_duration_seconds'),
+      buildDurationDistrictGrowth: num(r, 'build_duration_district_growth'),
+      buildDurationDistanceGrowth: num(r, 'build_duration_distance_growth'),
+      upgradeCost: wallet(r, 'upgrade_cost'),
+      upgradeCostLevelGrowth: num(r, 'upgrade_cost_level_growth'),
+      upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
+      upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
     };
   }
 
-  const harvest = byId(
-    readCsv('harvest.csv', ['source', 'yield_per_tap', 'taps_to_exhaust', 'recovery_seconds']),
-    'harvest.csv', HARVEST_IDS, 'source',
-  );
-  for (const [id, r] of harvest) {
+  for (const [id, r] of byId(readSheet(workbook, 'Harvest'), HARVEST_IDS, 'source')) {
     out.harvest[id] = {
-      yieldPerTap: num(r, 'harvest.csv', 'yield_per_tap'),
-      tapsToExhaust: num(r, 'harvest.csv', 'taps_to_exhaust'),
-      recoverySeconds: num(r, 'harvest.csv', 'recovery_seconds'),
+      yieldPerTap: num(r, 'yield_per_tap'),
+      tapsToExhaust: num(r, 'taps_to_exhaust'),
+      recoverySeconds: num(r, 'recovery_seconds'),
     };
   }
 
-  const currencies = byId(
-    readCsv('currencies.csv', ['id', 'cap', 'start']), 'currencies.csv', CURRENCY_IDS,
-  );
-  for (const [id, r] of currencies) {
+  for (const [id, r] of byId(readSheet(workbook, 'Currencies'), CURRENCY_IDS)) {
     out.currencies[id] = {
-      cap: r.cap === '' ? null : num(r, 'currencies.csv', 'cap'),
-      start: num(r, 'currencies.csv', 'start'),
+      cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
+      start: num(r, 'start'),
     };
   }
 
-  const units = byId(
-    readCsv('units.csv', ['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood',
-      'recruit_cost_food', 'train_duration_seconds']),
-    'units.csv', UNIT_IDS,
-  );
-  for (const [id, r] of units) {
+  for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
     out.units[id] = {
-      power: num(r, 'units.csv', 'power'),
-      recruitCost: wallet(r, 'units.csv', 'recruit_cost'),
-      trainDurationSeconds: num(r, 'units.csv', 'train_duration_seconds'),
+      power: num(r, 'power'),
+      recruitCost: wallet(r, 'recruit_cost'),
+      trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
   }
 
-  const spellRows = readCsv('spells.csv',
-    ['spell', 'level', 'mana_cost', 'duration_seconds', 'effect_magnitude', 'upgrade_cost']);
   for (const id of SPELL_IDS) out.spells[id] = [];
-  for (const r of spellRows) {
-    if (!SPELL_IDS.includes(r.spell)) fail('spells.csv', `row ${r._line}: unknown spell "${r.spell}"`);
-    const level = num(r, 'spells.csv', 'level');
+  for (const r of readSheet(workbook, 'Spells')) {
+    if (!SPELL_IDS.includes(r.spell)) fail(where(r), `unknown spell "${r.spell}"`);
+    const level = num(r, 'level');
     if (level !== out.spells[r.spell].length + 1) {
-      fail('spells.csv', `row ${r._line}: ${r.spell} levels must be contiguous from 1 (got ${level})`);
+      fail(where(r), `${r.spell} levels must be contiguous from 1 (got ${level})`);
     }
     out.spells[r.spell].push({
-      manaCost: num(r, 'spells.csv', 'mana_cost'),
-      durationSeconds: num(r, 'spells.csv', 'duration_seconds'),
-      effectMagnitude: num(r, 'spells.csv', 'effect_magnitude'),
-      upgradeCost: num(r, 'spells.csv', 'upgrade_cost'),
+      manaCost: num(r, 'mana_cost'),
+      durationSeconds: num(r, 'duration_seconds'),
+      effectMagnitude: num(r, 'effect_magnitude'),
+      upgradeCost: num(r, 'upgrade_cost'),
     });
   }
   for (const id of SPELL_IDS) {
-    if (out.spells[id].length === 0) fail('spells.csv', `no levels for spell "${id}"`);
+    if (out.spells[id].length === 0) fail('Spells', `no levels for spell "${id}"`);
   }
 
-  const rings = readCsv('fog_rings.csv', ['distance', 'cost']);
   let lastDistance = 0;
-  for (const r of rings) {
-    const distance = num(r, 'fog_rings.csv', 'distance');
-    if (distance <= lastDistance) fail('fog_rings.csv', `row ${r._line}: distances must be ascending`);
+  for (const r of readSheet(workbook, 'FogRings')) {
+    const distance = num(r, 'distance');
+    if (distance <= lastDistance) fail(where(r), 'distances must be ascending');
     lastDistance = distance;
-    out.fog.rings.push({ distance, cost: num(r, 'fog_rings.csv', 'cost') });
+    out.fog.rings.push({ distance, cost: num(r, 'cost') });
   }
 
-  const settings = readCsv('settings.csv', ['key', 'value']);
-  const byKey = byId(settings, 'settings.csv', SETTINGS.map(([k]) => k), 'key');
+  const settings = byId(readSheet(workbook, 'Settings'), SETTINGS.map(([k]) => k), 'key');
   for (const [key, path, kind] of SETTINGS) {
-    const row = byKey.get(key);
-    const value = kind === 'list' ? list(row, 'settings.csv', 'value') : num(row, 'settings.csv', 'value');
+    const row = settings.get(key);
+    const value = kind === 'list' ? list(row, 'value') : num(row, 'value');
     const parts = path.split('.');
     let target = out;
     while (parts.length > 1) target = target[parts.shift()];
@@ -267,18 +295,34 @@ function importCsvs() {
 
 // ------------------------------------------------------------------- export
 
-const csvLine = (cells) => cells.join(',') + '\n';
-const listCell = (arr) => arr.join('|');
-const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] ?? '') === 0 ? '' : (w[c] ?? ''));
+const listCell = (arr) => arr.join(',');
+const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] && w[c] !== 0 ? w[c] : ''));
 
-function exportCsvs() {
+/** isTextCell(colName, rowValues) marks list cells: they get Excel's Text
+ *  format so a two-entry list like "3,5" can't collapse into the number 3.5. */
+function addSheet(workbook, name, rows, isTextCell = () => false) {
+  const columns = SHEETS[name];
+  const ws = workbook.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
+  ws.addRow(columns);
+  ws.getRow(1).font = { bold: true };
+  columns.forEach((col, i) => {
+    ws.getColumn(i + 1).width = Math.max(col.length + 2, 10);
+  });
+  for (const row of rows) {
+    const added = ws.addRow(row.map((v, i) => (isTextCell(columns[i], row) ? String(v) : v)));
+    added.eachCell({ includeEmpty: true }, (cell, col) => {
+      if (isTextCell(columns[col - 1], row)) cell.numFmt = '@';
+    });
+  }
+}
+
+async function exportXlsx() {
   const b = JSON.parse(readFileSync(JSON_PATH, 'utf8'));
-  mkdirSync(CSV_DIR, { recursive: true });
+  const workbook = new ExcelJS.Workbook();
 
-  let csv = csvLine(DISTRICT_COLUMNS);
-  for (const id of DISTRICT_IDS) {
+  addSheet(workbook, 'Districts', DISTRICT_IDS.map((id) => {
     const d = b.districts[id];
-    csv += csvLine([
+    return [
       id, d.size.x, d.size.y, d.maxLevel, d.populationCapacity,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
@@ -287,58 +331,44 @@ function exportCsvs() {
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
       ...costCells(d.upgradeCost),
       d.upgradeCostLevelGrowth, d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
-    ]);
-  }
-  writeFileSync(join(CSV_DIR, 'districts.csv'), csv);
+    ];
+  }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
 
-  csv = csvLine(['source', 'yield_per_tap', 'taps_to_exhaust', 'recovery_seconds']);
-  for (const id of HARVEST_IDS) {
-    const h = b.harvest[id];
-    csv += csvLine([id, h.yieldPerTap, h.tapsToExhaust, h.recoverySeconds]);
-  }
-  writeFileSync(join(CSV_DIR, 'harvest.csv'), csv);
-
-  csv = csvLine(['id', 'cap', 'start']);
-  for (const id of CURRENCY_IDS) {
-    const c = b.currencies[id];
-    csv += csvLine([id, c.cap ?? '', c.start]);
-  }
-  writeFileSync(join(CSV_DIR, 'currencies.csv'), csv);
-
-  csv = csvLine(['id', 'power', 'recruit_cost_silver', 'recruit_cost_wood',
-    'recruit_cost_food', 'train_duration_seconds']);
-  for (const id of UNIT_IDS) {
+  addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
-    csv += csvLine([id, u.power, ...costCells(u.recruitCost), u.trainDurationSeconds]);
-  }
-  writeFileSync(join(CSV_DIR, 'units.csv'), csv);
+    return [id, u.power, ...costCells(u.recruitCost), u.trainDurationSeconds];
+  }));
 
-  csv = csvLine(['spell', 'level', 'mana_cost', 'duration_seconds', 'effect_magnitude', 'upgrade_cost']);
-  for (const id of SPELL_IDS) {
-    b.spells[id].forEach((l, i) => {
-      csv += csvLine([id, i + 1, l.manaCost, l.durationSeconds, l.effectMagnitude, l.upgradeCost]);
-    });
-  }
-  writeFileSync(join(CSV_DIR, 'spells.csv'), csv);
+  addSheet(workbook, 'Spells', SPELL_IDS.flatMap((id) =>
+    b.spells[id].map((l, i) => [id, i + 1, l.manaCost, l.durationSeconds, l.effectMagnitude, l.upgradeCost]),
+  ));
 
-  csv = csvLine(['distance', 'cost']);
-  for (const r of b.fog.rings) csv += csvLine([r.distance, r.cost]);
-  writeFileSync(join(CSV_DIR, 'fog_rings.csv'), csv);
+  addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
+    const h = b.harvest[id];
+    return [id, h.yieldPerTap, h.tapsToExhaust, h.recoverySeconds];
+  }));
 
-  csv = csvLine(['key', 'value']);
-  for (const [key, path, kind] of SETTINGS) {
+  addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
+    const c = b.currencies[id];
+    return [id, c.cap ?? '', c.start];
+  }));
+
+  addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
+
+  addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
     for (const part of path.split('.')) value = value[part];
-    csv += csvLine([key, kind === 'list' ? listCell(value) : value]);
-  }
-  writeFileSync(join(CSV_DIR, 'settings.csv'), csv);
+    return [key, kind === 'list' ? listCell(value) : value];
+  }), (col, row) => col === 'value' &&
+    SETTINGS.some(([key, , kind]) => key === row[0] && kind === 'list'));
 
-  console.log(`balance: wrote ${CSV_DIR}/*.csv`);
+  await workbook.xlsx.writeFile(XLSX_PATH);
+  console.log(`balance: wrote ${XLSX_PATH}`);
 }
 
 // --------------------------------------------------------------------- main
 
 const mode = process.argv[2] ?? 'import';
-if (mode === 'import') importCsvs();
-else if (mode === 'export') exportCsvs();
+if (mode === 'import') await importXlsx();
+else if (mode === 'export') await exportXlsx();
 else fail('(args)', `unknown mode "${mode}" — use import or export`);

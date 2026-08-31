@@ -1,5 +1,5 @@
 {
-  "_note": "GENERATED from balance/*.csv — edit the CSVs and run: npm run balance",
+  "_note": "GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance",
   "districts": {
     "Townhall": {
       "size": {
