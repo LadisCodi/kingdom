@@ -3,8 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { MARKET } from '../src/sim/data/definitions';
 import {
-  addToSale, nextSaleInSeconds, queuedGoldValue, queuedUnits, removeFromSale,
-  rushSale, rushSaleCost,
+  addToSale, nextSaleInSeconds, queuedGoldValue, queuedUnits, rushSale, rushSaleCost,
 } from '../src/sim/market';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
@@ -13,7 +12,7 @@ import { freshGame, fund, T0, map, tickAt } from './helpers';
 const INTERVAL = MARKET.sellIntervalSeconds * 1000; // 5s
 
 describe('the sell queue', () => {
-  it('escrows added units, returns withdrawn ones, rejects non-sellables', () => {
+  it('escrows added units (one-way — no withdrawals), rejects non-sellables', () => {
     const state = freshGame();
     fund(state, { Wood: 10, Gold: 5 });
     expect(addToSale(state, 'Gold', 5, T0)).toBe('NotSellable');
@@ -21,9 +20,6 @@ describe('the sell queue', () => {
     expect(getWallet(state.city.wallet, 'Wood')).toBe(6);
     expect(queuedUnits(state)).toBe(4);
     expect(queuedGoldValue(state)).toBe(4 * 2); // Wood sells for 2
-    expect(removeFromSale(state, 'Wood', 2)).toBe('Removed');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(8);
-    expect(queuedUnits(state)).toBe(2);
   });
 
   it('is capped at MARKET.capacity units (adds clamp to the free space)', () => {

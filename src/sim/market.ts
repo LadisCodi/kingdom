@@ -20,7 +20,8 @@ export const queuedGoldValue = (state: GameState): number =>
 
 export type AddToSaleResult = 'Added' | 'NotSellable' | 'NotEnoughResources' | 'MarketFull';
 
-/** Move units wallet → sell queue. Anchors the sale clock when the queue
+/** Move units wallet → sell queue (one-way: queued units cannot be taken
+ *  back — only sold, or gem-rushed). Anchors the sale clock when the queue
  *  starts from empty (no banked time from idle-empty periods). */
 export function addToSale(
   state: GameState,
@@ -38,21 +39,6 @@ export function addToSale(
   addToWallet(state.city.wallet, currency, -moved);
   addToWallet(state.market.queue, currency, moved);
   return 'Added';
-}
-
-export type RemoveFromSaleResult = 'Removed' | 'NothingQueued';
-
-/** Return unsold units from the queue to the wallet. */
-export function removeFromSale(
-  state: GameState,
-  currency: CurrencyId,
-  amount: number,
-): RemoveFromSaleResult {
-  const n = Math.min(amount, getWallet(state.market.queue, currency));
-  if (n <= 0) return 'NothingQueued';
-  addToWallet(state.market.queue, currency, -n);
-  addToWallet(state.city.wallet, currency, n);
-  return 'Removed';
 }
 
 /** Drip-sell up to `toTime`: one unit per interval, in SELLABLE order.

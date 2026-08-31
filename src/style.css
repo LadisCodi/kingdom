@@ -103,6 +103,10 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
 .menu-row .body .desc { font-size: 12px; opacity: 0.7; }
 .menu-row .meta { font-size: 12px; text-align: right; white-space: nowrap; }
 .menu-row.disabled { opacity: 0.5; cursor: default; }
+/* Market amount selector: what each row's Sell button queues. */
+.amount-row { display: flex; align-items: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+.amount-row button { padding: 6px 10px; font-size: 13px; }
+.amount-row button.selected { background: #3d6f3d; border-color: #58a058; }
 /* Market sale queue: one small card per queued resource. */
 .queue-cards { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
 .queue-card {
