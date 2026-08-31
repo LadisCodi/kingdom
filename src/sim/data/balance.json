@@ -316,6 +316,15 @@
       "durationSeconds": 30,
       "requires": []
     },
+    "Commerce": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Forestry"
+      ]
+    },
     "Archery": {
       "cost": {
         "Gold": 150,
@@ -343,35 +352,35 @@
       "costGrowth": 2.2,
       "maxLevel": 5,
       "effectPerLevel": 1,
-      "requiredTech": null
+      "requiredTech": "Forestry"
     },
     "QuickHands": {
       "costBase": 75,
       "costGrowth": 2,
       "maxLevel": 5,
       "effectPerLevel": 0.05,
-      "requiredTech": null
+      "requiredTech": "Forestry"
     },
     "WorkerLoad": {
       "costBase": 200,
       "costGrowth": 2.5,
       "maxLevel": 3,
       "effectPerLevel": 1,
-      "requiredTech": null
+      "requiredTech": "Forestry"
     },
     "MarketStall": {
       "costBase": 100,
       "costGrowth": 2,
       "maxLevel": 4,
       "effectPerLevel": 25,
-      "requiredTech": null
+      "requiredTech": "Commerce"
     },
     "TradeRoutes": {
       "costBase": 150,
       "costGrowth": 2,
       "maxLevel": 5,
       "effectPerLevel": 0.5,
-      "requiredTech": null
+      "requiredTech": "Commerce"
     }
   },
   "research": {

@@ -1,5 +1,5 @@
-// Upgrades: instant gold purchases, the cost curve, gating, and the
-// effective-value helpers actually changing sim behavior.
+// Upgrades: instant gold purchases, the cost curve, tech-parent gating, and
+// the effective-value helpers actually changing sim behavior.
 import { describe, expect, it } from 'vitest';
 import { MARKET, TAP, UPGRADES } from '../src/sim/data/definitions';
 import { collectTap } from '../src/sim/harvest';
@@ -9,7 +9,7 @@ import {
   buyUpgrade, effectiveCollectCooldownMs, effectiveMarketCapacity,
   effectiveSellIntervalMs, upgradeCost, upgradeLevel,
 } from '../src/sim/upgrades';
-import { freshGame, fund, map, T0 } from './helpers';
+import { completeTech, freshGame, fund, map, T0 } from './helpers';
 
 const FOREST = { x: 2, y: 2 }; // seed-revealed Trees cell
 
@@ -17,6 +17,7 @@ describe('buying upgrades', () => {
   it('is instant, gold-only, with an escalating cost curve', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
+    completeTech(state, 'Forestry');
     expect(upgradeCost('TapPower', 0)).toBe(50);
     expect(upgradeCost('TapPower', 1)).toBe(110); // 50 × 2.2
     expect(buyUpgrade(state, 'TapPower')).toBe('Purchased');
@@ -26,8 +27,21 @@ describe('buying upgrades', () => {
     expect(getWallet(state.city.wallet, 'Gold')).toBe(840);
   });
 
+  it('hangs off its parent technology in the tree', () => {
+    const state = freshGame();
+    fund(state, { Gold: 1000 });
+    expect(buyUpgrade(state, 'TapPower')).toBe('TechRequired'); // Forestry
+    expect(buyUpgrade(state, 'MarketStall')).toBe('TechRequired'); // Commerce
+    completeTech(state, 'Forestry');
+    expect(buyUpgrade(state, 'TapPower')).toBe('Purchased');
+    expect(buyUpgrade(state, 'MarketStall')).toBe('TechRequired'); // still
+    completeTech(state, 'Commerce');
+    expect(buyUpgrade(state, 'MarketStall')).toBe('Purchased');
+  });
+
   it('rejects when poor and stops at max level', () => {
     const state = freshGame(); // 0 Gold
+    completeTech(state, 'Forestry');
     expect(buyUpgrade(state, 'TapPower')).toBe('NotEnoughResources');
     fund(state, { Gold: 1_000_000 });
     for (let i = 0; i < UPGRADES.TapPower.maxLevel; i++) {
@@ -41,6 +55,7 @@ describe('effects reach the sim', () => {
   it('TapPower increases what a collect tap yields', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
+    completeTech(state, 'Forestry');
     buyUpgrade(state, 'TapPower'); // +1
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(2); // 1 base + 1
@@ -49,6 +64,7 @@ describe('effects reach the sim', () => {
   it('QuickHands shortens the collect cooldown', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
+    completeTech(state, 'Forestry');
     const baseMs = TAP.collectCooldownSeconds * 1000; // 500
     expect(effectiveCollectCooldownMs(state)).toBe(baseMs);
     buyUpgrade(state, 'QuickHands'); // −0.05s
@@ -60,6 +76,7 @@ describe('effects reach the sim', () => {
   it('MarketStall raises the queue capacity', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
+    completeTech(state, 'Commerce');
     buyUpgrade(state, 'MarketStall'); // +25
     expect(effectiveMarketCapacity(state)).toBe(MARKET.capacity + 25);
     addToSale(state, 'Wood', 500, T0);
@@ -69,6 +86,7 @@ describe('effects reach the sim', () => {
   it('TradeRoutes speeds up the drip', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 10 });
+    completeTech(state, 'Commerce');
     buyUpgrade(state, 'TradeRoutes'); // 5s → 4.5s
     expect(effectiveSellIntervalMs(state)).toBe(4500);
     addToSale(state, 'Wood', 10, T0);

@@ -116,6 +116,7 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
 .tech-edges { position: absolute; inset: 0; }
 .tech-edge { fill: none; stroke: #3a4757; stroke-width: 3; stroke-dasharray: 4 5; }
 .tech-edge.open { stroke: #58a058; }
+.tech-edge.dim { stroke: #2a3442; }
 .tech-node {
   position: absolute; width: 56px; height: 56px; border-radius: 12px;
   font-size: 26px; padding: 0; display: flex; align-items: center; justify-content: center;
@@ -126,6 +127,19 @@ button.danger { background: #5a2c2c; border-color: #8a4444; }
 .tech-node.active { border-color: #8ab4d8; }
 .tech-node.locked { opacity: 0.45; }
 .tech-node.selected { box-shadow: 0 0 0 2px #ffe27a; }
+/* Tree fog: an undiscovered tech one step ahead — anonymous, inert. */
+.tech-node.silhouette {
+  opacity: 0.4; cursor: default; color: #8b98a8; font-size: 22px;
+  border-style: dashed;
+}
+/* Upgrades: instant, leveled circles fanned below their parent tech. */
+.tech-node.upgrade { width: 36px; height: 36px; border-radius: 50%; font-size: 17px; }
+.tech-node.upgrade .lvl {
+  position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px;
+  border-radius: 50%; background: #d9a536; color: #12181f;
+  font-size: 11px; font-weight: 700; line-height: 16px; text-align: center;
+}
+.tech-node.upgrade.done .lvl { background: #58a058; }
 .tech-node .node-bar {
   position: absolute; left: 6px; right: 6px; bottom: 4px; height: 4px;
   background: rgba(0, 0, 0, 0.55); border-radius: 2px; overflow: hidden;

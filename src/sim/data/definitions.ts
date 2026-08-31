@@ -289,6 +289,13 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🪓',
     node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
+  Commerce: tech({
+    id: 'Commerce',
+    name: 'Commerce',
+    description: 'Organized trade — unlocks Market improvements.',
+    glyph: '🤝',
+    node: { x: 0, y: 2 },
+  }, balance.technologies.Commerce),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
@@ -306,7 +313,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
 };
 
 export const TECH_ORDER: TechId[] =
-  ['Agriculture', 'Irrigation', 'Forestry', 'Archery', 'CavalryTraining'];
+  ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Archery', 'CavalryTraining'];
 
 // Slots & gem pricing for extra slots.
 export const RESEARCH_SETTINGS = balance.research;

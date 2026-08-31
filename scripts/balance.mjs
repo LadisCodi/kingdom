@@ -46,7 +46,7 @@ const MAP_COLORS = { // conditional-formatting fills, keyed by code
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
 const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill'];
-const TECH_IDS = ['Agriculture', 'Irrigation', 'Forestry', 'Archery', 'CavalryTraining'];
+const TECH_IDS = ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Archery', 'CavalryTraining'];
 const UPGRADE_IDS = ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
