@@ -32,12 +32,14 @@ import {
   type TechId, type UnitId, type UpgradeId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
+import { playPop } from './audio/sfx';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
+import { TapFx } from './render/tapFx';
 
 export type Mode =
   | { kind: 'normal' }
@@ -50,6 +52,7 @@ export class Game {
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
+  readonly tapFx = new TapFx();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
@@ -160,6 +163,7 @@ export class Game {
             DISTRICTS[district.definitionId].populationCapacity > 0) {
           const { result, gold } = houseTap(this.state, district, this.now());
           if (result === 'Boosted') {
+            this.tapFeedback(district.location);
             this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
           }
           this.inspectedDistrictId = district.uniqueId;
@@ -169,6 +173,7 @@ export class Game {
         // Townhall: tapping adds cycle progress (and opens/keeps its card).
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
           const tap = townhallTap(this.state, this.now());
+          if (tap !== 'NoTraining') this.tapFeedback(district.location);
           if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
           else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
           this.inspectedDistrictId = district.uniqueId;
@@ -195,6 +200,12 @@ export class Game {
     });
   }
 
+  /** Punch + flash + pop on whatever was successfully tapped. */
+  private tapFeedback(anchor: Coord): void {
+    this.tapFx.add(coordKey(anchor));
+    playPop();
+  }
+
   /** One cooldown-gated collect on a resource cell, with feedback.
    *  'OnCooldown' is silent — hold-to-collect retries until the gate opens. */
   private collectAt(cell: Coord): CollectTapResult {
@@ -202,6 +213,7 @@ export class Game {
     const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
     const result = collectTap(this.state, this.map, cell, this.now());
     if (result === 'Harvested' && source !== null) {
+      this.tapFeedback(districtAt(this.state, cell)?.location ?? cell);
       this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
     } else if (result === 'Exhausted') {
       this.floaters.add(cell, '💤');
@@ -220,6 +232,7 @@ export class Game {
         DISTRICTS[district.definitionId].populationCapacity > 0) {
       const { result, gold } = houseTap(this.state, district, this.now());
       if (result === 'Boosted') {
+        this.tapFeedback(district.location);
         this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
         this.notify();
       }

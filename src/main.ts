@@ -107,7 +107,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------ render loop
   const frame = () => {
-    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.now());
+    drawMap(canvas, camera, game.state, map, game.markers(), game.floaters, game.villagers, game.tapFx, game.now());
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);

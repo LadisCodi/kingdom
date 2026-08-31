@@ -15,6 +15,7 @@ import {
 } from '../sim/state';
 import type { Camera } from './camera';
 import type { Floaters } from './floaters';
+import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from './palette';
 import { drawSprite } from './sprites';
@@ -43,6 +44,7 @@ export function drawMap(
   markers: MarkerLayer,
   floaters: Floaters,
   villagers: Villagers,
+  tapFx: TapFx,
   now: number,
 ): void {
   const dpr = camera.dpr;
@@ -84,6 +86,26 @@ export function drawMap(
       }
     }
   };
+  // Tap punch: draw a sprite squashed/stretched about its bottom center
+  // (things smoosh into the ground), brightened while the flash lasts.
+  const punched = (anchorKey: string, x: number, y: number, w: number, h: number,
+    draw: () => void) => {
+    const p = tapFx.sample(anchorKey);
+    if (!p) {
+      draw();
+      return;
+    }
+    ctx.save();
+    const cx = x + w / 2;
+    const cy = y + h;
+    ctx.translate(cx, cy);
+    ctx.scale(p.sx, p.sy);
+    ctx.translate(-cx, -cy);
+    if (p.flash > 0.02) ctx.filter = `brightness(${1 + 2.5 * p.flash})`;
+    draw();
+    ctx.restore();
+  };
+
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
   // separate pass — a multi-cell sprite drawn here would be overpainted by
   // the terrain fill of the following footprint cells.
@@ -114,9 +136,11 @@ export function drawMap(
       if (feature) {
         const def = FEATURES[feature];
         const exhausted = recoversAt(state, cell, now) !== null;
-        if (!drawSprite(ctx, exhausted ? `${def.sprite}_exhausted` : def.sprite, x, y, size, size)) {
-          drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
-        }
+        punched(key, x, y, size, size, () => {
+          if (!drawSprite(ctx, exhausted ? `${def.sprite}_exhausted` : def.sprite, x, y, size, size)) {
+            drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
+          }
+        });
       }
 
       if (fog === 'Revealed') drawResourceState(cell, x, y);
@@ -147,11 +171,14 @@ export function drawMap(
     // otherwise the normal sprite (or glyph) plus the withered overlay.
     const exhaustedPlot = district.definitionId === 'FarmLands' &&
       exhausted && district.state !== 'UnderConstruction';
-    const drewExhaustedPlot =
-      exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh);
-    if (!drewExhaustedPlot && !drawSprite(ctx, def.sprite, x, y, fw, fh)) {
-      drawGlyph(ctx, def.glyph, x, y, fw, size * 0.52 * Math.min(def.size.x, def.size.y), fh);
-    }
+    let drewExhaustedPlot = false;
+    punched(coordKey(district.location), x, y, fw, fh, () => {
+      drewExhaustedPlot =
+        exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh);
+      if (!drewExhaustedPlot && !drawSprite(ctx, def.sprite, x, y, fw, fh)) {
+        drawGlyph(ctx, def.glyph, x, y, fw, size * 0.52 * Math.min(def.size.x, def.size.y), fh);
+      }
+    });
     if (district.state === 'UnderConstruction') {
       ctx.fillStyle = PALETTE.constructionHatch;
       ctx.fillRect(x, y, fw, fh);

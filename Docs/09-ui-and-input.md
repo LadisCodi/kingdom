@@ -31,6 +31,11 @@ the district card also toggles the Free Workers widget.
 - Fog progress bar over partially-paid Discovered cells.
 - Floating feedback: "+N currency" on production/collection, reveal cost on fog taps,
   trees destroyed/grown effects.
+- Tap punch (web build, `src/render/tapFx.ts`): every successful tap on an
+  element (feature or building) squash-&-stretches its sprite — different
+  damped-cosine curves per axis, scaled about the bottom center — with a
+  brightness flash, plus a pitch-jittered pop sound (`src/audio/sfx.ts`,
+  Web Audio, lazily initialized on the first tap gesture).
 - Tile markers: selected tile, worked tiles, valid expand/build targets (with yield
   labels).
 
