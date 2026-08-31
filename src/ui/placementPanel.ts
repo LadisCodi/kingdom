@@ -1,5 +1,5 @@
 // Bottom panel while placing a district: exact cost & duration for the
-// selected cell, ghost preview on the map, Build / Cancel.
+// selected cell, ghost preview on the map, Build (the navbar Close cancels).
 
 import { DISTRICTS } from '../sim/data/definitions';
 import type { Game } from '../game';
@@ -35,7 +35,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   const actions = el('div', { class: 'actions' });
   const buildBtn = button('Build', () => game.confirmBuild(), 'cta');
   buildBtn.disabled = info.cell === null || !info.affordable;
-  actions.append(buildBtn, button('Cancel', () => game.cancelPlacement()));
+  actions.append(buildBtn);
   panel.append(actions);
   return panel;
 }

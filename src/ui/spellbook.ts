@@ -38,6 +38,5 @@ export function renderCastBanner(game: Game): HTMLElement {
   const def = SPELLS[game.mode.spellId];
   return el('div', { class: 'cast-banner' },
     `${def.glyph} Tap a highlighted cell to cast ${def.name}`,
-    button('Done', () => game.cancelTargeting()),
   );
 }

@@ -225,22 +225,12 @@ export class Game {
     this.notify();
   }
 
-  cancelPlacement(): void {
-    this.mode = { kind: 'normal' };
-    this.notify();
-  }
-
   // ------------------------------------------------------------ targeting mode
 
   startTargeting(spellId: SpellId): void {
     this.mode = { kind: 'targeting', spellId };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
-    this.notify();
-  }
-
-  cancelTargeting(): void {
-    this.mode = { kind: 'normal' };
     this.notify();
   }
 
@@ -295,6 +285,21 @@ export class Game {
   setOverlay(name: string | null): void {
     this.openOverlay = name;
     if (name !== null) this.inspectedDistrictId = null;
+    this.notify();
+  }
+
+  /** True when the navbar should show a single Close button instead of the tabs. */
+  dismissible(): boolean {
+    return (
+      this.mode.kind !== 'normal' || this.openOverlay !== null || this.inspectedDistrictId !== null
+    );
+  }
+
+  /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
+  dismiss(): void {
+    this.mode = { kind: 'normal' };
+    this.openOverlay = null;
+    this.inspectedDistrictId = null;
     this.notify();
   }
 
