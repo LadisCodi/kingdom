@@ -12,7 +12,8 @@ import { effectiveAmount, pay } from '../src/sim/wallet';
 import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
-const QUARRY_CELL = { x: 3, y: -1 };
+const QUARRY_CELL = { x: 4, y: 0 }; // grassland beside them
+const COVE_WATER = { x: 2, y: -1 }; // open water in the starting cove
 const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 // Docks anchor: 2×1 pier — (-6,3) is Water, (-5,3) is Grassland (mirrored case).
 const PIER = { x: -6, y: 3 };
@@ -24,9 +25,10 @@ describe('stone line (Masonry → Quarry)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
-    reveal(state, [NEAR_ROCKS, QUARRY_CELL]);
+    reveal(state, [NEAR_ROCKS, QUARRY_CELL, COVE_WATER]);
     expect(placementBlock(state, map, 'Quarry', QUARRY_CELL)).toBe('NeedsResearch');
     completeTech(state, 'Masonry');
+    expect(placementBlock(state, map, 'Quarry', COVE_WATER)).toBe('NeedsLand'); // no sea quarries
     expect(tapCell(state, map, NEAR_ROCKS, T0)).toBe('Harvested'); // rocks tap like trees
     expect(getWallet(state.city.wallet, 'Stone')).toBe(1);
     expect(enqueueBuild(state, map, 'Quarry', QUARRY_CELL)).toBe('Started');
@@ -40,6 +42,15 @@ describe('stone line (Masonry → Quarry)', () => {
 });
 
 describe('fish line (Fishing → coastal Docks)', () => {
+  it('the food fork: Fishing branches off Forestry, parallel to Agriculture', () => {
+    const state = freshGame();
+    fund(state, { Gold: 1000, Wood: 100, Food: 100 });
+    expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
+    expect(startTech(state, 'Agriculture', T0)).toBe('MissingRequirement');
+    completeTech(state, 'Forestry');
+    expect(startTech(state, 'Fishing', T0)).toBe('Started'); // no Agriculture needed
+  });
+
   it('the Docks must touch Water; its boats net Fish from shoals', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
@@ -63,7 +74,7 @@ describe('fish line (Fishing → coastal Docks)', () => {
     reveal(state, [SHOAL]);
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, SHOAL, T0)).toBe('Harvested');
     expect(state.features[coordKey(SHOAL)]).toBeUndefined(); // consumed
-    tickAt(state, T0 + 150_000); // respawn_seconds
+    tickAt(state, T0 + 90_000); // respawn_seconds — shorter than berries (120s)
     const shoals = Object.entries(state.features).filter(([, f]) => f === 'FishShoal');
     const back = shoals.find(([k]) => {
       const [x, y] = k.split(',').map(Number);

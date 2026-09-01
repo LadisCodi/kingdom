@@ -24,7 +24,8 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsShoreline';
+  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsShoreline'
+  | 'NeedsLand';
 
 /** All placement conditions ANDed over the full footprint (cell = anchor,
  *  top-left); null = buildable here. */
@@ -42,6 +43,8 @@ export function placementBlock(
     if (state.features[coordKey(c)]) return 'HasFeature';
     if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
     if (districtAt(state, c)) return 'Occupied';
+    // Only the Docks (which checks its own land+water mix) may touch Water.
+    if (definitionId !== 'Docks' && map.terrain.get(coordKey(c)) === 'Water') return 'NeedsLand';
   }
   if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
     return 'CountLimit';

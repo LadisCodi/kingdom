@@ -13,7 +13,7 @@ describe('map data', () => {
     expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(100);
     expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(30);
     expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(25);
-    expect(map.initialFeatures.size).toBe(35); // + Rocks, FishShoals, IronVeins
+    expect(map.initialFeatures.size).toBe(36); // + Rocks, FishShoals (one in the cove), IronVeins
   });
   it('8-neighbor adjacency: distance 0 across the 2x2 footprint, 1 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);

@@ -63,13 +63,14 @@ Everything numeric lives in the balance workbook:
 Initial tree (all roads lead from Forestry):
 
 - **Forestry** (root; Sawmill) → upgrades TapPower, QuickHands, WorkerLoad
-- **Agriculture** (requires Forestry; FarmLands) → **Irrigation** (Farm)
+- THE FOOD FORK — after Forestry the player picks a route (or both):
+  - **Agriculture** (FarmLands) → **Irrigation** (Farm)
+  - **Fishing** (the Docks + fishing boats) → upgrade Big Nets
 - **Commerce** (requires Forestry; Market building) → upgrades MarketStall
   (+5% sale prices), TradeRoutes (+10% tax income)
 - **Militia** (requires Forestry; Swordsman)
 - **Masonry** (requires Forestry; Quarry) → upgrade Stonecutting; →
   **Mining** (Mine, costs Stone) → upgrade Iron Picks
-- **Fishing** (requires Agriculture; the Docks + fishing boats) → upgrade Big Nets
 - **Archery** (requires Forestry; Archer) → **CavalryTraining** (Cavalry)
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —

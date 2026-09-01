@@ -361,7 +361,7 @@
       "yieldPerWorker": 1,
       "tapsToExhaust": 5,
       "recoverySeconds": 0,
-      "respawnSeconds": 150
+      "respawnSeconds": 90
     },
     "Iron": {
       "yieldPerTap": 1,
@@ -564,7 +564,7 @@
       },
       "durationSeconds": 45,
       "requires": [
-        "Agriculture"
+        "Forestry"
       ]
     },
     "Mining": {

@@ -391,7 +391,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     name: 'Fishing',
     description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
     glyph: '🎣',
-    node: { x: -1, y: -1 },
+    node: { x: 0, y: -1 },
   }, balance.technologies.Fishing),
   Mining: tech({
     id: 'Mining',

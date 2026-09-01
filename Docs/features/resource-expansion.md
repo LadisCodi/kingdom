@@ -8,10 +8,10 @@ live in the balance workbook.
 
 | | Stone 🪨 | Fish 🐟 | Iron ⚙️ |
 |---|---|---|---|
-| Feature | Rocks (renewable, 120s recovery) | Fish shoal on WATER (finite, respawns 150s **on water**) | Iron vein (renewable, slow 300s) |
+| Feature | Rocks (renewable, 120s recovery) | Fish shoal on WATER (finite like berries, respawns in 90s — faster than the 120s bushes — **on water**) | Iron vein (renewable, slow 300s) |
 | Where | Mainland east edge + the Plains isle | Coastal ring + the SW bay | The frozen isle north (distance 8–10) |
 | Building | Quarry (Masonry) | Docks (Fishing) — a 2×1 pier: one cell on land, one on Water (horizontal only, auto-mirrored); workers render as FISHING BOATS ⛵ | Mine (Mining) — costs Stone |
-| Tech chain | Forestry → **Masonry** | Agriculture → **Fishing** | Masonry → **Mining** |
+| Tech chain | Forestry → **Masonry** | Forestry → **Fishing** (the food fork: farm OR fish after the Sawmill) | Masonry → **Mining** |
 | Upgrade | Stonecutting +1/delivery | Big Nets +1/delivery | Iron Picks +1/delivery |
 | Role | 2nd construction material (Townhall L2 +25 🪨, Mine) | Food-valued: 1 Fish = **1 Food** (tooltip breakdown) | The army's metal |
 

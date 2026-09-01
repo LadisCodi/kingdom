@@ -121,9 +121,11 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThanOrEqual(goldBeforeTaxes + 7);
 
     // --- The Market building (Commerce tech): instant selling.
-    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 0 })).toBe('InvalidCell'); // locked
+    // ((3,0) is cove water — the NeedsLand rule keeps land buildings dry.)
+    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 1 })).toBe('InvalidCell'); // locked
     completeTech(state, 'Commerce');
-    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 0 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 0 })).toBe('InvalidCell'); // water
+    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);
