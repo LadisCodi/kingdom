@@ -29,7 +29,7 @@ import {
 import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { button, el, formatDuration } from './format';
-import { action, btn, costChips, iconEl, knob, progress } from './kit';
+import { action, btn, costChips, iconEl, knob, pips, progress, stat } from './kit';
 
 /** Level as stars rather than "lvl 2/3" — a count you read, not parse. */
 function levelStars(level: number, max: number): HTMLElement {
@@ -60,27 +60,42 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   if (district.state === 'UnderConstruction') {
     body.append(el('div', { class: 'dc-note' }, 'Under construction.'));
   } else {
+    // The Townhall's job is growing the population, so the queue is the star.
     if (district.definitionId === 'Townhall') {
       const training = game.trainingInfo();
       if (training.active) {
         const bar = progress('gold');
-        bar.set(training.progress,
-          `+1 villager in ${Math.ceil(training.remainingSeconds)}s`
-          + (training.queued > 1 ? ` · ${training.queued - 1} more queued` : ''));
+        bar.set(training.progress, `Next villager in ${Math.ceil(training.remainingSeconds)}s`);
         body.append(bar.root);
-        body.append(el('div', { class: 'dc-note' },
-          `Tap the Townhall to add +${TRAINING.tapBoostSeconds}s of training per tap.`));
+        if (training.queued > 1) {
+          body.append(el('div', { class: 'dc-queue' },
+            iconEl('population', { size: 'sm' }),
+            pips(1, training.queued),
+            el('span', {}, `${training.queued - 1} more waiting`)));
+        }
+        // The tap boost is an affordance on the BUILDING, so it is pointed
+        // at rather than described.
+        body.append(el('div', { class: 'dc-tapline' },
+          iconEl('showme', { size: 'sm' }),
+          `Tap the Townhall itself to hurry it — +${TRAINING.tapBoostSeconds}s each tap`));
       }
-      const trainBtn = button('Train', () => game.doQueueTraining());
-      if (game.uiHint() === 'card:train') trainBtn.classList.add('hinted');
       const short = game.shortfall({ Food: training.cost });
-      trainBtn.disabled = training.atMax || Object.keys(short).length > 0;
-      body.append(el('div', { class: 'action-row' },
-        el('span', { class: `info${training.atMax || !trainBtn.disabled ? '' : ' blocked'}` },
-          training.atMax
-            ? 'Population at max — build more Housing'
-            : `Train villager — ${training.cost} ${icon('Food')} (${formatDuration(TRAINING.seconds)})`),
-        trainBtn));
+      const trainAction = action({
+        label: 'Train',
+        kind: 'primary',
+        onClick: () => game.doQueueTraining(),
+        disabledReason: training.atMax
+          ? 'Nowhere to put them — build more Housing'
+          : Object.keys(short).length > 0
+            ? `Short ${short.Food} Food`
+            : undefined,
+        info: el('span', { class: 'dc-upcost' },
+          costChips({ Food: training.cost }, (c) => game.effectiveWalletValue(c)),
+          el('span', { class: 'dc-uptime' },
+            iconEl('hourglass', { size: 'sm' }), formatDuration(TRAINING.seconds))),
+      });
+      if (game.uiHint() === 'card:train') trainAction.classList.add('hinted');
+      body.append(trainAction);
     }
 
     if (district.definitionId === 'FarmLands') {
@@ -89,29 +104,35 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         + `${HARVEST.Crops.tapsToExhaust} taps, recovers in ${HARVEST.Crops.recoverySeconds}s.`));
     }
 
+    // A house is people and the rent they pay, so show both as such.
     if (districtCapacity(game.state, district) > 0) {
+      const capacity = districtCapacity(game.state, district);
       const residents = game.residentsIn(district);
       const perMinute = houseGoldPerMinute(game.state, district);
       const adjacency = districtAdjacency(game.state, district);
-      const rows = el('div', { class: 'rows' },
-        el('div', { class: 'row' },
-          el('span', {}, '👥 residents'),
-          el('span', {}, `${residents}/${districtCapacity(game.state, district)}`)));
+
+      body.append(el('div', { class: 'dc-homes' },
+        iconEl('population', { size: 'sm' }),
+        pips(residents, capacity),
+        el('span', {}, `${residents} of ${capacity} homes filled`)));
+
       if (residents > 0) {
-        rows.append(el('div', { class: 'row' },
-          el('span', {}, '💰 taxes'),
-          el('span', {}, `${Number.isInteger(perMinute) ? perMinute : perMinute.toFixed(1)} ${icon('Gold')}/min`)));
+        body.append(el('div', { class: 'dc-drip' },
+          stat('Gold', Number.isInteger(perMinute) ? String(perMinute) : perMinute.toFixed(1),
+            'per minute')));
       }
+      // Adjacency as a verdict rather than a signed number.
       if (adjacency !== 0) {
-        rows.append(el('div', { class: 'row' },
-          el('span', {}, 'Neighbors'),
-          el('span', { class: adjacency < 0 ? 'blocked' : 'delta' },
-            `${formatAdjacency(adjacency)}/min`)));
+        body.append(el('div', { class: `dc-badge ${adjacency < 0 ? 'is-bad' : 'is-good'}` },
+          adjacency < 0
+            ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
+            : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
       }
-      body.append(rows);
-      body.append(el('div', { class: 'dc-note' }, residents === 0
-        ? 'Nobody lives here yet — train villagers at the Townhall.'
-        : `Tap to fast-forward tax collection — +${TAXES.tapBoostSeconds}s per tap.`));
+      body.append(el('div', { class: 'dc-tapline' },
+        iconEl('showme', { size: 'sm' }),
+        residents === 0
+          ? 'Nobody lives here yet — train villagers at the Townhall'
+          : `Tap the house to hurry the rent — +${TAXES.tapBoostSeconds}s each tap`));
     }
 
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSource) {

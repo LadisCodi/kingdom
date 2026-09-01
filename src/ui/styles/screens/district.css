@@ -100,3 +100,36 @@
   color: var(--ink-muted);
   box-shadow: 0 2px 0 #a79470;
 }
+
+/* Townhall: the training queue is the point of the building. */
+.dc-queue,
+.dc-homes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-family: var(--font-display);
+}
+.dc-drip { margin: 4px 0; }
+
+/* A tap affordance on the BUILDING, pointed at rather than described. */
+.dc-tapline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  color: var(--ink-muted);
+  line-height: 1.3;
+}
+
+/* Adjacency as a verdict, not a signed number. */
+.dc-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 4px 0;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 2px solid;
+}
+.dc-badge.is-good { color: var(--leaf-dark); border-color: var(--leaf-dark); background: rgba(111, 191, 74, 0.18); }
+.dc-badge.is-bad { color: var(--clay); border-color: var(--clay); background: rgba(212, 85, 62, 0.15); }
