@@ -1,6 +1,20 @@
+/* The frame, and the last few things the kit has not absorbed.
+ *
+ * This file was 250 lines of slate-blue chrome. What remains is the app
+ * frame itself, the mount points, and the two affordances that are not
+ * screen-specific: the quest hint arrow and the ?dev bar. Everything else
+ * lives in src/ui/styles/, screen by screen. */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; background: #05070b; }
-body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-select: none; -webkit-user-select: none; display: flex; justify-content: center; }
+html, body { height: 100%; overflow: hidden; background: #14100c; }
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  justify-content: center;
+}
 
 /* Portrait phone frame: never wider than 9:16 of the viewport height, so
    desktop gets pillarboxed like the mobile target; on a real phone the cap
@@ -9,7 +23,7 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
 #app {
   position: relative; width: 100%; height: 100%; overflow: hidden;
   max-width: calc(100vh * 9 / 16);
-  background: #10151c; box-shadow: 0 0 0 1px #2a3442;
+  background: #10151c; box-shadow: 0 0 0 1px var(--wood-dark);
 }
 
 /* Canvas is a replaced element: inset alone doesn't stretch it, and without a
@@ -19,134 +33,45 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
 #ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; }
 #ui > * { pointer-events: auto; }
 
-/* ---------- header ---------- */
-#header {
-  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
-  padding: 8px 12px; background: rgba(16, 21, 28, 0.92);
-  border-bottom: 1px solid #2a3442; font-size: 14px;
-}
-.res { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; position: relative; }
-.res b { font-variant-numeric: tabular-nums; }
-/* Breakdown tooltip for currencies with equivalents (hover, or tap to pin). */
-.res .tip {
-  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
-  min-width: 130px; padding: 8px 10px; font-size: 12px;
-  background: rgba(20, 26, 35, 0.97); border: 1px solid #3a4757; border-radius: 8px;
-}
-.res:hover .tip, .res.open .tip { display: block; }
-.res .tip .row { display: flex; justify-content: space-between; gap: 14px; }
-.res .tip .row.total { border-top: 1px solid #3a4757; margin-top: 4px; padding-top: 4px; font-weight: 600; }
-.res.shake { animation: shake 0.4s; color: #ff7a6e; }
-@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-#cloud-badge { margin-left: auto; font-size: 11px; opacity: 0.7; }
+/* ---------- mount points ---------- */
+#panel:empty { display: none; }
+#panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); }
 
-/* ---------- nav bar ---------- */
-#navbar {
-  margin-top: auto; min-height: var(--nav-h); display: flex; gap: 8px; justify-content: center;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: rgba(16, 21, 28, 0.92); border-top: 1px solid #2a3442;
-  position: relative; z-index: 10; /* above #overlay so Close stays reachable */
+#overlay:empty { display: none; }
+/* inset:0 and pointer-events:auto are load-bearing: this element is what
+   stops a tap beside a sheet reaching the canvas and firing a harvest. */
+#overlay {
+  position: absolute; inset: 0; z-index: 5;
+  background: var(--scrim);
+  overflow-y: auto;
+  padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
 }
-#navbar button { flex: 1; max-width: 140px; }
-#navbar button.close { max-width: 300px; }
-.btn {
-  font: inherit; color: inherit; background: #26303e; border: 1px solid #3a4757;
-  border-radius: 8px; padding: 9px 14px; cursor: pointer;
-}
-.btn:hover { background: #2f3b4c; }
-.btn:disabled { opacity: 0.45; cursor: default; }
-button.cta { background: #3d6f3d; border-color: #58a058; animation: pulse 1.5s infinite; }
-@keyframes pulse { 50% { filter: brightness(1.25); } }
-button.danger { background: #5a2c2c; border-color: #8a4444; }
-/* iOS-style switch: a pill track with a sliding knob; .on = right/green. */
-button.switch {
-  position: relative; flex: none; width: 52px; height: 30px; padding: 0;
-  border-radius: 15px; background: #3a4757; border-color: #4a5767;
-  transition: background 0.2s, border-color 0.2s;
-}
-button.switch:hover { filter: brightness(1.1); background: #3a4757; }
-button.switch::after {
-  content: ''; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
-  border-radius: 50%; background: #e8e2d0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s;
-}
-button.switch.on { background: #58a058; border-color: #6ab06a; }
-button.switch.on:hover { background: #58a058; }
-button.switch.on::after { transform: translateX(22px); }
 
-/* Quest hint: glow + a bouncing 👇 above the element, until interacted. */
-.hinted { box-shadow: 0 0 0 2px #ffe27a !important; position: relative; }
+/* ---------- the quest hint ---------- */
+/* Not screen-specific: any element the quest points at wears this. */
+.hinted { box-shadow: 0 0 0 3px var(--gold) !important; position: relative; }
 .hinted::after {
-  content: '👇'; position: absolute; top: -30px; left: 50%; margin-left: -11px;
-  font-size: 22px; z-index: 30; pointer-events: none;
+  content: '';
+  position: absolute; top: -26px; left: 50%; margin-left: -9px;
+  width: 0; height: 0; z-index: 30; pointer-events: none;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 12px solid var(--gold);
+  filter: drop-shadow(0 2px 0 var(--gold-dark));
   animation: hint-bob 0.7s ease-in-out infinite alternate;
 }
 @keyframes hint-bob { from { transform: translateY(0); } to { transform: translateY(6px); } }
 
-
-
-/* ---------- bottom panel (placement / district card) ---------- */
-#panel:empty { display: none; }
-#panel {
-  position: absolute; left: 0; right: 0; bottom: var(--nav-h); max-height: 45%;
-  overflow-y: auto; background: rgba(20, 26, 35, 0.96);
-  border-top: 1px solid #3a4757; padding: 12px 14px; font-size: 14px;
-}
-#panel h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-#panel .rows, .menu .rows { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
-#panel .row, .menu .row { display: flex; justify-content: space-between; gap: 12px; }
-#panel .delta { color: #7fd07f; }
-#panel .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-/* Action row: [description + cost ......... verb button] */
-.action-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-.action-row .info { flex: 1; min-width: 0; }
-.action-row .info .sub { font-size: 12px; opacity: 0.7; }
-.action-row button { white-space: nowrap; }
-.muted { opacity: 0.65; }
-.blocked { color: #ff9d8a; }
-.progress { position: relative; height: 14px; background: #223; border-radius: 7px; overflow: hidden; margin: 6px 0; }
-.progress .fill { position: absolute; inset: 0; background: #d9a536; transition: width 0.5s linear; }
-.progress .label { position: absolute; inset: 0; text-align: center; font-size: 10px; line-height: 14px; color: #fff; }
-
-/* ---------- overlays (build / army / research) ---------- */
-#overlay:empty { display: none; }
-#overlay {
-  position: absolute; inset: 0; background: rgba(10, 13, 18, 0.88);
-  overflow-y: auto; z-index: 5;
-  /* top clears the header (the quest tracker hides while a menu is open); bottom the navbar */
-  padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
-}
-.menu { max-width: 560px; margin: 0 auto; }
-.menu h2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.menu-list { display: flex; flex-direction: column; gap: 10px; }
-.menu-row {
-  display: flex; gap: 12px; align-items: center; text-align: left;
-  background: #1c2430; border: 1px solid #313d4d; border-radius: 10px; padding: 12px;
-  width: 100%; font: inherit; color: inherit;
-}
-.menu-row .icon { font-size: 30px; width: 42px; text-align: center; }
-.menu-row .body { flex: 1; }
-.menu-row .body .name { font-weight: 600; }
-.menu-row .body .desc { font-size: 12px; opacity: 0.7; }
-.menu-row .meta { font-size: 12px; text-align: right; white-space: nowrap; }
-.menu-row.disabled { opacity: 0.5; cursor: default; }
-/* Market amount selector: what each row's Sell button queues. */
-.amount-row { display: flex; align-items: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
-.amount-row button { padding: 6px 10px; font-size: 13px; }
-.amount-row button.selected { background: #3d6f3d; border-color: #58a058; }
-/* Market sale queue: one small card per queued resource. */
-.queue-cards { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-.queue-card {
-  display: flex; align-items: center; gap: 6px; padding: 8px 10px;
-  background: #1c2430; border: 1px solid #313d4d; border-radius: 10px; font-size: 14px;
-}
-.queue-card .big { font-size: 22px; }
-
-/* ---------- cast banner & toast ---------- */
 @keyframes fadeout { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- the ?dev bar ---------- */
 .cast-banner {
-  position: absolute; top: var(--hud-h); left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: calc(var(--nav-h) + 60px); left: 50%; transform: translateX(-50%);
   background: rgba(40, 40, 80, 0.95); border: 1px solid #5a5aa0;
-  padding: 10px 16px; border-radius: 10px; z-index: 6;
+  padding: 10px 16px; border-radius: 10px; z-index: 40; color: #e8e2d0;
   display: flex; gap: 12px; align-items: center; font-size: 14px;
+}
+.cast-banner button {
+  font: inherit; color: inherit; background: #26303e;
+  border: 1px solid #3a4757; border-radius: 8px; padding: 8px 12px; cursor: pointer;
 }

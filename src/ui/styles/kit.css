@@ -10,8 +10,8 @@
  * scope, so a migrated screen and a legacy one render correctly side by
  * side while style.css shrinks. */
 
-/* Type is scoped to the kit for now. Phase 5 moves --font-body to <body>
- * once no legacy screen is left to be surprised by it. */
+/* --font-body is on <body> now (src/style.css); these stay so a kit surface
+ * is still correct if dropped anywhere. */
 .k-panel,
 .k-card,
 .gal { font-family: var(--font-body); }

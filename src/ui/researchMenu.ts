@@ -9,7 +9,7 @@
 //    beyond a RESEARCHED or RESEARCHING tech show as anonymous "?"
 //    silhouettes; anything deeper is hidden.
 
-import { icon, type Game } from '../game';
+import type { Game } from '../game';
 import {
   DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES, UPGRADE_ORDER,
 } from '../sim/data/definitions';
@@ -22,8 +22,8 @@ import { upgradeCost, upgradeLevel } from '../sim/upgrades';
 import { getWallet, type GameState, type TechId, type UpgradeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
-import { btn, iconEl, knob } from './kit';
-import { button, el, formatCost, formatDuration } from './format';
+import { action, btn, costChips, iconEl, knob } from './kit';
+import { el, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
 type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId } | null;
@@ -340,14 +340,23 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
     panel.append(bar);
   } else {
-    const affordable = canAfford(state.city.wallet, def.cost);
-    const startBtn = button('Start', () => game.doStartTech(id));
-    startBtn.disabled = !affordable || !requirementsMet(state, id) || busy >= slots;
-    panel.append(el('div', { class: 'action-row' },
-      el('span', { class: `info${affordable ? '' : ' blocked'}` },
-        `${formatCost(def.cost)} · ⏱ ${formatDuration(def.durationSeconds)}` +
-        (busy >= slots ? ' — all slots busy' : '')),
-      startBtn));
+    const short = game.shortfall(def.cost);
+    panel.append(action({
+      label: 'Start',
+      kind: 'primary',
+      onClick: () => game.doStartTech(id),
+      disabledReason: !requirementsMet(state, id)
+        ? 'Research what it needs first'
+        : busy >= slots
+          ? 'Every scholar is busy'
+          : Object.keys(short).length > 0
+            ? `Short ${Object.entries(short).map(([c, n]) => `${n} ${c}`).join(' and ')}`
+            : undefined,
+      info: el('span', { class: 'res-cost' },
+        costChips(def.cost, (c) => game.effectiveWalletValue(c)),
+        el('span', { class: 'res-time' },
+          iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds))),
+    }));
   }
   return panel;
 }
@@ -371,13 +380,16 @@ function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
     panel.append(el('div', { class: 'delta' }, 'Maxed'));
   } else {
     const cost = upgradeCost(id, level);
-    const affordable = canAfford(state.city.wallet, { Gold: cost });
-    const buyBtn = button('Upgrade', () => game.doBuyUpgrade(id));
-    buyBtn.disabled = !affordable;
-    panel.append(el('div', { class: 'action-row' },
-      el('span', { class: `info${affordable ? '' : ' blocked'}` },
-        `${cost} ${icon('Gold')} · instant`),
-      buyBtn));
+    const short = game.shortfall({ Gold: cost });
+    panel.append(action({
+      label: 'Upgrade',
+      kind: 'primary',
+      onClick: () => game.doBuyUpgrade(id),
+      disabledReason: Object.keys(short).length > 0 ? `Short ${short.Gold} Gold` : undefined,
+      info: el('span', { class: 'res-cost' },
+        costChips({ Gold: cost }, (c) => game.effectiveWalletValue(c)),
+        el('span', { class: 'res-time' }, 'instant')),
+    }));
   }
   return panel;
 }

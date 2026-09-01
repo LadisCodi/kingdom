@@ -1,12 +1,10 @@
-import { icon } from '../game';
-import type { CurrencyId, Wallet } from '../sim/state';
+// Formatting helpers and the two DOM primitives everything is built on.
+//
+// formatCost() used to live here, joining emoji into "20 🪵 + 10 🪨". That
+// string concatenation was the thing blocking pixel icons; every caller now
+// uses costChips() from the kit, which returns nodes. Gone with the last one.
 
 import { playSfx } from '../audio/sfx';
-
-export const formatCost = (cost: Wallet): string =>
-  Object.entries(cost)
-    .map(([c, n]) => `${n} ${icon(c as CurrencyId)}`)
-    .join(' + ') || 'free';
 
 export function formatDuration(seconds: number): string {
   if (seconds <= 0) return 'instant';
