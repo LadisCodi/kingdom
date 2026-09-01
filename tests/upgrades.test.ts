@@ -31,11 +31,11 @@ describe('buying upgrades', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
     expect(buyUpgrade(state, 'TapPower')).toBe('TechRequired'); // Forestry
-    expect(buyUpgrade(state, 'MarketStall')).toBe('TechRequired'); // Commerce
+    expect(buyUpgrade(state, 'MarketStall')).toBe('TechRequired'); // Market
     completeTech(state, 'Forestry');
     expect(buyUpgrade(state, 'TapPower')).toBe('Purchased');
     expect(buyUpgrade(state, 'MarketStall')).toBe('TechRequired'); // still
-    completeTech(state, 'Commerce');
+    completeTech(state, 'Market');
     expect(buyUpgrade(state, 'MarketStall')).toBe('Purchased');
   });
 
@@ -61,23 +61,11 @@ describe('effects reach the sim', () => {
     expect(getWallet(state.city.wallet, 'Wood')).toBe(2); // 1 base + 1
   });
 
-  it('QuickHands shortens the collect cooldown', () => {
-    const state = freshGame();
-    fund(state, { Gold: 1000 });
-    completeTech(state, 'Forestry');
-    const baseMs = TAP.collectCooldownSeconds * 1000; // 500
-    expect(effectiveCollectCooldownMs(state)).toBe(baseMs);
-    buyUpgrade(state, 'QuickHands'); // −0.05s
-    expect(effectiveCollectCooldownMs(state)).toBe(baseMs - 50);
-    collectTap(state, map, FOREST, T0);
-    expect(collectTap(state, map, FOREST, T0 + baseMs - 50)).toBe('Harvested'); // base would still be cooling
-  });
-
   it('MarketStall raises the Market sale prices', () => {
     const state = freshGame();
     addBuilt(state, 'Market', { x: 2, y: 0 });
     fund(state, { Gold: 1000, Wood: 100 });
-    completeTech(state, 'Commerce');
+    completeTech(state, 'Market');
     expect(salePayout(state, 'Wood', 100)).toBe(300);
     buyUpgrade(state, 'MarketStall'); // +5%
     expect(effectiveSalePriceMultiplier(state)).toBeCloseTo(1.05);
@@ -89,7 +77,7 @@ describe('effects reach the sim', () => {
     addBuilt(state, 'Housing', { x: 2, y: 0 });
     state.city.population = 1;
     fund(state, { Gold: 1000 });
-    completeTech(state, 'Commerce');
+    completeTech(state, 'Market');
     expect(effectiveTaxRate(state)).toBe(30);
     buyUpgrade(state, 'TradeRoutes'); // +10% → 33/min
     expect(effectiveTaxRate(state)).toBeCloseTo(33);

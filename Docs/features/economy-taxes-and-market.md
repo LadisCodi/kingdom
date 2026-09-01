@@ -24,7 +24,8 @@ surplus resources, not a chore you must visit to earn money.
   crops). Paced by the shared collect cooldown, so QuickHands helps.
 - **Adjacency** (`Adjacency` sheet, `src/sim/adjacency.ts`): a house gains
   or LOSES gold/min per adjacent district of a given type — footprints
-  touching, diagonals included. Rules are directional `(district,
+  sharing an edge; diagonal corner contact does NOT count. Rules are
+  directional `(district,
   neighbor)` rows with a single `gold_per_minute` (negatives allowed);
   since the tap only advances the same production clock, one number
   covers both mechanics. Initial content: Housing next to Housing =
@@ -46,7 +47,7 @@ surplus resources, not a chore you must visit to earn money.
 
 ## The Market (optional, late-game)
 
-- A **buildable district** gated behind the Commerce technology; no navbar
+- A **buildable district** gated behind the Market technology; no navbar
   entry — **tap the built Market** to open its trade screen.
 - Selling is **instant**: amount selector `[x1][x10][x100][x1.000][All]`,
   one Sell per sellable currency, Gold on the spot
@@ -60,4 +61,4 @@ Settings: `taxes.gold_per_population_per_minute`, `training.seconds`,
 `training.tap_boost_seconds`. Harvest sheet: the `Taxes` row. Currencies
 sheet: `gold_value` per sellable resource. Districts sheet: the `Market`
 row. Upgrades: MarketStall (+5% prices), TradeRoutes (+10% taxes), both
-under Commerce.
+under the Market tech.

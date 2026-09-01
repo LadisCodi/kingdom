@@ -4,10 +4,15 @@
 
 import { formatAdjacency, icon, type Game } from '../game';
 import { canAfford, gemRushCost } from '../sim/commands';
-import { DISTRICTS, HARVEST, TAXES, TRAINING, WORKER, levelIndexed } from '../sim/data/definitions';
+import {
+  DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, WORKER, levelIndexed,
+} from '../sim/data/definitions';
 import { districtAdjacency } from '../sim/adjacency';
-import { districtCount, requiredTownhallLevel, upgradeCost, upgradeDuration } from '../sim/districts';
-import { houseGoldPerMinute } from '../sim/population';
+import {
+  districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
+} from '../sim/districts';
+import { districtCapacity, houseGoldPerMinute } from '../sim/population';
+import { isTechComplete } from '../sim/research';
 import {
   queueProgress, remainingSeconds, townhall,
   type District,
@@ -66,14 +71,14 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     }
 
     // Housing: residents (auto-assigned) pay taxes; the house is a gold cell.
-    if (def.populationCapacity > 0) {
+    if (districtCapacity(game.state, district) > 0) {
       const residents = game.residentsIn(district);
       const perMinute = houseGoldPerMinute(game.state, district);
       const adjacency = districtAdjacency(game.state, district);
       const rows = el('div', { class: 'rows' },
         el('div', { class: 'row' },
           el('span', {}, '👥 residents'),
-          el('span', {}, `${residents}/${def.populationCapacity}`)));
+          el('span', {}, `${residents}/${districtCapacity(game.state, district)}`)));
       if (residents > 0) {
         rows.append(el('div', { class: 'row' },
           el('span', {}, '💰 taxes'),
@@ -95,8 +100,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSource) {
       const spec = HARVEST[def.harvestSource];
       const cells = game.workableCellsOf(district);
-      const limit = assignableWorkerLimit(game.state, game.map, district);
-      const maxForLevel = levelIndexed(def.maxWorkersPerLevel, district.level);
+      const limit = assignableWorkerLimit(district);
       panel.append(el('div', { class: 'rows' },
         el('div', { class: 'row' },
           el('span', {}, 'Area of influence'),
@@ -114,7 +118,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       plus.disabled = district.assignedWorkers >= limit || game.freeWorkers() === 0;
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
       panel.append(el('div', { class: 'actions' },
-        el('span', {}, `Workers ${district.assignedWorkers}/${limit} (cap ${maxForLevel})`),
+        el('span', {}, `Workers ${district.assignedWorkers}/${limit}`),
         minus, plus));
       const states = game.state.workers
         .filter((w) => w.buildingId === district.uniqueId)
@@ -152,11 +156,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     const cost = upgradeCost(district.definitionId, n, district.level);
     const duration = upgradeDuration(district.definitionId, district.level);
     const requiredTh = requiredTownhallLevel(district.definitionId, district.level + 1);
+    const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
     const thLevel = townhall(game.state).level;
     const affordable = canAfford(game.state.city.wallet, cost);
-    const blocked = thLevel < requiredTh;
+    const thBlocked = thLevel < requiredTh;
+    const techBlocked = gateTech !== null && !isTechComplete(game.state, gateTech);
     const upBtn = button('Upgrade', () => game.doUpgrade(district.uniqueId));
-    upBtn.disabled = blocked || !affordable;
+    upBtn.disabled = thBlocked || techBlocked || !affordable;
     if (game.uiHint() === 'card:upgrade') upBtn.classList.add('hinted');
     const info = el('div', { class: 'info' },
       el('div', { class: affordable ? '' : 'blocked' },
@@ -167,7 +173,18 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       info.append(el('div', { class: 'sub delta' },
         `radius ${influenceRadius(district)}→${nextRadius}, worker cap →${nextCap}`));
     }
-    if (blocked) info.append(el('div', { class: 'sub blocked' }, `Townhall lvl ${requiredTh} required`));
+    if (def.populationCapacityPerLevel.length > 0) {
+      const nextCap = levelIndexed(def.populationCapacityPerLevel, district.level + 1)
+        + districtCapacity(game.state, district)
+        - levelIndexed(def.populationCapacityPerLevel, district.level);
+      info.append(el('div', { class: 'sub delta' },
+        `residents ${districtCapacity(game.state, district)}→${nextCap}`));
+    }
+    if (thBlocked) info.append(el('div', { class: 'sub blocked' }, `Townhall lvl ${requiredTh} required`));
+    if (techBlocked) {
+      info.append(el('div', { class: 'sub blocked' },
+        `Research ${TECHNOLOGIES[gateTech].name} required`));
+    }
     panel.append(el('div', { class: 'action-row' }, info, upBtn));
   }
 

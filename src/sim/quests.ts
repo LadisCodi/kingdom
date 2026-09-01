@@ -9,7 +9,7 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { effectiveAmount, refund } from './wallet';
-import type { CurrencyId, GameState } from './state';
+import { addToWallet, type CurrencyId, type GameState } from './state';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
   QUESTS[state.quests.index] ?? null;
@@ -78,7 +78,8 @@ export const isQuestComplete = (state: GameState, quest: QuestDef): boolean =>
 
 export type ClaimResult = 'Claimed' | 'NotComplete' | 'NoQuest';
 
-/** Pay the reward into the city wallet and activate the next quest. */
+/** Pay the reward into the city wallet (Gems into the player's) and activate
+ *  the next quest. */
 export function claimQuest(state: GameState): ClaimResult {
   const quest = activeQuest(state);
   if (!quest) return 'NoQuest';
@@ -86,6 +87,10 @@ export function claimQuest(state: GameState): ClaimResult {
   refund(state.city.wallet, quest.reward);
   for (const currency of Object.keys(quest.reward)) {
     recordResourceDiscovery(state, currency as CurrencyId);
+  }
+  if (quest.rewardGems > 0) {
+    addToWallet(state.player.wallet, 'Gems', quest.rewardGems);
+    recordResourceDiscovery(state, 'Gems');
   }
   state.quests.index += 1;
   state.quests.progress = 0;

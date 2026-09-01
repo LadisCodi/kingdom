@@ -8,18 +8,20 @@ const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 
 describe('map data', () => {
-  it('loads 253 terrain cells across five biomes and 35 features', () => {
-    expect(map.terrain.size).toBe(253);
-    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(100);
-    expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(30);
-    expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(25);
-    expect(map.initialFeatures.size).toBe(36); // + Rocks, FishShoals (one in the cove), IronVeins
+  it('loads 340 terrain cells across six biomes and 42 features', () => {
+    expect(map.terrain.size).toBe(340);
+    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(101);
+    expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(23);
+    expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(16);
+    expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(20);
+    expect(map.initialFeatures.size).toBe(42);
   });
-  it('8-neighbor adjacency: distance 0 across the 2x2 footprint, 1 diagonal from it', () => {
+  it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);
     expect(townhallDistance(map, { x: 1, y: 1 })).toBe(0); // inside the footprint
-    expect(townhallDistance(map, { x: 2, y: 2 })).toBe(1); // diagonal from its corner
-    expect(townhallDistance(map, { x: -1, y: -1 })).toBe(1);
+    expect(townhallDistance(map, { x: 2, y: 0 })).toBe(1); // beside its edge
+    expect(townhallDistance(map, { x: 2, y: 2 })).toBe(2); // diagonal from its corner
+    expect(townhallDistance(map, { x: -1, y: -1 })).toBe(2);
   });
 });
 
@@ -62,5 +64,27 @@ describe('paying to reveal', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 50;
     expect(revealTap(state, map, { x: -6, y: -3 })).toBe('NotDiscovered');
+  });
+});
+
+describe('exploration gates (Sailing / Scaling Tools)', () => {
+  it('sea cells are locked until Sailing is researched', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    const sea = { x: -3, y: 0 }; // inside the Townhall discover radius
+    expect(fogState(state, map, sea)).toBe('Discovered');
+    expect(revealTap(state, map, sea)).toBe('TechLocked');
+    state.research.completed.push('Sailing');
+    expect(revealTap(state, map, sea)).toBe('Paid');
+  });
+
+  it('mountain cells are locked until Scaling Tools is researched', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    const peak = { x: 0, y: -9 }; // the northern ridge
+    state.fog.discovered[coordKey(peak)] = true; // walk the frontier up in spirit
+    expect(revealTap(state, map, peak)).toBe('TechLocked');
+    state.research.completed.push('ScalingTools');
+    expect(revealTap(state, map, peak)).toBe('Paid');
   });
 });

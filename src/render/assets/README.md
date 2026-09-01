@@ -29,9 +29,12 @@ prompts and the normalization pipeline.
 | `rocks.png` (+ `_exhausted`) | 🪨 / 🧱 | |
 | `iron_vein.png` (+ `_exhausted`) | ⛰️ / 🕳️ | |
 | `fish_shoal.png` | 🐟 | drawn over water; fish + ripples only |
-| `worker.png` / `_carrying` | 🧑‍🌾 / 🎒 | drawn at 0.6 tile |
+| `worker.png` / `_carrying` | 🧑‍🌾 / 🎒 | drawn at 0.6 tile; statics = each cycle's frame 2 |
+| `worker_walk_1..4.png` / `worker_carry_1..4.png` | — | 4-frame walk cycles (140 ms/frame) |
+| `worker_chop_1/2` · `worker_mine_1/2` · `worker_farm_1/2` | — | 2-frame work loops by harvest source (320 ms); pending generation |
+| `fishing_boat_row_1/2.png` | — | 2-frame rowing loop; pending generation |
 | `fishing_boat.png` / `_carrying` | ⛵ / ⛵🐟 | workers of the Docks |
-| `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water) | flat `TERRAIN_COLORS` | full-bleed, self-tiling |
+| `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water, mountain) | flat `TERRAIN_COLORS` | full-bleed, self-tiling |
 
 District sprites are keyed by the `sprite` field in
 `src/sim/data/definitions.ts`; `_exhausted` variants are derived from it.

@@ -24,10 +24,9 @@ import tapEmptyUrl from './sounds/tap_empty.mp3?url';
 import unitUrl from './sounds/unit_trained.mp3?url';
 import upgradeUrl from './sounds/upgrade_bought.wav?url';
 import villagerUrl from './sounds/villager_trained.mp3?url';
-import tapTree1 from './sounds/tap_tree_01.mp3?url';
-import tapTree2 from './sounds/tap_tree_02.mp3?url';
-import tapTree3 from './sounds/tap_tree_03.mp3?url';
-import tapTree4 from './sounds/tap_tree_04.mp3?url';
+import tapTree1 from './sounds/tap_tree_01.ogg?url';
+import tapTree2 from './sounds/tap_tree_02.ogg?url';
+import tapTree3 from './sounds/tap_tree_03.ogg?url';
 import tapBerriesUrl from './sounds/tap_berries.ogg?url';
 import tapHouse1 from './sounds/tap_house_01.mp3?url';
 import tapHouse2 from './sounds/tap_house_02.mp3?url';
@@ -81,7 +80,7 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   boatSplash: { urls: one(boatSplashUrl), volume: 0.3, jitter: 0.1 },
   chainFinished: { urls: one(chainFinishedUrl), volume: 0.6, jitter: 0 },
   // Per-target tap sounds (multi-take where the library provides them).
-  tapTree: { urls: [tapTree1, tapTree2, tapTree3, tapTree4], volume: 0.5, jitter: 0.06 },
+  tapTree: { urls: [tapTree1, tapTree2, tapTree3], volume: 0.5, jitter: 0.06 },
   tapBerries: { urls: one(tapBerriesUrl), volume: 0.45, jitter: 0.08 },
   tapHouse: { urls: [tapHouse1, tapHouse2, tapHouse3, tapHouse4], volume: 0.45, jitter: 0.05 },
   // Mostly grunts, the occasional squeal (1 in 3).

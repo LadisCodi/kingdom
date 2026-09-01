@@ -11,7 +11,7 @@ import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
-  type Coord, type GameState,
+  type Coord, type GameState, type HarvestSourceId,
 } from '../sim/state';
 import type { Camera } from './camera';
 import type { Floaters } from './floaters';
@@ -249,13 +249,34 @@ export function drawMap(
   }
 
   // Pass 3: markers.
-  // Working-area cells: a white square at 75% of the tile size.
-  for (const cell of markers.influenceCells) {
-    const { x, y } = cellRect(cell);
-    const inset = size * 0.125;
-    ctx.strokeStyle = PALETTE.influenceSquare;
+  // Working area: one translucent white region with a crisp outline — border
+  // segments are drawn only on edges that face a cell outside the area.
+  if (markers.influenceCells.length > 0) {
+    const inArea = new Set(markers.influenceCells.map(coordKey));
+    ctx.fillStyle = PALETTE.influenceFill;
+    for (const cell of markers.influenceCells) {
+      const { x, y } = cellRect(cell);
+      ctx.fillRect(x, y, size, size);
+    }
+    ctx.strokeStyle = PALETTE.influenceBorder;
     ctx.lineWidth = 2;
-    ctx.strokeRect(x + inset, y + inset, size * 0.75, size * 0.75);
+    ctx.beginPath();
+    for (const cell of markers.influenceCells) {
+      const { x, y } = cellRect(cell);
+      if (!inArea.has(coordKey({ x: cell.x, y: cell.y - 1 }))) {
+        ctx.moveTo(x, y); ctx.lineTo(x + size, y);
+      }
+      if (!inArea.has(coordKey({ x: cell.x, y: cell.y + 1 }))) {
+        ctx.moveTo(x, y + size); ctx.lineTo(x + size, y + size);
+      }
+      if (!inArea.has(coordKey({ x: cell.x - 1, y: cell.y }))) {
+        ctx.moveTo(x, y); ctx.lineTo(x, y + size);
+      }
+      if (!inArea.has(coordKey({ x: cell.x + 1, y: cell.y }))) {
+        ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size);
+      }
+    }
+    ctx.stroke();
   }
   for (const { cell, label } of markers.validCells) {
     if (fogState(state, map, cell) === 'Undiscovered') continue;
@@ -278,7 +299,7 @@ export function drawMap(
     ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
   }
   // Cells that WILL be worked: green "positive" yield label on a dark pill
-  // (the white working-area square is already drawn above).
+  // (the white working-area region is already drawn above).
   for (const { cell, label, tone } of markers.yieldCells) {
     const { x, y } = cellRect(cell);
     const fontSize = Math.max(10, size * 0.18);
@@ -324,13 +345,19 @@ export function drawMap(
 
   // Pass 3.9: ambient villagers — unassigned population strolling around
   // the Townhall and Housing. Under the workers, so busy people read on top.
-  for (const pos of villagers.positions(state, map, now)) {
-    const { x, y } = cellRect(pos);
+  for (const v of villagers.positions(state, map, now)) {
+    const { x, y } = cellRect(v);
     const sx = x + size * 0.18;
     const sy = y + size * 0.18;
-    if (!drawSprite(ctx, 'worker', sx, sy, size * 0.6, size * 0.6)) {
-      drawGlyph(ctx, '🧍', sx, sy, size * 0.6, size * 0.34);
-    }
+    const uw = size * 0.6;
+    const t = now + v.phase;
+    const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
+    unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && v.dx < 0,
+      v.walking ? WALK_SQUASH : 0, WALK_FRAME_MS * 2, t, () => {
+        if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
+          drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
+        }
+      });
   }
 
   // Pass 3.8: the quest-hint arrow — a bouncing 👇 over the hinted cell.
@@ -343,27 +370,62 @@ export function drawMap(
     drawGlyph(ctx, '👇', x, y - size * 0.62 + bob, size, size * 0.5);
   }
 
-  // Pass 4: worker units (sprite with carrying variant, emoji fallback).
+  // Pass 4: worker units — animated. Walk cycles while moving (carry
+  // variant on the way home), a per-source work loop while Working, and a
+  // footfall squash & stretch about the feet. Every frame key falls back
+  // through the static sprite to the emoji, so missing art degrades cleanly.
   // Workers of a Fish-harvesting building are FISHING BOATS out on the water.
   for (const worker of state.workers) {
     const pos = workerPosition(state, worker, now);
     if (!pos) continue;
     const building = districtById(state, worker.buildingId);
-    const boat = building !== undefined &&
-      DISTRICTS[building.definitionId].harvestSource === 'Fish';
+    if (!building) continue;
+    const source = DISTRICTS[building.definitionId].harvestSource;
+    const boat = source === 'Fish';
     const { x, y } = cellRect(pos);
     const sx = x + size * 0.18;
     const sy = y + size * 0.18;
+    const uw = size * 0.6;
+    const t = now + unitPhase(worker.id);
+    const moving = worker.activity === 'MovingToCell' || worker.activity === 'MovingHome';
+    const working = worker.activity === 'Working';
+
+    // Facing: mirror the sprite while the current leg heads left.
+    let flip = false;
+    if (moving && worker.claimedCell) {
+      const dx = worker.claimedCell.x - building.location.x;
+      flip = (worker.activity === 'MovingToCell' ? dx : -dx) < 0;
+    }
+
+    // Sprite chain: animation frame → static (carrying) sprite → base.
     const stem = boat ? 'fishing_boat' : 'worker';
-    if (worker.carrying && drawSprite(ctx, `${stem}_carrying`, sx, sy, size * 0.6, size * 0.6)) {
-      continue;
+    const keys: string[] = [];
+    if (boat) {
+      if (moving && !worker.carrying) keys.push(workFrameKey('fishing_boat_row', t));
+    } else if (moving) {
+      keys.push(walkFrameKey(worker.carrying ? 'worker_carry' : 'worker_walk', t));
+    } else if (working) {
+      const anim = source ? WORK_ANIM[source] : undefined;
+      if (anim) keys.push(workFrameKey(`worker_${anim}`, t));
     }
-    if (!drawSprite(ctx, stem, sx, sy, size * 0.6, size * 0.6)) {
-      drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, size * 0.6, size * 0.34);
+    if (worker.carrying) keys.push(`${stem}_carrying`);
+    keys.push(stem);
+
+    // Squash & stretch: a bounce per footfall on land; a slow bob afloat.
+    let amp = 0;
+    let period = 1;
+    if (moving || working) {
+      amp = boat ? BOAT_SQUASH : moving ? WALK_SQUASH : WORK_SQUASH;
+      period = boat ? BOAT_BOB_MS : moving ? WALK_FRAME_MS * 2 : WORK_FRAME_MS;
     }
-    if (worker.carrying) {
-      drawGlyph(ctx, boat ? '🐟' : '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
-    }
+    unitTransform(ctx, sx + uw / 2, sy + uw, flip, amp, period, t, () => {
+      if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
+        drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
+        if (worker.carrying) {
+          drawGlyph(ctx, boat ? '🐟' : '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
+        }
+      }
+    });
   }
 
   // Pass 5: floaters.
@@ -377,6 +439,64 @@ export function drawMap(
     ctx.fillText(f.text, x + size / 2, y + size * 0.3 - f.t * size * 0.5);
     ctx.globalAlpha = 1;
   }
+}
+
+// ---------------------------------------------------------- unit animation
+
+const WALK_FRAME_MS = 140; // 4-frame walk cycle ≈ 560 ms
+const WORK_FRAME_MS = 320; // 2-frame work loop (strike cadence)
+const BOAT_BOB_MS = 900;
+const WALK_SQUASH = 0.06;
+const WORK_SQUASH = 0.04;
+const BOAT_SQUASH = 0.03;
+
+/** Which 2-frame work loop a Working worker plays, by what it harvests. */
+const WORK_ANIM: Partial<Record<HarvestSourceId, string>> = {
+  Crops: 'farm',
+  Forest: 'chop',
+  Stone: 'mine',
+  Iron: 'mine',
+};
+
+const walkFrameKey = (stem: string, t: number): string =>
+  `${stem}_${(Math.floor(t / WALK_FRAME_MS) % 4) + 1}`;
+
+const workFrameKey = (stem: string, t: number): string =>
+  `${stem}_${(Math.floor(t / WORK_FRAME_MS) % 2) + 1}`;
+
+/** Stable per-unit phase offset (ms) so units don't animate in lockstep. */
+function unitPhase(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return (h >>> 0) % 997;
+}
+
+/**
+ * Draw a unit mirrored and/or squash-and-stretched about its feet:
+ * (cx, cy) is the bottom-center of the sprite rect. Volume-preserving —
+ * width narrows as height stretches, so the bounce reads as weight.
+ */
+function unitTransform(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  flip: boolean,
+  amp: number,
+  periodMs: number,
+  t: number,
+  draw: () => void,
+): void {
+  if (!flip && amp === 0) {
+    draw();
+    return;
+  }
+  const stretch = 1 + amp * Math.sin((t / periodMs) * Math.PI * 2);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale((flip ? -1 : 1) / stretch, stretch);
+  ctx.translate(-cx, -cy);
+  draw();
+  ctx.restore();
 }
 
 function drawGlyph(

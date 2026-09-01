@@ -1,20 +1,29 @@
 // Population: housing, auto-assigned residents, passive tax gold, and the
 // Townhall's villager-training queue.
 
-import { CITY_DEF, DISTRICTS, TAXES, TRAINING } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TAXES, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
+import { isTechComplete } from './research';
 import { effectiveCollectCooldownMs, effectiveTaxRate } from './upgrades';
 import { addToWallet, type District, type GameState } from './state';
 import { canAfford, pay } from './wallet';
 
-/** Max population = Σ PopulationCapacity over active (Built) districts. */
+/** Capacity of ONE district at its CURRENT level (0 = houses nobody).
+ *  The Communities tech adds +1 to every district that houses anyone. */
+export function districtCapacity(state: GameState, district: District): number {
+  const list = DISTRICTS[district.definitionId].populationCapacityPerLevel;
+  if (list.length === 0) return 0;
+  return levelIndexed(list, district.level) + (isTechComplete(state, 'Communities') ? 1 : 0);
+}
+
+/** Max population = Σ capacity over active (Built) districts. */
 export function maxPopulation(state: GameState): number {
   let total = 0;
   for (const d of state.city.districts) {
     if (d.state !== 'Built') continue;
-    total += DISTRICTS[d.definitionId].populationCapacity;
+    total += districtCapacity(state, d);
   }
   return total;
 }
@@ -45,7 +54,7 @@ export function houseGoldPerMinute(state: GameState, district: District): number
 export function cityGoldPerMinute(state: GameState): number {
   let total = 0;
   for (const d of state.city.districts) {
-    if (d.state !== 'Built' || DISTRICTS[d.definitionId].populationCapacity === 0) continue;
+    if (d.state !== 'Built' || districtCapacity(state, d) === 0) continue;
     total += houseGoldPerMinute(state, d);
   }
   return total;
@@ -57,7 +66,7 @@ export function residentsOf(state: GameState, district: District): number {
   let remaining = state.city.population;
   for (const d of state.city.districts) {
     if (d.state !== 'Built') continue;
-    const cap = DISTRICTS[d.definitionId].populationCapacity;
+    const cap = districtCapacity(state, d);
     if (cap === 0) continue;
     const here = Math.min(cap, remaining);
     if (d.uniqueId === district.uniqueId) return here;

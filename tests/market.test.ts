@@ -1,4 +1,4 @@
-// The Market: an instant-sell trade building (Commerce tech). Optional gold
+// The Market: an instant-sell trade building (Market tech). Optional gold
 // on top of housing taxes — no queue, no timers.
 import { describe, expect, it } from 'vitest';
 import { hasMarket, salePayout, sellGoods, SELLABLE } from '../src/sim/market';

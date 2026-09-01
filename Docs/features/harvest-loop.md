@@ -38,8 +38,9 @@
    hours** per absence (the return-visit nudge the vault caps used to provide).
 5. **Area of influence = Chebyshev radius that grows with building level**
    (radius 1 at L1, +1 per level → 8 cells at L1, 24 at L2, 48 at L3).
-6. **Worker cap = min(per-level worker cap, workable cells in range)** — levels
-   still matter; the two-forests example still yields exactly 2 workers.
+6. **Worker cap = the per-level worker cap.** Workable cells in range don't
+   limit assignment — workers beyond the available cells wait Idle and pick up
+   work as cells recover, get revealed, or come into range.
 7. **Lumber is renamed Sawmill.** Save format changes are big enough that old
    prototype saves are **discarded** (fresh game on load of a v1 save).
 
@@ -89,9 +90,9 @@ system** (one worker per cell) prevents double-working.
 | **Townhall** | — | — | — | Cycle timer → Silver (below) |
 | **Housing** | — | — | — | Unchanged (population capacity) |
 
-`AssignableWorkerLimit = min(maxWorkersForLevel(level), workableCellsInArea)`
-(the old "1 + N, worker #1 runs the base" rule is gone — there is no base
-production anymore).
+`AssignableWorkerLimit = maxWorkersForLevel(level)` — workable cells in range
+don't cap assignment; surplus workers wait Idle. (The old "1 + N, worker #1
+runs the base" rule is gone — there is no base production anymore.)
 
 Build costs, times, count caps, the build queue, upgrades and Townhall gating
 are **unchanged**.

@@ -1,7 +1,8 @@
 // Adjacency rules: a district gains (or LOSES) flat gold per adjacent
 // neighbor of a given type — crowded houses pay less tax, spread-out ones
 // don't. Rules live in the balance workbook's Adjacency sheet; "adjacent"
-// means the two footprints touch, diagonals included.
+// means the two footprints share an edge — diagonal corner contact does
+// NOT count.
 
 import { ADJACENCY, DISTRICTS } from './data/definitions';
 import {
@@ -12,17 +13,18 @@ import {
 const rule = (district: DistrictId, neighbor: DistrictId) =>
   ADJACENCY.find((r) => r.district === district && r.neighbor === neighbor);
 
-/** Chebyshev gap between two footprint rects: 0 = overlap, 1 = touching. */
-function footprintGap(
+/** Whether two footprint rects share an edge (orthogonally adjacent):
+ *  a gap of exactly 1 on one axis while overlapping on the other. */
+function footprintsShareEdge(
   aLoc: Coord, aSize: { x: number; y: number },
   bLoc: Coord, bSize: { x: number; y: number },
-): number {
+): boolean {
   const dx = Math.max(bLoc.x - (aLoc.x + aSize.x - 1), aLoc.x - (bLoc.x + bSize.x - 1), 0);
   const dy = Math.max(bLoc.y - (aLoc.y + aSize.y - 1), aLoc.y - (bLoc.y + bSize.y - 1), 0);
-  return Math.max(dx, dy);
+  return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
 }
 
-/** Built districts whose footprint touches the rect at loc/size. */
+/** Built districts whose footprint shares an edge with the rect at loc/size. */
 export const adjacentBuilt = (
   state: GameState,
   loc: Coord,
@@ -31,7 +33,7 @@ export const adjacentBuilt = (
 ): District[] =>
   state.city.districts.filter((d) =>
     d.state === 'Built' && d.uniqueId !== excludeId &&
-    footprintGap(loc, size, d.location, districtSize(d)) === 1);
+    footprintsShareEdge(loc, size, d.location, districtSize(d)));
 
 /** Total effect a district of `definitionId` at `loc` receives from its
  *  built neighbors. */

@@ -133,6 +133,8 @@ export interface QuestDef {
   /** UpgradeDistrict only: the level bar ("n districts at level ≥ L"). */
   goalLevel: number | null;
   reward: Wallet;
+  /** Gems paid into the PLAYER wallet (city currencies go through `reward`). */
+  rewardGems: number;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
@@ -155,7 +157,8 @@ export interface DistrictDef {
   fogDiscoverRadius: number;
   /** Technology that must be completed before this district can be built. */
   requiredTech: TechId | null;
-  populationCapacity: number;
+  /** Housing capacity by level; empty = houses nobody. */
+  populationCapacityPerLevel: readonly number[];
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
   /** Chebyshev radius of the area of influence, by level. Empty = no area. */
@@ -176,6 +179,8 @@ export interface DistrictDef {
   upgradeDurationSeconds: number;
   upgradeDurationLevelGrowth: number;
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
+  /** Technology gating each upgrade; index 0 = requirement to REACH level 2. */
+  requiredTechPerLevel: readonly (TechId | null)[];
 }
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
@@ -183,6 +188,13 @@ export interface DistrictDef {
 const rules = {
   buildable: true, harvestSource: null, providesHarvestSource: null, requiredTech: null,
 } as const;
+
+/** The per-level tech gates arrive from JSON as plain strings — the importer
+ *  already validated them against the tech id list. */
+const districtBalance = <B extends { requiredTechPerLevel: readonly (string | null)[] }>(
+  b: B,
+): Omit<B, 'requiredTechPerLevel'> & { requiredTechPerLevel: readonly (TechId | null)[] } =>
+  b as never;
 
 export const DISTRICTS: Record<DistrictId, DistrictDef> = {
   Townhall: {
@@ -194,7 +206,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🏛️',
     sprite: 'townhall',
     buildable: false,
-    ...balance.districts.Townhall,
+    ...districtBalance(balance.districts.Townhall),
   },
   Housing: {
     ...rules,
@@ -203,7 +215,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'Provides homes. Residents pay taxes in Gold — tap to speed collection up.',
     glyph: '🏠',
     sprite: 'housing',
-    ...balance.districts.Housing,
+    ...districtBalance(balance.districts.Housing),
   },
   Farm: {
     ...rules,
@@ -213,8 +225,8 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🌾',
     sprite: 'farm',
     harvestSource: 'Crops',
-    requiredTech: 'Irrigation',
-    ...balance.districts.Farm,
+    requiredTech: 'Farming',
+    ...districtBalance(balance.districts.Farm),
   },
   FarmLands: {
     ...rules,
@@ -225,7 +237,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     sprite: 'farmlands',
     providesHarvestSource: 'Crops',
     requiredTech: 'Agriculture',
-    ...balance.districts.FarmLands,
+    ...districtBalance(balance.districts.FarmLands),
   },
   Sawmill: {
     ...rules,
@@ -236,7 +248,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     sprite: 'sawmill',
     harvestSource: 'Forest',
     requiredTech: 'Forestry',
-    ...balance.districts.Sawmill,
+    ...districtBalance(balance.districts.Sawmill),
   },
   Market: {
     ...rules,
@@ -245,8 +257,8 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'Trade surplus goods for Gold — tap it to open the trade screen.',
     glyph: '🏪',
     sprite: 'market',
-    requiredTech: 'Commerce',
-    ...balance.districts.Market,
+    requiredTech: 'Market',
+    ...districtBalance(balance.districts.Market),
   },
   Quarry: {
     ...rules,
@@ -257,7 +269,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     sprite: 'quarry',
     harvestSource: 'Stone',
     requiredTech: 'Masonry',
-    ...balance.districts.Quarry,
+    ...districtBalance(balance.districts.Quarry),
   },
   Docks: {
     ...rules,
@@ -268,7 +280,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     sprite: 'docks',
     harvestSource: 'Fish',
     requiredTech: 'Fishing',
-    ...balance.districts.Docks,
+    ...districtBalance(balance.districts.Docks),
   },
   Mine: {
     ...rules,
@@ -279,7 +291,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     sprite: 'mine',
     harvestSource: 'Iron',
     requiredTech: 'Mining',
-    ...balance.districts.Mine,
+    ...districtBalance(balance.districts.Mine),
   },
 };
 
@@ -368,24 +380,16 @@ export interface TechnologyDef {
 const tech = (
   content: Omit<TechnologyDef, 'cost' | 'durationSeconds' | 'requires'>,
   b: { cost: Wallet; durationSeconds: number; requires: unknown },
-): TechnologyDef => ({ ...content, cost: b.cost, durationSeconds: b.durationSeconds,
-  requires: b.requires as TechId[] });
+): TechnologyDef => ({
+  ...content, cost: b.cost, durationSeconds: b.durationSeconds,
+  requires: b.requires as TechId[]
+});
 
+// Four branches out of Forestry (Docs/features/tech-tree.md): CIVICS up,
+// ECONOMICS left (farm row 0, stone row −1), EXPLORATION right, MILITARY down.
+// Cells (−1,0) and (1,0) stay EMPTY on purpose: the branch trunks route their
+// elbows through them, so no connector ever crosses another node.
 export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
-  Agriculture: tech({
-    id: 'Agriculture',
-    name: 'Agriculture',
-    description: 'Unlocks crop plots (FarmLands) — tap them for Food.',
-    glyph: '🌱',
-    node: { x: -1, y: 0 },
-  }, balance.technologies.Agriculture),
-  Irrigation: tech({
-    id: 'Irrigation',
-    name: 'Irrigation',
-    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
-    glyph: '💧',
-    node: { x: -2, y: 1 },
-  }, balance.technologies.Irrigation),
   Forestry: tech({
     id: 'Forestry',
     name: 'Forestry',
@@ -393,60 +397,153 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🪓',
     node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
-  Commerce: tech({
-    id: 'Commerce',
-    name: 'Commerce',
-    description: 'Organized trade — unlocks Market improvements.',
+  // ---- civics (up)
+  UrbanPlanning: tech({
+    id: 'UrbanPlanning',
+    name: 'Urban Planning',
+    description: 'Ordered streets — Housing reaches level 2.',
+    glyph: '🏘️',
+    node: { x: 0, y: -1 },
+  }, balance.technologies.UrbanPlanning),
+  Communities: tech({
+    id: 'Communities',
+    name: 'Communities',
+    description: 'Tighter neighborhoods — every Housing holds +1 resident.',
+    glyph: '👥',
+    node: { x: 0, y: -2 },
+  }, balance.technologies.Communities),
+  Architecture: tech({
+    id: 'Architecture',
+    name: 'Architecture',
+    description: 'Iron-braced monuments — the Townhall reaches level 3.',
+    glyph: '📐',
+    node: { x: 0, y: -3 },
+  }, balance.technologies.Architecture),
+  // ---- economics: farm side (left, row 0)
+  Agriculture: tech({
+    id: 'Agriculture',
+    name: 'Agriculture',
+    description: 'Unlocks crop plots (FarmLands) — tap them for Food.',
+    glyph: '🌱',
+    node: { x: -2, y: 0 },
+  }, balance.technologies.Agriculture),
+  Farming: tech({
+    id: 'Farming',
+    name: 'Farming',
+    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
+    glyph: '🚜',
+    node: { x: -3, y: 0 },
+  }, balance.technologies.Farming),
+  Market: tech({
+    id: 'Market',
+    name: 'Market',
+    description: 'Organized trade — unlocks the Market building.',
     glyph: '🤝',
-    node: { x: 0, y: 2 },
-  }, balance.technologies.Commerce),
-  Militia: tech({
-    id: 'Militia',
-    name: 'Militia',
-    description: 'Unlocks the Swordsman — a sturdy front line for your army.',
-    glyph: '🗡️',
-    node: { x: 1, y: 1 },
-  }, balance.technologies.Militia),
+    node: { x: -2, y: 1 },
+  }, balance.technologies.Market),
+  CropRotation: tech({
+    id: 'CropRotation',
+    name: 'Crop Rotation',
+    description: 'Smarter fields — the Farm reaches level 2.',
+    glyph: '🔄',
+    node: { x: -4, y: 0 },
+  }, balance.technologies.CropRotation),
+  // ---- economics: stone side (upper left, row −1)
   Masonry: tech({
     id: 'Masonry',
     name: 'Masonry',
     description: 'Unlocks the Quarry — its workers cut Stone from nearby rocks.',
     glyph: '🧱',
-    node: { x: 1, y: 0 },
+    node: { x: -1, y: -1 },
   }, balance.technologies.Masonry),
-  Fishing: tech({
-    id: 'Fishing',
-    name: 'Fishing',
-    description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
-    glyph: '🎣',
-    node: { x: 0, y: -1 },
-  }, balance.technologies.Fishing),
   Mining: tech({
     id: 'Mining',
     name: 'Mining',
     description: 'Unlocks the Mine — its workers dig Iron, the army\'s metal.',
     glyph: '⛏️',
-    node: { x: 1, y: -1 },
+    node: { x: -2, y: -1 },
   }, balance.technologies.Mining),
+  Engineering: tech({
+    id: 'Engineering',
+    name: 'Engineering',
+    description: 'Cranes and gears — Quarry level 2 and Sawmill level 3.',
+    glyph: '⚙️',
+    node: { x: -1, y: -2 },
+  }, balance.technologies.Engineering),
+  DeepMining: tech({
+    id: 'DeepMining',
+    name: 'Deep Mining',
+    description: 'Braced shafts — the Mine reaches level 2.',
+    glyph: '🕯️',
+    node: { x: -3, y: -1 },
+  }, balance.technologies.DeepMining),
+  // ---- exploration (right)
+  Sailing: tech({
+    id: 'Sailing',
+    name: 'Sailing',
+    description: 'Rafts and rigging — sea cells can be explored.',
+    glyph: '⛵',
+    node: { x: 2, y: 0 },
+  }, balance.technologies.Sailing),
+  Fishing: tech({
+    id: 'Fishing',
+    name: 'Fishing',
+    description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
+    glyph: '🎣',
+    node: { x: 3, y: 0 },
+  }, balance.technologies.Fishing),
+  Shipbuilding: tech({
+    id: 'Shipbuilding',
+    name: 'Shipbuilding',
+    description: 'Sturdier hulls — the Docks reach level 2.',
+    glyph: '🛶',
+    node: { x: 4, y: 0 },
+  }, balance.technologies.Shipbuilding),
+  ScalingTools: tech({
+    id: 'ScalingTools',
+    name: 'Scaling Tools',
+    description: 'Ropes and pitons — mountain cells can be explored.',
+    glyph: '🧗',
+    node: { x: 1, y: 1 },
+  }, balance.technologies.ScalingTools),
+  // ---- military (down)
+  Warrior: tech({
+    id: 'Warrior',
+    name: 'Warrior',
+    description: 'Unlocks the Warrior — a sturdy front line for your army.',
+    glyph: '🗡️',
+    node: { x: 0, y: 2 },
+  }, balance.technologies.Warrior),
+  Spears: tech({
+    id: 'Spears',
+    name: 'Spears',
+    description: 'Unlocks the Lancer — long reach that keeps the line safe.',
+    glyph: '🔱',
+    node: { x: -1, y: 3 },
+  }, balance.technologies.Spears),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
     description: 'Unlocks the Archer — ranged support for your army.',
     glyph: '🏹',
-    node: { x: 2, y: 0 },
+    node: { x: 0, y: 3 },
   }, balance.technologies.Archery),
-  CavalryTraining: tech({
-    id: 'CavalryTraining',
-    name: 'Cavalry Training',
+  Cavalry: tech({
+    id: 'Cavalry',
+    name: 'Cavalry',
     description: 'Unlocks the Cavalry — fast, hard-hitting mounted units.',
     glyph: '🐎',
-    node: { x: 3, y: 1 },
-  }, balance.technologies.CavalryTraining),
+    node: { x: 1, y: 3 },
+  }, balance.technologies.Cavalry),
 };
 
 export const TECH_ORDER: TechId[] = [
-  'Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining',
-  'Masonry', 'Fishing', 'Mining',
+  'Forestry',
+  'UrbanPlanning', 'Communities', 'Architecture',
+  'Agriculture', 'Farming', 'Market', 'CropRotation',
+  'Masonry', 'Mining', 'Engineering', 'DeepMining',
+  'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
+  'Warrior', 'Spears', 'Archery', 'Cavalry',
 ];
 
 // Slots & gem pricing for extra slots.
@@ -477,10 +574,6 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     id: 'TapPower', name: 'Tap Power', glyph: '👆',
     description: '+1 resource per collect tap',
   }, balance.upgrades.TapPower),
-  QuickHands: upgrade({
-    id: 'QuickHands', name: 'Quick Hands', glyph: '⚡',
-    description: '−0.05s collect cooldown',
-  }, balance.upgrades.QuickHands),
   WorkerLoad: upgrade({
     id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
     description: '+1 resource per worker delivery',
@@ -508,7 +601,7 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
 };
 
 export const UPGRADE_ORDER: UpgradeId[] = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'TapPower', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
   'Stonecutting', 'BigNets', 'IronPicks',
 ];
 
@@ -530,6 +623,24 @@ export interface UnitDef {
 }
 
 export const UNITS: Record<UnitId, UnitDef> = {
+  Warrior: {
+    id: 'Warrior',
+    name: 'Warrior',
+    description: 'Sturdy front line.',
+    glyph: '⚔️',
+    tags: ['Melee'],
+    requiredTech: 'Warrior',
+    ...balance.units.Warrior,
+  },
+  Lancer: {
+    id: 'Lancer',
+    name: 'Lancer',
+    description: 'Long reach that keeps the line safe.',
+    glyph: '🔱',
+    tags: ['Melee'],
+    requiredTech: 'Spears',
+    ...balance.units.Lancer,
+  },
   Archer: {
     id: 'Archer',
     name: 'Archer',
@@ -539,27 +650,18 @@ export const UNITS: Record<UnitId, UnitDef> = {
     requiredTech: 'Archery',
     ...balance.units.Archer,
   },
-  Swordsman: {
-    id: 'Swordsman',
-    name: 'Swordsman',
-    description: 'Sturdy front line.',
-    glyph: '⚔️',
-    tags: ['Melee'],
-    requiredTech: 'Militia',
-    ...balance.units.Swordsman,
-  },
   Cavalry: {
     id: 'Cavalry',
     name: 'Cavalry',
     description: 'Fast and hard-hitting.',
     glyph: '🐎',
     tags: ['Mounted', 'Melee'],
-    requiredTech: 'CavalryTraining',
+    requiredTech: 'Cavalry',
     ...balance.units.Cavalry,
   },
 };
 
-export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
+export const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 15; // v14 saves predate discoveries; discarded
+export const SAVE_VERSION = 16; // v15 saves predate the reshaped tech tree; discarded

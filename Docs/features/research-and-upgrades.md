@@ -60,18 +60,32 @@ Everything numeric lives in the balance workbook:
 - Settings: `research.tech_slots`, `research.max_slots`,
   `research.slot_gem_cost_base`, `research.slot_gem_cost_growth`.
 
-Initial tree (all roads lead from Forestry):
+The tree: **Forestry** is the root (Sawmill; upgrades TapPower, QuickHands,
+WorkerLoad), and four themed branches leave it:
 
-- **Forestry** (root; Sawmill) → upgrades TapPower, QuickHands, WorkerLoad
-- THE FOOD FORK — after Forestry the player picks a route (or both):
-  - **Agriculture** (FarmLands) → **Irrigation** (Farm)
-  - **Fishing** (the Docks + fishing boats) → upgrade Big Nets
-- **Commerce** (requires Forestry; Market building) → upgrades MarketStall
-  (+5% sale prices), TradeRoutes (+10% tax income)
-- **Militia** (requires Forestry; Swordsman)
-- **Masonry** (requires Forestry; Quarry) → upgrade Stonecutting; →
-  **Mining** (Mine, costs Stone) → upgrade Iron Picks
-- **Archery** (requires Forestry; Archer) → **CavalryTraining** (Cavalry)
+- **CIVICS (up)**: **Urban Planning** (Housing L2) → **Communities** (every
+  Housing +1 capacity) → **Architecture** (Townhall L3)
+- **ECONOMICS (left)** — two rows:
+  - farm side: **Agriculture** (FarmLands) → **Farming** (the Farm) →
+    **Crop Rotation** (Farm L2); Agriculture → **Market** (Market building;
+    upgrades MarketStall +5% sale prices, TradeRoutes +10% tax income)
+  - stone side: **Masonry** (Quarry; upgrade Stonecutting) → **Mining**
+    (Mine, costs Stone; upgrade Iron Picks) → **Deep Mining** (Mine L2);
+    Masonry → **Engineering** (Quarry L2, Sawmill L3)
+- **EXPLORATION (right)**: **Sailing** (sea cells become explorable) →
+  **Fishing** (the Docks + fishing boats; upgrade Big Nets) →
+  **Shipbuilding** (Docks L2); Forestry → **Scaling Tools** (mountain cells
+  become explorable)
+- **MILITARY (down)**: **Warrior** (the Warrior unit) → **Spears** (Lancer),
+  **Archery** (Archer), **Cavalry** (Cavalry)
+
+Exploration gates: `revealTap` refuses (`TechLocked`) to reveal Water cells
+before Sailing and Mountain cells before Scaling Tools — building fog radii
+ignore the gate. Mountains (the northern iron ridge, the eastern rocky peaks,
+and foothills beside the home island's rock deposits) are unbuildable terrain,
+drawn with the `terrain_mountain.png` tile like any other biome.
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —
-layout is content. Upgrade circles auto-fan below their parent.
+layout is content; cells (−1,0) and (1,0) stay empty so the branch trunks can
+elbow through them without crossing nodes. Upgrade circles auto-fan below
+their parent.

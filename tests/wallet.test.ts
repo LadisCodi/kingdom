@@ -41,9 +41,9 @@ describe('food-valued currencies', () => {
     expect(queueTraining(state, T0)).toBe('Queued'); // pays 3 Berries up front
     expect(state.city.wallet).toEqual({ Berries: 1, Meat: 2 });
 
-    fund(state, { Gold: 100, Meat: 7, Iron: 10 }); // fund SETS: Meat 7 + 1 Berry left
-    completeTech(state, 'Militia'); // the Swordsman sits behind it now
-    expect(trainUnit(state, 'Swordsman')).toBe('Trained'); // 50 Gold + 20 Food + 10 Iron
+    fund(state, { Gold: 100, Wood: 10, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
+    completeTech(state, 'Warrior'); // the Warrior sits behind it now
+    expect(trainUnit(state, 'Warrior')).toBe('Trained'); // 50 Gold + 10 Wood + 20 Food
     // 1 Berry + all 7 Meat (21) cover the 20 → 2 Food back as change.
     expect(getWallet(state.city.wallet, 'Berries')).toBe(0);
     expect(getWallet(state.city.wallet, 'Meat')).toBe(0);

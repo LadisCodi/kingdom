@@ -6,7 +6,7 @@ import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
 import { isTechComplete } from './research';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
-  type Coord, type DistrictId, type GameState, type Wallet,
+  type Coord, type DistrictId, type GameState, type TechId, type Wallet,
 } from './state';
 
 // ------------------------------------------------------------------ counting
@@ -45,6 +45,8 @@ export function placementBlock(
     if (districtAt(state, c)) return 'Occupied';
     // Only the Docks (which checks its own land+water mix) may touch Water.
     if (definitionId !== 'Docks' && map.terrain.get(coordKey(c)) === 'Water') return 'NeedsLand';
+    // Nothing builds on a Mountain — it's territory to explore, not settle.
+    if (map.terrain.get(coordKey(c)) === 'Mountain') return 'NeedsLand';
   }
   if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
     return 'CountLimit';
@@ -165,4 +167,14 @@ export function requiredTownhallLevel(definitionId: DistrictId, targetLevel: num
   const list = DISTRICTS[definitionId].requiredTownhallLevelPerLevel;
   if (targetLevel <= 1 || list.length === 0) return 0;
   return levelIndexed(list, targetLevel - 1); // list is indexed by target level − 2
+}
+
+/** Technology required to reach `targetLevel`; null = none (same indexing). */
+export function requiredTechForLevel(
+  definitionId: DistrictId,
+  targetLevel: number,
+): TechId | null {
+  const list = DISTRICTS[definitionId].requiredTechPerLevel;
+  if (targetLevel <= 1 || list.length === 0) return null;
+  return levelIndexed(list, targetLevel - 1);
 }

@@ -3,9 +3,10 @@
 import { DISTRICTS, FOG } from './data/definitions';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { recordQuestEvent } from './quests';
+import { isTechComplete } from './research';
 import {
   addToWallet, coordKey, districtCells, getWallet,
-  type Coord, type District, type GameState,
+  type Coord, type District, type GameState, type TechId,
 } from './state';
 
 export type FogState = 'Revealed' | 'Discovered' | 'Undiscovered';
@@ -42,11 +43,22 @@ export function revealCost(d: number): number {
 export const revealCostForCell = (map: MapData, cell: Coord): number =>
   revealCost(townhallDistance(map, cell));
 
-export type RevealTapResult = 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotEnoughGold';
+/** Exploration gates: sea and mountain cells need their tech before the
+ *  player can pay to reveal them (building fog radii ignore this). */
+export function explorationGate(map: MapData, cell: Coord): TechId | null {
+  const terrain = map.terrain.get(coordKey(cell));
+  if (terrain === 'Water') return 'Sailing';
+  if (terrain === 'Mountain') return 'ScalingTools';
+  return null;
+}
+
+export type RevealTapResult = 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotEnoughGold' | 'TechLocked';
 
 /** One tap on a Discovered cell: pay min(goldPerTap, remaining) toward its reveal. */
 export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTapResult {
   if (fogState(state, map, cell) !== 'Discovered') return 'NotDiscovered';
+  const gate = explorationGate(map, cell);
+  if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
   const key = coordKey(cell);
   const total = revealCostForCell(map, cell);
   const paid = state.fog.progress[key] ?? 0;

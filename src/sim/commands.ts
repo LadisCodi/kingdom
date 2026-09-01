@@ -4,7 +4,8 @@
 import { CITY_DEF, DISTRICTS, TRAINING } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
-  districtCount, placementBlock, requiredTownhallLevel, upgradeCost, upgradeDuration,
+  districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
+  upgradeCost, upgradeDuration,
 } from './districts';
 import { revealAroundDistrict } from './fog';
 import type { MapData } from './grid';
@@ -13,7 +14,7 @@ import {
 } from './harvest';
 import { advanceCityLife } from './population';
 import { advanceQueue } from './queue';
-import { advanceResearch } from './research';
+import { advanceResearch, isTechComplete } from './research';
 import { canAfford, effectiveAmount, pay, refund } from './wallet';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
@@ -75,6 +76,8 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   if (townhall(state).level < requiredTownhallLevel(district.definitionId, district.level + 1)) {
     return 'RequirementsNotMet';
   }
+  const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
+  if (gateTech !== null && !isTechComplete(state, gateTech)) return 'RequirementsNotMet';
   if (state.city.queue.length >= CITY_DEF.buildQueueCapacity) return 'QueueFull';
   const cost = upgradeCost(district.definitionId, districtCount(state, district.definitionId), district.level);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
@@ -155,7 +158,7 @@ export function finishWithGems(
 
 // ------------------------------------------------------------------- workers
 
-export type AssignWorkerResult = 'Assigned' | 'Unassigned' | 'NoFreeWorkers' | 'NoMoreTiles' | 'NotAWorkerDistrict' | 'NoWorkers';
+export type AssignWorkerResult = 'Assigned' | 'Unassigned' | 'NoFreeWorkers' | 'AtCapacity' | 'NotAWorkerDistrict' | 'NoWorkers';
 
 export function changeWorkers(
   state: GameState,
@@ -171,7 +174,7 @@ export function changeWorkers(
   if (delta === 1) {
     const assigned = state.city.districts.reduce((s, d) => s + d.assignedWorkers, 0);
     if (state.city.population - assigned < 1) return 'NoFreeWorkers';
-    if (district.assignedWorkers >= assignableWorkerLimit(state, map, district)) return 'NoMoreTiles';
+    if (district.assignedWorkers >= assignableWorkerLimit(district)) return 'AtCapacity';
     addWorker(state, map, district, now);
     return 'Assigned';
   }

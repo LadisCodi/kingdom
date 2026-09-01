@@ -9,16 +9,18 @@ import { getWallet, type GameState } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
-// (2,1)'s only adjacent tree is (2,2); (2,3) sits at radius 2.
+// Sawmill at (2,1): the L1 area (radius 2) reaches (2,2) and (2,3);
+// (4,4) sits at radius 3 and needs a level-2 sawmill.
 const SAWMILL_CELL = { x: 2, y: 1 };
-const FOREST_A = { x: 2, y: 2 }; // the sawmill's ONLY radius-1 tree
-const FOREST_B = { x: 2, y: 3 }; // radius-2 — needs a level-2 sawmill
+const FOREST_A = { x: 2, y: 2 }; // radius 1 — inside the completion's fog-reveal ring
+const FOREST_B = { x: 2, y: 3 }; // radius 2 — still in the L1 area
+const FOREST_C = { x: 4, y: 4 }; // radius 3 — needs a level-2 sawmill
 
 // One harvest cycle from an adjacent (orthogonal) cell:
 // 2 × (1 / speed) move + workSeconds.
 const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSeconds * 1000;
 
-const builtSawmill = (state: GameState) => {
+const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   fund(state, { Gold: 500, Wood: 500 });
   completeTech(state, 'Forestry'); // the Sawmill sits behind this tech now
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
@@ -26,7 +28,7 @@ const builtSawmill = (state: GameState) => {
   // (The sawmill's own completion re-reveals its radius-1 ring.)
   state.fog.revealed = {};
   state.fog.discovered = {};
-  reveal(state, [SAWMILL_CELL, FOREST_A, FOREST_B]);
+  reveal(state, [SAWMILL_CELL, ...forests]);
   expect(enqueueBuild(state, map, 'Sawmill', SAWMILL_CELL)).toBe('Started');
   tickAt(state, T0);
   tickAt(state, T0 + 30_000); // build takes 23s
@@ -36,20 +38,33 @@ const builtSawmill = (state: GameState) => {
 };
 
 describe('area of influence & worker limit', () => {
-  it('radius by level: L1 sees only the adjacent forest; L2 also the far one', () => {
+  it('radius by level: L1 reaches the two near forests; L2 also the far one', () => {
     const state = freshGame();
-    const sawmill = builtSawmill(state);
-    expect(workableCells(state, map, sawmill)).toHaveLength(1);
-    expect(assignableWorkerLimit(state, map, sawmill)).toBe(1); // min(3, 1)
-    sawmill.level = 2;
+    const sawmill = builtSawmill(state, [FOREST_A, FOREST_B, FOREST_C]);
     expect(workableCells(state, map, sawmill)).toHaveLength(2);
-    expect(assignableWorkerLimit(state, map, sawmill)).toBe(2); // min(5, 2)
+    expect(assignableWorkerLimit(sawmill)).toBe(3); // per-level cap — cells don't limit
+    sawmill.level = 2;
+    expect(workableCells(state, map, sawmill)).toHaveLength(3);
+    expect(assignableWorkerLimit(sawmill)).toBe(5);
+  });
+
+  it('workers beyond the workable cells are assignable and wait Idle', () => {
+    const state = freshGame();
+    state.city.population = 5;
+    const sawmill = builtSawmill(state, [FOREST_A]); // L1: cap 3, one workable cell
+    const start = state.lastAdvance;
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, start)).toBe('Assigned');
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, start)).toBe('Assigned');
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, start)).toBe('Assigned');
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, start)).toBe('AtCapacity');
+    expect(state.workers.filter((w) => w.activity === 'Idle')).toHaveLength(2);
+    expect(state.workers.filter((w) => w.claimedCell !== null)).toHaveLength(1);
   });
 
   it('unrevealed forest cells do not count', () => {
     const state = freshGame();
     const sawmill = builtSawmill(state);
-    sawmill.level = 3; // radius 3 reaches many authored Trees, but only revealed ones count
+    sawmill.level = 3; // radius 4 reaches many authored Trees, but only revealed ones count
     expect(workableCells(state, map, sawmill)).toHaveLength(2);
   });
 });
@@ -94,7 +109,7 @@ describe('the harvest cycle', () => {
   it('delivery that exhausts the only cell sends the worker Idle until recovery', () => {
     const state = freshGame();
     state.city.population = 3;
-    const sawmill = builtSawmill(state);
+    const sawmill = builtSawmill(state, [FOREST_A]);
     const start = state.lastAdvance;
     // Player taps the forest 9 times; the worker's delivery is the 10th.
     for (let i = 0; i < 9; i++) expect(tapCell(state, map, FOREST_A, start)).toBe('Harvested');
@@ -112,7 +127,7 @@ describe('the harvest cycle', () => {
   it('cell exhausted en route: worker returns empty-handed', () => {
     const state = freshGame();
     state.city.population = 3;
-    const sawmill = builtSawmill(state);
+    const sawmill = builtSawmill(state, [FOREST_A]);
     const start = state.lastAdvance;
     const woodBefore = getWallet(state.city.wallet, 'Wood');
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
@@ -142,8 +157,7 @@ describe('the harvest cycle', () => {
   it('two workers claim distinct cells', () => {
     const state = freshGame();
     state.city.population = 5;
-    const sawmill = builtSawmill(state);
-    sawmill.level = 2; // reach both forests
+    const sawmill = builtSawmill(state); // L1 reaches both forests
     const start = state.lastAdvance;
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
@@ -156,8 +170,7 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity 1 each
-    addBuilt(state, 'Housing', { x: 0, y: -1 });
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // L1 capacity 2
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
@@ -199,7 +212,7 @@ describe('Townhall villager training', () => {
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('AtMax'); // no Housing yet
     addBuilt(state, 'Housing', { x: 2, y: 0 });
-    state.city.population = 1; // the Housing (capacity 1) is full
+    state.city.population = 2; // the Housing (L1 capacity 2) is full
     expect(queueTraining(state, T0)).toBe('AtMax');
   });
 });

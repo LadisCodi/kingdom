@@ -35,14 +35,12 @@ export function workableCells(state: GameState, map: MapData, district: District
   );
 }
 
-/** min(per-level worker cap, workable cells in range). */
-export function assignableWorkerLimit(state: GameState, map: MapData, district: District): number {
+/** The per-level worker cap. Workable cells in range don't limit assignment —
+ *  workers beyond the available cells simply wait Idle. */
+export function assignableWorkerLimit(district: District): number {
   const def = DISTRICTS[district.definitionId];
   if (def.maxWorkersPerLevel.length === 0) return 0;
-  return Math.min(
-    levelIndexed(def.maxWorkersPerLevel, district.level),
-    workableCells(state, map, district).length,
-  );
+  return levelIndexed(def.maxWorkersPerLevel, district.level);
 }
 
 // ------------------------------------------------------------------------ claims

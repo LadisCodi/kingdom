@@ -3,9 +3,8 @@
 // populationCapacity). Pure cosmetics, render-side only — nothing here
 // touches sim state or the save; the flock rebuilds from scratch on reload.
 
-import { DISTRICTS } from '../sim/data/definitions';
 import type { MapData } from '../sim/grid';
-import { availableWorkers } from '../sim/population';
+import { availableWorkers, districtCapacity } from '../sim/population';
 import {
   coordKey, districtAt, districtSize,
   type Coord, type District, type GameState,
@@ -27,6 +26,14 @@ interface Agent {
   legStartedAt: number;
   legEndsAt: number;
   pauseUntil: number; // stand at `to` until then, then pick a new leg
+  phase: number; // ms offset so walk cycles don't sync across the flock
+}
+
+/** A draw position plus what the renderer needs to animate the stroll. */
+export interface VillagerPose extends Coord {
+  walking: boolean;
+  dx: number; // sign of horizontal travel while walking (for mirroring)
+  phase: number;
 }
 
 /** Open cells ringing the home footprint (1..WANDER_RADIUS away): existing
@@ -69,11 +76,11 @@ function pickTarget(state: GameState, map: MapData, home: District): Coord {
 export class Villagers {
   private agents: Agent[] = [];
 
-  /** Advance the flock and return draw positions in fractional cell coords. */
-  positions(state: GameState, map: MapData, now: number): Coord[] {
+  /** Advance the flock and return draw poses in fractional cell coords. */
+  positions(state: GameState, map: MapData, now: number): VillagerPose[] {
     const homes = state.city.districts.filter((d) =>
       d.state === 'Built' &&
-      (d.definitionId === 'Townhall' || DISTRICTS[d.definitionId].populationCapacity > 0));
+      (d.definitionId === 'Townhall' || districtCapacity(state, d) > 0));
     const idle = availableWorkers(state);
     if (homes.length === 0 || idle <= 0) {
       this.agents = [];
@@ -88,6 +95,7 @@ export class Villagers {
       this.agents.push({
         home: home.uniqueId, from: at, to: at,
         legStartedAt: now, legEndsAt: now, pauseUntil: now + rand(0, PAUSE_MAX_MS),
+        phase: Math.floor(rand(0, 997)),
       });
     }
 
@@ -108,11 +116,16 @@ export class Villagers {
         a.legEndsAt = now + (dist / rand(SPEED_MIN, SPEED_MAX)) * 1000;
         a.pauseUntil = a.legEndsAt + rand(PAUSE_MIN_MS, PAUSE_MAX_MS);
       }
-      if (now >= a.legEndsAt) return a.to; // standing
+      if (now >= a.legEndsAt) { // standing
+        return { ...a.to, walking: false, dx: 0, phase: a.phase };
+      }
       const t = (now - a.legStartedAt) / (a.legEndsAt - a.legStartedAt);
       return {
         x: a.from.x + (a.to.x - a.from.x) * t,
         y: a.from.y + (a.to.y - a.from.y) * t,
+        walking: true,
+        dx: a.to.x - a.from.x,
+        phase: a.phase,
       };
     });
   }

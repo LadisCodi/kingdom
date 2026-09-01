@@ -18,7 +18,7 @@ describe('passive tax gold', () => {
   it('accrues whole units: rate × housed population per minute', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
-    addBuilt(state, 'Housing', HOUSE2); // capacity is 1 per house
+    addBuilt(state, 'Housing', HOUSE2); // capacity is 2 per house
     state.city.population = 2; // 2 housed × 30/min → 1 Gold every second
     expect(TAXES.goldPerPopulationPerMinute).toBe(30);
     tickAt(state, T0 + 900);
@@ -36,8 +36,8 @@ describe('passive tax gold', () => {
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
     // Housing arrives late: taxes start from then, not retroactively.
     addBuilt(state, 'Housing', HOUSE);
-    tickAt(state, T0 + 600_000 + 30_000); // 1 housed (capacity 1) → 30/min
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(15);
+    tickAt(state, T0 + 600_000 + 30_000); // 2 housed (capacity 2) → 60/min
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(30);
   });
 
   it('one-call replay (with a training completion mid-window) matches stepped ticking', () => {
@@ -65,15 +65,16 @@ describe('tapping a house', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     addBuilt(state, 'Housing', HOUSE2);
-    state.city.population = 2; // 60/min → 1s per gold; boost = 5s per tap
-    expect(TAXES.tapBoostSeconds).toBe(5);
-    expect(houseTap(state, house(state), T0)).toEqual({ result: 'Boosted', gold: 5 });
+    state.city.population = 2; // 60/min → 1s per gold; boost = 2s per tap
+    expect(TAXES.tapBoostSeconds).toBe(2);
+    expect(houseTap(state, house(state), T0)).toEqual({ result: 'Boosted', gold: 2 });
     // Paced by the shared collect cooldown (0.5s).
     expect(houseTap(state, house(state), T0).result).toBe('OnCooldown');
-    expect(houseTap(state, house(state), T0 + 500)).toEqual({ result: 'Boosted', gold: 5 });
-    // 5s boost + the 1s of real time since T0 → 6 whole gold this time.
-    expect(houseTap(state, house(state), T0 + 1000)).toEqual({ result: 'Boosted', gold: 6 });
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(16);
+    // 2s boost + 0.5s of real time → 2 whole gold, 0.5s carried.
+    expect(houseTap(state, house(state), T0 + 500)).toEqual({ result: 'Boosted', gold: 2 });
+    // 2s boost + the carried 0.5s + another 0.5s real → 3 whole gold.
+    expect(houseTap(state, house(state), T0 + 1000)).toEqual({ result: 'Boosted', gold: 3 });
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(7);
   });
 
   it('an empty house cannot be boosted, and houses are not harvest cells', () => {

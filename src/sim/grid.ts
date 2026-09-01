@@ -1,6 +1,6 @@
-// Square-grid map math. 8-neighbor (Moore) adjacency is used uniformly for fog
-// discovery, placement adjacency, worked-unit connectivity, and BFS distance
-// (user decision — replaces the Unity hex grid's 6-neighbor adjacency).
+// Square-grid map math. 4-neighbor (Von Neumann) adjacency is used uniformly
+// for fog discovery, placement adjacency, worked-unit connectivity, and BFS
+// distance (user decision — diagonals do not count as adjacent).
 
 import { DISTRICTS } from './data/definitions';
 import regionMap from './data/region-map.json';
@@ -8,7 +8,6 @@ import { cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type 
 
 const NEIGHBOR_OFFSETS: ReadonlyArray<Coord> = [
   { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
-  { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 },
 ];
 
 export interface MapData {
@@ -67,7 +66,7 @@ export function buildMapData(): MapData {
 export const cellExists = (map: MapData, cell: Coord): boolean =>
   map.terrain.has(coordKey(cell));
 
-/** The (up to 8) neighbors of a cell that exist on the map. */
+/** The (up to 4) orthogonal neighbors of a cell that exist on the map. */
 export function neighbors(map: MapData, cell: Coord): Coord[] {
   const out: Coord[] = [];
   for (const off of NEIGHBOR_OFFSETS) {

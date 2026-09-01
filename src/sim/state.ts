@@ -11,16 +11,20 @@ export type CurrencyId =
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Mine';
-export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
+export type TerrainId =
+  | 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water' | 'Mountain';
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
 export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';
-export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
+export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 export type TechId =
-  | 'Agriculture' | 'Irrigation' | 'Forestry' | 'Commerce'
-  | 'Militia' | 'Archery' | 'CavalryTraining'
-  | 'Masonry' | 'Fishing' | 'Mining';
+  | 'Forestry'
+  | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
+  | 'Agriculture' | 'Farming' | 'Market' | 'CropRotation' // economics: farm side
+  | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
+  | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration (right)
+  | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry'; // military (down)
 export type UpgradeId =
-  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
+  | 'TapPower' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
   | 'Stonecutting' | 'BigNets' | 'IronPicks';
 
 export interface Coord { x: number; y: number }

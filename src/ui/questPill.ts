@@ -1,36 +1,28 @@
-// The quest pill: a slim tappable strip under the header showing the active
-// quest and its progress ("📜 Timber! 4/10"). Tapping expands a small card
-// with the description, a progress bar, and the reward; when the goal is met
-// the pill pulses and the card's button becomes Claim.
+// The quest tracker: an always-open card under the header showing the active
+// quest — name, description, progress bar, and reward. It belongs to the main
+// screen only: while any menu, panel, or placement mode is on top it hides,
+// reappearing when the player dismisses back to the map.
 
 import { icon, type Game } from '../game';
-import type { CurrencyId, Wallet } from '../sim/state';
+import type { QuestDef } from '../sim/data/definitions';
+import type { CurrencyId } from '../sim/state';
 import { button, el } from './format';
 
-let expanded = false; // survives the per-tick re-render
-
-const rewardText = (reward: Wallet): string =>
-  Object.entries(reward).map(([c, n]) => `${n} ${icon(c as CurrencyId)}`).join(' · ');
+const rewardText = (quest: QuestDef): string =>
+  Object.entries(quest.reward).map(([c, n]) => `${n} ${icon(c as CurrencyId)}`)
+    .concat(quest.rewardGems > 0 ? [`${quest.rewardGems} ${icon('Gems')}`] : [])
+    .join(' · ');
 
 export function mountQuestPill(game: Game, root: HTMLElement): void {
   const refresh = () => {
     root.replaceChildren();
+    if (game.dismissible()) return; // something is on top of the main screen
     const info = game.questInfo();
-    if (info === null) return; // chain finished — the pill retires
+    if (info === null) return; // chain finished — the tracker retires
     const { quest, value, complete } = info;
 
-    const pill = el('button', { class: `quest-pill${complete ? ' cta' : ''}` },
-      el('span', {}, `📜 ${quest.name}`),
-      el('span', { class: 'muted' },
-        complete ? '✓' : ` ${value}/${quest.goalAmount}`));
-    pill.addEventListener('click', () => {
-      expanded = !expanded;
-      game.notify();
-    });
-    root.append(pill);
-
-    if (!expanded) return;
     const card = el('div', { class: 'quest-card' },
+      el('div', { class: 'name' }, `📜 ${quest.name}`),
       el('div', { class: 'muted' }, quest.description));
     const bar = el('div', { class: 'progress' },
       el('div', { class: 'fill' }),
@@ -40,14 +32,11 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     card.append(bar);
     // Complete → Claim; otherwise 🔍 navigates to where the quest is done.
     const actionBtn = complete
-      ? button('Claim', () => game.doClaimQuest())
-      : button('🔍', () => {
-          expanded = false; // get the menus/camera in view
-          game.focusQuest();
-        });
+      ? button('Claim', () => game.doClaimQuest(), 'cta')
+      : button('🔍', () => game.focusQuest());
     if (!complete) actionBtn.setAttribute('aria-label', 'Show me where');
     card.append(el('div', { class: 'action-row' },
-      el('span', { class: 'info' }, `Reward: ${rewardText(quest.reward)}`),
+      el('span', { class: 'info' }, `Reward: ${rewardText(quest)}`),
       actionBtn));
     root.append(card);
   };

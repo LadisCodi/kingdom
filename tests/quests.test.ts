@@ -9,18 +9,33 @@ import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet } from '../src/sim/state';
+import { getWallet, townhall } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
 
 const FOREST = { x: 2, y: 2 };
 
 describe('the quest chain', () => {
-  it('ships 18 quests, starting with the tap tutorial', () => {
-    expect(QUESTS).toHaveLength(18);
+  it('ships 27 quests, starting with the tap tutorial', () => {
+    expect(QUESTS).toHaveLength(27);
     expect(QUESTS.findIndex((q) => q.id === 'Rations'))
       .toBe(QUESTS.findIndex((q) => q.id === 'FirstVillager') - 1); // food before mouths
     expect(QUESTS[0]).toMatchObject({ id: 'FirstSteps', goalType: 'CollectTaps', goalAmount: 5 });
     expect(QUESTS[1]).toMatchObject({ id: 'Timber', goalType: 'HoldResource', goalTarget: 'Wood' });
+    // The army needs no Iron anymore, but it still belongs to the TH2 era.
+    expect(QUESTS.findIndex((q) => q.id === 'FirstSoldier'))
+      .toBeGreaterThan(QUESTS.findIndex((q) => q.id === 'ProperCapital'));
+    expect(QUESTS.at(-1)).toMatchObject(
+      { id: 'GrandCapital', goalType: 'UpgradeDistrict', goalLevel: 3, rewardGems: 10 });
+  });
+
+  it('gem rewards land in the PLAYER wallet', () => {
+    const state = freshGame();
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'GrandCapital');
+    townhall(state).level = 3;
+    const before = getWallet(state.player.wallet, 'Gems');
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(before + 10);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(300);
   });
 
   it('quests 1→2 overlap: tutorial taps count toward the wood stockpile', () => {

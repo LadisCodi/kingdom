@@ -102,18 +102,14 @@ button.switch.on::after { transform: translateX(22px); }
 @keyframes notice-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes notice-out { to { transform: translateY(-16px); opacity: 0; } }
 
-/* ---------- quest pill (under the header) ---------- */
-/* Above #overlay (5) so the tracker never disappears behind menus. */
-#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; position: relative; z-index: 6; }
-.quest-pill {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 12px; font-size: 13px; border-radius: 999px;
-  background: rgba(20, 26, 35, 0.92);
-}
+/* ---------- quest tracker (under the header, main screen only) ---------- */
+/* Hidden while menus/panels are open (the widget unmounts), so no z-index games. */
+#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
 .quest-card {
-  margin-top: 6px; padding: 10px 12px; max-width: 320px; font-size: 13px;
+  padding: 10px 12px; max-width: 320px; font-size: 13px;
   background: rgba(20, 26, 35, 0.96); border: 1px solid #3a4757; border-radius: 10px;
 }
+.quest-card .name { font-weight: 600; margin-bottom: 2px; }
 .quest-card .action-row { margin-top: 8px; }
 
 /* ---------- bottom panel (placement / district card) ---------- */
@@ -144,8 +140,8 @@ button.switch.on::after { transform: translateX(22px); }
 #overlay {
   position: absolute; inset: 0; background: rgba(10, 13, 18, 0.88);
   overflow-y: auto; z-index: 5;
-  /* top clears the header + the always-visible quest pill; bottom the navbar */
-  padding: 104px 16px calc(80px + env(safe-area-inset-bottom));
+  /* top clears the header (the quest tracker hides while a menu is open); bottom the navbar */
+  padding: 64px 16px calc(80px + env(safe-area-inset-bottom));
 }
 .menu { max-width: 560px; margin: 0 auto; }
 .menu h2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -165,12 +161,22 @@ button.switch.on::after { transform: translateX(22px); }
 .amount-row { display: flex; align-items: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
 .amount-row button { padding: 6px 10px; font-size: 13px; }
 .amount-row button.selected { background: #3d6f3d; border-color: #58a058; }
-/* Tech tree: pannable canvas, icon nodes, dotted connectors. */
-.tech-tree {
-  overflow: auto; height: 38vh; margin: 10px 0; border-radius: 10px;
-  background: #12181f; border: 1px solid #2a3442;
+/* Research: fullscreen drag-pannable tree + floating bottom info panel. */
+.research-screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+.research-topbar {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  background: rgba(16, 21, 28, 0.92); border-bottom: 1px solid #2a3442;
 }
-.tech-canvas { position: relative; }
+.research-topbar h2 { font-size: 18px; }
+.research-topbar .action-row { margin-top: 0; flex: 1; font-size: 13px; }
+/* Tech tree: pans by dragging (mouse or touch) in both axes; wheel works too. */
+.tech-tree {
+  flex: 1; overflow: auto; display: grid; background: #12181f;
+  touch-action: none; cursor: grab; scrollbar-width: none;
+}
+.tech-tree::-webkit-scrollbar { display: none; }
+/* margin auto centers the small early-game tree; a grown tree scrolls normally. */
+.tech-canvas { position: relative; margin: auto; }
 .tech-edges { position: absolute; inset: 0; }
 .tech-edge { fill: none; stroke: #3a4757; stroke-width: 3; stroke-dasharray: 4 5; }
 .tech-edge.open { stroke: #58a058; }
@@ -203,7 +209,15 @@ button.switch.on::after { transform: translateX(22px); }
   background: rgba(0, 0, 0, 0.55); border-radius: 2px; overflow: hidden;
 }
 .tech-node .node-bar .fill { height: 100%; background: #8ab4d8; }
-.tech-info { margin-top: 4px; }
+/* Floating card above the navbar; mounted only while a node is selected. */
+.tech-info {
+  position: absolute; left: 10px; right: 10px;
+  bottom: calc(68px + env(safe-area-inset-bottom));
+  max-height: 40%; overflow-y: auto; z-index: 6;
+  background: rgba(20, 26, 35, 0.96); border: 1px solid #3a4757;
+  border-radius: 12px; padding: 12px 14px; font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
 .tech-info h3 { margin-bottom: 4px; }
 /* Upgrade level pips */
 .pips { display: flex; gap: 4px; margin: 4px 0; }

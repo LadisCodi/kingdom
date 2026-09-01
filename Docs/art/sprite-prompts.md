@@ -31,7 +31,7 @@ out, like a Civilization map:
   chopping block), level 3 reaches the reference's cozy medieval look. The
   Townhall literally starts as a campfire.
 
-Target: square PNGs with transparent background, downscaled to ~128×128
+Target: square PNGs without background, downscaled to ~128×128
 before dropping into `src/render/assets/`.
 
 ## Proven workflow (used for the v2 set, 2026-09-01)
@@ -196,11 +196,16 @@ brown stubble rows, cracked pale soil, one wilted plant."
 
 ## 5. Sawmill / Lumber — 3 levels
 
-`sawmill_l1.png`:
+`sawmill_l1.png` (v3, 2026-09-01 — the v2 "no building" camp read as a
+chopped-trees feature, indistinguishable from the exhausted forest):
 
-> [style block] Scene: a primitive logging camp — a chopping block with an
-> axe stuck in it, a small pile of three logs, two fresh tree stumps, wood
-> chips scattered. No building at all.
+> [style block] Scene: a primitive logging camp that clearly reads as a
+> small BUILT structure, not just felled trees — a rough open lean-to
+> shelter (a slanted roof of rough wooden planks held up by two log posts,
+> open sides) sheltering a chopping block with an axe stuck in it; beside
+> it a small neat pile of three logs, one fresh tree stump, wood chips
+> scattered. The lean-to is cruder and smaller than a proper hut — the
+> tier BELOW the level-2 workbench hut.
 
 `sawmill_l2.png`:
 
@@ -247,6 +252,49 @@ Drawn at ~60% of a tile, so keep it extra simple:
 
 *Carrying variant:* "Same villager carrying a bulging brown sack over the
 shoulder, leaning slightly forward."
+
+## 7b. Worker animation frames
+
+The renderer animates units when frame files exist (see mapping below);
+every frame falls back to the static sprite, so partial sets are fine.
+Generated as 2×2 sheets in the same conversation, with extra registration
+demands — paste this block before each animation sheet prompt:
+
+> CRITICAL for animation: the character must be IDENTICAL in all four
+> quadrants — same size, same colors, same position, facing the same
+> direction, feet standing on the same baseline in every frame; ONLY the
+> arms and legs (and the tool) change between frames.
+
+Sheets (frames in reading order TL, TR, BL, BR):
+
+- **Walk cycle** → `worker_walk_1..4.png`: (1) right leg forward, left
+  arm forward; (2) legs passing, arms at sides; (3) left leg forward,
+  right arm forward; (4) legs passing again. ✅ generated
+- **Carrying walk** → `worker_carry_1..4.png`: same four poses with the
+  bulging brown sack held rigid over the left shoulder. ✅ generated
+- **Chop + mine** → `worker_chop_1/2.png`, `worker_mine_1/2.png`: top row
+  a 2-frame axe loop (raised / struck low with wood chips), bottom row a
+  2-frame pickaxe loop (raised / struck low with stone chips).
+  ⏳ pending (ChatGPT Work quota)
+- **Farm + row** → `worker_farm_1/2.png`, `fishing_boat_row_1/2.png`: top
+  row a 2-frame sickle loop (raised / swung low with straw bits), bottom
+  row the fishing boat with oars swept back / forward plus tiny ripples.
+  ⏳ pending (ChatGPT Work quota)
+
+**Processing**: frames of one loop must NOT be normalized per-frame (bbox
+jitter) — use `originals/v2-sheets/anim_norm.fish`, which gives the whole
+group one common scale and plants every frame's feet on a shared baseline:
+`fish anim_norm.fish sheet.png 0.90 worker_walk_1.png:tl … worker_walk_4.png:br`.
+The static `worker.png` / `worker_carrying.png` are copies of each cycle's
+neutral passing frame (frame 2), so stopping never pops the character.
+
+**Runtime mapping** (`mapRenderer.ts`): MovingToCell/MovingHome plays
+`worker_walk_*` (or `worker_carry_*` when carrying) at 140 ms/frame with a
+volume-preserving squash-and-stretch bounce per footfall, mirrored when
+the leg heads left; Working plays the 2-frame loop for the building's
+harvest source (Crops→farm, Forest→chop, Stone/Iron→mine) at 320 ms;
+boats play `fishing_boat_row_*` while moving and bob gently. Ambient
+villagers reuse the walk cycle.
 
 ## 8. Terrain tiles (seamless)
 

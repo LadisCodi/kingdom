@@ -10,6 +10,7 @@ import { Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
+import { TECH_ORDER } from './sim/data/definitions';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -115,7 +116,7 @@ async function boot(): Promise<void> {
     const terrain = map.terrain.get(coordKey(center));
     if (terrain === undefined) return lastBiome;
     lastBiome = terrain === 'Water' ? 'coast'
-      : terrain === 'Snow' || terrain === 'Tundra' ? 'snow' : 'meadow';
+      : terrain === 'Snow' || terrain === 'Tundra' || terrain === 'Mountain' ? 'snow' : 'meadow';
     return lastBiome;
   };
 
@@ -165,9 +166,16 @@ async function boot(): Promise<void> {
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
       runTick();
     };
+    const allTechs = () => {
+      for (const id of TECH_ORDER) {
+        if (!game.state.research.completed.includes(id)) game.state.research.completed.push(id);
+      }
+      game.state.research.active = [];
+      runTick();
+    };
     const devBar = el('div', { class: 'cast-banner', style: 'top:auto;bottom:120px' },
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
-      button('🗑 reset save', resetSave));
+      button('🔬 all techs', allTechs), button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }
 

@@ -35,13 +35,14 @@ const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 const MAP_PATH = join(ROOT, 'src/sim/data/region-map.json');
 
 const TERRAIN_CODES = {
-  g: 'Grassland', w: 'Water', p: 'Plains', d: 'Desert', s: 'Snow', u: 'Tundra',
+  g: 'Grassland', w: 'Water', p: 'Plains', d: 'Desert', s: 'Snow', u: 'Tundra', m: 'Mountain',
 };
 const FEATURE_CODES = {
   T: 'Trees', B: 'BerryBush', A: 'WildAnimals', R: 'Rocks', F: 'FishShoal', I: 'IronVein',
 };
 const MAP_COLORS = { // conditional-formatting fills, keyed by code
   g: 'FF6FA84F', w: 'FF3D6F9E', p: 'FF9AA34F', d: 'FFC9B26A', s: 'FFDFE7EC', u: 'FF8B9A94',
+  m: 'FF6B6F78',
   T: 'FF2E6B2E', B: 'FF7A4FA8', A: 'FF8A5A34', R: 'FF7A7F87', F: 'FF2E86AB', I: 'FF4A4E57',
 };
 // The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
@@ -50,14 +51,18 @@ const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 const DISTRICT_IDS =
   ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine'];
 const TECH_IDS = [
-  'Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining',
-  'Masonry', 'Fishing', 'Mining',
+  'Forestry',
+  'UrbanPlanning', 'Communities', 'Architecture', // civics
+  'Agriculture', 'Farming', 'Market', 'CropRotation', // economics: farm side
+  'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
+  'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
+  'Warrior', 'Spears', 'Archery', 'Cavalry', // military
 ];
 const UPGRADE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'TapPower', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
   'Stonecutting', 'BigNets', 'IronPicks',
 ];
-const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
+const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
@@ -105,6 +110,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
+  'required_tech_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone', 'build_cost_iron',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -114,8 +120,9 @@ const DISTRICT_COLUMNS = [
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
 ];
 const DISTRICT_LIST_COLUMNS = [
-  'max_workers_per_level', 'max_count_per_townhall_level',
+  'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
+  'required_tech_per_level',
 ];
 
 const SHEETS = {
@@ -131,7 +138,8 @@ const SHEETS = {
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
-    'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron'],
+    'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
+    'reward_gems'],
   Settings: ['key', 'value'],
 };
 
@@ -232,6 +240,19 @@ function list(row, col) {
     const n = Number(part.trim());
     if (!Number.isFinite(n) || n < 0) fail(where(row), `"${col}" has a bad list entry ("${part}")`);
     return n;
+  });
+}
+
+/** Per-level tech list: comma-separated tech ids, "-" (or blank entry) = no
+ *  requirement at that level. Blank cell = no requirements at all. */
+function techList(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) return [];
+  return String(raw).split(/[,|;]/).map((part) => {
+    const id = part.trim();
+    if (id === '' || id === '-') return null;
+    if (!TECH_IDS.includes(id)) fail(where(row), `"${col}" has an unknown tech ("${id}")`);
+    return id;
   });
 }
 
@@ -398,13 +419,14 @@ async function importXlsx() {
     out.districts[id] = {
       size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
       maxLevel: num(r, 'max_level'),
-      populationCapacity: num(r, 'population_capacity'),
+      populationCapacityPerLevel: list(r, 'population_capacity'),
       fogRevealRadius: num(r, 'fog_reveal_radius'),
       fogDiscoverRadius: num(r, 'fog_discover_radius'),
       maxWorkersPerLevel: list(r, 'max_workers_per_level'),
       maxCountPerTownhallLevel: list(r, 'max_count_per_townhall_level'),
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
+      requiredTechPerLevel: techList(r, 'required_tech_per_level'),
       buildCost: wallet(r, 'build_cost'),
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
       buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
@@ -540,6 +562,7 @@ async function importXlsx() {
       goalAmount: amount,
       goalLevel: level,
       reward: wallet(r, 'reward'),
+      rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
     });
   }
 
@@ -596,10 +619,11 @@ async function exportXlsx() {
   addSheet(workbook, 'Districts', DISTRICT_IDS.map((id) => {
     const d = b.districts[id];
     return [
-      id, d.size.x, d.size.y, d.maxLevel, d.populationCapacity,
+      id, d.size.x, d.size.y, d.maxLevel, listCell(d.populationCapacityPerLevel),
       d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
+      listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
       ...costCells(d.buildCost),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
@@ -642,7 +666,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
-    q.goalLevel ?? '', ...costCells(q.reward),
+    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '',
   ]));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {

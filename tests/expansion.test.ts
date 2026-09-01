@@ -13,7 +13,7 @@ import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helper
 
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
 const QUARRY_CELL = { x: 4, y: 0 }; // grassland beside them
-const COVE_WATER = { x: 2, y: -1 }; // open water in the starting cove
+const COVE_WATER = { x: -3, y: -1 }; // open water west of the isle
 const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 // Docks anchor: 2×1 pier — (-6,3) is Water, (-5,3) is Grassland (mirrored case).
 const PIER = { x: -6, y: 3 };
@@ -41,13 +41,14 @@ describe('stone line (Masonry → Quarry)', () => {
   });
 });
 
-describe('fish line (Fishing → coastal Docks)', () => {
-  it('the food fork: Fishing branches off Forestry, parallel to Agriculture', () => {
+describe('fish line (Sailing → Fishing → coastal Docks)', () => {
+  it('the exploration branch: Fishing sits behind Sailing, not Agriculture', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 100, Food: 100 });
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
-    expect(startTech(state, 'Agriculture', T0)).toBe('MissingRequirement');
     completeTech(state, 'Forestry');
+    expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement'); // needs Sailing
+    completeTech(state, 'Sailing');
     expect(startTech(state, 'Fishing', T0)).toBe('Started'); // no Agriculture needed
   });
 
@@ -102,13 +103,15 @@ describe('iron line (Mining ← Masonry) and the iron-gated army', () => {
     expect(getWallet(state.city.wallet, 'Stone')).toBe(50 - 30);
   });
 
-  it('units cost Iron now', () => {
+  it('the Cavalry costs Iron (foot units no longer do)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
-    completeTech(state, 'Militia');
-    expect(trainUnit(state, 'Swordsman')).toBe('NotEnoughResources'); // no Iron
-    fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 10 });
-    expect(trainUnit(state, 'Swordsman')).toBe('Trained');
-    expect(getWallet(state.city.wallet, 'Iron')).toBe(0); // 10 spent
+    completeTech(state, 'Warrior');
+    expect(trainUnit(state, 'Warrior')).toBe('Trained'); // wood-armed now
+    completeTech(state, 'Cavalry');
+    expect(trainUnit(state, 'Cavalry')).toBe('NotEnoughResources'); // no Iron
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 20 });
+    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
+    expect(getWallet(state.city.wallet, 'Iron')).toBe(0); // 20 spent
   });
 });

@@ -39,8 +39,7 @@ export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number =
   spec.yieldPerTap + effect(state, 'TapPower');
 
 /** Cooldown between player collects, ms (QuickHands; floor 0.1s). */
-export const effectiveCollectCooldownMs = (state: GameState): number =>
-  Math.max(100, (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000);
+export const effectiveCollectCooldownMs = (state: GameState): number => 0;
 
 /** Resource-specific worker-delivery upgrades (each +1/level). */
 const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId>> = {

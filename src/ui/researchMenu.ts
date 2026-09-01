@@ -6,7 +6,8 @@
 //    instant gold purchases, leveled. The fan appears when the parent
 //    completes: the visible reward of the research.
 //  - Tree fog: researched/available techs render normally; techs one step
-//    beyond show as anonymous "?" silhouettes; anything deeper is hidden.
+//    beyond a RESEARCHED or RESEARCHING tech show as anonymous "?"
+//    silhouettes; anything deeper is hidden.
 
 import { icon, type Game } from '../game';
 import {
@@ -26,21 +27,60 @@ type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId 
 let selected: Selected = null;
 let treeScroll = { left: 0, top: 0 };
 
-const GRID = 90; // px per tree-grid step
+const GRID = 120; // px per tree-grid step
 const NODE = 56; // tech node square size
 const UNODE = 36; // upgrade circle size
 const FAN_DY = 0.7 * GRID; // fan distance below the parent tech
-const FAN_DX = 44; // spacing between fanned circles
+const FAN_DX = 56; // spacing between fanned circles
+
+// ---- drag panning ----------------------------------------------------------
+// Pointer listeners live on window and act on the CURRENT tree element, so an
+// in-flight drag survives the per-tick re-render that replaces the DOM.
+let treeEl: HTMLElement | null = null;
+let drag: {
+  id: number; x: number; y: number; startX: number; startY: number; moved: boolean;
+} | null = null;
+let suppressClick = false; // a pan gesture must not select/deselect on release
+let panWired = false;
+
+const consumeSuppressedClick = (): boolean => {
+  const s = suppressClick;
+  suppressClick = false;
+  return s;
+};
+
+function wirePanOnce(): void {
+  if (panWired) return;
+  panWired = true;
+  window.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id || !treeEl) return;
+    drag.moved = drag.moved
+      || Math.abs(e.clientX - drag.startX) + Math.abs(e.clientY - drag.startY) > 6;
+    treeEl.scrollLeft -= e.clientX - drag.x;
+    treeEl.scrollTop -= e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    treeScroll = { left: treeEl.scrollLeft, top: treeEl.scrollTop };
+  });
+  const end = () => {
+    if (drag?.moved) suppressClick = true;
+    drag = null;
+  };
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+}
 
 // Tree fog. normal = researched / researching / requirements met;
-// silhouette = one step ahead (every prerequisite is itself normal);
-// hidden = anything deeper.
+// silhouette = one step beyond what's actually researched or researching
+// (every prerequisite complete or active — a merely-available tech does NOT
+// reveal its children); hidden = everything else.
 type Visibility = 'normal' | 'silhouette' | 'hidden';
 function visibility(state: GameState, id: TechId): Visibility {
-  const normal = (t: TechId) =>
-    isTechComplete(state, t) || isTechActive(state, t) || requirementsMet(state, t);
-  if (normal(id)) return 'normal';
-  if (TECHNOLOGIES[id].requires.every(normal)) return 'silhouette';
+  if (
+    isTechComplete(state, id) || isTechActive(state, id) || requirementsMet(state, id)
+  ) return 'normal';
+  const started = (t: TechId) => isTechComplete(state, t) || isTechActive(state, t);
+  if (TECHNOLOGIES[id].requires.every(started)) return 'silhouette';
   return 'hidden';
 }
 
@@ -49,8 +89,7 @@ const upgradesOf = (id: TechId): UpgradeId[] =>
 
 export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;
-  const menu = el('div', { class: 'menu' });
-  menu.append(el('h2', {}, 'Research'));
+  const root = el('div', { class: 'research-screen' });
 
   // Drop a selection the fog no longer shows (e.g. after a fresh load).
   if (selected?.kind === 'tech' && visibility(state, selected.id) !== 'normal') selected = null;
@@ -64,14 +103,14 @@ export function renderResearchMenu(game: Game): HTMLElement {
 
   // Slots line + gem purchase for the next one.
   const slotsRow = el('div', { class: 'action-row' },
-    el('span', { class: 'info' }, `Research slots: ${busy} busy / ${slots}`));
+    el('span', { class: 'info' }, `Slots: ${busy} busy / ${slots}`));
   if (slots < RESEARCH_SETTINGS.maxSlots) {
     const cost = slotGemCost(state);
     const buyBtn = button('Buy', () => game.doBuySlot());
     buyBtn.disabled = getWallet(state.player.wallet, 'Gems') < cost;
     slotsRow.append(el('span', { class: 'muted' }, `extra slot — ${cost} ${icon('Gems')}`), buyBtn);
   }
-  menu.append(slotsRow);
+  root.append(el('div', { class: 'research-topbar' }, el('h2', {}, 'Research'), slotsRow));
 
   // ---- the tree canvas (sized to what the fog currently shows) ----
   const shown = TECH_ORDER.filter((id) => visibility(state, id) !== 'hidden');
@@ -80,7 +119,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const ys = shown.map((id) => TECHNOLOGIES[id].node.y);
   const [x0, y0] = [Math.min(...xs), Math.min(...ys)];
   const yMax = Math.max(...ys);
-  const pad = 24;
+  const pad = 40;
   const width = (Math.max(...xs) - x0 + 1) * GRID + pad * 2;
   let height = (yMax - y0 + 1) * GRID + pad * 2;
   // A fan below a bottom-row tech pokes past the grid — give it room.
@@ -149,6 +188,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       node.append(el('div', { class: 'node-bar' }, fill));
     }
     node.addEventListener('click', () => {
+      if (consumeSuppressedClick()) return;
       selected = { kind: 'tech', id };
       game.notify();
     });
@@ -171,6 +211,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       }, def.glyph);
       if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));
       node.addEventListener('click', () => {
+        if (consumeSuppressedClick()) return;
         selected = { kind: 'upgrade', id: u };
         game.notify();
       });
@@ -179,7 +220,31 @@ export function renderResearchMenu(game: Game): HTMLElement {
   }
 
   const tree = el('div', { class: 'tech-tree' }, canvas);
-  // Preserve the pan across the per-tick re-render.
+  treeEl = tree;
+  wirePanOnce();
+  tree.addEventListener('pointerdown', (e) => {
+    suppressClick = false; // a stale suppression must not eat this tap
+    drag = {
+      id: e.pointerId, x: e.clientX, y: e.clientY,
+      startX: e.clientX, startY: e.clientY, moved: false,
+    };
+    // Touch implicitly captures the pointer to its target; release it so the
+    // gesture keeps hit-testing (and reaching window) after the per-tick
+    // re-render swaps the element out from under the finger.
+    try {
+      (e.target as Element).releasePointerCapture?.(e.pointerId);
+    } catch { /* no active capture — nothing to release */ }
+  });
+  // Tapping empty tree space deselects (the info panel hides).
+  tree.addEventListener('click', (e) => {
+    if (consumeSuppressedClick()) return;
+    if ((e.target as HTMLElement).closest('.tech-node')) return;
+    if (selected !== null) {
+      selected = null;
+      game.notify();
+    }
+  });
+  // Preserve the pan across the per-tick re-render (wheel scrolling too).
   tree.addEventListener('scroll', () => {
     treeScroll = { left: tree.scrollLeft, top: tree.scrollTop };
   });
@@ -197,17 +262,15 @@ export function renderResearchMenu(game: Game): HTMLElement {
     tree.scrollLeft = treeScroll.left;
     tree.scrollTop = treeScroll.top;
   });
-  menu.append(tree);
+  root.append(tree);
 
-  // ---- info panel for the selected node ----
-  if (selected === null) {
-    menu.append(el('p', { class: 'muted' }, 'Tap a technology or upgrade for details.'));
-  } else if (selected.kind === 'tech') {
-    menu.append(techInfoPanel(game, selected.id, busy, slots));
-  } else {
-    menu.append(upgradeInfoPanel(game, selected.id));
+  // ---- floating bottom info panel, only while something is selected ----
+  if (selected?.kind === 'tech') {
+    root.append(techInfoPanel(game, selected.id, busy, slots));
+  } else if (selected?.kind === 'upgrade') {
+    root.append(upgradeInfoPanel(game, selected.id));
   }
-  return menu;
+  return root;
 }
 
 function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTMLElement {

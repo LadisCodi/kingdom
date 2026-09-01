@@ -9,6 +9,7 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
   Snow: '#dfe7ec',
   Tundra: '#8b9a94',
   Water: '#2e5d8a',
+  Mountain: '#6b6f78',
 };
 
 export const PALETTE = {
@@ -18,7 +19,8 @@ export const PALETTE = {
   selected: '#ffe27a',
   validTarget: 'rgba(126, 217, 87, 0.85)',
   workedTile: 'rgba(255, 226, 122, 0.75)',
-  influenceSquare: 'rgba(255, 255, 255, 0.85)',
+  influenceFill: 'rgba(255, 255, 255, 0.16)',
+  influenceBorder: 'rgba(255, 255, 255, 0.85)',
   yieldPositive: '#7fd07f',
   yieldNegative: '#ff8a7a',
   labelPill: 'rgba(0, 0, 0, 0.5)',
