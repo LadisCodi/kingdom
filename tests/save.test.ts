@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
-import { freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const FOREST = { x: 2, y: 2 };
-const SAWMILL = { x: 1, y: 1 };
+const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
 
 const workingGame = () => {
   const state = freshGame();
   state.city.population = 4;
-  fund(state, { Silver: 500, Wood: 500, Food: 42 });
+  fund(state, { Gold: 500, Wood: 500, Food: 42 });
+  completeTech(state, 'Forestry');
   reveal(state, [FOREST]);
   enqueueBuild(state, map, 'Sawmill', SAWMILL);
   tickAt(state, T0);
@@ -20,7 +21,7 @@ const workingGame = () => {
   return state;
 };
 
-describe('save v2 round-trip', () => {
+describe('save round-trip', () => {
   it('restores wallets, districts, workers, harvest state, fog, army', () => {
     const state = workingGame();
     const t = T0 + 60_000;
@@ -47,13 +48,14 @@ describe('save v2 round-trip', () => {
     ).toBeNull();
   });
 
-  it('offline replay: an aged save pays worker cycles and Townhall cycles', () => {
+  it('offline replay: an aged save accrues housing taxes and pays deliveries', () => {
     const state = workingGame();
-    const saveAt = T0 + 30_000;
-    const silver = getWallet(state.city.wallet, 'Silver');
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // 2 of the 4 villagers move in
+    const saveAt = T0 + 30_000; // tax clock already anchored here by the ticks
+    const gold = getWallet(state.city.wallet, 'Gold');
     const wood = getWallet(state.city.wallet, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Silver')).toBe(silver + 60 * 5 * 4); // 60 cycles × 5 × pop 4
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 600); // 2 housed × 30/min × 10 min
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 
@@ -64,20 +66,20 @@ describe('save v2 round-trip', () => {
     const live = workingGame();
     for (let t = 1000; t <= horizon; t += 1000) tickAt(live, saveAt + t);
     expect(getWallet(offline.city.wallet, 'Wood')).toBe(getWallet(live.city.wallet, 'Wood'));
-    expect(getWallet(offline.city.wallet, 'Silver')).toBe(getWallet(live.city.wallet, 'Silver'));
+    expect(getWallet(offline.city.wallet, 'Gold')).toBe(getWallet(live.city.wallet, 'Gold'));
   });
 
   it('the 8h offline cap: a 20h absence earns exactly what 8h earns; queue still completes', () => {
     const mk = () => {
       const s = workingGame();
-      fund(s, { Silver: 5000, Wood: 5000 });
-      enqueueBuild(s, map, 'Housing', { x: 0, y: 1 });
+      fund(s, { Gold: 5000, Wood: 5000 });
+      enqueueBuild(s, map, 'Housing', { x: 2, y: 0 });
       return serialize(s, T0 + 30_000);
     };
     const capped = deserialize(mk(), map, T0 + 30_000 + 20 * 3_600_000)!;
     const exact8h = deserialize(mk(), map, T0 + 30_000 + 8 * 3_600_000)!;
     expect(getWallet(capped.city.wallet, 'Wood')).toBe(getWallet(exact8h.city.wallet, 'Wood'));
-    expect(getWallet(capped.city.wallet, 'Silver')).toBe(getWallet(exact8h.city.wallet, 'Silver'));
+    expect(getWallet(capped.city.wallet, 'Gold')).toBe(getWallet(exact8h.city.wallet, 'Gold'));
     // The queued Housing finished regardless of the cap.
     expect(capped.city.districts.find((d) => d.definitionId === 'Housing')!.state).toBe('Built');
     // Workers resume from "now", not from 12h ago.

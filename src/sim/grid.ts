@@ -1,24 +1,24 @@
-// Square-grid map math. 8-neighbor (Moore) adjacency is used uniformly for fog
-// discovery, placement adjacency, worked-unit connectivity, and BFS distance
-// (user decision — replaces the Unity hex grid's 6-neighbor adjacency).
+// Square-grid map math. 4-neighbor (Von Neumann) adjacency is used uniformly
+// for fog discovery, placement adjacency, worked-unit connectivity, and BFS
+// distance (user decision — diagonals do not count as adjacent).
 
+import { DISTRICTS } from './data/definitions';
 import regionMap from './data/region-map.json';
-import { coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId } from './state';
+import { cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId } from './state';
 
 const NEIGHBOR_OFFSETS: ReadonlyArray<Coord> = [
   { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
-  { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 },
 ];
 
 export interface MapData {
   terrain: ReadonlyMap<string, TerrainId>;
   initialFeatures: ReadonlyMap<string, FeatureId>;
-  /** BFS distance from the Townhall origin (0,0) over existing cells; unreachable → 0 (as built). */
+  /** BFS distance from the Townhall footprint over existing cells; unreachable → 0 (as built). */
   distanceFromTownhall: ReadonlyMap<string, number>;
   cells: ReadonlyArray<Coord>;
 }
 
-export const TOWNHALL_ORIGIN: Coord = { x: 0, y: 0 };
+export const TOWNHALL_ORIGIN: Coord = { x: 0, y: 0 }; // anchor (top-left of its footprint)
 
 export function buildMapData(): MapData {
   const terrain = new Map<string, TerrainId>();
@@ -30,12 +30,17 @@ export function buildMapData(): MapData {
     initialFeatures.set(coordKey({ x: c.x, y: c.y }), c.id as FeatureId);
   }
 
-  // BFS over existing cells from the Townhall origin.
+  // Multi-source BFS over existing cells from the Townhall's whole footprint
+  // (every footprint cell is distance 0).
   const distanceFromTownhall = new Map<string, number>();
-  const originKey = coordKey(TOWNHALL_ORIGIN);
-  if (terrain.has(originKey)) {
-    distanceFromTownhall.set(originKey, 0);
-    const frontier: Coord[] = [TOWNHALL_ORIGIN];
+  const frontier: Coord[] = [];
+  for (const c of cellsOfRect(TOWNHALL_ORIGIN, DISTRICTS.Townhall.size)) {
+    if (terrain.has(coordKey(c))) {
+      distanceFromTownhall.set(coordKey(c), 0);
+      frontier.push(c);
+    }
+  }
+  {
     while (frontier.length > 0) {
       const cell = frontier.shift()!;
       const d = distanceFromTownhall.get(coordKey(cell))!;
@@ -61,7 +66,7 @@ export function buildMapData(): MapData {
 export const cellExists = (map: MapData, cell: Coord): boolean =>
   map.terrain.has(coordKey(cell));
 
-/** The (up to 8) neighbors of a cell that exist on the map. */
+/** The (up to 4) orthogonal neighbors of a cell that exist on the map. */
 export function neighbors(map: MapData, cell: Coord): Coord[] {
   const out: Coord[] = [];
   for (const off of NEIGHBOR_OFFSETS) {
@@ -78,13 +83,27 @@ export const townhallDistance = (map: MapData, cell: Coord): number =>
 /** Existing cells within Chebyshev distance ≤ radius of `center`, excluding it.
  *  Ordered nearest-first (then reading order) so "claim the nearest cell" is a
  *  simple first-match. */
-export function cellsWithinRadius(map: MapData, center: Coord, radius: number): Coord[] {
+export const cellsWithinRadius = (map: MapData, center: Coord, radius: number): Coord[] =>
+  cellsWithinRadiusOfRect(map, center, { x: 1, y: 1 }, radius);
+
+/** Like cellsWithinRadius, but around a size.x × size.y footprint anchored
+ *  (top-left) at `anchor` — the footprint's own cells are excluded. Same
+ *  nearest-first, then reading-order contract. */
+export function cellsWithinRadiusOfRect(
+  map: MapData,
+  anchor: Coord,
+  size: { x: number; y: number },
+  radius: number,
+): Coord[] {
   const out: Coord[] = [];
   for (let r = 1; r <= radius; r++) {
-    for (let dy = -r; dy <= r; dy++) {
-      for (let dx = -r; dx <= r; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; // ring r only
-        const c = { x: center.x + dx, y: center.y + dy };
+    for (let dy = -r; dy < size.y + r; dy++) {
+      for (let dx = -r; dx < size.x + r; dx++) {
+        // Chebyshev distance from (dx,dy) to the [0,size) rect; ring r only.
+        const ox = Math.max(-dx, dx - (size.x - 1), 0);
+        const oy = Math.max(-dy, dy - (size.y - 1), 0);
+        if (Math.max(ox, oy) !== r) continue;
+        const c = { x: anchor.x + dx, y: anchor.y + dy };
         if (map.terrain.has(coordKey(c))) out.push(c);
       }
     }

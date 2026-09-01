@@ -5,21 +5,20 @@
 | Currency | Scope (wallet) | Capped | Start | Notes |
 |---|---|---|---|---|
 | Food | City | no | 5 | Buys population |
-| Silver | City | no | 50 | Main build/reveal currency; taxed from population by the Townhall |
+| Silver | City | no | 50 | Main build/reveal currency; taxed from population by the Townhall *(web build: merged into Gold, earned at the Market)* |
 | Wood | City | no | 0 | Secondary build material |
 | Gold | Kingdom | no | 100 | No source or sink yet |
-| Mana | Kingdom | **yes — max 100** | 50 | Regenerates 5/min from the kingdom; spent on spells |
 | Knowledge | Kingdom | no | 0 | Reserved for research; no source or sink |
 | Gems | Player | no | 10 | Premium; only sink is finishing queue items instantly |
 
 City starting amounts and population come from the city definition (Oakville:
 Silver 50, Food 5, population 2). Kingdom/player starting amounts come from the
-initial-game-state settings (Gold 100, Mana 50, Gems 10). Saved amounts overwrite
+initial-game-state settings (Gold 100, Gems 10). Saved amounts overwrite
 starting amounts on load.
 
 Kingdom production: the kingdom definition lists `{currencyId, PerHour}` entries —
-one generator each with `rate = PerHour / 60` per minute. PlayerKingdom has a single
-entry: **Mana, 300/hour = 5/min**, accruing straight into the (capped) kingdom wallet.
+one generator each with `rate = PerHour / 60` per minute. PlayerKingdom currently has
+none (the Mana trickle left with the spell system).
 
 ## Generators
 
@@ -40,7 +39,7 @@ GenerationPerMinute = flat * (1 + pct)
 ```
 
 Modifier categories in use: `Building` (district base output), `Feature` (worked-unit
-yield), `Population` (Townhall tax), `Spell` (Rain boost), plus `Terrain` (legacy,
+yield), `Population` (Townhall tax), plus `Terrain` (legacy,
 always stripped). New generators are created with `LastProduction = now − random(0..60s)`
 to stagger whole-unit payouts across districts.
 
@@ -56,7 +55,7 @@ now  = UTC now
 1. rate == 0            → LastProduction = now; stop.        (no backlog builds up)
 2. destination full     → LastProduction = now; stop.        (overflow is LOST, deliberately)
      "full" = vault at capacity (vault generators)
-              or wallet at its cap (capped wallets only — Mana)
+              or wallet at its cap (capped wallets only)
 3. produced = trunc(rate * minutesSince(LastProduction))     (whole units only)
 4. produced == 0        → stop WITHOUT touching LastProduction (sub-unit remainder is kept)
 5. LastProduction += (produced / rate) minutes               (advance only by time paid out)
@@ -80,8 +79,7 @@ districts (FarmLands).
 
 `RecalculateCityProductionUseCase` rebuilds every active district's modifiers. It
 removes all `Terrain`/`Feature`/`Building`/`Population` modifiers it owns and re-adds
-current ones; **Spell modifiers are preserved** (a recalc never cancels Rain).
-Contributions per district:
+current ones. Contributions per district:
 
 ```
 worksUnits = the definition has a worked-unit source AND per-tile yield (Farm, Lumber)

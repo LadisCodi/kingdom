@@ -4,28 +4,25 @@ import { buildCost, buildDuration, upgradeCost, upgradeDuration } from '../src/s
 import { gemRushCost } from '../src/sim/commands';
 
 describe('build cost by instance (Docs/04 table)', () => {
-  it('Housing: 75/20 → 133/35 → 444/118 → 954/254', () => {
-    expect(buildCost('Housing', 0, 0)).toEqual({ Silver: 75, Wood: 20 });
-    expect(buildCost('Housing', 1, 0)).toEqual({ Silver: 133, Wood: 35 });
-    expect(buildCost('Housing', 2, 0)).toEqual({ Silver: 444, Wood: 118 });
-    expect(buildCost('Housing', 3, 0)).toEqual({ Silver: 954, Wood: 254 });
+  it('Housing: 10 → 26 → 83 → 172 Wood', () => {
+    expect(buildCost('Housing', 0)).toEqual({ Wood: 10 });
+    expect(buildCost('Housing', 1)).toEqual({ Wood: 26 });
+    expect(buildCost('Housing', 2)).toEqual({ Wood: 83 });
+    expect(buildCost('Housing', 3)).toEqual({ Wood: 172 });
   });
-  it('Farm: 50/10 → 282/56 → 1039/207', () => {
-    expect(buildCost('Farm', 0, 0)).toEqual({ Silver: 50, Wood: 10 });
-    expect(buildCost('Farm', 1, 0)).toEqual({ Silver: 282, Wood: 56 });
-    expect(buildCost('Farm', 2, 0)).toEqual({ Silver: 1039, Wood: 207 });
+  it('Farm: 30 → 169 → 623 Wood', () => {
+    expect(buildCost('Farm', 0)).toEqual({ Wood: 30 });
+    expect(buildCost('Farm', 1)).toEqual({ Wood: 169 });
+    expect(buildCost('Farm', 2)).toEqual({ Wood: 623 });
   });
-  it('Sawmill: 50 → 546 → 1967', () => {
-    expect(buildCost('Sawmill', 0, 0)).toEqual({ Silver: 50 });
-    expect(buildCost('Sawmill', 1, 0)).toEqual({ Silver: 546 });
-    expect(buildCost('Sawmill', 2, 0)).toEqual({ Silver: 1967 });
+  it('Sawmill: 20 → 110 → 353 Wood', () => {
+    expect(buildCost('Sawmill', 0)).toEqual({ Wood: 20 });
+    expect(buildCost('Sawmill', 1)).toEqual({ Wood: 110 });
+    expect(buildCost('Sawmill', 2)).toEqual({ Wood: 353 });
   });
   it('FarmLands: 20 → 91 → 298 → 633 → 1103 → 1717', () => {
     const expected = [20, 91, 298, 633, 1103, 1717];
-    expected.forEach((wood, n) => expect(buildCost('FarmLands', n, 0)).toEqual({ Wood: wood }));
-  });
-  it('distance growth is off for all buildables (distMult = 1)', () => {
-    expect(buildCost('Housing', 0, 7)).toEqual(buildCost('Housing', 0, 0));
+    expected.forEach((wood, n) => expect(buildCost('FarmLands', n)).toEqual({ Wood: wood }));
   });
 });
 
@@ -36,22 +33,25 @@ describe('build time (Docs/04 examples)', () => {
 });
 
 describe('upgrade cost & time (Docs/04 examples)', () => {
-  it('single Farm L1→L2 = 300 Silver + 50 Wood, 30 s', () => {
-    expect(upgradeCost('Farm', 1, 1)).toEqual({ Silver: 300, Wood: 50 });
+  it('single Farm L1→L2 = 50 Wood, 30 s', () => {
+    expect(upgradeCost('Farm', 1, 1)).toEqual({ Wood: 50 });
     expect(upgradeDuration('Farm', 1)).toBe(30);
   });
-  it('single Sawmill L1→L2 = 300 / 30 s, L2→L3 = 450 / 45 s', () => {
-    expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Silver: 300 });
+  it('Sawmill upgrades: 60 then 150 Wood, 30 s then 45 s', () => {
+    expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Wood: 60 });
     expect(upgradeDuration('Sawmill', 1)).toBe(30);
-    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Silver: 450 });
+    expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Wood: 150 });
     expect(upgradeDuration('Sawmill', 2)).toBe(45);
   });
-  it('with TWO Sawmill camps, each L1→L2 = 3278 Silver (count multiplier applies)', () => {
-    expect(upgradeCost('Sawmill', 2, 1)).toEqual({ Silver: 3278 });
+  it('Townhall L1→L2 = 40 Wood + 20 Stone in 30 s; L2→L3 = 156 + 78 in 120 s', () => {
+    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 40, Stone: 20 });
+    expect(upgradeDuration('Townhall', 1)).toBe(30);
+    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Wood: 156, Stone: 78 });
+    expect(upgradeDuration('Townhall', 2)).toBe(120);
   });
-  it('Townhall L1→L2 = 200 Silver + 25 Wood, instant', () => {
-    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Silver: 200, Wood: 25 });
-    expect(upgradeDuration('Townhall', 1)).toBe(0);
+  it('Housing L1→L2 = 30 Wood + 10 Stone in 20 s', () => {
+    expect(upgradeCost('Housing', 1, 1)).toEqual({ Wood: 30, Stone: 10 });
+    expect(upgradeDuration('Housing', 1)).toBe(20);
   });
 });
 

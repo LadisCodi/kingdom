@@ -1,7 +1,7 @@
 // Initial game state: Oakville with its Townhall at (0,0), starting wallets,
-// fog seed, spellbook, authored map features.
+// fog seed, authored map features.
 
-import { CITY_DEF, CURRENCIES, KINGDOM_DEF, SPELLS } from './data/definitions';
+import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { seedFog } from './fog';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
 import { coordKey, type CurrencyId, type GameState, type Wallet } from './state';
@@ -21,28 +21,30 @@ export function newGame(map: MapData, now: number): GameState {
       population: CITY_DEF.initialPopulation,
       districts: [],
       queue: [],
+      training: null,
+      lastTaxAt: now,
     },
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
-      manaLastProduction: now,
     },
     player: { wallet: playerWallet },
-    spellbook: {},
-    activeSpells: [],
-    fog: { revealed: {}, progress: {} },
+    fog: { revealed: {}, discovered: {}, progress: {} },
     features: {},
+    featureMeta: {},
+    featureRespawns: [],
     harvest: {},
     workers: [],
     army: [],
+    research: { completed: [], active: [], slotsPurchased: 0 },
+    upgrades: {},
+    quests: { index: 0, progress: 0 },
+    discoveries: {},
+    pendingDiscoveries: [],
     nextId: 1,
     lastAdvance: now,
+    lastCollectTapAt: 0,
   };
-
-  // Spellbook: one runtime spell per definition; unlock those flagged from start.
-  for (const def of Object.values(SPELLS)) {
-    state.spellbook[def.id] = { unlocked: def.unlockedFromStart, level: 1 };
-  }
 
   // Authored features from the map (static under the harvest model).
   for (const [key, featureId] of map.initialFeatures) {
@@ -58,7 +60,6 @@ export function newGame(map: MapData, now: number): GameState {
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
-    cycleStartedAt: now,
   });
 
   seedFog(state, map);

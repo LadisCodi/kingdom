@@ -1,14 +1,31 @@
 // Core simulation state types. This module (and everything under src/sim/) is
 // pure TypeScript: no DOM, no Date.now() — callers pass `now` (epoch ms) and an
 // injectable rng so the sim stays deterministic and portable to a server.
+// (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
-export type CurrencyId = 'Food' | 'Silver' | 'Wood' | 'Gold' | 'Mana' | 'Knowledge' | 'Gems';
-export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill';
-export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
-export type FeatureId = 'Trees';
-export type HarvestSourceId = 'Forest' | 'Crops';
-export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
-export type SpellId = 'Rain' | 'Tap';
+import { DISTRICTS } from './data/definitions';
+
+export type CurrencyId =
+  | 'Gold' | 'Food' | 'Wood' | 'Stone' | 'Iron' | 'Knowledge' | 'Gems'
+  | 'Berries' | 'Meat' | 'Fish'; // food-valued (see CurrencyDef.countsAs)
+export type DistrictId =
+  | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
+  | 'Quarry' | 'Docks' | 'Mine';
+export type TerrainId =
+  | 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water' | 'Mountain';
+export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
+export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';
+export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
+export type TechId =
+  | 'Forestry'
+  | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
+  | 'Agriculture' | 'Farming' | 'Market' | 'CropRotation' // economics: farm side
+  | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
+  | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration (right)
+  | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry'; // military (down)
+export type UpgradeId =
+  | 'TapPower' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
+  | 'Stonecutting' | 'BigNets' | 'IronPicks';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -30,8 +47,6 @@ export interface District {
   location: Coord;
   state: ConstructionState;
   visualVariant: number;
-  /** Townhall only: start of the current tax cycle (epoch ms). */
-  cycleStartedAt?: number;
 }
 
 export interface QueueItem {
@@ -58,6 +73,11 @@ export interface City {
   population: number;
   districts: District[];
   queue: QueueItem[];
+  /** Villager training queue at the Townhall: `queued` villagers are paid
+   *  for; the current one started at `startedAt`, the rest follow. */
+  training: { queued: number; startedAt: number } | null;
+  /** Epoch ms anchor for passive tax gold (whole units only). */
+  lastTaxAt: number;
 }
 
 /** Per-resource-cell harvest state. Absent entry = fresh cell (0 taps). */
@@ -78,15 +98,6 @@ export interface Worker {
   stateUntil: number | null; // event time; null while Idle
 }
 
-export interface ActiveSpell {
-  spellId: SpellId;
-  cell: Coord;
-  level: number;
-  magnitude: number;
-  expiresAt: number; // epoch ms
-  sourceId: string;
-}
-
 export interface ArmyUnit {
   uniqueId: string;
   definitionId: UnitId;
@@ -97,21 +108,48 @@ export interface GameState {
   kingdom: {
     maxBuilders: number;
     wallet: Wallet;
-    manaLastProduction: number; // epoch ms — the 5/min trickle's timestamp
   };
   player: { wallet: Wallet };
-  spellbook: Record<string, { unlocked: boolean; level: number }>;
-  activeSpells: ActiveSpell[];
   fog: {
     revealed: Record<string, true>; // coordKey → revealed
-    progress: Record<string, number>; // coordKey → silver paid so far
+    /** coordKey → discovered by a building's discover radius. (Cells adjacent
+     *  to a revealed cell are ALSO Discovered — that part stays derived.) */
+    discovered: Record<string, true>;
+    progress: Record<string, number>; // coordKey → gold paid so far
   };
-  features: Record<string, FeatureId>; // coordKey → authored feature (static)
+  features: Record<string, FeatureId>; // coordKey → feature at its CURRENT cell
+  /** Respawning features: current cell → its map-authored ORIGIN + respawn
+   *  generation (drives the deterministic "random" adjacent placement). */
+  featureMeta: Record<string, { origin: string; generation: number }>;
+  /** Depleted features waiting to reappear next to their origin. */
+  featureRespawns: Array<{
+    origin: string; feature: FeatureId; readyAt: number; generation: number;
+  }>;
   harvest: Record<string, CellHarvestState>; // coordKey → taps/exhaustion
   workers: Worker[];
   army: ArmyUnit[];
+  research: {
+    completed: TechId[];
+    /** Technologies in progress — length is capped by techSlots(). */
+    active: Array<{ id: TechId; startedAt: number }>;
+    /** Extra concurrent slots bought with Gems (escalating price). */
+    slotsPurchased: number;
+  };
+  /** Upgrade levels (instant, gold-bought); absent = level 0. */
+  upgrades: Partial<Record<UpgradeId, number>>;
+  /** The quest chain: index into QUESTS (length = all done); progress is the
+   *  event counter for RELATIVE goals, reset when a quest is claimed. */
+  quests: { index: number; progress: number };
+  /** First-time discoveries already announced (keys like 'resource:Wood'). */
+  discoveries: Record<string, true>;
+  /** Discoveries made since the UI last drained them. Transient — a banner
+   *  missed at quit simply doesn't replay. */
+  pendingDiscoveries: string[];
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
+  /** Epoch ms of the last successful player collect tap (cooldown anchor).
+   *  Transient — not persisted; resets on load. */
+  lastCollectTapAt: number;
 }
 
 export type Rng = () => number; // [0, 1)
@@ -123,8 +161,33 @@ export const addToWallet = (w: Wallet, c: CurrencyId, amount: number): void => {
   w[c] = getWallet(w, c) + amount;
 };
 
+// ------------------------------------------------------------- footprints
+
+/** The cells of a size.x × size.y rectangle anchored (top-left) at `anchor`. */
+export function cellsOfRect(anchor: Coord, size: { x: number; y: number }): Coord[] {
+  const out: Coord[] = [];
+  for (let dy = 0; dy < size.y; dy++) {
+    for (let dx = 0; dx < size.x; dx++) out.push({ x: anchor.x + dx, y: anchor.y + dy });
+  }
+  return out;
+}
+
+export const districtSize = (d: District): { x: number; y: number } =>
+  DISTRICTS[d.definitionId].size;
+
+/** All cells a district occupies (location = top-left anchor). */
+export const districtCells = (d: District): Coord[] => cellsOfRect(d.location, districtSize(d));
+
+export const districtOccupies = (d: District, cell: Coord): boolean => {
+  const size = districtSize(d);
+  return (
+    cell.x >= d.location.x && cell.x < d.location.x + size.x &&
+    cell.y >= d.location.y && cell.y < d.location.y + size.y
+  );
+};
+
 export const districtAt = (state: GameState, cell: Coord): District | undefined =>
-  state.city.districts.find((d) => sameCell(d.location, cell));
+  state.city.districts.find((d) => districtOccupies(d, cell));
 
 export const districtById = (state: GameState, uniqueId: string): District | undefined =>
   state.city.districts.find((d) => d.uniqueId === uniqueId);

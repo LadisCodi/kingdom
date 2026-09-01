@@ -1,10 +1,13 @@
-// Resource cells: tapping, exhaustion, lazy recovery, and Rain's ×2 recovery
-// boost (Docs/features/harvest-loop.md §1, §4).
+// Resource cells: tapping, exhaustion, lazy recovery
+// (Docs/features/harvest-loop.md §1, §4).
 
-import { FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
-import type { MapData } from './grid';
+import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
+import { recordQuestEvent } from './quests';
+import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
+import { neighbors, type MapData } from './grid';
 import {
-  addToWallet, coordKey, districtAt, sameCell,
+  addToWallet, coordKey, districtAt, parseCoordKey,
   type CellHarvestState, type Coord, type GameState, type HarvestSourceId,
 } from './state';
 
@@ -12,9 +15,11 @@ import {
 export function harvestSourceAt(state: GameState, cell: Coord): HarvestSourceId | null {
   const district = districtAt(state, cell);
   if (district) {
-    // A built crop plot (FarmLands) IS a Crops cell; any other district blocks.
-    if (district.definitionId === 'FarmLands' && district.state === 'Built') return 'Crops';
-    return null;
+    // Some districts ARE resource cells (a built FarmLands is a Crops cell);
+    // every other district blocks. Buildings with timers (Townhall, Housing)
+    // are NOT harvest sources — tapping them boosts their timers instead.
+    const provides = DISTRICTS[district.definitionId].providesHarvestSource;
+    return district.state === 'Built' ? provides : null;
   }
   const feature = state.features[coordKey(cell)];
   if (feature) return FEATURES[feature].source;
@@ -25,6 +30,12 @@ export const harvestSpecAt = (state: GameState, cell: Coord): HarvestSpec | null
   const source = harvestSourceAt(state, cell);
   return source === null ? null : HARVEST[source];
 };
+
+/** What ONE player collect tap on this cell pays (0 = not harvestable). */
+export function tapYieldAt(state: GameState, cell: Coord): number {
+  const source = harvestSourceAt(state, cell);
+  return source === null ? 0 : effectiveTapYield(state, HARVEST[source]);
+}
 
 const cellState = (state: GameState, key: string): CellHarvestState => {
   let s = state.harvest[key];
@@ -66,17 +77,6 @@ export function tapFraction(state: GameState, cell: Coord, spec: HarvestSpec, no
   return 1 - s.taps / spec.tapsToExhaust;
 }
 
-const activeRainOn = (state: GameState, cell: Coord, now: number) =>
-  state.activeSpells.find(
-    (s) => s.spellId === 'Rain' && sameCell(s.cell, cell) && s.expiresAt > now,
-  );
-
-/** Rain math: with remaining recovery R and rain window D, completion moves to
- *  now + max(R/2, R − D) — the covered window counts double (magnitude 2). */
-export function rainAdjustedRecovery(remainingMs: number, rainWindowMs: number): number {
-  return Math.max(remainingMs / 2, remainingMs - rainWindowMs);
-}
-
 /** Register one extraction (player tap or worker delivery) against the cell.
  *  Returns true if this tap exhausted the cell. Caller has verified the cell
  *  is a live resource cell. */
@@ -86,27 +86,74 @@ export function registerTap(
   spec: HarvestSpec,
   now: number,
 ): boolean {
-  const s = cellState(state, coordKey(cell));
+  const key = coordKey(cell);
+  const s = cellState(state, key);
   recoverIfDue(s, now);
   s.taps += 1;
   if (s.taps < spec.tapsToExhaust) return false;
-  let recoveryMs = spec.recoverySeconds * 1000;
-  const rain = activeRainOn(state, cell, now);
-  if (rain) recoveryMs = rainAdjustedRecovery(recoveryMs, rain.expiresAt - now);
-  s.exhaustedUntil = now + recoveryMs;
+  if (spec.recoverySeconds <= 0) {
+    // Finite source (Berry bush, Wild animals): consumed — the feature
+    // vanishes from this cell. With respawnSeconds it later reappears in a
+    // random tile ADJACENT TO ITS ORIGINAL MAP CELL; otherwise it is gone.
+    const feature = state.features[key];
+    if (feature && spec.respawnSeconds > 0) {
+      const meta = state.featureMeta[key] ?? { origin: key, generation: 0 };
+      state.featureRespawns.push({
+        origin: meta.origin,
+        feature,
+        readyAt: now + spec.respawnSeconds * 1000,
+        generation: meta.generation + 1,
+      });
+    }
+    delete state.features[key];
+    delete state.featureMeta[key];
+    delete state.harvest[key];
+    return true;
+  }
+  s.exhaustedUntil = now + spec.recoverySeconds * 1000;
   return true;
 }
 
-/** Rain cast on an already-exhausted cell: apply the boost immediately. */
-export function applyRainToExhausted(state: GameState, cell: Coord, rainWindowMs: number, now: number): void {
-  const s = state.harvest[coordKey(cell)];
-  if (!s || s.exhaustedUntil === null || s.exhaustedUntil <= now) return;
-  s.exhaustedUntil = now + rainAdjustedRecovery(s.exhaustedUntil - now, rainWindowMs);
+// -------------------------------------------------------------- respawning
+
+/** Deterministic "random": the same origin + generation always picks the
+ *  same candidate, so offline replay reproduces live play exactly. */
+function pickIndex(seed: string, length: number): number {
+  let h = 5381;
+  for (let i = 0; i < seed.length; i++) h = ((h << 5) + h + seed.charCodeAt(i)) >>> 0;
+  return h % length;
+}
+
+/** Place every due respawn: a random valid neighbor of the ORIGIN cell
+ *  (the feature's respawn terrain — Grassland for bushes/animals, Water for
+ *  fish shoals — no district, no feature). No valid cell → gone for good. */
+export function advanceRespawns(state: GameState, map: MapData, toTime: number): void {
+  const due = state.featureRespawns
+    .filter((r) => r.readyAt <= toTime)
+    .sort((a, b) => a.readyAt - b.readyAt);
+  if (due.length === 0) return;
+  state.featureRespawns = state.featureRespawns.filter((r) => r.readyAt > toTime);
+  for (const r of due) {
+    const terrain = FEATURES[r.feature].respawnTerrain;
+    const candidates = neighbors(map, parseCoordKey(r.origin)).filter((c) => {
+      const k = coordKey(c);
+      return map.terrain.get(k) === terrain &&
+        state.features[k] === undefined &&
+        districtAt(state, c) === undefined;
+    });
+    if (candidates.length === 0) continue; // nowhere left — removed for good
+    const cell = candidates[pickIndex(`${r.origin}:${r.generation}`, candidates.length)];
+    const key = coordKey(cell);
+    state.features[key] = r.feature;
+    state.featureMeta[key] = { origin: r.origin, generation: r.generation };
+  }
 }
 
 export type TapCellResult = 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed';
+export type CollectTapResult = TapCellResult | 'OnCooldown';
 
-/** Free player tap on a resource cell: +yield to the city wallet, +1 tap. */
+/** Free player tap on a resource cell: +yield to the city wallet, +1 tap.
+ *  No cooldown — the raw primitive (also handy for test setup). */
 export function tapCell(
   state: GameState,
   map: MapData,
@@ -119,7 +166,25 @@ export function tapCell(
   if (source === null) return 'NotHarvestable';
   if (isExhausted(state, cell, now)) return 'Exhausted';
   const spec = HARVEST[source];
-  addToWallet(state.city.wallet, spec.currencyId, spec.yieldPerTap);
+  const units = tapYieldAt(state, cell);
+  addToWallet(state.city.wallet, spec.currencyId, units);
+  recordResourceDiscovery(state, spec.currencyId);
+  recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
+  recordQuestEvent(state, { kind: 'tap' });
   registerTap(state, cell, spec, now);
   return 'Harvested';
+}
+
+/** The PLAYER's collect tap: tapCell gated by the collect cooldown. The same
+ *  gate paces hold-to-collect — the input layer retries and this decides. */
+export function collectTap(
+  state: GameState,
+  map: MapData,
+  cell: Coord,
+  now: number,
+): CollectTapResult {
+  if (now - state.lastCollectTapAt < effectiveCollectCooldownMs(state)) return 'OnCooldown';
+  const result = tapCell(state, map, cell, now);
+  if (result === 'Harvested') state.lastCollectTapAt = now;
+  return result;
 }

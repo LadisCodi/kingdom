@@ -1,45 +1,83 @@
-// Game orchestrator: owns the sim state, UI modes (placement / spell
-// targeting / inspection), the tap-handler chain, and change notification.
+// Game orchestrator: owns the sim state, UI modes (placement / inspection),
+// the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, enqueueBuild, finishWithGems,
-  tapCell, townhallCycle, townhallTap, upgradeDistrict, wakeIdleWorkersAt,
-  type AssignWorkerResult, type UpgradeResult,
+  advance, canAfford, cancelQueueItem, changeWorkers, collectTap, effectiveAmount,
+  enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
+  wakeIdleWorkersAt,
+  type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
-import { BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, SPELLS } from './sim/data/definitions';
 import {
-  buildCostForCell, buildDurationForCell, districtCount, hasPlacementRestriction,
-  maxCountForTownhallLevel, validPlacementCells,
+  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING, UNITS,
+} from './sim/data/definitions';
+import {
+  buildDurationForCell, districtCount, hasPlacementRestriction,
+  maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
 } from './sim/districts';
-import { fogState, revealCostForCell, revealTap } from './sim/fog';
-import { cellsWithinRadius, townhallDistance, type MapData } from './sim/grid';
-import { harvestSourceAt } from './sim/harvest';
+import { explorationGate, fogState, revealCostForCell, revealTap } from './sim/fog';
+import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
+import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
+import { placementAdjacency } from './sim/adjacency';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { availableWorkers, buyPopulation } from './sim/population';
-import { canTarget, castSpell } from './sim/spells';
+import { hasMarket, salePayout, sellGoods } from './sim/market';
+import {
+  availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, queuedTraining,
+  queueTraining, residentsOf, trainingCompletesAt,
+} from './sim/population';
+import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
+import { buySlot, startTech } from './sim/research';
+import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type SpellId, type UnitId,
+  type TechId, type UnitId, type UpgradeId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
+import { playSfx, type SfxName } from './audio/sfx';
+import type { HarvestSourceId } from './sim/state';
+import { QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
+import { Villagers } from './render/villagers';
 import type { MarkerLayer } from './render/mapRenderer';
 import { PALETTE } from './render/palette';
 import { TapChain } from './render/tapChain';
+import { TapFx } from './render/tapFx';
 
 export type Mode =
   | { kind: 'normal' }
-  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
-  | { kind: 'targeting'; spellId: SpellId };
+  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null };
+
+/** A transient attention hint: a UI element (by key) or a world cell gets an
+ *  arrow until it's interacted with or HINT_MS passes. */
+export type Hint =
+  | { kind: 'ui'; key: string; until: number }
+  | { kind: 'cell'; cell: Coord; until: number };
+
+const HINT_MS = 8000;
+
+/** A queued top-of-screen notification card (shown one at a time, 5s each). */
+export interface Banner {
+  title: string;
+  icon: string;
+  name: string;
+  desc: string;
+  /** Chime override; the banner plays 'discovery' when absent. */
+  sfx?: SfxName;
+}
 
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
-  openOverlay: string | null = null; // 'build' | 'spellbook' | 'army' | 'research'
+  private hint: Hint | null = null;
+  openOverlay: string | null = null; // 'build' | 'army' | 'research'
   readonly floaters = new Floaters();
+  readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
+  readonly tapFx = new TapFx();
+  private bannerQueue: Banner[] = [];
+  private questWasComplete = false;
+  private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
@@ -68,9 +106,29 @@ export class Game {
     this.toastListeners.push(fn);
   }
   notify(): void {
+    // Move fresh sim discoveries into the banner queue BEFORE listeners run,
+    // so the banner component sees them on this very render.
+    for (const key of this.state.pendingDiscoveries.splice(0)) {
+      const [kind, id] = key.split(':');
+      if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
+    }
+    // The moment the active quest's goal is met, ding — before any claim.
+    const questDone = this.questInfo()?.complete ?? false;
+    if (questDone && !this.questWasComplete) playSfx('questComplete');
+    this.questWasComplete = questDone;
     for (const fn of this.changeListeners) fn();
   }
+
+  queueBanner(banner: Banner): void {
+    this.bannerQueue.push(banner);
+  }
+
+  /** The next queued banner, if any (consumed by the banner component). */
+  takeBanner(): Banner | null {
+    return this.bannerQueue.shift() ?? null;
+  }
   shake(currencies: CurrencyId[]): void {
+    playSfx('error'); // every shake is a denial — one audible "no"
     for (const fn of this.shakeListeners) fn(currencies);
   }
   toast(msg: string): void {
@@ -84,11 +142,68 @@ export class Game {
     for (const d of result.deposits) {
       this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
     }
-    if (result.townhallPaid > 0) {
-      this.floaters.add(townhall(this.state).location, `+${result.townhallPaid} ${icon('Silver')}`);
+    if (result.goldEarned > 0) {
+      this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);
+    }
+    if (result.trainedPopulation > 0) {
+      playSfx('villagerTrained');
+      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation} 👥`);
+    }
+    // A quiet splash when a fishing boat sets out (one per tick, max).
+    let splashed = false;
+    for (const w of this.state.workers) {
+      const b = districtById(this.state, w.buildingId);
+      const isBoat = b !== undefined && DISTRICTS[b.definitionId].harvestSource === 'Fish';
+      const out = w.activity === 'MovingToCell';
+      if (isBoat && out && !this.boatsOut.has(w.id) && !splashed) {
+        playSfx('boatSplash');
+        splashed = true;
+      }
+      if (out) this.boatsOut.add(w.id);
+      else this.boatsOut.delete(w.id);
     }
     for (const item of result.completedItems) {
-      this.toast(item.kind === 'build' ? 'Construction complete!' : 'Upgrade complete!');
+      const district = districtById(this.state, item.districtUniqueId);
+      if (!district) continue;
+      const def = DISTRICTS[district.definitionId];
+      this.queueBanner(item.kind === 'build'
+        ? {
+          title: 'Construction complete!', icon: def.glyph, name: def.name,
+          desc: def.description, sfx: 'constructionComplete'
+        }
+        : {
+          title: 'Upgrade complete!', icon: def.glyph, name: def.name,
+          desc: `Now level ${district.level}`, sfx: 'constructionComplete'
+        });
+    }
+    for (const id of result.completedResearch) {
+      const tech = TECHNOLOGIES[id];
+      this.queueBanner({
+        title: 'Research complete!', icon: tech.glyph, name: tech.name,
+        desc: tech.description, sfx: 'researchComplete',
+      });
+      // Everything this tech just unlocked gets its own card, queued behind.
+      for (const def of Object.values(DISTRICTS)) {
+        if (def.requiredTech === id) {
+          this.queueBanner({
+            title: 'New building unlocked!', icon: def.glyph, name: def.name, desc: def.description,
+          });
+        }
+        const gatedLevel = def.requiredTechPerLevel.indexOf(id);
+        if (gatedLevel !== -1) {
+          this.queueBanner({
+            title: 'Upgrade unlocked!', icon: def.glyph, name: def.name,
+            desc: `${def.name} can now reach level ${gatedLevel + 2}.`,
+          });
+        }
+      }
+      for (const unit of Object.values(UNITS)) {
+        if (unit.requiredTech === id) {
+          this.queueBanner({
+            title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
+          });
+        }
+      }
     }
     this.notify();
   }
@@ -109,27 +224,6 @@ export class Game {
         return true; // placement mode swallows all map taps
       },
     });
-    // 200 — spell targeting.
-    this.tapChain.register({
-      priority: 200,
-      handle: (cell) => {
-        if (this.mode.kind !== 'targeting') return false;
-        const spellId = this.mode.spellId;
-        if (canTarget(this.state, spellId, cell)) {
-          const result = castSpell(this.state, spellId, cell, this.now());
-          if (result === 'Cast') {
-            this.floaters.add(cell, SPELLS[spellId].glyph);
-            this.mode = { kind: 'normal' };
-          } else if (result === 'NotEnoughMana') {
-            this.shake(['Mana']);
-          } else {
-            this.toast(result);
-          }
-          this.notify();
-        }
-        return true; // swallow taps outside valid cells
-      },
-    });
     // 50 — fog reveal (blocked while a full overlay is open; the tile card doesn't count).
     this.tapChain.register({
       priority: 50,
@@ -139,12 +233,17 @@ export class Game {
         if (fog === 'Undiscovered') return true; // swallowed
         if (fog !== 'Discovered') return false;
         const result = revealTap(this.state, this.map, cell);
-        if (result === 'NotEnoughSilver') this.shake(['Silver']);
-        else if (result === 'Revealed') {
+        if (result === 'NotEnoughGold') this.shake(['Gold']);
+        else if (result === 'TechLocked') {
+          const gate = explorationGate(this.map, cell);
+          if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} to explore this terrain`);
+        } else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
+          playSfx('revealDone');
           this.floaters.add(cell, 'Revealed!');
         } else if (result === 'Paid') {
-          this.floaters.add(cell, `-1 ${icon('Silver')}`);
+          playSfx('revealPaid');
+          this.floaters.add(cell, `-1 ${icon('Gold')}`);
         }
         this.notify();
         return true;
@@ -155,24 +254,38 @@ export class Game {
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
-        // Townhall: tapping adds cycle progress (and opens/keeps its card).
-        if (district?.definitionId === 'Townhall' && district.state === 'Built') {
-          const paid = townhallTap(this.state, this.now());
-          this.floaters.add(cell, paid > 0 ? `+${paid} ${icon('Silver')}` : '⏩');
+        // Market: tapping the built Market opens its trade screen.
+        if (district?.definitionId === 'Market' && district.state === 'Built') {
+          this.setOverlay('market');
+          return true;
+        }
+        // Housing: tapping fast-forwards tax collection (and opens the card).
+        if (district && district.state === 'Built' &&
+          districtCapacity(this.state, district) > 0) {
+          const { result, gold } = houseTap(this.state, district, this.now());
+          if (result === 'Boosted') {
+            this.tapFeedback(district.location, 'tapHouse');
+            this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+          }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
         }
-        // Resource cells (Forest, built Crops): free harvest tap.
+        // Townhall: tapping adds cycle progress (and opens/keeps its card).
+        if (district?.definitionId === 'Townhall' && district.state === 'Built') {
+          const tap = townhallTap(this.state, this.now());
+          if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap === 'TrainingComplete') playSfx('villagerTrained');
+          if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
+          else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
+          this.inspectedDistrictId = district.uniqueId;
+          this.notify();
+          return true;
+        }
+        // Resource cells (Forest, built Crops): cooldown-gated collect tap.
         const source = harvestSourceAt(this.state, cell);
         if (source !== null && this.state.fog.revealed[coordKey(cell)]) {
-          const result = tapCell(this.state, this.map, cell, this.now());
-          if (result === 'Harvested') {
-            const currency = source === 'Forest' ? 'Wood' : 'Food';
-            this.floaters.add(cell, `+1 ${icon(currency)}`);
-          } else if (result === 'Exhausted') {
-            this.floaters.add(cell, '💤');
-          }
+          this.collectAt(cell);
           // A crop plot is also a district — inspecting it stays useful.
           this.inspectedDistrictId = district?.uniqueId ?? null;
           this.notify();
@@ -187,6 +300,51 @@ export class Game {
         return true;
       },
     });
+  }
+
+  /** Punch + flash + a target-appropriate sound on a successful tap. */
+  private tapFeedback(anchor: Coord, sfx: SfxName = 'pop'): void {
+    this.tapFx.add(coordKey(anchor));
+    playSfx(sfx);
+  }
+
+  /** One cooldown-gated collect on a resource cell, with feedback.
+   *  'OnCooldown' is silent — hold-to-collect retries until the gate opens. */
+  private collectAt(cell: Coord): CollectTapResult {
+    const source = harvestSourceAt(this.state, cell);
+    const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
+    const result = collectTap(this.state, this.map, cell, this.now());
+    if (result === 'Harvested' && source !== null) {
+      this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
+      this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
+    } else if (result === 'Exhausted') {
+      playSfx('tapEmpty');
+      this.floaters.add(cell, '💤');
+    }
+    return result;
+  }
+
+  /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place). */
+  handleHold(sx: number, sy: number): void {
+    // if (this.mode.kind !== 'normal' || this.openOverlay !== null) return;
+    // const cell = this.camera.screenToCell(sx, sy);
+    // if (!this.map.terrain.has(coordKey(cell))) return;
+    // // Holding a lived-in house keeps boosting its tax clock, same cooldown.
+    // const district = districtAt(this.state, cell);
+    // if (district && district.state === 'Built' &&
+    //     districtCapacity(this.state, district) > 0) {
+    //   const { result, gold } = houseTap(this.state, district, this.now());
+    //   if (result === 'Boosted') {
+    //     this.tapFeedback(district.location, 'tapHouse');
+    //     this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+    //     this.notify();
+    //   }
+    //   return;
+    // }
+    // if (harvestSourceAt(this.state, cell) === null) return;
+    // if (!this.state.fog.revealed[coordKey(cell)]) return;
+    // if (isExhausted(this.state, cell, this.now())) return; // quiet — no 💤 spam
+    // if (this.collectAt(cell) === 'Harvested') this.notify();
   }
 
   // ------------------------------------------------------------ placement mode
@@ -213,9 +371,10 @@ export class Game {
   confirmBuild(): void {
     if (this.mode.kind !== 'placing' || !this.mode.selected) return;
     const { definitionId, selected } = this.mode;
-    const cost = buildCostForCell(this.state, definitionId, selected, this.map);
+    const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
+      playSfx('buildPlaced');
       this.mode = { kind: 'normal' };
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
@@ -225,29 +384,21 @@ export class Game {
     this.notify();
   }
 
-  cancelPlacement(): void {
-    this.mode = { kind: 'normal' };
-    this.notify();
-  }
-
-  // ------------------------------------------------------------ targeting mode
-
-  startTargeting(spellId: SpellId): void {
-    this.mode = { kind: 'targeting', spellId };
-    this.openOverlay = null;
-    this.inspectedDistrictId = null;
-    this.notify();
-  }
-
-  cancelTargeting(): void {
-    this.mode = { kind: 'normal' };
-    this.notify();
-  }
-
   // -------------------------------------------------------------- UI commands
 
-  doBuyPopulation(): void {
-    const result = buyPopulation(this.state);
+  doSell(c: CurrencyId, amount: number): void {
+    const { result, gold } = sellGoods(this.state, c, amount);
+    if (result === 'Sold') {
+      playSfx('coinSale');
+      const market = this.state.city.districts.find(
+        (d) => d.definitionId === 'Market' && d.state === 'Built');
+      if (market) this.floaters.add(market.location, `+${gold} ${icon('Gold')}`);
+    }
+    this.notify();
+  }
+
+  doQueueTraining(): void {
+    const result = queueTraining(this.state, this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
     else if (result === 'AtMax') this.toast('Population at max — build more Housing');
     this.notify();
@@ -255,7 +406,7 @@ export class Game {
 
   doChangeWorkers(districtId: string, delta: 1 | -1): AssignWorkerResult {
     const result = changeWorkers(this.state, this.map, districtId, delta, this.now());
-    if (result === 'NoMoreTiles') this.toast('No more cells available to work');
+    if (result === 'AtCapacity') this.toast('Worker capacity reached — upgrade the building');
     if (result === 'NoFreeWorkers') this.toast('No free workers — buy population');
     this.notify();
     return result;
@@ -274,20 +425,219 @@ export class Game {
   }
 
   doRush(itemId: string): void {
-    const result = finishWithGems(this.state, itemId, this.now());
+    const result = finishWithGems(this.state, this.map, itemId, this.now());
+    if (result === 'Success') playSfx('gemSpend');
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 
   doCancelItem(itemId: string): void {
-    cancelQueueItem(this.state, this.map, itemId);
+    cancelQueueItem(this.state, itemId);
     this.inspectedDistrictId = null;
+    this.notify();
+  }
+
+  doStartTech(id: TechId): void {
+    const result = startTech(this.state, id, this.now());
+    if (result === 'Started') playSfx('research');
+    if (result === 'NotEnoughResources') {
+      this.shake(Object.keys(TECHNOLOGIES[id].cost) as CurrencyId[]);
+    } else if (result === 'NoFreeSlot') {
+      this.toast('All research slots are busy');
+    } else if (result === 'MissingRequirement') {
+      this.toast('Requires another technology first');
+    }
+    this.notify();
+  }
+
+  doBuyUpgrade(id: UpgradeId): void {
+    const result = buyUpgrade(this.state, id);
+    if (result === 'Purchased') playSfx('upgradeBought');
+    if (result === 'NotEnoughResources') this.shake(['Gold']);
+    this.notify();
+  }
+
+  /** Renderers ask: is this UI key currently hinted? */
+  uiHint(): string | null {
+    if (this.hint?.kind !== 'ui' || this.hint.until < this.now()) return null;
+    return this.hint.key;
+  }
+
+  /** The world cell currently hinted (arrow on the map), if any. */
+  hintCell(): Coord | null {
+    if (this.hint?.kind !== 'cell' || this.hint.until < this.now()) return null;
+    return this.hint.cell;
+  }
+
+  setUiHint(key: string): void {
+    this.hint = { kind: 'ui', key, until: this.now() + HINT_MS };
+  }
+
+  setCellHint(cell: Coord): void {
+    this.hint = { kind: 'cell', cell, until: this.now() + HINT_MS };
+  }
+
+  clearHint(): void {
+    if (this.hint === null) return;
+    this.hint = null;
+    this.notify();
+  }
+
+  /** The quest 🔍: navigate to where the ACTIVE quest can be progressed —
+   *  open the right menu, or close menus and center/inspect on the map. */
+  focusQuest(): void {
+    const quest = activeQuest(this.state);
+    if (!quest) return;
+    const overlay = (name: string) => this.setOverlay(name);
+    const centerCell = (cell: Coord | null) => {
+      if (!cell) return;
+      this.setOverlay(null);
+      this.inspectedDistrictId = null;
+      this.camera.centerOnCell(cell);
+      this.setCellHint(cell); // arrow on the map until tapped (or timeout)
+      this.notify();
+    };
+    const inspect = (district: District | undefined, fallback = 'build') => {
+      if (!district) {
+        overlay(fallback);
+        return;
+      }
+      this.setOverlay(null);
+      this.inspectedDistrictId = district.uniqueId;
+      this.camera.centerOnCell(district.location);
+      this.notify();
+    };
+    const built = (pred: (d: District) => boolean) =>
+      this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
+    switch (quest.goalType) {
+      // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
+      // and the render they trigger must already see the hint.
+      case 'BuildDistrict':
+        this.setUiHint(`build:${quest.goalTarget}`);
+        overlay('build');
+        break;
+      case 'UpgradeDistrict': {
+        const target = built((d) => d.definitionId === quest.goalTarget);
+        this.setUiHint(target ? 'card:upgrade' : `build:${quest.goalTarget}`);
+        inspect(target);
+        break;
+      }
+      case 'ReachPopulation':
+        this.setUiHint('card:train');
+        inspect(townhall(this.state));
+        break;
+      case 'CompleteTech':
+        this.setUiHint(`tech:${quest.goalTarget}`);
+        overlay('research');
+        break;
+      case 'CompleteTechs':
+        overlay('research');
+        break;
+      case 'AssignWorkers': {
+        const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);
+        if (target) this.setUiHint('card:workers');
+        inspect(target);
+        break;
+      }
+      case 'TrainArmy':
+        this.setUiHint('army');
+        overlay('army');
+        break;
+      case 'SellGoods':
+        if (hasMarket(this.state)) {
+          this.setUiHint('market');
+          overlay('market');
+        } else {
+          this.setUiHint('build:Market');
+          overlay('build');
+        }
+        break;
+      case 'DiscoverCells':
+        centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      case 'CollectTaps':
+        centerCell(this.nearestCell((c) =>
+          this.state.fog.revealed[coordKey(c)] === true && harvestSourceAt(this.state, c) !== null));
+        break;
+      case 'HoldResource':
+      case 'CollectResource': {
+        if (quest.goalTarget === 'Gold') {
+          const house = built((d) => districtCapacity(this.state, d) > 0 &&
+            residentsOf(this.state, d) > 0);
+          inspect(house ?? townhall(this.state));
+          if (house) this.setCellHint(house.location);
+          break;
+        }
+        const cell = this.nearestCell((c) => {
+          if (this.state.fog.revealed[coordKey(c)] !== true) return false;
+          const source = harvestSourceAt(this.state, c);
+          if (source === null) return false;
+          // Food-valued sources (berries, meat, fish) satisfy a Food target.
+          const currency = HARVEST[source].currencyId;
+          return currency === quest.goalTarget ||
+            CURRENCIES[currency].countsAs?.currency === quest.goalTarget;
+        });
+        if (cell) centerCell(cell);
+        else centerCell(townhall(this.state).location);
+        break;
+      }
+    }
+  }
+
+  /** Nearest cell (by townhall distance) satisfying the predicate. */
+  private nearestCell(pred: (cell: Coord) => boolean): Coord | null {
+    let best: Coord | null = null;
+    let bestD = Infinity;
+    for (const c of this.map.cells) {
+      if (!pred(c)) continue;
+      const d = townhallDistance(this.map, c);
+      if (d < bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    return best;
+  }
+
+  doClaimQuest(): void {
+    const quest = activeQuest(this.state);
+    const result = claimQuest(this.state);
+    if (result === 'Claimed' && quest) {
+      // The LAST claim gets the victory sting instead of the usual chime.
+      playSfx(activeQuest(this.state) === null ? 'chainFinished' : 'quest');
+      const parts = Object.entries(quest.reward)
+        .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
+      this.floaters.add(townhall(this.state).location, parts.join(' '));
+    }
+    this.notify();
+  }
+
+  /** Active-quest snapshot for the pill; null when the chain is finished. */
+  questInfo(): {
+    quest: QuestDef; value: number; complete: boolean; index: number; total: number;
+  } | null {
+    const quest = activeQuest(this.state);
+    if (!quest) return null;
+    return {
+      quest,
+      value: Math.min(questValue(this.state, quest), quest.goalAmount),
+      complete: isQuestComplete(this.state, quest),
+      index: this.state.quests.index,
+      total: QUESTS.length,
+    };
+  }
+
+  doBuySlot(): void {
+    const result = buySlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 
   doTrain(unitId: UnitId): void {
     const result = trainUnit(this.state, unitId);
-    if (result === 'NotEnoughResources') this.shake(['Silver', 'Wood', 'Food']);
+    if (result === 'Trained') playSfx('unitTrained');
+    if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
     if (result === 'ArmyAtCapacity') this.toast(`Army at capacity (${armyPower(this.state)}/${maxArmyPower(this.state)})`);
     this.notify();
   }
@@ -295,6 +645,21 @@ export class Game {
   setOverlay(name: string | null): void {
     this.openOverlay = name;
     if (name !== null) this.inspectedDistrictId = null;
+    this.notify();
+  }
+
+  /** True when the navbar should show a single Close button instead of the tabs. */
+  dismissible(): boolean {
+    return (
+      this.mode.kind !== 'normal' || this.openOverlay !== null || this.inspectedDistrictId !== null
+    );
+  }
+
+  /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
+  dismiss(): void {
+    this.mode = { kind: 'normal' };
+    this.openOverlay = null;
+    this.inspectedDistrictId = null;
     this.notify();
   }
 
@@ -309,8 +674,7 @@ export class Game {
       if (capped) return false;
       const cells = validPlacementCells(this.state, this.map, id);
       if (cells.length === 0) return false;
-      const cost = buildCostForCell(this.state, id, cells[0], this.map);
-      return canAfford(this.state.city.wallet, cost);
+      return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
     });
   }
 
@@ -318,7 +682,7 @@ export class Game {
   capturedCells(definitionId: DistrictId, cell: Coord): Coord[] {
     const def = DISTRICTS[definitionId];
     if (!def.harvestSource || def.influenceRadiusPerLevel.length === 0) return [];
-    return cellsWithinRadius(this.map, cell, def.influenceRadiusPerLevel[0]).filter(
+    return cellsWithinRadiusOfRect(this.map, cell, def.size, def.influenceRadiusPerLevel[0]).filter(
       (c) =>
         this.state.fog.revealed[coordKey(c)] === true &&
         harvestSourceAt(this.state, c) === def.harvestSource,
@@ -335,6 +699,10 @@ export class Game {
       yieldCells: [],
       previewCell: null,
       previewGlyph: null,
+      previewSprite: null,
+      previewSize: null,
+      selectedSize: null,
+      hintCell: this.hintCell(),
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
@@ -347,29 +715,50 @@ export class Game {
         );
       }
       layer.selected = this.mode.selected;
+      layer.selectedSize = def.size;
       layer.previewCell = this.mode.selected;
       layer.previewGlyph = def.glyph;
+      layer.previewSprite = def.sprite;
+      layer.previewSize = def.size;
+      // Adjacency preview: a label over every neighbor the new building
+      // would modify, and over the ghost itself (what it would receive).
+      if (this.mode.selected) {
+        const adj = placementAdjacency(this.state, this.mode.definitionId, this.mode.selected);
+        for (const g of adj.given) {
+          layer.yieldCells.push({
+            cell: g.district.location,
+            label: formatAdjacency(g.goldPerMinute),
+            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+          });
+        }
+        if (adj.received !== 0) {
+          layer.yieldCells.push({
+            cell: this.mode.selected,
+            label: formatAdjacency(adj.received),
+            tone: adj.received < 0 ? 'bad' : 'good',
+          });
+        }
+      }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
-        layer.influenceCells = cellsWithinRadius(
-          this.map, this.mode.selected, def.influenceRadiusPerLevel[0],
+        layer.influenceCells = cellsWithinRadiusOfRect(
+          this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
         );
         if (def.harvestSource) {
           const spec = HARVEST[def.harvestSource];
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
-            (cell) => ({ cell, label: `+${spec.yieldPerTap} ${icon(spec.currencyId)}` }),
+            // The placement preview shows what WORKERS will fetch per delivery.
+            (cell) => ({
+              cell,
+              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
+            }),
           );
         }
       }
-    } else if (this.mode.kind === 'targeting') {
-      const spellId = this.mode.spellId;
-      layer.validColor = PALETTE.spellTarget;
-      layer.validCells = this.map.cells
-        .filter((c) => canTarget(this.state, spellId, c))
-        .map((cell) => ({ cell, label: SPELLS[spellId].glyph }));
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
         layer.selected = district.location;
+        layer.selectedSize = DISTRICTS[district.definitionId].size;
         if (district.state === 'Built') {
           layer.influenceCells = influenceCells(this.map, district);
           layer.claimedCells = this.state.workers
@@ -388,7 +777,7 @@ export class Game {
   placementInfo(): {
     definitionId: DistrictId;
     cell: Coord | null;
-    cost: ReturnType<typeof buildCostForCell>;
+    cost: ReturnType<typeof nextBuildCost>;
     duration: number;
     affordable: boolean;
     captured: number;
@@ -398,7 +787,7 @@ export class Game {
     if (!selected) {
       return { definitionId, cell: null, cost: {}, duration: 0, affordable: false, captured: 0 };
     }
-    const cost = buildCostForCell(this.state, definitionId, selected, this.map);
+    const cost = nextBuildCost(this.state, definitionId);
     return {
       definitionId,
       cell: selected,
@@ -417,12 +806,37 @@ export class Game {
     return workableCells(this.state, this.map, district);
   }
 
-  townhallCycleInfo() {
-    return townhallCycle(this.state, this.now());
+  /** Villager-training snapshot for the Townhall card & map bar. */
+  trainingInfo(): {
+    active: boolean; progress: number; remainingSeconds: number; queued: number;
+    cost: number; atMax: boolean;
+  } {
+    const now = this.now();
+    const completesAt = trainingCompletesAt(this.state);
+    const total = TRAINING.seconds * 1000;
+    const queued = queuedTraining(this.state);
+    return {
+      active: completesAt !== null,
+      progress: completesAt === null ? 0 : Math.min(1, Math.max(0, 1 - (completesAt - now) / total)),
+      remainingSeconds: completesAt === null ? 0 : Math.max(0, (completesAt - now) / 1000),
+      queued,
+      cost: populationCost(this.state.city.population + queued),
+      atMax: this.state.city.population + queued >= maxPopulation(this.state),
+    };
+  }
+
+  residentsIn(district: District): number {
+    return residentsOf(this.state, district);
+  }
+
+  marketPayout(c: CurrencyId, amount: number): number {
+    return salePayout(this.state, c, amount);
   }
 
   handleTap(sx: number, sy: number): void {
     const cell = this.camera.screenToCell(sx, sy);
+    const hinted = this.hintCell();
+    if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {
       // Tapping the void: close card / keep mode (placement & targeting still swallow).
       if (this.mode.kind === 'normal') {
@@ -436,14 +850,54 @@ export class Game {
 
   walletValue(c: CurrencyId): number {
     if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Mana' || c === 'Gold' || c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
+    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return getWallet(this.state.city.wallet, c);
   }
+
+  /** Widget value: base amount plus everything that counts as it (Food shows
+   *  Food + Berries + Meat×3). Same number every Food cost checks against. */
+  effectiveWalletValue(c: CurrencyId): number {
+    if (c === 'Gems') return getWallet(this.state.player.wallet, c);
+    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
+    return effectiveAmount(this.state.city.wallet, c);
+  }
+}
+
+/** What a collect tap on each harvest source sounds like. */
+const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
+  Forest: 'tapTree',
+  Berries: 'tapBerries',
+  Crops: 'tapBerries', // same gathering foley until a distinct take lands
+  Meat: 'tapAnimals',
+  Stone: 'tapStone',
+  Iron: 'tapIron',
+  Fish: 'tapFish',
+};
+
+/** The discovery card for a first-collected resource. */
+function resourceBanner(currency: CurrencyId): Banner {
+  const def = CURRENCIES[currency];
+  const desc = def.countsAs
+    ? `${def.countsAs.value} ${def.countsAs.currency}`
+    : currency === 'Gold'
+      ? 'Pays for everything'
+      : def.goldValue !== null
+        ? `Sells for ${def.goldValue} ${icon('Gold')}`
+        : '';
+  return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
+}
+
+/** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */
+export function formatAdjacency(goldPerMinute: number): string {
+  const n = Math.abs(Number.isInteger(goldPerMinute)
+    ? goldPerMinute : Number(goldPerMinute.toFixed(1)));
+  return `${goldPerMinute > 0 ? '+' : '\u2212'}${n} 🪙`;
 }
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Food: '🍎', Silver: '🪙', Wood: '🪵', Gold: '🏅', Mana: '💧', Knowledge: '📜', Gems: '💎',
+    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️',
+    Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }

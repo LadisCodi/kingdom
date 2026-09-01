@@ -54,15 +54,13 @@ prevents building on Water *per se* — placement rules are per-district (see
 | Feature | On the map | Tap durability | Destroyed → | Upgraded → | BaseYield |
 |---|---|---|---|---|---|
 | **Trees** | 13 cells in Region_01 | destroyed after 5–12 taps (random per cell) | TreesCut | — | empty (see note) |
-| **TreesCut** | none initially | indestructible (0/0) | — | Trees (via Rain; UI hint "Grow trees") | empty |
+| **TreesCut** | none initially | indestructible (0/0) | — | Trees (regrowth; UI hint "Grow trees") | empty |
 
 - Features block district placement (universal rule). When a district is built on a
   cell whose feature was hidden during placement preview, the feature tile is removed;
   cancelling the build restores it.
 - Lumber camps *work* adjacent+connected revealed Trees cells for bonus Wood (see
   `03-economy-and-production.md`).
-- The empty `BaseYield` on both features means the Tap spell currently has nothing to
-  extract — see `11-gaps-and-discrepancies.md`.
 
 ## Region_01 layout
 

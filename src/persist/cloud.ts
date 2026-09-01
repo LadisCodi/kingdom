@@ -41,6 +41,16 @@ export async function cloudLoad(): Promise<SaveFile | null> {
   }
 }
 
+/** Delete this player's save row (best effort — reset must not hang on it). */
+export async function cloudClear(): Promise<void> {
+  if (!client || !userId) return;
+  try {
+    await client.from('saves').delete().eq('user_id', userId);
+  } catch {
+    // Offline/unavailable: the local wipe still resets the game.
+  }
+}
+
 export async function cloudSave(save: SaveFile): Promise<boolean> {
   if (!client || !userId) return false;
   try {

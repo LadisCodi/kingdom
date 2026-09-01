@@ -1,0 +1,1224 @@
+{
+  "_note": "GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance",
+  "districts": {
+    "Townhall": {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "maxLevel": 3,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 3,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [
+        null,
+        "Architecture"
+      ],
+      "buildCost": {},
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 0,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 40,
+        "Stone": 20
+      },
+      "upgradeCostLevelGrowth": 3.9,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 4
+    },
+    "Housing": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacityPerLevel": [
+        2,
+        4
+      ],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        2,
+        4,
+        6
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [
+        "UrbanPlanning"
+      ],
+      "buildCost": {
+        "Wood": 10
+      },
+      "buildCostMultiplier": 1.25,
+      "buildCostExponentialGrowth": 1.1,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 30,
+        "Stone": 10
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 20,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Farm": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [
+        1,
+        2
+      ],
+      "requiredTownhallLevelPerLevel": [
+        2
+      ],
+      "requiredTechPerLevel": [
+        "CropRotation"
+      ],
+      "buildCost": {
+        "Wood": 30
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.5,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 50
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "FarmLands": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        6,
+        6,
+        12
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [],
+      "buildCost": {
+        "Wood": 20
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 10,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Sawmill": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 3,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5,
+        7
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2,
+        3
+      ],
+      "influenceRadiusPerLevel": [
+        2,
+        3,
+        4
+      ],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "requiredTechPerLevel": [
+        null,
+        "Engineering"
+      ],
+      "buildCost": {
+        "Wood": 20
+      },
+      "buildCostMultiplier": 2.5,
+      "buildCostExponentialGrowth": 1.15,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 60
+      },
+      "upgradeCostLevelGrowth": 2.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Market": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [],
+      "buildCost": {
+        "Wood": 40
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 30,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Quarry": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2,
+        3
+      ],
+      "influenceRadiusPerLevel": [
+        2,
+        3,
+        4
+      ],
+      "requiredTownhallLevelPerLevel": [
+        2
+      ],
+      "requiredTechPerLevel": [
+        "Engineering"
+      ],
+      "buildCost": {
+        "Wood": 30
+      },
+      "buildCostMultiplier": 2.5,
+      "buildCostExponentialGrowth": 1.15,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 40
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Docks": {
+      "size": {
+        "x": 2,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2,
+        3
+      ],
+      "influenceRadiusPerLevel": [
+        4,
+        6
+      ],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [
+        "Shipbuilding"
+      ],
+      "buildCost": {
+        "Wood": 25
+      },
+      "buildCostMultiplier": 2.5,
+      "buildCostExponentialGrowth": 1.15,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 35
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Mine": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2,
+        3
+      ],
+      "influenceRadiusPerLevel": [
+        2,
+        3,
+        4
+      ],
+      "requiredTownhallLevelPerLevel": [
+        2
+      ],
+      "requiredTechPerLevel": [
+        "DeepMining"
+      ],
+      "buildCost": {
+        "Wood": 40,
+        "Stone": 20
+      },
+      "buildCostMultiplier": 2.5,
+      "buildCostExponentialGrowth": 1.15,
+      "buildDurationSeconds": 30,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 50,
+        "Stone": 25
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    }
+  },
+  "harvest": {
+    "Forest": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 90,
+      "respawnSeconds": 0
+    },
+    "Crops": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 60,
+      "respawnSeconds": 0
+    },
+    "Berries": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 0,
+      "respawnSeconds": 120
+    },
+    "Meat": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 10,
+      "recoverySeconds": 0,
+      "respawnSeconds": 180
+    },
+    "Stone": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 120,
+      "respawnSeconds": 0
+    },
+    "Fish": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 0,
+      "respawnSeconds": 90
+    },
+    "Iron": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 300,
+      "respawnSeconds": 0
+    }
+  },
+  "currencies": {
+    "Gold": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": null
+    },
+    "Food": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": 1
+    },
+    "Wood": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": 3
+    },
+    "Stone": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": 2
+    },
+    "Iron": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": 6
+    },
+    "Berries": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "countsAs": {
+        "currency": "Food",
+        "value": 1
+      },
+      "goldValue": 1
+    },
+    "Meat": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "countsAs": {
+        "currency": "Food",
+        "value": 3
+      },
+      "goldValue": 3
+    },
+    "Fish": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "countsAs": {
+        "currency": "Food",
+        "value": 1
+      },
+      "goldValue": 2
+    },
+    "Knowledge": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "countsAs": null,
+      "goldValue": null
+    },
+    "Gems": {
+      "cap": null,
+      "start": 10,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": null
+    }
+  },
+  "units": {
+    "Warrior": {
+      "power": 3,
+      "recruitCost": {
+        "Gold": 50,
+        "Wood": 10,
+        "Food": 20
+      },
+      "trainDurationSeconds": 30
+    },
+    "Lancer": {
+      "power": 4,
+      "recruitCost": {
+        "Gold": 100,
+        "Wood": 30,
+        "Food": 10
+      },
+      "trainDurationSeconds": 40
+    },
+    "Archer": {
+      "power": 2,
+      "recruitCost": {
+        "Gold": 60,
+        "Wood": 30
+      },
+      "trainDurationSeconds": 25
+    },
+    "Cavalry": {
+      "power": 5,
+      "recruitCost": {
+        "Gold": 150,
+        "Food": 40,
+        "Iron": 20
+      },
+      "trainDurationSeconds": 60
+    }
+  },
+  "technologies": {
+    "Forestry": {
+      "cost": {
+        "Gold": 75
+      },
+      "durationSeconds": 30,
+      "requires": []
+    },
+    "UrbanPlanning": {
+      "cost": {
+        "Gold": 200,
+        "Wood": 50
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Communities": {
+      "cost": {
+        "Gold": 450,
+        "Wood": 60
+      },
+      "durationSeconds": 90,
+      "requires": [
+        "UrbanPlanning"
+      ]
+    },
+    "Architecture": {
+      "cost": {
+        "Gold": 600,
+        "Iron": 15
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "Communities"
+      ]
+    },
+    "Agriculture": {
+      "cost": {
+        "Gold": 100,
+        "Wood": 25
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Farming": {
+      "cost": {
+        "Gold": 250,
+        "Wood": 50
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Agriculture"
+      ]
+    },
+    "Market": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Agriculture"
+      ]
+    },
+    "CropRotation": {
+      "cost": {
+        "Gold": 300,
+        "Food": 30
+      },
+      "durationSeconds": 75,
+      "requires": [
+        "Farming"
+      ]
+    },
+    "Masonry": {
+      "cost": {
+        "Gold": 100,
+        "Wood": 25
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Mining": {
+      "cost": {
+        "Gold": 250,
+        "Stone": 30
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Masonry"
+      ]
+    },
+    "Engineering": {
+      "cost": {
+        "Gold": 500,
+        "Stone": 60
+      },
+      "durationSeconds": 90,
+      "requires": [
+        "Masonry"
+      ]
+    },
+    "DeepMining": {
+      "cost": {
+        "Gold": 800,
+        "Stone": 30
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "Mining"
+      ]
+    },
+    "Sailing": {
+      "cost": {
+        "Gold": 150,
+        "Wood": 30
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Fishing": {
+      "cost": {
+        "Gold": 100,
+        "Food": 20
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Sailing"
+      ]
+    },
+    "Shipbuilding": {
+      "cost": {
+        "Gold": 400,
+        "Wood": 40
+      },
+      "durationSeconds": 90,
+      "requires": [
+        "Fishing"
+      ]
+    },
+    "ScalingTools": {
+      "cost": {
+        "Gold": 200,
+        "Wood": 25
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Warrior": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Spears": {
+      "cost": {
+        "Gold": 150,
+        "Wood": 20
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Warrior"
+      ]
+    },
+    "Archery": {
+      "cost": {
+        "Gold": 150,
+        "Wood": 20
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Warrior"
+      ]
+    },
+    "Cavalry": {
+      "cost": {
+        "Gold": 400,
+        "Food": 30
+      },
+      "durationSeconds": 90,
+      "requires": [
+        "Warrior"
+      ]
+    }
+  },
+  "upgrades": {
+    "TapPower": {
+      "costBase": 50,
+      "costGrowth": 2.2,
+      "maxLevel": 5,
+      "effectPerLevel": 1,
+      "requiredTech": "Forestry"
+    },
+    "WorkerLoad": {
+      "costBase": 200,
+      "costGrowth": 2.5,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Forestry"
+    },
+    "MarketStall": {
+      "costBase": 100,
+      "costGrowth": 2,
+      "maxLevel": 4,
+      "effectPerLevel": 0.05,
+      "requiredTech": "Market"
+    },
+    "TradeRoutes": {
+      "costBase": 150,
+      "costGrowth": 2,
+      "maxLevel": 5,
+      "effectPerLevel": 0.1,
+      "requiredTech": "Market"
+    },
+    "Stonecutting": {
+      "costBase": 100,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Masonry"
+    },
+    "BigNets": {
+      "costBase": 100,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Fishing"
+    },
+    "IronPicks": {
+      "costBase": 150,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Mining"
+    }
+  },
+  "research": {
+    "techSlots": 1,
+    "maxSlots": 3,
+    "slotGemCostBase": 10,
+    "slotGemCostGrowth": 3
+  },
+  "worker": {
+    "moveSpeedTilesPerSecond": 1,
+    "workSeconds": 8
+  },
+  "tap": {
+    "collectCooldownSeconds": 0
+  },
+  "training": {
+    "seconds": 20,
+    "tapBoostSeconds": 2
+  },
+  "taxes": {
+    "goldPerPopulationPerMinute": 30,
+    "tapBoostSeconds": 2
+  },
+  "adjacency": [
+    {
+      "district": "Housing",
+      "neighbor": "Housing",
+      "goldPerMinute": -1
+    }
+  ],
+  "quests": [
+    {
+      "id": "FirstSteps",
+      "name": "First steps",
+      "description": "Tap the forest next to your Townhall to gather Wood.",
+      "goalType": "CollectTaps",
+      "goalTarget": null,
+      "goalAmount": 5,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 10
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Timber",
+      "name": "Timber!",
+      "description": "Stockpile 10 Wood — enough for your first building.",
+      "goalType": "HoldResource",
+      "goalTarget": "Wood",
+      "goalAmount": 10,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "ARoof",
+      "name": "A roof",
+      "description": "Build a Housing next to the Townhall.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Housing",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 20
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Rations",
+      "name": "Rations",
+      "description": "Gather 3 Food for your first villager — the berry bushes will do.",
+      "goalType": "HoldResource",
+      "goalTarget": "Food",
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "FirstVillager",
+      "name": "First villager",
+      "description": "Train a villager at the Townhall — berries make fine rations.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 25
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Explorer",
+      "name": "Explorer",
+      "description": "Spend Gold on the misty frontier — reveal 6 new map cells.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 6,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 20
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "TaxDay",
+      "name": "Tax day",
+      "description": "Collect 30 Gold — housed villagers pay taxes every minute.",
+      "goalType": "CollectResource",
+      "goalTarget": "Gold",
+      "goalAmount": 30,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 20,
+        "Wood": 10
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Woodcraft",
+      "name": "Forestry",
+      "description": "Research Forestry — the root of the technology tree.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Forestry",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 40
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "TheSawmill",
+      "name": "The Sawmill",
+      "description": "Build a Sawmill near the forest.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Sawmill",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "ToWork",
+      "name": "Put them to work",
+      "description": "Assign a worker — they will chop wood for you.",
+      "goalType": "AssignWorkers",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "GrowingTown",
+      "name": "Growing town",
+      "description": "Build a second Housing — mind the crowding penalty!",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Housing",
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 40
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Neighbors",
+      "name": "Neighbors",
+      "description": "Reach a population of 2.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 50
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "PickARoute",
+      "name": "Pick a route",
+      "description": "Research 3 technologies — farm the land or fish the sea, your call.",
+      "goalType": "CompleteTechs",
+      "goalTarget": null,
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 60
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Stoneworks",
+      "name": "Stoneworks",
+      "description": "Build a Quarry — Stone builds the future.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Quarry",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 50,
+        "Food": 20
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "ToMarket",
+      "name": "To market",
+      "description": "Build the Market and open trade.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 80
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Merchant",
+      "name": "Merchant",
+      "description": "Sell 20 goods at the Market.",
+      "goalType": "SellGoods",
+      "goalTarget": null,
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "ProperCapital",
+      "name": "A proper capital",
+      "description": "Upgrade the Townhall to level 2.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Townhall",
+      "goalAmount": 1,
+      "goalLevel": 2,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 5
+    },
+    {
+      "id": "MoreRoom",
+      "name": "More room",
+      "description": "Research Urban Planning — homes with a second story.",
+      "goalType": "CompleteTech",
+      "goalTarget": "UrbanPlanning",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 60
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "SecondStory",
+      "name": "Second story",
+      "description": "Upgrade a Housing to level 2 — an extra resident under the same roof.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Housing",
+      "goalAmount": 1,
+      "goalLevel": 2,
+      "reward": {
+        "Gold": 75
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "FullHouse",
+      "name": "Full house",
+      "description": "Reach a population of 6.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 6,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 75,
+        "Food": 20
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "FirstSoldier",
+      "name": "First soldier",
+      "description": "Muster your first army unit — every capital needs a guard.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "RunningWater",
+      "name": "Fields of plenty",
+      "description": "Research Farming — it unlocks the Farm.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Farming",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 60
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Farmhand",
+      "name": "Farmhand",
+      "description": "Build a Farm — its workers harvest nearby crop plots for you.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Farm",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 80
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "IronRoad",
+      "name": "The iron road",
+      "description": "Push the frontier to the iron veins and collect 10 Iron.",
+      "goalType": "CollectResource",
+      "goalTarget": "Iron",
+      "goalAmount": 10,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 120
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "TheMine",
+      "name": "The Mine",
+      "description": "Build a Mine near the iron veins.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Mine",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 120
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Architect",
+      "name": "The architect",
+      "description": "Research Architecture — iron-braced monuments.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Architecture",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "GrandCapital",
+      "name": "A grand capital",
+      "description": "Upgrade the Townhall to level 3.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Townhall",
+      "goalAmount": 1,
+      "goalLevel": 3,
+      "reward": {
+        "Gold": 300
+      },
+      "rewardGems": 10
+    }
+  ],
+  "fog": {
+    "silverPerTap": 0,
+    "rings": [
+      {
+        "distance": 1,
+        "cost": 1
+      },
+      {
+        "distance": 2,
+        "cost": 3
+      },
+      {
+        "distance": 3,
+        "cost": 5
+      },
+      {
+        "distance": 4,
+        "cost": 10
+      },
+      {
+        "distance": 5,
+        "cost": 20
+      },
+      {
+        "distance": 6,
+        "cost": 40
+      },
+      {
+        "distance": 7,
+        "cost": 80
+      },
+      {
+        "distance": 8,
+        "cost": 160
+      },
+      {
+        "distance": 9,
+        "cost": 320
+      },
+      {
+        "distance": 10,
+        "cost": 640
+      }
+    ],
+    "fallbackGrowth": 1.25,
+    "goldPerTap": 1
+  },
+  "city": {
+    "initialCurrencies": {
+      "Gold": 0,
+      "Food": 0
+    },
+    "initialPopulation": 0,
+    "populationCostBase": 5,
+    "populationCostGrowth": 1.45,
+    "buildQueueCapacity": 1,
+    "maxArmyPowerPerTownhallLevel": [
+      10,
+      20,
+      30
+    ]
+  },
+  "kingdom": {
+    "startBuilders": 1,
+    "maxBuilders": 4
+  },
+  "offlineCapHours": 8
+}

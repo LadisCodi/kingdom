@@ -14,10 +14,14 @@
 | Trees are destroyed permanently after 5–12 taps (→ TreesCut) | Cells **exhaust** after X taps and **auto-recover** after a timer |
 | Workers are a number on the district; "worker #1 runs the base" | Workers are **units that move on the map**: walk → work → walk back → deposit |
 | Worked tiles via adjacency/BFS connectivity | Buildings have an **area of influence** (radius by level) |
-| Rain boosts Food ×5 / regrows forests | Rain **doubles recovery speed** of exhausted cells while active |
 | Offline: vaults fill to cap from timestamps | Offline: worker cycles are **simulated**, capped at 8 h |
 
 ## Resolved decisions (from design review, 2026-08-17)
+
+> **Since reworked in the web build:** money (now Gold, merged with Silver)
+> comes from HOUSING TAXES — housed villagers pay passively, and a lived-in
+> house is itself a tappable gold cell (see
+> `economy-taxes-and-market.md`). The Townhall trains villagers over time.
 
 1. **Townhall** keeps generating Silver, but via a **visible cycle timer** paying
    directly to the wallet (no internal warehouse). **Tapping the Townhall adds
@@ -28,15 +32,15 @@
    (Food), exactly like a Forest cell is for Wood.
 3. **Exhaustion replaces destruction.** Trees→TreesCut permanent destruction is
    gone; TreesCut becomes the *visual* for an exhausted Forest. Player taps are
-   free. **The spell system is out of scope for this feature** (reworked later);
-   the only spell change is Rain's effect (see Spells).
+   free. (The spell system has since been removed from the game entirely.)
 4. **Offline is simulated**: full worker cycles, cell exhaustion/recovery
    windows and Townhall cycles are replayed deterministically, **capped at 8
    hours** per absence (the return-visit nudge the vault caps used to provide).
 5. **Area of influence = Chebyshev radius that grows with building level**
    (radius 1 at L1, +1 per level → 8 cells at L1, 24 at L2, 48 at L3).
-6. **Worker cap = min(per-level worker cap, workable cells in range)** — levels
-   still matter; the two-forests example still yields exactly 2 workers.
+6. **Worker cap = the per-level worker cap.** Workable cells in range don't
+   limit assignment — workers beyond the available cells wait Idle and pick up
+   work as cells recover, get revealed, or come into range.
 7. **Lumber is renamed Sawmill.** Save format changes are big enough that old
    prototype saves are **discarded** (fresh game on load of a v1 save).
 
@@ -58,7 +62,7 @@ CellHarvestState { taps: number, exhaustedUntil: number | null }
 ```
 
 - **Tapping** a revealed, non-exhausted resource cell yields its `yieldPerTap`
-  (1 unit) straight to the city wallet and registers 1 tap. Free — no Mana.
+  (1 unit) straight to the city wallet and registers 1 tap. Free.
 - At `tapsToExhaust` total taps the cell becomes **exhausted**:
   `exhaustedUntil = now + recoverySeconds`, taps reset. While exhausted it can't
   be tapped or worked, and shows its exhausted visual (Forest → stump 🪵,
@@ -86,9 +90,9 @@ system** (one worker per cell) prevents double-working.
 | **Townhall** | — | — | — | Cycle timer → Silver (below) |
 | **Housing** | — | — | — | Unchanged (population capacity) |
 
-`AssignableWorkerLimit = min(maxWorkersForLevel(level), workableCellsInArea)`
-(the old "1 + N, worker #1 runs the base" rule is gone — there is no base
-production anymore).
+`AssignableWorkerLimit = maxWorkersForLevel(level)` — workable cells in range
+don't cap assignment; surplus workers wait Idle. (The old "1 + N, worker #1
+runs the base" rule is gone — there is no base production anymore.)
 
 Build costs, times, count caps, the build queue, upgrades and Townhall gating
 are **unchanged**.
@@ -160,33 +164,18 @@ build-queue completions up to `toTime`.
 This replaces the generator accrual algorithm; one code path serves both cases
 (same as the old build-queue design).
 
-## 4. Spells (minimal scope — full rework deferred)
+## 4. Spells
 
-The spell system (spellbook, targeting, Mana, active-spell casts) is untouched
-by this feature. Two effect-level consequences only:
-
-- **Rain (adjusted effect)**: unchanged shell — 10 Mana, 30 s duration,
-  non-stackable, cast on a cell. New effect: while the rain is active on a
-  **resource cell** (Forest or Crops), that cell's **recovery runs at ×2
-  speed**. Cast on an already-exhausted cell it halves the remaining wait
-  covered by the rain window; if the cell exhausts *during* the rain, the
-  boost applies for the remaining window. (Formally: with remaining recovery
-  `R` and rain time remaining `D`, the new completion is
-  `now + max(R/2, R − D)`.) `CanTarget` = any revealed resource cell. The old
-  ×5 Food boost and forest regrowth disappear with the systems they hooked
-  into (generators, permanent destruction).
-- **Tap spell**: left in the spellbook untouched, but its extraction machinery
-  (feature BaseYield + durability destruction) is superseded by free player
-  taps, so it has **no valid targets** until the spell rework — the same
-  dormant state it shipped in originally (see Docs/11). Not removed, not
-  redesigned here.
+*(Historical note: this feature originally kept the spell system with an
+adjusted Rain effect. Spells and Mana have since been removed from the game
+entirely, pending a future rework.)*
 
 ## 5. UI & input changes
 
 - **Tap chain** (priorities unchanged): the default handler (0) becomes —
   resource cell → harvest tap (+1 floater); Townhall cell → +progress tap *and*
   open its card; other district → open card; empty ground → close card.
-  Fog reveal (50), placement (300) and spell targeting (200) unchanged.
+  Fog reveal (50) and placement (300) unchanged.
 - **District card**: vault rows gone. Worker districts show workers ± with
   per-worker state (Idle/working); Townhall card shows the cycle bar, payout
   and "tap to speed up" hint. Upgrade rows now also show **radius +1** deltas.
@@ -233,17 +222,12 @@ game). Changes:
 - Districts lose `Generators`; Townhall gains `CycleStartedAt`.
 - New module `kingdom.cellHarvest`: `[{Coord, Taps, ExhaustedUntil}]`.
 - New module `kingdom.workers`: the Worker records above.
-- `kingdom.spells` and `kingdom.activeSpells` keep their shape; active Rain
-  casts persist as today (offline-expired casts are still dropped without
-  side effects — with the ×2 effect, an offline-expired rain simply
-  contributes its window to the offline recovery replay before expiring).
 - `LastSaved` anchors the offline-simulation window.
 
 ## 9. Implementation plan (separate commits on `feature/harvest-loop`)
 
 1. `feat(sim):` cell harvest state, exhaustion/recovery, free tap command;
-   remove permanent destruction; adjust Rain's effect to ×2 recovery. Tests:
-   exhaust/recover timing, tap yields, rained-recovery math.
+   remove permanent destruction. Tests: exhaust/recover timing, tap yields.
 2. `feat(sim):` worker units + claims + the event-driven `advance`; remove
    generators/vaults/recalc. Tests: cycle math, claim rules, race rule,
    offline replay capped at 8 h (the docs' worked-example tests for costs/
@@ -257,7 +241,6 @@ game). Changes:
 ## 10. Out of scope (explicitly)
 
 Pathfinding/obstacle avoidance; worker carry upgrades; per-cell yield variety;
-the spell-system rework (deferred — only Rain's effect changes here);
 Sawmill/Farm art; migrating v1 saves; server-side validation.
 
 ## Open questions

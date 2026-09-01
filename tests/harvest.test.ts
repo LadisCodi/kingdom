@@ -1,10 +1,9 @@
-// Cell harvest: tap yields, exhaustion, lazy recovery, Rain ×2 recovery math.
+// Cell harvest: tap yields, exhaustion, lazy recovery, the collect cooldown.
 import { describe, expect, it } from 'vitest';
-import { HARVEST } from '../src/sim/data/definitions';
+import { HARVEST, TAP } from '../src/sim/data/definitions';
 import {
-  harvestSourceAt, isExhausted, rainAdjustedRecovery, tapCell, tapFraction,
+  collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
 } from '../src/sim/harvest';
-import { castSpell } from '../src/sim/spells';
 import { getWallet } from '../src/sim/state';
 import { freshGame, map, reveal, T0 } from './helpers';
 
@@ -15,7 +14,8 @@ describe('harvest sources', () => {
     const state = freshGame();
     expect(harvestSourceAt(state, FOREST)).toBe('Forest');
     expect(harvestSourceAt(state, { x: 0, y: 0 })).toBe(null); // Townhall
-    expect(harvestSourceAt(state, { x: 1, y: 0 })).toBe(null); // empty grass
+    expect(harvestSourceAt(state, { x: 1, y: 0 })).toBe(null); // Townhall footprint cell
+    expect(harvestSourceAt(state, { x: 3, y: 0 })).toBe(null); // empty grass
   });
 });
 
@@ -39,54 +39,28 @@ describe('tapping', () => {
     expect(tapCell(state, map, FOREST, recoverAt)).toBe('Harvested');
   });
 
+  it('the player collect tap has a cooldown (holds retry against the same gate)', () => {
+    const state = freshGame();
+    const cooldownMs = TAP.collectCooldownSeconds * 1000;
+    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
+    // Retries inside the window (what hold-to-collect does) are rejected…
+    expect(collectTap(state, map, FOREST, T0 + 100)).toBe('OnCooldown');
+    expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1)).toBe('OnCooldown');
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(1); // nothing collected meanwhile
+    // …and the first retry at/after the cooldown collects again.
+    expect(collectTap(state, map, FOREST, T0 + cooldownMs)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(2);
+    // A failed collect (exhausted cell) does NOT reset the cooldown anchor.
+    for (let i = 0; i < 8; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // exhaust (10 taps total)
+    expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs)).toBe('Exhausted');
+    expect(state.lastCollectTapAt).toBe(T0 + cooldownMs);
+  });
+
   it('rejects unrevealed and non-resource cells', () => {
     const state = freshGame();
-    expect(tapCell(state, map, FOREST, T0)).toBe('NotRevealed');
-    expect(tapCell(state, map, { x: 1, y: 0 }, T0)).toBe('NotHarvestable');
+    // (2,5) is a tree beyond the Townhall's fog reveal radius (3).
+    expect(tapCell(state, map, { x: 2, y: 5 }, T0)).toBe('NotRevealed');
+    expect(tapCell(state, map, { x: 2, y: 0 }, T0)).toBe('NotHarvestable'); // revealed empty grass
   });
 });
 
-describe('Rain ×2 recovery', () => {
-  it('formula: completion moves to max(R/2, R − D)', () => {
-    expect(rainAdjustedRecovery(90_000, 30_000)).toBe(60_000); // R−D wins: 90−30
-    expect(rainAdjustedRecovery(40_000, 30_000)).toBe(20_000); // R/2 wins
-    expect(rainAdjustedRecovery(20_000, 30_000)).toBe(10_000); // fully covered
-  });
-
-  it('cast on an exhausted cell halves the wait covered by the rain window', () => {
-    const state = freshGame();
-    reveal(state, [FOREST]);
-    for (let i = 0; i < 10; i++) tapCell(state, map, FOREST, T0);
-    expect(isExhausted(state, FOREST, T0)).toBe(true); // recovers at T0+90s
-    expect(castSpell(state, 'Rain', FOREST, T0)).toBe('Cast');
-    // 90s remaining, 30s window → recovers at T0 + max(45, 60) = 60s.
-    expect(isExhausted(state, FOREST, T0 + 59_999)).toBe(true);
-    expect(isExhausted(state, FOREST, T0 + 60_000)).toBe(false);
-    expect(getWallet(state.kingdom.wallet, 'Mana')).toBe(40);
-  });
-
-  it('a cell exhausting DURING the rain gets the remaining window', () => {
-    const state = freshGame();
-    reveal(state, [FOREST]);
-    expect(castSpell(state, 'Rain', FOREST, T0)).toBe('Cast'); // fresh cell OK
-    const t = T0 + 20_000; // 10s of rain left
-    for (let i = 0; i < 10; i++) tapCell(state, map, FOREST, t);
-    // R=90s, D=10s → max(45, 80) = 80s from t.
-    expect(isExhausted(state, FOREST, t + 79_999)).toBe(true);
-    expect(isExhausted(state, FOREST, t + 80_000)).toBe(false);
-  });
-
-  it('non-stackable: a second Rain on the same cell is rejected while active', () => {
-    const state = freshGame();
-    reveal(state, [FOREST]);
-    expect(castSpell(state, 'Rain', FOREST, T0)).toBe('Cast');
-    expect(castSpell(state, 'Rain', FOREST, T0 + 1000)).toBe('AlreadyActive');
-    expect(castSpell(state, 'Rain', FOREST, T0 + 31_000)).toBe('Cast'); // expired
-  });
-
-  it('Tap spell has no valid targets (dormant pending rework)', () => {
-    const state = freshGame();
-    reveal(state, [FOREST]);
-    expect(castSpell(state, 'Tap', FOREST, T0)).toBe('InvalidTarget');
-  });
-});

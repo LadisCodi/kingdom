@@ -1,7 +1,7 @@
 // Save format v2 (harvest loop). v1 saves (the generator/vault era) are
 // discarded — deserialize returns null and the caller starts a fresh game.
 // Offline catch-up: the unified advance replays the absence up to the 8h cap;
-// time beyond the cap pauses workers/townhall/mana (queue timers and cell
+// time beyond the cap pauses workers/townhall (queue timers and cell
 // recovery keep running in real time).
 
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
@@ -10,8 +10,8 @@ import type { MapData } from './grid';
 import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
-  type ActiveSpell, type Coord, type District, type GameState, type QueueItem,
-  type Wallet, type Worker,
+  type Coord, type District, type GameState, type QueueItem,
+  type TechId, type UpgradeId, type Wallet, type Worker,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -35,7 +35,6 @@ interface DistrictDto {
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
-  CycleStartedAt?: string;
 }
 
 interface QueueItemDto {
@@ -77,7 +76,6 @@ export function serialize(state: GameState, now: number): SaveFile {
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
-                ...(d.cycleStartedAt !== undefined ? { CycleStartedAt: iso(d.cycleStartedAt) } : {}),
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -88,40 +86,39 @@ export function serialize(state: GameState, now: number): SaveFile {
               ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
             })),
             QueueKinds: state.city.queue.map((q) => q.kind),
+            TrainingStartedAt: state.city.training === null
+              ? null : iso(state.city.training.startedAt),
+            TrainingQueued: state.city.training?.queued ?? 0,
+            LastTaxAt: iso(state.city.lastTaxAt),
           },
         ],
       },
       'kingdom.kingdoms': {
         MaxBuilders: state.kingdom.maxBuilders,
         Currencies: state.kingdom.wallet,
-        ManaLastProduction: iso(state.kingdom.manaLastProduction),
-      },
-      'kingdom.spells': Object.fromEntries(
-        Object.entries(state.spellbook).map(([id, s]) => [
-          id, { IsUnlocked: s.unlocked, Level: s.level },
-        ]),
-      ),
-      'kingdom.activeSpells': {
-        Casts: state.activeSpells.map((s) => ({
-          SpellID: s.spellId,
-          TargetCell: s.cell,
-          Level: s.level,
-          Magnitude: s.magnitude,
-          ExpiresAt: iso(s.expiresAt),
-          SourceID: s.sourceId,
-        })),
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
-        Progress: Object.entries(state.fog.progress).map(([k, silver]) => ({
+        Discovered: Object.keys(state.fog.discovered).map(parseCoordKey),
+        Progress: Object.entries(state.fog.progress).map(([k, gold]) => ({
           Coord: parseCoordKey(k),
-          Silver: silver,
+          Gold: gold,
         })),
       },
       'kingdom.features': {
         Cells: Object.entries(state.features).map(([k, id]) => ({
           Coord: parseCoordKey(k),
           FeatureID: id,
+          ...(state.featureMeta[k] !== undefined ? {
+            Origin: parseCoordKey(state.featureMeta[k].origin),
+            Generation: state.featureMeta[k].generation,
+          } : {}),
+        })),
+        Respawns: state.featureRespawns.map((r) => ({
+          Origin: parseCoordKey(r.origin),
+          FeatureID: r.feature,
+          ReadyAtUtc: iso(r.readyAt),
+          Generation: r.generation,
         })),
       },
       'kingdom.cellHarvest': {
@@ -146,6 +143,22 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.army': {
         Units: state.army.map((u) => ({ UniqueID: u.uniqueId, DefinitionID: u.definitionId })),
+      },
+      'kingdom.quests': {
+        Index: state.quests.index,
+        Progress: state.quests.progress,
+      },
+      'kingdom.discoveries': {
+        Keys: Object.keys(state.discoveries),
+      },
+      'kingdom.research': {
+        Completed: state.research.completed,
+        Active: state.research.active.map((a) => ({
+          ID: a.id,
+          StartedAtUtc: iso(a.startedAt),
+        })),
+        SlotsPurchased: state.research.slotsPurchased,
+        UpgradeLevels: state.upgrades,
       },
       'player.currencies': state.player.wallet,
       'meta.nextId': state.nextId,
@@ -176,7 +189,6 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
-        ...(d.CycleStartedAt !== undefined ? { cycleStartedAt: ms(d.CycleStartedAt) } : {}),
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -190,53 +202,44 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
         startedAt: msOrNull(q.StartedAtUtc),
       }),
     );
+    state.city.training = cityDto.TrainingStartedAt
+      ? { queued: cityDto.TrainingQueued ?? 1, startedAt: ms(cityDto.TrainingStartedAt) } : null;
+    state.city.lastTaxAt = cityDto.LastTaxAt ? ms(cityDto.LastTaxAt) : lastSaved;
   }
 
   const kingdomDto = modules['kingdom.kingdoms'];
   if (kingdomDto) {
     state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
-    if (kingdomDto.ManaLastProduction) {
-      state.kingdom.manaLastProduction = ms(kingdomDto.ManaLastProduction);
-    }
-  }
-
-  const spellsDto = modules['kingdom.spells'];
-  if (spellsDto) {
-    for (const [id, s] of Object.entries(spellsDto as Record<string, any>)) {
-      if (state.spellbook[id]) {
-        state.spellbook[id] = { unlocked: !!s.IsUnlocked, level: s.Level ?? 1 };
-      }
-    }
-  }
-
-  const activeDto = modules['kingdom.activeSpells']?.Casts;
-  if (activeDto) {
-    state.activeSpells = (activeDto as any[]).map(
-      (s): ActiveSpell => ({
-        spellId: s.SpellID,
-        cell: s.TargetCell,
-        level: s.Level,
-        magnitude: s.Magnitude,
-        expiresAt: ms(s.ExpiresAt),
-        sourceId: s.SourceID,
-      }),
-    );
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
   if (fogDto) {
-    state.fog = { revealed: {}, progress: {} };
+    state.fog = { revealed: {}, discovered: {}, progress: {} };
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
-    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Silver: number }[]) {
-      state.fog.progress[coordKey(p.Coord)] = p.Silver;
+    for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
+    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Gold: number }[]) {
+      state.fog.progress[coordKey(p.Coord)] = p.Gold;
     }
   }
 
-  const featuresDto = modules['kingdom.features']?.Cells;
-  if (featuresDto) {
+  const featuresDto = modules['kingdom.features'];
+  if (featuresDto?.Cells) {
     state.features = {};
-    for (const f of featuresDto as any[]) state.features[coordKey(f.Coord)] = f.FeatureID;
+    state.featureMeta = {};
+    for (const f of featuresDto.Cells as any[]) {
+      const key = coordKey(f.Coord);
+      state.features[key] = f.FeatureID;
+      if (f.Origin !== undefined) {
+        state.featureMeta[key] = { origin: coordKey(f.Origin), generation: f.Generation ?? 0 };
+      }
+    }
+    state.featureRespawns = ((featuresDto.Respawns ?? []) as any[]).map((r) => ({
+      origin: coordKey(r.Origin),
+      feature: r.FeatureID,
+      readyAt: ms(r.ReadyAtUtc),
+      generation: r.Generation ?? 0,
+    }));
   }
 
   const harvestDto = modules['kingdom.cellHarvest']?.Cells;
@@ -272,6 +275,31 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
     }));
   }
 
+  const researchDto = modules['kingdom.research'];
+  if (researchDto) {
+    state.research = {
+      completed: [...((researchDto.Completed ?? []) as TechId[])],
+      active: ((researchDto.Active ?? []) as Array<{ ID: TechId; StartedAtUtc: string }>).map(
+        (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
+      slotsPurchased: researchDto.SlotsPurchased ?? 0,
+    };
+    state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
+  }
+
+  const discoveriesDto = modules['kingdom.discoveries'];
+  if (discoveriesDto?.Keys) {
+    state.discoveries = {};
+    for (const key of discoveriesDto.Keys as string[]) state.discoveries[key] = true;
+  }
+
+  const questsDto = modules['kingdom.quests'];
+  if (questsDto) {
+    state.quests = {
+      index: questsDto.Index ?? 0,
+      progress: questsDto.Progress ?? 0,
+    };
+  }
+
   const playerDto = modules['player.currencies'];
   if (playerDto) state.player.wallet = { ...(playerDto as Wallet) };
 
@@ -284,13 +312,14 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
   if (capEnd < now) {
     const gap = now - capEnd;
     for (const w of state.workers) {
-      w.stateStartedAt += gap;
+      // A blocked-Idle worker resumes AT `now`: keeping its pre-cap offset
+      // (stateStartedAt + gap < now) would let the final advance below fit a
+      // whole harvest cycle inside the paused window and over-pay the cap.
+      w.stateStartedAt = w.activity === 'Idle' ? now : w.stateStartedAt + gap;
       if (w.stateUntil !== null) w.stateUntil += gap;
     }
-    for (const d of state.city.districts) {
-      if (d.cycleStartedAt !== undefined) d.cycleStartedAt += gap;
-    }
-    state.kingdom.manaLastProduction += gap;
+    if (state.city.training) state.city.training.startedAt += gap;
+    state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     advance(state, map, now); // completes remaining queue work; workers resume at now

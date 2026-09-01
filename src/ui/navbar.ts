@@ -1,5 +1,8 @@
 // Bottom navigation. The Build CTA lights when at least one uncapped district
 // type is both affordable and has a legal cell (checked on every change).
+// While anything dismissible is on screen (overlay, placement, district card)
+// the whole bar becomes a single Close button — the one cancel/close
+// affordance for every menu.
 
 import type { Game } from '../game';
 import { button } from './format';
@@ -9,13 +12,15 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
     game.setOverlay(game.openOverlay === name ? null : name);
 
   const buildBtn = button('🔨 Build', toggle('build'));
-  const spellsBtn = button('✨ Spells', toggle('spellbook'));
   const armyBtn = button('🛡️ Army', toggle('army'));
   const researchBtn = button('🔬 Research', toggle('research'));
-  root.append(buildBtn, spellsBtn, armyBtn, researchBtn);
+  const settingsBtn = button('⚙️', toggle('settings'));
+  const closeBtn = button('✕ Close', () => game.dismiss(), 'close');
 
   const refresh = () => {
     buildBtn.classList.toggle('cta', game.buildCtaLit());
+    if (game.dismissible()) root.replaceChildren(closeBtn);
+    else root.replaceChildren(buildBtn, armyBtn, researchBtn, settingsBtn);
   };
   game.onChange(refresh);
   refresh();

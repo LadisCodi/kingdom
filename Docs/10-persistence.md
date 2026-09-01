@@ -12,8 +12,6 @@ serialized with Newtonsoft (`TypeNameHandling.Auto`, ISO UTC dates):
   "Modules": {
     "kingdom.cities":       { … },
     "kingdom.kingdoms":     { … },
-    "kingdom.spells":       { … },
-    "kingdom.activeSpells": { … },
     "kingdom.fogOfWar":     { … },
     "kingdom.army":         { … }
   }
@@ -29,8 +27,6 @@ saved separately** in a player file.
 |---|---|
 | `kingdom.cities` | Per city: `Population`, currency amounts, `DistrictState[]`, plus the queue: `BuildQueueItemState[]` and `DistrictUpgradeQueueItemState[]` |
 | `kingdom.kingdoms` | `MaxBuilders`, kingdom currency amounts, kingdom `GeneratorState[]` |
-| `kingdom.spells` | Per spell: `IsUnlocked`, `Level` |
-| `kingdom.activeSpells` | Per active cast: `SpellID`, `TargetCell`, `Level`, `Magnitude`, `ExpiresAt` |
 | `kingdom.fogOfWar` | `Revealed[]` (cell coords) + `Progress[] {Coord, Silver}` |
 | `kingdom.army` | `UnitState[] {UniqueID, DefinitionID}` |
 
@@ -58,10 +54,9 @@ production recalculation after load. This is what makes offline income "just wor
 
 Register saveables → load catalogs (definitions by id; game-specific `Kingdom/Data/…`
 resources override same-id shared ones) → create initial entities (kingdom, region,
-city with Townhall, spellbook) → **load the save if present, else apply initial state
+city with Townhall) → **load the save if present, else apply initial state
 and save** → load the region scene → build map data from the tilemaps → place saved
 districts and views → initialize fog (seeding only if the save restored nothing) →
-re-apply still-active spells (drop expired ones **without** their removal effects) →
 activate the city **last**, so the production tick can't run against restored
 `LastProduction` values before rates are rebuilt → show Header/Main/NavBar.
 
@@ -78,6 +73,3 @@ Everything catches up from persisted timestamps on the first ticks after load:
 - **Build queue:** `StartedAtUtc` is persisted; the Advance algorithm completes items
   in chronological order, stamping promoted items with the moment their slot freed —
   a long absence finishes a chain of queued work correctly.
-- **Active spells:** casts whose `ExpiresAt` passed while away are dropped on load
-  (skipping their removal side effects — an offline-expired Rain does not regrow
-  trees).

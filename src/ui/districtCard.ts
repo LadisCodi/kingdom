@@ -1,16 +1,23 @@
 // Tile / district card: identity, level, harvest info, workers ±, Townhall
-// cycle, upgrade, and — while a build/upgrade is in progress — progress + gem
-// finish.
+// villager training, upgrade, and — while a build/upgrade is in progress —
+// progress + gem finish.
 
-import { icon, type Game } from '../game';
+import { formatAdjacency, icon, type Game } from '../game';
 import { canAfford, gemRushCost } from '../sim/commands';
-import { DISTRICTS, HARVEST, TOWNHALL_CYCLE, WORKER, levelIndexed } from '../sim/data/definitions';
-import { districtCount, requiredTownhallLevel, upgradeCost, upgradeDuration } from '../sim/districts';
-import { maxPopulation, populationCost } from '../sim/population';
+import {
+  DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, WORKER, levelIndexed,
+} from '../sim/data/definitions';
+import { districtAdjacency } from '../sim/adjacency';
+import {
+  districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
+} from '../sim/districts';
+import { districtCapacity, houseGoldPerMinute } from '../sim/population';
+import { isTechComplete } from '../sim/research';
 import {
   queueProgress, remainingSeconds, townhall,
   type District,
 } from '../sim/state';
+import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { button, el, formatCost, formatDuration } from './format';
 
@@ -29,46 +36,71 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   if (district.state === 'UnderConstruction') {
     panel.append(el('div', { class: 'muted' }, 'Under construction.'));
   } else {
-    // Townhall: the tap-boostable tax cycle.
+    // Townhall: the villager-training queue (tap-boostable).
     if (district.definitionId === 'Townhall') {
-      const cycle = game.townhallCycleInfo();
-      const bar = el('div', { class: 'progress' },
-        el('div', { class: 'fill' }),
-        el('div', { class: 'label' },
-          `+${cycle.payout} ${icon('Silver')} in ${Math.ceil(cycle.remainingSeconds)}s`));
-      (bar.querySelector('.fill') as HTMLElement).style.width = `${cycle.progress * 100}%`;
-      panel.append(bar);
-      panel.append(el('div', { class: 'muted' },
-        `Tap the Townhall to add +${TOWNHALL_CYCLE.tapBoostSeconds}s of progress per tap.`));
+      const training = game.trainingInfo();
+      if (training.active) {
+        const bar = el('div', { class: 'progress' },
+          el('div', { class: 'fill' }),
+          el('div', { class: 'label' },
+            `+1 👥 in ${Math.ceil(training.remainingSeconds)}s` +
+            (training.queued > 1 ? ` · ${training.queued - 1} more queued` : '')));
+        (bar.querySelector('.fill') as HTMLElement).style.width = `${training.progress * 100}%`;
+        panel.append(bar);
+        panel.append(el('div', { class: 'muted' },
+          `Tap the Townhall to add +${TRAINING.tapBoostSeconds}s of training per tap.`));
+      }
+      // Queue the next villager — allowed while one is already training.
+      const trainBtn = button('Train', () => game.doQueueTraining());
+      if (game.uiHint() === 'card:train') trainBtn.classList.add('hinted');
+      const affordable = canAfford(game.state.city.wallet, { Food: training.cost });
+      trainBtn.disabled = training.atMax || !affordable;
+      panel.append(el('div', { class: 'action-row' },
+        el('span', { class: `info${training.atMax || affordable ? '' : ' blocked'}` },
+          training.atMax
+            ? 'Population at max — build more Housing'
+            : `Train villager — ${training.cost} ${icon('Food')} (${formatDuration(TRAINING.seconds)})`),
+        trainBtn));
     }
 
     // Crop plot: it's a resource cell.
     if (district.definitionId === 'FarmLands') {
       panel.append(el('div', { class: 'muted' },
-        `Tap for +${HARVEST.Crops.yieldPerTap} ${icon('Food')} — exhausts after ` +
+        `Tap for +${effectiveTapYield(game.state, HARVEST.Crops)} ${icon('Food')} — exhausts after ` +
         `${HARVEST.Crops.tapsToExhaust} taps, recovers in ${HARVEST.Crops.recoverySeconds}s.`));
     }
 
-    if (def.populationCapacity > 0) {
-      panel.append(el('div', { class: 'rows' },
+    // Housing: residents (auto-assigned) pay taxes; the house is a gold cell.
+    if (districtCapacity(game.state, district) > 0) {
+      const residents = game.residentsIn(district);
+      const perMinute = houseGoldPerMinute(game.state, district);
+      const adjacency = districtAdjacency(game.state, district);
+      const rows = el('div', { class: 'rows' },
         el('div', { class: 'row' },
-          el('span', {}, '👥 housing'), el('span', {}, `+${def.populationCapacity}`))));
-      const pop = game.state.city.population;
-      const atMax = pop >= maxPopulation(game.state);
-      const buyBtn = button(
-        atMax ? 'Population at max' : `Buy population — ${populationCost(pop)} ${icon('Food')}`,
-        () => game.doBuyPopulation(),
-      );
-      buyBtn.disabled = atMax;
-      panel.append(el('div', { class: 'actions' }, buyBtn));
+          el('span', {}, '👥 residents'),
+          el('span', {}, `${residents}/${districtCapacity(game.state, district)}`)));
+      if (residents > 0) {
+        rows.append(el('div', { class: 'row' },
+          el('span', {}, '💰 taxes'),
+          el('span', {}, `${Number.isInteger(perMinute) ? perMinute : perMinute.toFixed(1)} ${icon('Gold')}/min`)));
+      }
+      if (adjacency !== 0) {
+        rows.append(el('div', { class: 'row' },
+          el('span', {}, 'Neighbors'),
+          el('span', { class: adjacency < 0 ? 'blocked' : 'delta' },
+            `${formatAdjacency(adjacency)}/min`)));
+      }
+      panel.append(rows);
+      panel.append(el('div', { class: 'muted' }, residents === 0
+        ? 'Nobody lives here yet — train villagers at the Townhall.'
+        : `Tap to fast-forward tax collection — +${TAXES.tapBoostSeconds}s per tap.`));
     }
 
     // Worker buildings: area, workers ±, live worker states.
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSource) {
       const spec = HARVEST[def.harvestSource];
       const cells = game.workableCellsOf(district);
-      const limit = assignableWorkerLimit(game.state, game.map, district);
-      const maxForLevel = levelIndexed(def.maxWorkersPerLevel, district.level);
+      const limit = assignableWorkerLimit(district);
       panel.append(el('div', { class: 'rows' },
         el('div', { class: 'row' },
           el('span', {}, 'Area of influence'),
@@ -78,14 +110,15 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('span', {}, `${cells.length}`)),
         el('div', { class: 'row' },
           el('span', {}, 'Per delivery'),
-          el('span', {}, `+${WORKER.carry} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
+          el('span', {}, `+${effectiveWorkerYield(game.state, spec)} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
       ));
       const minus = button('−', () => game.doChangeWorkers(district.uniqueId, -1));
       minus.disabled = district.assignedWorkers === 0;
       const plus = button('+', () => game.doChangeWorkers(district.uniqueId, 1));
       plus.disabled = district.assignedWorkers >= limit || game.freeWorkers() === 0;
+      if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
       panel.append(el('div', { class: 'actions' },
-        el('span', {}, `Workers ${district.assignedWorkers}/${limit} (cap ${maxForLevel})`),
+        el('span', {}, `Workers ${district.assignedWorkers}/${limit}`),
         minus, plus));
       const states = game.state.workers
         .filter((w) => w.buildingId === district.uniqueId)
@@ -109,38 +142,50 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         queueItem.startedAt === null ? 'waiting for a builder' : `${formatDuration(remaining)} left`));
     (bar.querySelector('.fill') as HTMLElement).style.width = `${progress * 100}%`;
     panel.append(bar);
-    const actions = el('div', { class: 'actions' });
-    actions.append(
-      button(`Finish now — ${gemRushCost(queueItem, now)} ${icon('Gems')}`, () =>
-        game.doRush(queueItem.uniqueId)),
-    );
+    panel.append(el('div', { class: 'action-row' },
+      el('span', { class: 'info' }, `Finish now — ${gemRushCost(queueItem, now)} ${icon('Gems')}`),
+      button('Finish', () => game.doRush(queueItem.uniqueId))));
     if (queueItem.kind === 'build') {
-      actions.append(button('Cancel & refund', () => game.doCancelItem(queueItem.uniqueId), 'danger'));
+      panel.append(el('div', { class: 'action-row' },
+        el('span', { class: 'info' }, 'Cancel construction — full refund'),
+        button('Cancel', () => game.doCancelItem(queueItem.uniqueId), 'danger')));
     }
-    panel.append(actions);
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     // Upgrade widget (with radius/worker-cap deltas for worker buildings).
     const n = districtCount(game.state, district.definitionId);
     const cost = upgradeCost(district.definitionId, n, district.level);
     const duration = upgradeDuration(district.definitionId, district.level);
     const requiredTh = requiredTownhallLevel(district.definitionId, district.level + 1);
+    const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
     const thLevel = townhall(game.state).level;
     const affordable = canAfford(game.state.city.wallet, cost);
-    const blocked = thLevel < requiredTh;
-    const upBtn = button(
-      `Upgrade to lvl ${district.level + 1} — ${formatCost(cost)} (${formatDuration(duration)})`,
-      () => game.doUpgrade(district.uniqueId),
-    );
-    upBtn.disabled = blocked || !affordable;
-    const actions = el('div', { class: 'actions' }, upBtn);
+    const thBlocked = thLevel < requiredTh;
+    const techBlocked = gateTech !== null && !isTechComplete(game.state, gateTech);
+    const upBtn = button('Upgrade', () => game.doUpgrade(district.uniqueId));
+    upBtn.disabled = thBlocked || techBlocked || !affordable;
+    if (game.uiHint() === 'card:upgrade') upBtn.classList.add('hinted');
+    const info = el('div', { class: 'info' },
+      el('div', { class: affordable ? '' : 'blocked' },
+        `Upgrade to lvl ${district.level + 1} — ${formatCost(cost)} (${formatDuration(duration)})`));
     if (def.influenceRadiusPerLevel.length > 0) {
       const nextRadius = levelIndexed(def.influenceRadiusPerLevel, district.level + 1);
       const nextCap = levelIndexed(def.maxWorkersPerLevel, district.level + 1);
-      actions.append(el('span', { class: 'muted' },
-        el('span', { class: 'delta' }, `radius ${influenceRadius(district)}→${nextRadius}, worker cap →${nextCap}`)));
+      info.append(el('div', { class: 'sub delta' },
+        `radius ${influenceRadius(district)}→${nextRadius}, worker cap →${nextCap}`));
     }
-    if (blocked) actions.append(el('span', { class: 'blocked' }, `Townhall lvl ${requiredTh} required`));
-    panel.append(actions);
+    if (def.populationCapacityPerLevel.length > 0) {
+      const nextCap = levelIndexed(def.populationCapacityPerLevel, district.level + 1)
+        + districtCapacity(game.state, district)
+        - levelIndexed(def.populationCapacityPerLevel, district.level);
+      info.append(el('div', { class: 'sub delta' },
+        `residents ${districtCapacity(game.state, district)}→${nextCap}`));
+    }
+    if (thBlocked) info.append(el('div', { class: 'sub blocked' }, `Townhall lvl ${requiredTh} required`));
+    if (techBlocked) {
+      info.append(el('div', { class: 'sub blocked' },
+        `Research ${TECHNOLOGIES[gateTech].name} required`));
+    }
+    panel.append(el('div', { class: 'action-row' }, info, upBtn));
   }
 
   return panel;

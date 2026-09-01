@@ -54,10 +54,11 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 | Path | What |
 |---|---|
 | `Docs/` | The complete game spec the port was built from |
-| `src/sim/` | Pure simulation core (state, economy, queue, fog, spells, army, save format) |
-| `src/sim/data/` | All balancing data transcribed from the docs + the region map |
+| `balance/` | Editable balance workbook (`balance.xlsx`) — tweak, then `npm run balance` |
+| `src/sim/` | Pure simulation core (state, economy, queue, fog, research, army, save format) |
+| `src/sim/data/` | Definitions + generated `balance.json` + the region map |
 | `src/render/` | Canvas renderer, camera, input, tap-handler chain |
-| `src/ui/` | HTML/CSS screens (header, build menu, district card, spellbook, army) |
+| `src/ui/` | HTML/CSS screens (header, build menu, district card, research, army) |
 | `src/persist/` | localStorage + Supabase save orchestration |
 | `tests/` | Formula tests pinned to the docs' worked examples + headless e2e smoke |
 
@@ -67,9 +68,14 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
   data unchanged, the fog seed reveals 8 neighbors instead of 6.
 - **The harvest loop** (see the feature doc): the generator/vault economy is
   replaced by tappable resource cells with exhaustion/recovery, workers as
-  moving units, a tap-boostable Townhall tax cycle, and radius-by-level areas
-  of influence. Lumber is renamed Sawmill; Rain now doubles a rained cell's
-  recovery speed; the Tap spell is dormant pending a spell rework.
+  moving units, and radius-by-level areas
+  of influence. Lumber is renamed Sawmill. Spells (and Mana) are removed for
+  now, pending a future rework.
+- **The Market economy**: Silver and Gold are merged into one money (Gold),
+  earned only by drip-selling resources at the Market (1 unit per interval,
+  each resource has a gold value; keeps selling offline within the 8h cap).
+  The Townhall no longer taxes population — it trains villagers over time
+  (tap-boostable), replacing the instant population purchase.
 - **Single tick driver** (the Unity build double-ticked its timer).
 - Save format v2; incompatible older saves start a fresh game.
 - Placeholder art: flat-color tiles + emoji glyphs; state-driven rendering so

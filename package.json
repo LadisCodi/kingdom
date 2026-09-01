@@ -4,15 +4,20 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/balance.mjs import",
     "dev": "vite",
+    "prebuild": "node scripts/balance.mjs import",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "balance": "node scripts/balance.mjs import",
+    "balance:export": "node scripts/balance.mjs export"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
+    "exceljs": "^4.4.0",
     "typescript": "^5.5.0",
     "vite": "^5.4.0",
     "vitest": "^2.0.0"

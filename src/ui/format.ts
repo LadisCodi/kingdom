@@ -1,6 +1,8 @@
 import { icon } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';
 
+import { playSfx } from '../audio/sfx';
+
 export const formatCost = (cost: Wallet): string =>
   Object.entries(cost)
     .map(([c, n]) => `${n} ${icon(c as CurrencyId)}`)
@@ -30,6 +32,9 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 
 export function button(label: string, onClick: () => void, className = ''): HTMLButtonElement {
   const b = el('button', className ? { class: className } : {}, label);
-  b.addEventListener('click', onClick);
+  b.addEventListener('click', () => {
+    playSfx('click'); // every UI button clicks audibly (disabled ones don't fire)
+    onClick();
+  });
   return b;
 }

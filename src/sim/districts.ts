@@ -2,10 +2,11 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { cellsWithinRadius, neighbors, townhallDistance, type MapData } from './grid';
+import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
+import { isTechComplete } from './research';
 import {
-  coordKey, districtAt, sameCell, townhall,
-  type Coord, type DistrictId, type GameState, type Wallet,
+  cellsOfRect, coordKey, districtAt, townhall,
+  type Coord, type DistrictId, type GameState, type TechId, type Wallet,
 } from './state';
 
 // ------------------------------------------------------------------ counting
@@ -22,10 +23,12 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 // ----------------------------------------------------------------- placement
 
 export type PlacementBlock =
-  | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'CountLimit'
-  | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsFarmInfluence';
+  | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
+  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsShoreline'
+  | 'NeedsLand';
 
-/** All placement conditions ANDed; null = buildable on this cell. */
+/** All placement conditions ANDed over the full footprint (cell = anchor,
+ *  top-left); null = buildable here. */
 export function placementBlock(
   state: GameState,
   map: MapData,
@@ -33,44 +36,57 @@ export function placementBlock(
   cell: Coord,
 ): PlacementBlock | null {
   const def = DISTRICTS[definitionId];
-  // Universal rules.
-  if (state.features[coordKey(cell)]) return 'HasFeature';
-  if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
-  if (districtAt(state, cell)) return 'Occupied';
+  const footprint = cellsOfRect(cell, def.size);
+  // Universal rules — every footprint cell must pass.
+  for (const c of footprint) {
+    if (!cellExists(map, c)) return 'OffMap';
+    if (state.features[coordKey(c)]) return 'HasFeature';
+    if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
+    if (districtAt(state, c)) return 'Occupied';
+    // Only the Docks (which checks its own land+water mix) may touch Water.
+    if (definitionId !== 'Docks' && map.terrain.get(coordKey(c)) === 'Water') return 'NeedsLand';
+    // Nothing builds on a Mountain — it's territory to explore, not settle.
+    if (map.terrain.get(coordKey(c)) === 'Mountain') return 'NeedsLand';
+  }
   if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
     return 'CountLimit';
   }
-  // Per-type rules.
+  if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
+  // Per-type rules: terrain must hold on every footprint cell; adjacency /
+  // influence must hold for at least one.
   switch (definitionId) {
     case 'Housing': {
       // Adjacent to a Townhall or another Housing (under-construction Housing counts).
-      const ok = neighbors(map, cell).some((n) => {
-        const d = districtAt(state, n);
-        return d !== undefined && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
-      });
+      const ok = footprint.some((fc) =>
+        neighbors(map, fc).some((n) => {
+          const d = districtAt(state, n);
+          return d !== undefined && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
+        }),
+      );
       if (!ok) return 'NeedsHousingAdjacency';
       break;
     }
     case 'Farm':
-      if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
+      if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       break;
-    case 'FarmLands': {
-      // On Grassland, inside a BUILT Farm's area of influence.
-      if (map.terrain.get(coordKey(cell)) !== 'Grassland') return 'NeedsGrassland';
-      const inFarmArea = state.city.districts.some(
-        (d) =>
-          d.definitionId === 'Farm' &&
-          d.state === 'Built' &&
-          cellsWithinRadius(
-            map,
-            d.location,
-            levelIndexed(DISTRICTS.Farm.influenceRadiusPerLevel, d.level),
-          ).some((c) => sameCell(c, cell)),
-      );
-      if (!inFarmArea) return 'NeedsFarmInfluence';
+    case 'FarmLands':
+      // Any revealed Grassland — the player taps it by hand until a Farm
+      // is built nearby to send workers.
+      if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
+      break;
+    case 'Docks': {
+      // A pier spanning the shoreline: its 2×1 footprint needs exactly ONE
+      // cell on Water and one on land. Horizontal only — no rotation; the
+      // coast decides which half is wet (the sprite flips to match).
+      const waters = footprint.filter(
+        (c) => map.terrain.get(coordKey(c)) === 'Water').length;
+      if (waters !== 1) return 'NeedsShoreline';
       break;
     }
     case 'Sawmill': // no placement restriction — the influence range guides placement
+    case 'Quarry':
+    case 'Mine':
+    case 'Market':
     case 'Townhall':
       break;
   }
@@ -81,7 +97,8 @@ export function placementBlock(
  *  is highlighting valid cells informative (an unrestricted building like the
  *  Sawmill would just outline most of the map). */
 export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
-  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands';
+  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands' ||
+  definitionId === 'Docks';
 
 export const validPlacementCells = (
   state: GameState,
@@ -91,16 +108,16 @@ export const validPlacementCells = (
 
 // ------------------------------------------------------------- cost formulas
 
-/** Build cost for the (n+1)th instance at BFS distance d. Rounding: floor. */
-export function buildCost(definitionId: DistrictId, n: number, d: number): Wallet {
+/** Build cost for the (n+1)th instance — count-scaled only, no distance term.
+ *  Rounding: floor. */
+export function buildCost(definitionId: DistrictId, n: number): Wallet {
   const def = DISTRICTS[definitionId];
   const i = n + 1;
   const expGrowth = i ** def.buildCostExponentialGrowth;
   const countMult = Math.max(def.buildCostMultiplier * (i - 1) * expGrowth, 1);
-  const distMult = def.buildCostDistanceGrowth ** d;
   const out: Wallet = {};
   for (const [c, base] of Object.entries(def.buildCost)) {
-    out[c as keyof Wallet] = Math.floor(base * countMult * distMult);
+    out[c as keyof Wallet] = Math.floor(base * countMult);
   }
   return out;
 }
@@ -136,8 +153,9 @@ export const upgradeDuration = (definitionId: DistrictId, currentLevel: number):
   );
 };
 
-export const buildCostForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): Wallet =>
-  buildCost(definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
+/** Cost of the NEXT instance of a type (distance no longer affects cost). */
+export const nextBuildCost = (state: GameState, definitionId: DistrictId): Wallet =>
+  buildCost(definitionId, districtCount(state, definitionId));
 
 export const buildDurationForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): number =>
   buildDuration(definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
@@ -149,4 +167,14 @@ export function requiredTownhallLevel(definitionId: DistrictId, targetLevel: num
   const list = DISTRICTS[definitionId].requiredTownhallLevelPerLevel;
   if (targetLevel <= 1 || list.length === 0) return 0;
   return levelIndexed(list, targetLevel - 1); // list is indexed by target level − 2
+}
+
+/** Technology required to reach `targetLevel`; null = none (same indexing). */
+export function requiredTechForLevel(
+  definitionId: DistrictId,
+  targetLevel: number,
+): TechId | null {
+  const list = DISTRICTS[definitionId].requiredTechPerLevel;
+  if (targetLevel <= 1 || list.length === 0) return null;
+  return levelIndexed(list, targetLevel - 1);
 }

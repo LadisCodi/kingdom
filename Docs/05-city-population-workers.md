@@ -4,7 +4,7 @@
 
 A **city** owns:
 
-- its own currency wallet (Food, Silver, Wood);
+- its own currency wallet (Food, Silver, Wood); *(web build: Silver is now Gold, and population is trained over time at the Townhall rather than bought instantly)*
 - its **population** count;
 - its list of districts (always created with a Townhall);
 - one **build queue** (capacity from its definition — Oakville: **1**).

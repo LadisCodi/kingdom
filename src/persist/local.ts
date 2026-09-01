@@ -18,3 +18,11 @@ export function saveLocal(save: SaveFile): void {
     // Storage full/blocked — cloud save (if configured) still applies.
   }
 }
+
+export function clearLocal(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    // Blocked storage: nothing to clear anyway.
+  }
+}
