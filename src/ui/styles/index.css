@@ -10,3 +10,4 @@
  * main.ts imports style.css FIRST, then this — kit rules win ties. */
 
 @import './tokens.css';
+@import './kit.css';

@@ -177,7 +177,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
     const isSel = selected?.kind === 'tech' && selected.id === id;
     const hinted = game.uiHint() === `tech:${id}`;
     const node = el('button', {
-      class: `tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
     if (active) {
@@ -206,7 +206,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       const cls = maxed ? 'done' : affordable ? 'available' : 'locked';
       const isSel = selected?.kind === 'upgrade' && selected.id === u;
       const node = el('button', {
-        class: `tech-node upgrade ${cls}${isSel ? ' selected' : ''}`,
+        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
       }, def.glyph);
       if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));

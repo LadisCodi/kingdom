@@ -31,7 +31,10 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 }
 
 export function button(label: string, onClick: () => void, className = ''): HTMLButtonElement {
-  const b = el('button', className ? { class: className } : {}, label);
+  // `btn` carries the base styling that used to come from a bare `button`
+  // element selector — see src/style.css. Kept explicit so the new kit's
+  // buttons can't inherit it by accident.
+  const b = el('button', { class: className ? `btn ${className}` : 'btn' }, label);
   b.addEventListener('click', () => {
     playSfx('click'); // every UI button clicks audibly (disabled ones don't fire)
     onClick();

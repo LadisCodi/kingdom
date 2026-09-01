@@ -49,12 +49,12 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
 }
 #navbar button { flex: 1; max-width: 140px; }
 #navbar button.close { max-width: 300px; }
-button {
+.btn {
   font: inherit; color: inherit; background: #26303e; border: 1px solid #3a4757;
   border-radius: 8px; padding: 9px 14px; cursor: pointer;
 }
-button:hover { background: #2f3b4c; }
-button:disabled { opacity: 0.45; cursor: default; }
+.btn:hover { background: #2f3b4c; }
+.btn:disabled { opacity: 0.45; cursor: default; }
 button.cta { background: #3d6f3d; border-color: #58a058; animation: pulse 1.5s infinite; }
 @keyframes pulse { 50% { filter: brightness(1.25); } }
 button.danger { background: #5a2c2c; border-color: #8a4444; }

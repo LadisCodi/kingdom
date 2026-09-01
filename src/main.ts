@@ -159,6 +159,14 @@ async function boot(): Promise<void> {
   };
   requestAnimationFrame(frame);
 
+  // ?dev=kit — the UI-kit gallery, in place of the game. Mounted before the
+  // time-warp bar so it takes the whole screen.
+  if (new URLSearchParams(location.search).get('dev') === 'kit') {
+    const { mountGallery } = await import('./ui/devGallery');
+    mountGallery(document.getElementById('ui')!);
+    return;
+  }
+
   // Dev time-warp (?dev): shift every timestamp back N minutes to demo offline catch-up.
   if (new URLSearchParams(location.search).has('dev')) {
     const warp = (minutes: number) => {
