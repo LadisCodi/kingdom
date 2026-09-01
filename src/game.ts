@@ -30,7 +30,7 @@ import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type TechId, type UnitId, type UpgradeId,
+  type TechId, type UnitId, type UpgradeId, type Wallet,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -965,6 +965,17 @@ export class Game {
     this.inspectedDistrictId = hall.uniqueId;
     this.camera.centerOnCell(hall.location);
     this.notify();
+  }
+
+  /** What the player is missing for a cost; empty when it is affordable.
+   *  Lets a blocked action say "Short 12 Wood" instead of just going grey. */
+  shortfall(cost: Wallet): Wallet {
+    const short: Wallet = {};
+    for (const [c, n] of Object.entries(cost) as Array<[CurrencyId, number]>) {
+      const have = this.effectiveWalletValue(c);
+      if (have < n) short[c] = n - have;
+    }
+    return short;
   }
 
   effectiveWalletValue(c: CurrencyId): number {

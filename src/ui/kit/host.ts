@@ -49,11 +49,11 @@ export function legacy(render: () => HTMLElement, onClose?: () => void): Screen 
     root,
     refresh: () => {
       const content = render();
-      // A kit sheet carries its own dismiss in its plank. Detecting that
-      // rather than listing which screens have migrated means the extra knob
-      // vanishes by itself as each one does.
-      const hasOwnClose = content.classList.contains('k-sheet')
-        || content.querySelector('.k-sheet') !== null;
+      // A migrated screen marks its own dismiss with data-own-close.
+      // Detecting that, rather than listing which screens have migrated,
+      // means the host's extra knob vanishes by itself as each one does.
+      const hasOwnClose = content.hasAttribute('data-own-close')
+        || content.querySelector('[data-own-close]') !== null;
       // The knob is the SAME node every refresh, so a press survives the
       // per-tick rebuild happening underneath it.
       root.replaceChildren(...(knob && !hasOwnClose ? [content, knob] : [content]));

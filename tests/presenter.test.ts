@@ -368,6 +368,34 @@ describe('the HUD', () => {
   });
 });
 
+// A blocked action has to say what is missing, not just go grey (§6.3).
+describe('shortfall', () => {
+  it('reports only what is actually missing, and by how much', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Wood: 8, Stone: 50 });
+
+    expect(game.shortfall({ Wood: 20, Stone: 10 })).toEqual({ Wood: 12 });
+  });
+
+  it('is empty when the cost is affordable', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Wood: 20 });
+
+    expect(game.shortfall({ Wood: 20 })).toEqual({});
+  });
+
+  it('counts food equivalents, so berries can cover a Food cost', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Food: 2, Berries: 5 }); // berries count as Food 1:1
+
+    expect(game.shortfall({ Food: 7 })).toEqual({});
+    expect(game.shortfall({ Food: 10 })).toEqual({ Food: 3 });
+  });
+});
+
 describe('the Build call-to-action', () => {
   it('lights only once something is both affordable and placeable', () => {
     const state = freshGame();

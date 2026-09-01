@@ -22,6 +22,16 @@ surplus resources, not a chore you must visit to earn money.
   Townhall to speed training. Buildings never exhaust: extraction +
   exhaustion is reserved for natural cells (trees, berries, animals,
   crops). Paced by the shared collect cooldown, so QuickHands helps.
+
+  > **CHANGED by [`balancing-v2.md`](balancing-v2.md) §1 (2026-09-02).** As
+  > written, this boost is unbounded: it rewinds the **city-wide** clock and is
+  > ungated for deliberate taps, so at Townhall 3 with 30 housed villagers it pays
+  > ~30 Gold per tap — about 9,000 Gold/min against 900 idle, and it is the only
+  > tap in the game with no exhaustion analogue. Housing gains a **tax cycle**
+  > with a progress bar, like the Townhall's training cycle: tapping
+  > fast-forwards *within* the current cycle and cannot exceed it. Tapping then
+  > means "collect early", not "print money", and the idle backbone this document
+  > describes becomes the dominant income again, as intended.
 - **Adjacency** (`Adjacency` sheet, `src/sim/adjacency.ts`): a house gains
   or LOSES gold/min per adjacent district of a given type — footprints
   sharing an edge; diagonal corner contact does NOT count. Rules are
@@ -62,3 +72,16 @@ Settings: `taxes.gold_per_population_per_minute`, `training.seconds`,
 sheet: `gold_value` per sellable resource. Districts sheet: the `Market`
 row. Upgrades: MarketStall (+5% prices), TradeRoutes (+10% taxes), both
 under the Market tech.
+
+## Interactions added 2026-09-02
+
+- The **Gilded Ledger** artifact grants `tax rate +20%` while attuned, which
+  reaches the tax rate through the modifier layer rather than through a new
+  upgrade — see [`magic.md`](magic.md) and [`engine-seams.md`](engine-seams.md) §2.
+  A `taxRate` modifier expiring mid-window is what makes `repriceTaxAnchor`
+  (today only applied on training completions, `population.ts:164-167`) a
+  correctness requirement rather than a nicety.
+- **Gold gains a large new sink**: expedition supplies, paid per delve launch and
+  scaling from 50 Gold at Tier I to 2,000 at Tier V
+  (see [`expeditions.md`](expeditions.md)), plus the one-off cost of claiming
+  undefended landmarks. Taxes stop being an income with nowhere to go.

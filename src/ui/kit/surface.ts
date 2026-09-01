@@ -26,6 +26,7 @@ export function sheet(
   ...children: Array<Node | string>
 ): HTMLElement {
   const close = knob('✕', opts.onClose, { label: `Close ${opts.title}` });
+  close.setAttribute('data-own-close', '');
   return el(
     'div',
     { class: 'k-sheet' },

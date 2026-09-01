@@ -28,6 +28,22 @@ quest 2 (stockpile 10 Wood) overlap 100% — quest 2 is HoldResource, not
 CollectResource, precisely so the tutorial taps count. "Pick a route" uses
 CompleteTechs so the farm/fish fork stays the player's choice.
 
+## Changes from 2026-09-02
+
+**Gem rewards are rebalanced.** The chain pays 15 Gems and the game grants 10 at
+start — 25 total against 40 needed for both research slots alone, so
+`research.max_slots: 3` was unreachable. `balancing-v2.md` §1.3 adds recurring
+faucets (10 Gems per ruin first-cleared, 5 per weekly Conjunction) because this
+pass adds three more Gem sinks: attunement slots, party slots and gacha pulls.
+
+**The chain gains a tail.** Quest 27 (`GrandCapital`, Townhall 3) was the end of
+content. New goal types are needed for the systems in
+[`magic.md`](magic.md) and [`expeditions.md`](expeditions.md) — claiming a
+landmark, clearing a ruin's first depth, attuning an artifact, reaching a given
+delve depth. All four are **absolute** goals in the sense §"Absolute vs relative"
+defines, so work done before the quest activates counts, and a player who
+explored ahead is never dead-ended.
+
 ## Sheet columns
 
 `id, name, description, goal_type, goal_target, goal_amount, goal_level,

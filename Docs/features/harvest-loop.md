@@ -238,6 +238,24 @@ game). Changes:
    card/menu changes, tap-chain rework.
 5. `docs:` update README deviations; `chore:` version bump.
 
+## Interactions added 2026-09-02
+
+Exhaustion stops being a hard ceiling and becomes a lever
+(see [`magic.md`](magic.md)):
+
+- The **Verdant Seal** artifact's passive cuts `recoverySeconds` by 25% while
+  attuned; its active, **Bloom**, clears `exhaustedUntil` outright on every
+  resource cell within a radius.
+- The **Foreman's Sigil**'s active, **Haste**, doubles worker yield for 60
+  minutes — the fix for workers delivering ~6 units/min against a tapper's 300.
+- The **Wanderer's Compass**'s active, **Beckon**, chooses where a finite feature
+  respawns instead of letting §1's deterministic hash pick an adjacent cell.
+
+All three reach the sim through the modifier layer and the `effectiveX` helpers,
+so none of them changes the rules in §1–§3 — they change the numbers those rules
+read. The TODO at `src/sim/upgrades.ts:52-54` (the dropped QuickHands upgrade)
+is resolved the same way: an `autoTapCooldown` modifier stat exists for it.
+
 ## 10. Out of scope (explicitly)
 
 Pathfinding/obstacle avoidance; worker carry upgrades; per-cell yield variety;

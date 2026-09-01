@@ -89,3 +89,33 @@ Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —
 layout is content; cells (−1,0) and (1,0) stay empty so the branch trunks can
 elbow through them without crossing nodes. Upgrade circles auto-fan below
 their parent.
+
+## Changes from 2026-09-02
+
+The tree today is a **checklist rather than a tree**: one root gate (Forestry,
+with 6 of 20 techs hanging off it), five branches that never reconverge, no
+exclusive picks, and a maximum depth of 4. It is also fully exhausted inside the
+2–3 hour arc. Three changes, none of which alter the mechanics above:
+
+- **The military branch now unlocks buildings, not just units.** `Warrior`,
+  `Spears`, `Archery` and `Cavalry` currently unlock units that do nothing. Each
+  becomes the gate for its training building — Barracks, Spear Hall, Shooting
+  Grounds, Stables — which is what raises the army cap
+  ([`balancing-v2.md`](balancing-v2.md) Part 2). The branch stops being a dead
+  limb.
+- **Two new leaves grant slots.** One technology grants the **second attunement
+  slot** ([`magic.md`](magic.md)) and one grants a **third party slot**
+  ([`expeditions.md`](expeditions.md)). Every further slot of either kind costs
+  Gems, so research is the earned half of both gates and the paid gate is never
+  the only route in.
+- **A `Sanctum` gate** for the Mana-capacity district, on the civics branch.
+
+Note that **upgrades and artifacts must not overlap**. Upgrades are permanent and
+stacking, bought with Gold; artifacts are exclusive and swappable, levelled with
+Knowledge. No single effect should be reachable through both — see
+[`magic.md`](magic.md) §"Keeping this out of stat-soup territory".
+
+The `effectiveX` helpers this document describes gain a third stage: **balance
+base → upgrade levels → modifier stack**, so artifact passives, timed actives and
+event boons all reach the same values without new bespoke code. See
+[`engine-seams.md`](engine-seams.md) §2.

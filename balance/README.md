@@ -27,6 +27,30 @@ the script.
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate + tap boost (`taxes.*`), offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |
 
+### Sheets added by the 2026-09-02 design pass *(not yet implemented)*
+
+| Sheet | What |
+|---|---|
+| `Artifacts` | One row per relic: passive stat/scope/value, hourly Mana `upkeep`, active effect + Mana cost, `cost_base`/`cost_growth` for Knowledge levels, `max_level`, the ruin it drops from |
+| `Heroes` | One row per hero: unit `type`, trait stat/value, level curve, gacha rarity |
+| `Ruins` | One row per dungeon: `tier`, `difficulty`, `base_depth_seconds`, `depth_growth`, `max_depth`, supply costs, `affinity` (threat type), the artifact it holds |
+
+Changed sheets:
+
+- `Units` gains **`atk`, `def`, `hp`**; `power` becomes equal to `atk`;
+  `train_duration_seconds` stops being decorative.
+- `Districts` gains the four military buildings and the Sanctum, and
+  `population_capacity` for Housing changes `2,4` → **`1,2`**.
+- `Currencies` gains **`Mana`** — the first row where `cap` is not blank.
+- `Settings` gains `mana.*`, `attunement.*`, `delve.*`, `gacha.*`.
+- `army.power_cap_per_townhall_level` is **removed**; the cap comes from the
+  military buildings instead.
+
+**Event and gacha-banner schedules do NOT belong in the workbook.** The xlsx is
+for numbers designers tune; schedules are live-ops content with wall-clock dates
+that change after ship. They live in a hand-written `src/sim/data/events.json`.
+See `Docs/features/engine-seams.md` §5.
+
 Format notes:
 
 - **Per-level lists go in one cell, comma-separated** (`3,5,7`), clamping to
@@ -55,6 +79,8 @@ y coordinates (y grows downward); each cell is one map cell:
 - **Features** (uppercase): `T` Trees · `B` Berry bush · `A` Wild animals ·
   `R` Rocks · `F` Fish shoal (water: write `wF`) · `I` Iron vein.
   A bare feature letter implies Grassland; `pT` puts Trees on Plains.
+  *Planned (2026-09-02):* `U` Ruin · `L` Landmark — see
+  `Docs/features/expeditions.md` and `Docs/features/magic.md`.
 - Cells are color-coded by conditional formatting, so the map stays visible
   as you type.
 - The Townhall anchors at (0,0) and occupies (0,0)–(1,1) — those four cells
