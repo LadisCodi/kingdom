@@ -662,8 +662,9 @@ export class Game {
     this.notify();
   }
 
-  /** True when the navbar should show a single Close button instead of the tabs. */
-  dismissible(): boolean {
+  /** True when a sheet, panel or placement mode is covering the main screen.
+   *  The quest tracker hides while anything is on top of the map. */
+  hasOpenSheet(): boolean {
     return (
       this.mode.kind !== 'normal' || this.openOverlay !== null || this.inspectedDistrictId !== null
     );

@@ -1,0 +1,117 @@
+/* Bottom navigation, the floating Settings knob, and the dismiss affordance
+ * that replaces the old swap-the-whole-bar-for-Close (§5.4). */
+
+/* #navbar wins on specificity over a bare class, so the overrides are keyed
+ * to both until style.css's rule is deleted in Phase 5. */
+#navbar.nav {
+  margin-top: auto;
+  min-height: var(--nav-h);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  justify-content: center;
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom));
+  background: var(--wood);
+  border-top: var(--outline) solid var(--wood-dark);
+  box-shadow: inset 0 3px 0 var(--wood-light);
+  position: relative;
+  z-index: 10;
+}
+
+#navbar.nav .nav-tab {
+  flex: 1;
+  max-width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px 4px;
+  font-family: var(--font-display);
+  font-size: var(--text-helper);
+  color: var(--ink);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 0 var(--wood-dark);
+  cursor: pointer;
+  transition: transform var(--motion-snap) steps(1);
+}
+#navbar.nav .nav-tab:hover { filter: brightness(1.06); }
+#navbar.nav .nav-tab:active { transform: translateY(2px); box-shadow: none; }
+
+/* The open destination sits proud of the others. */
+#navbar.nav .nav-tab.is-active {
+  background: var(--parchment);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 0 var(--wood-dark);
+}
+
+/* The one lit call to action — a warm glow, not a brightness pulse. */
+#navbar.nav .nav-tab.is-cta {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 2px 0 var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.75);
+  animation: nav-cta 1.6s ease-in-out infinite;
+}
+@keyframes nav-cta {
+  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 20px rgba(242, 178, 51, 0.95); }
+}
+.nav-label { line-height: 1.1; }
+
+/* ---------------------------------------------------------- settings knob */
+
+/* Outside the header, top-right — the free corner, since the quest scroll
+ * owns the left. Below the banner's z-index on purpose: a banner is
+ * transient and tap-to-dismiss, so it may cover this for its five seconds. */
+#tools {
+  position: absolute;
+  top: calc(var(--hud-h) + 8px);
+  right: 12px;
+  z-index: 20;
+}
+.tools-knob {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: 0 3px 0 var(--wood-dark);
+  cursor: pointer;
+}
+.tools-knob:hover { filter: brightness(1.08); }
+.tools-knob:active { transform: translateY(3px); box-shadow: none; }
+.tools-knob.is-active { background: var(--gold); border-color: var(--gold-dark); }
+
+/* ------------------------------------------------------ legacy dismiss ---
+ * Every unmigrated screen needs its own close now that the nav bar stays
+ * put. Removed per screen as each grows a kit sheet with a knob of its own. */
+.legacy-screen { display: contents; }
+.legacy-close {
+  position: absolute;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  z-index: 30;
+  border-radius: 50%;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: 0 3px 0 var(--wood-dark);
+  cursor: pointer;
+}
+.legacy-close:hover { filter: brightness(1.08); }
+.legacy-close:active { transform: translateY(3px); box-shadow: none; }
+/* Sits LEFT of the settings knob rather than under it. #overlay's own
+ * z-index makes it a stacking context, so this knob's z-index cannot lift it
+ * above #tools no matter how high — they have to not overlap. */
+#overlay .legacy-close { top: calc(var(--hud-h) + 8px); right: 66px; }
+#panel .legacy-close { top: 8px; }
+/* Reserve the corner so the knob can't sit on a legacy screen's first action
+ * row. Goes away per screen as each grows a sheet with a plank of its own. */
+#panel:has(.legacy-close) { padding-right: 64px; }

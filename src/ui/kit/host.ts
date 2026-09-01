@@ -27,12 +27,29 @@ export interface Screen {
  * This is what lets the host land before any screen is migrated: the rebuild
  * is byte-for-byte what refreshScreens() did, just inside a stable wrapper.
  * Screens shed it one at a time by holding their own nodes instead.
+ *
+ * `onClose` adds a floating dismiss knob. Every legacy screen needs one now
+ * that the nav bar no longer turns into a Close button — without it they
+ * would be unreachable to leave. Kit sheets carry their own and pass nothing.
  */
-export function legacy(render: () => HTMLElement): Screen {
+export function legacy(render: () => HTMLElement, onClose?: () => void): Screen {
   const root = document.createElement('div');
+  root.className = 'legacy-screen';
+  let knob: HTMLElement | undefined;
+  if (onClose) {
+    const b = document.createElement('button');
+    b.className = 'legacy-close';
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Close');
+    b.textContent = '✕';
+    b.addEventListener('click', onClose);
+    knob = b;
+  }
   return {
     root,
-    refresh: () => root.replaceChildren(render()),
+    // The knob is the SAME node every refresh, so a press survives the
+    // per-tick rebuild happening underneath it.
+    refresh: () => root.replaceChildren(...(knob ? [render(), knob] : [render()])),
   };
 }
 

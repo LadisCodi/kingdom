@@ -67,7 +67,7 @@
    * them is what lets the HUD and nav change height without silently
    * misaligning five other screens. */
   --hud-h: 78px;
-  --nav-h: 58px;
+  --nav-h: 68px;
 
   /* ---- type ----
    * The display stack falls back to MONOSPACE, not a proportional face: if

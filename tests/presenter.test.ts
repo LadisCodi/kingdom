@@ -40,24 +40,24 @@ describe('the overlay / dismiss state machine', () => {
     expect(game.inspectedDistrictId).toBe(null);
   });
 
-  it('is dismissible from each of its three independent causes', () => {
+  it('reports an open sheet from each of its three independent causes', () => {
     const state = freshGame();
 
     const normal = freshPresenter(state);
-    expect(normal.dismissible()).toBe(false);
+    expect(normal.hasOpenSheet()).toBe(false);
 
     const withOverlay = freshPresenter(state);
     withOverlay.setOverlay('army');
-    expect(withOverlay.dismissible()).toBe(true);
+    expect(withOverlay.hasOpenSheet()).toBe(true);
 
     const withCard = freshPresenter(state);
     withCard.inspectedDistrictId = townhall(state).uniqueId;
-    expect(withCard.dismissible()).toBe(true);
+    expect(withCard.hasOpenSheet()).toBe(true);
 
     const placing = freshPresenter(freshGame());
     placing.startPlacement('Housing');
     expect(placing.mode.kind).toBe('placing');
-    expect(placing.dismissible()).toBe(true);
+    expect(placing.hasOpenSheet()).toBe(true);
   });
 
   it('dismiss() clears all three at once', () => {
@@ -72,7 +72,7 @@ describe('the overlay / dismiss state machine', () => {
     expect(game.mode).toEqual({ kind: 'normal' });
     expect(game.openOverlay).toBe(null);
     expect(game.inspectedDistrictId).toBe(null);
-    expect(game.dismissible()).toBe(false);
+    expect(game.hasOpenSheet()).toBe(false);
   });
 });
 

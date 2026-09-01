@@ -16,7 +16,7 @@ const rewardText = (quest: QuestDef): string =>
 export function mountQuestPill(game: Game, root: HTMLElement): void {
   const refresh = () => {
     root.replaceChildren();
-    if (game.dismissible()) return; // something is on top of the main screen
+    if (game.hasOpenSheet()) return; // something is on top of the main screen
     const info = game.questInfo();
     if (info === null) return; // chain finished — the tracker retires
     const { quest, value, complete } = info;

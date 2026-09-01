@@ -17,7 +17,7 @@ import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
 import { deserialize } from './sim/save';
 import { mountHeader } from './ui/header';
-import { mountNavbar } from './ui/navbar';
+import { mountNavbar, mountTools } from './ui/navbar';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderDistrictCard } from './ui/districtCard';
@@ -69,6 +69,7 @@ async function boot(): Promise<void> {
   mountQuestPill(game, document.getElementById('quest')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
+  mountTools(game, document.getElementById('tools')!);
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => location.reload());
@@ -97,20 +98,27 @@ async function boot(): Promise<void> {
     // Bottom panel: placement > district card > empty.
     const inspectedId = game.inspectedDistrictId;
     if (game.mode.kind === 'placing') {
-      panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game)));
+      panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game), () => game.dismiss()));
     } else if (inspectedId !== null) {
       // Keyed by district, so inspecting a different one is a real remount.
       panelSlot.show(`district:${inspectedId}`, () => legacy(() => {
         const district = game.state.city.districts.find((d) => d.uniqueId === inspectedId);
         return district ? renderDistrictCard(game, district) : el('div');
-      }));
+      }, () => game.dismiss()));
     } else {
       panelSlot.clear();
     }
     // Overlays. Exhaustive over OverlayName, so adding a name without a
     // screen is a compile error rather than an overlay that draws nothing.
     const overlay = game.openOverlay;
-    if (overlay !== null) overlaySlot.show(overlay, () => legacy(() => OVERLAYS[overlay](game)));
+    if (overlay !== null) {
+      // Kit sheets bring their own close knob; legacy overlays get one added.
+      const needsKnob = overlay !== 'purse';
+      overlaySlot.show(overlay, () => legacy(
+        () => OVERLAYS[overlay](game),
+        needsKnob ? () => game.dismiss() : undefined,
+      ));
+    }
     else overlaySlot.clear();
   };
   game.onChange(refreshScreens);

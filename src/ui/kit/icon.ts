@@ -22,6 +22,7 @@ import { el } from '../format';
 /** Names that are not currencies or districts. */
 export type UiIconName =
   | 'population' | 'builders' | 'workers'
+  | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
   | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown';
 
@@ -37,6 +38,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
   Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️',
+  // destinations
+  build: '🔨', army: '🛡️', research: '🔬', settings: '⚙️',
   // city status + affordances
   population: '👥', builders: '👷', workers: '🧑‍🌾',
   quest: '📜', showme: '👉', padlock: '🔒', hourglass: '⏳', clock: '🕐',
