@@ -27,6 +27,7 @@ import { renderSettingsMenu } from './ui/settingsMenu';
 import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
 import { button, el } from './ui/format';
+import { legacy, ScreenSlot } from './ui/kit/host';
 
 const AUTOSAVE_TICKS = 30;
 
@@ -70,21 +71,32 @@ async function boot(): Promise<void> {
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
   };
 
+  // Each mount point holds one keyed screen: same key → re-render in place,
+  // different key → tear down and build. Screens still rebuild themselves
+  // wholesale via legacy(); only the container is now stable, which is what
+  // sheet animations and scroll preservation will need.
+  const panelSlot = new ScreenSlot(panelRoot);
+  const overlaySlot = new ScreenSlot(overlayRoot);
+
   const refreshScreens = () => {
     // Bottom panel: placement > district card > empty.
-    panelRoot.replaceChildren();
+    const inspectedId = game.inspectedDistrictId;
     if (game.mode.kind === 'placing') {
-      panelRoot.append(renderPlacementPanel(game));
-    } else if (game.inspectedDistrictId) {
-      const district = game.state.city.districts.find(
-        (d) => d.uniqueId === game.inspectedDistrictId,
-      );
-      if (district) panelRoot.append(renderDistrictCard(game, district));
+      panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game)));
+    } else if (inspectedId !== null) {
+      // Keyed by district, so inspecting a different one is a real remount.
+      panelSlot.show(`district:${inspectedId}`, () => legacy(() => {
+        const district = game.state.city.districts.find((d) => d.uniqueId === inspectedId);
+        return district ? renderDistrictCard(game, district) : el('div');
+      }));
+    } else {
+      panelSlot.clear();
     }
     // Overlays. Exhaustive over OverlayName, so adding a name without a
     // screen is a compile error rather than an overlay that draws nothing.
-    overlayRoot.replaceChildren();
-    if (game.openOverlay !== null) overlayRoot.append(OVERLAYS[game.openOverlay](game));
+    const overlay = game.openOverlay;
+    if (overlay !== null) overlaySlot.show(overlay, () => legacy(() => OVERLAYS[overlay](game)));
+    else overlaySlot.clear();
   };
   game.onChange(refreshScreens);
   game.onToast((msg) => {
