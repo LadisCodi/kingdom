@@ -48,6 +48,11 @@ export type Mode =
   | { kind: 'normal' }
   | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null };
 
+/** Every full-screen menu the nav (or the map) can open. Naming them means
+ *  `tsc` — the only real gate this project has over the view layer — catches
+ *  an overlay that nothing renders, instead of it silently drawing nothing. */
+export type OverlayName = 'build' | 'market' | 'army' | 'research' | 'settings';
+
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
 export type Hint =
@@ -70,7 +75,7 @@ export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
   private hint: Hint | null = null;
-  openOverlay: string | null = null; // 'build' | 'army' | 'research'
+  openOverlay: OverlayName | null = null;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -496,7 +501,7 @@ export class Game {
   focusQuest(): void {
     const quest = activeQuest(this.state);
     if (!quest) return;
-    const overlay = (name: string) => this.setOverlay(name);
+    const overlay = (name: OverlayName) => this.setOverlay(name);
     const centerCell = (cell: Coord | null) => {
       if (!cell) return;
       this.setOverlay(null);
@@ -505,7 +510,7 @@ export class Game {
       this.setCellHint(cell); // arrow on the map until tapped (or timeout)
       this.notify();
     };
-    const inspect = (district: District | undefined, fallback = 'build') => {
+    const inspect = (district: District | undefined, fallback: OverlayName = 'build') => {
       if (!district) {
         overlay(fallback);
         return;
@@ -650,7 +655,7 @@ export class Game {
     this.notify();
   }
 
-  setOverlay(name: string | null): void {
+  setOverlay(name: OverlayName | null): void {
     this.openOverlay = name;
     if (name !== null) this.inspectedDistrictId = null;
     this.notify();

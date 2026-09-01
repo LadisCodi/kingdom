@@ -5,7 +5,7 @@
 import './style.css';
 import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { musicMuted, startMusic } from './audio/music';
-import { Game } from './game';
+import { Game, type OverlayName } from './game';
 import { Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
@@ -62,6 +62,14 @@ async function boot(): Promise<void> {
   const overlayRoot = document.getElementById('overlay')!;
   const toastRoot = document.getElementById('toast')!;
 
+  const OVERLAYS: Record<OverlayName, (g: Game) => HTMLElement> = {
+    build: renderBuildMenu,
+    market: renderMarketMenu,
+    army: renderArmyMenu,
+    research: renderResearchMenu,
+    settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
+  };
+
   const refreshScreens = () => {
     // Bottom panel: placement > district card > empty.
     panelRoot.replaceChildren();
@@ -73,15 +81,10 @@ async function boot(): Promise<void> {
       );
       if (district) panelRoot.append(renderDistrictCard(game, district));
     }
-    // Overlays.
+    // Overlays. Exhaustive over OverlayName, so adding a name without a
+    // screen is a compile error rather than an overlay that draws nothing.
     overlayRoot.replaceChildren();
-    if (game.openOverlay === 'build') overlayRoot.append(renderBuildMenu(game));
-    else if (game.openOverlay === 'market') overlayRoot.append(renderMarketMenu(game));
-    else if (game.openOverlay === 'army') overlayRoot.append(renderArmyMenu(game));
-    else if (game.openOverlay === 'research') overlayRoot.append(renderResearchMenu(game));
-    else if (game.openOverlay === 'settings') {
-      overlayRoot.append(renderSettingsMenu(game, { saveModeLabel, onReset: resetSave }));
-    }
+    if (game.openOverlay !== null) overlayRoot.append(OVERLAYS[game.openOverlay](game));
   };
   game.onChange(refreshScreens);
   game.onToast((msg) => {

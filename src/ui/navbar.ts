@@ -4,11 +4,11 @@
 // the whole bar becomes a single Close button — the one cancel/close
 // affordance for every menu.
 
-import type { Game } from '../game';
+import type { Game, OverlayName } from '../game';
 import { button } from './format';
 
 export function mountNavbar(game: Game, root: HTMLElement): void {
-  const toggle = (name: string) => () =>
+  const toggle = (name: OverlayName) => () =>
     game.setOverlay(game.openOverlay === name ? null : name);
 
   const buildBtn = button('🔨 Build', toggle('build'));
