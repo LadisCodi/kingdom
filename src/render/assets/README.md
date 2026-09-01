@@ -4,32 +4,36 @@ Drop PNGs here (transparent background, ~128×128, nearest-neighbor
 downscaled). They're picked up automatically by filename — no code changes.
 Any sprite that's missing simply keeps its emoji placeholder.
 
-Expected filenames (see `Docs/art/sprite-prompts.md` for the prompts):
+**v2 art set (2026-09):** all sprites follow the zoomed-out "manage from
+afar" style locked by `Docs/art/reference.png`. Districts have per-level
+art: the renderer tries **`<sprite>_l<level>.png`** first, then the
+un-leveled `<sprite>.png`, then the emoji glyph. The placement preview
+uses `<sprite>_l1`. Source sheets + processing scripts live in
+`Docs/art/originals/v2-sheets/`; see `Docs/art/sprite-prompts.md` for the
+prompts and the normalization pipeline.
 
-| File | Replaces |
-|---|---|
-| `townhall.png` | 🏛️ |
-| `housing.png` | 🏠 |
-| `farm.png` | 🌾 |
-| `farmlands.png` | 🟩 |
-| `farmlands_exhausted.png` | 🟩 + 🥀 |
-| `sawmill.png` | 🪚 |
-| `forest.png` | 🌲 |
-| `forest_exhausted.png` | 🪵 |
-| `berry_bush.png` | 🫐 |
-| `wild_animals.png` | 🐗 |
-| `market.png` | 🏪 |
-| `quarry.png` | ⛏️ |
-| `docks.png` (2×1 pier: land half LEFT, water half right — mirrored in code when the coast faces the other way) | ⚓ |
-| `mine.png` | ⚒️ |
-| `rocks.png` (+ `rocks_exhausted.png`) | 🪨 / 🧱 |
-| `fish_shoal.png` | 🐟 |
-| `iron_vein.png` (+ `iron_vein_exhausted.png`) | ⛰️ / 🕳️ |
-| `worker.png` | 🧑‍🌾 |
-| `worker_carrying.png` | 🧑‍🌾 + 🎒 |
-| `fishing_boat.png` (workers of the Docks, out on water) | ⛵ |
-| `fishing_boat_carrying.png` | ⛵ + 🐟 |
-| `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water) | flat `TERRAIN_COLORS` |
+| File | Replaces | Notes |
+|---|---|---|
+| `townhall_l1..l3.png` | 🏛️ | campfire camp → hall → hilltop town |
+| `housing_l1..l3.png` | 🏠 | hut → two cottages → hamlet cluster |
+| `farm_l1..l3.png` | 🌾 | tilled patch → barn → farmstead |
+| `farmlands.png` (+ `_exhausted`) | 🟩 / 🥀 | flat full-bleed field tile, no levels |
+| `sawmill_l1..l3.png` | 🪚 | logging camp → saw hut → mill |
+| `market_l1..l3.png` | 🏪 | stall → two stalls → market square |
+| `quarry_l1..l3.png` | ⛏️ | stone pit → quarry → terraced quarry |
+| `mine_l1..l3.png` | ⚒️ | tunnel → mine + cart → mine complex |
+| `docks_l1..l3.png` | ⚓ | **256×128** (2×1 pier, land end LEFT; mirrored in code when the coast faces the other way) |
+| `forest.png` / `_exhausted` | 🌲 / 🪵 | |
+| `berry_bush.png` | 🫐 | finite — no exhausted variant |
+| `wild_animals.png` | 🐗 | finite — no exhausted variant |
+| `rocks.png` (+ `_exhausted`) | 🪨 / 🧱 | |
+| `iron_vein.png` (+ `_exhausted`) | ⛰️ / 🕳️ | |
+| `fish_shoal.png` | 🐟 | drawn over water; fish + ripples only |
+| `worker.png` / `_carrying` | 🧑‍🌾 / 🎒 | drawn at 0.6 tile |
+| `fishing_boat.png` / `_carrying` | ⛵ / ⛵🐟 | workers of the Docks |
+| `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water) | flat `TERRAIN_COLORS` | full-bleed, self-tiling |
 
 District sprites are keyed by the `sprite` field in
 `src/sim/data/definitions.ts`; `_exhausted` variants are derived from it.
+v1 (zoomed-in single-building) sprites are archived in
+`Docs/art/originals/v1-downscaled/`.
