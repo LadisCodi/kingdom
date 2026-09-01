@@ -23,13 +23,14 @@ export function renderSettingsMenu(
       el('span', {}, 'Version'), el('span', {}, `${GAME_VERSION} · save v${SAVE_VERSION}`)),
   ));
 
-  const muteBtn = button(musicMuted() ? 'Unmute' : 'Mute', () => {
+  const musicSwitch = button('', () => {
     setMusicMuted(!musicMuted());
     game.notify();
-  });
+  }, `switch${musicMuted() ? '' : ' on'}`);
+  musicSwitch.setAttribute('aria-label', 'Music on/off');
   menu.append(el('div', { class: 'action-row' },
-    el('span', { class: 'info' }, `Music — ${musicMuted() ? 'muted' : '🎵 playing'}`),
-    muteBtn));
+    el('span', { class: 'info' }, `Music — ${musicMuted() ? 'off' : '🎵 on'}`),
+    musicSwitch));
 
   menu.append(el('h2', { style: 'margin-top:16px' }, 'Danger zone'));
   const armed = Date.now() < armedUntil;
