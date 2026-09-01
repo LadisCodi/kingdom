@@ -10,7 +10,7 @@
 // primary action at the bottom. The upgrade is a before → after strip, so the
 // player sees the thing growing rather than reading `radius 2→3`.
 
-import { formatAdjacency, icon, type Game } from '../game';
+import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
   DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, WORKER, levelIndexed,
@@ -23,12 +23,13 @@ import { districtCapacity, houseGoldPerMinute } from '../sim/population';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import {
-  queueProgress, remainingSeconds, townhall,
+  coordKey, queueProgress, remainingSeconds, townhall,
   type CurrencyId, type District,
 } from '../sim/state';
+import { recoversAt, tapFraction } from '../sim/harvest';
 import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
-import { button, el, formatDuration } from './format';
+import { el, formatDuration } from './format';
 import { action, btn, costChips, iconEl, knob, pips, progress, stat } from './kit';
 
 /** Level as stars rather than "lvl 2/3" — a count you read, not parse. */
@@ -48,6 +49,31 @@ function portrait(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number
   return el('div', { class: 'dc-portrait' }, url
     ? el('img', { src: url, alt: '' })
     : iconEl(def.id, { size: 'lg' }));
+}
+
+/**
+ * A small map of what this building can reach: its own footprint, the cells
+ * its workers will harvest, and the ground in between. Replaces "Area of
+ * influence: radius 2" and "Forest cells in range: 4" — two numbers that
+ * describe a shape nobody was being shown.
+ */
+function influenceThumb(game: Game, district: District): HTMLElement {
+  const def = DISTRICTS[district.definitionId];
+  const r = influenceRadius(district);
+  const caught = new Set(game.workableCellsOf(district).map((c) => coordKey(c)));
+  const grid = el('div', {
+    class: 'dc-thumb',
+    style: `grid-template-columns: repeat(${r * 2 + def.size.x}, 1fr)`,
+  });
+  for (let dy = -r; dy < r + def.size.y; dy++) {
+    for (let dx = -r; dx < r + def.size.x; dx++) {
+      const cell = { x: district.location.x + dx, y: district.location.y + dy };
+      const self = dx >= 0 && dx < def.size.x && dy >= 0 && dy < def.size.y;
+      const cls = self ? 'is-self' : caught.has(coordKey(cell)) ? 'is-catch' : '';
+      grid.append(el('span', { class: `dc-cell ${cls}` }));
+    }
+  }
+  return grid;
 }
 
 export function renderDistrictCard(game: Game, district: District): HTMLElement {
@@ -98,10 +124,21 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       body.append(trainAction);
     }
 
+    // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
-      body.append(el('div', { class: 'dc-note' },
-        `Tap for +${effectiveTapYield(game.state, HARVEST.Crops)} ${icon('Food')} — exhausts after `
-        + `${HARVEST.Crops.tapsToExhaust} taps, recovers in ${HARVEST.Crops.recoverySeconds}s.`));
+      const spec = HARVEST.Crops;
+      const left = Math.round(tapFraction(game.state, district.location, spec, now)
+        * spec.tapsToExhaust);
+      const readyAt = recoversAt(game.state, district.location, now);
+      body.append(el('div', { class: 'dc-homes' },
+        iconEl('Food', { size: 'sm' }),
+        pips(left, spec.tapsToExhaust),
+        el('span', {}, readyAt === null
+          ? `${left} harvests left`
+          : `regrowing — ${formatDuration((readyAt - now) / 1000)}`)));
+      body.append(el('div', { class: 'dc-tapline' },
+        iconEl('showme', { size: 'sm' }),
+        `Tap the plot for +${effectiveTapYield(game.state, spec)} Food`));
     }
 
     // A house is people and the rent they pay, so show both as such.
@@ -135,36 +172,57 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           : `Tap the house to hurry the rent — +${TAXES.tapBoostSeconds}s each tap`));
     }
 
+    // A worker building is an AREA and the people you put in it. Both were
+    // numbers in a table; both are now pictures.
     if (def.maxWorkersPerLevel.length > 0 && def.harvestSource) {
       const spec = HARVEST[def.harvestSource];
       const cells = game.workableCellsOf(district);
       const limit = assignableWorkerLimit(district);
-      body.append(el('div', { class: 'rows' },
-        el('div', { class: 'row' },
-          el('span', {}, 'Area of influence'),
-          el('span', {}, `radius ${influenceRadius(district)}`)),
-        el('div', { class: 'row' },
-          el('span', {}, `${def.harvestSource} cells in range`),
-          el('span', {}, `${cells.length}`)),
-        el('div', { class: 'row' },
-          el('span', {}, 'Per delivery'),
-          el('span', {}, `+${effectiveWorkerYield(game.state, spec)} ${icon(spec.currencyId)} every ~${Math.round(WORKER.workSeconds + 3)}s`)),
-      ));
-      const minus = button('−', () => game.doChangeWorkers(district.uniqueId, -1));
-      minus.disabled = district.assignedWorkers === 0;
-      const plus = button('+', () => game.doChangeWorkers(district.uniqueId, 1));
-      plus.disabled = district.assignedWorkers >= limit || game.freeWorkers() === 0;
+
+      body.append(el('div', { class: 'dc-area' },
+        influenceThumb(game, district),
+        el('div', {},
+          el('div', { class: 'dc-area-count' },
+            iconEl(spec.currencyId, { size: 'sm' }),
+            el('b', {}, `×${cells.length}`),
+            el('span', {}, `${def.harvestSource} in reach`)),
+          el('div', { class: 'dc-area-rate' },
+            `+${effectiveWorkerYield(game.state, spec)} per trip, about every `
+            + `${Math.round(WORKER.workSeconds + 3)}s`))));
+
+      // Slots, not a fraction: filled ones are people, empty ones are room.
+      const slots = el('div', { class: 'dc-slots' });
+      for (let i = 0; i < limit; i++) {
+        const filled = i < district.assignedWorkers;
+        slots.append(el('span', { class: `dc-slot${filled ? ' is-filled' : ''}` },
+          ...(filled ? [iconEl('workers', { size: 'sm' })] : [])));
+      }
+      const minus = knob('−', () => game.doChangeWorkers(district.uniqueId, -1), {
+        label: 'Remove a worker', disabled: district.assignedWorkers === 0,
+      });
+      const plus = knob('+', () => game.doChangeWorkers(district.uniqueId, 1), {
+        label: 'Add a worker',
+        disabled: district.assignedWorkers >= limit || game.freeWorkers() === 0,
+      });
       if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
-      body.append(el('div', { class: 'actions' },
-        el('span', {}, `Workers ${district.assignedWorkers}/${limit}`),
-        minus, plus));
-      const states = game.state.workers
-        .filter((w) => w.buildingId === district.uniqueId)
-        .map((w) => ({
-          Idle: '💤 waiting', MovingToCell: '🚶 heading out',
-          Working: '⛏ working', MovingHome: '🎒 returning',
-        }[w.activity]));
-      if (states.length > 0) body.append(el('div', { class: 'dc-note' }, states.join(' · ')));
+      body.append(el('div', { class: 'dc-crew' }, minus, slots, plus));
+
+      // What the crew is doing, aggregated — a per-worker list of emoji was
+      // noise once there were more than two of them.
+      const busy = game.state.workers.filter((w) => w.buildingId === district.uniqueId);
+      if (busy.length > 0) {
+        const counts = new Map<string, number>();
+        for (const w of busy) {
+          const label = { Idle: 'waiting', MovingToCell: 'heading out',
+            Working: 'working', MovingHome: 'carrying home' }[w.activity];
+          counts.set(label, (counts.get(label) ?? 0) + 1);
+        }
+        body.append(el('div', { class: 'dc-note' },
+          [...counts].map(([label, n]) => `${n} ${label}`).join(' · ')));
+      } else if (district.assignedWorkers === 0) {
+        body.append(el('div', { class: 'dc-tapline' },
+          iconEl('showme', { size: 'sm' }), 'Nobody works here yet — add a villager'));
+      }
     }
   }
 

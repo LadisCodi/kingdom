@@ -133,3 +133,40 @@
 }
 .dc-badge.is-good { color: var(--leaf-dark); border-color: var(--leaf-dark); background: rgba(111, 191, 74, 0.18); }
 .dc-badge.is-bad { color: var(--clay); border-color: var(--clay); background: rgba(212, 85, 62, 0.15); }
+
+/* What the building can reach, as a shape rather than two numbers. */
+.dc-area { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+.dc-thumb {
+  flex: none;
+  display: grid;
+  gap: 1px;
+  padding: 3px;
+  background: var(--wood-dark);
+  border: 2px solid var(--wood-dark);
+  border-radius: 4px;
+}
+.dc-cell { width: 7px; height: 7px; background: var(--parchment-shade); border-radius: 1px; }
+.dc-cell.is-catch { background: var(--leaf); }
+.dc-cell.is-self { background: var(--gold); }
+.dc-area-count {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+}
+.dc-area-rate { color: var(--ink-muted); line-height: 1.3; }
+
+/* Crew slots: filled ones are people, empty ones are room for more. */
+.dc-crew { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+.dc-slots { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+.dc-slot {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: var(--parchment-shade);
+  border: 2px dashed var(--wood-dark);
+  border-radius: 50%;
+}
+.dc-slot.is-filled { background: var(--parchment); border-style: solid; }
+.dc-crew .k-knob { width: 40px; height: 40px; min-height: 40px; margin-bottom: 0; }
