@@ -4,6 +4,7 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import { DISTRICTS } from './data/definitions';
+import type { Modifier } from './modifiers';
 
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' | 'Iron' | 'Knowledge' | 'Gems'
@@ -137,6 +138,10 @@ export interface GameState {
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   upgrades: Partial<Record<UpgradeId, number>>;
+  /** The modifier stack: artifact passives (permanent), actives and seasons
+   *  (timed). Kingdom-scoped concepts, so this sits beside `upgrades` at the
+   *  top level rather than inside `city`. See sim/modifiers.ts. */
+  modifiers: Modifier[];
   /** The quest chain: index into QUESTS (length = all done); progress is the
    *  event counter for RELATIVE goals, reset when a quest is claimed. */
   quests: { index: number; progress: number };

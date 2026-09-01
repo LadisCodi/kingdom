@@ -12,9 +12,10 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { advanceCityLife } from './population';
+import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
+import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, effectiveAmount, pay, refund } from './wallet';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
@@ -230,10 +231,14 @@ export interface AdvanceResult {
   completedResearch: TechId[];
   goldEarned: number; // passive tax gold accrued in this window
   trainedPopulation: number; // villagers who finished training
+  /** Modifiers whose window closed inside this advance — the "your Haste ran
+   *  out while you were away" half of the offline report. */
+  expiredModifiers: Modifier[];
 }
 
 const emptyResult = (): AdvanceResult => ({
-  deposits: [], completedItems: [], completedResearch: [], goldEarned: 0, trainedPopulation: 0,
+  deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
+  trainedPopulation: 0, expiredModifiers: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -244,11 +249,18 @@ function applyDueAt(
   builders: number,
   out: AdvanceResult,
 ): void {
-  for (const item of advanceQueue(state.city.queue, t, builders)) {
-    completeQueueItem(state, map, item, Math.min(completesAt(item), t));
-    out.completedItems.push(item);
-  }
-  out.completedResearch.push(...advanceResearch(state, t));
+  // Bracketed so the tax anchor is repriced across the WHOLE batch: one call
+  // site covers a Housing completing, Communities landing and a taxRate
+  // modifier expiring, instead of only the training completion that used to
+  // remember to do it.
+  repriceTaxAnchorAround(state, t, () => {
+    for (const item of advanceQueue(state.city.queue, t, builders)) {
+      completeQueueItem(state, map, item, Math.min(completesAt(item), t));
+      out.completedItems.push(item);
+    }
+    out.completedResearch.push(...advanceResearch(state, t));
+    out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
+  });
 }
 
 /** The continuous sims, run only BETWEEN boundaries. */
@@ -271,6 +283,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
     if (item.startedAt !== null) consider(completesAt(item));
   }
   for (const a of state.research.active) consider(techCompletesAt(state, a.id));
+  consider(nextModifierExpiry(state, after));
   return t;
 }
 

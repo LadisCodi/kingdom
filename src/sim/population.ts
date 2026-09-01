@@ -135,6 +135,31 @@ export function houseTap(
   return { result: 'Boosted', gold: advanceCityLife(state, now).gold };
 }
 
+/**
+ * The tax rate just changed at `t`: rescale the partial progress since the
+ * anchor so the elapsed stretch is not repriced at the new rate.
+ *
+ * This used to be four inline lines that only training completion ran, so a
+ * Housing finishing, `Communities` landing, or a taxRate modifier expiring all
+ * quietly repriced their partial stretch. `applyDueAt` now brackets its whole
+ * batch with `repriceTaxAnchorAround`, which means ONE call site covers every
+ * boundary kind there will ever be.
+ */
+export function repriceTaxAnchor(state: GameState, t: number, rateBefore: number): void {
+  const rateAfter = cityGoldPerMinute(state);
+  if (rateAfter !== rateBefore && rateBefore > 0 && rateAfter > 0) {
+    state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * rateBefore) / rateAfter;
+  }
+}
+
+/** Run `work` (anything that might move the tax rate) with the anchor
+ *  repriced across it. */
+export function repriceTaxAnchorAround(state: GameState, t: number, work: () => void): void {
+  const rateBefore = cityGoldPerMinute(state);
+  work();
+  repriceTaxAnchor(state, t, rateBefore);
+}
+
 // ------------------------------------------------------- taxes + training tick
 
 /** Advance passive taxes AND the training queue to `toTime`, interleaved so a
@@ -159,12 +184,7 @@ export function advanceCityLife(
     training.queued -= 1;
     if (training.queued > 0) training.startedAt = t;
     else state.city.training = null;
-    // The tax rate just changed: rescale the partial progress since the
-    // anchor so the elapsed stretch isn't repriced at the new rate.
-    const rateAfter = cityGoldPerMinute(state);
-    if (rateAfter !== rateBefore && rateBefore > 0 && rateAfter > 0) {
-      state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * rateBefore) / rateAfter;
-    }
+    repriceTaxAnchor(state, t, rateBefore);
   }
   return result;
 }

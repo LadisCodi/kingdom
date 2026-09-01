@@ -14,6 +14,7 @@
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
+import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
@@ -196,6 +197,12 @@ export function serialize(state: GameState, now: number): SaveFile {
         SlotsPurchased: state.research.slotsPurchased,
         UpgradeLevels: state.upgrades,
       },
+      'kingdom.modifiers': {
+        Modifiers: state.modifiers.map((m) => ({
+          ID: m.id, Source: m.source, Stat: m.stat, Scope: m.scope,
+          Op: m.op, Value: m.value, ExpiresAtUtc: isoOrNull(m.expiresAt),
+        })),
+      },
       'player.currencies': state.player.wallet,
       'meta.seed': state.seed,
       'meta.nextId': state.nextId,
@@ -358,6 +365,19 @@ export function deserialize(
       index: questsDto.Index ?? 0,
       progress: questsDto.Progress ?? 0,
     };
+  }
+
+  const modifiersDto = modules['kingdom.modifiers']?.Modifiers;
+  if (modifiersDto) {
+    state.modifiers = (modifiersDto as any[]).map((m): Modifier => ({
+      id: m.ID,
+      source: m.Source,
+      stat: m.Stat,
+      scope: m.Scope ?? null,
+      op: m.Op,
+      value: m.Value,
+      expiresAt: msOrNull(m.ExpiresAtUtc),
+    }));
   }
 
   const playerDto = modules['player.currencies'];

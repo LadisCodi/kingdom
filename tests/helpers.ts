@@ -10,7 +10,16 @@ import {
 export const map = buildMapData();
 export const T0 = Date.parse('2026-08-17T12:00:00Z');
 
-export const freshGame = (): GameState => newGame(map, T0);
+/** A fixed world seed. newGame() rolls a real one, so without this two
+ *  freshGame()s would be two different worlds and every "replay equals
+ *  ticking" assertion would compare apples to oranges. */
+export const TEST_SEED = 0x5eed;
+
+export const freshGame = (): GameState => {
+  const state = newGame(map, T0);
+  state.seed = TEST_SEED;
+  return state;
+};
 
 /** The presenter, constructible under node: Camera reads nothing but the
  *  canvas's client size (stubbed below), playSfx swallows the missing

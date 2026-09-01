@@ -1,11 +1,21 @@
 // Upgrades: instant, gold-only, leveled boosts to existing mechanics.
-// Effects reach the sim through the effective-value helpers below — consumers
-// read these instead of raw balance values, so each upgrade level is applied
-// in exactly one place.
+//
+// The effective-value helpers below are the ONE place effects are applied, and
+// each is now a three-stage pipeline: base -> upgrade levels -> the modifier
+// stack (artifact passives, hero traits, seasons; see sim/modifiers.ts). An
+// empty stack is the bit-exact identity, so nothing changes until something
+// grants a modifier.
+//
+// Integer stats (tapYield, workerYield) round ONCE, here at the boundary,
+// because they feed addToWallet directly and a fractional wallet would leak
+// into quest counters, the Market and every displayed number. Math.round
+// rather than floor: flooring makes a small multiplier useless at base-1
+// yields.
 
 import { TAP, TAXES, UPGRADES, type HarvestSpec } from './data/definitions';
 import type { GameState, UpgradeId } from './state';
 import { isTechComplete } from './research';
+import { resolve } from './modifiers';
 import { canAfford, pay } from './wallet';
 
 export const upgradeLevel = (state: GameState, id: UpgradeId): number =>
@@ -34,9 +44,11 @@ export function buyUpgrade(state: GameState, id: UpgradeId): BuyUpgradeResult {
 const effect = (state: GameState, id: UpgradeId): number =>
   upgradeLevel(state, id) * UPGRADES[id].effectPerLevel;
 
-/** Units a player collect tap yields (TapPower). */
+/** Units a player collect tap yields (TapPower, plus tapYield modifiers). */
 export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number =>
-  spec.yieldPerTap + effect(state, 'TapPower');
+  Math.max(0, Math.round(resolve(
+    state, 'tapYield', spec.yieldPerTap + effect(state, 'TapPower'), spec.currencyId,
+  )));
 
 /** Cooldown between AUTO-taps — the repeats a held pointer generates, ms
  *  (QuickHands buys it down; floor 0.1s).
@@ -51,7 +63,9 @@ export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number =
  *  shape: it narrows the gap toward manual tapping without closing it (0.5s
  *  down to 0.25s at level 5, still slower than a determined tapper). */
 export const effectiveAutoTapCooldownMs = (state: GameState): number =>
-  Math.max(100, (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000);
+  Math.max(100, resolve(
+    state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,
+  ));
 
 /** Resource-specific worker-delivery upgrades (each +1/level). */
 const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId>> = {
@@ -64,14 +78,17 @@ const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId
  *  upgrade: Stonecutting/BigNets/IronPicks). */
 export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): number {
   const specific = WORKER_YIELD_UPGRADES[spec.currencyId];
-  return spec.yieldPerWorker + effect(state, 'WorkerLoad') +
+  const base = spec.yieldPerWorker + effect(state, 'WorkerLoad') +
     (specific ? effect(state, specific) : 0);
+  return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
 }
 
 /** Multiplier on Market sale prices (MarketStall: +5%/level). */
 export const effectiveSalePriceMultiplier = (state: GameState): number =>
-  1 + effect(state, 'MarketStall');
+  Math.max(0, resolve(state, 'salePrice', 1 + effect(state, 'MarketStall')));
 
 /** Tax gold per housed villager per minute (TradeRoutes: +10%/level). */
 export const effectiveTaxRate = (state: GameState): number =>
-  TAXES.goldPerPopulationPerMinute * (1 + effect(state, 'TradeRoutes'));
+  Math.max(0, resolve(
+    state, 'taxRate', TAXES.goldPerPopulationPerMinute * (1 + effect(state, 'TradeRoutes')),
+  ));
