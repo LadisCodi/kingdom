@@ -25,7 +25,7 @@ import {
   queueTraining, residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
-import { buySlot, startTech } from './sim/research';
+import { buySlot, startTech, techUnlocks } from './sim/research';
 import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
@@ -188,22 +188,22 @@ export class Game {
         desc: tech.description, sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
-      for (const def of Object.values(DISTRICTS)) {
-        if (def.requiredTech === id) {
+      // Upgrades are deliberately not announced — they appear as the fan of
+      // circles under the tech, which is the reward being made visible.
+      for (const unlock of techUnlocks(id)) {
+        if (unlock.kind === 'district') {
+          const def = DISTRICTS[unlock.id];
           this.queueBanner({
             title: 'New building unlocked!', icon: def.glyph, name: def.name, desc: def.description,
           });
-        }
-        const gatedLevel = def.requiredTechPerLevel.indexOf(id);
-        if (gatedLevel !== -1) {
+        } else if (unlock.kind === 'districtLevel') {
+          const def = DISTRICTS[unlock.id];
           this.queueBanner({
             title: 'Upgrade unlocked!', icon: def.glyph, name: def.name,
-            desc: `${def.name} can now reach level ${gatedLevel + 2}.`,
+            desc: `${def.name} can now reach level ${unlock.level}.`,
           });
-        }
-      }
-      for (const unit of Object.values(UNITS)) {
-        if (unit.requiredTech === id) {
+        } else if (unlock.kind === 'unit') {
+          const unit = UNITS[unlock.id];
           this.queueBanner({
             title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
           });

@@ -3,9 +3,51 @@
 // Gems at an escalating price); tree edges via `requires`. Completion runs
 // in real time through the unified advance (like the build queue).
 
-import { RESEARCH_SETTINGS, TECHNOLOGIES } from './data/definitions';
-import { addToWallet, getWallet, type GameState, type TechId } from './state';
+import { DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, UNITS, UPGRADES } from './data/definitions';
+import {
+  addToWallet, getWallet,
+  type DistrictId, type GameState, type TechId, type UnitId, type UpgradeId,
+} from './state';
 import { canAfford, pay } from './wallet';
+
+/** Something a technology puts in the player's hands. */
+export type Unlock =
+  | { kind: 'district'; id: DistrictId }
+  | { kind: 'districtLevel'; id: DistrictId; level: number }
+  | { kind: 'unit'; id: UnitId }
+  | { kind: 'upgrade'; id: UpgradeId };
+
+/**
+ * What researching `id` gives you — derived from the definitions, so it can
+ * never drift from what the gates actually check.
+ *
+ * Used twice, and the second use is the point: the completion banners have
+ * always announced this AFTER the fact, while the research screen could not
+ * tell the player what a technology was FOR before they committed to it.
+ * Same list, now available up front.
+ *
+ * Order is load-bearing for the banners — districts (with their per-level
+ * gates interleaved, as authored) then units, matching the sequence players
+ * already see. Upgrades come last because the banners don't announce them.
+ */
+export function techUnlocks(id: TechId): Unlock[] {
+  const unlocks: Unlock[] = [];
+  for (const def of Object.values(DISTRICTS)) {
+    if (def.requiredTech === id) unlocks.push({ kind: 'district', id: def.id });
+    const gatedLevel = def.requiredTechPerLevel.indexOf(id);
+    // The list is 0-indexed by level−1, and a gate at index n unlocks n+2.
+    if (gatedLevel !== -1) {
+      unlocks.push({ kind: 'districtLevel', id: def.id, level: gatedLevel + 2 });
+    }
+  }
+  for (const unit of Object.values(UNITS)) {
+    if (unit.requiredTech === id) unlocks.push({ kind: 'unit', id: unit.id });
+  }
+  for (const upgrade of Object.values(UPGRADES)) {
+    if (upgrade.requiredTech === id) unlocks.push({ kind: 'upgrade', id: upgrade.id });
+  }
+  return unlocks;
+}
 
 export const isTechComplete = (state: GameState, id: TechId): boolean =>
   state.research.completed.includes(id);

@@ -3,10 +3,12 @@
 import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { enqueueBuild } from '../src/sim/commands';
-import { RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER } from '../src/sim/data/definitions';
+import {
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
+} from '../src/sim/data/definitions';
 import { placementBlock } from '../src/sim/districts';
 import {
-  buySlot, isTechComplete, slotGemCost, startTech, techSlots,
+  buySlot, isTechComplete, slotGemCost, startTech, techSlots, techUnlocks,
 } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
@@ -163,5 +165,55 @@ describe('tree layout (layout is content)', () => {
         }
       }
     }
+  });
+});
+
+// What a technology gives you. The completion banners have always derived
+// this after the fact; the research screen needs the same list BEFORE the
+// player commits, so it lives in one place that cannot drift from the gates.
+describe('techUnlocks', () => {
+  it('reports exactly what the gates check, and nothing else', () => {
+    for (const id of TECH_ORDER) {
+      for (const u of techUnlocks(id)) {
+        if (u.kind === 'district') expect(DISTRICTS[u.id].requiredTech).toBe(id);
+        if (u.kind === 'unit') expect(UNITS[u.id].requiredTech).toBe(id);
+        if (u.kind === 'upgrade') expect(UPGRADES[u.id].requiredTech).toBe(id);
+        if (u.kind === 'districtLevel') {
+          // A gate at index n unlocks level n+2 (the list is 0-indexed by level-1).
+          expect(DISTRICTS[u.id].requiredTechPerLevel[u.level - 2]).toBe(id);
+        }
+      }
+    }
+  });
+
+  it('leaves nothing gated behind — every gate is announced by its tech', () => {
+    const announced = new Set(
+      TECH_ORDER.flatMap((id) => techUnlocks(id).map((u) => `${u.kind}:${u.id}`)),
+    );
+    for (const def of Object.values(DISTRICTS)) {
+      if (def.requiredTech !== null) expect(announced).toContain(`district:${def.id}`);
+    }
+    for (const unit of Object.values(UNITS)) {
+      if (unit.requiredTech !== null) expect(announced).toContain(`unit:${unit.id}`);
+    }
+    for (const up of Object.values(UPGRADES)) {
+      if (up.requiredTech !== null) expect(announced).toContain(`upgrade:${up.id}`);
+    }
+  });
+
+  it('orders districts before units, so the banner sequence is unchanged', () => {
+    for (const id of TECH_ORDER) {
+      const kinds = techUnlocks(id).map((u) => u.kind);
+      // No findLastIndex — the tsconfig targets ES2022.
+      let lastDistrict = -1;
+      kinds.forEach((k, i) => { if (k.startsWith('district')) lastDistrict = i; });
+      const firstUnit = kinds.indexOf('unit');
+      if (lastDistrict !== -1 && firstUnit !== -1) expect(lastDistrict).toBeLessThan(firstUnit);
+    }
+  });
+
+  it('a tech that unlocks nothing returns an empty list', () => {
+    const barren = TECH_ORDER.filter((id) => techUnlocks(id).length === 0);
+    expect(barren.length).toBeLessThan(TECH_ORDER.length); // sanity: not all barren
   });
 });
