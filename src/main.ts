@@ -3,6 +3,7 @@
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
 import './style.css';
+import { startMusic } from './audio/music';
 import { Game } from './game';
 import { Camera } from './render/camera';
 import { wireInput } from './render/input';
@@ -81,6 +82,10 @@ async function boot(): Promise<void> {
     toastRoot.append(t);
     setTimeout(() => t.remove(), 2600);
   });
+
+  // Background music can only start on a user gesture; keep nudging it on
+  // every pointerdown until the browser lets it through (then it's a no-op).
+  window.addEventListener('pointerdown', () => startMusic());
 
   // ----------------------------------------------------------------- input
   wireInput(

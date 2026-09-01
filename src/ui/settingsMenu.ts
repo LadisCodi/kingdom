@@ -2,6 +2,7 @@
 // destructive, so it uses a two-step confirm (arm, then tap again within 4s)
 // instead of firing on the first tap.
 
+import { musicMuted, setMusicMuted } from '../audio/music';
 import type { Game } from '../game';
 import { GAME_VERSION, SAVE_VERSION } from '../sim/data/definitions';
 import { button, el } from './format';
@@ -21,6 +22,14 @@ export function renderSettingsMenu(
     el('div', { class: 'row' },
       el('span', {}, 'Version'), el('span', {}, `${GAME_VERSION} · save v${SAVE_VERSION}`)),
   ));
+
+  const muteBtn = button(musicMuted() ? 'Unmute' : 'Mute', () => {
+    setMusicMuted(!musicMuted());
+    game.notify();
+  });
+  menu.append(el('div', { class: 'action-row' },
+    el('span', { class: 'info' }, `Music — ${musicMuted() ? 'muted' : '🎵 playing'}`),
+    muteBtn));
 
   menu.append(el('h2', { style: 'margin-top:16px' }, 'Danger zone'));
   const armed = Date.now() < armedUntil;
