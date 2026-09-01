@@ -194,10 +194,10 @@ except the single lit CTA.
 
 | # | Screen | File | Kind today | Kind proposed |
 |---|---|---|---|---|
-| 1 | Resource HUD | `ui/header.ts` | Top bar, 9 widgets | Top bar, 3 + purse |
+| 1 | Resource HUD | `ui/header.ts` | Top bar, 9 widgets | Top bar, 3 coins + purse + 1 contextual plaque |
 | 2 | Quest tracker | `ui/questPill.ts` | Card under HUD | Scroll card, unchanged shape |
 | 3 | Banner / toast | `ui/banner.ts`, `#toast` | Top card, 5s queue | Cloth banner, 5s queue |
-| 4 | Bottom nav | `ui/navbar.ts` | 4 buttons ⇄ Close | 4 carved tabs + corner Close |
+| 4 | Bottom nav | `ui/navbar.ts` | 4 buttons ⇄ Close | 3 carved tabs; Settings floats by the header |
 | 5 | Build | `ui/buildMenu.ts` | Full-screen list | Bottom sheet, card grid |
 | 6 | Placement | `ui/placementPanel.ts` | Bottom panel | Bottom sheet + map-first |
 | 7 | District card | `ui/districtCard.ts` | Bottom panel, 5 variants | Bottom sheet, same 5 variants |
@@ -235,22 +235,34 @@ badge is developer information occupying prime real estate.
   the early game. Icon + tabular value, large.
 - *Primary, right side:* **Gems**, visually separated (premium), with the
   `+` affordance kept as-is.
-- *Contextual:* Stone and Iron **appear only once the player owns any, or
-  once a visible cost requires them.** They slide in with a one-off
-  banner ("Your quarry is bringing Stone home").
+- *Contextual:* Stone and Iron **appear once their gating tech is complete
+  (Masonry, Mining) or once the balance is above zero.** The tech clause is
+  what makes it sticky — a counter must not vanish when the player spends
+  back to zero; the balance clause covers a quest reward arriving early.
+  They slide in with a one-off banner ("Your quarry is bringing Stone home").
 - *Purse (tap to expand):* the full wallet including Berries / Meat /
   Fish / Knowledge, each with its Food-equivalent value shown as
   `🫐 12 × 1 = 12 🍎`. This is today's tooltip, promoted to a proper
   sheet, and it is where the Food breakdown lives.
-- *City strip (second, thinner row or a single pill):* **Population
-  `n/max`**, **Builders `free/max`**, **Free workers `n`**. These are
-  city status, not currency — group them and mark them visually distinct
-  (a small wooden plaque under the coins). Tapping the strip should jump
-  to the Townhall.
+- *City status — **one contextual slot**, not three permanent widgets.*
+  A single small wooden plaque under the coins, showing whichever of the
+  three numbers the player can currently act on:
+
+  | When | Shows |
+  |---|---|
+  | Default | **Population `n/max`** — tap to jump to the Townhall |
+  | A screen that can reassign workers is open (a worker building's card) | **Workers `working/free`** |
+  | A screen that needs builders is open (Build, placement) | **Free builders `n`** |
+
+  Three permanent counters is exactly the spreadsheet problem this document
+  opens with: builders only matter while you are queueing something, and
+  free workers only matter while you are staffing something. Showing the
+  one that is live turns three pieces of trivia into one piece of advice.
 - *Move out:* the save-mode badge belongs in Settings.
 
-**States to mock.** Default (3 coins), expanded purse, a counter mid-shake
-in `clay`, Stone appearing for the first time.
+**States to mock.** Default (3 coins + population plaque), expanded purse, a
+counter mid-shake in `clay`, Stone appearing for the first time, and the
+plaque in each of its three states.
 
 ---
 
@@ -326,7 +338,7 @@ also lives.
 
 ### 5.4 Bottom nav
 
-**Purpose.** Reach the four places; leave any of them.
+**Purpose.** Reach the three places; leave any of them.
 
 **Today** (`src/ui/navbar.ts`). `🔨 Build`, `🛡️ Army`, `🔬 Research`, `⚙️`.
 The Build button lights green and pulses when at least one uncapped
@@ -342,8 +354,17 @@ reachable by finding and tapping the Market building on the map.
 
 **Show this.**
 
-- Four carved wooden tabs with pixel icons **and labels**: Build, Army,
-  Research, Settings. Active tab is raised and lit.
+- **Three** carved wooden tabs with pixel icons **and labels**: Build, Army,
+  Research. Active tab is raised and lit.
+- **Settings leaves the bar.** It is not a destination with the weight of
+  the other three, and giving it an equal tab flattens the hierarchy — it
+  is a drawer you open twice a month, sitting next to the thing you tap
+  every session. It becomes a **floating icon-only wooden knob just below
+  the header, outside it**, at the top right. Three tabs also widen each
+  remaining one, which is the right direction for thumb reach.
+- Top right is the free corner: the quest scroll owns the top left. The
+  banner is centred and can reach across on a narrow screen — let the
+  banner win, it is transient and tap-to-dismiss.
 - Keep the lit-CTA behaviour on Build (gold glow + a small sparkle, not a
   brightness pulse).
 - **Replace the swap-to-Close with a persistent nav plus a close affordance
@@ -352,7 +373,7 @@ reachable by finding and tapping the Market building on the map.
   sheets directly. (This is a behaviour change; it is the single biggest
   navigation improvement available and costs one small refactor of
   `dismissible()`/`dismiss()`.)
-- Consider surfacing **Market** as a fifth tab once it is built, rather
+- Consider surfacing **Market** as a fourth tab once it is built, rather
   than making it the only building-only entry point.
 
 ---
@@ -410,6 +431,8 @@ auto-centres on the closest legal cell to the Townhall.
 **Problems.** `(x, y)` is debug output. "Crops cells captured" is the most
 important number on the screen and it is the fourth row. The panel eats
 45% of the screen at the exact moment the player needs to look at the map.
+And the ghost can only be *tapped* into place — the one gesture every player
+will try first, dragging it, pans the camera instead.
 
 **Show this.**
 
@@ -424,6 +447,20 @@ important number on the screen and it is the fourth row. The panel eats
   uncaptured ones dimmed.
 - Replace `(x, y)` with nothing. Replace "tap the map to move" with a
   one-time coach line the first time only.
+- **Make the ghost draggable, and keep the tap.** Both gestures move it:
+
+  | Gesture | Result |
+  |---|---|
+  | Drag starting **on the ghost** | The ghost follows your finger; the camera stays put |
+  | Drag starting **anywhere else** | Pans the camera, exactly as today — you need this to reach distant cells |
+  | Tap any legal cell | The ghost jumps there, exactly as today |
+
+  The ghost lifts slightly while held (a little scale and a shadow), snaps
+  to legal cells only — if you drag over illegal ground it stays on the
+  last legal cell rather than falling off — and **dragging never commits**.
+  Build stays an explicit button press, because confirming spends
+  resources. On touch the finger covers the ghost, so carry the grab offset
+  rather than centring the ghost on the pointer, or it teleports on pickup.
 - Quality feedback in words: **"Good spot"** (≥ 3 captured) /
   **"Poor spot — no Crops nearby"** (0 captured), in leaf or clay.
 - Keep Build disabled + a reason chip when unaffordable: "Short 12 🪵".
@@ -711,6 +748,12 @@ Small, high-leverage, mostly independent of the visual redesign.
 
 ### 7.0 How to run the session
 
+This section produces two different things, and it matters which you are
+asking for. **§7.1–§7.14 are mockups** — full screens over the map, generated
+so I can build from them; nothing is sliced out of them. **§7.16 is export
+sheets** — the flat transparent grids that become the icons the game actually
+loads. Same conversation, same style block, different output rules.
+
 Same workflow that produced the v2 sprite set — it is proven here:
 
 1. **One conversation.** Attach [`reference.png`](reference.png) to the
@@ -888,8 +931,11 @@ Two square transparent sheets. Run each twice — once normal, once locked.
 > four pine-tree cells are lit and slightly raised while trees outside it
 > are dimmed. A small parchment tag floats just above the ghost building
 > showing a pine tree icon and "×4" in large gold lettering, with the words
-> "Good spot" beneath it in green. Legal neighbouring cells are marked with
-> small unobtrusive wooden corner brackets. Along the very bottom, a single
+> "Good spot" beneath it in green. The ghost is being **held**: it sits
+> slightly larger than a cell with a soft dark shadow cast on the ground
+> beneath it, as if lifted a few millimetres off the map. Legal neighbouring
+> cells are marked with small unobtrusive wooden corner brackets. Along the
+> very bottom, a single
 > slim wooden bar — not a tall panel — holding, left to right: a tiny
 > sawmill icon, the word "Sawmill", cost chips (a log "20", a coin "40"),
 > a small hourglass "45s", and a big green "Build" slab at the right end.
@@ -1044,19 +1090,119 @@ the screens. Phrases that reliably move the output:
 
 ---
 
+### 7.16 Export sheets — the art that actually ships
+
+Everything above produces **mockups**: full screens, over the map, for me to
+build from. They are references, not assets. This section produces **export
+sheets** — flat, evenly spaced, transparent grids that a script slices into
+the atlas the game loads. Different output, different rules.
+
+**Only generate what cannot be geometry.** Panel frames, card frames, button
+slabs, progress troughs, pips and the scrim are specified numerically in §3.2
+and §3.3, so CSS reproduces them exactly — recolourable, crisp at any DPR,
+zero bytes. Asking an image model for 9-slice frames is a trap: the four
+corners will not register with each other, the edges will not tile, the slice
+insets will not land on integers, and `border-image` throws away the
+`border-radius` §3.2 mandates. So the ask shrinks to **icons, seamless
+textures and loose decorations**.
+
+| Sheet | Grid | Contents |
+|---|---|---|
+| **UI-A** resources | 4×3 | Gold, Food, Wood, Stone, Iron, Gems, Knowledge, Population, Builders, Workers, Berries, Fish |
+| **UI-B** buildings | 3×3 | Townhall, Housing, Farm, FarmLands, Sawmill, Market, Quarry, Docks, Mine |
+| **UI-C** actions | 4×3 | quest scroll, pointing hand, padlock, hourglass, clock, tick, ✕, +, −, pip, sparkle, `?` |
+| **UI-D** textures | 2×2 | wood grain, dark wood, parchment fibre, cloth — **tiling, not trimmed** |
+| **UI-E** decorations | 2×3 | wax seal, rope handle, pennant, sparkle burst, corner bracket, padlock ribbon |
+| **UI-F** unit portraits | 2×2 | spearman, swordsman, archer, horseman (later — §8.2) |
+
+**Do not generate three things** that are cheaper and better derived locally:
+the **locked variant** of each icon (desaturating toward `locked` also
+guarantees an identical silhouette, so a row never shifts when it locks), a
+**padlock on every icon** (one padlock, composited in CSS), and the **16px
+inline variants** (point-decimated). That is 35 generations saved.
+
+**Generate UI-A first and run it all the way through the slicing tool before
+generating anything else.** One sheet validates the grid wording, the trim,
+the scale normalisation and the palette remap at once. A prompt fix found
+there is free; found after five sheets it is five regenerations.
+
+#### Append to every icon sheet (UI-A, UI-B, UI-C)
+
+Paste after the §7.2 body, before the alpha sentence, substituting the real
+row and column counts:
+
+> Output one square image, 1024×1024. Treat the canvas as a strict grid of R
+> rows × C columns of equal cells and place exactly one icon, centred, in each
+> cell, in reading order left-to-right then top-to-bottom. Every icon must fit
+> inside the middle 70% of its own cell: leave a wide empty transparent margin
+> around each one, and no icon may touch, overlap or cross a cell boundary.
+> All icons on this sheet must be the same visual size as each other — roughly
+> 160 pixels across — so they can be used interchangeably at one size. Do not
+> draw grid lines, cell borders, labels, numbers, captions, frames, drop
+> shadows or any background. The background must be fully transparent (alpha
+> 0) everywhere, not white and not a grey checkerboard pattern. If you cannot
+> fit every icon, leave the surplus cells completely empty rather than
+> shrinking or crowding the others.
+
+Then keep the proven closing line verbatim: *"Then apply the true-alpha
+transparency correction and give me the download link for the corrected PNG."*
+
+Coarse cells are the whole tolerance story. At 1024×1024 a 4×3 grid gives
+256px cells, so an icon drawn at ~160px can wander ±45px and still sit safely
+inside its own cell — which is the difference between a sheet that slices
+cleanly and one that clips. Do not ask for a grid finer than 4×4.
+
+#### UI-D — seamless textures
+
+> [style block] …but instead of a screen: one square image, 1024×1024, divided
+> into a strict 2×2 grid of four equal 512×512 tiles that touch edge to edge
+> with no gap and no separator. Each tile is a seamless, self-tiling texture:
+> its left edge must continue perfectly into its right edge, and its top edge
+> into its bottom edge, so it can be repeated as wallpaper without a visible
+> seam. TOP-LEFT: carved wooden plank grain in #A9713F with #5C3A1E grooves and
+> #C89159 highlights. TOP-RIGHT: the same, darker, in #5C3A1E. BOTTOM-LEFT:
+> aged parchment fibre in #F4E4C1 with faint #E2CCA0 mottling, very low
+> contrast. BOTTOM-RIGHT: plain cream cloth weave. Low contrast throughout —
+> these sit *behind* dark brown text and must never compete with it. Fully
+> opaque, no transparency, no objects, no text, no borders.
+
+#### UI-E — decorations
+
+> [style block] …but instead of a screen: one square image, 1024×1024, as a 2
+> rows × 3 columns grid of six separate objects on a fully transparent
+> background, evenly spaced, none touching, each centred in its own cell: (1) a
+> red wax seal stamped with a crown, (2) a short length of rope lying
+> horizontally, as a drawer handle, (3) a cloth pennant banner with a notched
+> swallowtail bottom edge, (4) a burst of gold sparkles, (5) a small wooden
+> corner bracket, (6) a diagonal ribbon bearing a padlock. These are NOT all
+> the same size — draw each at its natural relative size, filling most of its
+> cell. Then apply the true-alpha transparency correction and give me the
+> download link for the corrected PNG.
+
+---
+
 ## 8. Open questions
 
-1. **Bottom sheets vs. the single-Close nav.** §5.4 proposes replacing the
-   swap-to-Close bar. It is the biggest behavioural change here and the
-   current pattern was a deliberate choice — worth a playtest before
-   committing.
+1. ~~**Bottom sheets vs. the single-Close nav.**~~ — **decided**: replace the
+   swap-to-Close bar with a persistent three-tab nav plus a per-sheet close
+   knob (§5.4). It remains the biggest behavioural change here, so it lands
+   as its own commit and is revertible on its own if it feels worse in the
+   hand than it reads on paper.
 2. **Unit art.** The Army screen assumes unit portraits that do not exist.
    Four portraits is a small sprite job, but it is a job.
-3. **How many currencies should ever be visible?** §5.1 proposes three
-   plus a purse. If Stone and Iron turn out to be constantly relevant
-   mid-game, the contextual rule needs a different cut.
+3. **How many currencies should ever be visible?** §5.1 settles on three
+   coins plus a purse, with Stone and Iron revealed by "gating tech complete
+   **or** balance above zero". That rule is one-way — nothing ever hides
+   again — so a late-game player ends up back at five coins. If that reads as
+   crowded in playtest, the next cut is to hide a coin the player has not
+   spent or earned in N minutes.
 4. **Research metaphor cost.** Re-skinning the tree as a parchment map is
    the most expensive item in this document. The mechanics stay identical,
    so it can ship last.
-5. **Pixel font licensing** — pick one before any of this is implemented;
-   the whole kit hangs off it.
+5. ~~**Pixel font licensing**~~ — **decided**: self-hosted OFL faces,
+   **Pixelify Sans** (400/700) for display and numbers, **Nunito** (400/700)
+   for body, vendored as subset woff2 with their licence so the GitHub Pages
+   build stays self-contained. Pixelify Sans over Press Start 2P (an 8×8
+   arcade face, far too wide and legible only at multiples of 8) and over
+   Silkscreen (no descender room at 24px); Nunito for the highest x-height of
+   the OFL rounded faces, which decides it at the 13px floor §6.12 sets.
