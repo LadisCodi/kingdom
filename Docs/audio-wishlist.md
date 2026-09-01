@@ -6,9 +6,14 @@ registry in `src/audio/sfx.ts` handles either) and say the word; each gets
 a volume + pitch-jitter entry and its call site. Keep SFX short (< 1s
 unless noted); they play over the music loop at ~0.35–0.55 volume.
 
-Already in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
-· `discovery` (every banner) · `quest_claimed` · `research_started` ·
-`music-harp-peaceful-loop`.
+**Status: everything below has been delivered and wired** (2026-09-01) —
+this doc now serves as the sound map. `tab_empty` was renamed `tap_empty`;
+the ambience files use the provided `ambiance_*` spelling. Still open:
+`chain_finished` (victory sting for claiming the final quest).
+
+Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
+· `discovery` (default banner chime) · `quest_claimed` · `research_started`
+· `music-harp-peaceful-loop`.
 
 ## Tier 1 — core feedback (silent moments players notice)
 

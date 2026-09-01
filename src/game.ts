@@ -33,7 +33,7 @@ import {
   type TechId, type UnitId, type UpgradeId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
-import { playPop, playSfx } from './audio/sfx';
+import { playPop, playSfx, type SfxName } from './audio/sfx';
 import { QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
@@ -61,6 +61,8 @@ export interface Banner {
   icon: string;
   name: string;
   desc: string;
+  /** Chime override; the banner plays 'discovery' when absent. */
+  sfx?: SfxName;
 }
 
 export class Game {
@@ -73,6 +75,8 @@ export class Game {
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
   private bannerQueue: Banner[] = [];
+  private questWasComplete = false;
+  private boatsOut = new Set<string>();
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
@@ -107,6 +111,10 @@ export class Game {
       const [kind, id] = key.split(':');
       if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
     }
+    // The moment the active quest's goal is met, ding — before any claim.
+    const questDone = this.questInfo()?.complete ?? false;
+    if (questDone && !this.questWasComplete) playSfx('questComplete');
+    this.questWasComplete = questDone;
     for (const fn of this.changeListeners) fn();
   }
 
@@ -119,6 +127,7 @@ export class Game {
     return this.bannerQueue.shift() ?? null;
   }
   shake(currencies: CurrencyId[]): void {
+    playSfx('error'); // every shake is a denial — one audible "no"
     for (const fn of this.shakeListeners) fn(currencies);
   }
   toast(msg: string): void {
@@ -136,20 +145,37 @@ export class Game {
       this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);
     }
     if (result.trainedPopulation > 0) {
+      playSfx('villagerTrained');
       this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation} 👥`);
+    }
+    // A quiet splash when a fishing boat sets out (one per tick, max).
+    let splashed = false;
+    for (const w of this.state.workers) {
+      const b = districtById(this.state, w.buildingId);
+      const isBoat = b !== undefined && DISTRICTS[b.definitionId].harvestSource === 'Fish';
+      const out = w.activity === 'MovingToCell';
+      if (isBoat && out && !this.boatsOut.has(w.id) && !splashed) {
+        playSfx('boatSplash');
+        splashed = true;
+      }
+      if (out) this.boatsOut.add(w.id);
+      else this.boatsOut.delete(w.id);
     }
     for (const item of result.completedItems) {
       const district = districtById(this.state, item.districtUniqueId);
       if (!district) continue;
       const def = DISTRICTS[district.definitionId];
       this.queueBanner(item.kind === 'build'
-        ? { title: 'Construction complete!', icon: def.glyph, name: def.name, desc: def.description }
-        : { title: 'Upgrade complete!', icon: def.glyph, name: def.name, desc: `Now level ${district.level}` });
+        ? { title: 'Construction complete!', icon: def.glyph, name: def.name,
+            desc: def.description, sfx: 'constructionComplete' }
+        : { title: 'Upgrade complete!', icon: def.glyph, name: def.name,
+            desc: `Now level ${district.level}`, sfx: 'constructionComplete' });
     }
     for (const id of result.completedResearch) {
       const tech = TECHNOLOGIES[id];
       this.queueBanner({
-        title: 'Research complete!', icon: tech.glyph, name: tech.name, desc: tech.description,
+        title: 'Research complete!', icon: tech.glyph, name: tech.name,
+        desc: tech.description, sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
       for (const def of Object.values(DISTRICTS)) {
@@ -198,8 +224,10 @@ export class Game {
         if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
+          playSfx('revealDone');
           this.floaters.add(cell, 'Revealed!');
         } else if (result === 'Paid') {
+          playSfx('revealPaid');
           this.floaters.add(cell, `-1 ${icon('Gold')}`);
         }
         this.notify();
@@ -232,6 +260,7 @@ export class Game {
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
           const tap = townhallTap(this.state, this.now());
           if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap === 'TrainingComplete') playSfx('villagerTrained');
           if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
           else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
           this.inspectedDistrictId = district.uniqueId;
@@ -274,6 +303,7 @@ export class Game {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell);
       this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
     } else if (result === 'Exhausted') {
+      playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
     }
     return result;
@@ -329,6 +359,7 @@ export class Game {
     const cost = nextBuildCost(this.state, definitionId);
     const result = enqueueBuild(this.state, this.map, definitionId, selected);
     if (result === 'Started') {
+      playSfx('buildPlaced');
       this.mode = { kind: 'normal' };
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
@@ -343,6 +374,7 @@ export class Game {
   doSell(c: CurrencyId, amount: number): void {
     const { result, gold } = sellGoods(this.state, c, amount);
     if (result === 'Sold') {
+      playSfx('coinSale');
       const market = this.state.city.districts.find(
         (d) => d.definitionId === 'Market' && d.state === 'Built');
       if (market) this.floaters.add(market.location, `+${gold} ${icon('Gold')}`);
@@ -379,6 +411,7 @@ export class Game {
 
   doRush(itemId: string): void {
     const result = finishWithGems(this.state, this.map, itemId, this.now());
+    if (result === 'Success') playSfx('gemSpend');
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
@@ -404,6 +437,7 @@ export class Game {
 
   doBuyUpgrade(id: UpgradeId): void {
     const result = buyUpgrade(this.state, id);
+    if (result === 'Purchased') playSfx('upgradeBought');
     if (result === 'NotEnoughResources') this.shake(['Gold']);
     this.notify();
   }
@@ -579,12 +613,14 @@ export class Game {
 
   doBuySlot(): void {
     const result = buySlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
     if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 
   doTrain(unitId: UnitId): void {
     const result = trainUnit(this.state, unitId);
+    if (result === 'Trained') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
     if (result === 'ArmyAtCapacity') this.toast(`Army at capacity (${armyPower(this.state)}/${maxArmyPower(this.state)})`);
     this.notify();

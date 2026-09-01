@@ -20,7 +20,7 @@ export function mountBanner(game: Game, root: HTMLElement): void {
     if (banner === null) return;
 
     showing = true;
-    playSfx('discovery');
+    playSfx(banner.sfx ?? 'discovery');
     const card = el('div', { class: 'notice-card' },
       el('span', { class: 'big' }, banner.icon),
       el('div', {},

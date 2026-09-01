@@ -3,13 +3,15 @@
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
 import './style.css';
-import { startMusic } from './audio/music';
+import { syncAmbience, type AmbienceName } from './audio/ambience';
+import { musicMuted, startMusic } from './audio/music';
 import { Game } from './game';
 import { Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
+import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
 import { deserialize } from './sim/save';
 import { mountHeader, setCloudBadge } from './ui/header';
@@ -105,9 +107,22 @@ async function boot(): Promise<void> {
   );
 
   // ------------------------------------------------------- the single tick
+  // The ambience bed follows the camera: waves over water, wind over snow.
+  // Off-map void keeps the LAST bed — the world's edge shouldn't chirp.
+  let lastBiome: AmbienceName = 'meadow';
+  const biomeAtCenter = (): AmbienceName => {
+    const center = camera.screenToCell(canvas.clientWidth / 2, canvas.clientHeight / 2);
+    const terrain = map.terrain.get(coordKey(center));
+    if (terrain === undefined) return lastBiome;
+    lastBiome = terrain === 'Water' ? 'coast'
+      : terrain === 'Snow' || terrain === 'Tundra' ? 'snow' : 'meadow';
+    return lastBiome;
+  };
+
   let ticks = 0;
   const runTick = () => {
     game.tick();
+    syncAmbience(musicMuted() ? null : biomeAtCenter());
     ticks += 1;
     if (ticks % AUTOSAVE_TICKS === 0) saveManager.save(game.state, game.now());
   };
