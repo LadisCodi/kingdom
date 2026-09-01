@@ -16,6 +16,7 @@ export function newGame(map: MapData, now: number): GameState {
   }
 
   const state: GameState = {
+    regionId: 'oakville',
     city: {
       name: CITY_DEF.name,
       wallet: { ...CITY_DEF.initialCurrencies },

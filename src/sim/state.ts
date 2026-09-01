@@ -12,6 +12,13 @@ export type CurrencyId =
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Mine';
+/** Which authored region this kingdom is playing. One today — the field
+ *  exists now because the SAVE FILE is the only artefact that cannot be
+ *  changed retroactively: every save written before it exists is ambiguous
+ *  the moment a second region appears, and "it must be the first one" is a
+ *  guess that fails for anyone mid-migration. */
+export type RegionId = 'oakville';
+
 export type TerrainId =
   | 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water' | 'Mountain';
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
@@ -105,6 +112,7 @@ export interface ArmyUnit {
 }
 
 export interface GameState {
+  regionId: RegionId;
   city: City;
   kingdom: {
     maxBuilders: number;
