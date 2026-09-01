@@ -171,15 +171,29 @@ export function drawMap(
     // otherwise the normal sprite (or glyph) plus the withered overlay.
     const exhaustedPlot = district.definitionId === 'FarmLands' &&
       exhausted && district.state !== 'UnderConstruction';
+    // Docks art faces water-right; mirror it when the wet half is on the left
+    // (the anchor cell is the Water one). Sprites only — glyphs never flip.
+    const mirrored = district.definitionId === 'Docks' &&
+      map.terrain.get(coordKey(district.location)) === 'Water';
+    const flip = (draw: () => boolean): boolean => {
+      if (!mirrored) return draw();
+      ctx.save();
+      ctx.translate(x + fw / 2, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-(x + fw / 2), 0);
+      const drew = draw();
+      ctx.restore();
+      return drew;
+    };
     let drewExhaustedPlot = false;
     punched(coordKey(district.location), x, y, fw, fh, () => {
       drewExhaustedPlot =
-        exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh);
+        exhaustedPlot && flip(() => drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh));
       // Leveled art (`sprite_l2`…) when present, base sprite otherwise.
       if (
         !drewExhaustedPlot &&
-        !drawSprite(ctx, `${def.sprite}_l${district.level}`, x, y, fw, fh) &&
-        !drawSprite(ctx, def.sprite, x, y, fw, fh)
+        !flip(() => drawSprite(ctx, `${def.sprite}_l${district.level}`, x, y, fw, fh)) &&
+        !flip(() => drawSprite(ctx, def.sprite, x, y, fw, fh))
       ) {
         drawGlyph(ctx, def.glyph, x, y, fw, size * 0.52 * Math.min(def.size.x, def.size.y), fh);
       }

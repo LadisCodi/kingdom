@@ -24,7 +24,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsWaterAdjacency';
+  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsShoreline';
 
 /** All placement conditions ANDed over the full footprint (cell = anchor,
  *  top-left); null = buildable here. */
@@ -70,10 +70,12 @@ export function placementBlock(
       if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       break;
     case 'Docks': {
-      // On the shore: at least one footprint neighbor must be Water.
-      const coastal = footprint.some((fc) =>
-        neighbors(map, fc).some((n) => map.terrain.get(coordKey(n)) === 'Water'));
-      if (!coastal) return 'NeedsWaterAdjacency';
+      // A pier spanning the shoreline: its 2×1 footprint needs exactly ONE
+      // cell on Water and one on land. Horizontal only — no rotation; the
+      // coast decides which half is wet (the sprite flips to match).
+      const waters = footprint.filter(
+        (c) => map.terrain.get(coordKey(c)) === 'Water').length;
+      if (waters !== 1) return 'NeedsShoreline';
       break;
     }
     case 'Sawmill': // no placement restriction — the influence range guides placement

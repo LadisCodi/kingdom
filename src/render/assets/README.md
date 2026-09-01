@@ -20,7 +20,7 @@ Expected filenames (see `Docs/art/sprite-prompts.md` for the prompts):
 | `wild_animals.png` | 🐗 |
 | `market.png` | 🏪 |
 | `quarry.png` | ⛏️ |
-| `docks.png` | ⚓ |
+| `docks.png` (2×1 pier: land half LEFT, water half right — mirrored in code when the coast faces the other way) | ⚓ |
 | `mine.png` | ⚒️ |
 | `rocks.png` (+ `rocks_exhausted.png`) | 🪨 / 🧱 |
 | `fish_shoal.png` | 🐟 |

@@ -235,7 +235,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Docks',
     name: 'Docks',
-    description: 'Shore docks — its fishing boats net Fish from nearby shoals (1 Food each).',
+    description: 'A pier: one half on land, one on water. Its boats net Fish (1 Food each).',
     glyph: '⚓',
     sprite: 'docks',
     harvestSource: 'Fish',
@@ -534,4 +534,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 12; // v11 saves predate the Docks (FishingHut renamed); discarded
+export const SAVE_VERSION = 13; // v12 saves predate the 2×1 Docks footprint; discarded

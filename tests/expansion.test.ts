@@ -14,8 +14,10 @@ import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helper
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
 const QUARRY_CELL = { x: 3, y: -1 };
 const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
-const COAST = { x: -4, y: 2 }; // grassland beside it
-const INLAND = { x: -1, y: 0 }; // no water within one cell
+// Docks anchor: 2×1 pier — (-6,3) is Water, (-5,3) is Grassland (mirrored case).
+const PIER = { x: -6, y: 3 };
+const PIER_LAND = { x: -5, y: 3 };
+const INLAND = { x: -1, y: 3 }; // (-1,3)+(0,3): two land cells, no shoreline
 
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
@@ -42,11 +44,12 @@ describe('fish line (Fishing → coastal Docks)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
-    reveal(state, [SHOAL, COAST]);
+    reveal(state, [SHOAL, PIER, PIER_LAND, INLAND, { x: 0, y: 3 }]);
     completeTech(state, 'Fishing');
-    expect(placementBlock(state, map, 'Docks', INLAND)).toBe('NeedsWaterAdjacency');
-    expect(placementBlock(state, map, 'Docks', COAST)).toBe(null);
-    expect(enqueueBuild(state, map, 'Docks', COAST)).toBe('Started');
+    expect(placementBlock(state, map, 'Docks', INLAND)).toBe('NeedsShoreline'); // all land
+    expect(placementBlock(state, map, 'Docks', SHOAL)).not.toBe(null); // shoal blocks its cell
+    expect(placementBlock(state, map, 'Docks', PIER)).toBe(null); // land+water pair
+    expect(enqueueBuild(state, map, 'Docks', PIER)).toBe('Started');
     tickAt(state, T0);
     expect(finishWithGems(state, map, state.city.queue[0].uniqueId, T0)).toBe('Success');
     const docks = state.city.districts.find((d) => d.definitionId === 'Docks')!;
