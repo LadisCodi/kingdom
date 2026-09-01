@@ -83,24 +83,6 @@ button.switch.on::after { transform: translateX(22px); }
 }
 @keyframes hint-bob { from { transform: translateY(0); } to { transform: translateY(6px); } }
 
-/* ---------- discovery banner (top, 5s) ---------- */
-#notice { position: absolute; top: calc(var(--hud-h) + 6px); left: 0; right: 0; display: flex;
-  justify-content: center; pointer-events: none; z-index: 25; }
-/* The card itself IS clickable (tap anywhere on it to dismiss). */
-.notice-card { pointer-events: auto; cursor: pointer; }
-.notice-card {
-  display: flex; align-items: center; gap: 12px; padding: 10px 18px;
-  background: rgba(20, 26, 35, 0.97); border: 1px solid #d9a536; border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  animation: notice-in 0.3s ease-out;
-}
-.notice-card.leaving { animation: notice-out 0.3s ease-in forwards; }
-.notice-card .big { font-size: 30px; }
-.notice-card .title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #d9a536; }
-.notice-card .name { font-weight: 700; }
-.notice-card .desc { font-size: 12px; opacity: 0.75; }
-@keyframes notice-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes notice-out { to { transform: translateY(-16px); opacity: 0; } }
 
 
 /* ---------- bottom panel (placement / district card) ---------- */
@@ -223,15 +205,6 @@ button.switch.on::after { transform: translateX(22px); }
 .queue-card .big { font-size: 22px; }
 
 /* ---------- cast banner & toast ---------- */
-#toast {
-  position: absolute; top: var(--hud-h); left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; gap: 6px; align-items: center; z-index: 9;
-  pointer-events: none;
-}
-.toast-msg {
-  background: rgba(20, 26, 35, 0.95); border: 1px solid #3a4757;
-  padding: 8px 16px; border-radius: 8px; font-size: 13px; animation: fadeout 2.5s forwards;
-}
 @keyframes fadeout { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
 .cast-banner {
   position: absolute; top: var(--hud-h); left: 50%; transform: translateX(-50%);

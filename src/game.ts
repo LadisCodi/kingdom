@@ -68,6 +68,11 @@ export interface Banner {
   icon: string;
   name: string;
   desc: string;
+  /** A world sprite key, when the subject has real art to show off. */
+  sprite?: string;
+  /** Colours the banner by what happened: gold = new, leaf = built,
+   *  sky = learned. Defaults to gold. */
+  tone?: 'gold' | 'leaf' | 'sky';
   /** Chime override; the banner plays 'discovery' when absent. */
   sfx?: SfxName;
 }
@@ -175,18 +180,20 @@ export class Game {
       this.queueBanner(item.kind === 'build'
         ? {
           title: 'Construction complete!', icon: def.glyph, name: def.name,
-          desc: def.description, sfx: 'constructionComplete'
+          desc: def.description, sprite: `${def.sprite}_l1`, tone: 'leaf',
+          sfx: 'constructionComplete'
         }
         : {
           title: 'Upgrade complete!', icon: def.glyph, name: def.name,
-          desc: `Now level ${district.level}`, sfx: 'constructionComplete'
+          desc: `Now level ${district.level}`, tone: 'leaf',
+          sprite: `${def.sprite}_l${district.level}`, sfx: 'constructionComplete'
         });
     }
     for (const id of result.completedResearch) {
       const tech = TECHNOLOGIES[id];
       this.queueBanner({
         title: 'Research complete!', icon: tech.glyph, name: tech.name,
-        desc: tech.description, sfx: 'researchComplete',
+        desc: tech.description, tone: 'sky', sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
       // Upgrades are deliberately not announced — they appear as the fan of
@@ -195,7 +202,8 @@ export class Game {
         if (unlock.kind === 'district') {
           const def = DISTRICTS[unlock.id];
           this.queueBanner({
-            title: 'New building unlocked!', icon: def.glyph, name: def.name, desc: def.description,
+            title: 'New building unlocked!', icon: def.glyph, name: def.name,
+            desc: def.description, sprite: `${def.sprite}_l1`,
           });
         } else if (unlock.kind === 'districtLevel') {
           const def = DISTRICTS[unlock.id];

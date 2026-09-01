@@ -1,0 +1,128 @@
+/* Two notification channels that must not look alike (§5.3, §6.8):
+ * a cloth pennant for good news, a parchment slip for "that didn't work". */
+
+#notice {
+  position: absolute;
+  top: calc(var(--hud-h) + 6px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.b-pennant {
+  --tone: var(--gold);
+  --tone-dark: var(--gold-dark);
+  position: relative;
+  pointer-events: auto; /* the card itself is tap-to-dismiss */
+  cursor: pointer;
+  max-width: 92%;
+  padding-bottom: 20px; /* room for the tail */
+  filter: drop-shadow(0 6px 10px rgba(60, 36, 18, 0.45));
+  animation: b-drop 0.3s ease-out;
+}
+.b-pennant.is-leaving { animation: b-lift 0.3s ease-in forwards; }
+@keyframes b-drop { from { transform: translateY(-18px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes b-lift { to { transform: translateY(-18px); opacity: 0; } }
+
+.b-leaf { --tone: var(--leaf); --tone-dark: var(--leaf-dark); }
+.b-sky { --tone: var(--sky); --tone-dark: #2f7d9c; }
+
+/* The rope it hangs from. */
+.b-rope {
+  height: 5px;
+  margin: 0 10px;
+  border-radius: 3px;
+  background: var(--tone-dark);
+}
+
+.b-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--tone);
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: 4px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* The swallowtail. The notch has to be most of the tail's height to read at
+ * all — a shallow one across this width is indistinguishable from a straight
+ * edge, which is exactly how the first attempt looked. */
+.b-tail {
+  height: 20px;
+  margin: -3px 0 0;
+  background: var(--tone);
+  border-left: var(--outline) solid var(--wood-dark);
+  border-right: var(--outline) solid var(--wood-dark);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 25%, 0 100%);
+}
+
+/* The subject gets to show itself off — its real sprite, not a glyph. */
+.b-slot {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.35);
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+}
+.b-art {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.b-glyph { font-size: 30px; line-height: 1; }
+
+.b-text { min-width: 0; }
+.b-title {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wood-dark);
+}
+.b-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.b-desc { font-size: var(--text-helper); color: var(--ink); opacity: 0.8; }
+
+/* ------------------------------------------------------------- the toast ---
+ * Failures live at the BOTTOM, out of the celebratory channel's way and
+ * clear of the quest scroll — which is where they used to collide. */
+#toast {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+  top: auto;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 9;
+  pointer-events: none;
+}
+.toast-msg {
+  max-width: 88%;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink);
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-left: 6px solid var(--clay);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.3);
+  animation: fadeout 2.6s forwards;
+}

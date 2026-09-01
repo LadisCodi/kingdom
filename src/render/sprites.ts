@@ -25,6 +25,11 @@ for (const [path, url] of Object.entries(urls)) {
   sprites.set(key, entry);
 }
 
+/** The URL Vite emitted for a sprite, for the DOM to use in an <img>.
+ *  Null when there is no such art — the caller falls back to an icon. */
+export const spriteUrl = (key: string): string | null =>
+  urls[`./assets/${key}.png`] ?? null;
+
 /**
  * Draw sprite `key` filling (x, y, w, h). Returns false when the image is
  * missing or not yet loaded — the caller draws its glyph fallback instead.
