@@ -34,7 +34,8 @@ export function sheet(
       { class: 'k-panel' },
       el('div', { class: 'k-grab' }),
       plank(opts.title, close),
-      ...children,
+      // The body scrolls; the plank and its close knob do not go with it.
+      el('div', { class: 'k-sheet-body' }, ...children),
     ),
   );
 }

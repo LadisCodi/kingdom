@@ -1,3 +1,9 @@
+> **SUPERSEDED (2026-09-02) by [`heroes-and-gacha.md`](heroes-and-gacha.md).**
+> This stub asked for collectible characters granting economy multipliers and
+> gating content. **Heroes** are that feature: gacha-acquired, Fragment-tiered,
+> Knowledge-levelled, and they double as the commanders every expedition
+> requires. Kept here for provenance; do not implement from this file.
+
 Managers
 ---
 

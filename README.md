@@ -1,9 +1,9 @@
 # Kingdom — Web Prototype
 
-A cozy square-grid city-builder / idle game: reveal the fog with Silver, tap
+A cozy square-grid city-builder / idle game: reveal the fog with Gold, tap
 resource cells to harvest them (they exhaust and recover), build districts
-whose workers walk out to harvest for you, grow a population, and shape the
-land with magic. Progress continues while away (simulated, capped at 8h).
+whose workers walk out to harvest for you, and grow a population that pays
+taxes. Progress continues while away (simulated, capped at 8h).
 
 Web reimplementation of the Unity prototype, built from the spec in [`Docs/`](Docs/),
 with the harvest-loop rework described in
@@ -53,7 +53,7 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 
 | Path | What |
 |---|---|
-| `Docs/` | The complete game spec the port was built from |
+| `Docs/` | `00`–`11`: the Unity as-built spec the port was built from. `Docs/features/`: the web build's own design docs — the live source of truth |
 | `balance/` | Editable balance workbook (`balance.xlsx`) — tweak, then `npm run balance` |
 | `src/sim/` | Pure simulation core (state, economy, queue, fog, research, army, save format) |
 | `src/sim/data/` | Definitions + generated `balance.json` + the region map |
@@ -64,18 +64,22 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 
 ## Deliberate deviations from the Unity build
 
-- **Square grid, 8-neighbor adjacency** (was hex / 6) — user decision; balance
-  data unchanged, the fog seed reveals 8 neighbors instead of 6.
+- **Square grid** (was hex). Three metrics coexist by design: fog, placement and
+  BFS distance use **4-way von Neumann** adjacency (`src/sim/grid.ts:9-11`),
+  building areas of influence use **Chebyshev**, and worker travel uses
+  **Euclidean**. Balance data unchanged.
 - **The harvest loop** (see the feature doc): the generator/vault economy is
   replaced by tappable resource cells with exhaustion/recovery, workers as
   moving units, and radius-by-level areas
   of influence. Lumber is renamed Sawmill. Spells (and Mana) are removed for
   now, pending a future rework.
-- **The Market economy**: Silver and Gold are merged into one money (Gold),
-  earned only by drip-selling resources at the Market (1 unit per interval,
-  each resource has a gold value; keeps selling offline within the 8h cap).
-  The Townhall no longer taxes population — it trains villagers over time
-  (tap-boostable), replacing the instant population purchase.
+- **The Gold economy**: Silver and Gold are merged into one money (Gold). The
+  idle backbone is **housing taxes** — every housed villager pays passively, and
+  a lived-in house is itself a tappable gold cell. The **Market** is an optional
+  building for selling surplus: an **instant bulk sale**, not a drip
+  (`src/sim/market.ts:26-43`). The Townhall trains villagers over time
+  (tap-boostable), replacing the instant population purchase. See
+  [`Docs/features/economy-taxes-and-market.md`](Docs/features/economy-taxes-and-market.md).
 - **Single tick driver** (the Unity build double-ticked its timer).
 - Save format v2; incompatible older saves start a fresh game.
 - Placeholder art: flat-color tiles + emoji glyphs; state-driven rendering so

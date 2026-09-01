@@ -11,7 +11,7 @@ in these files.
 
 | # | File | What it covers |
 |---|---|---|
-| 0 | [00-design-intent.md](00-design-intent.md) | The original design overview — the *intent* and player-facing fantasy. Everything else in this set is **as-built** and wins when they disagree. |
+| 0 | [00-design-intent.md](00-design-intent.md) | **The current design intent for the web build.** Rewritten 2026-09-02; it supersedes this Unity snapshot wherever they disagree. |
 | 1 | [01-overview.md](01-overview.md) | Pitch, entity hierarchy, core loop, currency summary, status |
 | 2 | [02-map-and-fog.md](02-map-and-fog.md) | Hex grid & adjacency, terrain/features, fog of war & reveal costs |
 | 3 | [03-economy-and-production.md](03-economy-and-production.md) | Currencies, generator model, accrual algorithm, worked units, vaults |
@@ -23,6 +23,26 @@ in these files.
 | 10 | [10-persistence.md](10-persistence.md) | Save format, autosave, load order, offline progress |
 | 11 | [11-gaps-and-discrepancies.md](11-gaps-and-discrepancies.md) | Stubs, data gaps, quirks — the deliberate-decision list for a port |
 | — | [data/region-map.json](data/region-map.json) | The full Region_01 tile layout (155 terrain cells, 13 Trees), extracted from the Unity scene |
+
+## The web build
+
+Files `01`–`11` above are a frozen Unity snapshot. The web reimplementation has
+diverged substantially (square grid, the harvest loop, housing taxes, no spells
+as-shipped), and its own design docs are the live source of truth:
+
+| File | What it covers |
+|---|---|
+| [features/harvest-loop.md](features/harvest-loop.md) | Tappable resource cells, exhaustion/recovery, workers as walking units |
+| [features/economy-taxes-and-market.md](features/economy-taxes-and-market.md) | Housing taxes, villager training, the Market |
+| [features/research-and-upgrades.md](features/research-and-upgrades.md) | The one tech/upgrade tree and its fog |
+| [features/resource-expansion.md](features/resource-expansion.md) | Stone, Fish and Iron lines; the archipelago |
+| [features/quests.md](features/quests.md) | The 27-quest onboarding chain |
+| [features/balancing-v1.md](features/balancing-v1.md) | The three-era Townhall arc |
+| **[features/magic.md](features/magic.md)** | *Designed 2026-09-02* — Mana, artifacts, attunement, landmarks |
+| **[features/expeditions.md](features/expeditions.md)** | *Designed 2026-09-02* — ruins as dungeons, staged delves, unit stats |
+| **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | *Designed 2026-09-02* — the collection substrate and the gacha. Supersedes `managers.md` |
+| **[features/engine-seams.md](features/engine-seams.md)** | *Designed 2026-09-02* — the sim groundwork all of the above needs, and the build order |
+| **[features/balancing-v2.md](features/balancing-v2.md)** | *Designed 2026-09-02* — unblockers, military buildings, every new number |
 
 ## Ground rules used throughout
 

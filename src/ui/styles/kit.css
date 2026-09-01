@@ -354,3 +354,20 @@
 .gal-icons.on-wood .icon { color: var(--ink-inverse); }
 .gal-icons.on-grass { background: #7ac74f; color: var(--ink); }
 .gal-icons.on-grass .gal-label { color: #2f5e1c; }
+
+/* A sheet fits the screen and scrolls inside itself, so its plank — and the
+ * close knob in it — stay put however long the content is. */
+.k-sheet { width: 100%; max-height: 100%; display: flex; }
+.k-sheet > .k-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+}
+.k-sheet-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* don't scroll the page behind it */
+  -webkit-overflow-scrolling: touch;
+}

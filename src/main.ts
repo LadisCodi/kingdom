@@ -122,6 +122,15 @@ async function boot(): Promise<void> {
     else overlaySlot.clear();
   };
   game.onChange(refreshScreens);
+
+  // Tap the dimmed map beside a sheet to dismiss it (§5.4). Scoped to kit
+  // sheets: a legacy full-screen menu has no "beside" to tap. #overlay is
+  // inset:0 and pointer-events:auto, so this also guarantees the tap never
+  // reaches the canvas underneath and fires a harvest.
+  overlayRoot.addEventListener('pointerdown', (e) => {
+    if (e.target === overlayRoot && overlayRoot.querySelector('.k-sheet')) game.dismiss();
+  });
+
   game.onToast((msg) => {
     const t = el('div', { class: 'toast-msg' }, msg);
     toastRoot.append(t);
