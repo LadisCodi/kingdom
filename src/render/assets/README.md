@@ -36,6 +36,26 @@ prompts and the normalization pipeline.
 | `fishing_boat.png` / `_carrying` | ⛵ / ⛵🐟 | workers of the Docks |
 | `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water, mountain) | flat `TERRAIN_COLORS` | full-bleed, self-tiling |
 
+### Planned by the 2026-09-02 design pass (not yet wired)
+
+Stems reserved so the naming stays consistent when the art arrives; all keep
+their emoji fallback until then. Prompts in `Docs/art/sprite-prompts.md`.
+
+| File | Replaces | Notes |
+|---|---|---|
+| `barracks_l1..l3.png` | ⚔️ | trains Warriors; raises the army cap |
+| `spear_hall_l1..l3.png` | 🔱 | trains Lancers |
+| `shooting_grounds_l1..l3.png` | 🏹 | trains Archers |
+| `stables_l1..l3.png` | 🐎 | trains Cavalry |
+| `sanctum_l1..l3.png` | 🔮 | raises the Mana cap |
+| `ruin.png` / `_cleared` | 🏚️ | dungeon entrance — see `Docs/features/expeditions.md` |
+| `landmark.png` / `_claimed` / `_defended` | 🗿 | +1 Mana/h once claimed |
+
+**Hero, unit and artifact portraits do NOT belong here.** They are UI art, not
+world tiles, and this directory is globbed **eagerly** by
+`src/render/sprites.ts` (see below). They go in `src/ui/assets/` with the rest of
+the atlas.
+
 District sprites are keyed by the `sprite` field in
 `src/sim/data/definitions.ts`; `_exhausted` variants are derived from it.
 v1 (zoomed-in single-building) sprites are archived in

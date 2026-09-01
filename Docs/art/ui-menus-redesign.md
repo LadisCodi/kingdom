@@ -197,15 +197,24 @@ except the single lit CTA.
 | 1 | Resource HUD | `ui/header.ts` | Top bar, 9 widgets | Top bar, 3 coins + purse + 1 contextual plaque |
 | 2 | Quest tracker | `ui/questPill.ts` | Card under HUD | Scroll card, unchanged shape |
 | 3 | Banner / toast | `ui/banner.ts`, `#toast` | Top card, 5s queue | Cloth banner, 5s queue |
-| 4 | Bottom nav | `ui/navbar.ts` | 4 buttons ⇄ Close | 3 carved tabs; Settings floats by the header |
+| 4 | Bottom nav | `ui/navbar.ts` | 4 buttons ⇄ Close | 3 carved tabs — **Build, Artifacts, Research**; Settings floats by the header |
 | 5 | Build | `ui/buildMenu.ts` | Full-screen list | Bottom sheet, card grid |
 | 6 | Placement | `ui/placementPanel.ts` | Bottom panel | Bottom sheet + map-first |
 | 7 | District card | `ui/districtCard.ts` | Bottom panel, 5 variants | Bottom sheet, same 5 variants |
 | 8 | Market | `ui/marketMenu.ts` | Full-screen list | Bottom sheet, stall scene |
 | 9 | Research | `ui/researchMenu.ts` | Full-screen node graph | Illustrated board, own place |
-| 10 | Army | `ui/armyMenu.ts` | Full-screen list | Bottom sheet, muster roster |
+| 10 | Army | `ui/armyMenu.ts` | Full-screen list | **Retired as a destination** — folded into the expedition sheet (§5.13) |
 | 11 | Settings | `ui/settingsMenu.ts` | Full-screen list | Bottom sheet |
 | 12 | **Welcome back** | *(missing)* | — | Modal on load, offline report |
+| 13 | **Expedition** | *(new)* | — | Bottom sheet from a ruin: party, supplies, safe depth |
+| 14 | **Checkpoint** | *(new)* | — | The delve's one recurring decision |
+| 15 | **Reliquary** | *(new)* | — | Bottom sheet: attunement slots, relics, heroes |
+| 16 | **Banner** | *(new)* | — | The gacha, reached from the reliquary — not the nav |
+
+> **Amended 2026-09-02.** Rows 4, 10 and 13–16 come from the design pass in
+> `Docs/features/` (`magic.md`, `expeditions.md`, `heroes-and-gacha.md`). The
+> principles in §2 and the kit in §3 are unchanged and govern the new screens
+> too.
 
 ---
 
@@ -354,8 +363,15 @@ reachable by finding and tapping the Market building on the map.
 
 **Show this.**
 
-- **Three** carved wooden tabs with pixel icons **and labels**: Build, Army,
-  Research. Active tab is raised and lit.
+- **Three** carved wooden tabs with pixel icons **and labels**: **Build,
+  Artifacts, Research**. Active tab is raised and lit.
+
+  > **Changed 2026-09-02.** The third tab was Army. An army only matters at the
+  > moment it is sent somewhere, so it is configured inside the expedition sheet
+  > (§5.13) and loses its standing destination — the same reasoning that moved
+  > Settings off the bar. **Artifacts** takes the freed tab: it is opened every
+  > session to weigh a relic's Mana upkeep against its passive, which is exactly
+  > the test a tab has to pass. See `Docs/features/magic.md`.
 - **Settings leaves the bar.** It is not a destination with the weight of
   the other three, and giving it an equal tab flattens the hierarchy — it
   is a drawer you open twice a month, sitting next to the thing you tap
@@ -374,7 +390,10 @@ reachable by finding and tapping the Market building on the map.
   navigation improvement available and costs one small refactor of
   `dismissible()`/`dismiss()`.)
 - Consider surfacing **Market** as a fourth tab once it is built, rather
-  than making it the only building-only entry point.
+  than making it the only building-only entry point. *(2026-09-02: with
+  Artifacts taking the third tab and expeditions opening from ruins on the
+  map, the bar is full. Market staying a building-only entry point is now the
+  consistent answer, not a compromise — the map is the menu, §2.7.)*
 
 ---
 
@@ -632,6 +651,17 @@ good ideas that just need a different costume.
 
 ### 5.10 Army
 
+> **RETIRED as a destination, 2026-09-02.** Everything below still describes the
+> right *presentation* — portrait cards, aspirational locked units, shield pips,
+> "Recruit" not "Train" — but it stops being its own screen. Recruiting moves to
+> the four military training buildings' district cards (Barracks, Spear Hall,
+> Shooting Grounds, Stables), and party composition happens in the expedition
+> sheet (§5.13) where it is actually a decision. Two notes that now bind:
+> **unit portraits stop being optional** (units gain ATK/DEF/HP and a matchup
+> chart, so the player must tell them apart at a glance), and the header line
+> "Your Townhall can't support more" is wrong — the cap comes from the military
+> buildings. See `Docs/features/expeditions.md`.
+
 **Purpose.** Spend surplus on power; a long-term goal placeholder today.
 
 **Today** (`src/ui/armyMenu.ts`). Full-screen list. Title
@@ -714,6 +744,109 @@ single strongest retention beat is invisible.
   each with its sprite.
 - One green button: **Collect**. Coins fly to the HUD.
 - If the quest advanced, hand off directly to the quest card.
+
+---
+
+### 5.13 Expedition *(new — `Docs/features/expeditions.md`)*
+
+**Purpose.** Commit a party to a ruin. The only place army composition matters.
+
+**Show this.**
+
+- Opens as a bottom sheet from a **ruin on the map**, so the world stays visible
+  behind it (§2.1) and the destination you are committing to is the thing you
+  tapped.
+- **The hero slot first, and it is mandatory** — an empty hero slot disables
+  Launch, with the reason attached (§2.4): "A hero must lead the party."
+- Party slots as a row of carved sockets, filled from the units you own. Locked
+  sockets say what unlocks them — research, or Gems.
+- **The one number that matters: "Safe to depth 4."** Not a power total. It is
+  the outcome, not the stat (§2.3) — party power against the ruin's depth
+  difficulties, computed and shown before launch.
+- The **matchup read** against the ruin's affinity, as advantage/disadvantage
+  arrows on each unit, never as a multiplier.
+- Supply cost as cost chips, and the **standing orders** control — "delve to
+  depth N, then return" — as a plain choice, not an advanced option.
+- One big green **Launch**.
+
+**States to mock.** No hero (disabled, reason shown) · a good composition
+(advantage arrows) · a bad one · standing orders set · locked party slot.
+
+---
+
+### 5.14 Checkpoint *(new — the delve's one recurring moment)*
+
+**Purpose.** Ask one question: go deeper, or come back with what you're carrying?
+
+This is the most important new screen in the game and the easiest to get wrong.
+
+**Show this.**
+
+- **Party HP as a bar that does not refill between depths.** This is the risk
+  meter — the whole push-your-luck tension is legible here or nowhere.
+- **The haul so far**, shown as objects in a pouch rather than a table of
+  numbers, and labelled so it is obvious it is **not banked yet**.
+- Whatever is known about the next depth. If a Scout is in the party, its threat
+  type; otherwise an honest question mark.
+- **Two choices of equal visual weight**: *Go deeper* and *Take the haul*. This
+  breaks §2.2's one-primary-action rule **deliberately and only here** — the
+  whole design is that neither is the default, so styling one as primary would
+  answer the question for the player.
+- **No battle screen.** The depth resolves instantly and reports what it cost.
+
+**Tone, which is the hard part.** It must read as an **offer, never a threat**.
+A failed push costs half the haul, and the design only survives that because the
+haul was never the player's to begin with — so this screen has to sell "not
+banked yet" from the very first depth. Red, warning triangles and countdowns are
+all wrong. There is **no decision timer**: the party waits indefinitely.
+
+**States to mock.** Depth 1 (small haul, safe next) · deep and worn (low HP,
+large haul, unknown next) · scouted next depth · the failure report.
+
+---
+
+### 5.15 Reliquary *(new — `Docs/features/magic.md`)*
+
+**Purpose.** Decide what magic you can afford to keep switched on.
+
+**Show this.**
+
+- Bottom sheet, two tabs — **Relics** and **Heroes** — because they share one set
+  of collection rules and should look like one system.
+- **Attunement slots at the top**, as physical sockets. A locked slot says
+  whether research or Gems opens it. A slot in its **5-minute swap lock** shows
+  the time remaining on the socket itself.
+- Each relic card carries its passive in plain words and its **upkeep in Mana per
+  hour** — the number the whole decision turns on.
+- **This is where the Mana breakdown lives**: production, minus upkeep, equals
+  the net rate the header shows as a single figure (§5.1). Never three numbers in
+  the HUD.
+- Knowledge and Fragments live here, not in the header.
+
+**States to mock.** One slot, empty · one filled · a slot mid-lock · a relic you
+cannot afford the upkeep of · the heroes tab.
+
+---
+
+### 5.16 Banner *(new — `Docs/features/heroes-and-gacha.md`)*
+
+**Purpose.** Spend Gems on a pull.
+
+**Show this.**
+
+- Reached **from the reliquary, never from the nav bar**. It is not somewhere the
+  player should be led every session.
+- **Rates shown plainly and the pity counter always visible** — "guaranteed
+  within N". In a cozy game this is not a legal footnote, it is the thing that
+  makes the screen acceptable at all.
+- **No dead pulls**: a duplicate is shown converting into Fragments as part of
+  the reveal, not as a consolation line afterwards.
+- The reveal is the one place in this document where a bit of spectacle is
+  correct — but it stays inside the warm material language of §3.5. No neon, no
+  slot-machine chrome.
+
+**States to mock.** Standard banner · pity near-guaranteed · a duplicate
+converting · a limited event banner.
 
 ---
 
@@ -1188,8 +1321,13 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
    knob (§5.4). It remains the biggest behavioural change here, so it lands
    as its own commit and is revertible on its own if it feels worse in the
    hand than it reads on paper.
-2. **Unit art.** The Army screen assumes unit portraits that do not exist.
-   Four portraits is a small sprite job, but it is a job.
+2. **Unit art.** ~~The Army screen assumes unit portraits that do not exist.~~
+   **Escalated 2026-09-02, and no longer optional.** Units gain ATK/DEF/HP and a
+   matchup chart, so the player must distinguish four unit types at a glance;
+   heroes and artifacts add five portraits and five relic icons on top. That is a
+   **new class of art** — the world set is deliberately zoomed-out and
+   impersonal, and a face is the opposite of that. The style question has to be
+   answered before a set is generated. See `Docs/art/sprite-prompts.md`.
 3. **How many currencies should ever be visible?** §5.1 settles on three
    coins plus a purse, with Stone and Iron revealed by "gating tech complete
    **or** balance above zero". That rule is one-way — nothing ever hides
@@ -1199,6 +1337,16 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
 4. **Research metaphor cost.** Re-skinning the tree as a parchment map is
    the most expensive item in this document. The mechanics stay identical,
    so it can ship last.
+6. **The checkpoint breaks the one-primary-action rule** (§2.2) on purpose, and
+   it is the only screen that does. If two equal-weight choices read as
+   indecision rather than as a genuine fork in playtest, the fix is more contrast
+   between the two paths — not promoting one of them to primary, which would
+   answer the question for the player.
+7. **Does the header survive a sixth number?** §5.1 settles on three coins plus a
+   purse plus one contextual plaque, and warns that a late-game player ends up
+   back at five coins. Mana is permanent on top of that — it is the visit clock,
+   so it earns its slot — but it is the strongest argument yet for the
+   hide-an-unused-coin rule floated in question 3.
 5. ~~**Pixel font licensing**~~ — **decided**: self-hosted OFL faces,
    **Pixelify Sans** (400/700) for display and numbers, **Nunito** (400/700)
    for body, vendored as subset woff2 with their licence so the GitHub Pages
