@@ -39,6 +39,8 @@ export function newGame(map: MapData, now: number): GameState {
     research: { completed: [], active: [], slotsPurchased: 0 },
     upgrades: {},
     quests: { index: 0, progress: 0 },
+    discoveries: {},
+    pendingDiscoveries: [],
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,

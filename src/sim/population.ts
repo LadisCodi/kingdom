@@ -3,6 +3,7 @@
 
 import { CITY_DEF, DISTRICTS, TAXES, TRAINING } from './data/definitions';
 import { districtAdjacency } from './adjacency';
+import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { effectiveCollectCooldownMs, effectiveTaxRate } from './upgrades';
 import { addToWallet, type District, type GameState } from './state';
@@ -166,6 +167,7 @@ function accrueTaxes(state: GameState, toTime: number, out: { gold: number }): v
   const units = Math.floor((toTime - state.city.lastTaxAt) / msPerGold);
   if (units <= 0) return;
   addToWallet(state.city.wallet, 'Gold', units);
+  recordResourceDiscovery(state, 'Gold');
   recordQuestEvent(state, { kind: 'collect', currency: 'Gold', amount: units });
   state.city.lastTaxAt += units * msPerGold;
   out.gold += units;

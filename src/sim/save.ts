@@ -148,6 +148,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         Index: state.quests.index,
         Progress: state.quests.progress,
       },
+      'kingdom.discoveries': {
+        Keys: Object.keys(state.discoveries),
+      },
       'kingdom.research': {
         Completed: state.research.completed,
         Active: state.research.active.map((a) => ({
@@ -281,6 +284,12 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
     state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
+  }
+
+  const discoveriesDto = modules['kingdom.discoveries'];
+  if (discoveriesDto?.Keys) {
+    state.discoveries = {};
+    for (const key of discoveriesDto.Keys as string[]) state.discoveries[key] = true;
   }
 
   const questsDto = modules['kingdom.quests'];

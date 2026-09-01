@@ -89,3 +89,27 @@ describe('the quest chain', () => {
     expect(isQuestComplete(restored, activeQuest(restored)!)).toBe(true);
   });
 });
+
+describe('first-time discoveries', () => {
+  it('announces a resource ONCE, ever — persisted across saves', () => {
+    const state = freshGame();
+    expect(state.pendingDiscoveries).toEqual([]);
+    tapCell(state, map, FOREST, T0);
+    expect(state.pendingDiscoveries).toEqual(['resource:Wood']);
+    tapCell(state, map, FOREST, T0); // second wood: no new announcement
+    expect(state.pendingDiscoveries).toEqual(['resource:Wood']);
+    state.pendingDiscoveries = []; // UI drained the banner
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(restored.discoveries['resource:Wood']).toBe(true);
+    tapCell(restored, map, FOREST, T0 + 1000);
+    expect(restored.pendingDiscoveries).toEqual([]); // never re-announced
+  });
+
+  it('quest rewards discover their currencies too', () => {
+    const state = freshGame();
+    for (let i = 0; i < 5; i++) tapCell(state, map, FOREST, T0);
+    state.pendingDiscoveries = [];
+    expect(claimQuest(state)).toBe('Claimed'); // pays 10 Gold
+    expect(state.pendingDiscoveries).toEqual(['resource:Gold']);
+  });
+});

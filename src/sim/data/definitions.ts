@@ -562,4 +562,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 14; // v13 saves predate the quest chain; discarded
+export const SAVE_VERSION = 15; // v14 saves predate discoveries; discarded

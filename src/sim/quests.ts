@@ -7,6 +7,7 @@
 import {
   QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
 import { effectiveAmount, refund } from './wallet';
 import type { CurrencyId, GameState } from './state';
 
@@ -83,6 +84,9 @@ export function claimQuest(state: GameState): ClaimResult {
   if (!quest) return 'NoQuest';
   if (!isQuestComplete(state, quest)) return 'NotComplete';
   refund(state.city.wallet, quest.reward);
+  for (const currency of Object.keys(quest.reward)) {
+    recordResourceDiscovery(state, currency as CurrencyId);
+  }
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';

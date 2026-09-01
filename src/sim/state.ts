@@ -136,6 +136,11 @@ export interface GameState {
   /** The quest chain: index into QUESTS (length = all done); progress is the
    *  event counter for RELATIVE goals, reset when a quest is claimed. */
   quests: { index: number; progress: number };
+  /** First-time discoveries already announced (keys like 'resource:Wood'). */
+  discoveries: Record<string, true>;
+  /** Discoveries made since the UI last drained them. Transient — a banner
+   *  missed at quit simply doesn't replay. */
+  pendingDiscoveries: string[];
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
   /** Epoch ms of the last successful player collect tap (cooldown anchor).

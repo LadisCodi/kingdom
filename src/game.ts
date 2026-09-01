@@ -33,7 +33,7 @@ import {
   type TechId, type UnitId, type UpgradeId,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
-import { playPop } from './audio/sfx';
+import { playPop, playSfx } from './audio/sfx';
 import { QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
@@ -64,6 +64,7 @@ export class Game {
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
+  private bannerQueue: string[] = [];
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
@@ -92,7 +93,17 @@ export class Game {
     this.toastListeners.push(fn);
   }
   notify(): void {
+    // Move fresh sim discoveries into the banner queue BEFORE listeners run,
+    // so the banner component sees them on this very render.
+    if (this.state.pendingDiscoveries.length > 0) {
+      this.bannerQueue.push(...this.state.pendingDiscoveries.splice(0));
+    }
     for (const fn of this.changeListeners) fn();
+  }
+
+  /** The next queued discovery banner, if any (consumed). */
+  takeDiscovery(): string | null {
+    return this.bannerQueue.shift() ?? null;
   }
   shake(currencies: CurrencyId[]): void {
     for (const fn of this.shakeListeners) fn(currencies);
@@ -344,6 +355,7 @@ export class Game {
 
   doStartTech(id: TechId): void {
     const result = startTech(this.state, id, this.now());
+    if (result === 'Started') playSfx('research');
     if (result === 'NotEnoughResources') {
       this.shake(Object.keys(TECHNOLOGIES[id].cost) as CurrencyId[]);
     } else if (result === 'NoFreeSlot') {
@@ -506,7 +518,7 @@ export class Game {
     const quest = activeQuest(this.state);
     const result = claimQuest(this.state);
     if (result === 'Claimed' && quest) {
-      playPop();
+      playSfx('quest');
       const parts = Object.entries(quest.reward)
         .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
       this.floaters.add(townhall(this.state).location, parts.join(' '));

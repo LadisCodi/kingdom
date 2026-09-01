@@ -22,6 +22,7 @@ import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { mountQuestPill } from './ui/questPill';
+import { mountDiscoveryBanner } from './ui/discoveryBanner';
 import { button, el } from './ui/format';
 
 const AUTOSAVE_TICKS = 30;
@@ -47,6 +48,7 @@ async function boot(): Promise<void> {
   // ------------------------------------------------------------------- UI
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
+  mountDiscoveryBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   setCloudBadge(saveModeLabel);
