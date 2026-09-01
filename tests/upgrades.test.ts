@@ -6,7 +6,7 @@ import { collectTap } from '../src/sim/harvest';
 import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
 import {
-  buyUpgrade, effectiveSalePriceMultiplier,
+  buyUpgrade, effectiveAutoTapCooldownMs, effectiveSalePriceMultiplier,
   effectiveTaxRate, upgradeCost, upgradeLevel,
 } from '../src/sim/upgrades';
 import { addBuilt, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
@@ -59,6 +59,38 @@ describe('effects reach the sim', () => {
     buyUpgrade(state, 'TapPower'); // +1
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(2); // 1 base + 1
+  });
+
+  // QuickHands shortens the gap between AUTO-taps only. A deliberate tap has
+  // no cooldown to shave, so the upgrade is a convenience — it narrows the gap
+  // toward manual tapping without ever closing it.
+  it('QuickHands shortens the auto-tap cooldown, and nothing else', () => {
+    const state = freshGame();
+    fund(state, { Gold: 100000 });
+    completeTech(state, 'Forestry');
+    expect(effectiveAutoTapCooldownMs(state)).toBe(500);
+
+    buyUpgrade(state, 'QuickHands'); // -0.05s
+    expect(effectiveAutoTapCooldownMs(state)).toBe(450);
+
+    while (buyUpgrade(state, 'QuickHands') === 'Purchased') { /* to max */ }
+    expect(upgradeLevel(state, 'QuickHands')).toBe(UPGRADES.QuickHands.maxLevel);
+    // 0.5 - 5x0.05 = 0.25s: still slower than a determined tapper.
+    expect(effectiveAutoTapCooldownMs(state)).toBe(250);
+  });
+
+  it('QuickHands never lets a hold out-pace a manual tap', () => {
+    const state = freshGame();
+    fund(state, { Gold: 100000 });
+    completeTech(state, 'Forestry');
+    while (buyUpgrade(state, 'QuickHands') === 'Purchased') { /* to max */ }
+
+    // Manual taps ignore the cooldown entirely, maxed upgrade or not.
+    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
+    expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
+    // A held repeat still waits, just less than it used to.
+    expect(collectTap(state, map, FOREST, T0 + 2, true)).toBe('OnCooldown');
+    expect(collectTap(state, map, FOREST, T0 + 1 + 250, true)).toBe('Harvested');
   });
 
   it('MarketStall raises the Market sale prices', () => {

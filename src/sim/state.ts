@@ -24,7 +24,7 @@ export type TechId =
   | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration (right)
   | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry'; // military (down)
 export type UpgradeId =
-  | 'TapPower' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
+  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
   | 'Stonecutting' | 'BigNets' | 'IronPicks';
 
 export interface Coord { x: number; y: number }

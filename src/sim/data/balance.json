@@ -768,6 +768,13 @@
       "maxLevel": 3,
       "effectPerLevel": 1,
       "requiredTech": "Mining"
+    },
+    "QuickHands": {
+      "costBase": 75,
+      "costGrowth": 2,
+      "maxLevel": 5,
+      "effectPerLevel": 0.05,
+      "requiredTech": "Forestry"
     }
   },
   "research": {
@@ -781,7 +788,7 @@
     "workSeconds": 8
   },
   "tap": {
-    "collectCooldownSeconds": 0
+    "collectCooldownSeconds": 0.5
   },
   "training": {
     "seconds": 20,

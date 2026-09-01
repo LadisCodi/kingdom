@@ -574,6 +574,12 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     id: 'TapPower', name: 'Tap Power', glyph: '👆',
     description: '+1 resource per collect tap',
   }, balance.upgrades.TapPower),
+  QuickHands: upgrade({
+    id: 'QuickHands', name: 'Quick Hands', glyph: '⚡',
+    // Only holding is paced, so this only ever speeds holding up. A
+    // deliberate tap has no cooldown to shave.
+    description: '−0.05s between auto-taps while holding',
+  }, balance.upgrades.QuickHands),
   WorkerLoad: upgrade({
     id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
     description: '+1 resource per worker delivery',
@@ -601,7 +607,7 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
 };
 
 export const UPGRADE_ORDER: UpgradeId[] = [
-  'TapPower', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
   'Stonecutting', 'BigNets', 'IronPicks',
 ];
 

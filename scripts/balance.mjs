@@ -59,7 +59,7 @@ const TECH_IDS = [
   'Warrior', 'Spears', 'Archery', 'Cavalry', // military
 ];
 const UPGRADE_IDS = [
-  'TapPower', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
   'Stonecutting', 'BigNets', 'IronPicks',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
