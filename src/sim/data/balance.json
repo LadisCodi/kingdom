@@ -21,7 +21,8 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Wood": 25
+        "Wood": 25,
+        "Stone": 25
       },
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
@@ -195,6 +196,128 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5
+    },
+    "Quarry": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacity": 0,
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [
+        1,
+        2
+      ],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "buildCost": {
+        "Wood": 30
+      },
+      "buildCostMultiplier": 4,
+      "buildCostExponentialGrowth": 1.45,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 40
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "FishingHut": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacity": 0,
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [
+        2,
+        2
+      ],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "buildCost": {
+        "Wood": 25
+      },
+      "buildCostMultiplier": 4,
+      "buildCostExponentialGrowth": 1.45,
+      "buildDurationSeconds": 20,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 35
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
+    },
+    "Mine": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 2,
+      "populationCapacity": 0,
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        3,
+        5
+      ],
+      "maxCountPerTownhallLevel": [
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [
+        1,
+        2
+      ],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "buildCost": {
+        "Wood": 40,
+        "Stone": 20
+      },
+      "buildCostMultiplier": 4,
+      "buildCostExponentialGrowth": 1.45,
+      "buildDurationSeconds": 30,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 50,
+        "Stone": 25
+      },
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 30,
+      "upgradeDurationLevelGrowth": 1.5
     }
   },
   "harvest": {
@@ -225,6 +348,27 @@
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 180
+    },
+    "Stone": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 120,
+      "respawnSeconds": 0
+    },
+    "Fish": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 0,
+      "respawnSeconds": 150
+    },
+    "Iron": {
+      "yieldPerTap": 1,
+      "yieldPerWorker": 1,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 300,
+      "respawnSeconds": 0
     }
   },
   "currencies": {
@@ -249,6 +393,20 @@
       "countsAs": null,
       "goldValue": 3
     },
+    "Stone": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": 2
+    },
+    "Iron": {
+      "cap": null,
+      "start": 0,
+      "primary": true,
+      "countsAs": null,
+      "goldValue": 6
+    },
     "Berries": {
       "cap": null,
       "start": 0,
@@ -268,6 +426,16 @@
         "value": 3
       },
       "goldValue": 3
+    },
+    "Fish": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "countsAs": {
+        "currency": "Food",
+        "value": 2
+      },
+      "goldValue": 2
     },
     "Knowledge": {
       "cap": null,
@@ -289,7 +457,8 @@
       "power": 2,
       "recruitCost": {
         "Gold": 40,
-        "Wood": 20
+        "Wood": 20,
+        "Iron": 5
       },
       "trainDurationSeconds": 25
     },
@@ -297,7 +466,8 @@
       "power": 3,
       "recruitCost": {
         "Gold": 50,
-        "Food": 20
+        "Food": 20,
+        "Iron": 10
       },
       "trainDurationSeconds": 30
     },
@@ -305,7 +475,8 @@
       "power": 5,
       "recruitCost": {
         "Gold": 100,
-        "Food": 40
+        "Food": 40,
+        "Iron": 20
       },
       "trainDurationSeconds": 60
     }
@@ -375,6 +546,36 @@
       "requires": [
         "Archery"
       ]
+    },
+    "Masonry": {
+      "cost": {
+        "Gold": 100,
+        "Wood": 25
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Fishing": {
+      "cost": {
+        "Gold": 100,
+        "Food": 20
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Agriculture"
+      ]
+    },
+    "Mining": {
+      "cost": {
+        "Gold": 250,
+        "Stone": 30
+      },
+      "durationSeconds": 60,
+      "requires": [
+        "Masonry"
+      ]
     }
   },
   "upgrades": {
@@ -412,6 +613,27 @@
       "maxLevel": 5,
       "effectPerLevel": 0.1,
       "requiredTech": "Commerce"
+    },
+    "Stonecutting": {
+      "costBase": 100,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Masonry"
+    },
+    "BigNets": {
+      "costBase": 100,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Fishing"
+    },
+    "IronPicks": {
+      "costBase": 150,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Mining"
     }
   },
   "research": {

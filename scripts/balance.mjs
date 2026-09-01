@@ -37,23 +37,32 @@ const MAP_PATH = join(ROOT, 'src/sim/data/region-map.json');
 const TERRAIN_CODES = {
   g: 'Grassland', w: 'Water', p: 'Plains', d: 'Desert', s: 'Snow', u: 'Tundra',
 };
-const FEATURE_CODES = { T: 'Trees', B: 'BerryBush', A: 'WildAnimals' };
+const FEATURE_CODES = {
+  T: 'Trees', B: 'BerryBush', A: 'WildAnimals', R: 'Rocks', F: 'FishShoal', I: 'IronVein',
+};
 const MAP_COLORS = { // conditional-formatting fills, keyed by code
   g: 'FF6FA84F', w: 'FF3D6F9E', p: 'FF9AA34F', d: 'FFC9B26A', s: 'FFDFE7EC', u: 'FF8B9A94',
-  T: 'FF2E6B2E', B: 'FF7A4FA8', A: 'FF8A5A34',
+  T: 'FF2E6B2E', B: 'FF7A4FA8', A: 'FF8A5A34', R: 'FF7A7F87', F: 'FF2E86AB', I: 'FF4A4E57',
 };
 // The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
-const DISTRICT_IDS = ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market'];
-const TECH_IDS =
-  ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining'];
-const UPGRADE_IDS = ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
+const DISTRICT_IDS =
+  ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'FishingHut', 'Mine'];
+const TECH_IDS = [
+  'Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining',
+  'Masonry', 'Fishing', 'Mining',
+];
+const UPGRADE_IDS = [
+  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'Stonecutting', 'BigNets', 'IronPicks',
+];
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
-const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat'];
+const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
-const CURRENCY_IDS = ['Gold', 'Food', 'Wood', 'Berries', 'Meat', 'Knowledge', 'Gems'];
-const COST_CURRENCIES = ['Gold', 'Wood', 'Food'];
+const CURRENCY_IDS =
+  ['Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems'];
+const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone', 'Iron'];
 
 const SETTINGS = [
   // [sheet key, json path, kind]
@@ -88,9 +97,11 @@ const DISTRICT_COLUMNS = [
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
+  'build_cost_stone', 'build_cost_iron',
   'build_cost_multiplier', 'build_cost_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
   'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
+  'upgrade_cost_stone', 'upgrade_cost_iron',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
 ];
 const DISTRICT_LIST_COLUMNS = [
@@ -101,12 +112,13 @@ const DISTRICT_LIST_COLUMNS = [
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
   Units: ['id', 'power', 'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
-    'train_duration_seconds'],
+    'recruit_cost_stone', 'recruit_cost_iron', 'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
     'respawn_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'duration_seconds', 'requires'],
+  Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'cost_stone', 'cost_iron',
+    'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Settings: ['key', 'value'],

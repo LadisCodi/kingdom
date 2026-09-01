@@ -6,17 +6,22 @@
 import { DISTRICTS } from './data/definitions';
 
 export type CurrencyId =
-  | 'Gold' | 'Food' | 'Wood' | 'Knowledge' | 'Gems'
-  | 'Berries' | 'Meat'; // food-valued (see CurrencyDef.countsAs)
-export type DistrictId = 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market';
+  | 'Gold' | 'Food' | 'Wood' | 'Stone' | 'Iron' | 'Knowledge' | 'Gems'
+  | 'Berries' | 'Meat' | 'Fish'; // food-valued (see CurrencyDef.countsAs)
+export type DistrictId =
+  | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
+  | 'Quarry' | 'FishingHut' | 'Mine';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
-export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals';
-export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat';
+export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
+export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';
 export type UnitId = 'Archer' | 'Swordsman' | 'Cavalry';
 export type TechId =
   | 'Agriculture' | 'Irrigation' | 'Forestry' | 'Commerce'
-  | 'Militia' | 'Archery' | 'CavalryTraining';
-export type UpgradeId = 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes';
+  | 'Militia' | 'Archery' | 'CavalryTraining'
+  | 'Masonry' | 'Fishing' | 'Mining';
+export type UpgradeId =
+  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
+  | 'Stonecutting' | 'BigNets' | 'IronPicks';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;

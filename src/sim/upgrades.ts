@@ -42,9 +42,20 @@ export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number =
 export const effectiveCollectCooldownMs = (state: GameState): number =>
   Math.max(100, (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000);
 
-/** Units a worker delivery deposits (WorkerLoad). */
-export const effectiveWorkerYield = (state: GameState, spec: HarvestSpec): number =>
-  spec.yieldPerWorker + effect(state, 'WorkerLoad');
+/** Resource-specific worker-delivery upgrades (each +1/level). */
+const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId>> = {
+  Stone: 'Stonecutting',
+  Fish: 'BigNets',
+  Iron: 'IronPicks',
+};
+
+/** Units a worker delivery deposits (global WorkerLoad + the resource's own
+ *  upgrade: Stonecutting/BigNets/IronPicks). */
+export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): number {
+  const specific = WORKER_YIELD_UPGRADES[spec.currencyId];
+  return spec.yieldPerWorker + effect(state, 'WorkerLoad') +
+    (specific ? effect(state, specific) : 0);
+}
 
 /** Multiplier on Market sale prices (MarketStall: +5%/level). */
 export const effectiveSalePriceMultiplier = (state: GameState): number =>

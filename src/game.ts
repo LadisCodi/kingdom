@@ -589,8 +589,8 @@ export function formatAdjacency(goldPerMinute: number): string {
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Gold: '🪙', Food: '🍎', Wood: '🪵', Berries: '🫐', Meat: '🍖',
-    Knowledge: '📜', Gems: '💎',
+    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️',
+    Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }

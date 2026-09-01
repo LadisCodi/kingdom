@@ -43,8 +43,8 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
     expect(upgradeCost('Sawmill', 1, 2)).toEqual({});
     expect(upgradeDuration('Sawmill', 2)).toBe(45);
   });
-  it('Townhall L1→L2 = 25 Wood, instant', () => {
-    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 25 });
+  it('Townhall L1→L2 = 25 Wood + 25 Stone, instant', () => {
+    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 25, Stone: 25 });
     expect(upgradeDuration('Townhall', 1)).toBe(0);
   });
 });

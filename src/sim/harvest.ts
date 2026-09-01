@@ -123,7 +123,8 @@ function pickIndex(seed: string, length: number): number {
 }
 
 /** Place every due respawn: a random valid neighbor of the ORIGIN cell
- *  (Grassland, no district, no feature). No valid cell → gone for good. */
+ *  (the feature's respawn terrain — Grassland for bushes/animals, Water for
+ *  fish shoals — no district, no feature). No valid cell → gone for good. */
 export function advanceRespawns(state: GameState, map: MapData, toTime: number): void {
   const due = state.featureRespawns
     .filter((r) => r.readyAt <= toTime)
@@ -131,9 +132,10 @@ export function advanceRespawns(state: GameState, map: MapData, toTime: number):
   if (due.length === 0) return;
   state.featureRespawns = state.featureRespawns.filter((r) => r.readyAt > toTime);
   for (const r of due) {
+    const terrain = FEATURES[r.feature].respawnTerrain;
     const candidates = neighbors(map, parseCoordKey(r.origin)).filter((c) => {
       const k = coordKey(c);
-      return map.terrain.get(k) === 'Grassland' &&
+      return map.terrain.get(k) === terrain &&
         state.features[k] === undefined &&
         districtAt(state, c) === undefined;
     });

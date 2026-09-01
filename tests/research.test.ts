@@ -45,7 +45,7 @@ describe('technology basics', () => {
 
   it('gates units: every unit has its technology (Militia, Archery)', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 100 });
     expect(trainUnit(state, 'Swordsman')).toBe('TechRequired');
     completeTech(state, 'Militia');
     expect(trainUnit(state, 'Swordsman')).toBe('Trained');

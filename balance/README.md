@@ -15,7 +15,7 @@ the script.
 
 | Sheet | What |
 |---|---|
-| `Districts` | One row per building: footprint, levels, workers, costs, times, growth exponents |
+| `Districts` | One row per building: footprint, levels, workers, costs (Gold/Wood/Food/Stone/Iron columns), times, growth exponents |
 | `Units` | Army units: power, recruit costs |
 | `Harvest` | NATURAL resource cells (trees, crops, berries, animals): yield per tap, taps to exhaust, recovery |
 | `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market instant-sell price; blank = not sellable) |
@@ -51,7 +51,8 @@ y coordinates (y grows downward); each cell is one map cell:
 
 - **Terrain** (lowercase): `g` Grassland · `w` Water · `p` Plains ·
   `d` Desert · `s` Snow · `u` Tundra. **Blank = void** (outside the world).
-- **Features** (uppercase): `T` Trees · `B` Berry bush · `A` Wild animals.
+- **Features** (uppercase): `T` Trees · `B` Berry bush · `A` Wild animals ·
+  `R` Rocks · `F` Fish shoal (water: write `wF`) · `I` Iron vein.
   A bare feature letter implies Grassland; `pT` puts Trees on Plains.
 - Cells are color-coded by conditional formatting, so the map stays visible
   as you type.

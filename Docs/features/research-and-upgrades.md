@@ -67,6 +67,9 @@ Initial tree (all roads lead from Forestry):
 - **Commerce** (requires Forestry; Market building) → upgrades MarketStall
   (+5% sale prices), TradeRoutes (+10% tax income)
 - **Militia** (requires Forestry; Swordsman)
+- **Masonry** (requires Forestry; Quarry) → upgrade Stonecutting; →
+  **Mining** (Mine, costs Stone) → upgrade Iron Picks
+- **Fishing** (requires Agriculture; Fishing Hut) → upgrade Big Nets
 - **Archery** (requires Forestry; Archer) → **CavalryTraining** (Cavalry)
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —

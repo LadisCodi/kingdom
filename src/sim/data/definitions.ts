@@ -46,8 +46,11 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Gold: currency('city', balance.currencies.Gold),
   Food: currency('city', balance.currencies.Food),
   Wood: currency('city', balance.currencies.Wood),
+  Stone: currency('city', balance.currencies.Stone),
+  Iron: currency('city', balance.currencies.Iron),
   Berries: currency('city', balance.currencies.Berries),
   Meat: currency('city', balance.currencies.Meat),
+  Fish: currency('city', balance.currencies.Fish),
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Gems: currency('player', balance.currencies.Gems),
 };
@@ -77,6 +80,9 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   Crops: { currencyId: 'Food', ...balance.harvest.Crops },
   Berries: { currencyId: 'Berries', ...balance.harvest.Berries },
   Meat: { currencyId: 'Meat', ...balance.harvest.Meat },
+  Stone: { currencyId: 'Stone', ...balance.harvest.Stone },
+  Fish: { currencyId: 'Fish', ...balance.harvest.Fish },
+  Iron: { currencyId: 'Iron', ...balance.harvest.Iron },
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -214,10 +220,43 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     requiredTech: 'Commerce',
     ...balance.districts.Market,
   },
+  Quarry: {
+    ...rules,
+    id: 'Quarry',
+    name: 'Quarry',
+    description: 'Sends workers to cut Stone from Rocks within its area of influence.',
+    glyph: '⛏️',
+    sprite: 'quarry',
+    harvestSource: 'Stone',
+    requiredTech: 'Masonry',
+    ...balance.districts.Quarry,
+  },
+  FishingHut: {
+    ...rules,
+    id: 'FishingHut',
+    name: 'Fishing Hut',
+    description: 'Built on the shore — its workers fish nearby shoals. Fish feed like 2 Food.',
+    glyph: '🎣',
+    sprite: 'fishing_hut',
+    harvestSource: 'Fish',
+    requiredTech: 'Fishing',
+    ...balance.districts.FishingHut,
+  },
+  Mine: {
+    ...rules,
+    id: 'Mine',
+    name: 'Mine',
+    description: 'Sends workers to dig Iron from veins within its area of influence.',
+    glyph: '⚒️',
+    sprite: 'mine',
+    harvestSource: 'Iron',
+    requiredTech: 'Mining',
+    ...balance.districts.Mine,
+  },
 };
 
 export const BUILDABLE_DISTRICTS: DistrictId[] =
-  ['Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market'];
+  ['Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'FishingHut', 'Mine', 'Market'];
 
 // ------------------------------------------------------------------ features
 
@@ -228,21 +267,35 @@ export interface FeatureDef {
   exhaustedGlyph: string;
   sprite: string; // asset filename stem; `${sprite}_exhausted` for the exhausted state
   source: HarvestSourceId;
+  /** Terrain a FINITE feature respawns on (adjacent to its origin). */
+  respawnTerrain: 'Grassland' | 'Water';
 }
 
 export const FEATURES: Record<FeatureId, FeatureDef> = {
   Trees: {
     id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵',
-    sprite: 'forest', source: 'Forest',
+    sprite: 'forest', source: 'Forest', respawnTerrain: 'Grassland',
+  },
+  Rocks: {
+    id: 'Rocks', name: 'Rocks', glyph: '🪨', exhaustedGlyph: '🧱',
+    sprite: 'rocks', source: 'Stone', respawnTerrain: 'Grassland',
+  },
+  IronVein: {
+    id: 'IronVein', name: 'Iron vein', glyph: '⛰️', exhaustedGlyph: '🕳️',
+    sprite: 'iron_vein', source: 'Iron', respawnTerrain: 'Grassland',
   },
   // Finite sources (recovery 0): consumed and removed from the map when drained.
   BerryBush: {
     id: 'BerryBush', name: 'Berry bush', glyph: '🫐', exhaustedGlyph: '🍂',
-    sprite: 'berry_bush', source: 'Berries',
+    sprite: 'berry_bush', source: 'Berries', respawnTerrain: 'Grassland',
   },
   WildAnimals: {
     id: 'WildAnimals', name: 'Wild animals', glyph: '🐗', exhaustedGlyph: '🦴',
-    sprite: 'wild_animals', source: 'Meat',
+    sprite: 'wild_animals', source: 'Meat', respawnTerrain: 'Grassland',
+  },
+  FishShoal: {
+    id: 'FishShoal', name: 'Fish shoal', glyph: '🐟', exhaustedGlyph: '🫧',
+    sprite: 'fish_shoal', source: 'Fish', respawnTerrain: 'Water',
   },
 };
 
@@ -326,6 +379,27 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🗡️',
     node: { x: 1, y: 1 },
   }, balance.technologies.Militia),
+  Masonry: tech({
+    id: 'Masonry',
+    name: 'Masonry',
+    description: 'Unlocks the Quarry — its workers cut Stone from nearby rocks.',
+    glyph: '🧱',
+    node: { x: 1, y: 0 },
+  }, balance.technologies.Masonry),
+  Fishing: tech({
+    id: 'Fishing',
+    name: 'Fishing',
+    description: 'Unlocks the Fishing Hut — coastal workers net Fish (worth 2 Food each).',
+    glyph: '🎣',
+    node: { x: -1, y: -1 },
+  }, balance.technologies.Fishing),
+  Mining: tech({
+    id: 'Mining',
+    name: 'Mining',
+    description: 'Unlocks the Mine — its workers dig Iron, the army\'s metal.',
+    glyph: '⛏️',
+    node: { x: 1, y: -1 },
+  }, balance.technologies.Mining),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
@@ -342,8 +416,10 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   }, balance.technologies.CavalryTraining),
 };
 
-export const TECH_ORDER: TechId[] =
-  ['Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining'];
+export const TECH_ORDER: TechId[] = [
+  'Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining',
+  'Masonry', 'Fishing', 'Mining',
+];
 
 // Slots & gem pricing for extra slots.
 export const RESEARCH_SETTINGS = balance.research;
@@ -389,10 +465,24 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     id: 'TradeRoutes', name: 'Trade Routes', glyph: '⛵',
     description: '+10% tax income',
   }, balance.upgrades.TradeRoutes),
+  Stonecutting: upgrade({
+    id: 'Stonecutting', name: 'Stonecutting', glyph: '🪨',
+    description: '+1 Stone per worker delivery',
+  }, balance.upgrades.Stonecutting),
+  BigNets: upgrade({
+    id: 'BigNets', name: 'Big Nets', glyph: '🕸️',
+    description: '+1 Fish per worker delivery',
+  }, balance.upgrades.BigNets),
+  IronPicks: upgrade({
+    id: 'IronPicks', name: 'Iron Picks', glyph: '⛏️',
+    description: '+1 Iron per worker delivery',
+  }, balance.upgrades.IronPicks),
 };
 
-export const UPGRADE_ORDER: UpgradeId[] =
-  ['TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes'];
+export const UPGRADE_ORDER: UpgradeId[] = [
+  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'Stonecutting', 'BigNets', 'IronPicks',
+];
 
 // -------------------------------------------------------------------- units
 
@@ -444,4 +534,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 10; // v9 saves predate the tax economy; discarded
+export const SAVE_VERSION = 11; // v10 saves predate the Stone/Fish/Iron expansion; discarded

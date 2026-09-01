@@ -8,10 +8,12 @@ const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 
 describe('map data', () => {
-  it('loads 155 terrain cells (98 Grassland, 57 Water) and 17 features', () => {
-    expect(map.terrain.size).toBe(155);
-    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(98);
-    expect(map.initialFeatures.size).toBe(17); // 13 Trees + 2 BerryBush + 2 WildAnimals
+  it('loads 253 terrain cells across five biomes and 35 features', () => {
+    expect(map.terrain.size).toBe(253);
+    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(100);
+    expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(30);
+    expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(25);
+    expect(map.initialFeatures.size).toBe(35); // + Rocks, FishShoals, IronVeins
   });
   it('8-neighbor adjacency: distance 0 across the 2x2 footprint, 1 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);

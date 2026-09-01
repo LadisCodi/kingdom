@@ -18,6 +18,13 @@ Expected filenames (see `Docs/art/sprite-prompts.md` for the prompts):
 | `forest_exhausted.png` | 🪵 |
 | `berry_bush.png` | 🫐 |
 | `wild_animals.png` | 🐗 |
+| `market.png` | 🏪 |
+| `quarry.png` | ⛏️ |
+| `fishing_hut.png` | 🎣 |
+| `mine.png` | ⚒️ |
+| `rocks.png` (+ `rocks_exhausted.png`) | 🪨 / 🧱 |
+| `fish_shoal.png` | 🐟 |
+| `iron_vein.png` (+ `iron_vein_exhausted.png`) | ⛰️ / 🕳️ |
 | `worker.png` | 🧑‍🌾 |
 | `worker_carrying.png` | 🧑‍🌾 + 🎒 |
 | `terrain_<id>.png` (grassland, plains, desert, snow, tundra, water) | flat `TERRAIN_COLORS` |

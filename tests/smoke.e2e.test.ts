@@ -102,7 +102,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(food);
 
     // --- Housing: villagers live there (1 per house) and pay taxes.
-    fund(state, { Food: 10_000, Gold: 10_000, Wood: 10_000 });
+    fund(state, { Food: 10_000, Gold: 10_000, Wood: 10_000, Stone: 500, Iron: 500 });
     expect(maxPopulation(state)).toBe(0);
     expect(queueTraining(state, now)).toBe('AtMax'); // nowhere to live yet
     for (const cell of [{ x: 2, y: 0 }, { x: 0, y: -1 }]) {

@@ -175,7 +175,12 @@ export function drawMap(
     punched(coordKey(district.location), x, y, fw, fh, () => {
       drewExhaustedPlot =
         exhaustedPlot && drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh);
-      if (!drewExhaustedPlot && !drawSprite(ctx, def.sprite, x, y, fw, fh)) {
+      // Leveled art (`sprite_l2`…) when present, base sprite otherwise.
+      if (
+        !drewExhaustedPlot &&
+        !drawSprite(ctx, `${def.sprite}_l${district.level}`, x, y, fw, fh) &&
+        !drawSprite(ctx, def.sprite, x, y, fw, fh)
+      ) {
         drawGlyph(ctx, def.glyph, x, y, fw, size * 0.52 * Math.min(def.size.x, def.size.y), fh);
       }
     });
@@ -282,7 +287,12 @@ export function drawMap(
     const pw = size * (markers.previewSize?.x ?? 1);
     const ph = size * (markers.previewSize?.y ?? 1);
     ctx.globalAlpha = 0.6;
-    if (!(markers.previewSprite && drawSprite(ctx, markers.previewSprite, x, y, pw, ph))) {
+    // New builds preview at level 1; fall back to the un-leveled sprite.
+    if (
+      !(markers.previewSprite &&
+        (drawSprite(ctx, `${markers.previewSprite}_l1`, x, y, pw, ph) ||
+          drawSprite(ctx, markers.previewSprite, x, y, pw, ph)))
+    ) {
       drawGlyph(ctx, markers.previewGlyph, x, y, pw, size * 0.52, ph);
     }
     ctx.globalAlpha = 1;

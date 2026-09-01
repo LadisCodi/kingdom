@@ -24,7 +24,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland';
+  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsWaterAdjacency';
 
 /** All placement conditions ANDed over the full footprint (cell = anchor,
  *  top-left); null = buildable here. */
@@ -69,7 +69,17 @@ export function placementBlock(
       // is built nearby to send workers.
       if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       break;
+    case 'FishingHut': {
+      // On the shore: at least one footprint neighbor must be Water.
+      const coastal = footprint.some((fc) =>
+        neighbors(map, fc).some((n) => map.terrain.get(coordKey(n)) === 'Water'));
+      if (!coastal) return 'NeedsWaterAdjacency';
+      break;
+    }
     case 'Sawmill': // no placement restriction — the influence range guides placement
+    case 'Quarry':
+    case 'Mine':
+    case 'Market':
     case 'Townhall':
       break;
   }
@@ -80,7 +90,8 @@ export function placementBlock(
  *  is highlighting valid cells informative (an unrestricted building like the
  *  Sawmill would just outline most of the map). */
 export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
-  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands';
+  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands' ||
+  definitionId === 'FishingHut';
 
 export const validPlacementCells = (
   state: GameState,
