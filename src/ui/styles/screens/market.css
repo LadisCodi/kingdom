@@ -1,0 +1,86 @@
+/* The Market (§5.8) — a stall you buy from, not a table you read. */
+
+/* Striped awning across the top of the sheet body. */
+.mkt-awning {
+  height: 16px;
+  margin: -4px -2px 8px;
+  border-radius: 0 0 6px 6px;
+  border: 2px solid var(--wood-dark);
+  border-top: none;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--clay) 0 14px,
+    var(--parchment) 14px 28px
+  );
+}
+
+/* The bonus is something the player BOUGHT — it gets a ribbon, not a
+ * parenthetical. */
+.mkt-bonus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  color: var(--ink);
+  background: var(--gold);
+  border: 2px solid var(--gold-dark);
+  border-radius: 999px;
+}
+.mkt-blurb { color: var(--ink-muted); margin-bottom: 8px; }
+
+.mkt-amounts { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.mkt-amount-label {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.mkt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+/* Each good is a crate on the counter. */
+.mkt-crate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 8px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3), 0 3px 0 rgba(60, 36, 18, 0.22);
+}
+.mkt-crate.is-empty { background: var(--locked); }
+.mkt-goods { width: 52px; height: 52px; display: grid; place-items: center; }
+.mkt-goods img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+
+/* A little hanging price tag. */
+.mkt-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: 999px;
+}
+.mkt-have { color: var(--ink-muted); font-size: var(--text-helper); }
+
+/* The reason anyone is on this screen. */
+.mkt-payout {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--gold-dark);
+}
+.mkt-crate.is-empty .mkt-payout { color: var(--ink-muted); }
+.mkt-crate .k-btn { min-height: 40px; padding: 8px 18px; margin-top: 4px; }
