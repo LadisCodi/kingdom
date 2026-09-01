@@ -958,6 +958,12 @@ export class Game {
     };
   }
 
+  /** Jump to a technology in the tree — for a blocker that names one. */
+  focusTech(id: TechId): void {
+    this.setUiHint(`tech:${id}`); // set BEFORE the overlay renders
+    this.setOverlay('research');
+  }
+
   /** Tapping the population plaque goes to where villagers come from. */
   focusTownhall(): void {
     const hall = townhall(this.state);

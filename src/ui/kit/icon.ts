@@ -16,7 +16,7 @@
 // need a string.
 
 import { CURRENCIES } from '../../sim/data/definitions';
-import type { CurrencyId, DistrictId, Wallet } from '../../sim/state';
+import type { CurrencyId, DistrictId, UnitId, Wallet } from '../../sim/state';
 import { el } from '../format';
 import { ATLAS_CELLS } from './atlas.generated';
 
@@ -27,7 +27,7 @@ export type UiIconName =
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
   | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star';
 
-export type IconName = CurrencyId | DistrictId | UiIconName;
+export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
 
 /** The fallback glyph for every icon, and — once the atlas lands — the
  *  checklist of cells it must contain. Exhaustive by construction: adding a
@@ -39,6 +39,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
   Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️',
+  // units
+  Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',
   // destinations
   build: '🔨', army: '🛡️', research: '🔬', settings: '⚙️',
   // city status + affordances

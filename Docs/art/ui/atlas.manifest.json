@@ -1,53 +1,133 @@
 {
   "cell": 32,
   "atlasCols": 16,
-  "note": "Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. UI-A's slots 8-10 held illustrated characters (villagers, a builder, a farmer) that turned to mush inline; UI-D replaces them with flat symbols, so they are skipped here rather than being generated and immediately overwritten.",
+  "note": "Names must match IconName in src/ui/kit/icon.ts \u2014 tests/icons.test.ts holds us to it. A null entry skips that grid cell. UI-A's slots 8-10 held illustrated characters (villagers, a builder, a farmer) that turned to mush inline; UI-D replaces them with flat symbols, so they are skipped here rather than being generated and immediately overwritten. UI-F is drawn left-to-right as spearman, swordsman, archer, horseman, which maps to Lancer, Warrior, Archer, Cavalry.",
   "sheets": [
     {
       "file": "sheets/ui-a-resources.png",
-      "grid": { "rows": 3, "cols": 4 },
+      "grid": {
+        "rows": 3,
+        "cols": 4
+      },
       "fill": 0.88,
       "names": [
-        "Gold", "Food", "Wood", "Stone",
-        "Iron", "Gems", "Knowledge", null,
-        null, null, "Berries", "Fish"
+        "Gold",
+        "Food",
+        "Wood",
+        "Stone",
+        "Iron",
+        "Gems",
+        "Knowledge",
+        null,
+        null,
+        null,
+        "Berries",
+        "Fish"
       ]
     },
     {
       "file": "sheets/ui-b-buildings.png",
-      "grid": { "rows": 3, "cols": 3 },
+      "grid": {
+        "rows": 3,
+        "cols": 3
+      },
       "fill": 0.92,
       "names": [
-        "Townhall", "Housing", "Farm",
-        "FarmLands", "Sawmill", "Market",
-        "Quarry", "Docks", "Mine"
+        "Townhall",
+        "Housing",
+        "Farm",
+        "FarmLands",
+        "Sawmill",
+        "Market",
+        "Quarry",
+        "Docks",
+        "Mine"
       ]
     },
     {
       "file": "sheets/ui-c-symbols.png",
-      "grid": { "rows": 3, "cols": 4 },
+      "grid": {
+        "rows": 3,
+        "cols": 4
+      },
       "fill": 0.86,
       "names": [
-        "quest", "showme", "padlock", "hourglass",
-        "clock", "tick", "close", "plus",
-        "minus", "sparkle", "unknown", "Meat"
+        "quest",
+        "showme",
+        "padlock",
+        "hourglass",
+        "clock",
+        "tick",
+        "close",
+        "plus",
+        "minus",
+        "sparkle",
+        "unknown",
+        "Meat"
       ]
     },
     {
       "file": "sheets/ui-d-ui.png",
-      "grid": { "rows": 2, "cols": 4 },
+      "grid": {
+        "rows": 2,
+        "cols": 4
+      },
       "fill": 0.86,
       "names": [
-        "build", "army", "research", "settings",
-        "population", "builders", "workers", "star"
+        "build",
+        "army",
+        "research",
+        "settings",
+        "population",
+        "builders",
+        "workers",
+        "star"
+      ]
+    },
+    {
+      "file": "sheets/ui-f-units.png",
+      "grid": {
+        "rows": 1,
+        "cols": 4
+      },
+      "fill": 0.94,
+      "names": [
+        "Lancer",
+        "Warrior",
+        "Archer",
+        "Cavalry"
       ]
     }
   ],
-  "locked": { "except": ["padlock", "sparkle", "close", "plus", "minus", "tick", "unknown", "showme", "star"] },
+  "locked": {
+    "except": [
+      "padlock",
+      "sparkle",
+      "close",
+      "plus",
+      "minus",
+      "tick",
+      "unknown",
+      "showme",
+      "star"
+    ]
+  },
   "tiny": {
     "only": [
-      "Gold", "Food", "Wood", "Stone", "Iron", "Gems", "Knowledge", "Berries", "Fish", "Meat",
-      "padlock", "population", "builders", "workers"
+      "Gold",
+      "Food",
+      "Wood",
+      "Stone",
+      "Iron",
+      "Gems",
+      "Knowledge",
+      "Berries",
+      "Fish",
+      "Meat",
+      "padlock",
+      "population",
+      "builders",
+      "workers"
     ]
   }
 }

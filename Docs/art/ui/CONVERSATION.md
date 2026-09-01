@@ -102,3 +102,22 @@ On UI-C the model reported: *"The first alpha pass exposed residual
 checkerboard texture rather than clean transparency, so it didn't meet the
 export rule."* — and ran a second, tighter matte removal unprompted. Stating
 the export rule as a rule, not a preference, is what makes that happen.
+
+
+## UI-F — unit portraits
+
+Same conversation, 2026-09-02. `sheets/ui-f-units.png`, 1024×512, 1×4.
+
+Drawn left to right as spearman, swordsman, archer, horseman, which maps to
+**Lancer, Warrior, Archer, Cavalry** — the manifest names them in that order,
+not in UNIT_ORDER, because the sheet is the thing being sliced.
+
+This is the one sheet that deliberately breaks the "symbols, not characters"
+rule from UI-C/UI-D: an army roster wants figures you can recognise and want,
+and these are shown at 60px in a portrait frame, never inline. The rule is
+about SIZE, not about taste.
+
+What prompted it: `tests/icons.test.ts` failed the moment the Army screen
+asked for a `Warrior` icon that had no cell — the guard doing exactly the job
+it was written for, before a single unit had rendered as an emoji next to
+forty pixel icons.
