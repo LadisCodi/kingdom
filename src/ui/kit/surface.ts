@@ -36,7 +36,9 @@ export function sheet(
       el('div', { class: 'k-grab' }),
       plank(opts.title, close),
       // The body scrolls; the plank and its close knob do not go with it.
-      el('div', { class: 'k-sheet-body' }, ...children),
+      // data-keep-scroll asks the host to carry the scroll position across
+      // the per-tick rebuild, so reading a long sheet is possible at all.
+      el('div', { class: 'k-sheet-body', 'data-keep-scroll': '' }, ...children),
     ),
   );
 }

@@ -48,6 +48,15 @@ export function legacy(render: () => HTMLElement, onClose?: () => void): Screen 
   return {
     root,
     refresh: () => {
+      // Rebuilding the subtree throws away scroll position, once a second,
+      // which makes a scrollable screen impossible to read — you get pulled
+      // back to the top mid-scroll. Containers opt in with data-keep-scroll
+      // and are matched by order, which is stable because the rebuild
+      // produces the same shape. (researchMenu.ts solves the same problem
+      // with module-level state; this retires the need for that.)
+      const kept = [...root.querySelectorAll<HTMLElement>('[data-keep-scroll]')]
+        .map((n) => [n.scrollTop, n.scrollLeft] as const);
+
       const content = render();
       // A migrated screen marks its own dismiss with data-own-close.
       // Detecting that, rather than listing which screens have migrated,
@@ -57,6 +66,16 @@ export function legacy(render: () => HTMLElement, onClose?: () => void): Screen 
       // The knob is the SAME node every refresh, so a press survives the
       // per-tick rebuild happening underneath it.
       root.replaceChildren(...(knob && !hasOwnClose ? [content, knob] : [content]));
+
+      if (kept.length > 0) {
+        const now = root.querySelectorAll<HTMLElement>('[data-keep-scroll]');
+        kept.forEach(([top, left], i) => {
+          const n = now[i];
+          if (!n) return;
+          n.scrollTop = top;
+          n.scrollLeft = left;
+        });
+      }
     },
   };
 }

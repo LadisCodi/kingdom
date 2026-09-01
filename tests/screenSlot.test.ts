@@ -151,4 +151,8 @@ describe('ScreenSlot', () => {
       expect(container.attrs.has('data-entering')).toBe(false);
     });
   });
+
+  // NOTE: legacy()'s scroll preservation is not unit-tested here — it calls
+  // document.createElement, so it needs a real DOM, and stubbing that deeply
+  // would test the stub rather than the code. Verified in the browser instead.
 });
