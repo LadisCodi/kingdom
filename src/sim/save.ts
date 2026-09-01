@@ -5,7 +5,7 @@
 // recovery keep running in real time).
 
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
-import { advance } from './commands';
+import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
 import { newGame } from './newGame';
 import {
@@ -170,7 +170,27 @@ export function serialize(state: GameState, now: number): SaveFile {
  * Rebuild a GameState from a v2 save and replay the absence (capped at 8h).
  * Returns null for incompatible (v1) saves — caller starts a fresh game.
  */
-export function deserialize(save: SaveFile, map: MapData, now: number): GameState | null {
+/** What the kingdom did while nobody was watching. */
+export interface CatchUpReport {
+  /** Milliseconds actually replayed (capped). */
+  elapsedMs: number;
+  /** True when the absence was longer than the cap and progress paused. */
+  cappedOut: boolean;
+  result: AdvanceResult;
+}
+
+/**
+ * @param onCatchUp Called once with everything the offline replay produced.
+ *   Optional and last, so no existing call site changes: the replay happens
+ *   in here, BEFORE a Game exists, and its AdvanceResult was being dropped
+ *   on the floor — which is why the player never saw what they earned.
+ */
+export function deserialize(
+  save: SaveFile,
+  map: MapData,
+  now: number,
+  onCatchUp?: (report: CatchUpReport) => void,
+): GameState | null {
   if ((save.SaveVersion ?? 1) !== SAVE_VERSION) return null;
   const lastSaved = ms(save.LastSaved);
   const state = newGame(map, lastSaved);
@@ -308,7 +328,7 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
 
   // ---- Offline catch-up: replay up to the cap, pause beyond it. -------------
   const capEnd = Math.min(now, lastSaved + OFFLINE_CAP_HOURS * 3_600_000);
-  advance(state, map, capEnd);
+  const report = advance(state, map, capEnd);
   if (capEnd < now) {
     const gap = now - capEnd;
     for (const w of state.workers) {
@@ -322,7 +342,15 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
-    advance(state, map, now); // completes remaining queue work; workers resume at now
+    // Completes remaining queue work; workers resume at now. Its results are
+    // merged in so a build that finished past the cap is still announced.
+    const tail = advance(state, map, now);
+    report.deposits.push(...tail.deposits);
+    report.completedItems.push(...tail.completedItems);
+    report.completedResearch.push(...tail.completedResearch);
+    report.goldEarned += tail.goldEarned;
+    report.trainedPopulation += tail.trainedPopulation;
   }
+  onCatchUp?.({ elapsedMs: capEnd - lastSaved, cappedOut: capEnd < now, result: report });
   return state;
 }

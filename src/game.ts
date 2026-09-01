@@ -52,7 +52,7 @@ export type Mode =
  *  `tsc` — the only real gate this project has over the view layer — catches
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
-  | 'build' | 'market' | 'army' | 'research' | 'settings' | 'purse';
+  | 'build' | 'market' | 'army' | 'research' | 'settings' | 'purse' | 'welcome';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */

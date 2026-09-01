@@ -15,7 +15,7 @@ import { TECH_ORDER } from './sim/data/definitions';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
-import { deserialize } from './sim/save';
+import { deserialize, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
 import { renderBuildMenu } from './ui/buildMenu';
@@ -26,6 +26,7 @@ import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
+import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
 import { button, el } from './ui/format';
@@ -40,8 +41,12 @@ async function boot(): Promise<void> {
   const savedFile = await saveManager.load();
 
   const now = Date.now();
-  // v1 saves come back null → fresh game (save format changed with the harvest loop).
-  const state = (savedFile ? deserialize(savedFile, map, now) : null) ?? newGame(map, now);
+  // The offline replay happens INSIDE deserialize, before a Game exists, so
+  // its results are captured here to be shown once the UI is up.
+  let catchUp: CatchUpReport | null = null;
+  const state = (savedFile
+    ? deserialize(savedFile, map, now, (r) => { catchUp = r; })
+    : null) ?? newGame(map, now);
 
   const canvas = document.getElementById('map') as HTMLCanvasElement;
   const camera = new Camera(canvas);
@@ -85,6 +90,7 @@ async function boot(): Promise<void> {
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
+    welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
   // Each mount point holds one keyed screen: same key → re-render in place,
@@ -121,6 +127,12 @@ async function boot(): Promise<void> {
     }
     else overlaySlot.clear();
   };
+  // Show the offline report once, and only when the absence was long enough
+  // to be worth interrupting for.
+  if (catchUp !== null && (catchUp as CatchUpReport).elapsedMs >= WELCOME_MIN_MS) {
+    game.setOverlay('welcome');
+  }
+
   game.onChange(refreshScreens);
 
   // Tap the dimmed map beside a sheet to dismiss it (§5.4). Scoped to kit
