@@ -39,8 +39,8 @@
       },
       "maxLevel": 2,
       "populationCapacityPerLevel": [
-        2,
-        4
+        1,
+        2
       ],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -727,6 +727,13 @@
       "effectPerLevel": 1,
       "requiredTech": "Forestry"
     },
+    "QuickHands": {
+      "costBase": 75,
+      "costGrowth": 2,
+      "maxLevel": 5,
+      "effectPerLevel": 0.05,
+      "requiredTech": "Forestry"
+    },
     "WorkerLoad": {
       "costBase": 200,
       "costGrowth": 2.5,
@@ -768,13 +775,6 @@
       "maxLevel": 3,
       "effectPerLevel": 1,
       "requiredTech": "Mining"
-    },
-    "QuickHands": {
-      "costBase": 75,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Forestry"
     }
   },
   "research": {
@@ -796,7 +796,8 @@
   },
   "taxes": {
     "goldPerPopulationPerMinute": 30,
-    "tapBoostSeconds": 2
+    "tapBoostSeconds": 20,
+    "cycleSeconds": 60
   },
   "adjacency": [
     {

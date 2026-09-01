@@ -87,6 +87,7 @@ const SETTINGS = [
   ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
   ['taxes.tap_boost_seconds', 'taxes.tapBoostSeconds'],
+  ['taxes.cycle_seconds', 'taxes.cycleSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],

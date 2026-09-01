@@ -26,7 +26,7 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import { buySlot, isTechComplete, startTech, techUnlocks } from './sim/research';
-import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
+import { buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
@@ -277,9 +277,11 @@ export class Game {
         if (district && district.state === 'Built' &&
           districtCapacity(this.state, district) > 0) {
           const { result, gold } = houseTap(this.state, district, this.now());
-          if (result === 'Boosted') {
+          if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
             this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+          } else if (result === 'NotReady') {
+            playSfx('tapEmpty');
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -339,32 +341,59 @@ export class Game {
     return result;
   }
 
-  /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place).
-   *  The input layer repeats this while the press lasts; the auto-tap
-   *  cooldown decides how many actually land, so holding is the slow, lazy
-   *  option and tapping fast stays the skilful one.
+  /** Held pointer: repeat COLLECT and REVEAL taps (never inspect or place).
+   *  The input layer repeats this while the press lasts; the auto-tap cooldown
+   *  decides how many actually land, so holding is the slow, lazy option and
+   *  tapping fast stays the skilful one.
+   *
+   *  Reveal is here because paying for fog is one Gold per tap on a doubling
+   *  ring curve: a single distance-9 iron vein is 320 individual taps, and the
+   *  whole map is 194,142. That is the difference between the game's
+   *  differentiator being filmable and being punishing.
    *
    *  Returns true when this repeat DID something — the input layer then
-   *  swallows the tap on release, so one press never collects twice. */
+   *  swallows the tap on release, so one press never acts twice. */
   handleHold(sx: number, sy: number): boolean {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a lived-in house keeps boosting its tax clock, same cooldown.
+    // Holding a house keeps collecting, but each one still waits out its cycle.
     const district = districtAt(this.state, cell);
     if (district && district.state === 'Built' &&
         districtCapacity(this.state, district) > 0) {
-      const { result, gold } = houseTap(this.state, district, this.now(), true);
-      if (result !== 'Boosted') return false;
+      const { result, gold } = houseTap(this.state, district, this.now());
+      if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
       this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
       this.notify();
       return true;
     }
+    if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
     if (harvestSourceAt(this.state, cell) === null) return false;
     if (!this.state.fog.revealed[coordKey(cell)]) return false;
     if (isExhausted(this.state, cell, this.now())) return false; // quiet — no 💤 spam
     if (this.collectAt(cell, true) !== 'Harvested') return false;
+    this.notify();
+    return true;
+  }
+
+  /** One repeat of a held reveal. Paced by the SAME auto-tap cooldown as
+   *  collecting, so QuickHands speeds clearing fog up too and holding never
+   *  outruns a determined tapper. */
+  private revealHold(cell: Coord): boolean {
+    const now = this.now();
+    if (now - this.state.lastCollectTapAt < effectiveAutoTapCooldownMs(this.state)) return false;
+    const result = revealTap(this.state, this.map, cell);
+    if (result !== 'Paid' && result !== 'Revealed') return false;
+    this.state.lastCollectTapAt = now;
+    if (result === 'Revealed') {
+      wakeIdleWorkersAt(this.state, now);
+      playSfx('revealDone');
+      this.floaters.add(cell, 'Revealed!');
+    } else {
+      playSfx('revealPaid');
+      this.floaters.add(cell, `-1 ${icon('Gold')}`);
+    }
     this.notify();
     return true;
   }

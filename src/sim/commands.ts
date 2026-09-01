@@ -49,6 +49,7 @@ export function enqueueBuild(
     location: cell,
     state: 'UnderConstruction',
     visualVariant: 1,
+    lastTapAt: 0,
   };
   const duration = buildDurationForCell(state, definitionId, cell, map);
   state.city.districts.push(district);

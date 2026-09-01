@@ -114,16 +114,24 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       now += 120_000;
       tickAt(state, now);
     }
-    expect(maxPopulation(state)).toBe(4); // TH1 allows 2 houses × 2 residents
+    // TH1 allows 2 houses; at L1 each holds one villager, and the two the
+    // test seeded already fill them.
+    expect(maxPopulation(state)).toBe(2);
+    expect(queueTraining(state, now)).toBe('AtMax'); // 2 living, 2 roofs
+    // Level them up and there is room again.
+    for (const house of state.city.districts.filter((d) => d.definitionId === 'Housing')) {
+      house.level = 2;
+    }
+    expect(maxPopulation(state)).toBe(4);
     expect(queueTraining(state, now)).toBe('Queued');
     expect(queueTraining(state, now)).toBe('Queued');
     expect(queueTraining(state, now)).toBe('AtMax'); // 2 + 2 queued = cap
-    now += 41_000; // 2 × 20s of training
+    now += 41_000; // 2 x 20s of training
     tickAt(state, now);
     expect(state.city.population).toBe(4);
     expect(state.city.training).toBe(null);
 
-    // --- Taxes: 4 housed villagers × 30 Gold/min, fully idle.
+    // --- Taxes: 4 housed villagers x 30 Gold/min, fully idle.
     const goldBeforeTaxes = getWallet(state.city.wallet, 'Gold');
     now += 60_000;
     tickAt(state, now);
@@ -168,7 +176,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       now += 120_000;
       tickAt(state, now);
     }
-    expect(maxPopulation(state)).toBe(8);
+    expect(maxPopulation(state)).toBe(6); // two L2 houses (2 each) + two L1 (1 each)
     expect(queueTraining(state, now)).toBe('Queued');
     expect(queueTraining(state, now)).toBe('Queued');
     expect(townhallTap(state, now)).toBe('Boosted'); // taps speed the current one
@@ -185,10 +193,10 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const gold = getWallet(state.city.wallet, 'Gold');
     const restored = deserialize(save, map, now + 600_000)!;
     const earned = getWallet(restored.city.wallet, 'Gold') - gold;
-    // Houses fill in build order: three hold 2 residents, the fourth is empty.
-    // 3 × (60 − 1 crowding) = 177/min.
-    expect(earned).toBeGreaterThanOrEqual(1769);
-    expect(earned).toBeLessThanOrEqual(1771);
+    // Four full houses, each with exactly one crowding neighbour:
+    // 2 × (2 × 30 − 1) + 2 × (1 × 30 − 1) = 176/min.
+    expect(earned).toBeGreaterThanOrEqual(1759);
+    expect(earned).toBeLessThanOrEqual(1761);
     expect(getWallet(restored.city.wallet, 'Wood'))
       .toBeGreaterThan(getWallet(state.city.wallet, 'Wood'));
   });

@@ -55,6 +55,11 @@ export interface District {
   location: Coord;
   state: ConstructionState;
   visualVariant: number;
+  /** Housing: when this house's collection cycle last rolled over. A tap
+   *  collects early WITHIN the current cycle and cannot exceed it, so a house
+   *  can never pay more than a cycle's worth however fast you tap.
+   *  0 = never tapped (the first cycle is ready immediately). */
+  lastTapAt: number;
 }
 
 export interface QueueItem {

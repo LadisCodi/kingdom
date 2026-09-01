@@ -43,6 +43,7 @@ interface DistrictDto {
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
+  LastTapAt?: number;
 }
 
 interface QueueItemDto {
@@ -113,6 +114,7 @@ export function serialize(state: GameState, now: number): SaveFile {
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
+                LastTapAt: d.lastTapAt,
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -257,6 +259,7 @@ export function deserialize(
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
+        lastTapAt: d.LastTapAt ?? 0,
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;

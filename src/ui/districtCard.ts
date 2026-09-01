@@ -19,7 +19,9 @@ import { districtAdjacency } from '../sim/adjacency';
 import {
   districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from '../sim/districts';
-import { districtCapacity, houseGoldPerMinute } from '../sim/population';
+import {
+  districtCapacity, houseCycleProgress, houseGoldPerMinute, houseTapReady, houseTapReadyIn,
+} from '../sim/population';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import {
@@ -165,11 +167,24 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
             ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
             : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
       }
+      // The collection cycle, with the same trough the Townhall's training
+      // uses — a house and the Townhall now behave the same way, which is the
+      // whole point of giving the tap a cycle at all.
+      if (residents > 0) {
+        const now = game.now();
+        const ready = houseTapReady(district, now);
+        const bar = progress('gold');
+        bar.set(
+          houseCycleProgress(district, now),
+          ready ? 'Rent ready — tap the house' : `Ready in ${Math.ceil(houseTapReadyIn(district, now))}s`,
+        );
+        body.append(bar.root);
+      }
       body.append(el('div', { class: 'dc-tapline' },
         iconEl('showme', { size: 'sm' }),
         residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall'
-          : `Tap the house to hurry the rent — +${TAXES.tapBoostSeconds}s each tap`));
+          : `Collecting early pulls ${TAXES.tapBoostSeconds}s of rent forward, once a cycle`));
     }
 
     // A worker building is an AREA and the people you put in it. Both were

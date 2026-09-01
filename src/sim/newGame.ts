@@ -64,6 +64,7 @@ export function newGame(map: MapData, now: number): GameState {
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
+    lastTapAt: 0,
   });
 
   seedFog(state, map);

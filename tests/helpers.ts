@@ -49,6 +49,7 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
   state.city.districts.push({
     uniqueId: `district_${definitionId}_${state.nextId++}`,
     definitionId, level: 1, assignedWorkers: 0, location, state: 'Built', visualVariant: 1,
+    lastTapAt: 0,
   });
 };
 

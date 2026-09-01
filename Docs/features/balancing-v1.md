@@ -5,6 +5,13 @@
 > capacity this document assumes was never what shipped, TH3 is no longer the
 > endgame, the army cap moves out of the Townhall, and most of the "future work"
 > list is now designed. The three-era arc itself stands.
+>
+> **Update (implementation):** the housing capacity is fixed. The workbook now
+> ships `[1, 2]` — the value this document always documented and derived every
+> pacing number from — so the income tables below are correct again rather than
+> 2–3x optimistic. The house tap is bounded by a collection cycle too, so "tap
+> income" is capped at `taxes.tap_boost_seconds` of *city* income per cycle
+> instead of scaling without limit.
 
 The first deliberate balance pass. Before it the progression was flat: 8 of
 10 technologies hung directly off Forestry, the Townhall stopped at level 2,
