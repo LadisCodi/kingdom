@@ -21,8 +21,9 @@
 // decoded bitmap that CSS and canvas can share.
 //
 // Two things the sheets taught us (Docs/art/ui/CONVERSATION.md):
-//   * a generated grid is NOT centred on its canvas, so we crop to the
-//     content bounding box FIRST and divide that — never the raw canvas;
+//   * a generated grid is neither centred on its canvas nor evenly spaced,
+//     so the columns and rows are READ OFF the sheet by finding its gutters
+//     rather than assumed from the canvas or from equal division;
 //   * ChatGPT's image-editor download bakes the transparency checkerboard in
 //     as opaque pixels, so alpha is checked by corner AND mean.
 
@@ -38,8 +39,10 @@ const OUT_ASSETS = join(ROOT, 'src/ui/assets');
 const OUT_KIT = join(ROOT, 'src/ui/kit');
 const MANIFEST = join(UI_DIR, 'atlas.manifest.json');
 
-/** Content must clear its cell edge by this much, or the grid has drifted. */
-const BLEED_PX = 6;
+/** An empty run this wide counts as a gutter between icons rather than a gap
+ *  inside one. Wide enough to survive a detached highlight, narrow enough to
+ *  separate icons the generator placed close together. */
+const GUTTER_PX = 12;
 /** Below this fraction of the cell, an icon reads as a different set. */
 const SCALE_WARN_LOW = 0.45;
 
@@ -72,6 +75,51 @@ function contentBox(file, region) {
 
 const boxStr = (b) => `${b.w}x${b.h}+${b.x}+${b.y}`;
 
+/**
+ * Where the ink is along one axis: collapse the alpha channel to a single
+ * row (or column) and read it back.
+ */
+function coverage(file, axis, length) {
+  const geom = axis === 'x' ? `${length}x1!` : `1x${length}!`;
+  const txt = magick(file, '-alpha', 'extract', '-resize', geom, '-depth', '8', 'txt:-');
+  const values = new Array(length).fill(0);
+  for (const line of txt.split('\n')) {
+    const m = /^(\d+),(\d+):\s*\((\d+)/.exec(line);
+    if (m) values[axis === 'x' ? Number(m[1]) : Number(m[2])] = Number(m[3]);
+  }
+  return values;
+}
+
+/**
+ * Split an axis into bands of ink separated by empty gutters.
+ *
+ * This replaces dividing the sheet into equal cells, which assumed the
+ * generator spaces its icons evenly — it does not. UI-D put the research
+ * icon close enough to the settings cog that an equal quarter-width boundary
+ * fell inside the book. Reading the actual gutters is both simpler and
+ * exactly right: the sheet tells us where its columns are.
+ */
+function bands(values, minGap = 4) {
+  const out = [];
+  let start = null;
+  let gap = 0;
+  values.forEach((v, i) => {
+    if (v > 2) {
+      if (start === null) start = i;
+      gap = 0;
+    } else if (start !== null) {
+      gap += 1;
+      if (gap >= minGap) {
+        out.push({ start, end: i - gap });
+        start = null;
+        gap = 0;
+      }
+    }
+  });
+  if (start !== null) out.push({ start, end: values.length - 1 });
+  return out;
+}
+
 // ---------------------------------------------------------------- verifying
 
 /**
@@ -103,9 +151,10 @@ function checkAlpha(file, label) {
 /**
  * Cut one sheet into named 32×32 cells.
  *
- * The grid is derived from the CONTENT bounding box, not the canvas: a
- * generated sheet routinely sits off-centre (UI-A: 884×702 at 72,156 on a
- * 1024² canvas), and dividing the canvas would cut through the last row.
+ * The grid comes from the sheet's own gutters. Two assumptions failed in a
+ * row here: the grid is not centred on the canvas (UI-A sat at 72,156), and
+ * it is not evenly spaced either (UI-D's book nearly touched the cog).
+ * Finding the empty columns and rows is immune to both.
  */
 function sliceSheet(sheet, cell, outDir) {
   const file = join(UI_DIR, sheet.file);
@@ -113,14 +162,23 @@ function sliceSheet(sheet, cell, outDir) {
   const label = sheet.file;
   checkAlpha(file, label);
 
-  const outer = contentBox(file);
-  if (!outer) fail(`${label}: the sheet is empty`);
   const { rows, cols } = sheet.grid;
-  const cw = Math.floor(outer.w / cols);
-  const ch = Math.floor(outer.h / rows);
+  const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
+
+  // Read the grid off the sheet instead of assuming even spacing.
+  const colBands = bands(coverage(file, 'x', w), GUTTER_PX);
+  const rowBands = bands(coverage(file, 'y', h), GUTTER_PX);
+  if (colBands.length !== cols || rowBands.length !== rows) {
+    fail(
+      `${label}: found ${colBands.length} columns and ${rowBands.length} rows of ` +
+      `icons, but the manifest says ${cols}x${rows}. Either the grid in the ` +
+      'manifest is wrong, or two icons in a row are touching and read as one — ' +
+      'regenerate asking for wider gaps.',
+    );
+  }
   console.log(
-    `ui-atlas: ${label} content ${outer.w}x${outer.h} at (${outer.x},${outer.y}) ` +
-    `→ ${cols}x${rows} cells of ${cw}x${ch}`,
+    `ui-atlas: ${label} ${cols}x${rows}, columns at ` +
+    `${colBands.map((b) => `${b.start}-${b.end}`).join(' ')}`,
   );
 
   // Pass 1: locate every icon, and find the largest so the whole sheet can
@@ -128,34 +186,18 @@ function sliceSheet(sheet, cell, outDir) {
   // different visual weights, which is what makes a set look bought-in.
   const found = [];
   sheet.names.forEach((name, i) => {
-    if (!name) return; // a deliberately empty cell
+    if (!name) return; // a deliberately skipped cell
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const region = { w: cw, h: ch, x: outer.x + col * cw, y: outer.y + row * ch };
+    const cb = colBands[col];
+    const rb = rowBands[row];
+    const region = {
+      x: cb.start, w: cb.end - cb.start + 1,
+      y: rb.start, h: rb.end - rb.start + 1,
+    };
+    // The bands bound the whole column and row; this narrows to THIS icon.
     const box = contentBox(file, region);
     if (!box) fail(`${label} [row ${row + 1}, col ${col + 1}] "${name}": the cell is empty`);
-
-    // Bleed gate — but only on boundaries this cell SHARES with a neighbour.
-    // The grid is cropped to the content bbox, so by construction the
-    // topmost icon touches the top of it, the leftmost touches the left, and
-    // so on; policing the outer rim would reject every correct sheet. What
-    // actually matters is an icon leaking into the cell next door, which is
-    // the only way trimming can pick up someone else's pixels.
-    const clear = {
-      left: col > 0 ? box.x - region.x : Infinity,
-      top: row > 0 ? box.y - region.y : Infinity,
-      right: col < cols - 1 ? region.x + region.w - (box.x + box.w) : Infinity,
-      bottom: row < rows - 1 ? region.y + region.h - (box.y + box.h) : Infinity,
-    };
-    const tight = Object.entries(clear).filter(([, v]) => v < BLEED_PX);
-    if (tight.length) {
-      fail(
-        `${label} [row ${row + 1}, col ${col + 1}] "${name}": content reaches the ` +
-        `${tight.map(([k]) => k).join(' and ')} cell edge ` +
-        `(clearance ${tight.map(([, v]) => v).join(',')}px, need ${BLEED_PX}). ` +
-        'The grid drifted — regenerate the sheet, or set "gutter" in the manifest.',
-      );
-    }
     found.push({ name, box, row, col });
   });
 

@@ -25,7 +25,7 @@ export type UiIconName =
   | 'population' | 'builders' | 'workers'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
-  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown';
+  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star';
 
 export type IconName = CurrencyId | DistrictId | UiIconName;
 
@@ -45,6 +45,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   population: '👥', builders: '👷', workers: '🧑‍🌾',
   quest: '📜', showme: '👉', padlock: '🔒', hourglass: '⏳', clock: '🕐',
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
+  star: '★', // district card level pips (Phase 3)
 };
 
 export interface IconOpts {

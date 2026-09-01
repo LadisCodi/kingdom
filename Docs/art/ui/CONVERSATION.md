@@ -45,17 +45,60 @@ magick sheet.png -alpha extract -format "%[fx:mean]" info: # < 0.5
 The editor export fails both (`srgb(253,253,253)`, mean `1`). A *faked*
 checkerboard would pass the corner test alone, which is why the mean matters.
 
-**2. The grid is not where a naive slicer would look.**
+**2. The grid is never where a slicer would assume.**
 
 Asked for a strict 3×4 grid on a 1024² canvas, the model produced well-spaced,
-consistently-sized icons — but laid the whole grid out with uneven margins:
+consistently-sized icons — and then placed the grid with uneven margins:
 
 ```
-content 884×702 at (72,156)   →  cell 221×234
-top 156   bottom 166   left 72   right 68
+content 884×702 at (72,156)   →  top 156  bottom 166  left 72  right 68
 ```
 
-Slicing on `1024/4 × 1024/3` would cut through the bottom row. **The slicer
-must crop to the content bounding box first, then divide that** into cells.
-The generous per-icon margins mean trim-to-bbox then recovers each icon
-exactly, so this costs nothing as long as the tool does it in that order.
+So the canvas cannot be divided directly. Cropping to the content bounding
+box and dividing THAT survived UI-A but failed on UI-D, where the research
+icon sits close enough to the settings cog that an equal quarter-width
+boundary fell inside the book: the spacing is not uniform either.
+
+The slicer therefore **reads the grid off the sheet**, finding the empty
+columns and rows (gutters ≥ 12px) and taking each band as a column or row.
+That is immune to both problems, and it turns a whole class of "regenerate
+the sheet" into no work at all. It also gives a much better error: if the
+band count disagrees with the manifest, either the manifest is wrong or two
+icons are touching — both actionable.
+
+---
+
+## UI-B, UI-C, UI-D
+
+Same conversation, 2026-09-02, continued so the model kept UI-A in context as
+its own style reference — which is why the four sheets read as one set.
+
+| Sheet | Grid | Contents |
+|---|---|---|
+| `ui-b-buildings.png` | 3×3 | Townhall, Housing, Farm, FarmLands, Sawmill, Market, Quarry, Docks, Mine |
+| `ui-c-symbols.png` | 4×3 | quest, showme, padlock, hourglass, clock, tick, close, plus, minus, sparkle, unknown, Meat |
+| `ui-d-ui.png` | 4×2 | build, army, research, settings, population, builders, workers, star |
+
+### The prompt correction that mattered
+
+UI-A's status icons came back as little illustrated *characters* — a farmer
+with a hoe, three villagers with faces. Charming at 64px, mud at 16. The
+contact sheet made that obvious immediately.
+
+Every later prompt therefore leads with: **"these must be SYMBOLS, not little
+characters. No faces, no bodies, no people."** UI-D re-does the three status
+icons on that basis (faceless silhouettes, a hard hat on its own, crossed
+tools), and the manifest skips UI-A's originals rather than generating art
+that is immediately overwritten.
+
+For the six abstract marks (check, cross, plus, minus, sparkle, question) the
+extra instruction that worked was a concrete floor: *"THICK and CHUNKY — at
+least 20 pixels of stroke width at this canvas size — so they survive being
+shrunk."* Without it they come back as thin drawn strokes.
+
+### It self-corrects if you let it
+
+On UI-C the model reported: *"The first alpha pass exposed residual
+checkerboard texture rather than clean transparency, so it didn't meet the
+export rule."* — and ran a second, tighter matte removal unprompted. Stating
+the export rule as a rule, not a preference, is what makes that happen.
