@@ -1,0 +1,95 @@
+/* The quest tracker (§5.2) — an unrolled scroll under the header. */
+
+#quest { padding: 8px 12px 0; align-self: flex-start; max-width: 100%; }
+#quest[hidden] { display: none; }
+
+.q-scroll {
+  position: relative;
+  width: 320px;
+  max-width: 100%;
+  padding: 12px 14px 10px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  /* Curled edges: a darker band top and bottom, as if the sheet is rolled. */
+  background:
+    linear-gradient(var(--parchment-shade), var(--parchment-shade)) top / 100% 7px no-repeat,
+    linear-gradient(var(--parchment-shade), var(--parchment-shade)) bottom / 100% 7px no-repeat,
+    var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: 6px;
+  box-shadow: 0 4px 0 rgba(60, 36, 18, 0.3), 0 10px 20px rgba(60, 36, 18, 0.3);
+}
+
+/* The wax seal pins the scroll to the screen. */
+.q-seal {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--clay);
+  border: 2px solid #8e3323;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.4);
+}
+
+/* The chain has always known its own length; now it says so. */
+.q-chain {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.q-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  margin: 1px 0 2px;
+}
+.q-desc { color: var(--ink-muted); margin-bottom: 8px; }
+
+.q-pips { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); }
+.q-pips[hidden] { display: none; }
+
+.q-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.q-reward { flex: 1; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.q-reward-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+/* Loot, not a sentence. */
+.q-reward-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  background: var(--gold);
+  border: 2px solid var(--gold-dark);
+  border-radius: 999px;
+}
+.q-foot .k-btn { min-height: 40px; padding: 8px 14px; font-size: var(--text-helper); }
+.q-foot .k-btn[hidden] { display: none; }
+
+/* Done: a gold rim and a gentle bob, so Claim is the only lively thing on
+ * screen. */
+.q-scroll.is-complete {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 3px var(--gold), 0 4px 0 rgba(60, 36, 18, 0.3),
+    0 10px 22px rgba(60, 36, 18, 0.35);
+  animation: q-bob 1.4s ease-in-out infinite alternate;
+}
+@keyframes q-bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .q-scroll.is-complete { animation: none; }
+}

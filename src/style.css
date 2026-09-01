@@ -102,15 +102,6 @@ button.switch.on::after { transform: translateX(22px); }
 @keyframes notice-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes notice-out { to { transform: translateY(-16px); opacity: 0; } }
 
-/* ---------- quest tracker (under the header, main screen only) ---------- */
-/* Hidden while menus/panels are open (the widget unmounts), so no z-index games. */
-#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
-.quest-card {
-  padding: 10px 12px; max-width: 320px; font-size: 13px;
-  background: rgba(20, 26, 35, 0.96); border: 1px solid #3a4757; border-radius: 10px;
-}
-.quest-card .name { font-weight: 600; margin-bottom: 2px; }
-.quest-card .action-row { margin-top: 8px; }
 
 /* ---------- bottom panel (placement / district card) ---------- */
 #panel:empty { display: none; }

@@ -618,10 +618,22 @@ export class Game {
     const result = claimQuest(this.state);
     if (result === 'Claimed' && quest) {
       // The LAST claim gets the victory sting instead of the usual chime.
-      playSfx(activeQuest(this.state) === null ? 'chainFinished' : 'quest');
+      const finished = activeQuest(this.state) === null;
+      playSfx(finished ? 'chainFinished' : 'quest');
       const parts = Object.entries(quest.reward)
         .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
       this.floaters.add(townhall(this.state).location, parts.join(' '));
+      // Finishing the chain used to just make the tracker vanish, which reads
+      // as a bug rather than an ending. Say something.
+      if (finished) {
+        this.queueBanner({
+          title: 'The chain is done',
+          icon: '👑',
+          name: 'Your kingdom stands on its own',
+          desc: 'No more guidance — build whatever you like from here.',
+          sfx: 'chainFinished',
+        });
+      }
     }
     this.notify();
   }
