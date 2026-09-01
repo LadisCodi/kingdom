@@ -75,7 +75,8 @@ button.switch.on:hover { background: #58a058; }
 button.switch.on::after { transform: translateX(22px); }
 
 /* ---------- quest pill (under the header) ---------- */
-#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+/* Above #overlay (5) so the tracker never disappears behind menus. */
+#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; position: relative; z-index: 6; }
 .quest-pill {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px; font-size: 13px; border-radius: 999px;
@@ -115,7 +116,8 @@ button.switch.on::after { transform: translateX(22px); }
 #overlay {
   position: absolute; inset: 0; background: rgba(10, 13, 18, 0.88);
   overflow-y: auto; z-index: 5;
-  padding: 16px 16px calc(80px + env(safe-area-inset-bottom)); /* clear the navbar */
+  /* top clears the always-visible quest pill; bottom clears the navbar */
+  padding: 52px 16px calc(80px + env(safe-area-inset-bottom));
 }
 .menu { max-width: 560px; margin: 0 auto; }
 .menu h2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }

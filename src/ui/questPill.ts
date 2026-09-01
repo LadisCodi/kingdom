@@ -38,13 +38,17 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
     (bar.querySelector('.fill') as HTMLElement).style.width =
       `${(value / quest.goalAmount) * 100}%`;
     card.append(bar);
-    const claimBtn = button('Claim', () => {
-      game.doClaimQuest();
-    });
-    claimBtn.disabled = !complete;
+    // Complete → Claim; otherwise 🔍 navigates to where the quest is done.
+    const actionBtn = complete
+      ? button('Claim', () => game.doClaimQuest())
+      : button('🔍', () => {
+          expanded = false; // get the menus/camera in view
+          game.focusQuest();
+        });
+    if (!complete) actionBtn.setAttribute('aria-label', 'Show me where');
     card.append(el('div', { class: 'action-row' },
       el('span', { class: 'info' }, `Reward: ${rewardText(quest.reward)}`),
-      claimBtn));
+      actionBtn));
     root.append(card);
   };
   game.onChange(refresh);

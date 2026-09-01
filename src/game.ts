@@ -8,7 +8,7 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  BUILDABLE_DISTRICTS, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING,
+  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING,
 } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
@@ -19,7 +19,7 @@ import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/g
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { salePayout, sellGoods } from './sim/market';
+import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
   availableWorkers, houseTap, maxPopulation, populationCost, queuedTraining,
   queueTraining, residentsOf, trainingCompletesAt,
@@ -349,6 +349,99 @@ export class Game {
     const result = buyUpgrade(this.state, id);
     if (result === 'NotEnoughResources') this.shake(['Gold']);
     this.notify();
+  }
+
+  /** The quest 🔍: navigate to where the ACTIVE quest can be progressed —
+   *  open the right menu, or close menus and center/inspect on the map. */
+  focusQuest(): void {
+    const quest = activeQuest(this.state);
+    if (!quest) return;
+    const overlay = (name: string) => this.setOverlay(name);
+    const centerCell = (cell: Coord | null) => {
+      if (!cell) return;
+      this.setOverlay(null);
+      this.inspectedDistrictId = null;
+      this.camera.centerOnCell(cell);
+      this.notify();
+    };
+    const inspect = (district: District | undefined, fallback = 'build') => {
+      if (!district) {
+        overlay(fallback);
+        return;
+      }
+      this.setOverlay(null);
+      this.inspectedDistrictId = district.uniqueId;
+      this.camera.centerOnCell(district.location);
+      this.notify();
+    };
+    const built = (pred: (d: District) => boolean) =>
+      this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
+    switch (quest.goalType) {
+      case 'BuildDistrict':
+        overlay('build');
+        break;
+      case 'UpgradeDistrict':
+        inspect(built((d) => d.definitionId === quest.goalTarget));
+        break;
+      case 'ReachPopulation':
+        inspect(townhall(this.state));
+        break;
+      case 'CompleteTech':
+      case 'CompleteTechs':
+        overlay('research');
+        break;
+      case 'AssignWorkers':
+        inspect(built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0));
+        break;
+      case 'TrainArmy':
+        overlay('army');
+        break;
+      case 'SellGoods':
+        overlay(hasMarket(this.state) ? 'market' : 'build');
+        break;
+      case 'DiscoverCells':
+        centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      case 'CollectTaps':
+        centerCell(this.nearestCell((c) =>
+          this.state.fog.revealed[coordKey(c)] === true && harvestSourceAt(this.state, c) !== null));
+        break;
+      case 'HoldResource':
+      case 'CollectResource': {
+        if (quest.goalTarget === 'Gold') {
+          inspect(built((d) => DISTRICTS[d.definitionId].populationCapacity > 0 &&
+            residentsOf(this.state, d) > 0) ?? townhall(this.state));
+          break;
+        }
+        const cell = this.nearestCell((c) => {
+          if (this.state.fog.revealed[coordKey(c)] !== true) return false;
+          const source = harvestSourceAt(this.state, c);
+          if (source === null) return false;
+          // Food-valued sources (berries, meat, fish) satisfy a Food target.
+          const currency = HARVEST[source].currencyId;
+          return currency === quest.goalTarget ||
+            CURRENCIES[currency].countsAs?.currency === quest.goalTarget;
+        });
+        if (cell) centerCell(cell);
+        else centerCell(townhall(this.state).location);
+        break;
+      }
+    }
+  }
+
+  /** Nearest cell (by townhall distance) satisfying the predicate. */
+  private nearestCell(pred: (cell: Coord) => boolean): Coord | null {
+    let best: Coord | null = null;
+    let bestD = Infinity;
+    for (const c of this.map.cells) {
+      if (!pred(c)) continue;
+      const d = townhallDistance(this.map, c);
+      if (d < bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    return best;
   }
 
   doClaimQuest(): void {

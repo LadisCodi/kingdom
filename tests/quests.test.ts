@@ -15,8 +15,10 @@ import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
 const FOREST = { x: 2, y: 2 };
 
 describe('the quest chain', () => {
-  it('ships 17 quests, starting with the tap tutorial', () => {
-    expect(QUESTS).toHaveLength(17);
+  it('ships 18 quests, starting with the tap tutorial', () => {
+    expect(QUESTS).toHaveLength(18);
+    expect(QUESTS.findIndex((q) => q.id === 'Rations'))
+      .toBe(QUESTS.findIndex((q) => q.id === 'FirstVillager') - 1); // food before mouths
     expect(QUESTS[0]).toMatchObject({ id: 'FirstSteps', goalType: 'CollectTaps', goalAmount: 5 });
     expect(QUESTS[1]).toMatchObject({ id: 'Timber', goalType: 'HoldResource', goalTarget: 'Wood' });
   });

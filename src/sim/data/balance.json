@@ -702,6 +702,18 @@
       }
     },
     {
+      "id": "Rations",
+      "name": "Rations",
+      "description": "Gather 3 Food for your first villager — the berry bushes will do.",
+      "goalType": "HoldResource",
+      "goalTarget": "Food",
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      }
+    },
+    {
       "id": "FirstVillager",
       "name": "First villager",
       "description": "Train a villager at the Townhall — berries make fine rations.",
