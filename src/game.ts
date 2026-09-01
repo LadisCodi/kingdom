@@ -8,7 +8,7 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING,
+  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING, UNITS,
 } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
@@ -55,6 +55,14 @@ export type Hint =
 
 const HINT_MS = 8000;
 
+/** A queued top-of-screen notification card (shown one at a time, 5s each). */
+export interface Banner {
+  title: string;
+  icon: string;
+  name: string;
+  desc: string;
+}
+
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
@@ -64,7 +72,7 @@ export class Game {
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
   readonly tapFx = new TapFx();
-  private bannerQueue: string[] = [];
+  private bannerQueue: Banner[] = [];
   private changeListeners: Array<() => void> = [];
   private shakeListeners: Array<(c: CurrencyId[]) => void> = [];
   private toastListeners: Array<(msg: string) => void> = [];
@@ -95,14 +103,19 @@ export class Game {
   notify(): void {
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render.
-    if (this.state.pendingDiscoveries.length > 0) {
-      this.bannerQueue.push(...this.state.pendingDiscoveries.splice(0));
+    for (const key of this.state.pendingDiscoveries.splice(0)) {
+      const [kind, id] = key.split(':');
+      if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
     }
     for (const fn of this.changeListeners) fn();
   }
 
-  /** The next queued discovery banner, if any (consumed). */
-  takeDiscovery(): string | null {
+  queueBanner(banner: Banner): void {
+    this.bannerQueue.push(banner);
+  }
+
+  /** The next queued banner, if any (consumed by the banner component). */
+  takeBanner(): Banner | null {
     return this.bannerQueue.shift() ?? null;
   }
   shake(currencies: CurrencyId[]): void {
@@ -126,10 +139,33 @@ export class Game {
       this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation} 👥`);
     }
     for (const item of result.completedItems) {
-      this.toast(item.kind === 'build' ? 'Construction complete!' : 'Upgrade complete!');
+      const district = districtById(this.state, item.districtUniqueId);
+      if (!district) continue;
+      const def = DISTRICTS[district.definitionId];
+      this.queueBanner(item.kind === 'build'
+        ? { title: 'Construction complete!', icon: def.glyph, name: def.name, desc: def.description }
+        : { title: 'Upgrade complete!', icon: def.glyph, name: def.name, desc: `Now level ${district.level}` });
     }
     for (const id of result.completedResearch) {
-      this.toast(`Research complete: ${TECHNOLOGIES[id].name}!`);
+      const tech = TECHNOLOGIES[id];
+      this.queueBanner({
+        title: 'Research complete!', icon: tech.glyph, name: tech.name, desc: tech.description,
+      });
+      // Everything this tech just unlocked gets its own card, queued behind.
+      for (const def of Object.values(DISTRICTS)) {
+        if (def.requiredTech === id) {
+          this.queueBanner({
+            title: 'New building unlocked!', icon: def.glyph, name: def.name, desc: def.description,
+          });
+        }
+      }
+      for (const unit of Object.values(UNITS)) {
+        if (unit.requiredTech === id) {
+          this.queueBanner({
+            title: 'New unit unlocked!', icon: unit.glyph, name: unit.name, desc: unit.description,
+          });
+        }
+      }
     }
     this.notify();
   }
@@ -773,6 +809,19 @@ export class Game {
     if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return effectiveAmount(this.state.city.wallet, c);
   }
+}
+
+/** The discovery card for a first-collected resource. */
+function resourceBanner(currency: CurrencyId): Banner {
+  const def = CURRENCIES[currency];
+  const desc = def.countsAs
+    ? `${def.countsAs.value} ${def.countsAs.currency}`
+    : currency === 'Gold'
+      ? 'Pays for everything'
+      : def.goldValue !== null
+        ? `Sells for ${def.goldValue} ${icon('Gold')}`
+        : '';
+  return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
 }
 
 /** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */
