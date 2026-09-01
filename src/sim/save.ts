@@ -144,6 +144,10 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.army': {
         Units: state.army.map((u) => ({ UniqueID: u.uniqueId, DefinitionID: u.definitionId })),
       },
+      'kingdom.quests': {
+        Index: state.quests.index,
+        Progress: state.quests.progress,
+      },
       'kingdom.research': {
         Completed: state.research.completed,
         Active: state.research.active.map((a) => ({
@@ -277,6 +281,14 @@ export function deserialize(save: SaveFile, map: MapData, now: number): GameStat
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
     state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
+  }
+
+  const questsDto = modules['kingdom.quests'];
+  if (questsDto) {
+    state.quests = {
+      index: questsDto.Index ?? 0,
+      progress: questsDto.Progress ?? 0,
+    };
   }
 
   const playerDto = modules['player.currencies'];

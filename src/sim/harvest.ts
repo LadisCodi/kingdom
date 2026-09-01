@@ -2,6 +2,7 @@
 // (Docs/features/harvest-loop.md §1, §4).
 
 import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { recordQuestEvent } from './quests';
 import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import {
@@ -164,7 +165,10 @@ export function tapCell(
   if (source === null) return 'NotHarvestable';
   if (isExhausted(state, cell, now)) return 'Exhausted';
   const spec = HARVEST[source];
-  addToWallet(state.city.wallet, spec.currencyId, tapYieldAt(state, cell));
+  const units = tapYieldAt(state, cell);
+  addToWallet(state.city.wallet, spec.currencyId, units);
+  recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
+  recordQuestEvent(state, { kind: 'tap' });
   registerTap(state, cell, spec, now);
   return 'Harvested';
 }

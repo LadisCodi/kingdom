@@ -664,6 +664,214 @@
       "goldPerMinute": -1
     }
   ],
+  "quests": [
+    {
+      "id": "FirstSteps",
+      "name": "First steps",
+      "description": "Tap the forest next to your Townhall to gather Wood.",
+      "goalType": "CollectTaps",
+      "goalTarget": null,
+      "goalAmount": 5,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 10
+      }
+    },
+    {
+      "id": "Timber",
+      "name": "Timber!",
+      "description": "Stockpile 10 Wood — enough for your first building.",
+      "goalType": "HoldResource",
+      "goalTarget": "Wood",
+      "goalAmount": 10,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      }
+    },
+    {
+      "id": "ARoof",
+      "name": "A roof",
+      "description": "Build a Housing next to the Townhall.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Housing",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 20
+      }
+    },
+    {
+      "id": "FirstVillager",
+      "name": "First villager",
+      "description": "Train a villager at the Townhall — berries make fine rations.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 25
+      }
+    },
+    {
+      "id": "Explorer",
+      "name": "Explorer",
+      "description": "Spend Gold on the misty frontier — reveal 6 new map cells.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 6,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 20
+      }
+    },
+    {
+      "id": "TaxDay",
+      "name": "Tax day",
+      "description": "Collect 30 Gold — housed villagers pay taxes every minute.",
+      "goalType": "CollectResource",
+      "goalTarget": "Gold",
+      "goalAmount": 30,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 20,
+        "Wood": 10
+      }
+    },
+    {
+      "id": "Woodcraft",
+      "name": "Forestry",
+      "description": "Research Forestry — the root of the technology tree.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Forestry",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 40
+      }
+    },
+    {
+      "id": "TheSawmill",
+      "name": "The Sawmill",
+      "description": "Build a Sawmill near the forest.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Sawmill",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      }
+    },
+    {
+      "id": "ToWork",
+      "name": "Put them to work",
+      "description": "Assign a worker — they will chop wood for you.",
+      "goalType": "AssignWorkers",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      }
+    },
+    {
+      "id": "GrowingTown",
+      "name": "Growing town",
+      "description": "Build a second Housing — mind the crowding penalty!",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Housing",
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 40
+      }
+    },
+    {
+      "id": "Neighbors",
+      "name": "Neighbors",
+      "description": "Reach a population of 2.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 50
+      }
+    },
+    {
+      "id": "PickARoute",
+      "name": "Pick a route",
+      "description": "Research 3 technologies — farm the land or fish the sea, your call.",
+      "goalType": "CompleteTechs",
+      "goalTarget": null,
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 60
+      }
+    },
+    {
+      "id": "Stoneworks",
+      "name": "Stoneworks",
+      "description": "Build a Quarry — Stone builds the future.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Quarry",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 50,
+        "Food": 20
+      }
+    },
+    {
+      "id": "ToMarket",
+      "name": "To market",
+      "description": "Build the Market and open trade.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 80
+      }
+    },
+    {
+      "id": "Merchant",
+      "name": "Merchant",
+      "description": "Sell 20 goods at the Market.",
+      "goalType": "SellGoods",
+      "goalTarget": null,
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      }
+    },
+    {
+      "id": "FirstSoldier",
+      "name": "First soldier",
+      "description": "Train your first army unit — iron wins wars.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      }
+    },
+    {
+      "id": "ProperCapital",
+      "name": "A proper capital",
+      "description": "Upgrade the Townhall to level 2.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Townhall",
+      "goalAmount": 1,
+      "goalLevel": 2,
+      "reward": {
+        "Gold": 150
+      }
+    }
+  ],
   "fog": {
     "silverPerTap": 0,
     "rings": [

@@ -24,6 +24,7 @@ import {
   availableWorkers, houseTap, maxPopulation, populationCost, queuedTraining,
   queueTraining, residentsOf, trainingCompletesAt,
 } from './sim/population';
+import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import { buySlot, startTech } from './sim/research';
 import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
 import {
@@ -33,6 +34,7 @@ import {
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { playPop } from './audio/sfx';
+import { QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { Villagers } from './render/villagers';
@@ -347,6 +349,33 @@ export class Game {
     const result = buyUpgrade(this.state, id);
     if (result === 'NotEnoughResources') this.shake(['Gold']);
     this.notify();
+  }
+
+  doClaimQuest(): void {
+    const quest = activeQuest(this.state);
+    const result = claimQuest(this.state);
+    if (result === 'Claimed' && quest) {
+      playPop();
+      const parts = Object.entries(quest.reward)
+        .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
+      this.floaters.add(townhall(this.state).location, parts.join(' '));
+    }
+    this.notify();
+  }
+
+  /** Active-quest snapshot for the pill; null when the chain is finished. */
+  questInfo(): {
+    quest: QuestDef; value: number; complete: boolean; index: number; total: number;
+  } | null {
+    const quest = activeQuest(this.state);
+    if (!quest) return null;
+    return {
+      quest,
+      value: Math.min(questValue(this.state, quest), quest.goalAmount),
+      complete: isQuestComplete(this.state, quest),
+      index: this.state.quests.index,
+      total: QUESTS.length,
+    };
   }
 
   doBuySlot(): void {

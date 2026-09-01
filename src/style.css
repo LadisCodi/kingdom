@@ -74,6 +74,19 @@ button.switch.on { background: #58a058; border-color: #6ab06a; }
 button.switch.on:hover { background: #58a058; }
 button.switch.on::after { transform: translateX(22px); }
 
+/* ---------- quest pill (under the header) ---------- */
+#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+.quest-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px; font-size: 13px; border-radius: 999px;
+  background: rgba(20, 26, 35, 0.92);
+}
+.quest-card {
+  margin-top: 6px; padding: 10px 12px; max-width: 320px; font-size: 13px;
+  background: rgba(20, 26, 35, 0.96); border: 1px solid #3a4757; border-radius: 10px;
+}
+.quest-card .action-row { margin-top: 8px; }
+
 /* ---------- bottom panel (placement / district card) ---------- */
 #panel:empty { display: none; }
 #panel {

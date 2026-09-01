@@ -60,6 +60,15 @@ const UPGRADE_IDS = [
 const UNIT_IDS = ['Archer', 'Swordsman', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
+const QUEST_GOAL_TYPES = {
+  // absolute — goal_target validated against the named id list (null = none)
+  BuildDistrict: 'district', UpgradeDistrict: 'district', HoldResource: 'currency',
+  ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null,
+  AssignWorkers: null, TrainArmy: null,
+  // relative
+  CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
+};
+
 const CURRENCY_IDS =
   ['Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems'];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone', 'Iron'];
@@ -121,6 +130,8 @@ const SHEETS = {
     'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
+  Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
+    'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron'],
   Settings: ['key', 'value'],
 };
 
@@ -377,6 +388,7 @@ async function importXlsx() {
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
+    quests: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
     offlineCapHours: 0,
@@ -499,6 +511,38 @@ async function importXlsx() {
     });
   }
 
+  const questIds = new Set();
+  for (const r of readSheet(workbook, 'Quests')) {
+    if (!(r.goal_type in QUEST_GOAL_TYPES)) fail(where(r), `unknown goal_type "${r.goal_type}"`);
+    if (questIds.has(r.id)) fail(where(r), `duplicate quest id "${r.id}"`);
+    questIds.add(r.id);
+    const targetKind = QUEST_GOAL_TYPES[r.goal_type];
+    const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
+    const lists = { district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS };
+    if (targetKind === null && target !== null) {
+      fail(where(r), `goal_type ${r.goal_type} takes no goal_target`);
+    }
+    if (targetKind !== null && (target === null || !lists[targetKind].includes(target))) {
+      fail(where(r), `goal_target "${target}" is not a valid ${targetKind}`);
+    }
+    const amount = num(r, 'goal_amount');
+    if (amount < 1) fail(where(r), 'goal_amount must be ≥ 1');
+    const level = (r.goal_level === '' || r.goal_level === undefined) ? null : num(r, 'goal_level');
+    if ((r.goal_type === 'UpgradeDistrict') !== (level !== null)) {
+      fail(where(r), 'goal_level is required for UpgradeDistrict and only there');
+    }
+    out.quests.push({
+      id: r.id,
+      name: String(r.name),
+      description: String(r.description),
+      goalType: r.goal_type,
+      goalTarget: target,
+      goalAmount: amount,
+      goalLevel: level,
+      reward: wallet(r, 'reward'),
+    });
+  }
+
   let lastDistance = 0;
   for (const r of readSheet(workbook, 'FogRings')) {
     const distance = num(r, 'distance');
@@ -595,6 +639,11 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
     [a.district, a.neighbor, a.goldPerMinute]));
+
+  addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
+    q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
+    q.goalLevel ?? '', ...costCells(q.reward),
+  ]));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;

@@ -38,6 +38,7 @@ export function newGame(map: MapData, now: number): GameState {
     army: [],
     research: { completed: [], active: [], slotsPurchased: 0 },
     upgrades: {},
+    quests: { index: 0, progress: 0 },
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,

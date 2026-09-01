@@ -2,6 +2,7 @@
 
 import { DISTRICTS, FOG } from './data/definitions';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
+import { recordQuestEvent } from './quests';
 import {
   addToWallet, coordKey, districtCells, getWallet,
   type Coord, type District, type GameState,
@@ -57,6 +58,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     delete state.fog.progress[key];
     delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
+    recordQuestEvent(state, { kind: 'reveal' });
     return 'Revealed'; // caller must trigger a production recalc
   }
   state.fog.progress[key] = nowPaid;

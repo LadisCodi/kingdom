@@ -110,6 +110,34 @@ export const ADJACENCY = balance.adjacency as unknown as AdjacencyRule[];
 
 export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
+// -------------------------------------------------------------------- quests
+
+/** Absolute types are state predicates (done-or-not, regardless of when the
+ *  quest activated); relative types count events only while active. */
+export type QuestGoalType =
+  | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
+  | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
+  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'SellGoods';
+
+export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
+  new Set(['CollectResource', 'CollectTaps', 'DiscoverCells', 'SellGoods']);
+
+export interface QuestDef {
+  id: string; // content id — data-side, not a TS union
+  name: string;
+  description: string;
+  goalType: QuestGoalType;
+  /** DistrictId / TechId / CurrencyId depending on goalType; null otherwise. */
+  goalTarget: string | null;
+  goalAmount: number;
+  /** UpgradeDistrict only: the level bar ("n districts at level ≥ L"). */
+  goalLevel: number | null;
+  reward: Wallet;
+}
+
+/** The chain, in sheet order — one quest active at a time. */
+export const QUESTS = balance.quests as unknown as QuestDef[];
+
 // ----------------------------------------------------------------- districts
 
 export interface DistrictDef {
@@ -534,4 +562,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 13; // v12 saves predate the 2×1 Docks footprint; discarded
+export const SAVE_VERSION = 14; // v13 saves predate the quest chain; discarded

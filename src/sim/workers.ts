@@ -6,6 +6,7 @@ import { DISTRICTS, HARVEST, WORKER, levelIndexed } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { effectiveWorkerYield } from './upgrades';
 import { harvestSourceAt, isExhausted, recoversAt, registerTap } from './harvest';
+import { recordQuestEvent } from './quests';
 import {
   addToWallet, coordKey, districtById, newId, sameCell,
   type Coord, type CurrencyId, type District, type GameState, type Worker,
@@ -145,6 +146,7 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
           const spec = HARVEST[source];
           const amount = effectiveWorkerYield(state, spec);
           addToWallet(state.city.wallet, spec.currencyId, amount);
+          recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
           registerTap(state, w.claimedCell, spec, t);
           deposits.push({ cell: building.location, currencyId: spec.currencyId, amount });
         }

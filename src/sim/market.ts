@@ -3,6 +3,7 @@
 // passive housing taxes. Tap the built Market to open its trade screen.
 
 import { CURRENCIES } from './data/definitions';
+import { recordQuestEvent } from './quests';
 import { effectiveSalePriceMultiplier } from './upgrades';
 import { addToWallet, getWallet, type CurrencyId, type GameState } from './state';
 
@@ -35,5 +36,7 @@ export function sellGoods(
   const gold = salePayout(state, currency, units);
   addToWallet(state.city.wallet, currency, -units);
   addToWallet(state.city.wallet, 'Gold', gold);
+  recordQuestEvent(state, { kind: 'sell', units });
+  recordQuestEvent(state, { kind: 'collect', currency: 'Gold', amount: gold });
   return { result: 'Sold', units, gold };
 }

@@ -22,6 +22,7 @@ the script.
 | `Technologies` | One-time researches: costs, duration, `requires` (comma-separated tech ids) |
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `Adjacency` | Gold/min a district gains **or loses** per adjacent neighbor of a given type (negative = crowding penalty); columns `district`, `neighbor`, `gold_per_minute` — negatives allowed, one row per pair |
+| `Quests` | The onboarding chain, one row per quest IN ORDER: `goal_type` (absolute: BuildDistrict/UpgradeDistrict/HoldResource/ReachPopulation/CompleteTech/CompleteTechs/AssignWorkers/TrainArmy · relative: CollectResource/CollectTaps/DiscoverCells/SellGoods), `goal_target` (district/tech/currency id where the type needs one), `goal_amount`, `goal_level` (UpgradeDistrict only), `reward_*` |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate + tap boost (`taxes.*`), offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |

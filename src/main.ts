@@ -21,6 +21,7 @@ import { renderArmyMenu } from './ui/armyMenu';
 import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
+import { mountQuestPill } from './ui/questPill';
 import { button, el } from './ui/format';
 
 const AUTOSAVE_TICKS = 30;
@@ -45,6 +46,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------------- UI
   mountHeader(game, document.getElementById('header')!);
+  mountQuestPill(game, document.getElementById('quest')!);
   mountNavbar(game, document.getElementById('navbar')!);
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   setCloudBadge(saveModeLabel);

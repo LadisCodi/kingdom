@@ -133,6 +133,9 @@ export interface GameState {
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   upgrades: Partial<Record<UpgradeId, number>>;
+  /** The quest chain: index into QUESTS (length = all done); progress is the
+   *  event counter for RELATIVE goals, reset when a quest is claimed. */
+  quests: { index: number; progress: number };
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
   /** Epoch ms of the last successful player collect tap (cooldown anchor).
