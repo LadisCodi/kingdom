@@ -1,6 +1,8 @@
 import { advance } from '../src/sim/commands';
+import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
+import { Camera } from '../src/render/camera';
 import {
   coordKey, type Coord, type DistrictId, type GameState, type TechId,
 } from '../src/sim/state';
@@ -9,6 +11,12 @@ export const map = buildMapData();
 export const T0 = Date.parse('2026-08-17T12:00:00Z');
 
 export const freshGame = (): GameState => newGame(map, T0);
+
+/** The presenter, constructible under node: Camera only stores the canvas
+ *  (nothing these tests reach touches it), playSfx swallows the missing
+ *  AudioContext, and mapRenderer is only ever an erased `import type`. */
+export const freshPresenter = (state: GameState = freshGame()): Game =>
+  new Game(state, map, new Camera(null as unknown as HTMLCanvasElement));
 
 export const fund = (state: GameState, wallet: Record<string, number>): void => {
   Object.assign(state.city.wallet, wallet);
