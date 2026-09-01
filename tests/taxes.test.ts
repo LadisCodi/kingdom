@@ -68,13 +68,23 @@ describe('tapping a house', () => {
     state.city.population = 2; // 60/min → 1s per gold; boost = 2s per tap
     expect(TAXES.tapBoostSeconds).toBe(2);
     expect(houseTap(state, house(state), T0)).toEqual({ result: 'Boosted', gold: 2 });
-    // Paced by the shared collect cooldown (0.5s).
-    expect(houseTap(state, house(state), T0).result).toBe('OnCooldown');
+    // A HELD pointer is paced by the auto-tap cooldown, so this repeat is a
+    // no-op and the arithmetic below carries on from the first tap.
+    expect(houseTap(state, house(state), T0, true).result).toBe('OnCooldown');
     // 2s boost + 0.5s of real time → 2 whole gold, 0.5s carried.
     expect(houseTap(state, house(state), T0 + 500)).toEqual({ result: 'Boosted', gold: 2 });
     // 2s boost + the carried 0.5s + another 0.5s real → 3 whole gold.
     expect(houseTap(state, house(state), T0 + 1000)).toEqual({ result: 'Boosted', gold: 3 });
     expect(getWallet(state.city.wallet, 'Gold')).toBe(7);
+  });
+
+  it('deliberate house taps are not gated — only held repeats are', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    state.city.population = 2;
+    expect(houseTap(state, house(state), T0).result).toBe('Boosted');
+    expect(houseTap(state, house(state), T0).result).toBe('Boosted'); // same instant
+    expect(houseTap(state, house(state), T0, true).result).toBe('OnCooldown');
   });
 
   it('an empty house cannot be boosted, and houses are not harvest cells', () => {

@@ -6,7 +6,7 @@ import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
-import { effectiveCollectCooldownMs, effectiveTaxRate } from './upgrades';
+import { effectiveAutoTapCooldownMs, effectiveTaxRate } from './upgrades';
 import { addToWallet, type District, type GameState } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -115,16 +115,19 @@ export type HouseTapResult = 'Boosted' | 'NoResidents' | 'OnCooldown';
 
 /** Tap a lived-in house: fast-forward the CITY tax clock by
  *  taxes.tap_boost_seconds — the building-timer twin of the Townhall's
- *  training boost. Paced by the shared collect cooldown (QuickHands helps),
- *  and houses never exhaust — that mechanic is for natural cells only.
- *  Returns any gold that matured from the boost. */
+ *  training boost. Houses never exhaust — that mechanic is for natural cells
+ *  only. Returns any gold that matured from the boost.
+ *
+ *  Same asymmetry as `collectTap`: deliberate taps are unrestricted, only the
+ *  repeats from a held pointer wait out the auto-tap cooldown. */
 export function houseTap(
   state: GameState,
   district: District,
   now: number,
+  autoRepeat = false,
 ): { result: HouseTapResult; gold: number } {
   if (residentsOf(state, district) === 0) return { result: 'NoResidents', gold: 0 };
-  if (now - state.lastCollectTapAt < effectiveCollectCooldownMs(state)) {
+  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
     return { result: 'OnCooldown', gold: 0 };
   }
   state.lastCollectTapAt = now;

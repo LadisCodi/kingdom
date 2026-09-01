@@ -4,7 +4,7 @@
 import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
-import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
+import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import {
   addToWallet, coordKey, districtAt, parseCoordKey,
@@ -175,15 +175,23 @@ export function tapCell(
   return 'Harvested';
 }
 
-/** The PLAYER's collect tap: tapCell gated by the collect cooldown. The same
- *  gate paces hold-to-collect — the input layer retries and this decides. */
+/** The PLAYER's collect tap.
+ *
+ *  A deliberate tap is never gated — tapping fast is a skill. Only the
+ *  repeats a HELD pointer generates pass `autoRepeat`, and those wait out
+ *  `effectiveAutoTapCooldownMs` so holding stays the lazier, slower option.
+ *  Every successful collect stamps the clock, so starting a hold right after
+ *  a manual tap still waits one full cooldown. */
 export function collectTap(
   state: GameState,
   map: MapData,
   cell: Coord,
   now: number,
+  autoRepeat = false,
 ): CollectTapResult {
-  if (now - state.lastCollectTapAt < effectiveCollectCooldownMs(state)) return 'OnCooldown';
+  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
+    return 'OnCooldown';
+  }
   const result = tapCell(state, map, cell, now);
   if (result === 'Harvested') state.lastCollectTapAt = now;
   return result;

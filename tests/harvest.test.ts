@@ -1,10 +1,12 @@
-// Cell harvest: tap yields, exhaustion, lazy recovery, the collect cooldown.
+// Cell harvest: tap yields, exhaustion, lazy recovery, and the auto-tap
+// cooldown that paces holding (but never a deliberate tap).
 import { describe, expect, it } from 'vitest';
-import { HARVEST, TAP } from '../src/sim/data/definitions';
+import { HARVEST } from '../src/sim/data/definitions';
 import {
   collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
 } from '../src/sim/harvest';
 import { getWallet } from '../src/sim/state';
+import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import { freshGame, map, reveal, T0 } from './helpers';
 
 const FOREST = { x: 2, y: 2 }; // authored Trees cell near the origin
@@ -39,20 +41,31 @@ describe('tapping', () => {
     expect(tapCell(state, map, FOREST, recoverAt)).toBe('Harvested');
   });
 
-  it('the player collect tap has a cooldown (holds retry against the same gate)', () => {
+  // The asymmetry is the design: tapping fast is a skill and stays
+  // unrestricted; holding trades speed for not having to work, so its
+  // repeats are paced.
+  it('manual taps are never gated — the player can tap as fast as they like', () => {
     const state = freshGame();
-    const cooldownMs = TAP.collectCooldownSeconds * 1000;
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
-    // Retries inside the window (what hold-to-collect does) are rejected…
-    expect(collectTap(state, map, FOREST, T0 + 100)).toBe('OnCooldown');
-    expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1)).toBe('OnCooldown');
+    expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
+    expect(collectTap(state, map, FOREST, T0 + 2)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(3);
+  });
+
+  it('held-pointer repeats wait out the auto-tap cooldown', () => {
+    const state = freshGame();
+    const cooldownMs = effectiveAutoTapCooldownMs(state);
+    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
+    // The input layer retries every 100ms; those land as autoRepeat…
+    expect(collectTap(state, map, FOREST, T0 + 100, true)).toBe('OnCooldown');
+    expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1, true)).toBe('OnCooldown');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(1); // nothing collected meanwhile
     // …and the first retry at/after the cooldown collects again.
-    expect(collectTap(state, map, FOREST, T0 + cooldownMs)).toBe('Harvested');
+    expect(collectTap(state, map, FOREST, T0 + cooldownMs, true)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(2);
     // A failed collect (exhausted cell) does NOT reset the cooldown anchor.
     for (let i = 0; i < 8; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // exhaust (10 taps total)
-    expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs)).toBe('Exhausted');
+    expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs, true)).toBe('Exhausted');
     expect(state.lastCollectTapAt).toBe(T0 + cooldownMs);
   });
 

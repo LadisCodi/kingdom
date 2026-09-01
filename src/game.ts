@@ -308,12 +308,13 @@ export class Game {
     playSfx(sfx);
   }
 
-  /** One cooldown-gated collect on a resource cell, with feedback.
-   *  'OnCooldown' is silent — hold-to-collect retries until the gate opens. */
-  private collectAt(cell: Coord): CollectTapResult {
+  /** One collect on a resource cell, with feedback. `autoRepeat` marks the
+   *  ticks a held pointer generates — those are cooldown-gated, deliberate
+   *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
+  private collectAt(cell: Coord, autoRepeat = false): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
     const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
-    const result = collectTap(this.state, this.map, cell, this.now());
+    const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
       this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
@@ -324,27 +325,30 @@ export class Game {
     return result;
   }
 
-  /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place). */
+  /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place).
+   *  The input layer fires this every 100ms; the auto-tap cooldown decides
+   *  how many of those actually land, so holding is the slow, lazy option
+   *  and tapping fast stays the skilful one. */
   handleHold(sx: number, sy: number): void {
-    // if (this.mode.kind !== 'normal' || this.openOverlay !== null) return;
-    // const cell = this.camera.screenToCell(sx, sy);
-    // if (!this.map.terrain.has(coordKey(cell))) return;
-    // // Holding a lived-in house keeps boosting its tax clock, same cooldown.
-    // const district = districtAt(this.state, cell);
-    // if (district && district.state === 'Built' &&
-    //     districtCapacity(this.state, district) > 0) {
-    //   const { result, gold } = houseTap(this.state, district, this.now());
-    //   if (result === 'Boosted') {
-    //     this.tapFeedback(district.location, 'tapHouse');
-    //     this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
-    //     this.notify();
-    //   }
-    //   return;
-    // }
-    // if (harvestSourceAt(this.state, cell) === null) return;
-    // if (!this.state.fog.revealed[coordKey(cell)]) return;
-    // if (isExhausted(this.state, cell, this.now())) return; // quiet — no 💤 spam
-    // if (this.collectAt(cell) === 'Harvested') this.notify();
+    if (this.mode.kind !== 'normal' || this.openOverlay !== null) return;
+    const cell = this.camera.screenToCell(sx, sy);
+    if (!this.map.terrain.has(coordKey(cell))) return;
+    // Holding a lived-in house keeps boosting its tax clock, same cooldown.
+    const district = districtAt(this.state, cell);
+    if (district && district.state === 'Built' &&
+        districtCapacity(this.state, district) > 0) {
+      const { result, gold } = houseTap(this.state, district, this.now(), true);
+      if (result === 'Boosted') {
+        this.tapFeedback(district.location, 'tapHouse');
+        this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+        this.notify();
+      }
+      return;
+    }
+    if (harvestSourceAt(this.state, cell) === null) return;
+    if (!this.state.fog.revealed[coordKey(cell)]) return;
+    if (isExhausted(this.state, cell, this.now())) return; // quiet — no 💤 spam
+    if (this.collectAt(cell, true) === 'Harvested') this.notify();
   }
 
   // ------------------------------------------------------------ placement mode

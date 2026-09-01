@@ -1,12 +1,12 @@
 // Upgrades: instant gold purchases, the cost curve, tech-parent gating, and
 // the effective-value helpers actually changing sim behavior.
 import { describe, expect, it } from 'vitest';
-import { TAP, UPGRADES } from '../src/sim/data/definitions';
+import { UPGRADES } from '../src/sim/data/definitions';
 import { collectTap } from '../src/sim/harvest';
 import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
 import {
-  buyUpgrade, effectiveCollectCooldownMs, effectiveSalePriceMultiplier,
+  buyUpgrade, effectiveSalePriceMultiplier,
   effectiveTaxRate, upgradeCost, upgradeLevel,
 } from '../src/sim/upgrades';
 import { addBuilt, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';

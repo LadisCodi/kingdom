@@ -38,8 +38,28 @@ const effect = (state: GameState, id: UpgradeId): number =>
 export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number =>
   spec.yieldPerTap + effect(state, 'TapPower');
 
-/** Cooldown between player collects, ms (QuickHands; floor 0.1s). */
-export const effectiveCollectCooldownMs = (state: GameState): number => 0;
+/** Cooldown between AUTO-taps — the repeats a held pointer generates, ms.
+ *
+ *  Deliberately asymmetric: a *manual* tap is never gated, so tapping fast
+ *  stays a skill the player is rewarded for, while holding trades that speed
+ *  for not having to work. The cooldown therefore has to be slower than a
+ *  determined tapper, or holding would simply dominate.
+ *
+ *  The workbook currently carries 0 (the cooldown was removed wholesale), so
+ *  fall back to a rate that keeps holding the lazier option. Set
+ *  Settings.tap.collect_cooldown_seconds to take control of it.
+ *
+ *  TODO: the tech tree should buy this down. The old QuickHands upgrade was
+ *  dropped from the workbook, so re-adding it is a balance decision — once a
+ *  row exists, subtract `effect(state, 'QuickHands')` here and nowhere else. */
+const AUTO_TAP_FALLBACK_SECONDS = 0.4;
+export const effectiveAutoTapCooldownMs = (state: GameState): number => {
+  void state; // reads no upgrade yet — see the TODO above
+  const seconds = TAP.collectCooldownSeconds > 0
+    ? TAP.collectCooldownSeconds
+    : AUTO_TAP_FALLBACK_SECONDS;
+  return Math.max(100, seconds * 1000);
+};
 
 /** Resource-specific worker-delivery upgrades (each +1/level). */
 const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId>> = {
