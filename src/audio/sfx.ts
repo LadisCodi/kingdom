@@ -6,6 +6,7 @@
 
 import boatSplashUrl from './sounds/boat_splash.ogg?url';
 import buildPlacedUrl from './sounds/build_placed.mp3?url';
+import chainFinishedUrl from './sounds/chain_finished.wav?url';
 import clickUrl from './sounds/button_click.mp3?url';
 import coinSaleUrl from './sounds/coin_sale.ogg?url';
 import constructionUrl from './sounds/construction_complete.mp3?url';
@@ -29,7 +30,7 @@ export type SfxName =
   | 'error' | 'tapEmpty' | 'revealPaid' | 'revealDone' | 'buildPlaced'
   | 'questComplete' | 'villagerTrained' | 'coinSale' | 'researchComplete'
   | 'constructionComplete' | 'upgradeBought' | 'gemSpend' | 'unitTrained'
-  | 'boatSplash';
+  | 'boatSplash' | 'chainFinished';
 
 const SOUNDS: Record<SfxName, { url: string; volume: number; jitter: number }> = {
   pop: { url: popUrl, volume: 0.5, jitter: 0.08 },
@@ -51,6 +52,7 @@ const SOUNDS: Record<SfxName, { url: string; volume: number; jitter: number }> =
   gemSpend: { url: gemUrl, volume: 0.5, jitter: 0 },
   unitTrained: { url: unitUrl, volume: 0.5, jitter: 0.04 },
   boatSplash: { url: boatSplashUrl, volume: 0.3, jitter: 0.1 },
+  chainFinished: { url: chainFinishedUrl, volume: 0.6, jitter: 0 },
 };
 
 let ctx: AudioContext | null = null;

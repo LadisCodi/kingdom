@@ -588,7 +588,8 @@ export class Game {
     const quest = activeQuest(this.state);
     const result = claimQuest(this.state);
     if (result === 'Claimed' && quest) {
-      playSfx('quest');
+      // The LAST claim gets the victory sting instead of the usual chime.
+      playSfx(activeQuest(this.state) === null ? 'chainFinished' : 'quest');
       const parts = Object.entries(quest.reward)
         .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
       this.floaters.add(townhall(this.state).location, parts.join(' '));
