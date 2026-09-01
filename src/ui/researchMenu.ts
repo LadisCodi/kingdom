@@ -136,8 +136,9 @@ export function renderResearchMenu(game: Game): HTMLElement {
     const active = isTechActive(state, id);
     const cls = done ? 'done' : active ? 'active' : 'available';
     const isSel = selected?.kind === 'tech' && selected.id === id;
+    const hinted = game.uiHint() === `tech:${id}`;
     const node = el('button', {
-      class: `tech-node ${cls}${isSel ? ' selected' : ''}`,
+      class: `tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
     if (active) {
@@ -183,6 +184,16 @@ export function renderResearchMenu(game: Game): HTMLElement {
     treeScroll = { left: tree.scrollLeft, top: tree.scrollTop };
   });
   requestAnimationFrame(() => {
+    // A hinted tech overrides the remembered pan — bring it into view.
+    const hint = game.uiHint();
+    const hintedTech = hint?.startsWith('tech:')
+      ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
+    if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
+      treeScroll = {
+        left: Math.max(0, cx(hintedTech) - tree.clientWidth / 2),
+        top: Math.max(0, cy(hintedTech) - tree.clientHeight / 2),
+      };
+    }
     tree.scrollLeft = treeScroll.left;
     tree.scrollTop = treeScroll.top;
   });

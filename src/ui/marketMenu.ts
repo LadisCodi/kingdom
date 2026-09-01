@@ -19,6 +19,7 @@ const AMOUNTS: Array<{ label: string; value: number | 'All' }> = [
 ];
 
 export function renderMarketMenu(game: Game): HTMLElement {
+  let marketHintUsed = false; // arrow only the FIRST sellable row
   const menu = el('div', { class: 'menu' });
   menu.append(el('h2', {}, 'Market'));
   const bonus = Math.round((effectiveSalePriceMultiplier(game.state) - 1) * 100);
@@ -44,8 +45,10 @@ export function renderMarketMenu(game: Game): HTMLElement {
 
     const sellBtn = button('Sell', () => game.doSell(c, amount));
     sellBtn.disabled = amount === 0;
+    const hinted = game.uiHint() === 'market' && amount > 0 && !marketHintUsed;
+    if (hinted) marketHintUsed = true;
 
-    list.append(el('div', { class: `menu-row${have === 0 ? ' disabled' : ''}` },
+    list.append(el('div', { class: `menu-row${have === 0 ? ' disabled' : ''}${hinted ? ' hinted' : ''}` },
       el('span', { class: 'icon' }, icon(c)),
       el('div', { class: 'body' },
         el('div', { class: 'name' },

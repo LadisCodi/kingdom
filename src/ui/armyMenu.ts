@@ -8,6 +8,7 @@ import type { Game } from '../game';
 import { button, el, formatCost } from './format';
 
 export function renderArmyMenu(game: Game): HTMLElement {
+  let armyHintUsed = false; // arrow only the FIRST trainable row
   const menu = el('div', { class: 'menu' });
   const power = armyPower(game.state);
   const max = maxArmyPower(game.state);
@@ -21,12 +22,14 @@ export function renderArmyMenu(game: Game): HTMLElement {
       def.requiredTech !== null && !isTechComplete(game.state, def.requiredTech);
     const trainBtn = button('Train', () => game.doTrain(id));
     trainBtn.disabled = capBlocked || techLocked;
+    const hinted = game.uiHint() === 'army' && !trainBtn.disabled && !armyHintUsed;
+    if (hinted) armyHintUsed = true;
     const statusLine = techLocked
       ? el('div', { class: 'blocked' }, `🔒 ${TECHNOLOGIES[def.requiredTech!].name} research`)
       : el('div', { class: capBlocked ? 'blocked' : 'desc' },
           capBlocked ? 'At power cap' : formatCost(def.recruitCost));
     list.append(
-      el('div', { class: `menu-row${techLocked ? ' disabled' : ''}` },
+      el('div', { class: `menu-row${techLocked ? ' disabled' : ''}${hinted ? ' hinted' : ''}` },
         el('span', { class: 'icon' }, def.glyph),
         el('div', { class: 'body' },
           el('div', { class: 'name' }, `${def.name} ×${owned}`),

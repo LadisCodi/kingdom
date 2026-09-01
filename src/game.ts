@@ -47,9 +47,18 @@ export type Mode =
   | { kind: 'normal' }
   | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null };
 
+/** A transient attention hint: a UI element (by key) or a world cell gets an
+ *  arrow until it's interacted with or HINT_MS passes. */
+export type Hint =
+  | { kind: 'ui'; key: string; until: number }
+  | { kind: 'cell'; cell: Coord; until: number };
+
+const HINT_MS = 8000;
+
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
+  private hint: Hint | null = null;
   openOverlay: string | null = null; // 'build' | 'army' | 'research'
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
@@ -351,6 +360,32 @@ export class Game {
     this.notify();
   }
 
+  /** Renderers ask: is this UI key currently hinted? */
+  uiHint(): string | null {
+    if (this.hint?.kind !== 'ui' || this.hint.until < this.now()) return null;
+    return this.hint.key;
+  }
+
+  /** The world cell currently hinted (arrow on the map), if any. */
+  hintCell(): Coord | null {
+    if (this.hint?.kind !== 'cell' || this.hint.until < this.now()) return null;
+    return this.hint.cell;
+  }
+
+  setUiHint(key: string): void {
+    this.hint = { kind: 'ui', key, until: this.now() + HINT_MS };
+  }
+
+  setCellHint(cell: Coord): void {
+    this.hint = { kind: 'cell', cell, until: this.now() + HINT_MS };
+  }
+
+  clearHint(): void {
+    if (this.hint === null) return;
+    this.hint = null;
+    this.notify();
+  }
+
   /** The quest 🔍: navigate to where the ACTIVE quest can be progressed —
    *  open the right menu, or close menus and center/inspect on the map. */
   focusQuest(): void {
@@ -362,6 +397,7 @@ export class Game {
       this.setOverlay(null);
       this.inspectedDistrictId = null;
       this.camera.centerOnCell(cell);
+      this.setCellHint(cell); // arrow on the map until tapped (or timeout)
       this.notify();
     };
     const inspect = (district: District | undefined, fallback = 'build') => {
@@ -377,27 +413,47 @@ export class Game {
     const built = (pred: (d: District) => boolean) =>
       this.state.city.districts.find((d) => d.state === 'Built' && pred(d));
     switch (quest.goalType) {
+      // NOTE: hints are set BEFORE navigating — overlay()/inspect() notify,
+      // and the render they trigger must already see the hint.
       case 'BuildDistrict':
+        this.setUiHint(`build:${quest.goalTarget}`);
         overlay('build');
         break;
-      case 'UpgradeDistrict':
-        inspect(built((d) => d.definitionId === quest.goalTarget));
+      case 'UpgradeDistrict': {
+        const target = built((d) => d.definitionId === quest.goalTarget);
+        this.setUiHint(target ? 'card:upgrade' : `build:${quest.goalTarget}`);
+        inspect(target);
         break;
+      }
       case 'ReachPopulation':
+        this.setUiHint('card:train');
         inspect(townhall(this.state));
         break;
       case 'CompleteTech':
+        this.setUiHint(`tech:${quest.goalTarget}`);
+        overlay('research');
+        break;
       case 'CompleteTechs':
         overlay('research');
         break;
-      case 'AssignWorkers':
-        inspect(built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0));
+      case 'AssignWorkers': {
+        const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);
+        if (target) this.setUiHint('card:workers');
+        inspect(target);
         break;
+      }
       case 'TrainArmy':
+        this.setUiHint('army');
         overlay('army');
         break;
       case 'SellGoods':
-        overlay(hasMarket(this.state) ? 'market' : 'build');
+        if (hasMarket(this.state)) {
+          this.setUiHint('market');
+          overlay('market');
+        } else {
+          this.setUiHint('build:Market');
+          overlay('build');
+        }
         break;
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
@@ -409,8 +465,10 @@ export class Game {
       case 'HoldResource':
       case 'CollectResource': {
         if (quest.goalTarget === 'Gold') {
-          inspect(built((d) => DISTRICTS[d.definitionId].populationCapacity > 0 &&
-            residentsOf(this.state, d) > 0) ?? townhall(this.state));
+          const house = built((d) => DISTRICTS[d.definitionId].populationCapacity > 0 &&
+            residentsOf(this.state, d) > 0);
+          inspect(house ?? townhall(this.state));
+          if (house) this.setCellHint(house.location);
           break;
         }
         const cell = this.nearestCell((c) => {
@@ -544,6 +602,7 @@ export class Game {
       previewSprite: null,
       previewSize: null,
       selectedSize: null,
+      hintCell: this.hintCell(),
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
@@ -676,6 +735,8 @@ export class Game {
 
   handleTap(sx: number, sy: number): void {
     const cell = this.camera.screenToCell(sx, sy);
+    const hinted = this.hintCell();
+    if (hinted && cell.x === hinted.x && cell.y === hinted.y) this.clearHint();
     if (!this.map.terrain.has(coordKey(cell))) {
       // Tapping the void: close card / keep mode (placement & targeting still swallow).
       if (this.mode.kind === 'normal') {

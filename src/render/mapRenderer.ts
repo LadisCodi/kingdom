@@ -34,6 +34,8 @@ export interface MarkerLayer {
   previewGlyph: string | null;
   previewSprite: string | null;
   previewSize: { x: number; y: number } | null; // footprint of the previewed building
+  /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
+  hintCell: Coord | null;
 }
 
 export function drawMap(
@@ -329,6 +331,16 @@ export function drawMap(
     if (!drawSprite(ctx, 'worker', sx, sy, size * 0.6, size * 0.6)) {
       drawGlyph(ctx, '🧍', sx, sy, size * 0.6, size * 0.34);
     }
+  }
+
+  // Pass 3.8: the quest-hint arrow — a bouncing 👇 over the hinted cell.
+  if (markers.hintCell) {
+    const { x, y } = cellRect(markers.hintCell);
+    const bob = Math.sin(now / 140) * size * 0.07;
+    ctx.strokeStyle = PALETTE.selected;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
+    drawGlyph(ctx, '👇', x, y - size * 0.62 + bob, size, size * 0.5);
   }
 
   // Pass 4: worker units (sprite with carrying variant, emoji fallback).

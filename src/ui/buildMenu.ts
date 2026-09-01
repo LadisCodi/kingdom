@@ -37,9 +37,10 @@ export function renderBuildMenu(game: Game): HTMLElement {
 
     const selectBtn = button('Select', () => game.startPlacement(id));
     selectBtn.disabled = capped;
+    const hinted = game.uiHint() === `build:${id}`;
     const row = el(
       'div',
-      { class: `menu-row${capped || !affordable ? ' disabled' : ''}` },
+      { class: `menu-row${capped || !affordable ? ' disabled' : ''}${hinted ? ' hinted' : ''}` },
       el('span', { class: 'icon' }, def.glyph),
       el('div', { class: 'body' },
         el('div', { class: 'name' }, def.name),

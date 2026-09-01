@@ -47,6 +47,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       }
       // Queue the next villager — allowed while one is already training.
       const trainBtn = button('Train', () => game.doQueueTraining());
+      if (game.uiHint() === 'card:train') trainBtn.classList.add('hinted');
       const affordable = canAfford(game.state.city.wallet, { Food: training.cost });
       trainBtn.disabled = training.atMax || !affordable;
       panel.append(el('div', { class: 'action-row' },
@@ -111,6 +112,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       minus.disabled = district.assignedWorkers === 0;
       const plus = button('+', () => game.doChangeWorkers(district.uniqueId, 1));
       plus.disabled = district.assignedWorkers >= limit || game.freeWorkers() === 0;
+      if (game.uiHint() === 'card:workers') plus.classList.add('hinted');
       panel.append(el('div', { class: 'actions' },
         el('span', {}, `Workers ${district.assignedWorkers}/${limit} (cap ${maxForLevel})`),
         minus, plus));
@@ -155,6 +157,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     const blocked = thLevel < requiredTh;
     const upBtn = button('Upgrade', () => game.doUpgrade(district.uniqueId));
     upBtn.disabled = blocked || !affordable;
+    if (game.uiHint() === 'card:upgrade') upBtn.classList.add('hinted');
     const info = el('div', { class: 'info' },
       el('div', { class: affordable ? '' : 'blocked' },
         `Upgrade to lvl ${district.level + 1} — ${formatCost(cost)} (${formatDuration(duration)})`));

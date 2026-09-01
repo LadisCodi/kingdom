@@ -89,6 +89,12 @@ async function boot(): Promise<void> {
   // every pointerdown until the browser lets it through (then it's a no-op).
   window.addEventListener('pointerdown', () => startMusic());
 
+  // Interacting with the hinted element retires its arrow (capture phase, so
+  // it works no matter what the element's own handler does).
+  document.addEventListener('pointerdown', (e) => {
+    if ((e.target as HTMLElement).closest?.('.hinted')) game.clearHint();
+  }, true);
+
   // ----------------------------------------------------------------- input
   wireInput(
     canvas, camera,
