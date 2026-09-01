@@ -1,0 +1,12 @@
+/* The kit's stylesheet barrel — the only CSS file main.ts imports besides
+ * the legacy style.css.
+ *
+ * One ordered list rather than a CSS import at the top of each component,
+ * because during the migration old and new rules can legitimately match the
+ * same node, so cascade order is load-bearing and must be reviewable in one
+ * place instead of being a side effect of the JS import graph. PostCSS
+ * inlines these at build time, so there is no runtime request cost.
+ *
+ * main.ts imports style.css FIRST, then this — kit rules win ties. */
+
+@import './tokens.css';

@@ -1,0 +1,63 @@
+/* Design tokens. Nothing here draws anything — it names the values the kit
+ * and the screens will draw with, so a change lands in one place.
+ *
+ * The palette is Docs/art/ui-menus-redesign.md §3.1, sampled so the chrome
+ * and the world read as one game: parchment and carved wood over the bright
+ * top-down pixel art, never the slate-blue strategy HUD it replaces.
+ *
+ * Rule the kit enforces: no pure black, no blue-grey, no #FFFFFF. Outlines
+ * are --wood-dark, and "disabled" is --locked (a warm fill), not opacity. */
+
+:root {
+  /* ---- surfaces ---- */
+  --parchment: #f4e4c1;
+  --parchment-shade: #e2cca0;
+  --wood: #a9713f;
+  --wood-dark: #5c3a1e;
+  --wood-light: #c89159;
+
+  /* ---- ink ---- */
+  --ink: #3b2412;
+  --ink-muted: #7a5c3e;
+  /* Label on a saturated slab, where --ink would not carry. */
+  --ink-inverse: #fff6e0;
+
+  /* ---- state ---- */
+  --leaf: #6fbf4a; /* affordable, confirm, progress */
+  --leaf-dark: #3f8a2e;
+  --gold: #f2b233; /* highlight, reward, the one lit CTA */
+  --gold-dark: #c98a16;
+  --clay: #d4553e; /* can't afford, destructive */
+  --sky: #4fa3c7; /* in progress, research, information */
+  --locked: #cbba96; /* gated — warm, never grey */
+
+  /* Warm, not near-black: the kingdom stays legible behind an open sheet. */
+  --scrim: rgba(60, 36, 18, 0.35);
+
+  /* ---- chrome metrics ----
+   * These two were hardcoded in six places (#notice, #panel, #overlay,
+   * .tech-info, #toast, .cast-banner), and the nav's height was only ever
+   * IMPLIED by its padding — which is where the magic 58 came from. Naming
+   * them is what lets the HUD and nav change height without silently
+   * misaligning five other screens. */
+  --hud-h: 64px;
+  --nav-h: 58px;
+
+  /* ---- type ----
+   * 13px is the floor (§6.12): the current 11–12px helper text is unreadable
+   * on a phone in daylight. */
+  --text-title: 22px;
+  --text-body: 15px;
+  --text-helper: 13px;
+
+  /* ---- form ---- */
+  --gutter: 24px;
+  --radius: 10px;
+  --radius-sm: 8px;
+  --outline: 3px; /* panel frame outline */
+  --lip: 3px; /* the drop under a pressable slab */
+
+  /* ---- motion ---- */
+  --motion-sheet: 180ms;
+  --motion-snap: 60ms; /* pixel-art slabs snap, they don't glide */
+}

@@ -2,7 +2,8 @@
 // renderer + UI. Load order per Docs/10: the tick never runs against restored
 // timestamps before rates are rebuilt (deserialize recalcs before returning).
 
-import './style.css';
+import './style.css'; // legacy chrome — shrinks as screens migrate
+import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
 import { musicMuted, startMusic } from './audio/music';
 import { Game, type OverlayName } from './game';
