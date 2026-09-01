@@ -18,6 +18,7 @@
 import { CURRENCIES } from '../../sim/data/definitions';
 import type { CurrencyId, DistrictId, Wallet } from '../../sim/state';
 import { el } from '../format';
+import { ATLAS_CELLS } from './atlas.generated';
 
 /** Names that are not currencies or districts. */
 export type UiIconName =
@@ -46,10 +47,6 @@ export const ICON_EMOJI: Record<IconName, string> = {
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
 };
 
-/** Cells the atlas actually provides. Empty until scripts/ui-atlas.mjs runs;
- *  the generated module replaces this and every icon upgrades at once. */
-const ATLAS_CELLS: ReadonlySet<string> = new Set<string>();
-
 export interface IconOpts {
   size?: 'sm' | 'md' | 'lg';
   locked?: boolean;
@@ -57,19 +54,43 @@ export interface IconOpts {
   label?: string;
 }
 
+/**
+ * Pick the best cell the atlas has for this request.
+ *
+ * `-locked` is a DERIVED desaturation rather than a CSS filter, so the
+ * silhouette is pixel-identical and a row can't shift when an item locks.
+ * `-sm` is authored at 16 logical pixels for the icons that would otherwise
+ * turn to mush inline. Both fall back to the plain cell, and the plain cell
+ * falls back to the emoji — so art can land one sheet, or one variant, at a
+ * time.
+ */
+function atlasCell(name: IconName, opts: IconOpts): string | null {
+  const suffixes: string[] = [];
+  if (opts.locked && opts.size === 'sm') suffixes.push(`${name}-sm-locked`);
+  if (opts.locked) suffixes.push(`${name}-locked`);
+  if (opts.size === 'sm') suffixes.push(`${name}-sm`);
+  suffixes.push(name);
+  return suffixes.find((cell) => ATLAS_CELLS.has(cell)) ?? null;
+}
+
 export function iconEl(name: IconName, opts: IconOpts = {}): HTMLElement {
-  const classes = ['icon', `icon-${name}`];
+  const cell = atlasCell(name, opts);
+  const classes = ['icon', `icon-${cell ?? name}`];
   if (opts.size === 'sm') classes.push('icon--sm');
   if (opts.size === 'lg') classes.push('icon--lg');
-  if (opts.locked) classes.push('is-locked');
+  // Only tint when the atlas has no dedicated locked cell to use instead.
+  if (opts.locked && cell !== `${name}-locked` && cell !== `${name}-sm-locked`) {
+    classes.push('is-locked');
+  }
+  if (cell === null) classes.push('icon--emoji');
   const node = el('i', {
     class: classes.join(' '),
     role: 'img',
     'aria-label': opts.label ?? name,
   });
-  // No atlas cell yet → the emoji stands in. The class is already correct,
-  // so the atlas takes over by CSS alone.
-  if (!ATLAS_CELLS.has(name)) node.textContent = ICON_EMOJI[name];
+  // No cell → the emoji stands in, and the class is already right, so the
+  // atlas takes over by CSS alone once the art lands.
+  if (cell === null) node.textContent = ICON_EMOJI[name];
   return node;
 }
 

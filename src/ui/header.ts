@@ -88,7 +88,9 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     gemValue.textContent = String(game.effectiveWalletValue('Gems'));
 
     const slot = game.hudSlot();
-    plaqueIcon.replaceChildren(iconEl(SLOT_ICON[slot.kind], { size: 'sm' }));
+    // md, not sm: the status icons carry more internal detail than a coin
+    // and turn to mush at 16px — the contact sheet made that obvious.
+    plaqueIcon.replaceChildren(iconEl(SLOT_ICON[slot.kind]));
     plaqueValue.textContent = `${slot.value}/${slot.max}`;
     plaque.setAttribute('aria-label', `${SLOT_LABEL[slot.kind]} ${slot.value} of ${slot.max}`);
     plaque.classList.toggle('is-population', slot.kind === 'population');

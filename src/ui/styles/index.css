@@ -11,5 +11,6 @@
 
 @import './tokens.css';
 @import './kit.css';
+@import '../assets/ui-atlas.css';
 @import './screens/hud.css';
 @import './screens/nav.css';

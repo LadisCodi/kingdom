@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "balance": "node scripts/balance.mjs import",
-    "balance:export": "node scripts/balance.mjs export"
+    "balance:export": "node scripts/balance.mjs export",
+    "art": "node scripts/ui-atlas.mjs build",
+    "art:check": "node scripts/ui-atlas.mjs check"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"

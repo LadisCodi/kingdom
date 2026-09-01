@@ -1,0 +1,19 @@
+{
+  "cell": 32,
+  "atlasCols": 16,
+  "note": "Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it.",
+  "sheets": [
+    {
+      "file": "sheets/ui-a-resources.png",
+      "grid": { "rows": 3, "cols": 4 },
+      "fill": 0.88,
+      "names": [
+        "Gold", "Food", "Wood", "Stone",
+        "Iron", "Gems", "Knowledge", "population",
+        "builders", "workers", "Berries", "Fish"
+      ]
+    }
+  ],
+  "locked": { "except": ["padlock", "sparkle", "close", "plus", "minus", "tick"] },
+  "tiny": { "only": ["Gold", "Food", "Wood", "Stone", "Iron", "Gems", "Knowledge"] }
+}
