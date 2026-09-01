@@ -10,6 +10,7 @@ import { placementBlock } from '../src/sim/districts';
 import {
   buySlot, isTechComplete, slotGemCost, startTech, techSlots, techUnlocks,
 } from '../src/sim/research';
+import { edgeCells } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
 import { buyUpgrade } from '../src/sim/upgrades';
@@ -148,20 +149,29 @@ describe('tree layout (layout is content)', () => {
     expect(new Set(nodes.map((n) => `${n.x},${n.y}`)).size).toBe(nodes.length);
   });
 
-  it('no H-then-V connector elbows on or crosses another node', () => {
+  // Reads the SAME route the renderer draws (src/ui/research/layout.ts)
+  // rather than a hand-copied description of it, so a change to the routing
+  // updates both at once instead of leaving this quietly asserting fiction.
+  it('edgeCells walks the route it claims to', () => {
+    // Same row: everything strictly between the endpoints.
+    expect(edgeCells({ x: 0, y: 0 }, { x: 3, y: 0 }))
+      .toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }]);
+    // Elbowed: horizontal first, so the corner is at (to.x, from.y) and IS
+    // reported — a node sitting there is exactly the failure to catch.
+    expect(edgeCells({ x: 0, y: 0 }, { x: 2, y: 2 }))
+      .toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }]);
+    // Adjacent nodes have nothing in between.
+    expect(edgeCells({ x: 0, y: 0 }, { x: 1, y: 0 })).toEqual([]);
+  });
+
+  it('no connector passes through an unrelated node', () => {
     for (const id of TECH_ORDER) {
       const to = TECHNOLOGIES[id].node;
       for (const req of TECHNOLOGIES[id].requires) {
         const from = TECHNOLOGIES[req].node;
-        // Horizontal leg at from.y, then vertical leg at to.x (the renderer's route).
-        for (let x = Math.min(from.x, to.x) + 1; x < Math.max(from.x, to.x); x++) {
-          expect(at(x, from.y)?.id).toBeUndefined();
-        }
-        for (let y = Math.min(from.y, to.y) + 1; y < Math.max(from.y, to.y); y++) {
-          expect(at(to.x, y)?.id).toBeUndefined();
-        }
-        if (to.x !== from.x && to.y !== from.y) {
-          expect(at(to.x, from.y)?.id).toBeUndefined(); // the elbow corner
+        for (const cell of edgeCells(from, to)) {
+          const blocker = at(cell.x, cell.y);
+          expect(blocker?.id, `${req} → ${id} runs through ${blocker?.id}`).toBeUndefined();
         }
       }
     }

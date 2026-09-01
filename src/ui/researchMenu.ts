@@ -20,6 +20,7 @@ import {
 } from '../sim/research';
 import { upgradeCost, upgradeLevel } from '../sim/upgrades';
 import { getWallet, type GameState, type TechId, type UpgradeId } from '../sim/state';
+import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { button, el, formatCost, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
@@ -27,11 +28,8 @@ type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId 
 let selected: Selected = null;
 let treeScroll = { left: 0, top: 0 };
 
-const GRID = 120; // px per tree-grid step
-const NODE = 56; // tech node square size
-const UNODE = 36; // upgrade circle size
-const FAN_DY = 0.7 * GRID; // fan distance below the parent tech
-const FAN_DX = 56; // spacing between fanned circles
+// Geometry (GRID, NODE, UNODE, FAN_*) and the connector route come from
+// ./research/layout.ts, so the test reads the same route this draws.
 
 // ---- drag panning ----------------------------------------------------------
 // Pointer listeners live on window and act on the CURRENT tree element, so an
@@ -126,8 +124,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
   if (fanned.some((id) => TECHNOLOGIES[id].node.y === yMax)) {
     height += FAN_DY + UNODE / 2 - GRID / 2 + 6;
   }
-  const cx = (id: TechId) => pad + (TECHNOLOGIES[id].node.x - x0) * GRID + GRID / 2;
-  const cy = (id: TechId) => pad + (TECHNOLOGIES[id].node.y - y0) * GRID + GRID / 2;
+  const px = (gx: number) => pad + (gx - x0) * GRID + GRID / 2;
+  const py = (gy: number) => pad + (gy - y0) * GRID + GRID / 2;
+  const cx = (id: TechId) => px(TECHNOLOGIES[id].node.x);
+  const cy = (id: TechId) => py(TECHNOLOGIES[id].node.y);
   const fanX = (id: TechId, i: number, n: number) => cx(id) + (i - (n - 1) / 2) * FAN_DX;
   const fanY = (id: TechId) => cy(id) + FAN_DY;
 
@@ -142,8 +142,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
   for (const id of shown) {
     for (const req of TECHNOLOGIES[id].requires) {
       const path = document.createElementNS(ns, 'path');
-      path.setAttribute('d',
-        `M ${cx(req)} ${cy(req)} L ${cx(id)} ${cy(req)} L ${cx(id)} ${cy(id)}`);
+      const route = edgePath(TECHNOLOGIES[req].node, TECHNOLOGIES[id].node)
+        .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x)} ${py(p.y)}`)
+        .join(' ');
+      path.setAttribute('d', route);
       path.setAttribute('class',
         visibility(state, id) === 'silhouette' ? 'tech-edge dim'
           : isTechComplete(state, req) ? 'tech-edge open' : 'tech-edge');
