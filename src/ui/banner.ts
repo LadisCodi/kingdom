@@ -28,14 +28,21 @@ export function mountBanner(game: Game, root: HTMLElement): void {
         el('div', { class: 'name' }, banner.name),
         el('div', { class: 'desc' }, banner.desc)));
     root.replaceChildren(card);
-    setTimeout(() => {
+    let leaving = false;
+    const leave = () => {
+      if (leaving) return;
+      leaving = true;
+      clearTimeout(showTimer);
       card.classList.add('leaving');
       setTimeout(() => {
         if (card.parentElement === root) root.replaceChildren();
         showing = false;
         showNext(); // the queue advances — one card at a time
       }, LEAVE_MS);
-    }, SHOW_MS);
+    };
+    const showTimer = setTimeout(leave, SHOW_MS);
+    // Clicking anywhere on the banner disbands it right away.
+    card.addEventListener('pointerdown', leave);
   };
 
   game.onChange(showNext);

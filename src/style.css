@@ -86,6 +86,8 @@ button.switch.on::after { transform: translateX(22px); }
 /* ---------- discovery banner (top, 5s) ---------- */
 #notice { position: absolute; top: 70px; left: 0; right: 0; display: flex;
   justify-content: center; pointer-events: none; z-index: 25; }
+/* The card itself IS clickable (tap anywhere on it to dismiss). */
+.notice-card { pointer-events: auto; cursor: pointer; }
 .notice-card {
   display: flex; align-items: center; gap: 12px; padding: 10px 18px;
   background: rgba(20, 26, 35, 0.97); border: 1px solid #d9a536; border-radius: 12px;
