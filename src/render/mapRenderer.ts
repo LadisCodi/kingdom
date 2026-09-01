@@ -10,7 +10,7 @@ import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
 import { workerPosition } from '../sim/workers';
 import {
-  queueProgress, remainingSeconds, coordKey, districtOccupies,
+  queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
   type Coord, type GameState,
 } from '../sim/state';
 import type { Camera } from './camera';
@@ -318,20 +318,25 @@ export function drawMap(
   }
 
   // Pass 4: worker units (sprite with carrying variant, emoji fallback).
+  // Workers of a Fish-harvesting building are FISHING BOATS out on the water.
   for (const worker of state.workers) {
     const pos = workerPosition(state, worker, now);
     if (!pos) continue;
+    const building = districtById(state, worker.buildingId);
+    const boat = building !== undefined &&
+      DISTRICTS[building.definitionId].harvestSource === 'Fish';
     const { x, y } = cellRect(pos);
     const sx = x + size * 0.18;
     const sy = y + size * 0.18;
-    if (worker.carrying && drawSprite(ctx, 'worker_carrying', sx, sy, size * 0.6, size * 0.6)) {
+    const stem = boat ? 'fishing_boat' : 'worker';
+    if (worker.carrying && drawSprite(ctx, `${stem}_carrying`, sx, sy, size * 0.6, size * 0.6)) {
       continue;
     }
-    if (!drawSprite(ctx, 'worker', sx, sy, size * 0.6, size * 0.6)) {
-      drawGlyph(ctx, '🧑‍🌾', sx, sy, size * 0.6, size * 0.34);
+    if (!drawSprite(ctx, stem, sx, sy, size * 0.6, size * 0.6)) {
+      drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, size * 0.6, size * 0.34);
     }
     if (worker.carrying) {
-      drawGlyph(ctx, '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
+      drawGlyph(ctx, boat ? '🐟' : '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
     }
   }
 

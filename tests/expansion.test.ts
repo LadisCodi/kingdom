@@ -37,20 +37,20 @@ describe('stone line (Masonry → Quarry)', () => {
   });
 });
 
-describe('fish line (Fishing → coastal Fishing Hut)', () => {
-  it('the hut must touch Water; its workers net Fish from shoals', () => {
+describe('fish line (Fishing → coastal Docks)', () => {
+  it('the Docks must touch Water; its boats net Fish from shoals', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
     reveal(state, [SHOAL, COAST]);
     completeTech(state, 'Fishing');
-    expect(placementBlock(state, map, 'FishingHut', INLAND)).toBe('NeedsWaterAdjacency');
-    expect(placementBlock(state, map, 'FishingHut', COAST)).toBe(null);
-    expect(enqueueBuild(state, map, 'FishingHut', COAST)).toBe('Started');
+    expect(placementBlock(state, map, 'Docks', INLAND)).toBe('NeedsWaterAdjacency');
+    expect(placementBlock(state, map, 'Docks', COAST)).toBe(null);
+    expect(enqueueBuild(state, map, 'Docks', COAST)).toBe('Started');
     tickAt(state, T0);
     expect(finishWithGems(state, map, state.city.queue[0].uniqueId, T0)).toBe('Success');
-    const hut = state.city.districts.find((d) => d.definitionId === 'FishingHut')!;
-    expect(changeWorkers(state, map, hut.uniqueId, 1, T0)).toBe('Assigned');
+    const docks = state.city.districts.find((d) => d.definitionId === 'Docks')!;
+    expect(changeWorkers(state, map, docks.uniqueId, 1, T0)).toBe('Assigned');
     tickAt(state, T0 + 60_000);
     expect(getWallet(state.city.wallet, 'Fish')).toBeGreaterThan(0);
   });
@@ -70,10 +70,10 @@ describe('fish line (Fishing → coastal Fishing Hut)', () => {
     expect(map.terrain.get(back![0])).toBe('Water'); // never on land
   });
 
-  it('Fish pays Food costs at 2 Food each', () => {
+  it('Fish pays Food costs at 1 Food each', () => {
     const wallet = { Food: 0, Fish: 3 };
-    expect(effectiveAmount(wallet, 'Food')).toBe(6);
-    pay(wallet, { Food: 4 });
+    expect(effectiveAmount(wallet, 'Food')).toBe(3);
+    pay(wallet, { Food: 2 });
     expect(wallet).toEqual({ Food: 0, Fish: 1 });
   });
 });

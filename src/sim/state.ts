@@ -10,7 +10,7 @@ export type CurrencyId =
   | 'Berries' | 'Meat' | 'Fish'; // food-valued (see CurrencyDef.countsAs)
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
-  | 'Quarry' | 'FishingHut' | 'Mine';
+  | 'Quarry' | 'Docks' | 'Mine';
 export type TerrainId = 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
 export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';

@@ -231,16 +231,16 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     requiredTech: 'Masonry',
     ...balance.districts.Quarry,
   },
-  FishingHut: {
+  Docks: {
     ...rules,
-    id: 'FishingHut',
-    name: 'Fishing Hut',
-    description: 'Built on the shore — its workers fish nearby shoals. Fish feed like 2 Food.',
-    glyph: '🎣',
-    sprite: 'fishing_hut',
+    id: 'Docks',
+    name: 'Docks',
+    description: 'Shore docks — its fishing boats net Fish from nearby shoals (1 Food each).',
+    glyph: '⚓',
+    sprite: 'docks',
     harvestSource: 'Fish',
     requiredTech: 'Fishing',
-    ...balance.districts.FishingHut,
+    ...balance.districts.Docks,
   },
   Mine: {
     ...rules,
@@ -256,7 +256,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
 };
 
 export const BUILDABLE_DISTRICTS: DistrictId[] =
-  ['Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'FishingHut', 'Mine', 'Market'];
+  ['Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Mine', 'Market'];
 
 // ------------------------------------------------------------------ features
 
@@ -389,7 +389,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Fishing: tech({
     id: 'Fishing',
     name: 'Fishing',
-    description: 'Unlocks the Fishing Hut — coastal workers net Fish (worth 2 Food each).',
+    description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
     glyph: '🎣',
     node: { x: -1, y: -1 },
   }, balance.technologies.Fishing),
@@ -534,4 +534,4 @@ export const UNITS: Record<UnitId, UnitDef> = {
 export const UNIT_ORDER: UnitId[] = ['Archer', 'Swordsman', 'Cavalry'];
 
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 11; // v10 saves predate the Stone/Fish/Iron expansion; discarded
+export const SAVE_VERSION = 12; // v11 saves predate the Docks (FishingHut renamed); discarded

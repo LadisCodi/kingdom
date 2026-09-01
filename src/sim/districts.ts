@@ -69,7 +69,7 @@ export function placementBlock(
       // is built nearby to send workers.
       if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
       break;
-    case 'FishingHut': {
+    case 'Docks': {
       // On the shore: at least one footprint neighbor must be Water.
       const coastal = footprint.some((fc) =>
         neighbors(map, fc).some((n) => map.terrain.get(coordKey(n)) === 'Water'));
@@ -91,7 +91,7 @@ export function placementBlock(
  *  Sawmill would just outline most of the map). */
 export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
   definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands' ||
-  definitionId === 'FishingHut';
+  definitionId === 'Docks';
 
 export const validPlacementCells = (
   state: GameState,

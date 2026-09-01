@@ -237,7 +237,7 @@
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5
     },
-    "FishingHut": {
+    "Docks": {
       "size": {
         "x": 1,
         "y": 1
@@ -433,7 +433,7 @@
       "primary": false,
       "countsAs": {
         "currency": "Food",
-        "value": 2
+        "value": 1
       },
       "goldValue": 2
     },

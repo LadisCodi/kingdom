@@ -48,7 +48,7 @@ const MAP_COLORS = { // conditional-formatting fills, keyed by code
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
 const DISTRICT_IDS =
-  ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'FishingHut', 'Mine'];
+  ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine'];
 const TECH_IDS = [
   'Agriculture', 'Irrigation', 'Forestry', 'Commerce', 'Militia', 'Archery', 'CavalryTraining',
   'Masonry', 'Fishing', 'Mining',

@@ -69,7 +69,7 @@ Initial tree (all roads lead from Forestry):
 - **Militia** (requires Forestry; Swordsman)
 - **Masonry** (requires Forestry; Quarry) → upgrade Stonecutting; →
   **Mining** (Mine, costs Stone) → upgrade Iron Picks
-- **Fishing** (requires Agriculture; Fishing Hut) → upgrade Big Nets
+- **Fishing** (requires Agriculture; the Docks + fishing boats) → upgrade Big Nets
 - **Archery** (requires Forestry; Archer) → **CavalryTraining** (Cavalry)
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —
