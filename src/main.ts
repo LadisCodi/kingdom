@@ -43,10 +43,22 @@ async function boot(): Promise<void> {
   const now = Date.now();
   // The offline replay happens INSIDE deserialize, before a Game exists, so
   // its results are captured here to be shown once the UI is up.
+  //
+  // The try/catch is not defensive decoration: an unexpected save shape used
+  // to throw straight out of boot() and WHITE-SCREEN the app, which is a far
+  // worse failure than the one being handled. A fresh game is recoverable; a
+  // blank page is not.
   let catchUp: CatchUpReport | null = null;
-  const state = (savedFile
-    ? deserialize(savedFile, map, now, (r) => { catchUp = r; })
-    : null) ?? newGame(map, now);
+  let restored = null;
+  if (savedFile) {
+    try {
+      restored = deserialize(savedFile, map, now, (r) => { catchUp = r; });
+    } catch (err) {
+      console.error('kingdom: unreadable save — starting fresh', err);
+      catchUp = null;
+    }
+  }
+  const state = restored ?? newGame(map, now);
 
   const canvas = document.getElementById('map') as HTMLCanvasElement;
   const camera = new Camera(canvas);

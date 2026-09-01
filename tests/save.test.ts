@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { deserialize, serialize } from '../src/sim/save';
+import { SAVE_VERSION } from '../src/sim/data/definitions';
+import {
+  deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
+} from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
 import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
@@ -85,5 +88,28 @@ describe('save round-trip', () => {
     // Workers resume from "now", not from 12h ago.
     const w = capped.workers[0];
     expect(w.stateUntil === null || w.stateUntil > T0 + 30_000 + 20 * 3_600_000 - 60_000).toBe(true);
+  });
+});
+
+// The migration chain (Docs/features/engine-seams.md §4). Additive changes
+// need no migrator — a version bump plus the defensive readers is enough —
+// so this covers the two gates that DO have to hold on every bump.
+describe('save versions', () => {
+  it('rejects a save written by a newer client', () => {
+    const save = serialize(freshGame(), T0);
+    save.SaveVersion = SAVE_VERSION + 1;
+    expect(deserialize(save, map, T0)).toBeNull();
+  });
+
+  it('rejects anything below MIN_MIGRATABLE_VERSION', () => {
+    const save = serialize(freshGame(), T0);
+    save.SaveVersion = MIN_MIGRATABLE_VERSION - 1;
+    expect(deserialize(save, map, T0)).toBeNull();
+  });
+
+  it('carries a current save through the chain unchanged', () => {
+    const save = serialize(freshGame(), T0);
+    expect(migrate(save)).toBe(true);
+    expect(save.SaveVersion).toBe(SAVE_VERSION);
   });
 });

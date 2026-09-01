@@ -1,8 +1,15 @@
-// Save format v2 (harvest loop). v1 saves (the generator/vault era) are
-// discarded — deserialize returns null and the caller starts a fresh game.
+// The save file, its migration chain, and the offline catch-up.
+//
+// The insight that keeps migration small: every module read below is already
+// defensive — `if (dto)` plus `?? default`. So an ADDITIVE change (a new
+// module key, a new optional field) needs no migrator at all: bump
+// SAVE_VERSION and let the reader default. Migrators exist only for renames,
+// reshapes and semantic changes, and this design is shaped around that
+// reality instead of around a general framework.
+//
 // Offline catch-up: the unified advance replays the absence up to the 8h cap;
-// time beyond the cap pauses workers/townhall (queue timers and cell
-// recovery keep running in real time).
+// time beyond the cap pauses workers/townhall (queue timers and cell recovery
+// keep running in real time).
 
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
 import { advance, type AdvanceResult } from './commands';
@@ -53,6 +60,35 @@ interface WorkerDto {
   Carrying: boolean;
   StateStartedAt: string;
   StateUntil: string | null;
+}
+
+/** Below this, a save is from a game shape that no longer exists and is
+ *  discarded rather than migrated. v15 and earlier predate the reshaped tech
+ *  tree; v1 predates the harvest loop entirely. */
+export const MIN_MIGRATABLE_VERSION = 16;
+
+interface Migration {
+  /** The version this migrator produces. */
+  to: number;
+  migrate: (modules: Record<string, any>) => void;
+}
+
+/** Ordered, gap-free, append-only. A version bump with no reshape needs NO
+ *  entry here — the defensive readers below already default the new field. */
+const MIGRATIONS: readonly Migration[] = [
+];
+
+/** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
+ *  Exported for the test that walks the chain end to end. */
+export function migrate(save: SaveFile): boolean {
+  const from = save.SaveVersion ?? 1;
+  if (from > SAVE_VERSION) return false; // a NEWER client wrote this — do not guess
+  if (from < MIN_MIGRATABLE_VERSION) return false;
+  for (const m of MIGRATIONS) {
+    if (m.to > from) m.migrate(save.Modules as Record<string, any>);
+  }
+  save.SaveVersion = SAVE_VERSION;
+  return true;
 }
 
 export function serialize(state: GameState, now: number): SaveFile {
@@ -167,8 +203,11 @@ export function serialize(state: GameState, now: number): SaveFile {
 }
 
 /**
- * Rebuild a GameState from a v2 save and replay the absence (capped at 8h).
- * Returns null for incompatible (v1) saves — caller starts a fresh game.
+ * Rebuild a GameState from a save and replay the absence (capped at 8h).
+ * Returns null when the save cannot be brought to the current version —
+ * older than MIN_MIGRATABLE_VERSION, or written by a NEWER client, which a
+ * second device can sync in and which must never be read as if current.
+ * The caller then starts a fresh game.
  */
 /** What the kingdom did while nobody was watching. */
 export interface CatchUpReport {
@@ -191,7 +230,7 @@ export function deserialize(
   now: number,
   onCatchUp?: (report: CatchUpReport) => void,
 ): GameState | null {
-  if ((save.SaveVersion ?? 1) !== SAVE_VERSION) return null;
+  if (!migrate(save)) return null;
   const lastSaved = ms(save.LastSaved);
   const state = newGame(map, lastSaved);
   const modules = save.Modules as Record<string, any>;
