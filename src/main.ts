@@ -16,7 +16,7 @@ import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
 import { deserialize } from './sim/save';
-import { mountHeader, setCloudBadge } from './ui/header';
+import { mountHeader } from './ui/header';
 import { mountNavbar } from './ui/navbar';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
@@ -25,6 +25,7 @@ import { renderArmyMenu } from './ui/armyMenu';
 import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
+import { renderPurseSheet } from './ui/purseSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
 import { button, el } from './ui/format';
@@ -69,7 +70,6 @@ async function boot(): Promise<void> {
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
-  setCloudBadge(saveModeLabel);
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => location.reload());
 
@@ -83,6 +83,7 @@ async function boot(): Promise<void> {
     army: renderArmyMenu,
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
+    purse: renderPurseSheet,
   };
 
   // Each mount point holds one keyed screen: same key → re-render in place,

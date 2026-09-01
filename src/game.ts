@@ -25,7 +25,7 @@ import {
   queueTraining, residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
-import { buySlot, startTech, techUnlocks } from './sim/research';
+import { buySlot, isTechComplete, startTech, techUnlocks } from './sim/research';
 import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
@@ -51,7 +51,8 @@ export type Mode =
 /** Every full-screen menu the nav (or the map) can open. Naming them means
  *  `tsc` — the only real gate this project has over the view layer — catches
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
-export type OverlayName = 'build' | 'market' | 'army' | 'research' | 'settings';
+export type OverlayName =
+  | 'build' | 'market' | 'army' | 'research' | 'settings' | 'purse';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -869,6 +870,82 @@ export class Game {
 
   /** Widget value: base amount plus everything that counts as it (Food shows
    *  Food + Berries + Meat×3). Same number every Food cost checks against. */
+  // ------------------------------------------------------------------ the HUD
+
+  /** The tech that first makes a currency obtainable — the requiredTech of
+   *  whichever district harvests it. Derived rather than listed, so renaming
+   *  a tech or moving a resource behind a different one can't desync it. */
+  private techForCurrency(c: CurrencyId): TechId | null {
+    for (const def of Object.values(DISTRICTS)) {
+      if (def.harvestSource && HARVEST[def.harvestSource].currencyId === c) {
+        return def.requiredTech;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Coins the HUD shows, in order. Gems are not here — they are premium and
+   * the header sets them apart.
+   *
+   * Gold, Food and Wood gate the early game and are always up. Stone and
+   * Iron would otherwise be two permanent zeroes for the first hour, so they
+   * appear once their tech is researched OR the player holds any.
+   *
+   * The tech clause is what makes it STICKY: keyed on the balance alone, a
+   * counter would vanish the moment the player spent back to zero.
+   */
+  visibleCurrencies(): CurrencyId[] {
+    const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
+    const contextual: CurrencyId[] = ['Stone', 'Iron'];
+    return [
+      ...always,
+      ...contextual.filter((c) => {
+        const tech = this.techForCurrency(c);
+        return (tech !== null && isTechComplete(this.state, tech))
+          || this.effectiveWalletValue(c) > 0;
+      }),
+    ];
+  }
+
+  /**
+   * The city plaque: ONE reading, whichever the player can currently act on.
+   *
+   * Three permanent counters is the spreadsheet problem the redesign opens
+   * with — builders only matter while something is being queued, and free
+   * workers only while something is being staffed. Showing the live one
+   * turns three pieces of trivia into one piece of advice.
+   */
+  hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
+    // Queueing something → builders.
+    if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
+      const max = this.state.kingdom.maxBuilders;
+      return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
+    }
+    // Staffing something → workers assigned vs. the whole workforce.
+    const inspected = this.inspectedDistrictId === null
+      ? undefined
+      : districtById(this.state, this.inspectedDistrictId);
+    if (inspected && DISTRICTS[inspected.definitionId].maxWorkersPerLevel.length > 0) {
+      const working = this.state.city.districts.reduce((n, d) => n + d.assignedWorkers, 0);
+      return { kind: 'workers', value: working, max: working + this.freeWorkers() };
+    }
+    return {
+      kind: 'population',
+      value: this.state.city.population,
+      max: maxPopulation(this.state),
+    };
+  }
+
+  /** Tapping the population plaque goes to where villagers come from. */
+  focusTownhall(): void {
+    const hall = townhall(this.state);
+    this.setOverlay(null);
+    this.inspectedDistrictId = hall.uniqueId;
+    this.camera.centerOnCell(hall.location);
+    this.notify();
+  }
+
   effectiveWalletValue(c: CurrencyId): number {
     if (c === 'Gems') return getWallet(this.state.player.wallet, c);
     if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);

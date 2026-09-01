@@ -1,0 +1,131 @@
+/* The resource HUD (§5.1) and the purse it expands into. */
+
+#header.hud {
+  display: block;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+/* The plank: three coins, a rope divider, then gems set apart. */
+.hud-plank {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--wood);
+  border-bottom: var(--outline) solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 rgba(60, 36, 18, 0.35);
+}
+.hud-coins { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+
+.hud-coin,
+.hud-gems {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.hud-coin:hover, .hud-gems:hover { filter: brightness(1.05); }
+
+/* Premium is a different kind of thing, so it sits past a rope. */
+.hud-divider {
+  flex: none;
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+  background: var(--wood-dark);
+  opacity: 0.6;
+}
+.hud-gems { background: linear-gradient(160deg, #dfe9ff, #cfc0f0); }
+.hud-plus {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: var(--leaf);
+  border: 2px solid var(--leaf-dark);
+  color: var(--ink-inverse);
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* The one contextual plaque, hanging under the plank. */
+.hud-plaque {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 12px;
+  padding: 3px 12px 4px;
+  font-family: var(--font-display);
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--parchment);
+  background: var(--wood-dark);
+  border: 2px solid var(--wood-dark);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  cursor: default;
+}
+.hud-plaque.is-population { cursor: pointer; } /* the only one that leads somewhere */
+.hud-plaque.is-population:hover { filter: brightness(1.15); }
+.hud-plaque:disabled { opacity: 1; } /* a read-out, not a dead button */
+.hud-plaque-icon { display: inline-flex; }
+
+/* Denied purchases shake the money, not the button. */
+.is-shaking { animation: hud-shake 0.4s; border-color: var(--clay) !important; }
+@keyframes hud-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ------------------------------------------------------------ the purse ---
+ * A kit sheet, so it also proves the sheet shell before Phase 3 leans on it.
+ * The `:has()` rules below warm the legacy overlay scrim and bottom-anchor it
+ * for ANY kit sheet — so each screen picks this up as it migrates, instead of
+ * needing the change repeated. */
+#overlay:has(.k-sheet) {
+  background: var(--scrim);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: var(--hud-h) 10px calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
+}
+#overlay .k-sheet { animation: sheet-in var(--motion-sheet) ease-out; }
+@keyframes sheet-in {
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.purse { display: flex; flex-direction: column; gap: 2px; }
+.purse-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.purse-row:nth-child(odd) { background: rgba(92, 58, 30, 0.07); }
+.purse-name { flex: 1; min-width: 0; }
+.purse-value { font-family: var(--font-display); font-weight: 700; }
+/* An equivalent's contribution, indented under the currency it feeds. */
+.purse-row.is-sub { padding-left: 26px; font-size: var(--text-helper); color: var(--ink-muted); }
+.purse-row.is-total {
+  border-top: 2px solid var(--wood-dark);
+  border-radius: 0;
+  margin-bottom: 6px;
+  font-weight: 700;
+}

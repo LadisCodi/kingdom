@@ -10,7 +10,9 @@ import { QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
 import { getWallet, townhall, type CurrencyId } from '../src/sim/state';
-import { addBuilt, freshGame, freshPresenter, fund, map, screenAt } from './helpers';
+import {
+  addBuilt, completeTech, freshGame, freshPresenter, fund, map, screenAt,
+} from './helpers';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -276,6 +278,93 @@ describe('hold-to-collect reports whether it consumed the gesture', () => {
     game.setOverlay('build');
 
     expect(game.handleHold(sx, sy)).toBe(false);
+  });
+});
+
+describe('the HUD', () => {
+  it('shows three coins until a resource becomes relevant', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+
+    expect(game.visibleCurrencies()).toEqual(['Gold', 'Food', 'Wood']);
+  });
+
+  it('reveals Stone once Masonry lands, and keeps it when spent to zero', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    completeTech(state, 'Masonry');
+
+    expect(game.visibleCurrencies()).toContain('Stone');
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(0); // still broke…
+    expect(game.visibleCurrencies()).toContain('Stone'); // …and still shown
+  });
+
+  it('reveals a resource held before its tech — a quest reward, say', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    expect(game.visibleCurrencies()).not.toContain('Iron');
+
+    fund(state, { Iron: 3 });
+
+    expect(game.visibleCurrencies()).toContain('Iron');
+  });
+
+  // One plaque, not three permanent counters: whichever number the player
+  // can currently act on.
+  it('shows population by default', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+
+    expect(game.hudSlot()).toEqual({ kind: 'population', value: 0, max: expect.any(Number) });
+  });
+
+  it('shows builders while something is being queued', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+
+    game.setOverlay('build');
+    expect(game.hudSlot().kind).toBe('builders');
+
+    game.startPlacement('Housing'); // placement, too — same decision
+    expect(game.hudSlot().kind).toBe('builders');
+  });
+
+  it('shows workers while a building that can be staffed is open', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    addBuilt(state, 'Sawmill', { x: 4, y: 2 });
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    sawmill.assignedWorkers = 2;
+    state.city.population = 5;
+
+    game.inspectedDistrictId = sawmill.uniqueId;
+
+    const slot = game.hudSlot();
+    expect(slot.kind).toBe('workers');
+    expect(slot.value).toBe(2); // working
+    expect(slot.max).toBe(2 + game.freeWorkers()); // of the whole workforce
+  });
+
+  it('stays on population for a building nobody can be assigned to', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    addBuilt(state, 'Housing', { x: 3, y: 2 });
+
+    game.inspectedDistrictId = state.city.districts
+      .find((d) => d.definitionId === 'Housing')!.uniqueId;
+
+    expect(game.hudSlot().kind).toBe('population');
+  });
+
+  it('focusTownhall() closes what is open and inspects the hall', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    game.setOverlay('research');
+
+    game.focusTownhall();
+
+    expect(game.openOverlay).toBe(null);
+    expect(game.inspectedDistrictId).toBe(townhall(state).uniqueId);
   });
 });
 
