@@ -51,6 +51,19 @@ async function boot(): Promise<void> {
   if (!savedFile) saveManager.save(state, now); // brand-new game: save immediately
 
   // ------------------------------------------------------------------- UI
+  // Let the type land before the first mount. The display face's metrics are
+  // nothing like system-ui, so swapping it in afterwards would visibly reflow
+  // the HUD. This is cheap here precisely because nothing has painted yet —
+  // the app is a module script mounting into an empty #app — and the race
+  // puts a hard ceiling on a slow or failed download.
+  await Promise.race([
+    Promise.all([
+      document.fonts.load('700 24px "Kingdom Display"'),
+      document.fonts.load('400 16px "Kingdom Body"'),
+    ]),
+    new Promise((resolve) => setTimeout(resolve, 1500)),
+  ]);
+
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
   mountBanner(game, document.getElementById('notice')!);

@@ -8,6 +8,32 @@
  * Rule the kit enforces: no pure black, no blue-grey, no #FFFFFF. Outlines
  * are --wood-dark, and "disabled" is --locked (a warm fill), not opacity. */
 
+/* Self-hosted so the Pages build stays self-contained. These live in CSS
+ * rather than a <link> in index.html on purpose: Vite rewrites a relative
+ * url() for the /kingdom/ base and content-hashes it, while a hand-written
+ * <link href="/src/..."> works in dev and 404s on Pages.
+ *
+ * Both are variable fonts with the wght axis preserved, so 700 is a real
+ * instance rather than a synthesised bold. font-display: block on the
+ * display face — it carries titles and counters whose metrics diverge
+ * sharply from system-ui, so a swap would visibly reflow the HUD; boot()
+ * waits for it (with a ceiling) instead. Nunito's metrics are close enough
+ * to system-ui that swapping body copy is benign. */
+@font-face {
+  font-family: 'Kingdom Display';
+  src: url('../fonts/pixelify-sans-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Kingdom Body';
+  src: url('../fonts/nunito-latin.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ---- surfaces ---- */
   --parchment: #f4e4c1;
@@ -44,7 +70,12 @@
   --nav-h: 58px;
 
   /* ---- type ----
-   * 13px is the floor (§6.12): the current 11–12px helper text is unreadable
+   * The display stack falls back to MONOSPACE, not a proportional face: if
+   * the pixel font ever fails to load, tabular numbers still don't jitter. */
+  --font-display: 'Kingdom Display', ui-monospace, 'Courier New', monospace;
+  --font-body: 'Kingdom Body', system-ui, -apple-system, sans-serif;
+
+  /* 13px is the floor (§6.12): the current 11–12px helper text is unreadable
    * on a phone in daylight. */
   --text-title: 22px;
   --text-body: 15px;

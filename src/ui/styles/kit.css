@@ -10,6 +10,17 @@
  * scope, so a migrated screen and a legacy one render correctly side by
  * side while style.css shrinks. */
 
+/* Type is scoped to the kit for now. Phase 5 moves --font-body to <body>
+ * once no legacy screen is left to be surprised by it. */
+.k-panel,
+.k-card,
+.gal { font-family: var(--font-body); }
+.k-plank,
+.k-card .k-name,
+.k-chip,
+.k-stat .k-stat-value,
+.k-trough .k-trough-label { font-family: var(--font-display); }
+
 /* ---------------------------------------------------------------- surfaces */
 
 /* Parchment panel inside a carved wooden frame. The frame is a transparent
@@ -106,7 +117,8 @@
   min-height: 56px;
   padding: 12px 20px;
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
-  font: inherit;
+  font-family: var(--font-display);
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--ink-inverse);
   background: var(--slab);
