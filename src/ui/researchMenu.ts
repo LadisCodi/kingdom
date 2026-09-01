@@ -11,22 +11,23 @@
 
 import { icon, type Game } from '../game';
 import {
-  RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UPGRADES, UPGRADE_ORDER,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES, UPGRADE_ORDER,
 } from '../sim/data/definitions';
 import { canAfford } from '../sim/commands';
 import {
   isTechActive, isTechComplete, requirementsMet, slotGemCost,
-  techCompletesAt, techSlots,
+  techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
 import { upgradeCost, upgradeLevel } from '../sim/upgrades';
 import { getWallet, type GameState, type TechId, type UpgradeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
+import { spriteUrl } from '../render/sprites';
+import { btn, iconEl, knob } from './kit';
 import { button, el, formatCost, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
 type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId } | null;
 let selected: Selected = null;
-let treeScroll = { left: 0, top: 0 };
 
 // Geometry (GRID, NODE, UNODE, FAN_*) and the connector route come from
 // ./research/layout.ts, so the test reads the same route this draws.
@@ -58,7 +59,6 @@ function wirePanOnce(): void {
     treeEl.scrollTop -= e.clientY - drag.y;
     drag.x = e.clientX;
     drag.y = e.clientY;
-    treeScroll = { left: treeEl.scrollLeft, top: treeEl.scrollTop };
   });
   const end = () => {
     if (drag?.moved) suppressClick = true;
@@ -99,16 +99,34 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const busy = state.research.active.length;
   const slots = techSlots(state);
 
-  // Slots line + gem purchase for the next one.
-  const slotsRow = el('div', { class: 'action-row' },
-    el('span', { class: 'info' }, `Slots: ${busy} busy / ${slots}`));
+  // Scholars at lecterns, not "Slots: 1 busy / 2". A concurrency limit is an
+  // abstraction; people at desks is something the player can picture.
+  const desks = el('div', { class: 'res-desks' });
+  for (let i = 0; i < slots; i++) {
+    desks.append(el('span', { class: `res-desk${i < busy ? ' is-busy' : ''}` },
+      iconEl(i < busy ? 'research' : 'clock', { size: 'sm' })));
+  }
+  const bar = el('div', { class: 'res-scholars' },
+    desks,
+    el('span', { class: 'res-desk-label' }, busy === 0
+      ? `${slots} ${slots === 1 ? 'scholar' : 'scholars'} idle`
+      : `${busy} of ${slots} at work`));
   if (slots < RESEARCH_SETTINGS.maxSlots) {
     const cost = slotGemCost(state);
-    const buyBtn = button('Buy', () => game.doBuySlot());
-    buyBtn.disabled = getWallet(state.player.wallet, 'Gems') < cost;
-    slotsRow.append(el('span', { class: 'muted' }, `extra slot — ${cost} ${icon('Gems')}`), buyBtn);
+    const hire = btn({
+      label: `Hire · ${cost}`,
+      kind: 'gem',
+      icon: 'Gems',
+      onClick: () => game.doBuySlot(),
+      disabledReason: getWallet(state.player.wallet, 'Gems') < cost
+        ? `Needs ${cost} Gems` : undefined,
+    });
+    bar.append(hire);
   }
-  root.append(el('div', { class: 'research-topbar' }, el('h2', {}, 'Research'), slotsRow));
+  const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
+  close.setAttribute('data-own-close', '');
+  root.append(el('div', { class: 'research-topbar' },
+    el('h2', {}, 'Research'), bar, close));
 
   // ---- the tree canvas (sized to what the fog currently shows) ----
   const shown = TECH_ORDER.filter((id) => visibility(state, id) !== 'hidden');
@@ -221,7 +239,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
     });
   }
 
-  const tree = el('div', { class: 'tech-tree' }, canvas);
+  const tree = el('div', { class: 'tech-tree', 'data-keep-scroll': '' }, canvas);
   treeEl = tree;
   wirePanOnce();
   tree.addEventListener('pointerdown', (e) => {
@@ -246,24 +264,19 @@ export function renderResearchMenu(game: Game): HTMLElement {
       game.notify();
     }
   });
-  // Preserve the pan across the per-tick re-render (wheel scrolling too).
-  tree.addEventListener('scroll', () => {
-    treeScroll = { left: tree.scrollLeft, top: tree.scrollTop };
-  });
-  requestAnimationFrame(() => {
-    // A hinted tech overrides the remembered pan — bring it into view.
-    const hint = game.uiHint();
-    const hintedTech = hint?.startsWith('tech:')
-      ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
-    if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
-      treeScroll = {
-        left: Math.max(0, cx(hintedTech) - tree.clientWidth / 2),
-        top: Math.max(0, cy(hintedTech) - tree.clientHeight / 2),
-      };
-    }
-    tree.scrollLeft = treeScroll.left;
-    tree.scrollTop = treeScroll.top;
-  });
+  // The pan across the per-tick re-render is the host's job now
+  // (data-keep-scroll above), which retires the module-level treeScroll and
+  // its rAF restore. Only the hint still needs to move the view, and it must
+  // run after the host has put the old position back.
+  const hint = game.uiHint();
+  const hintedTech = hint?.startsWith('tech:')
+    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
+  if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
+    requestAnimationFrame(() => {
+      tree.scrollLeft = Math.max(0, cx(hintedTech) - tree.clientWidth / 2);
+      tree.scrollTop = Math.max(0, cy(hintedTech) - tree.clientHeight / 2);
+    });
+  }
   root.append(tree);
 
   // ---- floating bottom info panel, only while something is selected ----
@@ -285,6 +298,33 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
     panel.append(el('div', { class: 'rows' }, ...def.requires.map((req) =>
       el('div', { class: isTechComplete(state, req) ? 'muted' : 'blocked' },
         `Requires ${TECHNOLOGIES[req].name} ${isTechComplete(state, req) ? '✓' : '✗'}`))));
+  }
+
+  // The single most valuable missing piece of information in the old UI: a
+  // player could not tell what a technology was FOR until it finished and a
+  // banner announced it. techUnlocks() has always known.
+  const unlocks = techUnlocks(id);
+  if (unlocks.length > 0) {
+    const row = el('div', { class: 'res-unlocks' },
+      el('span', { class: 'res-unlocks-label' }, 'Unlocks'));
+    for (const u of unlocks) {
+      if (u.kind === 'district') {
+        const url = spriteUrl(`${DISTRICTS[u.id].sprite}_l1`);
+        row.append(el('span', { class: 'res-unlock' },
+          url ? el('img', { src: url, alt: '' }) : iconEl(u.id, { size: 'sm' }),
+          DISTRICTS[u.id].name));
+      } else if (u.kind === 'districtLevel') {
+        row.append(el('span', { class: 'res-unlock' },
+          iconEl('star', { size: 'sm' }), `${DISTRICTS[u.id].name} lv${u.level}`));
+      } else if (u.kind === 'unit') {
+        row.append(el('span', { class: 'res-unlock' },
+          iconEl(u.id, { size: 'sm' }), UNITS[u.id].name));
+      } else {
+        row.append(el('span', { class: 'res-unlock' },
+          iconEl('sparkle', { size: 'sm' }), UPGRADES[u.id].name));
+      }
+    }
+    panel.append(row);
   }
 
   if (isTechComplete(state, id)) {
