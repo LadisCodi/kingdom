@@ -123,7 +123,27 @@ function warmAll(): void {
   }
 }
 
+// Like music's, this is a DEVICE preference, so it lives in its own
+// localStorage key rather than in the game save.
+const MUTE_KEY = 'kingdom.sfxMuted';
+
+export const sfxMuted = (): boolean => {
+  try {
+    return localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+export function setSfxMuted(muted: boolean): void {
+  try {
+    if (muted) localStorage.setItem(MUTE_KEY, '1');
+    else localStorage.removeItem(MUTE_KEY);
+  } catch { /* storage blocked — the toggle just won't persist */ }
+}
+
 export function playSfx(name: SfxName): void {
+  if (sfxMuted()) return;
   try {
     if (ctx === null) {
       ctx = new AudioContext();

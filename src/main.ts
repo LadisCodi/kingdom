@@ -5,7 +5,7 @@
 import './style.css'; // legacy chrome — shrinks as screens migrate
 import './ui/styles/index.css'; // the kit: imported second, so its rules win ties
 import { syncAmbience, type AmbienceName } from './audio/ambience';
-import { musicMuted, startMusic } from './audio/music';
+import { startMusic } from './audio/music';
 import { Game, type OverlayName } from './game';
 import { Camera } from './render/camera';
 import { wireInput } from './render/input';
@@ -170,7 +170,7 @@ async function boot(): Promise<void> {
   let ticks = 0;
   const runTick = () => {
     game.tick();
-    syncAmbience(musicMuted() ? null : biomeAtCenter());
+    syncAmbience(biomeAtCenter()); // ambience has its own mute now
     ticks += 1;
     if (ticks % AUTOSAVE_TICKS === 0) saveManager.save(game.state, game.now());
   };
