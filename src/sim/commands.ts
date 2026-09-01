@@ -14,7 +14,7 @@ import {
 } from './harvest';
 import { advanceCityLife } from './population';
 import { advanceQueue } from './queue';
-import { advanceResearch, isTechComplete } from './research';
+import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { canAfford, effectiveAmount, pay, refund } from './wallet';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
@@ -198,6 +198,31 @@ export function townhallTap(state: GameState, now: number): TownhallTapResult {
 }
 
 // ------------------------------------------------------------------- advance
+//
+// THE BOUNDARY LOOP. `advance` splits its window at every moment discrete work
+// falls due, and runs the continuous sims only BETWEEN those moments. Three
+// properties hold, and every future boundary source must preserve them:
+//
+//  1. Termination is structural. `consider` only accepts `at > after`, and
+//     `applyDueAt(cursor)` drains every source AT the cursor before
+//     `nextBoundary` is asked — so the cursor strictly increases. The step cap
+//     is a seatbelt, not the mechanism.
+//  2. Boundaries are absolute-time, not tick-relative. That is *why* stepped
+//     ticking and one-call offline replay converge exactly rather than
+//     approximately: a tech completing at C splits the window at C in both.
+//  3. A boundary landing exactly on `toTime` is still applied, because
+//     `applyDueAt` sits at the top of the loop body (tests/research.test.ts
+//     relies on this).
+//
+// Deliberately preserved: there is no trailing `applyDueAt(toTime)`. The old
+// code never called `advanceQueue` at `toTime` either, and adding one would
+// change when a newly enqueued item is stamped.
+//
+// Deliberately NOT a boundary: feature respawns. Over an 8h replay a finite
+// feature can cycle dozens of times, and each boundary costs a full
+// `advanceWorkers` sweep — O(workers × workableCells) with a fresh allocation
+// per worker. Thousands of boundaries would turn a ~10-iteration replay into a
+// multi-second one, to fix an inaccuracy both paths share identically.
 
 export interface AdvanceResult {
   deposits: DepositEvent[];
@@ -207,47 +232,69 @@ export interface AdvanceResult {
   trainedPopulation: number; // villagers who finished training
 }
 
+const emptyResult = (): AdvanceResult => ({
+  deposits: [], completedItems: [], completedResearch: [], goldEarned: 0, trainedPopulation: 0,
+});
+
+/** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
+function applyDueAt(
+  state: GameState,
+  map: MapData,
+  t: number,
+  builders: number,
+  out: AdvanceResult,
+): void {
+  for (const item of advanceQueue(state.city.queue, t, builders)) {
+    completeQueueItem(state, map, item, Math.min(completesAt(item), t));
+    out.completedItems.push(item);
+  }
+  out.completedResearch.push(...advanceResearch(state, t));
+}
+
+/** The continuous sims, run only BETWEEN boundaries. */
+function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceResult): void {
+  advanceRespawns(state, map, t);
+  out.deposits.push(...advanceWorkers(state, map, t));
+  const life = advanceCityLife(state, t);
+  out.goldEarned += life.gold;
+  out.trainedPopulation += life.trained;
+}
+
+/** The earliest moment STRICTLY after `after` at which discrete work falls
+ *  due. Adding a source is one `consider()` line. */
+function nextBoundary(state: GameState, after: number, builders: number): number {
+  let t = Infinity;
+  const consider = (at: number | null): void => {
+    if (at !== null && at > after && at < t) t = at;
+  };
+  for (const item of state.city.queue.slice(0, builders)) {
+    if (item.startedAt !== null) consider(completesAt(item));
+  }
+  for (const a of state.research.active) consider(techCompletesAt(state, a.id));
+  return t;
+}
+
+/** Seatbelt only — see property 1 in the header. A window with this many
+ *  genuine boundaries is a content bug, and stopping early beats hanging. */
+const MAX_BOUNDARY_STEPS = 10_000;
+
 /**
- * Advance the whole sim from state.lastAdvance to `toTime`. Queue completions
- * are interleaved chronologically with the worker simulation so a FarmLands
- * finishing mid-absence starts being worked at its completion time, not at
- * load time. Also used verbatim by the live once-per-second tick.
+ * Advance the whole sim from state.lastAdvance to `toTime`. Used verbatim by
+ * the live once-per-second tick and by offline replay — see the header above
+ * for why those two agree exactly rather than approximately.
  */
 export function advance(state: GameState, map: MapData, toTime: number): AdvanceResult {
-  const result: AdvanceResult = {
-    deposits: [], completedItems: [], completedResearch: [], goldEarned: 0, trainedPopulation: 0,
-  };
+  const result = emptyResult();
   let cursor = Math.min(state.lastAdvance, toTime);
   const builders = Math.max(1, state.kingdom.maxBuilders);
-  for (;;) {
-    // Stamp/complete queue work due at the cursor (items enqueued since the
-    // last advance get stamped here — within one tick of their enqueue).
-    const done = advanceQueue(state.city.queue, cursor, builders);
-    for (const item of done) {
-      completeQueueItem(state, map, item, Math.min(completesAt(item), cursor));
-      result.completedItems.push(item);
-    }
-    // Next queue completion inside the window?
-    let tNext = Infinity;
-    for (const item of state.city.queue.slice(0, builders)) {
-      if (item.startedAt !== null) tNext = Math.min(tNext, completesAt(item));
-    }
-    if (tNext > toTime) break;
-    advanceRespawns(state, map, tNext);
-    result.deposits.push(...advanceWorkers(state, map, tNext));
-    // Taxes/training up to the cursor too: a Housing completing mid-absence
-    // starts collecting taxes at its completion time, not at load time.
-    const life = advanceCityLife(state, tNext);
-    result.goldEarned += life.gold;
-    result.trainedPopulation += life.trained;
-    cursor = tNext;
+  for (let steps = 0; steps < MAX_BOUNDARY_STEPS; steps++) {
+    applyDueAt(state, map, cursor, builders, result);
+    const next = nextBoundary(state, cursor, builders);
+    if (next > toTime) break;
+    runContinuous(state, map, next, result);
+    cursor = next;
   }
-  advanceRespawns(state, map, toTime);
-  result.deposits.push(...advanceWorkers(state, map, toTime));
-  const life = advanceCityLife(state, toTime);
-  result.goldEarned += life.gold;
-  result.trainedPopulation += life.trained;
-  result.completedResearch.push(...advanceResearch(state, toTime));
+  runContinuous(state, map, toTime, result);
   state.lastAdvance = toTime;
   return result;
 }
