@@ -12,11 +12,19 @@ export const T0 = Date.parse('2026-08-17T12:00:00Z');
 
 export const freshGame = (): GameState => newGame(map, T0);
 
-/** The presenter, constructible under node: Camera only stores the canvas
- *  (nothing these tests reach touches it), playSfx swallows the missing
+/** The presenter, constructible under node: Camera reads nothing but the
+ *  canvas's client size (stubbed below), playSfx swallows the missing
  *  AudioContext, and mapRenderer is only ever an erased `import type`. */
 export const freshPresenter = (state: GameState = freshGame()): Game =>
-  new Game(state, map, new Camera(null as unknown as HTMLCanvasElement));
+  new Game(state, map, new Camera(
+    { clientWidth: 720, clientHeight: 1280 } as unknown as HTMLCanvasElement,
+  ));
+
+/** Screen coords that land on `cell`, for driving handleTap / handleHold. */
+export const screenAt = (game: Game, cell: Coord): [number, number] => {
+  const { x, y, size } = game.camera.cellToScreen(cell);
+  return [x + size / 2, y + size / 2];
+};
 
 export const fund = (state: GameState, wallet: Record<string, number>): void => {
   Object.assign(state.city.wallet, wallet);

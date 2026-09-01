@@ -10,7 +10,7 @@ import { QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
 import { getWallet, townhall, type CurrencyId } from '../src/sim/state';
-import { addBuilt, freshGame, freshPresenter, fund, map } from './helpers';
+import { addBuilt, freshGame, freshPresenter, fund, map, screenAt } from './helpers';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -239,6 +239,43 @@ describe('the banner queue', () => {
     const banner = game.takeBanner();
     expect(banner?.title).toBe('Construction complete!');
     expect(banner?.name).toBe('Housing');
+  });
+});
+
+// Manual taps are deliberately not cooldown-gated, so if a held pointer's
+// repeat AND the tap on release both landed, one press would collect twice.
+// The input layer suppresses the release-tap when a repeat consumed the
+// gesture — which only works if handleHold reports honestly.
+describe('hold-to-collect reports whether it consumed the gesture', () => {
+  it('true when it actually collected, false once the cooldown closes', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    const forest = { x: 2, y: 2 }; // authored Trees cell, seed-revealed
+    game.camera.centerOnCell(forest);
+    const [sx, sy] = screenAt(game, forest);
+
+    expect(game.handleHold(sx, sy)).toBe(true); // collected
+    expect(game.handleHold(sx, sy)).toBe(false); // same instant — cooldown
+  });
+
+  it('false over ground it cannot harvest, so the release-tap survives', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    const bare = { x: 2, y: 0 }; // revealed grassland, no resource
+    game.camera.centerOnCell(bare);
+    const [sx, sy] = screenAt(game, bare);
+
+    expect(game.handleHold(sx, sy)).toBe(false);
+  });
+
+  it('false while a menu is open — holds never reach the map', () => {
+    const game = freshPresenter();
+    const forest = { x: 2, y: 2 };
+    game.camera.centerOnCell(forest);
+    const [sx, sy] = screenAt(game, forest);
+    game.setOverlay('build');
+
+    expect(game.handleHold(sx, sy)).toBe(false);
   });
 });
 

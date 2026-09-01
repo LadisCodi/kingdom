@@ -326,29 +326,33 @@ export class Game {
   }
 
   /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place).
-   *  The input layer fires this every 100ms; the auto-tap cooldown decides
-   *  how many of those actually land, so holding is the slow, lazy option
-   *  and tapping fast stays the skilful one. */
-  handleHold(sx: number, sy: number): void {
-    if (this.mode.kind !== 'normal' || this.openOverlay !== null) return;
+   *  The input layer repeats this while the press lasts; the auto-tap
+   *  cooldown decides how many actually land, so holding is the slow, lazy
+   *  option and tapping fast stays the skilful one.
+   *
+   *  Returns true when this repeat DID something — the input layer then
+   *  swallows the tap on release, so one press never collects twice. */
+  handleHold(sx: number, sy: number): boolean {
+    if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
-    if (!this.map.terrain.has(coordKey(cell))) return;
+    if (!this.map.terrain.has(coordKey(cell))) return false;
     // Holding a lived-in house keeps boosting its tax clock, same cooldown.
     const district = districtAt(this.state, cell);
     if (district && district.state === 'Built' &&
         districtCapacity(this.state, district) > 0) {
       const { result, gold } = houseTap(this.state, district, this.now(), true);
-      if (result === 'Boosted') {
-        this.tapFeedback(district.location, 'tapHouse');
-        this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
-        this.notify();
-      }
-      return;
+      if (result !== 'Boosted') return false;
+      this.tapFeedback(district.location, 'tapHouse');
+      this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+      this.notify();
+      return true;
     }
-    if (harvestSourceAt(this.state, cell) === null) return;
-    if (!this.state.fog.revealed[coordKey(cell)]) return;
-    if (isExhausted(this.state, cell, this.now())) return; // quiet — no 💤 spam
-    if (this.collectAt(cell, true) === 'Harvested') this.notify();
+    if (harvestSourceAt(this.state, cell) === null) return false;
+    if (!this.state.fog.revealed[coordKey(cell)]) return false;
+    if (isExhausted(this.state, cell, this.now())) return false; // quiet — no 💤 spam
+    if (this.collectAt(cell, true) !== 'Harvested') return false;
+    this.notify();
+    return true;
   }
 
   // ------------------------------------------------------------ placement mode
