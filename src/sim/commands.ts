@@ -22,7 +22,7 @@ import {
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type Rng, type TechId,
+  type QueueItem, type TechId,
 } from './state';
 
 // ------------------------------------------------------------------ building
@@ -301,5 +301,3 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
 
 export { canAfford, effectiveAmount, collectTap, tapCell, assignableWorkerLimit };
 export type { CollectTapResult, TapCellResult };
-
-export type { Rng };

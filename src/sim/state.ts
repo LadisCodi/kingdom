@@ -145,14 +145,17 @@ export interface GameState {
   /** Discoveries made since the UI last drained them. Transient — a banner
    *  missed at quit simply doesn't replay. */
   pendingDiscoveries: string[];
+  /** The world seed. Every random outcome in the game is a pure function of
+   *  this plus the identity of the event asking (see sim/rng.ts) — never of
+   *  how many draws came before, which is what makes offline replay and live
+   *  ticking produce the same world. */
+  seed: number;
   nextId: number; // monotonic counter for unique ids
   lastAdvance: number; // epoch ms — where the unified advance left off
   /** Epoch ms of the last successful player collect tap (cooldown anchor).
    *  Transient — not persisted; resets on load. */
   lastCollectTapAt: number;
 }
-
-export type Rng = () => number; // [0, 1)
 
 export const newId = (state: GameState, prefix: string): string => `${prefix}_${state.nextId++}`;
 

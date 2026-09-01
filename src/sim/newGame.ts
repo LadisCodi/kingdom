@@ -3,6 +3,7 @@
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { seedFog } from './fog';
+import { newSeed } from './rng';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
 import { coordKey, type CurrencyId, type GameState, type Wallet } from './state';
 
@@ -41,6 +42,7 @@ export function newGame(map: MapData, now: number): GameState {
     quests: { index: 0, progress: 0 },
     discoveries: {},
     pendingDiscoveries: [],
+    seed: newSeed(),
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,
