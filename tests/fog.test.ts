@@ -8,12 +8,14 @@ const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 
 describe('map data', () => {
-  it('loads 340 terrain cells across six biomes and 42 features', () => {
-    expect(map.terrain.size).toBe(340);
-    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(101);
+  it('loads 342 terrain cells across six biomes and 42 features', () => {
+    expect(map.terrain.size).toBe(342);
+    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(93);
     expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(23);
-    expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(16);
-    expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(20);
+    expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(18);
+    expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(28);
+    expect([...map.terrain.values()].filter((t) => t === 'Water').length).toBe(171);
+    expect([...map.terrain.values()].filter((t) => t === 'Tundra').length).toBe(9);
     expect(map.initialFeatures.size).toBe(42);
   });
   it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {
@@ -51,7 +53,9 @@ describe('paying to reveal', () => {
   it('accumulates 1 Gold per tap and reveals when total cost is met', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 50; // the start has 0 Gold
-    const cell = { x: 3, y: 0 }; // distance 2 from the footprint → cost 3
+    // Distance 2 from the footprint → cost 3. Must be an UNGATED terrain:
+    // (3,0) is Mountain and now needs Scaling Tools (see the gates block below).
+    const cell = { x: 3, y: 1 };
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(state.fog.progress[coordKey(cell)]).toBe(2);

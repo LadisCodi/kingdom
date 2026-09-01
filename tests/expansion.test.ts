@@ -12,7 +12,9 @@ import { effectiveAmount, pay } from '../src/sim/wallet';
 import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
-const QUARRY_CELL = { x: 4, y: 0 }; // grassland beside them
+// The rocks sit in a mountain pocket: (5,0) and (5,-2) are their only land
+// neighbours, so the quarry goes diagonally beside them.
+const QUARRY_CELL = { x: 5, y: 0 };
 const COVE_WATER = { x: -3, y: -1 }; // open water west of the isle
 const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 // Docks anchor: 2×1 pier — (-6,3) is Water, (-5,3) is Grassland (mirrored case).

@@ -77,7 +77,7 @@ describe('the quest chain', () => {
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Explorer');
     fund(state, { Gold: 100 });
     let r: string = 'Paid';
-    while (r === 'Paid') r = revealTap(state, map, { x: 3, y: 0 });
+    while (r === 'Paid') r = revealTap(state, map, { x: 3, y: 1 }); // ungated grassland
     expect(r).toBe('Revealed');
     expect(state.quests.progress).toBe(1);
   });

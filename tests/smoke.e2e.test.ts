@@ -25,7 +25,9 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // distance 3 (5 Gold — 4-neighbor BFS, diagonals don't shortcut).
     // (The start has 0 Gold — fund the reveal budget.)
     fund(state, { Gold: 50 });
-    for (const cell of [{ x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 }]) {
+    // All three must be ungated terrain — (3,0) is Mountain and now needs
+    // Scaling Tools before it can be revealed at all.
+    for (const cell of [{ x: 1, y: -2 }, { x: 3, y: 1 }, { x: 3, y: 2 }]) {
       let r: string = 'Paid';
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r).toBe('Revealed');
