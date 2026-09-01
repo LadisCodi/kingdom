@@ -3,16 +3,21 @@
 // bottom-sheet animations, scroll preservation and listener cleanup all
 // depend on. Testable in node: the slot only appends to and clears its
 // container, so a stub stands in for the DOM.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ScreenSlot, type Screen } from '../src/ui/kit/host';
 
-/** Minimal stand-in for the mount point. */
+/** Minimal stand-in for the mount point, including the attribute the enter
+ *  animation is keyed to. */
 const stubContainer = () => {
   const children: unknown[] = [];
+  const attrs = new Map<string, string>();
   return {
     children,
+    attrs,
     append: (n: unknown) => { children.push(n); },
     replaceChildren: () => { children.length = 0; },
+    setAttribute: (k: string, v: string) => { attrs.set(k, v); },
+    removeAttribute: (k: string) => { attrs.delete(k); },
   };
 };
 
@@ -88,5 +93,62 @@ describe('ScreenSlot', () => {
     slot.show('a', () => bare);
     expect(() => slot.clear()).not.toThrow();
     expect(container.children).toHaveLength(0);
+  });
+
+  // A legacy screen rebuilds its whole subtree every tick, so an enter
+  // animation keyed to the screen's own element replays once a second for as
+  // long as the sheet is open — which is exactly what it looked like. The
+  // flag belongs to the MOUNT, and has to clear itself.
+  describe('the enter flag', () => {
+    afterEach(() => { vi.useRealTimers(); });
+
+    it('is set on mount and clears itself', () => {
+      vi.useFakeTimers();
+      const container = stubContainer();
+      const slot = slotWith(container);
+
+      slot.show('a', () => spyScreen([], 'a'));
+      expect(container.attrs.has('data-entering')).toBe(true);
+
+      vi.advanceTimersByTime(300);
+      expect(container.attrs.has('data-entering')).toBe(false);
+    });
+
+    it('is NOT re-set by a refresh of the same screen', () => {
+      vi.useFakeTimers();
+      const container = stubContainer();
+      const slot = slotWith(container);
+      const create = () => spyScreen([], 'a');
+
+      slot.show('a', create);
+      vi.advanceTimersByTime(300);
+      slot.show('a', create); // the per-tick refresh
+      slot.show('a', create);
+
+      expect(container.attrs.has('data-entering')).toBe(false);
+    });
+
+    it('is set again for a genuinely different screen', () => {
+      vi.useFakeTimers();
+      const container = stubContainer();
+      const slot = slotWith(container);
+
+      slot.show('a', () => spyScreen([], 'a'));
+      vi.advanceTimersByTime(300);
+      slot.show('b', () => spyScreen([], 'b'));
+
+      expect(container.attrs.has('data-entering')).toBe(true);
+    });
+
+    it('drops the flag when the slot is cleared mid-animation', () => {
+      vi.useFakeTimers();
+      const container = stubContainer();
+      const slot = slotWith(container);
+
+      slot.show('a', () => spyScreen([], 'a'));
+      slot.clear();
+
+      expect(container.attrs.has('data-entering')).toBe(false);
+    });
   });
 });

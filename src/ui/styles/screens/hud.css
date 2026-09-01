@@ -106,7 +106,10 @@
    * §5.5 wants anyway. */
   padding: calc(var(--hud-h) + 56px) 10px calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
 }
-#overlay .k-sheet { animation: sheet-in var(--motion-sheet) ease-out; }
+/* Only while the slot says this is a fresh mount. A legacy screen rebuilds
+ * its subtree every tick, so keying the animation to the ELEMENT made it
+ * replay once a second for as long as the sheet was open. */
+#overlay[data-entering] .k-sheet { animation: sheet-in var(--motion-sheet) ease-out; }
 @keyframes sheet-in {
   from { transform: translateY(18px); opacity: 0; }
   to { transform: none; opacity: 1; }

@@ -61,10 +61,19 @@ export function legacy(render: () => HTMLElement, onClose?: () => void): Screen 
   };
 }
 
+/**
+ * How long `data-entering` stays on the container. Slightly longer than
+ * --motion-sheet so the animation is never cut off mid-flight.
+ */
+const ENTER_MS = 240;
+
 /** One mount point holding at most one Screen, identified by a key. */
 export class ScreenSlot {
   private key: string | null = null;
   private screen: Screen | null = null;
+  // Not `window.setTimeout`: this module has to import under node so the
+  // slot stays testable without a DOM.
+  private enterTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private readonly container: HTMLElement) {}
 
@@ -75,6 +84,7 @@ export class ScreenSlot {
       this.key = key;
       this.screen = create();
       this.container.append(this.screen.root);
+      this.markEntering();
     }
     this.screen?.refresh();
   }
@@ -85,7 +95,32 @@ export class ScreenSlot {
     this.teardown();
   }
 
+  /**
+   * Flag the container as freshly mounted, briefly, so CSS can run an enter
+   * animation exactly once.
+   *
+   * The animation cannot live on the screen's own element: a legacy screen
+   * rebuilds its whole subtree on every refresh — once a second from the
+   * tick — so that element is new each time and its animation restarts,
+   * which is precisely the "sheet keeps replaying its slide-in" bug. The
+   * MOUNT is what this class knows about, so the mount is what carries the
+   * flag. It self-clears, so a rebuild after the window is unaffected.
+   */
+  private markEntering(): void {
+    this.container.setAttribute('data-entering', '');
+    if (this.enterTimer !== null) clearTimeout(this.enterTimer);
+    this.enterTimer = setTimeout(() => {
+      this.container.removeAttribute('data-entering');
+      this.enterTimer = null;
+    }, ENTER_MS);
+  }
+
   private teardown(): void {
+    if (this.enterTimer !== null) {
+      clearTimeout(this.enterTimer);
+      this.enterTimer = null;
+    }
+    this.container.removeAttribute('data-entering');
     this.screen?.destroy?.();
     this.container.replaceChildren();
     this.screen = null;
