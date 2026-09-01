@@ -38,6 +38,27 @@ export interface MarkerLayer {
   hintCell: Coord | null;
 }
 
+// Canvas text uses the same display face as the HUD, read from the CSS token
+// so tokens.css stays the one source of truth. Cached: this is called from
+// the render loop.
+let displayFontStack: string | null = null;
+function displayFont(): string {
+  if (displayFontStack === null) {
+    displayFontStack = getComputedStyle(document.documentElement)
+      .getPropertyValue('--font-display').trim() || 'ui-monospace, monospace';
+  }
+  return displayFontStack;
+}
+
+/** A pixel face is crisp only at whole multiples of its grid, and these sizes
+ *  are derived from a continuous zoom — so snap to 4px steps. */
+const snapPx = (px: number, floor: number): number =>
+  Math.max(floor, Math.round(px / 4) * 4);
+
+/** Canvas font string in the display face, at a snapped size. */
+const labelFont = (px: number, floor: number, bold = false): string =>
+  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${displayFont()}`;
+
 export function drawMap(
   canvas: HTMLCanvasElement,
   camera: Camera,
@@ -207,7 +228,7 @@ export function drawMap(
     } else {
       if (district.level > 1) {
         ctx.fillStyle = PALETTE.label;
-        ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
+        ctx.font = labelFont(size * 0.16, 8);
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(`L${district.level}`, x + fw - 3, y + 3);
@@ -242,7 +263,7 @@ export function drawMap(
     const remaining = Math.ceil(remainingSeconds(item, now));
     drawBar(ctx, x + fw * 0.1, y + size * 0.1, fw * 0.8, 6, progress, PALETTE.progressFill);
     ctx.fillStyle = PALETTE.label;
-    ctx.font = `${Math.max(9, size * 0.15)}px system-ui`;
+    ctx.font = labelFont(size * 0.15, 8);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, x + fw / 2, y + size * 0.1 + 8);
@@ -286,7 +307,7 @@ export function drawMap(
     ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
     if (label) {
       ctx.fillStyle = markers.validColor;
-      ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
+      ctx.font = labelFont(size * 0.16, 8);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillText(label, x + size / 2, y + size - 4);
@@ -302,8 +323,8 @@ export function drawMap(
   // (the white working-area region is already drawn above).
   for (const { cell, label, tone } of markers.yieldCells) {
     const { x, y } = cellRect(cell);
-    const fontSize = Math.max(10, size * 0.18);
-    ctx.font = `bold ${fontSize}px system-ui`;
+    const fontSize = snapPx(size * 0.18, 8);
+    ctx.font = labelFont(fontSize, 8, true);
     const textWidth = ctx.measureText(label).width;
     const padX = fontSize * 0.5;
     const pillW = textWidth + padX * 2;
@@ -433,7 +454,7 @@ export function drawMap(
     const { x, y } = cellRect(f.cell);
     ctx.globalAlpha = 1 - f.t;
     ctx.fillStyle = f.color ?? PALETTE.floaterText;
-    ctx.font = `bold ${Math.max(11, size * 0.22)}px system-ui`;
+    ctx.font = labelFont(size * 0.22, 12, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(f.text, x + size / 2, y + size * 0.3 - f.t * size * 0.5);
@@ -510,6 +531,8 @@ function drawGlyph(
 ): void {
   // Emoji ink rarely matches the font's line box, so center on the measured
   // bounding box instead of relying on textBaseline: 'middle'.
+  // Stays on system-ui deliberately: this draws EMOJI, and forcing a pixel
+  // face here would break them. Becomes dead code as sprites cover every case.
   ctx.font = `${fontSize}px system-ui`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
