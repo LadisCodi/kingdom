@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { fogState } from '../src/sim/fog';
 import { addModifier, type Modifier } from '../src/sim/modifiers';
-import { MANA, OFFLINE_CAP_HOURS } from '../src/sim/data/definitions';
+import { FOG, MANA, OFFLINE_CAP_HOURS, type LandmarkDef } from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
 } from '../src/sim/landmarks';
@@ -19,7 +19,7 @@ import {
 } from '../src/sim/mana';
 import { LANDMARKS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, townhall, type GameState } from '../src/sim/state';
+import { coordKey, getWallet, parseCoordKey, townhall, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const HOUR = 3_600_000;
@@ -341,5 +341,60 @@ describe('landmarks', () => {
     expect(restored.landmarks.claimed[first.id]).toBe(true);
     expect(restored.landmarks.cleared.CircleOfNine).toBe(true);
     expect(manaProduction(restored)).toBe(manaProduction(state));
+  });
+});
+
+// A claim lifts the fog around the sanctuary (2026-09-02).
+//
+// DISCOVERED, never revealed — and the distinction is the whole design. Paid
+// reveal is the economy's main sink, so a claim must not hand the player
+// ground for free; what it hands them is a place to LOOK. That turns the
+// second and third sanctuaries into lanterns held up over new parts of the
+// map, which is what makes "go and claim the far one" a reason to explore
+// rather than a chore at the end of exploring.
+describe('claiming a sanctuary lifts the fog around it', () => {
+  const claimable = (): { state: GameState; def: LandmarkDef } => {
+    const state = freshGame();
+    const def = LANDMARKS[0];
+    reveal(state, [def.location]);
+    state.city.wallet.Gold = landmarkClaimCost(def) + 10;
+    return { state, def };
+  };
+
+  it('discovers every cell within the authored radius, and reveals none of them', () => {
+    const { state, def } = claimable();
+    const revealedBefore = new Set(Object.keys(state.fog.revealed));
+
+    expect(claimLandmark(state, map, def.location)).toBe('Claimed');
+
+    const inRadius = [...map.terrain.keys()].map(parseCoordKey).filter((c) =>
+      Math.max(Math.abs(c.x - def.location.x), Math.abs(c.y - def.location.y))
+        <= FOG.claimDiscoverRadius);
+    expect(inRadius.length).toBeGreaterThan(50); // it is a real swathe of map
+
+    for (const cell of inRadius) {
+      expect(fogState(state, map, cell), `${coordKey(cell)} stayed dark`)
+        .not.toBe('Undiscovered');
+    }
+    // Not one cell was handed over: the Gold sink is untouched.
+    expect(new Set(Object.keys(state.fog.revealed))).toEqual(revealedBefore);
+  });
+
+  it('leaves ground the player already paid for alone', () => {
+    const { state, def } = claimable();
+    const paid = { x: def.location.x + 1, y: def.location.y };
+    reveal(state, [paid]);
+    expect(claimLandmark(state, map, def.location)).toBe('Claimed');
+    expect(fogState(state, map, paid)).toBe('Revealed'); // not downgraded
+  });
+
+  it('does nothing when the claim was refused', () => {
+    const state = freshGame();
+    const def = LANDMARKS[0];
+    reveal(state, [def.location]);
+    state.city.wallet.Gold = 0;
+    const before = Object.keys(state.fog.discovered).length;
+    expect(claimLandmark(state, map, def.location)).toBe('NotEnoughGold');
+    expect(Object.keys(state.fog.discovered)).toHaveLength(before);
   });
 });

@@ -13,7 +13,7 @@ const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 
 describe('map data', () => {
-  it('loads 342 terrain cells across six biomes and 43 features', () => {
+  it('loads 342 terrain cells across six biomes and 42 features', () => {
     expect(map.terrain.size).toBe(342);
     expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(91);
     expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(23);
@@ -21,7 +21,7 @@ describe('map data', () => {
     expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(30);
     expect([...map.terrain.values()].filter((t) => t === 'Water').length).toBe(171);
     expect([...map.terrain.values()].filter((t) => t === 'Tundra').length).toBe(9);
-    expect(map.initialFeatures.size).toBe(43);
+    expect(map.initialFeatures.size).toBe(42);
   });
   it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);

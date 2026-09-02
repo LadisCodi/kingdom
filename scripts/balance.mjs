@@ -117,6 +117,10 @@ const SETTINGS = [
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
+  // Claiming a sanctuary lifts the fog around it: every cell within this many
+  // rings becomes DISCOVERED, never revealed. A claim buys you a place to
+  // look, not the ground itself — the paid reveal is still the sink.
+  ['fog.claim_discover_radius', 'fog.claimDiscoverRadius'],
   ['city.initial_population', 'city.initialPopulation'],
   ['city.initial_gold', 'city.initialCurrencies.Gold'],
   ['city.initial_food', 'city.initialCurrencies.Food'],

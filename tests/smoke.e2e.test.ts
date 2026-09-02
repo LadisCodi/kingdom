@@ -46,11 +46,10 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, FOREST, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
 
-    // --- One of the two villagers sleeps in the Townhall and pays rent; the
-    // other has no roof and pays nothing.
+    // --- No taxes yet: villagers without a roof pay nothing.
     now += 60_000;
     tickAt(state, now);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11 + 30);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11);
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500, Knowledge: 500 });
@@ -107,36 +106,34 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     tickAt(state, now);
     expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(food);
 
-    // --- Housing: villagers live there (2 per house) and pay taxes. The
-    // Townhall's own bed is already taken by one of the two seeded villagers.
+    // --- Housing: villagers live there (2 per house) and pay taxes.
     fund(state, { Food: 10_000, Gold: 10_000, Wood: 10_000, Stone: 500, Iron: 500 });
-    expect(maxPopulation(state)).toBe(1);
-    expect(queueTraining(state, now)).toBe('AtMax'); // the one bed is full
+    expect(maxPopulation(state)).toBe(0);
+    expect(queueTraining(state, now)).toBe('AtMax'); // nowhere to live yet
     for (const cell of [{ x: 2, y: 0 }, { x: 0, y: -1 }]) {
       expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
       tickAt(state, now);
       now += 120_000;
       tickAt(state, now);
     }
-    // TH1 allows 2 houses; at L1 each holds TWO villagers, and the Townhall
-    // sleeps one — so the two the test seeded leave room for three more.
-    expect(maxPopulation(state)).toBe(5);
+    // TH1 allows 2 houses; at L1 each holds TWO villagers, so the two the test
+    // seeded leave room for two more without any upgrade.
+    expect(maxPopulation(state)).toBe(4);
     expect(queueTraining(state, now)).toBe('Queued');
     expect(queueTraining(state, now)).toBe('Queued');
-    expect(queueTraining(state, now)).toBe('Queued');
-    expect(queueTraining(state, now)).toBe('AtMax'); // 2 living + 3 queued = cap
-    now += 61_000; // 3 x 20s of training
+    expect(queueTraining(state, now)).toBe('AtMax'); // 2 living + 2 queued = cap
+    now += 41_000; // 2 x 20s of training
     tickAt(state, now);
-    expect(state.city.population).toBe(5);
+    expect(state.city.population).toBe(4);
     expect(state.city.training).toBe(null);
 
     // Level them up and there is room again.
     for (const house of state.city.districts.filter((d) => d.definitionId === 'Housing')) {
       house.level = 2;
     }
-    expect(maxPopulation(state)).toBe(9); // two L2 houses (4 each) + the Townhall bed
+    expect(maxPopulation(state)).toBe(8); // two L2 houses (4 each)
 
-    // --- Taxes: 5 housed villagers x 30 Gold/min, fully idle.
+    // --- Taxes: 4 housed villagers x 30 Gold/min, fully idle.
     const goldBeforeTaxes = getWallet(state.city.wallet, 'Gold');
     now += 60_000;
     tickAt(state, now);
@@ -192,10 +189,13 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       now += 120_000;
       tickAt(state, now);
     }
-    // two L2 houses (4 each) + two L1 (2 each) + the Townhall bed
-    expect(maxPopulation(state)).toBe(13);
+    expect(maxPopulation(state)).toBe(12); // two L2 houses (4 each) + two L1 (2 each)
+    expect(queueTraining(state, now)).toBe('Queued');
     expect(queueTraining(state, now)).toBe('Queued');
     expect(townhallTap(state, now)).toBe('Boosted'); // taps speed the current one
+    now += 20_000;
+    tickAt(state, now);
+    expect(state.city.population).toBe(5);
     now += 20_000;
     tickAt(state, now);
     expect(state.city.population).toBe(6);
@@ -206,10 +206,10 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const gold = getWallet(state.city.wallet, 'Gold');
     const restored = deserialize(save, map, now + 600_000)!;
     const earned = getWallet(restored.city.wallet, 'Gold') - gold;
-    // Six villagers filled in BUILD ORDER: the Townhall bed takes one, the
-    // two L2 houses (capacity 4) take 4 and 1, the two L1 houses stand empty
-    // and pay nothing. Each occupied house has one crowding neighbour, the
-    // Townhall none: 30 + (4 × 30 − 1) + (1 × 30 − 1) = 178/min.
+    // Six villagers across four houses, filled in BUILD ORDER: the two L2
+    // houses (capacity 4) take 4 and 2, the two L1 houses stand empty and pay
+    // nothing. Each occupied house has exactly one crowding neighbour:
+    // (4 × 30 − 1) + (2 × 30 − 1) = 178/min.
     expect(earned).toBeGreaterThanOrEqual(1779);
     expect(earned).toBeLessThanOrEqual(1781);
     expect(getWallet(restored.city.wallet, 'Wood'))

@@ -1129,7 +1129,7 @@ export class Game {
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
         name: LANDMARK_ART[def.kind].name,
-        desc: 'The kingdom draws more Mana every hour, for good.',
+        desc: 'A deeper Mana pool, for good — and the fog lifts all around it.',
         sprite: LANDMARK_ART[def.kind].sprite,
         tone: 'sky',
       });

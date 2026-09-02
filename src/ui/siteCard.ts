@@ -7,7 +7,9 @@
 // legible BEFORE the player spends anything — what it gives, what it costs,
 // and, when it is out of reach, exactly what is missing.
 
-import { LANDMARK_ART, MANA, type LandmarkDef, type RuinDef } from '../sim/data/definitions';
+import {
+  FOG, LANDMARK_ART, MANA, type LandmarkDef, type RuinDef,
+} from '../sim/data/definitions';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
@@ -37,10 +39,15 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
       el('div', {},
         el('div', { class: 'site-name' }, look.name),
         el('div', { class: 'site-kind' }, claimed ? 'Claimed' : 'Unclaimed'))),
-    // The promise, stated as the thing it actually buys: a bigger pool, which
-    // is also a bigger reward every time an ad refills it.
+    // The promise, stated as the two things it actually buys: a bigger pool
+    // (which is also a bigger reward every time an ad refills it), and a
+    // lantern held up over the map around it.
     el('div', { class: 'site-gift' },
-      stat('Mana', `+${MANA.landmarkCap}`, 'to your pool, for good')),
+      stat('Mana', `+${MANA.landmarkCap}`, 'to your pool, for good'),
+      // `showme` is the "look over there" glyph the quest pill already uses,
+      // and looking is exactly what a claim buys here — not owning.
+      stat('showme', `${FOG.claimDiscoverRadius * 2 + 1}×${FOG.claimDiscoverRadius * 2 + 1}`,
+        'of map uncovered')),
   );
 
   if (claimed) {
@@ -59,7 +66,9 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   // framing would be describing a rule that no longer exists.
   body.append(el('div', { class: 'site-note' },
     `Claiming it holds ${MANA.landmarkCap} more Mana, for good — a longer run of `
-    + 'taps, and more from every refill.'));
+    + 'taps, and more from every refill. It also lifts the fog for '
+    + `${FOG.claimDiscoverRadius} cells around: you will see what is out there, `
+    + 'though clearing it is still yours to pay for.'));
 
   body.append(action({
     label: 'Claim',

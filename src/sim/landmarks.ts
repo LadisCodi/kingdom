@@ -26,11 +26,11 @@
 //    rather than a permanent commitment: the army is never locked up holding
 //    ground.
 
-import { LANDMARKS, type LandmarkDef } from './data/definitions';
+import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
 import { fogState } from './fog';
-import type { MapData } from './grid';
+import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
-import { addToWallet, getWallet, type Coord, type GameState } from './state';
+import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
 
 export const landmarkAt = landmarkDefAt;
 
@@ -69,7 +69,35 @@ export function claimLandmark(state: GameState, map: MapData, cell: Coord): Clai
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
   state.landmarks.claimed[def.id] = true;
+  discoverAroundLandmark(state, map, def);
   return 'Claimed';
+}
+
+/**
+ * A claim lifts the fog around the sanctuary: every cell within
+ * `fog.claim_discover_radius` becomes DISCOVERED.
+ *
+ * Discovered, never revealed — and that distinction is the whole design. The
+ * paid reveal stays the economy's main sink, so a claim cannot be allowed to
+ * hand the player ground for free. What it hands them is a place to LOOK: a
+ * hundred-odd cells of dark tiles with their features showing, which is a map
+ * to plan against and a frontier to push at, bought with the Gold they saved.
+ *
+ * It also gives the second and third sanctuaries a job beyond Mana capacity —
+ * each one is a lantern held up over a new part of the map, which is what
+ * makes "go and claim the far one" a reason to explore rather than a chore at
+ * the end of exploring.
+ *
+ * Cells the player has already cleared are left alone: revealed outranks
+ * discovered, and overwriting would undo paid-for progress.
+ */
+function discoverAroundLandmark(state: GameState, map: MapData, def: LandmarkDef): void {
+  for (const cell of cellsWithinRadiusOfRect(
+    map, def.location, { x: 1, y: 1 }, FOG.claimDiscoverRadius,
+  )) {
+    const key = coordKey(cell);
+    if (!state.fog.revealed[key]) state.fog.discovered[key] = true;
+  }
 }
 
 /** Landmarks the player can currently see — revealed cells only. */

@@ -181,15 +181,13 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    // The Townhall sleeps one and an L1 house holds two: capacity 3.
-    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // one L1 house holds TWO
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
     expect(queueTraining(state, T0)).toBe('Queued'); // second one queues behind
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3 - populationCost(1));
-    expect(queueTraining(state, T0)).toBe('Queued'); // third fills the last bed
-    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 3 queued = cap
+    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);
     tickAt(state, T0 + 20_000);
@@ -198,8 +196,6 @@ describe('Townhall villager training', () => {
     expect(state.city.population).toBe(1);
     tickAt(state, T0 + 40_000);
     expect(state.city.population).toBe(2);
-    tickAt(state, T0 + 60_000);
-    expect(state.city.population).toBe(3);
     expect(state.city.training).toBe(null);
   });
 
@@ -225,11 +221,9 @@ describe('Townhall villager training', () => {
   it('is blocked at the housing cap (queued villagers count)', () => {
     const state = freshGame();
     fund(state, { Food: 100 });
-    // The Townhall's own bed means a brand-new city can hire exactly one.
-    expect(queueTraining(state, T0)).toBe('Queued');
-    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 1 queued = cap
+    expect(queueTraining(state, T0)).toBe('AtMax'); // no Housing yet
     addBuilt(state, 'Housing', { x: 2, y: 0 });
-    state.city.population = 3; // Townhall (1) + Housing L1 (2), all full
+    state.city.population = 2; // the Housing (L1 capacity 2) is full
     expect(queueTraining(state, T0)).toBe('AtMax');
   });
 });

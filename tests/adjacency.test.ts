@@ -64,9 +64,7 @@ describe('housing adjacency', () => {
   it('the Townhall has no rule: a house beside it is unaffected', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', A); // touches the 2x2 Townhall footprint
-    // The Townhall sleeps one and fills FIRST (build order), so the house
-    // needs a second villager before it has a resident of its own.
-    state.city.population = 2;
+    state.city.population = 1;
     expect(houseGoldPerMinute(state, house(state, A))).toBe(30); // no penalty
   });
 });

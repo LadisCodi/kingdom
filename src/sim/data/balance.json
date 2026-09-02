@@ -7,9 +7,7 @@
         "y": 2
       },
       "maxLevel": 3,
-      "populationCapacityPerLevel": [
-        1
-      ],
+      "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
@@ -1213,10 +1211,10 @@
     {
       "id": "ThornedShrine",
       "kind": "Shrine",
-      "x": 1,
-      "y": -2,
+      "x": 3,
+      "y": 3,
       "defended": false,
-      "claimCost": 400
+      "claimCost": 2000
     },
     {
       "id": "WhisperingStones",
@@ -1468,34 +1466,6 @@
       "rewardKnowledge": 0
     },
     {
-      "id": "Rations",
-      "name": "Rations",
-      "description": "Now tap the berry bush west of your Townhall for Food.",
-      "goalType": "CollectResource",
-      "goalTarget": "Berries",
-      "goalAmount": 5,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 15
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 2
-    },
-    {
-      "id": "FirstVillager",
-      "name": "First villager",
-      "description": "Train your first villager. There is a bed in the Townhall already.",
-      "goalType": "ReachPopulation",
-      "goalTarget": null,
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 25
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 3
-    },
-    {
       "id": "Timber",
       "name": "Timber!",
       "description": "Now tap the trees beside your Townhall. Twenty-five Wood buys a roof and a field.",
@@ -1522,6 +1492,34 @@
       },
       "rewardGems": 0,
       "rewardKnowledge": 2
+    },
+    {
+      "id": "Rations",
+      "name": "Rations",
+      "description": "Tap the berry bush west of your Townhall for Food. Villagers eat.",
+      "goalType": "CollectResource",
+      "goalTarget": "Berries",
+      "goalAmount": 5,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 2
+    },
+    {
+      "id": "FirstVillager",
+      "name": "First villager",
+      "description": "Train your first villager — your new House has room for two.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 25
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
       "id": "TaxDay",
@@ -2177,7 +2175,8 @@
       }
     ],
     "fallbackGrowth": 1.25,
-    "goldPerTap": 1
+    "goldPerTap": 1,
+    "claimDiscoverRadius": 5
   },
   "city": {
     "initialCurrencies": {

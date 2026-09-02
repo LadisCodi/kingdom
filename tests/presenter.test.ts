@@ -421,10 +421,7 @@ describe('villager training', () => {
     game.onShake((c) => shaken.push(c));
     game.onToast((m) => toasts.push(m));
 
-    // The Townhall sleeps one, so a fresh city has exactly one bed. Fill it
-    // first; the SECOND villager is the one with nowhere to go.
-    state.city.population = 1;
-    game.doQueueTraining();
+    game.doQueueTraining(); // fresh game: no Housing, so no room to grow into
 
     expect(toasts).toEqual(['Population at max — build more Housing']);
     expect(shaken).toEqual([]);

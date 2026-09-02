@@ -44,10 +44,9 @@ describe('the quest chain', () => {
 
     inOrder(
       'FirstSteps', 'Woodcraft',                  // 1-2  explore → the one research
-      'Rations', 'FirstVillager',                 // eat, then hire — the Townhall
-                                                  //   sleeps one, so neither waits
-                                                  //   on a building
       'Timber', 'ARoof',                          // 3-4  chop, then a roof
+      'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
+                                                  //   a roof is what permits one
       'TaxDay', 'Explorer',                       // 7    rent pays for more fog
       'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
       'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand

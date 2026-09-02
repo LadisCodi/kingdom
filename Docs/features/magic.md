@@ -195,21 +195,38 @@ were living off.
 ## 4. Landmarks and the Sanctum
 
 **Landmarks** are small, numerous, passive map features — a shrine, a standing
-stone, a leyspring. Ten across the map. Claiming one raises the Mana **cap** by
-**+10** permanently (it used to be +1/h of production — see `ad-economy.md`).
+stone, a leyspring. Ten across the map. Claiming one does two things,
+permanently:
+
+1. raises the Mana **cap** by **+10** (it used to be +1/h of production — see
+   `ad-economy.md`);
+2. **lifts the fog for `fog.claim_discover_radius` cells around it** — every
+   cell in that square becomes **Discovered**, never Revealed (2026-09-02).
+
+That second effect is the one worth being careful about. Discovered-not-
+revealed keeps the paid reveal as the economy's main sink: a claim hands the
+player a *place to look*, not ground. At radius 5 that is an 11×11 square —
+around a hundred cells of dark tiles with their features showing, which is a
+map to plan against and a frontier to push at. It also gives the second and
+third sanctuaries a job beyond capacity: each is a lantern held up over a new
+part of the world, which turns "go and claim the far one" into a reason to
+explore rather than a chore at the end of exploring.
+
+Cells the player already cleared are left alone — revealed outranks
+discovered, and overwriting would undo paid-for progress.
+
 Claiming rules and the contested variant live in `expeditions.md`.
 
 **Placed and priced as destinations, not pickups** (2026-09-02). Exactly ONE
-sits inside the Townhall's own reveal radius, visible from the first minute and
-costing **5,000 Gold** — over an hour of idle income at Townhall 1, so it is a
-thing to save for rather than something you stumble into. The rest are
-*undiscovered* at the start and sit two rings further out:
+is reachable from the opening — *Discovered* rather than revealed, a dark tile
+one border-push away — and it is priced as something to save for rather than
+stumble into. The rest are undiscovered at the start and sit further out:
 
-| Tier | Distance | Cost | Count |
-|---|---|---|---|
-| In sight | 2 | **5,000** | 1 |
-| The middle ring | 5–6 | **25,000** | 5 |
-| The far ring | 8–10 | **100,000** | 4 — all of them **defended** |
+| Tier | Cost | Count |
+|---|---|---|
+| In reach from the start | **2,000** | 1 |
+| The middle ring | **25,000** | 5 |
+| The far ring | **100,000** | 4 — all of them **defended** |
 
 The dearest tier is exactly the defended set, so the last sanctuaries need both
 the Gold *and* an army — which is also the only thing that gives combat a job

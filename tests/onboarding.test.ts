@@ -114,17 +114,7 @@ describe('a player can actually play the onboarding', () => {
     research('Forestry');
     finish('Woodcraft');
 
-    // ---- eat, then hire: neither waits on a building any more ----
-    for (let i = 0; i < 5; i++) expect(collectTap(state, map, BERRIES, now)).toBe('Harvested');
-    finish('Rations');
-
-    expect(maxPopulation(state)).toBeGreaterThanOrEqual(1); // the Townhall bed
-    expect(state.city.districts.filter((d) => d.definitionId === 'Housing')).toHaveLength(0);
-    expect(queueTraining(state, now)).toBe('Queued');
-    tick(60);
-    expect(state.city.population).toBe(1);
-    finish('FirstVillager');
-
+    // ---- steps 3-4: chop, then a roof ----
     // Trees exhaust after ten taps and take 90 s to come back, so this is a
     // few cells and a little patience — exactly the friction step 15 later
     // sells the Sawmill against.
@@ -135,9 +125,19 @@ describe('a player can actually play the onboarding', () => {
     build('Housing', { x: 2, y: 0 });
     finish('ARoof');
 
+    // ---- steps 5-6: a meal, and the neighbour the roof permits ----
+    for (let i = 0; i < 5; i++) expect(collectTap(state, map, BERRIES, now)).toBe('Harvested');
+    finish('Rations');
+
+    expect(maxPopulation(state)).toBeGreaterThanOrEqual(1); // the House, not the Townhall
+    expect(queueTraining(state, now)).toBe('Queued');
+    tick(60);
+    expect(state.city.population).toBe(1);
+    finish('FirstVillager');
+
     // ---- step 7: rent, which is what pays for more fog ----
     const beforeTax = gold();
-    tick(120); // the villager in the Townhall bed pays like any other
+    tick(120); // one housed villager × 30/min
     expect(gold()).toBeGreaterThanOrEqual(beforeTax + 30);
     finish('TaxDay');
 
