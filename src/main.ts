@@ -40,6 +40,7 @@ import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountDelvePill } from './ui/delvePill';
 import { mountBanner } from './ui/banner';
+import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
 import { legacy, ScreenSlot } from './ui/kit/host';
 
@@ -104,6 +105,15 @@ async function boot(): Promise<void> {
   mountTools(game, document.getElementById('tools')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
   mountAdScreen(game, document.getElementById('ad')!);
+  // The two bars publish their REAL heights as --hud-h / --nav-h, which is
+  // what every other screen positions against. The tokens are only the
+  // pre-paint fallback; see ui/chromeMetrics.ts for what went wrong when the
+  // numbers were hand-written.
+  watchChromeMetrics({
+    header: document.getElementById('header')!,
+    navbar: document.getElementById('navbar')!,
+    quest: document.getElementById('quest')!,
+  });
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => location.reload());

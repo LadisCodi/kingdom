@@ -29,6 +29,15 @@ body {
   position: relative; width: 100%; height: 100%; overflow: hidden;
   max-width: calc(100vh * 9 / 16);
   background: #10151c; box-shadow: 0 0 0 1px var(--wood-dark);
+  /* THE FRAME IS THE VIEWPORT, as far as any screen inside it is concerned.
+     A `@media (max-width: …)` reads the BROWSER window, which on desktop is
+     wider than this 9:16 frame by however much is pillarboxed — so the phone
+     layout the game actually ships never fired while anyone was looking at
+     it. Naming #app a query container lets the HUD ask how wide the FRAME is
+     (`@container frame (…)`), which is the only width that exists on the
+     device. */
+  container-type: inline-size;
+  container-name: frame;
 }
 
 /* Canvas is a replaced element: inset alone doesn't stretch it, and without a
@@ -89,7 +98,10 @@ body {
   position: absolute; inset: 0; z-index: 7;
   background: var(--scrim);
   overflow-y: auto;
-  padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
+  /* --nav-h is MEASURED (ui/chromeMetrics.ts) and the nav bar pads itself by
+     the safe-area inset, so that inset is already inside this number. Adding
+     env() again — as this used to — reserved it twice. */
+  padding: var(--hud-h) 16px calc(var(--nav-h) + 16px);
 }
 
 /* ---------- the quest hint ---------- */

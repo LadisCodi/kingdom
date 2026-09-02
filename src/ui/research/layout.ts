@@ -21,7 +21,7 @@ export const GRID = 120;
 /** Tech node square. */
 export const NODE = 56;
 /** Upgrade circle. */
-export const UNODE = 36;
+export const UNODE = 40;
 /** How far below its parent an upgrade fan hangs. */
 export const FAN_DY = 0.7 * GRID;
 /** Spacing between fanned upgrade circles. */

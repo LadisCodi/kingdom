@@ -99,12 +99,19 @@
 
 /* ------------------------------------------------------------- the toast ---
  * Failures live at the BOTTOM, out of the celebratory channel's way and
- * clear of the quest scroll — which is where they used to collide. */
+ * clear of the quest scroll.
+ *
+ * They were NOT clear of it: both were anchored `var(--nav-h) + ~10px` above
+ * the nav, so a refused tap dropped its slip straight over the bottom of the
+ * quest card — same band, and the toast is six z-levels up. Stacking above it
+ * needs the scroll's height, which is not a constant, so
+ * ui/chromeMetrics.ts measures it into --quest-h (0px when no quest is up,
+ * which collapses this back to the old anchor). */
 #toast {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-h) + var(--quest-h) + 12px);
   top: auto;
   transform: none;
   display: flex;

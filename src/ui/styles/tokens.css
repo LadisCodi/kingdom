@@ -88,9 +88,25 @@
    * .tech-info, #toast, .cast-banner), and the nav's height was only ever
    * IMPLIED by its padding — which is where the magic 58 came from. Naming
    * them is what lets the HUD and nav change height without silently
-   * misaligning five other screens. */
-  --hud-h: 78px;
-  --nav-h: 68px;
+   * misaligning five other screens.
+   *
+   * NAMING THEM WAS NOT ENOUGH, because a name can still hold a wrong number
+   * and no rule that reads it will look wrong. Both of these were: the header
+   * renders 59px against the 78 declared here, and the nav bar renders 84
+   * against 68 — its `min-height` is a floor, and an icon plus a label had
+   * grown past it. Sixteen pixels of the district card and of the quest
+   * scroll were therefore drawn UNDER the nav bar.
+   *
+   * So src/ui/chromeMetrics.ts measures both bars and overwrites these on
+   * :root. What is left here is the pre-paint FALLBACK — near enough that the
+   * first frame is not visibly wrong — and the values below are the measured
+   * ones, so a build without the script still lands close.
+   *
+   * --quest-h is the same trick for a widget: the toast slip stacks above the
+   * quest scroll, which it can only do if it knows how tall the scroll is. */
+  --hud-h: 59px;
+  --nav-h: 84px;
+  --quest-h: 0px;
 
   /* ---- type ----
    * `--font-display` is TITLES ONLY — headings, sheet planks, proper names,

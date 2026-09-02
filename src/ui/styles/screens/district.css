@@ -1,18 +1,41 @@
 /* The district card (§5.7). One shell, five personalities. */
 
+/* `height`, not `max-height`, AND a flex column that pins the card to the
+ * bottom of it.
+ *
+ * `max-height: 62%` looked like the cap and was not one: #panel has no
+ * definite height of its own, so the card's `max-height: 100%` resolved
+ * against `auto` and was ignored outright. The card grew to whatever it
+ * contained, `.dc-body` never became a scroller, and the tail of a long card
+ * — reliably the Upgrade button, the one thing worth reaching — was drawn
+ * UNDER the nav bar where it could not be tapped.
+ *
+ * A definite height fixes the resolution; `justify-content: flex-end` keeps
+ * the card hugging the nav bar instead of the sky, and `pointer-events` hands
+ * the empty space above it back to the map, which is what the old
+ * content-sized box did for free. */
 #panel:has(.dc) {
   padding: 0;
   background: none;
   border: none;
-  max-height: 62%;
+  height: 62%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   overflow: visible;
+  pointer-events: none;
 }
 
 .dc {
   display: flex;
   flex-direction: column;
+  min-height: 0;
   max-height: 100%;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  pointer-events: auto;
+  /* No env(safe-area-inset-bottom) here: #panel stops at `bottom:
+     var(--nav-h)`, --nav-h is measured, and the nav bar's own padding already
+     holds the inset — so the card is above it and would be padding twice. */
+  padding: 10px 12px;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
@@ -46,7 +69,15 @@
 }
 .dc-portrait img { width: 46px; height: 46px; object-fit: contain; image-rendering: pixelated; }
 
-.dc-body { min-height: 0; overflow-y: auto; margin-top: 8px; }
+/* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
+   bleeds a pixel or two must not make the card draggable sideways. */
+.dc-body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  overflow-clip-margin: 6px;
+  margin-top: 8px;
+}
 .dc-note { color: var(--ink-muted); line-height: 1.3; margin: 4px 0; }
 
 /* The upgrade row: a mark, what the level buys, and the button that spends —

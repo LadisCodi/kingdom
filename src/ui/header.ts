@@ -27,7 +27,7 @@
 
 import type { Game } from '../game';
 import type { CurrencyId } from '../sim/state';
-import { el } from './format';
+import { el, formatCount } from './format';
 import { currencyIcon, iconEl } from './kit';
 
 /** What the plaque shows, per kind. */
@@ -68,17 +68,27 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     coins.replaceChildren(...list.map((c) => {
       const value = el('b', {}, '0');
       values.set(c, value);
+      // 'sm' (16px), not the 32px default. The plank is the tightest row in
+      // the game — four coins, Mana and Gems inside 402px — and at 32 they
+      // did not fit, so two of the four coins were being clipped away
+      // entirely. 16 is the atlas's half-cell and the -sm art is authored at
+      // it, so this is 1:1 rather than the downscale 24 would be.
+      //
       // Tapping any coin opens the purse — the only place the game explains
       // that berries, meat and fish all count as Food.
       const coin = el('button', {
         class: 'hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
-      }, currencyIcon(c), value);
+      }, currencyIcon(c, { size: 'sm' }), value);
       coin.addEventListener('click', () => game.setOverlay('purse'));
       return coin;
     }));
   };
 
-  gems.append(currencyIcon('Gems'), el('b', {}, '0'), el('span', { class: 'hud-plus' }, '+'));
+  gems.append(
+    currencyIcon('Gems', { size: 'sm' }),
+    el('b', {}, '0'),
+    el('span', { class: 'hud-plus' }, '+'),
+  );
   const gemValue = gems.querySelector('b')!;
   gems.addEventListener('click', () => game.setOverlay('purse'));
 
@@ -106,8 +116,11 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       shown = key;
       buildCoins(list);
     }
-    for (const [c, node] of values) node.textContent = String(game.walletValue(c));
-    gemValue.textContent = String(game.walletValue('Gems'));
+    // Rolled up past ten thousand: the plank is 402px wide and a six-digit
+    // Gold used to push the coins after it off the end of it. The purse (one
+    // tap away, on any coin) is where the exact figure lives.
+    for (const [c, node] of values) node.textContent = formatCount(game.walletValue(c));
+    gemValue.textContent = formatCount(game.walletValue('Gems'));
 
     const slot = game.hudSlot();
     // Population is drawn on the world now, over the Townhall, so the plaque
@@ -126,7 +139,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // met magic, which was right when it only paid for relics; it now pays
     // for every tap, so hiding it would hide the reason a tap refused.
     const m = game.manaInfo();
-    manaValue.textContent = `${m.value}/${m.cap}`;
+    // The POOL, not "pool/cap". The gauge already draws the ratio as a fill
+    // and turns its rim gold when it is spilling, so "/100" was the same fact
+    // twice — and it was the four characters that pushed Stone off the end of
+    // the plank. The full reading stays in the aria-label and in the
+    // Reliquary, which is what this gauge opens.
+    manaValue.textContent = formatCount(m.value);
     manaRate.textContent = `+${m.net}/h`;
     manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
     // Full and OVERCHARGED are different states: full means the next hour is

@@ -173,6 +173,9 @@
 }
 .rel-tab {
   flex: 1;
+  /* 44px: this is the control that switches the screen, and at the 32px its
+     padding used to give it, it was the smallest tap target in the game. */
+  min-height: 44px;
   padding: 7px 10px;
   border: none;
   border-radius: 8px;

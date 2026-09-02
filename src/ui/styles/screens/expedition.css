@@ -146,15 +146,26 @@
 }
 .exp-of { font-size: var(--text-helper); color: var(--ink-muted); }
 
-/* Standing orders: the opt-out, in plain sight. */
-.exp-orders { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Standing orders: the opt-out, in plain sight.
+ *
+ * STACKED, not three across. Three columns of a 340px sheet is 104px each,
+ * and "All the way, whatever it costs" set in 104px is four lines two words
+ * wide — the shape of the control drowned the sentence that distinguishes the
+ * three choices from each other. As rows the label sits beside its
+ * explanation and each option reads in one pass, which is what a control
+ * asking the player to commit to an absence needs to do. */
+.exp-orders { display: flex; flex-direction: column; gap: 8px; }
 .exp-order {
-  flex: 1 1 30%;
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 8px; border-radius: 8px;
+  display: flex; align-items: baseline; gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px; border-radius: 8px;
   border: 3px solid var(--wood-dark); background: rgba(255, 246, 222, 0.6);
   color: var(--ink); cursor: pointer; text-align: left;
 }
+/* The label is the answer, the hint is why — so the label keeps its own
+   column and the sentences line up down the row. */
+.exp-order b { flex: none; }
+.exp-order span { flex: 1; min-width: 0; }
 .exp-order.is-chosen { border-color: var(--gold, #d9a441); background: rgba(217, 164, 65, 0.2); }
 .exp-order b { font-family: var(--font-body); font-size: var(--text-helper); }
 .exp-order span { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.2; }
@@ -227,7 +238,12 @@
  * decision nobody makes, so the parked party has to be visible without being
  * a modal that demands an answer. */
 
-#delves { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+/* The right padding is the SETTINGS KNOB's corner. #delves is in the normal
+ * flow directly under the header and the knob floats at `top: var(--hud-h) +
+ * 8px; right: 12px` — so a full-width pill ran underneath it and the knob sat
+ * on the haul. Reserving 68px keeps the pill short of it; the pill shrinks
+ * rather than being covered. */
+#delves { padding: 6px 68px 0 12px; align-self: flex-start; max-width: 100%; }
 #delves[hidden] { display: none; }
 .dv-list { display: flex; flex-direction: column; gap: 6px; }
 .dv-pill {

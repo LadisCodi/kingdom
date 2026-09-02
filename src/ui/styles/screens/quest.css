@@ -8,7 +8,9 @@
 #quest {
   position: absolute;
   left: 12px;
-  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  /* --nav-h is measured and already contains the nav's safe-area padding;
+     adding env() again pushed the scroll a notch's worth up the screen. */
+  bottom: calc(var(--nav-h) + 10px);
   max-width: calc(100% - 24px);
   z-index: 3;
 }

@@ -11,27 +11,42 @@
 .hud-plank {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 12px;
+  gap: 5px;
+  padding: 5px 7px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 rgba(60, 36, 18, 0.35);
 }
-/* ONE line at any width, and the right-hand group never leaves the screen.
+/* ONE line at any width, and EVERY WIDGET IN IT VISIBLE.
  *
  * §5.1 cut this row to three coins because nine widgets wrapped onto two
  * lines and none of them read. Population and Mana have earned their way
- * back, which puts eight widgets in a 390px row again — so instead of
- * wrapping, the COINS scroll inside their own share and everything from
- * population rightwards is pinned. Mana is the energy every tap spends and
- * Gems is what refills it: those two have to be readable at the moment a tap
- * refuses, which is exactly when a player would otherwise be scrolling the
- * header to find out why. The coins are the ones that can afford to wait. */
+ * back, which puts six widgets in a 402px row — so the coins were given
+ * their own scroller and everything from Mana rightwards was pinned.
+ *
+ * THAT DID NOT WORK, and the failure was worse than wrapping. Four coins do
+ * not fit the share left to them, so on the device the row rendered Gold,
+ * then Food SLICED IN HALF THROUGH THE NUMBER, and Wood and Stone simply
+ * absent — a scroller with no scrollbar, no fade, and nothing to say it was
+ * one. The player is not told that Stone exists; they are shown a broken
+ * chip. Hiding a resource is a worse outcome than any layout compromise, and
+ * "you could have swiped it" is not a defence for a bar nobody knows scrolls.
+ *
+ * So the row is made to FIT instead, by spending pixels the widgets do not
+ * need: the coin icons drop from 32 to the atlas's 16px cell (a clean 1:1
+ * half — see the note in kit.css), the pills tighten, and the mana rate is
+ * dropped at frame widths where it cannot be afforded. That is ~120px back,
+ * which is exactly the overflow. The scroller stays as a SAFETY NET for a
+ * fifth currency nobody has designed yet — it should never be reachable with
+ * the four that exist. */
 .hud-coins {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex: 1;
+  gap: 4px;
+  /* `1 1 auto`, not `1`: the shorthand's `flex: 1` sets flex-basis 0, which
+     makes this row demand its share of the plank whether or not it needs it.
+     Sizing from content lets Mana and Gems keep what the coins do not use. */
+  flex: 1 1 auto;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -43,18 +58,49 @@
 .hud-plank > .hud-gems { flex: none; }
 
 /* On a phone the net rate is the first thing to go: "how full is my pool" is
- * the number a refused tap sends you to read, and "+4/h" is not it. */
-@media (max-width: 560px) {
-  .hud-plank { gap: 6px; padding: 6px 8px; }
+ * the number a refused tap sends you to read, and "+4/h" is not it.
+ *
+ * @container, not @media: the game is pillarboxed to a 9:16 frame, so on a
+ * desktop the WINDOW is wide while the frame the header actually lives in is
+ * phone-width. Keyed to the window, this rule never fired anywhere it was
+ * being looked at — which is how the row shipped broken. */
+@container frame (max-width: 560px) {
   .hud-mana-rate { display: none; }
+}
+
+/* Narrower than the iPhone 17 the game is built for — an SE, a fold's cover
+ * screen — the six widgets stop fitting one line however hard they are
+ * squeezed, and the scroller starts hiding coins again.
+ *
+ * So below that width the plank takes a second line: the coins get a row of
+ * their own and Mana and Gems keep the one under it. Two rows costs ~40px of
+ * map, which is a real price, and it is still the right trade — §5.1's
+ * objection to wrapping was that NINE widgets over two rows read as noise,
+ * not that a second row is forbidden. Four coins on one line and two gauges
+ * on the next is a layout; a resource silently clipped out of existence is
+ * not. */
+@container frame (max-width: 380px) {
+  .hud-plank { flex-wrap: wrap; row-gap: 4px; }
+  /* `1 0 100%` — a whole line of its own, and no longer a scroller, because
+     on its own line it fits. */
+  .hud-coins { flex: 1 0 100%; overflow-x: visible; }
+  /* Gems stays at the right edge, where it is on every other width — which
+     also means the rope has nothing left to do: with the two gauges at
+     opposite ends of their own row, the gap IS the separation. */
+  .hud-gems { margin-left: auto; }
+  .hud-divider { display: none; }
 }
 
 .hud-coin,
 .hud-gems {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  justify-content: center;
+  gap: 4px;
+  /* 40px, so a pill with a 16px icon in it is still a thumb-sized target.
+     The height used to be an accident of the 32px icon inside it. */
+  min-height: 40px;
+  padding: 2px 7px;
   font-family: var(--font-body);
   /* The helper tier, not the body tier. A pill with a number in it is a
      glanceable readout, not something you read a sentence of — and this row
@@ -100,7 +146,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 0 12px;
+  /* 7px, matching the plank's own padding, so the plaque hangs flush under
+     the first coin rather than a hair inside it. */
+  margin: 0 0 0 7px;
   padding: 3px 12px 4px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
@@ -140,7 +188,9 @@
    * there behind what you pulled up over it. This used to be about dodging
    * the floating Settings knob as well; the knob now hides itself whenever a
    * menu is open (see nav.css), so only the sky reason is left. */
-  padding: calc(var(--hud-h) + 56px) 10px calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
+  /* --nav-h is measured and the nav pads itself by the safe-area inset, so
+     that inset is already in the number; env() here counted it twice. */
+  padding: calc(var(--hud-h) + 56px) 10px calc(var(--nav-h) + 10px);
 }
 /* A centred sheet is a modal, not a drawer: it asks one question and the
  * player answers it, so it sits in the middle of the play area rather than
@@ -194,7 +244,7 @@
   align-items: center;
   gap: 5px;
   overflow: hidden;
-  padding: 3px 10px 4px;
+  padding: 2px 7px;
   /* The BODY face for the pool, at the size it was chosen for. The pixel
    * display face is lovely at 15px and up, but at the 13px chrome size a 2, a
    * 5 and an 8 share most of their pixels — and "is my pool 24 or 84" is the
@@ -210,7 +260,11 @@
   /* On the plank now, beside the coins, so it is a pill like they are —
    * it used to hang under the plank as a tab. */
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 2px 8px;
+  /* Same 40px target as the coins: it opens the Reliquary, so it is a button
+     the thumb has to be able to find, not a read-out. */
+  min-height: 40px;
+  justify-content: center;
   cursor: pointer;
 }
 .hud-mana > * { position: relative; }

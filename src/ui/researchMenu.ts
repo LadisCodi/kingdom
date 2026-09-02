@@ -42,6 +42,20 @@ let drag: {
 let suppressClick = false; // a pan gesture must not select/deselect on release
 let panWired = false;
 
+// ---- first-open framing ----------------------------------------------------
+// The canvas is 1160x1040 inside a ~400x520 window, so where it starts
+// matters, and it started at (0, 0) — the top-left CORNER of the authored
+// grid, which is empty parchment. The screen opened on nothing, every time,
+// and the player had to drag to find their own tree.
+//
+// Only on a FRESH MOUNT: the per-second rebuild must never yank the view back
+// while a finger is on it, and the host already restores the pan across those
+// (data-keep-scroll). The two are told apart by whether the PREVIOUS tree
+// element is still in the document when this render runs — on a refresh the
+// old subtree is still mounted and is replaced afterwards; on a fresh mount
+// the slot has already torn it down.
+const isFreshMount = (): boolean => treeEl === null || !treeEl.isConnected;
+
 const consumeSuppressedClick = (): boolean => {
   const s = suppressClick;
   suppressClick = false;
@@ -247,6 +261,9 @@ export function renderResearchMenu(game: Game): HTMLElement {
     });
   }
 
+  // Captured BEFORE treeEl is reassigned below — the old element is the
+  // evidence, and overwriting it first would make every render look fresh.
+  const fresh = isFreshMount();
   const tree = el('div', { class: 'tech-tree', 'data-keep-scroll': '' }, canvas);
   treeEl = tree;
   wirePanOnce();
@@ -284,10 +301,21 @@ export function renderResearchMenu(game: Game): HTMLElement {
     : hint?.startsWith('upgrade:')
       ? (UPGRADES[hint.slice('upgrade:'.length) as UpgradeId]?.requiredTech ?? null)
       : null;
-  if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
+  // Where the eye should land. A hint wins outright — it is the game asking
+  // for attention at a specific node. Otherwise: the WORK, meaning whatever
+  // is running or startable right now, and failing that the last thing
+  // finished, which is where the next branch grows from.
+  const frontier = shown.find((id) => isTechActive(state, id))
+    ?? shown.find((id) => !isTechComplete(state, id) && requirementsMet(state, id))
+    ?? [...shown].reverse().find((id) => isTechComplete(state, id))
+    ?? null;
+  const focus = hintedTech && visibility(state, hintedTech) !== 'hidden' ? hintedTech
+    : fresh ? frontier
+      : null;
+  if (focus !== null) {
     requestAnimationFrame(() => {
-      tree.scrollLeft = Math.max(0, cx(hintedTech) - tree.clientWidth / 2);
-      tree.scrollTop = Math.max(0, cy(hintedTech) - tree.clientHeight / 2);
+      tree.scrollLeft = Math.max(0, cx(focus) - tree.clientWidth / 2);
+      tree.scrollTop = Math.max(0, cy(focus) - tree.clientHeight / 2);
     });
   }
   root.append(tree);

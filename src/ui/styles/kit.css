@@ -205,6 +205,18 @@
   color: var(--ink-muted);
 }
 .k-action .k-reason.is-blocked { color: var(--clay); }
+/* MOST actions have nothing to explain, and `action()` builds the reason span
+ * either way — so `flex: 1` above was reserving the left half of the row for
+ * an empty element and shoving the button against the right edge with a void
+ * beside it. In the Reliquary that read as a bug: Attune and Cast on one row,
+ * then a wide blank, then Study alone in the corner.
+ *
+ * With no reason there is no two-column shape to hold, so the button takes
+ * the row. A full-width primary is also the right answer on a phone: it is
+ * the widest thumb target the card can offer. */
+.k-action:has(> .k-reason:empty) { gap: 0; }
+.k-action > .k-reason:empty { display: none; }
+.k-action:has(> .k-reason:empty) > .k-btn { flex: 1; }
 
 /* iOS-style switch, in wood. */
 .k-switch {
@@ -233,9 +245,17 @@
   border: 2px solid var(--wood-dark);
   transition: transform var(--motion-snap) steps(1);
 }
+/* The track is 56x32 because that is what an iOS switch looks like; the
+ * TARGET has no business being 32px tall. This grows the hit area to 56x48
+ * without moving a pixel of the drawing. Vertical only — the height was the
+ * failing dimension, and widening it would push the knob past the row. */
+.k-switch::before { content: ''; position: absolute; inset: -8px 0; }
 .k-switch:active { transform: none; }
 .k-switch.is-on { background: var(--leaf); }
-.k-switch.is-on::after { transform: translateX(24px); }
+/* 22, not 24: the track's inner width is 52 and the knob is 28, so 24 put
+   its edge 2px past the border — enough to make the whole sheet scrollable
+   sideways. */
+.k-switch.is-on::after { transform: translateX(22px); }
 
 /* Segmented wooden toggles (the market's x1 / x10 / …). */
 .k-toggles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -409,6 +429,20 @@
 .k-sheet { width: 100%; max-height: 100%; display: flex; }
 .k-sheet > .k-panel {
   flex: 1;
+  /* BOTH of these are load-bearing, and min-WIDTH was the one missing.
+   *
+   * A flex item's automatic minimum size is its content's min-content size,
+   * so a panel wrapping anything that refuses to get narrower — a row of
+   * fixed-width relic cards, a grid with an `auto` track — grows the panel
+   * past the sheet, past the frame, and off the screen. The expedition sheet
+   * rendered 274px wider than the phone: its close knob was off-screen, its
+   * copy ran off the right edge, and the whole page grew a horizontal
+   * scrollbar. Nothing in that screen's own CSS was wrong.
+   *
+   * `min-width: 0` lets the panel shrink to the sheet and hands the problem
+   * back to the child that actually has an intrinsic width — which is where
+   * it can be solved, usually by that child being a scroller. */
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -417,6 +451,56 @@
 .k-sheet-body {
   min-height: 0;
   overflow-y: auto;
+  /* `clip`, not the `visible` it would otherwise compute to beside a scrolling
+   * axis. Several screens bleed a decoration a couple of px past the panel —
+   * the market's awning, the switch's knob — and each of those turned the
+   * sheet into a horizontally draggable page with two pixels of travel. It
+   * reads as a broken layout for no gain. The clip margin keeps the bleed
+   * painted; it only stops it being scrollable. */
+  overflow-x: clip;
+  overflow-clip-margin: 6px;
   overscroll-behavior: contain; /* don't scroll the page behind it */
   -webkit-overflow-scrolling: touch;
 }
+
+/* SAY THAT THERE IS MORE. Every long screen in the game is a scroller inside
+ * a fixed box, and the box's edge falls wherever the content happens to be —
+ * through the middle of a Train button, halfway down a hero portrait. With no
+ * mark on that edge it reads as a broken layout rather than as a page you can
+ * push, and a player who reads it as broken does not push it.
+ *
+ * A sticky ::after rather than the usual `background-attachment: local`
+ * trick: these scrollers are full of cards with opaque parchment fills of
+ * their own, and a background layer paints BEHIND those, so the classic
+ * version drew nothing at all here.
+ *
+ * The shade has to be honest — it may only appear in a direction you can
+ * actually go — which is what the scroll timeline buys: the fade runs over
+ * the last 28px of travel, so it is gone by the time you reach the end and
+ * `both` holds it fully on everywhere before that. Where the timeline is not
+ * supported the @supports gate drops the whole thing, and the screen behaves
+ * exactly as it did before.
+ *
+ * .dc-body is the district card's scroller — same parchment ground, same
+ * problem, and it is the one where a half-cut Upgrade button was worst. */
+@supports (animation-timeline: scroll()) {
+  .k-sheet-body,
+  .dc-body { position: relative; }
+  .k-sheet-body::after,
+  .dc-body::after {
+    content: '';
+    display: block;
+    position: sticky;
+    bottom: 0;
+    /* Negative margin so the strip overlays the last line of content instead
+       of adding a gap under it; it has no height in the flow. */
+    height: 18px;
+    margin-top: -18px;
+    pointer-events: none;
+    background: linear-gradient(rgba(60, 36, 18, 0), rgba(60, 36, 18, 0.32));
+    animation: k-scroll-shade linear both;
+    animation-timeline: scroll(self block);
+    animation-range: calc(100% - 28px) 100%;
+  }
+}
+@keyframes k-scroll-shade { to { opacity: 0; } }

@@ -15,18 +15,27 @@
   position: absolute;
   top: var(--hud-h);
   right: 0;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  bottom: var(--nav-h); /* measured; the nav's own padding holds the inset */
   left: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* TWO ROWS, because four things do not fit one 402px line.
+ *
+ * The title, the lectern row, the Hire button and the close knob were laid
+ * out side by side; on the phone that squeezed "1 scholar idle" into a
+ * two-line column two words wide and pressed the Hire slab against the knob.
+ * The title and the way out are the fixed pair, so they keep the top line —
+ * the same place every other sheet's plank puts them — and the scholars, who
+ * are what this screen is actually about, get a line of their own. */
 .research-topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 8px 12px;
+  padding: 8px 14px 10px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   box-shadow: inset 0 2px 0 var(--wood-light);
@@ -38,9 +47,12 @@
   font-weight: 400;
   color: var(--parchment);
 }
+/* The knob keeps the top-right cell; the scholars take the whole second row. */
+.research-topbar > .k-knob { grid-row: 1; grid-column: 2; }
+.research-topbar > .res-scholars { grid-row: 2; grid-column: 1 / -1; }
 
 /* Scholars at lecterns: a concurrency limit made picturable. */
-.res-scholars { flex: 1; display: flex; align-items: center; gap: 8px; }
+.res-scholars { display: flex; align-items: center; gap: 8px; }
 .res-desks { display: flex; gap: 4px; }
 .res-desk {
   width: 28px;
@@ -53,7 +65,9 @@
   opacity: 0.55;
 }
 .res-desk.is-busy { background: var(--parchment); opacity: 1; }
-.res-desk-label { font-size: var(--text-helper); color: var(--parchment); }
+/* Takes the slack so Hire sits at the right end of its own row, under the
+   close knob, rather than floating in the middle of it. */
+.res-desk-label { flex: 1; font-size: var(--text-helper); color: var(--parchment); }
 .research-topbar .k-btn { min-height: 40px; padding: 8px 14px; margin-bottom: 0; }
 
 /* Aged parchment ground, faintly stained. */
@@ -117,8 +131,10 @@
 
 /* Upgrades: small round badges pinned below their parent. */
 .tech-node.upgrade {
-  width: 36px;
-  height: 36px;
+  /* 40, not 36: it is still unmistakably the small circle beside the 56px
+     square, and 36 was under the smallest target a thumb can reliably hit. */
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   font-size: 16px;
   border-width: 2px;
@@ -177,7 +193,7 @@
   position: absolute;
   left: 10px;
   right: 10px;
-  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-h) + 10px);
   max-height: 46%;
   overflow-y: auto;
   z-index: 6;
