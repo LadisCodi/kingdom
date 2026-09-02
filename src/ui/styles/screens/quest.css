@@ -47,14 +47,14 @@
 /* The chain has always known its own length; now it says so. */
 .q-chain {
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: 18px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-muted);
 }
 .q-name {
-  font-family: var(--font-display);
-  font-size: 16px;
+  font-family: var(--font-body);
+  font-size: 18px;
   margin: 1px 0 2px;
   /* Germania One ships one weight; 700 would be a synthesised smear. */
   font-weight: 400;
@@ -72,7 +72,7 @@
 }
 .q-reward[hidden] { display: none; }
 .q-reward-label {
-  font-size: 10px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);

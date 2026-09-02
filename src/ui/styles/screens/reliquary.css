@@ -49,7 +49,7 @@
 .rel-purse-body { flex: 1; min-width: 0; }
 .rel-purse-title { font-family: var(--font-display); font-size: var(--text-title); }
 .rel-purse-hint { font-size: var(--text-helper); color: var(--ink-muted); }
-.rel-purse-value { font-family: var(--font-display); font-size: var(--text-title); }
+.rel-purse-value { font-family: var(--font-body); font-size: var(--text-title); }
 
 /* The breakdown the header refuses to show. Here it IS the point. */
 .rel-breakdown { display: flex; flex-direction: column; gap: 2px; }
@@ -128,7 +128,7 @@
 .rel-art--glyph { display: grid; place-items: center; font-size: 26px; }
 .rel-art.is-locked { filter: grayscale(1) brightness(0.85); opacity: 0.65; }
 
-.rel-name { font-family: var(--font-display); font-size: var(--text-body); }
+.rel-name { font-family: var(--font-body); font-size: var(--text-body); }
 .rel-tier {
   display: flex;
   align-items: center;

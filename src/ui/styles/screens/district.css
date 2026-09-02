@@ -27,7 +27,7 @@
    movable is a close button you have to look for. */
 .dc-tools { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .dc-id { flex: 1; min-width: 0; }
-.dc-name { font-family: var(--font-display); font-size: 18px; font-weight: 400; }
+.dc-name { font-family: var(--font-display); font-size: var(--text-title); font-weight: 400; }
 .dc-what { color: var(--ink-muted); line-height: 1.25; }
 
 /* Level as stars: a count you read rather than a fraction you parse. */
@@ -75,7 +75,7 @@
   border: 2px solid var(--gold-dark);
 }
 .dc-up-body { min-width: 0; }
-.dc-up-title { font-family: var(--font-display); font-size: 15px; font-weight: 400; }
+.dc-up-title { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
 .dc-up > .k-action { grid-column: 1 / -1; }
 .dc-deltas {
   display: flex;
@@ -228,7 +228,7 @@
 
 .tr-head {
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: 18px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -304,13 +304,13 @@
   border: 2px solid var(--wood-dark);
 }
 .tr-body { min-width: 0; }
-.tr-name { font-family: var(--font-display); font-size: 16px; font-weight: 400; }
+.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
 .tr-tag {
   display: inline-block;
   margin: 1px 0 3px;
   padding: 1px 8px;
   font-family: var(--font-body);
-  font-size: 10px;
+  font-size: 18px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--parchment);

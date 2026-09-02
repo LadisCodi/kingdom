@@ -15,10 +15,12 @@
 .k-panel,
 .k-card,
 .gal { font-family: var(--font-body); }
-/* Titles: a sheet's plank and a card's name are the two places the display
- * face earns its keep in the kit. */
-.k-plank,
-.k-card .k-name { font-family: var(--font-display); }
+/* Titles: the sheet plank is the ONE place the display face earns its keep in
+ * the kit. A card's name used to share this rule, and cannot any more —
+ * BoldPixels is only crisp at 16/32/48, a list row has no business at 32, and
+ * at 16 its caps (8px) would be shorter than the body face's (11px), which is
+ * a title smaller than the text under it. Row names are body copy now. */
+.k-plank { font-family: var(--font-display); }
 /* Numbers. These used to share the rule above, back when one pixel face did
  * both jobs — which is exactly what made it have to be legible at 13px. */
 .k-chip,
@@ -62,7 +64,10 @@
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 var(--wood-dark);
   color: var(--parchment);
   font-size: var(--text-title);
-  font-weight: 700;
+  /* 400, not 700: BoldPixels has one weight, and `font-synthesis-weight: none`
+     refuses the fake — so 700 here was already rendering as 400 and only
+     misleading the next reader. */
+  font-weight: 400;
 }
 
 /* Rope grab handle on a sheet. */
@@ -299,7 +304,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--ink);
 }
@@ -371,7 +376,7 @@
   font-size: var(--text-body);
 }
 .gal h2 {
-  font-size: 15px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--gold);
@@ -382,7 +387,7 @@
 .gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .gal-item { margin: 8px 0; min-width: 0; }
 .gal-label {
-  font-size: 11px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);
