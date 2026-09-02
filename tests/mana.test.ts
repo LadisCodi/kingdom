@@ -8,8 +8,11 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { fogState } from '../src/sim/fog';
+import { townhallDistance } from '../src/sim/grid';
 import { addModifier, type Modifier } from '../src/sim/modifiers';
-import { FOG, MANA, OFFLINE_CAP_HOURS, type LandmarkDef } from '../src/sim/data/definitions';
+import {
+  FOG, MANA, OFFLINE_CAP_HOURS, RUINS, type LandmarkDef,
+} from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
 } from '../src/sim/landmarks';
@@ -295,35 +298,43 @@ describe('landmarks', () => {
     expect(Math.max(...costs)).toBeGreaterThan(Math.min(...costs) * 4);
   });
 
-  // The shape of the map's opening, and a design claim worth protecting: the
-  // player can SEE exactly one sanctuary from the first minute and cannot
-  // afford it for a long while. It is a destination, not a pickup — and the
-  // rest are not even discovered, so the fog still has somewhere to go.
+  // The shape of the map's opening, and a design claim worth protecting:
+  // sites are a REWARD for exploring, not a lure laid out at the start
+  // (revised 2026-09-02). Nothing site-like is on screen when a kingdom
+  // begins — the opening shows terrain and the things you can work, and the
+  // first shrine is something the player uncovers.
   //
-  // "Sees" means DISCOVERED, not revealed: it sits one cell beyond the
-  // Townhall's cleared block, so the player is shown a dark tile with
-  // something on it and has to walk the border out to reach it. The price is
-  // tuned to the tutorial (Docs/onboarding.md step 19) — claimed once the
-  // Sawmill runs, so reachable THEN, an order of magnitude above the opening
-  // purse rather than two.
-  it('shows exactly one sanctuary at the start, and prices it as a goal', () => {
+  // What has to stay true is the SHAPE past that: the nearest sanctuary is
+  // also the cheapest by a wide margin, so the first one the player meets is
+  // the one they can plausibly save for, and every other is dearer. Get that
+  // backwards and the fog's whole cost curve stops meaning anything.
+  it('hides every site at the start, and puts the cheapest sanctuary nearest', () => {
     const state = freshGame();
-    const inReach = LANDMARKS.filter((l) => fogState(state, map, l.location) !== 'Undiscovered');
-    expect(inReach).toHaveLength(1);
 
-    const [inSight] = inReach;
-    // Many times what a new kingdom is handed, and still a genuine save.
-    expect(landmarkClaimCost(inSight)).toBeGreaterThan(
-      5 * getWallet(state.city.wallet, 'Gold'),
-    );
-    expect(getWallet(state.city.wallet, 'Gold')).toBeLessThan(landmarkClaimCost(inSight));
-
-    // Everything else is still under the fog, and dearer again.
     for (const l of LANDMARKS) {
-      if (l.id === inSight.id) continue;
-      expect(fogState(state, map, l.location)).toBe('Undiscovered');
-      expect(landmarkClaimCost(l)).toBeGreaterThan(landmarkClaimCost(inSight));
+      expect(fogState(state, map, l.location), `${l.id} is visible at the start`)
+        .toBe('Undiscovered');
     }
+    for (const r of Object.values(RUINS)) {
+      expect(fogState(state, map, r.location), `${r.id} is visible at the start`)
+        .toBe('Undiscovered');
+    }
+
+    const byDistance = [...LANDMARKS]
+      .sort((a, b) => townhallDistance(map, a.location) - townhallDistance(map, b.location));
+    const [nearest, ...rest] = byDistance;
+    const cheapest = Math.min(...LANDMARKS.map(landmarkClaimCost));
+    expect(landmarkClaimCost(nearest)).toBe(cheapest);
+
+    // ...and nothing else shares its price, so "the near one" is unambiguous.
+    for (const l of rest) {
+      expect(landmarkClaimCost(l), `${l.id} is no dearer than the nearest`)
+        .toBeGreaterThan(landmarkClaimCost(nearest));
+    }
+
+    // Many times what a new kingdom is handed: a save, not a pickup.
+    expect(landmarkClaimCost(nearest))
+      .toBeGreaterThan(5 * getWallet(state.city.wallet, 'Gold'));
   });
 
   it('reserves the dearest tier for the ones an army has to clear', () => {

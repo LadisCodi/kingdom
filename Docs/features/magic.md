@@ -217,14 +217,21 @@ discovered, and overwriting would undo paid-for progress.
 
 Claiming rules and the contested variant live in `expeditions.md`.
 
-**Placed and priced as destinations, not pickups** (2026-09-02). Exactly ONE
-is reachable from the opening — *Discovered* rather than revealed, a dark tile
-one border-push away — and it is priced as something to save for rather than
-stumble into. The rest are undiscovered at the start and sit further out:
+**Placed and priced as destinations, not pickups** (2026-09-02, revised the
+same day). **No sanctuary — and no ruin — is visible when a kingdom begins.**
+The opening shows terrain and the things you can work; a shrine is something
+the player uncovers, not a lure laid out in front of them. Sites do draw
+through the Discovered scrim once the fog reaches them, so the moment one
+comes into view it reads as a destination.
+
+What the placement guarantees is the shape past that: **the nearest sanctuary
+is also the cheapest, by a wide margin**, so the first one the player meets is
+the one they can plausibly save for. Get that backwards and the fog's cost
+curve stops meaning anything.
 
 | Tier | Cost | Count |
 |---|---|---|
-| In reach from the start | **2,000** | 1 |
+| The near one | **2,000** | 1 |
 | The middle ring | **25,000** | 5 |
 | The far ring | **100,000** | 4 — all of them **defended** |
 

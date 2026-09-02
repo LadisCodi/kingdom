@@ -1212,7 +1212,7 @@
       "id": "ThornedShrine",
       "kind": "Shrine",
       "x": 3,
-      "y": 3,
+      "y": 4,
       "defended": false,
       "claimCost": 2000
     },
@@ -1227,7 +1227,7 @@
     {
       "id": "BrightLeyspring",
       "kind": "Leyspring",
-      "x": 1,
+      "x": -1,
       "y": 6,
       "defended": false,
       "claimCost": 25000
@@ -1291,8 +1291,8 @@
   ],
   "ruins": {
     "HollowBarrow": {
-      "x": -2,
-      "y": 2,
+      "x": 1,
+      "y": 6,
       "tier": 1,
       "difficulty": 6,
       "baseDepthSeconds": 180,
