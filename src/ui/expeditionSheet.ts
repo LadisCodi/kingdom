@@ -22,7 +22,7 @@ import { spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, chip, costChips, iconEl, knob, pips, sheet, stat } from './kit';
+import { action, btn, iconEl, knob, pips, sheet, stat } from './kit';
 
 const portrait = (sprite: string, glyph: string, cls: string): HTMLElement => {
   const url = spriteUrl(sprite);
@@ -151,9 +151,8 @@ function troopPicker(game: Game): HTMLElement {
       label: 'Another slot',
       kind: 'gem',
       onClick: () => game.doBuyPartySlot(),
-      info: chip('Gems', cost, game.effectiveWalletValue('Gems') < cost),
-      disabledReason: game.effectiveWalletValue('Gems') < cost
-        ? `Short ${cost - game.effectiveWalletValue('Gems')} Gems` : undefined,
+      cost: { Gems: cost },
+      have: (c) => game.effectiveWalletValue(c),
     }));
   }
   return body;
@@ -270,17 +269,20 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
 
     standingOrder(game, ruin.maxDepth, preview.safeDepth),
 
-    el('div', { class: 'exp-cost' },
-      el('span', {}, 'Supplies'),
-      costChips(preview.supplies, (c) => game.effectiveWalletValue(c)),
-      el('span', { class: 'exp-time' },
-        iconEl('hourglass', { size: 'sm' }),
-        `first depth ${formatDuration(depthDurationMs(ruinId, 1) / 1000)}`)),
+    // The supplies used to sit in a row of their own, a whole control away
+    // from the button that spends them. They are the price of setting off, so
+    // they set off with it (§6.4); the WAIT stays out here, being a
+    // consequence rather than a cost.
+    el('div', { class: 'exp-time' },
+      iconEl('hourglass', { size: 'sm' }),
+      `first depth ${formatDuration(depthDurationMs(ruinId, 1) / 1000)}`),
 
     action({
       label: 'Set off',
       kind: 'primary',
       onClick: () => game.doLaunchExpedition(),
+      cost: preview.supplies,
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: blocked ?? undefined,
     }),
   );

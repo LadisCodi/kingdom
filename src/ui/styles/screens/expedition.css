@@ -159,11 +159,12 @@
 .exp-order b { font-family: var(--font-display); font-size: var(--text-helper); }
 .exp-order span { font-size: 11px; color: var(--ink-muted); line-height: 1.2; }
 
-.exp-cost {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-  font-size: var(--text-helper);
+/* The supplies moved into the Set-off button (§6.4); what is left out here is
+ * the wait, which is a consequence rather than a price. */
+.exp-time {
+  display: flex; align-items: center; gap: 4px;
+  font-size: var(--text-helper); color: var(--ink-muted);
 }
-.exp-time { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-muted); }
 .exp-back { display: flex; justify-content: center; }
 
 /* ------------------------------------------------------- the checkpoint --- */

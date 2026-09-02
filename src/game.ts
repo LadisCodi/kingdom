@@ -1123,6 +1123,10 @@ export class Game {
       this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
       this.expeditionArtifact);
     if (block === null) return null;
+    // The supplies are printed in the button and turn clay when they cannot be
+    // paid (§6.4), so saying it again in words beside it is nagging. The
+    // button still refuses — the red is what disables it.
+    if (block === 'NotEnoughSupplies') return null;
     return LAUNCH_BLOCK_TEXT[block];
   }
 

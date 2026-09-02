@@ -15,7 +15,7 @@ import { ARTIFACTS } from '../sim/data/definitions';
 import { spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el } from './format';
-import { btn, chip, iconEl } from './kit';
+import { btn, iconEl } from './kit';
 
 export function renderCastPanel(game: Game): HTMLElement {
   const info = game.castInfo()!;
@@ -43,16 +43,17 @@ export function renderCastPanel(game: Game): HTMLElement {
     verdict = el('span', { class: 'plc-verdict' }, active.text);
   }
 
-  const blockedBy = !info.affordable
-    ? `Short ${info.manaCost - game.manaInfo().value} Mana`
-    : active.targeted && info.cell === null
-      ? 'Nowhere legal to cast it'
-      : undefined;
+  // Not affording the Mana is no longer a sentence — the price is in the
+  // button and turns clay (§6.4).
+  const blockedBy = active.targeted && info.cell === null
+    ? 'Nowhere legal to cast it'
+    : undefined;
 
   const confirm = btn({
     label: 'Cast',
     kind: 'primary',
     onClick: () => game.confirmCast(),
+    costExtra: [{ icon: 'Mana', amount: String(info.manaCost), short: !info.affordable }],
     disabledReason: blockedBy,
   });
   const cancel = btn({ label: 'Cancel', onClick: () => game.dismiss() });
@@ -65,7 +66,6 @@ export function renderCastPanel(game: Game): HTMLElement {
     el('div', { class: 'plc-body' },
       el('div', { class: 'plc-name' }, active.name),
       verdict,
-      el('div', { class: 'plc-cost' }, chip('Mana', info.manaCost, !info.affordable)),
       ...(blockedBy
         ? [el('div', { class: 'plc-reason' }, iconEl('padlock', { size: 'sm' }), blockedBy)]
         : [])),

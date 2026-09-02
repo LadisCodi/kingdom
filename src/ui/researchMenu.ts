@@ -19,10 +19,10 @@ import {
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
 import { upgradeCost, upgradeLevel } from '../sim/upgrades';
-import { getWallet, type GameState, type TechId, type UpgradeId } from '../sim/state';
+import { type GameState, type TechId, type UpgradeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
-import { action, btn, costChips, iconEl, knob } from './kit';
+import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
@@ -114,12 +114,13 @@ export function renderResearchMenu(game: Game): HTMLElement {
   if (slots < RESEARCH_SETTINGS.maxSlots) {
     const cost = slotGemCost(state);
     const hire = btn({
-      label: `Hire · ${cost}`,
+      label: 'Hire',
       kind: 'gem',
-      icon: 'Gems',
       onClick: () => game.doBuySlot(),
-      disabledReason: getWallet(state.player.wallet, 'Gems') < cost
-        ? `Needs ${cost} Gems` : undefined,
+      // The price used to be spliced into the label, where it read as part of
+      // the verb rather than as something you pay.
+      cost: { Gems: cost },
+      have: (c) => game.effectiveWalletValue(c),
     });
     bar.append(hire);
   }
@@ -340,22 +341,19 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
     panel.append(bar);
   } else {
-    const short = game.shortfall(def.cost);
     panel.append(action({
       label: 'Start',
       kind: 'primary',
       onClick: () => game.doStartTech(id),
+      cost: def.cost,
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: !requirementsMet(state, id)
         ? 'Research what it needs first'
         : busy >= slots
           ? 'Every scholar is busy'
-          : Object.keys(short).length > 0
-            ? `Short ${Object.entries(short).map(([c, n]) => `${n} ${c}`).join(' and ')}`
-            : undefined,
-      info: el('span', { class: 'res-cost' },
-        costChips(def.cost, (c) => game.effectiveWalletValue(c)),
-        el('span', { class: 'res-time' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds))),
+          : undefined,
+      info: el('span', { class: 'res-time' },
+        iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
   }
   return panel;
@@ -380,15 +378,13 @@ function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
     panel.append(el('div', { class: 'delta' }, 'Maxed'));
   } else {
     const cost = upgradeCost(id, level);
-    const short = game.shortfall({ Gold: cost });
     panel.append(action({
       label: 'Upgrade',
       kind: 'primary',
       onClick: () => game.doBuyUpgrade(id),
-      disabledReason: Object.keys(short).length > 0 ? `Short ${short.Gold} Gold` : undefined,
-      info: el('span', { class: 'res-cost' },
-        costChips({ Gold: cost }, (c) => game.effectiveWalletValue(c)),
-        el('span', { class: 'res-time' }, 'instant')),
+      cost: { Gold: cost },
+      have: (c) => game.effectiveWalletValue(c),
+      info: el('span', { class: 'res-time' }, 'instant'),
     }));
   }
   return panel;

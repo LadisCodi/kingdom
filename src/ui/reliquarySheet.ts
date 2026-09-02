@@ -29,7 +29,7 @@ import { spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, card, chip, iconEl, pips, progress, sheet, stat } from './kit';
+import { action, btn, card, iconEl, pips, progress, sheet, stat } from './kit';
 
 /** Relic art at card size — sprite if it exists, glyph if not. */
 function relicArt(id: ArtifactId, locked: boolean): HTMLElement {
@@ -87,9 +87,8 @@ function manaPanel(game: Game): HTMLElement {
         label: 'Refill',
         kind: 'gem',
         onClick: () => game.doRefillMana(),
-        info: chip('Gems', refillCost, game.effectiveWalletValue('Gems') < refillCost),
-        disabledReason: game.effectiveWalletValue('Gems') < refillCost
-          ? `Short ${refillCost - game.effectiveWalletValue('Gems')} Gems` : undefined,
+        cost: { Gems: refillCost },
+        have: (c) => game.effectiveWalletValue(c),
       })
       : el('div', { class: 'rel-note' }, 'The pool is full.'),
   );
@@ -142,9 +141,8 @@ function slots(game: Game): HTMLElement {
       label: 'Open a socket',
       kind: 'gem',
       onClick: () => game.doBuyAttunementSlot(),
-      info: chip('Gems', gemCost, game.effectiveWalletValue('Gems') < gemCost),
-      disabledReason: game.effectiveWalletValue('Gems') < gemCost
-        ? `Short ${gemCost - game.effectiveWalletValue('Gems')} Gems` : undefined,
+      cost: { Gems: gemCost },
+      have: (c) => game.effectiveWalletValue(c),
     }));
   }
   return body;
@@ -157,7 +155,6 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   const owned = ownsArtifact(game.state, id);
   const entry = artifactEntry(game.state, id);
   const worn = isAttuned(game.state, id);
-  const knowledge = game.effectiveWalletValue('Knowledge');
 
   if (!owned) {
     // An unfound relic is a SIGNPOST, not a locked box: it names the ruin, so
@@ -240,12 +237,12 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
     controls.append(btn({
       label: `Cast ${def.active.name}`,
       onClick: () => game.startCast(id),
-      icon: 'Mana',
-      disabledReason: block === 'NotAttuned'
-        ? 'Wear it first'
-        : block === 'NotEnoughMana'
-          ? `Needs ${def.active.manaCost} Mana`
-          : undefined,
+      // The Mana price used to live ONLY in the blocked reason, so it was
+      // visible exactly when it could not be paid and invisible the rest of
+      // the time. Inside the button it is always readable.
+      cost: { Mana: def.active.manaCost },
+      have: (c) => game.effectiveWalletValue(c),
+      disabledReason: block === 'NotAttuned' ? 'Wear it first' : undefined,
     }));
   }
   body.append(controls);
@@ -257,22 +254,26 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
     body.append(action({
       label: 'Study',
       onClick: () => game.doLevelArtifact(id),
-      info: chip('Knowledge', levelCost(entry.level), knowledge < levelCost(entry.level)),
+      cost: { Knowledge: levelCost(entry.level) },
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: atLevelCap
         ? 'Its tier holds it back — raise it with Fragments'
-        : knowledge < levelCost(entry.level)
-          ? `Short ${levelCost(entry.level) - knowledge} Knowledge`
-          : undefined,
+        : undefined,
     }));
   }
   if (entry.tier < COLLECTION.maxTier) {
     body.append(action({
       label: 'Raise its tier',
       onClick: () => game.doRaiseArtifactTier(id),
-      info: el('span', { class: 'rel-frag' },
-        iconEl('sparkle', { size: 'sm' }),
-        `${entry.fragments} / ${tierCost(entry.tier)} fragments`),
-      disabledReason: entry.fragments < tierCost(entry.tier)
+      // Fragments are a per-relic counter rather than a wallet entry, but a
+      // price is a price: it goes in the button like every other one, reading
+      // "have / needed" so the gap is the thing you see.
+      costExtra: [{
+        icon: 'sparkle',
+        amount: `${entry.fragments} / ${tierCost(entry.tier)}`,
+        short: entry.fragments < tierCost(entry.tier),
+      }],
+      info: entry.fragments < tierCost(entry.tier)
         ? `Delve ${RUINS[def.source].name} again for fragments`
         : undefined,
     }));
@@ -289,7 +290,6 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
 
 function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTMLElement {
   const hero = HEROES[view.id];
-  const knowledge = game.effectiveWalletValue('Knowledge');
   const stats = heroStats(game.state, view.id);
   const busy = heroIsBusy(game.state, view.id);
 
@@ -335,20 +335,23 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
     body.append(action({
       label: 'Train',
       onClick: () => game.doLevelHero(view.id),
-      info: chip('Knowledge', cost, knowledge < cost),
+      cost: { Knowledge: cost },
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: view.entry.level >= view.levelCap
         ? 'Their tier holds them back — raise it with Fragments'
-        : knowledge < cost ? `Short ${cost - knowledge} Knowledge` : undefined,
+        : undefined,
     }));
   }
   if (view.entry.tier < COLLECTION.maxTier) {
     body.append(action({
       label: 'Raise their tier',
       onClick: () => game.doRaiseHeroTier(view.id),
-      info: el('span', { class: 'rel-frag' },
-        iconEl('sparkle', { size: 'sm' }),
-        `${view.entry.fragments} / ${tierCost(view.entry.tier)} fragments`),
-      disabledReason: view.entry.fragments < tierCost(view.entry.tier)
+      costExtra: [{
+        icon: 'sparkle',
+        amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
+        short: view.entry.fragments < tierCost(view.entry.tier),
+      }],
+      info: view.entry.fragments < tierCost(view.entry.tier)
         ? 'Pull for them, or delve again' : undefined,
     }));
   }
@@ -366,7 +369,6 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
  */
 function bannerPanel(game: Game): HTMLElement {
   const cost = pullCost();
-  const gems = game.effectiveWalletValue('Gems');
   const pity = pityCount(game.state, STANDARD_BANNER);
   const toGuarantee = pullsToGuarantee(game.state, STANDARD_BANNER);
   const chance = heroChanceAt(pity);
@@ -389,8 +391,8 @@ function bannerPanel(game: Game): HTMLElement {
       label: 'Call',
       kind: 'gem',
       onClick: () => game.doPull(),
-      info: chip('Gems', cost, gems < cost),
-      disabledReason: gems < cost ? `Short ${cost - gems} Gems` : undefined,
+      cost: { Gems: cost },
+      have: (c) => game.effectiveWalletValue(c),
     }),
     el('div', { class: 'rel-note' },
       'Heroes can also be found by delving: fragments come back from every ruin, '

@@ -21,8 +21,76 @@ export function chip(c: CurrencyId, amount: number, short = false): HTMLElement 
 }
 
 /**
+ * One priced term inside a button. Most are wallet currencies, but not all:
+ * Fragments are per-collectible counters rather than a `Wallet` entry, and a
+ * price the player pays is a price whatever bucket it lives in.
+ */
+export interface CostTerm {
+  icon: CurrencyId | IconName;
+  /** Pre-formatted, so a term can read "3 / 20" and not only a bare number. */
+  amount: string;
+  /** The player cannot pay it — this is the term that turns clay. */
+  short?: boolean;
+}
+
+const CURRENCY_ICON_IDS = new Set<string>([
+  'Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Knowledge', 'Gems', 'Mana',
+  'Berries', 'Meat', 'Fish',
+]);
+
+/** Is any term of this cost beyond what the player has? */
+export function isShort(cost: Wallet, have?: (c: CurrencyId) => number): boolean {
+  if (have === undefined) return false;
+  return (Object.entries(cost) as Array<[CurrencyId, number]>).some(([c, n]) => have(c) < n);
+}
+
+/**
+ * A cost as it appears INSIDE a button (§6.4).
+ *
+ * No pills here, unlike `costChips`: the button is already the container, and
+ * a pill inside a slab reads as a control inside a control. Just icon and
+ * number, inheriting the button's ink — except a term the player cannot pay,
+ * which turns clay. That red IS the reason the button is disabled, which is
+ * why an unaffordable action needs no separate reason line.
+ *
+ * Returns null for a free action, so a button with nothing to charge stays a
+ * single line rather than growing an empty second one.
+ */
+export function costTerms(
+  cost: Wallet | undefined,
+  have?: (c: CurrencyId) => number,
+  extra?: readonly CostTerm[],
+): HTMLElement | null {
+  const terms: CostTerm[] = [
+    ...(Object.entries(cost ?? {}) as Array<[CurrencyId, number]>)
+      .filter(([, n]) => n > 0)
+      .map(([c, n]) => ({
+        icon: c, amount: String(n), short: have !== undefined && have(c) < n,
+      })),
+    ...(extra ?? []),
+  ];
+  if (terms.length === 0) return null;
+  return el(
+    'span',
+    { class: 'k-btn-cost' },
+    ...terms.map((t) => el(
+      'span',
+      { class: `k-cost${t.short ? ' is-short' : ''}` },
+      typeof t.icon === 'string' && CURRENCY_ICON_IDS.has(t.icon)
+        ? currencyIcon(t.icon as CurrencyId, { size: 'sm' })
+        : iconEl(t.icon as IconName, { size: 'sm' }),
+      t.amount,
+    )),
+  );
+}
+
+/**
  * A whole cost as chips, each flagged against what the player actually has.
  * The affordability check lives here so no screen has to remember to do it.
+ *
+ * For a cost attached to a BUTTON, use `costTerms` instead — §6.4 puts those
+ * inside the button. These pills are for costs that stand on their own, like
+ * the supply line on the expedition sheet.
  */
 export function costChips(cost: Wallet, have?: (c: CurrencyId) => number): HTMLElement {
   const entries = Object.entries(cost) as Array<[CurrencyId, number]>;

@@ -138,6 +138,29 @@
 .k-btn--destructive { --slab: var(--clay); --slab-lip: #8e3323; }
 .k-btn--gem { --slab: linear-gradient(160deg, var(--sky), #7a5bc7); --slab-lip: #3c2c73; }
 
+/* §6.4 — a price belongs INSIDE the button that spends it. The label rides on
+ * top, the cost sits under it, and the whole thing is one press-target that
+ * reads in a single glance instead of a caption the eye has to pair up. */
+.k-btn-label { display: inline-flex; align-items: center; gap: 8px; }
+.k-btn.has-cost {
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 18px;
+}
+.k-btn-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.k-cost { display: inline-flex; align-items: center; gap: 4px; }
+/* The red IS the reason the button is dead, so it has to survive the disabled
+ * fill — which is a warm tan, not a grey, and would swallow a subtler red. */
+.k-cost.is-short { color: var(--clay); }
+.k-btn:disabled .k-cost.is-short { color: #a8321c; }
+.k-btn:disabled .k-cost.is-short .icon { color: #a8321c; }
+
 /* Gated, not greyed: a warm fill, and never without a reason beside it. */
 .k-btn:disabled,
 .k-btn.is-locked {
@@ -310,6 +333,8 @@
 }
 /* On a dark or saturated ground, flip it. */
 .k-plank .icon, .k-btn .icon { color: var(--ink-inverse); }
+/* …except a cost the player is short of, which stays clay icon and all. */
+.k-btn .k-cost.is-short .icon { color: var(--clay); }
 .icon--sm { --icon-size: 16px; }
 .icon--lg { --icon-size: 48px; }
 .icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }

@@ -58,7 +58,6 @@
   font-family: var(--font-display);
   color: var(--leaf-dark);
 }
-.dc-upcost { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dc-uptime {
   display: inline-flex;
   align-items: center;

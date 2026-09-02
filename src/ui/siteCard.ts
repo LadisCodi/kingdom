@@ -15,7 +15,7 @@ import { spriteUrl } from '../render/sprites';
 import type { Coord } from '../sim/state';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { el, formatDuration } from './format';
-import { action, chip, iconEl, panel, stat } from './kit';
+import { action, iconEl, panel, stat } from './kit';
 
 /** The site art, at card size: the sprite if it exists, its glyph if not. */
 function art(sprite: string, glyph: string): HTMLElement {
@@ -30,7 +30,6 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   const claimed = game.state.landmarks.claimed[def.id] === true;
   const cleared = !def.defended || game.state.landmarks.cleared[def.id] === true;
   const cost = landmarkClaimCost(game.map, def);
-  const short = game.effectiveWalletValue('Gold') < cost;
 
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },
@@ -61,12 +60,9 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     label: 'Claim',
     kind: 'primary',
     onClick: () => game.doClaimLandmark(def.location),
-    info: chip('Gold', cost, short),
-    disabledReason: !cleared
-      ? 'An enemy warband holds this place'
-      : short
-        ? `Short ${cost - game.effectiveWalletValue('Gold')} Gold`
-        : undefined,
+    cost: { Gold: cost },
+    have: (c) => game.effectiveWalletValue(c),
+    disabledReason: !cleared ? 'An enemy warband holds this place' : undefined,
   }));
   return panel(body);
 }

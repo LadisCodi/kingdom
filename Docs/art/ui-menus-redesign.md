@@ -142,6 +142,7 @@ Rule: **no pure black, no blue-grey, no #FFFFFF.** Outlines are
 | Destructive | `clay` slab, dark-clay lip | Reset, Cancel construction |
 | Gem action | `sky`-to-violet slab with a gem icon | Finish now, buy research slot |
 | Disabled | `locked` fill, ink-muted label, small padlock, **reason line beside it** | any gated action |
+| **Priced** | label on top, **the cost inside the button** underneath — icon + amount per term, any term the player cannot pay in `clay` | anything that spends: Build, Upgrade, Train, Recruit, Start, Claim, Cast, Call, Set off, Refill |
 
 Pressed state: the slab drops onto its lip (3px down, lip hidden).
 
@@ -874,6 +875,44 @@ Small, high-leverage, mostly independent of the visual redesign.
 11. **Offline report** (§5.12).
 12. **Minimum type size 13px**; the current 11–12px helper text fails on
     a phone in daylight.
+13. **A price lives inside the button that spends it** (§6.4 below).
+
+### 6.4 A price lives inside the button that spends it
+
+*Added 2026-09-02, and it supersedes the cost-beside-the-button layout every
+screen used before it.*
+
+**The rule.** When an action has a cost, that cost is rendered **inside the
+button**, under its label: one icon-and-amount term per currency. **Any term
+the player cannot pay is drawn in `clay`.**
+
+Three reasons it is worth changing every screen for:
+
+- **A price beside a button is a caption; a price on a button is part of the
+  thing you press.** The player reads the verb and what it costs in one glance
+  instead of pairing up two elements and hoping they belong together.
+- **It fixes a real bug in the old layout.** `action()` renders one slot that
+  holds *either* the cost *or* the blocked reason — so the moment a player
+  could not afford something, the price was **replaced** by the words "Short 28
+  Wood". The number vanished exactly when it mattered most, and the player was
+  told they were short without being told short *of what total*.
+- **The red is the reason.** §6.3 says nothing is greyed out without a reason
+  beside it. A clay number satisfies that rule by itself, so an action blocked
+  *only* by its price now needs no sentence at all — and a screen that prints
+  "Short 28 Wood" beside a button already showing a red 40 is nagging.
+
+**Therefore:** `disabledReason` is for obstacles that are **not** money — a
+Townhall level, a missing technology, a busy hero, nowhere legal to build.
+Affordability is not a reason any more; it is a colour. Passing `cost` and
+`have` to `btn()`/`action()` gets the price, the red and the disabled state
+together, so no screen can show one without the others.
+
+**What stays outside the button:** consequences, not prices — a build
+duration, "instant", "takes 2m 30s". Those are what you get, not what you pay.
+
+**Non-wallet prices count too.** Fragments are a per-collectible counter rather
+than a currency, and they go in the button like everything else, reading
+`have / needed` so the gap is the thing you see.
 
 ---
 
