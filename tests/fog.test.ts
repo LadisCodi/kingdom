@@ -183,7 +183,7 @@ describe('exploring is what buys research', () => {
     }
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
     expect(supply).toBe(2902);
-    expect(tree).toBe(643);
+    expect(tree).toBe(655);
     // Comfortable, but not free: about a quarter of the map funds all of it.
     expect(supply).toBeGreaterThan(tree * 4);
   });

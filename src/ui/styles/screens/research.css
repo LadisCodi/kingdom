@@ -79,11 +79,15 @@
 .tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
 
 /* Wax-seal medallions. */
+/* SHAPE carries the kind, so the two never have to be told apart by size
+ * alone: a technology is a rounded SQUARE — a thing you research once — and an
+ * upgrade is a small CIRCLE hanging off it, a thing you buy again and again.
+ * At a glance the tree now reads as trunks with beads on them. */
 .tech-node {
   position: absolute;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 14px;
   font-size: 24px;
   padding: 0;
   display: flex;
@@ -111,10 +115,11 @@
   font-size: 22px;
 }
 
-/* Upgrades: small badges pinned below their parent. */
+/* Upgrades: small round badges pinned below their parent. */
 .tech-node.upgrade {
   width: 36px;
   height: 36px;
+  border-radius: 50%;
   font-size: 16px;
   border-width: 2px;
   background: var(--parchment);

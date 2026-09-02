@@ -71,11 +71,17 @@ TapPower, QuickHands and WorkerLoad. Four themed branches leave it:
   Housing +1 capacity) → **Architecture** (Townhall L3)
 - **ECONOMICS (left)** — two rows:
   - **Saws** (the Sawmill) hangs directly off Forestry: chopping by hand and
-    automating it are two separate decisions, ten onboarding beats apart
+    automating it are two separate decisions, ten onboarding beats apart;
+    upgrade **Sawpits** (+1 Wood per worker delivery)
+  - **Hunting** also hangs off Forestry and gates the **wild game** tap —
+    the one resource behind a technology of its own; upgrade **Butchery**
+    (+1 Meat per collect tap)
   - farm side: **Agriculture** (FarmLands **and** the Farm — one research, so
     nothing sits between tapping a plot and automating it) → **Farming**
-    (Farm L2); Agriculture → **Market** (Market building; upgrades
-    MarketStall +5% sale prices, TradeRoutes +10% tax income)
+    (Farm L2; upgrade **Scythes**, +1 Food per collect tap); Agriculture also
+    carries **Irrigation** (+1 Food per worker delivery) and leads to
+    **Market** (Market building; upgrades MarketStall +5% sale prices,
+    TradeRoutes +10% tax income)
   - stone side: **Masonry** (Quarry; upgrade Stonecutting) → **Mining**
     (Mine, costs Stone; upgrade Iron Picks) → **Deep Mining** (Mine L2);
     Masonry → **Engineering** (Quarry L2, Sawmill L3)
@@ -86,9 +92,29 @@ TapPower, QuickHands and WorkerLoad. Four themed branches leave it:
   not new here: Communities adds +1 to every bed the same way. → **Sailing** (sea cells become explorable) →
   **Fishing** (the Docks + fishing boats; upgrade Big Nets) →
   **Shipbuilding** (Docks L2); Cartography → **Scaling Tools** (mountain cells
-  become explorable)
+  become explorable; upgrade **Pitons**, −10%/level on the Gold a cell of fog
+  costs — Pitons discounts the price, Surveying buys back the taps, so the two
+  stack without either making the other moot)
 - **MILITARY (down)**: **Warrior** (the Warrior unit) → **Spears** (Lancer),
   **Archery** (Archer), **Cavalry** (Cavalry)
+- **Attunement** carries **Resonance** (−20%/level on the Mana a relic costs
+  to cast)
+
+**Shape carries the kind** (2026-09-02): a technology is a rounded **square**,
+an upgrade a smaller **circle** hanging below its parent. They used to differ
+only in size, which is a weak signal on a busy tree; now it reads as trunks
+with beads on them.
+
+Scoped upgrades (per-resource tap and worker yields) are small lookup tables at
+the call site — `TAP_YIELD_UPGRADES` and `WORKER_YIELD_UPGRADES` in
+`upgrades.ts` — rather than a general scoping mechanism, because a handful is
+all the game has and a table is what the handful needs.
+
+`UPGRADE_ORDER` is **derived** from `UPGRADES`, not restated. It used to be a
+hand-written list and it silently went stale — Surveying was added, never
+listed, and so never drawn in the tree at all, while a quest pointed the player
+straight at it. The tree groups upgrades by filtering that list, so anything
+missing from it is invisible in the game.
 
 Exploration gates: `revealTap` refuses (`TechLocked`) to reveal Water cells
 before Sailing and Mountain cells before Scaling Tools — building fog radii

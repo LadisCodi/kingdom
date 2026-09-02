@@ -171,13 +171,19 @@ describe('Forestry is the only door out of the opening', () => {
     expect(mana(state)).toBe(before);
   });
 
-  // The gate is a tutorial device, not a permanent rule: everything else the
-  // map yields stays ungated, so a player who explores sideways is never told
-  // to go and research something first.
+  // Gates are the exception, not the rule: everything else the map yields
+  // stays open, so a player who explores sideways is never told to go and
+  // research something first. Three sources are gated and each for its own
+  // reason — the first two to pace the opening, the third because taking game
+  // is a skill rather than a chore.
   it('gates only what is authored', () => {
-    const gated = Object.entries(HARVEST)
+    const gated = Object.fromEntries(Object.entries(HARVEST)
       .filter(([, spec]) => spec.requiredTech !== null)
-      .map(([id]) => id);
-    expect(gated.sort()).toEqual(['Berries', 'Forest']);
+      .map(([id, spec]) => [id, spec.requiredTech]));
+    expect(gated).toEqual({
+      Forest: 'Forestry',
+      Berries: 'Forestry',
+      Meat: 'Hunting',
+    });
   });
 });

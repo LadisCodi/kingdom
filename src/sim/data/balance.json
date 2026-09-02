@@ -610,7 +610,7 @@
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 180,
-      "requiredTech": null
+      "requiredTech": "Hunting"
     },
     "Stone": {
       "yieldPerTap": 1,
@@ -818,6 +818,15 @@
         "Forestry"
       ]
     },
+    "Hunting": {
+      "cost": {
+        "Knowledge": 12
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "Forestry"
+      ]
+    },
     "Agriculture": {
       "cost": {
         "Knowledge": 10
@@ -1003,12 +1012,47 @@
       "effectPerLevel": 1,
       "requiredTech": "Forestry"
     },
+    "Sawpits": {
+      "costBase": 120,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Saws"
+    },
+    "Butchery": {
+      "costBase": 80,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Hunting"
+    },
+    "Irrigation": {
+      "costBase": 120,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Agriculture"
+    },
+    "Scythes": {
+      "costBase": 90,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Farming"
+    },
     "Surveying": {
       "costBase": 150,
       "costGrowth": 3,
       "maxLevel": 2,
       "effectPerLevel": 1,
       "requiredTech": "Cartography"
+    },
+    "Pitons": {
+      "costBase": 200,
+      "costGrowth": 2.5,
+      "maxLevel": 2,
+      "effectPerLevel": 0.1,
+      "requiredTech": "ScalingTools"
     },
     "MarketStall": {
       "costBase": 100,
@@ -1044,6 +1088,13 @@
       "maxLevel": 3,
       "effectPerLevel": 1,
       "requiredTech": "Mining"
+    },
+    "Resonance": {
+      "costBase": 250,
+      "costGrowth": 2.5,
+      "maxLevel": 2,
+      "effectPerLevel": 0.2,
+      "requiredTech": "Attunement"
     }
   },
   "research": {

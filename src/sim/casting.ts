@@ -20,6 +20,7 @@ import {
   coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
 } from './state';
 import { isAttuned, ownsArtifact } from './artifacts';
+import { effect } from './upgrades';
 
 export type CastBlock =
   | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget' | 'NotAttuned';
@@ -40,11 +41,13 @@ export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
   return null;
 }
 
-/** What casting actually costs right now — a Conjunction can halve it. */
+/** What casting actually costs right now — Resonance buys it down permanently,
+ *  a Conjunction can halve it on top. */
 export function castCost(state: GameState, id: ArtifactId): number {
   const active = ARTIFACTS[id].active;
   if (active === null) return 0;
-  return Math.max(0, Math.round(resolve(state, 'activeCost', active.manaCost)));
+  const bought = active.manaCost * Math.max(0, 1 - effect(state, 'Resonance'));
+  return Math.max(0, Math.round(resolve(state, 'activeCost', bought)));
 }
 
 /** Cells a targeted active may legally be cast on. Empty for an untargeted

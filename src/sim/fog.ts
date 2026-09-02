@@ -49,7 +49,13 @@ export function revealCost(d: number): number {
 export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): number =>
   Math.max(
     FOG.goldPerTap,
-    Math.round(resolve(state, 'revealCost', revealCost(townhallDistance(map, cell)))),
+    Math.round(resolve(
+      state,
+      'revealCost',
+      // Pitons discount the GOLD; Surveying buys back the taps. Two different
+      // costs, so the two upgrades stack without either making the other moot.
+      revealCost(townhallDistance(map, cell)) * Math.max(0, 1 - effect(state, 'Pitons')),
+    )),
   );
 
 /**

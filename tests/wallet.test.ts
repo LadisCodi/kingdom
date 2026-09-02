@@ -66,10 +66,13 @@ describe('finite map features', () => {
     expect(tapCell(state, map, BERRY_BUSH, T0)).toBe('NotHarvestable');
   });
 
-  it('wild animals yield Meat once revealed', () => {
+  it('wild animals yield Meat once revealed AND hunted', () => {
     const state = freshGame();
     expect(tapCell(state, map, WILD_ANIMALS, T0)).toBe('NotRevealed');
     state.fog.revealed[coordKey(WILD_ANIMALS)] = true;
+    // Game is the one resource behind a technology of its own.
+    expect(tapCell(state, map, WILD_ANIMALS, T0)).toBe('TechLocked');
+    completeTech(state, 'Hunting');
     expect(tapCell(state, map, WILD_ANIMALS, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Meat')).toBe(1);
   });

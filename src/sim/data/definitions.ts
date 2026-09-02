@@ -513,6 +513,13 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🪚',
     node: { x: -1, y: 1 },
   }, balance.technologies.Saws),
+  Hunting: tech({
+    id: 'Hunting',
+    name: 'Hunting',
+    description: 'Snares and spears — you can take the wild game on the plains.',
+    glyph: '🏹',
+    node: { x: 1, y: 1 },
+  }, balance.technologies.Hunting),
   Agriculture: tech({
     id: 'Agriculture',
     name: 'Agriculture',
@@ -651,7 +658,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
 export const TECH_ORDER: TechId[] = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture',
-  'Saws', 'Agriculture', 'Farming', 'Market',
+  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market',
   'Masonry', 'Mining', 'Engineering', 'DeepMining',
   'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
   'Warrior', 'Spears', 'Archery', 'Cavalry',
@@ -709,6 +716,30 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
     description: '+1 resource per worker delivery',
   }, balance.upgrades.WorkerLoad),
+  Sawpits: upgrade({
+    id: 'Sawpits', name: 'Sawpits', glyph: '🪵',
+    description: '+1 Wood per worker delivery',
+  }, balance.upgrades.Sawpits),
+  Butchery: upgrade({
+    id: 'Butchery', name: 'Butchery', glyph: '🍖',
+    description: '+1 Meat per collect tap',
+  }, balance.upgrades.Butchery),
+  Irrigation: upgrade({
+    id: 'Irrigation', name: 'Irrigation', glyph: '💧',
+    description: '+1 Food per worker delivery',
+  }, balance.upgrades.Irrigation),
+  Scythes: upgrade({
+    id: 'Scythes', name: 'Scythes', glyph: '🌾',
+    description: '+1 Food per collect tap',
+  }, balance.upgrades.Scythes),
+  Pitons: upgrade({
+    id: 'Pitons', name: 'Pitons', glyph: '⛏️',
+    description: '−10% Gold to clear a cell of fog',
+  }, balance.upgrades.Pitons),
+  Resonance: upgrade({
+    id: 'Resonance', name: 'Resonance', glyph: '🔔',
+    description: '−20% Mana to cast a relic',
+  }, balance.upgrades.Resonance),
   Surveying: upgrade({
     id: 'Surveying', name: 'Surveying', glyph: '🧭',
     // Each level makes one tap on the fog do the work of one more. The Gold
@@ -738,10 +769,17 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   }, balance.upgrades.IronPicks),
 };
 
-export const UPGRADE_ORDER: UpgradeId[] = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks',
-];
+/**
+ * Display order, DERIVED from the definitions above rather than restated.
+ *
+ * It used to be a hand-written list, and it silently went stale: Surveying was
+ * added, never listed, and so never appeared in the tech tree at all — while a
+ * quest cheerfully pointed the player at it. The tree groups upgrades with
+ * `UPGRADE_ORDER.filter(...)`, so anything missing here is invisible in the
+ * game. A second list of the same names could only ever be a chance to forget
+ * one.
+ */
+export const UPGRADE_ORDER: UpgradeId[] = Object.keys(UPGRADES) as UpgradeId[];
 
 // -------------------------------------------------------------------- units
 

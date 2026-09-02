@@ -58,15 +58,17 @@ const DISTRICT_IDS = [
 const TECH_IDS = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture', // civics
-  'Saws', 'Agriculture', 'Farming', 'Market', // economics: farm side
+  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market', // economics: farm side
   'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
   'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
   'Warrior', 'Spears', 'Archery', 'Cavalry', // military
   'Attunement', 'Warband', // the magic and expedition leaves
 ];
 const UPGRADE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'Surveying', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks',
+  'TapPower', 'QuickHands', 'WorkerLoad',
+  'Sawpits', 'Butchery', 'Irrigation', 'Scythes',
+  'Surveying', 'Pitons', 'MarketStall', 'TradeRoutes',
+  'Stonecutting', 'BigNets', 'IronPicks', 'Resonance',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];

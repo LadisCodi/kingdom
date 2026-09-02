@@ -35,14 +35,16 @@ export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'S
 export type TechId =
   | 'Forestry'
   | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
-  | 'Saws' | 'Agriculture' | 'Farming' | 'Market' // economics: farm side
+  | 'Saws' | 'Hunting' | 'Agriculture' | 'Farming' | 'Market' // economics: farm side
   | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
   | 'Cartography' | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration
   | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry' // military (down)
   | 'Attunement' | 'Warband'; // the magic and expedition leaves
 export type UpgradeId =
-  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Surveying' | 'MarketStall' | 'TradeRoutes'
-  | 'Stonecutting' | 'BigNets' | 'IronPicks';
+  | 'TapPower' | 'QuickHands' | 'WorkerLoad'
+  | 'Sawpits' | 'Butchery' | 'Irrigation' | 'Scythes'
+  | 'Surveying' | 'Pitons' | 'MarketStall' | 'TradeRoutes'
+  | 'Stonecutting' | 'BigNets' | 'IronPicks' | 'Resonance';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
