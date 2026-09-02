@@ -1491,24 +1491,10 @@
     {
       "id": "FirstSteps",
       "name": "First steps",
-      "description": "Tap the dark ground around your Townhall to clear it. Every cell you uncover teaches you something.",
-      "goalType": "DiscoverCells",
-      "goalTarget": null,
-      "goalAmount": 5,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 10
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "FindTheWoods",
-      "name": "Find the woods",
-      "description": "Clear two cells with forest on them — you will want the timber.",
+      "description": "Tap the dark ground to clear it. Find four stands of forest — you will want the timber.",
       "goalType": "DiscoverFeature",
       "goalTarget": "Trees",
-      "goalAmount": 2,
+      "goalAmount": 4,
       "goalLevel": null,
       "reward": {
         "Gold": 10

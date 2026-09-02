@@ -45,16 +45,15 @@ describe('the quest chain', () => {
     // pays for Forestry, and Forestry is the ONE door out of the opening —
     // it gates the trees and the berries both, so until it lands the only
     // thing a player can do is clear ground.
+    // The opening is a HEADING, not just fog: it names the forest, so the
+    // ground the player clears is the ground quest 3 then asks them to chop.
     expect(QUESTS[0]).toMatchObject(
-      { id: 'FirstSteps', goalType: 'DiscoverCells', goalAmount: 5 });
-    // ...and then a HEADING, not just more fog: the trees quest 3 wants.
-    expect(QUESTS[1]).toMatchObject(
-      { id: 'FindTheWoods', goalType: 'DiscoverFeature', goalTarget: 'Trees' });
-    expect(QUESTS[2]).toMatchObject({ id: 'Woodcraft', goalTarget: 'Forestry' });
+      { id: 'FirstSteps', goalType: 'DiscoverFeature', goalTarget: 'Trees' });
+    expect(QUESTS[1]).toMatchObject({ id: 'Woodcraft', goalTarget: 'Forestry' });
 
     inOrder(
-      'FirstSteps', 'FindTheWoods', 'Woodcraft',  // 1-2  explore → find the woods
-                                                  //        → the one research
+      'FirstSteps', 'Woodcraft',                  // 1-2  find the woods → the
+                                                  //        one research
       'Timber', 'ARoof',                          // 3-4  chop, then a roof
       'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
                                                   //   a roof is what permits one
@@ -253,15 +252,20 @@ describe('quests fund the research tree', () => {
   it('the opening funds its own first research, at the worst frontier the player can pick', () => {
     const state = freshGame();
     const first = QUESTS[0];
-    expect(first).toMatchObject({ goalType: 'DiscoverCells' });
+    expect(['DiscoverCells', 'DiscoverFeature']).toContain(first.goalType);
 
-    // Every cell the player could actually pay for right now.
+    // Every cell the player could actually pay for right now — narrowed to
+    // the ones that COUNT, because a feature-specific opening quest cannot be
+    // finished on whatever ground happens to be cheapest.
     const frontier = [...map.terrain.keys()]
       .map(parseCoordKey)
       .filter((c) => fogState(state, map, c) === 'Discovered'
         && isReachable(state, map, c)
-        && explorationGate(map, c) === null);
-    expect(frontier.length).toBeGreaterThanOrEqual(first.goalAmount);
+        && explorationGate(map, c) === null
+        && (first.goalType !== 'DiscoverFeature'
+          || map.initialFeatures.get(coordKey(c)) === first.goalTarget));
+    expect(frontier.length, `fewer than ${first.goalAmount} cells can finish quest 1`)
+      .toBeGreaterThanOrEqual(first.goalAmount);
 
     const cheapest = frontier
       .map((c) => ({ k: revealKnowledge(map, c), gold: revealCostForCell(state, map, c) }))

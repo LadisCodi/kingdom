@@ -65,7 +65,7 @@ records how each became a mechanic, and the four decisions taken to get there.
 
 | Steps | Quests | What was built |
 |---|---|---|
-| 1 | `FirstSteps` | The game opens on the **fog**, not a tap. Five cells → 10 Knowledge. |
+| 1 | `FirstSteps` | The game opens on the **fog**, not a tap — and it names the FOREST (`DiscoverFeature`, 4 cells), so the ground the player clears is the ground step 3 then asks them to chop. Those four are every forest cell reachable from the opening block: 16 Gold of the 50, paying 2+2+3+3 = **10 Knowledge** against Forestry's 8. Three would pay 7, which is why it asks for four. |
 | 2-3 | `Woodcraft`, `Timber` | `HarvestSpec.requiredTech` is new: the Forest is gated on **Forestry**, which is now a **3-second** research and no longer unlocks the Sawmill. The trees are visible and refusing from the first second — that is what makes the first research something the player wants. A refused tap costs no Mana and says *"Research Forestry before you can work this"*. |
 | 4-6 | `ARoof`, `Rations`, `FirstVillager` | Unchanged mechanics. The crop plot repricing (below) is what makes the Wood add up. |
 | 7 | `TaxDay` | Added back into the chain: rent is what pays for more fog, and step 7 asks for more fog. |

@@ -25,7 +25,8 @@ OwnHeroes(n) · BuyUpgrade(upgrade, level) — absolute;
 CollectResource(currency, n) · CollectTaps(n) · DiscoverCells(n) ·
 DiscoverFeature(feature, n) · SellGoods(n) — relative.
 
-**DiscoverFeature** is a DiscoverCells that cares WHAT it uncovered:
+**DiscoverFeature** is what quest 1 uses, and a DiscoverCells that cares WHAT
+it uncovered:
 `goal_target` is a map feature (`Trees`, `BerryBush`, `WildAnimals`, `Rocks`,
 `FishShoal`, `IronVein`). "Clear five cells" can be satisfied in any direction,
 so it teaches the verb and nothing else; "clear two with forest on them" is a

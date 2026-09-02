@@ -106,19 +106,12 @@ describe('a player can actually play the onboarding', () => {
     expect(collectTap(state, map, FOREST, now)).not.toBe('Harvested');
     expect(collectTap(state, map, BERRIES, now)).not.toBe('Harvested');
 
-    // The bush and the nearest trees are all one ring out, so clearing toward
-    // what you can SEE is the same act as finishing the first quest.
-    for (const cell of [BERRIES, FOREST, { x: 0, y: 3 },
-      { x: 3, y: 1 }, { x: -2, y: 0 }]) clear(cell);
+    // Quest 1 names the FOREST, so the border walks toward the trees rather
+    // than in whatever direction the player happened to face — and the ground
+    // it clears is the ground quest 3 then asks them to chop. These four are
+    // every forest cell reachable from the opening block.
+    for (const cell of [{ x: 0, y: 3 }, FOREST, { x: 3, y: 2 }, { x: 2, y: 3 }]) clear(cell);
     finish('FirstSteps');
-
-    // DiscoverFeature is RELATIVE, like DiscoverCells: it counts from the
-    // moment it activates, so forest cleared during quest 1 does not pay for
-    // quest 2. Two more, and the border walks toward the trees rather than in
-    // whatever direction the player happened to face.
-    clear({ x: 2, y: 3 });
-    clear({ x: 0, y: 4 });
-    finish('FindTheWoods');
 
     research('Forestry');
     finish('Woodcraft');
@@ -135,6 +128,11 @@ describe('a player can actually play the onboarding', () => {
     finish('ARoof');
 
     // ---- steps 5-6: a meal, and the neighbour the roof permits ----
+    // The bush is on the other side of the Townhall from the woods, so this
+    // is the first time the border goes the other way. The quest's own arrow
+    // points at it — a Discovered cell counts for that hint, which is why it
+    // can point at a bush still under the fog.
+    clear(BERRIES);
     for (let i = 0; i < 5; i++) expect(collectTap(state, map, BERRIES, now)).toBe('Harvested');
     finish('Rations');
 
@@ -229,7 +227,9 @@ describe('a player can actually play the onboarding', () => {
           .toBeGreaterThanOrEqual(techCost(id));
         purse -= techCost(id);
       }
-      if (quest.goalType === 'DiscoverCells') purse += quest.goalAmount * CHEAPEST_CELL;
+      if (quest.goalType === 'DiscoverCells' || quest.goalType === 'DiscoverFeature') {
+        purse += quest.goalAmount * CHEAPEST_CELL;
+      }
       purse += quest.rewardKnowledge;
     }
   });
