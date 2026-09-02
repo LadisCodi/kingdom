@@ -70,6 +70,13 @@
   right: 12px;
   z-index: 20;
 }
+/* ...and it goes away while any menu is open. The knob floats above every
+   menu, so it lands on top of that menu's own chrome — it was sitting on the
+   research screen's close button. Every menu brings its own way out, so the
+   knob has nothing to do while one is up: it is the affordance for the MAP.
+   Keyed on the overlay actually having content rather than on a presenter
+   flag, so it cannot drift from what is on screen. */
+#ui:has(> #overlay:not(:empty)) #tools { display: none; }
 .tools-knob {
   display: grid;
   place-items: center;

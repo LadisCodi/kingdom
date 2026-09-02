@@ -131,9 +131,10 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  /* Starts below the floating Settings knob, so the sheet's own close knob
-   * cannot collide with it — and the map keeps a strip of visible sky, which
-   * §5.5 wants anyway. */
+  /* Leaves a strip of visible sky above the sheet (§5.5), so the map is still
+   * there behind what you pulled up over it. This used to be about dodging
+   * the floating Settings knob as well; the knob now hides itself whenever a
+   * menu is open (see nav.css), so only the sky reason is left. */
   padding: calc(var(--hud-h) + 56px) 10px calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
 }
 /* A centred sheet is a modal, not a drawer: it asks one question and the

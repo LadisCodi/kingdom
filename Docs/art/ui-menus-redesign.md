@@ -910,8 +910,7 @@ Small, high-leverage, mostly independent of the visual redesign.
 12. **Minimum type size 13px**; the current 11–12px helper text fails on
     a phone in daylight.
 13. **A price lives inside the button that spends it** (§6.4 below).
-14. **The header outranks a drawer, and ducks under a full-screen menu**
-    (§6.5 below).
+14. **The header and nav bar outrank every menu** (§6.5 below).
 15. **A lit tab never lies** (§6.7 below).
 
 ### 6.4 A price lives inside the button that spends it
@@ -951,23 +950,38 @@ duration, "instant", "takes 2m 30s". Those are what you get, not what you pay.
 than a currency, and they go in the button like everything else, reading
 `have / needed` so the gap is the thing you see.
 
-### 6.5 The header outranks a drawer
+### 6.5 The chrome outranks every menu
 
-*Added 2026-09-02.*
+*Added 2026-09-02. Revised the same day — see below.*
 
-A bottom sheet is something the player pulled up **over** the game, not a
-replacement for it — so the resource header stays above it, undimmed by the
-scrim and still tappable. Your purse should be readable while you browse the
-build menu, because what you can afford is the whole reason you opened it.
+A menu is something the player opened **over** the game, never a replacement
+for it. The resource header and the nav bar both stay above it, undimmed by
+the scrim and still tappable. Your purse has to be readable while you browse
+the build menu, because what you can afford is the whole reason you opened it,
+and the way out has to stay where it always is.
 
-A **full-screen** menu is the exception and keeps the top of the screen. It is
-not a drawer; it owns the view, and it brings its own top bar (the research
-screen's, for one) that the game header would otherwise sit on top of.
+This first shipped with an exception for **full-screen** menus, on the
+reasoning that they own the view and bring their own top bar. That was wrong
+in exactly the place it mattered: the Research screen hid the resource bar
+while the player was reading prices off it. The exception is gone.
 
-The rule is written the other way round so that it needs no list of screens:
-`#overlay` outranks the header by default, and **drops below it when it holds
-a `.k-sheet`**. A new full-screen menu therefore gets the right behaviour for
-free, and a new bottom sheet does too.
+The stack, bottom to top: map · ad-offer tab (4) · district card (6) · **menus
+and sheets (7)** · header (8) · nav bar (10) · settings knob (20) · the
+rewarded video (200). One z-index for every menu, so a new screen gets the
+right behaviour without being enumerated.
+
+Two consequences worth knowing:
+
+- **A full-screen menu must reserve the two bars itself.** An absolutely
+  positioned child resolves `inset` against its containing block's *padding
+  box*, which INCLUDES the padding — so `#overlay`'s reserved strips do
+  nothing for a child using `inset: 0`. `.research-screen` sets its own `top`
+  and `bottom` instead.
+- **The settings knob hides while any menu is open.** It floats above
+  everything (z 20), so it landed on the research screen's own close button.
+  Every menu brings its own way out; the knob is the affordance for the map.
+  Keyed on `#ui:has(> #overlay:not(:empty))`, so it cannot drift from what is
+  actually on screen.
 
 The one thing above everything is the rewarded-video surface, which is not in
 `#overlay` at all — see `Docs/features/ad-economy.md` §5.
