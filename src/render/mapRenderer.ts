@@ -216,8 +216,14 @@ export function drawMap(
       // Landmarks and ruins: authored sites, drawn where a feature would be.
       // They are what the fog is FOR, so they get the same weight as a forest
       // and a badge saying whether they still want something from you.
+      //
+      // Drawn through the fog, exactly like a feature. A site you cannot see
+      // until you have already paid to stand on it is not a destination —
+      // it is a surprise, and the whole economy is built on the player
+      // choosing which direction to spend Gold in. The Discovered scrim below
+      // still dims them, so "there, and not yet yours" reads at a glance.
       const landmark = landmarkDefAt(cell);
-      if (landmark && fog === 'Revealed') {
+      if (landmark) {
         const art = LANDMARK_ART[landmark.kind];
         const claimed = state.landmarks.claimed[landmark.id] === true;
         punched(key, x, y, size, size, () => {
@@ -229,7 +235,7 @@ export function drawMap(
         if (!claimed) drawSiteBadge(x, y, landmark.defended ? '!' : '\u2726');
       }
       const ruin = ruinDefAt(cell);
-      if (ruin && fog === 'Revealed') {
+      if (ruin) {
         punched(key, x, y, size, size, () => {
           if (!drawSprite(ctx, ruin.sprite, x, y, size, size)) {
             drawGlyph(ctx, ruin.glyph, x, y, size, size * 0.5);

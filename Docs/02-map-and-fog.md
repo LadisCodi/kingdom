@@ -82,8 +82,14 @@ Three cell states:
 | State | Stored? | Meaning | Interaction |
 |---|---|---|---|
 | **Revealed** | yes (the only stored state) | fully in play | taps fall through to gameplay handlers |
-| **Discovered** | derived: any existing neighbour is Revealed | dimmed, shows a reveal progress bar once paid into | tappable to pay toward reveal |
+| **Discovered** | derived: any existing neighbour is Revealed | dimmed; terrain, features **and authored sites** (landmarks, ruins) all draw through the dimming, with a reveal progress bar once paid into | tappable to pay toward reveal |
 | **Undiscovered** | derived: no revealed neighbour | opaque | taps are swallowed (do nothing) |
+
+Landmarks and ruins draw under the fog exactly as features do (2026-09-02).
+A site you cannot see until you have already paid to stand on it is not a
+destination, it is a surprise — and the whole economy rests on the player
+choosing which direction to spend Gold in. Seeing one is not claiming it:
+`claimLandmark` still refuses anything short of `Revealed`.
 
 State derivation is a pure function of the revealed set + the cell's existing
 neighbours.
