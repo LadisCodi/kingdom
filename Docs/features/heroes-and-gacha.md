@@ -192,19 +192,31 @@ kingdom.gacha   { pullCounts{}, pityCounters{} }
 
 Additive; no migrator needed (`engine-seams.md` §4).
 
-## 8. Implementation plan (separate commits)
+## 8. Implementation plan — done, minus the load-bearing rule
 
-Depends on the seeded RNG and the timeline from `engine-seams.md`.
+Landed 2026-09-02 on `feature/engine-seams`.
 
-1. `feat(sim):` the collection substrate — Fragments, tier caps, Knowledge
-   levels, shared by heroes and artifacts.
-2. `feat(sim):` heroes — roster, types, traits, XP.
-3. `feat(sim):` artifacts as hero equipment; the exclusive attune-or-arm rule.
-4. `feat(sim):` the gacha — banners as data, pity, duplicate conversion, seeded
-   rolls. Tests: pity is guaranteed, duplicates never dead, the same seed and
-   pull number always yields the same result.
-5. `feat(render/ui):` reliquary tabs and the banner screen.
-6. `docs:` mark `managers.md` superseded.
+| Step | Commit | Notes |
+|---|---|---|
+| The collection substrate — Fragments, tier caps, Knowledge levels | `e57ec98` | `collection.ts`, shared verbatim by relics and heroes |
+| Heroes — roster, types, traits, XP | `4c59dce` | XP accumulates and **nothing reads it** — backlog gap 3 |
+| **Artifacts as hero equipment; the exclusive attune-or-arm rule** | — | **NOT BUILT.** Backlog gap 1 |
+| The gacha — banners as data, pity, duplicate conversion, seeded rolls | `4c59dce` | Pity, soft pity and duplicate conversion all shipped; **no banner is authored**, so rate-up is untested — backlog gap 5 |
+| Reliquary tabs and the banner screen | `bbfbb8f` | Two tabs of one screen, as §6 asks |
+| Mark `managers.md` superseded | `26092c4` | |
+
+### Why the missing rule matters more than its size suggests
+
+§2 calls attune-or-arm *"the best decision in the design"* and *"what welds the
+city half of the game to the delve half"*. Without it a relic has exactly one
+use — you wear it — so the Foreman's Sigil is never a question, only a purchase.
+The upkeep asymmetry that makes the trade interesting (attuning costs Mana every
+hour, arming a hero costs none) is authored in the data and currently unreachable.
+
+The work is small and well-shaped: a `Delve` gains an artifact field,
+`launchDelve` takes one and refuses anything currently attuned, `manaUpkeep`
+already reads `attuned` so it needs no change, and the expedition sheet gains a
+slot next to the hero picker.
 
 ## 9. Out of scope
 

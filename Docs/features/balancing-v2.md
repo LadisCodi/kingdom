@@ -203,10 +203,27 @@ both rise with depth. Failed push: **50%** of the carried haul.
 Event and banner **schedules do not go in the workbook** — see
 `engine-seams.md` §5.
 
+## Status (2026-09-02)
+
+Everything in Parts 1–4 landed. Two numbers need a second pass:
+
+- **The Gem faucet overshot.** §1.3 budgets 75 up front; it is 110 (10 start +
+  50 quests + 50 ruin first-clears), because the eleven quests added to the
+  chain were given Gem rewards without re-deriving the total. The sinks are
+  unchanged, so slots and pulls are cheaper in practice than intended.
+- **`balancing-v1`'s income tables are annotated as corrected but not
+  recomputed.** The `[1, 2]` capacity fix makes them right again in principle;
+  nobody has re-run the arithmetic.
+
+The tier ladder in Part 2 IS verified — `tests/expeditions.test.ts` asserts that
+each rung of military development opens the next tier and leaves the one after
+it a stretch, against a `guaranteedDepth` that assumes the worst matchup.
+
 ## Future work (noted, not in this pass)
 
 - `kingdom.max_builders` is authored 4 and nothing raises it past 1, so all of
   `queue.ts`'s promotion logic remains unreachable.
 - Only one adjacency rule exists (Housing↔Housing −1); spatial play is still thin
-  even with the new districts competing for space.
+  even with the new districts competing for space — and this pass added five
+  more buildings competing for the same ground, so the gap widened.
 - `Desert` remains a declared terrain with zero cells.

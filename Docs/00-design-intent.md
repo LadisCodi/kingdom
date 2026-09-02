@@ -134,7 +134,8 @@ Fragments** gate artifacts and heroes, and that arc is measured in weeks.
 
 ## What is built
 
-All of it, as of 2026-09-02, in the order `engine-seams.md` §8 prescribes: the
+Nearly all of it, as of 2026-09-02, in the order `engine-seams.md` §8
+prescribes: the
 boundary loop, the save migration chain, seeded RNG, the modifier layer, Mana
 and the Sanctum, landmarks, ruins, artifacts and attunement, military buildings
 and unit stats, delves and checkpoints, the timeline and the Conjunction, the
@@ -149,9 +150,53 @@ The quest chain now runs eleven quests past Townhall 3, through landmarks, the
 Sanctum, an army and the ruins, so the three-hour content cliff the 2026-09-01
 audit found is gone.
 
+Two design centrepieces did **not** make it — the attune-or-arm rule and the
+contested landmark — and they are the first two entries in the backlog below
+rather than being buried in it.
+
+The art landed with it: ten sheets covering the Sanctum, the four military
+halls, ten landmarks, five ruins, five relics and five heroes. Nothing in the
+game falls back to an emoji unintentionally, and `tests/icons.test.ts` refuses
+to let that quietly stop being true.
+
 ## What is still open
 
-Region control and domination, guild and social play, a second region, and the
-art for the newest content — the buildings, sites, relics and heroes added in
-this pass render as their fallback glyphs until their sheets land
-(`tests/icons.test.ts` names exactly which, and refuses to let the list rot).
+**This section is the canonical backlog.** The per-feature docs mark their own
+steps done and point here rather than each keeping a partial list.
+
+### Gaps in what shipped
+
+Ordered by how soon a player meets them.
+
+| # | Gap | Where |
+|---|---|---|
+| 1 | **An artifact cannot be carried into a delve.** Only kingdom attunement exists; there is no attune-OR-arm exclusivity, because a `Delve` has no artifact field and `launchDelve` takes none. This is the rule the design calls *"the best decision in the design"* and *"what welds the city half of the game to the delve half"* — wear the Foreman's Sigil for +1 worker yield, or send it down to reach depth 6. Its absence is why relics currently have exactly one use. | `heroes-and-gacha.md` §2 |
+| 2 | **Four of ten landmarks cannot be claimed.** `defended: true` is authored and claiming is gated on `landmarks.cleared`, but nothing in the codebase ever writes that field — the "send a party to clear it" encounter does not exist. A visible dead end, and the only thing giving combat a job outside dungeons. | `expeditions.md` §1 |
+| 3 | **Hero XP is written and never read.** Every extraction calls `addHeroXp`; nothing consumes it. Exactly the `train_duration_seconds` fault this pass removed, reintroduced. | `heroes-and-gacha.md` §1 |
+| 4 | **The Gem faucet is ~50% over budget** — 110 up front against the 75 the design sets, because the eleven new quests were given Gem rewards without re-deriving the total. | `balancing-v2.md` §1.3 |
+| 5 | **No gacha banner is authored.** The timeline carries a `banner` payload and `activeBanners()` exists, but `EVENTS` holds only the Conjunction, so rate-up is untested code. | `heroes-and-gacha.md` §4 |
+| 6 | **Timed-event rewards vs the 8h cap was decided rather than flagged.** Schedule events fire in the post-cap tail advance, so a 20h absence spanning a 24h Conjunction pays in full. `engine-seams.md` §5 explicitly asked for a marker at the call site instead of a policy. | `engine-seams.md` §5 |
+| 7 | **Adjacency is still one rule** (Housing↔Housing −1) — and five more districts now compete for the same ground, so spatial play got thinner in relative terms. | `balancing-v2.md` future work |
+| 8 | **The ghost is not draggable.** `wireInput` has no drag hooks; placement is still tap-only. | `art/ui-menus-redesign.md` §5.6 |
+| 9 | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | `audio-wishlist.md` |
+| 10 | Smaller: the `?dev=kit` gallery does not show the new primitives; `balancing-v1`'s income tables are annotated as corrected but not recomputed; `kingdom.max_builders` is authored 4 and still unreachable past 1. | — |
+
+### Decisions still to make
+
+- **How a defended landmark is cleared.** The sim can resolve it through the
+  same scoring pass a delve depth uses, so the cost is a UI decision: the full
+  expedition sheet with a hero and a party, or a lighter one-off that spends
+  army power and nothing else.
+- **Whether the 8h cap should limit timed-event rewards** (gap 5 above). The
+  rule the rest of the sim follows — *the cap limits what the city produces,
+  never what a timer does* — argues for the current behaviour, but an event
+  window is not obviously a timer.
+- **The 50% haul loss.** `expeditions.md` names this the number that most needs
+  playtest rather than argument.
+- **Ten progression systems.** `heroes-and-gacha.md` flags this as the standing
+  accepted risk. It is now real rather than hypothetical, and the single
+  collection substrate is the only thing keeping the list learnable.
+
+### Not started at all
+
+Region control and domination, guild and social play, and a second region.

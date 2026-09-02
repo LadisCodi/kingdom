@@ -233,22 +233,25 @@ kingdom.landmarks   { claimed[] }
 **Mana regen is city idle production, so it IS subject to the 8 h offline cap.**
 Artifact modifier expiry is not — see `engine-seams.md` for the rule.
 
-## 8. Implementation plan (separate commits)
+## 8. Implementation plan — done
 
-Depends on `engine-seams.md` steps 1–3 landing first (boundary loop, save
-migration chain, modifier layer).
+Landed 2026-09-02 on `feature/engine-seams`, after `engine-seams.md` steps 1–5.
 
-1. `feat(sim):` Mana — currency, cap clamping in the wallet, accrual against
-   `lastManaAt`, production/capacity split. Tests: cap fill, overflow discarded,
-   one-call replay equals stepped ticking, offline cap applies.
-2. `feat(sim):` the Sanctum district; landmark feature, claiming, production
-   contribution.
-3. `feat(sim):` artifacts — ownership, levels, Knowledge sink, attunement slots,
-   the 5-minute lock, passives granted as permanent modifiers.
-4. `feat(sim):` the three actives — Divination into `fog.ts`, Bloom into
-   `harvest.ts`, Beckon into `featureRespawns`, Haste as a timed modifier.
-5. `feat(render/ui):` reliquary sheet, header Mana widget, cast mode, nav change.
-6. `docs:` update `00-design-intent.md`; `chore:` version bump.
+| Step | Commit | Notes |
+|---|---|---|
+| Mana — currency, cap clamp, accrual, production/capacity split | `1850430` | Clamping lives in `addMana`, not `addToWallet`; the tuning law `cap ≈ 8 × net regen` is asserted at every Townhall level |
+| The Sanctum; landmarks, claiming, production contribution | `1850430` | **Contested claiming is NOT built** — see backlog gap 2 |
+| Artifacts — ownership, levels, Knowledge sink, sockets, the 5-min lock, passives as permanent modifiers | `e57ec98` | `syncArtifactModifiers` is a total idempotent rebuild rather than incremental add/remove |
+| The four actives | `e57ec98` | Cast mode reuses placement mode, as §2 said it should |
+| Reliquary sheet, header Mana widget, cast mode, nav change | `bbfbb8f` | Army lost its tab to the Reliquary |
+| Docs | `26092c4` | |
+
+**One test found a real bug.** "Mana is city production, so the 8h offline cap
+applies to it" failed: the cap's pause shifted `lastTaxAt` and not
+`lastManaAt`, so a 40-hour absence paid Mana in full.
+
+**Not built from this doc:** the contested landmark (backlog gap 2). Everything
+else in §1–§7 shipped.
 
 ## 9. Out of scope
 

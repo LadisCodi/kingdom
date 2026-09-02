@@ -439,30 +439,45 @@ that the RNG is keyed well enough to be lifted to a server later.
 
 ## 8. Build order
 
-| # | Step | Depends on | Doc |
-|---|---|---|---|
-| 1 | Unblockers | — | `balancing-v2.md` |
-| 2 | Boundary loop in `advance()` | — | §1 |
-| 3 | Save migration chain | — | §4 |
-| 4 | Seeded RNG | 3 | §3 |
-| 5 | Modifier layer + `repriceTaxAnchor` | 2, 3 | §2 |
-| 6 | Mana: production, capacity, Sanctum, landmarks | 3, 5 | `magic.md` |
-| 7 | Ruins, artifacts, upkeep, attunement, Knowledge | 5, 6 | `magic.md` |
-| 8 | Military buildings, army cap, unit stats, type chart | 1 | `expeditions.md` |
-| 9 | Delves, checkpoints, party slots, heroes, landmarks | 4, 7, 8 | `expeditions.md` |
-| 10 | Timeline + the Conjunction | 2, 4, 5 | §5, §7 |
-| 11 | Gacha: banners, pity, duplicates | 4, 9, 10 | `heroes-and-gacha.md` |
-| 12 | Offline report payload | 10 | §9 |
-| 13 | Region discriminator | 3 | §6 |
+**All thirteen steps landed on 2026-09-02**, in this order, each on its own
+commit with `npm test` green.
 
-Steps 2, 3 and 13 are independent of each other. Every step must keep
-`npm test` green on its own commit.
+| # | Step | Commit |
+|---|---|---|
+| 1 | Unblockers | `b279a5d` |
+| 2 | Boundary loop in `advance()` | `db6eb1f` |
+| 3 | Save migration chain | `4cf3819` |
+| 4 | Seeded RNG | `48116f3` |
+| 5 | Modifier layer + `repriceTaxAnchor` | `8ccbde3` |
+| 6 | Mana: production, capacity, Sanctum, landmarks | `1850430` |
+| 7 | Ruins, artifacts, upkeep, attunement, Knowledge | `e57ec98` |
+| 8 | Military buildings, army cap, unit stats, type chart | `39849c2` |
+| 9 | Delves, checkpoints, party slots, heroes | `39849c2` |
+| 10 | Timeline + the Conjunction | `4c59dce` |
+| 11 | Gacha: banners, pity, duplicates | `4c59dce` |
+| 12 | Offline report payload | `bbfbb8f` |
+| 13 | Region discriminator | `6050079` |
 
-**The load-bearing assertion, repeated at every step**, in the shape of
+**The load-bearing assertion holds at every one of them**, in the shape of
 `tests/taxes.test.ts:43-60`: **one-call replay equals stepped ticking** — across
-a research completion (2), a modifier expiry (5), a Mana cap fill (6), an
-attunement lock and a Knowledge drip (7), a delve depth resolving (9), and a
-Conjunction window opening and closing (10).
+a research completion (`tests/advance.test.ts`), a modifier expiry
+(`tests/modifiers.test.ts`), a Mana cap fill (`tests/mana.test.ts`), army
+training and a delve depth resolving (`tests/expeditions.test.ts`), and a
+Conjunction window opening and closing (`tests/timeline.test.ts`).
+
+### Two things the build changed about the design
+
+**Feature respawns stayed out of the pivot set**, as §1 said they should, and
+the perf argument was never tested because nothing forced it. The boundary
+count in practice is small enough that the seatbelt (`MAX_BOUNDARY_STEPS`) has
+never been approached.
+
+**Step 12 was decided rather than flagged.** §5 asked for a marker at the
+offline-cap call site and a product decision from a human; schedule and delve
+events instead fire in the post-cap tail advance, so a 20h absence spanning a
+24h Conjunction pays in full. That is consistent with *"the cap limits what the
+city produces, never what a timer does"*, but it was not the instruction. It is
+gap 5 in `Docs/00-design-intent.md`.
 
 ---
 

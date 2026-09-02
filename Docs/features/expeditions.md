@@ -294,18 +294,31 @@ city.army         + per-unit stats resolved from definitions, not stored
 
 Additive, so no migrator — see `engine-seams.md` §4.
 
-## 10. Implementation plan (separate commits)
+## 10. Implementation plan — done, with one hole
 
-1. `feat(sim):` unit stats + the type chart + the resolution pass. Pure function,
-   heavily tested, no state changes.
-2. `feat(sim):` the four military buildings; retire the Townhall army cap; make
-   `train_duration_seconds` live.
-3. `feat(sim):` landmarks — feature, claiming, contested clearing.
-4. `feat(sim):` delves — depths, checkpoints, attrition, haul, the 50% rule,
-   standing orders. Tests: one-call replay equals stepped ticking across a depth
-   completion; a checkpoint survives an absence; guaranteed depth is exact.
-5. `feat(render/ui):` expedition sheet, checkpoint, nav change.
-6. `docs:` amend `00-design-intent.md`.
+Landed 2026-09-02 on `feature/engine-seams`.
+
+| Step | Commit | Notes |
+|---|---|---|
+| Unit stats + the type chart + the resolution pass | `39849c2` | Pure, in `combat.ts`, six tunable numbers |
+| Four military buildings; retire the Townhall army cap; `train_duration_seconds` live | `39849c2` | Each building runs its own training line |
+| Landmarks — feature, claiming, **contested clearing** | `1850430` | Claiming shipped. **Contested clearing did not** — nothing writes `landmarks.cleared`, so the four defended landmarks are unreachable. Backlog gap 2 |
+| Delves — depths, checkpoints, attrition, haul, the 50% rule, standing orders | `39849c2` | |
+| Expedition sheet, checkpoint, nav change | `bbfbb8f` | Plus the delve pill, which the doc did not ask for and the "checkpoint never expires" rule needs |
+| Docs | `26092c4` | |
+
+### The one that mattered
+
+`guaranteedDepth` shipped wrong and was caught by reading the arc, not by a
+test. It assumed the worst case was the ruin's **affinity**, but `rollThreat`
+weights the draw toward the affinity and can still produce any of the four
+types — so a Warrior party in the Lancer-affine Ironworks was told "safe to
+depth 9" and would have died at 6.
+
+That is not a rounding error: *"your economy decides how deep you go safely"* is
+the promise the whole delve design rests on, and a safe floor that is not safe
+turns push-your-luck into being robbed. Fixed in `2309afe`, and the tier ladder
+in `balancing-v2.md` Part 2 is now asserted rather than hoped for.
 
 ## 11. Out of scope
 

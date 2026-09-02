@@ -11,7 +11,7 @@ in these files.
 
 | # | File | What it covers |
 |---|---|---|
-| 0 | [00-design-intent.md](00-design-intent.md) | **The current design intent for the web build.** Rewritten 2026-09-02; it supersedes this Unity snapshot wherever they disagree. |
+| 0 | [00-design-intent.md](00-design-intent.md) | **The current design intent for the web build, and the canonical backlog.** Rewritten 2026-09-02; it supersedes this Unity snapshot wherever they disagree. |
 | 1 | [01-overview.md](01-overview.md) | Pitch, entity hierarchy, core loop, currency summary, status |
 | 2 | [02-map-and-fog.md](02-map-and-fog.md) | Hex grid & adjacency, terrain/features, fog of war & reveal costs |
 | 3 | [03-economy-and-production.md](03-economy-and-production.md) | Currencies, generator model, accrual algorithm, worked units, vaults |
@@ -38,9 +38,9 @@ as-shipped), and its own design docs are the live source of truth:
 | [features/resource-expansion.md](features/resource-expansion.md) | Stone, Fish and Iron lines; the archipelago |
 | [features/quests.md](features/quests.md) | The onboarding chain (27 quests to Townhall 3, then 11 more into the long game) |
 | [features/balancing-v1.md](features/balancing-v1.md) | The three-era Townhall arc |
-| **[features/magic.md](features/magic.md)** | **Built 2026-09-02** — Mana, artifacts, attunement, landmarks |
+| **[features/magic.md](features/magic.md)** | **Built 2026-09-02** — Mana, artifacts, attunement, landmarks (contested landmarks outstanding) |
 | **[features/expeditions.md](features/expeditions.md)** | **Built 2026-09-02** — ruins as dungeons, staged delves, unit stats |
-| **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | **Built 2026-09-02** — the collection substrate and the gacha. Supersedes `managers.md` |
+| **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | **Built 2026-09-02** — the collection substrate and the gacha (attune-or-arm outstanding). Supersedes `managers.md` |
 | **[features/engine-seams.md](features/engine-seams.md)** | **Built 2026-09-02** — the sim groundwork all of the above needed, and the build order it prescribed |
 | **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
 
