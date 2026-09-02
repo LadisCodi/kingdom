@@ -24,7 +24,8 @@ import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/g
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import {
-  committedArmyPower, lineFor, maxArmyPower, trainUnit, trainingCompletesAt, trainingTap,
+  committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
+  trainingCompletesAt, trainingTap,
 } from './sim/army';
 import {
   artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
@@ -60,7 +61,7 @@ import {
 import {
   coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
-  type FeatureId,
+  type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type UpgradeId, type Wallet,
 } from './sim/state';
@@ -1396,12 +1397,26 @@ export class Game {
     this.notify();
   }
 
-  doTrain(unitId: UnitId): void {
-    const result = trainUnit(this.state, unitId, this.now());
+  /** Army headroom, for the card's blocked reason. */
+  armyRoom(): { used: number; cap: number } {
+    return { used: committedArmyPower(this.state), cap: maxArmyPower(this.state) };
+  }
+
+  doFinishTraining(district: District): void {
+    const result = finishLineWithGems(this.state, district.uniqueId, this.now());
+    if (result === 'Success') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  doTrain(unitId: TrainableId, at?: District): void {
+    const result = trainUnit(this.state, unitId, this.now(), at);
     if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
-    if (result === 'NoBuilding') {
-      this.toast(`Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
+    if (result === 'AtMax') this.toast('Population at max — build more Housing');
+    if (result === 'NoBuilding' && unitId !== 'Villager') {
+      this.toast(
+        `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
     }
     if (result === 'ArmyAtCapacity') {
       this.toast(`Army at capacity (${committedArmyPower(this.state)}/${maxArmyPower(this.state)}) — build or upgrade a military building`);

@@ -27,7 +27,8 @@ import {
   cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
 } from './population';
 import {
-  newId, type District, type GameState, type TrainableId, type TrainingItem, type UnitId,
+  addToWallet, getWallet, newId,
+  type District, type GameState, type TrainableId, type TrainingItem, type UnitId,
 } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -228,24 +229,70 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
     const at = trainingCompletesAt(earliest);
     state.city.trainingQueue.splice(state.city.trainingQueue.indexOf(earliest), 1);
 
-    if (earliest.trainee === 'Villager') {
-      // A new villager changes the tax RATE from this instant, so the anchor
-      // has to be repriced at `at` and not at the end of the window — the
-      // property one-call replay parity rests on.
-      const rateBefore = cityGoldPerMinute(state);
-      state.city.population += 1;
-      repriceTaxAnchor(state, at, rateBefore);
-    } else {
-      state.army.push({
-        uniqueId: newId(state, `unit_${earliest.trainee}`),
-        definitionId: earliest.trainee,
-      });
-    }
+    deliver(state, earliest.trainee, at);
     delivered.push(earliest.trainee);
     // The next in THAT line starts when the slot freed, not at `toTime`.
     const next = lineFor(state, earliest.buildingId)[0];
     if (next && next.startedAt === null) next.startedAt = at;
   }
+}
+
+/**
+ * Hand over one finished trainee.
+ *
+ * A new villager changes the tax RATE from this instant, so the anchor is
+ * repriced at `at` rather than at the end of whatever window we are in — the
+ * property one-call replay parity rests on. Shared with the gem rush, so a
+ * bought unit lands by exactly the same path as a waited-for one.
+ */
+function deliver(state: GameState, trainee: TrainableId, at: number): void {
+  if (trainee === 'Villager') {
+    const rateBefore = cityGoldPerMinute(state);
+    state.city.population += 1;
+    repriceTaxAnchor(state, at, rateBefore);
+    return;
+  }
+  state.army.push({ uniqueId: newId(state, `unit_${trainee}`), definitionId: trainee });
+}
+
+// ------------------------------------------------------------- buying the wait
+
+/** Seconds until this building's line is empty: what is left on the bench plus
+ *  the full duration of everyone behind it. */
+export function lineRemainingSeconds(
+  state: GameState, buildingId: string, now: number,
+): number {
+  let total = 0;
+  lineFor(state, buildingId).forEach((item, i) => {
+    if (i === 0 && item.startedAt !== null) {
+      total += Math.max(0, (trainingCompletesAt(item) - now) / 1000);
+    } else {
+      total += trainSeconds(item.trainee);
+    }
+  });
+  return total;
+}
+
+/** Gems to finish the WHOLE line, at the build queue's rate of ten seconds a
+ *  gem. One rule for buying time, wherever the player meets it. */
+export const lineRushCost = (state: GameState, buildingId: string, now: number): number =>
+  Math.max(1, Math.ceil(lineRemainingSeconds(state, buildingId, now) / 10));
+
+export type RushTrainingResult = 'Success' | 'NothingTraining' | 'NotEnoughGems';
+
+export function finishLineWithGems(
+  state: GameState, buildingId: string, now: number,
+): RushTrainingResult {
+  const line = lineFor(state, buildingId);
+  if (line.length === 0) return 'NothingTraining';
+  const cost = lineRushCost(state, buildingId, now);
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  // Out of the queue FIRST, so a concurrent advance cannot deliver them twice.
+  state.city.trainingQueue = state.city.trainingQueue.filter(
+    (i) => i.buildingId !== buildingId);
+  for (const item of line) deliver(state, item.trainee, now);
+  return 'Success';
 }
 
 /** A boundary source: the next unit to appear. */

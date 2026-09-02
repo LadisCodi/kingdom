@@ -13,9 +13,9 @@
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, TAP, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TECHNOLOGIES, WORKER, levelIndexed,
 } from '../sim/data/definitions';
-import { committedArmyPower, lineFor, maxArmyPower, trainingProgress } from '../sim/army';
+import { committedArmyPower, maxArmyPower } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
 import {
   districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
@@ -26,8 +26,9 @@ import {
 import { mana } from '../sim/mana';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
+import { trainingSection } from './trainingSection';
 import {
-  coordKey, queueProgress, remainingSeconds, townhall, type District, type UnitId,
+  coordKey, queueProgress, remainingSeconds, townhall, type District,
 } from '../sim/state';
 import { recoversAt, tapFraction } from '../sim/harvest';
 import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
@@ -89,40 +90,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   if (district.state === 'UnderConstruction') {
     body.append(el('div', { class: 'dc-note' }, 'Under construction.'));
   } else {
-    // The Townhall's job is growing the population, so the queue is the star.
-    if (district.definitionId === 'Townhall') {
-      const training = game.trainingInfo();
-      if (training.active) {
-        const bar = progress('gold');
-        bar.set(training.progress, `Next villager in ${Math.ceil(training.remainingSeconds)}s`);
-        body.append(bar.root);
-        if (training.queued > 1) {
-          body.append(el('div', { class: 'dc-queue' },
-            iconEl('population', { size: 'sm' }),
-            pips(1, training.queued),
-            el('span', {}, `${training.queued - 1} more waiting`)));
-        }
-        // The tap boost is an affordance on the BUILDING, so it is pointed
-        // at rather than described.
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }),
-          `Tap the Townhall itself to hurry it — +${TRAINING.tapBoostSeconds}s each tap`));
-      }
-      const trainAction = action({
-        label: 'Train',
-        kind: 'primary',
-        onClick: () => game.doQueueTraining(),
-        disabledReason: training.atMax
-          ? 'Nowhere to put them — build more Housing'
-          : undefined,
-        cost: { Food: training.cost },
-        have: (c) => game.effectiveWalletValue(c),
-        info: el('span', { class: 'dc-uptime' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(TRAINING.seconds)),
-      });
-      if (game.uiHint() === 'card:train') trainAction.classList.add('hinted');
-      body.append(trainAction);
-    }
+    // Every building that turns something out gets the same block — the
+    // Townhall's villagers and a hall's soldiers are one mechanic now, so
+    // they are one piece of UI. See trainingSection.ts.
+    const training = trainingSection(game, district);
+    if (training) body.append(training);
 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
@@ -182,60 +154,14 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       }
     }
 
-    // A military building trains its own unit, in its own line, exactly as
-    // the Townhall trains villagers. That symmetry is why the standing Army
-    // screen could disappear: an army only matters when it is SENT somewhere,
-    // and it is recruited where it is made.
-    // Villagers keep their own block above (the Townhall's Train row); this
-    // one is the soldier line. Both draw from the same queue now — the card
-    // rewrite that unifies their presentation is the next step.
-    const soldier = def.trains.find((t) => t !== 'Villager') as UnitId | undefined;
-    if (soldier !== undefined) {
-      const unitId = soldier;
-      const unit = UNITS[unitId];
-      const cap = maxArmyPower(game.state);
-      const used = committedArmyPower(game.state);
-      const inLine = lineFor(game.state, district.uniqueId);
-      const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
-
+    // The army headroom line stays: it is about the CITY, not about any one
+    // unit, and it is the number that explains a refused Train.
+    if (def.trains.some((t) => t !== 'Villager')) {
       body.append(el('div', { class: 'dc-army' },
         iconEl('army', { size: 'sm' }),
-        el('span', {}, `Army ${used} of ${cap}`),
+        el('span', {}, `Army ${committedArmyPower(game.state)} of ${maxArmyPower(game.state)}`),
         el('span', { class: 'dc-army-note' },
           `this hall holds ${levelIndexed(def.armyCapPerLevel, district.level)} of it`)));
-
-      if (inLine.length > 0) {
-        const bar = progress('sky');
-        bar.set(
-          trainingProgress(game.state, district.uniqueId, game.now()),
-          inLine.length > 1
-            ? `${unit.name} — ${inLine.length} in the line`
-            : `${unit.name} in training`,
-        );
-        body.append(bar.root);
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }),
-          `Tap the ${def.name} to hurry them along`));
-      }
-
-      const cost = unit.recruitCost;
-      body.append(action({
-        label: `Recruit ${unit.name}`,
-        kind: 'primary',
-        onClick: () => game.doTrain(unitId),
-        cost,
-        have: (c) => game.effectiveWalletValue(c),
-        disabledReason: !techOk
-          ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
-          : used + unit.power > cap
-            ? 'Your army is full — upgrade this hall'
-            : undefined,
-      }));
-      body.append(el('div', { class: 'dc-army-stats' },
-        stat('army', String(unit.atk), 'attack'),
-        stat('padlock', String(unit.def), 'defence'),
-        stat('population', String(unit.hp), 'health'),
-        stat('hourglass', formatDuration(unit.trainDurationSeconds), 'to train')));
     }
 
     // A worker building is an AREA and the people you put in it. Both were
@@ -350,6 +276,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         + `${levelIndexed(def.influenceRadiusPerLevel, next)}`));
       deltas.append(el('span', {}, `workers ${assignableWorkerLimit(district)} → `
         + `${levelIndexed(def.maxWorkersPerLevel, next)}`));
+    }
+    // A hall's level IS its army cap, and until now the only place that
+    // number appeared was a note further up the card. It belongs in the
+    // before/after too — it is the whole reason to upgrade a Barracks.
+    if (def.armyCapPerLevel.length > 0) {
+      deltas.append(el('span', {}, `army cap ${levelIndexed(def.armyCapPerLevel, district.level)} `
+        + `\u2192 ${levelIndexed(def.armyCapPerLevel, next)}`));
     }
     if (def.populationCapacityPerLevel.length > 0) {
       const capNow = districtCapacity(game.state, district);

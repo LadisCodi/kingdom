@@ -7,7 +7,9 @@
 // it. Everything past that is a gamble the player opted into, on information
 // they chose not to wait for.
 import { describe, expect, it } from 'vitest';
-import { maxArmyPower, trainUnit, lineFor } from '../src/sim/army';
+import {
+  finishLineWithGems, lineFor, lineRemainingSeconds, lineRushCost, maxArmyPower, trainUnit,
+} from '../src/sim/army';
 import {
   BEATS, depthDurationMs, effectiveAttack, fullClearSeconds, guaranteedDepth,
   partyStats, resolveDepth, threatStrength, typeMultiplier, worstThreatFor,
@@ -23,7 +25,9 @@ import {
 import { artifactIsCarried } from '../src/sim/artifacts';
 import { mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type ArtifactId, type GameState, type UnitId } from '../src/sim/state';
+import {
+  getWallet, townhall, type ArtifactId, type GameState, type UnitId,
+} from '../src/sim/state';
 import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
@@ -708,5 +712,98 @@ describe('a hall can turn out more than one unit', () => {
     const state = readyToDelve({});
     const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
     expect(trainUnit(state, 'Archer', T0, barracks)).toBe('TechRequired');
+  });
+});
+
+// Buying the wait (2026-09-02). The FINISH button on the training card takes
+// the WHOLE line, priced at the build queue's rate — ten seconds a gem — so
+// the player meets one rule for buying time wherever they meet it.
+describe('finishing a training line with gems', () => {
+  const barracksOf = (state: GameState) =>
+    state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+
+  it('prices the bench PLUS everyone behind it', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    const hall = barracksOf(state);
+    trainUnit(state, 'Warrior', T0, hall); // 30s, started
+    trainUnit(state, 'Warrior', T0, hall); // 30s, waiting
+
+    // Ten seconds in: 20 left on the bench + a full 30 behind it.
+    expect(lineRemainingSeconds(state, hall.uniqueId, T0 + 10_000)).toBe(50);
+    expect(lineRushCost(state, hall.uniqueId, T0 + 10_000)).toBe(5);
+    // ...and it falls as the bench empties.
+    expect(lineRushCost(state, hall.uniqueId, T0 + 25_000)).toBe(4);
+  });
+
+  it('delivers every unit in the line and charges once', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    const hall = barracksOf(state);
+    trainUnit(state, 'Warrior', T0, hall);
+    trainUnit(state, 'Warrior', T0, hall);
+    state.player.wallet.Gems = 100;
+
+    const cost = lineRushCost(state, hall.uniqueId, T0);
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
+    expect(state.army).toHaveLength(2);
+    expect(lineFor(state, hall.uniqueId)).toHaveLength(0);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(100 - cost);
+
+    // And the advance cannot hand them over a second time.
+    advance(state, map, T0 + 120_000);
+    expect(state.army).toHaveLength(2);
+  });
+
+  it('takes only THAT hall, leaving the others training', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    completeTech(state, 'Cavalry');
+    const hall = barracksOf(state);
+    const stables = state.city.districts.find((d) => d.definitionId === 'Stables')!;
+    trainUnit(state, 'Warrior', T0, hall);
+    trainUnit(state, 'Cavalry', T0, stables);
+    state.player.wallet.Gems = 100;
+
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
+    expect(lineFor(state, stables.uniqueId)).toHaveLength(1); // untouched
+    expect(state.army.map((u) => u.definitionId)).toEqual(['Warrior']);
+  });
+
+  it('refuses politely, and charges nothing, when the purse is short', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    const hall = barracksOf(state);
+    trainUnit(state, 'Warrior', T0, hall);
+    state.player.wallet.Gems = 0;
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('NotEnoughGems');
+    expect(lineFor(state, hall.uniqueId)).toHaveLength(1);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+  });
+
+  it('says so when there is nothing to buy', () => {
+    const state = readyToDelve({});
+    state.player.wallet.Gems = 100;
+    expect(finishLineWithGems(state, barracksOf(state).uniqueId, T0)).toBe('NothingTraining');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(100);
+  });
+
+  // A villager bought outright must land by the same path as a waited-for one,
+  // or its tax anchor is repriced at the wrong instant.
+  it('a rushed villager starts paying tax from the moment it is bought', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    fund(state, { Food: 500 });
+    state.player.wallet.Gems = 100;
+    const hall = townhall(state);
+    trainUnit(state, 'Villager', T0, hall);
+    state.city.wallet.Gold = 0;
+    state.city.lastTaxAt = T0;
+    state.lastAdvance = T0;
+
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
+    expect(state.city.population).toBe(1);
+    advance(state, map, T0 + 60_000);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(30); // a full minute of rent
   });
 });

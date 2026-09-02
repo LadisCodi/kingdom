@@ -332,7 +332,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Barracks',
     name: 'Barracks',
-    description: 'Drills Warriors, and every level lets you keep a bigger army.',
+    description: 'Drills foot soldiers, and every level lets you keep a bigger army.',
     glyph: '🛖',
     sprite: 'barracks',
     requiredTech: 'Warrior',
