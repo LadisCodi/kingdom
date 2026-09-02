@@ -4,7 +4,9 @@
 > army into the content that feeds the whole magic economy. Parties delve in
 > **stages**, deciding at every checkpoint whether to go deeper or bank what they
 > carry.
-> Status: **designed, not implemented** (2026-09-02).
+> Status: **built** (2026-09-02). Implemented in `src/sim/combat.ts`,
+> `expeditions.ts` and the rewritten `army.ts`, with the screens in
+> `src/ui/expeditionSheet.ts`, `checkpointSheet.ts` and `delvePill.ts`.
 
 Companion docs: [`magic.md`](magic.md) (what artifacts do),
 [`heroes-and-gacha.md`](heroes-and-gacha.md) (where heroes come from),

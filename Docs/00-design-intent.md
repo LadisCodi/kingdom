@@ -132,11 +132,26 @@ many of each district you can own and how high each can level. **Military
 buildings** gate the army, and therefore how deep you can delve. **Knowledge and
 Fragments** gate artifacts and heroes, and that arc is measured in weeks.
 
-## What is designed but not yet built
+## What is built
 
-Everything in `Docs/features/magic.md`, `expeditions.md`, `heroes-and-gacha.md`
-and `engine-seams.md`, plus the balance changes in `balancing-v2.md`. The build
-order lives in `engine-seams.md` §8.
+All of it, as of 2026-09-02, in the order `engine-seams.md` §8 prescribes: the
+boundary loop, the save migration chain, seeded RNG, the modifier layer, Mana
+and the Sanctum, landmarks, ruins, artifacts and attunement, military buildings
+and unit stats, delves and checkpoints, the timeline and the Conjunction, the
+gacha, and the region discriminator.
 
-Also still open in the shipped build: region control and domination, guild and
-social play, and a second region.
+The load-bearing assertion is repeated at every step and holds at all of them:
+**one-call offline replay equals stepped ticking** — across a research
+completion, a modifier expiry, a Mana cap fill, a delve depth resolving, and a
+Conjunction window opening and closing.
+
+The quest chain now runs eleven quests past Townhall 3, through landmarks, the
+Sanctum, an army and the ruins, so the three-hour content cliff the 2026-09-01
+audit found is gone.
+
+## What is still open
+
+Region control and domination, guild and social play, a second region, and the
+art for the newest content — the buildings, sites, relics and heroes added in
+this pass render as their fallback glyphs until their sheets land
+(`tests/icons.test.ts` names exactly which, and refuses to let the list rot).

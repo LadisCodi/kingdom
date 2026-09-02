@@ -3,7 +3,9 @@
 > Design doc for five pieces of engine groundwork that let seasons, events,
 > spells, banners and gacha arrive later as **data rather than as rewrites** —
 > plus the two worked examples that prove them.
-> Status: **designed, not implemented** (2026-09-02).
+> Status: **built** (2026-09-02), in the order §8 prescribes. The boundary
+> loop is in `src/sim/commands.ts`; the rest are `modifiers.ts`, `rng.ts`,
+> `timeline.ts`, and the migration chain in `save.ts`.
 
 Companion docs: [`magic.md`](magic.md), [`expeditions.md`](expeditions.md),
 [`heroes-and-gacha.md`](heroes-and-gacha.md).

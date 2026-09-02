@@ -27,7 +27,6 @@ const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
  * lands, leaving the name here fails.
  */
 const AWAITING_ART: readonly string[] = [
-  'Mana', 'Sanctum', 'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
 
 const pending = new Set(AWAITING_ART);

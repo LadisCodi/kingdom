@@ -121,3 +121,55 @@ What prompted it: `tests/icons.test.ts` failed the moment the Army screen
 asked for a `Warrior` icon that had no cell — the guard doing exactly the job
 it was written for, before a single unit had rendered as an emoji next to
 forty pixel icons.
+
+
+## UI-G — Mana, the Sanctum and the four military halls
+
+Same conversation, 2026-09-02. `sheets/ui-g-special.png`, 1024×1024, 2×3:
+mana orb, Sanctum, Barracks, Spear Hall, Shooting Grounds, Stables.
+
+Buildings, so the UI-C/UI-D "symbols, not characters" rule applies in its
+building form: *objects and buildings, three-quarter view, no faces, no
+bodies, no people, no animals*. The last clause matters — "Stables" without it
+invites a horse, and a horse at 16px is a smudge. It came back as a stable
+with a horseshoe over the door, which is the right answer.
+
+`Mana` was added to `tiny.only` in the manifest: it is a currency, and costs
+render inline at 16px. `tests/icons.test.ts` caught the omission on the first
+run after the sheet landed, which is the whole reason that assertion exists.
+
+### The download button opens a viewer now
+
+The message-body button no longer downloads directly — it opens the file in
+ChatGPT's image viewer ("Biblioteca"), whose own top-right download icon is
+what writes the real file. That is still the code-interpreter artifact, not
+the editor export, and it passes both halves of the alpha check:
+
+```
+size=1024x1024 corner=srgba(0,0,0,0)   alphaMean=0.28
+```
+
+The editor trap from UI-A is unchanged; only the number of clicks moved.
+
+
+## SPR-A — map sites
+
+`sheets/spr-a-sites.png`, 1024×512, 2×4: shrine, standing stones, leyspring,
+and the five ruins.
+
+These are **map sprites, not menu icons**, and the prompt says so in its first
+line. Three differences from every sheet above, and they are the difference
+between art that sits on a tile and art that floats over one:
+
+- three-quarter **top-down** view, "like a building tile in a cozy village
+  builder seen from above at an angle" — the icon sheets are drawn front-on;
+- each object **sitting on the ground with a little shadow**;
+- 110px per sprite on a 512-tall canvas, because a map sprite is drawn at cell
+  size and the extra resolution is wasted.
+
+`node scripts/ui-atlas.mjs sprites` slices these into `src/render/assets/`
+rather than into the atlas. It shares the band reading and the alpha check
+with the icon path and differs in three deliberate ways: one 128px file per
+name, per-sprite scaling (a shrine and a chapel really are different sizes on
+the ground, and forcing one scale makes the small ones vanish at low zoom),
+and **south gravity**, so a building meets the tile it stands on.

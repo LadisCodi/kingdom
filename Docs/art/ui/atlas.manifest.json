@@ -97,6 +97,22 @@
         "Archer",
         "Cavalry"
       ]
+    },
+    {
+      "file": "sheets/ui-g-special.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.92,
+      "names": [
+        "Mana",
+        "Sanctum",
+        "Barracks",
+        "SpearHall",
+        "ShootingGrounds",
+        "Stables"
+      ]
     }
   ],
   "locked": {
@@ -119,6 +135,7 @@
       "Wood",
       "Stone",
       "Iron",
+      "Mana",
       "Gems",
       "Knowledge",
       "Berries",
