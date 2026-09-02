@@ -16,7 +16,7 @@
 
 import { ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, RUINS } from './data/definitions';
 import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
-import { addModifier, type Modifier } from './modifiers';
+import { addModifier, resolve, type Modifier } from './modifiers';
 import { isTechComplete } from './research';
 import {
   addToWallet, getWallet, type ArtifactId, type GameState, type RuinId,
@@ -91,10 +91,10 @@ export function raiseArtifactTier(state: GameState, id: ArtifactId): RaiseTierRe
  *  so the paid gate is never the only thing between a player and the system. */
 export function attunementSlots(state: GameState): number {
   const fromResearch = isTechComplete(state, 'Attunement') ? 1 : 0;
-  return Math.min(
-    ATTUNEMENT.baseSlots + fromResearch + state.artifacts.slotsPurchased,
-    ATTUNEMENT.maxSlots,
-  );
+  const base = ATTUNEMENT.baseSlots + fromResearch + state.artifacts.slotsPurchased;
+  // A season can LEND a socket for its window. It goes through the modifier
+  // layer like everything else, so it retires itself when the window closes.
+  return Math.max(1, Math.min(Math.round(resolve(state, 'attunementSlots', base)), ATTUNEMENT.maxSlots));
 }
 
 export const attunementSlotGemCost = (state: GameState): number =>

@@ -15,7 +15,7 @@ import { fogState, revealCostForCell } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
 import { harvestSourceAt } from './harvest';
 import { mana, payMana } from './mana';
-import { addModifier } from './modifiers';
+import { addModifier, resolve } from './modifiers';
 import {
   coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
 } from './state';
@@ -36,8 +36,15 @@ export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
   const active = ARTIFACTS[id].active;
   if (active === null) return 'NoActive';
   if (!isAttuned(state, id)) return 'NotAttuned';
-  if (mana(state) < active.manaCost) return 'NotEnoughMana';
+  if (mana(state) < castCost(state, id)) return 'NotEnoughMana';
   return null;
+}
+
+/** What casting actually costs right now — a Conjunction can halve it. */
+export function castCost(state: GameState, id: ArtifactId): number {
+  const active = ARTIFACTS[id].active;
+  if (active === null) return 0;
+  return Math.max(0, Math.round(resolve(state, 'activeCost', active.manaCost)));
 }
 
 /** Cells a targeted active may legally be cast on. Empty for an untargeted
@@ -163,7 +170,7 @@ export function cast(
       break;
     }
   }
-  payMana(state, active.manaCost);
+  payMana(state, castCost(state, id));
   return report;
 }
 

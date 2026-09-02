@@ -29,7 +29,10 @@ export type ModifierStat =
   | 'manaRegen'
   | 'revealCost'
   | 'cellRecovery'
-  | 'knowledgeYield';
+  | 'knowledgeYield'
+  | 'activeCost'      // Mana an artifact ability costs to cast
+  | 'delveSpeed'      // how fast a depth resolves
+  | 'attunementSlots'; // sockets, for a season that lends you one
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

@@ -10,6 +10,9 @@ import {
 import { advanceArmyTraining, nextTrainingCompletion } from './army';
 import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
 import { revealAroundDistrict } from './fog';
+import {
+  advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
+} from './timeline';
 import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
@@ -244,12 +247,15 @@ export interface AdvanceResult {
   trainedUnits: UnitId[];
   /** Depths resolved, checkpoints reached, runs ended. */
   delveEvents: DelveEvent[];
+  /** Windows that opened or closed — including ones that did BOTH while the
+   *  player was away, which is the payoff for absolute-time boundaries. */
+  scheduleEvents: ScheduleEvent[];
 }
 
 const emptyResult = (): AdvanceResult => ({
   deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], delveEvents: [],
+  trainedUnits: [], delveEvents: [], scheduleEvents: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -276,6 +282,7 @@ function applyDueAt(
     // PRODUCES, never what a timer does. A party at a checkpoint proposes no
     // boundary at all — it waits, indefinitely, until the player answers.
     out.delveEvents.push(...advanceDelves(state, t));
+    out.scheduleEvents.push(...advanceSchedule(state, t));
   });
 }
 
@@ -306,6 +313,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextModifierExpiry(state, after));
   consider(nextTrainingCompletion(state, after));
   consider(nextDelveBoundary(state, after));
+  consider(nextScheduleBoundary(state, after));
   return t;
 }
 

@@ -35,6 +35,7 @@ import {
   ARTIFACTS, DELVE, HEROES, PARTY, RUINS, UNITS,
 } from './data/definitions';
 import { grantArtifact, addArtifactFragments } from './artifacts';
+import { addHeroXp } from './heroes';
 import {
   depthDurationMs, guaranteedDepth, matchupAgainst, partyStats, resolveDepth,
   worstThreatFor, type Party, type PartySlot,
@@ -42,6 +43,7 @@ import {
 import { availableRoster, maxArmyPower } from './army';
 import { fogState } from './fog';
 import type { MapData } from './grid';
+import { resolve } from './modifiers';
 import { pick } from './rng';
 import { isTechComplete } from './research';
 import {
@@ -52,6 +54,12 @@ import {
 import { canAfford, pay } from './wallet';
 
 // ------------------------------------------------------------------- slots
+
+/** How long a depth actually takes right now. Kept in ONE place so a
+ *  Conjunction that speeds delves up cannot apply to the launch and not to the
+ *  push, or to the timer and not to the estimate on the sheet. */
+export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
+  Math.max(1000, Math.round(resolve(state, 'delveSpeed', depthDurationMs(ruinId, depth))));
 
 /** Two at the start (hero + one unit type), one from research, the rest with
  *  Gems — the same earned-breadth-first shape as attunement sockets. */
@@ -168,7 +176,7 @@ export function launchDelve(
     haul: {},
     haulFragments: 0,
     phase: 'descending',
-    depthEndsAt: now + depthDurationMs(ruinId, 1),
+    depthEndsAt: now + depthMs(state, ruinId, 1),
     standingOrder,
     threat: rollThreat(state, ruinId, 1),
     outcome: null,
@@ -305,7 +313,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       // the whole run resolves offline with no prompts.
       if (delve.standingOrder !== null && depth < delve.standingOrder) {
         delve.threat = rollThreat(state, delve.ruinId, depth + 1);
-        delve.depthEndsAt += depthDurationMs(delve.ruinId, depth + 1);
+        delve.depthEndsAt += depthMs(state, delve.ruinId, depth + 1);
         continue;
       }
       delve.phase = 'checkpoint';
@@ -345,7 +353,7 @@ export function pushDeeper(state: GameState, delveId: string, now: number): Push
   if (delve.depth >= RUINS[delve.ruinId].maxDepth) return 'AtBottom';
   delve.phase = 'descending';
   delve.threat = rollThreat(state, delve.ruinId, delve.depth + 1);
-  delve.depthEndsAt = now + depthDurationMs(delve.ruinId, delve.depth + 1);
+  delve.depthEndsAt = now + depthMs(state, delve.ruinId, delve.depth + 1);
   return 'Descending';
 }
 
@@ -379,6 +387,9 @@ export function extract(state: GameState, delveId: string): ExtractReport {
       === 'Granted' ? artifactId : null;
   }
   if (delve.haulFragments > 0) addArtifactFragments(state, artifactId, delve.haulFragments);
+  // XP lands whether or not the run banked anything, so a bad push still
+  // taught the party something.
+  addHeroXp(state, delve.heroId, delve.depth * RUINS[delve.ruinId].tier);
   const report: ExtractReport = {
     result: 'Extracted',
     wallet: { ...delve.haul },

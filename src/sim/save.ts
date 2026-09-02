@@ -15,6 +15,7 @@ import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definition
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
 import { normaliseSlots } from './artifacts';
+import { reconcileSchedule } from './timeline';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
 import {
@@ -207,6 +208,16 @@ export function serialize(state: GameState, now: number): SaveFile {
         })),
         SlotsPurchased: state.research.slotsPurchased,
         UpgradeLevels: state.upgrades,
+      },
+      'kingdom.schedule': {
+        Entries: state.schedule.map((e) => ({
+          ID: e.id,
+          TemplateID: e.templateId,
+          StartsAtUtc: iso(e.startsAt),
+          EndsAtUtc: isoOrNull(e.endsAt),
+          Payload: e.payload,
+          Phase: e.phase,
+        })),
       },
       'kingdom.delves': {
         Delves: state.delves.map((d) => ({
@@ -433,6 +444,18 @@ export function deserialize(
     };
   }
 
+  const scheduleDto = modules['kingdom.schedule'];
+  if (scheduleDto) {
+    state.schedule = ((scheduleDto.Entries ?? []) as any[]).map((e) => ({
+      id: e.ID,
+      templateId: e.TemplateID ?? String(e.ID).split('#')[0],
+      startsAt: ms(e.StartsAtUtc),
+      endsAt: msOrNull(e.EndsAtUtc),
+      payload: e.Payload,
+      phase: e.Phase ?? 'pending',
+    }));
+  }
+
   const delvesDto = modules['kingdom.delves'];
   if (delvesDto) {
     state.delves = ((delvesDto.Delves ?? []) as any[]).map((d) => ({
@@ -531,6 +554,15 @@ export function deserialize(
   if (typeof modules['meta.seed'] === 'number') state.seed = modules['meta.seed'] as number;
   state.nextId = Math.max(state.nextId, (modules['meta.nextId'] as number) ?? 1);
   state.lastAdvance = lastSaved;
+
+  // Authored windows are merged in from the BUILD's catalogue, and BEFORE the
+  // replay below — otherwise a save written before a content drop would never
+  // learn the new event exists, and a window that opened and closed during the
+  // absence would never fire.
+  // Reconciled against LAST SAVED, not `now`: a window that opened and closed
+  // during this absence must still be pending here so the replay below fires
+  // it, while one that closed before the save was ever written must not.
+  reconcileSchedule(state, lastSaved);
 
   // ---- Offline catch-up: replay up to the cap, pause beyond it. -------------
   const capEnd = Math.min(now, lastSaved + OFFLINE_CAP_HOURS * 3_600_000);

@@ -3,6 +3,7 @@
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { seedFog } from './fog';
+import { reconcileSchedule } from './timeline';
 import { newSeed } from './rng';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
 import { coordKey, type CurrencyId, type GameState, type Wallet } from './state';
@@ -42,6 +43,7 @@ export function newGame(map: MapData, now: number): GameState {
     workers: [],
     army: [],
     research: { completed: [], active: [], slotsPurchased: 0 },
+    schedule: [],
     delves: [],
     // One hero free at the start — the gacha sells breadth and speed, never
     // access, so the system has to be reachable without it.
@@ -84,6 +86,7 @@ export function newGame(map: MapData, now: number): GameState {
     lastTapAt: 0,
   });
 
+  reconcileSchedule(state, now);
   seedFog(state, map);
 
   if (!state.fog.revealed[coordKey(TOWNHALL_ORIGIN)]) {

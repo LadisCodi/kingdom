@@ -9,7 +9,10 @@ import {
 } from '../src/sim/state';
 
 export const map = buildMapData();
-export const T0 = Date.parse('2026-08-17T12:00:00Z');
+/** A Thursday, deliberately: it sits in the quiet gap between two
+ *  Conjunction windows (which run Monday to Wednesday), so a test that does
+ *  not care about the timeline is not silently inside a season. */
+export const T0 = Date.parse('2026-08-20T12:00:00Z');
 
 /** A fixed world seed. newGame() rolls a real one, so without this two
  *  freshGame()s would be two different worlds and every "replay equals

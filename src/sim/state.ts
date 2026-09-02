@@ -125,6 +125,27 @@ export interface Worker {
   stateUntil: number | null; // event time; null while Idle
 }
 
+/** What a scheduled window DOES. Payloads are data; the handlers that read
+ *  them are pure functions of (state, entry, t) — no closures over UI, or the
+ *  sim stops being replayable. */
+export type SchedulePayload =
+  | { kind: 'conjunction'; occurrence: number }
+  | { kind: 'banner'; occurrence: number };
+
+export interface ScheduledEntry {
+  id: string;
+  /** Which authored template produced it, for reconciliation. */
+  templateId: string;
+  startsAt: number;
+  /** null = instant: it fires on open and is done. */
+  endsAt: number | null;
+  payload: SchedulePayload;
+  /** THE termination guarantee: applyDueAt transitions the phase, so the same
+   *  boundary can never be proposed twice. It must persist, or an event that
+   *  already paid out pays again on reload. */
+  phase: 'pending' | 'active' | 'done';
+}
+
 export interface ArmyUnit {
   uniqueId: string;
   definitionId: UnitId;
@@ -214,6 +235,15 @@ export interface GameState {
     /** Extra concurrent slots bought with Gems (escalating price). */
     slotsPurchased: number;
   };
+  /**
+   * Scheduled content: seasons, events, gacha banners, the Conjunction.
+   *
+   * Reconciled from the BUILD's catalogue at load, so a save written before a
+   * content drop still learns the new window exists — and a window that
+   * opened and closed during an absence still fires, because boundaries are
+   * absolute-time and reconciliation happens before the replay.
+   */
+  schedule: ScheduledEntry[];
   /** Parties currently in ruins. One per hero: heroes gate delve throughput
    *  as well as capability, which is what makes a second hero a prize twice
    *  over. */
