@@ -12,8 +12,13 @@ import { equivalentsOf } from '../sim/wallet';
 import { el } from './format';
 import { currencyIcon, sheet } from './kit';
 
-/** Currencies worth a row: the city's goods, plus the player's gems. */
-const PURSE_ORDER = (Object.keys(CURRENCIES) as CurrencyId[]);
+/** Currencies worth a row: the city's goods, plus the player's gems.
+ *
+ *  Mana is excluded deliberately. It is the one capped currency, so a bare
+ *  number here would be a worse version of the header gauge — and everything
+ *  worth knowing about it (the ceiling, the production, the upkeep) lives in
+ *  the Reliquary, which is one tap from the same gauge. */
+const PURSE_ORDER = (Object.keys(CURRENCIES) as CurrencyId[]).filter((c) => c !== 'Mana');
 
 export function renderPurseSheet(game: Game): HTMLElement {
   const rows = el('div', { class: 'purse' });

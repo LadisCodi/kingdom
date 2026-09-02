@@ -166,6 +166,22 @@
         "ruin_counting_house",
         "ruin_observatory"
       ]
+    },
+    {
+      "file": "sheets/spr-b-city.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.94,
+      "names": [
+        "sanctum",
+        "barracks",
+        "spear_hall",
+        "shooting_grounds",
+        "stables",
+        null
+      ]
     }
   ]
 }

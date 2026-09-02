@@ -1031,8 +1031,8 @@ export class Game {
     this.expeditionOrder = null;
     const roster = availableRoster(this.state);
     const affinity = RUINS[ruinId].affinity;
-    // Favour the type this ruin answers worst to, then whatever else is on
-    // hand — a sensible default that the player can immediately override.
+    // Best-answering type first, then whatever else is on hand — a sensible
+    // default the player can immediately override, not a recommendation.
     const order = (Object.keys(roster) as UnitId[])
       .filter((u) => roster[u] > 0)
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
