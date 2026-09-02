@@ -87,14 +87,28 @@ net regen/h = base(TH) + Σ landmarks − Σ upkeep of attuned artifacts    (flo
 Conflating them would waste both. Production answers "how many relics can I
 wear"; capacity answers "how long can I be away without spilling".
 
-### The tuning law
+### The tuning law — SUSPENDED 2026-09-02
 
 > **cap ≈ 8 × net regen**
 
-This keeps "an overnight absence fills the pool exactly" true at *every* stage of
-the game. Fill time sits just under the 8 h offline cap, so the two caps
-reinforce each other instead of fighting, and the Sanctum becomes worth building
-precisely when production has grown into it.
+This kept "an overnight absence fills the pool exactly" true at *every* stage of
+the game. Fill time sat just under the 8 h offline cap, so the two caps
+reinforced each other instead of fighting, and the Sanctum became worth building
+precisely when production had grown into it.
+
+**That law belonged to a pool whose only job was sustaining artifacts — an
+ABSENCE budget.** Mana is now also the energy every player tap is paid from
+(`balancing-v2.md` §1.1), which makes it a **SPEND budget**, and the two want
+opposite things: an absence budget should refill exactly overnight, while a
+spend budget has to be able to run out or there is nothing for a refill to
+sell. The starting cap went to **50** and regen did not follow, so a full pool
+is now **12.5 h at Townhall 1** rather than 8.
+
+This is deliberate and it is the demand the planned Gem/monetised refill sells
+against. It is recorded here rather than quietly re-tuned because the next
+person to touch `mana.production_per_townhall_level` has to know which budget
+they are tuning for. **Restoring the old law at cap 50 means regen 7/h at TH1.**
+`tests/mana.test.ts` asserts the new intent, not the old law.
 
 A player who checks in 2–3 times a day wastes nothing. A player who checks in
 once a day wastes some. That is the audit's session budget expressed as a

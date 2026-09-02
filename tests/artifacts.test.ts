@@ -245,7 +245,9 @@ describe('the actives', () => {
 
   it('charges nothing when the cast is refused', () => {
     const state = withRelic('DowsingRod');
-    addMana(state, 3); // less than Divination costs
+    // A new kingdom starts with a FULL pool now, so this has to be SET rather
+    // than added to: the point is being short of what Divination costs.
+    state.city.wallet.Mana = 3;
     attune(state, 0, 'DowsingRod', T0);
     const before = mana(state);
     expect(cast(state, map, 'DowsingRod', null, T0).result).toBe('NotEnoughMana');

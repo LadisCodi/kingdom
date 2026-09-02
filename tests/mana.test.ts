@@ -7,7 +7,7 @@
 // same way it ticks live.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { MANA } from '../src/sim/data/definitions';
+import { MANA, OFFLINE_CAP_HOURS } from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
 } from '../src/sim/landmarks';
@@ -25,6 +25,13 @@ const first = LANDMARKS[0];
 /** Far enough out that the Townhall's own reveal radius does not cover it —
  *  the first landmark sits deliberately in sight, to teach the mechanic. */
 const distant = LANDMARKS.find((l) => l.id === 'FallenStones')!;
+
+/** A new kingdom starts with a FULL pool (the house tap is paid from it), so
+ *  every test about FILLING one has to empty it first and say so. */
+const drained = (state: GameState): GameState => {
+  state.city.wallet.Mana = 0;
+  return state;
+};
 
 const sanctum = (state: GameState, level: number): void => {
   addBuilt(state, 'Sanctum', { x: 3, y: 1 });
@@ -60,15 +67,34 @@ describe('the two dials', () => {
     expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
   });
 
-  it('holds the tuning law: an overnight absence fills the pool', () => {
-    // cap ≈ 8 × net regen at every stage, so fill time sits just under the 8h
-    // offline cap and the two caps reinforce each other instead of fighting.
+  // THE TUNING LAW IS DELIBERATELY SUSPENDED (2026-09-02).
+  //
+  // It was `cap ≈ 8 × net regen`, so an overnight absence filled the pool
+  // exactly and the two caps reinforced each other. That law belonged to a
+  // Mana pool whose only job was sustaining artifacts — an ABSENCE budget.
+  //
+  // Mana is now the energy every tap is paid from, so the pool is a SPEND
+  // budget, and the two want opposite things: an absence budget should refill
+  // exactly overnight, while a spend budget has to be able to run out or
+  // there is nothing for a refill to sell. The cap went to 50 and regen did
+  // not follow, so a full pool is 12.5h rather than 8h.
+  //
+  // This test now pins the new intent rather than the old law, so the day
+  // someone re-tunes regen they have to come here and say which budget they
+  // are tuning for. Restoring the old law at cap 50 means regen 7/h at TH1.
+  it('is a SPEND budget now: the pool no longer refills inside an absence', () => {
     for (let level = 1; level <= 3; level++) {
       const state = freshGame();
       townhall(state).level = level;
-      expect(manaFillHours(state)).toBeGreaterThan(5);
-      expect(manaFillHours(state)).toBeLessThan(8);
+      expect(manaFillHours(state)).toBeGreaterThan(OFFLINE_CAP_HOURS);
+      expect(Number.isFinite(manaFillHours(state))).toBe(true);
     }
+  });
+
+  it('starts a new kingdom full, because every tap is paid from it', () => {
+    const state = freshGame();
+    expect(mana(state)).toBe(manaCap(state));
+    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
   });
 });
 
@@ -90,7 +116,7 @@ describe('upkeep', () => {
   });
 
   it('a stalled kingdom banks no time against a future rate', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     state.artifacts.attuned = [
       'GildedLedger', 'ForemansSigil', 'VerdantSeal', 'WanderersCompass', 'DowsingRod',
     ];
@@ -105,7 +131,7 @@ describe('upkeep', () => {
 
 describe('the pool', () => {
   it('fills to the ceiling and discards the overflow', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     const cap = manaCap(state);
     expect(addMana(state, cap + 50)).toBe(cap); // only the cap was banked
     expect(mana(state)).toBe(cap);
@@ -131,7 +157,7 @@ describe('the pool', () => {
   });
 
   it('accrues in whole units against its own anchor', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     const rate = manaNetRegen(state); // per hour
     const msPerMana = HOUR / rate;
     accrueMana(state, T0 + msPerMana - 1);
@@ -166,7 +192,7 @@ describe('the pool', () => {
 
 describe('gem refills', () => {
   it('are priced on what is missing, so a full pool costs nothing', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     const cap = manaCap(state);
     expect(manaRefillGemCost(state)).toBe(Math.ceil(cap / MANA.gemRefillPerGem));
     addMana(state, cap);
@@ -175,7 +201,7 @@ describe('gem refills', () => {
   });
 
   it('fill the pool and charge the gems', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     state.player.wallet.Gems = 100;
     const cost = manaRefillGemCost(state);
     expect(refillManaWithGems(state)).toBe('Refilled');
@@ -184,7 +210,7 @@ describe('gem refills', () => {
   });
 
   it('refuse politely when the purse is empty', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     state.player.wallet.Gems = 0;
     expect(refillManaWithGems(state)).toBe('NotEnoughGems');
   });

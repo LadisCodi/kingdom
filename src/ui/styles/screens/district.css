@@ -112,6 +112,17 @@
 .dc-drip { margin: 4px 0; }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
+/* What a tap costs, and what is left to spend it from. Replaces the cycle
+ * trough: a house has no timer any more, it has a price. */
+.dc-tapcost {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+.dc-tapcost.is-bad { color: var(--clay); }
+
 .dc-tapline {
   display: flex;
   align-items: center;

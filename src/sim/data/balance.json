@@ -1054,7 +1054,8 @@
     "workSeconds": 8
   },
   "tap": {
-    "collectCooldownSeconds": 0.5
+    "collectCooldownSeconds": 0.5,
+    "manaCost": 1
   },
   "training": {
     "seconds": 20,
@@ -1062,8 +1063,7 @@
   },
   "taxes": {
     "goldPerPopulationPerMinute": 30,
-    "tapBoostSeconds": 20,
-    "cycleSeconds": 60
+    "tapBoostSeconds": 20
   },
   "adjacency": [
     {
@@ -1079,9 +1079,9 @@
       6
     ],
     "baseCapPerTownhallLevel": [
-      24,
-      32,
-      40
+      50,
+      66,
+      82
     ],
     "sanctumCapPerLevel": [
       12,

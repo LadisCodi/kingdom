@@ -1,8 +1,9 @@
 // Resource cells: tapping, exhaustion, lazy recovery
 // (Docs/features/harvest-loop.md §1, §4).
 
-import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { DISTRICTS, FEATURES, HARVEST, TAP, type HarvestSpec } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
+import { payMana } from './mana';
 import { recordQuestEvent } from './quests';
 import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
@@ -153,7 +154,21 @@ export function advanceRespawns(state: GameState, map: MapData, toTime: number):
 }
 
 export type TapCellResult = 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed';
-export type CollectTapResult = TapCellResult | 'OnCooldown';
+export type CollectTapResult = TapCellResult | 'OnCooldown' | 'NoMana';
+
+/** Why this cell would refuse a tap, or null if it would harvest. Shared by
+ *  the raw primitive and the player's tap, so the energy charge can be decided
+ *  BEFORE anything is harvested without restating the guards. */
+export function harvestBlock(
+  state: GameState,
+  cell: Coord,
+  now: number,
+): Exclude<TapCellResult, 'Harvested'> | null {
+  if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
+  if (harvestSourceAt(state, cell) === null) return 'NotHarvestable';
+  if (isExhausted(state, cell, now)) return 'Exhausted';
+  return null;
+}
 
 /** Free player tap on a resource cell: +yield to the city wallet, +1 tap.
  *  No cooldown — the raw primitive (also handy for test setup). */
@@ -164,11 +179,9 @@ export function tapCell(
   now: number,
 ): TapCellResult {
   void map;
-  if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
-  const source = harvestSourceAt(state, cell);
-  if (source === null) return 'NotHarvestable';
-  if (isExhausted(state, cell, now)) return 'Exhausted';
-  const spec = HARVEST[source];
+  const blocked = harvestBlock(state, cell, now);
+  if (blocked !== null) return blocked;
+  const spec = HARVEST[harvestSourceAt(state, cell)!];
   const units = tapYieldAt(state, cell);
   addToWallet(state.city.wallet, spec.currencyId, units);
   recordResourceDiscovery(state, spec.currencyId);
@@ -180,11 +193,19 @@ export function tapCell(
 
 /** The PLAYER's collect tap.
  *
- *  A deliberate tap is never gated — tapping fast is a skill. Only the
+ *  A deliberate tap is never gated by TIME — tapping fast is a skill. Only the
  *  repeats a HELD pointer generates pass `autoRepeat`, and those wait out
  *  `effectiveAutoTapCooldownMs` so holding stays the lazier, slower option.
  *  Every successful collect stamps the clock, so starting a hold right after
- *  a manual tap still waits one full cooldown. */
+ *  a manual tap still waits one full cooldown.
+ *
+ *  It IS gated by energy: every collect costs `TAP.manaCost` Mana, the same
+ *  price a house tap pays. Mana is what lets a player accelerate any
+ *  generator by hand, so it is one budget across every tap in the game rather
+ *  than a rule that happens to apply to houses.
+ *
+ *  The cell is asked first and charged second: tapping an exhausted or
+ *  unrevealed cell costs nothing, and says the more useful thing. */
 export function collectTap(
   state: GameState,
   map: MapData,
@@ -195,6 +216,9 @@ export function collectTap(
   if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
     return 'OnCooldown';
   }
+  const blocked = harvestBlock(state, cell, now);
+  if (blocked !== null) return blocked;
+  if (!payMana(state, TAP.manaCost)) return 'NoMana';
   const result = tapCell(state, map, cell, now);
   if (result === 'Harvested') state.lastCollectTapAt = now;
   return result;

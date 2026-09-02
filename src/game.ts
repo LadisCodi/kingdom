@@ -351,8 +351,12 @@ export class Game {
           if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
             this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
-          } else if (result === 'NotReady') {
-            playSfx('tapEmpty');
+          } else if (result === 'NoMana') {
+            // Say WHICH pool is empty. A silent refusal reads as a broken tap,
+            // which is exactly how the old per-house cycle came across.
+            playSfx('error');
+            this.shake(['Mana']);
+            this.floaters.add(cell, `${icon('Mana')} empty`);
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -424,6 +428,14 @@ export class Game {
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
+    } else if (result === 'NoMana') {
+      // Out of energy. Say which pool, and only on a deliberate tap — a held
+      // pointer would otherwise shake the header once a frame.
+      if (!autoRepeat) {
+        playSfx('error');
+        this.shake(['Mana']);
+        this.floaters.add(cell, `${icon('Mana')} empty`);
+      }
     }
     return result;
   }
@@ -444,11 +456,17 @@ export class Game {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a house keeps collecting, but each one still waits out its cycle.
+    // Holding a house keeps collecting, paced by the same auto-tap cooldown a
+    // held tree uses, and stopping when the Mana runs out.
     const district = districtAt(this.state, cell);
     if (district && district.state === 'Built' &&
         districtCapacity(this.state, district) > 0) {
-      const { result, gold } = houseTap(this.state, district, this.now());
+      const { result, gold } = houseTap(this.state, district, this.now(), true);
+      if (result === 'NoMana') {
+        playSfx('error');
+        this.shake(['Mana']);
+        return false;
+      }
       if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
       this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');

@@ -1,7 +1,15 @@
-// Cell harvest: tap yields, exhaustion, lazy recovery, and the auto-tap
-// cooldown that paces holding (but never a deliberate tap).
+// Cell harvest: tap yields, exhaustion, lazy recovery, the auto-tap cooldown
+// that paces holding (but never a deliberate tap), and the ENERGY every
+// player tap is paid from.
+//
+// Mana is the one budget behind every tap in the game — a resource cell and a
+// house charge the same `TAP.manaCost` — because tapping is how the player
+// accelerates any generator by hand. `tapCell` is the raw primitive and stays
+// free, so test setup and the sim can harvest without minting energy; only
+// `collectTap`, the thing a finger drives, pays.
 import { describe, expect, it } from 'vitest';
-import { HARVEST } from '../src/sim/data/definitions';
+import { HARVEST, TAP } from '../src/sim/data/definitions';
+import { mana } from '../src/sim/mana';
 import {
   collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
 } from '../src/sim/harvest';
@@ -77,3 +85,42 @@ describe('tapping', () => {
   });
 });
 
+describe('the energy a tap is paid from', () => {
+  it('charges one Mana per collect, and refuses when the pool is dry', () => {
+    const state = freshGame();
+    reveal(state, [FOREST]);
+    const before = mana(state);
+    expect(before).toBeGreaterThan(0); // a new kingdom starts full
+    expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
+    expect(mana(state)).toBe(before - TAP.manaCost);
+
+    state.city.wallet.Mana = 0;
+    const wood = getWallet(state.city.wallet, 'Wood');
+    expect(collectTap(state, map, FOREST, T0)).toBe('NoMana');
+    expect(wood).toBe(getWallet(state.city.wallet, 'Wood')); // nothing harvested
+  });
+
+  it('never charges for a tap the cell itself refuses', () => {
+    const state = freshGame();
+    reveal(state, [FOREST]);
+    // Exhaust it with the free primitive so the pool is untouched.
+    for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) tapCell(state, map, FOREST, T0);
+    expect(isExhausted(state, FOREST, T0)).toBe(true);
+
+    const before = mana(state);
+    expect(collectTap(state, map, FOREST, T0)).toBe('Exhausted');
+    expect(mana(state)).toBe(before);
+    // An unrevealed cell is the same story, and says the useful thing rather
+    // than blaming the pool.
+    expect(collectTap(state, map, { x: 9, y: 9 }, T0)).toBe('NotRevealed');
+    expect(mana(state)).toBe(before);
+  });
+
+  it('leaves the raw primitive free, so the sim and fixtures do not mint energy', () => {
+    const state = freshGame();
+    reveal(state, [FOREST]);
+    const before = mana(state);
+    expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
+    expect(mana(state)).toBe(before);
+  });
+});

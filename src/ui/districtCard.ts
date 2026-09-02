@@ -13,7 +13,7 @@
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower, trainingProgress } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
@@ -21,8 +21,9 @@ import {
   districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from '../sim/districts';
 import {
-  districtCapacity, houseCycleProgress, houseGoldPerMinute, houseTapReady, houseTapReadyIn,
+  districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
+import { mana } from '../sim/mana';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import {
@@ -164,24 +165,21 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
             ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
             : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
       }
-      // The collection cycle, with the same trough the Townhall's training
-      // uses — a house and the Townhall now behave the same way, which is the
-      // whole point of giving the tap a cycle at all.
-      if (residents > 0) {
-        const now = game.now();
-        const ready = houseTapReady(district, now);
-        const bar = progress('gold');
-        bar.set(
-          houseCycleProgress(district, now),
-          ready ? 'Rent ready — tap the house' : `Ready in ${Math.ceil(houseTapReadyIn(district, now))}s`,
-        );
-        body.append(bar.root);
-      }
+      // No cycle bar any more: the house has no timer to show. What bounds
+      // the tap is the Mana pool, so the card says the price and what is left
+      // to spend — a number the player can act on, where a countdown was only
+      // ever a number to wait out.
       body.append(el('div', { class: 'dc-tapline' },
         iconEl('showme', { size: 'sm' }),
         residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall'
-          : `Collecting early pulls ${TAXES.tapBoostSeconds}s of rent forward, once a cycle`));
+          : `Tap to pull ${TAXES.tapBoostSeconds}s of rent forward, as often as you like`));
+      if (residents > 0) {
+        const pool = mana(game.state);
+        body.append(el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },
+          iconEl('Mana', { size: 'sm' }),
+          `${TAP.manaCost} per tap — ${pool} left`));
+      }
     }
 
     // A military building trains its own unit, in its own line, exactly as

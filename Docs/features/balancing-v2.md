@@ -23,11 +23,21 @@ by `taxes.tap_boost_seconds` and is **ungated for deliberate taps**
 housed villagers is **30 Gold per tap ≈ 9,000 Gold/min** against 900 Gold/min
 idle. It is the only tap in the game with no exhaustion analogue.
 
-**Fix:** give Housing a **tax cycle** with a progress bar, exactly like the
-Townhall's training cycle. Tapping fast-forwards *within* the current cycle and
-cannot exceed it. Buildings then behave consistently — tapping means "collect
-early", not "print money" — and the idle backbone the design depends on becomes
-the dominant income again.
+**Fix (shipped `b279a5d`, then replaced 2026-09-02):** the first fix gave
+Housing a **tax cycle** — tapping fast-forwards *within* the current cycle and
+cannot exceed it.
+
+That bounded the tap, but it bounded it with a **wait**, and a wait is not a
+decision: there was nothing to spend, nothing to run out of and nothing to buy.
+**Mana replaced it.** Every player tap in the game — a house, a tree, a rock —
+costs `tap.mana_cost` (1), so the ceiling is a pool the player can see, plan
+around and refill rather than a per-building timer. The share-scaling stays,
+and is still what stops a large city minting more per press than a small one.
+
+Mana is therefore an **energy** mechanic: the thing that lets a player
+accelerate any generator by hand. Paying fog is deliberately NOT part of it —
+a reveal already costs Gold, and charging twice for one tap would price
+exploration out of both currencies at once.
 
 ### 2. Fog costs one Gold per tap
 

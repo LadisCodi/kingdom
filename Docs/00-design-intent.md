@@ -39,8 +39,9 @@ or three check-ins. Every system below is shaped by that budget.
 1. **Reveal** — spend Gold, one tap at a time, to peel back the fog. Cost scales
    steeply with distance from the Townhall, so exploration is a deliberate,
    financed campaign.
-2. **Harvest** — tap resource cells directly. They exhaust after a number of taps
-   and recover on a timer.
+2. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**, so
+   Mana is the energy behind hand-acceleration; cells still exhaust after a
+   number of taps and recover on a timer.
 3. **Build** — place districts on revealed land. Costs are charged up front;
    construction takes time and runs while you are away.
 4. **Grow** — train villagers at the Townhall. Housed villagers pay taxes, which
@@ -90,10 +91,16 @@ a stronger economy**.
 
 ## Mana, and why it is capped
 
-Mana refills to a ceiling whether you are playing or not, in about six hours —
-just under the eight-hour offline cap. A player who checks in two or three times
-a day never wastes any; a player who checks in once a day wastes some. That is
-the entire retention mechanic, and it costs the player nothing they own.
+**Mana is the game's energy.** Every tap that hurries a generator along — a
+house's rent, a forest, a rock — costs 1 Mana, so the pool is what bounds
+hand-play. Paying fog is the exception: a reveal already costs Gold.
+
+It refills to a ceiling whether you are playing or not, and a new kingdom
+starts full (50). Since the pool became a **spend** budget rather than an
+absence budget, it deliberately no longer refills inside one absence — that
+gap is what a refill is worth buying for. A player who checks in two or three
+times a day spends more of it than one who checks in once; nobody loses
+anything they own, because unspent Mana is never taken, only capped.
 
 Attuned artifacts draw an hourly **upkeep** against production, so what you can
 wear is gated by the Mana economy you have built rather than by a paywall. Net
