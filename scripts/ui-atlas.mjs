@@ -241,6 +241,62 @@ function sliceSheet(sheet, cell, outDir) {
 }
 
 /**
+ * Slice a sheet that is ALREADY a pixel grid.
+ *
+ * `sliceSheet` above exists for generated sheets: it hunts for gutters, trims
+ * each icon to its ink, and rescales the whole sheet to one visual weight,
+ * because a model cannot be trusted to place or size anything. A hand-authored
+ * pack is the opposite problem — the grid is exact, the sizing is already
+ * consistent, and the placement inside each cell is a decision the artist made.
+ * Trimming would throw that away, and the refit would land on a fractional
+ * scale, which is how pixel art turns to mush.
+ *
+ * So this one does almost nothing: take the cell as drawn, point-scale it by a
+ * whole number, keep the alpha hard. The integer check is the whole safety
+ * net — a dense sheet whose size does not divide the atlas cell is a mistake,
+ * not something to round.
+ */
+function sliceDenseSheet(sheet, cell, outDir) {
+  const file = join(UI_DIR, sheet.file);
+  if (!existsSync(file)) fail(`${sheet.file} not found`);
+  const src = sheet.dense.size;
+  if (cell % src !== 0) {
+    fail(`${sheet.file}: ${src}px cells do not divide the ${cell}px atlas cell, so every ` +
+      'icon would be resampled off-grid. Change the atlas cell, not the art.');
+  }
+  const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
+  const cols = sheet.dense.cols ?? Math.floor(w / src);
+  if (w % src || h % src) {
+    fail(`${sheet.file}: ${w}x${h} is not a whole number of ${src}px cells`);
+  }
+  console.log(`ui-atlas: ${sheet.file} dense ${src}px x${cell / src}, ${cols} cols`);
+
+  const out = [];
+  sheet.names.forEach((name, i) => {
+    if (!name) return; // a cell we deliberately do not ship
+    const x = (i % cols) * src;
+    const y = Math.floor(i / cols) * src;
+    if (contentBox(file, { x, y, w: src, h: src }) === null) {
+      fail(`${sheet.file} [${Math.floor(i / cols)},${i % cols}] "${name}": the cell is empty`);
+    }
+    const dest = join(outDir, `${name}.png`);
+    // Slices are keyed by name, so a dense sheet listed after a generated one
+    // replaces it. That is the point, but silent replacement is how a set ends
+    // up half in one style — so say it out loud.
+    if (existsSync(dest)) console.log(`ui-atlas:   overrides ${name}`);
+    magick(
+      file, '-crop', `${src}x${src}+${x}+${y}`, '+repage',
+      '-filter', 'point', '-resize', `${cell}x${cell}`,
+      '-channel', 'A', '-threshold', '50%', '+channel',
+      '-strip', '-define', 'png:exclude-chunk=date,time',
+      dest,
+    );
+    out.push(name);
+  });
+  return out;
+}
+
+/**
  * Slice a WORLD sheet into individual map sprites.
  *
  * Deliberately different from sliceSheet in three ways, all because these are
@@ -461,7 +517,7 @@ if (mode === 'build') {
   if (!only) rmSync(SLICES, { recursive: true, force: true });
   mkdirSync(SLICES, { recursive: true });
 
-  for (const s of sheets) sliceSheet(s, cell, SLICES);
+  for (const s of sheets) (s.dense ? sliceDenseSheet : sliceSheet)(s, cell, SLICES);
 
   // Derivatives, from what is on disk — so --only still rebuilds the atlas
   // from every sheet sliced so far.
