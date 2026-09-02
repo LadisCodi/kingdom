@@ -115,11 +115,11 @@ describe('iron line (Mining ← Masonry) and the iron-gated army', () => {
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
     completeTech(state, 'Warrior');
     addAllTrainers(state); // the cap now comes from buildings, not the Townhall
-    expect(trainUnit(state, 'Warrior')).toBe('Queued'); // wood-armed now
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued'); // wood-armed now
     completeTech(state, 'Cavalry');
-    expect(trainUnit(state, 'Cavalry')).toBe('NotEnoughResources'); // no Iron
+    expect(trainUnit(state, 'Cavalry', T0)).toBe('NotEnoughResources'); // no Iron
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 20 });
-    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
+    expect(trainUnit(state, 'Cavalry', T0)).toBe('Queued');
     expect(getWallet(state.city.wallet, 'Iron')).toBe(0); // 20 spent
   });
 });

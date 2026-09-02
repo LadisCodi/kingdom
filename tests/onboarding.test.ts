@@ -23,7 +23,8 @@ import {
 import { collectTap } from '../src/sim/harvest';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
-import { maxPopulation, queueTraining } from '../src/sim/population';
+import { maxPopulation } from '../src/sim/population';
+import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { isTechComplete, startTech, techCost } from '../src/sim/research';
 import {
@@ -137,7 +138,7 @@ describe('a player can actually play the onboarding', () => {
     finish('Rations');
 
     expect(maxPopulation(state)).toBeGreaterThanOrEqual(1); // the House, not the Townhall
-    expect(queueTraining(state, now)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued');
     tick(60);
     expect(state.city.population).toBe(1);
     finish('FirstVillager');
@@ -193,7 +194,7 @@ describe('a player can actually play the onboarding', () => {
     // what the villager needed.
     expect(maxPopulation(state)).toBeGreaterThanOrEqual(3);
     while (state.city.population < 3) {
-      if (queueTraining(state, now) !== 'Queued') tick(30); // Food comes off the plots
+      if (trainUnit(state, 'Villager', T0) !== 'Queued') tick(30); // Food comes off the plots
       tick(30);
     }
     finish('Neighbors');

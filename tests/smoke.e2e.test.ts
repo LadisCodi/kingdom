@@ -2,13 +2,13 @@
 // recover → research → housing taxes → training queue → market → army →
 // upgrade → offline.
 import { describe, expect, it } from 'vitest';
-import { armyPower, maxArmyPower, trainUnit } from '../src/sim/army';
+import { armyPower, maxArmyPower, trainUnit, lineFor } from '../src/sim/army';
 import {
   changeWorkers, enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
 } from '../src/sim/commands';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { sellGoods } from '../src/sim/market';
-import { maxPopulation, queueTraining } from '../src/sim/population';
+import { maxPopulation } from '../src/sim/population';
 import { isTechComplete, startTech } from '../src/sim/research';
 import { revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
@@ -109,7 +109,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // --- Housing: villagers live there (2 per house) and pay taxes.
     fund(state, { Food: 10_000, Gold: 10_000, Wood: 10_000, Stone: 500, Iron: 500 });
     expect(maxPopulation(state)).toBe(0);
-    expect(queueTraining(state, now)).toBe('AtMax'); // nowhere to live yet
+    expect(trainUnit(state, 'Villager', now)).toBe('AtMax'); // nowhere to live yet
     for (const cell of [{ x: 2, y: 0 }, { x: 0, y: -1 }]) {
       expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
       tickAt(state, now);
@@ -119,13 +119,13 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // TH1 allows 2 houses; at L1 each holds TWO villagers, so the two the test
     // seeded leave room for two more without any upgrade.
     expect(maxPopulation(state)).toBe(4);
-    expect(queueTraining(state, now)).toBe('Queued');
-    expect(queueTraining(state, now)).toBe('Queued');
-    expect(queueTraining(state, now)).toBe('AtMax'); // 2 living + 2 queued = cap
+    expect(trainUnit(state, 'Villager', now)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', now)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', now)).toBe('AtMax'); // 2 living + 2 queued = cap
     now += 41_000; // 2 x 20s of training
     tickAt(state, now);
     expect(state.city.population).toBe(4);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
 
     // Level them up and there is room again.
     for (const house of state.city.districts.filter((d) => d.definitionId === 'Housing')) {
@@ -154,17 +154,17 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
 
     // --- Army: a unit sits behind a technology AND behind its own building,
     // and the cap comes from the buildings rather than from the Townhall.
-    expect(trainUnit(state, 'Warrior')).toBe('TechRequired');
+    expect(trainUnit(state, 'Warrior', now)).toBe('TechRequired');
     completeTech(state, 'Warrior');
-    expect(trainUnit(state, 'Warrior')).toBe('NoBuilding');
+    expect(trainUnit(state, 'Warrior', now)).toBe('NoBuilding');
     expect(maxArmyPower(state)).toBe(0);
     addAllTrainers(state);
     expect(maxArmyPower(state)).toBe(24); // four buildings at level 1
-    expect(trainUnit(state, 'Cavalry')).toBe('TechRequired');
+    expect(trainUnit(state, 'Cavalry', now)).toBe('TechRequired');
     completeTech(state, 'Archery');
     completeTech(state, 'Cavalry');
-    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
-    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
+    expect(trainUnit(state, 'Cavalry', now)).toBe('Queued');
+    expect(trainUnit(state, 'Cavalry', now)).toBe('Queued');
     // Training takes real time now, and a building runs ONE line: two Cavalry
     // is 2 x 60s at the Stables, not 60s in parallel.
     now += 61_000;
@@ -190,8 +190,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       tickAt(state, now);
     }
     expect(maxPopulation(state)).toBe(12); // two L2 houses (4 each) + two L1 (2 each)
-    expect(queueTraining(state, now)).toBe('Queued');
-    expect(queueTraining(state, now)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', now)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(townhallTap(state, now)).toBe('Boosted'); // taps speed the current one
     now += 20_000;
     tickAt(state, now);
@@ -199,7 +199,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     now += 20_000;
     tickAt(state, now);
     expect(state.city.population).toBe(6);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
 
     // --- Offline: 10 minutes away keep taxes and deliveries flowing.
     const save = serialize(state, now);

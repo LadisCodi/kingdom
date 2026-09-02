@@ -59,12 +59,12 @@ describe('technology basics', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 100 });
     addAllTrainers(state);
-    expect(trainUnit(state, 'Warrior')).toBe('TechRequired');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('TechRequired');
     completeTech(state, 'Warrior');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Archer')).toBe('TechRequired');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Archer', T0)).toBe('TechRequired');
     completeTech(state, 'Archery');
-    expect(trainUnit(state, 'Archer')).toBe('Queued');
+    expect(trainUnit(state, 'Archer', T0)).toBe('Queued');
   });
 
   it('the requires tree: Cavalry is blocked until Warrior is done', () => {

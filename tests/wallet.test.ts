@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
-import { populationCost, queueTraining } from '../src/sim/population';
+import { populationCost } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
 import {
   addBuilt, addTrainer, BERRIES, canGather, completeTech, freshGame, fund, map, T0,
@@ -40,13 +40,13 @@ describe('food-valued currencies', () => {
     addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity to train into
     state.city.wallet = { Berries: 5, Meat: 2 }; // 11 effective Food
     expect(populationCost(0)).toBe(5); // the authored price of the first
-    expect(queueTraining(state, T0)).toBe('Queued'); // pays 5 Berries up front
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued'); // pays 5 Berries up front
     expect(state.city.wallet).toEqual({ Berries: 0, Meat: 2 });
 
     fund(state, { Gold: 100, Wood: 10, Berries: 1, Meat: 7 }); // fund SETS both
     completeTech(state, 'Warrior'); // the Warrior sits behind it now
     addTrainer(state, 'Warrior', { x: 3, y: 2 }); // and behind its Barracks
-    expect(trainUnit(state, 'Warrior')).toBe('Queued'); // 50 Gold + 10 Wood + 20 Food
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued'); // 50 Gold + 10 Wood + 20 Food
     // 1 Berry + all 7 Meat (21) cover the 20 → 2 Food back as change.
     expect(getWallet(state.city.wallet, 'Berries')).toBe(0);
     expect(getWallet(state.city.wallet, 'Meat')).toBe(0);

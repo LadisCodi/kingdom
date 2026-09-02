@@ -3,9 +3,10 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART, TRAINING,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
+import { trainingProgress, unitInTraining } from '../sim/army';
 import { fogState, isReachable, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
@@ -338,11 +339,10 @@ export function drawMap(
       // header back the width the widget was costing on a phone.
       if (district.definitionId === 'Townhall') {
         drawCountPill(x + fw / 2, y - 2, `👥 ${state.city.population}/${maxPopulation(state)}`);
-        if (state.city.training !== null) {
-          const totalMs = TRAINING.seconds * 1000;
-          const progress =
-            Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
-          drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+        const inLine = unitInTraining(state, district.uniqueId);
+        if (inLine) {
+          drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4,
+            trainingProgress(state, district.uniqueId, now), PALETTE.progressFill);
         }
       }
       // Needs-workers warning.

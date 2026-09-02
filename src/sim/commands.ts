@@ -1,13 +1,13 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { CITY_DEF, DISTRICTS, TAP, TRAINING } from './data/definitions';
+import { CITY_DEF, DISTRICTS } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration,
 } from './districts';
-import { advanceArmyTraining, nextTrainingCompletion } from './army';
+import { advanceTraining, nextTrainingCompletion, trainingTap, unitInTraining } from './army';
 import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
 import { revealAroundDistrict } from './fog';
 import {
@@ -17,7 +17,7 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { accrueKnowledge, accrueMana, payMana } from './mana';
+import { accrueKnowledge, accrueMana } from './mana';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
@@ -204,10 +204,15 @@ export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining' | 
  *  AFTER the "is anything training" check, so tapping an idle Townhall is
  *  free — you cannot pay for nothing. */
 export function townhallTap(state: GameState, now: number): TownhallTapResult {
-  if (state.city.training === null) return 'NoTraining';
-  if (!payMana(state, TAP.manaCost)) return 'NoMana';
-  state.city.training.startedAt -= TRAINING.tapBoostSeconds * 1000;
-  return advanceCityLife(state, now).trained > 0 ? 'TrainingComplete' : 'Boosted';
+  // One tap, one mechanism: the Townhall hurries its line exactly the way a
+  // Barracks hurries its own, now that both draw from the same queue. The
+  // result names stay as they were — the presenter and its tests speak them.
+  const hall = townhall(state);
+  if (!hall || !unitInTraining(state, hall.uniqueId)) return 'NoTraining';
+  const result = trainingTap(state, hall, now);
+  return result === 'Complete' ? 'TrainingComplete'
+    : result === 'NoTraining' ? 'NoTraining'
+      : result === 'NoMana' ? 'NoMana' : 'Boosted';
 }
 
 // ------------------------------------------------------------------- advance
@@ -282,7 +287,12 @@ function applyDueAt(
     }
     out.completedResearch.push(...advanceResearch(state, t));
     out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
-    out.trainedUnits.push(...advanceArmyTraining(state, t));
+    // One line, two kinds of trainee: villagers land on the population, units
+    // in the army, and the caller is told about each separately.
+    for (const trainee of advanceTraining(state, t)) {
+      if (trainee === 'Villager') out.trainedPopulation += 1;
+      else out.trainedUnits.push(trainee);
+    }
     // Delve timers NEVER pause: the offline cap limits what the CITY
     // PRODUCES, never what a timer does. A party at a checkpoint proposes no
     // boundary at all — it waits, indefinitely, until the player answers.
@@ -295,9 +305,7 @@ function applyDueAt(
 function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceResult): void {
   advanceRespawns(state, map, t);
   out.deposits.push(...advanceWorkers(state, map, t));
-  const life = advanceCityLife(state, t);
-  out.goldEarned += life.gold;
-  out.trainedPopulation += life.trained;
+  out.goldEarned += advanceCityLife(state, t).gold;
   // Mana regen is city idle PRODUCTION, so it belongs here with the workers
   // and the taxes — and the 8h offline cap applies to it, unlike a timer.
   out.manaEarned += accrueMana(state, t);

@@ -8,7 +8,7 @@ import balance from './balance.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, TechId, UnitId, UpgradeId, Wallet,
+  LandmarkKind, RuinId, TechId, TrainableId, UnitId, UpgradeId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -207,17 +207,19 @@ export interface DistrictDef {
   /** Army cap this building contributes at each level (TOTAL, not
    *  incremental). Empty = it is not a military building. */
   armyCapPerLevel: readonly number[];
-  /** The unit this building trains; null = it trains nothing. Army size is a
+  /** Everything this building can turn out; empty = it trains nothing. A list
+   *  rather than one id, so a hall can offer a choice — and so the Townhall
+   *  can offer the Villager on the same footing. Army size is a
    *  city-building decision now, so wanting Cavalry means finding room for
    *  Stables — which is the strongest link between the two halves of the game. */
-  trains: UnitId | null;
+  trains: readonly TrainableId[];
 }
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
 // balance.json; only identity, art, and rules wiring is authored here.
 const rules = {
   buildable: true, harvestSource: null, providesHarvestSource: null, requiredTech: null,
-  trains: null,
+  trains: [],
 } as const;
 
 /** The per-level tech gates arrive from JSON as plain strings — the importer
@@ -236,6 +238,9 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
       'Heart of the city. Trains new villagers — tap it to speed training up.',
     glyph: '🏛️',
     sprite: 'townhall',
+    // The Townhall is a trainer like any other hall; the Villager is simply
+    // what it turns out.
+    trains: ['Villager'],
     buildable: false,
     ...districtBalance(balance.districts.Townhall),
   },
@@ -331,7 +336,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🛖',
     sprite: 'barracks',
     requiredTech: 'Warrior',
-    trains: 'Warrior',
+    trains: ['Warrior'],
     ...districtBalance(balance.districts.Barracks),
   },
   SpearHall: {
@@ -342,7 +347,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🏚️',
     sprite: 'spear_hall',
     requiredTech: 'Spears',
-    trains: 'Lancer',
+    trains: ['Lancer'],
     ...districtBalance(balance.districts.SpearHall),
   },
   ShootingGrounds: {
@@ -353,7 +358,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🎯',
     sprite: 'shooting_grounds',
     requiredTech: 'Archery',
-    trains: 'Archer',
+    trains: ['Archer'],
     ...districtBalance(balance.districts.ShootingGrounds),
   },
   Stables: {
@@ -364,7 +369,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🐴',
     sprite: 'stables',
     requiredTech: 'Cavalry',
-    trains: 'Cavalry',
+    trains: ['Cavalry'],
     ...districtBalance(balance.districts.Stables),
   },
   Mine: {
@@ -1334,4 +1339,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/features/engine-seams.md §4).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;

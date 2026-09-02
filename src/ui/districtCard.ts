@@ -15,7 +15,7 @@ import { gemRushCost } from '../sim/commands';
 import {
   DISTRICTS, HARVEST, TAP, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
 } from '../sim/data/definitions';
-import { committedArmyPower, maxArmyPower, trainingProgress } from '../sim/army';
+import { committedArmyPower, lineFor, maxArmyPower, trainingProgress } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
 import {
   districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
@@ -27,7 +27,7 @@ import { mana } from '../sim/mana';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import {
-  coordKey, queueProgress, remainingSeconds, townhall, type District,
+  coordKey, queueProgress, remainingSeconds, townhall, type District, type UnitId,
 } from '../sim/state';
 import { recoversAt, tapFraction } from '../sim/harvest';
 import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
@@ -186,12 +186,16 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // the Townhall trains villagers. That symmetry is why the standing Army
     // screen could disappear: an army only matters when it is SENT somewhere,
     // and it is recruited where it is made.
-    if (def.trains !== null) {
-      const unitId = def.trains;
+    // Villagers keep their own block above (the Townhall's Train row); this
+    // one is the soldier line. Both draw from the same queue now — the card
+    // rewrite that unifies their presentation is the next step.
+    const soldier = def.trains.find((t) => t !== 'Villager') as UnitId | undefined;
+    if (soldier !== undefined) {
+      const unitId = soldier;
       const unit = UNITS[unitId];
       const cap = maxArmyPower(game.state);
       const used = committedArmyPower(game.state);
-      const inLine = game.state.city.armyQueue.filter((i) => i.buildingId === district.uniqueId);
+      const inLine = lineFor(game.state, district.uniqueId);
       const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
 
       body.append(el('div', { class: 'dc-army' },

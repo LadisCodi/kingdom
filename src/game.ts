@@ -23,7 +23,9 @@ import {
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
-import { committedArmyPower, maxArmyPower, trainUnit, trainingTap } from './sim/army';
+import {
+  committedArmyPower, lineFor, maxArmyPower, trainUnit, trainingCompletesAt, trainingTap,
+} from './sim/army';
 import {
   artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
 } from './sim/artifacts';
@@ -46,8 +48,7 @@ import {
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
-  availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, queuedTraining,
-  queueTraining, residentsOf, trainingCompletesAt,
+  availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
@@ -792,7 +793,7 @@ export class Game {
   }
 
   doQueueTraining(): void {
-    const result = queueTraining(this.state, this.now());
+    const result = trainUnit(this.state, 'Villager', this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
     else if (result === 'AtMax') this.toast('Population at max — build more Housing');
     this.notify();
@@ -1396,7 +1397,7 @@ export class Game {
   }
 
   doTrain(unitId: UnitId): void {
-    const result = trainUnit(this.state, unitId);
+    const result = trainUnit(this.state, unitId, this.now());
     if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
     if (result === 'NoBuilding') {
@@ -1614,11 +1615,14 @@ export class Game {
     cost: number; atMax: boolean;
   } {
     const now = this.now();
-    const completesAt = trainingCompletesAt(this.state);
+    const hall = townhall(this.state);
+    const line = hall ? lineFor(this.state, hall.uniqueId) : [];
+    const head = line[0];
+    const completesAt = head ? trainingCompletesAt(head) : null;
     const total = TRAINING.seconds * 1000;
-    const queued = queuedTraining(this.state);
+    const queued = line.length;
     return {
-      active: completesAt !== null,
+      active: completesAt !== null && Number.isFinite(completesAt),
       progress: completesAt === null ? 0 : Math.min(1, Math.max(0, 1 - (completesAt - now) / total)),
       remainingSeconds: completesAt === null ? 0 : Math.max(0, (completesAt - now) / 1000),
       queued,
@@ -1854,7 +1858,7 @@ export function icon(c: CurrencyId): string {
 
 /** The building that trains a unit type, by name — for the blocker text. */
 function trainerName(unitId: UnitId): string {
-  const def = Object.values(DISTRICTS).find((d) => d.trains === unitId);
+  const def = Object.values(DISTRICTS).find((d) => d.trains.includes(unitId));
   return def?.name ?? 'right building';
 }
 

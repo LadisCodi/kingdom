@@ -94,7 +94,7 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
  *  every army assertion needs one. */
 export const addTrainer = (state: GameState, unitId: UnitId, location: Coord): void => {
   const definitionId = (Object.values(DISTRICTS)
-    .find((d) => d.trains === unitId) as DistrictDef).id;
+    .find((d) => d.trains.includes(unitId)) as DistrictDef).id;
   addBuilt(state, definitionId, location);
 };
 

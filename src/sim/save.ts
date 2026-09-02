@@ -127,13 +127,10 @@ export function serialize(state: GameState, now: number): SaveFile {
               ...(q.kind === 'upgrade' ? { TargetLevel: q.targetLevel } : {}),
             })),
             QueueKinds: state.city.queue.map((q) => q.kind),
-            TrainingStartedAt: state.city.training === null
-              ? null : iso(state.city.training.startedAt),
-            TrainingQueued: state.city.training?.queued ?? 0,
             LastTaxAt: iso(state.city.lastTaxAt),
-            ArmyQueue: state.city.armyQueue.map((i) => ({
+            TrainingQueue: state.city.trainingQueue.map((i) => ({
               UniqueID: i.uniqueId,
-              UnitID: i.unitId,
+              Trainee: i.trainee,
               BuildingID: i.buildingId,
               StartedAtUtc: isoOrNull(i.startedAt),
             })),
@@ -349,16 +346,41 @@ export function deserialize(
         startedAt: msOrNull(q.StartedAtUtc),
       }),
     );
-    state.city.training = cityDto.TrainingStartedAt
-      ? { queued: cityDto.TrainingQueued ?? 1, startedAt: ms(cityDto.TrainingStartedAt) } : null;
     state.city.lastTaxAt = cityDto.LastTaxAt ? ms(cityDto.LastTaxAt) : lastSaved;
     state.city.lastManaAt = cityDto.LastManaAt ? ms(cityDto.LastManaAt) : lastSaved;
-    state.city.armyQueue = ((cityDto.ArmyQueue ?? []) as any[]).map((i) => ({
+    state.city.trainingQueue = ((cityDto.TrainingQueue ?? []) as any[]).map((i) => ({
       uniqueId: i.UniqueID,
-      unitId: i.UnitID,
+      trainee: i.Trainee,
       buildingId: i.BuildingID,
       startedAt: msOrNull(i.StartedAtUtc),
     }));
+    // ---- migrating a save written before the two queues became one ----
+    // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
+    // and one timestamp on the city. Both become items in the single line.
+    // A rename plus a reshape, which is exactly what a migrator is for — the
+    // alternative is a player losing units they already paid for.
+    for (const i of (cityDto.ArmyQueue ?? []) as any[]) {
+      state.city.trainingQueue.push({
+        uniqueId: i.UniqueID,
+        trainee: i.UnitID,
+        buildingId: i.BuildingID,
+        startedAt: msOrNull(i.StartedAtUtc),
+      });
+    }
+    if (cityDto.TrainingStartedAt) {
+      const hall = state.city.districts.find((d) => d.definitionId === 'Townhall');
+      const startedAt = ms(cityDto.TrainingStartedAt);
+      // The old shape only remembered when the CURRENT one started; the rest
+      // of the line had no clock of its own, so they queue up behind it.
+      for (let n = 0; n < (cityDto.TrainingQueued ?? 1); n++) {
+        state.city.trainingQueue.push({
+          uniqueId: `migrated_villager_${n}`,
+          trainee: 'Villager',
+          buildingId: hall?.uniqueId ?? '',
+          startedAt: n === 0 ? startedAt : null,
+        });
+      }
+    }
   }
 
   const kingdomDto = modules['kingdom.kingdoms'];
@@ -603,7 +625,9 @@ export function deserialize(
       w.stateStartedAt = w.activity === 'Idle' ? now : w.stateStartedAt + gap;
       if (w.stateUntil !== null) w.stateUntil += gap;
     }
-    if (state.city.training) state.city.training.startedAt += gap;
+    for (const item of state.city.trainingQueue) {
+      if (item.startedAt !== null) item.startedAt += gap;
+    }
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
     state.kingdom.lastKnowledgeAt += gap; // the ruin drip is production too

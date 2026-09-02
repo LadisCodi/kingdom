@@ -97,11 +97,10 @@ export interface City {
   population: number;
   districts: District[];
   queue: QueueItem[];
-  /** Villager training queue at the Townhall: `queued` villagers are paid
-   *  for; the current one started at `startedAt`, the rest follow. */
-  training: { queued: number; startedAt: number } | null;
-  /** Units in training, across all four military buildings. */
-  armyQueue: ArmyTrainingItem[];
+  /** Everything in training anywhere in the city — villagers at the Townhall
+   *  and soldiers at the military halls, in ONE list. Each building draws its
+   *  own line out of it by `buildingId`. */
+  trainingQueue: TrainingItem[];
   /** Epoch ms anchor for passive tax gold (whole units only). */
   lastTaxAt: number;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same
@@ -153,11 +152,19 @@ export interface ArmyUnit {
   definitionId: UnitId;
 }
 
-/** One unit waiting to be trained. Paid for up front; `startedAt` is stamped
- *  when it reaches the front of its BUILDING's line. */
-export interface ArmyTrainingItem {
+/**
+ * Anything a building can put in its line. Villagers are not army units — no
+ * stats, no power, and a price that climbs with the population — so they are
+ * not in the UNITS table. But they QUEUE identically, so the queue carries the
+ * union rather than two parallel systems that drift apart.
+ */
+export type TrainableId = UnitId | 'Villager';
+
+/** One trainee waiting. Paid for up front; `startedAt` is stamped when it
+ *  reaches the front of its BUILDING's line. */
+export interface TrainingItem {
   uniqueId: string;
-  unitId: UnitId;
+  trainee: TrainableId;
   buildingId: string;
   startedAt: number | null;
 }

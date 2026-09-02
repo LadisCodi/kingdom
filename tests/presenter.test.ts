@@ -6,6 +6,7 @@
 // Node environment, no jsdom: `Game` constructs fine without a DOM, and the
 // views hold nothing but markup once the decisions live here.
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { lineFor } from '../src/sim/army';
 import { QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
@@ -425,7 +426,7 @@ describe('villager training', () => {
 
     expect(toasts).toEqual(['Population at max — build more Housing']);
     expect(shaken).toEqual([]);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
 
   it('with room but no Food, it shakes Food and queues nobody', () => {
@@ -438,7 +439,7 @@ describe('villager training', () => {
     game.doQueueTraining();
 
     expect(shaken).toEqual([['Food']]);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
 
   it('an affordable train starts the clock and spends the Food', () => {
@@ -450,7 +451,7 @@ describe('villager training', () => {
 
     game.doQueueTraining();
 
-    expect(state.city.training).not.toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId).length).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Food')).toBeLessThan(before);
     expect(game.trainingInfo().active).toBe(true);
     expect(game.trainingInfo().remainingSeconds).toBeLessThanOrEqual(TRAINING.seconds);

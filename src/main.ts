@@ -267,7 +267,9 @@ async function boot(): Promise<void> {
       // advance replay the "absence".
       const delta = minutes * 60_000;
       game.state.lastAdvance -= delta;
-      if (game.state.city.training) game.state.city.training.startedAt -= delta;
+      for (const item of game.state.city.trainingQueue) {
+        if (item.startedAt !== null) item.startedAt -= delta;
+      }
       game.state.city.lastTaxAt -= delta;
       for (const w of game.state.workers) {
         w.stateStartedAt -= delta;

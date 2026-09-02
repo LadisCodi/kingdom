@@ -155,9 +155,9 @@ describe('training takes time now', () => {
     const state = readyToDelve({});
     completeTech(state, 'Warrior');
     completeTech(state, 'Archery');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Archer')).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Archer', T0)).toBe('Queued');
     expect(state.army).toHaveLength(0);
 
     // The Archer (25s) lands before the first Warrior (30s); the SECOND
@@ -177,16 +177,16 @@ describe('training takes time now', () => {
     state.city.districts = state.city.districts.filter(
       (d) => d.definitionId === 'Townhall' || d.definitionId === 'Barracks');
     expect(maxArmyPower(state)).toBe(6);
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Warrior')).toBe('ArmyAtCapacity');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('ArmyAtCapacity');
   });
 
   it('one-call replay equals stepped ticking', () => {
     const build = (): GameState => {
       const s = readyToDelve({});
       completeTech(s, 'Warrior');
-      for (let i = 0; i < 4; i++) trainUnit(s, 'Warrior');
+      for (let i = 0; i < 4; i++) trainUnit(s, 'Warrior', T0);
       return s;
     };
     const oneCall = build();
@@ -199,14 +199,14 @@ describe('training takes time now', () => {
   it('delivers the whole line during a long absence', () => {
     const state = readyToDelve({});
     completeTech(state, 'Warrior');
-    for (let i = 0; i < 2; i++) trainUnit(state, 'Warrior');
+    for (let i = 0; i < 2; i++) trainUnit(state, 'Warrior', T0);
     // Through advance(), because that is the path that stamps the head at the
     // CURSOR — advanceArmyTraining on its own stamps at the time it is given,
     // exactly as advanceQueue does, so a raw far-future call starts the line
     // rather than finishing it.
     const report = advance(state, map, T0 + 3_600_000);
     expect(report.trainedUnits).toEqual(['Warrior', 'Warrior']);
-    expect(state.city.armyQueue).toHaveLength(0);
+    expect(state.city.trainingQueue).toHaveLength(0);
   });
 });
 
