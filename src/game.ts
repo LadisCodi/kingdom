@@ -464,6 +464,13 @@ export class Game {
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
+    } else if (result === 'TechLocked' && !autoRepeat && source !== null) {
+      // Say WHICH research, by name. "You can see it and you cannot have it
+      // yet" is the whole point of the gate, and it only teaches anything if
+      // the player is told what would open it.
+      const gate = HARVEST[source].requiredTech;
+      playSfx('error');
+      if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} before you can work this`);
     } else if (result === 'NoMana' && !autoRepeat) {
       // A held pointer stays silent — it would otherwise shake the header
       // once a frame for as long as the finger is down.
@@ -913,6 +920,16 @@ export class Game {
         break;
       case 'CompleteTechs':
         overlay('research');
+        break;
+      case 'BuyUpgrade':
+        this.setUiHint(`upgrade:${quest.goalTarget}`);
+        overlay('research');
+        break;
+      case 'OwnHeroes':
+        // The banner lives on the Reliquary's heroes tab; the sheet opens
+        // there on its own when the roster is what was asked for.
+        this.setUiHint('banner');
+        overlay('reliquary');
         break;
       case 'AssignWorkers': {
         const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);

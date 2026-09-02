@@ -62,7 +62,16 @@ CellHarvestState { taps: number, exhaustedUntil: number | null }
 ```
 
 - **Tapping** a revealed, non-exhausted resource cell yields its `yieldPerTap`
-  (1 unit) straight to the city wallet and registers 1 tap. Free.
+  straight to the city wallet and registers 1 tap. It costs `tap.mana_cost`
+  Mana ([`ad-economy.md`](ad-economy.md)).
+- A source may carry a **`required_tech`** gate (Harvest sheet). Only the
+  Forest has one — **Forestry** — and it exists for the opening: the trees
+  beside the Townhall are revealed from the first second and refuse the tap
+  until the research is in, which is what makes that research something the
+  player wants rather than a chore ([`../onboarding.md`](../onboarding.md)
+  steps 2-3). `harvestBlock` checks it BEFORE exhaustion, so a gated cell says
+  "you cannot work this yet" rather than "come back later", and a refused tap
+  costs no Mana.
 - At `tapsToExhaust` total taps the cell becomes **exhausted**:
   `exhaustedUntil = now + recoverySeconds`, taps reset. While exhausted it can't
   be tapped or worked, and shows its exhausted visual (Forest → stump 🪵,

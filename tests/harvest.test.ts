@@ -13,15 +13,17 @@ import { mana } from '../src/sim/mana';
 import {
   collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
 } from '../src/sim/harvest';
+import { fogState } from '../src/sim/fog';
 import { getWallet } from '../src/sim/state';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
-import { freshGame, map, reveal, T0 } from './helpers';
+import { canChop, completeTech, freshGame, map, reveal, T0 } from './helpers';
 
 const FOREST = { x: 2, y: 2 }; // authored Trees cell near the origin
+const BERRIES = { x: 0, y: 2 }; // the one berry bush, inside the opening reveal
 
 describe('harvest sources', () => {
   it('Trees cells are Forest; built FarmLands are Crops; districts block', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     expect(harvestSourceAt(state, FOREST)).toBe('Forest');
     expect(harvestSourceAt(state, { x: 0, y: 0 })).toBe(null); // Townhall
     expect(harvestSourceAt(state, { x: 1, y: 0 })).toBe(null); // Townhall footprint cell
@@ -31,7 +33,7 @@ describe('harvest sources', () => {
 
 describe('tapping', () => {
   it('a tap yields 1 Wood; the 10th tap exhausts the cell for 90 s', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     reveal(state, [FOREST]);
     for (let i = 1; i <= 9; i++) {
       expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
@@ -53,7 +55,7 @@ describe('tapping', () => {
   // unrestricted; holding trades speed for not having to work, so its
   // repeats are paced.
   it('manual taps are never gated — the player can tap as fast as they like', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 2)).toBe('Harvested');
@@ -61,7 +63,7 @@ describe('tapping', () => {
   });
 
   it('held-pointer repeats wait out the auto-tap cooldown', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     const cooldownMs = effectiveAutoTapCooldownMs(state);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     // The input layer retries every 100ms; those land as autoRepeat…
@@ -78,7 +80,7 @@ describe('tapping', () => {
   });
 
   it('rejects unrevealed and non-resource cells', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     // (2,5) is a tree beyond the Townhall's fog reveal radius (3).
     expect(tapCell(state, map, { x: 2, y: 5 }, T0)).toBe('NotRevealed');
     expect(tapCell(state, map, { x: 2, y: 0 }, T0)).toBe('NotHarvestable'); // revealed empty grass
@@ -87,7 +89,7 @@ describe('tapping', () => {
 
 describe('the energy a tap is paid from', () => {
   it('charges one Mana per collect, and refuses when the pool is dry', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     reveal(state, [FOREST]);
     const before = mana(state);
     expect(before).toBeGreaterThan(0); // a new kingdom starts full
@@ -101,7 +103,7 @@ describe('the energy a tap is paid from', () => {
   });
 
   it('never charges for a tap the cell itself refuses', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     reveal(state, [FOREST]);
     // Exhaust it with the free primitive so the pool is untouched.
     for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) tapCell(state, map, FOREST, T0);
@@ -117,10 +119,40 @@ describe('the energy a tap is paid from', () => {
   });
 
   it('leaves the raw primitive free, so the sim and fixtures do not mint energy', () => {
-    const state = freshGame();
+    const state = canChop(freshGame());
     reveal(state, [FOREST]);
     const before = mana(state);
     expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
     expect(mana(state)).toBe(before);
+  });
+});
+
+// Docs/onboarding.md steps 2-3. THE opening beat of the whole game: the trees
+// beside the Townhall are revealed from the first second and refuse the tap
+// until Forestry is in. Visible-and-refusing is what makes the first research
+// something the player wants rather than a chore they are told to do — and it
+// is why the reveal-for-Knowledge loop has to come first.
+describe('the forest is gated on Forestry', () => {
+  it('refuses the tap until the technology is in, then works normally', () => {
+    const state = freshGame();
+    expect(fogState(state, map, FOREST)).toBe('Revealed'); // seen from minute one
+    expect(tapCell(state, map, FOREST, T0)).toBe('TechLocked');
+    expect(collectTap(state, map, FOREST, T0)).toBe('TechLocked');
+
+    completeTech(state, 'Forestry');
+    expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
+  });
+
+  it('charges no Mana for a tap the gate refused', () => {
+    const state = freshGame();
+    const before = mana(state);
+    expect(collectTap(state, map, FOREST, T0)).toBe('TechLocked');
+    expect(mana(state)).toBe(before);
+  });
+
+  it('gates only what is authored — berries feed you before any research', () => {
+    const state = freshGame();
+    expect(HARVEST.Berries.requiredTech).toBe(null);
+    expect(tapCell(state, map, BERRIES, T0)).toBe('Harvested');
   });
 });

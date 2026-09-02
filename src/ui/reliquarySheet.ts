@@ -365,7 +365,7 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
  * than predatory, and it only works if the player can see it working.
  */
 function bannerPanel(game: Game): HTMLElement {
-  const cost = pullCost();
+  const cost = pullCost(game.state, STANDARD_BANNER);
   const pity = pityCount(game.state, STANDARD_BANNER);
   const toGuarantee = pullsToGuarantee(game.state, STANDARD_BANNER);
   const chance = heroChanceAt(pity);
@@ -384,17 +384,28 @@ function bannerPanel(game: Game): HTMLElement {
       el('div', { class: 'rel-line is-total' },
         el('span', {}, 'Guaranteed within'),
         el('b', {}, `${toGuarantee} call${toGuarantee === 1 ? '' : 's'}`))),
-    action({
-      label: 'Call',
-      kind: 'gem',
-      onClick: () => game.doPull(),
-      cost: { Gems: cost },
-      have: (c) => game.effectiveWalletValue(c),
-    }),
+    callAction(game, cost),
     el('div', { class: 'rel-note' },
       'Heroes can also be found by delving: fragments come back from every ruin, '
       + 'and enough of them raise anyone you already have.'),
   );
+}
+
+/** The summon button, split out so the quest hint can light it — `action()`
+ *  builds a whole row, so the class goes on afterwards rather than through a
+ *  new option nothing else would use. */
+function callAction(game: Game, cost: number): HTMLElement {
+  const row = action({
+    // A price of zero is not a price. The free first call says so on the
+    // button rather than rendering "0 💎", which reads as a bug.
+    label: cost === 0 ? 'Call — free' : 'Call',
+    kind: 'gem',
+    onClick: () => game.doPull(),
+    cost: cost === 0 ? undefined : { Gems: cost },
+    have: (c) => game.effectiveWalletValue(c),
+  });
+  if (game.uiHint() === 'banner') row.classList.add('hinted');
+  return row;
 }
 
 /** Which tab is open. Module-level so it survives the per-tick rebuild — the
@@ -402,6 +413,10 @@ function bannerPanel(game: Game): HTMLElement {
 let openTab: 'relics' | 'heroes' = 'relics';
 
 export function renderReliquarySheet(game: Game): HTMLElement {
+  // "Go summon a hero" has to LAND on the banner. The sheet remembers its tab
+  // across rebuilds, so a quest that points here would otherwise open on
+  // whatever the player last looked at — usually the relics.
+  if (game.uiHint() === 'banner') openTab = 'heroes';
   const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
   const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
 

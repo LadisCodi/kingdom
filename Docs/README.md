@@ -45,6 +45,7 @@ as-shipped), and its own design docs are the live source of truth:
 | **[features/ad-economy.md](features/ad-economy.md)** | **Built 2026-09-02** — Mana, taps and rewarded ads tuned as one loop; a tap pulls production forward |
 | **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
 | **[features/knowledge.md](features/knowledge.md)** | **Built 2026-09-02** — Knowledge buys the technology tree; clearing fog and quests pay for it |
+| **[onboarding.md](onboarding.md)** | **Built 2026-09-02** — the authored first-user experience, 26 steps; the quest chain and the tech gates that serve it |
 
 ## Ground rules used throughout
 

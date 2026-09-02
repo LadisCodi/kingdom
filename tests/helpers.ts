@@ -51,6 +51,19 @@ export const fund = (state: GameState, wallet: Record<string, number>): void => 
   if (Gems !== undefined) state.player.wallet.Gems = Gems;
 };
 
+/**
+ * A kingdom allowed to work its forests.
+ *
+ * Forestry gates the FOREST tap (Docs/onboarding.md steps 2-3), so every test
+ * about the harvest loop, workers, taxes or offline replay has to clear it
+ * first — those tests are about what happens after the gate, and the gate
+ * itself is defended in `harvest.test.ts`.
+ */
+export const canChop = (state: GameState): GameState => {
+  completeTech(state, 'Forestry');
+  return state;
+};
+
 export const reveal = (state: GameState, cells: Coord[]): void => {
   for (const c of cells) state.fog.revealed[coordKey(c)] = true;
 };

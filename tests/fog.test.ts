@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { TECH_ORDER } from '../src/sim/data/definitions';
-import { fogState, isReachable, revealCost, revealKnowledge, revealTap } from '../src/sim/fog';
+import {
+  fogState, isReachable, revealCost, revealKnowledge, revealPerTap, revealTap,
+} from '../src/sim/fog';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { techCost } from '../src/sim/research';
+import { reveal } from './helpers';
 import { coordKey, getWallet } from '../src/sim/state';
 
 const map = buildMapData();
@@ -176,5 +179,55 @@ describe('exploring is what buys research', () => {
     expect(tree).toBe(643);
     // Comfortable, but not free: about a quarter of the map funds all of it.
     expect(supply).toBeGreaterThan(tree * 4);
+  });
+});
+
+// Docs/onboarding.md step 20 — the point where exploring stops being a chore.
+//
+// Surveying does NOT make a cell cheaper. The Gold is unchanged; what it buys
+// back is the player's TIME, which is what exploring actually spends once the
+// far rings cost 320 and 640 Gold at one Gold a tap. That distinction is the
+// whole design of the upgrade, so it is what the test asserts.
+describe('Surveying makes a tap on the fog go further', () => {
+  const payFor = (state: ReturnType<typeof newGame>, cell: { x: number; y: number }) => {
+    let taps = 0;
+    let r: string = 'Paid';
+    while (r === 'Paid') { r = revealTap(state, map, cell); taps += 1; }
+    expect(r).toBe('Revealed');
+    return taps;
+  };
+
+  it('costs the same Gold at every level, and takes a third of the taps at level 2', () => {
+    const cell = { x: 0, y: 4 }; // ring 3 — 5 Gold
+    const plain = newGame(map, NOW);
+    plain.city.wallet.Gold = 500;
+    reveal(plain, [{ x: 0, y: 3 }]);
+    const goldBefore = getWallet(plain.city.wallet, 'Gold');
+    const plainTaps = payFor(plain, cell);
+    const spent = goldBefore - getWallet(plain.city.wallet, 'Gold');
+    expect(plainTaps).toBe(revealCost(3));
+
+    const surveyed = newGame(map, NOW);
+    surveyed.city.wallet.Gold = 500;
+    reveal(surveyed, [{ x: 0, y: 3 }]);
+    surveyed.upgrades.Surveying = 2; // one tap does the work of three
+    expect(revealPerTap(surveyed)).toBe(3);
+    const before2 = getWallet(surveyed.city.wallet, 'Gold');
+    const fastTaps = payFor(surveyed, cell);
+
+    expect(fastTaps).toBe(Math.ceil(plainTaps / 3));
+    // Same price. Only the number of taps moved.
+    expect(before2 - getWallet(surveyed.city.wallet, 'Gold')).toBe(spent);
+  });
+
+  it('never overpays the last tap of a cell', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 500;
+    state.upgrades.Surveying = 2;
+    reveal(state, [{ x: 0, y: 3 }]);
+    const cell = { x: 0, y: 4 }; // 5 Gold, which 3 does not divide
+    const before = getWallet(state.city.wallet, 'Gold');
+    payFor(state, cell);
+    expect(before - getWallet(state.city.wallet, 'Gold')).toBe(revealCost(3));
   });
 });

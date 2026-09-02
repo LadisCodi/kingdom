@@ -38,7 +38,8 @@ to do with an afternoon:
 
 **Clearing a cell of fog pays Knowledge equal to its ring** — distance 3 pays
 3, distance 10 pays 10 (`knowledge.per_reveal_ring`, ×1). Only on the tap that
-*finishes* the cell; partial payments bank nothing.
+*finishes* the cell; partial payments bank nothing. This is the game's opening
+move, not a side income: the first five cells are what buy Forestry.
 
 Linear, against a reveal cost that doubles from ring 4 (1, 3, 5, 10, 20, 40,
 80, 160, 320, 640 Gold). That gap is deliberate and it is the whole shape of
@@ -62,12 +63,13 @@ means something before the Reliquary opens.
 
 | | Knowledge |
 |---|---|
-| the whole technology tree (22 techs) | **643** |
-| the quest chain (38 quests) | **591** |
+| the whole technology tree (23 techs) | **673** |
+| the quest chain (50 quests) | **575** |
 | revealing the entire map (342 cells) | **2,902** |
 
-Tech prices are the old Gold prices ÷ 10: Forestry 8, Urban Planning 20,
-Communities 45, Deep Mining 80.
+Tech prices started as the old Gold prices ÷ 10: Forestry 8, Urban Planning 20,
+Communities 45, Deep Mining 80. Saws (12) and Cartography (18) were authored
+against that scale by the onboarding rewrite; Crop Rotation was retired.
 
 Three properties, each asserted by a test rather than left to playtest:
 
@@ -77,11 +79,12 @@ Three properties, each asserted by a test rather than left to playtest:
 2. **The map holds more than four times the tree.** About a quarter of the map
    funds every technology there is; the rest is surplus that flows into
    artifact and hero levelling, which is where Knowledge was always going.
-3. **The chain's first tech gate is reachable when it arrives.** Quest 8
-   (`Woodcraft`) *demands* Forestry, so quests 6 and 7 alone must cover its 8
-   Knowledge — counting no exploration income at all, even though the quest
-   right before it makes the player clear fog. `TaxDay` was raised 2 → 3 to
-   close that off-by-one, which the test found.
+3. **The chain's first tech gate is reachable when it arrives.** Quest 2
+   (`Woodcraft`) *demands* Forestry, and quest 1 is the only thing before it —
+   and pays no Knowledge of its own. Every point comes from the fog quest 1
+   makes the player clear, so the sum that has to work is (cells asked for) ×
+   (the cheapest Knowledge any of them can pay) ≥ Forestry. Cheapest, because
+   the player picks the cells. See [`../onboarding.md`](../onboarding.md).
 
 ## 4. What the player sees
 

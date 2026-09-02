@@ -4,6 +4,7 @@ import { DISTRICTS, FOG, KNOWLEDGE } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
+import { effect } from './upgrades';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
 import {
@@ -94,6 +95,17 @@ export function explorationGate(map: MapData, cell: Coord): TechId | null {
 export const revealKnowledge = (map: MapData, cell: Coord): number =>
   townhallDistance(map, cell) * KNOWLEDGE.perRevealRing;
 
+/**
+ * How much reveal progress ONE tap on the fog buys.
+ *
+ * Surveying does not make a cell cheaper — the Gold is unchanged. It buys
+ * back the player's TIME, which is what exploring actually spends once the
+ * far rings cost 320 and 640 Gold and a single cell wants hundreds of taps.
+ * Level 1 makes a tap count double, level 2 triple.
+ */
+export const revealPerTap = (state: GameState): number =>
+  FOG.goldPerTap * (1 + effect(state, 'Surveying'));
+
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';
 
@@ -109,7 +121,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   const key = coordKey(cell);
   const total = revealCostForCell(state, map, cell);
   const paid = state.fog.progress[key] ?? 0;
-  const payment = Math.min(FOG.goldPerTap, total - paid);
+  const payment = Math.min(revealPerTap(state), total - paid);
   if (getWallet(state.city.wallet, 'Gold') < payment) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -payment);
   const nowPaid = paid + payment;

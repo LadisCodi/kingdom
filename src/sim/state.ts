@@ -35,13 +35,13 @@ export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'S
 export type TechId =
   | 'Forestry'
   | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
-  | 'Agriculture' | 'Farming' | 'Market' | 'CropRotation' // economics: farm side
+  | 'Saws' | 'Agriculture' | 'Farming' | 'Market' // economics: farm side
   | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
-  | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration (right)
+  | 'Cartography' | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration
   | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry' // military (down)
   | 'Attunement' | 'Warband'; // the magic and expedition leaves
 export type UpgradeId =
-  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
+  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Surveying' | 'MarketStall' | 'TradeRoutes'
   | 'Stonecutting' | 'BigNets' | 'IronPicks';
 
 export interface Coord { x: number; y: number }

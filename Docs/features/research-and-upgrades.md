@@ -63,21 +63,27 @@ Everything numeric lives in the balance workbook:
 - Settings: `research.tech_slots`, `research.max_slots`,
   `research.slot_gem_cost_base`, `research.slot_gem_cost_growth`.
 
-The tree: **Forestry** is the root (Sawmill; upgrades TapPower, QuickHands,
-WorkerLoad), and four themed branches leave it:
+The tree: **Forestry** is the root — it opens the FOREST to the tap (see
+[`../onboarding.md`](../onboarding.md) steps 2-3) and carries the upgrades
+TapPower, QuickHands and WorkerLoad. Four themed branches leave it:
 
 - **CIVICS (up)**: **Urban Planning** (Housing L2) → **Communities** (every
   Housing +1 capacity) → **Architecture** (Townhall L3)
 - **ECONOMICS (left)** — two rows:
-  - farm side: **Agriculture** (FarmLands) → **Farming** (the Farm) →
-    **Crop Rotation** (Farm L2); Agriculture → **Market** (Market building;
-    upgrades MarketStall +5% sale prices, TradeRoutes +10% tax income)
+  - **Saws** (the Sawmill) hangs directly off Forestry: chopping by hand and
+    automating it are two separate decisions, ten onboarding beats apart
+  - farm side: **Agriculture** (FarmLands **and** the Farm — one research, so
+    nothing sits between tapping a plot and automating it) → **Farming**
+    (Farm L2); Agriculture → **Market** (Market building; upgrades
+    MarketStall +5% sale prices, TradeRoutes +10% tax income)
   - stone side: **Masonry** (Quarry; upgrade Stonecutting) → **Mining**
     (Mine, costs Stone; upgrade Iron Picks) → **Deep Mining** (Mine L2);
     Masonry → **Engineering** (Quarry L2, Sawmill L3)
-- **EXPLORATION (right)**: **Sailing** (sea cells become explorable) →
+- **EXPLORATION (right)**: **Cartography** heads the branch (upgrade
+  **Surveying**, +1 Gold of reveal progress per tap on the fog, max 2 — so a
+  tap counts double then triple) → **Sailing** (sea cells become explorable) →
   **Fishing** (the Docks + fishing boats; upgrade Big Nets) →
-  **Shipbuilding** (Docks L2); Forestry → **Scaling Tools** (mountain cells
+  **Shipbuilding** (Docks L2); Cartography → **Scaling Tools** (mountain cells
   become explorable)
 - **MILITARY (down)**: **Warrior** (the Warrior unit) → **Spears** (Lancer),
   **Archery** (Archer), **Cavalry** (Cavalry)
@@ -90,8 +96,15 @@ drawn with the `terrain_mountain.png` tile like any other biome.
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —
 layout is content; cells (−1,0) and (1,0) stay empty so the branch trunks can
-elbow through them without crossing nodes. Upgrade circles auto-fan below
-their parent.
+elbow through them without crossing nodes. Cartography sits at (2,0) rather
+than the nearer (1,0) for exactly that reason — the Forestry→Attunement
+connector already elbows through (1,0). Upgrade circles auto-fan below their
+parent.
+
+**Crop Rotation was retired** (2026-09-02). It gated the Farm's level 2 and
+nothing else; when Agriculture took over the Farm itself, Farming inherited
+that level gate and Crop Rotation was left unlocking nothing. A node in the
+tree that unlocks nothing is the same lie as a lit tab that leads nowhere.
 
 ## Changes from 2026-09-02
 

@@ -136,6 +136,13 @@ Standard RPG-gacha grammar, kept minimal.
 - **Duplicates convert to that hero's Fragments.** No dead pulls, ever.
 - **Pulls cost Gems directly.** One wallet, one thing to understand; events gift
   Gems like everything else does.
+- **The first call on the standard banner is free** (2026-09-02, for
+  [`../onboarding.md`](../onboarding.md) step 25). A summon the player has
+  never seen is not one they can judge the price of, and a banner whose first
+  impression is "you cannot afford this" teaches the wrong thing about the
+  whole system. It needs no new save field: `pullCounts` already persists for
+  pity, and "have you pulled here yet" is exactly what it records. The button
+  reads **"Call — free"** rather than rendering a price of zero.
 - **Banners are data**: `{ id, startsAt, endsAt, pool, rateUp }` — the same
   timeline the Conjunction runs on (`engine-seams.md` §5). A legendary event hero
   is **one banner row and one hero row**. That expandability costs nothing extra

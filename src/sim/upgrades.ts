@@ -58,7 +58,7 @@ export function buyUpgrade(state: GameState, id: UpgradeId): BuyUpgradeResult {
 
 // -------------------------------------------------- effective values
 
-const effect = (state: GameState, id: UpgradeId): number =>
+export const effect = (state: GameState, id: UpgradeId): number =>
   upgradeLevel(state, id) * UPGRADES[id].effectPerLevel;
 
 /**

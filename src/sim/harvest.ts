@@ -5,6 +5,7 @@ import { DISTRICTS, FEATURES, HARVEST, TAP, type HarvestSpec } from './data/defi
 import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
 import { recordQuestEvent } from './quests';
+import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import { resolve } from './modifiers';
@@ -153,7 +154,8 @@ export function advanceRespawns(state: GameState, map: MapData, toTime: number):
   }
 }
 
-export type TapCellResult = 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed';
+export type TapCellResult =
+  | 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed' | 'TechLocked';
 export type CollectTapResult = TapCellResult | 'OnCooldown' | 'NoMana';
 
 /** Why this cell would refuse a tap, or null if it would harvest. Shared by
@@ -165,7 +167,13 @@ export function harvestBlock(
   now: number,
 ): Exclude<TapCellResult, 'Harvested'> | null {
   if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
-  if (harvestSourceAt(state, cell) === null) return 'NotHarvestable';
+  const source = harvestSourceAt(state, cell);
+  if (source === null) return 'NotHarvestable';
+  // Checked before exhaustion: "you cannot work this yet" is the useful thing
+  // to hear about a forest you have never been able to touch, and it is true
+  // whether or not somebody has already worn the cell out.
+  const gate = HARVEST[source].requiredTech;
+  if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
   if (isExhausted(state, cell, now)) return 'Exhausted';
   return null;
 }

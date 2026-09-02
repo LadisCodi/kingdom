@@ -72,6 +72,11 @@ export interface HarvestSpec {
   /** Seconds to recover after exhausting; 0 = FINITE — the feature is
    *  consumed and vanishes from the map when drained. */
   recoverySeconds: number;
+  /** The technology a player needs before they may tap this at all; null =
+   *  none. Forestry gates the Forest so the trees around the Townhall are
+   *  VISIBLE and refusing from the first second — which is what makes the
+   *  first research something the player wants rather than a chore. */
+  requiredTech: TechId | null;
   /** FINITE sources only: seconds after depletion until the feature
    *  reappears in a random tile adjacent to its ORIGINAL map cell
    *  (0 = never — removed for good). */
@@ -80,14 +85,19 @@ export interface HarvestSpec {
 
 // Exhaustion/recovery applies to NATURAL sources only — buildings (Townhall,
 // Housing) are tapped to advance their timers instead, and never exhaust.
+const harvest = (
+  currencyId: CurrencyId,
+  b: Omit<HarvestSpec, 'currencyId' | 'requiredTech'> & { requiredTech: unknown },
+): HarvestSpec => ({ ...b, currencyId, requiredTech: (b.requiredTech ?? null) as TechId | null });
+
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
-  Forest: { currencyId: 'Wood', ...balance.harvest.Forest },
-  Crops: { currencyId: 'Food', ...balance.harvest.Crops },
-  Berries: { currencyId: 'Berries', ...balance.harvest.Berries },
-  Meat: { currencyId: 'Meat', ...balance.harvest.Meat },
-  Stone: { currencyId: 'Stone', ...balance.harvest.Stone },
-  Fish: { currencyId: 'Fish', ...balance.harvest.Fish },
-  Iron: { currencyId: 'Iron', ...balance.harvest.Iron },
+  Forest: harvest('Wood', balance.harvest.Forest),
+  Crops: harvest('Food', balance.harvest.Crops),
+  Berries: harvest('Berries', balance.harvest.Berries),
+  Meat: harvest('Meat', balance.harvest.Meat),
+  Stone: harvest('Stone', balance.harvest.Stone),
+  Fish: harvest('Fish', balance.harvest.Fish),
+  Iron: harvest('Iron', balance.harvest.Iron),
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -123,7 +133,8 @@ export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'SellGoods'
-  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts';
+  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts'
+  | 'OwnHeroes' | 'BuyUpgrade';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
   new Set(['CollectResource', 'CollectTaps', 'DiscoverCells', 'SellGoods']);
@@ -243,7 +254,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🌾',
     sprite: 'farm',
     harvestSource: 'Crops',
-    requiredTech: 'Farming',
+    requiredTech: 'Agriculture',
     ...districtBalance(balance.districts.Farm),
   },
   FarmLands: {
@@ -265,7 +276,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🪚',
     sprite: 'sawmill',
     harvestSource: 'Forest',
-    requiredTech: 'Forestry',
+    requiredTech: 'Saws',
     ...districtBalance(balance.districts.Sawmill),
   },
   Market: {
@@ -468,7 +479,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Forestry: tech({
     id: 'Forestry',
     name: 'Forestry',
-    description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
+    description: 'Axes and felling — you can chop the forest cells around you.',
     glyph: '🪓',
     node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
@@ -495,17 +506,24 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     node: { x: 0, y: -3 },
   }, balance.technologies.Architecture),
   // ---- economics: farm side (left, row 0)
+  Saws: tech({
+    id: 'Saws',
+    name: 'Saws',
+    description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
+    glyph: '🪚',
+    node: { x: -1, y: 1 },
+  }, balance.technologies.Saws),
   Agriculture: tech({
     id: 'Agriculture',
     name: 'Agriculture',
-    description: 'Unlocks crop plots (FarmLands) — tap them for Food.',
+    description: 'Unlocks crop plots and the Farm that works them.',
     glyph: '🌱',
     node: { x: -2, y: 0 },
   }, balance.technologies.Agriculture),
   Farming: tech({
     id: 'Farming',
     name: 'Farming',
-    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
+    description: 'Deeper furrows — the Farm reaches level 2.',
     glyph: '🚜',
     node: { x: -3, y: 0 },
   }, balance.technologies.Farming),
@@ -516,13 +534,6 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🤝',
     node: { x: -2, y: 1 },
   }, balance.technologies.Market),
-  CropRotation: tech({
-    id: 'CropRotation',
-    name: 'Crop Rotation',
-    description: 'Smarter fields — the Farm reaches level 2.',
-    glyph: '🔄',
-    node: { x: -4, y: 0 },
-  }, balance.technologies.CropRotation),
   // ---- economics: stone side (upper left, row −1)
   Masonry: tech({
     id: 'Masonry',
@@ -553,33 +564,43 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     node: { x: -3, y: -1 },
   }, balance.technologies.DeepMining),
   // ---- exploration (right)
+  //
+  // Cartography heads the branch and sits at (2,0): the trunk elbow at (1,0)
+  // stays empty, so the Forestry→Attunement connector still has it to itself.
+  Cartography: tech({
+    id: 'Cartography',
+    name: 'Cartography',
+    description: 'Survey and chart — unlocks Surveying, and the ways past rock and water.',
+    glyph: '🗺️',
+    node: { x: 2, y: 0 },
+  }, balance.technologies.Cartography),
   Sailing: tech({
     id: 'Sailing',
     name: 'Sailing',
     description: 'Rafts and rigging — sea cells can be explored.',
     glyph: '⛵',
-    node: { x: 2, y: 0 },
+    node: { x: 3, y: 0 },
   }, balance.technologies.Sailing),
   Fishing: tech({
     id: 'Fishing',
     name: 'Fishing',
     description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
     glyph: '🎣',
-    node: { x: 3, y: 0 },
+    node: { x: 4, y: 0 },
   }, balance.technologies.Fishing),
   Shipbuilding: tech({
     id: 'Shipbuilding',
     name: 'Shipbuilding',
     description: 'Sturdier hulls — the Docks reach level 2.',
     glyph: '🛶',
-    node: { x: 4, y: 0 },
+    node: { x: 5, y: 0 },
   }, balance.technologies.Shipbuilding),
   ScalingTools: tech({
     id: 'ScalingTools',
     name: 'Scaling Tools',
     description: 'Ropes and pitons — mountain cells can be explored.',
     glyph: '🧗',
-    node: { x: 1, y: 1 },
+    node: { x: 2, y: 1 },
   }, balance.technologies.ScalingTools),
   // ---- military (down)
   Warrior: tech({
@@ -630,9 +651,9 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
 export const TECH_ORDER: TechId[] = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture',
-  'Agriculture', 'Farming', 'Market', 'CropRotation',
+  'Saws', 'Agriculture', 'Farming', 'Market',
   'Masonry', 'Mining', 'Engineering', 'DeepMining',
-  'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
+  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
   'Warrior', 'Spears', 'Archery', 'Cavalry',
   'Attunement', 'Warband',
 ];
@@ -688,6 +709,13 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
     description: '+1 resource per worker delivery',
   }, balance.upgrades.WorkerLoad),
+  Surveying: upgrade({
+    id: 'Surveying', name: 'Surveying', glyph: '🧭',
+    // Each level makes one tap on the fog do the work of one more. The Gold
+    // a cell costs is unchanged — this buys the player's TIME back, which is
+    // the thing exploration actually spends once the far rings get expensive.
+    description: '+1 Gold of reveal progress per tap on the fog',
+  }, balance.upgrades.Surveying),
   MarketStall: upgrade({
     id: 'MarketStall', name: 'Market Stall', glyph: '🛒',
     description: '+5% Market sale prices',

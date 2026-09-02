@@ -299,15 +299,20 @@ describe('landmarks', () => {
   // player can SEE exactly one sanctuary from the first minute and cannot
   // afford it for a long while. It is a destination, not a pickup — and the
   // rest are not even discovered, so the fog still has somewhere to go.
+  //
+  // The price is now tuned to the tutorial (Docs/onboarding.md step 19): it
+  // is claimed once the Sawmill is running, so it has to be reachable THEN —
+  // an order of magnitude above the opening's Gold, not two.
   it('shows exactly one sanctuary at the start, and prices it as a goal', () => {
     const state = freshGame();
     const visible = LANDMARKS.filter((l) => fogState(state, map, l.location) === 'Revealed');
     expect(visible).toHaveLength(1);
 
     const [inSight] = visible;
-    // Dearer than anything the opening hands out: at Townhall 1 (two houses,
-    // one resident each) this is well over an hour of idle income.
-    expect(landmarkClaimCost(inSight)).toBeGreaterThan(4000);
+    // Many times what a new kingdom is handed, and still a genuine save.
+    expect(landmarkClaimCost(inSight)).toBeGreaterThan(
+      10 * getWallet(state.city.wallet, 'Gold'),
+    );
     expect(getWallet(state.city.wallet, 'Gold')).toBeLessThan(landmarkClaimCost(inSight));
 
     // Everything else is still under the fog, and dearer again.

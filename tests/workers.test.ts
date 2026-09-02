@@ -23,7 +23,10 @@ const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSe
 
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   fund(state, { Gold: 500, Wood: 500 });
-  completeTech(state, 'Forestry'); // the Sawmill sits behind this tech now
+  // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
+  // it for you (Docs/onboarding.md steps 3 and 15).
+  completeTech(state, 'Forestry');
+  completeTech(state, 'Saws');
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
   // near the origin, so start from black fog and reveal only the test cells.
   // (The sawmill's own completion re-reveals its radius-1 ring.)
@@ -176,8 +179,7 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // L1 capacity 1
-    addBuilt(state, 'Housing', { x: 0, y: -1 }); // a second roof
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // one L1 house now holds TWO
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);

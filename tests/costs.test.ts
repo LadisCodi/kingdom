@@ -20,8 +20,11 @@ describe('build cost by instance (Docs/04 table)', () => {
     expect(buildCost('Sawmill', 1)).toEqual({ Wood: 110 });
     expect(buildCost('Sawmill', 2)).toEqual({ Wood: 353 });
   });
-  it('FarmLands: 20 → 91 → 298 → 633 → 1103 → 1717', () => {
-    const expected = [20, 91, 298, 633, 1103, 1717];
+  // The cheapest thing in the game, deliberately: a crop plot is a furrow,
+  // and at 20 Wood it cost twice a House — which stranded the player at
+  // onboarding step 10 with nothing left after the roof.
+  it('FarmLands: 10 → 45 → 149 → 316 → 551 → 858', () => {
+    const expected = [10, 45, 149, 316, 551, 858];
     expected.forEach((wood, n) => expect(buildCost('FarmLands', n)).toEqual({ Wood: wood }));
   });
 });
@@ -43,10 +46,14 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
     expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Wood: 150 });
     expect(upgradeDuration('Sawmill', 2)).toBe(45);
   });
-  it('Townhall L1→L2 = 40 Wood + 20 Stone in 30 s; L2→L3 = 156 + 78 in 120 s', () => {
-    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 40, Stone: 20 });
+  // Wood ONLY, deliberately: the onboarding chain reaches Townhall 2 before
+  // it reaches the Quarry (Docs/onboarding.md, woven in around step 14), and
+  // an upgrade that asks for Stone the player has no building for is a wall,
+  // not a goal.
+  it('Townhall L1→L2 = 60 Wood in 30 s; L2→L3 = 234 Wood in 120 s', () => {
+    expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 60 });
     expect(upgradeDuration('Townhall', 1)).toBe(30);
-    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Wood: 156, Stone: 78 });
+    expect(upgradeCost('Townhall', 1, 2)).toEqual({ Wood: 234 });
     expect(upgradeDuration('Townhall', 2)).toBe(120);
   });
   it('Housing L1→L2 = 30 Wood + 10 Stone in 20 s', () => {

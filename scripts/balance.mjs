@@ -58,14 +58,14 @@ const DISTRICT_IDS = [
 const TECH_IDS = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture', // civics
-  'Agriculture', 'Farming', 'Market', 'CropRotation', // economics: farm side
+  'Saws', 'Agriculture', 'Farming', 'Market', // economics: farm side
   'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
-  'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
+  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
   'Warrior', 'Spears', 'Archery', 'Cavalry', // military
   'Attunement', 'Warband', // the magic and expedition leaves
 ];
 const UPGRADE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
+  'TapPower', 'QuickHands', 'WorkerLoad', 'Surveying', 'MarketStall', 'TradeRoutes',
   'Stonecutting', 'BigNets', 'IronPicks',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
@@ -78,6 +78,7 @@ const QUEST_GOAL_TYPES = {
   AssignWorkers: null, TrainArmy: null,
   // The long game: magic and expeditions.
   ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
+  OwnHeroes: null, BuyUpgrade: 'upgrade',
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
 };
@@ -220,7 +221,7 @@ const SHEETS = {
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'recruit_cost_iron', 'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
-    'respawn_seconds'],
+    'respawn_seconds', 'required_tech'],
   Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
   // Research is paid in Knowledge and nothing else — one column, not a
@@ -363,6 +364,13 @@ function techList(row, col) {
     if (!TECH_IDS.includes(id)) fail(where(row), `"${col}" has an unknown tech ("${id}")`);
     return id;
   });
+}
+
+function techOrBlank(row, column) {
+  const v = row[column];
+  if (v === '' || v === undefined) return null;
+  if (!TECH_IDS.includes(String(v))) fail(where(row), `unknown technology "${v}"`);
+  return String(v);
 }
 
 function wallet(row, prefix) {
@@ -578,6 +586,11 @@ async function importXlsx() {
       tapsToExhaust: num(r, 'taps_to_exhaust'),
       recoverySeconds: num(r, 'recovery_seconds'),
       respawnSeconds: num(r, 'respawn_seconds', { blankAs: 0 }),
+      // Blank = anyone can tap it. A gate here is a TUTORIAL beat: the trees
+      // around the Townhall are visible from the first second and refuse the
+      // tap until Forestry is in, which is what makes the first research
+      // something the player wants rather than something they are told to do.
+      requiredTech: techOrBlank(r, 'required_tech'),
     };
   }
 
@@ -685,7 +698,9 @@ async function importXlsx() {
     questIds.add(r.id);
     const targetKind = QUEST_GOAL_TYPES[r.goal_type];
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
-    const lists = { district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS };
+    const lists = {
+      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
+    };
     if (targetKind === null && target !== null) {
       fail(where(r), `goal_type ${r.goal_type} takes no goal_target`);
     }
@@ -879,7 +894,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];
     return [id, h.yieldPerTap, h.yieldPerWorker, h.tapsToExhaust, h.recoverySeconds,
-      h.respawnSeconds || ''];
+      h.respawnSeconds || '', h.requiredTech ?? ''];
   }));
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {

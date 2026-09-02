@@ -96,8 +96,10 @@ cell of the city **plus all its neighbours** is revealed. With just the Townhall
 
 ### Paying to reveal
 
-- Each tap on a Discovered cell pays `min(SilverPerTap, remaining)` Silver from the
-  city wallet; **SilverPerTap = 1**. Progress accumulates per cell; when accumulated
+- Each tap on a Discovered cell pays `min(revealPerTap, remaining)` Gold from the
+  city wallet; **`fog.gold_per_tap` = 1**, multiplied by the **Surveying**
+  upgrade (max level 2, so a tap counts double then triple). Surveying changes
+  the number of TAPS, never the Gold a cell costs. Progress accumulates per cell; when accumulated
   Silver ≥ the cell's total cost, the cell becomes Revealed (progress is discarded).
 - Reveal taps are blocked while a full-screen overlay menu is open (the tile-info
   popup doesn't count).

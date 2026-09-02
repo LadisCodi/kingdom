@@ -6,7 +6,7 @@ import { enqueueBuild } from '../src/sim/commands';
 import {
   DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
 } from '../src/sim/data/definitions';
-import { placementBlock } from '../src/sim/districts';
+import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
   anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
   startTech, techCost, techSlots, techUnlocks,
@@ -23,7 +23,11 @@ const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('technology basics', () => {
-  it('the farming chain: Agriculture unlocks FarmLands, Farming unlocks the Farm', () => {
+  // Docs/onboarding.md step 9: ONE research opens the plots and the Farm that
+  // works them. Splitting them across two techs put a second research between
+  // "tap this for Food" and "stop tapping this for Food", which is the beat
+  // the tutorial is actually built around. Farming now buys the Farm's level 2.
+  it('the farming chain: Agriculture unlocks crop plots AND the Farm', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Knowledge: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
@@ -42,11 +46,13 @@ describe('technology basics', () => {
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
     expect(startTech(state, 'Agriculture', T0 + durationMs)).toBe('AlreadyDone');
 
-    // Crop plots open up; the Farm still needs the follow-up tech.
+    // Both open at once — no second research between tapping a plot and
+    // automating it.
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe(null);
-    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
-    completeTech(state, 'Farming');
+    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe(null);
     expect(enqueueBuild(state, map, 'Farm', FARM_CELL)).toBe('Started');
+    // Farming is what the Farm's second level costs.
+    expect(requiredTechForLevel('Farm', 2)).toBe('Farming');
   });
 
   it('gates units: every unit has its technology (Warrior, Archery)', () => {
@@ -77,6 +83,7 @@ describe('technology basics', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Knowledge: 100 });
     completeTech(state, 'Forestry');
+    completeTech(state, 'Cartography'); // the exploration branch heads here now
     expect(startTech(state, 'Sailing', T0)).toBe('Started');
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(100 - techCost('Sailing'));
     expect(state.city.wallet.Gold).toBe(1000); // the city paid nothing

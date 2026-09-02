@@ -231,8 +231,9 @@ export function renderResearchMenu(game: Game): HTMLElement {
       const affordable = canAfford(state.city.wallet, { Gold: upgradeCost(u, level) });
       const cls = maxed ? 'done' : affordable ? 'available' : 'locked';
       const isSel = selected?.kind === 'upgrade' && selected.id === u;
+      const hinted = game.uiHint() === `upgrade:${u}`;
       const node = el('button', {
-        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}`,
+        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
       }, def.glyph);
       if (canBuyUpgrade(state, u)) node.append(el('span', { class: 'node-dot' }));
@@ -276,8 +277,13 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // its rAF restore. Only the hint still needs to move the view, and it must
   // run after the host has put the old position back.
   const hint = game.uiHint();
+  // An upgrade circle hangs below its parent tech, so scrolling to the PARENT
+  // brings the hinted upgrade on screen with it — one code path for both.
   const hintedTech = hint?.startsWith('tech:')
-    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
+    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null)
+    : hint?.startsWith('upgrade:')
+      ? (UPGRADES[hint.slice('upgrade:'.length) as UpgradeId]?.requiredTech ?? null)
+      : null;
   if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
     requestAnimationFrame(() => {
       tree.scrollLeft = Math.max(0, cx(hintedTech) - tree.clientWidth / 2);
