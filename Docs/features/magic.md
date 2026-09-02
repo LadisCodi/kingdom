@@ -195,9 +195,28 @@ were living off.
 ## 4. Landmarks and the Sanctum
 
 **Landmarks** are small, numerous, passive map features — a shrine, a standing
-stone, a leyspring. 8–12 across the map. Claiming one raises Mana production by
-**+1/h** permanently. Claiming rules and the contested variant live in
-`expeditions.md`.
+stone, a leyspring. Ten across the map. Claiming one raises the Mana **cap** by
+**+10** permanently (it used to be +1/h of production — see `ad-economy.md`).
+Claiming rules and the contested variant live in `expeditions.md`.
+
+**Placed and priced as destinations, not pickups** (2026-09-02). Exactly ONE
+sits inside the Townhall's own reveal radius, visible from the first minute and
+costing **5,000 Gold** — over an hour of idle income at Townhall 1, so it is a
+thing to save for rather than something you stumble into. The rest are
+*undiscovered* at the start and sit two rings further out:
+
+| Tier | Distance | Cost | Count |
+|---|---|---|---|
+| In sight | 2 | **5,000** | 1 |
+| The middle ring | 5–6 | **25,000** | 5 |
+| The far ring | 8–10 | **100,000** | 4 — all of them **defended** |
+
+The dearest tier is exactly the defended set, so the last sanctuaries need both
+the Gold *and* an army — which is also the only thing that gives combat a job
+outside a dungeon.
+
+Costs are **authored per sanctuary**, not derived from distance. The tiers are
+the design, and no `base × growth^distance` curve lands on those numbers.
 
 They are what makes exploration *compound*, and they are the design's answer to
 the audit's strongest keeper — paid fog as the primary economic sink, which it
@@ -208,7 +227,7 @@ notes nobody else in the category does:
 A flat resource drip cannot do this, because it does not feed the constraint that
 gates everything else.
 
-**The Sanctum** is a new city district raising the Mana cap (3 levels, +12 each).
+**The Sanctum** is a new city district raising the Mana cap (3 levels, +24/48/72).
 It reuses `districts.ts` wholesale — count caps, distance costs, level gates.
 
 ---

@@ -107,6 +107,11 @@ pays a whole pool, a claim makes every future ad permanently larger:
 | Townhall 1, five sanctuaries | 150 | **150** |
 | Townhall 3, all ten, Sanctum L3 | 332 | **332** |
 
+Getting there is the cost. Sanctuaries are priced as destinations — 5,000 for
+the one in sight, 25,000 for the middle ring, 100,000 for the far one, which is
+also the defended set (`magic.md` §4). So the pool grows on a schedule the
+player chooses to save for, and each step permanently raises the ad.
+
 That is the shape a reward at the end of an exponential fog cost wants: worth
 *more* the longer you play. The +1 Mana/h it replaced was worth most on the day
 you found it and less every day after, because production is a rate and the

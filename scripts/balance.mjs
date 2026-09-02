@@ -135,8 +135,6 @@ const SETTINGS = [
   ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
-  ['mana.landmark_claim_cost_base', 'mana.landmarkClaimCostBase'],
-  ['mana.landmark_claim_cost_growth', 'mana.landmarkClaimCostGrowth'],
   ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
@@ -234,7 +232,7 @@ const SHEETS = {
     'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
   Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
-  Landmarks: ['id', 'kind', 'x', 'y', 'defended'],
+  Landmarks: ['id', 'kind', 'x', 'y', 'defended', 'claim_cost'],
   Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
     'max_depth', 'supply_food', 'supply_gold', 'supply_iron', 'affinity', 'artifact'],
   Settings: ['key', 'value'],
@@ -759,6 +757,10 @@ async function importXlsx() {
     out.landmarks.push({
       id: String(r.id), kind: r.kind, x, y,
       defended: num(r, 'defended', { blankAs: 0 }) === 1,
+      // Authored per sanctuary, not derived from distance. The tiers ARE the
+      // design — one in sight you save weeks for, then two rings beyond it —
+      // and a curve cannot express "5,000 / 25,000 / 100,000" exactly.
+      claimCost: num(r, 'claim_cost'),
     });
   }
 
@@ -908,7 +910,7 @@ async function exportXlsx() {
   }));
 
   addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>
-    [l.id, l.kind, l.x, l.y, l.defended ? 1 : '']));
+    [l.id, l.kind, l.x, l.y, l.defended ? 1 : '', l.claimCost]));
 
   addSheet(workbook, 'Ruins', RUIN_IDS.map((id) => {
     const r = b.ruins[id];

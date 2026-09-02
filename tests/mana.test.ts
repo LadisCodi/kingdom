@@ -7,6 +7,7 @@
 // same way it ticks live.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
+import { fogState } from '../src/sim/fog';
 import { addModifier, type Modifier } from '../src/sim/modifiers';
 import { MANA, OFFLINE_CAP_HOURS } from '../src/sim/data/definitions';
 import {
@@ -257,7 +258,7 @@ describe('landmarks', () => {
   it('cost Gold on the fog’s own distance curve, and pay capacity forever', () => {
     const state = freshGame();
     reveal(state, [first.location]);
-    const cost = landmarkClaimCost(map, first);
+    const cost = landmarkClaimCost(first);
     expect(cost).toBeGreaterThan(0);
 
     expect(claimLandmark(state, map, first.location)).toBe('NotEnoughGold');
@@ -290,8 +291,38 @@ describe('landmarks', () => {
   });
 
   it('get farther and dearer, so exploration compounds instead of paying flat', () => {
-    const costs = LANDMARKS.map((l) => landmarkClaimCost(map, l));
+    const costs = LANDMARKS.map((l) => landmarkClaimCost(l));
     expect(Math.max(...costs)).toBeGreaterThan(Math.min(...costs) * 4);
+  });
+
+  // The shape of the map's opening, and a design claim worth protecting: the
+  // player can SEE exactly one sanctuary from the first minute and cannot
+  // afford it for a long while. It is a destination, not a pickup — and the
+  // rest are not even discovered, so the fog still has somewhere to go.
+  it('shows exactly one sanctuary at the start, and prices it as a goal', () => {
+    const state = freshGame();
+    const visible = LANDMARKS.filter((l) => fogState(state, map, l.location) === 'Revealed');
+    expect(visible).toHaveLength(1);
+
+    const [inSight] = visible;
+    // Dearer than anything the opening hands out: at Townhall 1 (two houses,
+    // one resident each) this is well over an hour of idle income.
+    expect(landmarkClaimCost(inSight)).toBeGreaterThan(4000);
+    expect(getWallet(state.city.wallet, 'Gold')).toBeLessThan(landmarkClaimCost(inSight));
+
+    // Everything else is still under the fog, and dearer again.
+    for (const l of LANDMARKS) {
+      if (l.id === inSight.id) continue;
+      expect(fogState(state, map, l.location)).toBe('Undiscovered');
+      expect(landmarkClaimCost(l)).toBeGreaterThan(landmarkClaimCost(inSight));
+    }
+  });
+
+  it('reserves the dearest tier for the ones an army has to clear', () => {
+    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(l)));
+    for (const l of LANDMARKS) {
+      if (landmarkClaimCost(l) === dearest) expect(l.defended).toBe(true);
+    }
   });
 
   it('survive a save round-trip', () => {

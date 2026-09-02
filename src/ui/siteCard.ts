@@ -29,7 +29,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   const look = LANDMARK_ART[def.kind];
   const claimed = game.state.landmarks.claimed[def.id] === true;
   const cleared = !def.defended || game.state.landmarks.cleared[def.id] === true;
-  const cost = landmarkClaimCost(game.map, def);
+  const cost = landmarkClaimCost(def);
 
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },

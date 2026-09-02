@@ -26,9 +26,9 @@
 //    rather than a permanent commitment: the army is never locked up holding
 //    ground.
 
-import { LANDMARKS, MANA, type LandmarkDef } from './data/definitions';
+import { LANDMARKS, type LandmarkDef } from './data/definitions';
 import { fogState } from './fog';
-import { townhallDistance, type MapData } from './grid';
+import type { MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
 import { addToWallet, getWallet, type Coord, type GameState } from './state';
 
@@ -44,12 +44,17 @@ export const isLandmarkClaimed = (state: GameState, id: string): boolean =>
 export const isLandmarkClear = (state: GameState, def: LandmarkDef): boolean =>
   !def.defended || state.landmarks.cleared[def.id] === true;
 
-/** Gold to claim, on the fog's own exponential distance curve — so a far
- *  landmark is a real investment rather than a pickup. */
-export const landmarkClaimCost = (map: MapData, def: LandmarkDef): number =>
-  Math.round(
-    MANA.landmarkClaimCostBase * MANA.landmarkClaimCostGrowth ** townhallDistance(map, def.location),
-  );
+/**
+ * Gold to claim, authored per sanctuary.
+ *
+ * It used to ride the fog's own exponential distance curve. Tiers replaced it
+ * because the PRICES are the design: one sanctuary sits inside the Townhall's
+ * own reveal, visible from the first minute and costing 5,000 — a thing to
+ * save for rather than buy — and the rest sit two rings further out at 25,000
+ * and 100,000. A curve cannot land on those numbers, and a claim the player
+ * has been staring at for a week should cost what the designer said.
+ */
+export const landmarkClaimCost = (def: LandmarkDef): number => def.claimCost;
 
 export type ClaimResult =
   | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'Defended' | 'NotEnoughGold' | 'NoLandmark';
@@ -60,7 +65,7 @@ export function claimLandmark(state: GameState, map: MapData, cell: Coord): Clai
   if (isLandmarkClaimed(state, def.id)) return 'AlreadyClaimed';
   if (fogState(state, map, def.location) !== 'Revealed') return 'NotRevealed';
   if (!isLandmarkClear(state, def)) return 'Defended';
-  const cost = landmarkClaimCost(map, def);
+  const cost = landmarkClaimCost(def);
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
   state.landmarks.claimed[def.id] = true;

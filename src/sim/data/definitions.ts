@@ -804,6 +804,10 @@ export interface LandmarkDef {
   location: Coord;
   /** An enemy army holds it: clear the encounter first, then claim. */
   defended: boolean;
+  /** Gold to claim. Authored per sanctuary rather than derived from distance:
+   *  the tiers are the design — one in sight to save up for, then two rings
+   *  beyond it — and no curve lands on 5,000 / 25,000 / 100,000 exactly. */
+  claimCost: number;
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
@@ -813,12 +817,13 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
 };
 
 export const LANDMARKS: LandmarkDef[] = (balance.landmarks as Array<{
-  id: string; kind: string; x: number; y: number; defended: boolean;
+  id: string; kind: string; x: number; y: number; defended: boolean; claimCost: number;
 }>).map((l) => ({
   id: l.id,
   kind: l.kind as LandmarkKind,
   location: { x: l.x, y: l.y },
   defended: l.defended,
+  claimCost: l.claimCost,
 }));
 
 /**

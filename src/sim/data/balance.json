@@ -1089,8 +1089,6 @@
       72
     ],
     "landmarkCap": 10,
-    "landmarkClaimCostBase": 120,
-    "landmarkClaimCostGrowth": 1.3,
     "gemRefillPerGem": 4
   },
   "attunement": {
@@ -1211,70 +1209,80 @@
       "kind": "Shrine",
       "x": 2,
       "y": -1,
-      "defended": false
+      "defended": false,
+      "claimCost": 5000
     },
     {
       "id": "WhisperingStones",
       "kind": "StandingStones",
-      "x": -1,
-      "y": 2,
-      "defended": false
+      "x": -4,
+      "y": 5,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "BrightLeyspring",
       "kind": "Leyspring",
       "x": 1,
-      "y": 4,
-      "defended": false
+      "y": 6,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "OldOakShrine",
       "kind": "Shrine",
       "x": -2,
-      "y": -2,
-      "defended": false
+      "y": -5,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "CircleOfNine",
       "kind": "StandingStones",
-      "x": 4,
-      "y": 2,
-      "defended": true
+      "x": 8,
+      "y": 4,
+      "defended": true,
+      "claimCost": 100000
     },
     {
       "id": "SunkenLeyspring",
       "kind": "Leyspring",
-      "x": -1,
-      "y": 5,
-      "defended": false
+      "x": 5,
+      "y": 2,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "CliffShrine",
       "kind": "Shrine",
-      "x": 5,
-      "y": -2,
-      "defended": true
+      "x": 3,
+      "y": -9,
+      "defended": true,
+      "claimCost": 100000
     },
     {
       "id": "FallenStones",
       "kind": "StandingStones",
-      "x": -4,
+      "x": -5,
       "y": -3,
-      "defended": false
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "MirrorLeyspring",
       "kind": "Leyspring",
-      "x": 5,
-      "y": 5,
-      "defended": true
+      "x": -3,
+      "y": -10,
+      "defended": true,
+      "claimCost": 100000
     },
     {
       "id": "WindwardShrine",
       "kind": "Shrine",
-      "x": 9,
-      "y": -1,
-      "defended": true
+      "x": 10,
+      "y": 2,
+      "defended": true,
+      "claimCost": 100000
     }
   ],
   "ruins": {

@@ -69,7 +69,8 @@ answers a different need.
 
 Claiming comes in two flavours, which is what keeps them from being a formality:
 
-- **Undefended** — pay a one-off **Gold** cost scaling with distance. A pure
+- **Undefended** — pay a one-off **Gold** cost, authored per sanctuary in
+  tiers (5,000 in sight / 25,000 / 100,000 — see `magic.md` §4). A pure
   economic decision, and another sink on the fog's own curve.
 - **Defended** — an enemy army holds it. Send a party to clear it, then claim.
   This gives combat a second job outside dungeons, and it is a **one-off
