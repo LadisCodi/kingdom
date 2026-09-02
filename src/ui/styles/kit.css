@@ -319,9 +319,22 @@
 
 /* Until the atlas exists this is an emoji in a fixed box, so every call site
  * can be written against the real API now and upgrade in place later —
- * exactly the contract src/render/sprites.ts uses for world art. */
+ * exactly the contract src/render/sprites.ts uses for world art.
+ *
+ * THE SIZES ARE MULTIPLES OF THE ATLAS CELL, AND THAT IS NOT A STYLE CHOICE.
+ * The cell is 32px (scripts/ui-atlas.mjs, ATLAS_CELL) and the background
+ * scales by `--icon-size / cell`, so a size that is not a whole ratio of 32
+ * makes `image-rendering: pixelated` sample some source rows twice and others
+ * not at all. The default used to be 24 — a 0.75x downscale — and it visibly
+ * chewed the resource chips in the header: broken coin rims, ragged outlines,
+ * highlights eaten. It was read as "the icons are bad art" for months.
+ *
+ * 32 is 1:1 and stays whole at every DPR (2x, 3x). 16 is a clean half, and
+ * the -sm cells are authored at 16 anyway, so they land 1:1. 48 is the one
+ * compromise: 1.5x on a DPR-1 desktop, but a clean 3x on the phones this
+ * targets, and 64 would burst the 48px slots it sits in. */
 .icon {
-  --icon-size: 24px;
+  --icon-size: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -346,7 +346,10 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // drew the eye hardest while carrying the least — the two pictures are
     // nearly identical, and the numbers underneath were the whole point.
     foot.append(el('div', { class: 'dc-up' },
-      el('div', { class: 'dc-up-mark' }, iconEl('star', { size: 'lg' })),
+      // Default size, not lg: the 48px variant overflowed its own 40px well,
+      // and the mark is a symbol rather than a portrait — it has no business
+      // shouting louder than the unit art above it.
+      el('div', { class: 'dc-up-mark' }, iconEl('star')),
       el('div', { class: 'dc-up-body' },
         el('div', { class: 'dc-up-title' }, `Level ${next}`),
         el('div', { class: 'dc-deltas' }, ...upgradeDeltas(game, district, next))),
