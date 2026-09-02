@@ -25,7 +25,7 @@
   align-items: center;
   gap: 5px;
   padding: 4px 10px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -67,7 +67,7 @@
   gap: 6px;
   margin: 0 0 0 12px;
   padding: 3px 12px 4px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
   color: var(--parchment);
@@ -126,7 +126,7 @@
 }
 .purse-row:nth-child(odd) { background: rgba(92, 58, 30, 0.07); }
 .purse-name { flex: 1; min-width: 0; }
-.purse-value { font-family: var(--font-display); font-weight: 700; }
+.purse-value { font-family: var(--font-body); font-weight: 700; }
 /* An equivalent's contribution, indented under the currency it feeds. */
 .purse-row.is-sub { padding-left: 26px; font-size: var(--text-helper); color: var(--ink-muted); }
 .purse-row.is-total {

@@ -22,7 +22,7 @@
   gap: 6px;
   padding: 5px 10px;
   margin-bottom: 8px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   color: var(--ink);
   background: var(--gold);
   border: 2px solid var(--gold-dark);
@@ -32,7 +32,7 @@
 
 .mkt-amounts { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .mkt-amount-label {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -64,7 +64,7 @@
   align-items: center;
   gap: 3px;
   padding: 2px 8px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 11px;
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
@@ -77,7 +77,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 19px;
   font-weight: 700;
   color: var(--gold-dark);

@@ -84,8 +84,11 @@ async function boot(): Promise<void> {
   // puts a hard ceiling on a slow or failed download.
   await Promise.race([
     Promise.all([
-      document.fonts.load('700 24px "Kingdom Display"'),
+      // Germania One ships one weight, so asking for 700 would resolve to a
+      // synthesised bold and leave the real face unwaited-for.
+      document.fonts.load('400 24px "Kingdom Display"'),
       document.fonts.load('400 16px "Kingdom Body"'),
+      document.fonts.load('700 16px "Kingdom Body"'),
     ]),
     new Promise((resolve) => setTimeout(resolve, 1500)),
   ]);

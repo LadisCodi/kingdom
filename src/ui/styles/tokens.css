@@ -13,23 +13,43 @@
  * url() for the /kingdom/ base and content-hashes it, while a hand-written
  * <link href="/src/..."> works in dev and 404s on Pages.
  *
- * Both are variable fonts with the wght axis preserved, so 700 is a real
- * instance rather than a synthesised bold. font-display: block on the
- * display face — it carries titles and counters whose metrics diverge
- * sharply from system-ui, so a swap would visibly reflow the HUD; boot()
- * waits for it (with a ceiling) instead. Nunito's metrics are close enough
- * to system-ui that swapping body copy is benign. */
+ * TWO FACES, AND THE SPLIT IS THE POINT. The pixel face this replaces
+ * (Pixelify Sans) carried titles AND every number in the game, which is why
+ * it had to be legible at 13px and never quite was. Germania One now takes
+ * the titles alone — it is a display face and is used like one — while PT
+ * Sans takes body copy and, crucially, EVERY NUMBER.
+ *
+ * PT Sans for numbers is not arbitrary: its digits are all 545 units wide
+ * (567 at bold), so counters are tabular WITHOUT the `tnum` feature, which
+ * the font does not ship. Germania One's digits are proportional (464-483),
+ * so a number set in it would jitter as it ticked — another reason numbers
+ * never go in the title face.
+ *
+ * font-display: block on the title face: its metrics diverge sharply from
+ * system-ui, so a swap would visibly reflow every heading; boot() waits for
+ * it (with a ceiling) instead. PT Sans is close enough to system-ui that
+ * swapping body copy is benign. */
 @font-face {
   font-family: 'Kingdom Display';
-  src: url('../fonts/pixelify-sans-latin.woff2') format('woff2');
-  font-weight: 400 700;
+  src: url('../fonts/germania-one-latin.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: block;
 }
+/* PT Sans is NOT a variable font, so 400 and 700 are two real files rather
+ * than two instances of one — and a real bold beats a synthesised one at the
+ * sizes the HUD uses. */
 @font-face {
   font-family: 'Kingdom Body';
-  src: url('../fonts/nunito-latin.woff2') format('woff2');
-  font-weight: 400 700;
+  src: url('../fonts/pt-sans-latin-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kingdom Body';
+  src: url('../fonts/pt-sans-latin-700.woff2') format('woff2');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -70,10 +90,22 @@
   --nav-h: 68px;
 
   /* ---- type ----
-   * The display stack falls back to MONOSPACE, not a proportional face: if
-   * the pixel font ever fails to load, tabular numbers still don't jitter. */
-  --font-display: 'Kingdom Display', ui-monospace, 'Courier New', monospace;
+   * `--font-display` is TITLES ONLY — headings, sheet planks, proper names.
+   * `--font-body` is body copy AND every number, because a number has to be
+   * read at a glance at 13px and a display face is the wrong tool for that.
+   * Both fall back to a proportional sans now: the old monospace fallback
+   * existed to keep the PIXEL face's numbers from jittering, and PT Sans is
+   * naturally tabular, so the fallback should simply look like the font. */
+  --font-display: 'Kingdom Display', Georgia, 'Times New Roman', serif;
   --font-body: 'Kingdom Body', system-ui, -apple-system, sans-serif;
+
+  /* The title face ships ONE weight, so a `font-weight: 700` anywhere near it
+   * — declared, or inherited from an <h2>'s user-agent default — would be
+   * faked by the browser into a smear. This refuses the fake globally: a face
+   * with a real bold (PT Sans, any system fallback) is unaffected, and a face
+   * without one renders the weight it actually has. Cheaper and far harder to
+   * forget than spelling out 400 on every title rule. */
+  font-synthesis-weight: none;
 
   /* 13px is the floor (§6.12): the current 11–12px helper text is unreadable
    * on a phone in daylight. */

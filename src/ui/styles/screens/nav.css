@@ -27,7 +27,7 @@
   justify-content: center;
   gap: 1px;
   padding: 6px 4px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-helper);
   color: var(--ink);
   background: var(--parchment-shade);

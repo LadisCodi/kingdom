@@ -42,23 +42,30 @@ export interface MarkerLayer {
 // Canvas text uses the same display face as the HUD, read from the CSS token
 // so tokens.css stays the one source of truth. Cached: this is called from
 // the render loop.
-let displayFontStack: string | null = null;
-function displayFont(): string {
-  if (displayFontStack === null) {
-    displayFontStack = getComputedStyle(document.documentElement)
-      .getPropertyValue('--font-display').trim() || 'ui-monospace, monospace';
+let labelFontStack: string | null = null;
+function labelFace(): string {
+  if (labelFontStack === null) {
+    labelFontStack = getComputedStyle(document.documentElement)
+      .getPropertyValue('--font-body').trim() || 'system-ui, sans-serif';
   }
-  return displayFontStack;
+  return labelFontStack;
 }
 
-/** A pixel face is crisp only at whole multiples of its grid, and these sizes
- *  are derived from a continuous zoom — so snap to 4px steps. */
-const snapPx = (px: number, floor: number): number =>
-  Math.max(floor, Math.round(px / 4) * 4);
+/**
+ * Map labels are NUMBERS and short counts, so they are set in the body face,
+ * not the title one — the same split the CSS makes.
+ *
+ * These used to snap to 4px steps because a pixel face is crisp only at whole
+ * multiples of its grid. PT Sans is an outline face with no grid to land on,
+ * so the quantising bought nothing and cost a size: a label wanting 13px got
+ * 12px, under the readability floor. Whole pixels are still worth keeping —
+ * a fractional size renders soft — but every whole pixel is now available.
+ */
+const snapPx = (px: number, floor: number): number => Math.max(floor, Math.round(px));
 
-/** Canvas font string in the display face, at a snapped size. */
+/** Canvas font string in the body face, at a whole-pixel size. */
 const labelFont = (px: number, floor: number, bold = false): string =>
-  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${displayFont()}`;
+  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${labelFace()}`;
 
 export function drawMap(
   canvas: HTMLCanvasElement,

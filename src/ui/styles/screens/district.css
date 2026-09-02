@@ -23,7 +23,7 @@
 
 .dc-head { display: flex; align-items: flex-start; gap: 10px; }
 .dc-id { flex: 1; min-width: 0; }
-.dc-name { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+.dc-name { font-family: var(--font-display); font-size: 18px; font-weight: 400; }
 .dc-what { color: var(--ink-muted); line-height: 1.25; }
 
 /* Level as stars: a count you read rather than a fraction you parse. */
@@ -55,14 +55,14 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   color: var(--leaf-dark);
 }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   color: var(--ink-muted);
 }
 .dc-actions { display: flex; gap: 8px; margin-top: 8px; }
@@ -84,7 +84,7 @@
  * them for the kit's action()/btn(). */
 .dc .btn {
   padding: 8px 14px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   color: var(--ink-inverse);
   background: var(--wood);
   border: 2px solid var(--wood-dark);
@@ -107,7 +107,7 @@
   align-items: center;
   gap: 8px;
   margin: 6px 0;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
 }
 .dc-drip { margin: 4px 0; }
 
@@ -151,7 +151,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
 }
 .dc-area-rate { color: var(--ink-muted); line-height: 1.3; }
 

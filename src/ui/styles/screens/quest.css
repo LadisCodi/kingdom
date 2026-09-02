@@ -38,7 +38,7 @@
 
 /* The chain has always known its own length; now it says so. */
 .q-chain {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -47,12 +47,13 @@
 .q-name {
   font-family: var(--font-display);
   font-size: 17px;
-  font-weight: 700;
   margin: 1px 0 2px;
+  /* Germania One ships one weight; 700 would be a synthesised smear. */
+  font-weight: 400;
 }
 .q-desc { color: var(--ink-muted); margin-bottom: 8px; }
 
-.q-pips { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); }
+.q-pips { display: flex; align-items: center; gap: 8px; font-family: var(--font-body); }
 .q-pips[hidden] { display: none; }
 
 .q-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
@@ -69,7 +70,7 @@
   align-items: center;
   gap: 3px;
   padding: 2px 7px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   background: var(--gold);
   border: 2px solid var(--gold-dark);

@@ -1,6 +1,6 @@
 /* "Welcome back" (§5.12) — warm, generous, celebratory. */
 
-.wel-lede { font-family: var(--font-display); font-size: 16px; margin-bottom: 8px; }
+.wel-lede { font-family: var(--font-body); font-weight: 700; font-size: 16px; margin-bottom: 8px; }
 .wel-capped {
   display: flex;
   align-items: center;
@@ -25,7 +25,7 @@
 .wel-row:nth-child(odd) { background: rgba(92, 58, 30, 0.07); }
 .wel-name { flex: 1; }
 .wel-gain {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 17px;
   font-weight: 700;
   color: var(--leaf-dark);
@@ -33,7 +33,7 @@
 
 .wel-section {
   margin: 14px 0 6px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;

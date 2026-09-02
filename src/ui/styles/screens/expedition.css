@@ -39,12 +39,12 @@
 }
 .exp-safe-value {
   grid-area: value;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 44px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.exp-safe-label { grid-area: label; font-family: var(--font-display); font-size: var(--text-body); }
+.exp-safe-label { grid-area: label; font-family: var(--font-body); font-size: var(--text-body); }
 .exp-safe-note { grid-area: note; font-size: var(--text-helper); color: var(--ink-muted); }
 
 .exp-readout { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -76,7 +76,7 @@
 .exp-hero.is-chosen { border-color: var(--gold, #d9a441); background: rgba(217, 164, 65, 0.2); }
 .exp-hero.is-busy { opacity: 0.55; cursor: default; }
 .exp-portrait { width: 48px; height: 48px; image-rendering: pixelated; border-radius: 8px; }
-.exp-hero-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-hero-name { font-family: var(--font-body); font-size: var(--text-helper); }
 .exp-hero-trait { font-size: 11px; color: var(--ink-muted); line-height: 1.2; }
 
 /* Relics: attune-or-arm, made visible. The relics the kingdom is WEARING stay
@@ -100,7 +100,7 @@
 .exp-relic.is-worn { opacity: 0.55; cursor: default; }
 .exp-relic-art { width: 40px; height: 40px; image-rendering: pixelated; border-radius: 8px; }
 .exp-relic-art.is-glyph { display: grid; place-items: center; font-size: 24px; }
-.exp-relic-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-relic-name { font-family: var(--font-body); font-size: var(--text-helper); }
 .exp-relic-stats { font-size: 11px; color: var(--ink-muted); line-height: 1.2; }
 
 /* What the relic bought. A defensive relic may not move the safe depth at all
@@ -108,7 +108,7 @@
  * deltas carry the message when the headline number does not move. */
 .exp-readout-cell { display: flex; align-items: center; gap: 4px; }
 .exp-delta {
-  font-family: var(--font-display); font-size: var(--text-helper);
+  font-family: var(--font-body); font-size: var(--text-helper);
   color: var(--gold, #d9a441);
 }
 .exp-safe-delta {
@@ -137,12 +137,12 @@
   border-radius: 6px;
 }
 .exp-troop-body { flex: 1; min-width: 0; }
-.exp-troop-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-troop-name { font-family: var(--font-body); font-size: var(--text-helper); }
 .exp-troop-stats { display: flex; gap: 8px; font-size: 11px; color: var(--ink-muted); }
 .exp-stepper { display: flex; align-items: center; gap: 6px; }
 .exp-count {
   min-width: 22px; text-align: center;
-  font-family: var(--font-display); font-variant-numeric: tabular-nums;
+  font-family: var(--font-body); font-variant-numeric: tabular-nums;
 }
 .exp-of { font-size: 11px; color: var(--ink-muted); }
 
@@ -156,7 +156,7 @@
   color: var(--ink); cursor: pointer; text-align: left;
 }
 .exp-order.is-chosen { border-color: var(--gold, #d9a441); background: rgba(217, 164, 65, 0.2); }
-.exp-order b { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-order b { font-family: var(--font-body); font-size: var(--text-helper); }
 .exp-order span { font-size: 11px; color: var(--ink-muted); line-height: 1.2; }
 
 /* The supplies moved into the Set-off button (§6.4); what is left out here is
@@ -244,6 +244,6 @@
 .dv-pill.is-bottom { border-color: var(--gold, #d9a441); }
 .dv-pill.is-failed { border-color: var(--clay); }
 .dv-body { min-width: 0; }
-.dv-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.dv-name { font-family: var(--font-body); font-size: var(--text-helper); }
 .dv-haul { font-size: 11px; color: var(--ink-muted); }
-.dv-go { font-family: var(--font-display); font-size: 18px; color: var(--ink-muted); }
+.dv-go { font-family: var(--font-body); font-size: 18px; color: var(--ink-muted); }

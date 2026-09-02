@@ -148,10 +148,24 @@ Pressed state: the slab drops onto its lip (3px down, lip hidden).
 
 ### 3.4 Type & numbers
 
-- One chunky pixel display face for titles/numbers, one rounded readable
-  face for body copy. Titles 20–24px, body 15–16px, helper 13–14px.
-- Counters are **tabular** (already true in CSS) and always paired with an
-  icon on the left.
+*Revised 2026-09-02. The original called for "one chunky pixel display face
+for titles/numbers" — Pixelify Sans shipped as that face, and giving one
+decorative face both jobs is what forced it to be legible at 13px, which it
+was not. Numbers moved to the text face and the display face was replaced.*
+
+- **Titles: Germania One**, and **only at 15px and up**. It is a display face
+  and is used like one — headings, sheet planks, proper names. Nothing else.
+- **Body copy AND every number: PT Sans.** A number has to be read at a glance
+  at 13px, which is a text face's job, not a display face's.
+- Titles 20–24px, body 15–16px, helper 13–14px, unchanged.
+- Counters are **tabular** — and now by construction rather than by CSS: PT
+  Sans's digits are all one width, so figures do not jitter even though the
+  font ships no `tnum` feature for `font-variant-numeric` to switch on.
+  Germania One's digits *are* proportional, which is the second reason numbers
+  never go in the title face.
+- Germania One has **one weight**; asking it for 700 gets a synthesised smear,
+  so title rules specify 400.
+- Counters are always paired with an icon on the left.
 - Big numbers get thousands separators; never show more than one decimal
   (taxes currently print `1.5 Gold/min` — keep that shape).
 - Durations read as words at small values: `instant`, `8s`, `2m 30s`,
@@ -1386,10 +1400,16 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
    back at five coins. Mana is permanent on top of that — it is the visit clock,
    so it earns its slot — but it is the strongest argument yet for the
    hide-an-unused-coin rule floated in question 3.
-5. ~~**Pixel font licensing**~~ — **decided**: self-hosted OFL faces,
-   **Pixelify Sans** (400/700) for display and numbers, **Nunito** (400/700)
-   for body, vendored as subset woff2 with their licence so the GitHub Pages
-   build stays self-contained. Pixelify Sans over Press Start 2P (an 8×8
-   arcade face, far too wide and legible only at multiples of 8) and over
-   Silkscreen (no descender room at 24px); Nunito for the highest x-height of
-   the OFL rounded faces, which decides it at the 13px floor §6.12 sets.
+5. ~~**Pixel font licensing**~~ — **decided**, then **revised 2026-09-02.**
+   Originally: self-hosted OFL faces, **Pixelify Sans** (400/700) for display
+   *and numbers*, **Nunito** (400/700) for body.
+
+   That pairing shipped and the pixel face was not readable enough. The fault
+   was in the brief rather than the choice: making one decorative face carry
+   both titles and every number in the game meant it had to work at the 13px
+   floor §6.12 sets, and no pixel face does. Now **Germania One** (400) takes
+   titles alone at 15px and up, and **PT Sans** (400/700) takes body copy and
+   every number — with the useful property that its digits are all one width,
+   so counters stay tabular without a `tnum` feature. Still self-hosted OFL,
+   still vendored as subset woff2 with the licence, still 19 KB total. See
+   §3.4 and `src/ui/fonts/README.md`.

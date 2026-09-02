@@ -15,11 +15,16 @@
 .k-panel,
 .k-card,
 .gal { font-family: var(--font-body); }
+/* Titles: a sheet's plank and a card's name are the two places the display
+ * face earns its keep in the kit. */
 .k-plank,
-.k-card .k-name,
+.k-card .k-name { font-family: var(--font-display); }
+/* Numbers. These used to share the rule above, back when one pixel face did
+ * both jobs — which is exactly what made it have to be legible at 13px. */
 .k-chip,
+.k-cost,
 .k-stat .k-stat-value,
-.k-trough .k-trough-label { font-family: var(--font-display); }
+.k-trough .k-trough-label { font-family: var(--font-body); font-weight: 700; }
 
 /* ---------------------------------------------------------------- surfaces */
 
@@ -96,7 +101,8 @@
   border-radius: 6px;
 }
 .k-card > .k-body { flex: 1; min-width: 0; }
-.k-card .k-name { font-weight: 700; }
+/* 400, not 700: the title face has one weight and would fake the bold. */
+.k-card .k-name { font-weight: 400; }
 .k-card .k-desc { font-size: var(--text-helper); color: var(--ink-muted); }
 
 .k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -117,7 +123,7 @@
   min-height: 56px;
   padding: 12px 20px;
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: 700;
   color: var(--ink-inverse);
