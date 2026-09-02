@@ -216,7 +216,7 @@ export function drawMap(
         // Reveal progress only — the total cost is deliberately not shown.
         const paid = state.fog.progress[key] ?? 0;
         if (paid > 0) {
-          const total = revealCostForCell(map, cell);
+          const total = revealCostForCell(state, map, cell);
           drawBar(ctx, x + size * 0.15, y + size * 0.62, size * 0.7, 5, paid / total, PALETTE.progressFill);
         }
       }

@@ -26,9 +26,9 @@
 // anchor — so the offline replay and the live tick land on the same integer.
 // Mana regen IS city idle production, so it IS subject to the 8h cap.
 
-import { ARTIFACTS, MANA, levelIndexed } from './data/definitions';
+import { ARTIFACTS, KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
-import { addToWallet, getWallet, townhall, type GameState } from './state';
+import { addToWallet, coordKey, getWallet, townhall, type GameState } from './state';
 
 /** Mana per hour before upkeep: the Townhall's own output plus every claimed
  *  landmark. This is what a relic's upkeep is charged against. */
@@ -129,4 +129,39 @@ export function refillManaWithGems(state: GameState): RefillResult {
   addToWallet(state.player.wallet, 'Gems', -cost);
   addMana(state, manaCap(state));
   return 'Refilled';
+}
+
+// ------------------------------------------------------------- the Knowledge drip
+
+/**
+ * Knowledge accrues from every ruin the player has FOUND, whether or not they
+ * ever delve it. That is deliberate: the fog keeps paying between expeditions,
+ * so the levelling arc has a floor that does not depend on having a party ready
+ * — and finding a ruin is immediately worth something, before any combat exists.
+ *
+ * Kingdom-scoped, like the currency itself, and modified by knowledgeYield (the
+ * Wanderer's Compass). Same whole-units-against-an-anchor shape as taxes and
+ * Mana, so all three replay identically.
+ */
+export function knowledgePerHour(state: GameState): number {
+  let found = 0;
+  for (const r of Object.values(RUINS)) {
+    if (state.fog.revealed[coordKey(r.location)] === true) found += 1;
+  }
+  if (found === 0) return 0;
+  return Math.max(0, resolve(state, 'knowledgeYield', found * KNOWLEDGE.dripPerRuinPerHour));
+}
+
+export function accrueKnowledge(state: GameState, toTime: number): number {
+  const rate = knowledgePerHour(state);
+  if (rate <= 0) {
+    state.kingdom.lastKnowledgeAt = Math.max(state.kingdom.lastKnowledgeAt, toTime);
+    return 0;
+  }
+  const msPer = 3_600_000 / rate;
+  const units = Math.floor((toTime - state.kingdom.lastKnowledgeAt) / msPer);
+  if (units <= 0) return 0;
+  state.kingdom.lastKnowledgeAt += units * msPer;
+  addToWallet(state.kingdom.wallet, 'Knowledge', units);
+  return units;
 }

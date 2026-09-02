@@ -30,6 +30,7 @@ export function newGame(map: MapData, now: number): GameState {
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
+      lastKnowledgeAt: now,
     },
     player: { wallet: playerWallet },
     fog: { revealed: {}, discovered: {}, progress: {} },

@@ -14,6 +14,7 @@
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
+import { normaliseSlots } from './artifacts';
 import type { Modifier } from './modifiers';
 import { newGame } from './newGame';
 import {
@@ -136,6 +137,7 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.kingdoms': {
         MaxBuilders: state.kingdom.maxBuilders,
         Currencies: state.kingdom.wallet,
+        LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -297,6 +299,8 @@ export function deserialize(
   if (kingdomDto) {
     state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
+    state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
+      ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
@@ -420,6 +424,14 @@ export function deserialize(
     }));
   }
 
+  // AFTER the modifier stack is restored: the slot arrays are resized to the
+  // CURRENT slot count and the artifact passives are re-derived from what is
+  // attuned. So a save written before the Attunement tech completed, or before
+  // the passive curve was rebalanced, loads correct rather than stale — while
+  // everything that is genuinely stateful (a Haste still running, a season)
+  // comes back from the file untouched.
+  normaliseSlots(state);
+
   const playerDto = modules['player.currencies'];
   if (playerDto) state.player.wallet = { ...(playerDto as Wallet) };
 
@@ -448,6 +460,7 @@ export function deserialize(
     if (state.city.training) state.city.training.startedAt += gap;
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
+    state.kingdom.lastKnowledgeAt += gap; // the ruin drip is production too
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     // Completes remaining queue work; workers resume at now. Its results are

@@ -12,7 +12,7 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { accrueMana } from './mana';
+import { accrueKnowledge, accrueMana } from './mana';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
@@ -237,11 +237,12 @@ export interface AdvanceResult {
    *  out while you were away" half of the offline report. */
   expiredModifiers: Modifier[];
   manaEarned: number;
+  knowledgeEarned: number;
 }
 
 const emptyResult = (): AdvanceResult => ({
   deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
-  trainedPopulation: 0, expiredModifiers: [], manaEarned: 0,
+  trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -276,6 +277,7 @@ function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceRe
   // Mana regen is city idle PRODUCTION, so it belongs here with the workers
   // and the taxes — and the 8h offline cap applies to it, unlike a timer.
   out.manaEarned += accrueMana(state, t);
+  out.knowledgeEarned += accrueKnowledge(state, t);
 }
 
 /** The earliest moment STRICTLY after `after` at which discrete work falls

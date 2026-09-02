@@ -11,7 +11,9 @@ import { Camera } from './render/camera';
 import { wireInput } from './render/input';
 import { drawMap } from './render/mapRenderer';
 import { SaveManager } from './persist/saveManager';
-import { TECH_ORDER } from './sim/data/definitions';
+import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
+import { grantArtifact, normaliseSlots } from './sim/artifacts';
+import { addMana, manaCap } from './sim/mana';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -20,6 +22,7 @@ import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
+import { renderCastPanel } from './ui/castPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderSiteCard } from './ui/siteCard';
 import { renderArmyMenu } from './ui/armyMenu';
@@ -27,6 +30,7 @@ import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
+import { renderReliquarySheet } from './ui/reliquarySheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountBanner } from './ui/banner';
@@ -103,6 +107,7 @@ async function boot(): Promise<void> {
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
+    reliquary: renderReliquarySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
@@ -119,6 +124,8 @@ async function boot(): Promise<void> {
     const site = game.inspectedSite;
     if (game.mode.kind === 'placing') {
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game), () => game.dismiss()));
+    } else if (game.mode.kind === 'casting') {
+      panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
     } else if (site !== null) {
       // Keyed by cell, so tapping a different site is a real remount.
       panelSlot.show(`site:${site.x},${site.y}`, () => legacy(
@@ -139,7 +146,7 @@ async function boot(): Promise<void> {
     const overlay = game.openOverlay;
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
-      const needsKnob = overlay !== 'purse';
+      const needsKnob = overlay !== 'purse' && overlay !== 'reliquary';
       overlaySlot.show(overlay, () => legacy(
         () => OVERLAYS[overlay](game),
         needsKnob ? () => game.dismiss() : undefined,
@@ -260,9 +267,27 @@ async function boot(): Promise<void> {
       game.state.research.active = [];
       runTick();
     };
+    // Relics normally arrive from ruins, which is a delve away — this is how
+    // the reliquary, the sockets and cast mode get exercised in one click.
+    const allRelics = () => {
+      for (const id of ARTIFACT_ORDER) grantArtifact(game.state, id);
+      normaliseSlots(game.state);
+      game.state.kingdom.wallet.Knowledge = 5000;
+      addMana(game.state, manaCap(game.state));
+      runTick();
+    };
+    // "Warp then reload" is the only way to exercise the offline report: the
+    // in-place time warp above never goes through deserialize().
+    const warpReload = (minutes: number) => {
+      warp(minutes);
+      saveManager.save(game.state, game.now(), true);
+      location.reload();
+    };
     const devBar = el('div', { class: 'cast-banner', style: 'top:auto;bottom:120px' },
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
-      button('🔬 all techs', allTechs), button('🗑 reset save', resetSave));
+      button('💤 6 h + reload', () => warpReload(360)),
+      button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
+      button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }
 

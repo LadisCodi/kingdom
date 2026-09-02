@@ -6,6 +6,7 @@ import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
+import { resolve } from './modifiers';
 import { pick } from './rng';
 import {
   addToWallet, coordKey, districtAt, parseCoordKey,
@@ -46,6 +47,13 @@ const cellState = (state: GameState, key: string): CellHarvestState => {
   }
   return s;
 };
+
+/** How long a cell stays exhausted, after the Verdant Seal and anything else
+ *  that shortens it. Stamped ONCE at the moment of exhaustion — a relic
+ *  attuned afterwards does not retroactively wake sleeping cells, which keeps
+ *  the timer a fact about the cell rather than a live query. */
+export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
+  Math.max(1000, Math.round(resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)));
 
 /** Lazy recovery: an elapsed exhaustedUntil resets the cell. */
 function recoverIfDue(s: CellHarvestState, now: number): void {
@@ -111,7 +119,7 @@ export function registerTap(
     delete state.harvest[key];
     return true;
   }
-  s.exhaustedUntil = now + spec.recoverySeconds * 1000;
+  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec);
   return true;
 }
 

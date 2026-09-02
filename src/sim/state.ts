@@ -132,6 +132,8 @@ export interface GameState {
   kingdom: {
     maxBuilders: number;
     wallet: Wallet;
+    /** Epoch ms anchor for the Knowledge drip (whole units only). */
+    lastKnowledgeAt: number;
   };
   player: { wallet: Wallet };
   fog: {

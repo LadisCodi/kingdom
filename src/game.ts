@@ -8,8 +8,8 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, LANDMARK_ART, TECHNOLOGIES, TRAINING,
-  UNITS,
+  ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, LANDMARK_ART, TECHNOLOGIES,
+  TRAINING, UNITS,
 } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
@@ -20,8 +20,14 @@ import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/g
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
-import { claimLandmark } from './sim/landmarks';
-import { manaProduction } from './sim/mana';
+import {
+  attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
+} from './sim/artifacts';
+import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
+import { claimLandmark, visibleLandmarks } from './sim/landmarks';
+import {
+  mana, manaCap, manaNetRegen, manaProduction, manaUpkeep, refillManaWithGems,
+} from './sim/mana';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
@@ -32,9 +38,9 @@ import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/ques
 import { buySlot, isTechComplete, startTech, techUnlocks } from './sim/research';
 import { buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield } from './sim/upgrades';
 import {
-  coordKey, districtAt, districtById, getWallet, townhall,
-  type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type RuinId, type TechId, type UnitId, type UpgradeId, type Wallet,
+  coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
+  type GameState, type RuinId, type TechId, type UnitId, type UpgradeId, type Wallet,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -50,13 +56,17 @@ import { TapFx } from './render/tapFx';
 
 export type Mode =
   | { kind: 'normal' }
-  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null };
+  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
+  /** Casting reuses the placement machinery wholesale — select, highlight,
+   *  tap to commit — rather than inventing a second targeting model. */
+  | { kind: 'casting'; artifactId: ArtifactId; selected: Coord | null };
 
 /** Every full-screen menu the nav (or the map) can open. Naming them means
  *  `tsc` — the only real gate this project has over the view layer — catches
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
-  | 'build' | 'market' | 'army' | 'research' | 'settings' | 'purse' | 'welcome';
+  | 'build' | 'market' | 'army' | 'research' | 'settings' | 'purse' | 'welcome'
+  | 'reliquary';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -234,6 +244,20 @@ export class Game {
   // ----------------------------------------------------------------- tap chain
 
   private registerTapHandlers(): void {
+    // 320 — casting. Above placement because the two modes are exclusive and
+    // casting is the one the player entered most recently.
+    this.tapChain.register({
+      priority: 320,
+      handle: (cell) => {
+        if (this.mode.kind !== 'casting') return false;
+        const valid = validCastCells(this.state, this.map, this.mode.artifactId);
+        if (valid.some((c) => sameCell(c, cell))) {
+          this.mode.selected = cell;
+          this.notify();
+        }
+        return true; // cast mode swallows all map taps
+      },
+    });
     // 300 — district placement.
     this.tapChain.register({
       priority: 300,
@@ -443,6 +467,158 @@ export class Game {
     this.inspectedDistrictId = null;
     if (selected) this.camera.centerOnCell(selected);
     this.notify();
+  }
+
+  // --------------------------------------------------------------- casting
+
+  /** Enter cast mode, or cast immediately when the ability needs no target. */
+  startCast(artifactId: ArtifactId): void {
+    const active = ARTIFACTS[artifactId].active;
+    if (active === null) return;
+    const block = castBlock(this.state, artifactId);
+    if (block !== null) {
+      if (block === 'NotEnoughMana') this.shake(['Mana']);
+      else if (block === 'NotAttuned') this.toast('Attune it first — a relic must be worn to be cast');
+      this.notify();
+      return;
+    }
+    if (!active.targeted) {
+      this.doCast(artifactId, null);
+      return;
+    }
+    const valid = validCastCells(this.state, this.map, artifactId);
+    if (valid.length === 0) {
+      this.toast(`Nowhere to cast ${active.name} right now`);
+      this.notify();
+      return;
+    }
+    // Start on the legal cell nearest the Townhall, exactly as placement does.
+    let selected: Coord | null = null;
+    let best = Infinity;
+    for (const c of valid) {
+      const d = townhallDistance(this.map, c);
+      if (d < best) {
+        best = d;
+        selected = c;
+      }
+    }
+    this.mode = { kind: 'casting', artifactId, selected };
+    this.openOverlay = null;
+    this.inspectedDistrictId = null;
+    this.inspectedSite = null;
+    if (selected) this.camera.centerOnCell(selected);
+    this.notify();
+  }
+
+  confirmCast(): void {
+    if (this.mode.kind !== 'casting') return;
+    this.doCast(this.mode.artifactId, this.mode.selected);
+  }
+
+  private doCast(artifactId: ArtifactId, target: Coord | null): void {
+    const def = ARTIFACTS[artifactId];
+    const report = cast(this.state, this.map, artifactId, target, this.now());
+    if (report.result !== 'Cast') {
+      if (report.result === 'NotEnoughMana') this.shake(['Mana']);
+      else this.toast('That cannot be cast there');
+      this.notify();
+      return;
+    }
+    playSfx('research');
+    this.mode = { kind: 'normal' };
+    for (const c of report.affected) this.tapFx.add(coordKey(c));
+    if (report.goldSaved > 0 && target) {
+      this.floaters.add(target, `Saved ${report.goldSaved} ${icon('Gold')}`);
+    }
+    if (report.activeId === 'Bloom' && target) {
+      this.floaters.add(target, `${report.affected.length} cells renewed`);
+    }
+    if (report.activeId === 'Haste') {
+      this.toast(`${def.active!.name} — workers carry double for the next hour`);
+    }
+    if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
+    this.notify();
+  }
+
+  /** The cast preview the panel and the renderer both read. */
+  castInfo(): {
+    artifactId: ArtifactId; cell: Coord | null; manaCost: number; affordable: boolean;
+    saving: number; blooms: number;
+  } | null {
+    if (this.mode.kind !== 'casting') return null;
+    const { artifactId, selected } = this.mode;
+    const active = ARTIFACTS[artifactId].active!;
+    return {
+      artifactId,
+      cell: selected,
+      manaCost: active.manaCost,
+      affordable: mana(this.state) >= active.manaCost,
+      saving: active.id === 'Divination' && selected
+        ? divinationSaving(this.state, this.map, selected) : 0,
+      blooms: active.id === 'Bloom' && selected
+        ? bloomPreview(this.state, this.map, selected, active.radius).length : 0,
+    };
+  }
+
+  // ---------------------------------------------------------------- relics
+
+  doAttune(slot: number, artifactId: ArtifactId | null): void {
+    const result = attune(this.state, slot, artifactId, this.now());
+    if (result === 'Attuned' || result === 'Unattuned') playSfx('upgradeBought');
+    else if (result === 'SlotLocked') this.toast('That socket is still settling');
+    else if (result === 'AlreadyAttuned') this.toast('It is already worn in another socket');
+    this.notify();
+  }
+
+  doLevelArtifact(id: ArtifactId): void {
+    const result = levelUpArtifact(this.state, id);
+    if (result === 'Levelled') playSfx('upgradeBought');
+    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
+    this.notify();
+  }
+
+  doRaiseArtifactTier(id: ArtifactId): void {
+    const result = raiseArtifactTier(this.state, id);
+    if (result === 'Raised') playSfx('upgradeBought');
+    else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+    this.notify();
+  }
+
+  doBuyAttunementSlot(): void {
+    const result = buyAttunementSlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  doRefillMana(): void {
+    const result = refillManaWithGems(this.state);
+    if (result === 'Refilled') playSfx('gemSpend');
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  /** Everything the header's Mana gauge shows: a pool and ONE net rate.
+   *  Never three numbers — the breakdown belongs in the reliquary, on tap. */
+  manaInfo(): { value: number; cap: number; net: number; production: number; upkeep: number } {
+    return {
+      value: mana(this.state),
+      cap: manaCap(this.state),
+      net: manaNetRegen(this.state),
+      production: manaProduction(this.state),
+      upkeep: manaUpkeep(this.state),
+    };
+  }
+
+  /** Magic stays out of the HUD until the player has met it — a gauge with
+   *  nothing to spend on is exactly the spreadsheet chrome the redesign
+   *  exists to kill. Sticky once true. */
+  showsMana(): boolean {
+    return this.state.artifacts.owned.length > 0
+      || isTechComplete(this.state, 'Attunement')
+      || Object.keys(this.state.landmarks.claimed).length > 0
+      || visibleLandmarks(this.state, this.map).length > 0;
   }
 
   confirmBuild(): void {
@@ -886,6 +1062,28 @@ export class Game {
           );
         }
       }
+    } else if (this.mode.kind === 'casting') {
+      // The same highlight vocabulary as placement — valid cells outlined,
+      // the chosen one selected — because it is the same decision shape.
+      const active = ARTIFACTS[this.mode.artifactId].active!;
+      layer.validCells = validCastCells(this.state, this.map, this.mode.artifactId)
+        .map((cell) => ({ cell, label: '' }));
+      layer.validColor = PALETTE.castTarget;
+      layer.selected = this.mode.selected;
+      layer.selectedSize = { x: 1, y: 1 };
+      if (this.mode.selected) {
+        if (active.id === 'Bloom') {
+          layer.influenceCells = bloomPreview(
+            this.state, this.map, this.mode.selected, active.radius);
+        }
+        if (active.id === 'Divination') {
+          layer.yieldCells = [{
+            cell: this.mode.selected,
+            label: `${divinationSaving(this.state, this.map, this.mode.selected)} ${icon('Gold')}`,
+            tone: 'good',
+          }];
+        }
+      }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
@@ -903,7 +1101,7 @@ export class Game {
   }
 
   revealCostAt(cell: Coord): number {
-    return revealCostForCell(this.map, cell);
+    return revealCostForCell(this.state, this.map, cell);
   }
 
   placementInfo(): {

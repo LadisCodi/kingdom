@@ -900,6 +900,18 @@
     "slotGemCostGrowth": 2.5,
     "swapLockSeconds": 300
   },
+  "collection": {
+    "levelCostBase": 20,
+    "levelCostGrowth": 1.6,
+    "maxLevel": 10,
+    "levelsPerTier": 2,
+    "maxTier": 5,
+    "fragmentsPerTierBase": 10,
+    "fragmentsPerTierGrowth": 2
+  },
+  "knowledge": {
+    "dripPerRuinPerHour": 2
+  },
   "landmarks": [
     {
       "id": "ThornedShrine",
@@ -1050,6 +1062,48 @@
       },
       "affinity": "Any",
       "artifact": "WanderersCompass"
+    }
+  },
+  "artifacts": {
+    "DowsingRod": {
+      "upkeep": 1,
+      "passiveBase": 0.85,
+      "passivePerLevel": -0.015,
+      "activeManaCost": 8,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0
+    },
+    "VerdantSeal": {
+      "upkeep": 2,
+      "passiveBase": 0.75,
+      "passivePerLevel": -0.02,
+      "activeManaCost": 6,
+      "activeDurationSeconds": 0,
+      "activeRadius": 2
+    },
+    "ForemansSigil": {
+      "upkeep": 2,
+      "passiveBase": 1,
+      "passivePerLevel": 0.2,
+      "activeManaCost": 10,
+      "activeDurationSeconds": 3600,
+      "activeRadius": 0
+    },
+    "GildedLedger": {
+      "upkeep": 3,
+      "passiveBase": 1.2,
+      "passivePerLevel": 0.03,
+      "activeManaCost": 0,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0
+    },
+    "WanderersCompass": {
+      "upkeep": 2,
+      "passiveBase": 1.5,
+      "passivePerLevel": 0.1,
+      "activeManaCost": 5,
+      "activeDurationSeconds": 0,
+      "activeRadius": 0
     }
   },
   "quests": [

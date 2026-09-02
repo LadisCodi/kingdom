@@ -132,6 +132,16 @@ const SETTINGS = [
   ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
   ['attunement.slot_gem_cost_growth', 'attunement.slotGemCostGrowth'],
   ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
+  // The COLLECTION substrate: one set of rules shared by artifacts and heroes.
+  // Fragments raise a tier cap; Knowledge buys levels within it.
+  ['collection.level_cost_base', 'collection.levelCostBase'],
+  ['collection.level_cost_growth', 'collection.levelCostGrowth'],
+  ['collection.max_level', 'collection.maxLevel'],
+  ['collection.levels_per_tier', 'collection.levelsPerTier'],
+  ['collection.max_tier', 'collection.maxTier'],
+  ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
+  ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
+  ['knowledge.drip_per_ruin_per_hour', 'knowledge.dripPerRuinPerHour'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -169,6 +179,8 @@ const SHEETS = {
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
     'reward_gems'],
+  Artifacts: ['id', 'upkeep', 'passive_base', 'passive_per_level', 'active_mana_cost',
+    'active_duration_seconds', 'active_radius'],
   Landmarks: ['id', 'kind', 'x', 'y', 'defended'],
   Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
     'max_depth', 'supply_food', 'supply_gold', 'supply_iron', 'affinity', 'artifact'],
@@ -468,8 +480,8 @@ async function importXlsx() {
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
-    mana: {}, attunement: {},
-    landmarks: [], ruins: {},
+    mana: {}, attunement: {}, collection: {}, knowledge: {},
+    landmarks: [], ruins: {}, artifacts: {},
     quests: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -627,6 +639,17 @@ async function importXlsx() {
     });
   }
 
+  for (const [id, r] of byId(readSheet(workbook, 'Artifacts'), ARTIFACT_IDS)) {
+    out.artifacts[id] = {
+      upkeep: num(r, 'upkeep'),
+      passiveBase: signedNum(r, 'passive_base'),
+      passivePerLevel: signedNum(r, 'passive_per_level'),
+      activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
+      activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
+      activeRadius: num(r, 'active_radius', { blankAs: 0 }),
+    };
+  }
+
   // Landmarks and ruins are MAP content authored by coordinate. The importer
   // is the only place that can check the cell actually exists, is land, and is
   // not already occupied by a feature or the Townhall — so it does.
@@ -780,6 +803,12 @@ async function exportXlsx() {
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '',
   ]));
+
+  addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
+    const a = b.artifacts[id];
+    return [id, a.upkeep, a.passiveBase, a.passivePerLevel, a.activeManaCost,
+      a.activeDurationSeconds || '', a.activeRadius || ''];
+  }));
 
   addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>
     [l.id, l.kind, l.x, l.y, l.defended ? 1 : '']));

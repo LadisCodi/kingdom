@@ -32,8 +32,18 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const coins = el('div', { class: 'hud-coins' });
   const gems = el('button', { class: 'hud-gems', type: 'button', 'aria-label': 'Gems' });
   const plaque = el('button', { class: 'hud-plaque', type: 'button' });
+  // ONE gauge and ONE net rate. Never "+6/h base −4/h upkeep = +2/h" — that
+  // breakdown is the reliquary's job, on tap, where the player asked for it.
+  const manaGauge = el('button', {
+    class: 'hud-mana', type: 'button', 'aria-label': 'Mana',
+  });
+  const manaFill = el('span', { class: 'hud-mana-fill' });
+  const manaValue = el('b', {}, '');
+  const manaRate = el('span', { class: 'hud-mana-rate' }, '');
+  manaGauge.append(manaFill, currencyIcon('Mana', { size: 'sm' }), manaValue, manaRate);
+  manaGauge.addEventListener('click', () => game.setOverlay('reliquary'));
   plank.append(coins, el('span', { class: 'hud-divider' }), gems);
-  root.replaceChildren(plank, plaque);
+  root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque, manaGauge));
 
   // Coin elements are rebuilt only when the VISIBLE SET changes; their values
   // are mutated in place. That keeps the shake animation and the counter
@@ -96,6 +106,19 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     plaque.classList.toggle('is-population', slot.kind === 'population');
     // Only the population plaque leads anywhere; the others are read-outs.
     plaque.disabled = slot.kind !== 'population';
+
+    // Magic stays off the HUD until the player has met it: a gauge with
+    // nothing to spend on is the spreadsheet chrome the redesign kills.
+    const showMana = game.showsMana();
+    manaGauge.hidden = !showMana;
+    if (showMana) {
+      const m = game.manaInfo();
+      manaValue.textContent = `${m.value}/${m.cap}`;
+      manaRate.textContent = `+${m.net}/h`;
+      manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
+      manaGauge.classList.toggle('is-full', m.value >= m.cap);
+      manaGauge.setAttribute('aria-label', `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
+    }
   };
   game.onChange(refresh);
   refresh();

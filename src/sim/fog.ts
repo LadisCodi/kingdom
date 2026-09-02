@@ -2,6 +2,7 @@
 
 import { DISTRICTS, FOG } from './data/definitions';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
+import { resolve } from './modifiers';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
 import {
@@ -40,8 +41,14 @@ export function revealCost(d: number): number {
   return Math.max(cost, FOG.goldPerTap);
 }
 
-export const revealCostForCell = (map: MapData, cell: Coord): number =>
-  revealCost(townhallDistance(map, cell));
+/** The cost the PLAYER actually pays, after the Dowsing Rod and anything else
+ *  that discounts the fog. Every consumer reads this rather than revealCost(),
+ *  so a discount can never apply to the bar but not the charge. */
+export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): number =>
+  Math.max(
+    FOG.goldPerTap,
+    Math.round(resolve(state, 'revealCost', revealCost(townhallDistance(map, cell)))),
+  );
 
 /** Exploration gates: sea and mountain cells need their tech before the
  *  player can pay to reveal them (building fog radii ignore this). */
@@ -60,7 +67,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   const gate = explorationGate(map, cell);
   if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
   const key = coordKey(cell);
-  const total = revealCostForCell(map, cell);
+  const total = revealCostForCell(state, map, cell);
   const paid = state.fog.progress[key] ?? 0;
   const payment = Math.min(FOG.goldPerTap, total - paid);
   if (getWallet(state.city.wallet, 'Gold') < payment) return 'NotEnoughGold';

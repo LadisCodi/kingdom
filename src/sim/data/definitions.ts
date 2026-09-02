@@ -712,6 +712,20 @@ export const MANA = balance.mana;
 /** Attunement slots: one at start, one from research, the rest with Gems. */
 export const ATTUNEMENT = balance.attunement;
 
+/**
+ * The COLLECTION substrate — one set of rules shared by artifacts and heroes.
+ *
+ * Built as two systems they would teach the player the same lesson twice and
+ * neither would feel special. So: Fragments raise a TIER cap, Knowledge buys
+ * LEVELS within it, and a hero and a relic are two kinds of thing rather than
+ * two systems with two vocabularies.
+ */
+export const COLLECTION = balance.collection;
+
+/** Knowledge drips from every ruin the player has FOUND, whether or not they
+ *  ever delve it — so the fog keeps paying even between expeditions. */
+export const KNOWLEDGE = balance.knowledge;
+
 export interface LandmarkDef {
   id: string; // content id — data-side, not a TS union
   kind: LandmarkKind;
@@ -776,16 +790,31 @@ export interface ArtifactActive {
   manaCost: number;
   /** Cast targets a map cell through placement mode. */
   targeted: boolean;
+  /** Timed effects only (Haste); 0 = instant. */
+  durationSeconds: number;
+  /** Area effects only (Bloom); 0 = the target cell alone. */
+  radius: number;
 }
+
+type ArtifactBalance = {
+  upkeep: number; passiveBase: number; passivePerLevel: number;
+  activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
+};
+const ab = (id: ArtifactId): ArtifactBalance =>
+  (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
     id: 'DowsingRod', name: 'Dowsing Rod', glyph: '🔮', sprite: 'artifact_dowsing_rod',
     passiveText: 'Fog costs less to clear',
-    passive: { stat: 'revealCost', scope: null, op: 'mul', base: 0.85, perLevel: -0.015 },
-    upkeep: 1,
+    passive: {
+      stat: 'revealCost', scope: null, op: 'mul',
+      base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
+    },
+    upkeep: ab('DowsingRod').upkeep,
     active: {
-      id: 'Divination', name: 'Divination', targeted: true, manaCost: 8,
+      id: 'Divination', name: 'Divination', targeted: true,
+      manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
       // Its Mana price is FLAT while the Gold reveal cost doubles every ring,
       // so its value grows with depth — exactly where the pain is. This one
       // relic turns the fog from a chore into a real question: Gold, or Mana?
@@ -796,10 +825,15 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   VerdantSeal: {
     id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
     passiveText: 'Resource cells recover faster',
-    passive: { stat: 'cellRecovery', scope: null, op: 'mul', base: 0.75, perLevel: -0.02 },
-    upkeep: 2,
+    passive: {
+      stat: 'cellRecovery', scope: null, op: 'mul',
+      base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
+    },
+    upkeep: ab('VerdantSeal').upkeep,
     active: {
-      id: 'Bloom', name: 'Bloom', targeted: true, manaCost: 6,
+      id: 'Bloom', name: 'Bloom', targeted: true,
+      manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
+      radius: ab('VerdantSeal').activeRadius,
       text: 'Clears exhaustion from every resource cell nearby',
     },
     source: 'SunkenChapel',
@@ -807,10 +841,15 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   ForemansSigil: {
     id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
     passiveText: 'Every worker carries more',
-    passive: { stat: 'workerYield', scope: null, op: 'add', base: 1, perLevel: 0.2 },
-    upkeep: 2,
+    passive: {
+      stat: 'workerYield', scope: null, op: 'add',
+      base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
+    },
+    upkeep: ab('ForemansSigil').upkeep,
     active: {
-      id: 'Haste', name: 'Haste', targeted: false, manaCost: 10,
+      id: 'Haste', name: 'Haste', targeted: false,
+      manaCost: ab('ForemansSigil').activeManaCost,
+      durationSeconds: ab('ForemansSigil').activeDurationSeconds, radius: 0,
       // Cast on the way OUT. Divination and Bloom reward being present; a
       // game played in visits needs a good departure move too.
       text: 'Workers carry double for an hour \u2014 cast it on your way out',
@@ -820,8 +859,11 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   GildedLedger: {
     id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
     passiveText: 'Your villagers pay more tax',
-    passive: { stat: 'taxRate', scope: null, op: 'mul', base: 1.2, perLevel: 0.03 },
-    upkeep: 3,
+    passive: {
+      stat: 'taxRate', scope: null, op: 'mul',
+      base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
+    },
+    upkeep: ab('GildedLedger').upkeep,
     // No active at all, deliberately: the clearest proof that the SLOT rather
     // than the ability is the constraint.
     active: null,
@@ -831,10 +873,14 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
     id: 'WanderersCompass', name: 'Wanderer’s Compass', glyph: '🧭',
     sprite: 'artifact_wanderers_compass',
     passiveText: 'Delves teach you more',
-    passive: { stat: 'knowledgeYield', scope: null, op: 'mul', base: 1.5, perLevel: 0.1 },
-    upkeep: 2,
+    passive: {
+      stat: 'knowledgeYield', scope: null, op: 'mul',
+      base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
+    },
+    upkeep: ab('WanderersCompass').upkeep,
     active: {
-      id: 'Beckon', name: 'Beckon', targeted: true, manaCost: 5,
+      id: 'Beckon', name: 'Beckon', targeted: true,
+      manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
       text: 'Calls a depleted resource back onto a cell you choose',
     },
     source: 'StarObservatory',

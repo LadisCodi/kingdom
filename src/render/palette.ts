@@ -13,6 +13,8 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
 };
 
 export const PALETTE = {
+  // Cast targets read blue, so they can never be confused with a build spot.
+  castTarget: '#8fb4ff',
   // Site badges: the tag on an unclaimed landmark or an undelved ruin.
   siteBadge: '#f4e2b8',
   siteBadgeEdge: '#5a3d24',
