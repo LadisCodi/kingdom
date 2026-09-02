@@ -34,7 +34,7 @@ import {
 } from './sim/expeditions';
 import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, manaUpkeep, refillManaWithGems,
+  mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
 } from './sim/mana';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
@@ -660,13 +660,17 @@ export class Game {
 
   /** Everything the header's Mana gauge shows: a pool and ONE net rate.
    *  Never three numbers — the breakdown belongs in the reliquary, on tap. */
-  manaInfo(): { value: number; cap: number; net: number; production: number; upkeep: number } {
+  manaInfo(): { value: number; cap: number; net: number; production: number; over: boolean } {
+    const value = mana(this.state);
+    const cap = manaCap(this.state);
     return {
-      value: mana(this.state),
-      cap: manaCap(this.state),
+      value,
+      cap,
       net: manaNetRegen(this.state),
       production: manaProduction(this.state),
-      upkeep: manaUpkeep(this.state),
+      /** An ad reward can push the pool past its ceiling; the UI shows that
+       *  differently from merely being full. */
+      over: value > cap,
     };
   }
 

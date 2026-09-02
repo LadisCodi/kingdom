@@ -7,6 +7,7 @@ import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
 import { getWallet, type GameState } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
+import { effectiveTapYield, effectiveWorkerYield } from '../src/sim/upgrades';
 import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 // Sawmill at (2,1): the L1 area (radius 2) reaches (2,2) and (2,3);
@@ -134,7 +135,10 @@ describe('the harvest cycle', () => {
     // Exhaust the cell while the worker is walking (move takes ~1.4s).
     for (let i = 0; i < 10; i++) tapCell(state, map, FOREST_A, start + 500);
     tickAt(state, start + CYCLE_MS + 100);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10); // player's taps only
+    // Player's taps only. A tap is worth boostSeconds of production now, and
+    // this sawmill is staffed, so that is well above the authored floor of 1.
+    const perTap = effectiveTapYield(state, HARVEST.Forest);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10 * perTap);
     expect(state.workers[0].activity).toBe('Idle');
   });
 
@@ -150,8 +154,10 @@ describe('the harvest cycle', () => {
     for (let i = 0; i < 10; i++) tapCell(state, map, FOREST_A, start + 3000);
     expect(isExhausted(state, FOREST_A, start + 3000)).toBe(true);
     tickAt(state, start + CYCLE_MS + 2000);
-    // 10 player taps + the secured delivery.
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 11);
+    // 10 player taps + the one delivery the worker had already secured.
+    const perTap = effectiveTapYield(state, HARVEST.Forest);
+    const perWorker = effectiveWorkerYield(state, HARVEST.Forest);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10 * perTap + perWorker);
   });
 
   it('two workers claim distinct cells', () => {

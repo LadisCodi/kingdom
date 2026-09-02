@@ -1055,15 +1055,15 @@
   },
   "tap": {
     "collectCooldownSeconds": 0.5,
-    "manaCost": 1
+    "manaCost": 1,
+    "boostSeconds": 45
   },
   "training": {
     "seconds": 20,
     "tapBoostSeconds": 2
   },
   "taxes": {
-    "goldPerPopulationPerMinute": 30,
-    "tapBoostSeconds": 20
+    "goldPerPopulationPerMinute": 30
   },
   "adjacency": [
     {
@@ -1074,19 +1074,19 @@
   ],
   "mana": {
     "productionPerTownhallLevel": [
-      4,
-      5,
-      6
+      10,
+      13,
+      16
     ],
     "baseCapPerTownhallLevel": [
-      50,
-      66,
-      82
+      100,
+      130,
+      160
     ],
     "sanctumCapPerLevel": [
-      12,
       24,
-      36
+      48,
+      72
     ],
     "landmarkProduction": 1,
     "landmarkClaimCostBase": 120,
@@ -1198,6 +1198,12 @@
       "defPerLevel": 0.5,
       "hpPerLevel": 3
     }
+  },
+  "ads": {
+    "cooldownMinSeconds": 30,
+    "cooldownMaxSeconds": 90,
+    "eligibleBelowFraction": 0.5,
+    "watchSeconds": 5
   },
   "landmarks": [
     {
@@ -1353,7 +1359,6 @@
   },
   "artifacts": {
     "DowsingRod": {
-      "upkeep": 1,
       "passiveBase": 0.85,
       "passivePerLevel": -0.015,
       "activeManaCost": 8,
@@ -1367,7 +1372,6 @@
       "carriedHpPerLevel": 1
     },
     "VerdantSeal": {
-      "upkeep": 2,
       "passiveBase": 0.75,
       "passivePerLevel": -0.02,
       "activeManaCost": 6,
@@ -1381,7 +1385,6 @@
       "carriedHpPerLevel": 2.5
     },
     "ForemansSigil": {
-      "upkeep": 2,
       "passiveBase": 1,
       "passivePerLevel": 0.2,
       "activeManaCost": 10,
@@ -1395,7 +1398,6 @@
       "carriedHpPerLevel": 0
     },
     "GildedLedger": {
-      "upkeep": 3,
       "passiveBase": 1.2,
       "passivePerLevel": 0.03,
       "activeManaCost": 0,
@@ -1409,7 +1411,6 @@
       "carriedHpPerLevel": 1.5
     },
     "WanderersCompass": {
-      "upkeep": 2,
       "passiveBase": 1.5,
       "passivePerLevel": 0.1,
       "activeManaCost": 5,

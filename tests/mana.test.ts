@@ -7,13 +7,14 @@
 // same way it ticks live.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
+import { addModifier, type Modifier } from '../src/sim/modifiers';
 import { MANA, OFFLINE_CAP_HOURS } from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
 } from '../src/sim/landmarks';
 import {
   accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction,
-  manaRefillGemCost, manaUpkeep, refillManaWithGems,
+  manaRefillGemCost, refillManaWithGems,
 } from '../src/sim/mana';
 import { LANDMARKS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
@@ -98,32 +99,39 @@ describe('the two dials', () => {
   });
 });
 
-describe('upkeep', () => {
-  it('is drawn by what is attuned, and never takes regen below zero', () => {
+describe('what draws against the pool', () => {
+  // Nothing does. Relics used to charge an hourly upkeep while attuned, which
+  // was removed once Mana became the energy every tap is paid from: at
+  // Townhall 1 the full set drew exactly what the Townhall made, so wearing
+  // everything stalled the pool dead and left nothing to play with. The pool
+  // is a tap budget now, and only the player spends it.
+  it('is nothing — wearing every relic does not slow the fill', () => {
     const state = freshGame();
-    expect(manaUpkeep(state)).toBe(0);
-    state.artifacts.attuned = ['GildedLedger']; // 3/h
-    expect(manaUpkeep(state)).toBe(3);
-    expect(manaNetRegen(state)).toBe(manaProduction(state) - 3);
-
-    // Stalled, never bankrupt: the design's first promise applied to the one
-    // resource that could otherwise break it.
+    const bare = manaNetRegen(state);
+    expect(bare).toBe(manaProduction(state));
     state.artifacts.attuned = [
       'GildedLedger', 'ForemansSigil', 'VerdantSeal', 'WanderersCompass', 'DowsingRod',
     ];
-    expect(manaUpkeep(state)).toBeGreaterThan(manaProduction(state));
-    expect(manaNetRegen(state)).toBe(0);
+    expect(manaNetRegen(state)).toBe(bare);
   });
 
+  // Relics can no longer stall the pool, but a modifier still can — a season
+  // or a debug switch that zeroes `manaRegen`. The rule the branch protects is
+  // unchanged and worth keeping covered: a stalled kingdom must not bank the
+  // stalled hours and pay them out the moment the rate returns.
   it('a stalled kingdom banks no time against a future rate', () => {
     const state = drained(freshGame());
-    state.artifacts.attuned = [
-      'GildedLedger', 'ForemansSigil', 'VerdantSeal', 'WanderersCompass', 'DowsingRod',
-    ];
+    const stall: Modifier = {
+      id: 'test:stall', source: 'debug', stat: 'manaRegen', scope: null,
+      op: 'mul', value: 0, expiresAt: null,
+    };
+    addModifier(state, stall);
+    expect(manaNetRegen(state)).toBe(0);
     advance(state, map, T0 + 6 * HOUR);
     expect(mana(state)).toBe(0);
-    // Un-attune everything and the pool starts from NOW, not from six hours ago.
-    state.artifacts.attuned = [null];
+
+    // Lift it and the pool starts from NOW, not from six hours ago.
+    state.modifiers = [];
     advance(state, map, T0 + 6 * HOUR + 1000);
     expect(mana(state)).toBe(0);
   });
@@ -140,7 +148,7 @@ describe('the pool', () => {
   });
 
   it('never goes negative', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     addMana(state, 5);
     addMana(state, -50);
     expect(mana(state)).toBe(0);
@@ -166,6 +174,27 @@ describe('the pool', () => {
     expect(mana(state)).toBe(1);
     accrueMana(state, T0 + 3 * msPerMana);
     expect(mana(state)).toBe(3);
+  });
+
+  // The variant that matters, and the one that did not exist: a window the
+  // pool CROSSES the cap inside. A full pool early-outs from step zero, so
+  // starting full (which freshGame now does) hides any divergence in how the
+  // anchor advances once the ceiling is reached.
+  it('one-call replay equals stepped ticking ACROSS the ceiling', () => {
+    // NOT a whole multiple of msPerMana (15 min at TH1). The normal branch
+    // keeps the sub-unit remainder while a naive over-cap early-out would
+    // snap the anchor to `toTime`; on an exact multiple the two agree by
+    // accident and the divergence hides.
+    const horizon = 20 * HOUR + 7 * 60_000;
+    const oneCall = drained(freshGame());
+    advance(oneCall, map, T0 + horizon);
+
+    const stepped = drained(freshGame());
+    for (let t = 60_000; t <= horizon; t += 60_000) advance(stepped, map, T0 + t);
+
+    expect(mana(stepped)).toBe(mana(oneCall));
+    expect(mana(oneCall)).toBe(manaCap(oneCall)); // it really did cross
+    expect(stepped.city.lastManaAt).toBe(oneCall.city.lastManaAt);
   });
 
   it('one-call replay equals stepped ticking', () => {

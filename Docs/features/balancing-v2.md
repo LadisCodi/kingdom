@@ -34,6 +34,10 @@ costs `tap.mana_cost` (1), so the ceiling is a pool the player can see, plan
 around and refill rather than a per-building timer. The share-scaling stays,
 and is still what stops a large city minting more per press than a small one.
 
+**Superseded again, 2026-09-02.** `taxes.tap_boost_seconds` is gone, folded
+into `tap.boost_seconds` — one number for every tap in the game, houses and
+resource cells alike. See [`ad-economy.md`](ad-economy.md) §1.
+
 Mana is therefore an **energy** mechanic: the thing that lets a player
 accelerate any generator by hand. Paying fog is deliberately NOT part of it —
 a reveal already costs Gold, and charging twice for one tap would price

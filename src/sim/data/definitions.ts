@@ -826,10 +826,14 @@ export const LANDMARKS: LandmarkDef[] = (balance.landmarks as Array<{
  * cast on the map. Hand-authored, one legible effect each, no random rolls —
  * which is what keeps a collection system cozy rather than a spreadsheet.
  *
- * Upkeep is FLAT and does not scale with level, so levelling a relic is
- * unambiguously good. It applies to kingdom attunement only: an artifact
- * carried by a hero into a delve costs no Mana, and that asymmetry is what
- * makes the trade "which do I need right now" rather than "which is cheaper".
+ * Attuning is FREE. Relics used to draw an hourly Mana upkeep, which was
+ * removed once Mana became the energy every tap is paid from — the two jobs
+ * fought, and a player wearing the set had no pool left to play with.
+ *
+ * Attune-or-arm survives that intact, because the rule was never really about
+ * price: a relic is attuned to the kingdom OR carried down by a hero, never
+ * both, so the question is still "which do I need right now" — an economy
+ * passive at home, or combat stats below.
  */
 export interface ArtifactDef {
   id: ArtifactId;
@@ -847,7 +851,6 @@ export interface ArtifactDef {
     perLevel: number;
   };
   /** Mana per hour drawn while attuned. */
-  upkeep: number;
   /**
    * What the relic is worth when a hero carries it DOWN rather than the
    * kingdom wearing it — the other half of attune-OR-arm.
@@ -889,7 +892,7 @@ export interface CarriedStats {
 }
 
 type ArtifactBalance = {
-  upkeep: number; passiveBase: number; passivePerLevel: number;
+  passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
   carriedAtk: number; carriedDef: number; carriedHp: number;
   carriedAtkPerLevel: number; carriedDefPerLevel: number; carriedHpPerLevel: number;
@@ -914,7 +917,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'revealCost', scope: null, op: 'mul',
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
-    upkeep: ab('DowsingRod').upkeep,
     carried: carried('DowsingRod'),
     active: {
       id: 'Divination', name: 'Divination', targeted: true,
@@ -933,7 +935,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'cellRecovery', scope: null, op: 'mul',
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
-    upkeep: ab('VerdantSeal').upkeep,
     carried: carried('VerdantSeal'),
     active: {
       id: 'Bloom', name: 'Bloom', targeted: true,
@@ -950,7 +951,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'workerYield', scope: null, op: 'add',
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
-    upkeep: ab('ForemansSigil').upkeep,
     carried: carried('ForemansSigil'),
     active: {
       id: 'Haste', name: 'Haste', targeted: false,
@@ -969,7 +969,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'taxRate', scope: null, op: 'mul',
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    upkeep: ab('GildedLedger').upkeep,
     carried: carried('GildedLedger'),
     // No active at all, deliberately: the clearest proof that the SLOT rather
     // than the ability is the constraint.
@@ -984,7 +983,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'knowledgeYield', scope: null, op: 'mul',
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
-    upkeep: ab('WanderersCompass').upkeep,
     carried: carried('WanderersCompass'),
     active: {
       id: 'Beckon', name: 'Beckon', targeted: true,
@@ -1170,6 +1168,9 @@ export const HERO_ORDER: HeroId[] = [
 export const DELVE = balance.delve;
 export const PARTY = balance.party;
 export const GACHA = balance.gacha;
+/** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
+ *  eligible, and how long the (faked) video runs. */
+export const AD = balance.ads;
 
 // ------------------------------------------------------------ the timeline
 
@@ -1254,4 +1255,6 @@ export const GAME_VERSION = '0.1.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
 // migrator, only the version (see Docs/features/engine-seams.md §4).
-export const SAVE_VERSION = 18;
+// v18 predates ad offers. `kingdom.adOffers` is additive and its reader
+// defaults, so this bump needs no migrator either.
+export const SAVE_VERSION = 19;

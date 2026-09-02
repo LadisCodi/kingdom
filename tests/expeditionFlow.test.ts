@@ -147,7 +147,9 @@ describe('the Mana gauge', () => {
     const game = freshPresenter(freshGame());
     const info = game.manaInfo();
     expect(info.cap).toBeGreaterThan(0);
-    expect(info.net).toBe(info.production - info.upkeep);
+    // Nothing draws against the pool, so the rate IS the production.
+    expect(info.net).toBe(info.production);
+    expect(info.over).toBe(false);
   });
 });
 

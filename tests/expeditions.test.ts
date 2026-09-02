@@ -21,7 +21,7 @@ import {
   pushDeeper, supplyCost, unitSlots,
 } from '../src/sim/expeditions';
 import { artifactIsCarried } from '../src/sim/artifacts';
-import { manaUpkeep } from '../src/sim/mana';
+import { mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type ArtifactId, type GameState, type UnitId } from '../src/sim/state';
 import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
@@ -535,14 +535,16 @@ describe('attune or arm', () => {
     expect(state.artifacts.attuned[0]).toBe(null);
   });
 
-  it('costs no Mana to carry, which is what makes the trade a question', () => {
+  it('costs nothing to carry, and nothing to wear — the trade is exclusivity', () => {
     const state = armed();
+    const before = mana(state);
     expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
       .toBe('Launched');
-    // Attuning the same relic would draw upkeep every hour. Carrying draws
-    // none, so the trade is never "which is cheaper" but "which do I need".
-    expect(ARTIFACTS.ForemansSigil.upkeep).toBeGreaterThan(0);
-    expect(manaUpkeep(state)).toBe(0);
+    // Relic upkeep is gone, so neither half of attune-or-arm has a price. What
+    // makes it a question is that you cannot do both: an economy passive at
+    // home, or combat stats below.
+    expect(mana(state)).toBe(before);
+    expect(manaNetRegen(state)).toBe(manaProduction(state));
   });
 
   it('a relic in the pack takes the party deeper', () => {

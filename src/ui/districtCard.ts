@@ -13,7 +13,7 @@
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower, trainingProgress } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
@@ -173,7 +173,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         iconEl('showme', { size: 'sm' }),
         residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall'
-          : `Tap to pull ${TAXES.tapBoostSeconds}s of rent forward, as often as you like`));
+          : `Tap to pull ${TAP.boostSeconds}s of rent forward, as often as you like`));
       if (residents > 0) {
         const pool = mana(game.state);
         body.append(el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },

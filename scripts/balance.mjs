@@ -108,8 +108,11 @@ const SETTINGS = [
   ['training.seconds', 'training.seconds'],
   ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
-  ['taxes.tap_boost_seconds', 'taxes.tapBoostSeconds'],
   ['tap.mana_cost', 'tap.manaCost'],
+  // The one number behind every tap in the game: a tap hands you this many
+  // seconds of whatever you tapped is producing. Houses have always worked
+  // this way; resource cells now join them.
+  ['tap.boost_seconds', 'tap.boostSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
@@ -180,6 +183,13 @@ const SETTINGS = [
   ['gacha.hard_pity_at', 'gacha.hardPityAt'],
   ['gacha.duplicate_fragments', 'gacha.duplicateFragments'],
   ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
+  // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
+  // the player can plan around; `eligible_below_fraction` is what keeps it an
+  // answer to being short rather than an interruption.
+  ['ads.cooldown_min_seconds', 'ads.cooldownMinSeconds'],
+  ['ads.cooldown_max_seconds', 'ads.cooldownMaxSeconds'],
+  ['ads.eligible_below_fraction', 'ads.eligibleBelowFraction'],
+  ['ads.watch_seconds', 'ads.watchSeconds'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -218,7 +228,7 @@ const SHEETS = {
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
     'reward_gems'],
-  Artifacts: ['id', 'upkeep', 'passive_base', 'passive_per_level', 'active_mana_cost',
+  Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
     'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
@@ -524,7 +534,7 @@ async function importXlsx() {
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
-    delve: {}, party: {}, gacha: {}, heroes: {},
+    delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
     landmarks: [], ruins: {}, artifacts: {},
     quests: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
@@ -693,7 +703,6 @@ async function importXlsx() {
 
   for (const [id, r] of byId(readSheet(workbook, 'Artifacts'), ARTIFACT_IDS)) {
     out.artifacts[id] = {
-      upkeep: num(r, 'upkeep'),
       passiveBase: signedNum(r, 'passive_base'),
       passivePerLevel: signedNum(r, 'passive_per_level'),
       activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
@@ -886,7 +895,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
     const a = b.artifacts[id];
-    return [id, a.upkeep, a.passiveBase, a.passivePerLevel, a.activeManaCost,
+    return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
       a.activeDurationSeconds || '', a.activeRadius || '',
       a.carriedAtk || '', a.carriedDef || '', a.carriedHp || '',
       a.carriedAtkPerLevel || '', a.carriedDefPerLevel || '', a.carriedHpPerLevel || ''];

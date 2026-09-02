@@ -60,26 +60,25 @@ function manaPanel(game: Game): HTMLElement {
   bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${m.value} / ${m.cap}`);
 
   const refillCost = manaRefillGemCost(game.state);
+  // One line, not three. The breakdown existed to reconcile production against
+  // relic upkeep; nothing draws against the pool any more, so a subtraction
+  // that always reads "−0/h" is exactly the spreadsheet chrome this screen was
+  // built to remove.
   const rows = el('div', { class: 'rel-breakdown' },
-    // The two dials, named as the different jobs they do.
-    el('div', { class: 'rel-line' },
+    el('div', { class: 'rel-line is-total' },
       el('span', {}, 'Drawn from the land'),
       el('b', {}, `+${m.production}/h`)),
-    el('div', { class: `rel-line${m.upkeep > 0 ? ' is-cost' : ''}` },
-      el('span', {}, 'Sustaining your relics'),
-      el('b', {}, m.upkeep > 0 ? `−${m.upkeep}/h` : '0/h')),
-    el('div', { class: 'rel-line is-total' },
-      el('span', {}, m.net === 0 && m.upkeep > 0 ? 'Stalled — but never in debt' : 'Filling at'),
-      el('b', {}, `+${m.net}/h`)),
   );
 
   return el('div', { class: 'rel-mana' },
     el('div', { class: 'rel-mana-head' },
       iconEl('Mana', { size: 'lg' }),
       el('div', { class: 'rel-mana-title' }, 'Mana'),
-      el('div', { class: 'rel-mana-hint' }, m.value >= m.cap
-        ? 'Full — anything more is spilling'
-        : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
+      el('div', { class: 'rel-mana-hint' }, m.over
+        ? `Overcharged — ${m.value - m.cap} past the ceiling`
+        : m.value >= m.cap
+          ? 'Full — anything more is spilling'
+          : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
     bar.root,
     rows,
     refillCost > 0
@@ -177,8 +176,6 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
           el('span', {}, `Level ${entry.level} / ${levelCapForTier(entry.tier)}`)))),
     el('div', { class: 'rel-passive' },
       iconEl('sparkle', { size: 'sm' }), passiveLabel(game, id)),
-    el('div', { class: 'rel-upkeep' },
-      stat('Mana', `−${def.upkeep}`, 'per hour while worn')),
   );
 
   // Attune OR arm. A relic underground has to SAY so on the card: `btn()` is

@@ -53,8 +53,12 @@ by content, so it keeps giving for weeks.
    breadth first, so the paid gate is never the only thing between a player and
    the system. Same pattern as party slots in `expeditions.md`.
 3. **Swapping is immediate; the slot then locks for 5 minutes.**
-4. **Upkeep applies to kingdom attunement only.** An artifact carried by a hero
-   into a delve costs no Mana.
+4. ~~**Upkeep applies to kingdom attunement only.**~~ **Upkeep was removed
+   entirely on 2026-09-02.** Once Mana became the energy every tap is paid
+   from, the two jobs fought: at Townhall 1 the full relic set drew exactly
+   what the Townhall made, so wearing everything stalled the pool dead.
+   Attuning is free now, and attune-or-arm rests on exclusivity alone — see
+   [`ad-economy.md`](ad-economy.md) §2.
 5. **Upkeep is flat per artifact and does not scale with level**, so levelling a
    relic is unambiguously good.
 6. **Net regen floors at zero, never negative.** You can stall; you can never go
@@ -86,6 +90,14 @@ net regen/h = base(TH) + Σ landmarks − Σ upkeep of attuned artifacts    (flo
 
 Conflating them would waste both. Production answers "how many relics can I
 wear"; capacity answers "how long can I be away without spilling".
+
+### The pool, retuned 2026-09-02
+
+Cap **100 / 130 / 160** by Townhall level (Sanctum +24/48/72), regen
+**10 / 13 / 16** an hour. Fill time is **10 h at every level**, deliberately
+past the 8 h offline cap. Every tap in the game costs 1 Mana, so the pool is a
+session's worth of tapping and a rewarded ad refills it — see
+[`ad-economy.md`](ad-economy.md).
 
 ### The tuning law — SUSPENDED 2026-09-02
 

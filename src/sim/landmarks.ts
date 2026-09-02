@@ -3,7 +3,7 @@
 //
 // They are what makes exploration compound rather than merely pay:
 //
-//   explore → more Mana/h → afford more upkeep → wear more relics → explore further
+//   explore → more Mana/h → more taps → more of everything → explore further
 //
 // A flat resource drip cannot do that, because it does not feed the constraint
 // that gates everything else. This is also the design's answer to paid fog

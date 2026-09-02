@@ -18,7 +18,7 @@ import { advance } from '../src/sim/commands';
 import { ARTIFACTS, ATTUNEMENT, COLLECTION, HARVEST, RUINS } from '../src/sim/data/definitions';
 import { fogState, revealCostForCell } from '../src/sim/fog';
 import { registerTap } from '../src/sim/harvest';
-import { addMana, manaUpkeep, mana } from '../src/sim/mana';
+import { addMana, mana } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { effectiveTaxRate, effectiveWorkerYield } from '../src/sim/upgrades';
 import { coordKey, getWallet, type GameState } from '../src/sim/state';
@@ -107,14 +107,12 @@ describe('attunement', () => {
     const base = effectiveTaxRate(state);
     expect(attune(state, 0, 'GildedLedger', T0)).toBe('Attuned');
     expect(effectiveTaxRate(state)).toBeCloseTo(base * 1.2, 6);
-    expect(manaUpkeep(state)).toBe(ARTIFACTS.GildedLedger.upkeep);
 
     // The lock has to pass before it can come off again.
     expect(attune(state, 0, null, T0)).toBe('SlotLocked');
     const after = T0 + ATTUNEMENT.swapLockSeconds * 1000;
     expect(attune(state, 0, null, after)).toBe('Unattuned');
     expect(effectiveTaxRate(state)).toBe(base);
-    expect(manaUpkeep(state)).toBe(0);
   });
 
   it('locks the socket for exactly the authored time', () => {
@@ -324,7 +322,6 @@ describe('a relic cannot be worn and carried at once', () => {
     // cost the player the five minutes a real swap costs.
     expect(state.artifacts.attuned[0]).toBe(null);
     expect(isSlotLocked(state, 0, T0)).toBe(false);
-    expect(manaUpkeep(state)).toBe(0);
   });
 
   it('an attuned relic still un-attunes normally — the rule only blocks the way in', () => {

@@ -1,7 +1,7 @@
 // Population: housing, auto-assigned residents, passive tax gold, and the
 // Townhall's villager-training queue.
 
-import { CITY_DEF, DISTRICTS, TAP, TAXES, TRAINING, levelIndexed } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TAP, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
@@ -160,7 +160,7 @@ export function houseTap(
   const share = houseGoldPerMinute(state, district) / cityRate;
   district.lastTapAt = now;
   state.lastCollectTapAt = now;
-  state.city.lastTaxAt -= TAXES.tapBoostSeconds * 1000 * share;
+  state.city.lastTaxAt -= TAP.boostSeconds * 1000 * share;
   return { result: 'Collected', gold: advanceCityLife(state, now).gold };
 }
 

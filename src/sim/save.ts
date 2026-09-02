@@ -253,6 +253,15 @@ export function serialize(state: GameState, now: number): SaveFile {
         PullCounts: state.gacha.pullCounts,
         PityCounters: state.gacha.pityCounters,
       },
+      // The ad offer. `ReadyAt` is a TIMER, so it is not shifted by the
+      // offline cap below — the cap limits what the city produces, never what
+      // a clock does. `Pending` persists because an offer the player walked
+      // away from is still owed to them.
+      'kingdom.adOffers': {
+        ReadyAtUtc: iso(state.ads.readyAt),
+        Claims: state.ads.claims,
+        Pending: state.ads.pending,
+      },
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
         Cleared: Object.keys(state.landmarks.cleared),
@@ -498,6 +507,15 @@ export function deserialize(
       fragments: { ...(heroesDto.Fragments ?? {}) },
       xp: { ...(heroesDto.Xp ?? {}) },
       partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
+    };
+  }
+
+  const adsDto = modules['kingdom.adOffers'];
+  if (adsDto) {
+    state.ads = {
+      readyAt: adsDto.ReadyAtUtc ? ms(adsDto.ReadyAtUtc) : lastSaved,
+      claims: adsDto.Claims ?? 0,
+      pending: adsDto.Pending === true,
     };
   }
 

@@ -83,13 +83,14 @@ describe('collecting from a house', () => {
     // WHOLE city — which is what stops a big city minting more per tap.
     const first = houseTap(state, house(state), T0);
     expect(first.result).toBe('Collected');
-    expect(first.gold).toBe(TAXES.tapBoostSeconds / 2); // half the city's income
+    // Half the city's income, in whole gold — the accrual banks whole units.
+    expect(first.gold).toBe(Math.floor(TAP.boostSeconds / 2));
 
     // The SAME house, immediately, as many times as the pool allows. This is
     // the whole change: a house taps like a tree, and no timer is consulted.
     expect(houseTap(state, house(state), T0).result).toBe('Collected');
     expect(houseTap(state, house(state), T0).result).toBe('Collected');
-    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(TAXES.tapBoostSeconds / 2);
+    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(Math.floor(TAP.boostSeconds / 2));
   });
 
   it('charges one Mana a tap, and stops dead when the pool is dry', () => {
@@ -158,7 +159,7 @@ describe('collecting from a house', () => {
     const rate = TAXES.goldPerPopulationPerMinute;
     for (const houses of [2, 4, 8]) {
       // tapBoostSeconds of the whole city's per-minute income.
-      const expected = (houses * rate * TAXES.tapBoostSeconds) / 60;
+      const expected = (houses * rate * TAP.boostSeconds) / 60;
       expect(Math.abs(sweepBonus(houses) - expected)).toBeLessThanOrEqual(1);
     }
   });

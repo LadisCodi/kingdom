@@ -53,6 +53,9 @@ export function newGame(map: MapData, now: number): GameState {
       fragments: {}, xp: {}, partySlotsPurchased: 0,
     },
     gacha: { pullCounts: {}, pityCounters: {} },
+    // Ready from the first minute: a new kingdom starts with a full pool, so
+    // the offer simply waits for the player to spend down to half.
+    ads: { readyAt: now, claims: 0, pending: false },
     deepestDepth: 0,
     ruinsCleared: {},
     landmarks: { claimed: {}, cleared: {} },

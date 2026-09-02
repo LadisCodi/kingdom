@@ -42,6 +42,7 @@ as-shipped), and its own design docs are the live source of truth:
 | **[features/expeditions.md](features/expeditions.md)** | **Built 2026-09-02** — ruins as dungeons, staged delves, unit stats |
 | **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | **Built 2026-09-02** — the collection substrate and the gacha (attune-or-arm outstanding). Supersedes `managers.md` |
 | **[features/engine-seams.md](features/engine-seams.md)** | **Built 2026-09-02** — the sim groundwork all of the above needed, and the build order it prescribed |
+| **[features/ad-economy.md](features/ad-economy.md)** | **Built 2026-09-02** — Mana, taps and rewarded ads tuned as one loop; a tap pulls production forward |
 | **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
 
 ## Ground rules used throughout
