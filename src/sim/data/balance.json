@@ -1747,6 +1747,155 @@
         "Gold": 300
       },
       "rewardGems": 10
+    },
+    {
+      "id": "TheFirstShrine",
+      "name": "Old Stones",
+      "description": "Claim a landmark — it feeds your kingdom Mana every hour, for good.",
+      "goalType": "ClaimLandmarks",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Attuned",
+      "name": "Attunement",
+      "description": "Research Attunement — a second relic can then be worn at once.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Attunement",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 200
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "TheSanctum",
+      "name": "A Place for Magic",
+      "description": "Build the Sanctum — a bigger pool holds a longer absence.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Sanctum",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250,
+        "Stone": 40
+      },
+      "rewardGems": 5
+    },
+    {
+      "id": "Mustered",
+      "name": "Mustered",
+      "description": "Build a Barracks — an army is a city decision now, not a Townhall one.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Barracks",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 200,
+        "Wood": 60
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "AWarband",
+      "name": "A Warband",
+      "description": "Train four units — enough to send someone into the dark.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 4,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250,
+        "Food": 60
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "IntoTheDark",
+      "name": "Into the Dark",
+      "description": "Send a party into a ruin and clear its first depth.",
+      "goalType": "ReachDepth",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 300,
+        "Food": 80
+      },
+      "rewardGems": 5
+    },
+    {
+      "id": "TheBarrowsPrize",
+      "name": "The Barrow’s Prize",
+      "description": "Clear a ruin to its bottom — the relic waiting there is yours.",
+      "goalType": "ClearRuins",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 400
+      },
+      "rewardGems": 5
+    },
+    {
+      "id": "WornWell",
+      "name": "Worn Well",
+      "description": "Attune a relic. It works while you wear it, and only while you wear it.",
+      "goalType": "OwnArtifacts",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 300
+      },
+      "rewardGems": 0
+    },
+    {
+      "id": "Leylines",
+      "name": "Leylines",
+      "description": "Claim four landmarks — every one makes the next stretch of fog cheaper.",
+      "goalType": "ClaimLandmarks",
+      "goalTarget": null,
+      "goalAmount": 4,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 500,
+        "Stone": 60
+      },
+      "rewardGems": 5
+    },
+    {
+      "id": "DeeperStill",
+      "name": "Deeper Still",
+      "description": "Reach depth five. Past your safe floor is a gamble you choose.",
+      "goalType": "ReachDepth",
+      "goalTarget": null,
+      "goalAmount": 5,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 600,
+        "Iron": 30
+      },
+      "rewardGems": 5
+    },
+    {
+      "id": "TheReliquary",
+      "name": "The Reliquary",
+      "description": "Recover three relics. Each ruin holds exactly one.",
+      "goalType": "OwnArtifacts",
+      "goalTarget": null,
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 900
+      },
+      "rewardGems": 10
     }
   ],
   "fog": {

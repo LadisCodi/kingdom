@@ -76,6 +76,8 @@ const QUEST_GOAL_TYPES = {
   BuildDistrict: 'district', UpgradeDistrict: 'district', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null,
   AssignWorkers: null, TrainArmy: null,
+  // The long game: magic and expeditions.
+  ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
 };

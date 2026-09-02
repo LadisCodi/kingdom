@@ -289,6 +289,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
 
       delve.partyHp -= outcome.damage;
       delve.depth = depth;
+      state.deepestDepth = Math.max(state.deepestDepth, depth);
       const paid = depthHaul(delve.ruinId, depth, delve.heroId);
       addHaul(delve, paid.wallet, paid.fragments);
 

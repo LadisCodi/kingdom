@@ -28,8 +28,9 @@ import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import { availableRoster } from './sim/army';
 import { typeMultiplier } from './sim/combat';
 import {
-  buyPartySlot, delveById, extract, freeHeroes, launchBlock, launchDelve, previewExpedition,
-  pushDeeper, supplyCost, unitSlots, type ExpeditionPreview, type LaunchBlock,
+  buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, launchBlock, launchDelve,
+  previewExpedition, pushDeeper, supplyCost, unitSlots,
+  type ExpeditionPreview, type LaunchBlock,
 } from './sim/expeditions';
 import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
 import {
@@ -851,6 +852,50 @@ export class Game {
         break;
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      case 'ClaimLandmarks': {
+        // The nearest landmark that is visible and unclaimed; failing that,
+        // the nearest frontier cell — because the answer is "explore".
+        const claimable = visibleLandmarks(this.state, this.map)
+          .filter((l) => this.state.landmarks.claimed[l.id] !== true)
+          .sort((a, b) =>
+            townhallDistance(this.map, a.location) - townhallDistance(this.map, b.location))[0];
+        if (claimable) {
+          this.setOverlay(null);
+          this.inspectedSite = claimable.location;
+          this.camera.centerOnCell(claimable.location);
+          this.notify();
+        } else {
+          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        }
+        break;
+      }
+      case 'ReachDepth':
+      case 'ClearRuins': {
+        // A party already underground is the answer; otherwise the nearest
+        // ruin they could be sent into.
+        const waiting = this.waitingDelves()[0];
+        if (waiting) {
+          this.openCheckpointFor(waiting.id);
+          break;
+        }
+        const found = discoveredRuins(this.state, this.map)
+          .sort((a, b) =>
+            townhallDistance(this.map, RUINS[a].location)
+            - townhallDistance(this.map, RUINS[b].location))[0];
+        if (found) {
+          this.setOverlay(null);
+          this.inspectedSite = RUINS[found].location;
+          this.camera.centerOnCell(RUINS[found].location);
+          this.notify();
+        } else {
+          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        }
+        break;
+      }
+      case 'OwnArtifacts':
+        this.setUiHint('reliquary');
+        overlay('reliquary');
         break;
       case 'CollectTaps':
         centerCell(this.nearestCell((c) =>

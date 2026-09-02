@@ -185,7 +185,10 @@ describe('focusQuest() — the 🔍 lands somewhere for every quest in the chain
         game.uiHint() !== null ||
         game.hintCell() !== null ||
         game.openOverlay !== null ||
-        game.inspectedDistrictId !== null;
+        game.inspectedDistrictId !== null ||
+        // Sites are the fourth thing the 🔍 can land on: a landmark to claim
+        // or a ruin to send a party into.
+        game.inspectedSite !== null;
       expect(landed).toBe(true);
     },
   );

@@ -68,6 +68,14 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.city.districts.reduce((sum, d) => sum + d.assignedWorkers, 0);
     case 'TrainArmy':
       return state.army.length;
+    case 'ClaimLandmarks':
+      return Object.keys(state.landmarks.claimed).length;
+    case 'ReachDepth':
+      return state.deepestDepth;
+    case 'ClearRuins':
+      return Object.keys(state.ruinsCleared).length;
+    case 'OwnArtifacts':
+      return state.artifacts.owned.length;
     default:
       return 0;
   }

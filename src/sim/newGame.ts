@@ -52,6 +52,7 @@ export function newGame(map: MapData, now: number): GameState {
       fragments: {}, xp: {}, partySlotsPurchased: 0,
     },
     gacha: { pullCounts: {}, pityCounters: {} },
+    deepestDepth: 0,
     ruinsCleared: {},
     landmarks: { claimed: {}, cleared: {} },
     artifacts: {

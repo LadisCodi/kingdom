@@ -15,8 +15,12 @@ import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
 const FOREST = { x: 2, y: 2 };
 
 describe('the quest chain', () => {
-  it('ships 27 quests, starting with the tap tutorial', () => {
-    expect(QUESTS).toHaveLength(27);
+  it('runs from the tap tutorial into the long game', () => {
+    // The chain used to dead-end at Townhall 3, roughly three hours in — the
+    // audit's "lifetime is the bottleneck" finding in one number. It now
+    // continues through landmarks, the Sanctum, an army, and the ruins.
+    expect(QUESTS.length).toBeGreaterThanOrEqual(38);
+    expect(QUESTS[QUESTS.length - 1].goalType).toBe('OwnArtifacts');
     expect(QUESTS.findIndex((q) => q.id === 'Rations'))
       .toBe(QUESTS.findIndex((q) => q.id === 'FirstVillager') - 1); // food before mouths
     expect(QUESTS[0]).toMatchObject({ id: 'FirstSteps', goalType: 'CollectTaps', goalAmount: 5 });
@@ -24,8 +28,11 @@ describe('the quest chain', () => {
     // The army needs no Iron anymore, but it still belongs to the TH2 era.
     expect(QUESTS.findIndex((q) => q.id === 'FirstSoldier'))
       .toBeGreaterThan(QUESTS.findIndex((q) => q.id === 'ProperCapital'));
+    // Townhall 3 is now a milestone rather than the end of the road.
+    expect(QUESTS.find((q) => q.id === 'GrandCapital')).toMatchObject(
+      { goalType: 'UpgradeDistrict', goalLevel: 3, rewardGems: 10 });
     expect(QUESTS.at(-1)).toMatchObject(
-      { id: 'GrandCapital', goalType: 'UpgradeDistrict', goalLevel: 3, rewardGems: 10 });
+      { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
   });
 
   it('gem rewards land in the PLAYER wallet', () => {

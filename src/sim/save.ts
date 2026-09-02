@@ -237,6 +237,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Outcome: d.outcome,
         })),
         Cleared: Object.keys(state.ruinsCleared),
+        DeepestDepth: state.deepestDepth,
       },
       'kingdom.heroes': {
         Owned: state.heroes.owned,
@@ -474,6 +475,7 @@ export function deserialize(
       threat: d.Threat ?? 'Any',
       outcome: d.Outcome ?? null,
     }));
+    state.deepestDepth = delvesDto.DeepestDepth ?? 0;
     state.ruinsCleared = {};
     for (const id of (delvesDto.Cleared ?? []) as string[]) {
       state.ruinsCleared[id as keyof typeof state.ruinsCleared] = true;

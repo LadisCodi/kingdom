@@ -265,6 +265,10 @@ export interface GameState {
     pullCounts: Record<string, number>;
     pityCounters: Record<string, number>;
   };
+  /** The deepest depth any party has ever cleared. Persisted rather than
+   *  derived, because a delve that ended is gone — and "how deep have you
+   *  been" is a milestone, not a live reading. */
+  deepestDepth: number;
   /** Ruins whose deepest depth has been cleared at least once. The artifact
    *  is granted on the FIRST one — no randomness on the thing that gates a
    *  system. */
