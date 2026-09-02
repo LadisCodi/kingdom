@@ -26,6 +26,8 @@ import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
 import { renderAdOfferSheet } from './ui/adOfferSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
+import { renderDailySheet } from './ui/dailySheet';
+import { mountDailyPill } from './ui/dailyPill';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
@@ -101,6 +103,7 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
+  mountDailyPill(game, document.getElementById('daily')!);
   mountDelvePill(game, document.getElementById('delves')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
@@ -135,6 +138,7 @@ async function boot(): Promise<void> {
     checkpoint: renderCheckpointSheet,
     adOffer: renderAdOfferSheet,
     builder: renderBuilderSheet,
+    daily: renderDailySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
@@ -177,7 +181,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer', 'builder',
+        'adOffer', 'builder', 'daily',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(

@@ -232,6 +232,18 @@ export interface GameState {
     wallet: Wallet;
     /** Epoch ms anchor for the Knowledge drip (whole units only). */
     lastKnowledgeAt: number;
+    /** The daily chest ladder. KINGDOM-scoped on purpose, like Knowledge, so
+     *  it survives a region reset — a habit is a property of the player, not
+     *  of the city they happen to be playing. See sim/daily.ts. */
+    daily: {
+      /** Days PLAYED, not days elapsed. The ladder position is this modulo
+       *  the ladder's length, so it cycles and never resets. */
+      ladderStep: number;
+      /** `dayIndex` of the last claim, or null if none — stamped rather than
+       *  incremented, so a second claim in one day is impossible however the
+       *  clock moves, including backwards. */
+      lastClaimedDay: number | null;
+    };
   };
   player: { wallet: Wallet };
   fog: {

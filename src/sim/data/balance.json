@@ -1126,6 +1126,36 @@
     "damagePerStrength": 0.9,
     "damageAbsorbedPerDefence": 0.5
   },
+  "daily": {
+    "manaFractions": [
+      0.34,
+      0.34,
+      0.5,
+      0.34,
+      0.5,
+      0.34,
+      1
+    ],
+    "goldSeconds": [
+      0,
+      0,
+      0,
+      900,
+      0,
+      0,
+      0
+    ],
+    "gems": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      5
+    ],
+    "goldFloor": 100
+  },
   "delve": {
     "goldPerDepthPerTier": 25,
     "materialPerDepthPerTier": 4,

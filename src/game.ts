@@ -64,6 +64,9 @@ import {
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type UpgradeId, type Wallet,
 } from './sim/state';
+import {
+  chestAvailable, chestReward, claimDailyChest, ladderLength, nextStep,
+} from './sim/daily';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
@@ -93,7 +96,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder';
+  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder' | 'daily';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -804,6 +807,52 @@ export class Game {
   // ------------------------------------------------------------- ad offers
 
   /** The standing offer, or null. Drives the widget and the popup. */
+  // ------------------------------------------------------------ daily chest
+
+  /**
+   * Today's chest, or null when it has already been taken.
+   *
+   * `ladder` is the whole cycle rather than just this step, because the sheet
+   * draws it: a ladder you can see is what makes step 5 feel like somewhere
+   * you got to rather than a number in a corner.
+   */
+  dailyChest(): {
+    step: number;
+    length: number;
+    reward: Wallet;
+    ladder: Array<{ step: number; reward: Wallet; claimed: boolean; isToday: boolean }>;
+  } | null {
+    if (!chestAvailable(this.state, this.now())) return null;
+    const step = nextStep(this.state);
+    const length = ladderLength();
+    return {
+      step,
+      length,
+      reward: chestReward(this.state, step),
+      ladder: Array.from({ length }, (_, i) => ({
+        step: i + 1,
+        reward: chestReward(this.state, i + 1),
+        // Everything before today's step in THIS cycle is already taken.
+        claimed: i + 1 < step,
+        isToday: i + 1 === step,
+      })),
+    };
+  }
+
+  doClaimDailyChest(): void {
+    const chest = this.dailyChest();
+    if (chest === null) return;
+    if (claimDailyChest(this.state, this.now()) !== 'Claimed') return;
+    playSfx('quest');
+    this.setOverlay(null);
+    // The reward is the point, so it is said out loud rather than left to be
+    // spotted in the header.
+    const parts = (Object.entries(chest.reward) as Array<[CurrencyId, number]>)
+      .map(([c, n]) => `+${n} ${c}`);
+    this.toast(parts.join(' · '));
+    this.notify();
+  }
+
   adOffer(): { reward: number } | null {
     return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
   }

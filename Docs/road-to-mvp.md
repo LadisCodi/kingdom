@@ -4,8 +4,9 @@
 > the pillars the 2026-09-02 competitive review found missing, and the register
 > of design decisions that have to be closed along the way.
 >
-> **Status: the plan is live. Phase 0 is BUILT (2026-09-02); Phases 1–5 are
-> unstarted.**
+> **Status: the plan is live. Phase 0 is BUILT; Phase 1 is half built — the
+> daily chest ships, generated orders are blocked on decision 3. Phases 2–5
+> are unstarted.** (2026-09-02)
 >
 > This file owns the *sequence* and the *gates*. It does not own designs — each
 > pillar has its own doc in [`features/`](features/), listed in §8. The
@@ -129,7 +130,7 @@ which is Phase 3's problem. Two questions outlived the pass and are logged as
 open decisions: the Mana-refill price (→ decision 4's neighbourhood) and when
 to re-derive the tree's Gold (→ eras, §9). **Cost:** one session, as predicted.
 
-## 3. Phase 1 · The habit layer
+## 3. Phase 1 · The habit layer — **daily chest BUILT 2026-09-02**
 
 **Doc:** [`features/habit-loop.md`](features/habit-loop.md)
 
@@ -155,6 +156,11 @@ new types.
 **Gate:** a player who has finished all authored content still has a reason to
 open the game tomorrow, and it did not cost a designer an afternoon.
 **Cost:** days.
+
+**Half met.** The daily chest ships with a ladder that advances on days
+*played* and therefore cannot be lost — decisions 1 and 2 closed. Generated
+orders are still unstarted and blocked on decision 3 (which building they live
+in), which is the one §8 marks as needing a decision rather than a preference.
 
 ## 4. Phase 2 · The event archetype
 

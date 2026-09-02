@@ -69,7 +69,7 @@ design, and closes the open decisions §8 files against it.
 | Phase | File | What it covers |
 |---|---|---|
 | 0 | [features/balancing-v3.md](features/balancing-v3.md) | **Designed, unstarted** — make the prose agree with the workbook before anything is balanced on top of it; the dead `kingdom.max_builders` dial |
-| 1 | [features/habit-loop.md](features/habit-loop.md) | **Designed, unstarted** — a daily chest, a streak, and generated orders: a reason to open the game on a day nobody authored |
+| 1 | [features/habit-loop.md](features/habit-loop.md) | **Daily chest built 2026-09-02**; generated orders designed and blocked on one decision — a reason to open the game on a day nobody authored |
 | 2 | [features/event-archetype.md](features/event-archetype.md) | **Designed, unstarted** — the thing we author ten times a year, on the timeline that is already built; the two seam widenings it needs first |
 | 3 | [features/monetization-sim.md](features/monetization-sim.md) | **Designed, unstarted** — a store that never charges, more ad placements, and the telemetry that makes a D30 possible at all |
 | 4 | [features/social-layer.md](features/social-layer.md) | **Designed, unstarted** — Supabase as server authority, neighbours and capped daily help, a guild, a weekly collective bar |

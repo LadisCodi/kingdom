@@ -32,6 +32,7 @@ export function newGame(map: MapData, now: number): GameState {
     kingdom: {
       builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
+      daily: { ladderStep: 0, lastClaimedDay: null },
       lastKnowledgeAt: now,
     },
     player: { wallet: playerWallet },

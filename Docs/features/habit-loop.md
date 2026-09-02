@@ -3,7 +3,8 @@
 > Phase 1 of [`../road-to-mvp.md`](../road-to-mvp.md). Two mechanics that give
 > a player something to want on a day when no designer authored anything:
 > a **daily chest** and **generated orders**.
-> **Status: designed, unstarted.**
+> **Status: the daily chest is BUILT (2026-09-02); generated orders are
+> designed and unstarted, blocked on open decision 3.**
 >
 > Companion docs: [`quests.md`](quests.md) (the goal types this reuses),
 > [`ad-economy.md`](ad-economy.md) (what Mana is worth),
@@ -28,7 +29,7 @@ something to want that nobody had to author by hand?**
 
 ---
 
-## 1. The daily chest, and a streak that cannot be lost
+## 1. The daily chest, and a streak that cannot be lost — **BUILT**
 
 ### 1.1 The pillar problem, and the design that solves it
 
@@ -110,14 +111,40 @@ comes with it: pills hide behind any sheet, and z-order below the nav. A daily
 reward that interrupts the first tap of a session is the single most disliked
 screen in the genre; a pill that glows and waits is not.
 
-**Open question:** does the pill auto-open on the first session of a day, or
-does it only glow? Leaning toward *glow only*, because the whole design above
-is about the game not making demands. Worth one playtest either way — it is a
-one-line change.
+**Closed: it only glows.** The pill never opens the sheet by itself. The whole
+design above is about a game that does not make demands, and a build that opens
+with one contradicts it in the first second of the session. The cost is real
+and accepted — a player can finish a session without noticing the chest, and
+lose it — which is the same sanctioned pressure a missed day already carries.
+It stays a one-line change if a playtest disagrees.
+
+### 1.5 As built
+
+`src/sim/daily.ts`, `tests/daily.test.ts` (15 assertions), and two UI files —
+`dailyPill.ts` (glows, waits) and `dailySheet.ts` (the ladder, drawn).
+
+Three things worth knowing that the design above did not settle:
+
+- **The rollover is UTC.** A local-midnight rollover would make the ladder
+  depend on where the device thinks it is — a player crossing a timezone could
+  claim twice or lose a day — and the sim is not allowed to read anything that
+  is not passed in. The cost is that "a new day" lands at a different
+  wall-clock hour for different players, which for a mechanic that never
+  punishes a miss is a cost of nothing.
+- **`lastClaimedDay` is stamped, not incremented**, so a second claim in one
+  day is impossible however the clock moves — *including backwards*, which is
+  the failure a decremented counter would have paid out on.
+- **The Gold step is priced in seconds of the city's own tax income** with an
+  authored floor (`daily.gold_floor`), so it neither goes stale by era three
+  nor pays zero to a city that has not housed anyone yet.
+
+The ladder is drawn with the rungs behind you **lit rather than greyed**, and
+there is no countdown anywhere on the sheet. Most progress UI exists to create
+urgency; this one exists to remove it.
 
 ---
 
-## 2. Generated orders
+## 2. Generated orders — **unstarted**
 
 ### 2.1 What an order is
 
@@ -233,12 +260,14 @@ Additive ⇒ no migrator.
 These are the ones [`../road-to-mvp.md`](../road-to-mvp.md) §8 lists as
 blocking Phase 1. Recorded here as recommendations, to be closed in review.
 
-1. **Chest reward — Mana, Gems, or both?** Recommendation above: Mana every
-   day, Gems at the week marker only. The alternative — Gems daily in small
-   amounts — devalues the marker and makes the faucet hard to bound.
-2. **Does the pill auto-open?** Recommendation: no. §1.4.
-3. **Orders on the Market, or their own building?** Recommendation: **the
-   Market**, as a second tab. It gives the Market the second job the design
+1. ~~**Chest reward — Mana, Gems, or both?**~~ **CLOSED: Mana every day, Gems
+   at the week marker only**, as recommended. Gems daily in small amounts
+   devalues the marker and makes the faucet hard to bound. Authored as
+   `daily.mana_fractions` / `daily.gems`, with one Gold step in between priced
+   in seconds of production.
+2. ~~**Does the pill auto-open?**~~ **CLOSED: no, it only glows.** §1.4.
+3. **Orders on the Market, or their own building?** ← **the one blocking
+   Phase 1's second half.** Recommendation: **the Market**, as a second tab. It gives the Market the second job the design
    already wants for it, it needs no new placement or count cap, and it keeps
    the "tap the building" convention. The cost is that orders are gated behind
    the Market technology, which lands at quest 32+ — so either the gate moves

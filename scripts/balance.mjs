@@ -145,6 +145,13 @@ const SETTINGS = [
   // party and attunement slots: round(base x growth^purchased).
   ['kingdom.builder_gem_cost_base', 'kingdom.builderGemCostBase'],
   ['kingdom.builder_gem_cost_growth', 'kingdom.builderGemCostGrowth'],
+  // The daily chest ladder (Docs/features/habit-loop.md §1.2). Three parallel
+  // seven-long lists, one per reward kind, so a step is a column rather than a
+  // sheet — and so the ladder's LENGTH is the length of these lists.
+  ['daily.mana_fractions', 'daily.manaFractions', 'list'],
+  ['daily.gold_seconds', 'daily.goldSeconds', 'list'],
+  ['daily.gems', 'daily.gems', 'list'],
+  ['daily.gold_floor', 'daily.goldFloor'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -569,6 +576,7 @@ async function importXlsx() {
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
+    daily: {},
     delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
     landmarks: [], ruins: {}, artifacts: {},
     quests: [],
