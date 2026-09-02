@@ -91,7 +91,14 @@
   background: rgba(92, 58, 30, 0.07);
 }
 .exp-troop.is-blocked { opacity: 0.5; }
-.exp-troop-art { width: 36px; height: 36px; image-rendering: pixelated; border-radius: 6px; }
+.exp-troop-art {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+  border-radius: 6px;
+}
 .exp-troop-body { flex: 1; min-width: 0; }
 .exp-troop-name { font-family: var(--font-display); font-size: var(--text-helper); }
 .exp-troop-stats { display: flex; gap: 8px; font-size: 11px; color: var(--ink-muted); }

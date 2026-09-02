@@ -250,7 +250,10 @@ function sliceSheet(sheet, cell, outDir) {
  *     sheet-wide scale, because a shrine and a chapel are genuinely different
  *     sizes on the ground and forcing them to one scale makes the small ones
  *     vanish at low zoom;
- *   - it sits on the SOUTH edge, so a building meets the tile it stands on.
+ *   - it sits on the SOUTH edge by default, so a building meets the tile it
+ *     stands on. A sheet of held OBJECTS (relics, portraits) sets
+ *     `gravity: "center"` instead — those are shown in a framed slot, not on
+ *     the ground, and sinking them looks like a layout bug.
  */
 function sliceWorldSheet(sheet, outDir, size) {
   const file = join(UI_DIR, sheet.file);
@@ -288,7 +291,7 @@ function sliceWorldSheet(sheet, outDir, size) {
     magick(
       '-size', `${size}x${size}`, 'xc:none',
       '(', file, '-crop', boxStr(box), '+repage', '-filter', 'point', '-resize', `${sw}x${sh}!`, ')',
-      '-gravity', 'south', '-composite',
+      '-gravity', sheet.gravity ?? 'south', '-composite',
       '-channel', 'A', '-threshold', '50%', '+channel',
       '-strip', '-define', 'png:exclude-chunk=date,time',
       out,

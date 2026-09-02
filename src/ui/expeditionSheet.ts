@@ -67,7 +67,10 @@ function troopPicker(game: Game): HTMLElement {
     const wouldExceed = count === 0 && chosenTypes >= limit;
     const value = el('b', { class: 'exp-count' }, `${count}`);
     return el('div', { class: `exp-troop${wouldExceed ? ' is-blocked' : ''}` },
-      portrait(`unit_${unitId.toLowerCase()}`, unit.glyph, 'exp-troop-art'),
+      // The atlas already holds the four unit portraits (sheet UI-F), so this
+      // is an icon rather than a world sprite — there is no separate map art
+      // for a soldier, and inventing a key for one would only ever fall back.
+      el('div', { class: 'exp-troop-art' }, iconEl(unitId, { size: 'lg' })),
       el('div', { class: 'exp-troop-body' },
         el('div', { class: 'exp-troop-name' }, unit.name),
         el('div', { class: 'exp-troop-stats' },

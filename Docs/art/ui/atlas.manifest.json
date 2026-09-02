@@ -182,6 +182,23 @@
         "stables",
         null
       ]
+    },
+    {
+      "file": "sheets/spr-c-relics.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.9,
+      "names": [
+        "artifact_dowsing_rod",
+        "artifact_verdant_seal",
+        "artifact_foremans_sigil",
+        "artifact_gilded_ledger",
+        "artifact_wanderers_compass",
+        null
+      ],
+      "gravity": "center"
     }
   ]
 }
