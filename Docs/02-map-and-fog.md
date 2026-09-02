@@ -85,6 +85,16 @@ Three cell states:
 | **Discovered** | derived: any existing neighbour is Revealed | dimmed; terrain, features **and authored sites** (landmarks, ruins) all draw through the dimming, with a reveal progress bar once paid into | tappable to pay toward reveal |
 | **Undiscovered** | derived: no revealed neighbour | opaque | taps are swallowed (do nothing) |
 
+**Sighting a site announces it.** The first time a landmark or ruin stops
+being Undiscovered — however that happened — it goes into the persisted
+`discoveries` set as `site:<id>` and raises a banner, on the same system that
+announces a first-collected resource. `recordVisibleSites` is a SWEEP rather
+than a hook, because "became visible" is not a mutation: fog state is derived,
+so a shrine can come into view because a neighbour was cleared, because a
+building's radius landed near it, or because another sanctuary was claimed.
+Fifteen sites is cheaper to re-check than to be wrong about which change
+mattered, so all three routes call it.
+
 Landmarks and ruins draw under the fog exactly as features do (2026-09-02).
 A site you cannot see until you have already paid to stand on it is not a
 destination, it is a surprise — and the whole economy rests on the player

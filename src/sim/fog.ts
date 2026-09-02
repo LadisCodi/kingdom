@@ -1,7 +1,7 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/02).
 
-import { DISTRICTS, FOG, KNOWLEDGE } from './data/definitions';
-import { recordResourceDiscovery } from './discovery';
+import { DISTRICTS, FOG, KNOWLEDGE, LANDMARKS, RUINS } from './data/definitions';
+import { recordResourceDiscovery, recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
 import { effect } from './upgrades';
@@ -139,10 +139,35 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     addToWallet(state.kingdom.wallet, 'Knowledge', revealKnowledge(map, cell));
     recordResourceDiscovery(state, 'Knowledge');
     recordQuestEvent(state, { kind: 'reveal' });
+    // Clearing a cell can bring a whole ring of new ground into view.
+    recordVisibleSites(state, map);
     return 'Revealed'; // caller must trigger a production recalc
   }
   state.fog.progress[key] = nowPaid;
   return 'Paid';
+}
+
+/**
+ * Announce every landmark and ruin the player can now SEE, once each.
+ *
+ * A SWEEP rather than a hook, because "became visible" is not a mutation.
+ * Fog state is derived — a cell turns Discovered when a NEIGHBOUR is revealed,
+ * when a building's radius lands on it, or when a claimed sanctuary lifts the
+ * fog nearby — so there is no single write to hang the announcement off. There
+ * are fifteen sites; checking all of them after a fog change is cheaper than
+ * being wrong about which change mattered.
+ *
+ * Visible means not `Undiscovered`: a site under the fog still draws, so the
+ * moment the player can make one out is the moment worth telling them about.
+ * Waiting for `Revealed` would announce a place they had already walked to.
+ */
+export function recordVisibleSites(state: GameState, map: MapData): void {
+  for (const l of LANDMARKS) {
+    if (fogState(state, map, l.location) !== 'Undiscovered') recordSiteDiscovery(state, l.id);
+  }
+  for (const r of Object.values(RUINS)) {
+    if (fogState(state, map, r.location) !== 'Undiscovered') recordSiteDiscovery(state, r.id);
+  }
 }
 
 /** Apply a district's fog radii: reveal fogRevealRadius around the footprint
@@ -159,6 +184,7 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
   for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogDiscoverRadius)) {
     if (!state.fog.revealed[coordKey(cell)]) state.fog.discovered[coordKey(cell)] = true;
   }
+  recordVisibleSites(state, map);
 }
 
 /** New-game seed: every district applies its fog radii. */

@@ -27,7 +27,7 @@
 //    ground.
 
 import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
-import { fogState } from './fog';
+import { fogState, recordVisibleSites } from './fog';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
 import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
@@ -98,6 +98,8 @@ function discoverAroundLandmark(state: GameState, map: MapData, def: LandmarkDef
     const key = coordKey(cell);
     if (!state.fog.revealed[key]) state.fog.discovered[key] = true;
   }
+  // The lantern this just held up almost certainly caught something.
+  recordVisibleSites(state, map);
 }
 
 /** Landmarks the player can currently see — revealed cells only. */

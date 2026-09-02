@@ -8,7 +8,8 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES, LANDMARK_ART, RUINS,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
+  LANDMARK_ART, LANDMARKS, RUINS,
   TECHNOLOGIES, TRAINING, UNITS,
 } from './sim/data/definitions';
 import {
@@ -182,6 +183,10 @@ export class Game {
     for (const key of this.state.pendingDiscoveries.splice(0)) {
       const [kind, id] = key.split(':');
       if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
+      if (kind === 'site') {
+        const banner = siteBanner(id);
+        if (banner) this.queueBanner(banner);
+      }
     }
     // The moment the active quest's goal is met, ding — before any claim.
     const questDone = this.questInfo()?.complete ?? false;
@@ -1788,6 +1793,46 @@ function resourceBanner(currency: CurrencyId): Banner {
         ? `Sells for ${def.goldValue} ${icon('Gold')}`
         : '';
   return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
+}
+
+/**
+ * The card for a landmark or ruin coming into view for the first time.
+ *
+ * Sighted, not reached: the fog only has to have thinned enough to make it
+ * out. That is the moment it becomes a destination, and a destination the
+ * player has not been told about is just a sprite they may never walk to.
+ *
+ * Returns null for an id no longer in the workbook, so a save that remembers
+ * a site somebody has since deleted degrades to silence rather than a crash.
+ */
+function siteBanner(id: string): Banner | null {
+  const landmark = LANDMARKS.find((l) => l.id === id);
+  if (landmark) {
+    const art = LANDMARK_ART[landmark.kind];
+    return {
+      title: 'A place of power!',
+      icon: art.glyph,
+      name: art.name,
+      // What it is FOR, in one line — the site card carries the detail.
+      desc: landmark.defended
+        ? 'Something holds it. Clear a path, then clear the guard.'
+        : 'Clear a path to it and claim it.',
+      sprite: art.sprite,
+      tone: 'sky',
+    };
+  }
+  const ruin = Object.values(RUINS).find((r) => r.id === id);
+  if (ruin) {
+    return {
+      title: 'Ruins sighted!',
+      icon: ruin.glyph,
+      name: ruin.name,
+      desc: ruin.description,
+      sprite: ruin.sprite,
+      tone: 'gold',
+    };
+  }
+  return null;
 }
 
 /** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */

@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, TECH_ORDER } from '../src/sim/data/definitions';
 import {
-  fogState, isReachable, revealCost, revealKnowledge, revealPerTap, revealTap,
+  DISTRICTS, FOG, LANDMARKS, RUINS, TECH_ORDER,
+} from '../src/sim/data/definitions';
+import {
+  explorationGate, fogState, isReachable, recordVisibleSites, revealAroundDistrict,
+  revealCost, revealKnowledge, revealPerTap, revealTap,
 } from '../src/sim/fog';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
+import { siteDiscoveryKey } from '../src/sim/discovery';
+import { claimLandmark, landmarkClaimCost } from '../src/sim/landmarks';
 import { techCost } from '../src/sim/research';
-import { reveal } from './helpers';
-import { coordKey, getWallet } from '../src/sim/state';
+import { deserialize, serialize } from '../src/sim/save';
+import { addBuilt, reveal, T0 } from './helpers';
+import { coordKey, getWallet, parseCoordKey, type Coord } from '../src/sim/state';
 
 const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
@@ -242,5 +248,117 @@ describe('Surveying makes a tap on the fog go further', () => {
     const before = getWallet(state.city.wallet, 'Gold');
     payFor(state, cell);
     expect(before - getWallet(state.city.wallet, 'Gold')).toBe(revealCost(3));
+  });
+});
+
+// Sighting a site announces it, once, ever.
+//
+// The interesting part is that "became visible" is not a mutation — fog state
+// is derived, so a shrine can come into view because a NEIGHBOUR was cleared,
+// because a building's radius landed near it, or because another sanctuary
+// was claimed. These check all three routes, because a hook on any one of
+// them would have missed the other two.
+describe('a site announces itself when it comes into view', () => {
+  const near = (cell: Coord, of: Coord, r: number) =>
+    Math.max(Math.abs(cell.x - of.x), Math.abs(cell.y - of.y)) <= r;
+
+  it('says nothing at all on a brand-new map', () => {
+    const state = newGame(map, T0);
+    expect(state.pendingDiscoveries.filter((k) => k.startsWith('site:'))).toEqual([]);
+  });
+
+  it('announces one the moment the fog THINS, not when the cell is bought', () => {
+    const state = newGame(map, T0);
+    const shrine = LANDMARKS.reduce((a, b) =>
+      townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
+
+    // Clear a neighbour of the shrine. The shrine's own cell is untouched —
+    // it only becomes Discovered because something beside it was revealed.
+    reveal(state, [{ x: shrine.location.x, y: shrine.location.y + 1 }]);
+    recordVisibleSites(state, map);
+
+    expect(fogState(state, map, shrine.location)).toBe('Discovered');
+    expect(state.discoveries[siteDiscoveryKey(shrine.id)]).toBe(true);
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(shrine.id));
+  });
+
+  it('announces once, ever — and survives a save', () => {
+    const state = newGame(map, T0);
+    const shrine = LANDMARKS[0];
+    reveal(state, [shrine.location]);
+    recordVisibleSites(state, map);
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(shrine.id));
+
+    state.pendingDiscoveries = []; // the UI drained the banner
+    recordVisibleSites(state, map);
+    expect(state.pendingDiscoveries).toEqual([]); // not announced twice
+
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(restored.discoveries[siteDiscoveryKey(shrine.id)]).toBe(true);
+    recordVisibleSites(restored, map);
+    expect(restored.pendingDiscoveries).toEqual([]); // nor after a reload
+  });
+
+  // The three routes, each through the real function that takes them.
+  it('fires when a paid reveal brings one into view', () => {
+    const state = newGame(map, T0);
+    state.city.wallet.Gold = 100_000;
+    const target = LANDMARKS.reduce((a, b) =>
+      townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
+    const toward = (c: Coord) =>
+      Math.abs(c.x - target.location.x) + Math.abs(c.y - target.location.y);
+
+    // Push the border AT the nearest sanctuary, one payable cell at a time,
+    // and stop the moment something is sighted — which must happen before the
+    // player ever stands on it.
+    for (let i = 0; i < 30; i++) {
+      if (state.pendingDiscoveries.some((k) => k.startsWith('site:'))) break;
+      const next = [...map.terrain.keys()].map(parseCoordKey)
+        .filter((c) => fogState(state, map, c) === 'Discovered'
+          && isReachable(state, map, c) && explorationGate(map, c) === null)
+        .sort((a, b) => toward(a) - toward(b))[0];
+      expect(next, 'the frontier ran out').toBeDefined();
+      let r: string = 'Paid';
+      while (r === 'Paid') r = revealTap(state, map, next);
+    }
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(target.id));
+    // Sighted, not reached: its own cell is still under the fog.
+    expect(fogState(state, map, target.location)).toBe('Discovered');
+  });
+
+  it('fires when a claimed sanctuary lifts the fog over another site', () => {
+    const state = newGame(map, T0);
+    const claimed = LANDMARKS[0];
+    reveal(state, [claimed.location]);
+    state.city.wallet.Gold = landmarkClaimCost(claimed) + 10;
+    state.pendingDiscoveries = [];
+
+    expect(claimLandmark(state, map, claimed.location)).toBe('Claimed');
+
+    // Everything inside the lantern is now announced — and nothing outside it.
+    for (const l of LANDMARKS) {
+      const inside = near(l.location, claimed.location, FOG.claimDiscoverRadius);
+      if (!inside) continue;
+      expect(state.discoveries[siteDiscoveryKey(l.id)], `${l.id} went unannounced`)
+        .toBe(true);
+    }
+    const unseen = LANDMARKS.find((l) =>
+      fogState(state, map, l.location) === 'Undiscovered');
+    if (unseen) expect(state.discoveries[siteDiscoveryKey(unseen.id)]).toBeUndefined();
+  });
+
+  it("fires when a building's fog radius lands near one", () => {
+    const state = newGame(map, T0);
+    const ruin = Object.values(RUINS).reduce((a, b) =>
+      townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
+    state.pendingDiscoveries = [];
+
+    // A Sawmill dropped beside the ruin: its own radii do the revealing.
+    addBuilt(state, 'Sawmill', { x: ruin.location.x, y: ruin.location.y - 2 });
+    revealAroundDistrict(state, map,
+      state.city.districts.find((d) => d.definitionId === 'Sawmill')!);
+
+    expect(fogState(state, map, ruin.location)).not.toBe('Undiscovered');
+    expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(ruin.id));
   });
 });
