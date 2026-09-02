@@ -146,5 +146,26 @@
       "builders",
       "workers"
     ]
-  }
+  },
+  "spriteSize": 128,
+  "worldSheets": [
+    {
+      "file": "sheets/spr-a-sites.png",
+      "grid": {
+        "rows": 2,
+        "cols": 4
+      },
+      "fill": 0.94,
+      "names": [
+        "landmark_shrine",
+        "landmark_stones",
+        "landmark_leyspring",
+        "ruin_barrow",
+        "ruin_chapel",
+        "ruin_ironworks",
+        "ruin_counting_house",
+        "ruin_observatory"
+      ]
+    }
+  ]
 }

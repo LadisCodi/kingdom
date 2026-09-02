@@ -191,12 +191,20 @@ export function guaranteedDepth(party: Party, ruinId: RuinId, heroLevel = 1): nu
   return safe;
 }
 
-/** The threat type this party scores worst against. A ruin with 'Any'
- *  affinity can throw anything, so every type is on the table. */
+/**
+ * The threat type this party scores worst against.
+ *
+ * EVERY type is on the table, whatever the ruin's affinity. A ruin's affinity
+ * dominates its depths without owning all of them — `rollThreat` weights the
+ * draw toward it but can produce any of the four — so a "guaranteed" depth
+ * computed against the affinity alone would be a guarantee the sim does not
+ * actually make. Getting this wrong is the difference between "safe to depth
+ * 9" and a party that dies at 6, which is precisely the promise the whole
+ * design rests on.
+ */
 export function worstThreatFor(party: Party, affinity: UnitId | 'Any'): UnitId | 'Any' {
-  const candidates: Array<UnitId | 'Any'> = affinity === 'Any'
-    ? (Object.keys(BEATS) as UnitId[])
-    : [affinity];
+  void affinity;
+  const candidates: Array<UnitId | 'Any'> = Object.keys(BEATS) as UnitId[];
   let worst: UnitId | 'Any' = candidates[0];
   let lowest = Infinity;
   for (const c of candidates) {

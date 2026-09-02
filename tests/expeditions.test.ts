@@ -110,6 +110,35 @@ describe('the army cap is a city decision', () => {
     expect(RUINS.CountingHouse.difficulty).toBeGreaterThan(24);
   });
 
+  it('the tier ladder actually holds at the authored numbers', () => {
+    // The arc balancing-v2 Part 2 promises, asserted rather than hoped for:
+    // each rung of military development opens the next tier and leaves the one
+    // after it as a real stretch. `guaranteedDepth` assumes the WORST matchup,
+    // so these are floors, not best cases.
+    const bestSafe = (cap: number, ruinId: Parameters<typeof guaranteedDepth>[1]): number => {
+      let best = 0;
+      for (const u of Object.keys(UNITS) as UnitId[]) {
+        const count = Math.floor(cap / UNITS[u].power);
+        if (count === 0) continue;
+        best = Math.max(best, guaranteedDepth(
+          { heroId: 'Warden', slots: [{ unitId: u, count }] }, ruinId));
+      }
+      return best;
+    };
+    // One hall at L1 clears Tier I outright and stalls partway into Tier II.
+    expect(bestSafe(6, 'HollowBarrow')).toBe(RUINS.HollowBarrow.maxDepth);
+    expect(bestSafe(6, 'SunkenChapel')).toBeGreaterThan(0);
+    expect(bestSafe(6, 'SunkenChapel')).toBeLessThan(RUINS.SunkenChapel.maxDepth);
+    // Two halls, one levelled: Tier II outright, Tier III a stretch.
+    expect(bestSafe(16, 'SunkenChapel')).toBe(RUINS.SunkenChapel.maxDepth);
+    expect(bestSafe(16, 'DrownedIronworks')).toBeLessThan(RUINS.DrownedIronworks.maxDepth);
+    // All four at L3 — the top of the city — still leaves the deepest depth of
+    // the deepest ruin as something you choose to gamble on.
+    expect(bestSafe(60, 'CountingHouse')).toBe(RUINS.CountingHouse.maxDepth);
+    expect(bestSafe(60, 'StarObservatory')).toBeLessThan(RUINS.StarObservatory.maxDepth);
+    expect(bestSafe(60, 'StarObservatory')).toBeGreaterThan(RUINS.StarObservatory.maxDepth - 3);
+  });
+
   it('an unfinished building contributes nothing', () => {
     const state = freshGame();
     addBuilt(state, 'Barracks', { x: 3, y: 2 });
@@ -213,7 +242,17 @@ describe('resolution', () => {
     expect(a).toEqual(b);
   });
 
-  it('guaranteedDepth assumes the worst matchup at every step', () => {
+  it('guaranteedDepth assumes the worst of ALL FOUR types, not just the affinity', () => {
+    // A ruin's affinity dominates its depths without owning all of them, so a
+    // guarantee computed against the affinity alone is a guarantee the sim
+    // does not make. Warriors beat Lancers; the Ironworks is Lancer-affine;
+    // the worst case there is still an Archer.
+    expect(RUINS.DrownedIronworks.affinity).toBe('Lancer');
+    const warriors = party([{ unitId: 'Warrior', count: 8 }]);
+    expect(worstThreatFor(warriors, 'Lancer')).toBe('Archer');
+  });
+
+  it('guaranteedDepth is a floor: the worst matchup never breaks it', () => {
     const p = party([{ unitId: 'Warrior', count: 2 }]);
     const safe = guaranteedDepth(p, BARROW);
     expect(safe).toBeGreaterThan(0);
