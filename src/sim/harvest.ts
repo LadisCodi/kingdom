@@ -6,6 +6,8 @@ import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
+import { resolve } from './modifiers';
+import { pick } from './rng';
 import {
   addToWallet, coordKey, districtAt, parseCoordKey,
   type CellHarvestState, type Coord, type GameState, type HarvestSourceId,
@@ -45,6 +47,13 @@ const cellState = (state: GameState, key: string): CellHarvestState => {
   }
   return s;
 };
+
+/** How long a cell stays exhausted, after the Verdant Seal and anything else
+ *  that shortens it. Stamped ONCE at the moment of exhaustion — a relic
+ *  attuned afterwards does not retroactively wake sleeping cells, which keeps
+ *  the timer a fact about the cell rather than a live query. */
+export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
+  Math.max(1000, Math.round(resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)));
 
 /** Lazy recovery: an elapsed exhaustedUntil resets the cell. */
 function recoverIfDue(s: CellHarvestState, now: number): void {
@@ -110,19 +119,11 @@ export function registerTap(
     delete state.harvest[key];
     return true;
   }
-  s.exhaustedUntil = now + spec.recoverySeconds * 1000;
+  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec);
   return true;
 }
 
 // -------------------------------------------------------------- respawning
-
-/** Deterministic "random": the same origin + generation always picks the
- *  same candidate, so offline replay reproduces live play exactly. */
-function pickIndex(seed: string, length: number): number {
-  let h = 5381;
-  for (let i = 0; i < seed.length; i++) h = ((h << 5) + h + seed.charCodeAt(i)) >>> 0;
-  return h % length;
-}
 
 /** Place every due respawn: a random valid neighbor of the ORIGIN cell
  *  (the feature's respawn terrain — Grassland for bushes/animals, Water for
@@ -142,7 +143,9 @@ export function advanceRespawns(state: GameState, map: MapData, toTime: number):
         districtAt(state, c) === undefined;
     });
     if (candidates.length === 0) continue; // nowhere left — removed for good
-    const cell = candidates[pickIndex(`${r.origin}:${r.generation}`, candidates.length)];
+    // Keyed by the EVENT (this origin, this generation), so where a bush
+    // reappears is the same whether the window was replayed or ticked.
+    const cell = pick(state.seed, candidates, 'respawn', r.origin, r.generation);
     const key = coordKey(cell);
     state.features[key] = r.feature;
     state.featureMeta[key] = { origin: r.origin, generation: r.generation };

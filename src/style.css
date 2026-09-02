@@ -35,7 +35,9 @@ body {
 
 /* ---------- mount points ---------- */
 #panel:empty { display: none; }
-#panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); }
+/* Above the dev bar (z 4) and the overlay scrim (z 5): the placement and cast
+   bars are the bottom-most thing the player is meant to act on. */
+#panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); z-index: 6; }
 
 #overlay:empty { display: none; }
 /* inset:0 and pointer-events:auto are load-bearing: this element is what
@@ -68,7 +70,9 @@ body {
 .cast-banner {
   position: absolute; bottom: calc(var(--nav-h) + 60px); left: 50%; transform: translateX(-50%);
   background: rgba(40, 40, 80, 0.95); border: 1px solid #5a5aa0;
-  padding: 10px 16px; border-radius: 10px; z-index: 40; color: #e8e2d0;
+  /* Below the overlay (z 5) is not enough — this bar is dev-only and must
+   * never sit on top of a sheet it is meant to help test. */
+  padding: 10px 16px; border-radius: 10px; z-index: 4; color: #e8e2d0;
   display: flex; gap: 12px; align-items: center; font-size: 14px;
 }
 .cast-banner button {

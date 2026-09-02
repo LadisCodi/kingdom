@@ -6,7 +6,7 @@ import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
-import { effectiveAutoTapCooldownMs, effectiveTaxRate } from './upgrades';
+import { effectiveTaxRate } from './upgrades';
 import { addToWallet, type District, type GameState } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -111,28 +111,87 @@ export const trainingCompletesAt = (state: GameState): number | null =>
 
 // ---------------------------------------------------------------- house tap
 
-export type HouseTapResult = 'Boosted' | 'NoResidents' | 'OnCooldown';
-
-/** Tap a lived-in house: fast-forward the CITY tax clock by
- *  taxes.tap_boost_seconds — the building-timer twin of the Townhall's
- *  training boost. Houses never exhaust — that mechanic is for natural cells
- *  only. Returns any gold that matured from the boost.
+/**
+ * The collection cycle of one house (Docs/features/balancing-v2.md §1.1).
  *
- *  Same asymmetry as `collectTap`: deliberate taps are unrestricted, only the
- *  repeats from a held pointer wait out the auto-tap cooldown. */
+ * The tap used to rewind the CITY-WIDE tax clock by tapBoostSeconds with no
+ * gate at all, which made it the only tap in the game without an exhaustion
+ * analogue: 2 x rate / 60 gold per tap, at any speed the player could manage —
+ * roughly 9,000 Gold/min against 900 idle at Townhall 3.
+ *
+ * Now every house runs a cycle, exactly like the Townhall's training cycle.
+ * Tapping collects early WITHIN the current cycle and cannot exceed it, so
+ * "tap" means "collect early" rather than "print money", and the idle backbone
+ * the whole design rests on is the dominant income again.
+ *
+ * The boost is scaled by this house's SHARE of city income, which is what
+ * bounds it: sweeping every house exactly once pulls forward one
+ * tapBoostSeconds of the whole city's income, once per cycle — a fixed
+ * percentage over idle, no matter how large the city grows.
+ */
+export const houseCycleMs = (): number => TAXES.cycleSeconds * 1000;
+
+/** 0 → 1 across the current cycle; 1 = a collection is ready. */
+export function houseCycleProgress(district: District, now: number): number {
+  const cycle = houseCycleMs();
+  if (cycle <= 0) return 1;
+  return Math.min(1, Math.max(0, (now - district.lastTapAt) / cycle));
+}
+
+export const houseTapReady = (district: District, now: number): boolean =>
+  now - district.lastTapAt >= houseCycleMs();
+
+/** Seconds until this house can be collected again (0 = now). */
+export const houseTapReadyIn = (district: District, now: number): number =>
+  Math.max(0, (district.lastTapAt + houseCycleMs() - now) / 1000);
+
+export type HouseTapResult = 'Collected' | 'NoResidents' | 'NotReady';
+
+/**
+ * Collect a house early. Returns the gold that matured from the pull-forward.
+ *
+ * `autoRepeat` is kept for the held-pointer path, but it no longer needs the
+ * auto-tap cooldown: the cycle is a much harder gate than a 0.5s timer, and a
+ * held pointer simply finds the house not ready.
+ */
 export function houseTap(
   state: GameState,
   district: District,
   now: number,
-  autoRepeat = false,
 ): { result: HouseTapResult; gold: number } {
   if (residentsOf(state, district) === 0) return { result: 'NoResidents', gold: 0 };
-  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
-    return { result: 'OnCooldown', gold: 0 };
+  if (!houseTapReady(district, now)) return { result: 'NotReady', gold: 0 };
+  const cityRate = cityGoldPerMinute(state);
+  if (cityRate <= 0) return { result: 'NoResidents', gold: 0 };
+  const share = houseGoldPerMinute(state, district) / cityRate;
+  district.lastTapAt = now;
+  state.city.lastTaxAt -= TAXES.tapBoostSeconds * 1000 * share;
+  return { result: 'Collected', gold: advanceCityLife(state, now).gold };
+}
+
+/**
+ * The tax rate just changed at `t`: rescale the partial progress since the
+ * anchor so the elapsed stretch is not repriced at the new rate.
+ *
+ * This used to be four inline lines that only training completion ran, so a
+ * Housing finishing, `Communities` landing, or a taxRate modifier expiring all
+ * quietly repriced their partial stretch. `applyDueAt` now brackets its whole
+ * batch with `repriceTaxAnchorAround`, which means ONE call site covers every
+ * boundary kind there will ever be.
+ */
+export function repriceTaxAnchor(state: GameState, t: number, rateBefore: number): void {
+  const rateAfter = cityGoldPerMinute(state);
+  if (rateAfter !== rateBefore && rateBefore > 0 && rateAfter > 0) {
+    state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * rateBefore) / rateAfter;
   }
-  state.lastCollectTapAt = now;
-  state.city.lastTaxAt -= TAXES.tapBoostSeconds * 1000;
-  return { result: 'Boosted', gold: advanceCityLife(state, now).gold };
+}
+
+/** Run `work` (anything that might move the tax rate) with the anchor
+ *  repriced across it. */
+export function repriceTaxAnchorAround(state: GameState, t: number, work: () => void): void {
+  const rateBefore = cityGoldPerMinute(state);
+  work();
+  repriceTaxAnchor(state, t, rateBefore);
 }
 
 // ------------------------------------------------------- taxes + training tick
@@ -159,12 +218,7 @@ export function advanceCityLife(
     training.queued -= 1;
     if (training.queued > 0) training.startedAt = t;
     else state.city.training = null;
-    // The tax rate just changed: rescale the partial progress since the
-    // anchor so the elapsed stretch isn't repriced at the new rate.
-    const rateAfter = cityGoldPerMinute(state);
-    if (rateAfter !== rateBefore && rateBefore > 0 && rateAfter > 0) {
-      state.city.lastTaxAt = t - ((t - state.city.lastTaxAt) * rateBefore) / rateAfter;
-    }
+    repriceTaxAnchor(state, t, rateBefore);
   }
   return result;
 }

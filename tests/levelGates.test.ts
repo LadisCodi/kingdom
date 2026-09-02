@@ -47,15 +47,15 @@ describe('tech-gated upgrades', () => {
 });
 
 describe('per-level housing capacity', () => {
-  it('a level-2 house holds 4 villagers', () => {
+  it('a level-2 house holds twice what a level-1 one does', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
+    expect(districtCapacity(state, house)).toBe(1);
+    expect(maxPopulation(state)).toBe(1);
+    house.level = 2;
     expect(districtCapacity(state, house)).toBe(2);
     expect(maxPopulation(state)).toBe(2);
-    house.level = 2;
-    expect(districtCapacity(state, house)).toBe(4);
-    expect(maxPopulation(state)).toBe(4);
     expect(districtCapacity(state, districtById(state, townhall(state).uniqueId)!)).toBe(0);
   });
 
@@ -63,11 +63,11 @@ describe('per-level housing capacity', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     addBuilt(state, 'Housing', { x: 0, y: -1 });
-    expect(maxPopulation(state)).toBe(4);
+    expect(maxPopulation(state)).toBe(2);
     completeTech(state, 'Communities');
-    expect(maxPopulation(state)).toBe(6); // +1 per house
+    expect(maxPopulation(state)).toBe(4); // +1 per house
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
-    expect(districtCapacity(state, house)).toBe(3);
+    expect(districtCapacity(state, house)).toBe(2);
     expect(districtCapacity(state, districtById(state, townhall(state).uniqueId)!)).toBe(0);
   });
 });

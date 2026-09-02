@@ -15,6 +15,23 @@ const cells = new Set(Object.keys(ICON_INDEX));
 /** Cells the tool derived rather than an artist drawing them. */
 const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
 
+/**
+ * Content that has shipped in the sim but is still WAITING for its sheet.
+ *
+ * This list is the honest version of "the art is coming": it keeps every gate
+ * below live for everything else — nothing already drawn can silently vanish —
+ * while making the outstanding ask reviewable in one place instead of hiding
+ * in a green test run.
+ *
+ * `noPendingArtIsAlreadyDrawn` is what stops it rotting: the moment a sheet
+ * lands, leaving the name here fails.
+ */
+const AWAITING_ART: readonly string[] = [
+];
+
+const pending = new Set(AWAITING_ART);
+const outstanding = (missing: string[]): string[] => missing.filter((n) => !pending.has(n));
+
 describe('the icon atlas', () => {
   it('ships no cell the kit cannot name', () => {
     // Catches a typo in the manifest, which would otherwise pack a cell that
@@ -29,12 +46,12 @@ describe('the icon atlas', () => {
   it('every currency has art', () => {
     const missing = (Object.keys(CURRENCIES) as Array<keyof typeof CURRENCIES>)
       .filter((c) => !cells.has(c));
-    expect(missing).toEqual([]);
+    expect(outstanding(missing)).toEqual([]);
   });
 
   it('every district has art', () => {
     const missing = Object.keys(DISTRICTS).filter((d) => !cells.has(d));
-    expect(missing).toEqual([]);
+    expect(outstanding(missing)).toEqual([]);
   });
 
   it('everything that can be gated has a locked variant', () => {
@@ -42,13 +59,13 @@ describe('the icon atlas', () => {
     // (a plus sign, a tick) never lock, and the manifest excludes them.
     const gateable = [...Object.keys(CURRENCIES), ...Object.keys(DISTRICTS)];
     const missing = gateable.filter((n) => !cells.has(`${n}-locked`));
-    expect(missing).toEqual([]);
+    expect(outstanding(missing)).toEqual([]);
   });
 
   it('every currency has a 16px variant, since costs render inline', () => {
     const missing = (Object.keys(CURRENCIES) as Array<keyof typeof CURRENCIES>)
       .filter((c) => !cells.has(`${c}-sm`));
-    expect(missing).toEqual([]);
+    expect(outstanding(missing)).toEqual([]);
   });
 
   it('the drawn set covers every name the kit can ask for', () => {
@@ -56,6 +73,10 @@ describe('the icon atlas', () => {
     // emoji, and the fallback is deliberate — not an oversight.
     const drawn = new Set([...cells].filter((c) => !isDerived(c)));
     const stillEmoji = Object.keys(ICON_EMOJI).filter((n) => !drawn.has(n));
-    expect(stillEmoji).toEqual([]);
+    expect(outstanding(stillEmoji)).toEqual([]);
+  });
+
+  it('the pending list has not rotted — nothing on it is already drawn', () => {
+    expect(AWAITING_ART.filter((n) => cells.has(n))).toEqual([]);
   });
 });

@@ -4,6 +4,13 @@
 //   node scripts/ui-atlas.mjs build --only ui-a   just that sheet
 //   node scripts/ui-atlas.mjs check            verify the sheets, emit nothing
 //   node scripts/ui-atlas.mjs contact          regenerate the contact sheet
+//   node scripts/ui-atlas.mjs sprites          slice the WORLD sheets instead
+//
+// The `sprites` mode shares the band reading and the alpha check but emits
+// something different: one 128px PNG per name straight into
+// src/render/assets/, which sprites.ts picks up by filename stem. Map art is
+// not atlas art — it is drawn at cell size onto the canvas, never inline — so
+// it does not want packing, a shared 32px cell, or locked variants.
 //
 // Input:  Docs/art/ui/atlas.manifest.json + Docs/art/ui/sheets/*.png
 // Output: Docs/art/ui/slices/*.png          per-icon, for review and git diffs
@@ -233,6 +240,67 @@ function sliceSheet(sheet, cell, outDir) {
   return found.map((f) => f.name);
 }
 
+/**
+ * Slice a WORLD sheet into individual map sprites.
+ *
+ * Deliberately different from sliceSheet in three ways, all because these are
+ * drawn on the map rather than inline in a menu:
+ *   - the output is one file per name at `size`, not a packed cell;
+ *   - each sprite is scaled to fill its own frame rather than sharing one
+ *     sheet-wide scale, because a shrine and a chapel are genuinely different
+ *     sizes on the ground and forcing them to one scale makes the small ones
+ *     vanish at low zoom;
+ *   - it sits on the SOUTH edge by default, so a building meets the tile it
+ *     stands on. A sheet of held OBJECTS (relics, portraits) sets
+ *     `gravity: "center"` instead — those are shown in a framed slot, not on
+ *     the ground, and sinking them looks like a layout bug.
+ */
+function sliceWorldSheet(sheet, outDir, size) {
+  const file = join(UI_DIR, sheet.file);
+  if (!existsSync(file)) fail(`${sheet.file} not found`);
+  checkAlpha(file, sheet.file);
+
+  const { rows, cols } = sheet.grid;
+  const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
+  const colBands = bands(coverage(file, 'x', w), GUTTER_PX);
+  const rowBands = bands(coverage(file, 'y', h), GUTTER_PX);
+  if (colBands.length !== cols || rowBands.length !== rows) {
+    fail(
+      `${sheet.file}: found ${colBands.length} columns and ${rowBands.length} rows, ` +
+      `but the manifest says ${cols}x${rows}.`,
+    );
+  }
+  console.log(`ui-atlas: ${sheet.file} ${cols}x${rows} → ${outDir}`);
+
+  const written = [];
+  sheet.names.forEach((name, i) => {
+    if (!name) return;
+    const cb = colBands[i % cols];
+    const rb = rowBands[Math.floor(i / cols)];
+    const region = {
+      x: cb.start, w: cb.end - cb.start + 1,
+      y: rb.start, h: rb.end - rb.start + 1,
+    };
+    const box = contentBox(file, region);
+    if (!box) fail(`${sheet.file}: the cell for "${name}" is empty`);
+    const fill = sheet.fill ?? 0.94;
+    const scale = (size * fill) / Math.max(box.w, box.h);
+    const sw = Math.max(1, Math.round(box.w * scale));
+    const sh = Math.max(1, Math.round(box.h * scale));
+    const out = join(outDir, `${name}.png`);
+    magick(
+      '-size', `${size}x${size}`, 'xc:none',
+      '(', file, '-crop', boxStr(box), '+repage', '-filter', 'point', '-resize', `${sw}x${sh}!`, ')',
+      '-gravity', sheet.gravity ?? 'south', '-composite',
+      '-channel', 'A', '-threshold', '50%', '+channel',
+      '-strip', '-define', 'png:exclude-chunk=date,time',
+      out,
+    );
+    written.push(name);
+  });
+  return written;
+}
+
 // -------------------------------------------------------------- derivatives
 
 /** Desaturate toward --locked. Derived, so the silhouette is identical and a
@@ -368,11 +436,22 @@ const only = onlyArg === -1 ? null : process.argv[onlyArg + 1];
 const { cell, atlasCols: cols } = manifest;
 
 const sheets = manifest.sheets.filter((s) => !only || s.file.includes(only));
-if (sheets.length === 0) fail(`no sheet matches --only ${only}`);
+const worldSheets = (manifest.worldSheets ?? []).filter((s) => !only || s.file.includes(only));
+if (sheets.length === 0 && worldSheets.length === 0) fail(`no sheet matches --only ${only}`);
 
 if (mode === 'check') {
-  for (const s of sheets) checkAlpha(join(UI_DIR, s.file), s.file);
-  console.log(`ui-atlas: ${sheets.length} sheet(s) pass the alpha check`);
+  for (const s of [...sheets, ...worldSheets]) checkAlpha(join(UI_DIR, s.file), s.file);
+  console.log(`ui-atlas: ${sheets.length + worldSheets.length} sheet(s) pass the alpha check`);
+  process.exit(0);
+}
+
+if (mode === 'sprites') {
+  if (worldSheets.length === 0) fail('no world sheets in the manifest');
+  const outDir = join(ROOT, 'src/render/assets');
+  const size = manifest.spriteSize ?? 128;
+  const written = worldSheets.flatMap((s) => sliceWorldSheet(s, outDir, size));
+  console.log(`ui-atlas: wrote ${written.length} map sprites to src/render/assets`);
+  console.log(`ui-atlas:   ${written.join(' ')}`);
   process.exit(0);
 }
 

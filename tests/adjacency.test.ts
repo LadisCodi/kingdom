@@ -26,12 +26,12 @@ describe('housing adjacency', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', A);
     addBuilt(state, 'Housing', B);
-    state.city.population = 4; // 2 residents each (capacity 2)
-    // Each house: 2 × 30/min − 1 (one crowding neighbor) = 59.
-    expect(houseGoldPerMinute(state, house(state, A))).toBe(59);
-    expect(cityGoldPerMinute(state)).toBe(118);
+    state.city.population = 2; // 1 resident each (capacity 1)
+    // Each house: 1 × 30/min − 1 (one crowding neighbor) = 29.
+    expect(houseGoldPerMinute(state, house(state, A))).toBe(29);
+    expect(cityGoldPerMinute(state)).toBe(58);
     tickAt(state, T0 + 60_100); // a hair past the minute
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(118); // vs 120 if built apart
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(58); // vs 60 if built apart
   });
 
   it('crowding stacks per neighbor (and would clamp at 0, never negative)', () => {
@@ -39,11 +39,11 @@ describe('housing adjacency', () => {
     addBuilt(state, 'Housing', A);
     addBuilt(state, 'Housing', B); // two neighbors
     addBuilt(state, 'Housing', C);
-    state.city.population = 6; // 2 residents each
-    expect(houseGoldPerMinute(state, house(state, B))).toBe(58); // 60 − 2
-    expect(cityGoldPerMinute(state)).toBe(59 + 58 + 59);
-    state.city.population = 4; // A: 2, B: 2, C: 0
-    expect(cityGoldPerMinute(state)).toBe(59 + 58); // empty C pays nothing
+    state.city.population = 3; // 1 resident each
+    expect(houseGoldPerMinute(state, house(state, B))).toBe(28); // 30 − 2
+    expect(cityGoldPerMinute(state)).toBe(29 + 28 + 29);
+    state.city.population = 2; // A: 1, B: 1, C: 0
+    expect(cityGoldPerMinute(state)).toBe(29 + 28); // empty C pays nothing
   });
 
   it('placement preview reports both directions: given to neighbors, received by the ghost', () => {

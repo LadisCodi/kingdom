@@ -97,6 +97,22 @@
         "Archer",
         "Cavalry"
       ]
+    },
+    {
+      "file": "sheets/ui-g-special.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.92,
+      "names": [
+        "Mana",
+        "Sanctum",
+        "Barracks",
+        "SpearHall",
+        "ShootingGrounds",
+        "Stables"
+      ]
     }
   ],
   "locked": {
@@ -119,6 +135,7 @@
       "Wood",
       "Stone",
       "Iron",
+      "Mana",
       "Gems",
       "Knowledge",
       "Berries",
@@ -129,5 +146,76 @@
       "builders",
       "workers"
     ]
-  }
+  },
+  "spriteSize": 128,
+  "worldSheets": [
+    {
+      "file": "sheets/spr-a-sites.png",
+      "grid": {
+        "rows": 2,
+        "cols": 4
+      },
+      "fill": 0.94,
+      "names": [
+        "landmark_shrine",
+        "landmark_stones",
+        "landmark_leyspring",
+        "ruin_barrow",
+        "ruin_chapel",
+        "ruin_ironworks",
+        "ruin_counting_house",
+        "ruin_observatory"
+      ]
+    },
+    {
+      "file": "sheets/spr-b-city.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.94,
+      "names": [
+        "sanctum",
+        "barracks",
+        "spear_hall",
+        "shooting_grounds",
+        "stables",
+        null
+      ]
+    },
+    {
+      "file": "sheets/spr-c-relics.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.9,
+      "names": [
+        "artifact_dowsing_rod",
+        "artifact_verdant_seal",
+        "artifact_foremans_sigil",
+        "artifact_gilded_ledger",
+        "artifact_wanderers_compass",
+        null
+      ],
+      "gravity": "center"
+    },
+    {
+      "file": "sheets/spr-d-heroes.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.92,
+      "gravity": "center",
+      "names": [
+        "hero_warden",
+        "hero_quartermaster",
+        "hero_scholar",
+        "hero_relic_hunter",
+        "hero_scout",
+        null
+      ]
+    }
+  ]
 }

@@ -3,7 +3,9 @@
 > Design doc for the collectible layer: **one** set of collection rules shared by
 > heroes and artifacts, a Gems-funded gacha as the LiveOps faucet, and artifacts
 > doing double duty as hero equipment so there is no second item system.
-> Status: **designed, not implemented** (2026-09-02).
+> Status: **built** (2026-09-02). Implemented in `src/sim/heroes.ts` on the
+> shared substrate in `collection.ts`; the roster and the banner are tabs of
+> the Reliquary.
 >
 > **Supersedes `managers.md`.** That stub asked for collectible characters
 > granting economy multipliers and gating content; heroes are that feature, and

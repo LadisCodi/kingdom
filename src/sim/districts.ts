@@ -4,6 +4,7 @@
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
 import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
 import { isTechComplete } from './research';
+import { cellHasSite } from './sites';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
   type Coord, type DistrictId, type GameState, type TechId, type Wallet,
@@ -25,7 +26,8 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
   | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsShoreline'
-  | 'NeedsLand';
+  | 'NeedsLand'
+  | 'HasSite';
 
 /** All placement conditions ANDed over the full footprint (cell = anchor,
  *  top-left); null = buildable here. */
@@ -41,6 +43,9 @@ export function placementBlock(
   for (const c of footprint) {
     if (!cellExists(map, c)) return 'OffMap';
     if (state.features[coordKey(c)]) return 'HasFeature';
+    // Landmarks and ruins are content, not building ground: paving over a
+    // ruin would silently delete a whole dungeon.
+    if (cellHasSite(c)) return 'HasSite';
     if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
     if (districtAt(state, c)) return 'Occupied';
     // Only the Docks (which checks its own land+water mix) may touch Water.

@@ -36,13 +36,13 @@ as-shipped), and its own design docs are the live source of truth:
 | [features/economy-taxes-and-market.md](features/economy-taxes-and-market.md) | Housing taxes, villager training, the Market |
 | [features/research-and-upgrades.md](features/research-and-upgrades.md) | The one tech/upgrade tree and its fog |
 | [features/resource-expansion.md](features/resource-expansion.md) | Stone, Fish and Iron lines; the archipelago |
-| [features/quests.md](features/quests.md) | The 27-quest onboarding chain |
+| [features/quests.md](features/quests.md) | The onboarding chain (27 quests to Townhall 3, then 11 more into the long game) |
 | [features/balancing-v1.md](features/balancing-v1.md) | The three-era Townhall arc |
-| **[features/magic.md](features/magic.md)** | *Designed 2026-09-02* — Mana, artifacts, attunement, landmarks |
-| **[features/expeditions.md](features/expeditions.md)** | *Designed 2026-09-02* — ruins as dungeons, staged delves, unit stats |
-| **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | *Designed 2026-09-02* — the collection substrate and the gacha. Supersedes `managers.md` |
-| **[features/engine-seams.md](features/engine-seams.md)** | *Designed 2026-09-02* — the sim groundwork all of the above needs, and the build order |
-| **[features/balancing-v2.md](features/balancing-v2.md)** | *Designed 2026-09-02* — unblockers, military buildings, every new number |
+| **[features/magic.md](features/magic.md)** | **Built 2026-09-02** — Mana, artifacts, attunement, landmarks |
+| **[features/expeditions.md](features/expeditions.md)** | **Built 2026-09-02** — ruins as dungeons, staged delves, unit stats |
+| **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | **Built 2026-09-02** — the collection substrate and the gacha. Supersedes `managers.md` |
+| **[features/engine-seams.md](features/engine-seams.md)** | **Built 2026-09-02** — the sim groundwork all of the above needed, and the build order it prescribed |
+| **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
 
 ## Ground rules used throughout
 

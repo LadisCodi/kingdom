@@ -6,7 +6,7 @@ import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { populationCost, queueTraining } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
-import { addBuilt, completeTech, freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, addTrainer, completeTech, freshGame, fund, map, T0 } from './helpers';
 
 const BERRY_BUSH = { x: 0, y: 2 }; // the authored bush below the Townhall
 const WILD_ANIMALS = { x: -2, y: -4 }; // also unrevealed
@@ -43,7 +43,8 @@ describe('food-valued currencies', () => {
 
     fund(state, { Gold: 100, Wood: 10, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
     completeTech(state, 'Warrior'); // the Warrior sits behind it now
-    expect(trainUnit(state, 'Warrior')).toBe('Trained'); // 50 Gold + 10 Wood + 20 Food
+    addTrainer(state, 'Warrior', { x: 3, y: 2 }); // and behind its Barracks
+    expect(trainUnit(state, 'Warrior')).toBe('Queued'); // 50 Gold + 10 Wood + 20 Food
     // 1 Berry + all 7 Meat (21) cover the 20 → 2 Food back as change.
     expect(getWallet(state.city.wallet, 'Berries')).toBe(0);
     expect(getWallet(state.city.wallet, 'Meat')).toBe(0);

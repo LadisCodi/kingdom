@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { deserialize, serialize } from '../src/sim/save';
+import { SAVE_VERSION } from '../src/sim/data/definitions';
+import {
+  deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
+} from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
 import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
@@ -50,12 +53,12 @@ describe('save round-trip', () => {
 
   it('offline replay: an aged save accrues housing taxes and pays deliveries', () => {
     const state = workingGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // 2 of the 4 villagers move in
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // 1 of the 4 villagers moves in
     const saveAt = T0 + 30_000; // tax clock already anchored here by the ticks
     const gold = getWallet(state.city.wallet, 'Gold');
     const wood = getWallet(state.city.wallet, 'Wood');
     const restored = deserialize(serialize(state, saveAt), map, saveAt + 10 * 60_000)!;
-    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 600); // 2 housed × 30/min × 10 min
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(gold + 300); // 1 housed × 30/min × 10 min
     expect(getWallet(restored.city.wallet, 'Wood')).toBeGreaterThan(wood + 10); // spans a recovery window
   });
 
@@ -85,5 +88,28 @@ describe('save round-trip', () => {
     // Workers resume from "now", not from 12h ago.
     const w = capped.workers[0];
     expect(w.stateUntil === null || w.stateUntil > T0 + 30_000 + 20 * 3_600_000 - 60_000).toBe(true);
+  });
+});
+
+// The migration chain (Docs/features/engine-seams.md §4). Additive changes
+// need no migrator — a version bump plus the defensive readers is enough —
+// so this covers the two gates that DO have to hold on every bump.
+describe('save versions', () => {
+  it('rejects a save written by a newer client', () => {
+    const save = serialize(freshGame(), T0);
+    save.SaveVersion = SAVE_VERSION + 1;
+    expect(deserialize(save, map, T0)).toBeNull();
+  });
+
+  it('rejects anything below MIN_MIGRATABLE_VERSION', () => {
+    const save = serialize(freshGame(), T0);
+    save.SaveVersion = MIN_MIGRATABLE_VERSION - 1;
+    expect(deserialize(save, map, T0)).toBeNull();
+  });
+
+  it('carries a current save through the chain unchanged', () => {
+    const save = serialize(freshGame(), T0);
+    expect(migrate(save)).toBe(true);
+    expect(save.SaveVersion).toBe(SAVE_VERSION);
   });
 });

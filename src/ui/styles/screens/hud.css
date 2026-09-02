@@ -135,3 +135,47 @@
   margin-bottom: 6px;
   font-weight: 700;
 }
+
+/* The row under the plank: the contextual plaque, and the Mana gauge once
+ * the player has met magic at all. */
+.hud-under { display: flex; align-items: flex-start; gap: 8px; }
+
+/* One pool, one net rate — the breakdown lives in the reliquary. The fill is
+ * a real bar rather than a number to interpret, because the thing that
+ * matters is "how close to spilling", not the integer. */
+.hud-mana {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  padding: 3px 10px 4px;
+  /* The BODY face for the pool, at the size it was chosen for. The pixel
+   * display face is lovely at 15px and up, but at the 13px chrome size a 2, a
+   * 5 and an 8 share most of their pixels — and "is my pool 24 or 84" is the
+   * one number in this widget that has to be unambiguous. Tabular numerals
+   * keep it from jittering as it fills. */
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--parchment);
+  background: #2c3c66;
+  border: 2px solid #1b2745;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 0 rgba(20, 28, 50, 0.4);
+  cursor: pointer;
+}
+.hud-mana > * { position: relative; }
+.hud-mana-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(180deg, #6d8ede, #4a63b0);
+  transition: width var(--motion-quick, 160ms) linear;
+}
+.hud-mana-rate { opacity: 0.8; }
+/* Full means spilling, and spilling is the one thing the design wants the
+ * player to notice from across the room. */
+.hud-mana.is-full { border-color: var(--gold, #d9a441); }
+.hud-mana.is-full .hud-mana-rate { color: var(--gold, #f2c46b); }

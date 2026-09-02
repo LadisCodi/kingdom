@@ -4,7 +4,9 @@
 > progression axis: a capped Mana economy that paces the player's visits, and
 > **artifacts** — relics won from the fog that grant a passive while attuned and,
 > usually, one active ability.
-> Status: **designed, not implemented** (2026-09-02).
+> Status: **built** (2026-09-02). Implemented in `src/sim/mana.ts`,
+> `landmarks.ts`, `artifacts.ts`, `collection.ts` and `casting.ts`, with the
+> screens in `src/ui/reliquarySheet.ts`, `siteCard.ts` and `castPanel.ts`.
 
 Companion docs: [`expeditions.md`](expeditions.md) (where artifacts come from),
 [`heroes-and-gacha.md`](heroes-and-gacha.md) (the shared collection substrate),

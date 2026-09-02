@@ -8,7 +8,8 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING, UNITS,
+  ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES, LANDMARK_ART, RUINS,
+  TECHNOLOGIES, TRAINING, UNITS,
 } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
@@ -18,7 +19,24 @@ import { explorationGate, fogState, revealCostForCell, revealTap } from './sim/f
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
-import { armyPower, maxArmyPower, trainUnit } from './sim/army';
+import { committedArmyPower, maxArmyPower, trainUnit, trainingTap } from './sim/army';
+import {
+  attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
+} from './sim/artifacts';
+import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
+import { claimLandmark, visibleLandmarks } from './sim/landmarks';
+import { availableRoster } from './sim/army';
+import { typeMultiplier } from './sim/combat';
+import {
+  buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, launchBlock, launchDelve,
+  previewExpedition, pushDeeper, supplyCost, unitSlots,
+  type ExpeditionPreview, type LaunchBlock,
+} from './sim/expeditions';
+import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
+import {
+  mana, manaCap, manaNetRegen, manaProduction, manaUpkeep, refillManaWithGems,
+} from './sim/mana';
+import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
   availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, queuedTraining,
@@ -26,11 +44,12 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import { buySlot, isTechComplete, startTech, techUnlocks } from './sim/research';
-import { buyUpgrade, effectiveWorkerYield } from './sim/upgrades';
+import { buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield } from './sim/upgrades';
 import {
-  coordKey, districtAt, districtById, getWallet, townhall,
-  type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type TechId, type UnitId, type UpgradeId, type Wallet,
+  coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
+  type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
+  type UpgradeId, type Wallet,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -46,13 +65,17 @@ import { TapFx } from './render/tapFx';
 
 export type Mode =
   | { kind: 'normal' }
-  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null };
+  | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
+  /** Casting reuses the placement machinery wholesale — select, highlight,
+   *  tap to commit — rather than inventing a second targeting model. */
+  | { kind: 'casting'; artifactId: ArtifactId; selected: Coord | null };
 
 /** Every full-screen menu the nav (or the map) can open. Naming them means
  *  `tsc` — the only real gate this project has over the view layer — catches
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
-  | 'build' | 'market' | 'army' | 'research' | 'settings' | 'purse' | 'welcome';
+  | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
+  | 'reliquary' | 'expedition' | 'checkpoint';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -80,6 +103,21 @@ export interface Banner {
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
+  /** The ruin the expedition sheet is being composed for. */
+  expeditionRuin: RuinId | null = null;
+  /** What the player has picked so far, by unit type. Lives on the presenter
+   *  rather than in the view because it survives the per-tick rebuild and is
+   *  node-testable. */
+  expeditionParty: PartySlotState[] = [];
+  expeditionHero: HeroId | null = null;
+  expeditionOrder: number | null = null;
+  /** The delve whose checkpoint sheet is open. */
+  openCheckpoint: string | null = null;
+  /** The map SITE whose card is open — a landmark or a ruin. Sites are not
+   *  districts (they are authored content on a cell, not something the player
+   *  built), so they get their own slot rather than being squeezed into
+   *  inspectedDistrictId. */
+  inspectedSite: Coord | null = null;
   private hint: Hint | null = null;
   openOverlay: OverlayName | null = null;
   readonly floaters = new Floaters();
@@ -225,6 +263,20 @@ export class Game {
   // ----------------------------------------------------------------- tap chain
 
   private registerTapHandlers(): void {
+    // 320 — casting. Above placement because the two modes are exclusive and
+    // casting is the one the player entered most recently.
+    this.tapChain.register({
+      priority: 320,
+      handle: (cell) => {
+        if (this.mode.kind !== 'casting') return false;
+        const valid = validCastCells(this.state, this.map, this.mode.artifactId);
+        if (valid.some((c) => sameCell(c, cell))) {
+          this.mode.selected = cell;
+          this.notify();
+        }
+        return true; // cast mode swallows all map taps
+      },
+    });
     // 300 — district placement.
     this.tapChain.register({
       priority: 300,
@@ -236,6 +288,22 @@ export class Game {
           this.notify();
         }
         return true; // placement mode swallows all map taps
+      },
+    });
+    // 100 — landmarks and ruins. Above the fog handler, so a revealed site
+    // opens its card instead of being treated as ordinary ground, and above
+    // the harvest handler, so nothing tries to tap a shrine for wood.
+    this.tapChain.register({
+      priority: 100,
+      handle: (cell) => {
+        if (this.openOverlay !== null) return false;
+        if (!landmarkDefAt(cell) && !ruinDefAt(cell)) return false;
+        if (fogState(this.state, this.map, cell) !== 'Revealed') return false;
+        this.inspectedSite = cell;
+        this.inspectedDistrictId = null;
+        playSfx('click');
+        this.notify();
+        return true;
       },
     });
     // 50 — fog reveal (blocked while a full overlay is open; the tile card doesn't count).
@@ -277,9 +345,26 @@ export class Game {
         if (district && district.state === 'Built' &&
           districtCapacity(this.state, district) > 0) {
           const { result, gold } = houseTap(this.state, district, this.now());
-          if (result === 'Boosted') {
+          if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
             this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+          } else if (result === 'NotReady') {
+            playSfx('tapEmpty');
+          }
+          this.inspectedDistrictId = district.uniqueId;
+          this.notify();
+          return true;
+        }
+        // A military building: tapping hurries the unit in training, exactly
+        // as tapping the Townhall hurries a villager.
+        if (district && district.state === 'Built' && DISTRICTS[district.definitionId].trains) {
+          const tap = trainingTap(this.state, district, this.now());
+          if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap === 'Complete') {
+            playSfx('unitTrained');
+            this.floaters.add(cell, `+1 ${DISTRICTS[district.definitionId].trains}`);
+          } else if (tap === 'Boosted') {
+            this.floaters.add(cell, '⏩');
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -305,6 +390,7 @@ export class Game {
           this.notify();
           return true;
         }
+        this.inspectedSite = null;
         if (district) {
           this.inspectedDistrictId = district.uniqueId; // open/switch the card
         } else {
@@ -339,32 +425,59 @@ export class Game {
     return result;
   }
 
-  /** Held pointer: repeat COLLECT taps only (never reveal/inspect/place).
-   *  The input layer repeats this while the press lasts; the auto-tap
-   *  cooldown decides how many actually land, so holding is the slow, lazy
-   *  option and tapping fast stays the skilful one.
+  /** Held pointer: repeat COLLECT and REVEAL taps (never inspect or place).
+   *  The input layer repeats this while the press lasts; the auto-tap cooldown
+   *  decides how many actually land, so holding is the slow, lazy option and
+   *  tapping fast stays the skilful one.
+   *
+   *  Reveal is here because paying for fog is one Gold per tap on a doubling
+   *  ring curve: a single distance-9 iron vein is 320 individual taps, and the
+   *  whole map is 194,142. That is the difference between the game's
+   *  differentiator being filmable and being punishing.
    *
    *  Returns true when this repeat DID something — the input layer then
-   *  swallows the tap on release, so one press never collects twice. */
+   *  swallows the tap on release, so one press never acts twice. */
   handleHold(sx: number, sy: number): boolean {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a lived-in house keeps boosting its tax clock, same cooldown.
+    // Holding a house keeps collecting, but each one still waits out its cycle.
     const district = districtAt(this.state, cell);
     if (district && district.state === 'Built' &&
         districtCapacity(this.state, district) > 0) {
-      const { result, gold } = houseTap(this.state, district, this.now(), true);
-      if (result !== 'Boosted') return false;
+      const { result, gold } = houseTap(this.state, district, this.now());
+      if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
       this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
       this.notify();
       return true;
     }
+    if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
     if (harvestSourceAt(this.state, cell) === null) return false;
     if (!this.state.fog.revealed[coordKey(cell)]) return false;
     if (isExhausted(this.state, cell, this.now())) return false; // quiet — no 💤 spam
     if (this.collectAt(cell, true) !== 'Harvested') return false;
+    this.notify();
+    return true;
+  }
+
+  /** One repeat of a held reveal. Paced by the SAME auto-tap cooldown as
+   *  collecting, so QuickHands speeds clearing fog up too and holding never
+   *  outruns a determined tapper. */
+  private revealHold(cell: Coord): boolean {
+    const now = this.now();
+    if (now - this.state.lastCollectTapAt < effectiveAutoTapCooldownMs(this.state)) return false;
+    const result = revealTap(this.state, this.map, cell);
+    if (result !== 'Paid' && result !== 'Revealed') return false;
+    this.state.lastCollectTapAt = now;
+    if (result === 'Revealed') {
+      wakeIdleWorkersAt(this.state, now);
+      playSfx('revealDone');
+      this.floaters.add(cell, 'Revealed!');
+    } else {
+      playSfx('revealPaid');
+      this.floaters.add(cell, `-1 ${icon('Gold')}`);
+    }
     this.notify();
     return true;
   }
@@ -388,6 +501,158 @@ export class Game {
     this.inspectedDistrictId = null;
     if (selected) this.camera.centerOnCell(selected);
     this.notify();
+  }
+
+  // --------------------------------------------------------------- casting
+
+  /** Enter cast mode, or cast immediately when the ability needs no target. */
+  startCast(artifactId: ArtifactId): void {
+    const active = ARTIFACTS[artifactId].active;
+    if (active === null) return;
+    const block = castBlock(this.state, artifactId);
+    if (block !== null) {
+      if (block === 'NotEnoughMana') this.shake(['Mana']);
+      else if (block === 'NotAttuned') this.toast('Attune it first — a relic must be worn to be cast');
+      this.notify();
+      return;
+    }
+    if (!active.targeted) {
+      this.doCast(artifactId, null);
+      return;
+    }
+    const valid = validCastCells(this.state, this.map, artifactId);
+    if (valid.length === 0) {
+      this.toast(`Nowhere to cast ${active.name} right now`);
+      this.notify();
+      return;
+    }
+    // Start on the legal cell nearest the Townhall, exactly as placement does.
+    let selected: Coord | null = null;
+    let best = Infinity;
+    for (const c of valid) {
+      const d = townhallDistance(this.map, c);
+      if (d < best) {
+        best = d;
+        selected = c;
+      }
+    }
+    this.mode = { kind: 'casting', artifactId, selected };
+    this.openOverlay = null;
+    this.inspectedDistrictId = null;
+    this.inspectedSite = null;
+    if (selected) this.camera.centerOnCell(selected);
+    this.notify();
+  }
+
+  confirmCast(): void {
+    if (this.mode.kind !== 'casting') return;
+    this.doCast(this.mode.artifactId, this.mode.selected);
+  }
+
+  private doCast(artifactId: ArtifactId, target: Coord | null): void {
+    const def = ARTIFACTS[artifactId];
+    const report = cast(this.state, this.map, artifactId, target, this.now());
+    if (report.result !== 'Cast') {
+      if (report.result === 'NotEnoughMana') this.shake(['Mana']);
+      else this.toast('That cannot be cast there');
+      this.notify();
+      return;
+    }
+    playSfx('research');
+    this.mode = { kind: 'normal' };
+    for (const c of report.affected) this.tapFx.add(coordKey(c));
+    if (report.goldSaved > 0 && target) {
+      this.floaters.add(target, `Saved ${report.goldSaved} ${icon('Gold')}`);
+    }
+    if (report.activeId === 'Bloom' && target) {
+      this.floaters.add(target, `${report.affected.length} cells renewed`);
+    }
+    if (report.activeId === 'Haste') {
+      this.toast(`${def.active!.name} — workers carry double for the next hour`);
+    }
+    if (report.affected.length > 0) wakeIdleWorkersAt(this.state, this.now());
+    this.notify();
+  }
+
+  /** The cast preview the panel and the renderer both read. */
+  castInfo(): {
+    artifactId: ArtifactId; cell: Coord | null; manaCost: number; affordable: boolean;
+    saving: number; blooms: number;
+  } | null {
+    if (this.mode.kind !== 'casting') return null;
+    const { artifactId, selected } = this.mode;
+    const active = ARTIFACTS[artifactId].active!;
+    return {
+      artifactId,
+      cell: selected,
+      manaCost: active.manaCost,
+      affordable: mana(this.state) >= active.manaCost,
+      saving: active.id === 'Divination' && selected
+        ? divinationSaving(this.state, this.map, selected) : 0,
+      blooms: active.id === 'Bloom' && selected
+        ? bloomPreview(this.state, this.map, selected, active.radius).length : 0,
+    };
+  }
+
+  // ---------------------------------------------------------------- relics
+
+  doAttune(slot: number, artifactId: ArtifactId | null): void {
+    const result = attune(this.state, slot, artifactId, this.now());
+    if (result === 'Attuned' || result === 'Unattuned') playSfx('upgradeBought');
+    else if (result === 'SlotLocked') this.toast('That socket is still settling');
+    else if (result === 'AlreadyAttuned') this.toast('It is already worn in another socket');
+    this.notify();
+  }
+
+  doLevelArtifact(id: ArtifactId): void {
+    const result = levelUpArtifact(this.state, id);
+    if (result === 'Levelled') playSfx('upgradeBought');
+    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
+    this.notify();
+  }
+
+  doRaiseArtifactTier(id: ArtifactId): void {
+    const result = raiseArtifactTier(this.state, id);
+    if (result === 'Raised') playSfx('upgradeBought');
+    else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+    this.notify();
+  }
+
+  doBuyAttunementSlot(): void {
+    const result = buyAttunementSlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  doRefillMana(): void {
+    const result = refillManaWithGems(this.state);
+    if (result === 'Refilled') playSfx('gemSpend');
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  /** Everything the header's Mana gauge shows: a pool and ONE net rate.
+   *  Never three numbers — the breakdown belongs in the reliquary, on tap. */
+  manaInfo(): { value: number; cap: number; net: number; production: number; upkeep: number } {
+    return {
+      value: mana(this.state),
+      cap: manaCap(this.state),
+      net: manaNetRegen(this.state),
+      production: manaProduction(this.state),
+      upkeep: manaUpkeep(this.state),
+    };
+  }
+
+  /** Magic stays out of the HUD until the player has met it — a gauge with
+   *  nothing to spend on is exactly the spreadsheet chrome the redesign
+   *  exists to kill. Sticky once true. */
+  showsMana(): boolean {
+    return this.state.artifacts.owned.length > 0
+      || isTechComplete(this.state, 'Attunement')
+      || Object.keys(this.state.landmarks.claimed).length > 0
+      || visibleLandmarks(this.state, this.map).length > 0;
   }
 
   confirmBuild(): void {
@@ -561,10 +826,21 @@ export class Game {
         inspect(target);
         break;
       }
-      case 'TrainArmy':
-        this.setUiHint('army');
-        overlay('army');
+      case 'TrainArmy': {
+        // The Army screen is gone: units are trained at the building that
+        // trains them, exactly as villagers are trained at the Townhall. So
+        // "go train an army" means "go to the Barracks" — or, if there isn't
+        // one yet, "go build it".
+        const barracks = built((d) => DISTRICTS[d.definitionId].trains !== null);
+        if (barracks) {
+          this.setUiHint('card:train');
+          inspect(barracks);
+        } else {
+          this.setUiHint('build:Barracks');
+          overlay('build');
+        }
         break;
+      }
       case 'SellGoods':
         if (hasMarket(this.state)) {
           this.setUiHint('market');
@@ -576,6 +852,50 @@ export class Game {
         break;
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      case 'ClaimLandmarks': {
+        // The nearest landmark that is visible and unclaimed; failing that,
+        // the nearest frontier cell — because the answer is "explore".
+        const claimable = visibleLandmarks(this.state, this.map)
+          .filter((l) => this.state.landmarks.claimed[l.id] !== true)
+          .sort((a, b) =>
+            townhallDistance(this.map, a.location) - townhallDistance(this.map, b.location))[0];
+        if (claimable) {
+          this.setOverlay(null);
+          this.inspectedSite = claimable.location;
+          this.camera.centerOnCell(claimable.location);
+          this.notify();
+        } else {
+          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        }
+        break;
+      }
+      case 'ReachDepth':
+      case 'ClearRuins': {
+        // A party already underground is the answer; otherwise the nearest
+        // ruin they could be sent into.
+        const waiting = this.waitingDelves()[0];
+        if (waiting) {
+          this.openCheckpointFor(waiting.id);
+          break;
+        }
+        const found = discoveredRuins(this.state, this.map)
+          .sort((a, b) =>
+            townhallDistance(this.map, RUINS[a].location)
+            - townhallDistance(this.map, RUINS[b].location))[0];
+        if (found) {
+          this.setOverlay(null);
+          this.inspectedSite = RUINS[found].location;
+          this.camera.centerOnCell(RUINS[found].location);
+          this.notify();
+        } else {
+          centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        }
+        break;
+      }
+      case 'OwnArtifacts':
+        this.setUiHint('reliquary');
+        overlay('reliquary');
         break;
       case 'CollectTaps':
         centerCell(this.nearestCell((c) =>
@@ -661,6 +981,230 @@ export class Game {
     };
   }
 
+  /** Claim the landmark whose card is open. */
+  doClaimLandmark(cell: Coord): void {
+    const def = landmarkDefAt(cell);
+    if (!def) return;
+    const before = manaProduction(this.state);
+    const result = claimLandmark(this.state, this.map, cell);
+    if (result === 'Claimed') {
+      playSfx('upgradeBought');
+      this.floaters.add(cell, `+${manaProduction(this.state) - before} ${icon('Mana')}/h`);
+      this.queueBanner({
+        title: 'Landmark claimed!',
+        icon: LANDMARK_ART[def.kind].glyph,
+        name: LANDMARK_ART[def.kind].name,
+        desc: 'The kingdom draws more Mana every hour, for good.',
+        sprite: LANDMARK_ART[def.kind].sprite,
+        tone: 'sky',
+      });
+    } else if (result === 'NotEnoughGold') {
+      this.shake(['Gold']);
+    } else if (result === 'Defended') {
+      this.toast('An enemy warband holds this place — clear it first');
+    }
+    this.notify();
+  }
+
+  // ----------------------------------------------------------- expeditions
+
+  /** Why this ruin cannot be delved right now, in plain words; null = it can. */
+  expeditionBlock(ruinId: RuinId): string | null {
+    const running = this.state.delves.find((d) => d.ruinId === ruinId && d.phase !== 'done');
+    if (running) return 'Your party is already down there';
+    if (freeHeroes(this.state).length === 0) {
+      return this.state.heroes.owned.length === 0
+        ? 'You have no hero to lead a party'
+        : 'Every hero is already underground';
+    }
+    if (maxArmyPower(this.state) === 0) return 'Build a Barracks — you have no army to send';
+    if (this.state.army.length === 0) return 'Train some units first';
+    return null;
+  }
+
+  /** Open the launch sheet, pre-filled with the best guess: the free hero and
+   *  every unit the player owns, up to their slots. A player should never have
+   *  to assemble a party from nothing to see what a ruin would take. */
+  openExpedition(ruinId: RuinId): void {
+    this.expeditionRuin = ruinId;
+    this.expeditionHero = freeHeroes(this.state)[0] ?? null;
+    this.expeditionOrder = null;
+    const roster = availableRoster(this.state);
+    const affinity = RUINS[ruinId].affinity;
+    // Best-answering type first, then whatever else is on hand — a sensible
+    // default the player can immediately override, not a recommendation.
+    const order = (Object.keys(roster) as UnitId[])
+      .filter((u) => roster[u] > 0)
+      .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
+    // Clamped to the army cap. Proposing a party the player cannot field is
+    // worse than proposing a small one: the sheet would open pre-filled AND
+    // pre-blocked, which reads as the game refusing its own suggestion.
+    let budget = maxArmyPower(this.state);
+    this.expeditionParty = [];
+    for (const unitId of order.slice(0, unitSlots(this.state))) {
+      const affordable = Math.min(roster[unitId], Math.floor(budget / UNITS[unitId].power));
+      if (affordable <= 0) continue;
+      budget -= affordable * UNITS[unitId].power;
+      this.expeditionParty.push({ unitId, count: affordable });
+    }
+    this.setOverlay('expedition');
+  }
+
+  setExpeditionHero(heroId: HeroId): void {
+    this.expeditionHero = heroId;
+    this.notify();
+  }
+
+  setExpeditionCount(unitId: UnitId, count: number): void {
+    const roster = availableRoster(this.state);
+    const capped = Math.max(0, Math.min(count, roster[unitId] ?? 0));
+    const existing = this.expeditionParty.find((s) => s.unitId === unitId);
+    if (existing) existing.count = capped;
+    else if (capped > 0) this.expeditionParty.push({ unitId, count: capped });
+    this.expeditionParty = this.expeditionParty.filter((s) => s.count > 0);
+    this.notify();
+  }
+
+  setStandingOrder(depth: number | null): void {
+    this.expeditionOrder = depth;
+    this.notify();
+  }
+
+  /** The launch read-out: what this party is, and how deep it is SAFE. */
+  expeditionPreview(): ExpeditionPreview | null {
+    if (this.expeditionRuin === null) return null;
+    return previewExpedition(
+      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
+  }
+
+  expeditionLaunchBlock(): string | null {
+    if (this.expeditionRuin === null) return 'No ruin chosen';
+    const block = launchBlock(
+      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
+    if (block === null) return null;
+    return LAUNCH_BLOCK_TEXT[block];
+  }
+
+  doLaunchExpedition(): void {
+    if (this.expeditionRuin === null || this.expeditionHero === null) return;
+    const result = launchDelve(
+      this.state, this.map, this.expeditionRuin, this.expeditionHero,
+      this.expeditionParty, this.now(), this.expeditionOrder,
+    );
+    if (result === 'Launched') {
+      playSfx('unitTrained');
+      this.toast('Your party sets off');
+      this.expeditionRuin = null;
+      this.setOverlay(null);
+    } else if (result === 'NotEnoughSupplies') {
+      this.shake(Object.keys(supplyCost(this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
+    } else {
+      this.toast(LAUNCH_BLOCK_TEXT[result]);
+    }
+    this.notify();
+  }
+
+  // ----------------------------------------------------------- checkpoints
+
+  /** Parties waiting for an answer — the return hook the design asks for. */
+  waitingDelves(): Delve[] {
+    return this.state.delves.filter((d) => d.phase === 'checkpoint' || d.phase === 'done');
+  }
+
+  openCheckpointFor(delveId: string): void {
+    this.openCheckpoint = delveId;
+    this.setOverlay('checkpoint');
+  }
+
+  checkpointDelve(): Delve | undefined {
+    return this.openCheckpoint === null
+      ? undefined : delveById(this.state, this.openCheckpoint);
+  }
+
+  doPushDeeper(): void {
+    if (this.openCheckpoint === null) return;
+    const result = pushDeeper(this.state, this.openCheckpoint, this.now());
+    if (result === 'Descending') {
+      playSfx('click');
+      this.setOverlay(null);
+      this.openCheckpoint = null;
+    }
+    this.notify();
+  }
+
+  doExtract(): void {
+    if (this.openCheckpoint === null) return;
+    const report = extract(this.state, this.openCheckpoint);
+    if (report.result === 'Extracted') {
+      playSfx('quest');
+      if (report.artifact !== null) {
+        const relic = ARTIFACTS[report.artifact];
+        this.queueBanner({
+          title: 'A relic comes home!',
+          icon: relic.glyph,
+          name: relic.name,
+          desc: relic.passiveText,
+          sprite: relic.sprite,
+          tone: 'gold',
+          sfx: 'chainFinished',
+        });
+      }
+      this.toast(`Banked from depth ${report.depth}`);
+    }
+    this.openCheckpoint = null;
+    this.setOverlay(null);
+    this.notify();
+  }
+
+  doBuyPartySlot(): void {
+    const result = buyPartySlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
+  // --------------------------------------------------------------- heroes
+
+  doPull(): void {
+    const before = this.state.heroes.owned.length;
+    const result = pull(this.state);
+    if (result.result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    } else if (result.result === 'Pulled') {
+      playSfx('gemSpend');
+      if (result.heroId !== null && this.state.heroes.owned.length > before) {
+        const hero = HEROES[result.heroId];
+        this.queueBanner({
+          title: 'A new hero answers!',
+          icon: hero.glyph,
+          name: hero.name,
+          desc: hero.traitText,
+          sprite: hero.sprite,
+          tone: 'gold',
+          sfx: 'chainFinished',
+        });
+      } else if (result.fragmentsOf !== null) {
+        this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
+      }
+    }
+    this.notify();
+  }
+
+  doLevelHero(id: HeroId): void {
+    const result = levelUpHero(this.state, id);
+    if (result === 'Levelled') playSfx('upgradeBought');
+    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
+    this.notify();
+  }
+
+  doRaiseHeroTier(id: HeroId): void {
+    const result = raiseHeroTier(this.state, id);
+    if (result === 'Raised') playSfx('upgradeBought');
+    else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+    this.notify();
+  }
+
   doBuySlot(): void {
     const result = buySlot(this.state);
     if (result === 'Purchased') playSfx('gemSpend');
@@ -670,15 +1214,23 @@ export class Game {
 
   doTrain(unitId: UnitId): void {
     const result = trainUnit(this.state, unitId);
-    if (result === 'Trained') playSfx('unitTrained');
+    if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
-    if (result === 'ArmyAtCapacity') this.toast(`Army at capacity (${armyPower(this.state)}/${maxArmyPower(this.state)})`);
+    if (result === 'NoBuilding') {
+      this.toast(`Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
+    }
+    if (result === 'ArmyAtCapacity') {
+      this.toast(`Army at capacity (${committedArmyPower(this.state)}/${maxArmyPower(this.state)}) — build or upgrade a military building`);
+    }
     this.notify();
   }
 
   setOverlay(name: OverlayName | null): void {
     this.openOverlay = name;
-    if (name !== null) this.inspectedDistrictId = null;
+    if (name !== null) {
+      this.inspectedDistrictId = null;
+      this.inspectedSite = null;
+    }
     this.notify();
   }
 
@@ -686,7 +1238,8 @@ export class Game {
    *  The quest tracker hides while anything is on top of the map. */
   hasOpenSheet(): boolean {
     return (
-      this.mode.kind !== 'normal' || this.openOverlay !== null || this.inspectedDistrictId !== null
+      this.mode.kind !== 'normal' || this.openOverlay !== null ||
+      this.inspectedDistrictId !== null || this.inspectedSite !== null
     );
   }
 
@@ -695,6 +1248,8 @@ export class Game {
     this.mode = { kind: 'normal' };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
+    this.inspectedSite = null;
+    this.openCheckpoint = null;
     this.notify();
   }
 
@@ -789,6 +1344,28 @@ export class Game {
           );
         }
       }
+    } else if (this.mode.kind === 'casting') {
+      // The same highlight vocabulary as placement — valid cells outlined,
+      // the chosen one selected — because it is the same decision shape.
+      const active = ARTIFACTS[this.mode.artifactId].active!;
+      layer.validCells = validCastCells(this.state, this.map, this.mode.artifactId)
+        .map((cell) => ({ cell, label: '' }));
+      layer.validColor = PALETTE.castTarget;
+      layer.selected = this.mode.selected;
+      layer.selectedSize = { x: 1, y: 1 };
+      if (this.mode.selected) {
+        if (active.id === 'Bloom') {
+          layer.influenceCells = bloomPreview(
+            this.state, this.map, this.mode.selected, active.radius);
+        }
+        if (active.id === 'Divination') {
+          layer.yieldCells = [{
+            cell: this.mode.selected,
+            label: `${divinationSaving(this.state, this.map, this.mode.selected)} ${icon('Gold')}`,
+            tone: 'good',
+          }];
+        }
+      }
     } else if (this.inspectedDistrictId) {
       const district = districtById(this.state, this.inspectedDistrictId);
       if (district) {
@@ -806,7 +1383,7 @@ export class Game {
   }
 
   revealCostAt(cell: Coord): number {
-    return revealCostForCell(this.map, cell);
+    return revealCostForCell(this.state, this.map, cell);
   }
 
   placementInfo(): {
@@ -1024,8 +1601,33 @@ export function formatAdjacency(goldPerMinute: number): string {
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️',
+    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️', Mana: '🔮',
     Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }
+
+
+/** The building that trains a unit type, by name — for the blocker text. */
+function trainerName(unitId: UnitId): string {
+  const def = Object.values(DISTRICTS).find((d) => d.trains === unitId);
+  return def?.name ?? 'right building';
+}
+
+
+/** Why a launch is blocked, in words the player can act on. */
+const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
+  RuinNotFound: 'You have not found this ruin yet',
+  NoHero: 'Pick a hero to lead them',
+  HeroBusy: 'That hero is already underground',
+  EmptyParty: 'Send at least one unit with them',
+  TooManySlots: 'Too many kinds of unit — buy another party slot',
+  NotEnoughUnits: 'You do not have that many at home',
+  OverArmyCap: 'More than your army can field',
+  NotEnoughSupplies: 'Not enough supplies for the trip',
+};
+
+/** How well a unit type answers a ruin's affinity — used only to pre-fill a
+ *  sensible party, never to decide anything. */
+const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
+  typeMultiplier(unitId, affinity) * UNITS[unitId].atk;

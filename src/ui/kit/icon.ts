@@ -34,11 +34,12 @@ export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
  *  currency or district without a glyph fails `tsc`. */
 export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
-  Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️',
+  Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️', Mana: '🔮',
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
-  Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️',
+  Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️', Sanctum: '🔯',
+  Barracks: '🛖', SpearHall: '🏚️', ShootingGrounds: '🎯', Stables: '🐴',
   // units
   Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',
   // destinations

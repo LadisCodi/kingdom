@@ -3,8 +3,9 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, TRAINING,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART, TRAINING,
 } from '../sim/data/definitions';
+import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { fogState, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
@@ -129,6 +130,23 @@ export function drawMap(
     ctx.restore();
   };
 
+  /** A small corner tag on a site: what it still wants from the player. */
+  const drawSiteBadge = (x: number, y: number, text: string): void => {
+    const r = Math.max(6, size * 0.13);
+    ctx.beginPath();
+    ctx.arc(x + size - r - 2, y + r + 2, r, 0, Math.PI * 2);
+    ctx.fillStyle = PALETTE.siteBadge;
+    ctx.fill();
+    ctx.strokeStyle = PALETTE.siteBadgeEdge;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = PALETTE.siteBadgeInk;
+    ctx.font = labelFont(r * 1.2, 8, true);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + size - r - 2, y + r + 3);
+  };
+
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
   // separate pass — a multi-cell sprite drawn here would be overpainted by
   // the terrain fill of the following footprint cells.
@@ -166,6 +184,33 @@ export function drawMap(
         });
       }
 
+      // Landmarks and ruins: authored sites, drawn where a feature would be.
+      // They are what the fog is FOR, so they get the same weight as a forest
+      // and a badge saying whether they still want something from you.
+      const landmark = landmarkDefAt(cell);
+      if (landmark && fog === 'Revealed') {
+        const art = LANDMARK_ART[landmark.kind];
+        const claimed = state.landmarks.claimed[landmark.id] === true;
+        punched(key, x, y, size, size, () => {
+          if (!drawSprite(ctx, art.sprite, x, y, size, size)) {
+            drawGlyph(ctx, art.glyph, x, y, size, size * 0.5);
+          }
+        });
+        // A star means "claimable"; a bang means "something is holding it".
+        if (!claimed) drawSiteBadge(x, y, landmark.defended ? '!' : '\u2726');
+      }
+      const ruin = ruinDefAt(cell);
+      if (ruin && fog === 'Revealed') {
+        punched(key, x, y, size, size, () => {
+          if (!drawSprite(ctx, ruin.sprite, x, y, size, size)) {
+            drawGlyph(ctx, ruin.glyph, x, y, size, size * 0.5);
+          }
+        });
+        // The tier alone: a bare digit reads at any zoom, and "T1" in a
+        // pixel display face is one stroke away from an arrow.
+        drawSiteBadge(x, y, String(ruin.tier));
+      }
+
       if (fog === 'Revealed') drawResourceState(cell, x, y);
 
       if (fog === 'Discovered') {
@@ -174,7 +219,7 @@ export function drawMap(
         // Reveal progress only — the total cost is deliberately not shown.
         const paid = state.fog.progress[key] ?? 0;
         if (paid > 0) {
-          const total = revealCostForCell(map, cell);
+          const total = revealCostForCell(state, map, cell);
           drawBar(ctx, x + size * 0.15, y + size * 0.62, size * 0.7, 5, paid / total, PALETTE.progressFill);
         }
       }

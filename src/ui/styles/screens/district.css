@@ -170,3 +170,12 @@
 }
 .dc-slot.is-filled { background: var(--parchment); border-style: solid; }
 .dc-crew .k-knob { width: 40px; height: 40px; min-height: 40px; margin-bottom: 0; }
+
+/* A military building: the same shape as the Townhall's training block,
+ * because it is the same beat. */
+.dc-army {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: var(--text-helper);
+}
+.dc-army-note { color: var(--ink-muted); }
+.dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }

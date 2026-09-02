@@ -170,7 +170,8 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // L1 capacity 2
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // L1 capacity 1
+    addBuilt(state, 'Housing', { x: 0, y: -1 }); // a second roof
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);

@@ -9,7 +9,7 @@ import { tapCell } from '../src/sim/harvest';
 import { startTech } from '../src/sim/research';
 import { coordKey, getWallet } from '../src/sim/state';
 import { effectiveAmount, pay } from '../src/sim/wallet';
-import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
 // The rocks sit in a mountain pocket: (5,0) and (5,-2) are their only land
@@ -109,11 +109,12 @@ describe('iron line (Mining ← Masonry) and the iron-gated army', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
     completeTech(state, 'Warrior');
-    expect(trainUnit(state, 'Warrior')).toBe('Trained'); // wood-armed now
+    addAllTrainers(state); // the cap now comes from buildings, not the Townhall
+    expect(trainUnit(state, 'Warrior')).toBe('Queued'); // wood-armed now
     completeTech(state, 'Cavalry');
     expect(trainUnit(state, 'Cavalry')).toBe('NotEnoughResources'); // no Iron
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 20 });
-    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
+    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
     expect(getWallet(state.city.wallet, 'Iron')).toBe(0); // 20 spent
   });
 });
