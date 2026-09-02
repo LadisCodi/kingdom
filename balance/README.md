@@ -46,6 +46,7 @@ would reach for them (see `Docs/onboarding.md`):
 | Too much / too little tapping before the Sawmill | `Quests` → the `Timber` and `Lumber` rows' `goal_amount`; `Harvest` → `Forest.taps_to_exhaust` and `recovery_seconds` |
 | Taps run out of energy too fast | `Settings` → `tap.mana_cost`, `mana.base_cap_per_townhall_level` |
 | A beat arrives too early or too late | Reorder the `Quests` rows |
+| The player wanders instead of finding the thing | Use `DiscoverFeature` with `goal_target` = `Trees`/`BerryBush`/`WildAnimals`/`Rocks`/`FishShoal`/`IronVein` instead of `DiscoverCells` — it counts only reveals that uncovered that feature, and the quest arrow points at one |
 
 Two things to know before you retune the very opening:
 

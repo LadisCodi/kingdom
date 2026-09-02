@@ -112,6 +112,14 @@ describe('a player can actually play the onboarding', () => {
       { x: 3, y: 1 }, { x: -2, y: 0 }]) clear(cell);
     finish('FirstSteps');
 
+    // DiscoverFeature is RELATIVE, like DiscoverCells: it counts from the
+    // moment it activates, so forest cleared during quest 1 does not pay for
+    // quest 2. Two more, and the border walks toward the trees rather than in
+    // whatever direction the player happened to face.
+    clear({ x: 2, y: 3 });
+    clear({ x: 0, y: 4 });
+    finish('FindTheWoods');
+
     research('Forestry');
     finish('Woodcraft');
 

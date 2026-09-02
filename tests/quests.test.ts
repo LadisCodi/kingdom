@@ -2,7 +2,9 @@
 // counts), relative goals count events only while active, claims pay the
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, QUESTS, TECH_ORDER } from '../src/sim/data/definitions';
+import {
+  DISTRICTS, QUESTS, TECH_ORDER, type QuestDef,
+} from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealKnowledge, revealTap,
 } from '../src/sim/fog';
@@ -12,8 +14,13 @@ import {
 } from '../src/sim/quests';
 import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
-import { addToWallet, getWallet, parseCoordKey, townhall } from '../src/sim/state';
-import { addBuilt, canGather, FOREST, freshGame, fund, map, T0, tickAt } from './helpers';
+import {
+  addToWallet, coordKey, getWallet, parseCoordKey, townhall,
+  type FeatureId, type GameState,
+} from '../src/sim/state';
+import {
+  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt,
+} from './helpers';
 
 
 describe('the quest chain', () => {
@@ -40,10 +47,14 @@ describe('the quest chain', () => {
     // thing a player can do is clear ground.
     expect(QUESTS[0]).toMatchObject(
       { id: 'FirstSteps', goalType: 'DiscoverCells', goalAmount: 5 });
-    expect(QUESTS[1]).toMatchObject({ id: 'Woodcraft', goalTarget: 'Forestry' });
+    // ...and then a HEADING, not just more fog: the trees quest 3 wants.
+    expect(QUESTS[1]).toMatchObject(
+      { id: 'FindTheWoods', goalType: 'DiscoverFeature', goalTarget: 'Trees' });
+    expect(QUESTS[2]).toMatchObject({ id: 'Woodcraft', goalTarget: 'Forestry' });
 
     inOrder(
-      'FirstSteps', 'Woodcraft',                  // 1-2  explore → the one research
+      'FirstSteps', 'FindTheWoods', 'Woodcraft',  // 1-2  explore → find the woods
+                                                  //        → the one research
       'Timber', 'ARoof',                          // 3-4  chop, then a roof
       'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
                                                   //   a roof is what permits one
@@ -261,5 +272,97 @@ describe('quests fund the research tree', () => {
     const gold = cheapest.reduce((sum, c) => sum + c.gold, 0);
     expect(knowledge).toBeGreaterThanOrEqual(techCost('Forestry'));
     expect(gold).toBeLessThanOrEqual(getWallet(state.city.wallet, 'Gold'));
+  });
+});
+
+// DiscoverFeature (2026-09-02): a DiscoverCells that cares WHAT it uncovered.
+//
+// "Clear five cells" can be satisfied in any direction, so it teaches the verb
+// and nothing else. "Clear two with forest on them" is a heading — it points
+// the opening at the thing the next quest is about to need, which is the
+// whole reason the goal type exists.
+describe('DiscoverFeature: revealing cells that have something on them', () => {
+  const questWith = (target: FeatureId, amount: number): QuestDef => ({
+    id: 'test', name: 'test', description: '',
+    goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
+    reward: {}, rewardGems: 0, rewardKnowledge: 0,
+  });
+
+  /** Put a made-up quest in the chain's active slot. */
+  const activate = (state: GameState, quest: QuestDef) => {
+    (QUESTS as QuestDef[]).splice(state.quests.index, 0, quest);
+    state.quests.progress = 0;
+    return () => { (QUESTS as QuestDef[]).splice(state.quests.index, 1); };
+  };
+
+  it('counts only reveals that uncovered the named feature', () => {
+    const state = freshGame();
+    const restore = activate(state, questWith('Trees', 2));
+    try {
+      recordQuestEvent(state, { kind: 'reveal', feature: null }); // bare ground
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Rocks' }); // wrong one
+      expect(state.quests.progress).toBe(0);
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      expect(state.quests.progress).toBe(1);
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
+  // The event has to carry the feature, because the reveal is the only moment
+  // that knows it: a berry bush is FINITE, so a player who drains it minutes
+  // later would otherwise retroactively un-complete the quest.
+  it('keeps the credit after the feature itself is used up', () => {
+    const state = canGather(freshGame());
+    const bush = BERRIES;
+    delete state.fog.revealed[coordKey(bush)]; // put it back under the fog
+    state.city.wallet.Gold = 500;
+
+    const restore = activate(state, questWith('BerryBush', 1));
+    try {
+      let r: string = 'Paid';
+      while (r === 'Paid') r = revealTap(state, map, bush);
+      expect(r).toBe('Revealed');
+      expect(state.quests.progress).toBe(1);
+
+      // Drain it to nothing — the bush leaves the map entirely.
+      while (tapCell(state, map, bush, T0) === 'Harvested') { /* eat it */ }
+      expect(state.features[coordKey(bush)]).toBeUndefined();
+      expect(state.quests.progress).toBe(1); // still counted
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
+  it('counts a real fog reveal, with the feature read off the cell', () => {
+    const state = freshGame();
+    state.city.wallet.Gold = 500;
+    // A Trees cell one ring out, reachable from the opening block.
+    const trees = [...map.terrain.keys()].map(parseCoordKey)
+      .filter((c) => map.initialFeatures.get(coordKey(c)) === 'Trees'
+        && fogState(state, map, c) === 'Discovered' && isReachable(state, map, c))[0];
+    expect(trees, 'no reachable forest at the opening').toBeDefined();
+
+    const restore = activate(state, questWith('Trees', 1));
+    try {
+      let r: string = 'Paid';
+      while (r === 'Paid') r = revealTap(state, map, trees);
+      expect(r).toBe('Revealed');
+      expect(state.quests.progress).toBe(1);
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
+  it('the plain DiscoverCells goal still counts every reveal, feature or not', () => {
+    const state = freshGame();
+    const restore = activate(state, {
+      id: 'test', name: 'test', description: '',
+      goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
+      reward: {}, rewardGems: 0, rewardKnowledge: 0,
+    });
+    try {
+      recordQuestEvent(state, { kind: 'reveal', feature: null });
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
   });
 });

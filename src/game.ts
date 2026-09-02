@@ -59,6 +59,7 @@ import {
 import {
   coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
+  type FeatureId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type UpgradeId, type Wallet,
 } from './sim/state';
@@ -969,6 +970,25 @@ export class Game {
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
+      case 'DiscoverFeature': {
+        // Point at a DARK cell that has the thing on it. This is the whole
+        // reason the goal type exists: "clear five cells" can be satisfied in
+        // any direction, so it teaches the verb and nothing else, while "clear
+        // two with forest on them" is a heading — and the arrow has to give
+        // the player that heading or the quest is a riddle.
+        //
+        // Features draw through the fog, so a Discovered cell already shows
+        // what is on it; this tells the player nothing they cannot see.
+        const wanted = quest.goalTarget as FeatureId;
+        const target = this.nearestCell((c) =>
+          fogState(this.state, this.map, c) === 'Discovered'
+          && this.state.features[coordKey(c)] === wanted);
+        // Nothing of that kind in sight yet — fall back to the frontier,
+        // because the answer is still "go and explore".
+        centerCell(target
+          ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      }
       case 'CollectResource':
       case 'HoldResource': {
         // Point at the GROUND that yields it. The berry bush and the wild

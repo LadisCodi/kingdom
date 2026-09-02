@@ -144,7 +144,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     // Kingdom-scoped, like every other source of Knowledge.
     addToWallet(state.kingdom.wallet, 'Knowledge', revealKnowledge(map, cell));
     recordResourceDiscovery(state, 'Knowledge');
-    recordQuestEvent(state, { kind: 'reveal' });
+    recordQuestEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
     // Clearing a cell can bring a whole ring of new ground into view.
     recordVisibleSites(state, map);
     return 'Revealed'; // caller must trigger a production recalc

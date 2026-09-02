@@ -132,12 +132,14 @@ export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
-  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'SellGoods'
+  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature' | 'SellGoods'
   | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts'
   | 'OwnHeroes' | 'BuyUpgrade';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
-  new Set(['CollectResource', 'CollectTaps', 'DiscoverCells', 'SellGoods']);
+  new Set([
+    'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature', 'SellGoods',
+  ]);
 
 export interface QuestDef {
   id: string; // content id — data-side, not a TS union

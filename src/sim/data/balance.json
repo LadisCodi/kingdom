@@ -1503,6 +1503,20 @@
       "rewardKnowledge": 0
     },
     {
+      "id": "FindTheWoods",
+      "name": "Find the woods",
+      "description": "Clear two cells with forest on them — you will want the timber.",
+      "goalType": "DiscoverFeature",
+      "goalTarget": "Trees",
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 10
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 0
+    },
+    {
       "id": "Woodcraft",
       "name": "Forestry",
       "description": "Nothing here can be worked by hand yet. Research Forestry — it opens the woods and the berry bushes both.",

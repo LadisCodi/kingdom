@@ -9,7 +9,9 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { effectiveAmount, refund } from './wallet';
-import { addToWallet, type CurrencyId, type GameState, type UpgradeId } from './state';
+import {
+  addToWallet, type CurrencyId, type FeatureId, type GameState, type UpgradeId,
+} from './state';
 import { upgradeLevel } from './upgrades';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
@@ -18,7 +20,11 @@ export const activeQuest = (state: GameState): QuestDef | null =>
 export type QuestEvent =
   | { kind: 'collect'; currency: CurrencyId; amount: number }
   | { kind: 'tap' }
-  | { kind: 'reveal' }
+  /** `feature` is whatever was standing on the cell, or null for bare ground.
+   *  Carried on the event rather than looked up afterwards because the reveal
+   *  is the only moment that knows it: a finite feature can be tapped away
+   *  minutes later, and the quest should still have counted. */
+  | { kind: 'reveal'; feature: FeatureId | null }
   | { kind: 'sell'; units: number };
 
 /** Feed one sim event to the ACTIVE quest (no-op unless it's a matching
@@ -37,6 +43,11 @@ export function recordQuestEvent(state: GameState, event: QuestEvent): void {
       break;
     case 'DiscoverCells':
       if (event.kind === 'reveal') state.quests.progress += 1;
+      break;
+    case 'DiscoverFeature':
+      if (event.kind === 'reveal' && event.feature === quest.goalTarget) {
+        state.quests.progress += 1;
+      }
       break;
     case 'SellGoods':
       if (event.kind === 'sell') state.quests.progress += event.units;

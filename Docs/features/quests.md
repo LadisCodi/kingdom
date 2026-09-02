@@ -23,7 +23,21 @@ CompleteTechs(n) · AssignWorkers(n) · TrainArmy(n) — absolute;
 ClaimLandmarks(n) · ReachDepth(n) · ClearRuins(n) · OwnArtifacts(n) ·
 OwnHeroes(n) · BuyUpgrade(upgrade, level) — absolute;
 CollectResource(currency, n) · CollectTaps(n) · DiscoverCells(n) ·
-SellGoods(n) — relative.
+DiscoverFeature(feature, n) · SellGoods(n) — relative.
+
+**DiscoverFeature** is a DiscoverCells that cares WHAT it uncovered:
+`goal_target` is a map feature (`Trees`, `BerryBush`, `WildAnimals`, `Rocks`,
+`FishShoal`, `IronVein`). "Clear five cells" can be satisfied in any direction,
+so it teaches the verb and nothing else; "clear two with forest on them" is a
+**heading**, which is what the opening needs. The quest hint points at a dark
+cell that actually has the thing on it, falling back to the nearest frontier
+cell when none is in sight yet — because then the answer is still "go and
+explore".
+
+Two things follow from it being relative, like every other Discover goal:
+forest cleared before the quest activates does not pay for it, and the feature
+is carried ON the reveal event rather than looked up later — so draining a
+finite bush minutes afterwards cannot retroactively un-complete the quest.
 
 Design notes baked into the onboarding chain: beats OVERLAP on purpose. The 25
 Wood quest 3 asks the player to chop is the Wood quests 4 and 11 ask them to

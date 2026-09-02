@@ -83,6 +83,10 @@ const QUEST_GOAL_TYPES = {
   OwnHeroes: null, BuyUpgrade: 'upgrade',
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
+  // "clear two cells with forest on them" — a DiscoverCells that cares WHAT
+  // it uncovered, so the opening can point the player at the thing the next
+  // quest is about to need.
+  DiscoverFeature: 'feature',
 };
 
 const LANDMARK_KINDS = ['Shrine', 'StandingStones', 'Leyspring'];
@@ -710,6 +714,7 @@ async function importXlsx() {
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
     const lists = {
       district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
+      feature: Object.values(FEATURE_CODES),
     };
     if (targetKind === null && target !== null) {
       fail(where(r), `goal_type ${r.goal_type} takes no goal_target`);
