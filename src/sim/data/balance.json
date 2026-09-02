@@ -1670,6 +1670,34 @@
       "rewardKnowledge": 0
     },
     {
+      "id": "ToMarket",
+      "name": "To market",
+      "description": "Build a Market and turn surplus into Gold.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 110
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Merchant",
+      "name": "Merchant",
+      "description": "Sell twenty goods at the Market.",
+      "goalType": "SellGoods",
+      "goalTarget": null,
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 120
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 0
+    },
+    {
       "id": "GrowingTown",
       "name": "Growing town",
       "description": "Build a second House. The Wood is starting to add up.",
@@ -1906,34 +1934,6 @@
       },
       "rewardGems": 3,
       "rewardKnowledge": 25
-    },
-    {
-      "id": "ToMarket",
-      "name": "To market",
-      "description": "Build a Market and turn surplus into Gold.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Market",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 250
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Merchant",
-      "name": "Merchant",
-      "description": "Sell twenty goods at the Market.",
-      "goalType": "SellGoods",
-      "goalTarget": null,
-      "goalAmount": 20,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 290
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
     },
     {
       "id": "Stoneworks",

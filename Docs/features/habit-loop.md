@@ -3,8 +3,9 @@
 > Phase 1 of [`../road-to-mvp.md`](../road-to-mvp.md). Two mechanics that give
 > a player something to want on a day when no designer authored anything:
 > a **daily chest** and **generated orders**.
-> **Status: the daily chest is BUILT (2026-09-02); generated orders are
-> designed and unstarted, blocked on open decision 3.**
+> **Status: the daily chest is BUILT (2026-09-02). Generated orders are
+> unblocked — decision 3 closed 2026-09-03 and the Market moved into the
+> opening to meet them — and are the next thing to build.**
 >
 > Companion docs: [`quests.md`](quests.md) (the goal types this reuses),
 > [`ad-economy.md`](ad-economy.md) (what Mana is worth),
@@ -266,14 +267,24 @@ blocking Phase 1. Recorded here as recommendations, to be closed in review.
    `daily.mana_fractions` / `daily.gems`, with one Gold step in between priced
    in seconds of production.
 2. ~~**Does the pill auto-open?**~~ **CLOSED: no, it only glows.** §1.4.
-3. **Orders on the Market, or their own building?** ← **the one blocking
-   Phase 1's second half.** Recommendation: **the Market**, as a second tab. It gives the Market the second job the design
+3. ~~**Orders on the Market, or their own building?**~~ **CLOSED 2026-09-03:
+   the Market, as a second tab — and the Market moved into the opening to
+   meet it.** The recommendation below was right about the home and wrong
+   about the cost: the fix was not to accept that orders arrive at hour three,
+   it was to move the beat. `ToMarket` and `Merchant` are now steps 13-14
+   (`../onboarding.md`), which is the first point at which the city produces
+   more than it eats — so the Market arrives exactly when a sink first means
+   anything, rather than long after. Decision 4 falls away with it: there is
+   no "before the Market" worth designing for.
+
+   The original recommendation, kept for the reasoning: **the Market**, as a
+   second tab. It gives the Market the second job the design
    already wants for it, it needs no new placement or count cap, and it keeps
    the "tap the building" convention. The cost is that orders are gated behind
    the Market technology, which lands at quest 32+ — so either the gate moves
    earlier, or the first orders arrive later than the daily chest. **This is
    the one that actually needs a decision, not a preference.**
-4. **Do orders exist before the Market?** Following from 3. A cheap answer: the
+4. ~~**Do orders exist before the Market?**~~ **MOOT** — see 3. Following from 3. A cheap answer: the
    Townhall carries one order slot from the start and the Market adds the other
    two. That makes the Market a real upgrade to the feature rather than its
    gate, and it puts an order in front of the player during onboarding, where it

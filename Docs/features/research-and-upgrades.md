@@ -148,7 +148,7 @@ exhausted inside the 2–3 hour arc.
 > The count was **20** here and 24 in `currency-simplification.md` §3. The
 > workbook settles it: **24 technology rows costing 6,600 Gold in total**
 > (`balancing-v3.md` §2). And the number that matters more than the count —
-> the quest chain pays **12,075 Gold**, so the whole tree is **55 %** of what
+> the quest chain pays **11,765 Gold**, so the whole tree is **56 %** of what
 > finishing the chain hands you. The tree is not a Gold sink; it is a
 > formality the chain funds twice over, which is the argument for eras in
 > [`../road-to-mvp.md`](../road-to-mvp.md) §9. Three changes, none of which alter the mechanics above:

@@ -60,19 +60,27 @@ describe('the quest chain', () => {
       'TaxDay', 'Explorer',                       // 7    rent pays for more fog
       'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
       'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
-      'GrowingTown', 'Neighbors', 'ProperCapital',// 13-14 a House FIRST, then the
+      'ToMarket', 'Merchant',                     // 13-14 the FIRST beat at which
+                                                  //   the city makes more than it
+                                                  //   eats — so the first at which
+                                                  //   "somewhere for surplus to go"
+                                                  //   means anything. Moved up from
+                                                  //   27+ to give generated orders a
+                                                  //   home inside the opening
+                                                  //   (habit-loop.md §2).
+      'GrowingTown', 'Neighbors', 'ProperCapital',// 15-16 a House FIRST, then the
                                                   //   citizen it makes room for
                                                   //   (+ the Townhall, woven in)
-      'SawTeeth', 'TheSawmill', 'Crewed',         // 15-17 automate the wood
-      'FurtherAfield', 'OldStones',               // 18-19 explore, claim the shrine
-      'Mapmakers', 'Surveyors',                   // 20    exploration becomes a system
-      'Highlands', 'PutToSea',                    // 21-22 the terrain gates
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 23-24 something worth killing
-      'FirstSummon', 'IntoTheDark',               // 25-26 a hero, and the first depth
+      'SawTeeth', 'TheSawmill', 'Crewed',         // 17-19 automate the wood
+      'FurtherAfield', 'OldStones',               // 20-21 explore, claim the shrine
+      'Mapmakers', 'Surveyors',                   // 22    exploration becomes a system
+      'Highlands', 'PutToSea',                    // 23-24 the terrain gates
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 25-26 something worth killing
+      'FirstSummon', 'IntoTheDark',               // 27-28 a hero, and the first depth
     );
 
-    // 27+: the city economy the tutorial deferred, then the long game.
-    inOrder('IntoTheDark', 'ToMarket', 'Stoneworks', 'TheMine', 'GrandCapital');
+    // 29+: the rest of the city economy the tutorial defers, then the long game.
+    inOrder('IntoTheDark', 'Stoneworks', 'TheMine', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
       { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
   });
@@ -229,7 +237,10 @@ describe('quests fund the research tree', () => {
   it('the chain covers most of the tech tree, but never all of it', () => {
     const chain = QUESTS.reduce((sum, q) => sum + (q.reward.Gold ?? 0), 0);
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(chain).toBe(12_075);
+    // 11,765 since the two Market beats moved into the opening and were
+    // re-priced to their new position (250/290 -> 110/120): 540 Gold at
+    // quest 15 would have nearly doubled the early economy.
+    expect(chain).toBe(11_765);
     expect(chain).toBeGreaterThan(tree * 0.75);
     expect(chain).toBeLessThan(tree * 2);
   });
