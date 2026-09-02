@@ -51,16 +51,27 @@ export const fund = (state: GameState, wallet: Record<string, number>): void => 
   if (Gems !== undefined) state.player.wallet.Gems = Gems;
 };
 
+/** The authored resource cells the early game is built around. None of them
+ *  is inside the Townhall's opening REVEAL any more — the map puts them one
+ *  ring out, so the player explores toward what they can see. Tests that are
+ *  about what happens after the fog use `canGather`. */
+export const FOREST: Coord = { x: 1, y: 3 };
+export const BERRIES: Coord = { x: -2, y: 1 };
+export const ANIMALS: Coord = { x: -1, y: -2 };
+
 /**
- * A kingdom allowed to work its forests.
+ * A kingdom that can actually gather: Forestry researched, and the forest and
+ * berry cells cleared.
  *
- * Forestry gates the FOREST tap (Docs/onboarding.md steps 2-3), so every test
- * about the harvest loop, workers, taxes or offline replay has to clear it
- * first — those tests are about what happens after the gate, and the gate
- * itself is defended in `harvest.test.ts`.
+ * Forestry gates BOTH the Forest and the Berries (Docs/onboarding.md steps
+ * 2-3, revised): during the first-time experience the only thing the player
+ * can do is tap fog, so no Food arrives before it is meant to. Every test
+ * about the harvest loop, workers, taxes or offline replay is about what
+ * happens AFTER that gate — the gate itself is defended in `harvest.test.ts`.
  */
-export const canChop = (state: GameState): GameState => {
+export const canGather = (state: GameState): GameState => {
   completeTech(state, 'Forestry');
+  reveal(state, [FOREST, BERRIES, ANIMALS]);
   return state;
 };
 

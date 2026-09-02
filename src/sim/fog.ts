@@ -98,13 +98,19 @@ export const revealKnowledge = (map: MapData, cell: Coord): number =>
 /**
  * How much reveal progress ONE tap on the fog buys.
  *
- * Surveying does not make a cell cheaper — the Gold is unchanged. It buys
- * back the player's TIME, which is what exploring actually spends once the
- * far rings cost 320 and 640 Gold and a single cell wants hundreds of taps.
- * Level 1 makes a tap count double, level 2 triple.
+ * None of this makes a cell CHEAPER — the Gold a cell costs never moves. What
+ * it buys back is the player's TIME, which is what exploring actually spends
+ * once the far rings cost 320 and 640 Gold and a single cell wants hundreds
+ * of taps.
+ *
+ * Two sources, and they stack: **Cartography** doubles a tap on its own (a
+ * tech with an effect rather than a gate, the same shape as Communities
+ * adding +1 to every bed), and **Surveying** adds one more per level. So the
+ * ladder a player climbs is ×1 → ×2 on the research → ×3 → ×4.
  */
 export const revealPerTap = (state: GameState): number =>
-  FOG.goldPerTap * (1 + effect(state, 'Surveying'));
+  FOG.goldPerTap
+  * (1 + (isTechComplete(state, 'Cartography') ? 1 : 0) + effect(state, 'Surveying'));
 
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';

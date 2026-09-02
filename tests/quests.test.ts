@@ -13,9 +13,8 @@ import {
 import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { addToWallet, getWallet, parseCoordKey, townhall } from '../src/sim/state';
-import { addBuilt, canChop, freshGame, fund, map, T0, tickAt } from './helpers';
+import { addBuilt, canGather, FOREST, freshGame, fund, map, T0, tickAt } from './helpers';
 
-const FOREST = { x: 2, y: 2 };
 
 describe('the quest chain', () => {
   // CLAIM: the chain IS Docs/onboarding.md, in order. That document is the
@@ -36,16 +35,20 @@ describe('the quest chain', () => {
     };
 
     // Steps 1-3: the game opens on the FOG, not on a tap. Exploring is what
-    // pays for Forestry, and Forestry is what opens the trees.
+    // pays for Forestry, and Forestry is the ONE door out of the opening —
+    // it gates the trees and the berries both, so until it lands the only
+    // thing a player can do is clear ground.
     expect(QUESTS[0]).toMatchObject(
       { id: 'FirstSteps', goalType: 'DiscoverCells', goalAmount: 5 });
     expect(QUESTS[1]).toMatchObject({ id: 'Woodcraft', goalTarget: 'Forestry' });
-    expect(QUESTS[2]).toMatchObject({ id: 'Timber', goalTarget: 'Wood' });
 
     inOrder(
-      'FirstSteps', 'Woodcraft', 'Timber',        // 1-3  explore → research → chop
-      'ARoof', 'Rations', 'FirstVillager',        // 4-6  a roof, a meal, a neighbour
-      'TaxDay', 'Explorer', 'WildGame',           // 7-8  income, then out into the country
+      'FirstSteps', 'Woodcraft',                  // 1-2  explore → the one research
+      'Rations', 'FirstVillager',                 // eat, then hire — the Townhall
+                                                  //   sleeps one, so neither waits
+                                                  //   on a building
+      'Timber', 'ARoof',                          // 3-4  chop, then a roof
+      'TaxDay', 'Explorer',                       // 7    rent pays for more fog
       'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
       'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
       'Neighbors', 'GrowingTown', 'ProperCapital',// 13-14 (+ the Townhall, woven in)
@@ -93,7 +96,7 @@ describe('the quest chain', () => {
   // chop is the Wood quests 4 and 11 ask you to build with, so "collect it"
   // and "spend it" are one action rather than two errands.
   it('quests 3→4 overlap: the Wood you chopped is the House you build', () => {
-    const state = canChop(freshGame());
+    const state = canGather(freshGame());
     const timber = QUESTS.find((q) => q.id === 'Timber')!;
     state.quests.index = QUESTS.indexOf(timber);
     // Tapped through the raw primitive, so cell exhaustion is not the subject.
@@ -164,7 +167,7 @@ describe('the quest chain', () => {
 
 describe('first-time discoveries', () => {
   it('announces a resource ONCE, ever — persisted across saves', () => {
-    const state = canChop(freshGame());
+    const state = canGather(freshGame());
     expect(state.pendingDiscoveries).toEqual([]);
     tapCell(state, map, FOREST, T0);
     expect(state.pendingDiscoveries).toEqual(['resource:Wood']);
@@ -178,7 +181,7 @@ describe('first-time discoveries', () => {
   });
 
   it('quest rewards discover their currencies too', () => {
-    const state = canChop(freshGame());
+    const state = canGather(freshGame());
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Timber');
     state.quests.progress = QUESTS.find((q) => q.id === 'Timber')!.goalAmount;
     tapCell(state, map, FOREST, T0);
@@ -214,7 +217,7 @@ describe('quests fund the research tree', () => {
   it('the chain covers most of the tech tree, but never all of it', () => {
     const chain = QUESTS.reduce((sum, q) => sum + q.rewardKnowledge, 0);
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(chain).toBe(575);
+    expect(chain).toBe(571);
     expect(chain).toBeGreaterThan(tree * 0.75);
     expect(chain).toBeLessThan(tree);
   });

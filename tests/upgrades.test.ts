@@ -9,9 +9,10 @@ import {
   buyUpgrade, effectiveAutoTapCooldownMs, effectiveSalePriceMultiplier,
   effectiveTaxRate, upgradeCost, upgradeLevel,
 } from '../src/sim/upgrades';
-import { addBuilt, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
+import {
+  addBuilt, canGather, completeTech, FOREST, freshGame, fund, map, T0, tickAt,
+} from './helpers';
 
-const FOREST = { x: 2, y: 2 }; // seed-revealed Trees cell
 
 describe('buying upgrades', () => {
   it('is instant, gold-only, with an escalating cost curve', () => {
@@ -40,7 +41,8 @@ describe('buying upgrades', () => {
   });
 
   it('rejects when poor and stops at max level', () => {
-    const state = freshGame(); // 0 Gold
+    const state = freshGame();
+    state.city.wallet.Gold = 0; // the opening grant would cover the first level
     completeTech(state, 'Forestry');
     expect(buyUpgrade(state, 'TapPower')).toBe('NotEnoughResources');
     fund(state, { Gold: 1_000_000 });
@@ -55,7 +57,7 @@ describe('effects reach the sim', () => {
   it('TapPower increases what a collect tap yields', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
-    completeTech(state, 'Forestry');
+    canGather(state);
     buyUpgrade(state, 'TapPower'); // +1
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(2); // 1 base + 1
@@ -82,7 +84,7 @@ describe('effects reach the sim', () => {
   it('QuickHands never lets a hold out-pace a manual tap', () => {
     const state = freshGame();
     fund(state, { Gold: 100000 });
-    completeTech(state, 'Forestry');
+    canGather(state);
     while (buyUpgrade(state, 'QuickHands') === 'Purchased') { /* to max */ }
 
     // Manual taps ignore the cooldown entirely, maxed upgrade or not.

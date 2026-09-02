@@ -479,7 +479,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Forestry: tech({
     id: 'Forestry',
     name: 'Forestry',
-    description: 'Axes and felling — you can chop the forest cells around you.',
+    description: 'Axes and foraging — you can work the woods and berry bushes around you.',
     glyph: '🪓',
     node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
@@ -570,7 +570,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Cartography: tech({
     id: 'Cartography',
     name: 'Cartography',
-    description: 'Survey and chart — unlocks Surveying, and the ways past rock and water.',
+    description: 'Survey and chart — every tap on the fog counts double. Opens rock and water.',
     glyph: '🗺️',
     node: { x: 2, y: 0 },
   }, balance.technologies.Cartography),

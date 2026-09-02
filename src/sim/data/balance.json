@@ -7,9 +7,11 @@
         "y": 2
       },
       "maxLevel": 3,
-      "populationCapacityPerLevel": [],
+      "populationCapacityPerLevel": [
+        1
+      ],
       "fogRevealRadius": 1,
-      "fogDiscoverRadius": 3,
+      "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
       "maxCountPerTownhallLevel": [],
       "influenceRadiusPerLevel": [],
@@ -602,7 +604,7 @@
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 120,
-      "requiredTech": null
+      "requiredTech": "Forestry"
     },
     "Meat": {
       "yieldPerTap": 1,
@@ -1211,8 +1213,8 @@
     {
       "id": "ThornedShrine",
       "kind": "Shrine",
-      "x": 2,
-      "y": -1,
+      "x": 1,
+      "y": -2,
       "defended": false,
       "claimCost": 400
     },
@@ -1454,7 +1456,7 @@
     {
       "id": "Woodcraft",
       "name": "Forestry",
-      "description": "You know enough to work timber. Research Forestry — the trees will not fell themselves.",
+      "description": "Nothing here can be worked by hand yet. Research Forestry — it opens the woods and the berry bushes both.",
       "goalType": "CompleteTech",
       "goalTarget": "Forestry",
       "goalAmount": 1,
@@ -1464,6 +1466,34 @@
       },
       "rewardGems": 0,
       "rewardKnowledge": 0
+    },
+    {
+      "id": "Rations",
+      "name": "Rations",
+      "description": "Now tap the berry bush west of your Townhall for Food.",
+      "goalType": "CollectResource",
+      "goalTarget": "Berries",
+      "goalAmount": 5,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 2
+    },
+    {
+      "id": "FirstVillager",
+      "name": "First villager",
+      "description": "Train your first villager. There is a bed in the Townhall already.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 25
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
       "id": "Timber",
@@ -1494,34 +1524,6 @@
       "rewardKnowledge": 2
     },
     {
-      "id": "Rations",
-      "name": "Rations",
-      "description": "Tap the berry bush south of the Townhall for Food.",
-      "goalType": "CollectResource",
-      "goalTarget": "Berries",
-      "goalAmount": 5,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 15
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 2
-    },
-    {
-      "id": "FirstVillager",
-      "name": "First villager",
-      "description": "Train your first villager at the Townhall.",
-      "goalType": "ReachPopulation",
-      "goalTarget": null,
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 25
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 3
-    },
-    {
       "id": "TaxDay",
       "name": "Tax day",
       "description": "Your villager pays rent. Collect 30 Gold — exploring is not free.",
@@ -1548,20 +1550,6 @@
       },
       "rewardGems": 0,
       "rewardKnowledge": 5
-    },
-    {
-      "id": "WildGame",
-      "name": "Wild game",
-      "description": "There is game to the north. Tap it — meat feeds three times what berries do.",
-      "goalType": "CollectResource",
-      "goalTarget": "Meat",
-      "goalAmount": 5,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 25
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 4
     },
     {
       "id": "Fields",
@@ -2193,7 +2181,7 @@
   },
   "city": {
     "initialCurrencies": {
-      "Gold": 25,
+      "Gold": 50,
       "Food": 0
     },
     "initialPopulation": 0,

@@ -964,6 +964,30 @@ export class Game {
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
+      case 'CollectResource':
+      case 'HoldResource': {
+        // Point at the GROUND that yields it. The berry bush and the wild
+        // game sit outside the opening reveal, so "where is that?" is a real
+        // question the pill has to be able to answer — and a quest that says
+        // "tap the bush" while the bush is under fog is no instruction at all.
+        //
+        // Discovered counts: the player can already see something is there,
+        // so this reveals nothing they were not shown.
+        const currency = quest.goalTarget as CurrencyId;
+        const ground = this.nearestCell((c) => {
+          if (fogState(this.state, this.map, c) === 'Undiscovered') return false;
+          const source = harvestSourceAt(this.state, c);
+          return source !== null && HARVEST[source].currencyId === currency;
+        });
+        if (ground) {
+          centerCell(ground);
+        } else {
+          // Gold has no cell to stand on — it comes from rent, so the answer
+          // is a house, or the Townhall that sleeps the first villager.
+          inspect(built((d) => districtCapacity(this.state, d) > 0));
+        }
+        break;
+      }
       case 'ClaimLandmarks': {
         // The nearest landmark that is visible and unclaimed; failing that,
         // the nearest frontier cell — because the answer is "explore".

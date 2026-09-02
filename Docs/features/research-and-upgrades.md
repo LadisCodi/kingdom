@@ -79,9 +79,11 @@ TapPower, QuickHands and WorkerLoad. Four themed branches leave it:
   - stone side: **Masonry** (Quarry; upgrade Stonecutting) → **Mining**
     (Mine, costs Stone; upgrade Iron Picks) → **Deep Mining** (Mine L2);
     Masonry → **Engineering** (Quarry L2, Sawmill L3)
-- **EXPLORATION (right)**: **Cartography** heads the branch (upgrade
-  **Surveying**, +1 Gold of reveal progress per tap on the fog, max 2 — so a
-  tap counts double then triple) → **Sailing** (sea cells become explorable) →
+- **EXPLORATION (right)**: **Cartography** heads the branch and carries an
+  effect of its own — every tap on the fog counts **double** — rather than
+  only gating what follows. Its upgrade **Surveying** adds +1 more per level
+  (max 2), so the ladder is ×1 → ×2 → ×3 → ×4. A tech with a stat effect is
+  not new here: Communities adds +1 to every bed the same way. → **Sailing** (sea cells become explorable) →
   **Fishing** (the Docks + fishing boats; upgrade Big Nets) →
   **Shipbuilding** (Docks L2); Cartography → **Scaling Tools** (mountain cells
   become explorable)

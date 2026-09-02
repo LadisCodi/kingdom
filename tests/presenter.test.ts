@@ -11,7 +11,7 @@ import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
 import { getWallet, townhall, type CurrencyId } from '../src/sim/state';
 import {
-  addBuilt, canChop, completeTech, freshGame, freshPresenter, fund, map, screenAt,
+  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map, screenAt,
 } from './helpers';
 
 afterEach(() => {
@@ -253,11 +253,10 @@ describe('the banner queue', () => {
 // gesture — which only works if handleHold reports honestly.
 describe('hold-to-collect reports whether it consumed the gesture', () => {
   it('true when it actually collected, false once the cooldown closes', () => {
-    const state = canChop(freshGame()); // the forest is gated on Forestry
+    const state = canGather(freshGame()); // the forest is gated on Forestry
     const game = freshPresenter(state);
-    const forest = { x: 2, y: 2 }; // authored Trees cell, seed-revealed
-    game.camera.centerOnCell(forest);
-    const [sx, sy] = screenAt(game, forest);
+    game.camera.centerOnCell(FOREST);
+    const [sx, sy] = screenAt(game, FOREST);
 
     expect(game.handleHold(sx, sy)).toBe(true); // collected
     expect(game.handleHold(sx, sy)).toBe(false); // same instant — cooldown
@@ -422,7 +421,10 @@ describe('villager training', () => {
     game.onShake((c) => shaken.push(c));
     game.onToast((m) => toasts.push(m));
 
-    game.doQueueTraining(); // fresh game: no Housing, so no room to grow into
+    // The Townhall sleeps one, so a fresh city has exactly one bed. Fill it
+    // first; the SECOND villager is the one with nowhere to go.
+    state.city.population = 1;
+    game.doQueueTraining();
 
     expect(toasts).toEqual(['Population at max — build more Housing']);
     expect(shaken).toEqual([]);

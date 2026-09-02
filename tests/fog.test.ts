@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TECH_ORDER } from '../src/sim/data/definitions';
+import { DISTRICTS, TECH_ORDER } from '../src/sim/data/definitions';
 import {
   fogState, isReachable, revealCost, revealKnowledge, revealPerTap, revealTap,
 } from '../src/sim/fog';
@@ -13,15 +13,15 @@ const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 
 describe('map data', () => {
-  it('loads 342 terrain cells across six biomes and 42 features', () => {
+  it('loads 342 terrain cells across six biomes and 43 features', () => {
     expect(map.terrain.size).toBe(342);
-    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(93);
+    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(91);
     expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(23);
     expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(18);
-    expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(28);
+    expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(30);
     expect([...map.terrain.values()].filter((t) => t === 'Water').length).toBe(171);
     expect([...map.terrain.values()].filter((t) => t === 'Tundra').length).toBe(9);
-    expect(map.initialFeatures.size).toBe(42);
+    expect(map.initialFeatures.size).toBe(43);
   });
   it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);
@@ -47,10 +47,10 @@ describe('fog state & seeding', () => {
       expect(fogState(state, map, cell)).toBe('Revealed');
     }
   });
-  it('marks Discovered out to the discover radius (3), even beyond tap-adjacency', () => {
+  it('marks Discovered out to the discover radius (2), even beyond tap-adjacency', () => {
+    expect(DISTRICTS.Townhall.fogDiscoverRadius).toBe(2);
     expect(fogState(state, map, { x: 3, y: 0 })).toBe('Discovered'); // adjacent + in radius
-    expect(fogState(state, map, { x: 4, y: 0 })).toBe('Discovered'); // NOT adjacent — discover radius only
-    expect(fogState(state, map, { x: 5, y: 0 })).toBe('Undiscovered'); // beyond radius 3
+    expect(fogState(state, map, { x: 4, y: 0 })).toBe('Undiscovered'); // beyond radius 2
   });
 });
 
@@ -117,11 +117,12 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
   it('sea cells are locked until Sailing is researched', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
-    const sea = { x: -3, y: 0 }; // inside the Townhall discover radius
-    expect(fogState(state, map, sea)).toBe('Discovered');
+    const sea = { x: -3, y: 0 };
     // Stand on the shore first: the frontier rule is a separate gate, and
-    // this test is about the TECH one.
+    // this test is about the TECH one. Clearing the shore also DISCOVERS the
+    // sea beside it, which the Townhall's radius-2 no longer reaches.
     state.fog.revealed[coordKey({ x: -2, y: 0 })] = true;
+    expect(fogState(state, map, sea)).toBe('Discovered');
     expect(revealTap(state, map, sea)).toBe('TechLocked');
     state.research.completed.push('Sailing');
     expect(revealTap(state, map, sea)).toBe('Paid');
@@ -197,6 +198,18 @@ describe('Surveying makes a tap on the fog go further', () => {
     return taps;
   };
 
+  it('Cartography alone doubles a tap, before any upgrade is bought', () => {
+    const state = newGame(map, NOW);
+    expect(revealPerTap(state)).toBe(1);
+    state.research.completed.push('Cartography');
+    expect(revealPerTap(state)).toBe(2);
+    // ...and Surveying stacks on top of it: x2 -> x3 -> x4.
+    state.upgrades.Surveying = 1;
+    expect(revealPerTap(state)).toBe(3);
+    state.upgrades.Surveying = 2;
+    expect(revealPerTap(state)).toBe(4);
+  });
+
   it('costs the same Gold at every level, and takes a third of the taps at level 2', () => {
     const cell = { x: 0, y: 4 }; // ring 3 — 5 Gold
     const plain = newGame(map, NOW);
@@ -211,7 +224,7 @@ describe('Surveying makes a tap on the fog go further', () => {
     surveyed.city.wallet.Gold = 500;
     reveal(surveyed, [{ x: 0, y: 3 }]);
     surveyed.upgrades.Surveying = 2; // one tap does the work of three
-    expect(revealPerTap(surveyed)).toBe(3);
+    expect(revealPerTap(surveyed)).toBe(3); // Cartography not researched here
     const before2 = getWallet(surveyed.city.wallet, 'Gold');
     const fastTaps = payFor(surveyed, cell);
 

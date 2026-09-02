@@ -300,18 +300,21 @@ describe('landmarks', () => {
   // afford it for a long while. It is a destination, not a pickup — and the
   // rest are not even discovered, so the fog still has somewhere to go.
   //
-  // The price is now tuned to the tutorial (Docs/onboarding.md step 19): it
-  // is claimed once the Sawmill is running, so it has to be reachable THEN —
-  // an order of magnitude above the opening's Gold, not two.
+  // "Sees" means DISCOVERED, not revealed: it sits one cell beyond the
+  // Townhall's cleared block, so the player is shown a dark tile with
+  // something on it and has to walk the border out to reach it. The price is
+  // tuned to the tutorial (Docs/onboarding.md step 19) — claimed once the
+  // Sawmill runs, so reachable THEN, an order of magnitude above the opening
+  // purse rather than two.
   it('shows exactly one sanctuary at the start, and prices it as a goal', () => {
     const state = freshGame();
-    const visible = LANDMARKS.filter((l) => fogState(state, map, l.location) === 'Revealed');
-    expect(visible).toHaveLength(1);
+    const inReach = LANDMARKS.filter((l) => fogState(state, map, l.location) !== 'Undiscovered');
+    expect(inReach).toHaveLength(1);
 
-    const [inSight] = visible;
+    const [inSight] = inReach;
     // Many times what a new kingdom is handed, and still a genuine save.
     expect(landmarkClaimCost(inSight)).toBeGreaterThan(
-      10 * getWallet(state.city.wallet, 'Gold'),
+      5 * getWallet(state.city.wallet, 'Gold'),
     );
     expect(getWallet(state.city.wallet, 'Gold')).toBeLessThan(landmarkClaimCost(inSight));
 

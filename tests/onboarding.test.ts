@@ -13,21 +13,24 @@
 // So: no `fund()`, ever. The only resources this test spends are the ones the
 // opening grants and the ones it earns.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, QUESTS, TECHNOLOGIES } from '../src/sim/data/definitions';
+import {
+  DISTRICTS, FEATURES, HARVEST, QUESTS, TECHNOLOGIES,
+} from '../src/sim/data/definitions';
 import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { fogState, revealTap } from '../src/sim/fog';
+import {
+  explorationGate, fogState, isReachable, revealCostForCell, revealTap,
+} from '../src/sim/fog';
 import { collectTap } from '../src/sim/harvest';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
 import { maxPopulation, queueTraining } from '../src/sim/population';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { isTechComplete, startTech, techCost } from '../src/sim/research';
-import { coordKey, getWallet, type Coord, type TechId } from '../src/sim/state';
-import { map, T0 } from './helpers';
+import {
+  coordKey, getWallet, parseCoordKey, type Coord, type TechId,
+} from '../src/sim/state';
+import { BERRIES, FOREST, map, T0 } from './helpers';
 
-const BERRIES: Coord = { x: 0, y: 2 };
-const FOREST: Coord = { x: 2, y: 2 };
-const ANIMALS: Coord = { x: 2, y: -2 };
 const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed at start
 
 describe('a player can actually play the onboarding', () => {
@@ -52,6 +55,21 @@ describe('a player can actually play the onboarding', () => {
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r, `could not clear ${coordKey(cell)}`).toBe('Revealed');
     };
+    /** Push the border outward the way a player does: whatever is cheapest
+     *  and touching cleared ground. Derived, so moving a feature on the Map
+     *  sheet cannot turn this into a test of nothing. */
+    const clearNearest = (n: number) => {
+      for (let i = 0; i < n; i++) {
+        const next = [...map.terrain.keys()]
+          .map(parseCoordKey)
+          .filter((c) => fogState(state, map, c) === 'Discovered'
+            && isReachable(state, map, c)
+            && explorationGate(map, c) === null)
+          .sort((a, b) => revealCostForCell(state, map, a) - revealCostForCell(state, map, b))[0];
+        expect(next, 'the frontier ran out').toBeDefined();
+        clear(next);
+      }
+    };
     const research = (id: TechId) => {
       expect(knowledge(), `cannot afford ${id}`).toBeGreaterThanOrEqual(techCost(id));
       expect(startTech(state, id, now)).toBe('Started');
@@ -60,7 +78,7 @@ describe('a player can actually play the onboarding', () => {
     };
     // The forest cells the opening reveals, tapped round-robin so exhaustion
     // is waited out rather than assumed away.
-    const TREES: Coord[] = [FOREST, { x: 1, y: 3 }, { x: 2, y: 3 }];
+    const TREES: Coord[] = [FOREST, { x: 0, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 2 }];
     const chop = (units: number) => {
       const target = getWallet(state.city.wallet, 'Wood') + units;
       let guard = 0;
@@ -81,16 +99,31 @@ describe('a player can actually play the onboarding', () => {
         .toBe(true);
     };
 
-    // ---- steps 1-3: the fog pays for the research that opens the trees ----
+    // ---- steps 1-3: the fog pays for the one research that opens anything -
     expect(gold()).toBeGreaterThan(0); // the opening purse exists at all
-    expect(collectTap(state, map, FOREST, now)).toBe('TechLocked');
+    // Nothing on the map answers a tap yet. That is the whole opening.
+    expect(collectTap(state, map, FOREST, now)).not.toBe('Harvested');
+    expect(collectTap(state, map, BERRIES, now)).not.toBe('Harvested');
 
-    for (const cell of [{ x: 3, y: 1 }, { x: -2, y: 0 }, { x: -2, y: 1 },
-      { x: 0, y: 3 }, { x: 1, y: 3 }]) clear(cell);
+    // The bush and the nearest trees are all one ring out, so clearing toward
+    // what you can SEE is the same act as finishing the first quest.
+    for (const cell of [BERRIES, FOREST, { x: 0, y: 3 },
+      { x: 3, y: 1 }, { x: -2, y: 0 }]) clear(cell);
     finish('FirstSteps');
 
     research('Forestry');
     finish('Woodcraft');
+
+    // ---- eat, then hire: neither waits on a building any more ----
+    for (let i = 0; i < 5; i++) expect(collectTap(state, map, BERRIES, now)).toBe('Harvested');
+    finish('Rations');
+
+    expect(maxPopulation(state)).toBeGreaterThanOrEqual(1); // the Townhall bed
+    expect(state.city.districts.filter((d) => d.definitionId === 'Housing')).toHaveLength(0);
+    expect(queueTraining(state, now)).toBe('Queued');
+    tick(60);
+    expect(state.city.population).toBe(1);
+    finish('FirstVillager');
 
     // Trees exhaust after ten taps and take 90 s to come back, so this is a
     // few cells and a little patience — exactly the friction step 15 later
@@ -98,37 +131,19 @@ describe('a player can actually play the onboarding', () => {
     chop(QUESTS.find((q) => q.id === 'Timber')!.goalAmount);
     finish('Timber');
 
-    // ---- steps 4-6: a roof, a meal, a neighbour ----
     expect(wood()).toBeGreaterThanOrEqual(DISTRICTS.Housing.buildCost.Wood!);
     build('Housing', { x: 2, y: 0 });
     finish('ARoof');
 
-    for (let i = 0; i < 5; i++) expect(collectTap(state, map, BERRIES, now)).toBe('Harvested');
-    finish('Rations');
-
-    expect(maxPopulation(state)).toBeGreaterThanOrEqual(1);
-    expect(queueTraining(state, now)).toBe('Queued');
-    tick(60);
-    expect(state.city.population).toBe(1);
-    finish('FirstVillager');
-
     // ---- step 7: rent, which is what pays for more fog ----
     const beforeTax = gold();
-    tick(120); // 1 housed × 30/min
+    tick(120); // the villager in the Townhall bed pays like any other
     expect(gold()).toBeGreaterThanOrEqual(beforeTax + 30);
     finish('TaxDay');
 
     // ---- steps 7-8: back out into the country ----
-    for (const cell of [{ x: 0, y: -2 }, { x: 1, y: -2 }, { x: 2, y: -2 },
-      { x: -2, y: -1 }, { x: -2, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 2 },
-      { x: 3, y: 3 }]) clear(cell);
+    clearNearest(QUESTS.find((q) => q.id === 'Explorer')!.goalAmount);
     finish('Explorer');
-
-    expect(fogState(state, map, ANIMALS)).toBe('Revealed');
-    for (let i = 0; i < 5; i++) {
-      if (collectTap(state, map, ANIMALS, now) !== 'Harvested') tick(30);
-    }
-    finish('WildGame');
 
     // ---- steps 9-12: farming, by hand and then not ----
     research('Agriculture');
@@ -213,5 +228,51 @@ describe('the chain never asks for a building the city cannot hold', () => {
       expect(built[id], `${quest.id} wants ${built[id]} ${id} at Townhall ${townhallLevel}`)
         .toBeLessThanOrEqual(cap);
     }
+  });
+});
+
+// Every rock and every iron vein now sits on MOUNTAIN terrain, which cannot be
+// revealed — and so cannot be tapped or worked — until Scaling Tools. That
+// makes Stone and Iron mid-game materials, and it makes the chain's ORDER
+// load-bearing in a way it was not before: a quest asking for a building
+// priced in Stone before that research is a wall the player cannot see coming.
+//
+// Derived from the map's own terrain rather than a hand-written list, so
+// moving a feature onto or off a mountain re-checks the whole chain by itself.
+describe('the chain never asks for a material the map cannot yet yield', () => {
+  it('orders every gated material cost after the research that opens it', () => {
+    // currency -> the tech you need before ANY cell yields it. A single
+    // ungated cell anywhere means no gate at all.
+    const gate = new Map<string, TechId | null>();
+    for (const [key, feature] of map.initialFeatures) {
+      const source = FEATURES[feature].source;
+      if (source === null) continue;
+      const currency = HARVEST[source].currencyId;
+      const terrain = map.terrain.get(key);
+      const tech: TechId | null = terrain === 'Mountain' ? 'ScalingTools'
+        : terrain === 'Water' ? 'Sailing' : null;
+      if (tech === null || gate.get(currency) === null) gate.set(currency, null);
+      else if (!gate.has(currency)) gate.set(currency, tech);
+    }
+
+    const unlockedAt = (tech: TechId) =>
+      QUESTS.findIndex((q) => q.goalType === 'CompleteTech' && q.goalTarget === tech);
+
+    QUESTS.forEach((quest, i) => {
+      const id = quest.goalTarget as keyof typeof DISTRICTS;
+      const cost = quest.goalType === 'BuildDistrict' ? DISTRICTS[id].buildCost
+        : quest.goalType === 'UpgradeDistrict' ? DISTRICTS[id].upgradeCost
+          : null;
+      if (cost === null) return;
+      for (const currency of Object.keys(cost)) {
+        const tech = gate.get(currency);
+        if (tech === undefined || tech === null) continue;
+        const at = unlockedAt(tech);
+        expect(at, `${quest.id} needs ${currency}, and no quest researches ${tech}`)
+          .toBeGreaterThanOrEqual(0);
+        expect(at, `${quest.id} (q${i + 1}) needs ${currency}, behind ${tech} at q${at + 1}`)
+          .toBeLessThan(i);
+      }
+    });
   });
 });

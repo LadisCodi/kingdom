@@ -6,11 +6,11 @@ Tutorials, quests and systems should be built and balance to provide the followi
 1. Discover cells = Obtain knowledge
 2. Trees are discovered around the Townhall, but Forestry is required.
 3. Investigate Forestry (first tech, fast, 3 second), this allows chopping trees with the tap.
-4. Build first house.
+4. Collect wood from trees and build first house.
 5. Collect food from berries.
 6. Train first citizen.
-7. Explore more cells.
-8. Get Food from wild animals.
+7. Get gold from tapping the house.
+8. Explore more cells.
 9. Research agriculture = Unlock farmlands + farm.
 10. Harvest food from farmlands by tapping. Automating this becamos the objective.
 11. Get wood from manually tapping trees, enough to build a Farm besides a Farmland.
@@ -88,8 +88,45 @@ records how each became a mechanic, and the four decisions taken to get there.
 - **The first chop asks for 25 Wood** (was 10) — enough for the roof at step 4
   *and* the plot at step 10.
 
+### Revised 2026-09-02, after the first playtest pass
+
+**Forestry gates the berries too.** During the first-time experience the only
+thing a player can do is tap fog — no Food (and so no villager, and so no
+rent) can arrive before it is meant to. A test asserts the strong form of
+this: on a new game, *no cell anywhere on the map* answers a tap. That is what
+makes the first research the thing the player wants rather than a chore.
+
+**The Townhall sleeps one.** Eating and hiring no longer wait on a building,
+so the chain now reads: reveal → research → eat → a citizen → chop → a roof →
+rent. Two consequences worth knowing:
+
+- Residents fill in BUILD ORDER and the Townhall is district #1, so the first
+  villager lives there and the first House is room to grow rather than
+  permission to start.
+- The Townhall's rent is the one slice of city income a player can never hurry
+  along — it has no house tap. A full sweep of every house therefore pulls
+  forward slightly less than a whole `boost_seconds` of city income, which is
+  the safe direction and is now stated in the sweep test rather than implied.
+
+**Cartography carries its own effect**, rather than only gating: every tap on
+the fog counts double the moment it lands. Surveying stacks on top, so the
+ladder is ×1 → ×2 (research) → ×3 → ×4 (upgrade levels 1 and 2).
+
+**Stone and Iron are mid-game materials.** Every rock and every iron vein sits
+on Mountain terrain, so nothing can reveal or work them until Scaling Tools
+(step 21). Quarries can still be sited beside every rock — that was checked —
+but the chain's ORDER is now load-bearing, and a test derives the gate from
+the map's terrain and fails if any quest asks for a gated material too early.
+
+**The Meat quest is gone.** Wild animals are a finite, respawning feature: a
+quest that hard-requires tapping one can arrive when there is nothing there.
+
+**The opening purse is 50 Gold**, and the resource cells sit one ring OUT of
+the Townhall's cleared block — the bush, the nearest trees and the shrine are
+all visible-but-dark, so the player explores toward what they can see.
+
 ### Not done
 
 Steps 23-26 are wired as quests but only the first is playable end to end in a
 test; the delve and the banner need a running army and a party. The chain past
-quest 31 is the pre-existing long game, re-ordered but not re-tuned.
+quest 30 is the pre-existing long game, re-ordered but not re-tuned.

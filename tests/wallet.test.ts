@@ -6,9 +6,11 @@ import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { populationCost, queueTraining } from '../src/sim/population';
 import { canAfford, effectiveAmount, pay } from '../src/sim/wallet';
-import { addBuilt, addTrainer, completeTech, freshGame, fund, map, T0 } from './helpers';
+import {
+  addBuilt, addTrainer, BERRIES, canGather, completeTech, freshGame, fund, map, T0,
+} from './helpers';
 
-const BERRY_BUSH = { x: 0, y: 2 }; // the authored bush below the Townhall
+const BERRY_BUSH = BERRIES; // the one authored bush
 const WILD_ANIMALS = { x: -2, y: -4 }; // also unrevealed
 
 describe('food-valued currencies', () => {
@@ -55,7 +57,7 @@ describe('food-valued currencies', () => {
 describe('finite map features', () => {
   it('a berry bush yields Berries and vanishes for good when drained', () => {
     const state = freshGame();
-    state.fog.revealed[coordKey(BERRY_BUSH)] = true;
+    canGather(state); // the bush sits behind Forestry now
     expect(harvestSourceAt(state, BERRY_BUSH)).toBe('Berries');
     for (let i = 0; i < 10; i++) expect(tapCell(state, map, BERRY_BUSH, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Berries')).toBe(10);

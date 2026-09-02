@@ -22,7 +22,7 @@ import { addMana, mana } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { effectiveTaxRate, effectiveWorkerYield } from '../src/sim/upgrades';
 import { coordKey, getWallet, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
+import { addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const withRelic = (id: Parameters<typeof grantArtifact>[1] = 'GildedLedger'): GameState => {
   const state = freshGame();
@@ -202,9 +202,10 @@ describe('the actives', () => {
     addMana(state, 100);
     attune(state, 0, 'VerdantSeal', T0);
 
-    // Exhaust a forest the player can see.
-    const forest = map.cells.find((c) =>
-      state.fog.revealed[coordKey(c)] && map.initialFeatures.get(coordKey(c)) === 'Trees')!;
+    // Exhaust a forest the player can see. No Trees cell is inside the
+    // opening reveal any more, so clear one first.
+    reveal(state, [FOREST]);
+    const forest = FOREST;
     for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) {
       registerTap(state, forest, HARVEST.Forest, T0);
     }

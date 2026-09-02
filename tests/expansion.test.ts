@@ -20,7 +20,7 @@ const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 // Docks anchor: 2×1 pier — (-6,3) is Water, (-5,3) is Grassland (mirrored case).
 const PIER = { x: -6, y: 3 };
 const PIER_LAND = { x: -5, y: 3 };
-const INLAND = { x: -1, y: 3 }; // (-1,3)+(0,3): two land cells, no shoreline
+const INLAND = { x: -1, y: 2 }; // (-1,2)+(0,2): two clear land cells, no shoreline
 
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
@@ -58,7 +58,7 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
-    reveal(state, [SHOAL, PIER, PIER_LAND, INLAND, { x: 0, y: 3 }]);
+    reveal(state, [SHOAL, PIER, PIER_LAND, INLAND, { x: 0, y: 2 }]);
     completeTech(state, 'Fishing');
     expect(placementBlock(state, map, 'Docks', INLAND)).toBe('NeedsShoreline'); // all land
     expect(placementBlock(state, map, 'Docks', SHOAL)).not.toBe(null); // shoal blocks its cell

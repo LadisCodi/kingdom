@@ -5,17 +5,19 @@ import { changeWorkers, enqueueBuild, townhallTap } from '../src/sim/commands';
 import { populationCost, queueTraining } from '../src/sim/population';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
-import { getWallet, type GameState } from '../src/sim/state';
+import { getWallet, type GameState, coordKey } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { effectiveTapYield, effectiveWorkerYield } from '../src/sim/upgrades';
 import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
-// Sawmill at (2,1): the L1 area (radius 2) reaches (2,2) and (2,3);
-// (4,4) sits at radius 3 and needs a level-2 sawmill.
-const SAWMILL_CELL = { x: 2, y: 1 };
-const FOREST_A = { x: 2, y: 2 }; // radius 1 — inside the completion's fog-reveal ring
+// Sawmill at (3,1), chosen so its own completion re-reveals exactly ONE tree
+// — the adjacent one. Every other tree in range stays under fog unless this
+// fixture reveals it, which is what lets each test below hand the sawmill a
+// precise number of workable cells.
+const SAWMILL_CELL = { x: 3, y: 1 };
+const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes it
 const FOREST_B = { x: 2, y: 3 }; // radius 2 — still in the L1 area
-const FOREST_C = { x: 4, y: 4 }; // radius 3 — needs a level-2 sawmill
+const FOREST_C = { x: 0, y: 3 }; // radius 3 — needs a level-2 sawmill
 
 // One harvest cycle from an adjacent (orthogonal) cell:
 // 2 × (1 / speed) move + workSeconds.
@@ -88,7 +90,7 @@ describe('the harvest cycle', () => {
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // still walking home
     tickAt(state, start + CYCLE_MS + 100);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 1);
-    expect(state.harvest['2,2'].taps).toBe(1);
+    expect(state.harvest[coordKey(FOREST_A)].taps).toBe(1);
     expect(w.activity).toBe('MovingToCell'); // straight back out
   });
 
@@ -179,13 +181,15 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // one L1 house now holds TWO
+    // The Townhall sleeps one and an L1 house holds two: capacity 3.
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
     fund(state, { Food: 100 });
     expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
     expect(queueTraining(state, T0)).toBe('Queued'); // second one queues behind
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3 - populationCost(1));
-    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
+    expect(queueTraining(state, T0)).toBe('Queued'); // third fills the last bed
+    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 3 queued = cap
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);
     tickAt(state, T0 + 20_000);
@@ -194,6 +198,8 @@ describe('Townhall villager training', () => {
     expect(state.city.population).toBe(1);
     tickAt(state, T0 + 40_000);
     expect(state.city.population).toBe(2);
+    tickAt(state, T0 + 60_000);
+    expect(state.city.population).toBe(3);
     expect(state.city.training).toBe(null);
   });
 
@@ -219,9 +225,11 @@ describe('Townhall villager training', () => {
   it('is blocked at the housing cap (queued villagers count)', () => {
     const state = freshGame();
     fund(state, { Food: 100 });
-    expect(queueTraining(state, T0)).toBe('AtMax'); // no Housing yet
+    // The Townhall's own bed means a brand-new city can hire exactly one.
+    expect(queueTraining(state, T0)).toBe('Queued');
+    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 1 queued = cap
     addBuilt(state, 'Housing', { x: 2, y: 0 });
-    state.city.population = 2; // the Housing (L1 capacity 2) is full
+    state.city.population = 3; // Townhall (1) + Housing L1 (2), all full
     expect(queueTraining(state, T0)).toBe('AtMax');
   });
 });
