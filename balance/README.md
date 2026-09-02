@@ -37,6 +37,7 @@ would reach for them (see `Docs/onboarding.md`):
 
 | Want | Change |
 |---|---|
+| Villagers arrive too fast or too slow early | `Settings` → `city.population_cost_first` — the first six prices, authored in order (5, 20, 100, 300, 500, 1000). Past the list, `city.population_cost_growth` takes over from the LAST authored price. |
 | The opening feels too tight / too generous with Gold | `Settings` → `city.initial_gold` (25). It buys the first five fog cells. |
 | Fog costs too many taps | `Settings` → `fog.gold_per_tap`, or the `Surveying` row in `Upgrades` (each level makes one tap count for one more) |
 | Fog costs too much Gold | `FogRings` — cost by distance ring |

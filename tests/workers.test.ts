@@ -183,10 +183,10 @@ describe('Townhall villager training', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 }); // one L1 house holds TWO
     fund(state, { Food: 100 });
-    expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
-    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
+    expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 5
+    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5);
     expect(queueTraining(state, T0)).toBe('Queued'); // second one queues behind
-    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3 - populationCost(1));
+    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5 - populationCost(1));
     expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);

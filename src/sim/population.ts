@@ -78,11 +78,25 @@ export function residentsOf(state: GameState, district: District): number {
 
 // -------------------------------------------------------------------- training
 
-/** cost = round(base × growth^(currentPopulation − 1)) Food. */
-export const populationCost = (currentPopulation: number): number =>
-  Math.round(
-    CITY_DEF.populationCostBase * CITY_DEF.populationCostGrowth ** (currentPopulation - 1),
-  );
+/**
+ * Food for the NEXT villager, given how many you already have.
+ *
+ * Authored for the opening, exponential after it. The first handful of
+ * villagers ARE the early game — each one is a decision the player makes
+ * minutes apart, and the difference between 5 Food and 20 is the difference
+ * between a beat and a formality. No `base × growth^n` can be made to say
+ * 5, 20, 100, 300 without deforming everything past it, so it does not try:
+ * `city.population_cost_first` lists the authored prices in order, and the
+ * curve takes over from the LAST of them, so the two halves meet without a
+ * step.
+ */
+export const populationCost = (currentPopulation: number): number => {
+  const authored = CITY_DEF.populationCostFirst;
+  if (currentPopulation < authored.length) return authored[currentPopulation];
+  const last = authored[authored.length - 1];
+  const beyond = currentPopulation - (authored.length - 1);
+  return Math.round(last * CITY_DEF.populationCostGrowth ** beyond);
+};
 
 /** Villagers already paid for but not yet delivered. */
 export const queuedTraining = (state: GameState): number =>

@@ -124,7 +124,11 @@ const SETTINGS = [
   ['city.initial_population', 'city.initialPopulation'],
   ['city.initial_gold', 'city.initialCurrencies.Gold'],
   ['city.initial_food', 'city.initialCurrencies.Food'],
-  ['city.population_cost_base', 'city.populationCostBase'],
+  // Villager pricing is AUTHORED for the opening and exponential after it.
+  // A pure curve gave the designer no grip where it matters most: the first
+  // few villagers are the whole early game, and `base × growth^n` cannot be
+  // made to say 5, 20, 100 without deforming everything past it.
+  ['city.population_cost_first', 'city.populationCostFirst', 'list'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
   ['city.build_queue_capacity', 'city.buildQueueCapacity'],
   ['kingdom.start_builders', 'kingdom.startBuilders'],

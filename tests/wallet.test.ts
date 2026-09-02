@@ -38,12 +38,12 @@ describe('food-valued currencies', () => {
   it('population and units can be bought with food-valued currencies', () => {
     const state = freshGame(); // rebalanced start: 0 population, empty wallet
     addBuilt(state, 'Housing', { x: 2, y: 0 }); // capacity to train into
-    state.city.wallet = { Berries: 4, Meat: 2 }; // 10 effective Food
-    expect(populationCost(0)).toBe(3);
-    expect(queueTraining(state, T0)).toBe('Queued'); // pays 3 Berries up front
-    expect(state.city.wallet).toEqual({ Berries: 1, Meat: 2 });
+    state.city.wallet = { Berries: 5, Meat: 2 }; // 11 effective Food
+    expect(populationCost(0)).toBe(5); // the authored price of the first
+    expect(queueTraining(state, T0)).toBe('Queued'); // pays 5 Berries up front
+    expect(state.city.wallet).toEqual({ Berries: 0, Meat: 2 });
 
-    fund(state, { Gold: 100, Wood: 10, Meat: 7 }); // fund SETS: Meat 7 + 1 Berry left
+    fund(state, { Gold: 100, Wood: 10, Berries: 1, Meat: 7 }); // fund SETS both
     completeTech(state, 'Warrior'); // the Warrior sits behind it now
     addTrainer(state, 'Warrior', { x: 3, y: 2 }); // and behind its Barracks
     expect(trainUnit(state, 'Warrior')).toBe('Queued'); // 50 Gold + 10 Wood + 20 Food

@@ -2184,7 +2184,14 @@
       "Food": 0
     },
     "initialPopulation": 0,
-    "populationCostBase": 5,
+    "populationCostFirst": [
+      5,
+      20,
+      100,
+      300,
+      500,
+      1000
+    ],
     "populationCostGrowth": 1.45,
     "buildQueueCapacity": 1
   },
