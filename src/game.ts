@@ -3,18 +3,18 @@
 
 import {
   advance, canAfford, cancelQueueItem, changeWorkers, collectTap,
-  enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
+  enqueueBuild, finishWithGems, moveDistrict, townhallTap, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, RUINS,
-  TECHNOLOGIES, TRAINING, UNITS,
+  TECHNOLOGIES, TRAINING, UNITS, levelIndexed,
 } from './sim/data/definitions';
 import {
-  buildDurationForCell, districtCount, hasPlacementRestriction,
-  maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
+  buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
+  maxCountForTownhallLevel, nextBuildCost, placementBlock, validPlacementCells,
 } from './sim/districts';
 import {
   explorationGate, fogState, revealCostForCell, revealTap,
@@ -24,7 +24,7 @@ import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import {
   committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
-  trainingCompletesAt, trainingTap,
+  trainingCompletesAt, trainingTap, unitInTraining,
 } from './sim/army';
 import {
   artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
@@ -79,6 +79,11 @@ import { TapFx } from './render/tapFx';
 export type Mode =
   | { kind: 'normal' }
   | { kind: 'placing'; definitionId: DistrictId; selected: Coord | null }
+  /** Relocating a building that already exists. The same targeting model as
+   *  placing — a ghost you move and confirm — with `origin` kept so Cancel
+   *  can put it back and so the ghost knows which footprint is its own. */
+  | { kind: 'moving'; districtUniqueId: string; definitionId: DistrictId;
+      selected: Coord | null; origin: Coord }
   /** Casting reuses the placement machinery wholesale — select, highlight,
    *  tap to commit — rather than inventing a second targeting model. */
   | { kind: 'casting'; artifactId: ArtifactId; selected: Coord | null };
@@ -306,6 +311,20 @@ export class Game {
         return true; // cast mode swallows all map taps
       },
     });
+    // 310 — moving an existing building. Above placement for the same reason
+    // casting is above both: the modes are exclusive, and this is the one the
+    // player entered most recently.
+    this.tapChain.register({
+      priority: 310,
+      handle: (cell) => {
+        if (this.mode.kind !== 'moving') return false;
+        if (this.canDropAt(cell)) {
+          this.mode.selected = cell;
+          this.notify();
+        }
+        return true; // move mode swallows all map taps
+      },
+    });
     // 300 — district placement.
     this.tapChain.register({
       priority: 300,
@@ -392,12 +411,22 @@ export class Game {
         }
         // A military building: tapping hurries the unit in training, exactly
         // as tapping the Townhall hurries a villager.
-        if (district && district.state === 'Built' && DISTRICTS[district.definitionId].trains) {
+        //
+        // `.length > 0`, NOT the array itself: `trains` became a list when
+        // every building got its own training line, and an empty array is
+        // truthy. Testing it as a boolean sent every non-trainer down this
+        // branch — which swallowed the tap on a crop plot, because a plot is
+        // a district that trains nothing and the harvest branch is below.
+        if (district && district.state === 'Built'
+          && DISTRICTS[district.definitionId].trains.length > 0) {
+          // Read the trainee BEFORE the tap: a tap that completes the unit
+          // clears the line, and the floater has to name what came out.
+          const trainee = unitInTraining(this.state, district.uniqueId)?.trainee;
           const tap = trainingTap(this.state, district, this.now());
           if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
           if (tap === 'Complete') {
             playSfx('unitTrained');
-            this.floaters.add(cell, `+1 ${DISTRICTS[district.definitionId].trains}`);
+            this.floaters.add(cell, `+1 ${trainee ?? ''}`.trim());
           } else if (tap === 'Boosted') {
             this.floaters.add(cell, '⏩');
           } else if (tap === 'NoMana') {
@@ -564,6 +593,65 @@ export class Game {
     this.openOverlay = null;
     this.inspectedDistrictId = null;
     if (selected) this.camera.centerOnCell(selected);
+    this.notify();
+  }
+
+  // ----------------------------------------------------------------- moving
+
+  /** Enter move mode for a built building. The ghost starts where the
+   *  building already stands, so the first thing the player sees is the thing
+   *  they picked up, not a jump to somewhere else. */
+  startMove(districtUniqueId: string): void {
+    const district = districtById(this.state, districtUniqueId);
+    if (!district) return;
+    if (!canMoveDistrict(district)) {
+      this.toast(district.state === 'Built'
+        ? 'The Townhall is where everything is measured from — it stays put'
+        : 'Wait until it is finished, or cancel the build');
+      this.notify();
+      return;
+    }
+    this.mode = {
+      kind: 'moving',
+      districtUniqueId,
+      definitionId: district.definitionId,
+      selected: district.location,
+      origin: district.location,
+    };
+    this.openOverlay = null;
+    this.inspectedDistrictId = null;
+    this.notify();
+  }
+
+  /** Is this a legal address for the building currently being moved? */
+  canDropAt(cell: Coord): boolean {
+    if (this.mode.kind !== 'moving') return false;
+    return placementBlock(
+      this.state, this.map, this.mode.definitionId, cell, this.mode.districtUniqueId,
+    ) === null;
+  }
+
+  confirmMove(): void {
+    if (this.mode.kind !== 'moving' || !this.mode.selected) return;
+    const { districtUniqueId, selected, origin } = this.mode;
+    // Putting it back where it started is a cancel, not an error — the player
+    // dragged it around, changed their mind, and dropped it home.
+    if (selected.x === origin.x && selected.y === origin.y) {
+      this.mode = { kind: 'normal' };
+      this.inspectedDistrictId = districtUniqueId;
+      this.notify();
+      return;
+    }
+    const result = moveDistrict(this.state, this.map, districtUniqueId, selected, this.now());
+    if (result === 'Moved') {
+      playSfx('buildPlaced');
+      this.mode = { kind: 'normal' };
+      // Land back on the card the move was started from: the player is very
+      // likely to want the thing they just repositioned.
+      this.inspectedDistrictId = districtUniqueId;
+    } else {
+      this.toast(result === 'InvalidCell' ? 'It will not fit there' : result);
+    }
     this.notify();
   }
 
@@ -946,7 +1034,11 @@ export class Game {
         // trains them, exactly as villagers are trained at the Townhall. So
         // "go train an army" means "go to the Barracks" — or, if there isn't
         // one yet, "go build it".
-        const barracks = built((d) => DISTRICTS[d.definitionId].trains !== null);
+        // A MILITARY trainer: `trains` is an array now, so `!== null` was
+        // always true and this pointed at whatever was built first — usually
+        // the Townhall, which trains villagers and not an army.
+        const barracks = built(
+          (d) => DISTRICTS[d.definitionId].trains.some((t) => t !== 'Villager'));
         if (barracks) {
           this.setUiHint('card:train');
           inspect(barracks);
@@ -1470,10 +1562,14 @@ export class Game {
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */
-  capturedCells(definitionId: DistrictId, cell: Coord): Coord[] {
+  /** What a building at `cell` would work. `level` matters for a MOVE: an
+   *  upgraded Sawmill keeps its bigger radius when it is picked up, and
+   *  previewing it at level 1 would understate the spot it is being moved to. */
+  capturedCells(definitionId: DistrictId, cell: Coord, level = 1): Coord[] {
     const def = DISTRICTS[definitionId];
     if (!def.harvestSource || def.influenceRadiusPerLevel.length === 0) return [];
-    return cellsWithinRadiusOfRect(this.map, cell, def.size, def.influenceRadiusPerLevel[0]).filter(
+    const radius = levelIndexed(def.influenceRadiusPerLevel, level);
+    return cellsWithinRadiusOfRect(this.map, cell, def.size, radius).filter(
       (c) =>
         this.state.fog.revealed[coordKey(c)] === true &&
         harvestSourceAt(this.state, c) === def.harvestSource,
@@ -1493,6 +1589,7 @@ export class Game {
       previewSprite: null,
       previewSize: null,
       selectedSize: null,
+      liftedDistrictId: this.mode.kind === 'moving' ? this.mode.districtUniqueId : null,
       hintCell: this.hintCell(),
     };
     if (this.mode.kind === 'placing') {
@@ -1545,6 +1642,57 @@ export class Game {
           );
         }
       }
+    } else if (this.mode.kind === 'moving') {
+      // The same vocabulary as placement, and deliberately so — a move is the
+      // same decision as a placement, made once the building already exists.
+      // The one difference is what counts as legal: the footprint it is
+      // standing on is its own, so it stays available to it.
+      const def = DISTRICTS[this.mode.definitionId];
+      if (hasPlacementRestriction(this.mode.definitionId)) {
+        layer.validCells = validPlacementCells(
+          this.state, this.map, this.mode.definitionId, this.mode.districtUniqueId,
+        ).map((cell) => ({ cell, label: '' }));
+      }
+      layer.selected = this.mode.selected;
+      layer.selectedSize = def.size;
+      layer.previewCell = this.mode.selected;
+      layer.previewGlyph = def.glyph;
+      layer.previewSprite = def.sprite;
+      layer.previewSize = def.size;
+      if (this.mode.selected) {
+        const adj = placementAdjacency(this.state, this.mode.definitionId, this.mode.selected,
+          this.mode.districtUniqueId);
+        for (const g of adj.given) {
+          layer.yieldCells.push({
+            cell: g.district.location,
+            label: formatAdjacency(g.goldPerMinute),
+            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+          });
+        }
+        if (adj.received !== 0) {
+          layer.yieldCells.push({
+            cell: this.mode.selected,
+            label: formatAdjacency(adj.received),
+            tone: adj.received < 0 ? 'bad' : 'good',
+          });
+        }
+        if (def.influenceRadiusPerLevel.length > 0) {
+          const district = districtById(this.state, this.mode.districtUniqueId);
+          layer.influenceCells = cellsWithinRadiusOfRect(
+            this.map, this.mode.selected, def.size,
+            levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
+          );
+          if (def.harvestSource) {
+            const spec = HARVEST[def.harvestSource];
+            layer.yieldCells = this.capturedCells(
+              this.mode.definitionId, this.mode.selected, district?.level ?? 1,
+            ).map((cell) => ({
+              cell,
+              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
+            }));
+          }
+        }
+      }
     } else if (this.mode.kind === 'casting') {
       // The same highlight vocabulary as placement — valid cells outlined,
       // the chosen one selected — because it is the same decision shape.
@@ -1587,27 +1735,58 @@ export class Game {
     return revealCostForCell(this.state, this.map, cell);
   }
 
+  /**
+   * What the bottom bar shows while a ghost is out — for a new building and
+   * for one being relocated alike.
+   *
+   * One shape for both because it is one decision: "is this a good spot".
+   * `kind` is what the bar switches on, and a move differs in exactly three
+   * ways — no price, no wait, and it previews the influence the building
+   * ALREADY has rather than a level-1 footprint.
+   */
   placementInfo(): {
+    kind: 'build' | 'move';
     definitionId: DistrictId;
     cell: Coord | null;
     cost: ReturnType<typeof nextBuildCost>;
     duration: number;
     affordable: boolean;
     captured: number;
+    /** Move only: the ghost is still sitting where it started. */
+    unmoved: boolean;
   } | null {
+    if (this.mode.kind === 'moving') {
+      const { definitionId, selected, origin, districtUniqueId } = this.mode;
+      const level = districtById(this.state, districtUniqueId)?.level ?? 1;
+      return {
+        kind: 'move',
+        definitionId,
+        cell: selected,
+        cost: {},
+        duration: 0,
+        affordable: true,
+        captured: selected ? this.capturedCells(definitionId, selected, level).length : 0,
+        unmoved: selected !== null && selected.x === origin.x && selected.y === origin.y,
+      };
+    }
     if (this.mode.kind !== 'placing') return null;
     const { definitionId, selected } = this.mode;
     if (!selected) {
-      return { definitionId, cell: null, cost: {}, duration: 0, affordable: false, captured: 0 };
+      return {
+        kind: 'build', definitionId, cell: null, cost: {},
+        duration: 0, affordable: false, captured: 0, unmoved: false,
+      };
     }
     const cost = nextBuildCost(this.state, definitionId);
     return {
+      kind: 'build',
       definitionId,
       cell: selected,
       cost,
       duration: buildDurationForCell(this.state, definitionId, selected, this.map),
       affordable: canAfford(this.state.city.wallet, cost),
       captured: this.capturedCells(definitionId, selected).length,
+      unmoved: false,
     };
   }
 
@@ -1647,6 +1826,60 @@ export class Game {
 
   marketPayout(c: CurrencyId, amount: number): number {
     return salePayout(this.state, c, amount);
+  }
+
+  // --------------------------------------------------------- dragging a ghost
+
+  /** The footprint the ghost currently occupies, or null when there is no
+   *  ghost on the map. Placing and moving are the same shape here. */
+  private ghostFootprint(): { cell: Coord; size: { x: number; y: number } } | null {
+    if (this.mode.kind === 'placing' && this.mode.selected) {
+      return { cell: this.mode.selected, size: DISTRICTS[this.mode.definitionId].size };
+    }
+    if (this.mode.kind === 'moving' && this.mode.selected) {
+      return { cell: this.mode.selected, size: DISTRICTS[this.mode.definitionId].size };
+    }
+    return null;
+  }
+
+  /**
+   * Does a drag starting here GRAB the ghost rather than pan the camera?
+   *
+   * Only when the press lands inside the ghost's own footprint. Anywhere else
+   * on the map still pans, which is what keeps the two gestures from fighting:
+   * the player can always reach the rest of the world while a ghost is out,
+   * and the ghost is a thing you put your finger on rather than a mode that
+   * captures every drag.
+   */
+  grabGhost(sx: number, sy: number): boolean {
+    const ghost = this.ghostFootprint();
+    if (ghost === null) return false;
+    const cell = this.camera.screenToCell(sx, sy);
+    return cell.x >= ghost.cell.x && cell.x < ghost.cell.x + ghost.size.x
+      && cell.y >= ghost.cell.y && cell.y < ghost.cell.y + ghost.size.y;
+  }
+
+  /**
+   * Drag the ghost under the pointer.
+   *
+   * The anchor follows the finger by CELL, not by pixel offset, and an
+   * illegal cell is simply not taken — the ghost stays on the last legal one
+   * it passed through rather than following the finger somewhere it cannot be
+   * dropped and then snapping back. Dragging across a lake leaves it on the
+   * shore, which is the honest preview of where a release would put it.
+   */
+  dragGhostTo(sx: number, sy: number): void {
+    if (this.mode.kind !== 'placing' && this.mode.kind !== 'moving') return;
+    const cell = this.camera.screenToCell(sx, sy);
+    const current = this.mode.selected;
+    if (current && current.x === cell.x && current.y === cell.y) return;
+    if (!this.map.terrain.has(coordKey(cell))) return;
+    const legal = this.mode.kind === 'moving'
+      ? this.canDropAt(cell)
+      : placementBlock(this.state, this.map, this.mode.definitionId, cell) === null;
+    if (!legal) return;
+    this.mode.selected = cell;
+    this.notify();
   }
 
   handleTap(sx: number, sy: number): void {

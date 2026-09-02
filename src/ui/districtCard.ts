@@ -19,8 +19,8 @@ import {
 import { committedArmyPower, maxArmyPower } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
 import {
-  districtCount, maxCountForTownhallLevel, requiredTechForLevel, requiredTownhallLevel,
-  upgradeCost, upgradeDuration,
+  canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
+  requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from '../sim/districts';
 import {
   districtCapacity, houseGoldPerMinute,
@@ -356,8 +356,17 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       upgrade));
   }
 
+  // Moving is not an upgrade path, so it does not belong in the footer's
+  // one-primary-action slot (§2.2). It is a quiet secondary on the head, next
+  // to Close: something you do TO the building rather than something you buy
+  // for it — and it is free, so it carries no price to show.
+  const head = el('div', { class: 'dc-tools' });
+  if (canMoveDistrict(district)) {
+    head.append(knob('✥', () => game.startMove(district.uniqueId), { label: 'Move' }));
+  }
   const close = knob('✕', () => game.dismiss(), { label: 'Close' });
   close.setAttribute('data-own-close', '');
+  head.append(close);
 
   return el('div', { class: 'dc' },
     el('div', { class: 'dc-head' },
@@ -366,7 +375,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         el('div', { class: 'dc-name' }, def.name),
         levelStars(district.level, def.maxLevel),
         el('div', { class: 'dc-what' }, def.description)),
-      close),
+      head),
     body,
     foot,
   );

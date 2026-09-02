@@ -54,17 +54,24 @@ export function adjacencyEffect(
 export const districtAdjacency = (state: GameState, district: District): number =>
   adjacencyEffect(state, district.definitionId, district.location, district.uniqueId);
 
-/** Placement preview: the gold/min each existing neighbor would GAIN from
- *  the new building, and what the new building would RECEIVE from them. */
+/**
+ * Placement preview: the gold/min each existing neighbor would GAIN from the
+ * new building, and what the new building would RECEIVE from them.
+ *
+ * `excludeId` is the building being MOVED. Without it a relocation one cell
+ * sideways would count the building as its own neighbour and preview a bonus
+ * that vanishes the moment it is confirmed.
+ */
 export function placementAdjacency(
   state: GameState,
   definitionId: DistrictId,
   cell: Coord,
+  excludeId: string | null = null,
 ): { given: Array<{ district: District; goldPerMinute: number }>; received: number } {
   const given: Array<{ district: District; goldPerMinute: number }> = [];
-  for (const n of adjacentBuilt(state, cell, DISTRICTS[definitionId].size)) {
+  for (const n of adjacentBuilt(state, cell, DISTRICTS[definitionId].size, excludeId)) {
     const r = rule(n.definitionId, definitionId);
     if (r && r.goldPerMinute !== 0) given.push({ district: n, goldPerMinute: r.goldPerMinute });
   }
-  return { given, received: adjacencyEffect(state, definitionId, cell) };
+  return { given, received: adjacencyEffect(state, definitionId, cell, excludeId) };
 }

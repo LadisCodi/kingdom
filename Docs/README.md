@@ -46,6 +46,7 @@ as-shipped), and its own design docs are the live source of truth:
 | **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
 | **[features/knowledge.md](features/knowledge.md)** | **Built 2026-09-02, rewritten the same day** — Knowledge is a dungeon reward and levels relics and heroes; the technology tree is Gold |
 | **[features/currency-simplification.md](features/currency-simplification.md)** | **Built 2026-09-02** — eleven wallet rows down to seven; four coins on the plank; how the competition does it |
+| **[features/moving-buildings.md](features/moving-buildings.md)** | **Built 2026-09-02** — relocating a built building, and dragging the placement ghost instead of panning |
 | **[onboarding.md](onboarding.md)** | **Built 2026-09-02** — the authored first-user experience, 26 steps; the quest chain and the tech gates that serve it |
 
 ## Ground rules used throughout

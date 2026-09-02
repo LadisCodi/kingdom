@@ -7,7 +7,7 @@ import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
-  type Coord, type DistrictId, type GameState, type TechId, type Wallet,
+  type Coord, type District, type DistrictId, type GameState, type TechId, type Wallet,
 } from './state';
 
 // ------------------------------------------------------------------ counting
@@ -29,13 +29,24 @@ export type PlacementBlock =
   | 'NeedsLand'
   | 'HasSite';
 
-/** All placement conditions ANDed over the full footprint (cell = anchor,
- *  top-left); null = buildable here. */
+/**
+ * All placement conditions ANDed over the full footprint (cell = anchor,
+ * top-left); null = buildable here.
+ *
+ * `movingId` is the district being RELOCATED, if any. It changes exactly two
+ * rules and nothing else: the building may overlap the ground it is standing
+ * on (or it could never move one cell sideways), and the count limit does not
+ * apply (a move adds nothing to the count it would be measured against).
+ * Every other rule — terrain, features, sites, fog, tech, adjacency — is the
+ * same question it is at build time, which is the point: a spot you may not
+ * build on is a spot you may not move to.
+ */
 export function placementBlock(
   state: GameState,
   map: MapData,
   definitionId: DistrictId,
   cell: Coord,
+  movingId?: string,
 ): PlacementBlock | null {
   const def = DISTRICTS[definitionId];
   const footprint = cellsOfRect(cell, def.size);
@@ -47,13 +58,17 @@ export function placementBlock(
     // ruin would silently delete a whole dungeon.
     if (cellHasSite(c)) return 'HasSite';
     if (!state.fog.revealed[coordKey(c)]) return 'NotRevealed';
-    if (districtAt(state, c)) return 'Occupied';
+    const sitting = districtAt(state, c);
+    if (sitting && sitting.uniqueId !== movingId) return 'Occupied';
     // Only the Docks (which checks its own land+water mix) may touch Water.
     if (definitionId !== 'Docks' && map.terrain.get(coordKey(c)) === 'Water') return 'NeedsLand';
     // Nothing builds on a Mountain — it's territory to explore, not settle.
     if (map.terrain.get(coordKey(c)) === 'Mountain') return 'NeedsLand';
   }
-  if (districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)) {
+  if (
+    movingId === undefined &&
+    districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)
+  ) {
     return 'CountLimit';
   }
   if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
@@ -62,10 +77,13 @@ export function placementBlock(
   switch (definitionId) {
     case 'Housing': {
       // Adjacent to a Townhall or another Housing (under-construction Housing counts).
+      // A house cannot anchor its own move: standing next to where you
+      // already are is not neighbourliness.
       const ok = footprint.some((fc) =>
         neighbors(map, fc).some((n) => {
           const d = districtAt(state, n);
-          return d !== undefined && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
+          return d !== undefined && d.uniqueId !== movingId
+            && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
         }),
       );
       if (!ok) return 'NeedsHousingAdjacency';
@@ -109,7 +127,22 @@ export const validPlacementCells = (
   state: GameState,
   map: MapData,
   definitionId: DistrictId,
-): Coord[] => map.cells.filter((c) => placementBlock(state, map, definitionId, c) === null);
+  movingId?: string,
+): Coord[] => map.cells.filter(
+  (c) => placementBlock(state, map, definitionId, c, movingId) === null);
+
+/**
+ * Can this building be picked up and put down somewhere else?
+ *
+ * Two gates. **Built only** — an unfinished building's duration is measured
+ * from the Townhall, so relocating one mid-build would silently reprice the
+ * wait; the card offers Cancel (full refund) for those instead. And
+ * **`buildable` only**, which is the Townhall's exclusion: it is the origin
+ * every fog ring, every build duration and every worker distance is measured
+ * from, so moving it would reprice the whole world without saying so.
+ */
+export const canMoveDistrict = (district: District): boolean =>
+  district.state === 'Built' && DISTRICTS[district.definitionId].buildable;
 
 // ------------------------------------------------------------- cost formulas
 

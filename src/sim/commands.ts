@@ -3,7 +3,7 @@
 
 import { CITY_DEF, DISTRICTS } from './data/definitions';
 import {
-  buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
+  buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration,
 } from './districts';
@@ -24,7 +24,8 @@ import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, pay, refund } from './wallet';
 import {
-  addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
+  addWorker, advanceWorkers, assignableWorkerLimit, relocateCrew, removeWorker,
+  type DepositEvent,
 } from './workers';
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
@@ -67,6 +68,56 @@ export function enqueueBuild(
     startedAt: null,
   });
   return 'Started';
+}
+
+// ------------------------------------------------------------------- moving
+
+export type MoveDistrictResult =
+  | 'Moved' | 'NotFound' | 'Immovable' | 'InvalidCell' | 'SameCell';
+
+/**
+ * Pick a built building up and put it down somewhere else. **Free, instant,
+ * and it never fails halfway.**
+ *
+ * Free because the alternative is a tax on tidying up, and this is a game
+ * whose first promise is that nothing you own is ever taken from you. A move
+ * costs the player nothing and gains them nothing directly — what it changes
+ * is position, and position is already priced by everything that reads it:
+ * housing adjacency, influence radius, worker walking distance.
+ *
+ * Which is why it goes through `repriceTaxAnchorAround`. Moving a house in or
+ * out of a neighbour's range changes the city's gold rate at this instant,
+ * and the tax anchor has to be settled at the instant the rate changed or the
+ * player is paid the new rate for time already elapsed at the old one. That
+ * is the same mechanism a completed build uses; a move is just another thing
+ * that reprices the city.
+ */
+export function moveDistrict(
+  state: GameState,
+  map: MapData,
+  districtUniqueId: string,
+  cell: Coord,
+  now: number,
+): MoveDistrictResult {
+  const district = districtById(state, districtUniqueId);
+  if (!district) return 'NotFound';
+  if (!canMoveDistrict(district)) return 'Immovable';
+  if (district.location.x === cell.x && district.location.y === cell.y) return 'SameCell';
+  if (placementBlock(state, map, district.definitionId, cell, district.uniqueId) !== null) {
+    return 'InvalidCell';
+  }
+  const from = district.location;
+  repriceTaxAnchorAround(state, now, () => {
+    district.location = cell;
+  });
+  relocateCrew(state, district, from, now);
+  // The new address pushes back the fog exactly as finishing a build does —
+  // otherwise a building could be moved to the frontier and sit there staring
+  // at ground it has already paid to see.
+  revealAroundDistrict(state, map, district);
+  // Its old neighbours may have cells free now, and its new ones may not.
+  wakeIdleWorkersAt(state, now);
+  return 'Moved';
 }
 
 export type UpgradeResult =

@@ -22,6 +22,10 @@
 }
 
 .dc-head { display: flex; align-items: flex-start; gap: 10px; }
+/* Move and Close, stacked in the corner. Close stays last so its position
+   never shifts — a close button that moves when a building happens to be
+   movable is a close button you have to look for. */
+.dc-tools { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .dc-id { flex: 1; min-width: 0; }
 .dc-name { font-family: var(--font-display); font-size: 18px; font-weight: 400; }
 .dc-what { color: var(--ink-muted); line-height: 1.25; }

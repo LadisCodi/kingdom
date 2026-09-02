@@ -37,6 +37,10 @@ export interface MarkerLayer {
   previewGlyph: string | null;
   previewSprite: string | null;
   previewSize: { x: number; y: number } | null; // footprint of the previewed building
+  /** The district currently being MOVED. It is drawn faint at its old address
+   *  while its ghost is out — otherwise the player sees two of the same
+   *  building and no way to tell which one is real. */
+  liftedDistrictId: string | null;
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
 }
@@ -274,6 +278,11 @@ export function drawMap(
   // Pass 1.5: districts, each drawn once spanning its full footprint.
   for (const district of state.city.districts) {
     if (fogState(state, map, district.location) !== 'Revealed') continue;
+    // Lifted: this building is being moved and its ghost is out. Draw the
+    // original as a faint outline of itself so the address it is leaving
+    // stays legible without competing with the ghost.
+    const lifted = district.uniqueId === markers.liftedDistrictId;
+    if (lifted) ctx.globalAlpha = 0.28;
     const { x, y } = cellRect(district.location);
     const def = DISTRICTS[district.definitionId];
     const fw = size * def.size.x;
@@ -350,6 +359,7 @@ export function drawMap(
         drawGlyph(ctx, '⚠️', x + fw * 0.28, y - fh * 0.26, fw, size * 0.26, fh);
       }
     }
+    if (lifted) ctx.globalAlpha = 1;
   }
 
   // Pass 2: queue progress bars over districts.

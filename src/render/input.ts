@@ -1,5 +1,12 @@
-// Pointer input: distinguishes taps from camera drags; wheel/pinch zooms.
-// Taps that start over HTML UI never reach the canvas (the UI sits on top).
+// Pointer input: distinguishes taps from camera drags from GHOST drags;
+// wheel/pinch zooms. Taps that start over HTML UI never reach the canvas
+// (the UI sits on top).
+//
+// A drag does one of two things, decided entirely at pointerdown: if the
+// press landed on the building ghost, the drag moves the ghost; otherwise it
+// pans the camera. Deciding once, on press, is what stops the two gestures
+// fighting mid-flick — the alternative (hit-testing every move) would hand
+// the ghost off to the camera the instant the finger left it.
 //
 // A press becomes a HOLD only after HOLD_START_MS, then auto-repeats. Two
 // rules keep a hold and a tap from both firing for one gesture — since
@@ -24,10 +31,15 @@ export function wireInput(
   onTap: (sx: number, sy: number) => void,
   /** Returns true when the repeat consumed the gesture (it collected). */
   onHold: (sx: number, sy: number) => boolean,
+  /** Does a drag from here grab the building ghost instead of the camera? */
+  grabGhost: (sx: number, sy: number) => boolean,
+  /** Drag the grabbed ghost to the pointer. */
+  dragGhost: (sx: number, sy: number) => void,
 ): void {
   let pointerDown = false;
   let dragged = false;
   let holdConsumed = false;
+  let draggingGhost = false;
   let lastX = 0;
   let lastY = 0;
   let startX = 0;
@@ -54,6 +66,11 @@ export function wireInput(
     lastY = startY = e.clientY;
     canvas.setPointerCapture(e.pointerId);
     stopHold();
+    const rect = canvas.getBoundingClientRect();
+    draggingGhost = grabGhost(e.clientX - rect.left, e.clientY - rect.top);
+    // A press on the ghost is never a hold-to-collect: there is nothing under
+    // a ghost to harvest, and starting the timer would only race the drag.
+    if (draggingGhost) return;
     const repeat = () => {
       if (!pointerDown || dragged) return;
       const rect = canvas.getBoundingClientRect();
@@ -75,7 +92,12 @@ export function wireInput(
       dragged = true;
     }
     if (dragged) {
-      camera.panByScreen(e.clientX - lastX, e.clientY - lastY);
+      if (draggingGhost) {
+        const rect = canvas.getBoundingClientRect();
+        dragGhost(e.clientX - rect.left, e.clientY - rect.top);
+      } else {
+        camera.panByScreen(e.clientX - lastX, e.clientY - lastY);
+      }
     }
     lastX = e.clientX;
     lastY = e.clientY;
@@ -83,6 +105,8 @@ export function wireInput(
 
   canvas.addEventListener('pointerup', (e) => {
     stopHold();
+    // A drag that never crossed the threshold is still a tap, ghost or not —
+    // tapping the ghost where it stands should not be swallowed.
     if (pointerDown && !dragged && !holdConsumed) {
       // Camera math expects canvas-relative coords; the canvas sits inside
       // the centered #app frame, so clientX/Y are offset from it.
@@ -90,11 +114,13 @@ export function wireInput(
       onTap(e.clientX - rect.left, e.clientY - rect.top);
     }
     pointerDown = false;
+    draggingGhost = false;
   });
 
   canvas.addEventListener('pointercancel', () => {
     stopHold();
     pointerDown = false;
+    draggingGhost = false;
   });
 
   canvas.addEventListener(
