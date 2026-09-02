@@ -21,7 +21,7 @@ import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { committedArmyPower, maxArmyPower, trainUnit, trainingTap } from './sim/army';
 import {
-  attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
+  artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
 } from './sim/artifacts';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
@@ -111,6 +111,9 @@ export class Game {
   expeditionParty: PartySlotState[] = [];
   expeditionHero: HeroId | null = null;
   expeditionOrder: number | null = null;
+  /** The relic the player has chosen to send DOWN rather than wear. Null is
+   *  the common case and always a valid party. */
+  expeditionArtifact: ArtifactId | null = null;
   /** The delve whose checkpoint sheet is open. */
   openCheckpoint: string | null = null;
   /** The map SITE whose card is open — a landmark or a ruin. Sites are not
@@ -1029,6 +1032,10 @@ export class Game {
     this.expeditionRuin = ruinId;
     this.expeditionHero = freeHeroes(this.state)[0] ?? null;
     this.expeditionOrder = null;
+    // Never pre-filled, unlike the party. Arming a hero means giving up a
+    // passive the player is living off, and the sheet must not make that
+    // choice on their behalf — an empty socket is the only honest default.
+    this.expeditionArtifact = null;
     const roster = availableRoster(this.state);
     const affinity = RUINS[ruinId].affinity;
     // Best-answering type first, then whatever else is on hand — a sensible
@@ -1065,14 +1072,47 @@ export class Game {
     this.notify();
   }
 
+  /** Tapping the socketed relic again takes it back out — the choice has to be
+   *  reversible right up until the party leaves. */
+  setExpeditionArtifact(artifactId: ArtifactId | null): void {
+    this.expeditionArtifact = this.expeditionArtifact === artifactId ? null : artifactId;
+    this.notify();
+  }
+
   setStandingOrder(depth: number | null): void {
     this.expeditionOrder = depth;
     this.notify();
   }
 
+  /**
+   * The relic this party would actually leave with. A relic that has since
+   * been attuned, or sent down with someone else, is NOT one of them.
+   *
+   * The block message still names the raw choice, so the player is told why —
+   * but the numbers must only ever describe a party the game would really
+   * send. A sheet that shows the stats of a party it is simultaneously
+   * refusing reads as the game arguing with itself.
+   */
+  private sendableArtifact(): ArtifactId | null {
+    const id = this.expeditionArtifact;
+    if (id === null || artifactIsCommitted(this.state, id)) return null;
+    return id;
+  }
+
   /** The launch read-out: what this party is, and how deep it is SAFE. */
   expeditionPreview(): ExpeditionPreview | null {
     if (this.expeditionRuin === null) return null;
+    return previewExpedition(
+      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
+      this.sendableArtifact());
+  }
+
+  /** The same party WITHOUT the relic, so the sheet can show what socketing it
+   *  actually bought. A defensive relic may not move the safe depth at all —
+   *  it buys survival past the floor rather than a deeper floor — so the
+   *  stat deltas have to be shown too, or it reads as doing nothing. */
+  expeditionPreviewUnarmed(): ExpeditionPreview | null {
+    if (this.expeditionRuin === null || this.sendableArtifact() === null) return null;
     return previewExpedition(
       this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
   }
@@ -1080,7 +1120,8 @@ export class Game {
   expeditionLaunchBlock(): string | null {
     if (this.expeditionRuin === null) return 'No ruin chosen';
     const block = launchBlock(
-      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
+      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
+      this.expeditionArtifact);
     if (block === null) return null;
     return LAUNCH_BLOCK_TEXT[block];
   }
@@ -1089,7 +1130,7 @@ export class Game {
     if (this.expeditionRuin === null || this.expeditionHero === null) return;
     const result = launchDelve(
       this.state, this.map, this.expeditionRuin, this.expeditionHero,
-      this.expeditionParty, this.now(), this.expeditionOrder,
+      this.expeditionParty, this.now(), this.expeditionOrder, this.expeditionArtifact,
     );
     if (result === 'Launched') {
       playSfx('unitTrained');

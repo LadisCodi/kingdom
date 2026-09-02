@@ -118,6 +118,14 @@
 }
 
 .rel-passive { display: flex; align-items: center; gap: 6px; font-size: var(--text-helper); }
+/* A relic that is underground. It has to say so, and it has to correct the
+ * upkeep line above it — carrying draws no Mana, which is the asymmetry the
+ * whole attune-or-arm trade rests on. */
+.rel-carried {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--text-helper); color: var(--gold, #d9a441); line-height: 1.3;
+}
+
 .rel-upkeep { font-size: var(--text-helper); color: var(--ink-muted); }
 
 .rel-active {

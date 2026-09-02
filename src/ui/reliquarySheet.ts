@@ -184,6 +184,19 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       stat('Mana', `−${def.upkeep}`, 'per hour while worn')),
   );
 
+  // Attune OR arm. A relic underground has to SAY so on the card: `btn()` is
+  // the button without its reason line, so a disabled Attune alone would grey
+  // out with no answer to "where did my relic go?". The upkeep line above is
+  // also a half-truth while it is away — carrying costs no Mana — so the
+  // status line corrects it.
+  const bearer = game.state.delves.find((d) => d.artifactId === id);
+  if (bearer) {
+    body.append(el('div', { class: 'rel-carried' },
+      iconEl('army', { size: 'sm' }),
+      `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
+      + ' — it draws no Mana while it is away.'));
+  }
+
   if (def.active) {
     body.append(el('div', { class: 'rel-active' },
       el('div', { class: 'rel-active-name' }, def.active.name),
@@ -212,11 +225,13 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       label: 'Attune',
       kind: 'primary',
       onClick: () => game.doAttune(freeSlot, id),
-      disabledReason: freeSlot === -1
-        ? 'Every socket is full'
-        : isSlotLocked(game.state, freeSlot, now)
-          ? 'That socket is still settling'
-          : undefined,
+      disabledReason: bearer
+        ? `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
+        : freeSlot === -1
+          ? 'Every socket is full'
+          : isSlotLocked(game.state, freeSlot, now)
+            ? 'That socket is still settling'
+            : undefined,
     }));
   }
 

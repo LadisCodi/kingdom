@@ -263,10 +263,19 @@ export function worstThreatFor(party: Party, affinity: UnitId | 'Any'): UnitId |
   return worst;
 }
 
-/** How this party reads against a ruin's affinity, for the launch screen:
- *  1.5 is a strong answer, 0.75 is the wrong tool. */
+/**
+ * How this party reads against a ruin's affinity, for the launch screen:
+ * 1.5 is a strong answer, 0.75 is the wrong tool.
+ *
+ * The carried relic is deliberately EXCLUDED. This number answers "did I bring
+ * the right troops", and a relic's ATK is type-neutral — so counting it would
+ * pull the ratio toward 1 and socketing a relic would make a good matchup read
+ * WORSE while the party got stronger. The relic's contribution is already
+ * shown, honestly, in the safe depth and the stat deltas.
+ */
 export function matchupAgainst(party: Party, affinity: UnitId | 'Any'): number {
   if (affinity === 'Any') return 1;
-  const plain = partyStats(party).atk;
-  return plain === 0 ? 1 : effectiveAttack(party, affinity) / plain;
+  const troops: Party = { heroId: party.heroId, slots: party.slots };
+  const plain = partyStats(troops).atk;
+  return plain === 0 ? 1 : effectiveAttack(troops, affinity) / plain;
 }

@@ -559,6 +559,16 @@ describe('attune or arm', () => {
     expect(armedDeep.safeDepth).toBeGreaterThan(bareDeep.safeDepth);
   });
 
+  it('the matchup chip still answers "did I bring the right troops"', () => {
+    const state = armed();
+    const troopsOnly = previewExpedition(state, BARROW, 'Warden', troops);
+    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
+    // A type-neutral relic would otherwise pull the ratio toward 1, so adding
+    // one would make a GOOD matchup read worse while the party got stronger.
+    expect(withRelic.matchup).toBe(troopsOnly.matchup);
+    expect(withRelic.stats.atk).toBeGreaterThan(troopsOnly.stats.atk);
+  });
+
   it("a relic's attack is type-neutral, so it is worth most in the wrong matchup", () => {
     const slots = [{ unitId: 'Warrior' as UnitId, count: 4 }];
     const relic = { id: 'ForemansSigil' as ArtifactId, level: 1 };
