@@ -143,9 +143,12 @@ same machinery, not a new interaction model.
 ### Dual purpose
 
 An artifact is either **attuned to the kingdom** (economy passive, Mana upkeep)
-**or** **carried by a hero into a delve** (combat effects, no upkeep) — never
-both at once. See `heroes-and-gacha.md`. The asymmetry does real work: the trade
-is never "which is cheaper" but "which do I need right now".
+**or** **carried by a hero into a delve** (a `carried` ATK/DEF/HP block, no
+upkeep) — never both at once. See `heroes-and-gacha.md`. The asymmetry does real
+work: the trade is never "which is cheaper" but "which do I need right now".
+
+**Built 2026-09-02.** Both directions refuse: a launch will not take a relic the
+kingdom is wearing, and attuning will not take back one that is underground.
 
 ---
 
@@ -240,7 +243,7 @@ Landed 2026-09-02 on `feature/engine-seams`, after `engine-seams.md` steps 1–5
 | Step | Commit | Notes |
 |---|---|---|
 | Mana — currency, cap clamp, accrual, production/capacity split | `1850430` | Clamping lives in `addMana`, not `addToWallet`; the tuning law `cap ≈ 8 × net regen` is asserted at every Townhall level |
-| The Sanctum; landmarks, claiming, production contribution | `1850430` | **Contested claiming is NOT built** — see backlog gap 2 |
+| The Sanctum; landmarks, claiming, production contribution | `1850430` | **Contested claiming is NOT built** — see backlog gap 1 |
 | Artifacts — ownership, levels, Knowledge sink, sockets, the 5-min lock, passives as permanent modifiers | `e57ec98` | `syncArtifactModifiers` is a total idempotent rebuild rather than incremental add/remove |
 | The four actives | `e57ec98` | Cast mode reuses placement mode, as §2 said it should |
 | Reliquary sheet, header Mana widget, cast mode, nav change | `bbfbb8f` | Army lost its tab to the Reliquary |
@@ -250,8 +253,9 @@ Landed 2026-09-02 on `feature/engine-seams`, after `engine-seams.md` steps 1–5
 applies to it" failed: the cap's pause shifted `lastTaxAt` and not
 `lastManaAt`, so a 40-hour absence paid Mana in full.
 
-**Not built from this doc:** the contested landmark (backlog gap 2). Everything
-else in §1–§7 shipped.
+**Not built from this doc:** the contested landmark (backlog gap 1). Everything
+else in §1–§7 shipped. The dual-purpose rule in §2 landed separately on
+2026-09-02 — see `heroes-and-gacha.md` §8.
 
 ## 9. Out of scope
 

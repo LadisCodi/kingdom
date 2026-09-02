@@ -199,24 +199,45 @@ Landed 2026-09-02 on `feature/engine-seams`.
 | Step | Commit | Notes |
 |---|---|---|
 | The collection substrate — Fragments, tier caps, Knowledge levels | `e57ec98` | `collection.ts`, shared verbatim by relics and heroes |
-| Heroes — roster, types, traits, XP | `4c59dce` | XP accumulates and **nothing reads it** — backlog gap 3 |
-| **Artifacts as hero equipment; the exclusive attune-or-arm rule** | — | **NOT BUILT.** Backlog gap 1 |
-| The gacha — banners as data, pity, duplicate conversion, seeded rolls | `4c59dce` | Pity, soft pity and duplicate conversion all shipped; **no banner is authored**, so rate-up is untested — backlog gap 5 |
+| Heroes — roster, types, traits, XP | `4c59dce` | XP accumulates and **nothing reads it** — backlog gap 2 |
+| **Artifacts as hero equipment; the exclusive attune-or-arm rule** | `9c0b174` | Built 2026-09-02. Needed a `carried` stat block first (`7552ba1`) — the docs said "combat effects" but none were ever authored |
+| The gacha — banners as data, pity, duplicate conversion, seeded rolls | `4c59dce` | Pity, soft pity and duplicate conversion all shipped; **no banner is authored**, so rate-up is untested — backlog gap 4 |
 | Reliquary tabs and the banner screen | `bbfbb8f` | Two tabs of one screen, as §6 asks |
 | Mark `managers.md` superseded | `26092c4` | |
 
-### Why the missing rule matters more than its size suggests
+### What the rule cost, in the end
 
-§2 calls attune-or-arm *"the best decision in the design"* and *"what welds the
-city half of the game to the delve half"*. Without it a relic has exactly one
-use — you wear it — so the Foreman's Sigil is never a question, only a purchase.
-The upkeep asymmetry that makes the trade interesting (attuning costs Mana every
-hour, arming a hero costs none) is authored in the data and currently unreachable.
+The shape was as predicted — a `Delve` gained an artifact field, `launchDelve`
+takes one and refuses anything attuned, `manaUpkeep` needed no change because it
+already reads `attuned`, and the expedition sheet gained a slot next to the hero
+picker. Two things were not predicted:
 
-The work is small and well-shaped: a `Delve` gains an artifact field,
-`launchDelve` takes one and refuses anything currently attuned, `manaUpkeep`
-already reads `attuned` so it needs no change, and the expedition sheet gains a
-slot next to the hero picker.
+**There was nothing to be on the "arm" side of the rule.** §2 promised "combat
+effects" and `ARTIFACTS` held an economy passive and a map active and nothing
+else. Six new balance columns (`carried_atk`/`def`/`hp`, plus `_per_level`) had
+to land first. Sized against the real ladder — units are ATK 3–7 / DEF 1–3 /
+HP 6–12, a level-1 Warden is 4/6/24 — a relic is worth about one good unit at
+level 1 and about two at level 10.
+
+**Carried ATK is type-neutral**, because a relic has no unit type. That is not a
+shortcut, it is what makes a relic worth socketing: it lands whole whatever is
+down there, so it is worth most in exactly the run where the matchup went
+against you. It also means a relic must be excluded from the launch sheet's
+matchup chip, or socketing one would make a good matchup read *worse* while the
+party got stronger.
+
+Measured in the Drowned Ironworks, a 4-Warrior party under the Warden is safe to
+depth 2, and to depth 7 carrying the Foreman's Sigil — the trade §2 names, and
+still short of the depth-9 bottom. The Verdant Seal moves that number not at
+all, because the wall there is ATK-limited: a defensive relic buys survival
+*past* the safe floor rather than a deeper floor. Both readings are correct, and
+the sheet has to show stat deltas as well as the safe depth or the Seal looks
+broken.
+
+The level is snapshotted at launch, so levelling a relic back home never
+retroactively re-arms a party already underground; and a relic is committed for
+exactly as long as its delve sits in `state.delves` — the same span
+`heroIsBusy` uses — so a hero and its relic are released together.
 
 ## 9. Out of scope
 
