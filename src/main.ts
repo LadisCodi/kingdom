@@ -21,6 +21,7 @@ import { mountNavbar, mountTools } from './ui/navbar';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderDistrictCard } from './ui/districtCard';
+import { renderSiteCard } from './ui/siteCard';
 import { renderArmyMenu } from './ui/armyMenu';
 import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
@@ -113,10 +114,17 @@ async function boot(): Promise<void> {
   const overlaySlot = new ScreenSlot(overlayRoot);
 
   const refreshScreens = () => {
-    // Bottom panel: placement > district card > empty.
+    // Bottom panel: placement > site card > district card > empty.
     const inspectedId = game.inspectedDistrictId;
+    const site = game.inspectedSite;
     if (game.mode.kind === 'placing') {
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game), () => game.dismiss()));
+    } else if (site !== null) {
+      // Keyed by cell, so tapping a different site is a real remount.
+      panelSlot.show(`site:${site.x},${site.y}`, () => legacy(
+        () => renderSiteCard(game, site) ?? el('div'),
+        () => game.dismiss(),
+      ));
     } else if (inspectedId !== null) {
       // Keyed by district, so inspecting a different one is a real remount.
       panelSlot.show(`district:${inspectedId}`, () => legacy(() => {

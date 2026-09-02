@@ -25,6 +25,7 @@ export function newGame(map: MapData, now: number): GameState {
       queue: [],
       training: null,
       lastTaxAt: now,
+      lastManaAt: now,
     },
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
@@ -39,6 +40,11 @@ export function newGame(map: MapData, now: number): GameState {
     workers: [],
     army: [],
     research: { completed: [], active: [], slotsPurchased: 0 },
+    landmarks: { claimed: {}, cleared: {} },
+    artifacts: {
+      owned: [], levels: {}, tiers: {}, fragments: {},
+      attuned: [null], slotsPurchased: 0, lockedUntil: [0],
+    },
     upgrades: {},
     modifiers: [],
     quests: { index: 0, progress: 0 },

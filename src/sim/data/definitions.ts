@@ -5,8 +5,10 @@
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
 
 import balance from './balance.json';
+import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
-  CurrencyId, DistrictId, FeatureId, HarvestSourceId, TechId, UnitId, UpgradeId, Wallet,
+  ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, LandmarkKind,
+  RuinId, TechId, UnitId, UpgradeId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -48,6 +50,9 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Wood: currency('city', balance.currencies.Wood),
   Stone: currency('city', balance.currencies.Stone),
   Iron: currency('city', balance.currencies.Iron),
+  // Mana's ceiling is DYNAMIC (Townhall level + Sanctum levels), so its `cap`
+  // column stays blank and sim/mana.ts owns the real number.
+  Mana: currency('city', balance.currencies.Mana),
   Berries: currency('city', balance.currencies.Berries),
   Meat: currency('city', balance.currencies.Meat),
   Fish: currency('city', balance.currencies.Fish),
@@ -282,6 +287,16 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     requiredTech: 'Fishing',
     ...districtBalance(balance.districts.Docks),
   },
+  Sanctum: {
+    ...rules,
+    id: 'Sanctum',
+    name: 'Sanctum',
+    description: 'A vault for raw magic. Each level holds more Mana against the hours you are away.',
+    glyph: '🔯',
+    sprite: 'sanctum',
+    requiredTech: 'Attunement',
+    ...districtBalance(balance.districts.Sanctum),
+  },
   Mine: {
     ...rules,
     id: 'Mine',
@@ -295,8 +310,10 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
   },
 };
 
-export const BUILDABLE_DISTRICTS: DistrictId[] =
-  ['Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Mine', 'Market'];
+export const BUILDABLE_DISTRICTS: DistrictId[] = [
+  'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Mine', 'Market',
+  'Sanctum',
+];
 
 // ------------------------------------------------------------------ features
 
@@ -535,6 +552,21 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🐎',
     node: { x: 1, y: 3 },
   }, balance.technologies.Cavalry),
+  // ---- magic (up-right) and the warband leaf (below the military trunk)
+  Attunement: tech({
+    id: 'Attunement',
+    name: 'Attunement',
+    description: 'Unlocks the Sanctum, and a second relic can be attuned at once.',
+    glyph: '🔯',
+    node: { x: 1, y: -1 },
+  }, balance.technologies.Attunement),
+  Warband: tech({
+    id: 'Warband',
+    name: 'Warband',
+    description: 'Marching order — one more companion joins every expedition.',
+    glyph: '🚩',
+    node: { x: 0, y: 4 },
+  }, balance.technologies.Warband),
 };
 
 export const TECH_ORDER: TechId[] = [
@@ -544,6 +576,7 @@ export const TECH_ORDER: TechId[] = [
   'Masonry', 'Mining', 'Engineering', 'DeepMining',
   'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
   'Warrior', 'Spears', 'Archery', 'Cavalry',
+  'Attunement', 'Warband',
 ];
 
 // Slots & gem pricing for extra slots.
@@ -669,5 +702,238 @@ export const UNITS: Record<UnitId, UnitDef> = {
 
 export const UNIT_ORDER: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 
+// ---------------------------------------------------------------- magic
+
+/** Mana production, capacity, landmarks and Gem refills. The pool's ceiling is
+ *  DYNAMIC, so the Currencies sheet's static `cap` column is blank for Mana and
+ *  these are the numbers that decide it — see src/sim/mana.ts. */
+export const MANA = balance.mana;
+
+/** Attunement slots: one at start, one from research, the rest with Gems. */
+export const ATTUNEMENT = balance.attunement;
+
+export interface LandmarkDef {
+  id: string; // content id — data-side, not a TS union
+  kind: LandmarkKind;
+  location: Coord;
+  /** An enemy army holds it: clear the encounter first, then claim. */
+  defended: boolean;
+}
+
+export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
+  Shrine: { name: 'Shrine', glyph: '⛩️', sprite: 'landmark_shrine' },
+  StandingStones: { name: 'Standing stones', glyph: '🗿', sprite: 'landmark_stones' },
+  Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
+};
+
+export const LANDMARKS: LandmarkDef[] = (balance.landmarks as Array<{
+  id: string; kind: string; x: number; y: number; defended: boolean;
+}>).map((l) => ({
+  id: l.id,
+  kind: l.kind as LandmarkKind,
+  location: { x: l.x, y: l.y },
+  defended: l.defended,
+}));
+
+/**
+ * An artifact: a PASSIVE while attuned to the kingdom, and usually one ACTIVE
+ * cast on the map. Hand-authored, one legible effect each, no random rolls —
+ * which is what keeps a collection system cozy rather than a spreadsheet.
+ *
+ * Upkeep is FLAT and does not scale with level, so levelling a relic is
+ * unambiguously good. It applies to kingdom attunement only: an artifact
+ * carried by a hero into a delve costs no Mana, and that asymmetry is what
+ * makes the trade "which do I need right now" rather than "which is cheaper".
+ */
+export interface ArtifactDef {
+  id: ArtifactId;
+  name: string;
+  glyph: string;
+  sprite: string;
+  /** One line, player-facing, about what wearing it does. */
+  passiveText: string;
+  passive: {
+    stat: ModifierStat;
+    scope: ModifierScope;
+    op: 'add' | 'mul';
+    /** Value at level 1, and how much each further level moves it. */
+    base: number;
+    perLevel: number;
+  };
+  /** Mana per hour drawn while attuned. */
+  upkeep: number;
+  active: ArtifactActive | null;
+  /** The ruin whose full clear grants it. */
+  source: RuinId;
+}
+
+export type ArtifactActiveId = 'Divination' | 'Bloom' | 'Haste' | 'Beckon';
+
+export interface ArtifactActive {
+  id: ArtifactActiveId;
+  name: string;
+  text: string;
+  manaCost: number;
+  /** Cast targets a map cell through placement mode. */
+  targeted: boolean;
+}
+
+export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
+  DowsingRod: {
+    id: 'DowsingRod', name: 'Dowsing Rod', glyph: '🔮', sprite: 'artifact_dowsing_rod',
+    passiveText: 'Fog costs less to clear',
+    passive: { stat: 'revealCost', scope: null, op: 'mul', base: 0.85, perLevel: -0.015 },
+    upkeep: 1,
+    active: {
+      id: 'Divination', name: 'Divination', targeted: true, manaCost: 8,
+      // Its Mana price is FLAT while the Gold reveal cost doubles every ring,
+      // so its value grows with depth — exactly where the pain is. This one
+      // relic turns the fog from a chore into a real question: Gold, or Mana?
+      text: 'Pays a frontier cell\u2019s entire remaining reveal cost, at any distance',
+    },
+    source: 'HollowBarrow',
+  },
+  VerdantSeal: {
+    id: 'VerdantSeal', name: 'Verdant Seal', glyph: '🌱', sprite: 'artifact_verdant_seal',
+    passiveText: 'Resource cells recover faster',
+    passive: { stat: 'cellRecovery', scope: null, op: 'mul', base: 0.75, perLevel: -0.02 },
+    upkeep: 2,
+    active: {
+      id: 'Bloom', name: 'Bloom', targeted: true, manaCost: 6,
+      text: 'Clears exhaustion from every resource cell nearby',
+    },
+    source: 'SunkenChapel',
+  },
+  ForemansSigil: {
+    id: 'ForemansSigil', name: 'Foreman’s Sigil', glyph: '⚡', sprite: 'artifact_foremans_sigil',
+    passiveText: 'Every worker carries more',
+    passive: { stat: 'workerYield', scope: null, op: 'add', base: 1, perLevel: 0.2 },
+    upkeep: 2,
+    active: {
+      id: 'Haste', name: 'Haste', targeted: false, manaCost: 10,
+      // Cast on the way OUT. Divination and Bloom reward being present; a
+      // game played in visits needs a good departure move too.
+      text: 'Workers carry double for an hour \u2014 cast it on your way out',
+    },
+    source: 'DrownedIronworks',
+  },
+  GildedLedger: {
+    id: 'GildedLedger', name: 'Gilded Ledger', glyph: '🪙', sprite: 'artifact_gilded_ledger',
+    passiveText: 'Your villagers pay more tax',
+    passive: { stat: 'taxRate', scope: null, op: 'mul', base: 1.2, perLevel: 0.03 },
+    upkeep: 3,
+    // No active at all, deliberately: the clearest proof that the SLOT rather
+    // than the ability is the constraint.
+    active: null,
+    source: 'CountingHouse',
+  },
+  WanderersCompass: {
+    id: 'WanderersCompass', name: 'Wanderer’s Compass', glyph: '🧭',
+    sprite: 'artifact_wanderers_compass',
+    passiveText: 'Delves teach you more',
+    passive: { stat: 'knowledgeYield', scope: null, op: 'mul', base: 1.5, perLevel: 0.1 },
+    upkeep: 2,
+    active: {
+      id: 'Beckon', name: 'Beckon', targeted: true, manaCost: 5,
+      text: 'Calls a depleted resource back onto a cell you choose',
+    },
+    source: 'StarObservatory',
+  },
+};
+
+export const ARTIFACT_ORDER: ArtifactId[] = [
+  'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+];
+
+// ------------------------------------------------------------------- ruins
+
+/**
+ * A ruin is a repeatable DUNGEON, not a one-time pickup. That is the whole
+ * point: revealing one discovers a content node that keeps paying for months,
+ * rather than a reward that ends.
+ *
+ * `depthTime = baseDepthSeconds × depthGrowth^(depth − 1)` — time grows with
+ * depth INSIDE a run, not only across tiers, which is what makes "one more
+ * depth" a real escalation and naturally caps how far anyone pushes in one
+ * sitting.
+ */
+export interface RuinDef {
+  id: RuinId;
+  name: string;
+  description: string;
+  glyph: string;
+  sprite: string;
+  location: Coord;
+  tier: number;
+  /** Threat strength at depth 1; each depth raises it. */
+  difficulty: number;
+  baseDepthSeconds: number;
+  depthGrowth: number;
+  maxDepth: number;
+  /** Flat, paid once at launch — NOT per depth, so the checkpoint decision is
+   *  purely risk against reward with nothing else muddying it. */
+  supplies: Wallet;
+  /** The threat type dominating its depths: a dungeon rewards a COMPOSITION
+   *  rather than a single unit. 'Any' rotates. */
+  affinity: UnitId | 'Any';
+  /** Granted, guaranteed, on the first full clear. No randomness on the thing
+   *  that gates a system. */
+  artifact: ArtifactId;
+}
+
+const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
+  HollowBarrow: {
+    name: 'Hollow Barrow', glyph: '⚱️', sprite: 'ruin_barrow',
+    description: 'A grave-mound with the turf still on it. Something down there is awake.',
+  },
+  SunkenChapel: {
+    name: 'Sunken Chapel', glyph: '⛪', sprite: 'ruin_chapel',
+    description: 'Half-drowned pews and a bell that rings when nobody is near it.',
+  },
+  DrownedIronworks: {
+    name: 'Drowned Ironworks', glyph: '🏚️', sprite: 'ruin_ironworks',
+    description: 'The furnaces went out an age ago. The hammers did not.',
+  },
+  CountingHouse: {
+    name: 'The Counting House', glyph: '🏦', sprite: 'ruin_counting_house',
+    description: 'Ledgers stacked to the ceiling, every column still balancing itself.',
+  },
+  StarObservatory: {
+    name: 'Star Observatory', glyph: '🔭', sprite: 'ruin_observatory',
+    description: 'A brass eye aimed at a sky that has since moved on.',
+  },
+};
+
+const ruinBalance = balance.ruins as Record<RuinId, {
+  x: number; y: number; tier: number; difficulty: number; baseDepthSeconds: number;
+  depthGrowth: number; maxDepth: number; supplies: Wallet; affinity: string; artifact: string;
+}>;
+
+export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
+  (Object.keys(ruinContent) as RuinId[]).map((id) => {
+    const b = ruinBalance[id];
+    return [id, {
+      id,
+      ...ruinContent[id],
+      location: { x: b.x, y: b.y },
+      tier: b.tier,
+      difficulty: b.difficulty,
+      baseDepthSeconds: b.baseDepthSeconds,
+      depthGrowth: b.depthGrowth,
+      maxDepth: b.maxDepth,
+      supplies: b.supplies,
+      affinity: b.affinity as RuinDef['affinity'],
+      artifact: b.artifact as ArtifactId,
+    }];
+  }),
+) as Record<RuinId, RuinDef>;
+
+export const RUIN_ORDER: RuinId[] = [
+  'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
+];
+
 export const GAME_VERSION = '0.1.0';
-export const SAVE_VERSION = 16; // v15 saves predate the reshaped tech tree; discarded
+// v16 predates Mana, artifacts and expeditions. Everything those add is
+// ADDITIVE, and every module read in save.ts defaults — so this bump needs no
+// migrator, only the version (see Docs/features/engine-seams.md §4).
+export const SAVE_VERSION = 17;

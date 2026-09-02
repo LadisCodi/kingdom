@@ -19,7 +19,7 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type TechId, type UpgradeId, type Wallet, type Worker,
+  type ArtifactId, type TechId, type UpgradeId, type Wallet, type Worker,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -129,6 +129,7 @@ export function serialize(state: GameState, now: number): SaveFile {
               ? null : iso(state.city.training.startedAt),
             TrainingQueued: state.city.training?.queued ?? 0,
             LastTaxAt: iso(state.city.lastTaxAt),
+            LastManaAt: iso(state.city.lastManaAt),
           },
         ],
       },
@@ -198,6 +199,19 @@ export function serialize(state: GameState, now: number): SaveFile {
         })),
         SlotsPurchased: state.research.slotsPurchased,
         UpgradeLevels: state.upgrades,
+      },
+      'kingdom.landmarks': {
+        Claimed: Object.keys(state.landmarks.claimed),
+        Cleared: Object.keys(state.landmarks.cleared),
+      },
+      'kingdom.artifacts': {
+        Owned: state.artifacts.owned,
+        Levels: state.artifacts.levels,
+        Tiers: state.artifacts.tiers,
+        Fragments: state.artifacts.fragments,
+        Attuned: state.artifacts.attuned,
+        SlotsPurchased: state.artifacts.slotsPurchased,
+        LockedUntil: state.artifacts.lockedUntil.map(isoOrNull),
       },
       'kingdom.modifiers': {
         Modifiers: state.modifiers.map((m) => ({
@@ -276,6 +290,7 @@ export function deserialize(
     state.city.training = cityDto.TrainingStartedAt
       ? { queued: cityDto.TrainingQueued ?? 1, startedAt: ms(cityDto.TrainingStartedAt) } : null;
     state.city.lastTaxAt = cityDto.LastTaxAt ? ms(cityDto.LastTaxAt) : lastSaved;
+    state.city.lastManaAt = cityDto.LastManaAt ? ms(cityDto.LastManaAt) : lastSaved;
   }
 
   const kingdomDto = modules['kingdom.kingdoms'];
@@ -371,6 +386,27 @@ export function deserialize(
     };
   }
 
+  const landmarksDto = modules['kingdom.landmarks'];
+  if (landmarksDto) {
+    state.landmarks = { claimed: {}, cleared: {} };
+    for (const id of (landmarksDto.Claimed ?? []) as string[]) state.landmarks.claimed[id] = true;
+    for (const id of (landmarksDto.Cleared ?? []) as string[]) state.landmarks.cleared[id] = true;
+  }
+
+  const artifactsDto = modules['kingdom.artifacts'];
+  if (artifactsDto) {
+    state.artifacts = {
+      owned: [...((artifactsDto.Owned ?? []) as ArtifactId[])],
+      levels: { ...(artifactsDto.Levels ?? {}) },
+      tiers: { ...(artifactsDto.Tiers ?? {}) },
+      fragments: { ...(artifactsDto.Fragments ?? {}) },
+      attuned: [...((artifactsDto.Attuned ?? [null]) as Array<ArtifactId | null>)],
+      slotsPurchased: artifactsDto.SlotsPurchased ?? 0,
+      lockedUntil: ((artifactsDto.LockedUntil ?? []) as Array<string | null>)
+        .map((v) => msOrNull(v) ?? 0),
+    };
+  }
+
   const modifiersDto = modules['kingdom.modifiers']?.Modifiers;
   if (modifiersDto) {
     state.modifiers = (modifiersDto as any[]).map((m): Modifier => ({
@@ -411,6 +447,7 @@ export function deserialize(
     }
     if (state.city.training) state.city.training.startedAt += gap;
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
+    state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
     // Cell recovery and build-queue timers run in real time (NOT paused).
     state.lastAdvance = capEnd;
     // Completes remaining queue work; workers resume at now. Its results are

@@ -1,0 +1,46 @@
+/* Landmark and ruin cards.
+ *
+ * These sit in the same bottom panel as a district card and deliberately read
+ * differently: a district is something you built and manage, a site is
+ * something you FOUND. So the art is large, the promise is a headline, and
+ * there is exactly one thing to do. */
+
+.site { display: flex; flex-direction: column; gap: 10px; }
+
+.site-head { display: flex; align-items: center; gap: 12px; }
+.site-art {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  border-radius: 8px;
+  background: rgba(92, 58, 30, 0.1);
+  border: 2px solid var(--wood-dark);
+}
+.site-art--glyph { display: grid; place-items: center; font-size: 34px; }
+
+.site-name { font-family: var(--font-display); font-size: var(--text-title); }
+.site-kind { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* The promise, stated once and large: this is what paid fog buys. */
+.site-gift {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: linear-gradient(160deg, rgba(120, 150, 220, 0.22), rgba(120, 150, 220, 0.08));
+  border: 2px solid rgba(80, 100, 170, 0.45);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+}
+
+.site-desc { font-size: var(--text-helper); color: var(--ink-muted); font-style: italic; }
+.site-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+.site-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+  line-height: 1.35;
+}

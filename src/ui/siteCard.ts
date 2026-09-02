@@ -1,0 +1,111 @@
+// The card for a map SITE — a landmark or a ruin.
+//
+// These are what paid fog is FOR. A player who clears a distance-9 ring and
+// finds one more iron vein has learned that exploring is a treadmill; a player
+// who finds a shrine that pays Mana forever, or a dungeon that keeps paying for
+// months, has learned the opposite. So the card's job is to make the reward
+// legible BEFORE the player spends anything — what it gives, what it costs,
+// and, when it is out of reach, exactly what is missing.
+
+import { LANDMARK_ART, MANA, type LandmarkDef, type RuinDef } from '../sim/data/definitions';
+import type { Game } from '../game';
+import { landmarkClaimCost } from '../sim/landmarks';
+import { manaProduction } from '../sim/mana';
+import { spriteUrl } from '../render/sprites';
+import type { Coord } from '../sim/state';
+import { landmarkDefAt, ruinDefAt } from '../sim/sites';
+import { el, formatDuration } from './format';
+import { action, chip, iconEl, panel, stat } from './kit';
+
+/** The site art, at card size: the sprite if it exists, its glyph if not. */
+function art(sprite: string, glyph: string): HTMLElement {
+  const url = spriteUrl(sprite);
+  return url
+    ? el('img', { class: 'site-art', src: url, alt: '' })
+    : el('div', { class: 'site-art site-art--glyph' }, glyph);
+}
+
+function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
+  const look = LANDMARK_ART[def.kind];
+  const claimed = game.state.landmarks.claimed[def.id] === true;
+  const cleared = !def.defended || game.state.landmarks.cleared[def.id] === true;
+  const cost = landmarkClaimCost(game.map, def);
+  const short = game.effectiveWalletValue('Gold') < cost;
+
+  const body = el('div', { class: 'site' },
+    el('div', { class: 'site-head' },
+      art(look.sprite, look.glyph),
+      el('div', {},
+        el('div', { class: 'site-name' }, look.name),
+        el('div', { class: 'site-kind' }, claimed ? 'Claimed' : 'Unclaimed'))),
+    // The promise, stated as a rate rather than as a number to interpret.
+    el('div', { class: 'site-gift' },
+      stat('Mana', `+${MANA.landmarkProduction}`, 'per hour, for good')),
+  );
+
+  if (claimed) {
+    body.append(el('div', { class: 'site-note' },
+      iconEl('tick', { size: 'sm' }),
+      `Feeding the kingdom ${MANA.landmarkProduction} Mana an hour. Total: ${manaProduction(game.state)}/h.`));
+    return panel(body);
+  }
+
+  body.append(el('div', { class: 'site-note' },
+    'Claiming it raises how much magic your kingdom can SUSTAIN — which is what '
+    + 'decides how many relics you can wear at once.'));
+
+  body.append(action({
+    label: 'Claim',
+    kind: 'primary',
+    onClick: () => game.doClaimLandmark(def.location),
+    info: chip('Gold', cost, short),
+    disabledReason: !cleared
+      ? 'An enemy warband holds this place'
+      : short
+        ? `Short ${cost - game.effectiveWalletValue('Gold')} Gold`
+        : undefined,
+  }));
+  return panel(body);
+}
+
+function ruinCard(game: Game, def: RuinDef): HTMLElement {
+  const fullTime = Array.from({ length: def.maxDepth }, (_, i) =>
+    def.baseDepthSeconds * def.depthGrowth ** i).reduce((a, b) => a + b, 0);
+
+  const body = el('div', { class: 'site' },
+    el('div', { class: 'site-head' },
+      art(def.sprite, def.glyph),
+      el('div', {},
+        el('div', { class: 'site-name' }, def.name),
+        el('div', { class: 'site-kind' }, `Tier ${def.tier} ruin`))),
+    el('div', { class: 'site-desc' }, def.description),
+    el('div', { class: 'site-stats' },
+      stat('unknown', String(def.maxDepth), 'depths'),
+      stat('hourglass', formatDuration(fullTime), 'to the bottom'),
+      stat(def.affinity === 'Any' ? 'army' : def.affinity, def.affinity === 'Any'
+        ? 'anything' : `${def.affinity}s`, 'answer best')),
+  );
+
+  body.append(el('div', { class: 'site-note' },
+    'A dungeon, not a chest: it can be delved again and again. The first party '
+    + 'to reach the bottom brings back its relic.'));
+
+  // The launch control is expeditions' to own; everything above is content
+  // the player can read the moment the fog comes off it.
+  body.append(action({
+    label: 'Send a party',
+    kind: 'primary',
+    onClick: () => game.openExpedition(def.id),
+    disabledReason: game.expeditionBlock(def.id) ?? undefined,
+  }));
+  return panel(body);
+}
+
+/** Null when the cell holds no site — the caller then shows nothing. */
+export function renderSiteCard(game: Game, cell: Coord): HTMLElement | null {
+  const landmark = landmarkDefAt(cell);
+  if (landmark) return landmarkCard(game, landmark);
+  const ruin = ruinDefAt(cell);
+  if (ruin) return ruinCard(game, ruin);
+  return null;
+}

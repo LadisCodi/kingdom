@@ -8,10 +8,11 @@ import type { Modifier } from './modifiers';
 
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' | 'Iron' | 'Knowledge' | 'Gems'
+  | 'Mana' // the only capped currency — see sim/mana.ts
   | 'Berries' | 'Meat' | 'Fish'; // food-valued (see CurrencyDef.countsAs)
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
-  | 'Quarry' | 'Docks' | 'Mine';
+  | 'Quarry' | 'Docks' | 'Mine' | 'Sanctum';
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous
@@ -24,13 +25,19 @@ export type TerrainId =
 export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
 export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
+export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
+export type RuinId =
+  | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
+export type ArtifactId =
+  | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
 export type TechId =
   | 'Forestry'
   | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
   | 'Agriculture' | 'Farming' | 'Market' | 'CropRotation' // economics: farm side
   | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
   | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration (right)
-  | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry'; // military (down)
+  | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry' // military (down)
+  | 'Attunement' | 'Warband'; // the magic and expedition leaves
 export type UpgradeId =
   | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
   | 'Stonecutting' | 'BigNets' | 'IronPicks';
@@ -91,6 +98,9 @@ export interface City {
   training: { queued: number; startedAt: number } | null;
   /** Epoch ms anchor for passive tax gold (whole units only). */
   lastTaxAt: number;
+  /** Epoch ms anchor for Mana regeneration (whole units only), the same
+   *  shape as lastTaxAt so both replay deterministically. */
+  lastManaAt: number;
 }
 
 /** Per-resource-cell harvest state. Absent entry = fresh cell (0 taps). */
@@ -148,6 +158,31 @@ export interface GameState {
     active: Array<{ id: TechId; startedAt: number }>;
     /** Extra concurrent slots bought with Gems (escalating price). */
     slotsPurchased: number;
+  };
+  /** Claimed landmarks (by content id) and, for the defended ones, whose
+   *  guard has already been beaten. Claiming raises Mana PRODUCTION, which is
+   *  what makes exploration compound rather than merely pay. */
+  landmarks: {
+    claimed: Record<string, true>;
+    cleared: Record<string, true>;
+  };
+  /**
+   * The relic collection. `attuned` is indexed BY SLOT and is exactly as long
+   * as the player has slots, so a null is a visibly empty socket rather than
+   * an absence; `lockedUntil` is per-slot and derived lazily from time, the
+   * same pattern as `exhaustedUntil` on harvest cells.
+   */
+  artifacts: {
+    owned: ArtifactId[];
+    levels: Partial<Record<ArtifactId, number>>;
+    /** Fragments raise a TIER cap; Knowledge buys levels within it. */
+    tiers: Partial<Record<ArtifactId, number>>;
+    fragments: Partial<Record<ArtifactId, number>>;
+    attuned: Array<ArtifactId | null>;
+    /** Extra slots bought with Gems (escalating price). */
+    slotsPurchased: number;
+    /** Per slot; 0 = free. Swapping is immediate, then the slot locks. */
+    lockedUntil: number[];
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
   upgrades: Partial<Record<UpgradeId, number>>;

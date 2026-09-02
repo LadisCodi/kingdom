@@ -28,7 +28,8 @@ export type ModifierStat =
   | 'autoTapCooldown'
   | 'manaRegen'
   | 'revealCost'
-  | 'cellRecovery';
+  | 'cellRecovery'
+  | 'knowledgeYield';
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

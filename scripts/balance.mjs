@@ -48,8 +48,10 @@ const MAP_COLORS = { // conditional-formatting fills, keyed by code
 // The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
-const DISTRICT_IDS =
-  ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine'];
+const DISTRICT_IDS = [
+  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine',
+  'Sanctum',
+];
 const TECH_IDS = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture', // civics
@@ -57,6 +59,7 @@ const TECH_IDS = [
   'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
   'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
   'Warrior', 'Spears', 'Archery', 'Cavalry', // military
+  'Attunement', 'Warband', // the magic and expedition leaves
 ];
 const UPGRADE_IDS = [
   'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
@@ -74,8 +77,18 @@ const QUEST_GOAL_TYPES = {
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
 };
 
-const CURRENCY_IDS =
-  ['Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems'];
+const LANDMARK_KINDS = ['Shrine', 'StandingStones', 'Leyspring'];
+const RUIN_IDS = [
+  'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
+];
+const ARTIFACT_IDS = [
+  'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+];
+
+const CURRENCY_IDS = [
+  'Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Mana',
+  'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems',
+];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone', 'Iron'];
 
 const SETTINGS = [
@@ -104,6 +117,21 @@ const SETTINGS = [
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
   ['research.slot_gem_cost_growth', 'research.slotGemCostGrowth'],
+  // Mana. The ceiling is DYNAMIC (Townhall level + Sanctum levels), so the
+  // Currencies sheet's static `cap` column stays blank for Mana and these are
+  // the numbers that actually decide it — see src/sim/mana.ts.
+  ['mana.production_per_townhall_level', 'mana.productionPerTownhallLevel', 'list'],
+  ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
+  ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
+  ['mana.landmark_production', 'mana.landmarkProduction'],
+  ['mana.landmark_claim_cost_base', 'mana.landmarkClaimCostBase'],
+  ['mana.landmark_claim_cost_growth', 'mana.landmarkClaimCostGrowth'],
+  ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
+  ['attunement.base_slots', 'attunement.baseSlots'],
+  ['attunement.max_slots', 'attunement.maxSlots'],
+  ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
+  ['attunement.slot_gem_cost_growth', 'attunement.slotGemCostGrowth'],
+  ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -141,6 +169,9 @@ const SHEETS = {
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
     'reward_gems'],
+  Landmarks: ['id', 'kind', 'x', 'y', 'defended'],
+  Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
+    'max_depth', 'supply_food', 'supply_gold', 'supply_iron', 'affinity', 'artifact'],
   Settings: ['key', 'value'],
 };
 
@@ -214,6 +245,15 @@ function num(row, col, { blankAs = null } = {}) {
   }
   const n = typeof raw === 'number' ? raw : Number(raw);
   if (!Number.isFinite(n) || n < 0) fail(where(row), `"${col}" is not a non-negative number (got "${raw}")`);
+  return n;
+}
+
+/** A map coordinate: any integer, including negative ones. */
+function coord(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isInteger(n)) fail(where(row), `"${col}" is not an integer (got "${raw}")`);
   return n;
 }
 
@@ -347,6 +387,24 @@ function importMap(workbook) {
   writeFileSync(MAP_PATH, JSON.stringify(
     { terrain: { cells: terrain }, features: { cells: features } }, null, 2) + '\n');
   console.log(`balance: wrote ${MAP_PATH} (${terrain.length} cells, ${features.length} features)`);
+  return byCoord;
+}
+
+/** Every landmark and ruin has to sit on a real, walkable, empty cell. Getting
+ *  this wrong authors a site nobody can ever reach, which is invisible until a
+ *  player fails to find it. */
+function checkSites(out, cells) {
+  const townhall = new Set(TOWNHALL_CELLS.map(([x, y]) => `${x},${y}`));
+  const check = (what, x, y) => {
+    const c = cells.get(`${x},${y}`);
+    if (!c) fail('sites', `${what} is on (${x},${y}), which is not a map cell`);
+    if (c.terrainId === 'Water') fail('sites', `${what} is on water at (${x},${y})`);
+    if (c.featureId) fail('sites', `${what} shares (${x},${y}) with a ${c.featureId}`);
+    if (townhall.has(`${x},${y}`)) fail('sites', `${what} is under the Townhall at (${x},${y})`);
+  };
+  for (const l of out.landmarks) check(`landmark ${l.id}`, l.x, l.y);
+  for (const [id, r] of Object.entries(out.ruins)) check(`ruin ${id}`, r.x, r.y);
+  console.log(`balance: ${out.landmarks.length} landmarks and ${Object.keys(out.ruins).length} ruins check out`);
 }
 
 /** region-map.json → Map sheet (with live color rules per code). */
@@ -410,6 +468,8 @@ async function importXlsx() {
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
+    mana: {}, attunement: {},
+    landmarks: [], ruins: {},
     quests: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -567,6 +627,56 @@ async function importXlsx() {
     });
   }
 
+  // Landmarks and ruins are MAP content authored by coordinate. The importer
+  // is the only place that can check the cell actually exists, is land, and is
+  // not already occupied by a feature or the Townhall — so it does.
+  const siteSeen = new Map();
+  const claimSite = (r, x, y, what) => {
+    const key = `${x},${y}`;
+    if (siteSeen.has(key)) fail(where(r), `two sites on cell (${key}) — ${siteSeen.get(key)} is already there`);
+    siteSeen.set(key, what);
+    return key;
+  };
+  const landmarkIds = new Set();
+  for (const r of readSheet(workbook, 'Landmarks')) {
+    if (!LANDMARK_KINDS.includes(r.kind)) fail(where(r), `unknown landmark kind "${r.kind}"`);
+    if (landmarkIds.has(r.id)) fail(where(r), `duplicate landmark id "${r.id}"`);
+    landmarkIds.add(r.id);
+    const x = coord(r, 'x');
+    const y = coord(r, 'y');
+    claimSite(r, x, y, r.id);
+    out.landmarks.push({
+      id: String(r.id), kind: r.kind, x, y,
+      defended: num(r, 'defended', { blankAs: 0 }) === 1,
+    });
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Ruins'), RUIN_IDS)) {
+    const x = coord(r, 'x');
+    const y = coord(r, 'y');
+    claimSite(r, x, y, id);
+    if (r.affinity !== 'Any' && !UNIT_IDS.includes(r.affinity)) {
+      fail(where(r), `affinity must be a unit id or "Any" (got "${r.affinity}")`);
+    }
+    if (!ARTIFACT_IDS.includes(r.artifact)) fail(where(r), `unknown artifact "${r.artifact}"`);
+    const supplies = {};
+    for (const c of ['Food', 'Gold', 'Iron']) {
+      const v = num(r, `supply_${c.toLowerCase()}`, { blankAs: 0 });
+      if (v > 0) supplies[c] = v;
+    }
+    out.ruins[id] = {
+      x, y,
+      tier: num(r, 'tier'),
+      difficulty: num(r, 'difficulty'),
+      baseDepthSeconds: num(r, 'base_depth_seconds'),
+      depthGrowth: num(r, 'depth_growth'),
+      maxDepth: num(r, 'max_depth'),
+      supplies,
+      affinity: r.affinity,
+      artifact: r.artifact,
+    };
+  }
+
   let lastDistance = 0;
   for (const r of readSheet(workbook, 'FogRings')) {
     const distance = num(r, 'distance');
@@ -587,7 +697,8 @@ async function importXlsx() {
 
   writeFileSync(JSON_PATH, JSON.stringify(out, null, 2) + '\n');
   console.log(`balance: wrote ${JSON_PATH}`);
-  importMap(workbook);
+  const cells = importMap(workbook);
+  checkSites(out, cells);
 }
 
 // ------------------------------------------------------------------- export
@@ -669,6 +780,16 @@ async function exportXlsx() {
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '',
   ]));
+
+  addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>
+    [l.id, l.kind, l.x, l.y, l.defended ? 1 : '']));
+
+  addSheet(workbook, 'Ruins', RUIN_IDS.map((id) => {
+    const r = b.ruins[id];
+    return [id, r.x, r.y, r.tier, r.difficulty, r.baseDepthSeconds, r.depthGrowth, r.maxDepth,
+      r.supplies.Food ?? '', r.supplies.Gold ?? '', r.supplies.Iron ?? '',
+      r.affinity, r.artifact];
+  }));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;

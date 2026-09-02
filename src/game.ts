@@ -8,7 +8,8 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, TECHNOLOGIES, TRAINING, UNITS,
+  BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, LANDMARK_ART, TECHNOLOGIES, TRAINING,
+  UNITS,
 } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
@@ -19,6 +20,9 @@ import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/g
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { armyPower, maxArmyPower, trainUnit } from './sim/army';
+import { claimLandmark } from './sim/landmarks';
+import { manaProduction } from './sim/mana';
+import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
   availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, queuedTraining,
@@ -30,7 +34,7 @@ import { buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield } from './
 import {
   coordKey, districtAt, districtById, getWallet, townhall,
   type Coord, type CurrencyId, type District, type DistrictId, type GameState,
-  type TechId, type UnitId, type UpgradeId, type Wallet,
+  type RuinId, type TechId, type UnitId, type UpgradeId, type Wallet,
 } from './sim/state';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -80,6 +84,11 @@ export interface Banner {
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
+  /** The map SITE whose card is open — a landmark or a ruin. Sites are not
+   *  districts (they are authored content on a cell, not something the player
+   *  built), so they get their own slot rather than being squeezed into
+   *  inspectedDistrictId. */
+  inspectedSite: Coord | null = null;
   private hint: Hint | null = null;
   openOverlay: OverlayName | null = null;
   readonly floaters = new Floaters();
@@ -238,6 +247,22 @@ export class Game {
         return true; // placement mode swallows all map taps
       },
     });
+    // 100 — landmarks and ruins. Above the fog handler, so a revealed site
+    // opens its card instead of being treated as ordinary ground, and above
+    // the harvest handler, so nothing tries to tap a shrine for wood.
+    this.tapChain.register({
+      priority: 100,
+      handle: (cell) => {
+        if (this.openOverlay !== null) return false;
+        if (!landmarkDefAt(cell) && !ruinDefAt(cell)) return false;
+        if (fogState(this.state, this.map, cell) !== 'Revealed') return false;
+        this.inspectedSite = cell;
+        this.inspectedDistrictId = null;
+        playSfx('click');
+        this.notify();
+        return true;
+      },
+    });
     // 50 — fog reveal (blocked while a full overlay is open; the tile card doesn't count).
     this.tapChain.register({
       priority: 50,
@@ -307,6 +332,7 @@ export class Game {
           this.notify();
           return true;
         }
+        this.inspectedSite = null;
         if (district) {
           this.inspectedDistrictId = district.uniqueId; // open/switch the card
         } else {
@@ -690,6 +716,43 @@ export class Game {
     };
   }
 
+  /** Claim the landmark whose card is open. */
+  doClaimLandmark(cell: Coord): void {
+    const def = landmarkDefAt(cell);
+    if (!def) return;
+    const before = manaProduction(this.state);
+    const result = claimLandmark(this.state, this.map, cell);
+    if (result === 'Claimed') {
+      playSfx('upgradeBought');
+      this.floaters.add(cell, `+${manaProduction(this.state) - before} ${icon('Mana')}/h`);
+      this.queueBanner({
+        title: 'Landmark claimed!',
+        icon: LANDMARK_ART[def.kind].glyph,
+        name: LANDMARK_ART[def.kind].name,
+        desc: 'The kingdom draws more Mana every hour, for good.',
+        sprite: LANDMARK_ART[def.kind].sprite,
+        tone: 'sky',
+      });
+    } else if (result === 'NotEnoughGold') {
+      this.shake(['Gold']);
+    } else if (result === 'Defended') {
+      this.toast('An enemy warband holds this place — clear it first');
+    }
+    this.notify();
+  }
+
+  /** Why this ruin cannot be delved right now, in plain words; null = it can.
+   *  Expeditions fill this in — until then the honest answer is that there is
+   *  no party to send. */
+  expeditionBlock(_ruinId: RuinId): string | null {
+    void _ruinId;
+    return 'You have no hero to lead a party yet';
+  }
+
+  openExpedition(ruinId: RuinId): void {
+    void ruinId;
+  }
+
   doBuySlot(): void {
     const result = buySlot(this.state);
     if (result === 'Purchased') playSfx('gemSpend');
@@ -707,7 +770,10 @@ export class Game {
 
   setOverlay(name: OverlayName | null): void {
     this.openOverlay = name;
-    if (name !== null) this.inspectedDistrictId = null;
+    if (name !== null) {
+      this.inspectedDistrictId = null;
+      this.inspectedSite = null;
+    }
     this.notify();
   }
 
@@ -715,7 +781,8 @@ export class Game {
    *  The quest tracker hides while anything is on top of the map. */
   hasOpenSheet(): boolean {
     return (
-      this.mode.kind !== 'normal' || this.openOverlay !== null || this.inspectedDistrictId !== null
+      this.mode.kind !== 'normal' || this.openOverlay !== null ||
+      this.inspectedDistrictId !== null || this.inspectedSite !== null
     );
   }
 
@@ -724,6 +791,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     this.openOverlay = null;
     this.inspectedDistrictId = null;
+    this.inspectedSite = null;
     this.notify();
   }
 
@@ -1053,7 +1121,7 @@ export function formatAdjacency(goldPerMinute: number): string {
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️',
+    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️', Mana: '🔮',
     Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];

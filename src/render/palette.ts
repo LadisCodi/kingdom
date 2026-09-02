@@ -13,6 +13,10 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
 };
 
 export const PALETTE = {
+  // Site badges: the tag on an unclaimed landmark or an undelved ruin.
+  siteBadge: '#f4e2b8',
+  siteBadgeEdge: '#5a3d24',
+  siteBadgeInk: '#3a2716',
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
