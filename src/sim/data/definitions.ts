@@ -848,6 +848,16 @@ export interface ArtifactDef {
   };
   /** Mana per hour drawn while attuned. */
   upkeep: number;
+  /**
+   * What the relic is worth when a hero carries it DOWN rather than the
+   * kingdom wearing it — the other half of attune-OR-arm.
+   *
+   * Attuning draws Mana every hour; carrying draws none. That asymmetry is
+   * deliberate and does the real work: the trade is never "which is cheaper"
+   * but "which do I need right now" — a standing economic benefit against a
+   * burst of delve power.
+   */
+  carried: CarriedStats;
   active: ArtifactActive | null;
   /** The ruin whose full clear grants it. */
   source: RuinId;
@@ -868,12 +878,33 @@ export interface ArtifactActive {
   radius: number;
 }
 
+/** A relic's contribution to a party, before any matchup. */
+export interface CarriedStats {
+  atk: number;
+  def: number;
+  hp: number;
+  atkPerLevel: number;
+  defPerLevel: number;
+  hpPerLevel: number;
+}
+
 type ArtifactBalance = {
   upkeep: number; passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
+  carriedAtk: number; carriedDef: number; carriedHp: number;
+  carriedAtkPerLevel: number; carriedDefPerLevel: number; carriedHpPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
+
+const carried = (id: ArtifactId): CarriedStats => ({
+  atk: ab(id).carriedAtk,
+  def: ab(id).carriedDef,
+  hp: ab(id).carriedHp,
+  atkPerLevel: ab(id).carriedAtkPerLevel,
+  defPerLevel: ab(id).carriedDefPerLevel,
+  hpPerLevel: ab(id).carriedHpPerLevel,
+});
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
@@ -884,6 +915,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
     upkeep: ab('DowsingRod').upkeep,
+    carried: carried('DowsingRod'),
     active: {
       id: 'Divination', name: 'Divination', targeted: true,
       manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
@@ -902,6 +934,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
     upkeep: ab('VerdantSeal').upkeep,
+    carried: carried('VerdantSeal'),
     active: {
       id: 'Bloom', name: 'Bloom', targeted: true,
       manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
@@ -918,6 +951,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
     upkeep: ab('ForemansSigil').upkeep,
+    carried: carried('ForemansSigil'),
     active: {
       id: 'Haste', name: 'Haste', targeted: false,
       manaCost: ab('ForemansSigil').activeManaCost,
@@ -936,6 +970,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
     upkeep: ab('GildedLedger').upkeep,
+    carried: carried('GildedLedger'),
     // No active at all, deliberately: the clearest proof that the SLOT rather
     // than the ability is the constraint.
     active: null,
@@ -950,6 +985,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
     upkeep: ab('WanderersCompass').upkeep,
+    carried: carried('WanderersCompass'),
     active: {
       id: 'Beckon', name: 'Beckon', targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,

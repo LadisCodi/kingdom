@@ -1358,7 +1358,13 @@
       "passivePerLevel": -0.015,
       "activeManaCost": 8,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 4,
+      "carriedDef": 0,
+      "carriedHp": 10,
+      "carriedAtkPerLevel": 0.4,
+      "carriedDefPerLevel": 0,
+      "carriedHpPerLevel": 1
     },
     "VerdantSeal": {
       "upkeep": 2,
@@ -1366,7 +1372,13 @@
       "passivePerLevel": -0.02,
       "activeManaCost": 6,
       "activeDurationSeconds": 0,
-      "activeRadius": 2
+      "activeRadius": 2,
+      "carriedAtk": 0,
+      "carriedDef": 6,
+      "carriedHp": 25,
+      "carriedAtkPerLevel": 0,
+      "carriedDefPerLevel": 0.6,
+      "carriedHpPerLevel": 2.5
     },
     "ForemansSigil": {
       "upkeep": 2,
@@ -1374,7 +1386,13 @@
       "passivePerLevel": 0.2,
       "activeManaCost": 10,
       "activeDurationSeconds": 3600,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 8,
+      "carriedDef": 2,
+      "carriedHp": 0,
+      "carriedAtkPerLevel": 0.8,
+      "carriedDefPerLevel": 0.2,
+      "carriedHpPerLevel": 0
     },
     "GildedLedger": {
       "upkeep": 3,
@@ -1382,7 +1400,13 @@
       "passivePerLevel": 0.03,
       "activeManaCost": 0,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 2,
+      "carriedDef": 4,
+      "carriedHp": 15,
+      "carriedAtkPerLevel": 0.2,
+      "carriedDefPerLevel": 0.4,
+      "carriedHpPerLevel": 1.5
     },
     "WanderersCompass": {
       "upkeep": 2,
@@ -1390,7 +1414,13 @@
       "passivePerLevel": 0.1,
       "activeManaCost": 5,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 5,
+      "carriedDef": 3,
+      "carriedHp": 5,
+      "carriedAtkPerLevel": 0.5,
+      "carriedDefPerLevel": 0.3,
+      "carriedHpPerLevel": 0.5
     }
   },
   "quests": [

@@ -31,7 +31,7 @@ the script.
 
 | Sheet | What |
 |---|---|
-| `Artifacts` | One row per relic: passive stat/scope/value, hourly Mana `upkeep`, active effect + Mana cost, `cost_base`/`cost_growth` for Knowledge levels, `max_level`, the ruin it drops from |
+| `Artifacts` | One row per relic: passive stat/scope/value, hourly Mana `upkeep`, active effect + Mana cost, `cost_base`/`cost_growth` for Knowledge levels, `max_level`, the ruin it drops from, and `carried_atk`/`carried_def`/`carried_hp` (+ `_per_level`) — what the relic is worth to a party when a hero carries it down instead |
 | `Heroes` | One row per hero: unit `type`, trait stat/value, level curve, gacha rarity |
 | `Ruins` | One row per dungeon: `tier`, `difficulty`, `base_depth_seconds`, `depth_growth`, `max_depth`, supply costs, `affinity` (threat type), the artifact it holds |
 

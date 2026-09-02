@@ -219,7 +219,9 @@ const SHEETS = {
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
     'reward_gems'],
   Artifacts: ['id', 'upkeep', 'passive_base', 'passive_per_level', 'active_mana_cost',
-    'active_duration_seconds', 'active_radius'],
+    'active_duration_seconds', 'active_radius',
+    'carried_atk', 'carried_def', 'carried_hp',
+    'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
   Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
   Landmarks: ['id', 'kind', 'x', 'y', 'defended'],
@@ -697,6 +699,17 @@ async function importXlsx() {
       activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
       activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
       activeRadius: num(r, 'active_radius', { blankAs: 0 }),
+      // What the relic is worth when a hero carries it DOWN instead of the
+      // kingdom wearing it. Attuning costs Mana every hour; carrying costs
+      // none — so the trade is never "which is cheaper" but "which do I need
+      // right now". A relic with no carried stats at all would make that a
+      // non-question, so every one of them earns its keep underground.
+      carriedAtk: num(r, 'carried_atk', { blankAs: 0 }),
+      carriedDef: num(r, 'carried_def', { blankAs: 0 }),
+      carriedHp: num(r, 'carried_hp', { blankAs: 0 }),
+      carriedAtkPerLevel: num(r, 'carried_atk_per_level', { blankAs: 0 }),
+      carriedDefPerLevel: num(r, 'carried_def_per_level', { blankAs: 0 }),
+      carriedHpPerLevel: num(r, 'carried_hp_per_level', { blankAs: 0 }),
     };
   }
 
@@ -874,7 +887,9 @@ async function exportXlsx() {
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
     const a = b.artifacts[id];
     return [id, a.upkeep, a.passiveBase, a.passivePerLevel, a.activeManaCost,
-      a.activeDurationSeconds || '', a.activeRadius || ''];
+      a.activeDurationSeconds || '', a.activeRadius || '',
+      a.carriedAtk || '', a.carriedDef || '', a.carriedHp || '',
+      a.carriedAtkPerLevel || '', a.carriedDefPerLevel || '', a.carriedHpPerLevel || ''];
   }));
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
