@@ -9,7 +9,8 @@
 // where the decisions live.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { RUINS } from '../src/sim/data/definitions';
+import { maxArmyPower } from '../src/sim/army';
+import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { depthDurationMs } from '../src/sim/combat';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import { addAllTrainers, freshGame, freshPresenter, fund, map, reveal } from './helpers';
@@ -149,5 +150,19 @@ describe('the HUD only shows magic once the player has met it', () => {
     const info = game.manaInfo();
     expect(info.cap).toBeGreaterThan(0);
     expect(info.net).toBe(info.production - info.upkeep);
+  });
+});
+
+describe('the pre-filled party is always launchable', () => {
+  it('clamps to the army cap rather than opening pre-blocked', () => {
+    // Proposing a party the player cannot field reads as the game refusing
+    // its own suggestion.
+    const state = ready({ Warrior: 20, Archer: 20 });
+    const game = freshPresenter(state);
+    game.openExpedition(BARROW);
+    const power = game.expeditionParty
+      .reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
+    expect(power).toBeLessThanOrEqual(maxArmyPower(state));
+    expect(game.expeditionLaunchBlock()).toBeNull();
   });
 });

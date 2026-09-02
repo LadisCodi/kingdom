@@ -278,18 +278,25 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
   const stats = heroStats(game.state, view.id);
   const busy = heroIsBusy(game.state, view.id);
 
+  const art = spriteUrl(hero.sprite);
+
   if (!view.owned) {
+    // The SILHOUETTE, desaturated — not a stand-in glyph. A locked hero the
+    // player can already see is something to want; a padlock over a box is
+    // not. Same treatment the locked relics get.
     return card({
-      art: el('div', { class: 'rel-art rel-art--glyph is-locked' }, hero.glyph),
+      art: art
+        ? el('img', { class: 'rel-art is-locked', src: art, alt: '' })
+        : el('div', { class: 'rel-art rel-art--glyph is-locked' }, hero.glyph),
       name: hero.name,
-      desc: 'Not yet found — the banner might bring them',
+      desc: view.entry.fragments > 0
+        ? 'Not yet found — their fragments are adding up'
+        : 'Not yet found — the banner might bring them',
       locked: true,
     }, el('span', { class: 'rel-frag' },
       iconEl('sparkle', { size: 'sm' }),
       `${view.entry.fragments}`));
   }
-
-  const art = spriteUrl(hero.sprite);
   const body = el('div', { class: 'rel-card' },
     el('div', { class: 'rel-card-head' },
       art ? el('img', { class: 'rel-art', src: art, alt: '' })

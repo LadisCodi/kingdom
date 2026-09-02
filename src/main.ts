@@ -247,6 +247,11 @@ async function boot(): Promise<void> {
 
   // Dev time-warp (?dev): shift every timestamp back N minutes to demo offline catch-up.
   if (new URLSearchParams(location.search).has('dev')) {
+    // The presenter, reachable from the console. Every screen is a pure
+    // function of it, so `kingdom.openExpedition('HollowBarrow')` is a faster
+    // way to reach a sheet than finding its cell on the map — and it is the
+    // difference between checking a layout in ten seconds and in ten clicks.
+    (window as unknown as { kingdom: Game }).kingdom = game;
     const warp = (minutes: number) => {
       // Shift every stored timestamp into the past, then let the unified
       // advance replay the "absence".

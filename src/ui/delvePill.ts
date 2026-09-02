@@ -29,7 +29,15 @@ export function mountDelvePill(game: Game, root: HTMLElement): void {
       const ruin = RUINS[delve.ruinId];
       const failed = delve.outcome === 'failed';
       const atBottom = delve.depth >= ruin.maxDepth;
-      const carried = Object.values(delve.haul).reduce((a, b) => a + b, 0) + delve.haulFragments;
+      // The two numbers a player actually chases: the money and the chase
+      // currency. Summing every currency into "32 things" is evocative of
+      // nothing — and the checkpoint itemises the rest anyway.
+      const gold = delve.haul.Gold ?? 0;
+      const carried: string[] = [];
+      if (gold > 0) carried.push(`${gold} Gold`);
+      if (delve.haulFragments > 0) {
+        carried.push(`${delve.haulFragments} fragment${delve.haulFragments === 1 ? '' : 's'}`);
+      }
       const pill = el('button', {
         class: `dv-pill${failed ? ' is-failed' : ''}${atBottom ? ' is-bottom' : ''}`,
         type: 'button',
@@ -41,8 +49,8 @@ export function mountDelvePill(game: Game, root: HTMLElement): void {
             : atBottom
               ? `At the bottom of ${ruin.name}`
               : `Waiting at depth ${delve.depth} of ${ruin.maxDepth}`),
-          el('div', { class: 'dv-haul' }, carried > 0
-            ? `Carrying ${carried} things they have not brought home yet`
+          el('div', { class: 'dv-haul' }, carried.length > 0
+            ? `Carrying ${carried.join(' and ')}, not yet brought home`
             : 'Nothing to show for it yet')),
         el('span', { class: 'dv-go' }, '›'),
       );

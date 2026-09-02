@@ -1036,9 +1036,17 @@ export class Game {
     const order = (Object.keys(roster) as UnitId[])
       .filter((u) => roster[u] > 0)
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
-    this.expeditionParty = order
-      .slice(0, unitSlots(this.state))
-      .map((unitId) => ({ unitId, count: roster[unitId] }));
+    // Clamped to the army cap. Proposing a party the player cannot field is
+    // worse than proposing a small one: the sheet would open pre-filled AND
+    // pre-blocked, which reads as the game refusing its own suggestion.
+    let budget = maxArmyPower(this.state);
+    this.expeditionParty = [];
+    for (const unitId of order.slice(0, unitSlots(this.state))) {
+      const affordable = Math.min(roster[unitId], Math.floor(budget / UNITS[unitId].power));
+      if (affordable <= 0) continue;
+      budget -= affordable * UNITS[unitId].power;
+      this.expeditionParty.push({ unitId, count: affordable });
+    }
     this.setOverlay('expedition');
   }
 
