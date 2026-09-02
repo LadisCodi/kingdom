@@ -25,8 +25,8 @@
 // is INFORMATION, not dice — you do not know the next depth's threat type
 // until you commit to it.
 
-import { ARMY, HEROES, RUINS, UNITS } from './data/definitions';
-import type { HeroId, RuinId, UnitId } from './state';
+import { ARMY, ARTIFACTS, HEROES, RUINS, UNITS } from './data/definitions';
+import type { ArtifactId, HeroId, RuinId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
 export const BEATS: Record<UnitId, UnitId> = {
@@ -54,9 +54,31 @@ export interface PartySlot {
   count: number;
 }
 
+/** The relic a hero carried down, at the level it went down AT. Combat stays
+ *  pure — no `GameState` reaches this module — so the level is passed in the
+ *  same way `heroLevel` is. */
+export interface CarriedArtifact {
+  id: ArtifactId;
+  level: number;
+}
+
 export interface Party {
   heroId: HeroId | null;
   slots: readonly PartySlot[];
+  /** Carried into the delve, and therefore NOT attuned to the kingdom. */
+  artifact?: CarriedArtifact | null;
+}
+
+/** A carried relic's contribution at its level. */
+export function carriedStats(artifact: CarriedArtifact | null | undefined): PartyStats {
+  if (!artifact) return { atk: 0, def: 0, hp: 0 };
+  const c = ARTIFACTS[artifact.id].carried;
+  const levels = artifact.level - 1;
+  return {
+    atk: c.atk + c.atkPerLevel * levels,
+    def: c.def + c.defPerLevel * levels,
+    hp: c.hp + c.hpPerLevel * levels,
+  };
 }
 
 export interface PartyStats {
@@ -94,6 +116,12 @@ export function partyStats(party: Party, heroLevel = 1): PartyStats {
     // than the hero's own line.
     if (h.trait === 'PartyDefence') def *= 1 + h.traitValue;
   }
+  // The relic rides on top of the party, INCLUDING past a party-wide trait —
+  // the Warden shields the soldiers it commands, not the stone in its pack.
+  const relic = carriedStats(party.artifact);
+  atk += relic.atk;
+  def += relic.def;
+  hp += relic.hp;
   return { atk: Math.round(atk), def: Math.round(def), hp: Math.round(hp) };
 }
 
@@ -108,6 +136,12 @@ export function effectiveAttack(party: Party, threat: UnitId | 'Any', heroLevel 
     const h = HEROES[party.heroId];
     atk += (h.atk + h.atkPerLevel * (heroLevel - 1)) * typeMultiplier(h.unitType, threat);
   }
+  // A relic has no unit type, so its ATK is TYPE-NEUTRAL: it lands whole
+  // whatever is down there. That is deliberate, and it is what a relic is FOR
+  // — it is worth most in exactly the run where the matchup went against you,
+  // which makes socketing one a real answer to uncertainty rather than a flat
+  // power bump you would always take.
+  atk += carriedStats(party.artifact).atk;
   return Math.round(atk);
 }
 

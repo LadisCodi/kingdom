@@ -1625,6 +1625,11 @@ const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
   NotEnoughUnits: 'You do not have that many at home',
   OverArmyCap: 'More than your army can field',
   NotEnoughSupplies: 'Not enough supplies for the trip',
+  ArtifactNotOwned: 'You do not have that relic',
+  // Naming the passive being given up is the whole point of the message: the
+  // choice is the feature, so the refusal has to read as one.
+  ArtifactAttuned: 'That relic is attuned — unsocket it from the Reliquary first',
+  ArtifactCarried: 'That relic is already with another party',
 };
 
 /** How well a unit type answers a ruin's affinity — used only to pre-fill a

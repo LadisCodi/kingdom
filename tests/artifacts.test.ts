@@ -7,9 +7,10 @@
 // socket.
 import { describe, expect, it } from 'vitest';
 import {
-  artifactEntry, attune, attunementSlots, attunementSlotGemCost, buyAttunementSlot,
-  grantArtifact, isAttuned, isSlotLocked, levelUpArtifact, normaliseSlots, ownsArtifact,
-  passiveValue, raiseArtifactTier, slotUnlocksIn, syncArtifactModifiers,
+  artifactEntry, artifactIsCarried, artifactIsCommitted, attune, attunementSlots,
+  attunementSlotGemCost, buyAttunementSlot, grantArtifact, isAttuned, isSlotLocked,
+  levelUpArtifact, normaliseSlots, ownsArtifact, passiveValue, raiseArtifactTier,
+  slotUnlocksIn, syncArtifactModifiers,
 } from '../src/sim/artifacts';
 import { cast, castBlock, validCastCells } from '../src/sim/casting';
 import { levelCapForTier, levelCost, tierCost, totalLevelCost } from '../src/sim/collection';
@@ -293,5 +294,43 @@ describe('the fog discount reaches both the bar and the charge', () => {
     const full = revealCostForCell(state, map, frontier);
     attune(state, 0, 'DowsingRod', T0);
     expect(revealCostForCell(state, map, frontier)).toBeLessThanOrEqual(full);
+  });
+});
+
+// The socket half of attune-or-arm (Docs/features/heroes-and-gacha.md §2).
+// The delve half lives in expeditions.test.ts; what matters HERE is that the
+// Reliquary cannot take back a relic the sim has already committed, and that
+// a carried relic draws no upkeep — the asymmetry the whole trade rests on.
+describe('a relic cannot be worn and carried at once', () => {
+  it('a relic underground is committed, and the socket says so', () => {
+    const state = withRelic('DowsingRod');
+    expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
+
+    // Standing in for a launch: what the sim records is a delve holding it.
+    state.delves.push({
+      id: 'd1', ruinId: 'HollowBarrow', heroId: 'Warden',
+      artifactId: 'DowsingRod', artifactLevel: 1,
+      party: [{ unitId: 'Warrior', count: 1 }], depth: 0, partyHp: 10, maxPartyHp: 10,
+      haul: {}, haulFragments: 0, phase: 'descending', depthEndsAt: T0 + 1000,
+      standingOrder: null, threat: 'Any', outcome: null,
+    });
+    expect(artifactIsCarried(state, 'DowsingRod')).toBe(true);
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
+    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Carried');
+    // Refused, so the socket is untouched AND unlocked — a refusal must never
+    // cost the player the five minutes a real swap costs.
+    expect(state.artifacts.attuned[0]).toBe(null);
+    expect(isSlotLocked(state, 0, T0)).toBe(false);
+    expect(manaUpkeep(state)).toBe(0);
+  });
+
+  it('an attuned relic still un-attunes normally — the rule only blocks the way in', () => {
+    const state = withRelic('DowsingRod');
+    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
+    const after = T0 + ATTUNEMENT.swapLockSeconds * 1000;
+    expect(attune(state, 0, null, after)).toBe('Unattuned');
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
   });
 });

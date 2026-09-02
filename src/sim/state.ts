@@ -178,6 +178,13 @@ export interface Delve {
   id: string;
   ruinId: RuinId;
   heroId: HeroId;
+  /** The relic that went down with them, or null. An artifact is attuned to
+   *  the kingdom OR carried by a hero — never both, which is the rule that
+   *  welds the city half of the game to the delve half. */
+  artifactId: ArtifactId | null;
+  /** The level it went down AT. Snapshotted beside `maxPartyHp`, so levelling
+   *  a relic back home never retroactively re-arms a party already below. */
+  artifactLevel: number;
   party: PartySlotState[];
   /** Depths already cleared. */
   depth: number;

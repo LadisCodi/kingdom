@@ -34,11 +34,14 @@
 import {
   ARTIFACTS, DELVE, HEROES, PARTY, RUINS, UNITS,
 } from './data/definitions';
-import { grantArtifact, addArtifactFragments } from './artifacts';
+import {
+  addArtifactFragments, artifactEntry, artifactIsCarried, grantArtifact, isAttuned,
+  ownsArtifact,
+} from './artifacts';
 import { addHeroXp } from './heroes';
 import {
   depthDurationMs, guaranteedDepth, matchupAgainst, partyStats, resolveDepth,
-  worstThreatFor, type Party, type PartySlot,
+  worstThreatFor, type CarriedArtifact, type Party, type PartySlot,
 } from './combat';
 import { availableRoster, maxArmyPower } from './army';
 import { fogState } from './fog';
@@ -115,6 +118,10 @@ export const ownsHero = (state: GameState, id: HeroId): boolean => state.heroes.
 export const heroIsBusy = (state: GameState, id: HeroId): boolean =>
   state.delves.some((d) => d.heroId === id && d.phase !== 'done');
 
+/** What a delve's relic contributes, at the level it went down at. */
+export const carriedOf = (delve: Delve): CarriedArtifact | null =>
+  delve.artifactId === null ? null : { id: delve.artifactId, level: delve.artifactLevel };
+
 export const freeHeroes = (state: GameState): HeroId[] =>
   state.heroes.owned.filter((id) => !heroIsBusy(state, id));
 
@@ -122,7 +129,8 @@ export const freeHeroes = (state: GameState): HeroId[] =>
 
 export type LaunchBlock =
   | 'RuinNotFound' | 'NoHero' | 'HeroBusy' | 'EmptyParty' | 'TooManySlots'
-  | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies';
+  | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies'
+  | 'ArtifactNotOwned' | 'ArtifactAttuned' | 'ArtifactCarried';
 
 export function launchBlock(
   state: GameState,
@@ -130,6 +138,7 @@ export function launchBlock(
   ruinId: RuinId,
   heroId: HeroId | null,
   slots: readonly PartySlot[],
+  artifactId: ArtifactId | null = null,
 ): LaunchBlock | null {
   if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
   if (heroId === null || !ownsHero(state, heroId)) return 'NoHero';
@@ -144,6 +153,14 @@ export function launchBlock(
   const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
   if (power > maxArmyPower(state)) return 'OverArmyCap';
   if (!canAfford(state.city.wallet, supplyCost(ruinId, heroId))) return 'NotEnoughSupplies';
+  if (artifactId !== null) {
+    if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
+    // Attune OR arm. Refusing here rather than silently un-attuning is the
+    // point: the player gives up a passive they are living off to arm a hero,
+    // so the sim must never make that choice on their behalf.
+    if (isAttuned(state, artifactId)) return 'ArtifactAttuned';
+    if (artifactIsCarried(state, artifactId)) return 'ArtifactCarried';
+  }
   return null;
 }
 
@@ -157,17 +174,22 @@ export function launchDelve(
   slots: readonly PartySlot[],
   now: number,
   standingOrder: number | null = null,
+  artifactId: ArtifactId | null = null,
 ): LaunchResult {
-  const block = launchBlock(state, map, ruinId, heroId, slots);
+  const block = launchBlock(state, map, ruinId, heroId, slots, artifactId);
   if (block !== null) return block;
   pay(state.city.wallet, supplyCost(ruinId, heroId));
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
-  const party: Party = { heroId, slots: committed };
+  const artifactLevel = artifactId === null ? 1 : artifactEntry(state, artifactId).level;
+  const artifact = artifactId === null ? null : { id: artifactId, level: artifactLevel };
+  const party: Party = { heroId, slots: committed, artifact };
   const hp = partyStats(party, heroLevel(state, heroId)).hp;
   state.delves.push({
     id: newId(state, 'delve'),
     ruinId,
     heroId,
+    artifactId,
+    artifactLevel,
     party: committed,
     depth: 0,
     partyHp: hp,
@@ -254,7 +276,9 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
     while (delve.phase === 'descending' && delve.depthEndsAt <= toTime) {
       const ruin = RUINS[delve.ruinId];
       const depth = delve.depth + 1;
-      const party: Party = { heroId: delve.heroId, slots: delve.party };
+      const party: Party = {
+        heroId: delve.heroId, slots: delve.party, artifact: carriedOf(delve),
+      };
       const level = heroLevel(state, delve.heroId);
       const outcome = resolveDepth(party, delve.ruinId, depth, delve.threat, level);
       const survived = outcome.cleared && delve.partyHp - outcome.damage > 0;
@@ -411,9 +435,13 @@ export function previewExpedition(
   ruinId: RuinId,
   heroId: HeroId | null,
   slots: readonly PartySlot[],
+  artifactId: ArtifactId | null = null,
 ): ExpeditionPreview {
   const committed = slots.filter((s) => s.count > 0);
-  const party: Party = { heroId, slots: committed };
+  const artifact: CarriedArtifact | null = artifactId === null
+    ? null
+    : { id: artifactId, level: artifactEntry(state, artifactId).level };
+  const party: Party = { heroId, slots: committed, artifact };
   const level = heroId === null ? 1 : heroLevel(state, heroId);
   const stats = partyStats(party, level);
   return {

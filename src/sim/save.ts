@@ -224,6 +224,8 @@ export function serialize(state: GameState, now: number): SaveFile {
           ID: d.id,
           RuinID: d.ruinId,
           HeroID: d.heroId,
+          ArtifactID: d.artifactId,
+          ArtifactLevel: d.artifactLevel,
           Party: d.party.map((p) => ({ UnitID: p.unitId, Count: p.count })),
           Depth: d.depth,
           PartyHp: d.partyHp,
@@ -463,6 +465,11 @@ export function deserialize(
       id: d.ID,
       ruinId: d.RuinID,
       heroId: d.HeroID,
+      // A save written before attune-or-arm shipped has no relic aboard, and
+      // reads back as a party that carried nothing — which is exactly what it
+      // was. Additive, so no migrator; see engine-seams.md §4.
+      artifactId: d.ArtifactID ?? null,
+      artifactLevel: d.ArtifactLevel ?? 1,
       party: ((d.Party ?? []) as any[]).map((p) => ({ unitId: p.UnitID, count: p.Count })),
       depth: d.Depth ?? 0,
       partyHp: d.PartyHp ?? 0,

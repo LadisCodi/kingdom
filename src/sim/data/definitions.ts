@@ -1254,4 +1254,4 @@ export const GAME_VERSION = '0.1.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
 // migrator, only the version (see Docs/features/engine-seams.md §4).
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
