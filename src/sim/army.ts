@@ -20,7 +20,8 @@
 // moment units are expedition capital rather than a quest gate, because it
 // removes the only pacing on party size.
 
-import { ARMY, DISTRICTS, UNITS, levelIndexed } from './data/definitions';
+import { ARMY, DISTRICTS, TAP, UNITS, levelIndexed } from './data/definitions';
+import { payMana } from './mana';
 import { isTechComplete } from './research';
 import {
   newId, type District, type GameState, type UnitId,
@@ -120,10 +121,13 @@ export function trainingProgress(state: GameState, buildingId: string, now: numb
   return total <= 0 ? 1 : Math.min(1, Math.max(0, (now - item.startedAt) / total));
 }
 
-export type TrainingTapResult = 'Boosted' | 'Complete' | 'NoTraining';
+export type TrainingTapResult = 'Boosted' | 'Complete' | 'NoTraining' | 'NoMana';
 
 /** Tap a military building to hurry the unit in training — the same beat the
- *  Townhall already has for villagers, so buildings behave consistently. */
+ *  Townhall already has for villagers, so buildings behave consistently.
+ *
+ *  Costs energy for the same reason every other hurrying tap does, and only
+ *  once there is something to hurry. */
 export function trainingTap(
   state: GameState,
   building: District,
@@ -131,6 +135,7 @@ export function trainingTap(
 ): TrainingTapResult {
   const item = unitInTraining(state, building.uniqueId);
   if (!item || item.startedAt === null) return 'NoTraining';
+  if (!payMana(state, TAP.manaCost)) return 'NoMana';
   item.startedAt -= ARMY.trainTapBoostSeconds * 1000;
   return advanceArmyTraining(state, now).length > 0 ? 'Complete' : 'Boosted';
 }

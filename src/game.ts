@@ -352,11 +352,7 @@ export class Game {
             this.tapFeedback(district.location, 'tapHouse');
             this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
           } else if (result === 'NoMana') {
-            // Say WHICH pool is empty. A silent refusal reads as a broken tap,
-            // which is exactly how the old per-house cycle came across.
-            playSfx('error');
-            this.shake(['Mana']);
-            this.floaters.add(cell, `${icon('Mana')} empty`);
+            this.outOfMana(cell);
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -366,12 +362,14 @@ export class Game {
         // as tapping the Townhall hurries a villager.
         if (district && district.state === 'Built' && DISTRICTS[district.definitionId].trains) {
           const tap = trainingTap(this.state, district, this.now());
-          if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
           if (tap === 'Complete') {
             playSfx('unitTrained');
             this.floaters.add(cell, `+1 ${DISTRICTS[district.definitionId].trains}`);
           } else if (tap === 'Boosted') {
             this.floaters.add(cell, '⏩');
+          } else if (tap === 'NoMana') {
+            this.outOfMana(cell);
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -380,10 +378,11 @@ export class Game {
         // Townhall: tapping adds cycle progress (and opens/keeps its card).
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
           const tap = townhallTap(this.state, this.now());
-          if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
           if (tap === 'TrainingComplete') playSfx('villagerTrained');
           if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
           else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
+          else if (tap === 'NoMana') this.outOfMana(cell);
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -415,6 +414,15 @@ export class Game {
     playSfx(sfx);
   }
 
+  /** Out of energy, said once and in one place: every tap that spends Mana
+   *  refuses the same way, so the player learns one refusal rather than four.
+   *  Names the pool, because a silent no reads as a broken tap. */
+  private outOfMana(cell: Coord): void {
+    playSfx('error');
+    this.shake(['Mana']);
+    this.floaters.add(cell, `${icon('Mana')} empty`);
+  }
+
   /** One collect on a resource cell, with feedback. `autoRepeat` marks the
    *  ticks a held pointer generates — those are cooldown-gated, deliberate
    *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
@@ -428,14 +436,10 @@ export class Game {
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
-    } else if (result === 'NoMana') {
-      // Out of energy. Say which pool, and only on a deliberate tap — a held
-      // pointer would otherwise shake the header once a frame.
-      if (!autoRepeat) {
-        playSfx('error');
-        this.shake(['Mana']);
-        this.floaters.add(cell, `${icon('Mana')} empty`);
-      }
+    } else if (result === 'NoMana' && !autoRepeat) {
+      // A held pointer stays silent — it would otherwise shake the header
+      // once a frame for as long as the finger is down.
+      this.outOfMana(cell);
     }
     return result;
   }
@@ -664,16 +668,6 @@ export class Game {
       production: manaProduction(this.state),
       upkeep: manaUpkeep(this.state),
     };
-  }
-
-  /** Magic stays out of the HUD until the player has met it — a gauge with
-   *  nothing to spend on is exactly the spreadsheet chrome the redesign
-   *  exists to kill. Sticky once true. */
-  showsMana(): boolean {
-    return this.state.artifacts.owned.length > 0
-      || isTechComplete(this.state, 'Attunement')
-      || Object.keys(this.state.landmarks.claimed).length > 0
-      || visibleLandmarks(this.state, this.map).length > 0;
   }
 
   confirmBuild(): void {
@@ -1577,6 +1571,12 @@ export class Game {
    * workers only while something is being staffed. Showing the live one
    * turns three pieces of trivia into one piece of advice.
    */
+  /** Housed villagers and the homes to hold them — a plank read-out now, so
+   *  it is its own accessor rather than a case of the contextual slot. */
+  population(): { value: number; max: number } {
+    return { value: this.state.city.population, max: maxPopulation(this.state) };
+  }
+
   hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {

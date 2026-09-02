@@ -129,21 +129,18 @@ describe('the checkpoint', () => {
   });
 });
 
-describe('the HUD only shows magic once the player has met it', () => {
-  it('is hidden with no landmark in sight and no relic', () => {
+// Magic used to be hidden from the HUD until the player had met it — a gauge
+// with nothing to spend on was exactly the spreadsheet chrome the redesign
+// killed. Mana now pays for every tap, so hiding it would hide the reason a
+// tap refused: the gate is gone and the gauge is unconditional.
+describe('the Mana gauge', () => {
+  it('is readable from the first minute, with nothing met yet', () => {
     const game = freshPresenter(freshGame());
-    // The starting view has a landmark in it deliberately, to teach the
-    // mechanic — so this asserts the RULE by removing the reason.
     game.state.fog.revealed = {};
     game.state.fog.discovered = {};
-    expect(game.showsMana()).toBe(false);
-  });
-
-  it('is sticky once true', () => {
-    const game = freshPresenter(freshGame());
-    game.state.fog.revealed = {};
-    game.state.artifacts.owned.push('DowsingRod');
-    expect(game.showsMana()).toBe(true);
+    const m = game.manaInfo();
+    expect(m.cap).toBeGreaterThan(0);
+    expect(m.value).toBe(m.cap); // a new kingdom starts full
   });
 
   it('shows one pool and one net rate — never the breakdown', () => {

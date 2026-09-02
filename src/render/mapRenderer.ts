@@ -9,6 +9,7 @@ import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { fogState, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
+import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
@@ -154,6 +155,27 @@ export function drawMap(
     ctx.fillText(text, x + size - r - 2, y + r + 3);
   };
 
+  /** A dark pill of text centred on (cx) and sitting just ABOVE (bottomY) —
+   *  the same shape the yield labels use, so a count over a building and a
+   *  yield over a cell read as the same kind of thing. */
+  const drawCountPill = (cx: number, bottomY: number, text: string): void => {
+    const fontSize = snapPx(size * 0.17, 9);
+    ctx.font = labelFont(fontSize, 9, true);
+    const padX = fontSize * 0.5;
+    const pillW = ctx.measureText(text).width + padX * 2;
+    const pillH = fontSize * 1.45;
+    const pillX = cx - pillW / 2;
+    const pillY = bottomY - pillH;
+    ctx.fillStyle = PALETTE.labelPill;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = PALETTE.label;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx, pillY + pillH / 2 + fontSize * 0.05);
+  };
+
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
   // separate pass — a multi-cell sprite drawn here would be overpainted by
   // the terrain fill of the following footprint cells.
@@ -292,11 +314,21 @@ export function drawMap(
       // A district that is itself a resource cell (FarmLands → Crops,
       // lived-in Housing → Taxes): wear/recovery bar.
       if (def.providesHarvestSource !== null) drawResourceState(district.location, x, y);
-      // Townhall: villager-training progress bar.
-      if (district.definitionId === 'Townhall' && state.city.training !== null) {
-        const totalMs = TRAINING.seconds * 1000;
-        const progress = Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
-        drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+      // Townhall: villager-training progress bar, and the population count.
+      //
+      // Population is drawn HERE rather than in the header because the
+      // Townhall is where villagers come from: the number and the button that
+      // changes it are the same object, so wanting more people and knowing
+      // how many you have are one glance instead of two. It also buys the
+      // header back the width the widget was costing on a phone.
+      if (district.definitionId === 'Townhall') {
+        drawCountPill(x + fw / 2, y - 2, `👥 ${state.city.population}/${maxPopulation(state)}`);
+        if (state.city.training !== null) {
+          const totalMs = TRAINING.seconds * 1000;
+          const progress =
+            Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
+          drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+        }
       }
       // Needs-workers warning.
       if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {

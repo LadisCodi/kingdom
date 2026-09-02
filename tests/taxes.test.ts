@@ -13,6 +13,7 @@ import { describe, expect, it } from 'vitest';
 import { TAP, TAXES } from '../src/sim/data/definitions';
 import { tapCell } from '../src/sim/harvest';
 import { houseTap, queueTraining } from '../src/sim/population';
+import { townhallTap } from '../src/sim/commands';
 import { mana } from '../src/sim/mana';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import { getWallet, type GameState } from '../src/sim/state';
@@ -168,5 +169,27 @@ describe('collecting from a house', () => {
     expect(houseTap(state, house(state), T0).result).toBe('NoResidents');
     state.city.population = 2;
     expect(tapCell(state, map, HOUSE, T0)).toBe('NotHarvestable'); // no extraction
+  });
+});
+
+// Every tap that hurries a generator pays the same energy, so the rule is one
+// thing to learn rather than four. A tap with nothing to hurry is free.
+describe('hurrying a building costs the same energy', () => {
+  it('the Townhall villager tap charges, and an idle Townhall is free', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE); // somewhere for a villager to live
+    fund(state, { Food: 500 });
+    const before = mana(state);
+    expect(townhallTap(state, T0)).toBe('NoTraining'); // nothing training yet
+    expect(mana(state)).toBe(before);
+
+    queueTraining(state, T0);
+    expect(townhallTap(state, T0)).toBe('Boosted');
+    expect(mana(state)).toBe(before - TAP.manaCost);
+
+    state.city.wallet.Mana = 0;
+    const startedAt = state.city.training!.startedAt;
+    expect(townhallTap(state, T0)).toBe('NoMana');
+    expect(state.city.training!.startedAt).toBe(startedAt); // nothing hurried
   });
 });

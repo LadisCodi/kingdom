@@ -1,7 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { CITY_DEF, DISTRICTS, TRAINING } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TAP, TRAINING } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
@@ -17,7 +17,7 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { accrueKnowledge, accrueMana } from './mana';
+import { accrueKnowledge, accrueMana, payMana } from './mana';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
@@ -194,13 +194,18 @@ export function changeWorkers(
 
 // -------------------------------------------------------------- townhall tap
 
-export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining';
+export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining' | 'NoMana';
 
 /** Tap the Townhall: add tapBoostSeconds of progress to the villager
  *  currently in training (completing it early when the boost covers the
- *  remainder — the next queued villager then starts immediately). */
+ *  remainder — the next queued villager then starts immediately).
+ *
+ *  Costs energy like every other tap that hurries a generator along. Charged
+ *  AFTER the "is anything training" check, so tapping an idle Townhall is
+ *  free — you cannot pay for nothing. */
 export function townhallTap(state: GameState, now: number): TownhallTapResult {
   if (state.city.training === null) return 'NoTraining';
+  if (!payMana(state, TAP.manaCost)) return 'NoMana';
   state.city.training.startedAt -= TRAINING.tapBoostSeconds * 1000;
   return advanceCityLife(state, now).trained > 0 ? 'TrainingComplete' : 'Boosted';
 }

@@ -257,8 +257,14 @@ badge is developer information occupying prime real estate.
 
 - *Primary, always:* **Gold**, **Food**, **Wood** — the three that gate
   the early game. Icon + tabular value, large.
-- *Primary, right side:* **Gems**, visually separated (premium), with the
-  `+` affordance kept as-is.
+- *Primary, right side:* **Mana**, then **Gems** past the rope, and the
+  `+` affordance on Gems kept as-is. *(Amended 2026-09-02.)* Mana was a
+  contextual gauge on the row under the plank, shown only once the player had
+  met magic — right when it only paid for relics. It now pays for **every
+  tap**, so it is unconditional and it is pinned: the coins scroll inside
+  their own share of the row, while Mana and Gems never leave the screen.
+  A player whose tap just refused must be able to read why without scrolling
+  the header, and Gems is what refills it.
 - *Contextual:* Stone and Iron **appear once their gating tech is complete
   (Masonry, Mining) or once the balance is above zero.** The tech clause is
   what makes it sticky — a counter must not vanish when the player spends
@@ -274,9 +280,17 @@ badge is developer information occupying prime real estate.
 
   | When | Shows |
   |---|---|
-  | Default | **Population `n/max`** — tap to jump to the Townhall |
+  | ~~Default~~ | ~~**Population `n/max`**~~ — **moved to the world, 2026-09-02** |
   | A screen that can reassign workers is open (a worker building's card) | **Workers `working/free`** |
   | A screen that needs builders is open (Build, placement) | **Free builders `n`** |
+
+  **Population left the HUD entirely (2026-09-02)** and is drawn on the map as
+  a pill over the **Townhall**: `👥 current/max`, no portrait and no pips.
+  The Townhall is where villagers are trained, so the number and the control
+  that changes it are the same object — wanting more people and knowing how
+  many you have became one glance instead of two. It also bought the header
+  back the width the widget cost, which is what let Mana in. The plaque is
+  therefore empty by default and hidden.
 
   Three permanent counters is exactly the spreadsheet problem this document
   opens with: builders only matter while you are queueing something, and
@@ -284,9 +298,15 @@ badge is developer information occupying prime real estate.
   one that is live turns three pieces of trivia into one piece of advice.
 - *Move out:* the save-mode badge belongs in Settings.
 
-**States to mock.** Default (3 coins + population plaque), expanded purse, a
-counter mid-shake in `clay`, Stone appearing for the first time, and the
-plaque in each of its three states.
+**States to mock.** Default (3 coins + Mana + Gems, no plaque), expanded
+purse, a counter mid-shake in `clay`, Stone appearing for the first time, the
+plaque in its two remaining states, and the population pill over the Townhall.
+
+**Narrow screens.** Eight widgets do not fit a 390px row, which is the problem
+§5.1 opened with — so the row never wraps. The coins scroll horizontally
+inside their own box and everything from Mana rightwards is pinned, and below
+560px the Mana gauge drops its `+N/h` rate: "how full is my pool" is the
+number a refused tap sends you to read, and the rate is not it.
 
 ---
 

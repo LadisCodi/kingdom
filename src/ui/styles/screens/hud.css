@@ -17,7 +17,37 @@
   border-bottom: var(--outline) solid var(--wood-dark);
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 rgba(60, 36, 18, 0.35);
 }
-.hud-coins { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+/* ONE line at any width, and the right-hand group never leaves the screen.
+ *
+ * §5.1 cut this row to three coins because nine widgets wrapped onto two
+ * lines and none of them read. Population and Mana have earned their way
+ * back, which puts eight widgets in a 390px row again — so instead of
+ * wrapping, the COINS scroll inside their own share and everything from
+ * population rightwards is pinned. Mana is the energy every tap spends and
+ * Gems is what refills it: those two have to be readable at the moment a tap
+ * refuses, which is exactly when a player would otherwise be scrolling the
+ * header to find out why. The coins are the ones that can afford to wait. */
+.hud-coins {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hud-coins::-webkit-scrollbar { display: none; }
+.hud-coins > * { flex: none; }
+.hud-plank > .hud-mana,
+.hud-plank > .hud-divider,
+.hud-plank > .hud-gems { flex: none; }
+
+/* On a phone the net rate is the first thing to go: "how full is my pool" is
+ * the number a refused tap sends you to read, and "+4/h" is not it. */
+@media (max-width: 560px) {
+  .hud-plank { gap: 6px; padding: 6px 8px; }
+  .hud-mana-rate { display: none; }
+}
 
 .hud-coin,
 .hud-gems {
@@ -136,9 +166,11 @@
   font-weight: 700;
 }
 
-/* The row under the plank: the contextual plaque, and the Mana gauge once
- * the player has met magic at all. */
+/* The row under the plank: the contextual plaque alone now. Population moved
+ * up to the plank and Mana with it, so this row is empty — and therefore
+ * invisible — unless the player is staffing or building something. */
 .hud-under { display: flex; align-items: flex-start; gap: 8px; }
+.hud-plaque[hidden] { display: none; }
 
 /* One pool, one net rate — the breakdown lives in the reliquary. The fill is
  * a real bar rather than a number to interpret, because the thing that
@@ -162,9 +194,10 @@
   color: var(--parchment);
   background: #2c3c66;
   border: 2px solid #1b2745;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  box-shadow: 0 2px 0 rgba(20, 28, 50, 0.4);
+  /* On the plank now, beside the coins, so it is a pill like they are —
+   * it used to hang under the plank as a tab. */
+  border-radius: 999px;
+  padding: 4px 10px;
   cursor: pointer;
 }
 .hud-mana > * { position: relative; }
