@@ -46,7 +46,10 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   if (claimed) {
     body.append(el('div', { class: 'site-note' },
       iconEl('tick', { size: 'sm' }),
-      `Feeding the kingdom ${MANA.landmarkProduction} Mana an hour. Total: ${manaProduction(game.state)}/h.`));
+      // "Production", spelled out: the header shows the NET rate, and two
+      // different numbers with the same units read as a contradiction.
+      `Feeding the kingdom ${MANA.landmarkProduction} Mana an hour. `
+      + `Total production: ${manaProduction(game.state)}/h.`));
     return panel(body);
   }
 
