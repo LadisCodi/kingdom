@@ -3,8 +3,9 @@ import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { Camera } from '../src/render/camera';
+import { DISTRICTS, type DistrictDef } from '../src/sim/data/definitions';
 import {
-  coordKey, type Coord, type DistrictId, type GameState, type TechId,
+  coordKey, type Coord, type DistrictId, type GameState, type TechId, type UnitId,
 } from '../src/sim/state';
 
 export const map = buildMapData();
@@ -51,6 +52,23 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
     definitionId, level: 1, assignedWorkers: 0, location, state: 'Built', visualVariant: 1,
     lastTapAt: 0,
   });
+};
+
+/** Test setup: the military building a unit type needs, plus enough army cap
+ *  to actually recruit. Units are trained by their OWN building now, so almost
+ *  every army assertion needs one. */
+export const addTrainer = (state: GameState, unitId: UnitId, location: Coord): void => {
+  const definitionId = (Object.values(DISTRICTS)
+    .find((d) => d.trains === unitId) as DistrictDef).id;
+  addBuilt(state, definitionId, location);
+};
+
+/** Drop the four military buildings somewhere out of the way, for tests that
+ *  only care that the army exists. */
+export const addAllTrainers = (state: GameState): void => {
+  const cells: Coord[] = [{ x: 4, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 }];
+  const units: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
+  units.forEach((u, i) => addTrainer(state, u, cells[i]));
 };
 
 /** Test setup: mark a technology as already researched. */

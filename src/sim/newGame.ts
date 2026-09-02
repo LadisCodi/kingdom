@@ -24,6 +24,7 @@ export function newGame(map: MapData, now: number): GameState {
       districts: [],
       queue: [],
       training: null,
+      armyQueue: [],
       lastTaxAt: now,
       lastManaAt: now,
     },
@@ -41,6 +42,15 @@ export function newGame(map: MapData, now: number): GameState {
     workers: [],
     army: [],
     research: { completed: [], active: [], slotsPurchased: 0 },
+    delves: [],
+    // One hero free at the start — the gacha sells breadth and speed, never
+    // access, so the system has to be reachable without it.
+    heroes: {
+      owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
+      fragments: {}, xp: {}, partySlotsPurchased: 0,
+    },
+    gacha: { pullCounts: {}, pityCounters: {} },
+    ruinsCleared: {},
     landmarks: { claimed: {}, cleared: {} },
     artifacts: {
       owned: [], levels: {}, tiers: {}, fragments: {},

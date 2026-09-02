@@ -14,7 +14,7 @@ import { edgeCells } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
 import { buyUpgrade } from '../src/sim/upgrades';
-import { completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
+import { addAllTrainers, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
@@ -49,12 +49,13 @@ describe('technology basics', () => {
   it('gates units: every unit has its technology (Warrior, Archery)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 100 });
+    addAllTrainers(state);
     expect(trainUnit(state, 'Warrior')).toBe('TechRequired');
     completeTech(state, 'Warrior');
-    expect(trainUnit(state, 'Warrior')).toBe('Trained');
+    expect(trainUnit(state, 'Warrior')).toBe('Queued');
     expect(trainUnit(state, 'Archer')).toBe('TechRequired');
     completeTech(state, 'Archery');
-    expect(trainUnit(state, 'Archer')).toBe('Trained');
+    expect(trainUnit(state, 'Archer')).toBe('Queued');
   });
 
   it('the requires tree: Cavalry is blocked until Warrior is done', () => {

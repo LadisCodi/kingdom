@@ -13,7 +13,7 @@ import { isTechComplete, startTech } from '../src/sim/research';
 import { revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
-import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 describe('full harvest-loop playthrough (headless smoke)', () => {
   it('plays the whole loop', () => {
@@ -150,24 +150,35 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(sellGoods(state, 'Wood', 10)).toMatchObject({ result: 'Sold', gold: 30 });
     expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBeforeSale + 30);
 
-    // --- Army: every unit sits behind a technology.
+    // --- Army: a unit sits behind a technology AND behind its own building,
+    // and the cap comes from the buildings rather than from the Townhall.
     expect(trainUnit(state, 'Warrior')).toBe('TechRequired');
     completeTech(state, 'Warrior');
+    expect(trainUnit(state, 'Warrior')).toBe('NoBuilding');
+    expect(maxArmyPower(state)).toBe(0);
+    addAllTrainers(state);
+    expect(maxArmyPower(state)).toBe(24); // four buildings at level 1
     expect(trainUnit(state, 'Cavalry')).toBe('TechRequired');
     completeTech(state, 'Archery');
     completeTech(state, 'Cavalry');
-    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
-    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
-    expect(trainUnit(state, 'Archer')).toBe('ArmyAtCapacity');
-    expect(armyPower(state)).toBe(10);
+    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
+    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
+    // Training takes real time now, and a building runs ONE line: two Cavalry
+    // is 2 x 60s at the Stables, not 60s in parallel.
+    now += 61_000;
+    tickAt(state, now);
+    expect(armyPower(state)).toBe(7); // the first one only
+    now += 60_000;
+    tickAt(state, now);
+    expect(armyPower(state)).toBe(14);
 
-    // --- The Townhall upgrade (30 s) raises the army cap AND the Housing count.
+    // --- The Townhall upgrade (30 s) raises the Housing count, not the army.
     expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
     tickAt(state, now);
     now += 31_000;
     tickAt(state, now);
     expect(townhall(state).level).toBe(2);
-    expect(maxArmyPower(state)).toBe(20);
+    expect(maxArmyPower(state)).toBe(24); // unchanged — it is a city decision
 
     // --- Two more houses at TH2, then queue BOTH new villagers up front.
     for (const cell of [{ x: -1, y: -1 }, { x: 2, y: 1 }]) {

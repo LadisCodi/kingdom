@@ -51,6 +51,9 @@ const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 const DISTRICT_IDS = [
   'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine',
   'Sanctum',
+  // Military: each unit type is trained by its own building, and building and
+  // upgrading them is what raises the army cap.
+  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
 const TECH_IDS = [
   'Forestry',
@@ -81,6 +84,10 @@ const LANDMARK_KINDS = ['Shrine', 'StandingStones', 'Leyspring'];
 const RUIN_IDS = [
   'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
 ];
+const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
+const HERO_TRAITS = [
+  'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
+];
 const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
 ];
@@ -110,7 +117,6 @@ const SETTINGS = [
   ['city.population_cost_base', 'city.populationCostBase'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
   ['city.build_queue_capacity', 'city.buildQueueCapacity'],
-  ['city.max_army_power_per_townhall_level', 'city.maxArmyPowerPerTownhallLevel', 'list'],
   ['kingdom.start_builders', 'kingdom.startBuilders'],
   ['kingdom.max_builders', 'kingdom.maxBuilders'],
   ['research.tech_slots', 'research.techSlots'],
@@ -142,6 +148,36 @@ const SETTINGS = [
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
   ['knowledge.drip_per_ruin_per_hour', 'knowledge.dripPerRuinPerHour'],
+  // Combat is a SCORING PASS, not a simulation — these six numbers are the
+  // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
+  // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
+  ['army.train_tap_boost_seconds', 'army.trainTapBoostSeconds'],
+  ['army.type_advantage', 'army.typeAdvantage'],
+  ['army.type_disadvantage', 'army.typeDisadvantage'],
+  ['army.threat_floor_fraction', 'army.threatFloorFraction'],
+  ['army.damage_per_strength', 'army.damagePerStrength'],
+  ['army.damage_absorbed_per_defence', 'army.damageAbsorbedPerDefence'],
+  // Delves. `fail_haul_loss` is the number that most needs playtest rather
+  // than argument: lower is gentler and may make pushing automatic, higher
+  // bites but starts to feel like the loss aversion the positioning rules out.
+  ['delve.gold_per_depth_per_tier', 'delve.goldPerDepthPerTier'],
+  ['delve.material_per_depth_per_tier', 'delve.materialPerDepthPerTier'],
+  ['delve.knowledge_per_depth_per_tier', 'delve.knowledgePerDepthPerTier'],
+  ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
+  ['delve.fail_haul_loss', 'delve.failHaulLoss'],
+  ['delve.first_clear_gems', 'delve.firstClearGems'],
+  ['party.base_slots', 'party.baseSlots'],
+  ['party.max_slots', 'party.maxSlots'],
+  ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
+  ['party.slot_gem_cost_growth', 'party.slotGemCostGrowth'],
+  // The gacha. Pity is MANDATORY: it is the single thing that makes a gacha
+  // read as fair rather than predatory, and it matters more in a cozy game.
+  ['gacha.pull_gem_cost', 'gacha.pullGemCost'],
+  ['gacha.hero_chance', 'gacha.heroChance'],
+  ['gacha.soft_pity_at', 'gacha.softPityAt'],
+  ['gacha.hard_pity_at', 'gacha.hardPityAt'],
+  ['gacha.duplicate_fragments', 'gacha.duplicateFragments'],
+  ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -149,7 +185,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level',
+  'required_tech_per_level', 'army_cap_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone', 'build_cost_iron',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -161,12 +197,13 @@ const DISTRICT_COLUMNS = [
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level',
+  'required_tech_per_level', 'army_cap_per_level',
 ];
 
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
-  Units: ['id', 'power', 'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
+  Units: ['id', 'power', 'atk', 'def', 'hp',
+    'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'recruit_cost_iron', 'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
     'respawn_seconds'],
@@ -181,6 +218,8 @@ const SHEETS = {
     'reward_gems'],
   Artifacts: ['id', 'upkeep', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius'],
+  Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
+    'atk_per_level', 'def_per_level', 'hp_per_level'],
   Landmarks: ['id', 'kind', 'x', 'y', 'defended'],
   Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
     'max_depth', 'supply_food', 'supply_gold', 'supply_iron', 'affinity', 'artifact'],
@@ -480,7 +519,8 @@ async function importXlsx() {
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
-    mana: {}, attunement: {}, collection: {}, knowledge: {},
+    mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
+    delve: {}, party: {}, gacha: {}, heroes: {},
     landmarks: [], ruins: {}, artifacts: {},
     quests: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
@@ -500,6 +540,7 @@ async function importXlsx() {
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
       requiredTechPerLevel: techList(r, 'required_tech_per_level'),
+      armyCapPerLevel: list(r, 'army_cap_per_level'),
       buildCost: wallet(r, 'build_cost'),
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
       buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
@@ -555,8 +596,15 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
+    const atk = num(r, 'atk');
+    // A unit's POWER — what it costs against the army cap — equals its ATK,
+    // so the cap table reads directly as attack potential.
+    if (num(r, 'power') !== atk) fail(where(r), `power must equal atk (${atk})`);
     out.units[id] = {
-      power: num(r, 'power'),
+      power: atk,
+      atk,
+      def: num(r, 'def'),
+      hp: num(r, 'hp'),
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
@@ -647,6 +695,22 @@ async function importXlsx() {
       activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
       activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
       activeRadius: num(r, 'active_radius', { blankAs: 0 }),
+    };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Heroes'), HERO_IDS)) {
+    if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
+    if (!HERO_TRAITS.includes(r.trait)) fail(where(r), `unknown trait "${r.trait}"`);
+    out.heroes[id] = {
+      unitType: r.unit_type,
+      trait: r.trait,
+      traitValue: num(r, 'trait_value'),
+      atk: num(r, 'atk'),
+      def: num(r, 'def'),
+      hp: num(r, 'hp'),
+      atkPerLevel: num(r, 'atk_per_level'),
+      defPerLevel: num(r, 'def_per_level'),
+      hpPerLevel: num(r, 'hp_per_level'),
     };
   }
 
@@ -759,6 +823,7 @@ async function exportXlsx() {
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
+      listCell(d.armyCapPerLevel),
       ...costCells(d.buildCost),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
@@ -769,7 +834,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
-    return [id, u.power, ...costCells(u.recruitCost), u.trainDurationSeconds];
+    return [id, u.power, u.atk, u.def, u.hp, ...costCells(u.recruitCost), u.trainDurationSeconds];
   }));
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
@@ -808,6 +873,12 @@ async function exportXlsx() {
     const a = b.artifacts[id];
     return [id, a.upkeep, a.passiveBase, a.passivePerLevel, a.activeManaCost,
       a.activeDurationSeconds || '', a.activeRadius || ''];
+  }));
+
+  addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
+    const h = b.heroes[id];
+    return [id, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
+      h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
   }));
 
   addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>

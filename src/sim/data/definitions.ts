@@ -7,8 +7,8 @@
 import balance from './balance.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
-  ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, LandmarkKind,
-  RuinId, TechId, UnitId, UpgradeId, Wallet,
+  ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
+  LandmarkKind, RuinId, TechId, UnitId, UpgradeId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -186,12 +186,20 @@ export interface DistrictDef {
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
   /** Technology gating each upgrade; index 0 = requirement to REACH level 2. */
   requiredTechPerLevel: readonly (TechId | null)[];
+  /** Army cap this building contributes at each level (TOTAL, not
+   *  incremental). Empty = it is not a military building. */
+  armyCapPerLevel: readonly number[];
+  /** The unit this building trains; null = it trains nothing. Army size is a
+   *  city-building decision now, so wanting Cavalry means finding room for
+   *  Stables — which is the strongest link between the two halves of the game. */
+  trains: UnitId | null;
 }
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
 // balance.json; only identity, art, and rules wiring is authored here.
 const rules = {
   buildable: true, harvestSource: null, providesHarvestSource: null, requiredTech: null,
+  trains: null,
 } as const;
 
 /** The per-level tech gates arrive from JSON as plain strings — the importer
@@ -297,6 +305,50 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     requiredTech: 'Attunement',
     ...districtBalance(balance.districts.Sanctum),
   },
+  Barracks: {
+    ...rules,
+    id: 'Barracks',
+    name: 'Barracks',
+    description: 'Drills Warriors, and every level lets you keep a bigger army.',
+    glyph: '🛖',
+    sprite: 'barracks',
+    requiredTech: 'Warrior',
+    trains: 'Warrior',
+    ...districtBalance(balance.districts.Barracks),
+  },
+  SpearHall: {
+    ...rules,
+    id: 'SpearHall',
+    name: 'Spear Hall',
+    description: 'Trains Lancers — long reach that stops a charge.',
+    glyph: '🏚️',
+    sprite: 'spear_hall',
+    requiredTech: 'Spears',
+    trains: 'Lancer',
+    ...districtBalance(balance.districts.SpearHall),
+  },
+  ShootingGrounds: {
+    ...rules,
+    id: 'ShootingGrounds',
+    name: 'Shooting Grounds',
+    description: 'Trains Archers — the most attack per Gold, and the least armour.',
+    glyph: '🎯',
+    sprite: 'shooting_grounds',
+    requiredTech: 'Archery',
+    trains: 'Archer',
+    ...districtBalance(balance.districts.ShootingGrounds),
+  },
+  Stables: {
+    ...rules,
+    id: 'Stables',
+    name: 'Stables',
+    description: 'Trains Cavalry — fast, hard-hitting, and expensive to keep.',
+    glyph: '🐴',
+    sprite: 'stables',
+    requiredTech: 'Cavalry',
+    trains: 'Cavalry',
+    ...districtBalance(balance.districts.Stables),
+  },
   Mine: {
     ...rules,
     id: 'Mine',
@@ -313,6 +365,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
 export const BUILDABLE_DISTRICTS: DistrictId[] = [
   'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Mine', 'Market',
   'Sanctum',
+  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
 
 // ------------------------------------------------------------------ features
@@ -582,6 +635,19 @@ export const TECH_ORDER: TechId[] = [
 // Slots & gem pricing for extra slots.
 export const RESEARCH_SETTINGS = balance.research;
 
+/**
+ * Combat, in six numbers.
+ *
+ * `army.power_cap_per_townhall_level` is retired: army size stops being a
+ * passive consequence of a gate the player was going to pass anyway and
+ * becomes a city-building decision.
+ *
+ * The type values are deliberately soft (x1.5 / x0.75). Sharper ones are more
+ * dramatic but make one bad guess feel like a wasted trip, which is the
+ * un-cozy end of the dial.
+ */
+export const ARMY = balance.army;
+
 // ----------------------------------------------------------------- upgrades
 
 export interface UpgradeDef {
@@ -653,7 +719,12 @@ export interface UnitDef {
   name: string;
   description: string;
   glyph: string;
+  /** What it costs against the army cap — equal to `atk` by construction, so
+   *  the cap table reads directly as attack potential. */
   power: number;
+  atk: number;
+  def: number;
+  hp: number;
   tags: UnitTag[];
   recruitCost: Wallet; // city currencies
   trainDurationSeconds: number; // authored but unused — training is instant
@@ -665,7 +736,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
   Warrior: {
     id: 'Warrior',
     name: 'Warrior',
-    description: 'Sturdy front line.',
+    description: 'Sturdy front line: the most armour and health per Gold.',
     glyph: '⚔️',
     tags: ['Melee'],
     requiredTech: 'Warrior',
@@ -683,7 +754,7 @@ export const UNITS: Record<UnitId, UnitDef> = {
   Archer: {
     id: 'Archer',
     name: 'Archer',
-    description: 'Ranged support.',
+    description: 'Ranged support: the most attack per Gold, and the least of everything else.',
     glyph: '🏹',
     tags: ['Distance'],
     requiredTech: 'Archery',
@@ -973,6 +1044,95 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
     }];
   }),
 ) as Record<RuinId, RuinDef>;
+
+// ------------------------------------------------------------------ heroes
+
+/**
+ * A hero is MANDATORY on every expedition, so heroes gate delve throughput as
+ * well as capability. One is free at the start; the rest come from the gacha —
+ * and a second is a prize twice over: another delve at a time, and coverage of
+ * another matchup.
+ */
+export type HeroTrait =
+  | 'PartyDefence' | 'SupplyDiscount' | 'KnowledgeBonus' | 'FragmentBonus' | 'RevealNextDepth';
+
+export interface HeroDef {
+  id: HeroId;
+  name: string;
+  title: string;
+  glyph: string;
+  sprite: string;
+  /** Heroes carry a unit type of their own, so the hero choice feeds the same
+   *  matchup chart as the troops. */
+  unitType: UnitId;
+  trait: HeroTrait;
+  traitValue: number;
+  traitText: string;
+  atk: number;
+  def: number;
+  hp: number;
+  atkPerLevel: number;
+  defPerLevel: number;
+  hpPerLevel: number;
+}
+
+const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sprite' | 'traitText'>> = {
+  Warden: {
+    name: 'The Warden', title: 'Shield of the old wall', glyph: '🛡️', sprite: 'hero_warden',
+    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+  },
+  Quartermaster: {
+    name: 'The Quartermaster', title: 'Counts every biscuit', glyph: '📦',
+    sprite: 'hero_quartermaster',
+    traitText: 'Packs light — expeditions cost a quarter less to supply',
+  },
+  Scholar: {
+    name: 'The Scholar', title: 'Reads what the walls say', glyph: '📖', sprite: 'hero_scholar',
+    traitText: 'Brings back half again as much Knowledge',
+  },
+  RelicHunter: {
+    name: 'The Relic-hunter', title: 'Knows a good ruin by its smell', glyph: '🗝️',
+    sprite: 'hero_relic_hunter',
+    traitText: 'Finds half again as many Fragments',
+  },
+  Scout: {
+    // A design piece rather than a stat: it converts the delve's uncertainty
+    // from something you endure into something you can buy your way out of,
+    // which is exactly what a management game should sell.
+    name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
+    traitText: 'Sees what waits at the next depth before you commit to it',
+  },
+};
+
+const heroBalance = balance.heroes as Record<HeroId, {
+  unitType: string; trait: string; traitValue: number;
+  atk: number; def: number; hp: number;
+  atkPerLevel: number; defPerLevel: number; hpPerLevel: number;
+}>;
+
+export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
+  (Object.keys(heroContent) as HeroId[]).map((id) => {
+    const b = heroBalance[id];
+    return [id, {
+      id,
+      ...heroContent[id],
+      unitType: b.unitType as UnitId,
+      trait: b.trait as HeroTrait,
+      traitValue: b.traitValue,
+      atk: b.atk, def: b.def, hp: b.hp,
+      atkPerLevel: b.atkPerLevel, defPerLevel: b.defPerLevel, hpPerLevel: b.hpPerLevel,
+    }];
+  }),
+) as Record<HeroId, HeroDef>;
+
+export const HERO_ORDER: HeroId[] = [
+  'Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout',
+];
+
+/** Delve rewards, the 50% failure bite, and party slots. */
+export const DELVE = balance.delve;
+export const PARTY = balance.party;
+export const GACHA = balance.gacha;
 
 export const RUIN_ORDER: RuinId[] = [
   'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',

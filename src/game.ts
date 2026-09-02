@@ -19,7 +19,7 @@ import { explorationGate, fogState, revealCostForCell, revealTap } from './sim/f
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
-import { armyPower, maxArmyPower, trainUnit } from './sim/army';
+import { committedArmyPower, maxArmyPower, trainUnit } from './sim/army';
 import {
   attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
 } from './sim/artifacts';
@@ -938,9 +938,14 @@ export class Game {
 
   doTrain(unitId: UnitId): void {
     const result = trainUnit(this.state, unitId);
-    if (result === 'Trained') playSfx('unitTrained');
+    if (result === 'Queued') playSfx('unitTrained');
     if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Food']);
-    if (result === 'ArmyAtCapacity') this.toast(`Army at capacity (${armyPower(this.state)}/${maxArmyPower(this.state)})`);
+    if (result === 'NoBuilding') {
+      this.toast(`Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
+    }
+    if (result === 'ArmyAtCapacity') {
+      this.toast(`Army at capacity (${committedArmyPower(this.state)}/${maxArmyPower(this.state)}) — build or upgrade a military building`);
+    }
     this.notify();
   }
 
@@ -1323,4 +1328,11 @@ export function icon(c: CurrencyId): string {
     Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
+}
+
+
+/** The building that trains a unit type, by name — for the blocker text. */
+function trainerName(unitId: UnitId): string {
+  const def = Object.values(DISTRICTS).find((d) => d.trains === unitId);
+  return def?.name ?? 'right building';
 }

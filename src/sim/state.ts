@@ -12,7 +12,8 @@ export type CurrencyId =
   | 'Berries' | 'Meat' | 'Fish'; // food-valued (see CurrencyDef.countsAs)
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
-  | 'Quarry' | 'Docks' | 'Mine' | 'Sanctum';
+  | 'Quarry' | 'Docks' | 'Mine' | 'Sanctum'
+  | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables'; // military
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous
@@ -30,6 +31,7 @@ export type RuinId =
   | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
+export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout';
 export type TechId =
   | 'Forestry'
   | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
@@ -96,6 +98,8 @@ export interface City {
   /** Villager training queue at the Townhall: `queued` villagers are paid
    *  for; the current one started at `startedAt`, the rest follow. */
   training: { queued: number; startedAt: number } | null;
+  /** Units in training, across all four military buildings. */
+  armyQueue: ArmyTrainingItem[];
   /** Epoch ms anchor for passive tax gold (whole units only). */
   lastTaxAt: number;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same
@@ -124,6 +128,55 @@ export interface Worker {
 export interface ArmyUnit {
   uniqueId: string;
   definitionId: UnitId;
+}
+
+/** One unit waiting to be trained. Paid for up front; `startedAt` is stamped
+ *  when it reaches the front of its BUILDING's line. */
+export interface ArmyTrainingItem {
+  uniqueId: string;
+  unitId: UnitId;
+  buildingId: string;
+  startedAt: number | null;
+}
+
+/** A committed stack. A party SLOT holds a unit TYPE and every unit of it you
+ *  chose to send, so slots limit composition BREADTH rather than headcount —
+ *  which is what makes the type chart interesting and what "coverage" means
+ *  when a second hero arrives. */
+export interface PartySlotState {
+  unitId: UnitId;
+  count: number;
+}
+
+export type DelvePhase = 'descending' | 'checkpoint' | 'done';
+
+/** A party in a ruin. The haul is NOT yours until you extract it — that
+ *  framing is what makes a failed push cost half of it without breaking the
+ *  promise that nothing you OWN is ever taken. */
+export interface Delve {
+  id: string;
+  ruinId: RuinId;
+  heroId: HeroId;
+  party: PartySlotState[];
+  /** Depths already cleared. */
+  depth: number;
+  partyHp: number;
+  maxPartyHp: number;
+  /** Banked only on extraction. */
+  haul: Wallet;
+  haulFragments: number;
+  phase: DelvePhase;
+  /** When the depth currently being cleared finishes. Delve timers NEVER
+   *  pause: the offline cap limits what the city PRODUCES, never a timer. */
+  depthEndsAt: number;
+  /** "Delve to depth N, then come back" — the opt-out for anyone who does not
+   *  want to be asked. Null = ask me at every checkpoint. */
+  standingOrder: number | null;
+  /** The threat of the depth being cleared right now, rolled when the party
+   *  committed to it. The gamble is INFORMATION, not dice. */
+  threat: UnitId | 'Any';
+  /** How the run ended, for the report. */
+  outcome: 'extracted' | 'failed' | null;
 }
 
 export interface GameState {
@@ -161,6 +214,31 @@ export interface GameState {
     /** Extra concurrent slots bought with Gems (escalating price). */
     slotsPurchased: number;
   };
+  /** Parties currently in ruins. One per hero: heroes gate delve throughput
+   *  as well as capability, which is what makes a second hero a prize twice
+   *  over. */
+  delves: Delve[];
+  /** The hero roster, on the same collection substrate as the relics. */
+  heroes: {
+    owned: HeroId[];
+    levels: Partial<Record<HeroId, number>>;
+    tiers: Partial<Record<HeroId, number>>;
+    fragments: Partial<Record<HeroId, number>>;
+    xp: Partial<Record<HeroId, number>>;
+    /** Extra party slots bought with Gems. */
+    partySlotsPurchased: number;
+  };
+  /** Pull counters, per banner. Persisted because pity depends on them — and
+   *  because the counter IS the rng key, which is what lets a hash beat a
+   *  stream here. */
+  gacha: {
+    pullCounts: Record<string, number>;
+    pityCounters: Record<string, number>;
+  };
+  /** Ruins whose deepest depth has been cleared at least once. The artifact
+   *  is granted on the FIRST one — no randomness on the thing that gates a
+   *  system. */
+  ruinsCleared: Partial<Record<RuinId, true>>;
   /** Claimed landmarks (by content id) and, for the defended ones, whose
    *  guard has already been beaten. Claiming raises Mana PRODUCTION, which is
    *  what makes exploration compound rather than merely pay. */

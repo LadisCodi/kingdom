@@ -7,6 +7,8 @@ import {
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration,
 } from './districts';
+import { advanceArmyTraining, nextTrainingCompletion } from './army';
+import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
 import { revealAroundDistrict } from './fog';
 import type { MapData } from './grid';
 import {
@@ -24,7 +26,7 @@ import {
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
-  type QueueItem, type TechId,
+  type QueueItem, type TechId, type UnitId,
 } from './state';
 
 // ------------------------------------------------------------------ building
@@ -238,11 +240,16 @@ export interface AdvanceResult {
   expiredModifiers: Modifier[];
   manaEarned: number;
   knowledgeEarned: number;
+  /** Units that finished training in this window. */
+  trainedUnits: UnitId[];
+  /** Depths resolved, checkpoints reached, runs ended. */
+  delveEvents: DelveEvent[];
 }
 
 const emptyResult = (): AdvanceResult => ({
   deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
+  trainedUnits: [], delveEvents: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -264,6 +271,11 @@ function applyDueAt(
     }
     out.completedResearch.push(...advanceResearch(state, t));
     out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
+    out.trainedUnits.push(...advanceArmyTraining(state, t));
+    // Delve timers NEVER pause: the offline cap limits what the CITY
+    // PRODUCES, never what a timer does. A party at a checkpoint proposes no
+    // boundary at all — it waits, indefinitely, until the player answers.
+    out.delveEvents.push(...advanceDelves(state, t));
   });
 }
 
@@ -292,6 +304,8 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   }
   for (const a of state.research.active) consider(techCompletesAt(state, a.id));
   consider(nextModifierExpiry(state, after));
+  consider(nextTrainingCompletion(state, after));
+  consider(nextDelveBoundary(state, after));
   return t;
 }
 

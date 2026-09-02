@@ -130,6 +130,12 @@ export function serialize(state: GameState, now: number): SaveFile {
               ? null : iso(state.city.training.startedAt),
             TrainingQueued: state.city.training?.queued ?? 0,
             LastTaxAt: iso(state.city.lastTaxAt),
+            ArmyQueue: state.city.armyQueue.map((i) => ({
+              UniqueID: i.uniqueId,
+              UnitID: i.unitId,
+              BuildingID: i.buildingId,
+              StartedAtUtc: isoOrNull(i.startedAt),
+            })),
             LastManaAt: iso(state.city.lastManaAt),
           },
         ],
@@ -201,6 +207,37 @@ export function serialize(state: GameState, now: number): SaveFile {
         })),
         SlotsPurchased: state.research.slotsPurchased,
         UpgradeLevels: state.upgrades,
+      },
+      'kingdom.delves': {
+        Delves: state.delves.map((d) => ({
+          ID: d.id,
+          RuinID: d.ruinId,
+          HeroID: d.heroId,
+          Party: d.party.map((p) => ({ UnitID: p.unitId, Count: p.count })),
+          Depth: d.depth,
+          PartyHp: d.partyHp,
+          MaxPartyHp: d.maxPartyHp,
+          Haul: d.haul,
+          HaulFragments: d.haulFragments,
+          Phase: d.phase,
+          DepthEndsAtUtc: iso(d.depthEndsAt),
+          StandingOrder: d.standingOrder,
+          Threat: d.threat,
+          Outcome: d.outcome,
+        })),
+        Cleared: Object.keys(state.ruinsCleared),
+      },
+      'kingdom.heroes': {
+        Owned: state.heroes.owned,
+        Levels: state.heroes.levels,
+        Tiers: state.heroes.tiers,
+        Fragments: state.heroes.fragments,
+        Xp: state.heroes.xp,
+        PartySlotsPurchased: state.heroes.partySlotsPurchased,
+      },
+      'kingdom.gacha': {
+        PullCounts: state.gacha.pullCounts,
+        PityCounters: state.gacha.pityCounters,
       },
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
@@ -293,6 +330,12 @@ export function deserialize(
       ? { queued: cityDto.TrainingQueued ?? 1, startedAt: ms(cityDto.TrainingStartedAt) } : null;
     state.city.lastTaxAt = cityDto.LastTaxAt ? ms(cityDto.LastTaxAt) : lastSaved;
     state.city.lastManaAt = cityDto.LastManaAt ? ms(cityDto.LastManaAt) : lastSaved;
+    state.city.armyQueue = ((cityDto.ArmyQueue ?? []) as any[]).map((i) => ({
+      uniqueId: i.UniqueID,
+      unitId: i.UnitID,
+      buildingId: i.BuildingID,
+      startedAt: msOrNull(i.StartedAtUtc),
+    }));
   }
 
   const kingdomDto = modules['kingdom.kingdoms'];
@@ -387,6 +430,50 @@ export function deserialize(
     state.quests = {
       index: questsDto.Index ?? 0,
       progress: questsDto.Progress ?? 0,
+    };
+  }
+
+  const delvesDto = modules['kingdom.delves'];
+  if (delvesDto) {
+    state.delves = ((delvesDto.Delves ?? []) as any[]).map((d) => ({
+      id: d.ID,
+      ruinId: d.RuinID,
+      heroId: d.HeroID,
+      party: ((d.Party ?? []) as any[]).map((p) => ({ unitId: p.UnitID, count: p.Count })),
+      depth: d.Depth ?? 0,
+      partyHp: d.PartyHp ?? 0,
+      maxPartyHp: d.MaxPartyHp ?? 0,
+      haul: { ...(d.Haul ?? {}) },
+      haulFragments: d.HaulFragments ?? 0,
+      phase: d.Phase ?? 'checkpoint',
+      depthEndsAt: ms(d.DepthEndsAtUtc),
+      standingOrder: d.StandingOrder ?? null,
+      threat: d.Threat ?? 'Any',
+      outcome: d.Outcome ?? null,
+    }));
+    state.ruinsCleared = {};
+    for (const id of (delvesDto.Cleared ?? []) as string[]) {
+      state.ruinsCleared[id as keyof typeof state.ruinsCleared] = true;
+    }
+  }
+
+  const heroesDto = modules['kingdom.heroes'];
+  if (heroesDto) {
+    state.heroes = {
+      owned: [...((heroesDto.Owned ?? state.heroes.owned) as typeof state.heroes.owned)],
+      levels: { ...(heroesDto.Levels ?? {}) },
+      tiers: { ...(heroesDto.Tiers ?? {}) },
+      fragments: { ...(heroesDto.Fragments ?? {}) },
+      xp: { ...(heroesDto.Xp ?? {}) },
+      partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
+    };
+  }
+
+  const gachaDto = modules['kingdom.gacha'];
+  if (gachaDto) {
+    state.gacha = {
+      pullCounts: { ...(gachaDto.PullCounts ?? {}) },
+      pityCounters: { ...(gachaDto.PityCounters ?? {}) },
     };
   }
 

@@ -18,6 +18,7 @@
         null,
         "Architecture"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
@@ -55,6 +56,7 @@
       "requiredTechPerLevel": [
         "UrbanPlanning"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 10
       },
@@ -99,6 +101,7 @@
       "requiredTechPerLevel": [
         "CropRotation"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 30
       },
@@ -132,6 +135,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 20
       },
@@ -177,6 +181,7 @@
         null,
         "Engineering"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 20
       },
@@ -208,6 +213,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 40
       },
@@ -250,6 +256,7 @@
       "requiredTechPerLevel": [
         "Engineering"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 30
       },
@@ -291,6 +298,7 @@
       "requiredTechPerLevel": [
         "Shipbuilding"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 25
       },
@@ -335,6 +343,7 @@
       "requiredTechPerLevel": [
         "DeepMining"
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 40,
         "Stone": 20
@@ -374,6 +383,7 @@
         null,
         null
       ],
+      "armyCapPerLevel": [],
       "buildCost": {
         "Gold": 300,
         "Stone": 40
@@ -389,6 +399,184 @@
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6
+    },
+    "Barracks": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 3,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 1,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "requiredTechPerLevel": [
+        null,
+        null
+      ],
+      "armyCapPerLevel": [
+        6,
+        10,
+        15
+      ],
+      "buildCost": {
+        "Wood": 60,
+        "Stone": 20
+      },
+      "buildCostMultiplier": 1,
+      "buildCostExponentialGrowth": 1,
+      "buildDurationSeconds": 45,
+      "buildDurationDistrictGrowth": 1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 180,
+        "Stone": 60
+      },
+      "upgradeCostLevelGrowth": 1.8,
+      "upgradeDurationSeconds": 90,
+      "upgradeDurationLevelGrowth": 1.6
+    },
+    "SpearHall": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 3,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 1,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "requiredTechPerLevel": [
+        null,
+        null
+      ],
+      "armyCapPerLevel": [
+        6,
+        10,
+        15
+      ],
+      "buildCost": {
+        "Wood": 80,
+        "Stone": 30
+      },
+      "buildCostMultiplier": 1,
+      "buildCostExponentialGrowth": 1,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 240,
+        "Stone": 90
+      },
+      "upgradeCostLevelGrowth": 1.8,
+      "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6
+    },
+    "ShootingGrounds": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 3,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 1,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "requiredTechPerLevel": [
+        null,
+        null
+      ],
+      "armyCapPerLevel": [
+        6,
+        10,
+        15
+      ],
+      "buildCost": {
+        "Wood": 80,
+        "Stone": 30
+      },
+      "buildCostMultiplier": 1,
+      "buildCostExponentialGrowth": 1,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 240,
+        "Stone": 90
+      },
+      "upgradeCostLevelGrowth": 1.8,
+      "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6
+    },
+    "Stables": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 3,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 1,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2
+      ],
+      "requiredTechPerLevel": [
+        null,
+        null
+      ],
+      "armyCapPerLevel": [
+        6,
+        10,
+        15
+      ],
+      "buildCost": {
+        "Wood": 120,
+        "Stone": 40,
+        "Iron": 10
+      },
+      "buildCostMultiplier": 1,
+      "buildCostExponentialGrowth": 1,
+      "buildDurationSeconds": 90,
+      "buildDurationDistrictGrowth": 1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 360,
+        "Stone": 120,
+        "Iron": 30
+      },
+      "upgradeCostLevelGrowth": 1.8,
+      "upgradeDurationSeconds": 180,
       "upgradeDurationLevelGrowth": 1.6
     }
   },
@@ -534,6 +722,9 @@
   "units": {
     "Warrior": {
       "power": 3,
+      "atk": 3,
+      "def": 3,
+      "hp": 12,
       "recruitCost": {
         "Gold": 50,
         "Wood": 10,
@@ -542,7 +733,10 @@
       "trainDurationSeconds": 30
     },
     "Lancer": {
-      "power": 4,
+      "power": 5,
+      "atk": 5,
+      "def": 2,
+      "hp": 8,
       "recruitCost": {
         "Gold": 100,
         "Wood": 30,
@@ -551,7 +745,10 @@
       "trainDurationSeconds": 40
     },
     "Archer": {
-      "power": 2,
+      "power": 6,
+      "atk": 6,
+      "def": 1,
+      "hp": 6,
       "recruitCost": {
         "Gold": 60,
         "Wood": 30
@@ -559,7 +756,10 @@
       "trainDurationSeconds": 25
     },
     "Cavalry": {
-      "power": 5,
+      "power": 7,
+      "atk": 7,
+      "def": 2,
+      "hp": 10,
       "recruitCost": {
         "Gold": 150,
         "Food": 40,
@@ -911,6 +1111,93 @@
   },
   "knowledge": {
     "dripPerRuinPerHour": 2
+  },
+  "army": {
+    "trainTapBoostSeconds": 3,
+    "typeAdvantage": 1.5,
+    "typeDisadvantage": 0.75,
+    "threatFloorFraction": 0.4,
+    "damagePerStrength": 0.9,
+    "damageAbsorbedPerDefence": 0.5
+  },
+  "delve": {
+    "goldPerDepthPerTier": 25,
+    "materialPerDepthPerTier": 4,
+    "knowledgePerDepthPerTier": 2,
+    "fragmentsPerDepth": 1,
+    "failHaulLoss": 0.5,
+    "firstClearGems": 10
+  },
+  "party": {
+    "baseSlots": 2,
+    "maxSlots": 5,
+    "slotGemCostBase": 25,
+    "slotGemCostGrowth": 2.2
+  },
+  "gacha": {
+    "pullGemCost": 30,
+    "heroChance": 0.06,
+    "softPityAt": 40,
+    "hardPityAt": 60,
+    "duplicateFragments": 20,
+    "fragmentsPerMiss": 3
+  },
+  "heroes": {
+    "Warden": {
+      "unitType": "Warrior",
+      "trait": "PartyDefence",
+      "traitValue": 0.2,
+      "atk": 4,
+      "def": 6,
+      "hp": 24,
+      "atkPerLevel": 1,
+      "defPerLevel": 1,
+      "hpPerLevel": 6
+    },
+    "Quartermaster": {
+      "unitType": "Lancer",
+      "trait": "SupplyDiscount",
+      "traitValue": 0.25,
+      "atk": 6,
+      "def": 3,
+      "hp": 16,
+      "atkPerLevel": 1.5,
+      "defPerLevel": 0.5,
+      "hpPerLevel": 4
+    },
+    "Scholar": {
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.5,
+      "atk": 7,
+      "def": 2,
+      "hp": 12,
+      "atkPerLevel": 1.5,
+      "defPerLevel": 0.4,
+      "hpPerLevel": 3
+    },
+    "RelicHunter": {
+      "unitType": "Cavalry",
+      "trait": "FragmentBonus",
+      "traitValue": 0.5,
+      "atk": 8,
+      "def": 3,
+      "hp": 18,
+      "atkPerLevel": 2,
+      "defPerLevel": 0.5,
+      "hpPerLevel": 4
+    },
+    "Scout": {
+      "unitType": "Archer",
+      "trait": "RevealNextDepth",
+      "traitValue": 1,
+      "atk": 6,
+      "def": 3,
+      "hp": 14,
+      "atkPerLevel": 1.5,
+      "defPerLevel": 0.5,
+      "hpPerLevel": 3
+    }
   },
   "landmarks": [
     {
@@ -1517,12 +1804,7 @@
     "initialPopulation": 0,
     "populationCostBase": 5,
     "populationCostGrowth": 1.45,
-    "buildQueueCapacity": 1,
-    "maxArmyPowerPerTownhallLevel": [
-      10,
-      20,
-      30
-    ]
+    "buildQueueCapacity": 1
   },
   "kingdom": {
     "startBuilders": 1,
