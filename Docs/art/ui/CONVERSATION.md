@@ -173,3 +173,61 @@ with the icon path and differs in three deliberate ways: one 128px file per
 name, per-sprite scaling (a shrine and a chapel really are different sizes on
 the ground, and forcing one scale makes the small ones vanish at low zoom),
 and **south gravity**, so a building meets the tile it stands on.
+
+
+## SPR-B, SPR-C, SPR-D — city buildings, relics, heroes
+
+Same conversation, 2026-09-02.
+
+| Sheet | Grid | Contents | Treatment |
+|---|---|---|---|
+| `spr-b-city.png` | 2×3 | Sanctum, Barracks, Spear Hall, Shooting Grounds, Stables | map tile |
+| `spr-c-relics.png` | 2×3 | the five artifacts | object icon |
+| `spr-d-heroes.png` | 2×3 | the five heroes | full figure |
+
+### "Leave the sixth cell completely empty"
+
+All three sheets hold five things in a 2×3 grid, and asking for the empty cell
+explicitly works — the model preserves it and says so. The slicer needs no
+special case: columns are found across the WHOLE sheet, so the top row's three
+icons establish three columns and the manifest's `null` skips the missing one.
+
+### The gravity option
+
+`sliceWorldSheet` places a sprite on the **south** edge of its frame, which is
+right for a building meeting the tile it stands on and wrong for a compass in
+an inventory slot — a centred object sunk to the bottom of its frame reads as
+a layout bug. `spr-c` therefore sets `"gravity": "center"` in the manifest.
+That one word is the whole difference between the two treatments in code; the
+difference in the PROMPT is much larger, and it is the first line of each:
+"MAP SPRITES, three-quarter top-down, sitting on the ground" against "OBJECT
+ICONS, front-on three-quarter".
+
+### The heroes break the symbol rule, and say why
+
+Same reasoning as UI-F, stated in the prompt so the model does not apply the
+earlier rule by inheritance: *"These ARE characters — unlike the icon sheets,
+that rule does not apply here, because they are only ever shown at 48 pixels
+or larger in a framed portrait."*
+
+The unit portrait sheet is named as the pose and scale reference, which is
+what keeps a hero and a soldier looking like they belong to the same army.
+
+### The alpha guard earned its keep again
+
+`spr-d` came back with a 33×33 block of opaque BLACK in the extreme top-left
+corner — outside every cell, and exactly the "residual matte speck" the model
+had announced it was clearing. The corner check caught it before it reached
+the slicer, where it would have read as an extra column and produced a much
+more confusing error.
+
+Cleared locally rather than regenerated, because it is provably not art: the
+nearest figure starts ~150px in, and the fix is scoped to fully-black opaque
+pixels inside a 64×64 box.
+
+```sh
+magick spr-d-heroes.png -region 64x64+0+0 -fuzz 2% -transparent black +region spr-d-heroes.png
+```
+
+The guard was not relaxed to let the file through — it fired, and the file was
+fixed until it passed. That distinction is the whole value of having it.

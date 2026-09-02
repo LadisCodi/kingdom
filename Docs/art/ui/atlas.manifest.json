@@ -199,6 +199,23 @@
         null
       ],
       "gravity": "center"
+    },
+    {
+      "file": "sheets/spr-d-heroes.png",
+      "grid": {
+        "rows": 2,
+        "cols": 3
+      },
+      "fill": 0.92,
+      "gravity": "center",
+      "names": [
+        "hero_warden",
+        "hero_quartermaster",
+        "hero_scholar",
+        "hero_relic_hunter",
+        "hero_scout",
+        null
+      ]
     }
   ]
 }

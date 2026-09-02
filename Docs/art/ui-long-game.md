@@ -268,47 +268,40 @@ reports its events at all.
 
 ---
 
-## 10. The art still owed
+## 10. The art
 
-Everything below currently renders as its fallback glyph, which is the
-contract `src/render/sprites.ts` and `src/ui/kit/icon.ts` have always had:
-art lands one file at a time and upgrades the UI in place. `tests/icons.test.ts`
-holds an explicit `AWAITING_ART` list so the outstanding ask is reviewable in
-one place rather than hiding in a green test run — and it fails if a name on
-that list turns out to be drawn already, so the list cannot rot.
+All of it landed on 2026-09-02, in the same ChatGPT conversation as the
+original UI set so the whole game still reads as one hand. Provenance, prompts
+and the two traps are in [`ui/CONVERSATION.md`](ui/CONVERSATION.md).
 
-### Sheet UI-G — six icons (2 × 3), for the atlas
+| Sheet | Grid | Contents | Treatment |
+|---|---|---|---|
+| `ui-g-special` | 2×3 | Mana, Sanctum, Barracks, Spear Hall, Shooting Grounds, Stables | atlas icon |
+| `spr-a-sites` | 2×4 | 3 landmarks + the 5 ruins | map tile |
+| `spr-b-city` | 2×3 | the Sanctum and the four military halls | map tile |
+| `spr-c-relics` | 2×3 | the five artifacts | object icon |
+| `spr-d-heroes` | 2×3 | the five heroes | full figure |
 
-Mana orb · Sanctum · Barracks · Spear Hall · Shooting Grounds · Stables.
-Symbols and objects, three-quarter view for the buildings so they sit beside
-the existing Townhall and Sawmill icons.
+Three treatments, and the difference between them is the FIRST LINE of each
+prompt rather than a setting:
 
-### Sheet SPR-A — five world buildings (2 × 3)
+- **Atlas icons** are front-on three-quarter, symbols and objects, and must
+  read at 16px. They go through `ui-atlas.mjs build` into the packed atlas.
+- **Map tiles** are three-quarter TOP-DOWN, sitting on the ground with a
+  contact shadow. They go through `ui-atlas.mjs sprites` into
+  `src/render/assets/`, placed on the SOUTH edge of their frame so a building
+  meets the tile it stands on.
+- **Object icons and figures** use the same sprite path but set
+  `"gravity": "center"` — a compass sunk to the bottom of an inventory slot
+  reads as a layout bug.
 
-The same five as above but as **map sprites**: bigger, with ground contact and
-a little scene, matching `townhall_l1.png` and `sawmill_l1.png`. One level
-each is enough — the renderer falls back from `sprite_l2` to `sprite`.
+The hero portraits deliberately break the "symbols, not characters" rule, as
+the unit portraits already did: a roster wants figures you can recognise and
+want, and they are only ever shown at 48px or larger in a framed portrait.
+**The rule is about size, not about taste** — and the prompt says so, so the
+model does not inherit the earlier rule.
 
-### Sheet SPR-B — eight map sites (2 × 4)
-
-Shrine · standing stones · leyspring · Hollow Barrow · Sunken Chapel ·
-Drowned Ironworks · The Counting House · Star Observatory. Small enough to sit
-in one cell, distinct enough that a ruin is never mistaken for a rock.
-
-### Sheet SPR-C — five relics (2 × 3)
-
-Dowsing Rod · Verdant Seal · Foreman's Sigil · Gilded Ledger · Wanderer's
-Compass. Shown at 44–64px in the Reliquary, so objects with a clear
-silhouette, not scenes.
-
-### Sheet SPR-D — five hero portraits (2 × 3)
-
-The Warden · The Quartermaster · The Scholar · The Relic-hunter · The Scout.
-These deliberately break the "symbols, not characters" rule, exactly as the
-unit portraits do: a roster wants figures you can recognise and want, and they
-are only ever shown at 48px or larger in a framed portrait. **The rule is
-about size, not about taste.**
-
-The prompt shape, the two-download-buttons trap and the alpha verification are
-all in [`ui/CONVERSATION.md`](ui/CONVERSATION.md); the slicer reads the grid
-off the sheet, so an imprecise grid is not a regeneration.
+`tests/icons.test.ts` kept an explicit `AWAITING_ART` list while the sheets
+were outstanding, so the ask was reviewable in one place rather than hiding in
+a green test run; it fails if a name on the list turns out to be drawn, so it
+could not rot. It is empty again.
