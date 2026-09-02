@@ -8,8 +8,11 @@ what you can improve is always shown in the context of how you unlocked it.
 
 One-time researches that **unlock new content** (buildings, units, upgrades).
 
-- Cost **resources + time**; paid up front; complete through the unified
-  advance (so they finish while away, in real time like the build queue).
+- Cost **Knowledge + time**; paid up front from the KINGDOM purse (not the
+  city's); complete through the unified advance (so they finish while away, in
+  real time like the build queue). Knowledge comes from clearing fog and from
+  quests — see [`knowledge.md`](knowledge.md). Instant upgrades below stay
+  Gold-only.
 - Limited by **concurrent research slots**: base 1. Additional slots are
   bought **with Gems** directly in the Research menu, at an escalating
   price (`slot_gem_cost_base × slot_gem_cost_growth^purchased`, capped by
@@ -54,7 +57,7 @@ The tree is discovered like the map:
 
 Everything numeric lives in the balance workbook:
 
-- `Technologies` sheet: costs, duration, `requires` (comma-separated ids).
+- `Technologies` sheet: `cost_knowledge`, duration, `requires` (comma-separated ids).
 - `Upgrades` sheet: `cost_base, cost_growth, max_level, effect_per_level,
   required_tech`.
 - Settings: `research.tech_slots`, `research.max_slots`,

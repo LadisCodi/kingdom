@@ -141,6 +141,10 @@ export interface QuestDef {
   reward: Wallet;
   /** Gems paid into the PLAYER wallet (city currencies go through `reward`). */
   rewardGems: number;
+  /** Kingdom-scoped, so it is NOT part of `reward` — that wallet is the
+   *  city's. Quests are the steady half of the research budget; exploring
+   *  is the half that scales. */
+  rewardKnowledge: number;
 }
 
 /** The chain, in sheet order — one quest active at a time. */

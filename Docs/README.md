@@ -44,6 +44,7 @@ as-shipped), and its own design docs are the live source of truth:
 | **[features/engine-seams.md](features/engine-seams.md)** | **Built 2026-09-02** — the sim groundwork all of the above needed, and the build order it prescribed |
 | **[features/ad-economy.md](features/ad-economy.md)** | **Built 2026-09-02** — Mana, taps and rewarded ads tuned as one loop; a tap pulls production forward |
 | **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
+| **[features/knowledge.md](features/knowledge.md)** | **Built 2026-09-02** — Knowledge buys the technology tree; clearing fog and quests pay for it |
 
 ## Ground rules used throughout
 

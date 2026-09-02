@@ -15,7 +15,10 @@ import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
 } from './sim/districts';
-import { explorationGate, fogState, revealCostForCell, revealTap } from './sim/fog';
+import { resourceDiscoveryKey } from './sim/discovery';
+import {
+  explorationGate, fogState, revealCostForCell, revealKnowledge, revealTap,
+} from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
@@ -346,7 +349,11 @@ export class Game {
         } else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
           playSfx('revealDone');
-          this.floaters.add(cell, 'Revealed!');
+          // Say what clearing it PAID, not just that it worked. Fog is the
+          // main source of Knowledge and the only one the player controls
+          // minute to minute — if the floater stays silent about it, the
+          // research tree looks like it funds itself.
+          this.floaters.add(cell, `+${revealKnowledge(this.map, cell)} ${icon('Knowledge')}`);
         } else if (result === 'Paid') {
           playSfx('revealPaid');
           this.floaters.add(cell, `-1 ${icon('Gold')}`);
@@ -1639,6 +1646,14 @@ export class Game {
         return (tech !== null && isTechComplete(this.state, tech))
           || this.effectiveWalletValue(c) > 0;
       }),
+      // Knowledge is what the research tree is bought with, so it has to be
+      // on the plank — a currency the player spends and cannot see is the
+      // same bug as a price hidden outside its button. It has no unlocking
+      // tech; clearing the first cell of fog is what introduces it, and the
+      // DISCOVERY flag (not the balance) keeps it on the plank afterwards so
+      // it does not vanish the moment research spends it to zero.
+      ...(this.state.discoveries[resourceDiscoveryKey('Knowledge')] === true
+        ? (['Knowledge'] as CurrencyId[]) : []),
     ];
   }
 

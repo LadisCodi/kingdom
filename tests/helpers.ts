@@ -39,8 +39,16 @@ export const screenAt = (game: Game, cell: Coord): [number, number] => {
   return [x + size / 2, y + size / 2];
 };
 
+/**
+ * Top up a purse. Routed the way `Game.effectiveWalletValue` routes reads, so
+ * a test funds what it means to fund: Knowledge is KINGDOM-scoped (it buys
+ * research) and Gems are the player's; everything else is the city's.
+ */
 export const fund = (state: GameState, wallet: Record<string, number>): void => {
-  Object.assign(state.city.wallet, wallet);
+  const { Knowledge, Gems, ...city } = wallet;
+  Object.assign(state.city.wallet, city);
+  if (Knowledge !== undefined) state.kingdom.wallet.Knowledge = Knowledge;
+  if (Gems !== undefined) state.player.wallet.Gems = Gems;
 };
 
 export const reveal = (state: GameState, cells: Coord[]): void => {

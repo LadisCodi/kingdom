@@ -6,7 +6,7 @@ import { trainUnit } from '../src/sim/army';
 import { changeWorkers, enqueueBuild, finishWithGems } from '../src/sim/commands';
 import { placementBlock } from '../src/sim/districts';
 import { tapCell } from '../src/sim/harvest';
-import { startTech } from '../src/sim/research';
+import { startTech, techCost } from '../src/sim/research';
 import { coordKey, getWallet } from '../src/sim/state';
 import { effectiveAmount, pay } from '../src/sim/wallet';
 import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
@@ -46,7 +46,7 @@ describe('stone line (Masonry → Quarry)', () => {
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
   it('the exploration branch: Fishing sits behind Sailing, not Agriculture', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 100, Food: 100 });
+    fund(state, { Knowledge: 200 });
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement'); // needs Sailing
@@ -96,13 +96,18 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
 });
 
 describe('iron line (Mining ← Masonry) and the iron-gated army', () => {
-  it('Mining needs Masonry first and costs Stone', () => {
+  it('Mining needs Masonry first, and is paid for in Knowledge', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Stone: 50 });
+    // Deliberately rich in Stone and broke in Knowledge: research does not
+    // touch the city's materials any more, so a full quarry buys nothing.
+    fund(state, { Gold: 1000, Stone: 50, Knowledge: 0 });
     expect(startTech(state, 'Mining', T0)).toBe('MissingRequirement');
     completeTech(state, 'Masonry');
+    expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
+    fund(state, { Knowledge: techCost('Mining') });
     expect(startTech(state, 'Mining', T0)).toBe('Started');
-    expect(getWallet(state.city.wallet, 'Stone')).toBe(50 - 30);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(50); // untouched
   });
 
   it('the Cavalry costs Iron (foot units no longer do)', () => {

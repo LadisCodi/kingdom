@@ -9,7 +9,7 @@ import {
 import { placementBlock } from '../src/sim/districts';
 import {
   anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
-  startTech, techSlots, techUnlocks,
+  startTech, techCost, techSlots, techUnlocks,
 } from '../src/sim/research';
 import { edgeCells } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
@@ -25,7 +25,7 @@ const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 describe('technology basics', () => {
   it('the farming chain: Agriculture unlocks FarmLands, Farming unlocks the Farm', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Knowledge: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement'); // needs Agriculture
@@ -63,26 +63,39 @@ describe('technology basics', () => {
 
   it('the requires tree: Cavalry is blocked until Warrior is done', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
     completeTech(state, 'Warrior');
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
   });
 
-  it('costs are paid up front', () => {
+  // CLAIM: research is bought with Knowledge out of the KINGDOM purse, up
+  // front, and it never touches the city's money. That is what makes the tree
+  // a question about how far you have explored rather than how much you have
+  // stockpiled — and it is why a city reset cannot cost you a technology.
+  it('costs are paid up front, in Knowledge, from the kingdom purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Knowledge: 100 });
     completeTech(state, 'Forestry');
-    startTech(state, 'Sailing', T0); // 150 Gold + 30 Wood
-    expect(state.city.wallet.Gold).toBe(1000 - 150);
-    expect(state.city.wallet.Wood).toBe(500 - 30);
+    expect(startTech(state, 'Sailing', T0)).toBe('Started');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(100 - techCost('Sailing'));
+    expect(state.city.wallet.Gold).toBe(1000); // the city paid nothing
+    expect(state.city.wallet.Wood).toBe(500);
+  });
+
+  it('refuses a technology the kingdom cannot pay for, however rich the city', () => {
+    const state = freshGame();
+    fund(state, { Gold: 999_999, Wood: 999_999, Knowledge: techCost('Forestry') - 1 });
+    expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
+    fund(state, { Knowledge: techCost('Forestry') });
+    expect(startTech(state, 'Forestry', T0)).toBe('Started');
   });
 });
 
 describe('research slots', () => {
   it('base slot limits concurrency; a gem-bought slot lifts it', () => {
     const state = freshGame(); // 10 Gems
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
@@ -111,7 +124,7 @@ describe('research slots', () => {
   it('two active technologies complete independently, in time order', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     completeTech(state, 'Forestry');
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0); // 60s
@@ -129,7 +142,7 @@ describe('save round-trip', () => {
   it('restores completed techs, active researches, slots and upgrade levels', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Gold: 10_000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 10_000, Wood: 500, Food: 500, Knowledge: 500 });
     completeTech(state, 'Forestry');
     completeTech(state, 'Agriculture');
     buySlot(state);
@@ -254,7 +267,7 @@ describe('what the player can actually act on', () => {
 
   it('goes dark when every slot is busy, even with the money', () => {
     const state = freshGame();
-    fund(state, { Gold: 99_999, Wood: 99_999, Food: 99_999, Stone: 99_999, Iron: 99_999 });
+    fund(state, { Knowledge: 99_999 });
     expect(anyResearchActionable(state)).toBe(true);
     // Fill every slot: nothing is startable even though everything is paid for.
     while (state.research.active.length < techSlots(state)) {

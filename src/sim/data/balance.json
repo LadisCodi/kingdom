@@ -771,15 +771,14 @@
   "technologies": {
     "Forestry": {
       "cost": {
-        "Gold": 75
+        "Knowledge": 8
       },
       "durationSeconds": 30,
       "requires": []
     },
     "UrbanPlanning": {
       "cost": {
-        "Gold": 200,
-        "Wood": 50
+        "Knowledge": 20
       },
       "durationSeconds": 60,
       "requires": [
@@ -788,8 +787,7 @@
     },
     "Communities": {
       "cost": {
-        "Gold": 450,
-        "Wood": 60
+        "Knowledge": 45
       },
       "durationSeconds": 90,
       "requires": [
@@ -798,8 +796,7 @@
     },
     "Architecture": {
       "cost": {
-        "Gold": 600,
-        "Iron": 15
+        "Knowledge": 60
       },
       "durationSeconds": 120,
       "requires": [
@@ -808,8 +805,7 @@
     },
     "Agriculture": {
       "cost": {
-        "Gold": 100,
-        "Wood": 25
+        "Knowledge": 10
       },
       "durationSeconds": 45,
       "requires": [
@@ -818,8 +814,7 @@
     },
     "Farming": {
       "cost": {
-        "Gold": 250,
-        "Wood": 50
+        "Knowledge": 25
       },
       "durationSeconds": 60,
       "requires": [
@@ -828,7 +823,7 @@
     },
     "Market": {
       "cost": {
-        "Gold": 150
+        "Knowledge": 15
       },
       "durationSeconds": 45,
       "requires": [
@@ -837,8 +832,7 @@
     },
     "CropRotation": {
       "cost": {
-        "Gold": 300,
-        "Food": 30
+        "Knowledge": 30
       },
       "durationSeconds": 75,
       "requires": [
@@ -847,8 +841,7 @@
     },
     "Masonry": {
       "cost": {
-        "Gold": 100,
-        "Wood": 25
+        "Knowledge": 10
       },
       "durationSeconds": 45,
       "requires": [
@@ -857,8 +850,7 @@
     },
     "Mining": {
       "cost": {
-        "Gold": 250,
-        "Stone": 30
+        "Knowledge": 25
       },
       "durationSeconds": 60,
       "requires": [
@@ -867,8 +859,7 @@
     },
     "Engineering": {
       "cost": {
-        "Gold": 500,
-        "Stone": 60
+        "Knowledge": 50
       },
       "durationSeconds": 90,
       "requires": [
@@ -877,8 +868,7 @@
     },
     "DeepMining": {
       "cost": {
-        "Gold": 800,
-        "Stone": 30
+        "Knowledge": 80
       },
       "durationSeconds": 120,
       "requires": [
@@ -887,8 +877,7 @@
     },
     "Sailing": {
       "cost": {
-        "Gold": 150,
-        "Wood": 30
+        "Knowledge": 15
       },
       "durationSeconds": 45,
       "requires": [
@@ -897,8 +886,7 @@
     },
     "Fishing": {
       "cost": {
-        "Gold": 100,
-        "Food": 20
+        "Knowledge": 10
       },
       "durationSeconds": 45,
       "requires": [
@@ -907,8 +895,7 @@
     },
     "Shipbuilding": {
       "cost": {
-        "Gold": 400,
-        "Wood": 40
+        "Knowledge": 40
       },
       "durationSeconds": 90,
       "requires": [
@@ -917,8 +904,7 @@
     },
     "ScalingTools": {
       "cost": {
-        "Gold": 200,
-        "Wood": 25
+        "Knowledge": 20
       },
       "durationSeconds": 60,
       "requires": [
@@ -927,7 +913,7 @@
     },
     "Warrior": {
       "cost": {
-        "Gold": 100
+        "Knowledge": 10
       },
       "durationSeconds": 30,
       "requires": [
@@ -936,8 +922,7 @@
     },
     "Spears": {
       "cost": {
-        "Gold": 150,
-        "Wood": 20
+        "Knowledge": 15
       },
       "durationSeconds": 45,
       "requires": [
@@ -946,8 +931,7 @@
     },
     "Archery": {
       "cost": {
-        "Gold": 150,
-        "Wood": 20
+        "Knowledge": 15
       },
       "durationSeconds": 60,
       "requires": [
@@ -956,8 +940,7 @@
     },
     "Cavalry": {
       "cost": {
-        "Gold": 400,
-        "Food": 30
+        "Knowledge": 40
       },
       "durationSeconds": 90,
       "requires": [
@@ -966,8 +949,7 @@
     },
     "Attunement": {
       "cost": {
-        "Gold": 400,
-        "Stone": 40
+        "Knowledge": 40
       },
       "durationSeconds": 120,
       "requires": [
@@ -976,8 +958,7 @@
     },
     "Warband": {
       "cost": {
-        "Gold": 600,
-        "Iron": 20
+        "Knowledge": 60
       },
       "durationSeconds": 180,
       "requires": [
@@ -1108,7 +1089,8 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
-    "dripPerRuinPerHour": 2
+    "dripPerRuinPerHour": 2,
+    "perRevealRing": 1
   },
   "army": {
     "trainTapBoostSeconds": 3,
@@ -1444,7 +1426,8 @@
       "reward": {
         "Gold": 10
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Timber",
@@ -1457,7 +1440,8 @@
       "reward": {
         "Gold": 15
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "ARoof",
@@ -1470,7 +1454,8 @@
       "reward": {
         "Gold": 20
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Rations",
@@ -1483,7 +1468,8 @@
       "reward": {
         "Gold": 15
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstVillager",
@@ -1496,7 +1482,8 @@
       "reward": {
         "Gold": 25
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Explorer",
@@ -1509,7 +1496,8 @@
       "reward": {
         "Gold": 20
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
       "id": "TaxDay",
@@ -1523,7 +1511,8 @@
         "Gold": 20,
         "Wood": 10
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
       "id": "Woodcraft",
@@ -1536,7 +1525,8 @@
       "reward": {
         "Gold": 40
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 4
     },
     {
       "id": "TheSawmill",
@@ -1549,7 +1539,8 @@
       "reward": {
         "Gold": 30
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
       "id": "ToWork",
@@ -1562,7 +1553,8 @@
       "reward": {
         "Gold": 30
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
       "id": "GrowingTown",
@@ -1575,7 +1567,8 @@
       "reward": {
         "Gold": 40
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 4
     },
     {
       "id": "Neighbors",
@@ -1588,7 +1581,8 @@
       "reward": {
         "Gold": 50
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
       "id": "PickARoute",
@@ -1601,7 +1595,8 @@
       "reward": {
         "Gold": 60
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 6
     },
     {
       "id": "Stoneworks",
@@ -1615,7 +1610,8 @@
         "Gold": 50,
         "Food": 20
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
       "id": "ToMarket",
@@ -1628,7 +1624,8 @@
       "reward": {
         "Gold": 80
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 8
     },
     {
       "id": "Merchant",
@@ -1641,7 +1638,8 @@
       "reward": {
         "Gold": 100
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 10
     },
     {
       "id": "ProperCapital",
@@ -1654,7 +1652,8 @@
       "reward": {
         "Gold": 150
       },
-      "rewardGems": 5
+      "rewardGems": 5,
+      "rewardKnowledge": 15
     },
     {
       "id": "MoreRoom",
@@ -1667,7 +1666,8 @@
       "reward": {
         "Gold": 60
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 6
     },
     {
       "id": "SecondStory",
@@ -1680,7 +1680,8 @@
       "reward": {
         "Gold": 75
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 8
     },
     {
       "id": "FullHouse",
@@ -1694,7 +1695,8 @@
         "Gold": 75,
         "Food": 20
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 8
     },
     {
       "id": "FirstSoldier",
@@ -1707,7 +1709,8 @@
       "reward": {
         "Gold": 100
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 10
     },
     {
       "id": "RunningWater",
@@ -1720,7 +1723,8 @@
       "reward": {
         "Gold": 60
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 6
     },
     {
       "id": "Farmhand",
@@ -1733,7 +1737,8 @@
       "reward": {
         "Gold": 80
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 8
     },
     {
       "id": "IronRoad",
@@ -1746,7 +1751,8 @@
       "reward": {
         "Gold": 120
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 12
     },
     {
       "id": "TheMine",
@@ -1759,7 +1765,8 @@
       "reward": {
         "Gold": 120
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 12
     },
     {
       "id": "Architect",
@@ -1772,7 +1779,8 @@
       "reward": {
         "Gold": 150
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 15
     },
     {
       "id": "GrandCapital",
@@ -1785,7 +1793,8 @@
       "reward": {
         "Gold": 300
       },
-      "rewardGems": 10
+      "rewardGems": 10,
+      "rewardKnowledge": 30
     },
     {
       "id": "TheFirstShrine",
@@ -1798,7 +1807,8 @@
       "reward": {
         "Gold": 150
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 15
     },
     {
       "id": "Attuned",
@@ -1811,7 +1821,8 @@
       "reward": {
         "Gold": 200
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 20
     },
     {
       "id": "TheSanctum",
@@ -1825,7 +1836,8 @@
         "Gold": 250,
         "Stone": 40
       },
-      "rewardGems": 5
+      "rewardGems": 5,
+      "rewardKnowledge": 25
     },
     {
       "id": "Mustered",
@@ -1839,7 +1851,8 @@
         "Gold": 200,
         "Wood": 60
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 20
     },
     {
       "id": "AWarband",
@@ -1853,7 +1866,8 @@
         "Gold": 250,
         "Food": 60
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 25
     },
     {
       "id": "IntoTheDark",
@@ -1867,7 +1881,8 @@
         "Gold": 300,
         "Food": 80
       },
-      "rewardGems": 5
+      "rewardGems": 5,
+      "rewardKnowledge": 30
     },
     {
       "id": "TheBarrowsPrize",
@@ -1880,7 +1895,8 @@
       "reward": {
         "Gold": 400
       },
-      "rewardGems": 5
+      "rewardGems": 5,
+      "rewardKnowledge": 40
     },
     {
       "id": "WornWell",
@@ -1893,7 +1909,8 @@
       "reward": {
         "Gold": 300
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 30
     },
     {
       "id": "Leylines",
@@ -1907,7 +1924,8 @@
         "Gold": 500,
         "Stone": 60
       },
-      "rewardGems": 5
+      "rewardGems": 5,
+      "rewardKnowledge": 50
     },
     {
       "id": "DeeperStill",
@@ -1921,7 +1939,8 @@
         "Gold": 600,
         "Iron": 30
       },
-      "rewardGems": 5
+      "rewardGems": 5,
+      "rewardKnowledge": 60
     },
     {
       "id": "TheReliquary",
@@ -1934,7 +1953,8 @@
       "reward": {
         "Gold": 900
       },
-      "rewardGems": 10
+      "rewardGems": 10,
+      "rewardKnowledge": 90
     }
   ],
   "fog": {

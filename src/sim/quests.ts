@@ -86,8 +86,8 @@ export const isQuestComplete = (state: GameState, quest: QuestDef): boolean =>
 
 export type ClaimResult = 'Claimed' | 'NotComplete' | 'NoQuest';
 
-/** Pay the reward into the city wallet (Gems into the player's) and activate
- *  the next quest. */
+/** Pay the reward into the city wallet (Gems into the player's, Knowledge
+ *  into the kingdom's) and activate the next quest. */
 export function claimQuest(state: GameState): ClaimResult {
   const quest = activeQuest(state);
   if (!quest) return 'NoQuest';
@@ -99,6 +99,12 @@ export function claimQuest(state: GameState): ClaimResult {
   if (quest.rewardGems > 0) {
     addToWallet(state.player.wallet, 'Gems', quest.rewardGems);
     recordResourceDiscovery(state, 'Gems');
+  }
+  // Into the KINGDOM purse — Knowledge outlives the city that earned it, and
+  // it is what the research tree is bought with.
+  if (quest.rewardKnowledge > 0) {
+    addToWallet(state.kingdom.wallet, 'Knowledge', quest.rewardKnowledge);
+    recordResourceDiscovery(state, 'Knowledge');
   }
   state.quests.index += 1;
   state.quests.progress = 0;

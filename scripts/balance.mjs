@@ -151,6 +151,10 @@ const SETTINGS = [
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
   ['knowledge.drip_per_ruin_per_hour', 'knowledge.dripPerRuinPerHour'],
+  // Knowledge for clearing one cell of fog, PER RING of distance from the
+  // Townhall: ring 3 pays 3× this. Linear, so the far map is worth going to
+  // without any one cell being a jackpot.
+  ['knowledge.per_reveal_ring', 'knowledge.perRevealRing'],
   // Combat is a SCORING PASS, not a simulation — these six numbers are the
   // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
   // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
@@ -219,13 +223,14 @@ const SHEETS = {
     'respawn_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'cost_stone', 'cost_iron',
-    'duration_seconds', 'requires'],
+  // Research is paid in Knowledge and nothing else — one column, not a
+  // five-currency wallet. See the tech importer for why.
+  Technologies: ['id', 'cost_knowledge', 'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
-    'reward_gems'],
+    'reward_gems', 'reward_knowledge'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -629,8 +634,15 @@ async function importXlsx() {
       if (!TECH_IDS.includes(req)) fail(where(r), `unknown required tech "${req}"`);
       if (req === id) fail(where(r), 'a technology cannot require itself');
     }
+    // Knowledge, alone. A technology is what you learned by exploring, so it
+    // is bought with what exploring pays and nothing the city produces —
+    // which also keeps the whole tree spendable out of the KINGDOM purse,
+    // where Knowledge lives. Instant upgrades stay Gold; they are the sink
+    // the city's own economy feeds.
+    const knowledge = num(r, 'cost_knowledge');
+    if (knowledge < 1) fail(where(r), 'cost_knowledge must be at least 1');
     out.technologies[id] = {
-      cost: wallet(r, 'cost'),
+      cost: { Knowledge: knowledge },
       durationSeconds: num(r, 'duration_seconds'),
       requires,
     };
@@ -696,6 +708,7 @@ async function importXlsx() {
       goalLevel: level,
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
+      rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
     });
   }
 
@@ -879,7 +892,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, ...costCells(t.cost), t.durationSeconds, t.requires.join(',')];
+    return [id, t.cost.Knowledge, t.durationSeconds, t.requires.join(',')];
   }), (col) => col === 'requires');
 
   addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
@@ -892,7 +905,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
-    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '',
+    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardKnowledge || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

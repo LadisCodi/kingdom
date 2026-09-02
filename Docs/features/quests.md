@@ -47,7 +47,9 @@ explored ahead is never dead-ended.
 ## Sheet columns
 
 `id, name, description, goal_type, goal_target, goal_amount, goal_level,
-reward_gold, reward_wood, reward_food, reward_stone, reward_iron` —
+reward_gold, reward_wood, reward_food, reward_stone, reward_iron,
+reward_gems, reward_knowledge` — `reward_knowledge` is kingdom-scoped, so it
+sits outside the `reward` wallet ([`knowledge.md`](knowledge.md));
 goal_target is a DistrictId/TechId/CurrencyId depending on the type (the
 importer validates); `goal_level` only on UpgradeDistrict ("Upgrade 3
 Houses to lvl 2" = target Housing, amount 3, level 2).

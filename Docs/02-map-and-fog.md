@@ -103,6 +103,11 @@ cell of the city **plus all its neighbours** is revealed. With just the Townhall
   popup doesn't count).
 - Revealing a cell triggers a production recalculation for the active city (newly
   revealed Trees can join a Lumber camp's worked patch).
+- **Revealing a cell pays Knowledge equal to its ring** — distance 3 pays 3,
+  distance 10 pays 10 (`knowledge.per_reveal_ring`) — into the kingdom purse,
+  and only on the tap that finishes it. This is the main source of the
+  currency the technology tree is bought with; the floater says what the cell
+  paid. See [`features/knowledge.md`](features/knowledge.md).
 
 ### Reveal cost curve
 

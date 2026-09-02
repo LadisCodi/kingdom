@@ -2,12 +2,13 @@
 // counts), relative goals count events only while active, claims pay the
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
-import { QUESTS } from '../src/sim/data/definitions';
+import { QUESTS, TECH_ORDER } from '../src/sim/data/definitions';
 import { revealTap } from '../src/sim/fog';
 import { tapCell } from '../src/sim/harvest';
 import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
+import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
@@ -133,5 +134,48 @@ describe('first-time discoveries', () => {
     state.pendingDiscoveries = [];
     expect(claimQuest(state)).toBe('Claimed'); // pays 10 Gold
     expect(state.pendingDiscoveries).toEqual(['resource:Gold']);
+  });
+});
+
+// Docs/features/knowledge.md — the steady half of the research budget.
+//
+// CLAIM: quests pay Knowledge into the KINGDOM purse, and the chain pays out
+// more than the whole tech tree costs. Exploring is the half that scales;
+// this is the half that arrives on rails, so a player who follows the chain
+// is never hard-stuck behind a technology they cannot afford.
+describe('quests fund the research tree', () => {
+  it('pays its Knowledge into the kingdom purse, not the city', () => {
+    const state = freshGame();
+    const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
+    state.quests.index = explorer;
+    state.quests.progress = QUESTS[explorer].goalAmount;
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(QUESTS[explorer].rewardKnowledge);
+    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
+  });
+
+  // The chain carries MOST of the tree and deliberately not all of it: a
+  // player who follows the guided path still has to have been out on the map
+  // to finish researching, which is the whole reason the currency is earned
+  // by clearing fog. The map holds 2,902 on top of this, so the shortfall is
+  // a nudge rather than a wall.
+  it('the chain covers most of the tech tree, but never all of it', () => {
+    const chain = QUESTS.reduce((sum, q) => sum + q.rewardKnowledge, 0);
+    const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
+    expect(chain).toBe(591);
+    expect(chain).toBeGreaterThan(tree * 0.75);
+    expect(chain).toBeLessThan(tree);
+  });
+
+  // The chain's own gate: quest 8 asks for Forestry, so the Knowledge to buy
+  // it has to already be in hand by then — from the two quests before it and
+  // whatever fog the Explorer quest made the player clear.
+  it('the first quest that demands a technology is reachable when it arrives', () => {
+    // The floor, counting NO exploration income at all — even though the
+    // quest right before it makes the player clear fog, which pays more.
+    const upToWoodcraft = QUESTS.slice(0, QUESTS.findIndex((q) => q.id === 'Woodcraft'))
+      .reduce((sum, q) => sum + q.rewardKnowledge, 0);
+    expect(upToWoodcraft).toBeGreaterThanOrEqual(techCost('Forestry'));
   });
 });

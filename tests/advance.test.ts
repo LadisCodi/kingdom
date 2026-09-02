@@ -25,10 +25,10 @@ function onTheEdgeOfCommunities(): GameState {
   state.city.population = 5;
   completeTech(state, 'Forestry');
   completeTech(state, 'UrbanPlanning');
-  fund(state, { Gold: 10_000, Wood: 1000 });
-  const spent = getWallet(state.city.wallet, 'Gold');
+  fund(state, { Gold: 10_000, Wood: 1000, Knowledge: 1000 });
+  // Research is paid in Knowledge out of the KINGDOM purse, so the tech cost
+  // and the tax income no longer share a wallet — nothing to isolate.
   startTech(state, 'Communities', T0); // 90s
-  state.city.wallet.Gold = spent; // isolate the tax income from the tech cost
   state.city.lastTaxAt = T0;
   state.lastAdvance = T0;
   return state;
