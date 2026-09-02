@@ -64,11 +64,13 @@ different ways:
 | Found in the fog | Gives |
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | The raw materials |
-| **Landmarks** — shrines, standing stones, leysprings | **+1 Mana/h**, permanently |
+| **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | Dungeons to delve — artifacts, Fragments, Knowledge |
 
-Landmarks are what make exploration *compound*: more Mana per hour lets you
-sustain more artifacts, which makes the next stretch of fog cheaper to clear.
+Landmarks are what make exploration *compound*: a bigger Mana pool is a bigger
+session AND a bigger ad — the reward refills a whole pool — so every shrine
+claimed makes every future refill permanently larger, and the next stretch of
+fog cheaper to clear.
 Ruins are what stop the fog from being a treadmill — a non-repeating reward at
 the end of an exponential cost curve.
 

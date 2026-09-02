@@ -134,7 +134,7 @@ const SETTINGS = [
   ['mana.production_per_townhall_level', 'mana.productionPerTownhallLevel', 'list'],
   ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
-  ['mana.landmark_production', 'mana.landmarkProduction'],
+  ['mana.landmark_cap', 'mana.landmarkCap'],
   ['mana.landmark_claim_cost_base', 'mana.landmarkClaimCostBase'],
   ['mana.landmark_claim_cost_growth', 'mana.landmarkClaimCostGrowth'],
   ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],

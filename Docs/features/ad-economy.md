@@ -93,7 +93,30 @@ home, or combat stats below.
 | `mana.sanctum_cap_per_level` | 24, 48, 72 | Keeps the Sanctum worth the same fraction of the pool |
 | `ads.cooldown_min/max_seconds` | 30 / 90 | Randomised so the offer never becomes a metronome |
 | `ads.eligible_below_fraction` | 0.5 | Makes the offer an answer to being short, not an interruption |
+| `mana.landmark_cap` | **+10 per sanctuary** | Ten on the map: exploring the lot DOUBLES the pool, and therefore doubles every future ad |
 | ad reward | `manaCap` | One ad ≈ one pool ≈ one more span of production |
+
+## 3b. Exploring makes the ad bigger
+
+Sanctuaries raise **capacity**, not rate (changed 2026-09-02). Because an ad
+pays a whole pool, a claim makes every future ad permanently larger:
+
+| City | pool | one ad pays |
+|---|---|---|
+| bare Townhall 1 | 100 | **100** |
+| Townhall 1, five sanctuaries | 150 | **150** |
+| Townhall 3, all ten, Sanctum L3 | 332 | **332** |
+
+That is the shape a reward at the end of an exponential fog cost wants: worth
+*more* the longer you play. The +1 Mana/h it replaced was worth most on the day
+you found it and less every day after, because production is a rate and the
+things it competed with kept growing.
+
+The trade, stated plainly: a fully-explored pool takes ~21 h to refill for free
+rather than 10 h, so the free share of a session *shrinks* as you progress. The
+absolute free allowance is unchanged — production is still 10–16/h — but the
+ceiling it fills is taller. That is the intended direction, and it is the
+number to watch if free play starts to feel thin.
 
 ## 4. The session, in arithmetic
 

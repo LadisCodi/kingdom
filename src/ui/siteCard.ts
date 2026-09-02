@@ -10,7 +10,7 @@
 import { LANDMARK_ART, MANA, type LandmarkDef, type RuinDef } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
-import { manaProduction } from '../sim/mana';
+import { manaCap } from '../sim/mana';
 import { spriteUrl } from '../render/sprites';
 import type { Coord } from '../sim/state';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
@@ -37,24 +37,29 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
       el('div', {},
         el('div', { class: 'site-name' }, look.name),
         el('div', { class: 'site-kind' }, claimed ? 'Claimed' : 'Unclaimed'))),
-    // The promise, stated as a rate rather than as a number to interpret.
+    // The promise, stated as the thing it actually buys: a bigger pool, which
+    // is also a bigger reward every time an ad refills it.
     el('div', { class: 'site-gift' },
-      stat('Mana', `+${MANA.landmarkProduction}`, 'per hour, for good')),
+      stat('Mana', `+${MANA.landmarkCap}`, 'to your pool, for good')),
   );
 
   if (claimed) {
     body.append(el('div', { class: 'site-note' },
       iconEl('tick', { size: 'sm' }),
-      // "Production", spelled out: the header shows the NET rate, and two
-      // different numbers with the same units read as a contradiction.
-      `Feeding the kingdom ${MANA.landmarkProduction} Mana an hour. `
-      + `Total production: ${manaProduction(game.state)}/h.`));
+      // Spelled out against the running total, because the value of a claim
+      // is what it made the ceiling, not the number on the tin.
+      `Holding ${MANA.landmarkCap} more Mana. `
+      + `Your pool: ${manaCap(game.state)}.`));
     return panel(body);
   }
 
+  // What the claim actually buys, in the player's terms: a deeper pool means a
+  // longer session AND a larger refill, because a refill fills the whole
+  // thing. Relic upkeep is gone, so the old "how many relics you can wear"
+  // framing would be describing a rule that no longer exists.
   body.append(el('div', { class: 'site-note' },
-    'Claiming it raises how much magic your kingdom can SUSTAIN — which is what '
-    + 'decides how many relics you can wear at once.'));
+    `Claiming it holds ${MANA.landmarkCap} more Mana, for good — a longer run of `
+    + 'taps, and more from every refill.'));
 
   body.append(action({
     label: 'Claim',

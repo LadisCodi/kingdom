@@ -12,7 +12,7 @@ import {
   adCooldownMs, adOfferReward, claimAdOffer, refreshAdOffer,
 } from '../src/sim/adOffers';
 import { advance } from '../src/sim/commands';
-import { AD } from '../src/sim/data/definitions';
+import { AD, MANA } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { freshGame, freshPresenter, map, T0 } from './helpers';
@@ -88,6 +88,32 @@ describe('claiming', () => {
     expect(adCooldownMs(a)).toBe(adCooldownMs(b)); // same seed, same claims
     a.ads.claims = 1;
     expect(adCooldownMs(a)).not.toBe(adCooldownMs(b)); // and it moves on
+  });
+});
+
+describe('exploring makes the ad bigger', () => {
+  // The compounding loop the whole map is FOR: a sanctuary raises the ceiling,
+  // an ad pays a whole pool, so every claim makes every future ad permanently
+  // bigger. A rate bonus could not do this — it would be worth most the day
+  // you found it and less every day after.
+  it('every sanctuary claimed raises the reward, for good', () => {
+    const state = eligible();
+    const bare = adOfferReward(state);
+    state.landmarks.claimed.ThornedShrine = true;
+    expect(adOfferReward(state)).toBe(bare + MANA.landmarkCap);
+    state.landmarks.claimed.WhisperingStones = true;
+    expect(adOfferReward(state)).toBe(bare + 2 * MANA.landmarkCap);
+  });
+
+  it('pays out the bigger pool, and the claim reads the ceiling at claim time', () => {
+    const state = eligible();
+    refreshAdOffer(state, T0);
+    // A sanctuary claimed while the offer is standing pays into THIS ad.
+    state.landmarks.claimed.ThornedShrine = true;
+    const before = mana(state);
+    const cap = manaCap(state);
+    expect(claimAdOffer(state, T0)).toBe('Claimed');
+    expect(mana(state)).toBe(before + cap);
   });
 });
 

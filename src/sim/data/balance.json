@@ -1088,7 +1088,7 @@
       48,
       72
     ],
-    "landmarkProduction": 1,
+    "landmarkCap": 10,
     "landmarkClaimCostBase": 120,
     "landmarkClaimCostGrowth": 1.3,
     "gemRefillPerGem": 4

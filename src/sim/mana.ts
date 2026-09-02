@@ -3,15 +3,17 @@
 //
 // TWO DIALS THAT MUST KEEP DOING DIFFERENT JOBS.
 //
-//   production (Mana/h) = Townhall level + landmarks claimed on the map
-//   capacity   (pool)   = Townhall level + the Sanctum
+//   production (Mana/h) = Townhall level
+//   capacity   (pool)   = Townhall level + the Sanctum + sanctuaries claimed
 //
-// Production answers "how many relics can I sustain"; capacity answers "how
-// long an absence can I bank". Conflating them would waste both — a bigger
-// pool would look like more magic, and more magic would look like a longer
-// leash.
+// Production answers "how much do I get for free"; capacity answers "how big
+// is a session, and how big is an ad". Conflating them would waste both.
 //
-//   regen/h = base(TH) + Σ landmarks claimed on the map
+// SANCTUARIES BUY CAPACITY, NOT RATE (2026-09-02). They used to pay +1 Mana/h
+// each, which mattered most on the day you found one and less every day
+// after. Against a pool the ad reward is measured in, a claim instead makes
+// every future ad permanently bigger — so exploring compounds rather than
+// decays, and the map is worth clearing at any stage of the game.
 //
 // NOTHING DRAINS IT. Relics used to charge an hourly upkeep while attuned;
 // that was removed once Mana became the energy every tap is paid from, because
@@ -49,11 +51,11 @@ import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { resolve } from './modifiers';
 import { addToWallet, coordKey, getWallet, townhall, type GameState } from './state';
 
-/** Mana per hour: the Townhall's own output plus every claimed landmark. */
+/** Mana per hour. The Townhall alone — sanctuaries buy CAPACITY now, not
+ *  rate, so the two dials stay genuinely different things. */
 export function manaProduction(state: GameState): number {
   const base = levelIndexed(MANA.productionPerTownhallLevel, townhall(state).level);
-  const landmarks = Object.keys(state.landmarks.claimed).length * MANA.landmarkProduction;
-  return Math.max(0, resolve(state, 'manaRegen', base + landmarks));
+  return Math.max(0, resolve(state, 'manaRegen', base));
 }
 
 /** What actually accrues, per hour. Nothing draws against it, so this is
@@ -62,9 +64,19 @@ export function manaProduction(state: GameState): number {
  *  change in one place. */
 export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduction(state));
 
-/** The ceiling: the Townhall's own pool plus the Sanctum's. */
+/**
+ * The ceiling: the Townhall's own pool, the Sanctum's, and every sanctuary
+ * claimed out in the fog.
+ *
+ * Sanctuaries raise CAPACITY rather than rate, which is what makes exploring
+ * compound. An ad pays a whole pool, so every shrine claimed makes every
+ * future ad permanently bigger — a claim is worth more the longer you play,
+ * instead of a flat +1/h that mattered most on the day you found it and less
+ * every day after.
+ */
 export function manaCap(state: GameState): number {
   let cap = levelIndexed(MANA.baseCapPerTownhallLevel, townhall(state).level);
+  cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {
       cap += levelIndexed(MANA.sanctumCapPerLevel, d.level);

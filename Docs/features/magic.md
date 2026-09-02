@@ -81,7 +81,7 @@ capping is new behaviour and belongs in exactly one place.
 
 | Dial | Raised by | What it means to the player |
 |---|---|---|
-| **Production** (Mana/h) | Townhall level + **landmarks claimed on the map** | How much magic you can *sustain* |
+| **Production** (Mana/h) | Townhall level | How much you get for *free* |
 | **Capacity** (pool size) | The **Sanctum**, a new city district | How long an *absence* you can bank |
 
 ```
@@ -203,7 +203,7 @@ They are what makes exploration *compound*, and they are the design's answer to
 the audit's strongest keeper — paid fog as the primary economic sink, which it
 notes nobody else in the category does:
 
-> explore → more Mana/h → afford more upkeep → wear more relics → explore further
+> explore → a bigger pool → a bigger ad → more taps → explore further
 
 A flat resource drip cannot do this, because it does not feed the constraint that
 gates everything else.
@@ -240,10 +240,9 @@ Follows `Docs/art/ui-menus-redesign.md`.
 | Constant | Value | Rationale |
 |---|---|---|
 | Sanctum cap bonus | +12 / level, 3 levels | Keeps `cap ≈ 8 × net regen` as landmarks accumulate |
-| Landmark production | +1 Mana/h | 8–12 on the map ≈ doubles base production when fully claimed |
+| Landmark capacity | **+10 max Mana** | Ten on the map, so a full sweep DOUBLES the base pool — and doubles what every ad pays, since the reward is a whole pool |
 | Attunement slots | 1 → 1 research → 5 max | Gem price escalates per slot |
 | Slot swap lock | 5 min | Long enough to prevent hot-swapping, short enough not to punish |
-| Artifact upkeep | 1–3 Mana/h, flat | Strongest passive costs most; never scales with level |
 | Artifact level cost | `round(20 × 1.6^level)`, max 10 | Reuses `upgradeCost` (`upgrades.ts:15`); ≈3,630 Knowledge to max one |
 | Knowledge drip | 2/h per discovered ruin | 5 ruins ≈ 240/day → one artifact maxed in ~15 days |
 

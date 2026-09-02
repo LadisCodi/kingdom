@@ -45,16 +45,17 @@ describe('the two dials', () => {
     expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[0]);
     townhall(state).level = 2;
     expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[1]);
+    // Sanctuaries buy CAPACITY, not rate — production is the Townhall alone.
     state.landmarks.claimed[first.id] = true;
-    expect(manaProduction(state))
-      .toBe(MANA.productionPerTownhallLevel[1] + MANA.landmarkProduction);
+    expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[1]);
   });
 
-  it('capacity comes from the Townhall and the Sanctum, and not from landmarks', () => {
+  it('capacity comes from the Townhall, the Sanctum AND every sanctuary', () => {
     const state = freshGame();
     expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
     state.landmarks.claimed[first.id] = true;
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]); // production, not capacity
+    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.landmarkCap);
+    delete state.landmarks.claimed[first.id];
     sanctum(state, 1);
     expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.sanctumCapPerLevel[0]);
     state.city.districts.find((d) => d.definitionId === 'Sanctum')!.level = 3;
@@ -253,7 +254,7 @@ describe('landmarks', () => {
     expect(visibleLandmarks(state, map).map((l) => l.id)).toContain(distant.id);
   });
 
-  it('cost Gold on the fog’s own distance curve, and pay production forever', () => {
+  it('cost Gold on the fog’s own distance curve, and pay capacity forever', () => {
     const state = freshGame();
     reveal(state, [first.location]);
     const cost = landmarkClaimCost(map, first);
@@ -261,10 +262,14 @@ describe('landmarks', () => {
 
     expect(claimLandmark(state, map, first.location)).toBe('NotEnoughGold');
     fund(state, { Gold: cost });
-    const before = manaProduction(state);
+    const beforeCap = manaCap(state);
+    const beforeRate = manaProduction(state);
     expect(claimLandmark(state, map, first.location)).toBe('Claimed');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
-    expect(manaProduction(state)).toBe(before + MANA.landmarkProduction);
+    // The pool grows, the rate does not — which is what makes a claim worth
+    // more the longer you play: an ad pays a whole pool.
+    expect(manaCap(state)).toBe(beforeCap + MANA.landmarkCap);
+    expect(manaProduction(state)).toBe(beforeRate);
     expect(claimLandmark(state, map, first.location)).toBe('AlreadyClaimed');
   });
 

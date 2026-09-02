@@ -1,9 +1,15 @@
 // Landmarks (Docs/features/magic.md §4): small, numerous, passive map sites
-// that raise Mana PRODUCTION permanently when claimed.
+// that raise Mana CAPACITY permanently when claimed.
 //
 // They are what makes exploration compound rather than merely pay:
 //
-//   explore → more Mana/h → more taps → more of everything → explore further
+//   explore → a bigger pool → a bigger ad → more taps → explore further
+//
+// Capacity rather than rate, deliberately (2026-09-02). An ad pays a whole
+// pool, so a claim makes every future ad permanently bigger — the claim is
+// worth MORE the longer you play. The +1 Mana/h it used to pay was worth most
+// on the day you found it and less every day after, which is the wrong shape
+// for the reward at the end of an exponential fog cost.
 //
 // A flat resource drip cannot do that, because it does not feed the constraint
 // that gates everything else. This is also the design's answer to paid fog
