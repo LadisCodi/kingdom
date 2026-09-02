@@ -59,29 +59,33 @@ body {
   z-index: 4; /* under the overlay scrim, over the map */
 }
 
-/* The header outranks the menus, so your purse stays readable and tappable
-   while a drawer is open — a sheet is something you pulled up OVER the game,
-   not a replacement for it.
+/* The header and the nav bar outrank EVERY menu — full-screen ones included.
+   A menu is something you opened over the game, never a replacement for it:
+   your purse has to stay readable while you decide what to spend, and the
+   way out has to stay where it always is.
 
-   A FULL-SCREEN menu is the exception and keeps the top of the screen: it is
-   not a drawer, it owns the view, and it brings its own top bar (the research
-   screen's, for one) which the game header would otherwise sit on top of. The
-   rule below is therefore stated the other way round — #overlay outranks the
-   header by default, and DROPS BELOW IT when it holds a bottom sheet — so a
-   new full-screen menu gets the right behaviour without being enumerated. */
+   This used to make an exception for full-screen menus, on the reasoning that
+   they "own the view" and bring their own top bar. In practice that hid the
+   resource bar exactly when the player was reading prices — the Research
+   screen being the worst of it — so the exception is gone. The ONLY surface
+   that covers everything is the rewarded video (#ad, z 200), which has to be
+   inescapable to be worth anything.
+
+   The stack, bottom to top: map · ad-offer tab (4) · district card (6) ·
+   menus and sheets (7) · header (8) · nav bar (10) · settings knob (20) ·
+   the video (200). */
 #header { position: relative; z-index: 8; }
 
 #overlay:empty { display: none; }
 /* inset:0 and pointer-events:auto are load-bearing: this element is what
-   stops a tap beside a sheet reaching the canvas and firing a harvest. */
+   stops a tap beside a sheet reaching the canvas and firing a harvest. The
+   padding keeps content clear of the two bars it now sits under. */
 #overlay {
-  position: absolute; inset: 0; z-index: 12;
+  position: absolute; inset: 0; z-index: 7;
   background: var(--scrim);
   overflow-y: auto;
   padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
 }
-/* A bottom sheet ducks under the header (and so under the scrim it casts). */
-#overlay:has(.k-sheet) { z-index: 5; }
 
 /* ---------- the quest hint ---------- */
 /* Not screen-specific: any element the quest points at wears this. */

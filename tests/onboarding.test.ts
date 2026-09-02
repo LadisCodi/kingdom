@@ -32,6 +32,7 @@ import {
 import { BERRIES, FOREST, map, T0 } from './helpers';
 
 const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed at start
+const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
   it('runs steps 1-14 on nothing but what the game gives them', () => {
@@ -149,33 +150,50 @@ describe('a player can actually play the onboarding', () => {
     research('Agriculture');
     finish('Fields');
 
+    // Step 10 asks for TWO plots: enough Food to keep a growing town fed
+    // without tapping the single bush forever. The second plot is priced on
+    // the per-instance curve (10 then 45 Wood), so the player chops for it —
+    // the chain does not hand them the Wood until the NEXT beat.
+    chop(Math.max(0, 55 - wood()));
     build('FarmLands', PLOT);
+    build('FarmLands', PLOT_B);
     finish('FirstPlot');
 
     while (getWallet(state.city.wallet, 'Food') < 20) {
-      if (collectTap(state, map, PLOT, now) !== 'Harvested') tick(30);
+      let any = false;
+      for (const plot of [PLOT, PLOT_B]) {
+        if (collectTap(state, map, plot, now) === 'Harvested') any = true;
+      }
+      if (!any) tick(30);
     }
     finish('ByHand');
 
     chop(Math.max(0, 30 - wood()));
     finish('Lumber');
 
-    build('Farm', { x: -1, y: 0 });
+    build('Farm', { x: -2, y: 0 });
     finish('Farmhand');
 
     const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- step 13: one house holds two, so the second villager needs no second roof
-    expect(maxPopulation(state)).toBeGreaterThanOrEqual(2);
-    expect(queueTraining(state, now)).toBe('Queued');
-    tick(60);
-    expect(state.city.population).toBe(2);
+    // ---- steps 13-14: a second House, and the villager it makes room for ----
+    chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
+    build('Housing', { x: 0, y: -1 });
+    finish('GrowingTown');
+
+    // Two L1 houses hold four; the chain asks for three, so the new roof is
+    // what the villager needed.
+    expect(maxPopulation(state)).toBeGreaterThanOrEqual(3);
+    while (state.city.population < 3) {
+      if (queueTraining(state, now) !== 'Queued') tick(30); // Food comes off the plots
+      tick(30);
+    }
     finish('Neighbors');
 
-    // The player is now 14 beats in and has never been handed anything.
-    expect(activeQuest(state)!.id).toBe('GrowingTown');
+    // The player is now fourteen beats in and has never been handed anything.
+    expect(activeQuest(state)!.id).toBe('ProperCapital');
 
     // And the energy held out. Mana is what every tap is paid from, so an
     // opening that drains the pool is an opening that stops dead in front of

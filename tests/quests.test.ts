@@ -50,7 +50,9 @@ describe('the quest chain', () => {
       'TaxDay', 'Explorer',                       // 7    rent pays for more fog
       'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
       'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
-      'Neighbors', 'GrowingTown', 'ProperCapital',// 13-14 (+ the Townhall, woven in)
+      'GrowingTown', 'Neighbors', 'ProperCapital',// 13-14 a House FIRST, then the
+                                                  //   citizen it makes room for
+                                                  //   (+ the Townhall, woven in)
       'SawTeeth', 'TheSawmill', 'Crewed',         // 15-17 automate the wood
       'FurtherAfield', 'OldStones',               // 18-19 explore, claim the shrine
       'Mapmakers', 'Surveyors',                   // 20    exploration becomes a system

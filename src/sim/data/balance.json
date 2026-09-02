@@ -1524,7 +1524,7 @@
     {
       "id": "TaxDay",
       "name": "Tax day",
-      "description": "Your villager pays rent. Collect 30 Gold — exploring is not free.",
+      "description": "Your villager pays rent. Tap the House to hurry it along — 30 Gold.",
       "goalType": "CollectResource",
       "goalTarget": "Gold",
       "goalAmount": 30,
@@ -1566,10 +1566,10 @@
     {
       "id": "FirstPlot",
       "name": "First plot",
-      "description": "Build a crop plot on open grass.",
+      "description": "Build two crop plots on open grass.",
       "goalType": "BuildDistrict",
       "goalTarget": "FarmLands",
-      "goalAmount": 1,
+      "goalAmount": 2,
       "goalLevel": null,
       "reward": {
         "Gold": 25
@@ -1580,7 +1580,7 @@
     {
       "id": "ByHand",
       "name": "By hand",
-      "description": "Tap the plot for Food. Doing this forever is not the plan.",
+      "description": "Tap the plots for Food. Doing this forever is not the plan.",
       "goalType": "CollectResource",
       "goalTarget": "Food",
       "goalAmount": 20,
@@ -1634,23 +1634,9 @@
       "rewardKnowledge": 5
     },
     {
-      "id": "Neighbors",
-      "name": "Neighbors",
-      "description": "One House holds two. Train another villager.",
-      "goalType": "ReachPopulation",
-      "goalTarget": null,
-      "goalAmount": 2,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 40
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 5
-    },
-    {
       "id": "GrowingTown",
       "name": "Growing town",
-      "description": "Build a second House. Notice what the Wood costs now.",
+      "description": "Build a second House. The Wood is starting to add up.",
       "goalType": "BuildDistrict",
       "goalTarget": "Housing",
       "goalAmount": 2,
@@ -1660,6 +1646,20 @@
       },
       "rewardGems": 0,
       "rewardKnowledge": 6
+    },
+    {
+      "id": "Neighbors",
+      "name": "Neighbors",
+      "description": "Train another villager — the new House has the room.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 40
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
       "id": "ProperCapital",
