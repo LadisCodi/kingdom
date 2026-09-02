@@ -14,6 +14,7 @@ import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
+import { forceConjunction } from './sim/timeline';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -25,14 +26,16 @@ import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderSiteCard } from './ui/siteCard';
-import { renderArmyMenu } from './ui/armyMenu';
 import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
+import { renderExpeditionSheet } from './ui/expeditionSheet';
+import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { mountQuestPill } from './ui/questPill';
+import { mountDelvePill } from './ui/delvePill';
 import { mountBanner } from './ui/banner';
 import { button, el } from './ui/format';
 import { legacy, ScreenSlot } from './ui/kit/host';
@@ -89,6 +92,7 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
+  mountDelvePill(game, document.getElementById('delves')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
@@ -103,11 +107,12 @@ async function boot(): Promise<void> {
   const OVERLAYS: Record<OverlayName, (g: Game) => HTMLElement> = {
     build: renderBuildMenu,
     market: renderMarketMenu,
-    army: renderArmyMenu,
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
     reliquary: renderReliquarySheet,
+    expedition: renderExpeditionSheet,
+    checkpoint: renderCheckpointSheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
@@ -146,7 +151,10 @@ async function boot(): Promise<void> {
     const overlay = game.openOverlay;
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
-      const needsKnob = overlay !== 'purse' && overlay !== 'reliquary';
+      const KIT_SHEETS: OverlayName[] = [
+        'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
+      ];
+      const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
         () => OVERLAYS[overlay](game),
         needsKnob ? () => game.dismiss() : undefined,
@@ -287,6 +295,7 @@ async function boot(): Promise<void> {
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
+      button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
       button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }

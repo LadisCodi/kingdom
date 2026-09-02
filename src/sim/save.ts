@@ -590,6 +590,14 @@ export function deserialize(
     report.completedResearch.push(...tail.completedResearch);
     report.goldEarned += tail.goldEarned;
     report.trainedPopulation += tail.trainedPopulation;
+    report.manaEarned += tail.manaEarned;
+    report.knowledgeEarned += tail.knowledgeEarned;
+    report.expiredModifiers.push(...tail.expiredModifiers);
+    report.trainedUnits.push(...tail.trainedUnits);
+    // Delve and schedule events come from the TAIL by design: their timers
+    // never paused, so most of what happened past the cap happened here.
+    report.delveEvents.push(...tail.delveEvents);
+    report.scheduleEvents.push(...tail.scheduleEvents);
   }
   onCatchUp?.({ elapsedMs: capEnd - lastSaved, cappedOut: capEnd < now, result: report });
   return state;

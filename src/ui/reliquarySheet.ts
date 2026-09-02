@@ -12,8 +12,12 @@
 // on is which passive you are willing to go without.
 
 import {
-  ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, RUINS,
+  ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, HEROES, RUINS,
 } from '../sim/data/definitions';
+import { heroIsBusy } from '../sim/expeditions';
+import {
+  heroChanceAt, heroStats, pityCount, pullCost, pullsToGuarantee, rosterView, STANDARD_BANNER,
+} from '../sim/heroes';
 import {
   artifactEntry, attunementSlotGemCost, attunementSlots, isAttuned, isSlotLocked,
   ownsArtifact, passiveValue, slotUnlocksIn,
@@ -261,24 +265,163 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   return el('div', { class: 'rel-entry' }, body);
 }
 
+// -------------------------------------------------------------- the heroes
+//
+// Heroes and relics are TWO TABS OF ONE SCREEN because they share one set of
+// rules — Fragments raise a tier cap, Knowledge buys levels within it. Two
+// screens would teach the player the same lesson twice and neither would feel
+// special.
+
+function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTMLElement {
+  const hero = HEROES[view.id];
+  const knowledge = game.effectiveWalletValue('Knowledge');
+  const stats = heroStats(game.state, view.id);
+  const busy = heroIsBusy(game.state, view.id);
+
+  if (!view.owned) {
+    return card({
+      art: el('div', { class: 'rel-art rel-art--glyph is-locked' }, hero.glyph),
+      name: hero.name,
+      desc: 'Not yet found — the banner might bring them',
+      locked: true,
+    }, el('span', { class: 'rel-frag' },
+      iconEl('sparkle', { size: 'sm' }),
+      `${view.entry.fragments}`));
+  }
+
+  const art = spriteUrl(hero.sprite);
+  const body = el('div', { class: 'rel-card' },
+    el('div', { class: 'rel-card-head' },
+      art ? el('img', { class: 'rel-art', src: art, alt: '' })
+        : el('div', { class: 'rel-art rel-art--glyph' }, hero.glyph),
+      el('div', {},
+        el('div', { class: 'rel-name' }, hero.name),
+        el('div', { class: 'rel-tier' },
+          pips(view.entry.tier, COLLECTION.maxTier),
+          el('span', {}, `Level ${view.entry.level} / ${view.levelCap}`)))),
+    el('div', { class: 'rel-passive' }, iconEl('sparkle', { size: 'sm' }), hero.traitText),
+    el('div', { class: 'rel-hero-stats' },
+      stat('army', String(stats.atk), 'atk'),
+      stat('padlock', String(stats.def), 'def'),
+      stat('population', String(stats.hp), 'hp'),
+      stat(hero.unitType, hero.unitType, 'fights as')),
+    ...(busy ? [el('div', { class: 'rel-note' }, 'Currently underground.')] : []),
+  );
+
+  if (view.entry.level < COLLECTION.maxLevel) {
+    const cost = levelCost(view.entry.level);
+    body.append(action({
+      label: 'Train',
+      onClick: () => game.doLevelHero(view.id),
+      info: chip('Knowledge', cost, knowledge < cost),
+      disabledReason: view.entry.level >= view.levelCap
+        ? 'Their tier holds them back — raise it with Fragments'
+        : knowledge < cost ? `Short ${cost - knowledge} Knowledge` : undefined,
+    }));
+  }
+  if (view.entry.tier < COLLECTION.maxTier) {
+    body.append(action({
+      label: 'Raise their tier',
+      onClick: () => game.doRaiseHeroTier(view.id),
+      info: el('span', { class: 'rel-frag' },
+        iconEl('sparkle', { size: 'sm' }),
+        `${view.entry.fragments} / ${tierCost(view.entry.tier)} fragments`),
+      disabledReason: view.entry.fragments < tierCost(view.entry.tier)
+        ? 'Pull for them, or delve again' : undefined,
+    }));
+  }
+  return el('div', { class: 'rel-entry' }, body);
+}
+
+/**
+ * The banner. Reachable from the reliquary rather than from the nav bar,
+ * deliberately: a gacha with its own permanent tab is a different game from
+ * the one this is.
+ *
+ * The pity counter is ALWAYS visible. A hidden pity counter is the same as no
+ * pity counter — it is the single thing that makes a gacha read as fair rather
+ * than predatory, and it only works if the player can see it working.
+ */
+function bannerPanel(game: Game): HTMLElement {
+  const cost = pullCost();
+  const gems = game.effectiveWalletValue('Gems');
+  const pity = pityCount(game.state, STANDARD_BANNER);
+  const toGuarantee = pullsToGuarantee(game.state, STANDARD_BANNER);
+  const chance = heroChanceAt(pity);
+
+  return el('div', { class: 'rel-banner' },
+    el('div', { class: 'rel-banner-head' },
+      iconEl('Gems', { size: 'lg' }),
+      el('div', {},
+        el('div', { class: 'rel-mana-title' }, 'Call for aid'),
+        el('div', { class: 'rel-mana-hint' },
+          'Every miss still pays fragments. There are no wasted calls.'))),
+    el('div', { class: 'rel-breakdown' },
+      el('div', { class: 'rel-line' },
+        el('span', {}, 'Chance of a hero right now'),
+        el('b', {}, `${Math.round(chance * 100)}%`)),
+      el('div', { class: 'rel-line is-total' },
+        el('span', {}, 'Guaranteed within'),
+        el('b', {}, `${toGuarantee} call${toGuarantee === 1 ? '' : 's'}`))),
+    action({
+      label: 'Call',
+      kind: 'gem',
+      onClick: () => game.doPull(),
+      info: chip('Gems', cost, gems < cost),
+      disabledReason: gems < cost ? `Short ${cost - gems} Gems` : undefined,
+    }),
+    el('div', { class: 'rel-note' },
+      'Heroes can also be found by delving: fragments come back from every ruin, '
+      + 'and enough of them raise anyone you already have.'),
+  );
+}
+
+/** Which tab is open. Module-level so it survives the per-tick rebuild — the
+ *  same reason the market's amount selector lives outside its render. */
+let openTab: 'relics' | 'heroes' = 'relics';
+
 export function renderReliquarySheet(game: Game): HTMLElement {
   const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
   const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
 
+  const tabs = el('div', { class: 'rel-tabs' },
+    ...(['relics', 'heroes'] as const).map((tab) => {
+      const b = el('button', {
+        class: `rel-tab${openTab === tab ? ' is-active' : ''}`, type: 'button',
+      }, tab === 'relics' ? 'Relics' : 'Heroes');
+      b.addEventListener('click', () => {
+        openTab = tab;
+        game.notify();
+      });
+      return b;
+    }));
+
+  const relics = el('div', { class: 'rel-section' },
+    el('div', { class: 'rel-heading' },
+      el('span', {}, 'Relics'),
+      el('span', { class: 'rel-heading-note' },
+        `${owned.length} of ${ARTIFACT_ORDER.length} found`)),
+    ...(owned.length === 0
+      ? [el('div', { class: 'rel-note' },
+        `Relics are won from ruins. There are ${Object.keys(RUINS).length} out there, `
+        + 'and each holds exactly one — no luck involved.')]
+      : owned.map((id) => relicCard(game, id))),
+    ...missing.map((id) => relicCard(game, id)));
+
+  const roster = rosterView(game.state);
+  const heroes = el('div', { class: 'rel-section' },
+    el('div', { class: 'rel-heading' },
+      el('span', {}, 'Heroes'),
+      el('span', { class: 'rel-heading-note' },
+        `${roster.filter((h) => h.owned).length} of ${roster.length} found`)),
+    ...roster.map((view) => heroCard(game, view)),
+    bannerPanel(game));
+
   const body = el('div', { class: 'rel' },
     manaPanel(game),
     slots(game),
-    el('div', { class: 'rel-section' },
-      el('div', { class: 'rel-heading' },
-        el('span', {}, 'Relics'),
-        el('span', { class: 'rel-heading-note' },
-          `${owned.length} of ${ARTIFACT_ORDER.length} found`)),
-      ...(owned.length === 0
-        ? [el('div', { class: 'rel-note' },
-          `Relics are won from ruins. There are ${Object.keys(RUINS).length} out there, `
-          + 'and each holds exactly one — no luck involved.')]
-        : owned.map((id) => relicCard(game, id))),
-      ...missing.map((id) => relicCard(game, id))),
+    tabs,
+    openTab === 'relics' ? relics : heroes,
   );
 
   return sheet({ title: 'Reliquary', onClose: () => game.dismiss() }, body);

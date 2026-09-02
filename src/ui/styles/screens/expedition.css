@@ -1,0 +1,204 @@
+/* The expedition sheet and the checkpoint.
+ *
+ * These replace the old standing Army screen. An army only matters at the
+ * moment it is SENT somewhere, so composition lives here, next to the decision
+ * it serves. */
+
+.exp { display: flex; flex-direction: column; gap: 14px; }
+.exp-section { display: flex; flex-direction: column; gap: 8px; }
+.exp-heading { font-family: var(--font-display); font-size: var(--text-title); }
+.exp-note { font-size: var(--text-helper); color: var(--ink-muted); }
+
+.exp-head { display: flex; align-items: center; gap: 12px; }
+.exp-ruin-art {
+  width: 56px; height: 56px; image-rendering: pixelated; border-radius: 8px;
+  background: rgba(92, 58, 30, 0.12); border: 2px solid var(--wood-dark);
+}
+.exp-ruin-art.is-glyph, .exp-portrait.is-glyph, .exp-troop-art.is-glyph,
+.exp-prize-art.is-glyph { display: grid; place-items: center; font-size: 28px; }
+.exp-name { font-family: var(--font-display); font-size: var(--text-title); }
+.exp-kind { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* THE number. "A well-prepared run never fails" is only a promise the player
+ * can act on if they can read it before they commit — so it is the biggest
+ * thing on the screen, by a distance. */
+.exp-safe {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'value label' 'value note';
+  gap: 0 14px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(126, 217, 87, 0.24), rgba(126, 217, 87, 0.08));
+  border: 3px solid var(--leaf-dark, #4d7c33);
+}
+.exp-safe.is-bad {
+  background: linear-gradient(160deg, rgba(200, 90, 60, 0.22), rgba(200, 90, 60, 0.07));
+  border-color: var(--clay);
+}
+.exp-safe-value {
+  grid-area: value;
+  font-family: var(--font-display);
+  font-size: 44px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.exp-safe-label { grid-area: label; font-family: var(--font-display); font-size: var(--text-body); }
+.exp-safe-note { grid-area: note; font-size: var(--text-helper); color: var(--ink-muted); }
+
+.exp-readout { display: flex; flex-wrap: wrap; gap: 12px; }
+.exp-matchup {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--text-helper); color: var(--ink-muted);
+}
+
+/* The prize, and the fact that it is not yours yet. */
+.exp-prize {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 10px;
+  background: rgba(217, 164, 65, 0.14);
+  border: 2px solid rgba(150, 110, 40, 0.5);
+}
+.exp-prize-art { width: 40px; height: 40px; image-rendering: pixelated; border-radius: 6px; }
+.exp-prize-name { font-family: var(--font-display); font-size: var(--text-body); }
+.exp-prize-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.3; }
+
+/* Heroes: a mandatory choice, so it is a row of real portraits. */
+.exp-heroes { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.exp-hero {
+  flex: none; width: 132px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 6px; border-radius: 10px;
+  border: 3px solid var(--wood-dark); background: rgba(255, 246, 222, 0.6);
+  color: var(--ink); cursor: pointer; text-align: center;
+}
+.exp-hero.is-chosen { border-color: var(--gold, #d9a441); background: rgba(217, 164, 65, 0.2); }
+.exp-hero.is-busy { opacity: 0.55; cursor: default; }
+.exp-portrait { width: 48px; height: 48px; image-rendering: pixelated; border-radius: 8px; }
+.exp-hero-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-hero-trait { font-size: 11px; color: var(--ink-muted); line-height: 1.2; }
+
+/* Troops: a stepper per TYPE, because a slot holds a type. */
+.exp-slots {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--text-helper); color: var(--ink-muted);
+}
+.exp-troops { display: flex; flex-direction: column; gap: 8px; }
+.exp-troop {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px; border-radius: 8px;
+  background: rgba(92, 58, 30, 0.07);
+}
+.exp-troop.is-blocked { opacity: 0.5; }
+.exp-troop-art { width: 36px; height: 36px; image-rendering: pixelated; border-radius: 6px; }
+.exp-troop-body { flex: 1; min-width: 0; }
+.exp-troop-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-troop-stats { display: flex; gap: 8px; font-size: 11px; color: var(--ink-muted); }
+.exp-stepper { display: flex; align-items: center; gap: 6px; }
+.exp-count {
+  min-width: 22px; text-align: center;
+  font-family: var(--font-display); font-variant-numeric: tabular-nums;
+}
+.exp-of { font-size: 11px; color: var(--ink-muted); }
+
+/* Standing orders: the opt-out, in plain sight. */
+.exp-orders { display: flex; gap: 8px; flex-wrap: wrap; }
+.exp-order {
+  flex: 1 1 30%;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px; border-radius: 8px;
+  border: 3px solid var(--wood-dark); background: rgba(255, 246, 222, 0.6);
+  color: var(--ink); cursor: pointer; text-align: left;
+}
+.exp-order.is-chosen { border-color: var(--gold, #d9a441); background: rgba(217, 164, 65, 0.2); }
+.exp-order b { font-family: var(--font-display); font-size: var(--text-helper); }
+.exp-order span { font-size: 11px; color: var(--ink-muted); line-height: 1.2; }
+
+.exp-cost {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  font-size: var(--text-helper);
+}
+.exp-time { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-muted); }
+.exp-back { display: flex; justify-content: center; }
+
+/* ------------------------------------------------------- the checkpoint --- */
+
+.chk { display: flex; flex-direction: column; gap: 14px; }
+.chk-section { display: flex; flex-direction: column; gap: 8px; }
+.chk-heading { font-family: var(--font-display); font-size: var(--text-title); }
+.chk-head { display: flex; align-items: center; gap: 12px; }
+.chk-hero {
+  width: 56px; height: 56px; image-rendering: pixelated; border-radius: 8px;
+  background: rgba(92, 58, 30, 0.12); border: 2px solid var(--wood-dark);
+}
+.chk-hero.is-glyph { display: grid; place-items: center; font-size: 28px; }
+.chk-name { font-family: var(--font-display); font-size: var(--text-title); }
+.chk-depth { font-size: var(--text-helper); color: var(--ink-muted); }
+
+.chk-party { display: flex; flex-wrap: wrap; gap: 8px; }
+.chk-unit {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(92, 58, 30, 0.1);
+  font-size: var(--text-helper);
+}
+
+.chk-haul { display: flex; flex-wrap: wrap; gap: 8px; }
+.chk-haul-row {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: 8px;
+  background: rgba(217, 164, 65, 0.16);
+  font-size: var(--text-helper);
+}
+
+/* Said early, said plainly. A player who learns this from losing will feel
+ * robbed, and they will be right to. */
+.chk-warning {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 8px 10px; border-radius: 8px;
+  background: rgba(200, 90, 60, 0.12);
+  border: 2px solid rgba(160, 70, 45, 0.4);
+  font-size: var(--text-helper); line-height: 1.35;
+}
+
+.chk-next { display: flex; flex-wrap: wrap; gap: 12px; }
+.chk-unknown {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--text-helper); color: var(--ink-muted);
+}
+
+/* TWO ANSWERS OF EQUAL WEIGHT. Both primary; the copy carries the
+ * difference, never the styling. Styling one as the safe grey escape and the
+ * other as the exciting gold one is not asking a question, it is nudging. */
+.chk-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.chk-choices.is-single { grid-template-columns: 1fr; }
+.chk-choices .k-btn { width: 100%; justify-content: center; }
+.chk-note { font-size: var(--text-helper); color: var(--ink-muted); text-align: center; }
+
+/* --------------------------------------------------------- the delve pill ---
+ * The return hook. A checkpoint never expires — which is what stops delves
+ * becoming an interruption engine — but a decision nobody can see is a
+ * decision nobody makes, so the parked party has to be visible without being
+ * a modal that demands an answer. */
+
+#delves { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+#delves[hidden] { display: none; }
+.dv-list { display: flex; flex-direction: column; gap: 6px; }
+.dv-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 10px;
+  border: 3px solid var(--wood-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+}
+.dv-pill:hover { filter: brightness(1.04); }
+.dv-pill.is-bottom { border-color: var(--gold, #d9a441); }
+.dv-pill.is-failed { border-color: var(--clay); }
+.dv-body { min-width: 0; }
+.dv-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.dv-haul { font-size: 11px; color: var(--ink-muted); }
+.dv-go { font-family: var(--font-display); font-size: 18px; color: var(--ink-muted); }

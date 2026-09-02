@@ -13,8 +13,9 @@
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
 } from '../sim/data/definitions';
+import { committedArmyPower, maxArmyPower, trainingProgress } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
 import {
   districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
@@ -185,6 +186,62 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall'
           : `Collecting early pulls ${TAXES.tapBoostSeconds}s of rent forward, once a cycle`));
+    }
+
+    // A military building trains its own unit, in its own line, exactly as
+    // the Townhall trains villagers. That symmetry is why the standing Army
+    // screen could disappear: an army only matters when it is SENT somewhere,
+    // and it is recruited where it is made.
+    if (def.trains !== null) {
+      const unitId = def.trains;
+      const unit = UNITS[unitId];
+      const cap = maxArmyPower(game.state);
+      const used = committedArmyPower(game.state);
+      const inLine = game.state.city.armyQueue.filter((i) => i.buildingId === district.uniqueId);
+      const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
+
+      body.append(el('div', { class: 'dc-army' },
+        iconEl('army', { size: 'sm' }),
+        el('span', {}, `Army ${used} of ${cap}`),
+        el('span', { class: 'dc-army-note' },
+          `this hall holds ${levelIndexed(def.armyCapPerLevel, district.level)} of it`)));
+
+      if (inLine.length > 0) {
+        const bar = progress('sky');
+        bar.set(
+          trainingProgress(game.state, district.uniqueId, game.now()),
+          inLine.length > 1
+            ? `${unit.name} — ${inLine.length} in the line`
+            : `${unit.name} in training`,
+        );
+        body.append(bar.root);
+        body.append(el('div', { class: 'dc-tapline' },
+          iconEl('showme', { size: 'sm' }),
+          `Tap the ${def.name} to hurry them along`));
+      }
+
+      const cost = unit.recruitCost;
+      const short = game.shortfall(cost);
+      const shortText = (Object.entries(short) as Array<[CurrencyId, number]>)
+        .map(([c, n]) => `${n} ${c}`).join(' and ');
+      body.append(action({
+        label: `Recruit ${unit.name}`,
+        kind: 'primary',
+        onClick: () => game.doTrain(unitId),
+        info: costChips(cost, (c) => game.effectiveWalletValue(c)),
+        disabledReason: !techOk
+          ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
+          : used + unit.power > cap
+            ? 'Your army is full — upgrade this hall'
+            : shortText
+              ? `Short ${shortText}`
+              : undefined,
+      }));
+      body.append(el('div', { class: 'dc-army-stats' },
+        stat('army', String(unit.atk), 'attack'),
+        stat('padlock', String(unit.def), 'defence'),
+        stat('population', String(unit.hp), 'health'),
+        stat('hourglass', formatDuration(unit.trainDurationSeconds), 'to train')));
     }
 
     // A worker building is an AREA and the people you put in it. Both were

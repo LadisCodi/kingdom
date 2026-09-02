@@ -132,7 +132,7 @@ export function drawMap(
 
   /** A small corner tag on a site: what it still wants from the player. */
   const drawSiteBadge = (x: number, y: number, text: string): void => {
-    const r = Math.max(7, size * 0.16);
+    const r = Math.max(6, size * 0.13);
     ctx.beginPath();
     ctx.arc(x + size - r - 2, y + r + 2, r, 0, Math.PI * 2);
     ctx.fillStyle = PALETTE.siteBadge;
@@ -196,7 +196,8 @@ export function drawMap(
             drawGlyph(ctx, art.glyph, x, y, size, size * 0.5);
           }
         });
-        if (!claimed) drawSiteBadge(x, y, landmark.defended ? '⚔' : '✦');
+        // A star means "claimable"; a bang means "something is holding it".
+        if (!claimed) drawSiteBadge(x, y, landmark.defended ? '!' : '\u2726');
       }
       const ruin = ruinDefAt(cell);
       if (ruin && fog === 'Revealed') {
@@ -205,7 +206,9 @@ export function drawMap(
             drawGlyph(ctx, ruin.glyph, x, y, size, size * 0.5);
           }
         });
-        drawSiteBadge(x, y, `T${ruin.tier}`);
+        // The tier alone: a bare digit reads at any zoom, and "T1" in a
+        // pixel display face is one stroke away from an arrow.
+        drawSiteBadge(x, y, String(ruin.tier));
       }
 
       if (fog === 'Revealed') drawResourceState(cell, x, y);

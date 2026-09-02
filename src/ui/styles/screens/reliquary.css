@@ -132,3 +132,45 @@
 .rel-frag { display: inline-flex; align-items: center; gap: 4px; }
 .rel-locked-tag { display: inline-flex; align-items: center; }
 .rel-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+
+/* --------------------------------------------------------------- tabs ---
+ * Heroes and relics are two tabs of ONE screen because they share one set of
+ * rules. Two screens would teach the player the same lesson twice. */
+.rel-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(92, 58, 30, 0.12);
+}
+.rel-tab {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-display);
+  font-size: var(--text-helper);
+  cursor: pointer;
+}
+.rel-tab.is-active {
+  background: var(--parchment);
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.3);
+}
+
+.rel-hero-stats { display: flex; flex-wrap: wrap; gap: 10px; font-size: var(--text-helper); }
+
+/* The banner. Reachable from here rather than from the nav bar: a gacha with
+ * its own permanent tab is a different game from the one this is. */
+.rel-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(160, 120, 220, 0.2), rgba(160, 120, 220, 0.06));
+  border: 2px solid rgba(120, 90, 180, 0.45);
+}
+.rel-banner-head { display: flex; align-items: center; gap: 8px; }

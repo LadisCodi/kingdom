@@ -47,7 +47,7 @@ describe('the overlay / dismiss state machine', () => {
     expect(normal.hasOpenSheet()).toBe(false);
 
     const withOverlay = freshPresenter(state);
-    withOverlay.setOverlay('army');
+    withOverlay.setOverlay('reliquary');
     expect(withOverlay.hasOpenSheet()).toBe(true);
 
     const withCard = freshPresenter(state);

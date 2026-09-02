@@ -19,9 +19,14 @@ import type { Game, OverlayName } from '../game';
 import { el } from './format';
 import { iconEl, type IconName } from './kit';
 
+// Army lost its tab. An army only matters at the moment it is SENT somewhere,
+// so composition is set inside the expedition sheet and units are trained at
+// the building that trains them — exactly as villagers are trained at the
+// Townhall. The tab it vacated goes to the thing the player now visits every
+// session: their relics.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
   { name: 'build', label: 'Build', icon: 'build' },
-  { name: 'army', label: 'Army', icon: 'army' },
+  { name: 'reliquary', label: 'Relics', icon: 'Mana' },
   { name: 'research', label: 'Research', icon: 'research' },
 ];
 
