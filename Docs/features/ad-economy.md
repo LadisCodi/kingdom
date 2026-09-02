@@ -3,7 +3,7 @@
 > How the three systems that meet at a tap are tuned against each other, for a
 > **30–40 minute day across two or three visits**. Mana is the energy, a tap is
 > what it buys, and a rewarded ad is where more of it comes from.
-> Status: **balancing built** (2026-09-02); the ad UI is the outstanding half.
+> Status: **built** (2026-09-02) — balancing, the sim, and the three screens.
 
 Companion docs: [`magic.md`](magic.md) (what Mana is),
 [`harvest-loop.md`](harvest-loop.md) (what a tap does),
@@ -119,7 +119,27 @@ cooldown averages 60 s, so the player occasionally waits ~10–30 s. That gap is
 where they place buildings and spend what they just gathered. If playtest says
 it stalls, `cooldown_max_seconds` is the dial — lower it before anything else.
 
-## 5. Dials, in the order to reach for them
+## 5. The three screens
+
+| Surface | Where | Why there |
+|---|---|---|
+| **The tab** | `#adoffer`, right edge of the frame, z 4 | Slides in on a class toggle with a forced reflow — `data-entering` is ScreenSlot-only and never fires for a permanently mounted widget. Hides behind any sheet, like the quest and delve pills |
+| **The popup** | a kit `sheet()` in `#overlay` | The X and "No thanks" both just close it; only claiming consumes the offer, so a mis-tap costs nothing |
+| **The video** | `#ad`, its own mount, z 200 | NOT an overlay: `#overlay` is z 5 and that makes it a stacking context, so nothing inside can rise above the nav (10) or the settings knob (20). Being outside the overlay system is also what makes "no escape" structural — `dismiss()` and the tap-beside-a-sheet handler cannot reach it |
+
+`#ad` carries `:empty { display: none }`, without which an `inset: 0` element
+with `pointer-events: auto` would swallow every tap on the map.
+
+The countdown is derived from a timestamp, never a decremented integer, so a
+throttled background tab resolves to the right number on return instead of
+freezing. The once-a-second tick would land the Claim button up to a second
+late, so the screen arms one timeout for exactly the time remaining.
+
+An overcharged pool gets its own HUD state, distinct from full: full means
+"the next hour is spilling", overcharged means "an ad bought more than the
+ceiling holds".
+
+## 6. Dials, in the order to reach for them
 
 1. `tap.boost_seconds` — what a tap is worth, and therefore what an ad is worth.
 2. `mana.base_cap_per_townhall_level` — session length per pool.

@@ -15,7 +15,7 @@ import { advance } from '../src/sim/commands';
 import { AD } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
-import { freshGame, map, T0 } from './helpers';
+import { freshGame, freshPresenter, map, T0 } from './helpers';
 
 /** Ready to be offered: the cooldown elapsed and the pool below half. */
 const eligible = (state = freshGame()) => {
@@ -118,5 +118,65 @@ describe('the offer is not part of the sim clock', () => {
     const restored = deserialize(save, map, T0)!;
     expect(restored.ads.claims).toBe(0);
     expect(restored.ads.pending).toBe(false);
+  });
+});
+
+// The presenter route: what the player actually taps. Node env, no jsdom —
+// these assert presenter state, which is where the decisions live.
+describe('the route through the offer', () => {
+  const offered = () => {
+    const state = eligible();
+    const game = freshPresenter(state);
+    game.notify(); // the latch runs here, not on the tick
+    return game;
+  };
+
+  it('latches on notify, so a tap that empties the pool offers immediately', () => {
+    const game = offered();
+    expect(game.adOffer()).not.toBeNull();
+    expect(game.adOffer()!.reward).toBe(manaCap(game.state));
+  });
+
+  it('declining closes the popup and leaves the offer standing', () => {
+    const game = offered();
+    game.openAdOffer();
+    expect(game.openOverlay).toBe('adOffer');
+    game.declineAdOffer();
+    expect(game.openOverlay).toBe(null);
+    expect(game.adOffer()).not.toBeNull(); // still there to take later
+  });
+
+  it('will not open a popup when nothing is offered', () => {
+    const game = freshPresenter(freshGame()); // full pool, no offer
+    game.openAdOffer();
+    expect(game.openOverlay).toBe(null);
+  });
+
+  it('counts the ad down and refuses the reward until it finishes', () => {
+    const game = offered();
+    game.startAdWatch();
+    expect(game.openOverlay).toBe(null); // the ad is its own surface
+    const watch = game.adWatch()!;
+    expect(watch.ready).toBe(false);
+    expect(watch.secondsLeft).toBe(AD.watchSeconds);
+
+    const before = mana(game.state);
+    game.doClaimAdReward(); // too early
+    expect(mana(game.state)).toBe(before);
+    expect(game.adOffer()).not.toBeNull();
+  });
+
+  it('pays out once the countdown is done, and clears the tab', () => {
+    const game = offered();
+    game.startAdWatch();
+    const before = mana(game.state);
+    const cap = manaCap(game.state);
+    // Rewind the start so the watch has finished.
+    game.adWatchStartedAt = game.now() - AD.watchSeconds * 1000;
+    expect(game.adWatch()!.ready).toBe(true);
+    game.doClaimAdReward();
+    expect(mana(game.state)).toBe(before + cap);
+    expect(game.adWatch()).toBeNull();
+    expect(game.adOffer()).toBeNull(); // the tab goes away
   });
 });

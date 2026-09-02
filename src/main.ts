@@ -21,6 +21,9 @@ import { newGame } from './sim/newGame';
 import { deserialize, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
+import { mountAdOfferPill } from './ui/adOfferPill';
+import { mountAdScreen } from './ui/adScreen';
+import { renderAdOfferSheet } from './ui/adOfferSheet';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
@@ -99,6 +102,8 @@ async function boot(): Promise<void> {
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
+  mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountAdScreen(game, document.getElementById('ad')!);
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => location.reload());
@@ -116,6 +121,7 @@ async function boot(): Promise<void> {
     reliquary: renderReliquarySheet,
     expedition: renderExpeditionSheet,
     checkpoint: renderCheckpointSheet,
+    adOffer: renderAdOfferSheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
@@ -156,6 +162,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
+        'adOffer',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
@@ -304,6 +311,13 @@ async function boot(): Promise<void> {
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
       button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
+      // Force an offer: drain the pool under the gate and clear the cooldown.
+      button('📺 ad offer', () => {
+        game.state.ads.readyAt = 0;
+        game.state.ads.pending = false;
+        game.state.city.wallet.Mana = 1;
+        runTick();
+      }),
       button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }

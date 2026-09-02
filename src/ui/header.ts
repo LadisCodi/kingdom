@@ -125,8 +125,13 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     manaValue.textContent = `${m.value}/${m.cap}`;
     manaRate.textContent = `+${m.net}/h`;
     manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
-    manaGauge.classList.toggle('is-full', m.value >= m.cap);
-    manaGauge.setAttribute('aria-label', `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
+    // Full and OVERCHARGED are different states: full means the next hour is
+    // spilling, overcharged means an ad bought a pool the ceiling cannot hold.
+    manaGauge.classList.toggle('is-full', m.value >= m.cap && !m.over);
+    manaGauge.classList.toggle('is-over', m.over);
+    manaGauge.setAttribute('aria-label', m.over
+      ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
+      : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);
   };
   game.onChange(refresh);
   refresh();

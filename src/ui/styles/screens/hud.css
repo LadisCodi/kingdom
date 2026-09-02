@@ -212,3 +212,7 @@
  * player to notice from across the room. */
 .hud-mana.is-full { border-color: var(--gold, #d9a441); }
 .hud-mana.is-full .hud-mana-rate { color: var(--gold, #f2c46b); }
+/* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
+   because full means "you are spilling" and this means "you are ahead". */
+.hud-mana.is-over { border-color: var(--leaf); background: #2f4a3a; }
+.hud-mana.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }

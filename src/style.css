@@ -39,6 +39,26 @@ body {
    bars are the bottom-most thing the player is meant to act on. */
 #panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); z-index: 6; }
 
+/* The ad surface. Above the nav (10), the settings knob (20) and the legacy
+   close knob (30): a rewarded video the player can tap around is not one. It
+   is a sibling of #overlay rather than a child BECAUSE #overlay's z-index
+   makes it a stacking context, so no descendant could ever climb past #tools.
+   `:empty` is load-bearing — #ui children are pointer-events:auto, so an
+   inset:0 element with nothing in it would swallow every tap on the map. */
+#ad:empty { display: none; }
+#ad { position: absolute; inset: 0; z-index: 200; }
+
+/* The offer tab, flush to the right edge of the FRAME (#app), not the
+   viewport — everything inside positions against the 9:16 frame. */
+#adoffer[hidden] { display: none; }
+#adoffer {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4; /* under the overlay scrim, over the map */
+}
+
 #overlay:empty { display: none; }
 /* inset:0 and pointer-events:auto are load-bearing: this element is what
    stops a tap beside a sheet reaching the canvas and firing a harvest. */

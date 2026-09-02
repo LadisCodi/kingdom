@@ -8,7 +8,7 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES, LANDMARK_ART, RUINS,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES, LANDMARK_ART, RUINS,
   TECHNOLOGIES, TRAINING, UNITS,
 } from './sim/data/definitions';
 import {
@@ -25,6 +25,9 @@ import {
 } from './sim/artifacts';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
+import {
+  adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
+} from './sim/adOffers';
 import { availableRoster } from './sim/army';
 import { typeMultiplier } from './sim/combat';
 import {
@@ -75,7 +78,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint';
+  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -116,6 +119,9 @@ export class Game {
   expeditionArtifact: ArtifactId | null = null;
   /** The delve whose checkpoint sheet is open. */
   openCheckpoint: string | null = null;
+  /** When the fake ad started playing. A UI moment, not sim state — a reload
+   *  mid-ad simply drops back to the offer, which is still standing. */
+  adWatchStartedAt: number | null = null;
   /** The map SITE whose card is open — a landmark or a ruin. Sites are not
    *  districts (they are authored content on a cell, not something the player
    *  built), so they get their own slot rather than being squeezed into
@@ -158,6 +164,12 @@ export class Game {
     this.toastListeners.push(fn);
   }
   notify(): void {
+    // The ad offer's latch. Here rather than in `tick()` because Mana crosses
+    // the 50% gate on a TAP, not on the second — and every command ends in a
+    // notify, so this sees the spend that made the player eligible instead of
+    // lagging it by up to a second. `tick()` calls notify() too, so the
+    // "after advance()" ordering the architecture needs still holds.
+    refreshAdOffer(this.state, this.now());
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
@@ -672,6 +684,53 @@ export class Game {
        *  differently from merely being full. */
       over: value > cap,
     };
+  }
+
+  // ------------------------------------------------------------- ad offers
+
+  /** The standing offer, or null. Drives the widget and the popup. */
+  adOffer(): { reward: number } | null {
+    return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
+  }
+
+  openAdOffer(): void {
+    if (this.adOffer() === null) return;
+    this.setOverlay('adOffer');
+  }
+
+  /** "No thanks" and the X do the same thing: close the popup and leave the
+   *  offer standing. Only claiming consumes it. */
+  declineAdOffer(): void {
+    this.setOverlay(null);
+  }
+
+  startAdWatch(): void {
+    if (this.adOffer() === null) return;
+    this.adWatchStartedAt = this.now();
+    this.setOverlay(null); // the ad is its own surface, above everything
+    this.notify();
+  }
+
+  /** Seconds still to watch, and whether the reward is claimable. Derived from
+   *  a timestamp rather than a counted-down integer, so a throttled tab
+   *  resolves correctly the moment it comes back. */
+  adWatch(): { secondsLeft: number; ready: boolean } | null {
+    if (this.adWatchStartedAt === null) return null;
+    const elapsed = this.now() - this.adWatchStartedAt;
+    const left = Math.max(0, Math.ceil((AD.watchSeconds * 1000 - elapsed) / 1000));
+    return { secondsLeft: left, ready: left === 0 };
+  }
+
+  doClaimAdReward(): void {
+    const watch = this.adWatch();
+    if (watch === null || !watch.ready) return;
+    const reward = adOfferReward(this.state);
+    if (claimAdOffer(this.state, this.now()) === 'Claimed') {
+      playSfx('questComplete');
+      this.floaters.add(townhall(this.state).location, `+${reward} ${icon('Mana')}`);
+    }
+    this.adWatchStartedAt = null;
+    this.setOverlay(null);
   }
 
   confirmBuild(): void {
