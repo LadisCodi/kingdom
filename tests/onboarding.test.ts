@@ -39,7 +39,7 @@ const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
-  it('runs steps 1-16 on nothing but what the game gives them', () => {
+  it('runs steps 1-17 on nothing but what the game gives them', () => {
     const state = newGame(map, T0);
     let now = T0;
 
@@ -187,12 +187,16 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- steps 13-14: somewhere for the surplus to go ----
+    // ---- steps 13-15: somewhere for the surplus to go ----
     // The Market moved here from quest 32 so that generated orders have a home
     // inside the opening (habit-loop.md §2). This is the beat that has to hold
     // up: 150 Gold for the technology and 40 Wood for the building, out of
     // nothing but what the chain has paid so far.
+    //
+    // Research, then build, then use — the same three-beat shape the chain
+    // uses for every other building worth explaining.
     research('Market');
+    finish('Trade');
     chop(Math.max(0, DISTRICTS.Market.buildCost.Wood! - wood()));
     // Found rather than authored, like `clearNearest` above: a hardcoded cell
     // is a test that breaks when the map is re-authored, and this beat is
@@ -218,7 +222,7 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Merchant');
 
-    // ---- steps 15-16: a second House, and the villager it makes room for ----
+    // ---- steps 16-17: a second House, and the villager it makes room for ----
     chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
     build('Housing', { x: 0, y: -1 });
     finish('GrowingTown');
@@ -232,7 +236,7 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Neighbors');
 
-    // The player is now sixteen beats in and has never been handed anything.
+    // The player is now seventeen beats in and has never been handed anything.
     expect(activeQuest(state)!.id).toBe('ProperCapital');
 
     // And the energy held out. Mana is what every tap is paid from, so an

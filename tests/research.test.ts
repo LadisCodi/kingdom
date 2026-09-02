@@ -11,7 +11,7 @@ import {
   anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
   startTech, techCost, techSlots, techUnlocks,
 } from '../src/sim/research';
-import { edgeCells } from '../src/ui/research/layout';
+import { edgeCells, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId, type UpgradeId } from '../src/sim/state';
 import { buyUpgrade, canBuyUpgrade } from '../src/sim/upgrades';
@@ -172,6 +172,30 @@ describe('tree layout (layout is content)', () => {
 
   it('no two technologies share a grid cell', () => {
     expect(new Set(nodes.map((n) => `${n.x},${n.y}`)).size).toBe(nodes.length);
+  });
+
+  // THE FAN HAS TO FIT BETWEEN TWO ROWS, and it did not: an upgrade circle
+  // hung 0.7 x GRID below its parent, which put it 12px INSIDE the technology
+  // on the row underneath. Nothing noticed, because the invariant below is
+  // about connectors crossing nodes and this is nodes crossing nodes.
+  //
+  // Both ends are hard. A circle must clear its parent square, and it must
+  // clear whatever sits one row down — and the second constraint is the one
+  // that is easy to forget, because it involves a node the fan has nothing to
+  // do with.
+  it('hangs an upgrade fan clear of its parent AND of the row below it', () => {
+    const halfSquare = NODE / 2;
+    const halfCircle = UNODE / 2;
+    expect(FAN_DY, 'the fan overlaps its own parent').toBeGreaterThan(halfSquare + halfCircle);
+    expect(FAN_DY, 'the fan overlaps the technology one row below')
+      .toBeLessThan(GRID - halfSquare - halfCircle);
+  });
+
+  // A tap target below ~40px is one a thumb misses, and the upgrade circle is
+  // the smallest thing in the game a player is asked to press.
+  it('keeps the upgrade circle a thumb-sized target', () => {
+    expect(UNODE).toBeGreaterThanOrEqual(40);
+    expect(UNODE).toBeLessThan(NODE); // …and still unmistakably the smaller shape
   });
 
   // Reads the SAME route the renderer draws (src/ui/research/layout.ts)

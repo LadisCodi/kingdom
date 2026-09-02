@@ -82,7 +82,7 @@ exactly 6,600 Gold.**
 `research-and-upgrades.md` to 24, and re-check the fraction while there.
 
 **And the finding that matters more than the count.** The quest chain pays
-**11,765 Gold** against a tree that costs 6,600. The tree is not a sink; it is
+**11,865 Gold** against a tree that costs 6,600. The tree is not a sink; it is
 a formality that the chain funds twice over. That is not a Phase 0 fix — it is
 the argument for eras in `../road-to-mvp.md` §9 — but it should be recorded as
 the measured number rather than an impression.
@@ -90,13 +90,14 @@ the measured number rather than an impression.
 | | Gold |
 |---|---|
 | Whole technology tree, 24 techs | 6,600 |
-| Quest chain rewards, 49 quests | **11,765** |
-| Ratio | **1.78×** |
+| Quest chain rewards, 50 quests | **11,865** |
+| Ratio | **1.80×** |
 
-> Measured at 12,075 on 2026-09-02. It fell to 11,765 the next day when the
-> two Market beats moved into the opening and were re-priced to their new
-> position (`../onboarding.md`, steps 13-14). Held by `tests/quests.test.ts`,
-> so the next move has to come here and say so.
+> Measured at 12,075 across 49 quests on 2026-09-02. The next day the two
+> Market beats moved into the opening and were re-priced to their new position
+> (250/290 → 110/120), and a third beat — `Trade`, the research that opens
+> them — was added in front at 100. Held by `tests/quests.test.ts`, so the
+> next move has to come here and say so. See `../onboarding.md` steps 13-15.
 
 ## 3. The Gem faucet — resolved, and the review had it backwards.
 

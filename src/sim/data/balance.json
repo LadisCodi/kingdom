@@ -1670,9 +1670,23 @@
       "rewardKnowledge": 0
     },
     {
+      "id": "Trade",
+      "name": "Trade",
+      "description": "Your plots make more than your people eat. Research the Market — a surplus is only wealth once someone will buy it.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 0
+    },
+    {
       "id": "ToMarket",
       "name": "To market",
-      "description": "Build a Market and turn surplus into Gold.",
+      "description": "Now build the Market. It is where the surplus goes.",
       "goalType": "BuildDistrict",
       "goalTarget": "Market",
       "goalAmount": 1,

@@ -271,9 +271,9 @@ blocking Phase 1. Recorded here as recommendations, to be closed in review.
    the Market, as a second tab — and the Market moved into the opening to
    meet it.** The recommendation below was right about the home and wrong
    about the cost: the fix was not to accept that orders arrive at hour three,
-   it was to move the beat. `ToMarket` and `Merchant` are now steps 13-14
-   (`../onboarding.md`), which is the first point at which the city produces
-   more than it eats — so the Market arrives exactly when a sink first means
+   it was to move the beat. `Trade`, `ToMarket` and `Merchant` are now steps
+   13-15 (`../onboarding.md`) — research, build, use — which is the first
+   point at which the city produces more than it eats — so the Market arrives exactly when a sink first means
    anything, rather than long after. Decision 4 falls away with it: there is
    no "before the Market" worth designing for.
 

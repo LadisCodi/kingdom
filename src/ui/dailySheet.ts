@@ -51,13 +51,16 @@ export function renderDailySheet(game: Game): HTMLElement {
       'One step for every day you play — not for every day that passes. '
       + 'Miss a day and you lose nothing but that day’s chest.'),
     rungs,
+    // The haul BEFORE the button, not after it: the price-inside-the-button
+    // rule (§6.4) reads top-down, and a reward printed under the control that
+    // pays it reads as a footnote to a decision already made.
+    el('div', { class: 'dly-today' }, ...prize(chest.reward, 'md')),
     el('div', { class: 'dly-claim' },
       btn({
         label: `Take day ${chest.step}`,
         kind: 'primary',
         onClick: () => game.doClaimDailyChest(),
       })),
-    el('div', { class: 'dly-today' }, ...prize(chest.reward, 'md')),
   );
 
   return sheet({ title: 'Daily chest', onClose: close, centred: true }, body);
