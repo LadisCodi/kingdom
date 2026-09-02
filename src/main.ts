@@ -15,6 +15,7 @@ import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
 import { forceConjunction } from './sim/timeline';
+import { grantBuilder } from './sim/commands';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -326,6 +327,12 @@ async function boot(): Promise<void> {
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
+      // The only way to raise the builder count until the store exists
+      // (Phase 3). See grantBuilder() for why it is unpriced.
+      button('👷 +1 builder', () => {
+        if (grantBuilder(game.state) === 'AtCeiling') game.toast('Builders are at the ceiling');
+        runTick();
+      }),
       button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {

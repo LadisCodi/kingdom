@@ -1,17 +1,29 @@
-# Kingdom — Complete Game Specification
+# Kingdom — the documentation index
 
-Self-contained documentation of the **Kingdom** prototype ("mini civ" — a cozy hex
-city-builder / idle game) exactly as built in the Unity project on branch
-`feature/back-to-hex`, snapshot **2026-08-17**. It exists so the game can be
-reimplemented on another platform (e.g. the web) without access to the Unity project:
-all mechanics, formulas, balancing values, UI behavior, and the full map layout are
-in these files.
+**Kingdom** is a cozy square-grid city-builder / idle game, built for the web.
+This file is the map of everything written about it.
+
+Two bodies of documentation live here and they are not the same thing:
+
+- **The live design** — [`00-design-intent.md`](00-design-intent.md),
+  [`road-to-mvp.md`](road-to-mvp.md) and everything under
+  [`features/`](features/). This is the source of truth for the game that
+  exists and the game being built.
+- **A frozen Unity snapshot** — files `01`–`11`, taken from branch
+  `feature/back-to-hex` on **2026-08-17**, describing an earlier and different
+  game (hex grid, Silver, generator vaults, spells). The web port was built
+  from it and has since diverged substantially. It is kept for provenance and
+  for the formulas the port still uses. **It is history, not spec**, and every
+  one of those files says so at the top.
+
+Where the two disagree, the live design wins.
 
 ## Reading order
 
 | # | File | What it covers |
 |---|---|---|
-| 0 | [00-design-intent.md](00-design-intent.md) | **The current design intent for the web build, and the canonical backlog.** Rewritten 2026-09-02; it supersedes this Unity snapshot wherever they disagree. |
+| — | [00-design-intent.md](00-design-intent.md) | **What the game is, and the canonical backlog.** Rewritten 2026-09-02; it supersedes this Unity snapshot wherever they disagree. **Start here.** |
+| — | [road-to-mvp.md](road-to-mvp.md) | **What happens next** — the ordered plan for the four pillars the 2026-09-02 competitive review found missing, its phase gates, and the index of design decisions still open. |
 | 1 | [01-overview.md](01-overview.md) | Pitch, entity hierarchy, core loop, currency summary, status |
 | 2 | [02-map-and-fog.md](02-map-and-fog.md) | Hex grid & adjacency, terrain/features, fog of war & reveal costs |
 | 3 | [03-economy-and-production.md](03-economy-and-production.md) | Currencies, generator model, accrual algorithm, worked units, vaults |
@@ -26,9 +38,8 @@ in these files.
 
 ## The web build
 
-Files `01`–`11` above are a frozen Unity snapshot. The web reimplementation has
-diverged substantially (square grid, the harvest loop, housing taxes, no spells
-as-shipped), and its own design docs are the live source of truth:
+These are the live source of truth, one per feature, newest last. Each opens
+with its own scope-and-status blockquote.
 
 | File | What it covers |
 |---|---|
@@ -49,10 +60,37 @@ as-shipped), and its own design docs are the live source of truth:
 | **[features/moving-buildings.md](features/moving-buildings.md)** | **Built 2026-09-02** — relocating a built building, and dragging the placement ghost instead of panning |
 | **[onboarding.md](onboarding.md)** | **Built 2026-09-02** — the authored first-user experience, 26 steps; the quest chain and the tech gates that serve it |
 
+### The MVP plan
+
+Sequenced and gated by [road-to-mvp.md](road-to-mvp.md); each doc owns its own
+design, and closes the open decisions §8 files against it.
+
+| Phase | File | What it covers |
+|---|---|---|
+| 0 | [features/balancing-v3.md](features/balancing-v3.md) | **Designed, unstarted** — make the prose agree with the workbook before anything is balanced on top of it; the dead `kingdom.max_builders` dial |
+| 1 | [features/habit-loop.md](features/habit-loop.md) | **Designed, unstarted** — a daily chest, a streak, and generated orders: a reason to open the game on a day nobody authored |
+| 2 | [features/event-archetype.md](features/event-archetype.md) | **Designed, unstarted** — the thing we author ten times a year, on the timeline that is already built; the two seam widenings it needs first |
+| 3 | [features/monetization-sim.md](features/monetization-sim.md) | **Designed, unstarted** — a store that never charges, more ad placements, and the telemetry that makes a D30 possible at all |
+| 4 | [features/social-layer.md](features/social-layer.md) | **Designed, unstarted** — Supabase as server authority, neighbours and capped daily help, a guild, a weekly collective bar |
+
+### Reference, not a feature
+
+| File | What it covers |
+|---|---|
+| [map-features.md](map-features.md) | The authored feature layout of the region — what sits on which cell, and why |
+| [audio-wishlist.md](audio-wishlist.md) | The sounds the build wants and what each one is for |
+| [art/ui-menus-redesign.md](art/ui-menus-redesign.md) | The parchment-and-carved-wood UI system the kit implements — §3.1 palette, §3.2/§3.3 shapes |
+| [art/ui-long-game.md](art/ui-long-game.md) | Screens for the systems that arrived after the first UI pass |
+| [art/sprite-prompts.md](art/sprite-prompts.md) | How the world and UI art was generated, and the prompts that did it |
+| [features/managers.md](features/managers.md) | **Superseded** by `heroes-and-gacha.md` — kept for the reasoning, not as spec |
+
 ## Ground rules used throughout
 
-- All numbers were read from the raw data assets and all formulas from the source
-  code at the snapshot date — nothing is from memory or inferred.
+- In the frozen `01`–`11` files, all numbers were read from the raw data assets
+  and all formulas from the source code at the snapshot date — nothing is from
+  memory or inferred. In the web build's own docs, **the workbook
+  (`balance/balance.xlsx` → `src/sim/data/balance.json`) is the source of truth
+  for every number**, and where a doc disagrees with it the doc is stale.
 - Times are wall-clock UTC; rates are **per real-time minute**; the game ticks once
   per second.
 - "TH*n*" = Townhall level *n*. Lists indexed "per level" are 0-indexed by

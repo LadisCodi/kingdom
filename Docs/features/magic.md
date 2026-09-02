@@ -59,10 +59,12 @@ by content, so it keeps giving for weeks.
    what the Townhall made, so wearing everything stalled the pool dead.
    Attuning is free now, and attune-or-arm rests on exclusivity alone — see
    [`ad-economy.md`](ad-economy.md) §2.
-5. **Upkeep is flat per artifact and does not scale with level**, so levelling a
-   relic is unambiguously good.
-6. **Net regen floors at zero, never negative.** You can stall; you can never go
-   bankrupt.
+5. ~~**Upkeep is flat per artifact and does not scale with level.**~~ Moot —
+   see 4. Levelling a relic is unambiguously good because it costs nothing to
+   hold at any level.
+6. ~~**Net regen floors at zero, never negative.**~~ Moot — with no upkeep
+   there is nothing to subtract, so regen is `base(TH) + Σ landmarks` and
+   cannot be negative in the first place.
 7. **No random stat rolls.** Every artifact is a named, hand-authored thing with
    one legible effect.
 
@@ -85,8 +87,14 @@ capping is new behaviour and belongs in exactly one place.
 | **Capacity** (pool size) | The **Sanctum**, a new city district | How long an *absence* you can bank |
 
 ```
-net regen/h = base(TH) + Σ landmarks − Σ upkeep of attuned artifacts    (floored at 0)
+net regen/h = base(TH) + Σ landmarks
 ```
+
+There is **no upkeep term**. Artifact upkeep was removed on 2026-09-02: the
+formula above used to subtract `Σ upkeep of attuned artifacts` and floor at 0,
+and nothing in `src/sim/mana.ts` has done that since. Attunement is now free to
+hold — what it costs is *exclusivity* (§3), which is a stronger constraint
+anyway because it cannot be out-produced.
 
 Conflating them would waste both. Production answers "how many relics can I
 wear"; capacity answers "how long can I be away without spilling".
@@ -113,14 +121,19 @@ ABSENCE budget.** Mana is now also the energy every player tap is paid from
 (`balancing-v2.md` §1.1), which makes it a **SPEND budget**, and the two want
 opposite things: an absence budget should refill exactly overnight, while a
 spend budget has to be able to run out or there is nothing for a refill to
-sell. The starting cap went to **50** and regen did not follow, so a full pool
-is now **12.5 h at Townhall 1** rather than 8.
+sell.
 
-This is deliberate and it is the demand the planned Gem/monetised refill sells
-against. It is recorded here rather than quietly re-tuned because the next
-person to touch `mana.production_per_townhall_level` has to know which budget
-they are tuning for. **Restoring the old law at cap 50 means regen 7/h at TH1.**
-`tests/mana.test.ts` asserts the new intent, not the old law.
+**So the law is suspended by decision, not by drift.** The authored pool fills
+in **10 h at every Townhall level** — past the 8 h offline cap on purpose — and
+that gap between 8 and 10 is the demand a Gem refill sells against. It is
+recorded here rather than quietly re-tuned because the next person to touch
+`mana.production_per_townhall_level` has to know which budget they are tuning
+for. `tests/mana.test.ts` asserts the new intent, not the old law.
+
+> An earlier revision of this section described a starting cap of **50** and a
+> 12.5 h fill. That state does not exist in the workbook and never shipped;
+> the numbers above are the authored ones. See
+> [`balancing-v3.md`](balancing-v3.md) §1.
 
 A player who checks in 2–3 times a day wastes nothing. A player who checks in
 once a day wastes some. That is the audit's session budget expressed as a
@@ -129,8 +142,12 @@ potential, never a building.
 
 ### Sinks
 
-- **Actives** cost Mana to cast. Passives cost only their hourly upkeep.
-- **Gems** buy a refill (priced on the amount missing) and buy attunement slots.
+- **Every player tap** costs 1 Mana (`tap.manaCost`) — the largest sink by far,
+  and the reason the pool is a spend budget.
+- **Actives** cost Mana to cast. Passives cost **nothing** to hold; they cost a
+  socket.
+- **Gems** buy a refill (`mana.gemRefillPerGem`, 4 Mana a Gem) and buy
+  attunement slots.
 
 ---
 
@@ -139,12 +156,16 @@ potential, never a building.
 An artifact grants a **passive** while attuned to the kingdom and, usually, one
 **active** ability. Both scale with the artifact's level.
 
-| Artifact | Passive | Upkeep | Active | Mana | Won from |
-|---|---|---|---|---|---|
-| **Dowsing Rod** 🔮 | reveal costs −15% | 1/h | **Divination** — pays a Discovered cell's *entire* remaining reveal cost | 8 | Hollow Barrow |
-| **Verdant Seal** 🌱 | cell recovery −25% | 2/h | **Bloom** — clears exhaustion on every resource cell within radius | 6 | Sunken Chapel |
-| **Foreman's Sigil** ⚡ | worker yield +1 | 2/h | **Haste** — worker yield ×2 for 60 min | 10 | Drowned Ironworks |
-| **Gilded Ledger** 🪙 | tax rate +20% | 3/h | *none* | — | The Counting House |
+> The **Upkeep** column this table used to carry is gone: upkeep was removed on
+> 2026-09-02 (§Resolved 4) and nothing in `src/sim/mana.ts` has charged it
+> since. Holding a relic is free; the cost is the socket.
+
+| Artifact | Passive | Active | Mana | Won from |
+|---|---|---|---|---|
+| **Dowsing Rod** 🔮 | reveal costs −15% | **Divination** — pays a Discovered cell's *entire* remaining reveal cost | 8 | Hollow Barrow |
+| **Verdant Seal** 🌱 | cell recovery −25% | **Bloom** — clears exhaustion on every resource cell within radius | 6 | Sunken Chapel |
+| **Foreman's Sigil** ⚡ | worker yield +1 | **Haste** — worker yield ×2 for 60 min | 10 | Drowned Ironworks |
+| **Gilded Ledger** 🪙 | tax rate +20% | *none* | — | The Counting House |
 | **Wanderer's Compass** 🧭 | Knowledge +50% | 2/h | **Beckon** — a finite feature respawns on a cell you choose | 5 | Star Observatory |
 
 Three notes carry most of the design weight:
@@ -168,9 +189,10 @@ same machinery, not a new interaction model.
 
 ### Dual purpose
 
-An artifact is either **attuned to the kingdom** (economy passive, Mana upkeep)
-**or** **carried by a hero into a delve** (a `carried` ATK/DEF/HP block, no
-upkeep) — never both at once. See `heroes-and-gacha.md`. The asymmetry does real
+An artifact is either **attuned to the kingdom** (economy passive) **or**
+**carried by a hero into a delve** (a `carried` ATK/DEF/HP block) — never both
+at once. Neither side costs Mana to hold; what you spend is the relic's
+availability. See `heroes-and-gacha.md`. The asymmetry does real
 work: the trade is never "which is cheaper" but "which do I need right now".
 
 **Built 2026-09-02.** Both directions refuse: a launch will not take a relic the
@@ -260,34 +282,45 @@ It reuses `districts.ts` wholesale — count caps, distance costs, level gates.
 
 Follows `Docs/art/ui-menus-redesign.md`.
 
-- **Header**: `18/24` plus **one** net rate figure. Never three numbers — the
-  breakdown belongs in the reliquary, on tap. `+6/h base −4/h upkeep = +2/h` in
-  the HUD is exactly the spreadsheet chrome the brief exists to kill.
+- **Header**: the pool, as a gauge. **One** figure — the fill bar draws the
+  ratio and the rim turns gold when it is spilling, so `64/100` was the same
+  fact twice in the tightest row in the game. Never a breakdown:
+  `+6/h base −4/h upkeep = +2/h` in the HUD is exactly the spreadsheet chrome
+  the brief exists to kill, and there is no upkeep to break down any more.
 - **Reliquary**: bottom sheet over the live dimmed map (principle 1) — attuned
   slots first, then relics owned, then Knowledge and Fragments. Locked slots show
-  their remaining time. This is where the production/upkeep breakdown lives.
+  their remaining time. This is where the full `value / cap` reading and the
+  production breakdown live.
 - **Cast mode**: placement machinery, one big green confirm (principle 2).
 - **Navigation**: 🔨 Build / 🔮 Artifacts / 🔬 Research, Settings as the floating
   knob. Army loses its tab — see `expeditions.md`.
 
 ---
 
-## 6. Tunables (starting proposals — change the table, not the design)
+## 6. Tunables
 
-| | TH1 | TH2 | TH3 |
+> **These are the AUTHORED values**, read from `src/sim/data/balance.json`.
+> This table used to carry the original starting proposals (production 4/5/6,
+> cap 24/32/40, Sanctum +12×3) long after the workbook had moved past them —
+> three incompatible number sets for one dial inside one document, which is
+> what [`balancing-v3.md`](balancing-v3.md) §1 was opened to end. Change the
+> workbook, run `npm run balance`, then change this table.
+
+| | TH1 | TH2 | TH3 | Key |
+|---|---|---|---|---|
+| Base production / h | 10 | 13 | 16 | `mana.productionPerTownhallLevel` |
+| Base cap | 100 | 130 | 160 | `mana.baseCapPerTownhallLevel` |
+| Fill from empty | 10 h | 10 h | 10 h | — |
+
+| Constant | Value | Key | Rationale |
 |---|---|---|---|
-| Base production / h | 4 | 5 | 6 |
-| Base cap | 24 | 32 | 40 |
-| Fill from empty | 6 h | 6.4 h | 6.7 h |
-
-| Constant | Value | Rationale |
-|---|---|---|
-| Sanctum cap bonus | +12 / level, 3 levels | Keeps `cap ≈ 8 × net regen` as landmarks accumulate |
-| Landmark capacity | **+10 max Mana** | Ten on the map, so a full sweep DOUBLES the base pool — and doubles what every ad pays, since the reward is a whole pool |
-| Attunement slots | 1 → 1 research → 5 max | Gem price escalates per slot |
-| Slot swap lock | 5 min | Long enough to prevent hot-swapping, short enough not to punish |
-| Artifact level cost | `round(20 × 1.6^level)`, max 10 | Reuses `upgradeCost` (`upgrades.ts:15`); ≈3,630 Knowledge to max one |
-| Knowledge drip | 2/h per discovered ruin | 5 ruins ≈ 240/day → one artifact maxed in ~15 days |
+| Sanctum cap bonus | +24 / 48 / 72 | `mana.sanctumCapPerLevel` | Capacity is the Sanctum's whole job; production is the Townhall's |
+| Landmark capacity | **+10 max Mana** | `mana.landmarkCap` | Ten on the map, so a full sweep DOUBLES the base pool — and doubles what every ad pays, since the reward is a whole pool |
+| Gem refill rate | 4 Mana a Gem | `mana.gemRefillPerGem` | See the open question below: a full 160 pool is 40 Gems, against a gacha pull at 30 |
+| Tap cost | 1 Mana | `tap.manaCost` | Every tap in the game, fog excepted |
+| Tap boost | 45 s of production | `tap.boostSeconds` | The rule the whole reward table should follow (`../road-to-mvp.md` §10) |
+| Attunement slots | 1 → 5 max | `attunement.*` | Gem price escalates per slot |
+| Artifact level cost | `round(20 × 1.6^level)`, max 10 | `collection.*` | Reuses `upgradeCost` (`upgrades.ts:15`); 3,612 Knowledge to max one |
 
 ## 7. Persistence
 
@@ -333,9 +366,14 @@ build cost · offline casting.
 
 ## Open questions
 
-None blocking. Every number in §6 is a starting proposal in the tradition of
-`harvest-loop.md` §7. One thing worth verifying before committing hard to the
-upkeep model: Forge of Empires and Elvenar both gate output on population/culture
-upkeep, so the architecture has precedent in this exact quadrant — but applied to
-*buildings*, not equipment. A Game IQ check would confirm whether the equipment
-variant is genuinely novel.
+- **Is a full Mana refill really worth more than a hero pull?** At
+  `mana.gemRefillPerGem` 4, refilling a 160-cap pool from empty is **40 Gems**,
+  against a gacha pull at **30**. It may well be correct — a refill is
+  consumable and a hero is permanent — but it has never actually been argued,
+  and it is the first price in the game a player can put side by side, so it is
+  the first one that can feel wrong. → decision for
+  [`monetization-sim.md`](monetization-sim.md). (`balancing-v3.md` §1.)
+
+The upkeep question that used to sit here is closed: **upkeep was removed**, so
+there is no equipment-upkeep model left to check for precedent. Attune-or-arm
+rests on exclusivity instead (§3).

@@ -108,15 +108,28 @@ runs the base" rule is gone — there is no base production anymore.)
 Build costs, times, count caps, the build queue, upgrades and Townhall gating
 are **unchanged**.
 
-### Townhall cycle
+### Townhall taxes
 
-- Every `cycleSeconds` (60 s) the Townhall pays `silverPerPopulation ×
-  population` (5 × pop) Silver **directly to the wallet**.
-- **Tapping the Townhall cell adds `tapBoostSeconds` (1 s) of progress** to the
-  current cycle. Tapping never exhausts the Townhall.
-- The card and the map show the cycle progress bar.
-- Implementation: `cycleStartedAt` timestamp; a tap subtracts `tapBoostSeconds`
-  from it; elapsed full cycles pay out on tick (and in offline simulation).
+> **THE CYCLE IS GONE.** This section described a `cycleSeconds` /
+> `tapBoostSeconds` pair that was superseded twice — first by a per-building
+> cycle, then by Mana — and it disagreed with its own §7 table (60 s / 1 s here
+> against 10 s / 2 s there) for long enough that the contradiction was filed as
+> an MVP blocker. Neither key exists in the workbook. `balancing-v3.md` §4.
+
+- Taxes accrue **continuously**, not in cycles: `taxes.goldPerPopulationPerMinute`
+  (**30**) × population, against a `city.lastManaAt`-style anchor, in whole
+  units, replayed deterministically offline.
+- **Tapping any building — the Townhall included — pays `tap.boostSeconds`
+  (45 s) of whatever that building produces**, floored at the authored yield.
+  There is no Townhall-specific boost dial any more:
+  `taxes.tap_boost_seconds` was folded into the one global rule, as
+  [`ad-economy.md`](ad-economy.md) §1 already records. Every tap costs 1 Mana.
+- Tapping never exhausts the Townhall.
+
+A sanity check on the rate, because `balancing-v1`'s tables depend on it: at 30
+Gold/pop/min with `population_capacity [1, 2]`, a Townhall-1 city with two
+level-1 Houses is 2 villagers ≈ **60 Gold/min idle** — which is exactly the
+"TH1 ≈ 60 g/min" figure `balancing-v1.md` derives. Those tables are right.
 
 ## 3. Workers as units
 
@@ -219,8 +232,8 @@ Army, fog of war, build queue, population buying, Housing: **unchanged**.
 | Worker `moveSpeed` | 1 tile/s | Readable movement at tile size 72 px |
 | Worker `workSeconds` | 8 s | Adjacent-cell cycle ≈ 11 s → ~5.5 units/min/worker, close to the old 3–5/min feel |
 | Worker carry | 1 unit | One tap-equivalent per cycle |
-| Townhall `cycleSeconds` | 10 s | Pays 5 × pop (tuned down from 60 s in review) |
-| Townhall `tapBoostSeconds` | 2 s per tap | 5 taps force a full cycle |
+| `taxes.goldPerPopulationPerMinute` | 30 | Continuous, not a cycle — see §2. Replaces the `cycleSeconds` / `tapBoostSeconds` pair this row used to carry |
+| `tap.boostSeconds` | 45 s | Every tap in the game, houses included |
 | Offline cap | 8 h | Return-visit nudge |
 | Radius by level — Sawmill | 1 / 2 / 3 | — |
 | Radius by level — Farm | 1 / 2 | — |

@@ -58,7 +58,7 @@ import {
   anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
 } from './sim/upgrades';
 import {
-  coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
   type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
@@ -1964,7 +1964,7 @@ export class Game {
   hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
-      const max = this.state.kingdom.maxBuilders;
+      const max = builderCount(this.state);
       return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
     }
     // Staffing something → workers assigned vs. the whole workforce.

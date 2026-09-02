@@ -1,7 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { CITY_DEF, DISTRICTS } from './data/definitions';
+import { DISTRICTS, KINGDOM_DEF } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
@@ -28,12 +28,32 @@ import {
   type DepositEvent,
 } from './workers';
 import {
-  addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
+  addToWallet, builderCount, buildQueueCapacity, completesAt, districtById, getWallet,
+  newId, remainingSeconds, townhall,
   type Coord, type District, type DistrictId, type GameState,
   type QueueItem, type TechId, type UnitId,
 } from './state';
 
 // ------------------------------------------------------------------ building
+
+export type GrantBuilderResult = 'Granted' | 'AtCeiling';
+
+/**
+ * Hire a builder: one more job running at once, and one more slot in the
+ * queue that feeds it (see `buildQueueCapacity`).
+ *
+ * DELIBERATELY FREE AND UNPRICED here. The workbook authors the ceiling
+ * (`KINGDOM_DEF.maxBuilders`, 4) and Phase 0's job is only to make the dial
+ * reachable so the promotion logic in queue.ts stops being dead code —
+ * `?dev` calls this. What it COSTS is a store question, and the store is
+ * Phase 3 (`Docs/features/monetization-sim.md`); wrapping a price around
+ * this function is that phase's work, not this one's.
+ */
+export function grantBuilder(state: GameState): GrantBuilderResult {
+  if (state.kingdom.builders >= KINGDOM_DEF.maxBuilders) return 'AtCeiling';
+  state.kingdom.builders += 1;
+  return 'Granted';
+}
 
 export type EnqueueBuildResult = 'Started' | 'QueueFull' | 'NotEnoughResources' | 'InvalidCell';
 
@@ -43,7 +63,7 @@ export function enqueueBuild(
   definitionId: DistrictId,
   cell: Coord,
 ): EnqueueBuildResult {
-  if (state.city.queue.length >= CITY_DEF.buildQueueCapacity) return 'QueueFull';
+  if (state.city.queue.length >= buildQueueCapacity(state)) return 'QueueFull';
   if (placementBlock(state, map, definitionId, cell) !== null) return 'InvalidCell';
   const cost = nextBuildCost(state, definitionId);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
@@ -137,7 +157,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   }
   const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
   if (gateTech !== null && !isTechComplete(state, gateTech)) return 'RequirementsNotMet';
-  if (state.city.queue.length >= CITY_DEF.buildQueueCapacity) return 'QueueFull';
+  if (state.city.queue.length >= buildQueueCapacity(state)) return 'QueueFull';
   const cost = upgradeCost(district.definitionId, districtCount(state, district.definitionId), district.level);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   pay(state.city.wallet, cost);
@@ -393,7 +413,7 @@ const MAX_BOUNDARY_STEPS = 10_000;
 export function advance(state: GameState, map: MapData, toTime: number): AdvanceResult {
   const result = emptyResult();
   let cursor = Math.min(state.lastAdvance, toTime);
-  const builders = Math.max(1, state.kingdom.maxBuilders);
+  const builders = builderCount(state);
   for (let steps = 0; steps < MAX_BOUNDARY_STEPS; steps++) {
     applyDueAt(state, map, cursor, builders, result);
     const next = nextBoundary(state, cursor, builders);

@@ -15,7 +15,7 @@ Cultures the research currency is a *clock*, accrued per hour and never
 earned, existing only to pace the tree.
 
 And the arithmetic said the tree was never really the point. The whole tree
-cost 655 Knowledge; one maxed collectible costs ~3,630, and there are ten.
+cost 655 Knowledge; one maxed collectible costs 3,612, and there are ten.
 **Knowledge was already ~98% a collection currency**, and the 2% was what
 forced it onto the header.
 
@@ -84,7 +84,7 @@ The old arithmetic here compared three one-time totals — tree 655, quest chain
 571, whole map 2,902 — and all three are now zero or near it. Knowledge is not
 a stockpile you spend down; it is a **runway**.
 
-**Demand.** `round(20 × 1.6^level)` to level 10 is ≈**3,630 per collectible**.
+**Demand.** `round(20 × 1.6^level)` to level 10 is **3,612 per collectible**.
 Ten collectibles (five relics, five heroes) is ≈36,000, gated further by the
 Fragment-bought tier caps, so nothing is reachable in a hurry.
 
@@ -109,7 +109,7 @@ Asserted by tests rather than left to playtest
    against an anchor, so live ticking and offline replay land on the same
    integer.
 3. **Five cleared ruins carry the arc on a scale of weeks** — 240/day against
-   a ~3,630 collectible is between one and four weeks, asserted as a range so
+   a 3,612 collectible is between one and four weeks, asserted as a range so
    a balance edit that makes it instant or hopeless fails here.
 
 ## 4. What the player sees

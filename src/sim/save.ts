@@ -164,7 +164,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         ],
       },
       'kingdom.kingdoms': {
-        MaxBuilders: state.kingdom.maxBuilders,
+        // The DTO key stays `MaxBuilders` even though the field was renamed
+        // to `builders`: changing it would need a migrator to buy nothing.
+        MaxBuilders: state.kingdom.builders,
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
       },
@@ -410,7 +412,7 @@ export function deserialize(
 
   const kingdomDto = modules['kingdom.kingdoms'];
   if (kingdomDto) {
-    state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
+    state.kingdom.builders = kingdomDto.MaxBuilders ?? state.kingdom.builders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;

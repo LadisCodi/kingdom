@@ -79,17 +79,22 @@ out of, which is exactly what a management game should sell.
 
 An artifact is either:
 
-- **attuned to the kingdom** — economy passive, costs Mana upkeep every hour, or
-- **carried by a hero into a delve** — combat effects, **no upkeep**
+- **attuned to the kingdom** — economy passive, or
+- **carried by a hero into a delve** — combat effects
 
 …never both at once.
 
-The upkeep asymmetry is deliberate and does real work. Attuning costs Mana every
-hour; arming a hero costs none. So the trade is never "which is cheaper" but
-**"which do I need right now"** — a standing economic benefit against a burst of
-delve power. One item pool, one equip screen, and the best decision in the
-design: *wear the Foreman's Sigil for +1 worker yield, or send it down to reach
-depth 6?*
+**EXCLUSIVITY IS THE WHOLE COST, and that is a correction.** This section used
+to rest on an upkeep asymmetry — attuning drew Mana every hour, arming a hero
+drew none — and upkeep was removed on 2026-09-02 (`magic.md` §Resolved 4) when
+Mana became the energy every tap is paid from. The argument survives the removal
+intact, and is arguably better for it: the trade was never really "which is
+cheaper", it is **"which do I need right now"** — a standing economic benefit
+against a burst of delve power. Nothing about that needed a price tag, and a
+cost you cannot out-produce is a firmer constraint than one you can.
+
+One item pool, one equip screen, and the best decision in the design: *wear the
+Foreman's Sigil for +1 worker yield, or send it down to reach depth 6?*
 
 That single rule is what welds the city half of the game to the delve half.
 
@@ -113,8 +118,25 @@ cozy (`magic.md` §Resolved decisions).
 Knowledge is the steady drip that always has somewhere to go. Fragments are the
 targeted chase that unlocks further depth. Levels are priced
 `round(20 × 1.6^level)` — the same formula as `upgradeCost`
-(`src/sim/upgrades.ts:15`), reused — so maxing one collectible costs ≈3,630
-Knowledge.
+(`src/sim/upgrades.ts:15`), reused — so maxing one collectible costs
+**3,612 Knowledge**.
+
+**The ceiling, which was authored and undocumented** (`balancing-v3.md` §6).
+Fragments raise a tier cap; Knowledge buys levels inside it. A tier is worth
+exactly two levels, so a Fragment chase always converts into somewhere for the
+Knowledge drip to go — that interlock is the point, and it only works because
+both ladders end together at tier 5 / level 10.
+
+| Raise | Fragments | Cumulative | New level cap |
+|---|---|---|---|
+| tier 1 → 2 | 10 | 10 | 4 |
+| tier 2 → 3 | 20 | 30 | 6 |
+| tier 3 → 4 | 40 | 70 | 8 |
+| tier 4 → 5 | 80 | **150** | **10** (max) |
+
+`collection.maxTier` 5 · `levelsPerTier` 2 · `maxLevel` 10 ·
+`fragmentsPerTierBase` 10 · `fragmentsPerTierGrowth` 2 ·
+`levelCostBase` 20 · `levelCostGrowth` 1.6.
 
 **Knowledge became single-purpose on 2026-09-02.** It used to buy the
 technology tree as well, and to be earned by clearing fog. The tree is Gold
@@ -142,10 +164,28 @@ pulled, so the wallet buys speed and breadth, never access.
 
 Standard RPG-gacha grammar, kept minimal.
 
-- **Pity is mandatory** — a guaranteed hero within N pulls, with soft pity before
-  it. This is the single thing that makes a gacha read as fair rather than
+- **Pity is mandatory** — a guaranteed hero by pull 60, with soft pity from
+  pull 40. This is the single thing that makes a gacha read as fair rather than
   predatory, and it matters more here, in a cozy game, than it would in a
   mid-core one.
+
+**The authored rates.** §6 promises these are shown "plainly" on the banner
+screen, which is a promise to the player that this document has to be able to
+back — and until `balancing-v3.md` §6 they existed only in the spreadsheet,
+where nobody could review them.
+
+| Dial | Value | Key |
+|---|---|---|
+| Pull price | **30 Gems** | `gacha.pullGemCost` |
+| Base hero chance | **6 %** | `gacha.heroChance` |
+| Soft pity from | pull **40** | `gacha.softPityAt` |
+| Hard pity at | pull **60** | `gacha.hardPityAt` |
+| Duplicate pays | **20 Fragments** | `gacha.duplicateFragments` |
+| A miss pays | **3 Fragments** | `gacha.fragmentsPerMiss` |
+| Every pull pays | **50 Knowledge** | `gacha.pullKnowledge` |
+
+A miss is never empty — 3 Fragments and 50 Knowledge — which is the same
+"no dead pulls" rule as duplicate conversion, applied one level down.
 - **Duplicates convert to that hero's Fragments.** No dead pulls, ever.
 - **Pulls cost Gems directly.** One wallet, one thing to understand; events gift
   Gems like everything else does.

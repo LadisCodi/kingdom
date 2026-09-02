@@ -216,13 +216,15 @@ Ordered by how soon a player meets them.
 |---|---|---|
 | 1 | **Four of ten landmarks cannot be claimed.** `defended: true` is authored and claiming is gated on `landmarks.cleared`, but nothing in the codebase ever writes that field — the "send a party to clear it" encounter does not exist. A visible dead end, and the only thing giving combat a job outside dungeons. | `expeditions.md` §1 |
 | 2 | **Hero XP is written and never read.** Every extraction calls `addHeroXp`; nothing consumes it. Exactly the `train_duration_seconds` fault this pass removed, reintroduced. | `heroes-and-gacha.md` §1 |
-| 3 | **The Gem faucet is ~50% over budget** — 110 up front against the 75 the design sets, because the eleven new quests were given Gem rewards without re-deriving the total. | `balancing-v2.md` §1.3 |
+| 3 | ~~**The Gem faucet is ~50% over budget** — 110 up front against the 75 the design sets.~~ **STRUCK 2026-09-02: does not reproduce.** The workbook pays 10 + 15 + 50 = **75**, exactly the budget. The chain's Gem rewards are four quests, not eleven. Now held by `tests/faucet.test.ts` so it cannot drift back. | `balancing-v3.md` §3 |
 | 4 | **No gacha banner is authored.** The timeline carries a `banner` payload and `activeBanners()` exists, but `EVENTS` holds only the Conjunction, so rate-up is untested code. | `heroes-and-gacha.md` §4 |
 | 5 | **Timed-event rewards vs the 8h cap was decided rather than flagged.** Schedule events fire in the post-cap tail advance, so a 20h absence spanning a 24h Conjunction pays in full. `engine-seams.md` §5 explicitly asked for a marker at the call site instead of a policy. | `engine-seams.md` §5 |
 | 6 | **Adjacency is still one rule** (Housing↔Housing −1) — and five more districts now compete for the same ground, so spatial play got thinner in relative terms. | `balancing-v2.md` future work |
 | 7 | **The ghost is not draggable.** `wireInput` has no drag hooks; placement is still tap-only. | `art/ui-menus-redesign.md` §5.6 |
 | 8 | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | `audio-wishlist.md` |
-| 9 | Smaller: the `?dev=kit` gallery does not show the new primitives; `balancing-v1`'s income tables are annotated as corrected but not recomputed; `kingdom.max_builders` is authored 4 and still unreachable past 1. | — |
+| 9 | ~~Smaller: … `kingdom.max_builders` is authored 4 and still unreachable past 1.~~ **DONE 2026-09-02.** The dial is live: the queue capacity follows the builder count, `grantBuilder()` raises it to the authored ceiling, and `tests/builders.test.ts` holds both. It was never "smaller" — a second builder is the best-documented conversion surface in the comparable set. | `balancing-v3.md` §5 |
+| 9a | Still open, and genuinely smaller: the `?dev=kit` gallery does not show the new primitives. | — |
+| 9b | `balancing-v1`'s income tables are annotated as corrected but were never recomputed. Checked against the workbook in `balancing-v3.md` §4 and they are **right**; the annotation is what needs removing. | `balancing-v1.md` |
 
 ### Decisions still to make
 

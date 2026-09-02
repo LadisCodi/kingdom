@@ -3,7 +3,7 @@
 // injectable rng so the sim stays deterministic and portable to a server.
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
-import { DISTRICTS } from './data/definitions';
+import { CITY_DEF, DISTRICTS } from './data/definitions';
 import type { Modifier } from './modifiers';
 
 export type CurrencyId =
@@ -221,7 +221,14 @@ export interface GameState {
   regionId: RegionId;
   city: City;
   kingdom: {
-    maxBuilders: number;
+    /** How many builders the kingdom OWNS — the number of build/upgrade jobs
+     *  that run at once, and the length of the queue that feeds them.
+     *
+     *  Not to be confused with `KINGDOM_DEF.maxBuilders`, which is the
+     *  authored CEILING this may be raised to. That collision of names is why
+     *  the dial sat dead: the workbook authors 4, `startBuilders` is 1, and
+     *  a field called `maxBuilders` holding 1 reads like the ceiling IS 1. */
+    builders: number;
     wallet: Wallet;
     /** Epoch ms anchor for the Knowledge drip (whole units only). */
     lastKnowledgeAt: number;
@@ -401,3 +408,22 @@ export const districtById = (state: GameState, uniqueId: string): District | und
 
 export const townhall = (state: GameState): District =>
   state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+
+/**
+ * Jobs that build at once. Floored at 1 so a corrupt or pre-builders save can
+ * never deadlock the queue.
+ */
+export const builderCount = (state: GameState): number => Math.max(1, state.kingdom.builders);
+
+/**
+ * How many items may sit in the build queue at all.
+ *
+ * THE QUEUE FOLLOWS THE BUILDERS, and until now it did not: both gates in
+ * commands.ts tested against the bare `CITY_DEF.buildQueueCapacity` constant
+ * (1), so a kingdom with four builders still could not queue a second job and
+ * every promotion path in queue.ts was unreachable. The authored dial stays
+ * as the FLOOR — a city can always queue one thing — and the builder count
+ * raises it from there.
+ */
+export const buildQueueCapacity = (state: GameState): number =>
+  Math.max(CITY_DEF.buildQueueCapacity, builderCount(state));

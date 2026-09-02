@@ -4,7 +4,8 @@
 > the pillars the 2026-09-02 competitive review found missing, and the register
 > of design decisions that have to be closed along the way.
 >
-> **Status: the plan is live; every phase below is unstarted.**
+> **Status: the plan is live. Phase 0 is BUILT (2026-09-02); Phases 1–5 are
+> unstarted.**
 >
 > This file owns the *sequence* and the *gates*. It does not own designs — each
 > pillar has its own doc in [`features/`](features/), listed in §8. The
@@ -100,7 +101,7 @@ of strangers. We are building it for real (Phase 4) but the prototype's
 population is playtesters we know, so the answer will be about mechanics, not
 about community.
 
-## 2. Phase 0 · Firm ground
+## 2. Phase 0 · Firm ground — **BUILT 2026-09-02**
 
 **Doc:** [`features/balancing-v3.md`](features/balancing-v3.md)
 
@@ -121,8 +122,12 @@ Four numbers and one dead dial:
   of `queue.ts`'s promotion logic is unreachable. Turning it on is the cheapest
   monetisation surface in the game (see §5).
 
-**Gate:** `npm test` green, and a reader can find one number for each dial
-without choosing between three. **Cost:** days.
+**Gate — met.** `npm test` green (41 suites, 556 tests) and a reader can find
+one number for each dial without choosing between three. Gap 3 turned out not
+to reproduce and is struck; the builder dial is live and priced by nobody yet,
+which is Phase 3's problem. Two questions outlived the pass and are logged as
+open decisions: the Mana-refill price (→ decision 4's neighbourhood) and when
+to re-derive the tree's Gold (→ eras, §9). **Cost:** one session, as predicted.
 
 ## 3. Phase 1 · The habit layer
 

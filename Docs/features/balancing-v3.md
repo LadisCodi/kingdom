@@ -5,7 +5,10 @@
 >
 > It does **one** job: make the documentation agree with the workbook, so that
 > the four pillars the MVP adds can be balanced on top of numbers that only
-> exist once. **Status: unstarted.**
+> exist once. **Status: BUILT 2026-09-02.** Every action below is applied; the
+> exit gate in §8 is met. Two things outlived the pass and are recorded as
+> open questions rather than fixed: the Mana-refill price and when to re-derive
+> the tree's Gold.
 >
 > The 2026-09-02 competitive review listed five numeric contradictions as
 > blockers. **Reading `src/sim/data/balance.json` resolves three of them
@@ -100,11 +103,17 @@ rewards without re-deriving the total.
 
 | Source | Gems | Where |
 |---|---|---|
-| Starting grant | 10 | `city.initialCurrencies` / newGame |
-| Quest chain | **15** | `ProperCapital` 3 · `IntoTheDark` 3 · `GrandCapital` 5 · `TheReliquary` 4 |
+| Starting grant | 10 | `currencies.Gems.start` — Gems are PLAYER-scoped, so this is not in `city.initialCurrencies` |
+| Quest chain | **15** | quests #17 *A proper capital* 3 · #31 *Into the dark* 3 · #41 *A grand capital* 5 · #49 *The Reliquary* 4 (`rewardGems`, a field of its own — not part of `reward`) |
 | Ruin first clears | 50 | `delve.firstClearGems` 10 × 5 ruins |
 | **Total up front** | **75** | |
-| Conjunction, weekly | 5 | `CONJUNCTION_BOONS[*].gems` |
+| Conjunction, weekly | 5 | `CONJUNCTION_BOONS[*].gems` — every boon pays the same 5 |
+
+> Two shapes worth naming, because both are how a hand-derived total goes
+> wrong: Gem rewards live in `rewardGems` beside `reward`, not inside it, and
+> the opening grant is a currency's `start` rather than a city currency. Add
+> them up from the wrong two places and you get 65, or 0. `tests/faucet.test.ts`
+> reads them the way the game does.
 
 **75, which is exactly the §1.3 budget.** Either the over-authoring was
 corrected and the doc was not, or it never happened. Against the sinks —
@@ -212,14 +221,44 @@ decision, `../road-to-mvp.md` §8 decision 11), the adjacency table (one row, an
 deliberately post-MVP), the `Desert` terrain with zero cells, and any re-tuning
 of the Mana pool itself.
 
-## 8. Exit gate
+## 8. Exit gate — met 2026-09-02
 
-- `npm test` green.
-- Every dial named above has exactly one value findable in one place.
-- Backlog gap 3 struck, gap 9 split into "recompute v1 tables" (done) and
-  "second builder" (done).
-- One new test asserting the authored Gem faucet equals its budget.
-- `maxBuilders` reachable.
+| Gate | Evidence |
+|---|---|
+| `npm test` green | 41 suites, 556 tests |
+| Every dial named above has exactly one value findable in one place | §1 §2 §4 §6 applied; `magic.md` §6 now carries the authored values and says so |
+| Backlog gap 3 struck | `00-design-intent.md` gap 3, struck with the derivation |
+| Gap 9 split | gap 9 closed (builders), 9a `?dev=kit` gallery still open, 9b v1 tables recomputed and holding |
+| One new test asserting the faucet equals its budget | `tests/faucet.test.ts` — 4 assertions, including the *shape* of the payout, because the ordering argument in §3 depends on it |
+| `maxBuilders` reachable | `tests/builders.test.ts` — 9 assertions |
+
+### What changed in the code
+
+Only §5 needed any. Three edits and a dev-bar button:
+
+- `state.kingdom.maxBuilders` → **`state.kingdom.builders`**. The old name
+  collided with `KINGDOM_DEF.maxBuilders` (the authored *ceiling*, 4), and a
+  field called `maxBuilders` holding 1 is exactly why nobody noticed the dial
+  was dead. The save DTO key stays `MaxBuilders`, so **no migrator**.
+- **`buildQueueCapacity(state)`** in `state.ts`, and both gates in
+  `commands.ts` now call it. They tested the bare `CITY_DEF.buildQueueCapacity`
+  constant, so a kingdom with four builders still could not queue a second job
+  — every promotion path in `queue.ts` was unreachable. The authored dial is
+  the floor; the builder count raises it.
+- **`grantBuilder(state)`**, deliberately free and unpriced. Phase 0's job is
+  to make the dial reachable; what a builder *costs* is a store question and
+  the store is Phase 3.
+- `?dev` gains **👷 +1 builder**, which is the "one way to raise it" §5 asked
+  for.
+
+### What was left alone on purpose
+
+- **The doc-vs-doc `3,630` → `3,612`** rounding was corrected across four files
+  while in there, because this pass had just introduced the exact figure and
+  leaving both would have created the very contradiction it exists to remove.
+- Nothing in §7 was touched.
+- Neither open question below was answered. Both need a decision, not a
+  lookup, and both belong to a later phase's doc.
 
 ## Open questions
 
