@@ -53,7 +53,7 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 
 | Path | What |
 |---|---|
-| `Docs/` | `00`–`11`: the Unity as-built spec the port was built from. `Docs/features/`: the web build's own design docs — the live source of truth |
+| `Docs/` | `00-design-intent.md`: what the game is, and the canonical backlog. `road-to-mvp.md`: the ordered plan for the pillars still missing. `01`–`11`: the frozen Unity as-built spec the port was built from. `Docs/features/`: the web build's own design docs — the live source of truth |
 | `balance/` | Editable balance workbook (`balance.xlsx`) — tweak, then `npm run balance` |
 | `src/sim/` | Pure simulation core (state, economy, queue, fog, research, army, save format) |
 | `src/sim/data/` | Definitions + generated `balance.json` + the region map |

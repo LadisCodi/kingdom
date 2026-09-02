@@ -199,6 +199,15 @@ to let that quietly stop being true.
 **This section is the canonical backlog.** The per-feature docs mark their own
 steps done and point here rather than each keeping a partial list.
 
+**What happens next lives in [`road-to-mvp.md`](road-to-mvp.md)** — the ordered
+plan for the four pillars the 2026-09-02 competitive review found missing
+(the habit layer, the event archetype, simulated monetisation and the social
+layer), its phase gates, and the register of design decisions still to close.
+Phase 0 of that plan ([`features/balancing-v3.md`](features/balancing-v3.md))
+re-diagnoses gaps 3 and 9 below against the workbook: **gap 3 does not
+reproduce** — the authored Gem faucet is 75, exactly its budget — and gap 9's
+`kingdom.max_builders` is promoted out of "smaller" into a pillar of its own.
+
 ### Gaps in what shipped
 
 Ordered by how soon a player meets them.
