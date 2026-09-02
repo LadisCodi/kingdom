@@ -17,34 +17,50 @@ the script.
 |---|---|
 | `Districts` | One row per building: footprint, levels, workers, costs (Gold/Wood/Food/Stone/Iron columns), times, growth exponents |
 | `Units` | Army units: power, recruit costs |
-| `Harvest` | NATURAL resource cells (trees, crops, berries, animals): yield per tap, taps to exhaust, recovery |
+| `Harvest` | NATURAL resource cells (trees, crops, berries, animals): yield per tap, taps to exhaust, recovery, and `required_tech` — the research a player needs before they may tap it at all (blank = none; only `Forest` has one) |
 | `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market instant-sell price; blank = not sellable) |
-| `Technologies` | One-time researches: costs, duration, `requires` (comma-separated tech ids) |
+| `Technologies` | One-time researches: `cost_knowledge` (research is paid in Knowledge and nothing else), duration, `requires` (comma-separated tech ids) |
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `Adjacency` | Gold/min a district gains **or loses** per adjacent neighbor of a given type (negative = crowding penalty); columns `district`, `neighbor`, `gold_per_minute` — negatives allowed, one row per pair |
-| `Quests` | The onboarding chain, one row per quest IN ORDER: `goal_type` (absolute: BuildDistrict/UpgradeDistrict/HoldResource/ReachPopulation/CompleteTech/CompleteTechs/AssignWorkers/TrainArmy · relative: CollectResource/CollectTaps/DiscoverCells/SellGoods), `goal_target` (district/tech/currency id where the type needs one), `goal_amount`, `goal_level` (UpgradeDistrict only), `reward_*` |
+| `Quests` | The onboarding chain, one row per quest IN ORDER — **row order IS chain order**, so reordering the rows reorders the game. `goal_type` (absolute: BuildDistrict/UpgradeDistrict/HoldResource/ReachPopulation/CompleteTech/CompleteTechs/AssignWorkers/TrainArmy/ClaimLandmarks/ReachDepth/ClearRuins/OwnArtifacts/OwnHeroes/BuyUpgrade · relative: CollectResource/CollectTaps/DiscoverCells/SellGoods), `goal_target` (district/tech/currency/upgrade id where the type needs one), `goal_amount`, `goal_level` (UpgradeDistrict only), `reward_*` including `reward_gems` and `reward_knowledge` |
+| `Landmarks` | The shrines: position, whether they are defended, `claim_cost` in Gold |
+| `Artifacts` · `Heroes` · `Ruins` | Relics, the hero roster and the dungeons — see `Docs/features/magic.md`, `heroes-and-gacha.md`, `expeditions.md` |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate + tap boost (`taxes.*`), offline cap, population costs… |
 | `Map` | The world itself — one spreadsheet cell per map cell (see below) |
 
-### Sheets added by the 2026-09-02 design pass *(not yet implemented)*
+## Tuning the opening
 
-| Sheet | What |
+The first ten minutes are the most interlocked part of the workbook, because
+several sheets have to add up together. The dials, roughly in the order you
+would reach for them (see `Docs/onboarding.md`):
+
+| Want | Change |
 |---|---|
-| `Artifacts` | One row per relic: passive stat/scope/value, hourly Mana `upkeep`, active effect + Mana cost, `cost_base`/`cost_growth` for Knowledge levels, `max_level`, the ruin it drops from, and `carried_atk`/`carried_def`/`carried_hp` (+ `_per_level`) — what the relic is worth to a party when a hero carries it down instead |
-| `Heroes` | One row per hero: unit `type`, trait stat/value, level curve, gacha rarity |
-| `Ruins` | One row per dungeon: `tier`, `difficulty`, `base_depth_seconds`, `depth_growth`, `max_depth`, supply costs, `affinity` (threat type), the artifact it holds |
+| The opening feels too tight / too generous with Gold | `Settings` → `city.initial_gold` (25). It buys the first five fog cells. |
+| Fog costs too many taps | `Settings` → `fog.gold_per_tap`, or the `Surveying` row in `Upgrades` (each level makes one tap count for one more) |
+| Fog costs too much Gold | `FogRings` — cost by distance ring |
+| Exploring pays too little / too much research | `Settings` → `knowledge.per_reveal_ring` (1 = a ring-3 cell pays 3) |
+| Research is too slow / too dear | `Technologies` → `duration_seconds`, `cost_knowledge`. Forestry is deliberately 3 s — it is the tutorial's first research. |
+| Too much / too little tapping before the Sawmill | `Quests` → the `Timber` and `Lumber` rows' `goal_amount`; `Harvest` → `Forest.taps_to_exhaust` and `recovery_seconds` |
+| Taps run out of energy too fast | `Settings` → `tap.mana_cost`, `mana.base_cap_per_townhall_level` |
+| A beat arrives too early or too late | Reorder the `Quests` rows |
 
-Changed sheets:
+Two things to know before you retune the very opening:
 
-- `Units` gains **`atk`, `def`, `hp`**; `power` becomes equal to `atk`;
-  `train_duration_seconds` stops being decorative.
-- `Districts` gains the four military buildings and the Sanctum, and
-  `population_capacity` for Housing changes `2,4` → **`1,2`**.
-- `Currencies` gains **`Mana`** — the first row where `cap` is not blank.
-- `Settings` gains `mana.*`, `attunement.*`, `delve.*`, `gacha.*`.
-- `army.power_cap_per_townhall_level` is **removed**; the cap comes from the
-  military buildings instead.
+1. **Quest 1 has to pay for quest 2.** Quest 2 demands Forestry, quest 1 is the
+   only thing before it, and quest 1 pays no Knowledge of its own — every point
+   comes from the fog it makes the player clear. So
+   `FirstSteps.goal_amount × (cheapest ring yield) ≥ Forestry.cost_knowledge`,
+   and `city.initial_gold` has to cover those cells at `FogRings` prices. A
+   test asserts exactly this, at the worst frontier a player can pick.
+2. **The early Wood has to add up across three beats.** `Timber.goal_amount`
+   funds the House (step 4) *and* the crop plot (step 10);
+   `Lumber.goal_amount` funds the Farm.
+
+`tests/onboarding.test.ts` plays steps 1-14 through the real sim spending only
+what the game grants and earns, so if a change strands the player it fails
+there rather than in your session.
 
 **Event and gacha-banner schedules do NOT belong in the workbook.** The xlsx is
 for numbers designers tune; schedules are live-ops content with wall-clock dates
