@@ -113,6 +113,25 @@
 .tech-node.upgrade.done { background: var(--leaf); }
 .tech-node.upgrade.available { background: var(--gold); }
 .tech-node.upgrade.locked { background: var(--locked); opacity: 1; }
+/* "You can press this, now." The tree shows a lot of nodes the player cannot
+ * act on — done, running, unaffordable, prerequisite missing — and the
+ * `available` styling only means the prerequisites are met. The dot is the
+ * difference, and it sits top-right so it never collides with the level badge
+ * at bottom-right on an upgrade node. */
+.node-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--clay);
+  border: 2px solid var(--parchment);
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
+  pointer-events: none;
+}
+.tech-node.upgrade .node-dot { width: 12px; height: 12px; top: -2px; right: -2px; }
+
 .tech-node.upgrade .lvl {
   position: absolute;
   right: -5px;

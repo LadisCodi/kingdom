@@ -46,8 +46,12 @@ import {
   queueTraining, residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
-import { buySlot, isTechComplete, startTech, techUnlocks } from './sim/research';
-import { buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield } from './sim/upgrades';
+import {
+  anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
+} from './sim/research';
+import {
+  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
+} from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
@@ -1391,6 +1395,13 @@ export class Game {
       if (cells.length === 0) return false;
       return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
     });
+  }
+
+  /** Per-second Research CTA: some tech can be started, or some upgrade
+   *  bought. The same shape as `buildCtaLit` — the tab only lights when the
+   *  screen behind it has something the player can actually press. */
+  researchCtaLit(): boolean {
+    return anyResearchActionable(this.state) || anyUpgradeActionable(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */

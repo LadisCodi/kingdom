@@ -3,7 +3,9 @@
 // Gems at an escalating price); tree edges via `requires`. Completion runs
 // in real time through the unified advance (like the build queue).
 
-import { DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, UNITS, UPGRADES } from './data/definitions';
+import {
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
+} from './data/definitions';
 import {
   addToWallet, getWallet,
   type DistrictId, type GameState, type TechId, type UnitId, type UpgradeId,
@@ -66,6 +68,25 @@ export const techSlots = (state: GameState): number =>
 export type StartTechResult =
   | 'Started' | 'AlreadyDone' | 'AlreadyActive' | 'MissingRequirement'
   | 'NoFreeSlot' | 'NotEnoughResources';
+
+/**
+ * Could the player start this tech this second? Every gate `startTech` checks,
+ * asked without doing it.
+ *
+ * It exists so the dot on a node and the CTA on the nav tab cannot drift from
+ * what the button actually does — the failure mode being a lit tab that leads
+ * to a screen where nothing is pressable.
+ */
+export const canStartTech = (state: GameState, id: TechId): boolean =>
+  !isTechComplete(state, id)
+  && !isTechActive(state, id)
+  && requirementsMet(state, id)
+  && state.research.active.length < techSlots(state)
+  && canAfford(state.city.wallet, TECHNOLOGIES[id].cost);
+
+/** Anything at all worth a trip to the Research screen. */
+export const anyResearchActionable = (state: GameState): boolean =>
+  TECH_ORDER.some((id) => canStartTech(state, id));
 
 export function startTech(state: GameState, id: TechId, now: number): StartTechResult {
   if (isTechComplete(state, id)) return 'AlreadyDone';

@@ -912,6 +912,7 @@ Small, high-leverage, mostly independent of the visual redesign.
 13. **A price lives inside the button that spends it** (§6.4 below).
 14. **The header outranks a drawer, and ducks under a full-screen menu**
     (§6.5 below).
+15. **A lit tab never lies** (§6.7 below).
 
 ### 6.4 A price lives inside the button that spends it
 
@@ -978,6 +979,32 @@ you are still using. A short, modal, one-decision sheet — an offer, a
 confirmation — takes `centred: true` and sits in the middle of the play area
 instead, because a drawer is the wrong metaphor for something that wants an
 answer before you carry on.
+
+### 6.7 A lit tab never lies
+
+*Added 2026-09-02.*
+
+A nav tab wears the CTA when the screen behind it has something the player can
+press **this second** — not when it merely contains content. Build already
+worked this way (affordable *and* placeable); **Research** now does too: some
+tech startable, or some upgrade buyable.
+
+Inside the tech tree, the same question is asked per node and answered with a
+**red dot, top-right**. It is needed because `available` styling only means the
+prerequisites are met — a node can be available and still unaffordable, or
+blocked because every research slot is busy. The tree shows a lot of nodes at
+once and most of them are not actionable; the dot is the difference between
+"exists" and "go".
+
+The predicates behind both — `canStartTech`, `canBuyUpgrade` — mirror every
+gate the commands themselves check, and are the *same* functions the buttons
+use. That is the point: a light that drifts from its button is worse than no
+light, because it sends the player to a screen where nothing is pressable.
+
+Note the two are deliberately not the same question. Upgrades do not consume
+research slots, so with every slot busy the tech dots go dark while the upgrade
+dots stay — and the tab stays lit, honestly, because the upgrades really are
+pressable.
 
 ---
 

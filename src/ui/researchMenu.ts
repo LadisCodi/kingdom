@@ -15,10 +15,10 @@ import {
 } from '../sim/data/definitions';
 import { canAfford } from '../sim/commands';
 import {
-  isTechActive, isTechComplete, requirementsMet, slotGemCost,
+  canStartTech, isTechActive, isTechComplete, requirementsMet, slotGemCost,
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
-import { upgradeCost, upgradeLevel } from '../sim/upgrades';
+import { canBuyUpgrade, upgradeCost, upgradeLevel } from '../sim/upgrades';
 import { type GameState, type TechId, type UpgradeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
@@ -201,6 +201,11 @@ export function renderResearchMenu(game: Game): HTMLElement {
       class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
+    // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
+    // the player cannot act on yet — done, running, unaffordable, missing a
+    // prerequisite — and "available" styling only means the prerequisites are
+    // met, not that you can press it. The dot is the difference.
+    if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
     if (active) {
       const completesAt = techCompletesAt(state, id)!;
       const total = TECHNOLOGIES[id].durationSeconds * 1000;
@@ -230,6 +235,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
         class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
       }, def.glyph);
+      if (canBuyUpgrade(state, u)) node.append(el('span', { class: 'node-dot' }));
       if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));
       node.addEventListener('click', () => {
         if (consumeSuppressedClick()) return;

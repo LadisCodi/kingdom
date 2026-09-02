@@ -8,13 +8,16 @@ import {
 } from '../src/sim/data/definitions';
 import { placementBlock } from '../src/sim/districts';
 import {
-  buySlot, isTechComplete, slotGemCost, startTech, techSlots, techUnlocks,
+  anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
+  startTech, techSlots, techUnlocks,
 } from '../src/sim/research';
 import { edgeCells } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet } from '../src/sim/state';
-import { buyUpgrade } from '../src/sim/upgrades';
-import { addAllTrainers, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
+import { getWallet, type TechId, type UpgradeId } from '../src/sim/state';
+import { buyUpgrade, canBuyUpgrade } from '../src/sim/upgrades';
+import {
+  addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0, tickAt,
+} from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
@@ -226,5 +229,60 @@ describe('techUnlocks', () => {
   it('a tech that unlocks nothing returns an empty list', () => {
     const barren = TECH_ORDER.filter((id) => techUnlocks(id).length === 0);
     expect(barren.length).toBeLessThan(TECH_ORDER.length); // sanity: not all barren
+  });
+});
+
+// The CTA and the node dots (Docs/art/ui-menus-redesign.md §6.7).
+//
+// The claim they protect is that a lit tab never lies: it means the screen
+// behind it has something the player can press THIS SECOND. `canStartTech`
+// and `canBuyUpgrade` are the same gates the commands check, which is what
+// stops the light and the button drifting apart.
+describe('what the player can actually act on', () => {
+  it('agrees with startTech, gate for gate', () => {
+    const state = freshGame();
+    const id: TechId = 'Forestry';
+    // Broke: prerequisites fine, cost not.
+    expect(canStartTech(state, id)).toBe(false);
+    fund(state, TECHNOLOGIES[id].cost);
+    expect(canStartTech(state, id)).toBe(true);
+    expect(startTech(state, id, T0)).toBe('Started');
+    // Running is not startable, and it has taken the only slot.
+    expect(canStartTech(state, id)).toBe(false);
+    expect(startTech(state, id, T0)).toBe('AlreadyActive');
+  });
+
+  it('goes dark when every slot is busy, even with the money', () => {
+    const state = freshGame();
+    fund(state, { Gold: 99_999, Wood: 99_999, Food: 99_999, Stone: 99_999, Iron: 99_999 });
+    expect(anyResearchActionable(state)).toBe(true);
+    // Fill every slot: nothing is startable even though everything is paid for.
+    while (state.research.active.length < techSlots(state)) {
+      const next = TECH_ORDER.find((t) => canStartTech(state, t));
+      expect(next).toBeDefined();
+      startTech(state, next!, T0);
+    }
+    expect(anyResearchActionable(state)).toBe(false);
+  });
+
+  it('agrees with buyUpgrade, gate for gate', () => {
+    const state = freshGame();
+    const id: UpgradeId = 'TapPower'; // requires Forestry
+    fund(state, { Gold: 99_999 });
+    expect(canBuyUpgrade(state, id)).toBe(false); // tech not done
+    completeTech(state, 'Forestry');
+    expect(canBuyUpgrade(state, id)).toBe(true);
+    expect(buyUpgrade(state, id)).toBe('Purchased');
+
+    // Maxed is not actionable, however rich you are.
+    state.upgrades[id] = UPGRADES[id].maxLevel;
+    expect(canBuyUpgrade(state, id)).toBe(false);
+  });
+
+  it('lights the presenter CTA only when something is pressable', () => {
+    const game = freshPresenter(freshGame());
+    expect(game.researchCtaLit()).toBe(false); // broke at the start
+    fund(game.state, TECHNOLOGIES.Forestry.cost);
+    expect(game.researchCtaLit()).toBe(true);
   });
 });

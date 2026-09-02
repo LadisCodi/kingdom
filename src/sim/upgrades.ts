@@ -30,6 +30,20 @@ export const upgradeCost = (id: UpgradeId, level: number): number =>
 
 export type BuyUpgradeResult = 'Purchased' | 'AtMax' | 'TechRequired' | 'NotEnoughResources';
 
+/** Could the player buy this upgrade this second? Mirrors every gate
+ *  `buyUpgrade` checks, so the node dot and the button never disagree. */
+export function canBuyUpgrade(state: GameState, id: UpgradeId): boolean {
+  const def = UPGRADES[id];
+  const level = upgradeLevel(state, id);
+  if (level >= def.maxLevel) return false;
+  if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return false;
+  return canAfford(state.city.wallet, { Gold: upgradeCost(id, level) });
+}
+
+/** Anything on the upgrade side worth a trip to the Research screen. */
+export const anyUpgradeActionable = (state: GameState): boolean =>
+  (Object.keys(UPGRADES) as UpgradeId[]).some((id) => canBuyUpgrade(state, id));
+
 export function buyUpgrade(state: GameState, id: UpgradeId): BuyUpgradeResult {
   const def = UPGRADES[id];
   const level = upgradeLevel(state, id);
