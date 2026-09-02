@@ -136,6 +136,13 @@
    * §5.5 wants anyway. */
   padding: calc(var(--hud-h) + 56px) 10px calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
 }
+/* A centred sheet is a modal, not a drawer: it asks one question and the
+ * player answers it, so it sits in the middle of the play area rather than
+ * sliding up from the edge of a screen they are still working with. */
+#overlay:has(.k-sheet.is-centred) {
+  justify-content: center;
+  padding-top: calc(var(--hud-h) + 16px);
+}
 /* Only while the slot says this is a fresh mount. A legacy screen rebuilds
  * its subtree every tick, so keying the animation to the ELEMENT made it
  * replay once a second for as long as the sheet was open. */

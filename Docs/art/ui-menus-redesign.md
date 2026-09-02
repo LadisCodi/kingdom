@@ -910,6 +910,8 @@ Small, high-leverage, mostly independent of the visual redesign.
 12. **Minimum type size 13px**; the current 11–12px helper text fails on
     a phone in daylight.
 13. **A price lives inside the button that spends it** (§6.4 below).
+14. **The header outranks a drawer, and ducks under a full-screen menu**
+    (§6.5 below).
 
 ### 6.4 A price lives inside the button that spends it
 
@@ -947,6 +949,35 @@ duration, "instant", "takes 2m 30s". Those are what you get, not what you pay.
 **Non-wallet prices count too.** Fragments are a per-collectible counter rather
 than a currency, and they go in the button like everything else, reading
 `have / needed` so the gap is the thing you see.
+
+### 6.5 The header outranks a drawer
+
+*Added 2026-09-02.*
+
+A bottom sheet is something the player pulled up **over** the game, not a
+replacement for it — so the resource header stays above it, undimmed by the
+scrim and still tappable. Your purse should be readable while you browse the
+build menu, because what you can afford is the whole reason you opened it.
+
+A **full-screen** menu is the exception and keeps the top of the screen. It is
+not a drawer; it owns the view, and it brings its own top bar (the research
+screen's, for one) that the game header would otherwise sit on top of.
+
+The rule is written the other way round so that it needs no list of screens:
+`#overlay` outranks the header by default, and **drops below it when it holds
+a `.k-sheet`**. A new full-screen menu therefore gets the right behaviour for
+free, and a new bottom sheet does too.
+
+The one thing above everything is the rewarded-video surface, which is not in
+`#overlay` at all — see `Docs/features/ad-economy.md` §5.
+
+### 6.6 A centred sheet, for a question
+
+Bottom-anchoring is the default because most sheets are drawers over a screen
+you are still using. A short, modal, one-decision sheet — an offer, a
+confirmation — takes `centred: true` and sits in the middle of the play area
+instead, because a drawer is the wrong metaphor for something that wants an
+answer before you carry on.
 
 ---
 

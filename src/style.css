@@ -59,15 +59,29 @@ body {
   z-index: 4; /* under the overlay scrim, over the map */
 }
 
+/* The header outranks the menus, so your purse stays readable and tappable
+   while a drawer is open — a sheet is something you pulled up OVER the game,
+   not a replacement for it.
+
+   A FULL-SCREEN menu is the exception and keeps the top of the screen: it is
+   not a drawer, it owns the view, and it brings its own top bar (the research
+   screen's, for one) which the game header would otherwise sit on top of. The
+   rule below is therefore stated the other way round — #overlay outranks the
+   header by default, and DROPS BELOW IT when it holds a bottom sheet — so a
+   new full-screen menu gets the right behaviour without being enumerated. */
+#header { position: relative; z-index: 8; }
+
 #overlay:empty { display: none; }
 /* inset:0 and pointer-events:auto are load-bearing: this element is what
    stops a tap beside a sheet reaching the canvas and firing a harvest. */
 #overlay {
-  position: absolute; inset: 0; z-index: 5;
+  position: absolute; inset: 0; z-index: 12;
   background: var(--scrim);
   overflow-y: auto;
   padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
 }
+/* A bottom sheet ducks under the header (and so under the scrim it casts). */
+#overlay:has(.k-sheet) { z-index: 5; }
 
 /* ---------- the quest hint ---------- */
 /* Not screen-specific: any element the quest points at wears this. */

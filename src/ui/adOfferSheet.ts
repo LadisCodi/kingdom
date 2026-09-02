@@ -45,5 +45,8 @@ export function renderAdOfferSheet(game: Game): HTMLElement {
       })),
   );
 
-  return sheet({ title: 'Free Reward!', onClose: () => game.declineAdOffer() }, body);
+  return sheet(
+    { title: 'Free Reward!', onClose: () => game.declineAdOffer(), centred: true },
+    body,
+  );
 }
