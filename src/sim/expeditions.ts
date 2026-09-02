@@ -163,8 +163,7 @@ export function launchDelve(
   pay(state.city.wallet, supplyCost(ruinId, heroId));
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const party: Party = { heroId, slots: committed };
-  const stats = partyStats(party, heroLevel(state, heroId));
-  const hp = withWardenBonus(heroId, stats).hp;
+  const hp = partyStats(party, heroLevel(state, heroId)).hp;
   state.delves.push({
     id: newId(state, 'delve'),
     ruinId,
@@ -182,17 +181,6 @@ export function launchDelve(
     outcome: null,
   });
   return 'Launched';
-}
-
-/** The Warden's trait is party-wide DEF, which reads to the player as "we all
- *  stay standing longer" — so it is applied to the party sheet, once. */
-function withWardenBonus(
-  heroId: HeroId,
-  stats: { atk: number; def: number; hp: number },
-): { atk: number; def: number; hp: number } {
-  const hero = HEROES[heroId];
-  if (hero.trait !== 'PartyDefence') return stats;
-  return { ...stats, def: Math.round(stats.def * (1 + hero.traitValue)) };
 }
 
 /** What waits at a depth. Keyed by (ruin, depth, seed) so it is the same
@@ -427,8 +415,7 @@ export function previewExpedition(
   const committed = slots.filter((s) => s.count > 0);
   const party: Party = { heroId, slots: committed };
   const level = heroId === null ? 1 : heroLevel(state, heroId);
-  const raw = partyStats(party, level);
-  const stats = heroId === null ? raw : withWardenBonus(heroId, raw);
+  const stats = partyStats(party, level);
   return {
     ruinId,
     supplies: supplyCost(ruinId, heroId),

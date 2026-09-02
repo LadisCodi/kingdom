@@ -338,9 +338,28 @@ describe('launching', () => {
     expect(preview.maxDepth).toBe(RUINS[BARROW].maxDepth);
     expect(preview.stats.hp).toBeGreaterThan(0);
     // The Warden's trait is party-wide defence, and the sheet shows it.
-    const plain = partyStats({ heroId: 'Warden', slots: [{ unitId: 'Warrior', count: 4 }] });
-    expect(preview.stats.def).toBeGreaterThan(plain.def);
     expect(HEROES.Warden.trait).toBe('PartyDefence');
+    const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
+    const untraited = partyStats({ heroId: 'Scholar', slots: troops });
+    expect(preview.stats.def).toBeGreaterThan(untraited.def + HEROES.Scholar.def);
+  });
+
+  // The trait used to be applied to the preview's DEF and nowhere else, so the
+  // launch sheet promised a shield the descent never handed out. That is the
+  // `guaranteedDepth` fault again: a number on the sheet the sim does not
+  // honour. Asserting the DAMAGE, not the displayed stat, is what stops it
+  // coming back — every party-wide bonus now lives in `partyStats`.
+  it("the Warden's shield actually stops something", () => {
+    // A tier-III depth, because damage floors at 1 and a shallow barrow hides
+    // every defensive difference behind that floor.
+    const deep = 'DrownedIronworks' as const;
+    const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
+    const warden = resolveDepth({ heroId: 'Warden', slots: troops }, deep, 9, 'Warrior');
+    const scholar = resolveDepth({ heroId: 'Scholar', slots: troops }, deep, 9, 'Warrior');
+    expect(warden.damage).toBeGreaterThan(1);
+    expect(HEROES.Warden.trait).toBe('PartyDefence');
+    expect(HEROES.Scholar.trait).not.toBe('PartyDefence');
+    expect(warden.damage).toBeLessThan(scholar.damage);
   });
 });
 

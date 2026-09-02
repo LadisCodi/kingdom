@@ -65,7 +65,15 @@ export interface PartyStats {
   hp: number;
 }
 
-/** Raw totals, before any matchup. */
+/**
+ * Raw totals, before any matchup.
+ *
+ * EVERY party-wide bonus belongs here and nowhere else. A trait applied after
+ * the fact decorates the number the launch screen shows without changing the
+ * number the sim fights with, which is the same fault `guaranteedDepth` had:
+ * a promise on the sheet the descent does not keep. One function, one set of
+ * stats, every caller equal.
+ */
 export function partyStats(party: Party, heroLevel = 1): PartyStats {
   let atk = 0;
   let def = 0;
@@ -81,6 +89,10 @@ export function partyStats(party: Party, heroLevel = 1): PartyStats {
     atk += h.atk + h.atkPerLevel * (heroLevel - 1);
     def += h.def + h.defPerLevel * (heroLevel - 1);
     hp += h.hp + h.hpPerLevel * (heroLevel - 1);
+    // The Warden's trait is party-wide DEF, which reads to the player as "we
+    // all stay standing longer" — so it multiplies the assembled party rather
+    // than the hero's own line.
+    if (h.trait === 'PartyDefence') def *= 1 + h.traitValue;
   }
   return { atk: Math.round(atk), def: Math.round(def), hp: Math.round(hp) };
 }
