@@ -331,7 +331,12 @@ export class Game {
         if (fog !== 'Discovered') return false;
         const result = revealTap(this.state, this.map, cell);
         if (result === 'NotEnoughGold') this.shake(['Gold']);
-        else if (result === 'TechLocked') {
+        else if (result === 'NotReachable') {
+          // Say the rule, not just "no". A player who has been told once that
+          // the frontier moves outward stops trying to buy the far tile.
+          playSfx('error');
+          this.toast('Clear a path to it first — the fog lifts from the edges');
+        } else if (result === 'TechLocked') {
           const gate = explorationGate(this.map, cell);
           if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} to explore this terrain`);
         } else if (result === 'Revealed') {

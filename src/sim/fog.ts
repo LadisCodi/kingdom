@@ -50,6 +50,23 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
     Math.round(resolve(state, 'revealCost', revealCost(townhallDistance(map, cell)))),
   );
 
+/**
+ * Can the player pay to clear this cell yet?
+ *
+ * The frontier has to stay CONNECTED: a cell is only payable when it touches
+ * ground you have already cleared. A building's discover radius reaches
+ * further than its reveal radius, so without this the player could buy an
+ * island three tiles out and leave a ring of fog around it — exploration
+ * became a shopping list of whatever looked interesting rather than a border
+ * you push outward, and the distance cost curve stopped meaning anything
+ * because you could skip straight to the cheap side of the map.
+ *
+ * Being Discovered still means "you can SEE something is there". This is only
+ * about what you can buy.
+ */
+export const isReachable = (state: GameState, map: MapData, cell: Coord): boolean =>
+  neighbors(map, cell).some((n) => state.fog.revealed[coordKey(n)] === true);
+
 /** Exploration gates: sea and mountain cells need their tech before the
  *  player can pay to reveal them (building fog radii ignore this). */
 export function explorationGate(map: MapData, cell: Coord): TechId | null {
@@ -59,11 +76,16 @@ export function explorationGate(map: MapData, cell: Coord): TechId | null {
   return null;
 }
 
-export type RevealTapResult = 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotEnoughGold' | 'TechLocked';
+export type RevealTapResult =
+  | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';
 
 /** One tap on a Discovered cell: pay min(goldPerTap, remaining) toward its reveal. */
 export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTapResult {
   if (fogState(state, map, cell) !== 'Discovered') return 'NotDiscovered';
+  // Checked before the tech gate: "you cannot reach it yet" is the more
+  // useful thing to be told about a cell two rings out, and it is true
+  // whether or not the player has the tech for that terrain.
+  if (!isReachable(state, map, cell)) return 'NotReachable';
   const gate = explorationGate(map, cell);
   if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
   const key = coordKey(cell);

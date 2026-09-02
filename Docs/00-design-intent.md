@@ -38,7 +38,12 @@ or three check-ins. Every system below is shaped by that budget.
 
 1. **Reveal** — spend Gold, one tap at a time, to peel back the fog. Cost scales
    steeply with distance from the Townhall, so exploration is a deliberate,
-   financed campaign.
+   financed campaign. **The frontier stays connected**: you can only pay for a
+   cell that touches ground you have already cleared. A building's discover
+   radius reaches further than its reveal radius, so you can *see* further than
+   you can buy — and without the rule, exploring became a shopping list of
+   whichever distant tile looked interesting, which also let the player skip
+   the distance cost curve entirely by jumping to the cheap side of the map.
 2. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**, so
    Mana is the energy behind hand-acceleration; cells still exhaust after a
    number of taps and recover on a timer.

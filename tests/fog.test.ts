@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fogState, revealCost, revealTap } from '../src/sim/fog';
+import { fogState, isReachable, revealCost, revealTap } from '../src/sim/fog';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { coordKey, getWallet } from '../src/sim/state';
@@ -71,12 +71,52 @@ describe('paying to reveal', () => {
   });
 });
 
+describe('the frontier stays connected', () => {
+  // A building's discover radius reaches further than its reveal radius, so a
+  // fresh kingdom can SEE cells three rings out while standing on one. Paying
+  // for those directly turned exploration into a shopping list — pick the
+  // interesting tile, leave a doughnut of fog around it — and made the
+  // distance cost curve meaningless, because you could jump to the cheap side
+  // of the map without clearing the way there.
+  it('refuses a cell you can see but cannot reach', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    // Two rings out: discovered by the Townhall, not touching cleared ground.
+    const far = { x: 3, y: 3 };
+    expect(fogState(state, map, far)).toBe('Discovered');
+    expect(isReachable(state, map, far)).toBe(false);
+    expect(revealTap(state, map, far)).toBe('NotReachable');
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(5000); // and charges nothing
+  });
+
+  it('opens up the moment a neighbour is cleared', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    const far = { x: 3, y: 3 };
+    expect(revealTap(state, map, far)).toBe('NotReachable');
+    state.fog.revealed[coordKey({ x: 3, y: 2 })] = true;
+    expect(isReachable(state, map, far)).toBe(true);
+    expect(revealTap(state, map, far)).toBe('Paid');
+  });
+
+  it('the ring touching the Townhall is payable from the first minute', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    // (2,1) is revealed by the Townhall's radius, so (3,1) touches it.
+    expect(isReachable(state, map, { x: 3, y: 1 })).toBe(true);
+    expect(revealTap(state, map, { x: 3, y: 1 })).toBe('Paid');
+  });
+});
+
 describe('exploration gates (Sailing / Scaling Tools)', () => {
   it('sea cells are locked until Sailing is researched', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
     const sea = { x: -3, y: 0 }; // inside the Townhall discover radius
     expect(fogState(state, map, sea)).toBe('Discovered');
+    // Stand on the shore first: the frontier rule is a separate gate, and
+    // this test is about the TECH one.
+    state.fog.revealed[coordKey({ x: -2, y: 0 })] = true;
     expect(revealTap(state, map, sea)).toBe('TechLocked');
     state.research.completed.push('Sailing');
     expect(revealTap(state, map, sea)).toBe('Paid');
@@ -86,7 +126,7 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
     const peak = { x: 0, y: -9 }; // the northern ridge
-    state.fog.discovered[coordKey(peak)] = true; // walk the frontier up in spirit
+    state.fog.revealed[coordKey({ x: 0, y: -8 })] = true; // walk the frontier up
     expect(revealTap(state, map, peak)).toBe('TechLocked');
     state.research.completed.push('ScalingTools');
     expect(revealTap(state, map, peak)).toBe('Paid');

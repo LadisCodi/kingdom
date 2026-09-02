@@ -6,7 +6,7 @@ import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART, TRAINING,
 } from '../sim/data/definitions';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
-import { fogState, revealCostForCell } from '../sim/fog';
+import { fogState, isReachable, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
@@ -245,6 +245,15 @@ export function drawMap(
       if (fog === 'Discovered') {
         ctx.fillStyle = PALETTE.fogDiscovered;
         ctx.fillRect(x, y, size, size);
+        // A cell you can see but cannot reach yet sits under a second layer,
+        // so the payable frontier reads as a border rather than as every
+        // pale tile on screen. The rule is spatial, so it should be visible
+        // spatially — a toast on a refused tap is the fallback, not the
+        // teacher.
+        if (!isReachable(state, map, cell)) {
+          ctx.fillStyle = PALETTE.fogDiscovered;
+          ctx.fillRect(x, y, size, size);
+        }
         // Reveal progress only — the total cost is deliberately not shown.
         const paid = state.fog.progress[key] ?? 0;
         if (paid > 0) {
