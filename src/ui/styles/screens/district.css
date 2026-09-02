@@ -228,7 +228,7 @@
 
 .tr-head {
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: var(--text-helper);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-muted);
@@ -310,7 +310,7 @@
   margin: 1px 0 3px;
   padding: 1px 8px;
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: var(--text-helper);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--parchment);

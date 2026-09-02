@@ -83,14 +83,14 @@
 .b-text { min-width: 0; }
 .b-title {
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: var(--text-helper);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--wood-dark);
 }
 .b-name {
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: var(--text-body);
   color: var(--ink);
   /* Germania One ships one weight; 700 would be a synthesised smear. */
   font-weight: 400;

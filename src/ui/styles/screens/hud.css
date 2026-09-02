@@ -56,7 +56,12 @@
   gap: 5px;
   padding: 4px 10px;
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  /* The helper tier, not the body tier. A pill with a number in it is a
+     glanceable readout, not something you read a sentence of — and this row
+     is the tightest in the game, so every px here costs a resource the player
+     can see. At 18px m6x11plus these are 11px caps, the same optical size the
+     HUD had before the pixel faces landed. */
+  font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
   background: var(--parchment);
@@ -86,7 +91,7 @@
   background: var(--leaf);
   border: 2px solid var(--leaf-dark);
   color: var(--ink-inverse);
-  font-size: 18px;
+  font-size: var(--text-helper);
   line-height: 1;
 }
 

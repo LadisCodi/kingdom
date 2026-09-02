@@ -49,7 +49,7 @@
 
 .bld-name {
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: var(--text-body);
   /* Germania One ships one weight; 700 would be a synthesised smear. */
   font-weight: 400;
 }
@@ -81,7 +81,7 @@
   padding: 5px 6px;
   background: var(--clay);
   color: var(--ink-inverse);
-  font-size: 18px;
+  font-size: var(--text-helper);
   line-height: 1.2;
 }
 

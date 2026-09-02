@@ -77,7 +77,7 @@
 .exp-hero.is-busy { opacity: 0.55; cursor: default; }
 .exp-portrait { width: 48px; height: 48px; image-rendering: pixelated; border-radius: 8px; }
 .exp-hero-name { font-family: var(--font-body); font-size: var(--text-helper); }
-.exp-hero-trait { font-size: 18px; color: var(--ink-muted); line-height: 1.2; }
+.exp-hero-trait { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.2; }
 
 /* Relics: attune-or-arm, made visible. The relics the kingdom is WEARING stay
  * in the row rather than vanishing from it — a choice you cannot see is not a
@@ -101,7 +101,7 @@
 .exp-relic-art { width: 40px; height: 40px; image-rendering: pixelated; border-radius: 8px; }
 .exp-relic-art.is-glyph { display: grid; place-items: center; font-size: 24px; }
 .exp-relic-name { font-family: var(--font-body); font-size: var(--text-helper); }
-.exp-relic-stats { font-size: 18px; color: var(--ink-muted); line-height: 1.2; }
+.exp-relic-stats { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.2; }
 
 /* What the relic bought. A defensive relic may not move the safe depth at all
  * — it buys survival PAST the floor rather than a deeper floor — so the stat
@@ -138,13 +138,13 @@
 }
 .exp-troop-body { flex: 1; min-width: 0; }
 .exp-troop-name { font-family: var(--font-body); font-size: var(--text-helper); }
-.exp-troop-stats { display: flex; gap: 8px; font-size: 18px; color: var(--ink-muted); }
+.exp-troop-stats { display: flex; gap: 8px; font-size: var(--text-helper); color: var(--ink-muted); }
 .exp-stepper { display: flex; align-items: center; gap: 6px; }
 .exp-count {
   min-width: 22px; text-align: center;
   font-family: var(--font-body); font-variant-numeric: tabular-nums;
 }
-.exp-of { font-size: 18px; color: var(--ink-muted); }
+.exp-of { font-size: var(--text-helper); color: var(--ink-muted); }
 
 /* Standing orders: the opt-out, in plain sight. */
 .exp-orders { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -157,7 +157,7 @@
 }
 .exp-order.is-chosen { border-color: var(--gold, #d9a441); background: rgba(217, 164, 65, 0.2); }
 .exp-order b { font-family: var(--font-body); font-size: var(--text-helper); }
-.exp-order span { font-size: 18px; color: var(--ink-muted); line-height: 1.2; }
+.exp-order span { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.2; }
 
 /* The supplies moved into the Set-off button (§6.4); what is left out here is
  * the wait, which is a consequence rather than a price. */
@@ -245,5 +245,5 @@
 .dv-pill.is-failed { border-color: var(--clay); }
 .dv-body { min-width: 0; }
 .dv-name { font-family: var(--font-body); font-size: var(--text-helper); }
-.dv-haul { font-size: 18px; color: var(--ink-muted); }
-.dv-go { font-family: var(--font-body); font-size: 18px; color: var(--ink-muted); }
+.dv-haul { font-size: var(--text-helper); color: var(--ink-muted); }
+.dv-go { font-family: var(--font-body); font-size: var(--text-body); color: var(--ink-muted); }

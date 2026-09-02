@@ -47,7 +47,7 @@
   background: var(--leaf);
   border: 2px solid var(--leaf-dark);
   color: var(--ink-inverse);
-  font-size: 18px;
+  font-size: var(--text-helper);
   line-height: 1;
 }
 
@@ -106,7 +106,7 @@
   top: 12px;
   left: 12px;
   padding: 3px 8px;
-  font-size: 18px;
+  font-size: var(--text-helper);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-inverse);

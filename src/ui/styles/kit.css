@@ -162,7 +162,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
 .k-cost { display: inline-flex; align-items: center; gap: 4px; }
@@ -304,7 +304,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  font-size: var(--text-helper);
   font-weight: 700;
   color: var(--ink);
 }
@@ -376,7 +376,7 @@
   font-size: var(--text-body);
 }
 .gal h2 {
-  font-size: 18px;
+  font-size: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--gold);
@@ -387,7 +387,7 @@
 .gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .gal-item { margin: 8px 0; min-width: 0; }
 .gal-label {
-  font-size: 18px;
+  font-size: var(--text-helper);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);

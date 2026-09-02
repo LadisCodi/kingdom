@@ -112,17 +112,23 @@
    * forget than spelling out 400 on every title rule. */
   font-synthesis-weight: none;
 
-  /* Forced by the pixel grids above, not chosen. 32 is BoldPixels at 2x (16px
-   * caps, against Germania One's 17 at the old 22px — the same optical size).
-   * 18 is m6x11plus at 1x: 11px caps, exactly what PT Sans gave at 15px, and
-   * within 3% of the same line width.
+  /* Sized against the DEVICE, which is what "crisp" is actually a property of.
+   * A design pixel covers (css-size x dpr) / grid device pixels, so the target
+   * device decides the legal sizes, not the CSS pixel:
    *
-   * --text-helper is no longer a size. m6x11plus has no crisp size below 18,
-   * so the helper tier is carried by --ink-muted alone. It reads BIGGER than
-   * the 13px it replaces, which §6.12 wanted anyway; the cost is that helper
-   * lines run about 22% wider. */
+   *   m6x11plus (18 grid) @ DPR 3  ->  every multiple of 6:  18, 24, 30, 36
+   *   BoldPixels (16 grid) @ DPR 3 ->  every multiple of 16:  16, 32, 48
+   *
+   * The target is an iPhone 17 — 402x874 CSS px at DPR 3 — so 24px is exactly
+   * 4 device pixels per design pixel there. 18 and 36 are the only sizes that
+   * stay whole at EVERY dpr; 24 is a deliberate trade, because 18px body copy
+   * measured too small to read on the device and legibility outranks being
+   * pixel-exact on a desktop nobody plays on.
+   *
+   * 24px body = 14.7px caps, comfortably past the 17px-SF iOS body it sits
+   * beside. 18px helper = 11px caps, which is what PT Sans gave at 15px. */
   --text-title: 32px;
-  --text-body: 18px;
+  --text-body: 24px;
   --text-helper: 18px;
 
   /* ---- form ---- */

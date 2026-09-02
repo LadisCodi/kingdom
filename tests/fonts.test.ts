@@ -1,13 +1,21 @@
-// Pixel faces have LEGAL SIZES, and CSS cannot say so.
+// Pixel faces have LEGAL SIZES, and the DEVICE decides which.
 //
-// Both faces are drawn on a grid. Set one at anything but a whole multiple of
-// its grid and the outline lands between device pixels, where the rasteriser
-// antialiases the square edges into grey — which is the entire thing a pixel
-// face exists not to do. Measured over the 117 characters the subset ships
-// (units-per-em ÷ the GCD of every point coordinate):
+// Both faces are drawn on a grid. A design pixel covers
+// `(css-size x dpr) / grid` device pixels, and unless that is a whole number
+// the rasteriser antialiases the square edges into grey — the entire thing a
+// pixel face exists not to do. Grids measured over the 117 characters the
+// subset ships (units-per-em ÷ the GCD of every point coordinate):
 //
-//   BoldPixels   1024 / 64 = 16 px per em  ->  16, 32, 48
-//   m6x11plus    1152 / 64 = 18 px per em  ->  18, 36
+//   BoldPixels   1024 / 64 = 16 px per em
+//   m6x11plus    1152 / 64 = 18 px per em
+//
+// Note what that makes the rule: it is NOT "a whole multiple of the grid".
+// That is only the dpr-1 case, and nobody plays this on a dpr-1 screen. The
+// target is an iPhone 17 — 402x874 CSS px at dpr 3 — where the legal sizes
+// are every multiple of 6 for the body face and every multiple of 16 for the
+// display face. 18 and 36 happen to stay whole at every dpr; 24 does not, and
+// is a deliberate trade made because 18px body copy measured too small to
+// read on the device.
 //
 // This is the same failure the icon atlas had at 24px against a 32px cell,
 // and it is invisible the same way: every individual number looks reasonable,
@@ -20,6 +28,11 @@ import { describe, expect, it } from 'vitest';
 
 const DISPLAY_GRID = 16; // BoldPixels
 const BODY_GRID = 18; // m6x11plus
+/** iPhone 17, the device this is played and tested on. */
+const TARGET_DPR = 3;
+
+/** Whole device pixels per design pixel at the target density? */
+const crisp = (px: number, grid: number) => (px * TARGET_DPR) % grid === 0;
 
 const dir = new URL('../src/ui/styles/', import.meta.url);
 const files = [
@@ -61,26 +74,37 @@ function hardcodedSizes(): Array<{ file: string; sel: string; px: number }> {
 }
 
 describe('the pixel faces are only ever set at a legal size', () => {
-  it('sizes every hardcoded font-size on one of the two grids', () => {
+  it('sizes every hardcoded font-size so it lands on whole device pixels', () => {
     const offGrid = hardcodedSizes()
       .filter((r) => !GLYPH_BOXES.includes(r.sel))
-      .filter((r) => r.px % BODY_GRID !== 0 && r.px % DISPLAY_GRID !== 0)
+      .filter((r) => !crisp(r.px, BODY_GRID) && !crisp(r.px, DISPLAY_GRID))
       .map((r) => `${r.file} ${r.sel} = ${r.px}px`);
     expect(offGrid).toEqual([]);
   });
 
   // The tokens are the sizes almost everything actually resolves to, so they
   // get their own assertion rather than riding on the sweep above.
-  it('puts the type tokens on the grids', () => {
+  it('puts the type tokens on whole device pixels at the target density', () => {
     const tokens = readFileSync(new URL('../src/ui/styles/tokens.css', import.meta.url), 'utf8');
     const px = (name: string) => {
       const m = new RegExp(`--text-${name}:\\s*(\\d+)px`).exec(tokens);
       expect(m, `--text-${name} is not declared in px`).not.toBeNull();
       return Number(m![1]);
     };
-    expect(px('title') % DISPLAY_GRID).toBe(0); // set in BoldPixels
-    expect(px('body') % BODY_GRID).toBe(0);
-    expect(px('helper') % BODY_GRID).toBe(0);
+    expect(crisp(px('title'), DISPLAY_GRID)).toBe(true); // set in BoldPixels
+    expect(crisp(px('body'), BODY_GRID)).toBe(true);
+    expect(crisp(px('helper'), BODY_GRID)).toBe(true);
+  });
+
+  // The helper tier collapsed into the body tier once, when m6x11plus's only
+  // crisp size was thought to be 18. Two tiers that are the same number is not
+  // a hierarchy, and it is the kind of thing that survives review because
+  // every individual rule still looks sensible.
+  it('keeps helper text smaller than body text', () => {
+    const tokens = readFileSync(new URL('../src/ui/styles/tokens.css', import.meta.url), 'utf8');
+    const px = (n: string) => Number(new RegExp(`--text-${n}:\\s*(\\d+)px`).exec(tokens)![1]);
+    expect(px('helper')).toBeLessThan(px('body'));
+    expect(px('body')).toBeLessThan(px('title'));
   });
 
   // Everything unstyled inherits from <body>, and the browser's 16px default
