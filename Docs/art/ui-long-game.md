@@ -132,12 +132,16 @@ card uses and deliberately reading differently: a district is something you
 *built*, a site is something you *found*. So the art is large, there is
 exactly one thing to do, and the promise is a headline rather than a stat row:
 
-> **+1 Mana per hour, for good**
+> **+10 max Mana, for good**
 
 Because that is the sentence the whole fog economy rests on. A player who
-clears a distance-9 ring and finds one more iron vein has learned that
-exploring is a treadmill. A player who finds a shrine that pays forever has
-learned the opposite.
+clears a distance-9 ring and finds one more vein has learned that exploring is
+a treadmill. A player who finds a shrine that makes every future session — and
+every future ad — permanently bigger has learned the opposite.
+
+(Capacity, not rate. A flat +1/h was worth most on the day you found it and
+less every day after; against a pool the ad reward is measured in, a claim
+compounds. See [`../features/magic.md`](../features/magic.md).)
 
 The ruin card names the relic waiting at the bottom, its depth count, its full
 clear time, and which unit type answers it best — everything the player can

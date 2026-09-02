@@ -1,5 +1,10 @@
 // Placing a district (§5.6) — a slim bar, because the MAP is the screen here.
 //
+// It serves MOVING an existing building too. Same bar, because it is the same
+// decision: "is this a good spot". A move differs in three words — the button
+// says Move, there is no price and no wait — so it is a switch on `kind`
+// rather than a second panel that would drift from this one.
+//
 // The old panel ate 45% of the display at exactly the moment the player
 // needs to look at the map, and spent a row on `(x, y)`, which is debug
 // output. The decision being made is "is this a good spot", so that is what
@@ -20,11 +25,16 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   const def = DISTRICTS[info.definitionId];
   const art = spriteUrl(`${def.sprite}_l1`);
 
+  const moving = info.kind === 'move';
+
   // What this spot is worth, in words. Only harvest buildings capture
   // anything; for the rest the placement is unconstrained and silent.
   let verdict: HTMLElement;
   if (info.cell === null) {
     verdict = el('span', { class: 'plc-verdict is-bad' }, 'Nowhere to put this yet');
+  } else if (moving && info.unmoved) {
+    // The honest state before the first drag: it is where it has always been.
+    verdict = el('span', { class: 'plc-verdict' }, 'Drag it, or tap where it should go');
   } else if (def.harvestSource) {
     const source = HARVEST[def.harvestSource];
     const good = info.captured >= GOOD_ENOUGH;
@@ -42,13 +52,17 @@ export function renderPlacementPanel(game: Game): HTMLElement {
 
   // Being priced out is no longer a sentence: the cost rides in the button and
   // turns clay (§6.4), which is also why the bar got its width back.
-  const blockedBy = info.cell === null ? 'Nowhere legal to build it' : undefined;
+  const blockedBy = info.cell === null
+    ? (moving ? 'Nowhere legal to put it' : 'Nowhere legal to build it')
+    : undefined;
   const build = btn({
-    label: 'Build',
+    // "Move here" rather than "Move": the button confirms a destination, and
+    // the player already pressed something called Move to get to this bar.
+    label: moving ? 'Move here' : 'Build',
     kind: 'primary',
-    onClick: () => game.confirmBuild(),
+    onClick: () => (moving ? game.confirmMove() : game.confirmBuild()),
     cost: info.cost,
-    have: (c) => game.effectiveWalletValue(c),
+    have: (c) => game.walletValue(c),
     disabledReason: blockedBy,
   });
   const cancel = btn({ label: 'Cancel', onClick: () => game.dismiss() });
@@ -61,8 +75,12 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     el('div', { class: 'plc-body' },
       el('div', { class: 'plc-name' }, def.name),
       verdict,
-      el('div', { class: 'plc-time' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(info.duration)),
+      // A move is instant and free, so it shows neither a wait nor a price —
+      // the empty space is the message.
+      ...(moving
+        ? []
+        : [el('div', { class: 'plc-time' },
+            iconEl('hourglass', { size: 'sm' }), formatDuration(info.duration))]),
       // btn() disables but only action() draws a reason, and a bar has no
       // room for that layout — so the reason goes here. Nothing is greyed
       // out without saying why (§6.3). Affordability is not one of these any

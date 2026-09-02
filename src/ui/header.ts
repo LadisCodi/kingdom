@@ -3,10 +3,14 @@
 // What changed and why (§5.1). This was nine widgets of equal weight —
 // Gold, Food, Wood, Stone, Iron, Gems, population, builders, free workers,
 // plus a save-mode badge — wrapping onto two rows on a phone, so none of
-// them read. Now:
+// them read. The currency pass since cut the wallet from eleven rows to
+// seven: berries, game and shoals pay Food and veins pay Stone, so the coins
+// the plank can ever hold are Gold, Food, Wood and Stone. Knowledge left too
+// — it buys heroes and relics and nothing else, so it reads in the Reliquary
+// next to what it pays for. Now:
 //
-//   * three coins that gate the early game, with Stone and Iron appearing
-//     only once they mean something;
+//   * three coins that gate the early game, with Stone appearing only once
+//     it means something;
 //   * MANA, then Gems past the rope. Mana is the energy every tap is paid
 //     from, so it is never hidden and never contextual — a player who cannot
 //     see it cannot tell why a tap just refused;
@@ -102,8 +106,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       shown = key;
       buildCoins(list);
     }
-    for (const [c, node] of values) node.textContent = String(game.effectiveWalletValue(c));
-    gemValue.textContent = String(game.effectiveWalletValue('Gems'));
+    for (const [c, node] of values) node.textContent = String(game.walletValue(c));
+    gemValue.textContent = String(game.walletValue('Gems'));
 
     const slot = game.hudSlot();
     // Population is drawn on the world now, over the Townhall, so the plaque

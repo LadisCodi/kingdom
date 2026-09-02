@@ -31,6 +31,26 @@
 .rel-mana-title { font-family: var(--font-display); font-size: var(--text-title); flex: 1; }
 .rel-mana-hint { font-size: var(--text-helper); color: var(--ink-muted); }
 
+/* --------------------------------------------------------- the Knowledge --- */
+
+/* Knowledge has no coin on the plank — it buys relic and hero levels and
+   nothing else, so its purse reads here, beside the Study buttons that spend
+   it. Parchment against the pool's blue: two different kinds of resource, and
+   the eye should not have to read the label to tell them apart. */
+.rel-purse {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(198, 160, 96, 0.22), rgba(198, 160, 96, 0.07));
+  border: 2px solid rgba(160, 122, 62, 0.42);
+}
+.rel-purse-body { flex: 1; min-width: 0; }
+.rel-purse-title { font-family: var(--font-display); font-size: var(--text-title); }
+.rel-purse-hint { font-size: var(--text-helper); color: var(--ink-muted); }
+.rel-purse-value { font-family: var(--font-body); font-size: var(--text-title); }
+
 /* The breakdown the header refuses to show. Here it IS the point. */
 .rel-breakdown { display: flex; flex-direction: column; gap: 2px; }
 .rel-line {
@@ -108,7 +128,7 @@
 .rel-art--glyph { display: grid; place-items: center; font-size: 26px; }
 .rel-art.is-locked { filter: grayscale(1) brightness(0.85); opacity: 0.65; }
 
-.rel-name { font-family: var(--font-display); font-size: var(--text-body); }
+.rel-name { font-family: var(--font-body); font-size: var(--text-body); }
 .rel-tier {
   display: flex;
   align-items: center;

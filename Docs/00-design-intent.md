@@ -81,20 +81,32 @@ the end of an exponential cost curve.
 
 ## The economy
 
-**City-local:** Gold (build, upgrade, reveal), Food (train villagers, supply
-expeditions), Wood, Stone, Iron, and the food-valued goods Berries, Meat and
-Fish. **Mana** is city-local too, and the only currency in the game with a cap.
+> **The city runs on Gold, Food, Wood and Stone. Mana is what a tap costs.
+> Knowledge comes out of dungeons, and buys nothing but heroes and relics.**
 
-**Kingdom-wide:** Knowledge — the levelling currency for artifacts and heroes.
-Kingdom scope is deliberate: it survives a region reset, so it still works when
-Regions become the content treadmill.
+**City-local:** Gold (build, upgrade, reveal, **research**), Food (train
+villagers, supply expeditions), Wood and Stone. **Mana** is city-local too,
+and the only currency in the game with a cap.
+
+A cell's identity and the currency it pays are two different things. Berry
+bushes, game and shoals all pay **Food** — 1, 3 and 2 a tap — and an iron vein
+is a rich **Stone** node at 3 a tap. The map keeps its texture; the purse
+stops carrying four extra rows to express it.
+
+**Kingdom-wide:** Knowledge — the levelling currency for artifacts and heroes,
+and nothing else. Kingdom scope is deliberate: it survives a region reset, so
+it still works when Regions become the content treadmill.
 
 **Player:** Gems. They buy comfort — rushing a timer, refilling Mana — and
 breadth: attunement slots, party slots, gacha pulls.
 
-The everyday flow: **housing taxes → Gold → fog and buildings**; **harvest →
-materials → buildings**; **Mana → magic**; **delves → artifacts and Knowledge →
-a stronger economy**.
+The everyday flow: **housing taxes → Gold → fog, buildings and research**;
+**harvest → materials → buildings**; **Mana → magic**; **delves → artifacts
+and Knowledge → a stronger collection**.
+
+Seven wallet rows, four coins on the plank, three of them for the whole first
+hour. Full design:
+[`features/currency-simplification.md`](features/currency-simplification.md).
 
 ## Mana, and why it is capped
 
@@ -109,9 +121,11 @@ gap is what a refill is worth buying for. A player who checks in two or three
 times a day spends more of it than one who checks in once; nobody loses
 anything they own, because unspent Mana is never taken, only capped.
 
-Attuned artifacts draw an hourly **upkeep** against production, so what you can
-wear is gated by the Mana economy you have built rather than by a paywall. Net
-production floors at zero: you can stall, never go bankrupt.
+**Nothing draws against it.** Attuned artifacts used to charge an hourly
+upkeep; that was removed (2026-09-02) once Mana became the energy every tap is
+paid from, because the two jobs fought — at Townhall 1 the full relic set drew
+exactly what the Townhall made, so wearing everything stalled the pool dead.
+Mana is a tap budget now, and the only thing that spends it is the player.
 
 Full design: [`features/magic.md`](features/magic.md).
 
@@ -215,7 +229,15 @@ Ordered by how soon a player meets them.
   playtest rather than argument.
 - **Ten progression systems.** `heroes-and-gacha.md` flags this as the standing
   accepted risk. It is now real rather than hypothetical, and the single
-  collection substrate is the only thing keeping the list learnable.
+  collection substrate is the only thing keeping the list learnable. The
+  *currency* half of it was cut on 2026-09-02 — eleven wallet rows to seven —
+  but the systems count was not
+  ([`features/currency-simplification.md`](features/currency-simplification.md)).
+- **Collection progress now sits behind the army.** Knowledge comes only out
+  of dungeons, so the chain is army → hero → ruin → first clear → Knowledge →
+  relic levels. That gives the military buildings a job outside dungeons,
+  which this backlog wants — but a player who never delves makes no progress
+  on the weeks-long arc at all. First thing to watch in playtest.
 
 ### Not started at all
 

@@ -40,9 +40,10 @@ export const screenAt = (game: Game, cell: Coord): [number, number] => {
 };
 
 /**
- * Top up a purse. Routed the way `Game.effectiveWalletValue` routes reads, so
- * a test funds what it means to fund: Knowledge is KINGDOM-scoped (it buys
- * research) and Gems are the player's; everything else is the city's.
+ * Top up a purse. Routed the way `Game.walletValue` routes reads, so a test
+ * funds what it means to fund: Knowledge is KINGDOM-scoped (it levels heroes
+ * and relics) and Gems are the player's; everything else is the city's —
+ * research included, which is paid in Gold out of the city.
  */
 export const fund = (state: GameState, wallet: Record<string, number>): void => {
   const { Knowledge, Gems, ...city } = wallet;
@@ -94,16 +95,22 @@ export const addBuilt = (state: GameState, definitionId: DistrictId, location: C
  *  every army assertion needs one. */
 export const addTrainer = (state: GameState, unitId: UnitId, location: Coord): void => {
   const definitionId = (Object.values(DISTRICTS)
-    .find((d) => d.trains === unitId) as DistrictDef).id;
+    .find((d) => d.trains.includes(unitId)) as DistrictDef).id;
   addBuilt(state, definitionId, location);
 };
 
-/** Drop the four military buildings somewhere out of the way, for tests that
- *  only care that the army exists. */
+/** Drop every military building somewhere out of the way, for tests that only
+ *  care that the army exists.
+ *
+ *  DISTINCT buildings — the Barracks turns out three of the four units, so
+ *  adding one per unit would stack three Barracks on the city and treble the
+ *  army cap. */
 export const addAllTrainers = (state: GameState): void => {
   const cells: Coord[] = [{ x: 4, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 }];
-  const units: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
-  units.forEach((u, i) => addTrainer(state, u, cells[i]));
+  const halls = Object.values(DISTRICTS)
+    .filter((d) => d.armyCapPerLevel.length > 0)
+    .map((d) => d.id);
+  halls.forEach((id, i) => addBuilt(state, id, cells[i]));
 };
 
 /** Test setup: mark a technology as already researched. */

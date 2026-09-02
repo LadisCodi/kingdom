@@ -68,9 +68,15 @@ experience and the thing `tests/quests.test.ts` asserts beat by beat.
 
 The headline change is what the game opens on. It used to open on a **tap**
 ("tap the forest 5 times"); it now opens on the **fog** — clearing cells is
-what pays the Knowledge that buys Forestry, and Forestry is what opens the
-trees. That closes a loop the old opening never had: exploring, researching
-and gathering are one sequence rather than three parallel tutorials.
+what finds the trees, and Forestry is what opens them. That closes a loop the
+old opening never had: exploring, researching and gathering are one sequence
+rather than three parallel tutorials.
+
+*(Amended 2026-09-02. Clearing fog used to pay the Knowledge that bought
+Forestry. Research is Gold now, so the opening purse does both jobs: the fog
+quest 1 asks for **and** the research quest 2 demands come out of the same 50
+Gold plus quest 1's reward. `tests/quests.test.ts` asserts that sum at the
+DEAREST frontier the player could pick.)*
 
 Two goal types were added for beats the sim could not express: **BuyUpgrade**
 (step 20 asks the player to buy Surveying twice) and **OwnHeroes** (step 25,
@@ -92,12 +98,22 @@ the next two beats spend (10 → 25).
 ## Sheet columns
 
 `id, name, description, goal_type, goal_target, goal_amount, goal_level,
-reward_gold, reward_wood, reward_food, reward_stone, reward_iron,
+reward_gold, reward_wood, reward_food, reward_stone,
 reward_gems, reward_knowledge` — `reward_knowledge` is kingdom-scoped, so it
 sits outside the `reward` wallet ([`knowledge.md`](knowledge.md));
 goal_target is a DistrictId/TechId/CurrencyId depending on the type (the
 importer validates); `goal_level` only on UpgradeDistrict ("Upgrade 3
 Houses to lvl 2" = target Housing, amount 3, level 2).
+
+**`reward_knowledge` belongs to the long game only.** Since 2026-09-02 it is
+authored on exactly four goal types — `ClearRuins`, `ReachDepth`,
+`OwnArtifacts`, `OwnHeroes` — so the currency first appears at the same moment
+the Reliquary does. Everywhere else the chain pays Gold, which it now needs:
+the tech tree is Gold-priced, and the chain carries 12,075 of it against a
+6,600 tree. A test asserts the restriction, so a new quest cannot quietly
+reintroduce early Knowledge.
+
+`reward_iron` was retired with the currency: an iron vein pays Stone.
 
 ## UI
 

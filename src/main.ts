@@ -136,7 +136,9 @@ async function boot(): Promise<void> {
     // Bottom panel: placement > site card > district card > empty.
     const inspectedId = game.inspectedDistrictId;
     const site = game.inspectedSite;
-    if (game.mode.kind === 'placing') {
+    if (game.mode.kind === 'placing' || game.mode.kind === 'moving') {
+      // One key for both: the bar is the same element, and re-keying it would
+      // tear the panel down between placing and moving for no visible reason.
       panelSlot.show('placement', () => legacy(() => renderPlacementPanel(game), () => game.dismiss()));
     } else if (game.mode.kind === 'casting') {
       panelSlot.show('casting', () => legacy(() => renderCastPanel(game), () => game.dismiss()));
@@ -209,6 +211,8 @@ async function boot(): Promise<void> {
     canvas, camera,
     (sx, sy) => game.handleTap(sx, sy),
     (sx, sy) => game.handleHold(sx, sy),
+    (sx, sy) => game.grabGhost(sx, sy),
+    (sx, sy) => game.dragGhostTo(sx, sy),
   );
 
   // ------------------------------------------------------- the single tick
@@ -267,7 +271,9 @@ async function boot(): Promise<void> {
       // advance replay the "absence".
       const delta = minutes * 60_000;
       game.state.lastAdvance -= delta;
-      if (game.state.city.training) game.state.city.training.startedAt -= delta;
+      for (const item of game.state.city.trainingQueue) {
+        if (item.startedAt !== null) item.startedAt -= delta;
+      }
       game.state.city.lastTaxAt -= delta;
       for (const w of game.state.workers) {
         w.stateStartedAt -= delta;

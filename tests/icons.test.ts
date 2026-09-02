@@ -6,10 +6,12 @@
 // next to a dozen pixel icons, which nobody notices in review.
 //
 // Runs in node — atlas.generated.ts is deliberately DOM-free.
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
+import { ATLAS_CELL, ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
 import { CURRENCIES, DISTRICTS } from '../src/sim/data/definitions';
+
 
 const cells = new Set(Object.keys(ICON_INDEX));
 /** Cells the tool derived rather than an artist drawing them. */
@@ -78,5 +80,41 @@ describe('the icon atlas', () => {
 
   it('the pending list has not rotted — nothing on it is already drawn', () => {
     expect(AWAITING_ART.filter((n) => cells.has(n))).toEqual([]);
+  });
+});
+
+// The display sizes have to be whole ratios of the atlas cell (2026-09-02).
+//
+// `.icon` paints the atlas as a background scaled by `--icon-size / cell`, and
+// `image-rendering: pixelated` is nearest-neighbour — so a fractional ratio
+// samples some source rows twice and others not at all. The art does not
+// degrade gracefully; it degrades into mush.
+//
+// This is not hypothetical. The default was 24px against a 32px cell — a
+// 0.75x downscale — which is what the header's resource chips were drawn at.
+// Broken coin rims, ragged outlines, eaten highlights. It was read as bad art
+// for months, and nothing in the type system or the build could see it,
+// because both numbers are individually reasonable and live in files that
+// never mention each other.
+//
+// The rule is stated against DPR 2, the phone this game targets: at that
+// density 16/32/48 CSS px are 1x, 2x and 3x of a 32px cell. (On a DPR-1
+// desktop 48 is 1.5x, which is the one accepted compromise -- 64 would burst
+// the 48px slots it sits in.)
+describe('the icon display sizes', () => {
+  const kitCss = readFileSync(new URL('../src/ui/styles/kit.css', import.meta.url), 'utf8');
+
+  /** Every `--icon-size` the kit declares, whatever selector it sits on. */
+  const sizes = (): Array<[string, number]> =>
+    [...kitCss.matchAll(/(\S+)\s*\{[^}]*?--icon-size:\s*(\d+)px/gs)]
+      .map((m) => [m[1], Number(m[2])] as [string, number]);
+
+  it('declares at least the three the kit is built on', () => {
+    expect(sizes().map(([, px]) => px).sort((a, b) => a - b)).toEqual([16, 32, 48]);
+  });
+
+  it('renders every size as a whole multiple of the atlas cell at DPR 2', () => {
+    const fractional = sizes().filter(([, px]) => (px * 2) % ATLAS_CELL !== 0);
+    expect(fractional).toEqual([]);
   });
 });

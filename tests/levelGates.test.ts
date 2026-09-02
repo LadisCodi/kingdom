@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { upgradeDistrict } from '../src/sim/commands';
 import { requiredTechForLevel } from '../src/sim/districts';
 import { districtCapacity, maxPopulation } from '../src/sim/population';
-import { districtById, townhall } from '../src/sim/state';
+import { DISTRICTS, MANA, levelIndexed } from '../src/sim/data/definitions';
+import { districtById, townhall, type DistrictId } from '../src/sim/state';
 import { addBuilt, completeTech, freshGame, fund, tickAt, T0 } from './helpers';
 
 const HOUSE = { x: 2, y: 0 }; // touches the Townhall
@@ -78,5 +79,51 @@ describe('per-level housing capacity', () => {
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
     expect(districtCapacity(state, house)).toBe(3);
     expect(districtCapacity(state, districtById(state, townhall(state).uniqueId)!)).toBe(0);
+  });
+});
+
+// Every upgrade has to be able to SAY what it buys (2026-09-02).
+//
+// The district card's upgrade row is now a summary of what changes at the
+// next level, and that summary is derived — it reads the per-level arrays
+// and prints what moved. Which means a building whose numbers are all flat
+// renders a level, a price, a wait, and a blank line where the reason to
+// spend should be.
+//
+// That is not a UI bug to patch in the UI: it is a building the balance data
+// gives no reason to upgrade, and it is invisible until someone opens that
+// one card. Adding a district with `max_level: 2` and no per-level numbers
+// fails here instead.
+describe('every upgradable building has something to show for the level', () => {
+  const PER_LEVEL = [
+    'influenceRadiusPerLevel', 'maxWorkersPerLevel',
+    'armyCapPerLevel', 'populationCapacityPerLevel',
+  ] as const;
+
+  // The two that carry their per-level numbers in the Mana table rather than
+  // their own row, because the pool is one number the whole city shares.
+  const VIA_MANA: readonly DistrictId[] = ['Townhall', 'Sanctum'];
+
+  it('names at least one number that changes at the next level', () => {
+    const silent = (Object.keys(DISTRICTS) as DistrictId[]).filter((id) => {
+      const def = DISTRICTS[id];
+      if (def.maxLevel <= 1) return false; // nothing to upgrade, no row drawn
+      if (VIA_MANA.includes(id)) return false;
+      return !PER_LEVEL.some((k) => def[k].length > 0);
+    });
+    expect(silent).toEqual([]);
+  });
+
+  // And the Mana pair really does grow, so their exemption above is earned
+  // rather than a way to opt out of the rule.
+  it('the Townhall and the Sanctum grow the Mana pool with every level', () => {
+    for (let level = 1; level < DISTRICTS.Townhall.maxLevel; level++) {
+      expect(levelIndexed(MANA.baseCapPerTownhallLevel, level + 1))
+        .toBeGreaterThan(levelIndexed(MANA.baseCapPerTownhallLevel, level));
+    }
+    for (let level = 1; level < DISTRICTS.Sanctum.maxLevel; level++) {
+      expect(levelIndexed(MANA.sanctumCapPerLevel, level + 1))
+        .toBeGreaterThan(levelIndexed(MANA.sanctumCapPerLevel, level));
+    }
   });
 });

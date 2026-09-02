@@ -1,13 +1,13 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { CITY_DEF, DISTRICTS, TAP, TRAINING } from './data/definitions';
+import { CITY_DEF, DISTRICTS } from './data/definitions';
 import {
-  buildDurationForCell, buildCost as buildCostFormula, nextBuildCost,
+  buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration,
 } from './districts';
-import { advanceArmyTraining, nextTrainingCompletion } from './army';
+import { advanceTraining, nextTrainingCompletion, trainingTap, unitInTraining } from './army';
 import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
 import { revealAroundDistrict } from './fog';
 import {
@@ -17,14 +17,15 @@ import type { MapData } from './grid';
 import {
   advanceRespawns, collectTap, tapCell, type CollectTapResult, type TapCellResult,
 } from './harvest';
-import { accrueKnowledge, accrueMana, payMana } from './mana';
+import { accrueKnowledge, accrueMana } from './mana';
 import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
-import { canAfford, effectiveAmount, pay, refund } from './wallet';
+import { canAfford, pay, refund } from './wallet';
 import {
-  addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
+  addWorker, advanceWorkers, assignableWorkerLimit, relocateCrew, removeWorker,
+  type DepositEvent,
 } from './workers';
 import {
   addToWallet, completesAt, districtById, getWallet, newId, remainingSeconds, townhall,
@@ -67,6 +68,56 @@ export function enqueueBuild(
     startedAt: null,
   });
   return 'Started';
+}
+
+// ------------------------------------------------------------------- moving
+
+export type MoveDistrictResult =
+  | 'Moved' | 'NotFound' | 'Immovable' | 'InvalidCell' | 'SameCell';
+
+/**
+ * Pick a built building up and put it down somewhere else. **Free, instant,
+ * and it never fails halfway.**
+ *
+ * Free because the alternative is a tax on tidying up, and this is a game
+ * whose first promise is that nothing you own is ever taken from you. A move
+ * costs the player nothing and gains them nothing directly — what it changes
+ * is position, and position is already priced by everything that reads it:
+ * housing adjacency, influence radius, worker walking distance.
+ *
+ * Which is why it goes through `repriceTaxAnchorAround`. Moving a house in or
+ * out of a neighbour's range changes the city's gold rate at this instant,
+ * and the tax anchor has to be settled at the instant the rate changed or the
+ * player is paid the new rate for time already elapsed at the old one. That
+ * is the same mechanism a completed build uses; a move is just another thing
+ * that reprices the city.
+ */
+export function moveDistrict(
+  state: GameState,
+  map: MapData,
+  districtUniqueId: string,
+  cell: Coord,
+  now: number,
+): MoveDistrictResult {
+  const district = districtById(state, districtUniqueId);
+  if (!district) return 'NotFound';
+  if (!canMoveDistrict(district)) return 'Immovable';
+  if (district.location.x === cell.x && district.location.y === cell.y) return 'SameCell';
+  if (placementBlock(state, map, district.definitionId, cell, district.uniqueId) !== null) {
+    return 'InvalidCell';
+  }
+  const from = district.location;
+  repriceTaxAnchorAround(state, now, () => {
+    district.location = cell;
+  });
+  relocateCrew(state, district, from, now);
+  // The new address pushes back the fog exactly as finishing a build does —
+  // otherwise a building could be moved to the frontier and sit there staring
+  // at ground it has already paid to see.
+  revealAroundDistrict(state, map, district);
+  // Its old neighbours may have cells free now, and its new ones may not.
+  wakeIdleWorkersAt(state, now);
+  return 'Moved';
 }
 
 export type UpgradeResult =
@@ -204,10 +255,15 @@ export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining' | 
  *  AFTER the "is anything training" check, so tapping an idle Townhall is
  *  free — you cannot pay for nothing. */
 export function townhallTap(state: GameState, now: number): TownhallTapResult {
-  if (state.city.training === null) return 'NoTraining';
-  if (!payMana(state, TAP.manaCost)) return 'NoMana';
-  state.city.training.startedAt -= TRAINING.tapBoostSeconds * 1000;
-  return advanceCityLife(state, now).trained > 0 ? 'TrainingComplete' : 'Boosted';
+  // One tap, one mechanism: the Townhall hurries its line exactly the way a
+  // Barracks hurries its own, now that both draw from the same queue. The
+  // result names stay as they were — the presenter and its tests speak them.
+  const hall = townhall(state);
+  if (!hall || !unitInTraining(state, hall.uniqueId)) return 'NoTraining';
+  const result = trainingTap(state, hall, now);
+  return result === 'Complete' ? 'TrainingComplete'
+    : result === 'NoTraining' ? 'NoTraining'
+      : result === 'NoMana' ? 'NoMana' : 'Boosted';
 }
 
 // ------------------------------------------------------------------- advance
@@ -282,7 +338,12 @@ function applyDueAt(
     }
     out.completedResearch.push(...advanceResearch(state, t));
     out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
-    out.trainedUnits.push(...advanceArmyTraining(state, t));
+    // One line, two kinds of trainee: villagers land on the population, units
+    // in the army, and the caller is told about each separately.
+    for (const trainee of advanceTraining(state, t)) {
+      if (trainee === 'Villager') out.trainedPopulation += 1;
+      else out.trainedUnits.push(trainee);
+    }
     // Delve timers NEVER pause: the offline cap limits what the CITY
     // PRODUCES, never what a timer does. A party at a checkpoint proposes no
     // boundary at all — it waits, indefinitely, until the player answers.
@@ -295,9 +356,7 @@ function applyDueAt(
 function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceResult): void {
   advanceRespawns(state, map, t);
   out.deposits.push(...advanceWorkers(state, map, t));
-  const life = advanceCityLife(state, t);
-  out.goldEarned += life.gold;
-  out.trainedPopulation += life.trained;
+  out.goldEarned += advanceCityLife(state, t).gold;
   // Mana regen is city idle PRODUCTION, so it belongs here with the workers
   // and the taxes — and the 8h offline cap applies to it, unlike a timer.
   out.manaEarned += accrueMana(state, t);
@@ -347,5 +406,5 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   return result;
 }
 
-export { canAfford, effectiveAmount, collectTap, tapCell, assignableWorkerLimit };
+export { canAfford, collectTap, tapCell, assignableWorkerLimit };
 export type { CollectTapResult, TapCellResult };

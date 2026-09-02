@@ -21,13 +21,13 @@ describe('instant selling', () => {
   it('pays gold_value per unit, instantly, clamped to what is on hand', () => {
     const state = freshGame();
     addBuilt(state, 'Market', MARKET_CELL);
-    fund(state, { Wood: 10, Meat: 2, Gold: 0 }); // measuring the SALE, not the grant
+    fund(state, { Wood: 10, Stone: 2, Gold: 0 }); // measuring the SALE, not the grant
     expect(sellGoods(state, 'Wood', 4)).toEqual({ result: 'Sold', units: 4, gold: 12 }); // 3 each
     expect(getWallet(state.city.wallet, 'Wood')).toBe(6);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(12);
     expect(sellGoods(state, 'Wood', 999)).toEqual({ result: 'Sold', units: 6, gold: 18 });
     expect(sellGoods(state, 'Wood', 1).result).toBe('NothingToSell');
-    expect(sellGoods(state, 'Meat', 2)).toEqual({ result: 'Sold', units: 2, gold: 6 });
+    expect(sellGoods(state, 'Stone', 2)).toEqual({ result: 'Sold', units: 2, gold: 4 });
   });
 
   it('rejects non-sellable currencies and Gold itself', () => {
@@ -37,6 +37,8 @@ describe('instant selling', () => {
     state.kingdom.wallet.Knowledge = 5;
     expect(SELLABLE).not.toContain('Gold');
     expect(SELLABLE).not.toContain('Knowledge');
+    // Four coins in, three crates out: everything the city produces but Gold.
+    expect(SELLABLE).toEqual(['Food', 'Wood', 'Stone']);
     expect(sellGoods(state, 'Gold', 10).result).toBe('NotSellable');
     expect(sellGoods(state, 'Knowledge', 5).result).toBe('NotSellable');
   });

@@ -9,6 +9,11 @@
 html, body { height: 100%; overflow: hidden; background: #14100c; }
 body {
   font-family: var(--font-body);
+  /* The base size was never declared, so every unstyled string inherited the
+   * browser's 16px default — off m6x11plus's 18px grid, which is most of the
+   * text in the game rendering soft. Declaring it is the single biggest part
+   * of the pixel-face switch. */
+  font-size: var(--text-body);
   color: var(--ink);
   user-select: none;
   -webkit-user-select: none;
@@ -111,7 +116,7 @@ body {
   /* Below the overlay (z 5) is not enough — this bar is dev-only and must
    * never sit on top of a sheet it is meant to help test. */
   padding: 10px 16px; border-radius: 10px; z-index: 4; color: #e8e2d0;
-  display: flex; gap: 12px; align-items: center; font-size: 14px;
+  display: flex; gap: 12px; align-items: center; font-size: var(--text-body);
 }
 .cast-banner button {
   font: inherit; color: inherit; background: #26303e;

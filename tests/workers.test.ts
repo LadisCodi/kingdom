@@ -2,13 +2,19 @@
 // plus Townhall villager training that shares the unified advance.
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild, townhallTap } from '../src/sim/commands';
-import { populationCost, queueTraining } from '../src/sim/population';
+import { populationCost } from '../src/sim/population';
+import { cancelTraining, lineFor, trainCost, trainUnit } from '../src/sim/army';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
-import { getWallet, type GameState, coordKey } from '../src/sim/state';
+import {
+  getWallet, townhall, type DistrictId, type GameState, coordKey,
+} from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { effectiveTapYield, effectiveWorkerYield } from '../src/sim/upgrades';
-import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { deserialize, serialize } from '../src/sim/save';
+import {
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt,
+} from './helpers';
 
 // Sawmill at (3,1), chosen so its own completion re-reveals exactly ONE tree
 // — the adjacent one. Every other tree in range stays under fog unless this
@@ -183,11 +189,11 @@ describe('Townhall villager training', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 }); // one L1 house holds TWO
     fund(state, { Food: 100 });
-    expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 5
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued'); // populationCost(0) = 5
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5);
-    expect(queueTraining(state, T0)).toBe('Queued'); // second one queues behind
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued'); // second one queues behind
     expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5 - populationCost(1));
-    expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
+    expect(trainUnit(state, 'Villager', T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);
     tickAt(state, T0 + 20_000);
@@ -196,7 +202,7 @@ describe('Townhall villager training', () => {
     expect(state.city.population).toBe(1);
     tickAt(state, T0 + 40_000);
     expect(state.city.population).toBe(2);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
 
   it('taps boost the CURRENT villager; the next starts at its completion', () => {
@@ -205,8 +211,8 @@ describe('Townhall villager training', () => {
     addBuilt(state, 'Housing', { x: 0, y: -1 });
     fund(state, { Food: 100 });
     expect(townhallTap(state, T0)).toBe('NoTraining');
-    queueTraining(state, T0);
-    queueTraining(state, T0);
+    trainUnit(state, 'Villager', T0);
+    trainUnit(state, 'Villager', T0);
     tickAt(state, T0 + 10_000); // halfway through villager 1
     for (let i = 0; i < 4; i++) expect(townhallTap(state, T0 + 10_000)).toBe('Boosted');
     expect(townhallTap(state, T0 + 10_000)).toBe('TrainingComplete'); // 10s + 5 × 2s
@@ -221,10 +227,160 @@ describe('Townhall villager training', () => {
   it('is blocked at the housing cap (queued villagers count)', () => {
     const state = freshGame();
     fund(state, { Food: 100 });
-    expect(queueTraining(state, T0)).toBe('AtMax'); // no Housing yet
+    expect(trainUnit(state, 'Villager', T0)).toBe('AtMax'); // no Housing yet
     addBuilt(state, 'Housing', { x: 2, y: 0 });
     state.city.population = 2; // the Housing (L1 capacity 2) is full
-    expect(queueTraining(state, T0)).toBe('AtMax');
+    expect(trainUnit(state, 'Villager', T0)).toBe('AtMax');
   });
 });
 
+
+// One training line per building, villagers included (2026-09-02).
+//
+// Villagers used to have their own queue — a bare count and one timestamp on
+// the city — while soldiers had a typed list. They were always the same
+// mechanic wearing different clothes: pay up front, wait a duration, one at a
+// time per building. Two of them meant two ways to be wrong about capacity,
+// refunds and replay, and the UI could not show them the same way.
+describe('one training line per building', () => {
+  const hallOf = (state: GameState, id: DistrictId) =>
+    state.city.districts.find((d) => d.definitionId === id)!;
+
+  it('queues villagers at the Townhall and soldiers at their hall, in one list', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addAllTrainers(state);
+    completeTech(state, 'Warrior');
+    fund(state, { Food: 500, Gold: 500, Wood: 500 });
+
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+
+    expect(state.city.trainingQueue).toHaveLength(2);
+    // ...but each building only sees its own.
+    expect(lineFor(state, hallOf(state, 'Townhall').uniqueId).map((i) => i.trainee))
+      .toEqual(['Villager']);
+    expect(lineFor(state, hallOf(state, 'Barracks').uniqueId).map((i) => i.trainee))
+      .toEqual(['Warrior']);
+  });
+
+  it('runs the two lines in PARALLEL — a hall is not blocked by the Townhall', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addAllTrainers(state);
+    completeTech(state, 'Warrior');
+    fund(state, { Food: 500, Gold: 500, Wood: 500 });
+    trainUnit(state, 'Villager', T0); // 20s
+    trainUnit(state, 'Warrior', T0); // 30s
+
+    tickAt(state, T0 + 21_000);
+    expect(state.city.population).toBe(1); // the villager landed
+    expect(state.army).toHaveLength(0); // the soldier has not
+    tickAt(state, T0 + 31_000);
+    expect(state.army).toHaveLength(1);
+  });
+
+  it('prices a villager at its place in the line, and refunds what it charged', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    fund(state, { Food: 500 });
+    const first = trainCost(state, 'Villager').Food;
+    trainUnit(state, 'Villager', T0);
+    // The second is priced as if the first had already landed — a queue is
+    // never a way to buy at yesterday's price.
+    expect(trainCost(state, 'Villager').Food).toBeGreaterThan(first);
+
+    const before = getWallet(state.city.wallet, 'Food');
+    trainUnit(state, 'Villager', T0);
+    const paid = before - getWallet(state.city.wallet, 'Food');
+    const [, second] = lineFor(state, townhall(state).uniqueId);
+    expect(cancelTraining(state, second.uniqueId)).toBe('Cancelled');
+    expect(getWallet(state.city.wallet, 'Food')).toBe(before); // exactly what it took
+    expect(paid).toBeGreaterThan(0);
+  });
+
+  it('counts queued villagers against housing, and queued soldiers against the army', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // holds 2
+    fund(state, { Food: 5000 });
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Villager', T0)).toBe('AtMax'); // 0 living + 2 queued
+    expect(state.city.population).toBe(0); // nothing delivered yet
+  });
+
+  // The property the whole boundary loop exists to guarantee. A villager
+  // finishing mid-window changes the TAX RATE from that instant, and it used
+  // to be `advanceCityLife` that interleaved the two by hand. Now a completion
+  // is a boundary like any other, so `advance()` splits the window at it —
+  // same property, one mechanism.
+  it('one-call replay equals stepped ticking across a villager completion', () => {
+    const build = (): GameState => {
+      const s = freshGame();
+      addBuilt(s, 'Housing', { x: 2, y: 0 });
+      fund(s, { Food: 500 });
+      trainUnit(s, 'Villager', T0);
+      s.city.lastTaxAt = T0;
+      s.lastAdvance = T0;
+      return s;
+    };
+    const oneCall = build();
+    tickAt(oneCall, T0 + 120_000);
+
+    const stepped = build();
+    for (let t = 1000; t <= 120_000; t += 1000) tickAt(stepped, T0 + t);
+
+    expect(oneCall.city.population).toBe(stepped.city.population);
+    expect(getWallet(oneCall.city.wallet, 'Gold'))
+      .toBe(getWallet(stepped.city.wallet, 'Gold'));
+    expect(oneCall.city.lastTaxAt).toBe(stepped.city.lastTaxAt);
+  });
+
+  it('survives a save round-trip, both kinds together', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addAllTrainers(state);
+    completeTech(state, 'Warrior');
+    fund(state, { Food: 500, Gold: 500, Wood: 500 });
+    trainUnit(state, 'Villager', T0);
+    trainUnit(state, 'Warrior', T0);
+
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(restored.city.trainingQueue.map((i) => i.trainee).sort())
+      .toEqual(['Villager', 'Warrior']);
+    expect(restored.city.trainingQueue.map((i) => i.startedAt))
+      .toEqual(state.city.trainingQueue.map((i) => i.startedAt));
+  });
+
+  // A save written before the merge carried soldiers in `ArmyQueue` and
+  // villagers as a bare count. Both must survive, or a player loses trainees
+  // they already paid for.
+  it('migrates a pre-merge save without losing anyone', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addAllTrainers(state);
+    const hall = townhall(state);
+    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+
+    const dto = serialize(state, T0) as any;
+    // Hand-write the OLD shape into the save.
+    const city = dto.Modules['kingdom.cities'].Cities[0];
+    delete city.TrainingQueue;
+    city.TrainingStartedAt = new Date(T0).toISOString();
+    city.TrainingQueued = 3;
+    city.ArmyQueue = [{
+      UniqueID: 'old_1',
+      UnitID: 'Warrior',
+      BuildingID: barracks.uniqueId,
+      StartedAtUtc: new Date(T0).toISOString(),
+    }];
+
+    const restored = deserialize(dto, map, T0)!;
+    const villagers = lineFor(restored, hall.uniqueId);
+    expect(villagers).toHaveLength(3);
+    expect(villagers.every((i) => i.trainee === 'Villager')).toBe(true);
+    expect(villagers[0].startedAt).toBe(T0); // the one that was already running
+    expect(villagers[1].startedAt).toBeNull(); // the rest had no clock of their own
+    expect(lineFor(restored, barracks.uniqueId).map((i) => i.trainee)).toEqual(['Warrior']);
+  });
+});

@@ -67,7 +67,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
         : iconEl(id, { size: 'lg' })),
       el('div', { class: 'bld-name' }, def.name),
       el('div', { class: 'bld-promise' }, PROMISE[id] ?? def.description),
-      el('div', { class: 'bld-cost' }, costChips(cost, (c) => game.effectiveWalletValue(c))),
+      el('div', { class: 'bld-cost' }, costChips(cost, (c) => game.walletValue(c))),
       el('div', { class: 'bld-meta' },
         iconEl('hourglass', { size: 'sm' }),
         el('span', {}, formatDuration(buildDuration(id, count, 0))),

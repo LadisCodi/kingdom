@@ -172,8 +172,9 @@ has one place to read from.
 | Base production / h | 4 | 5 | 6 |
 | Base cap | 24 | 32 | 40 |
 
-Sanctum: +12 cap per level, 3 levels. Landmarks: +1 Mana/h each, 8–12 on the map.
-Artifact upkeep 1–3 Mana/h, flat. Attunement slot swap lock: 5 min.
+Sanctum: +12 cap per level, 3 levels. Landmarks: **+10 max Mana** each (capacity,
+not rate — see `magic.md`), 8–12 on the map. Artifact upkeep was **removed**
+(2026-09-02): nothing draws against the pool. Attunement slot swap lock: 5 min.
 
 **Tuning law: `cap ≈ 8 × net regen`** — keeps "an overnight absence fills the
 pool" true at every stage, and is the constraint every future number here must

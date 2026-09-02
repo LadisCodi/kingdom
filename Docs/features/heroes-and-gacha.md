@@ -106,9 +106,9 @@ cozy (`magic.md` §Resolved decisions).
 
 | Currency | Earned from | Spends on |
 |---|---|---|
-| **Knowledge** | Ruin drip (2/h each) · delves · the Conjunction · quests | **Levels**, for heroes and artifacts alike |
+| **Knowledge** | First clears (150 each) · the cleared-ruin drip (2/h) · delve hauls · **every pull** (50) · the Conjunction · long-game quests | **Levels**, for heroes and artifacts alike — and nothing else |
 | **Fragments** (per collectible) | Repeat delves · gacha duplicates | Raising that collectible's **tier cap** |
-| **Gems** | Quests · the Conjunction · purchase | Pulls · slots · Mana refills · rushes |
+| **Gems** | Quests · first clears · the Conjunction · purchase | Pulls · slots · Mana refills · rushes |
 
 Knowledge is the steady drip that always has somewhere to go. Fragments are the
 targeted chase that unlocks further depth. Levels are priced
@@ -116,9 +116,22 @@ targeted chase that unlocks further depth. Levels are priced
 (`src/sim/upgrades.ts:15`), reused — so maxing one collectible costs ≈3,630
 Knowledge.
 
-Runway: five ruins drip ~240 Knowledge/day, so one artifact maxes in ~15 days and
-the artifact set in ~75, before heroes are counted. Meaningful progress inside 30
-days, an endgame horizon well past it.
+**Knowledge became single-purpose on 2026-09-02.** It used to buy the
+technology tree as well, and to be earned by clearing fog. The tree is Gold
+now and the faucets are all dungeons or banners, which is what lets the table
+above read as three currencies with three jobs instead of one currency with
+three. See [`knowledge.md`](knowledge.md).
+
+**Every pull pays Knowledge, hero or not.** Fragments only ever point at one
+hero; Knowledge levels whoever the player already has. That is the second half
+of the no-dead-pulls rule below — it is what keeps a pull worth making once
+the roster is full.
+
+Runway: five **cleared** ruins drip ~240 Knowledge/day, so one artifact maxes
+in ~15 days and the artifact set in ~75, before heroes or pulls are counted.
+Meaningful progress inside 30 days, an endgame horizon well past it. The drip
+is gated on clearing rather than finding, so that runway now *starts* with a
+first clear — see `knowledge.md` §6 for the risk that carries.
 
 **Every gacha drop has a play-based route.** Fragments are earnable as well as
 pulled, so the wallet buys speed and breadth, never access.
@@ -260,3 +273,9 @@ than resolved: technologies, gold upgrades, artifacts, heroes, delve depth, city
 buildings, the Mana economy, army, landmarks, gacha. The single collection
 substrate is what keeps that list learnable. If playtest still says it is too
 much, merging heroes and artifacts further is the next cut to make.
+
+*(2026-09-02: the **currency** half of that risk has been cut — eleven wallet
+rows down to seven, four coins on the plank, and Knowledge doing one job
+instead of three. See
+[`currency-simplification.md`](currency-simplification.md). The systems count
+is untouched, and this remains the open question.)*

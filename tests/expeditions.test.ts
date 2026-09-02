@@ -7,7 +7,9 @@
 // it. Everything past that is a gamble the player opted into, on information
 // they chose not to wait for.
 import { describe, expect, it } from 'vitest';
-import { maxArmyPower, trainUnit } from '../src/sim/army';
+import {
+  finishLineWithGems, lineFor, lineRemainingSeconds, lineRushCost, maxArmyPower, trainUnit,
+} from '../src/sim/army';
 import {
   BEATS, depthDurationMs, effectiveAttack, fullClearSeconds, guaranteedDepth,
   partyStats, resolveDepth, threatStrength, typeMultiplier, worstThreatFor,
@@ -15,15 +17,20 @@ import {
 } from '../src/sim/combat';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
-import { ARMY, ARTIFACTS, DELVE, DISTRICTS, HEROES, RUINS, UNITS } from '../src/sim/data/definitions';
+import {
+  ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, RUINS, UNITS,
+} from '../src/sim/data/definitions';
 import {
   advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
   pushDeeper, supplyCost, unitSlots,
 } from '../src/sim/expeditions';
 import { artifactIsCarried } from '../src/sim/artifacts';
-import { mana, manaNetRegen, manaProduction } from '../src/sim/mana';
+import { levelCost } from '../src/sim/collection';
+import { knowledgePerHour, mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type ArtifactId, type GameState, type UnitId } from '../src/sim/state';
+import {
+  getWallet, townhall, type ArtifactId, type GameState, type UnitId,
+} from '../src/sim/state';
 import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
@@ -155,9 +162,14 @@ describe('training takes time now', () => {
     const state = readyToDelve({});
     completeTech(state, 'Warrior');
     completeTech(state, 'Archery');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Archer')).toBe('Queued');
+    // NAMED halls: the Barracks turns out Archers too, so without saying where,
+    // all three would join one line and the parallelism this test is about
+    // would quietly stop existing.
+    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+    const grounds = state.city.districts.find((d) => d.definitionId === 'ShootingGrounds')!;
+    expect(trainUnit(state, 'Warrior', T0, barracks)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0, barracks)).toBe('Queued');
+    expect(trainUnit(state, 'Archer', T0, grounds)).toBe('Queued');
     expect(state.army).toHaveLength(0);
 
     // The Archer (25s) lands before the first Warrior (30s); the SECOND
@@ -177,16 +189,16 @@ describe('training takes time now', () => {
     state.city.districts = state.city.districts.filter(
       (d) => d.definitionId === 'Townhall' || d.definitionId === 'Barracks');
     expect(maxArmyPower(state)).toBe(6);
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Warrior')).toBe('Queued');
-    expect(trainUnit(state, 'Warrior')).toBe('ArmyAtCapacity');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(trainUnit(state, 'Warrior', T0)).toBe('ArmyAtCapacity');
   });
 
   it('one-call replay equals stepped ticking', () => {
     const build = (): GameState => {
       const s = readyToDelve({});
       completeTech(s, 'Warrior');
-      for (let i = 0; i < 4; i++) trainUnit(s, 'Warrior');
+      for (let i = 0; i < 4; i++) trainUnit(s, 'Warrior', T0);
       return s;
     };
     const oneCall = build();
@@ -199,14 +211,14 @@ describe('training takes time now', () => {
   it('delivers the whole line during a long absence', () => {
     const state = readyToDelve({});
     completeTech(state, 'Warrior');
-    for (let i = 0; i < 2; i++) trainUnit(state, 'Warrior');
+    for (let i = 0; i < 2; i++) trainUnit(state, 'Warrior', T0);
     // Through advance(), because that is the path that stamps the head at the
     // CURSOR — advanceArmyTraining on its own stamps at the time it is given,
     // exactly as advanceQueue does, so a raw far-future call starts the line
     // rather than finishing it.
     const report = advance(state, map, T0 + 3_600_000);
     expect(report.trainedUnits).toEqual(['Warrior', 'Warrior']);
-    expect(state.city.armyQueue).toHaveLength(0);
+    expect(state.city.trainingQueue).toHaveLength(0);
   });
 });
 
@@ -451,10 +463,15 @@ describe('the descent', () => {
     launchDelve(state, map, BARROW, 'Warden',
       [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
     const gems = getWallet(state.player.wallet, 'Gems');
+    const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
     advance(state, map, T0 + 86_400_000);
     expect(state.ruinsCleared[BARROW]).toBe(true);
     // The recurring Gem faucet the design needs — one per ruin, once.
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + DELVE.firstClearGems);
+    // And the lump that opens the levelling arc. Banked immediately, not on
+    // extraction: a party parked at the bottom has already earned it.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBeGreaterThanOrEqual(knowledge + DELVE.firstClearKnowledge);
 
     const report = extract(state, state.delves[0].id);
     expect(report.artifact).toBe(RUINS[BARROW].artifact);
@@ -656,5 +673,197 @@ describe('advanceDelves is total', () => {
   it('touches nothing when there is nothing underground', () => {
     const state = freshGame();
     expect(advanceDelves(state, T0 + 86_400_000)).toEqual([]);
+  });
+});
+
+// The Barracks turns out every foot soldier (2026-09-02); Cavalry keeps the
+// Stables. Each unit is still behind its own technology, so the choice fills
+// in as the player researches rather than arriving all at once.
+describe('a hall can turn out more than one unit', () => {
+  it('offers the three foot soldiers at the Barracks, and Cavalry only at the Stables', () => {
+    expect(DISTRICTS.Barracks.trains).toEqual(['Warrior', 'Lancer', 'Archer']);
+    expect(DISTRICTS.Stables.trains).toEqual(['Cavalry']);
+    // Every trainable unit has a hall, and no unit is orphaned.
+    for (const id of ['Warrior', 'Lancer', 'Archer', 'Cavalry'] as UnitId[]) {
+      const halls = Object.values(DISTRICTS).filter((d) => d.trains.includes(id));
+      expect(halls.length, `${id} is trained nowhere`).toBeGreaterThan(0);
+    }
+  });
+
+  it('queues each of them into the SAME line at that hall, in order', () => {
+    const state = readyToDelve({});
+    for (const t of ['Warrior', 'Spears', 'Archery'] as const) completeTech(state, t);
+    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+
+    expect(trainUnit(state, 'Archer', T0, barracks)).toBe('Queued');
+    expect(trainUnit(state, 'Lancer', T0, barracks)).toBe('Queued');
+    expect(lineFor(state, barracks.uniqueId).map((i) => i.trainee)).toEqual(['Archer', 'Lancer']);
+
+    // One bench: the Archer (25s) finishes first because it was queued first,
+    // and the Lancer starts only when the slot frees.
+    advance(state, map, T0 + 26_000);
+    expect(state.army.map((u) => u.definitionId)).toEqual(['Archer']);
+    advance(state, map, T0 + 60_000);
+    expect(state.army).toHaveLength(1); // the Lancer's 40s began at 25s
+    advance(state, map, T0 + 66_000);
+    expect(state.army.map((u) => u.definitionId)).toEqual(['Archer', 'Lancer']);
+  });
+
+  it('refuses a unit the hall does not turn out, even when another hall does', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Cavalry');
+    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+    expect(trainUnit(state, 'Cavalry', T0, barracks)).toBe('NoBuilding');
+  });
+
+  it('still refuses one whose technology is missing', () => {
+    const state = readyToDelve({});
+    const barracks = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+    expect(trainUnit(state, 'Archer', T0, barracks)).toBe('TechRequired');
+  });
+});
+
+// Buying the wait (2026-09-02). The FINISH button on the training card takes
+// the WHOLE line, priced at the build queue's rate — ten seconds a gem — so
+// the player meets one rule for buying time wherever they meet it.
+describe('finishing a training line with gems', () => {
+  const barracksOf = (state: GameState) =>
+    state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+
+  it('prices the bench PLUS everyone behind it', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    const hall = barracksOf(state);
+    trainUnit(state, 'Warrior', T0, hall); // 30s, started
+    trainUnit(state, 'Warrior', T0, hall); // 30s, waiting
+
+    // Ten seconds in: 20 left on the bench + a full 30 behind it.
+    expect(lineRemainingSeconds(state, hall.uniqueId, T0 + 10_000)).toBe(50);
+    expect(lineRushCost(state, hall.uniqueId, T0 + 10_000)).toBe(5);
+    // ...and it falls as the bench empties.
+    expect(lineRushCost(state, hall.uniqueId, T0 + 25_000)).toBe(4);
+  });
+
+  it('delivers every unit in the line and charges once', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    const hall = barracksOf(state);
+    trainUnit(state, 'Warrior', T0, hall);
+    trainUnit(state, 'Warrior', T0, hall);
+    state.player.wallet.Gems = 100;
+
+    const cost = lineRushCost(state, hall.uniqueId, T0);
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
+    expect(state.army).toHaveLength(2);
+    expect(lineFor(state, hall.uniqueId)).toHaveLength(0);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(100 - cost);
+
+    // And the advance cannot hand them over a second time.
+    advance(state, map, T0 + 120_000);
+    expect(state.army).toHaveLength(2);
+  });
+
+  it('takes only THAT hall, leaving the others training', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    completeTech(state, 'Cavalry');
+    const hall = barracksOf(state);
+    const stables = state.city.districts.find((d) => d.definitionId === 'Stables')!;
+    trainUnit(state, 'Warrior', T0, hall);
+    trainUnit(state, 'Cavalry', T0, stables);
+    state.player.wallet.Gems = 100;
+
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
+    expect(lineFor(state, stables.uniqueId)).toHaveLength(1); // untouched
+    expect(state.army.map((u) => u.definitionId)).toEqual(['Warrior']);
+  });
+
+  it('refuses politely, and charges nothing, when the purse is short', () => {
+    const state = readyToDelve({});
+    completeTech(state, 'Warrior');
+    const hall = barracksOf(state);
+    trainUnit(state, 'Warrior', T0, hall);
+    state.player.wallet.Gems = 0;
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('NotEnoughGems');
+    expect(lineFor(state, hall.uniqueId)).toHaveLength(1);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+  });
+
+  it('says so when there is nothing to buy', () => {
+    const state = readyToDelve({});
+    state.player.wallet.Gems = 100;
+    expect(finishLineWithGems(state, barracksOf(state).uniqueId, T0)).toBe('NothingTraining');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(100);
+  });
+
+  // A villager bought outright must land by the same path as a waited-for one,
+  // or its tax anchor is repriced at the wrong instant.
+  it('a rushed villager starts paying tax from the moment it is bought', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    fund(state, { Food: 500 });
+    state.player.wallet.Gems = 100;
+    const hall = townhall(state);
+    trainUnit(state, 'Villager', T0, hall);
+    state.city.wallet.Gold = 0;
+    state.city.lastTaxAt = T0;
+    state.lastAdvance = T0;
+
+    expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
+    expect(state.city.population).toBe(1);
+    advance(state, map, T0 + 60_000);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(30); // a full minute of rent
+  });
+});
+
+// Docs/features/knowledge.md — where Knowledge actually comes from now.
+//
+// CLAIM: dungeons and the gacha, and nothing else. Clearing fog pays none
+// (tests/fog.test.ts), the early quest chain pays none (tests/quests.test.ts),
+// and the standing drip is earned one dungeon at a time rather than handed
+// out for spotting one through the fog.
+describe('Knowledge comes out of dungeons', () => {
+  it('a ruin drips nothing until it has been CLEARED', () => {
+    const state = readyToDelve();
+    // The Barrow is discovered — readyToDelve can launch into it — and still
+    // pays nothing per hour.
+    expect(knowledgePerHour(state)).toBe(0);
+    advance(state, map, T0 + 3_600_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+
+    state.ruinsCleared[BARROW] = true;
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
+  });
+
+  it('every cleared ruin adds its own hour rate, and the drip banks in whole units', () => {
+    const state = readyToDelve();
+    state.ruinsCleared[BARROW] = true;
+    state.ruinsCleared.SunkenChapel = true;
+    expect(knowledgePerHour(state)).toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+
+    state.kingdom.lastKnowledgeAt = T0;
+    advance(state, map, T0 + 3_600_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+  });
+
+  // The runway that replaces the old "the map holds more Knowledge than the
+  // tree costs" assertion in fog.test.ts. Demand is the collection; supply is
+  // what five cleared ruins pay while the player is away.
+  it('five cleared ruins carry the levelling arc on a scale of weeks', () => {
+    const state = readyToDelve();
+    for (const id of Object.keys(RUINS) as Array<keyof typeof RUINS>) {
+      state.ruinsCleared[id] = true;
+    }
+    const perDay = knowledgePerHour(state) * 24;
+    const oneCollectible = Array.from(
+      { length: COLLECTION.maxLevel - 1 },
+      (_, i) => levelCost(i + 1),
+    ).reduce((a, b) => a + b, 0);
+
+    expect(perDay).toBe(240);
+    // Meaningful progress inside a month, an endgame horizon past it.
+    expect(oneCollectible / perDay).toBeGreaterThan(7);
+    expect(oneCollectible / perDay).toBeLessThan(30);
   });
 });

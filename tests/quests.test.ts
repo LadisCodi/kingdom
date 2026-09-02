@@ -6,7 +6,7 @@ import {
   DISTRICTS, QUESTS, TECH_ORDER, type QuestDef,
 } from '../src/sim/data/definitions';
 import {
-  explorationGate, fogState, isReachable, revealCostForCell, revealKnowledge, revealTap,
+  explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
 import { tapCell } from '../src/sim/harvest';
 import {
@@ -198,7 +198,9 @@ describe('first-time discoveries', () => {
     tapCell(state, map, FOREST, T0);
     state.pendingDiscoveries = [];
     expect(claimQuest(state)).toBe('Claimed'); // pays Gold
-    expect(state.pendingDiscoveries).toEqual(['resource:Gold', 'resource:Knowledge']);
+    // Gold alone. The early chain pays no Knowledge now — that would announce
+    // a currency hours before the player owns anything to spend it on.
+    expect(state.pendingDiscoveries).toEqual(['resource:Gold']);
   });
 });
 
@@ -220,34 +222,43 @@ describe('quests fund the research tree', () => {
     expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
   });
 
-  // The chain carries MOST of the tree and deliberately not all of it: a
-  // player who follows the guided path still has to have been out on the map
-  // to finish researching, which is the whole reason the currency is earned
-  // by clearing fog. The map holds 2,902 on top of this, so the shortfall is
-  // a nudge rather than a wall.
+  // The chain carries MOST of the tree in Gold and deliberately not all of
+  // it: a player who follows the guided path still has to have run a city to
+  // finish researching. The gap is a nudge rather than a wall — housing taxes
+  // and the Market close it.
   it('the chain covers most of the tech tree, but never all of it', () => {
-    const chain = QUESTS.reduce((sum, q) => sum + q.rewardKnowledge, 0);
+    const chain = QUESTS.reduce((sum, q) => sum + (q.reward.Gold ?? 0), 0);
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(chain).toBe(571);
+    expect(chain).toBe(12_075);
     expect(chain).toBeGreaterThan(tree * 0.75);
-    expect(chain).toBeLessThan(tree);
+    expect(chain).toBeLessThan(tree * 2);
+  });
+
+  // CLAIM: Knowledge appears with the Reliquary, not before it. Every quest
+  // that pays it is a quest about the long game — clearing a ruin, reaching a
+  // depth, owning a hero or a relic — so a player cannot bank a currency they
+  // have nothing to spend on.
+  it('only the long-game quests pay Knowledge at all', () => {
+    const LONG_GAME = ['ClearRuins', 'ReachDepth', 'OwnArtifacts', 'OwnHeroes'];
+    for (const q of QUESTS) {
+      if (q.rewardKnowledge > 0) expect(LONG_GAME).toContain(q.goalType);
+    }
+    expect(QUESTS.filter((q) => q.rewardKnowledge > 0).length).toBeGreaterThan(0);
   });
 
   /**
    * The opening's one arithmetic dependency, and the whole game hangs off it:
-   * quest 2 DEMANDS Forestry, quest 1 is the only thing before it, and quest 1
-   * pays no Knowledge of its own. Every point of it comes from the fog quest 1
-   * makes the player clear.
+   * quest 2 DEMANDS Forestry, quest 1 is the only thing before it, and both
+   * the fog quest 1 asks for and Forestry itself are paid out of the same
+   * fixed opening purse (Docs/onboarding.md).
    *
-   * So the sum that has to work is: (cells quest 1 asks for) × (the CHEAPEST
-   * Knowledge any of them can pay) ≥ Forestry. Cheapest, because the player
-   * picks the cells and will pick the near ones — a floor that only holds for
-   * a considerate player is not a floor.
+   * So the sum that has to work is: (the cells quest 1 asks for, at their
+   * DEAREST) + Forestry ≤ the opening grant + what quest 1 pays back.
+   * Dearest, because the player picks the cells and may well pick badly — a
+   * floor that only holds for a considerate player is not a floor.
    *
-   * And the Gold has to be there too: a new kingdom is handed a fixed purse
-   * (Docs/onboarding.md), and clearing those cells is the only thing it is
-   * for. This is the test that fails if anyone retunes the fog curve, the
-   * opening grant, the reveal yield, or Forestry's price in isolation.
+   * This is the test that fails if anyone retunes the fog curve, the opening
+   * grant, quest 1's reward, or Forestry's price in isolation.
    */
   it('the opening funds its own first research, at the worst frontier the player can pick', () => {
     const state = freshGame();
@@ -267,15 +278,15 @@ describe('quests fund the research tree', () => {
     expect(frontier.length, `fewer than ${first.goalAmount} cells can finish quest 1`)
       .toBeGreaterThanOrEqual(first.goalAmount);
 
-    const cheapest = frontier
-      .map((c) => ({ k: revealKnowledge(map, c), gold: revealCostForCell(state, map, c) }))
-      .sort((a, b) => a.k - b.k)
+    const dearest = frontier
+      .map((c) => revealCostForCell(state, map, c))
+      .sort((a, b) => b - a)
       .slice(0, first.goalAmount);
 
-    const knowledge = cheapest.reduce((sum, c) => sum + c.k, 0);
-    const gold = cheapest.reduce((sum, c) => sum + c.gold, 0);
-    expect(knowledge).toBeGreaterThanOrEqual(techCost('Forestry'));
-    expect(gold).toBeLessThanOrEqual(getWallet(state.city.wallet, 'Gold'));
+    const fog = dearest.reduce((sum, cost) => sum + cost, 0);
+    const purse = getWallet(state.city.wallet, 'Gold') + (first.reward.Gold ?? 0);
+    expect(fog).toBeLessThanOrEqual(purse);
+    expect(fog + techCost('Forestry')).toBeLessThanOrEqual(purse);
   });
 });
 

@@ -152,7 +152,7 @@ function troopPicker(game: Game): HTMLElement {
       kind: 'gem',
       onClick: () => game.doBuyPartySlot(),
       cost: { Gems: cost },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
     }));
   }
   return body;
@@ -282,7 +282,7 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
       kind: 'primary',
       onClick: () => game.doLaunchExpedition(),
       cost: preview.supplies,
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       disabledReason: blocked ?? undefined,
     }),
   );

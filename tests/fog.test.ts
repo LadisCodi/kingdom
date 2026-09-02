@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FOG, LANDMARKS, RUINS, TECH_ORDER,
+  DISTRICTS, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, recordVisibleSites, revealAroundDistrict,
-  revealCost, revealKnowledge, revealPerTap, revealTap,
+  revealCost, revealPerTap, revealTap,
 } from '../src/sim/fog';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
@@ -145,47 +145,38 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
   });
 });
 
-// Docs/features/knowledge.md — where the research tree is actually paid for.
+// Docs/features/knowledge.md — clearing fog pays no currency at all.
 //
-// CLAIM: clearing a cell pays Knowledge linear in its distance from the
-// Townhall, into the KINGDOM purse, and only on the tap that finishes it.
-// Linear against a reveal cost that doubles is the whole shape of the
-// economy: the far map is worth going to, but no single cell is a jackpot,
-// so the tree is bought by pushing the border outward rather than by finding
-// one lucky tile.
-describe('exploring is what buys research', () => {
-  it('pays Knowledge equal to the ring, and only when the cell finally clears', () => {
+// CLAIM: a reveal buys GROUND. Resource cells, buildable land, ruins and
+// landmarks, against a Gold price that doubles from ring 4 — and nothing
+// else. Knowledge used to be paid here, linear in the ring, because it
+// bought the tech tree; the tree is Gold now and Knowledge comes out of
+// dungeons, so the faucet went with the reason for it.
+describe('exploring pays in ground, not in currency', () => {
+  it('banks no Knowledge, however far out the cell is', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
-    const cell = { x: 4, y: 1 }; // ring 3, reachable once (3,1) is cleared
-    expect(townhallDistance(map, cell)).toBe(3);
-    expect(revealKnowledge(map, cell)).toBe(3);
 
     const near = { x: 3, y: 1 }; // ring 2
     while (revealTap(state, map, near) === 'Paid') { /* pay it off */ }
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(2);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
 
-    // Partial payments on the next cell bank nothing.
-    expect(revealTap(state, map, cell)).toBe('Paid');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(2);
-    while (revealTap(state, map, cell) === 'Paid') { /* pay it off */ }
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(2 + 3);
+    const far = { x: 4, y: 1 }; // ring 3, reachable now
+    expect(townhallDistance(map, far)).toBe(3);
+    while (revealTap(state, map, far) === 'Paid') { /* pay it off */ }
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
   });
 
-  it('the map holds more Knowledge than the whole tech tree costs', () => {
+  it('the tech tree is priced against what the CITY earns, in Gold', () => {
     // Supply against demand, asserted on the AUTHORED numbers so a balance
     // edit that puts the tree out of reach fails here rather than in
-    // playtest. Quests carry roughly another 590 on top of this.
-    let supply = 0;
-    for (const key of map.terrain.keys()) {
-      const [x, y] = key.split(',').map(Number);
-      supply += revealKnowledge(map, { x, y });
-    }
+    // playtest. The quest chain carries 12,075 Gold on its own.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(supply).toBe(2902);
-    expect(tree).toBe(655);
-    // Comfortable, but not free: about a quarter of the map funds all of it.
-    expect(supply).toBeGreaterThan(tree * 4);
+    expect(tree).toBe(6600);
+    // Every tech is Gold and only Gold — no second purse, no materials.
+    for (const id of TECH_ORDER) {
+      expect(Object.keys(TECHNOLOGIES[id].cost)).toEqual(['Gold']);
+    }
   });
 });
 

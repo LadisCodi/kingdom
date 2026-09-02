@@ -1,7 +1,7 @@
 // Population: housing, auto-assigned residents, passive tax gold, and the
 // Townhall's villager-training queue.
 
-import { CITY_DEF, DISTRICTS, TAP, TRAINING, levelIndexed } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TAP, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
@@ -9,7 +9,6 @@ import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, effectiveTaxRate } from './upgrades';
 import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
-import { canAfford, pay } from './wallet';
 
 /** Capacity of ONE district at its CURRENT level (0 = houses nobody).
  *  The Communities tech adds +1 to every district that houses anyone. */
@@ -98,31 +97,13 @@ export const populationCost = (currentPopulation: number): number => {
   return Math.round(last * CITY_DEF.populationCostGrowth ** beyond);
 };
 
-/** Villagers already paid for but not yet delivered. */
-export const queuedTraining = (state: GameState): number =>
-  state.city.training?.queued ?? 0;
-
-export type QueueTrainingResult = 'Queued' | 'AtMax' | 'NotEnoughResources';
-
-/** Queue one villager at the Townhall: Food paid up front (priced as if the
- *  queue already delivered), then TRAINING.seconds each, one after another.
- *  Queueing is limited only by housing capacity and the Food on hand. */
-export function queueTraining(state: GameState, now: number): QueueTrainingResult {
-  const pending = queuedTraining(state);
-  if (state.city.population + pending >= maxPopulation(state)) return 'AtMax';
-  const cost = { Food: populationCost(state.city.population + pending) };
-  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
-  pay(state.city.wallet, cost);
-  if (state.city.training === null) state.city.training = { queued: 1, startedAt: now };
-  else state.city.training.queued += 1;
-  return 'Queued';
-}
-
-/** When the villager currently in training completes; null when idle. */
-export const trainingCompletesAt = (state: GameState): number | null =>
-  state.city.training === null
-    ? null
-    : state.city.training.startedAt + TRAINING.seconds * 1000;
+// Villagers used to have their own queue here — `city.training`, a bare count
+// with one timestamp. They now share the city's one training line
+// (`army.ts`), because they were always the same mechanic wearing different
+// clothes: pay up front, wait a duration, one at a time per building. Keeping
+// two of them meant two ways to be wrong about capacity, refunds and replay.
+//
+// `queueTraining` and `trainingCompletesAt` live in `army.ts` now.
 
 // ---------------------------------------------------------------- house tap
 
@@ -205,30 +186,19 @@ export function repriceTaxAnchorAround(state: GameState, t: number, work: () => 
 
 // ------------------------------------------------------- taxes + training tick
 
-/** Advance passive taxes AND the training queue to `toTime`, interleaved so a
- *  villager finishing mid-window starts paying taxes from that moment — the
- *  one-call offline replay lands exactly where stepped ticking would.
- *  Tax gold accrues in WHOLE units against the lastTaxAt anchor. */
-export function advanceCityLife(
-  state: GameState,
-  toTime: number,
-): { gold: number; trained: number } {
-  const result = { gold: 0, trained: 0 };
-  for (;;) {
-    const completes = trainingCompletesAt(state);
-    const t = completes !== null && completes <= toTime ? completes : toTime;
-    accrueTaxes(state, t, result);
-    if (t === toTime && (completes === null || completes > toTime)) break;
-    // One villager finished: +1 population, the next starts immediately.
-    const training = state.city.training!;
-    const rateBefore = cityGoldPerMinute(state);
-    state.city.population += 1;
-    result.trained += 1;
-    training.queued -= 1;
-    if (training.queued > 0) training.startedAt = t;
-    else state.city.training = null;
-    repriceTaxAnchor(state, t, rateBefore);
-  }
+/**
+ * Advance passive taxes to `toTime`. Gold accrues in WHOLE units against the
+ * lastTaxAt anchor.
+ *
+ * It used to interleave villager completions itself, so a villager finishing
+ * mid-window started paying taxes from that moment. It no longer has to: a
+ * completion is a BOUNDARY now, so `advance()` splits the window at it and
+ * `repriceTaxAnchor` runs at the exact instant the rate changed. Same
+ * property, one mechanism instead of two.
+ */
+export function advanceCityLife(state: GameState, toTime: number): { gold: number } {
+  const result = { gold: 0 };
+  accrueTaxes(state, toTime, result);
   return result;
 }
 

@@ -8,7 +8,7 @@ import balance from './balance.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, TechId, UnitId, UpgradeId, Wallet,
+  LandmarkKind, RuinId, TechId, TrainableId, UnitId, UpgradeId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -23,15 +23,12 @@ export interface CurrencyDef {
   start: number;
   /** Shown as a widget in the top resource bar. */
   primary: boolean;
-  /** This currency is stored separately but pays costs of another one at a
-   *  fixed rate (a Berry counts as 1 Food, a Meat as 3). Null = plain. */
-  countsAs: { currency: CurrencyId; value: number } | null;
   /** The Market sells 1 unit for this much Gold; null = not sellable. */
   goldValue: number | null;
 }
 
 interface CurrencyBalance {
-  cap: number | null; start: number; primary?: boolean; countsAs?: unknown;
+  cap: number | null; start: number; primary?: boolean;
   goldValue?: number | null;
 }
 const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef => ({
@@ -39,7 +36,6 @@ const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef 
   cap: b.cap,
   start: b.start,
   primary: b.primary ?? false,
-  countsAs: (b.countsAs ?? null) as CurrencyDef['countsAs'],
   goldValue: b.goldValue ?? null,
 });
 
@@ -49,13 +45,9 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Food: currency('city', balance.currencies.Food),
   Wood: currency('city', balance.currencies.Wood),
   Stone: currency('city', balance.currencies.Stone),
-  Iron: currency('city', balance.currencies.Iron),
   // Mana's ceiling is DYNAMIC (Townhall level + Sanctum levels), so its `cap`
   // column stays blank and sim/mana.ts owns the real number.
   Mana: currency('city', balance.currencies.Mana),
-  Berries: currency('city', balance.currencies.Berries),
-  Meat: currency('city', balance.currencies.Meat),
-  Fish: currency('city', balance.currencies.Fish),
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Gems: currency('player', balance.currencies.Gems),
 };
@@ -63,6 +55,10 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
 // -------------------------------------------------------------- harvest loop
 
 export interface HarvestSpec {
+  /** Which kind of cell this is. Distinct from `currencyId`, which is what it
+   *  PAYS — bushes, game and shoals all pay Food, veins pay Stone — and the
+   *  key the cell-scoped upgrades (Butchery, Big Nets, Iron Picks) hang on. */
+  id: HarvestSourceId;
   currencyId: CurrencyId;
   /** Units per player tap (click collection). */
   yieldPerTap: number;
@@ -86,18 +82,25 @@ export interface HarvestSpec {
 // Exhaustion/recovery applies to NATURAL sources only — buildings (Townhall,
 // Housing) are tapped to advance their timers instead, and never exhaust.
 const harvest = (
+  id: HarvestSourceId,
   currencyId: CurrencyId,
-  b: Omit<HarvestSpec, 'currencyId' | 'requiredTech'> & { requiredTech: unknown },
-): HarvestSpec => ({ ...b, currencyId, requiredTech: (b.requiredTech ?? null) as TechId | null });
+  b: Omit<HarvestSpec, 'id' | 'currencyId' | 'requiredTech'> & { requiredTech: unknown },
+): HarvestSpec =>
+  ({ ...b, id, currencyId, requiredTech: (b.requiredTech ?? null) as TechId | null });
 
+// A cell's IDENTITY and the currency it pays are two different things. Berry
+// bushes, game and shoals are all Food at different rates — the bush is worth
+// 1 a tap, an animal 3, a shoal 2 — and an iron vein is a rich Stone node at 3
+// a tap. That is where the old Berries/Meat/Fish/Iron wallet rows went: the
+// map keeps its texture, the purse stops carrying four rows to express it.
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
-  Forest: harvest('Wood', balance.harvest.Forest),
-  Crops: harvest('Food', balance.harvest.Crops),
-  Berries: harvest('Berries', balance.harvest.Berries),
-  Meat: harvest('Meat', balance.harvest.Meat),
-  Stone: harvest('Stone', balance.harvest.Stone),
-  Fish: harvest('Fish', balance.harvest.Fish),
-  Iron: harvest('Iron', balance.harvest.Iron),
+  Forest: harvest('Forest', 'Wood', balance.harvest.Forest),
+  Crops: harvest('Crops', 'Food', balance.harvest.Crops),
+  Berries: harvest('Berries', 'Food', balance.harvest.Berries),
+  Meat: harvest('Meat', 'Food', balance.harvest.Meat),
+  Stone: harvest('Stone', 'Stone', balance.harvest.Stone),
+  Fish: harvest('Fish', 'Food', balance.harvest.Fish),
+  Iron: harvest('Iron', 'Stone', balance.harvest.Iron),
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -207,17 +210,19 @@ export interface DistrictDef {
   /** Army cap this building contributes at each level (TOTAL, not
    *  incremental). Empty = it is not a military building. */
   armyCapPerLevel: readonly number[];
-  /** The unit this building trains; null = it trains nothing. Army size is a
+  /** Everything this building can turn out; empty = it trains nothing. A list
+   *  rather than one id, so a hall can offer a choice — and so the Townhall
+   *  can offer the Villager on the same footing. Army size is a
    *  city-building decision now, so wanting Cavalry means finding room for
    *  Stables — which is the strongest link between the two halves of the game. */
-  trains: UnitId | null;
+  trains: readonly TrainableId[];
 }
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
 // balance.json; only identity, art, and rules wiring is authored here.
 const rules = {
   buildable: true, harvestSource: null, providesHarvestSource: null, requiredTech: null,
-  trains: null,
+  trains: [],
 } as const;
 
 /** The per-level tech gates arrive from JSON as plain strings — the importer
@@ -236,6 +241,9 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
       'Heart of the city. Trains new villagers — tap it to speed training up.',
     glyph: '🏛️',
     sprite: 'townhall',
+    // The Townhall is a trainer like any other hall; the Villager is simply
+    // what it turns out.
+    trains: ['Villager'],
     buildable: false,
     ...districtBalance(balance.districts.Townhall),
   },
@@ -327,11 +335,15 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Barracks',
     name: 'Barracks',
-    description: 'Drills Warriors, and every level lets you keep a bigger army.',
+    description: 'Drills foot soldiers, and every level lets you keep a bigger army.',
     glyph: '🛖',
     sprite: 'barracks',
     requiredTech: 'Warrior',
-    trains: 'Warrior',
+    // The Barracks turns out every foot soldier; each is still behind its own
+    // technology, so the row fills in as the player researches. The Spear Hall
+    // and Shooting Grounds keep their specialty as well — a second hall is a
+    // second PARALLEL line and more army cap, not a different roster.
+    trains: ['Warrior', 'Lancer', 'Archer'],
     ...districtBalance(balance.districts.Barracks),
   },
   SpearHall: {
@@ -342,7 +354,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🏚️',
     sprite: 'spear_hall',
     requiredTech: 'Spears',
-    trains: 'Lancer',
+    trains: ['Lancer'],
     ...districtBalance(balance.districts.SpearHall),
   },
   ShootingGrounds: {
@@ -353,7 +365,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🎯',
     sprite: 'shooting_grounds',
     requiredTech: 'Archery',
-    trains: 'Archer',
+    trains: ['Archer'],
     ...districtBalance(balance.districts.ShootingGrounds),
   },
   Stables: {
@@ -364,7 +376,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🐴',
     sprite: 'stables',
     requiredTech: 'Cavalry',
-    trains: 'Cavalry',
+    trains: ['Cavalry'],
     ...districtBalance(balance.districts.Stables),
   },
   Mine: {
@@ -432,7 +444,7 @@ export const CROPS_EXHAUSTED_GLYPH = '🥀';
 
 // -------------------------------------------------------------- fog settings
 
-// rings: authored distance → total Silver cost.
+// rings: authored distance → total Gold cost to clear one cell at that ring.
 export const FOG = balance.fog;
 
 // ----------------------------------------------------------------- city def
@@ -724,15 +736,15 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   }, balance.upgrades.Sawpits),
   Butchery: upgrade({
     id: 'Butchery', name: 'Butchery', glyph: '🍖',
-    description: '+1 Meat per collect tap',
+    description: '+1 Food per tap on game',
   }, balance.upgrades.Butchery),
   Irrigation: upgrade({
     id: 'Irrigation', name: 'Irrigation', glyph: '💧',
-    description: '+1 Food per worker delivery',
+    description: '+1 Food per delivery from a farm',
   }, balance.upgrades.Irrigation),
   Scythes: upgrade({
     id: 'Scythes', name: 'Scythes', glyph: '🌾',
-    description: '+1 Food per collect tap',
+    description: '+1 Food per tap on a crop plot',
   }, balance.upgrades.Scythes),
   Pitons: upgrade({
     id: 'Pitons', name: 'Pitons', glyph: '⛏️',
@@ -763,11 +775,11 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   }, balance.upgrades.Stonecutting),
   BigNets: upgrade({
     id: 'BigNets', name: 'Big Nets', glyph: '🕸️',
-    description: '+1 Fish per worker delivery',
+    description: '+1 Food per delivery from a shoal',
   }, balance.upgrades.BigNets),
   IronPicks: upgrade({
     id: 'IronPicks', name: 'Iron Picks', glyph: '⛏️',
-    description: '+1 Iron per worker delivery',
+    description: '+1 Stone per delivery from a vein',
   }, balance.upgrades.IronPicks),
 };
 
@@ -1334,4 +1346,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/features/engine-seams.md §4).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 21;

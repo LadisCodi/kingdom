@@ -41,13 +41,17 @@ records how each became a mechanic, and the four decisions taken to get there.
 ### Four decisions
 
 1. **The opening purse.** Step 1 is "discover cells", but revealing costs Gold
-   and a new game started with **none** — and with trees gated behind Forestry,
-   Forestry behind Knowledge, and Knowledge behind revealing, the opening had
-   no entry point at all. A new kingdom now starts with **25 Gold**: enough for
-   five frontier cells (3-5 Gold each) paying 10+ Knowledge against Forestry's
-   8. `tests/quests.test.ts` asserts that sum at the *worst* frontier the
-   player can pick, so it fails if anyone retunes the fog curve, the grant, the
-   reveal yield or Forestry's price in isolation.
+   and a new game started with **none**, so the opening had no entry point at
+   all. A new kingdom now starts with **50 Gold**.
+
+   *(Revised 2026-09-02.)* It used to have to cover the fog only: trees were
+   gated behind Forestry, Forestry behind Knowledge, and Knowledge behind
+   revealing. Research is Gold now, so **the one purse pays for both** — the
+   four forest cells quest 1 asks for (~16 Gold) *and* Forestry (25), against
+   50 plus quest 1's 10 Gold reward. `tests/quests.test.ts` asserts that sum at
+   the **dearest** frontier the player could pick, so it fails if anyone
+   retunes the fog curve, the grant, quest 1's reward or Forestry's price in
+   isolation.
 2. **The shrine at step 19.** It had been priced at 5,000 Gold as a deliberate
    long save; at step 19 the player has two Houses and a Sawmill. Re-priced to
    **400 Gold**. The other tiers stay at 25,000 and 100,000, so the "save up
@@ -65,11 +69,11 @@ records how each became a mechanic, and the four decisions taken to get there.
 
 | Steps | Quests | What was built |
 |---|---|---|
-| 1 | `FirstSteps` | The game opens on the **fog**, not a tap — and it names the FOREST (`DiscoverFeature`, 4 cells), so the ground the player clears is the ground step 3 then asks them to chop. Those four are every forest cell reachable from the opening block: 16 Gold of the 50, paying 2+2+3+3 = **10 Knowledge** against Forestry's 8. Three would pay 7, which is why it asks for four. |
+| 1 | `FirstSteps` | The game opens on the **fog**, not a tap — and it names the FOREST (`DiscoverFeature`, 4 cells), so the ground the player clears is the ground step 3 then asks them to chop. Those four are every forest cell reachable from the opening block: ~16 Gold of the 50, leaving enough (with the quest's 10 Gold) for Forestry's 25. *(It used to pay 10 Knowledge against Forestry's 8; fog pays no currency since 2026-09-02.)* |
 | 2-3 | `Woodcraft`, `Timber` | `HarvestSpec.requiredTech` is new: the Forest is gated on **Forestry**, which is now a **3-second** research and no longer unlocks the Sawmill. The trees are visible and refusing from the first second — that is what makes the first research something the player wants. A refused tap costs no Mana and says *"Research Forestry before you can work this"*. |
 | 4-6 | `ARoof`, `Rations`, `FirstVillager` | Unchanged mechanics. The crop plot repricing (below) is what makes the Wood add up. |
 | 7 | `TaxDay` | Added back into the chain: rent is what pays for more fog, and step 7 asks for more fog. |
-| 8 | `WildGame` | Wild animals at (2,-2), inside the opening discover radius. Meat counts as 3 Food. |
+| 8 | `WildGame` | Wild animals at (2,-2), inside the opening discover radius. Game pays **3 Food** a tap — three times a berry bush, which is what makes hunting worth its own technology. |
 | 9-12 | `Fields` … `ToWork` | **Agriculture now unlocks the Farm as well as FarmLands** — one research, so nothing sits between tapping a plot and automating it. Farming inherited the Farm's level-2 gate; **Crop Rotation was retired**, since it then unlocked nothing. |
 | 13-14 | `Neighbors`, `GrowingTown` | **A level-1 House holds 2** (was 1), so the second villager needs no second roof. |
 | 15-17 | `SawTeeth`, `TheSawmill`, `Crewed` | New tech **Saws** (Forestry → Saws → Sawmill). Chopping by hand and automating it are two decisions, ten beats apart. |
