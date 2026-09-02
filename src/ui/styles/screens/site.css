@@ -30,7 +30,7 @@
   border-radius: 8px;
   background: linear-gradient(160deg, rgba(120, 150, 220, 0.22), rgba(120, 150, 220, 0.08));
   border: 2px solid rgba(80, 100, 170, 0.45);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-body);
 }
 

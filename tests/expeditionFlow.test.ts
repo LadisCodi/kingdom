@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { maxArmyPower } from '../src/sim/army';
+import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { depthDurationMs } from '../src/sim/combat';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
@@ -128,28 +129,27 @@ describe('the checkpoint', () => {
   });
 });
 
-describe('the HUD only shows magic once the player has met it', () => {
-  it('is hidden with no landmark in sight and no relic', () => {
+// Magic used to be hidden from the HUD until the player had met it — a gauge
+// with nothing to spend on was exactly the spreadsheet chrome the redesign
+// killed. Mana now pays for every tap, so hiding it would hide the reason a
+// tap refused: the gate is gone and the gauge is unconditional.
+describe('the Mana gauge', () => {
+  it('is readable from the first minute, with nothing met yet', () => {
     const game = freshPresenter(freshGame());
-    // The starting view has a landmark in it deliberately, to teach the
-    // mechanic — so this asserts the RULE by removing the reason.
     game.state.fog.revealed = {};
     game.state.fog.discovered = {};
-    expect(game.showsMana()).toBe(false);
-  });
-
-  it('is sticky once true', () => {
-    const game = freshPresenter(freshGame());
-    game.state.fog.revealed = {};
-    game.state.artifacts.owned.push('DowsingRod');
-    expect(game.showsMana()).toBe(true);
+    const m = game.manaInfo();
+    expect(m.cap).toBeGreaterThan(0);
+    expect(m.value).toBe(m.cap); // a new kingdom starts full
   });
 
   it('shows one pool and one net rate — never the breakdown', () => {
     const game = freshPresenter(freshGame());
     const info = game.manaInfo();
     expect(info.cap).toBeGreaterThan(0);
-    expect(info.net).toBe(info.production - info.upkeep);
+    // Nothing draws against the pool, so the rate IS the production.
+    expect(info.net).toBe(info.production);
+    expect(info.over).toBe(false);
   });
 });
 
@@ -164,5 +164,75 @@ describe('the pre-filled party is always launchable', () => {
       .reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
     expect(power).toBeLessThanOrEqual(maxArmyPower(state));
     expect(game.expeditionLaunchBlock()).toBeNull();
+  });
+});
+
+// The socket next to the hero (Docs/features/heroes-and-gacha.md §2).
+//
+// The rule is in the sim; what these prove is that the SHEET presents it as a
+// choice — the socket starts empty, a worn relic is visible-but-refused rather
+// than missing, and the read-out shows what socketing one actually bought.
+describe('arming a hero from the expedition sheet', () => {
+  const armed = () => {
+    const state = ready();
+    grantArtifact(state, 'ForemansSigil');
+    normaliseSlots(state);
+    const game = freshPresenter(state);
+    game.openExpedition(BARROW);
+    return game;
+  };
+
+  it('opens with an empty socket — the game never spends your passive for you', () => {
+    const game = armed();
+    expect(game.expeditionArtifact).toBe(null);
+    expect(game.expeditionPreviewUnarmed()).toBe(null);
+    expect(game.expeditionLaunchBlock()).toBeNull();
+  });
+
+  it('socketing one is reversible right up until the party leaves', () => {
+    const game = armed();
+    game.setExpeditionArtifact('ForemansSigil');
+    expect(game.expeditionArtifact).toBe('ForemansSigil');
+    // Tapping the same relic again takes it back out.
+    game.setExpeditionArtifact('ForemansSigil');
+    expect(game.expeditionArtifact).toBe(null);
+  });
+
+  it('shows what the relic bought, against the same party without it', () => {
+    const game = armed();
+    game.setExpeditionArtifact('ForemansSigil');
+    const armedPreview = game.expeditionPreview()!;
+    const bare = game.expeditionPreviewUnarmed()!;
+    expect(armedPreview.stats.atk).toBeGreaterThan(bare.stats.atk);
+  });
+
+  it('refuses a relic the kingdom is wearing, and says which', () => {
+    const game = armed();
+    attune(game.state, 0, 'ForemansSigil', game.now());
+    game.setExpeditionArtifact('ForemansSigil');
+    expect(game.expeditionLaunchBlock()).toMatch(/attuned/i);
+    game.doLaunchExpedition();
+    expect(game.state.delves).toHaveLength(0);
+  });
+
+  it('never shows the stats of a party it is refusing to send', () => {
+    const game = armed();
+    game.setExpeditionArtifact('ForemansSigil');
+    const armedStats = game.expeditionPreview()!.stats.atk;
+    // Attuning it behind the sheet's back must take the relic OUT of the
+    // read-out, not leave the numbers arguing with the blocked launch button.
+    attune(game.state, 0, 'ForemansSigil', game.now());
+    expect(game.expeditionLaunchBlock()).toMatch(/attuned/i);
+    expect(game.expeditionPreview()!.stats.atk).toBeLessThan(armedStats);
+    expect(game.expeditionPreviewUnarmed()).toBe(null);
+  });
+
+  it('carries it down, and the Reliquary cannot take it back until it returns', () => {
+    const game = armed();
+    game.setExpeditionArtifact('ForemansSigil');
+    game.doLaunchExpedition();
+    expect(game.state.delves).toHaveLength(1);
+    expect(game.state.delves[0].artifactId).toBe('ForemansSigil');
+    expect(attune(game.state, 0, 'ForemansSigil', game.now())).toBe('Carried');
   });
 });

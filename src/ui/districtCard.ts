@@ -13,7 +13,7 @@
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, TAXES, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower, trainingProgress } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
@@ -21,19 +21,19 @@ import {
   districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from '../sim/districts';
 import {
-  districtCapacity, houseCycleProgress, houseGoldPerMinute, houseTapReady, houseTapReadyIn,
+  districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
+import { mana } from '../sim/mana';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import {
-  coordKey, queueProgress, remainingSeconds, townhall,
-  type CurrencyId, type District,
+  coordKey, queueProgress, remainingSeconds, townhall, type District,
 } from '../sim/state';
 import { recoversAt, tapFraction } from '../sim/harvest';
 import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
-import { action, btn, costChips, iconEl, knob, pips, progress, stat } from './kit';
+import { action, btn, iconEl, knob, pips, progress, stat } from './kit';
 
 /** Level as stars rather than "lvl 2/3" — a count you read, not parse. */
 function levelStars(level: number, max: number): HTMLElement {
@@ -108,20 +108,17 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           iconEl('showme', { size: 'sm' }),
           `Tap the Townhall itself to hurry it — +${TRAINING.tapBoostSeconds}s each tap`));
       }
-      const short = game.shortfall({ Food: training.cost });
       const trainAction = action({
         label: 'Train',
         kind: 'primary',
         onClick: () => game.doQueueTraining(),
         disabledReason: training.atMax
           ? 'Nowhere to put them — build more Housing'
-          : Object.keys(short).length > 0
-            ? `Short ${short.Food} Food`
-            : undefined,
-        info: el('span', { class: 'dc-upcost' },
-          costChips({ Food: training.cost }, (c) => game.effectiveWalletValue(c)),
-          el('span', { class: 'dc-uptime' },
-            iconEl('hourglass', { size: 'sm' }), formatDuration(TRAINING.seconds))),
+          : undefined,
+        cost: { Food: training.cost },
+        have: (c) => game.effectiveWalletValue(c),
+        info: el('span', { class: 'dc-uptime' },
+          iconEl('hourglass', { size: 'sm' }), formatDuration(TRAINING.seconds)),
       });
       if (game.uiHint() === 'card:train') trainAction.classList.add('hinted');
       body.append(trainAction);
@@ -168,24 +165,21 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
             ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
             : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
       }
-      // The collection cycle, with the same trough the Townhall's training
-      // uses — a house and the Townhall now behave the same way, which is the
-      // whole point of giving the tap a cycle at all.
-      if (residents > 0) {
-        const now = game.now();
-        const ready = houseTapReady(district, now);
-        const bar = progress('gold');
-        bar.set(
-          houseCycleProgress(district, now),
-          ready ? 'Rent ready — tap the house' : `Ready in ${Math.ceil(houseTapReadyIn(district, now))}s`,
-        );
-        body.append(bar.root);
-      }
+      // No cycle bar any more: the house has no timer to show. What bounds
+      // the tap is the Mana pool, so the card says the price and what is left
+      // to spend — a number the player can act on, where a countdown was only
+      // ever a number to wait out.
       body.append(el('div', { class: 'dc-tapline' },
         iconEl('showme', { size: 'sm' }),
         residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall'
-          : `Collecting early pulls ${TAXES.tapBoostSeconds}s of rent forward, once a cycle`));
+          : `Tap to pull ${TAP.boostSeconds}s of rent forward, as often as you like`));
+      if (residents > 0) {
+        const pool = mana(game.state);
+        body.append(el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },
+          iconEl('Mana', { size: 'sm' }),
+          `${TAP.manaCost} per tap — ${pool} left`));
+      }
     }
 
     // A military building trains its own unit, in its own line, exactly as
@@ -221,21 +215,17 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       }
 
       const cost = unit.recruitCost;
-      const short = game.shortfall(cost);
-      const shortText = (Object.entries(short) as Array<[CurrencyId, number]>)
-        .map(([c, n]) => `${n} ${c}`).join(' and ');
       body.append(action({
         label: `Recruit ${unit.name}`,
         kind: 'primary',
         onClick: () => game.doTrain(unitId),
-        info: costChips(cost, (c) => game.effectiveWalletValue(c)),
+        cost,
+        have: (c) => game.effectiveWalletValue(c),
         disabledReason: !techOk
           ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
           : used + unit.power > cap
             ? 'Your army is full — upgrade this hall'
-            : shortText
-              ? `Short ${shortText}`
-              : undefined,
+            : undefined,
       }));
       body.append(el('div', { class: 'dc-army-stats' },
         stat('army', String(unit.atk), 'attack'),
@@ -310,10 +300,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         : `${formatDuration(remainingSeconds(queueItem, now))} left`);
     foot.append(bar.root);
     const rush = btn({
-      label: `Finish · ${gemRushCost(queueItem, now)}`,
+      label: 'Finish',
       kind: 'gem',
-      icon: 'Gems',
       onClick: () => game.doRush(queueItem.uniqueId),
+      // The price used to be glued into the label with a separator. It is a
+      // cost like any other, so it goes where every other cost now goes.
+      cost: { Gems: gemRushCost(queueItem, now) },
+      have: (c) => game.effectiveWalletValue(c),
     });
     const buttons = el('div', { class: 'dc-actions' }, rush);
     if (queueItem.kind === 'build') {
@@ -330,17 +323,16 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     const cost = upgradeCost(district.definitionId, n, district.level);
     const requiredTh = requiredTownhallLevel(district.definitionId, next);
     const gateTech = requiredTechForLevel(district.definitionId, next);
-    const short = game.shortfall(cost);
 
     // The reason, in plain words, and tappable when it points somewhere.
+    // Being short of the price is NOT one of these any more: the cost now
+    // rides inside the button and turns clay, which says it better than a
+    // sentence beside it could (§6.4).
     let reason: string | undefined;
     if (townhall(game.state).level < requiredTh) {
       reason = `Your Townhall must reach level ${requiredTh}`;
     } else if (gateTech !== null && !isTechComplete(game.state, gateTech)) {
       reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
-    } else if (Object.keys(short).length > 0) {
-      reason = `Short ${(Object.entries(short) as Array<[CurrencyId, number]>)
-        .map(([c, amount]) => `${amount} ${c}`).join(' and ')}`;
     }
 
     // Before → after: the thing growing, rather than "radius 2→3".
@@ -367,11 +359,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       kind: 'primary',
       onClick: () => game.doUpgrade(district.uniqueId),
       disabledReason: reason,
-      info: el('span', { class: 'dc-upcost' },
-        costChips(cost, (c) => game.effectiveWalletValue(c)),
-        el('span', { class: 'dc-uptime' },
-          iconEl('hourglass', { size: 'sm' }),
-          formatDuration(upgradeDuration(district.definitionId, district.level)))),
+      cost,
+      have: (c) => game.effectiveWalletValue(c),
+      // What is left beside the button is the WAIT, which is a consequence
+      // rather than a price and has no business inside the press-target.
+      info: el('span', { class: 'dc-uptime' },
+        iconEl('hourglass', { size: 'sm' }),
+        formatDuration(upgradeDuration(district.definitionId, district.level))),
     });
     if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
     foot.append(strip, deltas, upgrade);

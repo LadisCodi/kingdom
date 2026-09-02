@@ -34,14 +34,36 @@ export function mountGallery(root: HTMLElement): void {
       specimen('destructive', btn({ label: 'Reset', onClick: noop, kind: 'destructive' })),
       specimen('gem', btn({ label: 'Finish', onClick: noop, kind: 'gem', icon: 'Gems' })),
       specimen('with icon', btn({ label: 'Show me', onClick: noop, icon: 'showme' })),
+    ),
+    // §6.4: a price lives INSIDE the button that spends it, and a term the
+    // player cannot pay turns clay — which is itself the reason the button is
+    // dead, so these need no words beside them.
+    el('div', { class: 'gal-row' },
+      specimen('cost, affordable', btn({
+        label: 'Upgrade', kind: 'primary', onClick: noop,
+        cost: { Gold: 123, Food: 43 }, have: () => 999,
+      })),
+      specimen('cost, priced out', btn({
+        label: 'Upgrade', kind: 'primary', onClick: noop,
+        cost: { Gold: 123, Food: 43 }, have: (c) => (c === 'Gold' ? 999 : 12),
+      })),
+      specimen('one term', btn({
+        label: 'Call', kind: 'gem', onClick: noop,
+        cost: { Gems: 30 }, have: () => 4,
+      })),
+      specimen('non-wallet cost', btn({
+        label: 'Raise its tier', onClick: noop,
+        costExtra: [{ icon: 'sparkle', amount: '3 / 20', short: true }],
+      })),
       specimen('knob −', knob('−', noop, { label: 'Remove worker' })),
       specimen('knob +', knob('+', noop, { label: 'Add worker' })),
       specimen('knob at limit', knob('+', noop, { label: 'Add worker', disabled: true })),
     ),
     // The rule §6.3 makes universal: never greyed out without a reason.
-    specimen('available', action({
+    specimen('priced, with a consequence beside it', action({
       label: 'Upgrade', kind: 'primary', onClick: noop,
-      info: costChips({ Wood: 40, Stone: 20 }),
+      cost: { Wood: 40, Stone: 20 }, have: () => 999,
+      info: 'takes 2m 30s',
     })),
     specimen('gated', action({
       label: 'Upgrade', kind: 'primary', onClick: noop,

@@ -9,7 +9,7 @@
       "maxLevel": 3,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
-      "fogDiscoverRadius": 3,
+      "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
       "maxCountPerTownhallLevel": [],
       "influenceRadiusPerLevel": [],
@@ -26,8 +26,7 @@
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
-        "Wood": 40,
-        "Stone": 20
+        "Wood": 60
       },
       "upgradeCostLevelGrowth": 3.9,
       "upgradeDurationSeconds": 30,
@@ -40,8 +39,8 @@
       },
       "maxLevel": 2,
       "populationCapacityPerLevel": [
-        1,
-        2
+        2,
+        4
       ],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -99,7 +98,7 @@
         2
       ],
       "requiredTechPerLevel": [
-        "CropRotation"
+        "Farming"
       ],
       "armyCapPerLevel": [],
       "buildCost": {
@@ -137,7 +136,7 @@
       "requiredTechPerLevel": [],
       "armyCapPerLevel": [],
       "buildCost": {
-        "Wood": 20
+        "Wood": 10
       },
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
@@ -586,49 +585,56 @@
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 90,
-      "respawnSeconds": 0
+      "respawnSeconds": 0,
+      "requiredTech": "Forestry"
     },
     "Crops": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 60,
-      "respawnSeconds": 0
+      "respawnSeconds": 0,
+      "requiredTech": null
     },
     "Berries": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
-      "respawnSeconds": 120
+      "respawnSeconds": 120,
+      "requiredTech": "Forestry"
     },
     "Meat": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
-      "respawnSeconds": 180
+      "respawnSeconds": 180,
+      "requiredTech": "Hunting"
     },
     "Stone": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 5,
       "recoverySeconds": 120,
-      "respawnSeconds": 0
+      "respawnSeconds": 0,
+      "requiredTech": null
     },
     "Fish": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 5,
       "recoverySeconds": 0,
-      "respawnSeconds": 90
+      "respawnSeconds": 90,
+      "requiredTech": null
     },
     "Iron": {
       "yieldPerTap": 1,
       "yieldPerWorker": 1,
       "tapsToExhaust": 5,
       "recoverySeconds": 300,
-      "respawnSeconds": 0
+      "respawnSeconds": 0,
+      "requiredTech": null
     }
   },
   "currencies": {
@@ -771,15 +777,14 @@
   "technologies": {
     "Forestry": {
       "cost": {
-        "Gold": 75
+        "Knowledge": 8
       },
-      "durationSeconds": 30,
+      "durationSeconds": 3,
       "requires": []
     },
     "UrbanPlanning": {
       "cost": {
-        "Gold": 200,
-        "Wood": 50
+        "Knowledge": 20
       },
       "durationSeconds": 60,
       "requires": [
@@ -788,8 +793,7 @@
     },
     "Communities": {
       "cost": {
-        "Gold": 450,
-        "Wood": 60
+        "Knowledge": 45
       },
       "durationSeconds": 90,
       "requires": [
@@ -798,18 +802,34 @@
     },
     "Architecture": {
       "cost": {
-        "Gold": 600,
-        "Iron": 15
+        "Knowledge": 60
       },
       "durationSeconds": 120,
       "requires": [
         "Communities"
       ]
     },
+    "Saws": {
+      "cost": {
+        "Knowledge": 12
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ]
+    },
+    "Hunting": {
+      "cost": {
+        "Knowledge": 12
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "Forestry"
+      ]
+    },
     "Agriculture": {
       "cost": {
-        "Gold": 100,
-        "Wood": 25
+        "Knowledge": 10
       },
       "durationSeconds": 45,
       "requires": [
@@ -818,8 +838,7 @@
     },
     "Farming": {
       "cost": {
-        "Gold": 250,
-        "Wood": 50
+        "Knowledge": 25
       },
       "durationSeconds": 60,
       "requires": [
@@ -828,27 +847,16 @@
     },
     "Market": {
       "cost": {
-        "Gold": 150
+        "Knowledge": 15
       },
       "durationSeconds": 45,
       "requires": [
         "Agriculture"
       ]
     },
-    "CropRotation": {
-      "cost": {
-        "Gold": 300,
-        "Food": 30
-      },
-      "durationSeconds": 75,
-      "requires": [
-        "Farming"
-      ]
-    },
     "Masonry": {
       "cost": {
-        "Gold": 100,
-        "Wood": 25
+        "Knowledge": 10
       },
       "durationSeconds": 45,
       "requires": [
@@ -857,8 +865,7 @@
     },
     "Mining": {
       "cost": {
-        "Gold": 250,
-        "Stone": 30
+        "Knowledge": 25
       },
       "durationSeconds": 60,
       "requires": [
@@ -867,8 +874,7 @@
     },
     "Engineering": {
       "cost": {
-        "Gold": 500,
-        "Stone": 60
+        "Knowledge": 50
       },
       "durationSeconds": 90,
       "requires": [
@@ -877,28 +883,34 @@
     },
     "DeepMining": {
       "cost": {
-        "Gold": 800,
-        "Stone": 30
+        "Knowledge": 80
       },
       "durationSeconds": 120,
       "requires": [
         "Mining"
       ]
     },
-    "Sailing": {
+    "Cartography": {
       "cost": {
-        "Gold": 150,
-        "Wood": 30
+        "Knowledge": 18
       },
       "durationSeconds": 45,
       "requires": [
         "Forestry"
       ]
     },
+    "Sailing": {
+      "cost": {
+        "Knowledge": 20
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "Cartography"
+      ]
+    },
     "Fishing": {
       "cost": {
-        "Gold": 100,
-        "Food": 20
+        "Knowledge": 10
       },
       "durationSeconds": 45,
       "requires": [
@@ -907,8 +919,7 @@
     },
     "Shipbuilding": {
       "cost": {
-        "Gold": 400,
-        "Wood": 40
+        "Knowledge": 40
       },
       "durationSeconds": 90,
       "requires": [
@@ -917,17 +928,16 @@
     },
     "ScalingTools": {
       "cost": {
-        "Gold": 200,
-        "Wood": 25
+        "Knowledge": 15
       },
       "durationSeconds": 60,
       "requires": [
-        "Forestry"
+        "Cartography"
       ]
     },
     "Warrior": {
       "cost": {
-        "Gold": 100
+        "Knowledge": 10
       },
       "durationSeconds": 30,
       "requires": [
@@ -936,8 +946,7 @@
     },
     "Spears": {
       "cost": {
-        "Gold": 150,
-        "Wood": 20
+        "Knowledge": 15
       },
       "durationSeconds": 45,
       "requires": [
@@ -946,8 +955,7 @@
     },
     "Archery": {
       "cost": {
-        "Gold": 150,
-        "Wood": 20
+        "Knowledge": 15
       },
       "durationSeconds": 60,
       "requires": [
@@ -956,8 +964,7 @@
     },
     "Cavalry": {
       "cost": {
-        "Gold": 400,
-        "Food": 30
+        "Knowledge": 40
       },
       "durationSeconds": 90,
       "requires": [
@@ -966,8 +973,7 @@
     },
     "Attunement": {
       "cost": {
-        "Gold": 400,
-        "Stone": 40
+        "Knowledge": 40
       },
       "durationSeconds": 120,
       "requires": [
@@ -976,8 +982,7 @@
     },
     "Warband": {
       "cost": {
-        "Gold": 600,
-        "Iron": 20
+        "Knowledge": 60
       },
       "durationSeconds": 180,
       "requires": [
@@ -1006,6 +1011,48 @@
       "maxLevel": 3,
       "effectPerLevel": 1,
       "requiredTech": "Forestry"
+    },
+    "Sawpits": {
+      "costBase": 120,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Saws"
+    },
+    "Butchery": {
+      "costBase": 80,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Hunting"
+    },
+    "Irrigation": {
+      "costBase": 120,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Agriculture"
+    },
+    "Scythes": {
+      "costBase": 90,
+      "costGrowth": 2,
+      "maxLevel": 3,
+      "effectPerLevel": 1,
+      "requiredTech": "Farming"
+    },
+    "Surveying": {
+      "costBase": 150,
+      "costGrowth": 3,
+      "maxLevel": 2,
+      "effectPerLevel": 1,
+      "requiredTech": "Cartography"
+    },
+    "Pitons": {
+      "costBase": 200,
+      "costGrowth": 2.5,
+      "maxLevel": 2,
+      "effectPerLevel": 0.1,
+      "requiredTech": "ScalingTools"
     },
     "MarketStall": {
       "costBase": 100,
@@ -1041,6 +1088,13 @@
       "maxLevel": 3,
       "effectPerLevel": 1,
       "requiredTech": "Mining"
+    },
+    "Resonance": {
+      "costBase": 250,
+      "costGrowth": 2.5,
+      "maxLevel": 2,
+      "effectPerLevel": 0.2,
+      "requiredTech": "Attunement"
     }
   },
   "research": {
@@ -1054,16 +1108,16 @@
     "workSeconds": 8
   },
   "tap": {
-    "collectCooldownSeconds": 0.5
+    "collectCooldownSeconds": 0.5,
+    "manaCost": 1,
+    "boostSeconds": 45
   },
   "training": {
     "seconds": 20,
     "tapBoostSeconds": 2
   },
   "taxes": {
-    "goldPerPopulationPerMinute": 30,
-    "tapBoostSeconds": 20,
-    "cycleSeconds": 60
+    "goldPerPopulationPerMinute": 30
   },
   "adjacency": [
     {
@@ -1074,23 +1128,21 @@
   ],
   "mana": {
     "productionPerTownhallLevel": [
-      4,
-      5,
-      6
+      10,
+      13,
+      16
     ],
     "baseCapPerTownhallLevel": [
-      24,
-      32,
-      40
+      100,
+      130,
+      160
     ],
     "sanctumCapPerLevel": [
-      12,
       24,
-      36
+      48,
+      72
     ],
-    "landmarkProduction": 1,
-    "landmarkClaimCostBase": 120,
-    "landmarkClaimCostGrowth": 1.3,
+    "landmarkCap": 10,
     "gemRefillPerGem": 4
   },
   "attunement": {
@@ -1110,7 +1162,8 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
-    "dripPerRuinPerHour": 2
+    "dripPerRuinPerHour": 2,
+    "perRevealRing": 1
   },
   "army": {
     "trainTapBoostSeconds": 3,
@@ -1199,82 +1252,98 @@
       "hpPerLevel": 3
     }
   },
+  "ads": {
+    "cooldownMinSeconds": 30,
+    "cooldownMaxSeconds": 90,
+    "eligibleBelowFraction": 0.5,
+    "watchSeconds": 5
+  },
   "landmarks": [
     {
       "id": "ThornedShrine",
       "kind": "Shrine",
-      "x": 2,
-      "y": -1,
-      "defended": false
+      "x": 3,
+      "y": 4,
+      "defended": false,
+      "claimCost": 2000
     },
     {
       "id": "WhisperingStones",
       "kind": "StandingStones",
-      "x": -1,
-      "y": 2,
-      "defended": false
+      "x": -4,
+      "y": 5,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "BrightLeyspring",
       "kind": "Leyspring",
-      "x": 1,
-      "y": 4,
-      "defended": false
+      "x": -1,
+      "y": 6,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "OldOakShrine",
       "kind": "Shrine",
       "x": -2,
-      "y": -2,
-      "defended": false
+      "y": -5,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "CircleOfNine",
       "kind": "StandingStones",
-      "x": 4,
-      "y": 2,
-      "defended": true
+      "x": 8,
+      "y": 4,
+      "defended": true,
+      "claimCost": 100000
     },
     {
       "id": "SunkenLeyspring",
       "kind": "Leyspring",
-      "x": -1,
-      "y": 5,
-      "defended": false
+      "x": 5,
+      "y": 2,
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "CliffShrine",
       "kind": "Shrine",
-      "x": 5,
-      "y": -2,
-      "defended": true
+      "x": 3,
+      "y": -9,
+      "defended": true,
+      "claimCost": 100000
     },
     {
       "id": "FallenStones",
       "kind": "StandingStones",
-      "x": -4,
+      "x": -5,
       "y": -3,
-      "defended": false
+      "defended": false,
+      "claimCost": 25000
     },
     {
       "id": "MirrorLeyspring",
       "kind": "Leyspring",
-      "x": 5,
-      "y": 5,
-      "defended": true
+      "x": -3,
+      "y": -10,
+      "defended": true,
+      "claimCost": 100000
     },
     {
       "id": "WindwardShrine",
       "kind": "Shrine",
-      "x": 9,
-      "y": -1,
-      "defended": true
+      "x": 10,
+      "y": 2,
+      "defended": true,
+      "claimCost": 100000
     }
   ],
   "ruins": {
     "HollowBarrow": {
-      "x": -2,
-      "y": 2,
+      "x": 1,
+      "y": 6,
       "tier": 1,
       "difficulty": 6,
       "baseDepthSeconds": 180,
@@ -1353,77 +1422,118 @@
   },
   "artifacts": {
     "DowsingRod": {
-      "upkeep": 1,
       "passiveBase": 0.85,
       "passivePerLevel": -0.015,
       "activeManaCost": 8,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 4,
+      "carriedDef": 0,
+      "carriedHp": 10,
+      "carriedAtkPerLevel": 0.4,
+      "carriedDefPerLevel": 0,
+      "carriedHpPerLevel": 1
     },
     "VerdantSeal": {
-      "upkeep": 2,
       "passiveBase": 0.75,
       "passivePerLevel": -0.02,
       "activeManaCost": 6,
       "activeDurationSeconds": 0,
-      "activeRadius": 2
+      "activeRadius": 2,
+      "carriedAtk": 0,
+      "carriedDef": 6,
+      "carriedHp": 25,
+      "carriedAtkPerLevel": 0,
+      "carriedDefPerLevel": 0.6,
+      "carriedHpPerLevel": 2.5
     },
     "ForemansSigil": {
-      "upkeep": 2,
       "passiveBase": 1,
       "passivePerLevel": 0.2,
       "activeManaCost": 10,
       "activeDurationSeconds": 3600,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 8,
+      "carriedDef": 2,
+      "carriedHp": 0,
+      "carriedAtkPerLevel": 0.8,
+      "carriedDefPerLevel": 0.2,
+      "carriedHpPerLevel": 0
     },
     "GildedLedger": {
-      "upkeep": 3,
       "passiveBase": 1.2,
       "passivePerLevel": 0.03,
       "activeManaCost": 0,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 2,
+      "carriedDef": 4,
+      "carriedHp": 15,
+      "carriedAtkPerLevel": 0.2,
+      "carriedDefPerLevel": 0.4,
+      "carriedHpPerLevel": 1.5
     },
     "WanderersCompass": {
-      "upkeep": 2,
       "passiveBase": 1.5,
       "passivePerLevel": 0.1,
       "activeManaCost": 5,
       "activeDurationSeconds": 0,
-      "activeRadius": 0
+      "activeRadius": 0,
+      "carriedAtk": 5,
+      "carriedDef": 3,
+      "carriedHp": 5,
+      "carriedAtkPerLevel": 0.5,
+      "carriedDefPerLevel": 0.3,
+      "carriedHpPerLevel": 0.5
     }
   },
   "quests": [
     {
       "id": "FirstSteps",
       "name": "First steps",
-      "description": "Tap the forest next to your Townhall to gather Wood.",
-      "goalType": "CollectTaps",
-      "goalTarget": null,
-      "goalAmount": 5,
+      "description": "Tap the dark ground to clear it. Find four stands of forest — you will want the timber.",
+      "goalType": "DiscoverFeature",
+      "goalTarget": "Trees",
+      "goalAmount": 4,
       "goalLevel": null,
       "reward": {
         "Gold": 10
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
     },
     {
-      "id": "Timber",
-      "name": "Timber!",
-      "description": "Stockpile 10 Wood — enough for your first building.",
-      "goalType": "HoldResource",
-      "goalTarget": "Wood",
-      "goalAmount": 10,
+      "id": "Woodcraft",
+      "name": "Forestry",
+      "description": "Nothing here can be worked by hand yet. Research Forestry — it opens the woods and the berry bushes both.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Forestry",
+      "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 15
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Timber",
+      "name": "Timber!",
+      "description": "Now tap the trees beside your Townhall. Twenty-five Wood buys a roof and a field.",
+      "goalType": "CollectResource",
+      "goalTarget": "Wood",
+      "goalAmount": 25,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 15
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 2
     },
     {
       "id": "ARoof",
       "name": "A roof",
-      "description": "Build a Housing next to the Townhall.",
+      "description": "Build a House. Somebody has to live here.",
       "goalType": "BuildDistrict",
       "goalTarget": "Housing",
       "goalAmount": 1,
@@ -1431,25 +1541,27 @@
       "reward": {
         "Gold": 20
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 2
     },
     {
       "id": "Rations",
       "name": "Rations",
-      "description": "Gather 3 Food for your first villager — the berry bushes will do.",
-      "goalType": "HoldResource",
-      "goalTarget": "Food",
-      "goalAmount": 3,
+      "description": "Tap the berry bush west of your Townhall for Food. Villagers eat.",
+      "goalType": "CollectResource",
+      "goalTarget": "Berries",
+      "goalAmount": 5,
       "goalLevel": null,
       "reward": {
         "Gold": 15
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 2
     },
     {
       "id": "FirstVillager",
       "name": "First villager",
-      "description": "Train a villager at the Townhall — berries make fine rations.",
+      "description": "Train your first villager — your new House has room for two.",
       "goalType": "ReachPopulation",
       "goalTarget": null,
       "goalAmount": 1,
@@ -1457,383 +1569,549 @@
       "reward": {
         "Gold": 25
       },
-      "rewardGems": 0
-    },
-    {
-      "id": "Explorer",
-      "name": "Explorer",
-      "description": "Spend Gold on the misty frontier — reveal 6 new map cells.",
-      "goalType": "DiscoverCells",
-      "goalTarget": null,
-      "goalAmount": 6,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 20
-      },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
       "id": "TaxDay",
       "name": "Tax day",
-      "description": "Collect 30 Gold — housed villagers pay taxes every minute.",
+      "description": "Your villager pays rent. Tap the House to hurry it along — 30 Gold.",
       "goalType": "CollectResource",
       "goalTarget": "Gold",
       "goalAmount": 30,
       "goalLevel": null,
       "reward": {
-        "Gold": 20,
-        "Wood": 10
+        "Gold": 20
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 3
     },
     {
-      "id": "Woodcraft",
-      "name": "Forestry",
-      "description": "Research Forestry — the root of the technology tree.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Forestry",
-      "goalAmount": 1,
+      "id": "Explorer",
+      "name": "Explorer",
+      "description": "Push the fog back further. The land is worth knowing.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 8,
       "goalLevel": null,
       "reward": {
-        "Gold": 40
+        "Gold": 30
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
-      "id": "TheSawmill",
-      "name": "The Sawmill",
-      "description": "Build a Sawmill near the forest.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Sawmill",
+      "id": "Fields",
+      "name": "Fields",
+      "description": "Research Agriculture: crop plots, and the Farm that works them.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Agriculture",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 30
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 3
+    },
+    {
+      "id": "FirstPlot",
+      "name": "First plot",
+      "description": "Build two crop plots on open grass.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "FarmLands",
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 25
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 3
+    },
+    {
+      "id": "ByHand",
+      "name": "By hand",
+      "description": "Tap the plots for Food. Doing this forever is not the plan.",
+      "goalType": "CollectResource",
+      "goalTarget": "Food",
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 4
+    },
+    {
+      "id": "Lumber",
+      "name": "Lumber",
+      "description": "Chop enough Wood by hand to raise a Farm.",
+      "goalType": "HoldResource",
+      "goalTarget": "Wood",
+      "goalAmount": 30,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 4
+    },
+    {
+      "id": "Farmhand",
+      "name": "Farmhand",
+      "description": "Build a Farm beside your plot.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Farm",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 35
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
       "id": "ToWork",
       "name": "Put them to work",
-      "description": "Assign a worker — they will chop wood for you.",
+      "description": "Assign a villager to the Farm. Now it harvests without you.",
       "goalType": "AssignWorkers",
       "goalTarget": null,
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 30
+        "Gold": 35
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 5
     },
     {
       "id": "GrowingTown",
       "name": "Growing town",
-      "description": "Build a second Housing — mind the crowding penalty!",
+      "description": "Build a second House. The Wood is starting to add up.",
       "goalType": "BuildDistrict",
       "goalTarget": "Housing",
       "goalAmount": 2,
       "goalLevel": null,
       "reward": {
-        "Gold": 40
+        "Gold": 50
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 6
     },
     {
       "id": "Neighbors",
       "name": "Neighbors",
-      "description": "Reach a population of 2.",
+      "description": "Train another villager — the new House has the room.",
       "goalType": "ReachPopulation",
       "goalTarget": null,
-      "goalAmount": 2,
+      "goalAmount": 3,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 40
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 5
+    },
+    {
+      "id": "ProperCapital",
+      "name": "A proper capital",
+      "description": "Your Townhall is full. Upgrade it for room to build.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Townhall",
+      "goalAmount": 1,
+      "goalLevel": 2,
+      "reward": {
+        "Gold": 80
+      },
+      "rewardGems": 3,
+      "rewardKnowledge": 10
+    },
+    {
+      "id": "SawTeeth",
+      "name": "Saw teeth",
+      "description": "Research Saws. Hand-chopping has taken you as far as it goes.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Saws",
+      "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 50
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 6
     },
     {
-      "id": "PickARoute",
-      "name": "Pick a route",
-      "description": "Research 3 technologies — farm the land or fish the sea, your call.",
-      "goalType": "CompleteTechs",
+      "id": "TheSawmill",
+      "name": "The Sawmill",
+      "description": "Build a Sawmill within reach of the forest.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Sawmill",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 60
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 8
+    },
+    {
+      "id": "Crewed",
+      "name": "Crewed",
+      "description": "Put three villagers to work — two of them on the Sawmill.",
+      "goalType": "AssignWorkers",
       "goalTarget": null,
       "goalAmount": 3,
       "goalLevel": null,
       "reward": {
         "Gold": 60
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 8
     },
     {
-      "id": "Stoneworks",
-      "name": "Stoneworks",
-      "description": "Build a Quarry — Stone builds the future.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Quarry",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 50,
-        "Food": 20
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "ToMarket",
-      "name": "To market",
-      "description": "Build the Market and open trade.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Market",
-      "goalAmount": 1,
+      "id": "FurtherAfield",
+      "name": "Further afield",
+      "description": "The map is bigger than your fields. Keep clearing it.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 15,
       "goalLevel": null,
       "reward": {
         "Gold": 80
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 12
     },
     {
-      "id": "Merchant",
-      "name": "Merchant",
-      "description": "Sell 20 goods at the Market.",
-      "goalType": "SellGoods",
-      "goalTarget": null,
-      "goalAmount": 20,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 100
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "ProperCapital",
-      "name": "A proper capital",
-      "description": "Upgrade the Townhall to level 2.",
-      "goalType": "UpgradeDistrict",
-      "goalTarget": "Townhall",
-      "goalAmount": 1,
-      "goalLevel": 2,
-      "reward": {
-        "Gold": 150
-      },
-      "rewardGems": 5
-    },
-    {
-      "id": "MoreRoom",
-      "name": "More room",
-      "description": "Research Urban Planning — homes with a second story.",
-      "goalType": "CompleteTech",
-      "goalTarget": "UrbanPlanning",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 60
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "SecondStory",
-      "name": "Second story",
-      "description": "Upgrade a Housing to level 2 — an extra resident under the same roof.",
-      "goalType": "UpgradeDistrict",
-      "goalTarget": "Housing",
-      "goalAmount": 1,
-      "goalLevel": 2,
-      "reward": {
-        "Gold": 75
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "FullHouse",
-      "name": "Full house",
-      "description": "Reach a population of 6.",
-      "goalType": "ReachPopulation",
-      "goalTarget": null,
-      "goalAmount": 6,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 75,
-        "Food": 20
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "FirstSoldier",
-      "name": "First soldier",
-      "description": "Muster your first army unit — every capital needs a guard.",
-      "goalType": "TrainArmy",
-      "goalTarget": null,
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 100
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "RunningWater",
-      "name": "Fields of plenty",
-      "description": "Research Farming — it unlocks the Farm.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Farming",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 60
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "Farmhand",
-      "name": "Farmhand",
-      "description": "Build a Farm — its workers harvest nearby crop plots for you.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Farm",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 80
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "IronRoad",
-      "name": "The iron road",
-      "description": "Push the frontier to the iron veins and collect 10 Iron.",
-      "goalType": "CollectResource",
-      "goalTarget": "Iron",
-      "goalAmount": 10,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 120
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "TheMine",
-      "name": "The Mine",
-      "description": "Build a Mine near the iron veins.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Mine",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 120
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "Architect",
-      "name": "The architect",
-      "description": "Research Architecture — iron-braced monuments.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Architecture",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 150
-      },
-      "rewardGems": 0
-    },
-    {
-      "id": "GrandCapital",
-      "name": "A grand capital",
-      "description": "Upgrade the Townhall to level 3.",
-      "goalType": "UpgradeDistrict",
-      "goalTarget": "Townhall",
-      "goalAmount": 1,
-      "goalLevel": 3,
-      "reward": {
-        "Gold": 300
-      },
-      "rewardGems": 10
-    },
-    {
-      "id": "TheFirstShrine",
-      "name": "Old Stones",
-      "description": "Claim a landmark — it feeds your kingdom Mana every hour, for good.",
+      "id": "OldStones",
+      "name": "Old stones",
+      "description": "Claim the shrine east of the Townhall. It will hold your magic.",
       "goalType": "ClaimLandmarks",
       "goalTarget": null,
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 150
+        "Gold": 100
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 15
     },
     {
-      "id": "Attuned",
-      "name": "Attunement",
-      "description": "Research Attunement — a second relic can then be worn at once.",
+      "id": "Mapmakers",
+      "name": "Mapmakers",
+      "description": "Research Cartography — there are better ways to survey ground.",
       "goalType": "CompleteTech",
-      "goalTarget": "Attunement",
+      "goalTarget": "Cartography",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 200
+        "Gold": 80
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 12
     },
     {
-      "id": "TheSanctum",
-      "name": "A Place for Magic",
-      "description": "Build the Sanctum — a bigger pool holds a longer absence.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Sanctum",
+      "id": "Surveyors",
+      "name": "Surveyors",
+      "description": "Buy Surveying twice. Each tap on the fog will count for three.",
+      "goalType": "BuyUpgrade",
+      "goalTarget": "Surveying",
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 15
+    },
+    {
+      "id": "Highlands",
+      "name": "Into the highlands",
+      "description": "Research Scaling Tools to climb the mountains.",
+      "goalType": "CompleteTech",
+      "goalTarget": "ScalingTools",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 250,
-        "Stone": 40
+        "Gold": 100
       },
-      "rewardGems": 5
+      "rewardGems": 0,
+      "rewardKnowledge": 12
+    },
+    {
+      "id": "PutToSea",
+      "name": "Put to sea",
+      "description": "Research Sailing to cross open water.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Sailing",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 120
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 15
+    },
+    {
+      "id": "ArmedMen",
+      "name": "Armed men",
+      "description": "There is a barrow west of your fields, and it is not empty. Research Warriors.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Warrior",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 100
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 12
     },
     {
       "id": "Mustered",
       "name": "Mustered",
-      "description": "Build a Barracks — an army is a city decision now, not a Townhall one.",
+      "description": "Build a Barracks. You will need Stone — there is rock to the east.",
       "goalType": "BuildDistrict",
       "goalTarget": "Barracks",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 200,
-        "Wood": 60
+        "Gold": 150
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 20
     },
     {
-      "id": "AWarband",
-      "name": "A Warband",
-      "description": "Train four units — enough to send someone into the dark.",
+      "id": "FirstSoldier",
+      "name": "First soldier",
+      "description": "Train your first soldier.",
       "goalType": "TrainArmy",
       "goalTarget": null,
-      "goalAmount": 4,
+      "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 250,
-        "Food": 60
+        "Gold": 150
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 20
+    },
+    {
+      "id": "FirstSummon",
+      "name": "A hero answers",
+      "description": "Summon at the banner. The first call is free.",
+      "goalType": "OwnHeroes",
+      "goalTarget": null,
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 20
     },
     {
       "id": "IntoTheDark",
-      "name": "Into the Dark",
-      "description": "Send a party into a ruin and clear its first depth.",
+      "name": "Into the dark",
+      "description": "Send a party into the Hollow Barrow and survive one depth.",
       "goalType": "ReachDepth",
       "goalTarget": null,
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 300,
-        "Food": 80
+        "Gold": 200
       },
-      "rewardGems": 5
+      "rewardGems": 3,
+      "rewardKnowledge": 25
+    },
+    {
+      "id": "ToMarket",
+      "name": "To market",
+      "description": "Build a Market and turn surplus into Gold.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 10
+    },
+    {
+      "id": "Merchant",
+      "name": "Merchant",
+      "description": "Sell twenty goods at the Market.",
+      "goalType": "SellGoods",
+      "goalTarget": null,
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 180
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 11
+    },
+    {
+      "id": "Stoneworks",
+      "name": "Stoneworks",
+      "description": "Build a Quarry. Tapping rock by hand has served its purpose.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Quarry",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 180
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 11
+    },
+    {
+      "id": "MoreRoom",
+      "name": "More room",
+      "description": "Research Urban Planning to build Houses taller.",
+      "goalType": "CompleteTech",
+      "goalTarget": "UrbanPlanning",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 9
+    },
+    {
+      "id": "SecondStory",
+      "name": "Second story",
+      "description": "Upgrade a House to level 2.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Housing",
+      "goalAmount": 1,
+      "goalLevel": 2,
+      "reward": {
+        "Gold": 180,
+        "Stone": 20
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 10
+    },
+    {
+      "id": "FullHouse",
+      "name": "Full house",
+      "description": "Grow to eight villagers.",
+      "goalType": "ReachPopulation",
+      "goalTarget": null,
+      "goalAmount": 8,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 200,
+        "Food": 40
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 11
+    },
+    {
+      "id": "IronRoad",
+      "name": "The iron road",
+      "description": "Iron lies in the northern ridge. Bring back ten.",
+      "goalType": "CollectResource",
+      "goalTarget": "Iron",
+      "goalAmount": 10,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 13
+    },
+    {
+      "id": "TheMine",
+      "name": "The Mine",
+      "description": "Build a Mine on the iron.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Mine",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 13
+    },
+    {
+      "id": "Architect",
+      "name": "The architect",
+      "description": "Research Architecture — the capital can go higher.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Architecture",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 300
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 15
+    },
+    {
+      "id": "GrandCapital",
+      "name": "A grand capital",
+      "description": "Raise the Townhall to level 3.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Townhall",
+      "goalAmount": 1,
+      "goalLevel": 3,
+      "reward": {
+        "Gold": 400
+      },
+      "rewardGems": 5,
+      "rewardKnowledge": 20
+    },
+    {
+      "id": "Attuned",
+      "name": "Attunement",
+      "description": "Research Attunement and learn to wear a relic.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Attunement",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 300
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 15
+    },
+    {
+      "id": "TheSanctum",
+      "name": "A place for magic",
+      "description": "Build the Sanctum.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Sanctum",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 350,
+        "Stone": 40
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 18
+    },
+    {
+      "id": "AWarband",
+      "name": "A warband",
+      "description": "Muster four soldiers.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 4,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 300,
+        "Food": 60
+      },
+      "rewardGems": 0,
+      "rewardKnowledge": 15
     },
     {
       "id": "TheBarrowsPrize",
       "name": "The Barrow’s Prize",
-      "description": "Clear a ruin to its bottom — the relic waiting there is yours.",
+      "description": "Clear the Hollow Barrow to its floor.",
       "goalType": "ClearRuins",
       "goalTarget": null,
       "goalAmount": 1,
@@ -1841,25 +2119,27 @@
       "reward": {
         "Gold": 400
       },
-      "rewardGems": 5
+      "rewardGems": 0,
+      "rewardKnowledge": 20
     },
     {
       "id": "WornWell",
-      "name": "Worn Well",
-      "description": "Attune a relic. It works while you wear it, and only while you wear it.",
+      "name": "Worn well",
+      "description": "Attune an artifact to your kingdom.",
       "goalType": "OwnArtifacts",
       "goalTarget": null,
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 300
+        "Gold": 350
       },
-      "rewardGems": 0
+      "rewardGems": 0,
+      "rewardKnowledge": 18
     },
     {
       "id": "Leylines",
       "name": "Leylines",
-      "description": "Claim four landmarks — every one makes the next stretch of fog cheaper.",
+      "description": "Claim four of the old places.",
       "goalType": "ClaimLandmarks",
       "goalTarget": null,
       "goalAmount": 4,
@@ -1868,12 +2148,13 @@
         "Gold": 500,
         "Stone": 60
       },
-      "rewardGems": 5
+      "rewardGems": 0,
+      "rewardKnowledge": 25
     },
     {
       "id": "DeeperStill",
-      "name": "Deeper Still",
-      "description": "Reach depth five. Past your safe floor is a gamble you choose.",
+      "name": "Deeper still",
+      "description": "Reach depth five in any ruin.",
       "goalType": "ReachDepth",
       "goalTarget": null,
       "goalAmount": 5,
@@ -1882,12 +2163,13 @@
         "Gold": 600,
         "Iron": 30
       },
-      "rewardGems": 5
+      "rewardGems": 0,
+      "rewardKnowledge": 30
     },
     {
       "id": "TheReliquary",
       "name": "The Reliquary",
-      "description": "Recover three relics. Each ruin holds exactly one.",
+      "description": "Hold three artifacts at once.",
       "goalType": "OwnArtifacts",
       "goalTarget": null,
       "goalAmount": 3,
@@ -1895,7 +2177,8 @@
       "reward": {
         "Gold": 900
       },
-      "rewardGems": 10
+      "rewardGems": 4,
+      "rewardKnowledge": 45
     }
   ],
   "fog": {
@@ -1943,15 +2226,23 @@
       }
     ],
     "fallbackGrowth": 1.25,
-    "goldPerTap": 1
+    "goldPerTap": 1,
+    "claimDiscoverRadius": 5
   },
   "city": {
     "initialCurrencies": {
-      "Gold": 0,
+      "Gold": 50,
       "Food": 0
     },
     "initialPopulation": 0,
-    "populationCostBase": 5,
+    "populationCostFirst": [
+      5,
+      20,
+      100,
+      300,
+      500,
+      1000
+    ],
     "populationCostGrowth": 1.45,
     "buildQueueCapacity": 1
   },

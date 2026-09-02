@@ -38,9 +38,15 @@ or three check-ins. Every system below is shaped by that budget.
 
 1. **Reveal** — spend Gold, one tap at a time, to peel back the fog. Cost scales
    steeply with distance from the Townhall, so exploration is a deliberate,
-   financed campaign.
-2. **Harvest** — tap resource cells directly. They exhaust after a number of taps
-   and recover on a timer.
+   financed campaign. **The frontier stays connected**: you can only pay for a
+   cell that touches ground you have already cleared. A building's discover
+   radius reaches further than its reveal radius, so you can *see* further than
+   you can buy — and without the rule, exploring became a shopping list of
+   whichever distant tile looked interesting, which also let the player skip
+   the distance cost curve entirely by jumping to the cheap side of the map.
+2. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**, so
+   Mana is the energy behind hand-acceleration; cells still exhaust after a
+   number of taps and recover on a timer.
 3. **Build** — place districts on revealed land. Costs are charged up front;
    construction takes time and runs while you are away.
 4. **Grow** — train villagers at the Townhall. Housed villagers pay taxes, which
@@ -63,11 +69,13 @@ different ways:
 | Found in the fog | Gives |
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | The raw materials |
-| **Landmarks** — shrines, standing stones, leysprings | **+1 Mana/h**, permanently |
+| **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | Dungeons to delve — artifacts, Fragments, Knowledge |
 
-Landmarks are what make exploration *compound*: more Mana per hour lets you
-sustain more artifacts, which makes the next stretch of fog cheaper to clear.
+Landmarks are what make exploration *compound*: a bigger Mana pool is a bigger
+session AND a bigger ad — the reward refills a whole pool — so every shrine
+claimed makes every future refill permanently larger, and the next stretch of
+fog cheaper to clear.
 Ruins are what stop the fog from being a treadmill — a non-repeating reward at
 the end of an exponential cost curve.
 
@@ -90,10 +98,16 @@ a stronger economy**.
 
 ## Mana, and why it is capped
 
-Mana refills to a ceiling whether you are playing or not, in about six hours —
-just under the eight-hour offline cap. A player who checks in two or three times
-a day never wastes any; a player who checks in once a day wastes some. That is
-the entire retention mechanic, and it costs the player nothing they own.
+**Mana is the game's energy.** Every tap that hurries a generator along — a
+house's rent, a forest, a rock — costs 1 Mana, so the pool is what bounds
+hand-play. Paying fog is the exception: a reveal already costs Gold.
+
+It refills to a ceiling whether you are playing or not, and a new kingdom
+starts full (50). Since the pool became a **spend** budget rather than an
+absence budget, it deliberately no longer refills inside one absence — that
+gap is what a refill is worth buying for. A player who checks in two or three
+times a day spends more of it than one who checks in once; nobody loses
+anything they own, because unspent Mana is never taken, only capped.
 
 Attuned artifacts draw an hourly **upkeep** against production, so what you can
 wear is gated by the Mana economy you have built rather than by a paywall. Net
@@ -150,9 +164,16 @@ The quest chain now runs eleven quests past Townhall 3, through landmarks, the
 Sanctum, an army and the ruins, so the three-hour content cliff the 2026-09-01
 audit found is gone.
 
-Two design centrepieces did **not** make it — the attune-or-arm rule and the
-contested landmark — and they are the first two entries in the backlog below
-rather than being buried in it.
+One design centrepiece did **not** make it — the contested landmark — and it is
+the first entry in the backlog below rather than being buried in it.
+
+**Attune-or-arm landed on 2026-09-02**, after the rest of the pass. An artifact
+is now attuned to the kingdom *or* carried by a hero into a delve, never both,
+and both directions refuse: a launch will not take a relic the kingdom is
+wearing, and the Reliquary will not take back one that is underground. Relics
+gained a `carried` stat block to have something to be on the "arm" side of the
+rule. Measured in the Drowned Ironworks, the Foreman's Sigil takes a party from
+safe-to-depth-2 to safe-to-depth-7 — the trade the design named, now real.
 
 The art landed with it: ten sheets covering the Sanctum, the four military
 halls, ten landmarks, five ruins, five relics and five heroes. Nothing in the
@@ -170,16 +191,15 @@ Ordered by how soon a player meets them.
 
 | # | Gap | Where |
 |---|---|---|
-| 1 | **An artifact cannot be carried into a delve.** Only kingdom attunement exists; there is no attune-OR-arm exclusivity, because a `Delve` has no artifact field and `launchDelve` takes none. This is the rule the design calls *"the best decision in the design"* and *"what welds the city half of the game to the delve half"* — wear the Foreman's Sigil for +1 worker yield, or send it down to reach depth 6. Its absence is why relics currently have exactly one use. | `heroes-and-gacha.md` §2 |
-| 2 | **Four of ten landmarks cannot be claimed.** `defended: true` is authored and claiming is gated on `landmarks.cleared`, but nothing in the codebase ever writes that field — the "send a party to clear it" encounter does not exist. A visible dead end, and the only thing giving combat a job outside dungeons. | `expeditions.md` §1 |
-| 3 | **Hero XP is written and never read.** Every extraction calls `addHeroXp`; nothing consumes it. Exactly the `train_duration_seconds` fault this pass removed, reintroduced. | `heroes-and-gacha.md` §1 |
-| 4 | **The Gem faucet is ~50% over budget** — 110 up front against the 75 the design sets, because the eleven new quests were given Gem rewards without re-deriving the total. | `balancing-v2.md` §1.3 |
-| 5 | **No gacha banner is authored.** The timeline carries a `banner` payload and `activeBanners()` exists, but `EVENTS` holds only the Conjunction, so rate-up is untested code. | `heroes-and-gacha.md` §4 |
-| 6 | **Timed-event rewards vs the 8h cap was decided rather than flagged.** Schedule events fire in the post-cap tail advance, so a 20h absence spanning a 24h Conjunction pays in full. `engine-seams.md` §5 explicitly asked for a marker at the call site instead of a policy. | `engine-seams.md` §5 |
-| 7 | **Adjacency is still one rule** (Housing↔Housing −1) — and five more districts now compete for the same ground, so spatial play got thinner in relative terms. | `balancing-v2.md` future work |
-| 8 | **The ghost is not draggable.** `wireInput` has no drag hooks; placement is still tap-only. | `art/ui-menus-redesign.md` §5.6 |
-| 9 | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | `audio-wishlist.md` |
-| 10 | Smaller: the `?dev=kit` gallery does not show the new primitives; `balancing-v1`'s income tables are annotated as corrected but not recomputed; `kingdom.max_builders` is authored 4 and still unreachable past 1. | — |
+| 1 | **Four of ten landmarks cannot be claimed.** `defended: true` is authored and claiming is gated on `landmarks.cleared`, but nothing in the codebase ever writes that field — the "send a party to clear it" encounter does not exist. A visible dead end, and the only thing giving combat a job outside dungeons. | `expeditions.md` §1 |
+| 2 | **Hero XP is written and never read.** Every extraction calls `addHeroXp`; nothing consumes it. Exactly the `train_duration_seconds` fault this pass removed, reintroduced. | `heroes-and-gacha.md` §1 |
+| 3 | **The Gem faucet is ~50% over budget** — 110 up front against the 75 the design sets, because the eleven new quests were given Gem rewards without re-deriving the total. | `balancing-v2.md` §1.3 |
+| 4 | **No gacha banner is authored.** The timeline carries a `banner` payload and `activeBanners()` exists, but `EVENTS` holds only the Conjunction, so rate-up is untested code. | `heroes-and-gacha.md` §4 |
+| 5 | **Timed-event rewards vs the 8h cap was decided rather than flagged.** Schedule events fire in the post-cap tail advance, so a 20h absence spanning a 24h Conjunction pays in full. `engine-seams.md` §5 explicitly asked for a marker at the call site instead of a policy. | `engine-seams.md` §5 |
+| 6 | **Adjacency is still one rule** (Housing↔Housing −1) — and five more districts now compete for the same ground, so spatial play got thinner in relative terms. | `balancing-v2.md` future work |
+| 7 | **The ghost is not draggable.** `wireInput` has no drag hooks; placement is still tap-only. | `art/ui-menus-redesign.md` §5.6 |
+| 8 | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | `audio-wishlist.md` |
+| 9 | Smaller: the `?dev=kit` gallery does not show the new primitives; `balancing-v1`'s income tables are annotated as corrected but not recomputed; `kingdom.max_builders` is authored 4 and still unreachable past 1. | — |
 
 ### Decisions still to make
 

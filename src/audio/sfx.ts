@@ -18,7 +18,7 @@ import questUrl from './sounds/quest_claimed.wav?url';
 import questCompleteUrl from './sounds/quest_complete.ogg?url';
 import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
-import revealDoneUrl from './sounds/reveal_done.wav?url';
+import revealDoneUrl from './sounds/reveal_done.ogg?url';
 import revealPaidUrl from './sounds/reveal_paid.ogg?url';
 import tapEmptyUrl from './sounds/tap_empty.mp3?url';
 import unitUrl from './sounds/unit_trained.mp3?url';

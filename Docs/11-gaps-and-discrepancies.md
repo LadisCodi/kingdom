@@ -30,7 +30,7 @@ during a reimplementation: keep the as-is behavior, or fix it to match intent.
 
 ## Stubbed / future systems (designed, not built)
 
-- **Research**: the Research screen is a placeholder; Knowledge has no source or sink.
+- ~~**Research**: the Research screen is a placeholder; Knowledge has no source or sink.~~ Closed 2026-09-02: Knowledge buys the whole technology tree and is earned by clearing fog and finishing quests ([`features/knowledge.md`](features/knowledge.md)).
 - **Region claim & domination**: `Region.DomainProgress`/`IsDominated` exist but
   nothing drives them; claim requirement classes (cost / quest / clear-with-army)
   exist unused; no combat.

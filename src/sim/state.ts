@@ -35,14 +35,16 @@ export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'S
 export type TechId =
   | 'Forestry'
   | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
-  | 'Agriculture' | 'Farming' | 'Market' | 'CropRotation' // economics: farm side
+  | 'Saws' | 'Hunting' | 'Agriculture' | 'Farming' | 'Market' // economics: farm side
   | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
-  | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration (right)
+  | 'Cartography' | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration
   | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry' // military (down)
   | 'Attunement' | 'Warband'; // the magic and expedition leaves
 export type UpgradeId =
-  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'MarketStall' | 'TradeRoutes'
-  | 'Stonecutting' | 'BigNets' | 'IronPicks';
+  | 'TapPower' | 'QuickHands' | 'WorkerLoad'
+  | 'Sawpits' | 'Butchery' | 'Irrigation' | 'Scythes'
+  | 'Surveying' | 'Pitons' | 'MarketStall' | 'TradeRoutes'
+  | 'Stonecutting' | 'BigNets' | 'IronPicks' | 'Resonance';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -178,6 +180,13 @@ export interface Delve {
   id: string;
   ruinId: RuinId;
   heroId: HeroId;
+  /** The relic that went down with them, or null. An artifact is attuned to
+   *  the kingdom OR carried by a hero — never both, which is the rule that
+   *  welds the city half of the game to the delve half. */
+  artifactId: ArtifactId | null;
+  /** The level it went down AT. Snapshotted beside `maxPartyHp`, so levelling
+   *  a relic back home never retroactively re-arms a party already below. */
+  artifactLevel: number;
   party: PartySlotState[];
   /** Depths already cleared. */
   depth: number;
@@ -264,6 +273,26 @@ export interface GameState {
   gacha: {
     pullCounts: Record<string, number>;
     pityCounters: Record<string, number>;
+  };
+  /**
+   * The rewarded-ad offer (sim/adOffers.ts).
+   *
+   * `claims` IS the rng key for the next cooldown, the same way `pullCounts`
+   * keys a gacha roll — so it has to persist for the sequence to survive a
+   * reload. `pending` persists too: an offer the player walked away from is
+   * still owed to them, and a widget that vanished over lunch would read as
+   * the game taking something back.
+   *
+   * Nothing in `advance()` touches any of this. The offer is an opportunity
+   * shown to a player, not economy, so it is refreshed from the live tick —
+   * which is what keeps offline replay exactly equal to stepped ticking.
+   */
+  ads: {
+    /** Epoch ms; the cooldown only restarts on a claim. */
+    readyAt: number;
+    claims: number;
+    /** Latched: set when the offer becomes visible, cleared by claiming. */
+    pending: boolean;
   };
   /** The deepest depth any party has ever cleared. Persisted rather than
    *  derived, because a delve that ended is gone — and "how deep have you

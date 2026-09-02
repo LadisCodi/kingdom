@@ -39,7 +39,7 @@
   font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
 }
-.rel-line b { font-family: var(--font-display); }
+.rel-line b { font-family: var(--font-body); }
 .rel-line.is-cost b { color: var(--clay); }
 .rel-line.is-total {
   margin-top: 4px;
@@ -118,6 +118,14 @@
 }
 
 .rel-passive { display: flex; align-items: center; gap: 6px; font-size: var(--text-helper); }
+/* A relic that is underground. It has to say so, and it has to correct the
+ * upkeep line above it — carrying draws no Mana, which is the asymmetry the
+ * whole attune-or-arm trade rests on. */
+.rel-carried {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--text-helper); color: var(--gold, #d9a441); line-height: 1.3;
+}
+
 .rel-upkeep { font-size: var(--text-helper); color: var(--ink-muted); }
 
 .rel-active {
@@ -125,7 +133,7 @@
   border-radius: 8px;
   background: rgba(92, 58, 30, 0.08);
 }
-.rel-active-name { font-family: var(--font-display); font-size: var(--text-helper); }
+.rel-active-name { font-family: var(--font-body); font-size: var(--text-helper); }
 .rel-active-text { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.3; }
 
 .rel-controls { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -150,7 +158,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--ink-muted);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-helper);
   cursor: pointer;
 }

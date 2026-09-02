@@ -14,7 +14,7 @@
 | Silver | City | no | 50 | Main build/reveal currency; taxed from population by the Townhall *(web build: merged into Gold, earned at the Market)* |
 | Wood | City | no | 0 | Secondary build material |
 | Gold | Kingdom | no | 100 | No source or sink yet |
-| Knowledge | Kingdom | no | 0 | Reserved for research; no source or sink |
+| Knowledge | Kingdom | no | 0 | Buys the technology tree. Earned by clearing fog (ring N pays N), quests, ruins and delves — [`features/knowledge.md`](features/knowledge.md) |
 | Gems | Player | no | 10 | Premium; only sink is finishing queue items instantly |
 
 City starting amounts and population come from the city definition (Oakville:

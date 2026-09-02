@@ -9,7 +9,10 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { effectiveAmount, refund } from './wallet';
-import { addToWallet, type CurrencyId, type GameState } from './state';
+import {
+  addToWallet, type CurrencyId, type FeatureId, type GameState, type UpgradeId,
+} from './state';
+import { upgradeLevel } from './upgrades';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
   QUESTS[state.quests.index] ?? null;
@@ -17,7 +20,11 @@ export const activeQuest = (state: GameState): QuestDef | null =>
 export type QuestEvent =
   | { kind: 'collect'; currency: CurrencyId; amount: number }
   | { kind: 'tap' }
-  | { kind: 'reveal' }
+  /** `feature` is whatever was standing on the cell, or null for bare ground.
+   *  Carried on the event rather than looked up afterwards because the reveal
+   *  is the only moment that knows it: a finite feature can be tapped away
+   *  minutes later, and the quest should still have counted. */
+  | { kind: 'reveal'; feature: FeatureId | null }
   | { kind: 'sell'; units: number };
 
 /** Feed one sim event to the ACTIVE quest (no-op unless it's a matching
@@ -36,6 +43,11 @@ export function recordQuestEvent(state: GameState, event: QuestEvent): void {
       break;
     case 'DiscoverCells':
       if (event.kind === 'reveal') state.quests.progress += 1;
+      break;
+    case 'DiscoverFeature':
+      if (event.kind === 'reveal' && event.feature === quest.goalTarget) {
+        state.quests.progress += 1;
+      }
       break;
     case 'SellGoods':
       if (event.kind === 'sell') state.quests.progress += event.units;
@@ -76,6 +88,10 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return Object.keys(state.ruinsCleared).length;
     case 'OwnArtifacts':
       return state.artifacts.owned.length;
+    case 'OwnHeroes':
+      return state.heroes.owned.length;
+    case 'BuyUpgrade':
+      return upgradeLevel(state, quest.goalTarget as UpgradeId);
     default:
       return 0;
   }
@@ -86,8 +102,8 @@ export const isQuestComplete = (state: GameState, quest: QuestDef): boolean =>
 
 export type ClaimResult = 'Claimed' | 'NotComplete' | 'NoQuest';
 
-/** Pay the reward into the city wallet (Gems into the player's) and activate
- *  the next quest. */
+/** Pay the reward into the city wallet (Gems into the player's, Knowledge
+ *  into the kingdom's) and activate the next quest. */
 export function claimQuest(state: GameState): ClaimResult {
   const quest = activeQuest(state);
   if (!quest) return 'NoQuest';
@@ -99,6 +115,12 @@ export function claimQuest(state: GameState): ClaimResult {
   if (quest.rewardGems > 0) {
     addToWallet(state.player.wallet, 'Gems', quest.rewardGems);
     recordResourceDiscovery(state, 'Gems');
+  }
+  // Into the KINGDOM purse — Knowledge outlives the city that earned it, and
+  // it is what the research tree is bought with.
+  if (quest.rewardKnowledge > 0) {
+    addToWallet(state.kingdom.wallet, 'Knowledge', quest.rewardKnowledge);
+    recordResourceDiscovery(state, 'Knowledge');
   }
   state.quests.index += 1;
   state.quests.progress = 0;

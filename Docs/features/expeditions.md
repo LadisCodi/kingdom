@@ -69,7 +69,8 @@ answers a different need.
 
 Claiming comes in two flavours, which is what keeps them from being a formality:
 
-- **Undefended** — pay a one-off **Gold** cost scaling with distance. A pure
+- **Undefended** — pay a one-off **Gold** cost, authored per sanctuary in
+  tiers (5,000 in sight / 25,000 / 100,000 — see `magic.md` §4). A pure
   economic decision, and another sink on the fog's own curve.
 - **Defended** — an enemy army holds it. Send a party to clear it, then claim.
   This gives combat a second job outside dungeons, and it is a **one-off
@@ -302,7 +303,7 @@ Landed 2026-09-02 on `feature/engine-seams`.
 |---|---|---|
 | Unit stats + the type chart + the resolution pass | `39849c2` | Pure, in `combat.ts`, six tunable numbers |
 | Four military buildings; retire the Townhall army cap; `train_duration_seconds` live | `39849c2` | Each building runs its own training line |
-| Landmarks — feature, claiming, **contested clearing** | `1850430` | Claiming shipped. **Contested clearing did not** — nothing writes `landmarks.cleared`, so the four defended landmarks are unreachable. Backlog gap 2 |
+| Landmarks — feature, claiming, **contested clearing** | `1850430` | Claiming shipped. **Contested clearing did not** — nothing writes `landmarks.cleared`, so the four defended landmarks are unreachable. Backlog gap 1 |
 | Delves — depths, checkpoints, attrition, haul, the 50% rule, standing orders | `39849c2` | |
 | Expedition sheet, checkpoint, nav change | `bbfbb8f` | Plus the delve pill, which the doc did not ask for and the "checkpoint never expires" rule needs |
 | Docs | `26092c4` | |
@@ -319,6 +320,22 @@ That is not a rounding error: *"your economy decides how deep you go safely"* is
 the promise the whole delve design rests on, and a safe floor that is not safe
 turns push-your-luck into being robbed. Fixed in `2309afe`, and the tier ladder
 in `balancing-v2.md` Part 2 is now asserted rather than hoped for.
+
+### The same fault, found again on 2026-09-02
+
+`withWardenBonus` applied the Warden's +20% party DEF to the preview's
+*displayed* stats and to nothing else. `guaranteedDepth` used the raw party on
+the very next line, and `resolveDepth` read `partyStats` directly — so the
+starting hero's only trait was a number on a screen. At launch the function was
+asked for `.hp`, which it does not even modify.
+
+Identical in kind to the `guaranteedDepth` bug above: a promise the launch sheet
+makes and the descent does not keep. The existing test asserted the trait
+*string* rather than its effect, which is exactly how it survived.
+
+Fixed in `4ed8ff2` by folding every party-wide bonus into `partyStats`, so the
+preview, the safe depth, launch HP and each depth's damage all read one set of
+numbers. The test now asserts the **damage**, not the displayed stat.
 
 ## 11. Out of scope
 

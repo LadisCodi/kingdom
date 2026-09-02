@@ -15,14 +15,14 @@ import {
 } from '../sim/data/definitions';
 import { canAfford } from '../sim/commands';
 import {
-  isTechActive, isTechComplete, requirementsMet, slotGemCost,
+  canStartTech, isTechActive, isTechComplete, requirementsMet, slotGemCost,
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
-import { upgradeCost, upgradeLevel } from '../sim/upgrades';
-import { getWallet, type GameState, type TechId, type UpgradeId } from '../sim/state';
+import { canBuyUpgrade, upgradeCost, upgradeLevel } from '../sim/upgrades';
+import { type GameState, type TechId, type UpgradeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
-import { action, btn, costChips, iconEl, knob } from './kit';
+import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
@@ -114,12 +114,13 @@ export function renderResearchMenu(game: Game): HTMLElement {
   if (slots < RESEARCH_SETTINGS.maxSlots) {
     const cost = slotGemCost(state);
     const hire = btn({
-      label: `Hire · ${cost}`,
+      label: 'Hire',
       kind: 'gem',
-      icon: 'Gems',
       onClick: () => game.doBuySlot(),
-      disabledReason: getWallet(state.player.wallet, 'Gems') < cost
-        ? `Needs ${cost} Gems` : undefined,
+      // The price used to be spliced into the label, where it read as part of
+      // the verb rather than as something you pay.
+      cost: { Gems: cost },
+      have: (c) => game.effectiveWalletValue(c),
     });
     bar.append(hire);
   }
@@ -200,6 +201,11 @@ export function renderResearchMenu(game: Game): HTMLElement {
       class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
+    // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
+    // the player cannot act on yet — done, running, unaffordable, missing a
+    // prerequisite — and "available" styling only means the prerequisites are
+    // met, not that you can press it. The dot is the difference.
+    if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
     if (active) {
       const completesAt = techCompletesAt(state, id)!;
       const total = TECHNOLOGIES[id].durationSeconds * 1000;
@@ -225,10 +231,12 @@ export function renderResearchMenu(game: Game): HTMLElement {
       const affordable = canAfford(state.city.wallet, { Gold: upgradeCost(u, level) });
       const cls = maxed ? 'done' : affordable ? 'available' : 'locked';
       const isSel = selected?.kind === 'upgrade' && selected.id === u;
+      const hinted = game.uiHint() === `upgrade:${u}`;
       const node = el('button', {
-        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}`,
+        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
       }, def.glyph);
+      if (canBuyUpgrade(state, u)) node.append(el('span', { class: 'node-dot' }));
       if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));
       node.addEventListener('click', () => {
         if (consumeSuppressedClick()) return;
@@ -269,8 +277,13 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // its rAF restore. Only the hint still needs to move the view, and it must
   // run after the host has put the old position back.
   const hint = game.uiHint();
+  // An upgrade circle hangs below its parent tech, so scrolling to the PARENT
+  // brings the hinted upgrade on screen with it — one code path for both.
   const hintedTech = hint?.startsWith('tech:')
-    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
+    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null)
+    : hint?.startsWith('upgrade:')
+      ? (UPGRADES[hint.slice('upgrade:'.length) as UpgradeId]?.requiredTech ?? null)
+      : null;
   if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
     requestAnimationFrame(() => {
       tree.scrollLeft = Math.max(0, cx(hintedTech) - tree.clientWidth / 2);
@@ -340,22 +353,19 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
     panel.append(bar);
   } else {
-    const short = game.shortfall(def.cost);
     panel.append(action({
       label: 'Start',
       kind: 'primary',
       onClick: () => game.doStartTech(id),
+      cost: def.cost,
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: !requirementsMet(state, id)
         ? 'Research what it needs first'
         : busy >= slots
           ? 'Every scholar is busy'
-          : Object.keys(short).length > 0
-            ? `Short ${Object.entries(short).map(([c, n]) => `${n} ${c}`).join(' and ')}`
-            : undefined,
-      info: el('span', { class: 'res-cost' },
-        costChips(def.cost, (c) => game.effectiveWalletValue(c)),
-        el('span', { class: 'res-time' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds))),
+          : undefined,
+      info: el('span', { class: 'res-time' },
+        iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
   }
   return panel;
@@ -380,15 +390,13 @@ function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
     panel.append(el('div', { class: 'delta' }, 'Maxed'));
   } else {
     const cost = upgradeCost(id, level);
-    const short = game.shortfall({ Gold: cost });
     panel.append(action({
       label: 'Upgrade',
       kind: 'primary',
       onClick: () => game.doBuyUpgrade(id),
-      disabledReason: Object.keys(short).length > 0 ? `Short ${short.Gold} Gold` : undefined,
-      info: el('span', { class: 'res-cost' },
-        costChips({ Gold: cost }, (c) => game.effectiveWalletValue(c)),
-        el('span', { class: 'res-time' }, 'instant')),
+      cost: { Gold: cost },
+      have: (c) => game.effectiveWalletValue(c),
+      info: el('span', { class: 'res-time' }, 'instant'),
     }));
   }
   return panel;

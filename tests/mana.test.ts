@@ -7,17 +7,22 @@
 // same way it ticks live.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { MANA } from '../src/sim/data/definitions';
+import { fogState } from '../src/sim/fog';
+import { townhallDistance } from '../src/sim/grid';
+import { addModifier, type Modifier } from '../src/sim/modifiers';
+import {
+  FOG, MANA, OFFLINE_CAP_HOURS, RUINS, type LandmarkDef,
+} from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
 } from '../src/sim/landmarks';
 import {
   accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction,
-  manaRefillGemCost, manaUpkeep, refillManaWithGems,
+  manaRefillGemCost, refillManaWithGems,
 } from '../src/sim/mana';
 import { LANDMARKS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, townhall, type GameState } from '../src/sim/state';
+import { coordKey, getWallet, parseCoordKey, townhall, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const HOUR = 3_600_000;
@@ -25,6 +30,13 @@ const first = LANDMARKS[0];
 /** Far enough out that the Townhall's own reveal radius does not cover it —
  *  the first landmark sits deliberately in sight, to teach the mechanic. */
 const distant = LANDMARKS.find((l) => l.id === 'FallenStones')!;
+
+/** A new kingdom starts with a FULL pool (the house tap is paid from it), so
+ *  every test about FILLING one has to empty it first and say so. */
+const drained = (state: GameState): GameState => {
+  state.city.wallet.Mana = 0;
+  return state;
+};
 
 const sanctum = (state: GameState, level: number): void => {
   addBuilt(state, 'Sanctum', { x: 3, y: 1 });
@@ -37,16 +49,17 @@ describe('the two dials', () => {
     expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[0]);
     townhall(state).level = 2;
     expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[1]);
+    // Sanctuaries buy CAPACITY, not rate — production is the Townhall alone.
     state.landmarks.claimed[first.id] = true;
-    expect(manaProduction(state))
-      .toBe(MANA.productionPerTownhallLevel[1] + MANA.landmarkProduction);
+    expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[1]);
   });
 
-  it('capacity comes from the Townhall and the Sanctum, and not from landmarks', () => {
+  it('capacity comes from the Townhall, the Sanctum AND every sanctuary', () => {
     const state = freshGame();
     expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
     state.landmarks.claimed[first.id] = true;
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]); // production, not capacity
+    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.landmarkCap);
+    delete state.landmarks.claimed[first.id];
     sanctum(state, 1);
     expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.sanctumCapPerLevel[0]);
     state.city.districts.find((d) => d.definitionId === 'Sanctum')!.level = 3;
@@ -60,44 +73,70 @@ describe('the two dials', () => {
     expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
   });
 
-  it('holds the tuning law: an overnight absence fills the pool', () => {
-    // cap ≈ 8 × net regen at every stage, so fill time sits just under the 8h
-    // offline cap and the two caps reinforce each other instead of fighting.
+  // THE TUNING LAW IS DELIBERATELY SUSPENDED (2026-09-02).
+  //
+  // It was `cap ≈ 8 × net regen`, so an overnight absence filled the pool
+  // exactly and the two caps reinforced each other. That law belonged to a
+  // Mana pool whose only job was sustaining artifacts — an ABSENCE budget.
+  //
+  // Mana is now the energy every tap is paid from, so the pool is a SPEND
+  // budget, and the two want opposite things: an absence budget should refill
+  // exactly overnight, while a spend budget has to be able to run out or
+  // there is nothing for a refill to sell. The cap went to 50 and regen did
+  // not follow, so a full pool is 12.5h rather than 8h.
+  //
+  // This test now pins the new intent rather than the old law, so the day
+  // someone re-tunes regen they have to come here and say which budget they
+  // are tuning for. Restoring the old law at cap 50 means regen 7/h at TH1.
+  it('is a SPEND budget now: the pool no longer refills inside an absence', () => {
     for (let level = 1; level <= 3; level++) {
       const state = freshGame();
       townhall(state).level = level;
-      expect(manaFillHours(state)).toBeGreaterThan(5);
-      expect(manaFillHours(state)).toBeLessThan(8);
+      expect(manaFillHours(state)).toBeGreaterThan(OFFLINE_CAP_HOURS);
+      expect(Number.isFinite(manaFillHours(state))).toBe(true);
     }
+  });
+
+  it('starts a new kingdom full, because every tap is paid from it', () => {
+    const state = freshGame();
+    expect(mana(state)).toBe(manaCap(state));
+    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
   });
 });
 
-describe('upkeep', () => {
-  it('is drawn by what is attuned, and never takes regen below zero', () => {
+describe('what draws against the pool', () => {
+  // Nothing does. Relics used to charge an hourly upkeep while attuned, which
+  // was removed once Mana became the energy every tap is paid from: at
+  // Townhall 1 the full set drew exactly what the Townhall made, so wearing
+  // everything stalled the pool dead and left nothing to play with. The pool
+  // is a tap budget now, and only the player spends it.
+  it('is nothing — wearing every relic does not slow the fill', () => {
     const state = freshGame();
-    expect(manaUpkeep(state)).toBe(0);
-    state.artifacts.attuned = ['GildedLedger']; // 3/h
-    expect(manaUpkeep(state)).toBe(3);
-    expect(manaNetRegen(state)).toBe(manaProduction(state) - 3);
-
-    // Stalled, never bankrupt: the design's first promise applied to the one
-    // resource that could otherwise break it.
+    const bare = manaNetRegen(state);
+    expect(bare).toBe(manaProduction(state));
     state.artifacts.attuned = [
       'GildedLedger', 'ForemansSigil', 'VerdantSeal', 'WanderersCompass', 'DowsingRod',
     ];
-    expect(manaUpkeep(state)).toBeGreaterThan(manaProduction(state));
-    expect(manaNetRegen(state)).toBe(0);
+    expect(manaNetRegen(state)).toBe(bare);
   });
 
+  // Relics can no longer stall the pool, but a modifier still can — a season
+  // or a debug switch that zeroes `manaRegen`. The rule the branch protects is
+  // unchanged and worth keeping covered: a stalled kingdom must not bank the
+  // stalled hours and pay them out the moment the rate returns.
   it('a stalled kingdom banks no time against a future rate', () => {
-    const state = freshGame();
-    state.artifacts.attuned = [
-      'GildedLedger', 'ForemansSigil', 'VerdantSeal', 'WanderersCompass', 'DowsingRod',
-    ];
+    const state = drained(freshGame());
+    const stall: Modifier = {
+      id: 'test:stall', source: 'debug', stat: 'manaRegen', scope: null,
+      op: 'mul', value: 0, expiresAt: null,
+    };
+    addModifier(state, stall);
+    expect(manaNetRegen(state)).toBe(0);
     advance(state, map, T0 + 6 * HOUR);
     expect(mana(state)).toBe(0);
-    // Un-attune everything and the pool starts from NOW, not from six hours ago.
-    state.artifacts.attuned = [null];
+
+    // Lift it and the pool starts from NOW, not from six hours ago.
+    state.modifiers = [];
     advance(state, map, T0 + 6 * HOUR + 1000);
     expect(mana(state)).toBe(0);
   });
@@ -105,7 +144,7 @@ describe('upkeep', () => {
 
 describe('the pool', () => {
   it('fills to the ceiling and discards the overflow', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     const cap = manaCap(state);
     expect(addMana(state, cap + 50)).toBe(cap); // only the cap was banked
     expect(mana(state)).toBe(cap);
@@ -114,7 +153,7 @@ describe('the pool', () => {
   });
 
   it('never goes negative', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     addMana(state, 5);
     addMana(state, -50);
     expect(mana(state)).toBe(0);
@@ -131,7 +170,7 @@ describe('the pool', () => {
   });
 
   it('accrues in whole units against its own anchor', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     const rate = manaNetRegen(state); // per hour
     const msPerMana = HOUR / rate;
     accrueMana(state, T0 + msPerMana - 1);
@@ -140,6 +179,27 @@ describe('the pool', () => {
     expect(mana(state)).toBe(1);
     accrueMana(state, T0 + 3 * msPerMana);
     expect(mana(state)).toBe(3);
+  });
+
+  // The variant that matters, and the one that did not exist: a window the
+  // pool CROSSES the cap inside. A full pool early-outs from step zero, so
+  // starting full (which freshGame now does) hides any divergence in how the
+  // anchor advances once the ceiling is reached.
+  it('one-call replay equals stepped ticking ACROSS the ceiling', () => {
+    // NOT a whole multiple of msPerMana (15 min at TH1). The normal branch
+    // keeps the sub-unit remainder while a naive over-cap early-out would
+    // snap the anchor to `toTime`; on an exact multiple the two agree by
+    // accident and the divergence hides.
+    const horizon = 20 * HOUR + 7 * 60_000;
+    const oneCall = drained(freshGame());
+    advance(oneCall, map, T0 + horizon);
+
+    const stepped = drained(freshGame());
+    for (let t = 60_000; t <= horizon; t += 60_000) advance(stepped, map, T0 + t);
+
+    expect(mana(stepped)).toBe(mana(oneCall));
+    expect(mana(oneCall)).toBe(manaCap(oneCall)); // it really did cross
+    expect(stepped.city.lastManaAt).toBe(oneCall.city.lastManaAt);
   });
 
   it('one-call replay equals stepped ticking', () => {
@@ -166,7 +226,7 @@ describe('the pool', () => {
 
 describe('gem refills', () => {
   it('are priced on what is missing, so a full pool costs nothing', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     const cap = manaCap(state);
     expect(manaRefillGemCost(state)).toBe(Math.ceil(cap / MANA.gemRefillPerGem));
     addMana(state, cap);
@@ -175,7 +235,7 @@ describe('gem refills', () => {
   });
 
   it('fill the pool and charge the gems', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     state.player.wallet.Gems = 100;
     const cost = manaRefillGemCost(state);
     expect(refillManaWithGems(state)).toBe('Refilled');
@@ -184,7 +244,7 @@ describe('gem refills', () => {
   });
 
   it('refuse politely when the purse is empty', () => {
-    const state = freshGame();
+    const state = drained(freshGame());
     state.player.wallet.Gems = 0;
     expect(refillManaWithGems(state)).toBe('NotEnoughGems');
   });
@@ -198,18 +258,22 @@ describe('landmarks', () => {
     expect(visibleLandmarks(state, map).map((l) => l.id)).toContain(distant.id);
   });
 
-  it('cost Gold on the fog’s own distance curve, and pay production forever', () => {
+  it('cost Gold on the fog’s own distance curve, and pay capacity forever', () => {
     const state = freshGame();
     reveal(state, [first.location]);
-    const cost = landmarkClaimCost(map, first);
+    const cost = landmarkClaimCost(first);
     expect(cost).toBeGreaterThan(0);
 
     expect(claimLandmark(state, map, first.location)).toBe('NotEnoughGold');
     fund(state, { Gold: cost });
-    const before = manaProduction(state);
+    const beforeCap = manaCap(state);
+    const beforeRate = manaProduction(state);
     expect(claimLandmark(state, map, first.location)).toBe('Claimed');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
-    expect(manaProduction(state)).toBe(before + MANA.landmarkProduction);
+    // The pool grows, the rate does not — which is what makes a claim worth
+    // more the longer you play: an ad pays a whole pool.
+    expect(manaCap(state)).toBe(beforeCap + MANA.landmarkCap);
+    expect(manaProduction(state)).toBe(beforeRate);
     expect(claimLandmark(state, map, first.location)).toBe('AlreadyClaimed');
   });
 
@@ -230,8 +294,54 @@ describe('landmarks', () => {
   });
 
   it('get farther and dearer, so exploration compounds instead of paying flat', () => {
-    const costs = LANDMARKS.map((l) => landmarkClaimCost(map, l));
+    const costs = LANDMARKS.map((l) => landmarkClaimCost(l));
     expect(Math.max(...costs)).toBeGreaterThan(Math.min(...costs) * 4);
+  });
+
+  // The shape of the map's opening, and a design claim worth protecting:
+  // sites are a REWARD for exploring, not a lure laid out at the start
+  // (revised 2026-09-02). Nothing site-like is on screen when a kingdom
+  // begins — the opening shows terrain and the things you can work, and the
+  // first shrine is something the player uncovers.
+  //
+  // What has to stay true is the SHAPE past that: the nearest sanctuary is
+  // also the cheapest by a wide margin, so the first one the player meets is
+  // the one they can plausibly save for, and every other is dearer. Get that
+  // backwards and the fog's whole cost curve stops meaning anything.
+  it('hides every site at the start, and puts the cheapest sanctuary nearest', () => {
+    const state = freshGame();
+
+    for (const l of LANDMARKS) {
+      expect(fogState(state, map, l.location), `${l.id} is visible at the start`)
+        .toBe('Undiscovered');
+    }
+    for (const r of Object.values(RUINS)) {
+      expect(fogState(state, map, r.location), `${r.id} is visible at the start`)
+        .toBe('Undiscovered');
+    }
+
+    const byDistance = [...LANDMARKS]
+      .sort((a, b) => townhallDistance(map, a.location) - townhallDistance(map, b.location));
+    const [nearest, ...rest] = byDistance;
+    const cheapest = Math.min(...LANDMARKS.map(landmarkClaimCost));
+    expect(landmarkClaimCost(nearest)).toBe(cheapest);
+
+    // ...and nothing else shares its price, so "the near one" is unambiguous.
+    for (const l of rest) {
+      expect(landmarkClaimCost(l), `${l.id} is no dearer than the nearest`)
+        .toBeGreaterThan(landmarkClaimCost(nearest));
+    }
+
+    // Many times what a new kingdom is handed: a save, not a pickup.
+    expect(landmarkClaimCost(nearest))
+      .toBeGreaterThan(5 * getWallet(state.city.wallet, 'Gold'));
+  });
+
+  it('reserves the dearest tier for the ones an army has to clear', () => {
+    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(l)));
+    for (const l of LANDMARKS) {
+      if (landmarkClaimCost(l) === dearest) expect(l.defended).toBe(true);
+    }
   });
 
   it('survive a save round-trip', () => {
@@ -242,5 +352,60 @@ describe('landmarks', () => {
     expect(restored.landmarks.claimed[first.id]).toBe(true);
     expect(restored.landmarks.cleared.CircleOfNine).toBe(true);
     expect(manaProduction(restored)).toBe(manaProduction(state));
+  });
+});
+
+// A claim lifts the fog around the sanctuary (2026-09-02).
+//
+// DISCOVERED, never revealed — and the distinction is the whole design. Paid
+// reveal is the economy's main sink, so a claim must not hand the player
+// ground for free; what it hands them is a place to LOOK. That turns the
+// second and third sanctuaries into lanterns held up over new parts of the
+// map, which is what makes "go and claim the far one" a reason to explore
+// rather than a chore at the end of exploring.
+describe('claiming a sanctuary lifts the fog around it', () => {
+  const claimable = (): { state: GameState; def: LandmarkDef } => {
+    const state = freshGame();
+    const def = LANDMARKS[0];
+    reveal(state, [def.location]);
+    state.city.wallet.Gold = landmarkClaimCost(def) + 10;
+    return { state, def };
+  };
+
+  it('discovers every cell within the authored radius, and reveals none of them', () => {
+    const { state, def } = claimable();
+    const revealedBefore = new Set(Object.keys(state.fog.revealed));
+
+    expect(claimLandmark(state, map, def.location)).toBe('Claimed');
+
+    const inRadius = [...map.terrain.keys()].map(parseCoordKey).filter((c) =>
+      Math.max(Math.abs(c.x - def.location.x), Math.abs(c.y - def.location.y))
+        <= FOG.claimDiscoverRadius);
+    expect(inRadius.length).toBeGreaterThan(50); // it is a real swathe of map
+
+    for (const cell of inRadius) {
+      expect(fogState(state, map, cell), `${coordKey(cell)} stayed dark`)
+        .not.toBe('Undiscovered');
+    }
+    // Not one cell was handed over: the Gold sink is untouched.
+    expect(new Set(Object.keys(state.fog.revealed))).toEqual(revealedBefore);
+  });
+
+  it('leaves ground the player already paid for alone', () => {
+    const { state, def } = claimable();
+    const paid = { x: def.location.x + 1, y: def.location.y };
+    reveal(state, [paid]);
+    expect(claimLandmark(state, map, def.location)).toBe('Claimed');
+    expect(fogState(state, map, paid)).toBe('Revealed'); // not downgraded
+  });
+
+  it('does nothing when the claim was refused', () => {
+    const state = freshGame();
+    const def = LANDMARKS[0];
+    reveal(state, [def.location]);
+    state.city.wallet.Gold = 0;
+    const before = Object.keys(state.fog.discovered).length;
+    expect(claimLandmark(state, map, def.location)).toBe('NotEnoughGold');
+    expect(Object.keys(state.fog.discovered)).toHaveLength(before);
   });
 });

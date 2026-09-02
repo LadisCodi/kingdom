@@ -142,15 +142,30 @@ Rule: **no pure black, no blue-grey, no #FFFFFF.** Outlines are
 | Destructive | `clay` slab, dark-clay lip | Reset, Cancel construction |
 | Gem action | `sky`-to-violet slab with a gem icon | Finish now, buy research slot |
 | Disabled | `locked` fill, ink-muted label, small padlock, **reason line beside it** | any gated action |
+| **Priced** | label on top, **the cost inside the button** underneath — icon + amount per term, any term the player cannot pay in `clay` | anything that spends: Build, Upgrade, Train, Recruit, Start, Claim, Cast, Call, Set off, Refill |
 
 Pressed state: the slab drops onto its lip (3px down, lip hidden).
 
 ### 3.4 Type & numbers
 
-- One chunky pixel display face for titles/numbers, one rounded readable
-  face for body copy. Titles 20–24px, body 15–16px, helper 13–14px.
-- Counters are **tabular** (already true in CSS) and always paired with an
-  icon on the left.
+*Revised 2026-09-02. The original called for "one chunky pixel display face
+for titles/numbers" — Pixelify Sans shipped as that face, and giving one
+decorative face both jobs is what forced it to be legible at 13px, which it
+was not. Numbers moved to the text face and the display face was replaced.*
+
+- **Titles: Germania One**, and **only at 15px and up**. It is a display face
+  and is used like one — headings, sheet planks, proper names. Nothing else.
+- **Body copy AND every number: PT Sans.** A number has to be read at a glance
+  at 13px, which is a text face's job, not a display face's.
+- Titles 20–24px, body 15–16px, helper 13–14px, unchanged.
+- Counters are **tabular** — and now by construction rather than by CSS: PT
+  Sans's digits are all one width, so figures do not jitter even though the
+  font ships no `tnum` feature for `font-variant-numeric` to switch on.
+  Germania One's digits *are* proportional, which is the second reason numbers
+  never go in the title face.
+- Germania One has **one weight**; asking it for 700 gets a synthesised smear,
+  so title rules specify 400.
+- Counters are always paired with an icon on the left.
 - Big numbers get thousands separators; never show more than one decimal
   (taxes currently print `1.5 Gold/min` — keep that shape).
 - Durations read as words at small values: `instant`, `8s`, `2m 30s`,
@@ -242,8 +257,14 @@ badge is developer information occupying prime real estate.
 
 - *Primary, always:* **Gold**, **Food**, **Wood** — the three that gate
   the early game. Icon + tabular value, large.
-- *Primary, right side:* **Gems**, visually separated (premium), with the
-  `+` affordance kept as-is.
+- *Primary, right side:* **Mana**, then **Gems** past the rope, and the
+  `+` affordance on Gems kept as-is. *(Amended 2026-09-02.)* Mana was a
+  contextual gauge on the row under the plank, shown only once the player had
+  met magic — right when it only paid for relics. It now pays for **every
+  tap**, so it is unconditional and it is pinned: the coins scroll inside
+  their own share of the row, while Mana and Gems never leave the screen.
+  A player whose tap just refused must be able to read why without scrolling
+  the header, and Gems is what refills it.
 - *Contextual:* Stone and Iron **appear once their gating tech is complete
   (Masonry, Mining) or once the balance is above zero.** The tech clause is
   what makes it sticky — a counter must not vanish when the player spends
@@ -259,9 +280,17 @@ badge is developer information occupying prime real estate.
 
   | When | Shows |
   |---|---|
-  | Default | **Population `n/max`** — tap to jump to the Townhall |
+  | ~~Default~~ | ~~**Population `n/max`**~~ — **moved to the world, 2026-09-02** |
   | A screen that can reassign workers is open (a worker building's card) | **Workers `working/free`** |
   | A screen that needs builders is open (Build, placement) | **Free builders `n`** |
+
+  **Population left the HUD entirely (2026-09-02)** and is drawn on the map as
+  a pill over the **Townhall**: `👥 current/max`, no portrait and no pips.
+  The Townhall is where villagers are trained, so the number and the control
+  that changes it are the same object — wanting more people and knowing how
+  many you have became one glance instead of two. It also bought the header
+  back the width the widget cost, which is what let Mana in. The plaque is
+  therefore empty by default and hidden.
 
   Three permanent counters is exactly the spreadsheet problem this document
   opens with: builders only matter while you are queueing something, and
@@ -269,9 +298,15 @@ badge is developer information occupying prime real estate.
   one that is live turns three pieces of trivia into one piece of advice.
 - *Move out:* the save-mode badge belongs in Settings.
 
-**States to mock.** Default (3 coins + population plaque), expanded purse, a
-counter mid-shake in `clay`, Stone appearing for the first time, and the
-plaque in each of its three states.
+**States to mock.** Default (3 coins + Mana + Gems, no plaque), expanded
+purse, a counter mid-shake in `clay`, Stone appearing for the first time, the
+plaque in its two remaining states, and the population pill over the Townhall.
+
+**Narrow screens.** Eight widgets do not fit a 390px row, which is the problem
+§5.1 opened with — so the row never wraps. The coins scroll horizontally
+inside their own box and everything from Mana rightwards is pinned, and below
+560px the Mana gauge drops its `+N/h` rate: "how full is my pool" is the
+number a refused tap sends you to read, and the rate is not it.
 
 ---
 
@@ -299,6 +334,10 @@ quest 3 of 12, so completing one has no arc.
 - One-sentence description (already good — keep the voice).
 - Progress: bar **plus** `4/10` **plus**, where the goal is countable and
   small (≤10), a row of pips/stamps that fill in.
+  *(Revised 2026-09-02: one read-out for every goal — the bar, with the count
+  written inside it. The pips meant the widget changed SHAPE from quest to
+  quest, so the player had to re-find the number each time, on the one element
+  whose whole job is to be scannable at a glance.)*
 - Chain position: `Quest 3 of 12` or twelve small notches — `questInfo()`
   already returns `index` and `total`, and it is currently unused by the UI.
 - Reward as **icons with counts**, not a sentence: the coin sprite, the
@@ -311,6 +350,25 @@ quest 3 of 12, so completing one has no arc.
 **States to mock.** In progress, complete (gold rim + Claim), and the
 final claim ("The chain is done" — today the tracker simply vanishes,
 which deserves a one-off celebratory card instead).
+
+#### Revised 2026-09-02 — the card IS the button
+
+The two controls above are gone, and so is the wax seal. At any moment
+exactly one of "Show me" and "Claim" was live, so the other was furniture,
+and both competed for taps with the card that was already the biggest target
+on screen. **Tapping the card does the only thing there is to do**: point you
+at the goal while the quest is running, take the reward when it is done. The
+finished state styles the whole widget as the claim button, so what to press
+needs no label.
+
+The **reward only appears once the quest is complete**. It is not a decision
+the player makes beforehand, so showing it early spends space on something
+they cannot act on — and its arrival is what makes finishing feel like a
+payout.
+
+It also **moved to the bottom left**. The top of the screen belongs to the
+resource bar and to the fog the player is tapping; the thumb lives at the
+bottom, and the widget is now a button that wants to be reachable.
 
 ---
 
@@ -874,6 +932,116 @@ Small, high-leverage, mostly independent of the visual redesign.
 11. **Offline report** (§5.12).
 12. **Minimum type size 13px**; the current 11–12px helper text fails on
     a phone in daylight.
+13. **A price lives inside the button that spends it** (§6.4 below).
+14. **The header and nav bar outrank every menu** (§6.5 below).
+15. **A lit tab never lies** (§6.7 below).
+
+### 6.4 A price lives inside the button that spends it
+
+*Added 2026-09-02, and it supersedes the cost-beside-the-button layout every
+screen used before it.*
+
+**The rule.** When an action has a cost, that cost is rendered **inside the
+button**, under its label: one icon-and-amount term per currency. **Any term
+the player cannot pay is drawn in `clay`.**
+
+Three reasons it is worth changing every screen for:
+
+- **A price beside a button is a caption; a price on a button is part of the
+  thing you press.** The player reads the verb and what it costs in one glance
+  instead of pairing up two elements and hoping they belong together.
+- **It fixes a real bug in the old layout.** `action()` renders one slot that
+  holds *either* the cost *or* the blocked reason — so the moment a player
+  could not afford something, the price was **replaced** by the words "Short 28
+  Wood". The number vanished exactly when it mattered most, and the player was
+  told they were short without being told short *of what total*.
+- **The red is the reason.** §6.3 says nothing is greyed out without a reason
+  beside it. A clay number satisfies that rule by itself, so an action blocked
+  *only* by its price now needs no sentence at all — and a screen that prints
+  "Short 28 Wood" beside a button already showing a red 40 is nagging.
+
+**Therefore:** `disabledReason` is for obstacles that are **not** money — a
+Townhall level, a missing technology, a busy hero, nowhere legal to build.
+Affordability is not a reason any more; it is a colour. Passing `cost` and
+`have` to `btn()`/`action()` gets the price, the red and the disabled state
+together, so no screen can show one without the others.
+
+**What stays outside the button:** consequences, not prices — a build
+duration, "instant", "takes 2m 30s". Those are what you get, not what you pay.
+
+**Non-wallet prices count too.** Fragments are a per-collectible counter rather
+than a currency, and they go in the button like everything else, reading
+`have / needed` so the gap is the thing you see.
+
+### 6.5 The chrome outranks every menu
+
+*Added 2026-09-02. Revised the same day — see below.*
+
+A menu is something the player opened **over** the game, never a replacement
+for it. The resource header and the nav bar both stay above it, undimmed by
+the scrim and still tappable. Your purse has to be readable while you browse
+the build menu, because what you can afford is the whole reason you opened it,
+and the way out has to stay where it always is.
+
+This first shipped with an exception for **full-screen** menus, on the
+reasoning that they own the view and bring their own top bar. That was wrong
+in exactly the place it mattered: the Research screen hid the resource bar
+while the player was reading prices off it. The exception is gone.
+
+The stack, bottom to top: map · ad-offer tab (4) · district card (6) · **menus
+and sheets (7)** · header (8) · nav bar (10) · settings knob (20) · the
+rewarded video (200). One z-index for every menu, so a new screen gets the
+right behaviour without being enumerated.
+
+Two consequences worth knowing:
+
+- **A full-screen menu must reserve the two bars itself.** An absolutely
+  positioned child resolves `inset` against its containing block's *padding
+  box*, which INCLUDES the padding — so `#overlay`'s reserved strips do
+  nothing for a child using `inset: 0`. `.research-screen` sets its own `top`
+  and `bottom` instead.
+- **The settings knob hides while any menu is open.** It floats above
+  everything (z 20), so it landed on the research screen's own close button.
+  Every menu brings its own way out; the knob is the affordance for the map.
+  Keyed on `#ui:has(> #overlay:not(:empty))`, so it cannot drift from what is
+  actually on screen.
+
+The one thing above everything is the rewarded-video surface, which is not in
+`#overlay` at all — see `Docs/features/ad-economy.md` §5.
+
+### 6.6 A centred sheet, for a question
+
+Bottom-anchoring is the default because most sheets are drawers over a screen
+you are still using. A short, modal, one-decision sheet — an offer, a
+confirmation — takes `centred: true` and sits in the middle of the play area
+instead, because a drawer is the wrong metaphor for something that wants an
+answer before you carry on.
+
+### 6.7 A lit tab never lies
+
+*Added 2026-09-02.*
+
+A nav tab wears the CTA when the screen behind it has something the player can
+press **this second** — not when it merely contains content. Build already
+worked this way (affordable *and* placeable); **Research** now does too: some
+tech startable, or some upgrade buyable.
+
+Inside the tech tree, the same question is asked per node and answered with a
+**red dot, top-right**. It is needed because `available` styling only means the
+prerequisites are met — a node can be available and still unaffordable, or
+blocked because every research slot is busy. The tree shows a lot of nodes at
+once and most of them are not actionable; the dot is the difference between
+"exists" and "go".
+
+The predicates behind both — `canStartTech`, `canBuyUpgrade` — mirror every
+gate the commands themselves check, and are the *same* functions the buttons
+use. That is the point: a light that drifts from its button is worse than no
+light, because it sends the player to a screen where nothing is pressable.
+
+Note the two are deliberately not the same question. Upgrades do not consume
+research slots, so with every slot busy the tech dots go dark while the upgrade
+dots stay — and the tab stays lit, honestly, because the upgrades really are
+pressable.
 
 ---
 
@@ -1347,10 +1515,16 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
    back at five coins. Mana is permanent on top of that — it is the visit clock,
    so it earns its slot — but it is the strongest argument yet for the
    hide-an-unused-coin rule floated in question 3.
-5. ~~**Pixel font licensing**~~ — **decided**: self-hosted OFL faces,
-   **Pixelify Sans** (400/700) for display and numbers, **Nunito** (400/700)
-   for body, vendored as subset woff2 with their licence so the GitHub Pages
-   build stays self-contained. Pixelify Sans over Press Start 2P (an 8×8
-   arcade face, far too wide and legible only at multiples of 8) and over
-   Silkscreen (no descender room at 24px); Nunito for the highest x-height of
-   the OFL rounded faces, which decides it at the 13px floor §6.12 sets.
+5. ~~**Pixel font licensing**~~ — **decided**, then **revised 2026-09-02.**
+   Originally: self-hosted OFL faces, **Pixelify Sans** (400/700) for display
+   *and numbers*, **Nunito** (400/700) for body.
+
+   That pairing shipped and the pixel face was not readable enough. The fault
+   was in the brief rather than the choice: making one decorative face carry
+   both titles and every number in the game meant it had to work at the 13px
+   floor §6.12 sets, and no pixel face does. Now **Germania One** (400) takes
+   titles alone at 15px and up, and **PT Sans** (400/700) takes body copy and
+   every number — with the useful property that its digits are all one width,
+   so counters stay tabular without a `tnum` feature. Still self-hosted OFL,
+   still vendored as subset woff2 with the licence, still 19 KB total. See
+   §3.4 and `src/ui/fonts/README.md`.

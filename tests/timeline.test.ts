@@ -172,15 +172,33 @@ describe('the gacha', () => {
     return state;
   };
 
-  it('costs Gems directly — one wallet, one thing to understand', () => {
+  // Docs/onboarding.md step 25: the first call on the standard banner is a
+  // gift, and every one after it is the authored price. No new save field —
+  // the pull counter already persists for pity, and "have you pulled here
+  // yet" is exactly what it records.
+  it('gives the first call free, then charges the authored price', () => {
     const state = rich();
     const before = getWallet(state.player.wallet, 'Gems');
+    expect(pullCost(state)).toBe(0);
     expect(pull(state).result).toBe('Pulled');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(before - pullCost());
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(before); // nothing taken
+
+    expect(pullCost(state)).toBe(GACHA.pullGemCost);
+    expect(pull(state).result).toBe('Pulled');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(before - GACHA.pullGemCost);
+  });
+
+  it('the free call is the STANDARD banner\'s, and only once', () => {
+    const state = rich();
+    pull(state);
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(pullCost(restored)).toBe(GACHA.pullGemCost); // survives a reload
   });
 
   it('refuses politely, and charges nothing, when the purse is short', () => {
     const state = freshGame();
+    state.player.wallet.Gems = 0;
+    expect(pull(state).result).toBe('Pulled'); // the free one lands regardless
     state.player.wallet.Gems = 0;
     expect(pull(state).result).toBe('NotEnoughGems');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);

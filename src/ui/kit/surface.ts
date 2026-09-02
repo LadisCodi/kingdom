@@ -22,14 +22,22 @@ export const plank = (title: string, ...trailing: Array<Node | string>): HTMLEle
  * own dismiss lets the nav stay put (§5.4).
  */
 export function sheet(
-  opts: { title: string; onClose: () => void },
+  opts: {
+    title: string;
+    onClose: () => void;
+    /** Centre it in the play area instead of anchoring it to the bottom.
+     *  For a short, modal, one-decision sheet — an offer or a confirmation —
+     *  where the bottom-sheet idiom (a drawer you pull up over a screen you
+     *  are still using) is the wrong metaphor. */
+    centred?: boolean;
+  },
   ...children: Array<Node | string>
 ): HTMLElement {
   const close = knob('✕', opts.onClose, { label: `Close ${opts.title}` });
   close.setAttribute('data-own-close', '');
   return el(
     'div',
-    { class: 'k-sheet' },
+    { class: `k-sheet${opts.centred ? ' is-centred' : ''}` },
     el(
       'div',
       { class: 'k-panel' },

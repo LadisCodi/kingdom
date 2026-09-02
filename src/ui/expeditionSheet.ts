@@ -15,13 +15,14 @@ import {
   ARTIFACTS, HEROES, PARTY, RUINS, UNITS,
 } from '../sim/data/definitions';
 import { availableRoster } from '../sim/army';
-import { depthDurationMs } from '../sim/combat';
+import { artifactEntry, isAttuned, ownedArtifacts } from '../sim/artifacts';
+import { carriedStats, depthDurationMs } from '../sim/combat';
 import { partySlotGemCost, partySlots, freeHeroes, unitSlots } from '../sim/expeditions';
 import { spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, chip, costChips, iconEl, knob, pips, sheet, stat } from './kit';
+import { action, btn, iconEl, knob, pips, sheet, stat } from './kit';
 
 const portrait = (sprite: string, glyph: string, cls: string): HTMLElement => {
   const url = spriteUrl(sprite);
@@ -29,6 +30,51 @@ const portrait = (sprite: string, glyph: string, cls: string): HTMLElement => {
     ? el('img', { class: cls, src: url, alt: '' })
     : el('div', { class: `${cls} is-glyph` }, glyph);
 };
+
+/** A signed stat delta, only shown when it is non-zero. */
+const delta = (n: number): string => (n > 0 ? `+${Math.round(n)}` : String(Math.round(n)));
+
+/**
+ * What the hero carries. This is where attune-or-arm becomes a decision the
+ * player can see: every relic they own is here, and the ones the kingdom is
+ * currently wearing say so rather than being quietly missing. The kit refuses
+ * a bare `disabled`, which is exactly right — a relic the player cannot send
+ * must explain itself, because the explanation IS the mechanic.
+ */
+function artifactPicker(game: Game): HTMLElement {
+  const owned = ownedArtifacts(game.state);
+  const row = el('div', { class: 'exp-relics' });
+  if (owned.length === 0) {
+    return el('div', { class: 'exp-relics-empty' },
+      'Relics you recover can be sent down instead of worn.');
+  }
+  for (const id of owned) {
+    const def = ARTIFACTS[id];
+    const worn = isAttuned(game.state, id);
+    const chosen = game.expeditionArtifact === id;
+    const stats = carriedStats({ id, level: artifactEntry(game.state, id).level });
+    const line = [
+      stats.atk ? `${delta(stats.atk)} atk` : null,
+      stats.def ? `${delta(stats.def)} def` : null,
+      stats.hp ? `${delta(stats.hp)} hp` : null,
+    ].filter(Boolean).join(' · ');
+    const b = el('button', {
+      class: `exp-relic${chosen ? ' is-chosen' : ''}${worn ? ' is-worn' : ''}`,
+      type: 'button',
+    },
+      portrait(def.sprite, def.glyph, 'exp-relic-art'),
+      el('div', { class: 'exp-relic-name' }, def.name),
+      el('div', { class: 'exp-relic-stats' },
+        // Naming the passive being given up is the point: the trade is the
+        // feature, so the relic the kingdom is wearing has to say what it
+        // would cost to take it back.
+        worn ? `Worn — ${def.passiveText.toLowerCase()}` : (line || 'No use underground')));
+    if (worn) b.disabled = true;
+    else b.addEventListener('click', () => game.setExpeditionArtifact(id));
+    row.append(b);
+  }
+  return row;
+}
 
 /** Who leads. A hero is MANDATORY, so this is never an empty row. */
 function heroPicker(game: Game): HTMLElement {
@@ -105,9 +151,8 @@ function troopPicker(game: Game): HTMLElement {
       label: 'Another slot',
       kind: 'gem',
       onClick: () => game.doBuyPartySlot(),
-      info: chip('Gems', cost, game.effectiveWalletValue('Gems') < cost),
-      disabledReason: game.effectiveWalletValue('Gems') < cost
-        ? `Short ${cost - game.effectiveWalletValue('Gems')} Gems` : undefined,
+      cost: { Gems: cost },
+      have: (c) => game.effectiveWalletValue(c),
     }));
   }
   return body;
@@ -142,6 +187,13 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
   const relic = ARTIFACTS[ruin.artifact];
   const alreadyHave = game.state.ruinsCleared[ruinId] === true;
 
+  // What the relic bought, if one is socketed. The safe depth carries it when
+  // it moved; the stat read-out carries it either way — a DEFENSIVE relic buys
+  // survival past the floor rather than a deeper floor, so the headline number
+  // can legitimately not move and the relic still be the right call.
+  const bare = game.expeditionPreviewUnarmed();
+  const movedDepth = bare !== null && preview.safeDepth !== bare.safeDepth;
+
   // THE number. A player who can read "safe to depth 4" before committing is
   // playing a management game; one who cannot is gambling.
   const safety = el('div', { class: `exp-safe${preview.safeDepth === 0 ? ' is-bad' : ''}` },
@@ -150,10 +202,18 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
     el('div', { class: 'exp-safe-label' },
       preview.safeDepth === 0
         ? 'This party cannot clear the first depth'
-        : `Safe to depth ${preview.safeDepth} of ${preview.maxDepth}`),
+        : `Safe to depth ${preview.safeDepth} of ${preview.maxDepth}`,
+      movedDepth
+        ? el('span', { class: 'exp-safe-delta' }, `${bare!.safeDepth} without the relic`)
+        : ''),
     el('div', { class: 'exp-safe-note' },
       'Past that is a gamble you choose — you will be asked first.'),
   );
+
+  const statDelta = (now: number, was: number): HTMLElement | string =>
+    bare === null || now === was
+      ? ''
+      : el('span', { class: 'exp-delta' }, `${now > was ? '+' : ''}${now - was}`);
 
   const matchupText = preview.matchup > 1.05
     ? `Well matched against what lives here (×${preview.matchup.toFixed(2)})`
@@ -171,9 +231,15 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
     safety,
 
     el('div', { class: 'exp-readout' },
-      stat('army', String(preview.stats.atk), 'attack'),
-      stat('padlock', String(preview.stats.def), 'defence'),
-      stat('population', String(preview.stats.hp), 'health')),
+      el('div', { class: 'exp-readout-cell' },
+        stat('army', String(preview.stats.atk), 'attack'),
+        statDelta(preview.stats.atk, bare?.stats.atk ?? preview.stats.atk)),
+      el('div', { class: 'exp-readout-cell' },
+        stat('padlock', String(preview.stats.def), 'defence'),
+        statDelta(preview.stats.def, bare?.stats.def ?? preview.stats.def)),
+      el('div', { class: 'exp-readout-cell' },
+        stat('population', String(preview.stats.hp), 'health'),
+        statDelta(preview.stats.hp, bare?.stats.hp ?? preview.stats.hp))),
     el('div', { class: 'exp-matchup' }, iconEl('sparkle', { size: 'sm' }), matchupText),
 
     // The haul is the whole reason to go, and it must be clear that it is not
@@ -195,19 +261,28 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
       el('div', { class: 'exp-heading' }, 'Who goes'),
       troopPicker(game)),
 
+    el('div', { class: 'exp-section' },
+      el('div', { class: 'exp-heading' }, 'What they carry'),
+      el('div', { class: 'exp-subheading' },
+        'A relic goes down or stays home — never both. Carrying costs no Mana.'),
+      artifactPicker(game)),
+
     standingOrder(game, ruin.maxDepth, preview.safeDepth),
 
-    el('div', { class: 'exp-cost' },
-      el('span', {}, 'Supplies'),
-      costChips(preview.supplies, (c) => game.effectiveWalletValue(c)),
-      el('span', { class: 'exp-time' },
-        iconEl('hourglass', { size: 'sm' }),
-        `first depth ${formatDuration(depthDurationMs(ruinId, 1) / 1000)}`)),
+    // The supplies used to sit in a row of their own, a whole control away
+    // from the button that spends them. They are the price of setting off, so
+    // they set off with it (§6.4); the WAIT stays out here, being a
+    // consequence rather than a cost.
+    el('div', { class: 'exp-time' },
+      iconEl('hourglass', { size: 'sm' }),
+      `first depth ${formatDuration(depthDurationMs(ruinId, 1) / 1000)}`),
 
     action({
       label: 'Set off',
       kind: 'primary',
       onClick: () => game.doLaunchExpedition(),
+      cost: preview.supplies,
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: blocked ?? undefined,
     }),
   );

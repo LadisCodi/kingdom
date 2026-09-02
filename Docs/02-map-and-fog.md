@@ -82,8 +82,24 @@ Three cell states:
 | State | Stored? | Meaning | Interaction |
 |---|---|---|---|
 | **Revealed** | yes (the only stored state) | fully in play | taps fall through to gameplay handlers |
-| **Discovered** | derived: any existing neighbour is Revealed | dimmed, shows a reveal progress bar once paid into | tappable to pay toward reveal |
+| **Discovered** | derived: any existing neighbour is Revealed | dimmed; terrain, features **and authored sites** (landmarks, ruins) all draw through the dimming, with a reveal progress bar once paid into | tappable to pay toward reveal |
 | **Undiscovered** | derived: no revealed neighbour | opaque | taps are swallowed (do nothing) |
+
+**Sighting a site announces it.** The first time a landmark or ruin stops
+being Undiscovered — however that happened — it goes into the persisted
+`discoveries` set as `site:<id>` and raises a banner, on the same system that
+announces a first-collected resource. `recordVisibleSites` is a SWEEP rather
+than a hook, because "became visible" is not a mutation: fog state is derived,
+so a shrine can come into view because a neighbour was cleared, because a
+building's radius landed near it, or because another sanctuary was claimed.
+Fifteen sites is cheaper to re-check than to be wrong about which change
+mattered, so all three routes call it.
+
+Landmarks and ruins draw under the fog exactly as features do (2026-09-02).
+A site you cannot see until you have already paid to stand on it is not a
+destination, it is a surprise — and the whole economy rests on the player
+choosing which direction to spend Gold in. Seeing one is not claiming it:
+`claimLandmark` still refuses anything short of `Revealed`.
 
 State derivation is a pure function of the revealed set + the cell's existing
 neighbours.
@@ -96,13 +112,20 @@ cell of the city **plus all its neighbours** is revealed. With just the Townhall
 
 ### Paying to reveal
 
-- Each tap on a Discovered cell pays `min(SilverPerTap, remaining)` Silver from the
-  city wallet; **SilverPerTap = 1**. Progress accumulates per cell; when accumulated
+- Each tap on a Discovered cell pays `min(revealPerTap, remaining)` Gold from the
+  city wallet; **`fog.gold_per_tap` = 1**, multiplied by the **Surveying**
+  upgrade (max level 2, so a tap counts double then triple). Surveying changes
+  the number of TAPS, never the Gold a cell costs. Progress accumulates per cell; when accumulated
   Silver ≥ the cell's total cost, the cell becomes Revealed (progress is discarded).
 - Reveal taps are blocked while a full-screen overlay menu is open (the tile-info
   popup doesn't count).
 - Revealing a cell triggers a production recalculation for the active city (newly
   revealed Trees can join a Lumber camp's worked patch).
+- **Revealing a cell pays Knowledge equal to its ring** — distance 3 pays 3,
+  distance 10 pays 10 (`knowledge.per_reveal_ring`) — into the kingdom purse,
+  and only on the tap that finishes it. This is the main source of the
+  currency the technology tree is bought with; the floater says what the cell
+  paid. See [`features/knowledge.md`](features/knowledge.md).
 
 ### Reveal cost curve
 

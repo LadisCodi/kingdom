@@ -13,14 +13,17 @@ import {
   partyStats, resolveDepth, threatStrength, typeMultiplier, worstThreatFor,
   type Party,
 } from '../src/sim/combat';
+import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
-import { ARMY, DELVE, DISTRICTS, HEROES, RUINS, UNITS } from '../src/sim/data/definitions';
+import { ARMY, ARTIFACTS, DELVE, DISTRICTS, HEROES, RUINS, UNITS } from '../src/sim/data/definitions';
 import {
   advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
   pushDeeper, supplyCost, unitSlots,
 } from '../src/sim/expeditions';
+import { artifactIsCarried } from '../src/sim/artifacts';
+import { mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type GameState, type UnitId } from '../src/sim/state';
+import { getWallet, type ArtifactId, type GameState, type UnitId } from '../src/sim/state';
 import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
@@ -338,9 +341,28 @@ describe('launching', () => {
     expect(preview.maxDepth).toBe(RUINS[BARROW].maxDepth);
     expect(preview.stats.hp).toBeGreaterThan(0);
     // The Warden's trait is party-wide defence, and the sheet shows it.
-    const plain = partyStats({ heroId: 'Warden', slots: [{ unitId: 'Warrior', count: 4 }] });
-    expect(preview.stats.def).toBeGreaterThan(plain.def);
     expect(HEROES.Warden.trait).toBe('PartyDefence');
+    const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
+    const untraited = partyStats({ heroId: 'Scholar', slots: troops });
+    expect(preview.stats.def).toBeGreaterThan(untraited.def + HEROES.Scholar.def);
+  });
+
+  // The trait used to be applied to the preview's DEF and nowhere else, so the
+  // launch sheet promised a shield the descent never handed out. That is the
+  // `guaranteedDepth` fault again: a number on the sheet the sim does not
+  // honour. Asserting the DAMAGE, not the displayed stat, is what stops it
+  // coming back — every party-wide bonus now lives in `partyStats`.
+  it("the Warden's shield actually stops something", () => {
+    // A tier-III depth, because damage floors at 1 and a shallow barrow hides
+    // every defensive difference behind that floor.
+    const deep = 'DrownedIronworks' as const;
+    const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
+    const warden = resolveDepth({ heroId: 'Warden', slots: troops }, deep, 9, 'Warrior');
+    const scholar = resolveDepth({ heroId: 'Scholar', slots: troops }, deep, 9, 'Warrior');
+    expect(warden.damage).toBeGreaterThan(1);
+    expect(HEROES.Warden.trait).toBe('PartyDefence');
+    expect(HEROES.Scholar.trait).not.toBe('PartyDefence');
+    expect(warden.damage).toBeLessThan(scholar.damage);
   });
 });
 
@@ -471,6 +493,162 @@ describe('the descent', () => {
     expect(restored.delves[0].depth).toBe(state.delves[0].depth);
     expect(restored.delves[0].haul).toEqual(state.delves[0].haul);
     expect(restored.delves[0].phase).toBe('checkpoint');
+  });
+});
+
+// Attune OR arm (Docs/features/heroes-and-gacha.md §2).
+//
+// The claim these tests protect is the one the design calls "the best decision
+// in the design": an artifact is attuned to the kingdom OR carried by a hero,
+// never both. It only reads as a decision if BOTH halves bite — if the sim
+// would quietly un-attune a relic to arm a hero, there is no trade, only a
+// convenience. So each direction is asserted separately, and the asymmetry
+// that makes the trade interesting (attuning costs Mana every hour, carrying
+// costs none) is asserted too.
+describe('attune or arm', () => {
+  const armed = (relic: ArtifactId = 'ForemansSigil', units = { Warrior: 4 }) => {
+    const state = readyToDelve(units);
+    grantArtifact(state, relic);
+    normaliseSlots(state);
+    return state;
+  };
+  const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
+
+  it('refuses to send a relic the kingdom is wearing', () => {
+    const state = armed();
+    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Attuned');
+    expect(launchBlock(state, map, BARROW, 'Warden', troops, 'ForemansSigil'))
+      .toBe('ArtifactAttuned');
+    // And the launch itself refuses, not just the preview of it.
+    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+      .toBe('ArtifactAttuned');
+    expect(state.delves).toHaveLength(0);
+  });
+
+  it('refuses to attune a relic that is underground', () => {
+    const state = armed();
+    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+      .toBe('Launched');
+    expect(artifactIsCarried(state, 'ForemansSigil')).toBe(true);
+    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Carried');
+    // The socket is still empty — the refusal cost the player nothing.
+    expect(state.artifacts.attuned[0]).toBe(null);
+  });
+
+  it('costs nothing to carry, and nothing to wear — the trade is exclusivity', () => {
+    const state = armed();
+    const before = mana(state);
+    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+      .toBe('Launched');
+    // Relic upkeep is gone, so neither half of attune-or-arm has a price. What
+    // makes it a question is that you cannot do both: an economy passive at
+    // home, or combat stats below.
+    expect(mana(state)).toBe(before);
+    expect(manaNetRegen(state)).toBe(manaProduction(state));
+  });
+
+  it('a relic in the pack takes the party deeper', () => {
+    const state = armed();
+    const bare = previewExpedition(state, BARROW, 'Warden', troops);
+    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
+    expect(withRelic.stats.atk).toBeGreaterThan(bare.stats.atk);
+    // The promise the whole feature sells: "wear it, or send it down to reach
+    // depth 6". A relic that did not move this number would not be a choice.
+    const deep = 'DrownedIronworks' as const;
+    reveal(state, [RUINS[deep].location]);
+    const bareDeep = previewExpedition(state, deep, 'Warden', troops);
+    const armedDeep = previewExpedition(state, deep, 'Warden', troops, 'ForemansSigil');
+    expect(armedDeep.safeDepth).toBeGreaterThan(bareDeep.safeDepth);
+  });
+
+  it('the matchup chip still answers "did I bring the right troops"', () => {
+    const state = armed();
+    const troopsOnly = previewExpedition(state, BARROW, 'Warden', troops);
+    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
+    // A type-neutral relic would otherwise pull the ratio toward 1, so adding
+    // one would make a GOOD matchup read worse while the party got stronger.
+    expect(withRelic.matchup).toBe(troopsOnly.matchup);
+    expect(withRelic.stats.atk).toBeGreaterThan(troopsOnly.stats.atk);
+  });
+
+  it("a relic's attack is type-neutral, so it is worth most in the wrong matchup", () => {
+    const slots = [{ unitId: 'Warrior' as UnitId, count: 4 }];
+    const relic = { id: 'ForemansSigil' as ArtifactId, level: 1 };
+    // A relic has no unit type, so the same ATK lands whatever is down there.
+    const good = effectiveAttack({ heroId: 'Warden', slots, artifact: relic }, 'Lancer')
+      - effectiveAttack({ heroId: 'Warden', slots }, 'Lancer');
+    const bad = effectiveAttack({ heroId: 'Warden', slots, artifact: relic }, 'Archer')
+      - effectiveAttack({ heroId: 'Warden', slots }, 'Archer');
+    expect(good).toBe(bad);
+    expect(good).toBe(ARTIFACTS.ForemansSigil.carried.atk);
+  });
+
+  it('scales with the level it went down at, and never re-arms mid-run', () => {
+    const state = armed();
+    state.artifacts.levels.ForemansSigil = 5;
+    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+      .toBe('Launched');
+    expect(state.delves[0].artifactLevel).toBe(5);
+
+    // Levelling the relic back home does not reach a party already below: the
+    // level is snapshotted beside maxPartyHp, exactly like the party itself.
+    state.artifacts.levels.ForemansSigil = 9;
+    expect(state.delves[0].artifactLevel).toBe(5);
+  });
+
+  it('comes home when the party does — on a good run and a bad one', () => {
+    const state = armed();
+    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
+    advance(state, map, T0 + depthDurationMs(BARROW, 1));
+    // Still committed while the party waits at the checkpoint.
+    expect(artifactIsCarried(state, 'ForemansSigil')).toBe(true);
+    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Carried');
+
+    extract(state, state.delves[0].id);
+    expect(artifactIsCarried(state, 'ForemansSigil')).toBe(false);
+    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Attuned');
+  });
+
+  it('survives a save round-trip with the relic aboard', () => {
+    const state = armed();
+    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
+    state.delves[0].artifactLevel = 4;
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(restored.delves[0].artifactId).toBe('ForemansSigil');
+    expect(restored.delves[0].artifactLevel).toBe(4);
+    expect(artifactIsCarried(restored, 'ForemansSigil')).toBe(true);
+  });
+
+  it('a save written before the rule existed reads as a party carrying nothing', () => {
+    const state = armed();
+    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
+    const save = serialize(state, T0);
+    // Exactly what an older save looks like: the keys simply are not there.
+    const dto = (save.Modules['kingdom.delves'] as any).Delves[0];
+    delete dto.ArtifactID;
+    delete dto.ArtifactLevel;
+    const restored = deserialize(save, map, T0)!;
+    expect(restored.delves[0].artifactId).toBe(null);
+    expect(restored.delves[0].artifactLevel).toBe(1);
+  });
+
+  // The assertion repeated at every step of this design pass. A relic changes
+  // DEF, which changes damage, which changes whether a depth is survived — so
+  // it is exactly the kind of thing that could make replay disagree with
+  // ticking, and exactly why it is asserted again here.
+  it('one-call offline replay equals stepped ticking with a relic aboard', () => {
+    const run = (step: number) => {
+      const state = armed('VerdantSeal', { Warrior: 4 });
+      launchDelve(state, map, BARROW, 'Warden', troops, T0, RUINS[BARROW].maxDepth,
+        'VerdantSeal');
+      const end = T0 + 6 * 3_600_000;
+      if (step === 0) advance(state, map, end);
+      else for (let t = T0 + step; t <= end; t += step) advance(state, map, t);
+      const d = state.delves[0];
+      return { depth: d.depth, hp: d.partyHp, phase: d.phase, haul: d.haul, out: d.outcome };
+    };
+    expect(run(60_000)).toEqual(run(0));
+    expect(run(997)).toEqual(run(0));
   });
 });
 

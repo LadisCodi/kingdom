@@ -72,6 +72,11 @@ export interface HarvestSpec {
   /** Seconds to recover after exhausting; 0 = FINITE — the feature is
    *  consumed and vanishes from the map when drained. */
   recoverySeconds: number;
+  /** The technology a player needs before they may tap this at all; null =
+   *  none. Forestry gates the Forest so the trees around the Townhall are
+   *  VISIBLE and refusing from the first second — which is what makes the
+   *  first research something the player wants rather than a chore. */
+  requiredTech: TechId | null;
   /** FINITE sources only: seconds after depletion until the feature
    *  reappears in a random tile adjacent to its ORIGINAL map cell
    *  (0 = never — removed for good). */
@@ -80,14 +85,19 @@ export interface HarvestSpec {
 
 // Exhaustion/recovery applies to NATURAL sources only — buildings (Townhall,
 // Housing) are tapped to advance their timers instead, and never exhaust.
+const harvest = (
+  currencyId: CurrencyId,
+  b: Omit<HarvestSpec, 'currencyId' | 'requiredTech'> & { requiredTech: unknown },
+): HarvestSpec => ({ ...b, currencyId, requiredTech: (b.requiredTech ?? null) as TechId | null });
+
 export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
-  Forest: { currencyId: 'Wood', ...balance.harvest.Forest },
-  Crops: { currencyId: 'Food', ...balance.harvest.Crops },
-  Berries: { currencyId: 'Berries', ...balance.harvest.Berries },
-  Meat: { currencyId: 'Meat', ...balance.harvest.Meat },
-  Stone: { currencyId: 'Stone', ...balance.harvest.Stone },
-  Fish: { currencyId: 'Fish', ...balance.harvest.Fish },
-  Iron: { currencyId: 'Iron', ...balance.harvest.Iron },
+  Forest: harvest('Wood', balance.harvest.Forest),
+  Crops: harvest('Food', balance.harvest.Crops),
+  Berries: harvest('Berries', balance.harvest.Berries),
+  Meat: harvest('Meat', balance.harvest.Meat),
+  Stone: harvest('Stone', balance.harvest.Stone),
+  Fish: harvest('Fish', balance.harvest.Fish),
+  Iron: harvest('Iron', balance.harvest.Iron),
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -122,11 +132,14 @@ export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
-  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'SellGoods'
-  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts';
+  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature' | 'SellGoods'
+  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts'
+  | 'OwnHeroes' | 'BuyUpgrade';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
-  new Set(['CollectResource', 'CollectTaps', 'DiscoverCells', 'SellGoods']);
+  new Set([
+    'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature', 'SellGoods',
+  ]);
 
 export interface QuestDef {
   id: string; // content id — data-side, not a TS union
@@ -141,6 +154,10 @@ export interface QuestDef {
   reward: Wallet;
   /** Gems paid into the PLAYER wallet (city currencies go through `reward`). */
   rewardGems: number;
+  /** Kingdom-scoped, so it is NOT part of `reward` — that wallet is the
+   *  city's. Quests are the steady half of the research budget; exploring
+   *  is the half that scales. */
+  rewardKnowledge: number;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
@@ -239,7 +256,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🌾',
     sprite: 'farm',
     harvestSource: 'Crops',
-    requiredTech: 'Farming',
+    requiredTech: 'Agriculture',
     ...districtBalance(balance.districts.Farm),
   },
   FarmLands: {
@@ -261,7 +278,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🪚',
     sprite: 'sawmill',
     harvestSource: 'Forest',
-    requiredTech: 'Forestry',
+    requiredTech: 'Saws',
     ...districtBalance(balance.districts.Sawmill),
   },
   Market: {
@@ -464,7 +481,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Forestry: tech({
     id: 'Forestry',
     name: 'Forestry',
-    description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
+    description: 'Axes and foraging — you can work the woods and berry bushes around you.',
     glyph: '🪓',
     node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
@@ -491,17 +508,31 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     node: { x: 0, y: -3 },
   }, balance.technologies.Architecture),
   // ---- economics: farm side (left, row 0)
+  Saws: tech({
+    id: 'Saws',
+    name: 'Saws',
+    description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
+    glyph: '🪚',
+    node: { x: -1, y: 1 },
+  }, balance.technologies.Saws),
+  Hunting: tech({
+    id: 'Hunting',
+    name: 'Hunting',
+    description: 'Snares and spears — you can take the wild game on the plains.',
+    glyph: '🏹',
+    node: { x: 1, y: 1 },
+  }, balance.technologies.Hunting),
   Agriculture: tech({
     id: 'Agriculture',
     name: 'Agriculture',
-    description: 'Unlocks crop plots (FarmLands) — tap them for Food.',
+    description: 'Unlocks crop plots and the Farm that works them.',
     glyph: '🌱',
     node: { x: -2, y: 0 },
   }, balance.technologies.Agriculture),
   Farming: tech({
     id: 'Farming',
     name: 'Farming',
-    description: 'Unlocks the Farm — its workers harvest nearby crop plots for you.',
+    description: 'Deeper furrows — the Farm reaches level 2.',
     glyph: '🚜',
     node: { x: -3, y: 0 },
   }, balance.technologies.Farming),
@@ -512,13 +543,6 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🤝',
     node: { x: -2, y: 1 },
   }, balance.technologies.Market),
-  CropRotation: tech({
-    id: 'CropRotation',
-    name: 'Crop Rotation',
-    description: 'Smarter fields — the Farm reaches level 2.',
-    glyph: '🔄',
-    node: { x: -4, y: 0 },
-  }, balance.technologies.CropRotation),
   // ---- economics: stone side (upper left, row −1)
   Masonry: tech({
     id: 'Masonry',
@@ -549,33 +573,43 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     node: { x: -3, y: -1 },
   }, balance.technologies.DeepMining),
   // ---- exploration (right)
+  //
+  // Cartography heads the branch and sits at (2,0): the trunk elbow at (1,0)
+  // stays empty, so the Forestry→Attunement connector still has it to itself.
+  Cartography: tech({
+    id: 'Cartography',
+    name: 'Cartography',
+    description: 'Survey and chart — every tap on the fog counts double. Opens rock and water.',
+    glyph: '🗺️',
+    node: { x: 2, y: 0 },
+  }, balance.technologies.Cartography),
   Sailing: tech({
     id: 'Sailing',
     name: 'Sailing',
     description: 'Rafts and rigging — sea cells can be explored.',
     glyph: '⛵',
-    node: { x: 2, y: 0 },
+    node: { x: 3, y: 0 },
   }, balance.technologies.Sailing),
   Fishing: tech({
     id: 'Fishing',
     name: 'Fishing',
     description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
     glyph: '🎣',
-    node: { x: 3, y: 0 },
+    node: { x: 4, y: 0 },
   }, balance.technologies.Fishing),
   Shipbuilding: tech({
     id: 'Shipbuilding',
     name: 'Shipbuilding',
     description: 'Sturdier hulls — the Docks reach level 2.',
     glyph: '🛶',
-    node: { x: 4, y: 0 },
+    node: { x: 5, y: 0 },
   }, balance.technologies.Shipbuilding),
   ScalingTools: tech({
     id: 'ScalingTools',
     name: 'Scaling Tools',
     description: 'Ropes and pitons — mountain cells can be explored.',
     glyph: '🧗',
-    node: { x: 1, y: 1 },
+    node: { x: 2, y: 1 },
   }, balance.technologies.ScalingTools),
   // ---- military (down)
   Warrior: tech({
@@ -626,9 +660,9 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
 export const TECH_ORDER: TechId[] = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture',
-  'Agriculture', 'Farming', 'Market', 'CropRotation',
+  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market',
   'Masonry', 'Mining', 'Engineering', 'DeepMining',
-  'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
+  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
   'Warrior', 'Spears', 'Archery', 'Cavalry',
   'Attunement', 'Warband',
 ];
@@ -684,6 +718,37 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
     id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
     description: '+1 resource per worker delivery',
   }, balance.upgrades.WorkerLoad),
+  Sawpits: upgrade({
+    id: 'Sawpits', name: 'Sawpits', glyph: '🪵',
+    description: '+1 Wood per worker delivery',
+  }, balance.upgrades.Sawpits),
+  Butchery: upgrade({
+    id: 'Butchery', name: 'Butchery', glyph: '🍖',
+    description: '+1 Meat per collect tap',
+  }, balance.upgrades.Butchery),
+  Irrigation: upgrade({
+    id: 'Irrigation', name: 'Irrigation', glyph: '💧',
+    description: '+1 Food per worker delivery',
+  }, balance.upgrades.Irrigation),
+  Scythes: upgrade({
+    id: 'Scythes', name: 'Scythes', glyph: '🌾',
+    description: '+1 Food per collect tap',
+  }, balance.upgrades.Scythes),
+  Pitons: upgrade({
+    id: 'Pitons', name: 'Pitons', glyph: '⛏️',
+    description: '−10% Gold to clear a cell of fog',
+  }, balance.upgrades.Pitons),
+  Resonance: upgrade({
+    id: 'Resonance', name: 'Resonance', glyph: '🔔',
+    description: '−20% Mana to cast a relic',
+  }, balance.upgrades.Resonance),
+  Surveying: upgrade({
+    id: 'Surveying', name: 'Surveying', glyph: '🧭',
+    // Each level makes one tap on the fog do the work of one more. The Gold
+    // a cell costs is unchanged — this buys the player's TIME back, which is
+    // the thing exploration actually spends once the far rings get expensive.
+    description: '+1 Gold of reveal progress per tap on the fog',
+  }, balance.upgrades.Surveying),
   MarketStall: upgrade({
     id: 'MarketStall', name: 'Market Stall', glyph: '🛒',
     description: '+5% Market sale prices',
@@ -706,10 +771,17 @@ export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
   }, balance.upgrades.IronPicks),
 };
 
-export const UPGRADE_ORDER: UpgradeId[] = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks',
-];
+/**
+ * Display order, DERIVED from the definitions above rather than restated.
+ *
+ * It used to be a hand-written list, and it silently went stale: Surveying was
+ * added, never listed, and so never appeared in the tech tree at all — while a
+ * quest cheerfully pointed the player at it. The tree groups upgrades with
+ * `UPGRADE_ORDER.filter(...)`, so anything missing here is invisible in the
+ * game. A second list of the same names could only ever be a chance to forget
+ * one.
+ */
+export const UPGRADE_ORDER: UpgradeId[] = Object.keys(UPGRADES) as UpgradeId[];
 
 // -------------------------------------------------------------------- units
 
@@ -804,6 +876,10 @@ export interface LandmarkDef {
   location: Coord;
   /** An enemy army holds it: clear the encounter first, then claim. */
   defended: boolean;
+  /** Gold to claim. Authored per sanctuary rather than derived from distance:
+   *  the tiers are the design — one in sight to save up for, then two rings
+   *  beyond it — and no curve lands on 5,000 / 25,000 / 100,000 exactly. */
+  claimCost: number;
 }
 
 export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; sprite: string }> = {
@@ -813,12 +889,13 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
 };
 
 export const LANDMARKS: LandmarkDef[] = (balance.landmarks as Array<{
-  id: string; kind: string; x: number; y: number; defended: boolean;
+  id: string; kind: string; x: number; y: number; defended: boolean; claimCost: number;
 }>).map((l) => ({
   id: l.id,
   kind: l.kind as LandmarkKind,
   location: { x: l.x, y: l.y },
   defended: l.defended,
+  claimCost: l.claimCost,
 }));
 
 /**
@@ -826,10 +903,14 @@ export const LANDMARKS: LandmarkDef[] = (balance.landmarks as Array<{
  * cast on the map. Hand-authored, one legible effect each, no random rolls —
  * which is what keeps a collection system cozy rather than a spreadsheet.
  *
- * Upkeep is FLAT and does not scale with level, so levelling a relic is
- * unambiguously good. It applies to kingdom attunement only: an artifact
- * carried by a hero into a delve costs no Mana, and that asymmetry is what
- * makes the trade "which do I need right now" rather than "which is cheaper".
+ * Attuning is FREE. Relics used to draw an hourly Mana upkeep, which was
+ * removed once Mana became the energy every tap is paid from — the two jobs
+ * fought, and a player wearing the set had no pool left to play with.
+ *
+ * Attune-or-arm survives that intact, because the rule was never really about
+ * price: a relic is attuned to the kingdom OR carried down by a hero, never
+ * both, so the question is still "which do I need right now" — an economy
+ * passive at home, or combat stats below.
  */
 export interface ArtifactDef {
   id: ArtifactId;
@@ -847,7 +928,16 @@ export interface ArtifactDef {
     perLevel: number;
   };
   /** Mana per hour drawn while attuned. */
-  upkeep: number;
+  /**
+   * What the relic is worth when a hero carries it DOWN rather than the
+   * kingdom wearing it — the other half of attune-OR-arm.
+   *
+   * Attuning draws Mana every hour; carrying draws none. That asymmetry is
+   * deliberate and does the real work: the trade is never "which is cheaper"
+   * but "which do I need right now" — a standing economic benefit against a
+   * burst of delve power.
+   */
+  carried: CarriedStats;
   active: ArtifactActive | null;
   /** The ruin whose full clear grants it. */
   source: RuinId;
@@ -868,12 +958,33 @@ export interface ArtifactActive {
   radius: number;
 }
 
+/** A relic's contribution to a party, before any matchup. */
+export interface CarriedStats {
+  atk: number;
+  def: number;
+  hp: number;
+  atkPerLevel: number;
+  defPerLevel: number;
+  hpPerLevel: number;
+}
+
 type ArtifactBalance = {
-  upkeep: number; passiveBase: number; passivePerLevel: number;
+  passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
+  carriedAtk: number; carriedDef: number; carriedHp: number;
+  carriedAtkPerLevel: number; carriedDefPerLevel: number; carriedHpPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
+
+const carried = (id: ArtifactId): CarriedStats => ({
+  atk: ab(id).carriedAtk,
+  def: ab(id).carriedDef,
+  hp: ab(id).carriedHp,
+  atkPerLevel: ab(id).carriedAtkPerLevel,
+  defPerLevel: ab(id).carriedDefPerLevel,
+  hpPerLevel: ab(id).carriedHpPerLevel,
+});
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
@@ -883,7 +994,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'revealCost', scope: null, op: 'mul',
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
-    upkeep: ab('DowsingRod').upkeep,
+    carried: carried('DowsingRod'),
     active: {
       id: 'Divination', name: 'Divination', targeted: true,
       manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
@@ -901,7 +1012,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'cellRecovery', scope: null, op: 'mul',
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
-    upkeep: ab('VerdantSeal').upkeep,
+    carried: carried('VerdantSeal'),
     active: {
       id: 'Bloom', name: 'Bloom', targeted: true,
       manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
@@ -917,7 +1028,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'workerYield', scope: null, op: 'add',
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
-    upkeep: ab('ForemansSigil').upkeep,
+    carried: carried('ForemansSigil'),
     active: {
       id: 'Haste', name: 'Haste', targeted: false,
       manaCost: ab('ForemansSigil').activeManaCost,
@@ -935,7 +1046,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'taxRate', scope: null, op: 'mul',
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    upkeep: ab('GildedLedger').upkeep,
+    carried: carried('GildedLedger'),
     // No active at all, deliberately: the clearest proof that the SLOT rather
     // than the ability is the constraint.
     active: null,
@@ -949,7 +1060,7 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'knowledgeYield', scope: null, op: 'mul',
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
-    upkeep: ab('WanderersCompass').upkeep,
+    carried: carried('WanderersCompass'),
     active: {
       id: 'Beckon', name: 'Beckon', targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,
@@ -1134,6 +1245,9 @@ export const HERO_ORDER: HeroId[] = [
 export const DELVE = balance.delve;
 export const PARTY = balance.party;
 export const GACHA = balance.gacha;
+/** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
+ *  eligible, and how long the (faked) video runs. */
+export const AD = balance.ads;
 
 // ------------------------------------------------------------ the timeline
 
@@ -1218,4 +1332,6 @@ export const GAME_VERSION = '0.1.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
 // migrator, only the version (see Docs/features/engine-seams.md §4).
-export const SAVE_VERSION = 17;
+// v18 predates ad offers. `kingdom.adOffers` is additive and its reader
+// defaults, so this bump needs no migrator either.
+export const SAVE_VERSION = 19;

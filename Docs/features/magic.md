@@ -53,8 +53,12 @@ by content, so it keeps giving for weeks.
    breadth first, so the paid gate is never the only thing between a player and
    the system. Same pattern as party slots in `expeditions.md`.
 3. **Swapping is immediate; the slot then locks for 5 minutes.**
-4. **Upkeep applies to kingdom attunement only.** An artifact carried by a hero
-   into a delve costs no Mana.
+4. ~~**Upkeep applies to kingdom attunement only.**~~ **Upkeep was removed
+   entirely on 2026-09-02.** Once Mana became the energy every tap is paid
+   from, the two jobs fought: at Townhall 1 the full relic set drew exactly
+   what the Townhall made, so wearing everything stalled the pool dead.
+   Attuning is free now, and attune-or-arm rests on exclusivity alone — see
+   [`ad-economy.md`](ad-economy.md) §2.
 5. **Upkeep is flat per artifact and does not scale with level**, so levelling a
    relic is unambiguously good.
 6. **Net regen floors at zero, never negative.** You can stall; you can never go
@@ -77,7 +81,7 @@ capping is new behaviour and belongs in exactly one place.
 
 | Dial | Raised by | What it means to the player |
 |---|---|---|
-| **Production** (Mana/h) | Townhall level + **landmarks claimed on the map** | How much magic you can *sustain* |
+| **Production** (Mana/h) | Townhall level | How much you get for *free* |
 | **Capacity** (pool size) | The **Sanctum**, a new city district | How long an *absence* you can bank |
 
 ```
@@ -87,14 +91,36 @@ net regen/h = base(TH) + Σ landmarks − Σ upkeep of attuned artifacts    (flo
 Conflating them would waste both. Production answers "how many relics can I
 wear"; capacity answers "how long can I be away without spilling".
 
-### The tuning law
+### The pool, retuned 2026-09-02
+
+Cap **100 / 130 / 160** by Townhall level (Sanctum +24/48/72), regen
+**10 / 13 / 16** an hour. Fill time is **10 h at every level**, deliberately
+past the 8 h offline cap. Every tap in the game costs 1 Mana, so the pool is a
+session's worth of tapping and a rewarded ad refills it — see
+[`ad-economy.md`](ad-economy.md).
+
+### The tuning law — SUSPENDED 2026-09-02
 
 > **cap ≈ 8 × net regen**
 
-This keeps "an overnight absence fills the pool exactly" true at *every* stage of
-the game. Fill time sits just under the 8 h offline cap, so the two caps
-reinforce each other instead of fighting, and the Sanctum becomes worth building
-precisely when production has grown into it.
+This kept "an overnight absence fills the pool exactly" true at *every* stage of
+the game. Fill time sat just under the 8 h offline cap, so the two caps
+reinforced each other instead of fighting, and the Sanctum became worth building
+precisely when production had grown into it.
+
+**That law belonged to a pool whose only job was sustaining artifacts — an
+ABSENCE budget.** Mana is now also the energy every player tap is paid from
+(`balancing-v2.md` §1.1), which makes it a **SPEND budget**, and the two want
+opposite things: an absence budget should refill exactly overnight, while a
+spend budget has to be able to run out or there is nothing for a refill to
+sell. The starting cap went to **50** and regen did not follow, so a full pool
+is now **12.5 h at Townhall 1** rather than 8.
+
+This is deliberate and it is the demand the planned Gem/monetised refill sells
+against. It is recorded here rather than quietly re-tuned because the next
+person to touch `mana.production_per_townhall_level` has to know which budget
+they are tuning for. **Restoring the old law at cap 50 means regen 7/h at TH1.**
+`tests/mana.test.ts` asserts the new intent, not the old law.
 
 A player who checks in 2–3 times a day wastes nothing. A player who checks in
 once a day wastes some. That is the audit's session budget expressed as a
@@ -143,9 +169,12 @@ same machinery, not a new interaction model.
 ### Dual purpose
 
 An artifact is either **attuned to the kingdom** (economy passive, Mana upkeep)
-**or** **carried by a hero into a delve** (combat effects, no upkeep) — never
-both at once. See `heroes-and-gacha.md`. The asymmetry does real work: the trade
-is never "which is cheaper" but "which do I need right now".
+**or** **carried by a hero into a delve** (a `carried` ATK/DEF/HP block, no
+upkeep) — never both at once. See `heroes-and-gacha.md`. The asymmetry does real
+work: the trade is never "which is cheaper" but "which do I need right now".
+
+**Built 2026-09-02.** Both directions refuse: a launch will not take a relic the
+kingdom is wearing, and attuning will not take back one that is underground.
 
 ---
 
@@ -166,20 +195,63 @@ were living off.
 ## 4. Landmarks and the Sanctum
 
 **Landmarks** are small, numerous, passive map features — a shrine, a standing
-stone, a leyspring. 8–12 across the map. Claiming one raises Mana production by
-**+1/h** permanently. Claiming rules and the contested variant live in
-`expeditions.md`.
+stone, a leyspring. Ten across the map. Claiming one does two things,
+permanently:
+
+1. raises the Mana **cap** by **+10** (it used to be +1/h of production — see
+   `ad-economy.md`);
+2. **lifts the fog for `fog.claim_discover_radius` cells around it** — every
+   cell in that square becomes **Discovered**, never Revealed (2026-09-02).
+
+That second effect is the one worth being careful about. Discovered-not-
+revealed keeps the paid reveal as the economy's main sink: a claim hands the
+player a *place to look*, not ground. At radius 5 that is an 11×11 square —
+around a hundred cells of dark tiles with their features showing, which is a
+map to plan against and a frontier to push at. It also gives the second and
+third sanctuaries a job beyond capacity: each is a lantern held up over a new
+part of the world, which turns "go and claim the far one" into a reason to
+explore rather than a chore at the end of exploring.
+
+Cells the player already cleared are left alone — revealed outranks
+discovered, and overwriting would undo paid-for progress.
+
+Claiming rules and the contested variant live in `expeditions.md`.
+
+**Placed and priced as destinations, not pickups** (2026-09-02, revised the
+same day). **No sanctuary — and no ruin — is visible when a kingdom begins.**
+The opening shows terrain and the things you can work; a shrine is something
+the player uncovers, not a lure laid out in front of them. Sites do draw
+through the Discovered scrim once the fog reaches them, so the moment one
+comes into view it reads as a destination.
+
+What the placement guarantees is the shape past that: **the nearest sanctuary
+is also the cheapest, by a wide margin**, so the first one the player meets is
+the one they can plausibly save for. Get that backwards and the fog's cost
+curve stops meaning anything.
+
+| Tier | Cost | Count |
+|---|---|---|
+| The near one | **2,000** | 1 |
+| The middle ring | **25,000** | 5 |
+| The far ring | **100,000** | 4 — all of them **defended** |
+
+The dearest tier is exactly the defended set, so the last sanctuaries need both
+the Gold *and* an army — which is also the only thing that gives combat a job
+outside a dungeon.
+
+Costs are **authored per sanctuary**, not derived from distance. The tiers are
+the design, and no `base × growth^distance` curve lands on those numbers.
 
 They are what makes exploration *compound*, and they are the design's answer to
 the audit's strongest keeper — paid fog as the primary economic sink, which it
 notes nobody else in the category does:
 
-> explore → more Mana/h → afford more upkeep → wear more relics → explore further
+> explore → a bigger pool → a bigger ad → more taps → explore further
 
 A flat resource drip cannot do this, because it does not feed the constraint that
 gates everything else.
 
-**The Sanctum** is a new city district raising the Mana cap (3 levels, +12 each).
+**The Sanctum** is a new city district raising the Mana cap (3 levels, +24/48/72).
 It reuses `districts.ts` wholesale — count caps, distance costs, level gates.
 
 ---
@@ -211,10 +283,9 @@ Follows `Docs/art/ui-menus-redesign.md`.
 | Constant | Value | Rationale |
 |---|---|---|
 | Sanctum cap bonus | +12 / level, 3 levels | Keeps `cap ≈ 8 × net regen` as landmarks accumulate |
-| Landmark production | +1 Mana/h | 8–12 on the map ≈ doubles base production when fully claimed |
+| Landmark capacity | **+10 max Mana** | Ten on the map, so a full sweep DOUBLES the base pool — and doubles what every ad pays, since the reward is a whole pool |
 | Attunement slots | 1 → 1 research → 5 max | Gem price escalates per slot |
 | Slot swap lock | 5 min | Long enough to prevent hot-swapping, short enough not to punish |
-| Artifact upkeep | 1–3 Mana/h, flat | Strongest passive costs most; never scales with level |
 | Artifact level cost | `round(20 × 1.6^level)`, max 10 | Reuses `upgradeCost` (`upgrades.ts:15`); ≈3,630 Knowledge to max one |
 | Knowledge drip | 2/h per discovered ruin | 5 ruins ≈ 240/day → one artifact maxed in ~15 days |
 
@@ -240,7 +311,7 @@ Landed 2026-09-02 on `feature/engine-seams`, after `engine-seams.md` steps 1–5
 | Step | Commit | Notes |
 |---|---|---|
 | Mana — currency, cap clamp, accrual, production/capacity split | `1850430` | Clamping lives in `addMana`, not `addToWallet`; the tuning law `cap ≈ 8 × net regen` is asserted at every Townhall level |
-| The Sanctum; landmarks, claiming, production contribution | `1850430` | **Contested claiming is NOT built** — see backlog gap 2 |
+| The Sanctum; landmarks, claiming, production contribution | `1850430` | **Contested claiming is NOT built** — see backlog gap 1 |
 | Artifacts — ownership, levels, Knowledge sink, sockets, the 5-min lock, passives as permanent modifiers | `e57ec98` | `syncArtifactModifiers` is a total idempotent rebuild rather than incremental add/remove |
 | The four actives | `e57ec98` | Cast mode reuses placement mode, as §2 said it should |
 | Reliquary sheet, header Mana widget, cast mode, nav change | `bbfbb8f` | Army lost its tab to the Reliquary |
@@ -250,8 +321,9 @@ Landed 2026-09-02 on `feature/engine-seams`, after `engine-seams.md` steps 1–5
 applies to it" failed: the cap's pause shifted `lastTaxAt` and not
 `lastManaAt`, so a 40-hour absence paid Mana in full.
 
-**Not built from this doc:** the contested landmark (backlog gap 2). Everything
-else in §1–§7 shipped.
+**Not built from this doc:** the contested landmark (backlog gap 1). Everything
+else in §1–§7 shipped. The dual-purpose rule in §2 landed separately on
+2026-09-02 — see `heroes-and-gacha.md` §8.
 
 ## 9. Out of scope
 

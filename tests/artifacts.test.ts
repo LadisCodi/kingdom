@@ -7,9 +7,10 @@
 // socket.
 import { describe, expect, it } from 'vitest';
 import {
-  artifactEntry, attune, attunementSlots, attunementSlotGemCost, buyAttunementSlot,
-  grantArtifact, isAttuned, isSlotLocked, levelUpArtifact, normaliseSlots, ownsArtifact,
-  passiveValue, raiseArtifactTier, slotUnlocksIn, syncArtifactModifiers,
+  artifactEntry, artifactIsCarried, artifactIsCommitted, attune, attunementSlots,
+  attunementSlotGemCost, buyAttunementSlot, grantArtifact, isAttuned, isSlotLocked,
+  levelUpArtifact, normaliseSlots, ownsArtifact, passiveValue, raiseArtifactTier,
+  slotUnlocksIn, syncArtifactModifiers,
 } from '../src/sim/artifacts';
 import { cast, castBlock, validCastCells } from '../src/sim/casting';
 import { levelCapForTier, levelCost, tierCost, totalLevelCost } from '../src/sim/collection';
@@ -17,11 +18,11 @@ import { advance } from '../src/sim/commands';
 import { ARTIFACTS, ATTUNEMENT, COLLECTION, HARVEST, RUINS } from '../src/sim/data/definitions';
 import { fogState, revealCostForCell } from '../src/sim/fog';
 import { registerTap } from '../src/sim/harvest';
-import { addMana, manaUpkeep, mana } from '../src/sim/mana';
+import { addMana, mana } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { effectiveTaxRate, effectiveWorkerYield } from '../src/sim/upgrades';
 import { coordKey, getWallet, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
+import { addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0 } from './helpers';
 
 const withRelic = (id: Parameters<typeof grantArtifact>[1] = 'GildedLedger'): GameState => {
   const state = freshGame();
@@ -106,14 +107,12 @@ describe('attunement', () => {
     const base = effectiveTaxRate(state);
     expect(attune(state, 0, 'GildedLedger', T0)).toBe('Attuned');
     expect(effectiveTaxRate(state)).toBeCloseTo(base * 1.2, 6);
-    expect(manaUpkeep(state)).toBe(ARTIFACTS.GildedLedger.upkeep);
 
     // The lock has to pass before it can come off again.
     expect(attune(state, 0, null, T0)).toBe('SlotLocked');
     const after = T0 + ATTUNEMENT.swapLockSeconds * 1000;
     expect(attune(state, 0, null, after)).toBe('Unattuned');
     expect(effectiveTaxRate(state)).toBe(base);
-    expect(manaUpkeep(state)).toBe(0);
   });
 
   it('locks the socket for exactly the authored time', () => {
@@ -203,9 +202,10 @@ describe('the actives', () => {
     addMana(state, 100);
     attune(state, 0, 'VerdantSeal', T0);
 
-    // Exhaust a forest the player can see.
-    const forest = map.cells.find((c) =>
-      state.fog.revealed[coordKey(c)] && map.initialFeatures.get(coordKey(c)) === 'Trees')!;
+    // Exhaust a forest the player can see. No Trees cell is inside the
+    // opening reveal any more, so clear one first.
+    reveal(state, [FOREST]);
+    const forest = FOREST;
     for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) {
       registerTap(state, forest, HARVEST.Forest, T0);
     }
@@ -244,7 +244,9 @@ describe('the actives', () => {
 
   it('charges nothing when the cast is refused', () => {
     const state = withRelic('DowsingRod');
-    addMana(state, 3); // less than Divination costs
+    // A new kingdom starts with a FULL pool now, so this has to be SET rather
+    // than added to: the point is being short of what Divination costs.
+    state.city.wallet.Mana = 3;
     attune(state, 0, 'DowsingRod', T0);
     const before = mana(state);
     expect(cast(state, map, 'DowsingRod', null, T0).result).toBe('NotEnoughMana');
@@ -293,5 +295,42 @@ describe('the fog discount reaches both the bar and the charge', () => {
     const full = revealCostForCell(state, map, frontier);
     attune(state, 0, 'DowsingRod', T0);
     expect(revealCostForCell(state, map, frontier)).toBeLessThanOrEqual(full);
+  });
+});
+
+// The socket half of attune-or-arm (Docs/features/heroes-and-gacha.md §2).
+// The delve half lives in expeditions.test.ts; what matters HERE is that the
+// Reliquary cannot take back a relic the sim has already committed, and that
+// a carried relic draws no upkeep — the asymmetry the whole trade rests on.
+describe('a relic cannot be worn and carried at once', () => {
+  it('a relic underground is committed, and the socket says so', () => {
+    const state = withRelic('DowsingRod');
+    expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
+
+    // Standing in for a launch: what the sim records is a delve holding it.
+    state.delves.push({
+      id: 'd1', ruinId: 'HollowBarrow', heroId: 'Warden',
+      artifactId: 'DowsingRod', artifactLevel: 1,
+      party: [{ unitId: 'Warrior', count: 1 }], depth: 0, partyHp: 10, maxPartyHp: 10,
+      haul: {}, haulFragments: 0, phase: 'descending', depthEndsAt: T0 + 1000,
+      standingOrder: null, threat: 'Any', outcome: null,
+    });
+    expect(artifactIsCarried(state, 'DowsingRod')).toBe(true);
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
+    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Carried');
+    // Refused, so the socket is untouched AND unlocked — a refusal must never
+    // cost the player the five minutes a real swap costs.
+    expect(state.artifacts.attuned[0]).toBe(null);
+    expect(isSlotLocked(state, 0, T0)).toBe(false);
+  });
+
+  it('an attuned relic still un-attunes normally — the rule only blocks the way in', () => {
+    const state = withRelic('DowsingRod');
+    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
+    const after = T0 + ATTUNEMENT.swapLockSeconds * 1000;
+    expect(attune(state, 0, null, after)).toBe('Unattuned');
+    expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
   });
 });

@@ -104,7 +104,20 @@ export function addHeroXp(state: GameState, id: HeroId, amount: number): void {
 
 export const STANDARD_BANNER = 'standard';
 
-export const pullCost = (): number => GACHA.pullGemCost;
+/**
+ * What the NEXT pull costs on this banner.
+ *
+ * The first one on the standard banner is free (Docs/onboarding.md, step 25).
+ * The tutorial hands the player a hero rather than a price list: a summon they
+ * have never seen is not something they can judge the cost of, and a banner
+ * whose first impression is "you cannot afford this" teaches the wrong thing
+ * about the whole system.
+ *
+ * It needs no new save field — `pullCounts` is already persisted for pity, and
+ * "have you pulled here yet" is exactly what it records.
+ */
+export const pullCost = (state: GameState, banner: string = STANDARD_BANNER): number =>
+  (banner === STANDARD_BANNER && pullCount(state, banner) === 0) ? 0 : GACHA.pullGemCost;
 
 export const pullCount = (state: GameState, banner: string): number =>
   state.gacha.pullCounts[banner] ?? 0;
@@ -156,7 +169,7 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
     result: 'NotEnoughGems', heroId: null, duplicate: false,
     fragments: 0, fragmentsOf: null, guaranteed: false,
   };
-  const cost = pullCost();
+  const cost = pullCost(state, banner);
   if (getWallet(state.player.wallet, 'Gems') < cost) return miss;
 
   const pool = bannerPool(state, banner);

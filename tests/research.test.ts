@@ -6,23 +6,30 @@ import { enqueueBuild } from '../src/sim/commands';
 import {
   DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
 } from '../src/sim/data/definitions';
-import { placementBlock } from '../src/sim/districts';
+import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
-  buySlot, isTechComplete, slotGemCost, startTech, techSlots, techUnlocks,
+  anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
+  startTech, techCost, techSlots, techUnlocks,
 } from '../src/sim/research';
 import { edgeCells } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet } from '../src/sim/state';
-import { buyUpgrade } from '../src/sim/upgrades';
-import { addAllTrainers, completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
+import { getWallet, type TechId, type UpgradeId } from '../src/sim/state';
+import { buyUpgrade, canBuyUpgrade } from '../src/sim/upgrades';
+import {
+  addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0, tickAt,
+} from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('technology basics', () => {
-  it('the farming chain: Agriculture unlocks FarmLands, Farming unlocks the Farm', () => {
+  // Docs/onboarding.md step 9: ONE research opens the plots and the Farm that
+  // works them. Splitting them across two techs put a second research between
+  // "tap this for Food" and "stop tapping this for Food", which is the beat
+  // the tutorial is actually built around. Farming now buys the Farm's level 2.
+  it('the farming chain: Agriculture unlocks crop plots AND the Farm', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Knowledge: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement'); // needs Agriculture
@@ -39,11 +46,13 @@ describe('technology basics', () => {
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
     expect(startTech(state, 'Agriculture', T0 + durationMs)).toBe('AlreadyDone');
 
-    // Crop plots open up; the Farm still needs the follow-up tech.
+    // Both open at once — no second research between tapping a plot and
+    // automating it.
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe(null);
-    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
-    completeTech(state, 'Farming');
+    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe(null);
     expect(enqueueBuild(state, map, 'Farm', FARM_CELL)).toBe('Started');
+    // Farming is what the Farm's second level costs.
+    expect(requiredTechForLevel('Farm', 2)).toBe('Farming');
   });
 
   it('gates units: every unit has its technology (Warrior, Archery)', () => {
@@ -60,26 +69,40 @@ describe('technology basics', () => {
 
   it('the requires tree: Cavalry is blocked until Warrior is done', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
     completeTech(state, 'Warrior');
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
   });
 
-  it('costs are paid up front', () => {
+  // CLAIM: research is bought with Knowledge out of the KINGDOM purse, up
+  // front, and it never touches the city's money. That is what makes the tree
+  // a question about how far you have explored rather than how much you have
+  // stockpiled — and it is why a city reset cannot cost you a technology.
+  it('costs are paid up front, in Knowledge, from the kingdom purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Knowledge: 100 });
     completeTech(state, 'Forestry');
-    startTech(state, 'Sailing', T0); // 150 Gold + 30 Wood
-    expect(state.city.wallet.Gold).toBe(1000 - 150);
-    expect(state.city.wallet.Wood).toBe(500 - 30);
+    completeTech(state, 'Cartography'); // the exploration branch heads here now
+    expect(startTech(state, 'Sailing', T0)).toBe('Started');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(100 - techCost('Sailing'));
+    expect(state.city.wallet.Gold).toBe(1000); // the city paid nothing
+    expect(state.city.wallet.Wood).toBe(500);
+  });
+
+  it('refuses a technology the kingdom cannot pay for, however rich the city', () => {
+    const state = freshGame();
+    fund(state, { Gold: 999_999, Wood: 999_999, Knowledge: techCost('Forestry') - 1 });
+    expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
+    fund(state, { Knowledge: techCost('Forestry') });
+    expect(startTech(state, 'Forestry', T0)).toBe('Started');
   });
 });
 
 describe('research slots', () => {
   it('base slot limits concurrency; a gem-bought slot lifts it', () => {
     const state = freshGame(); // 10 Gems
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
@@ -108,7 +131,7 @@ describe('research slots', () => {
   it('two active technologies complete independently, in time order', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     completeTech(state, 'Forestry');
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0); // 60s
@@ -126,7 +149,7 @@ describe('save round-trip', () => {
   it('restores completed techs, active researches, slots and upgrade levels', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Gold: 10_000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 10_000, Wood: 500, Food: 500, Knowledge: 500 });
     completeTech(state, 'Forestry');
     completeTech(state, 'Agriculture');
     buySlot(state);
@@ -226,5 +249,60 @@ describe('techUnlocks', () => {
   it('a tech that unlocks nothing returns an empty list', () => {
     const barren = TECH_ORDER.filter((id) => techUnlocks(id).length === 0);
     expect(barren.length).toBeLessThan(TECH_ORDER.length); // sanity: not all barren
+  });
+});
+
+// The CTA and the node dots (Docs/art/ui-menus-redesign.md §6.7).
+//
+// The claim they protect is that a lit tab never lies: it means the screen
+// behind it has something the player can press THIS SECOND. `canStartTech`
+// and `canBuyUpgrade` are the same gates the commands check, which is what
+// stops the light and the button drifting apart.
+describe('what the player can actually act on', () => {
+  it('agrees with startTech, gate for gate', () => {
+    const state = freshGame();
+    const id: TechId = 'Forestry';
+    // Broke: prerequisites fine, cost not.
+    expect(canStartTech(state, id)).toBe(false);
+    fund(state, TECHNOLOGIES[id].cost);
+    expect(canStartTech(state, id)).toBe(true);
+    expect(startTech(state, id, T0)).toBe('Started');
+    // Running is not startable, and it has taken the only slot.
+    expect(canStartTech(state, id)).toBe(false);
+    expect(startTech(state, id, T0)).toBe('AlreadyActive');
+  });
+
+  it('goes dark when every slot is busy, even with the money', () => {
+    const state = freshGame();
+    fund(state, { Knowledge: 99_999 });
+    expect(anyResearchActionable(state)).toBe(true);
+    // Fill every slot: nothing is startable even though everything is paid for.
+    while (state.research.active.length < techSlots(state)) {
+      const next = TECH_ORDER.find((t) => canStartTech(state, t));
+      expect(next).toBeDefined();
+      startTech(state, next!, T0);
+    }
+    expect(anyResearchActionable(state)).toBe(false);
+  });
+
+  it('agrees with buyUpgrade, gate for gate', () => {
+    const state = freshGame();
+    const id: UpgradeId = 'TapPower'; // requires Forestry
+    fund(state, { Gold: 99_999 });
+    expect(canBuyUpgrade(state, id)).toBe(false); // tech not done
+    completeTech(state, 'Forestry');
+    expect(canBuyUpgrade(state, id)).toBe(true);
+    expect(buyUpgrade(state, id)).toBe('Purchased');
+
+    // Maxed is not actionable, however rich you are.
+    state.upgrades[id] = UPGRADES[id].maxLevel;
+    expect(canBuyUpgrade(state, id)).toBe(false);
+  });
+
+  it('lights the presenter CTA only when something is pressable', () => {
+    const game = freshPresenter(freshGame());
+    expect(game.researchCtaLit()).toBe(false); // broke at the start
+    fund(game.state, TECHNOLOGIES.Forestry.cost);
+    expect(game.researchCtaLit()).toBe(true);
   });
 });

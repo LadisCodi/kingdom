@@ -8,8 +8,11 @@ what you can improve is always shown in the context of how you unlocked it.
 
 One-time researches that **unlock new content** (buildings, units, upgrades).
 
-- Cost **resources + time**; paid up front; complete through the unified
-  advance (so they finish while away, in real time like the build queue).
+- Cost **Knowledge + time**; paid up front from the KINGDOM purse (not the
+  city's); complete through the unified advance (so they finish while away, in
+  real time like the build queue). Knowledge comes from clearing fog and from
+  quests — see [`knowledge.md`](knowledge.md). Instant upgrades below stay
+  Gold-only.
 - Limited by **concurrent research slots**: base 1. Additional slots are
   bought **with Gems** directly in the Research menu, at an escalating
   price (`slot_gem_cost_base × slot_gem_cost_growth^purchased`, capped by
@@ -54,30 +57,64 @@ The tree is discovered like the map:
 
 Everything numeric lives in the balance workbook:
 
-- `Technologies` sheet: costs, duration, `requires` (comma-separated ids).
+- `Technologies` sheet: `cost_knowledge`, duration, `requires` (comma-separated ids).
 - `Upgrades` sheet: `cost_base, cost_growth, max_level, effect_per_level,
   required_tech`.
 - Settings: `research.tech_slots`, `research.max_slots`,
   `research.slot_gem_cost_base`, `research.slot_gem_cost_growth`.
 
-The tree: **Forestry** is the root (Sawmill; upgrades TapPower, QuickHands,
-WorkerLoad), and four themed branches leave it:
+The tree: **Forestry** is the root — it opens the FOREST to the tap (see
+[`../onboarding.md`](../onboarding.md) steps 2-3) and carries the upgrades
+TapPower, QuickHands and WorkerLoad. Four themed branches leave it:
 
 - **CIVICS (up)**: **Urban Planning** (Housing L2) → **Communities** (every
   Housing +1 capacity) → **Architecture** (Townhall L3)
 - **ECONOMICS (left)** — two rows:
-  - farm side: **Agriculture** (FarmLands) → **Farming** (the Farm) →
-    **Crop Rotation** (Farm L2); Agriculture → **Market** (Market building;
-    upgrades MarketStall +5% sale prices, TradeRoutes +10% tax income)
+  - **Saws** (the Sawmill) hangs directly off Forestry: chopping by hand and
+    automating it are two separate decisions, ten onboarding beats apart;
+    upgrade **Sawpits** (+1 Wood per worker delivery)
+  - **Hunting** also hangs off Forestry and gates the **wild game** tap —
+    the one resource behind a technology of its own; upgrade **Butchery**
+    (+1 Meat per collect tap)
+  - farm side: **Agriculture** (FarmLands **and** the Farm — one research, so
+    nothing sits between tapping a plot and automating it) → **Farming**
+    (Farm L2; upgrade **Scythes**, +1 Food per collect tap); Agriculture also
+    carries **Irrigation** (+1 Food per worker delivery) and leads to
+    **Market** (Market building; upgrades MarketStall +5% sale prices,
+    TradeRoutes +10% tax income)
   - stone side: **Masonry** (Quarry; upgrade Stonecutting) → **Mining**
     (Mine, costs Stone; upgrade Iron Picks) → **Deep Mining** (Mine L2);
     Masonry → **Engineering** (Quarry L2, Sawmill L3)
-- **EXPLORATION (right)**: **Sailing** (sea cells become explorable) →
+- **EXPLORATION (right)**: **Cartography** heads the branch and carries an
+  effect of its own — every tap on the fog counts **double** — rather than
+  only gating what follows. Its upgrade **Surveying** adds +1 more per level
+  (max 2), so the ladder is ×1 → ×2 → ×3 → ×4. A tech with a stat effect is
+  not new here: Communities adds +1 to every bed the same way. → **Sailing** (sea cells become explorable) →
   **Fishing** (the Docks + fishing boats; upgrade Big Nets) →
-  **Shipbuilding** (Docks L2); Forestry → **Scaling Tools** (mountain cells
-  become explorable)
+  **Shipbuilding** (Docks L2); Cartography → **Scaling Tools** (mountain cells
+  become explorable; upgrade **Pitons**, −10%/level on the Gold a cell of fog
+  costs — Pitons discounts the price, Surveying buys back the taps, so the two
+  stack without either making the other moot)
 - **MILITARY (down)**: **Warrior** (the Warrior unit) → **Spears** (Lancer),
   **Archery** (Archer), **Cavalry** (Cavalry)
+- **Attunement** carries **Resonance** (−20%/level on the Mana a relic costs
+  to cast)
+
+**Shape carries the kind** (2026-09-02): a technology is a rounded **square**,
+an upgrade a smaller **circle** hanging below its parent. They used to differ
+only in size, which is a weak signal on a busy tree; now it reads as trunks
+with beads on them.
+
+Scoped upgrades (per-resource tap and worker yields) are small lookup tables at
+the call site — `TAP_YIELD_UPGRADES` and `WORKER_YIELD_UPGRADES` in
+`upgrades.ts` — rather than a general scoping mechanism, because a handful is
+all the game has and a table is what the handful needs.
+
+`UPGRADE_ORDER` is **derived** from `UPGRADES`, not restated. It used to be a
+hand-written list and it silently went stale — Surveying was added, never
+listed, and so never drawn in the tree at all, while a quest pointed the player
+straight at it. The tree groups upgrades by filtering that list, so anything
+missing from it is invisible in the game.
 
 Exploration gates: `revealTap` refuses (`TechLocked`) to reveal Water cells
 before Sailing and Mountain cells before Scaling Tools — building fog radii
@@ -87,8 +124,15 @@ drawn with the `terrain_mountain.png` tile like any other biome.
 
 Tech tree positions are hand-authored (`node: {x, y}` in `definitions.ts`) —
 layout is content; cells (−1,0) and (1,0) stay empty so the branch trunks can
-elbow through them without crossing nodes. Upgrade circles auto-fan below
-their parent.
+elbow through them without crossing nodes. Cartography sits at (2,0) rather
+than the nearer (1,0) for exactly that reason — the Forestry→Attunement
+connector already elbows through (1,0). Upgrade circles auto-fan below their
+parent.
+
+**Crop Rotation was retired** (2026-09-02). It gated the Farm's level 2 and
+nothing else; when Agriculture took over the Farm itself, Farming inherited
+that level gate and Crop Rotation was left unlocking nothing. A node in the
+tree that unlocks nothing is the same lie as a lit tab that leads nowhere.
 
 ## Changes from 2026-09-02
 

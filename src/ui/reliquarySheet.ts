@@ -29,7 +29,7 @@ import { spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, card, chip, iconEl, pips, progress, sheet, stat } from './kit';
+import { action, btn, card, iconEl, pips, progress, sheet, stat } from './kit';
 
 /** Relic art at card size — sprite if it exists, glyph if not. */
 function relicArt(id: ArtifactId, locked: boolean): HTMLElement {
@@ -60,26 +60,25 @@ function manaPanel(game: Game): HTMLElement {
   bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${m.value} / ${m.cap}`);
 
   const refillCost = manaRefillGemCost(game.state);
+  // One line, not three. The breakdown existed to reconcile production against
+  // relic upkeep; nothing draws against the pool any more, so a subtraction
+  // that always reads "−0/h" is exactly the spreadsheet chrome this screen was
+  // built to remove.
   const rows = el('div', { class: 'rel-breakdown' },
-    // The two dials, named as the different jobs they do.
-    el('div', { class: 'rel-line' },
+    el('div', { class: 'rel-line is-total' },
       el('span', {}, 'Drawn from the land'),
       el('b', {}, `+${m.production}/h`)),
-    el('div', { class: `rel-line${m.upkeep > 0 ? ' is-cost' : ''}` },
-      el('span', {}, 'Sustaining your relics'),
-      el('b', {}, m.upkeep > 0 ? `−${m.upkeep}/h` : '0/h')),
-    el('div', { class: 'rel-line is-total' },
-      el('span', {}, m.net === 0 && m.upkeep > 0 ? 'Stalled — but never in debt' : 'Filling at'),
-      el('b', {}, `+${m.net}/h`)),
   );
 
   return el('div', { class: 'rel-mana' },
     el('div', { class: 'rel-mana-head' },
       iconEl('Mana', { size: 'lg' }),
       el('div', { class: 'rel-mana-title' }, 'Mana'),
-      el('div', { class: 'rel-mana-hint' }, m.value >= m.cap
-        ? 'Full — anything more is spilling'
-        : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
+      el('div', { class: 'rel-mana-hint' }, m.over
+        ? `Overcharged — ${m.value - m.cap} past the ceiling`
+        : m.value >= m.cap
+          ? 'Full — anything more is spilling'
+          : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
     bar.root,
     rows,
     refillCost > 0
@@ -87,9 +86,8 @@ function manaPanel(game: Game): HTMLElement {
         label: 'Refill',
         kind: 'gem',
         onClick: () => game.doRefillMana(),
-        info: chip('Gems', refillCost, game.effectiveWalletValue('Gems') < refillCost),
-        disabledReason: game.effectiveWalletValue('Gems') < refillCost
-          ? `Short ${refillCost - game.effectiveWalletValue('Gems')} Gems` : undefined,
+        cost: { Gems: refillCost },
+        have: (c) => game.effectiveWalletValue(c),
       })
       : el('div', { class: 'rel-note' }, 'The pool is full.'),
   );
@@ -142,9 +140,8 @@ function slots(game: Game): HTMLElement {
       label: 'Open a socket',
       kind: 'gem',
       onClick: () => game.doBuyAttunementSlot(),
-      info: chip('Gems', gemCost, game.effectiveWalletValue('Gems') < gemCost),
-      disabledReason: game.effectiveWalletValue('Gems') < gemCost
-        ? `Short ${gemCost - game.effectiveWalletValue('Gems')} Gems` : undefined,
+      cost: { Gems: gemCost },
+      have: (c) => game.effectiveWalletValue(c),
     }));
   }
   return body;
@@ -157,7 +154,6 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   const owned = ownsArtifact(game.state, id);
   const entry = artifactEntry(game.state, id);
   const worn = isAttuned(game.state, id);
-  const knowledge = game.effectiveWalletValue('Knowledge');
 
   if (!owned) {
     // An unfound relic is a SIGNPOST, not a locked box: it names the ruin, so
@@ -180,9 +176,20 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
           el('span', {}, `Level ${entry.level} / ${levelCapForTier(entry.tier)}`)))),
     el('div', { class: 'rel-passive' },
       iconEl('sparkle', { size: 'sm' }), passiveLabel(game, id)),
-    el('div', { class: 'rel-upkeep' },
-      stat('Mana', `−${def.upkeep}`, 'per hour while worn')),
   );
+
+  // Attune OR arm. A relic underground has to SAY so on the card: `btn()` is
+  // the button without its reason line, so a disabled Attune alone would grey
+  // out with no answer to "where did my relic go?". The upkeep line above is
+  // also a half-truth while it is away — carrying costs no Mana — so the
+  // status line corrects it.
+  const bearer = game.state.delves.find((d) => d.artifactId === id);
+  if (bearer) {
+    body.append(el('div', { class: 'rel-carried' },
+      iconEl('army', { size: 'sm' }),
+      `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
+      + ' — it draws no Mana while it is away.'));
+  }
 
   if (def.active) {
     body.append(el('div', { class: 'rel-active' },
@@ -212,11 +219,13 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       label: 'Attune',
       kind: 'primary',
       onClick: () => game.doAttune(freeSlot, id),
-      disabledReason: freeSlot === -1
-        ? 'Every socket is full'
-        : isSlotLocked(game.state, freeSlot, now)
-          ? 'That socket is still settling'
-          : undefined,
+      disabledReason: bearer
+        ? `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
+        : freeSlot === -1
+          ? 'Every socket is full'
+          : isSlotLocked(game.state, freeSlot, now)
+            ? 'That socket is still settling'
+            : undefined,
     }));
   }
 
@@ -225,12 +234,12 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
     controls.append(btn({
       label: `Cast ${def.active.name}`,
       onClick: () => game.startCast(id),
-      icon: 'Mana',
-      disabledReason: block === 'NotAttuned'
-        ? 'Wear it first'
-        : block === 'NotEnoughMana'
-          ? `Needs ${def.active.manaCost} Mana`
-          : undefined,
+      // The Mana price used to live ONLY in the blocked reason, so it was
+      // visible exactly when it could not be paid and invisible the rest of
+      // the time. Inside the button it is always readable.
+      cost: { Mana: def.active.manaCost },
+      have: (c) => game.effectiveWalletValue(c),
+      disabledReason: block === 'NotAttuned' ? 'Wear it first' : undefined,
     }));
   }
   body.append(controls);
@@ -242,22 +251,26 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
     body.append(action({
       label: 'Study',
       onClick: () => game.doLevelArtifact(id),
-      info: chip('Knowledge', levelCost(entry.level), knowledge < levelCost(entry.level)),
+      cost: { Knowledge: levelCost(entry.level) },
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: atLevelCap
         ? 'Its tier holds it back — raise it with Fragments'
-        : knowledge < levelCost(entry.level)
-          ? `Short ${levelCost(entry.level) - knowledge} Knowledge`
-          : undefined,
+        : undefined,
     }));
   }
   if (entry.tier < COLLECTION.maxTier) {
     body.append(action({
       label: 'Raise its tier',
       onClick: () => game.doRaiseArtifactTier(id),
-      info: el('span', { class: 'rel-frag' },
-        iconEl('sparkle', { size: 'sm' }),
-        `${entry.fragments} / ${tierCost(entry.tier)} fragments`),
-      disabledReason: entry.fragments < tierCost(entry.tier)
+      // Fragments are a per-relic counter rather than a wallet entry, but a
+      // price is a price: it goes in the button like every other one, reading
+      // "have / needed" so the gap is the thing you see.
+      costExtra: [{
+        icon: 'sparkle',
+        amount: `${entry.fragments} / ${tierCost(entry.tier)}`,
+        short: entry.fragments < tierCost(entry.tier),
+      }],
+      info: entry.fragments < tierCost(entry.tier)
         ? `Delve ${RUINS[def.source].name} again for fragments`
         : undefined,
     }));
@@ -274,7 +287,6 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
 
 function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTMLElement {
   const hero = HEROES[view.id];
-  const knowledge = game.effectiveWalletValue('Knowledge');
   const stats = heroStats(game.state, view.id);
   const busy = heroIsBusy(game.state, view.id);
 
@@ -320,20 +332,23 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
     body.append(action({
       label: 'Train',
       onClick: () => game.doLevelHero(view.id),
-      info: chip('Knowledge', cost, knowledge < cost),
+      cost: { Knowledge: cost },
+      have: (c) => game.effectiveWalletValue(c),
       disabledReason: view.entry.level >= view.levelCap
         ? 'Their tier holds them back — raise it with Fragments'
-        : knowledge < cost ? `Short ${cost - knowledge} Knowledge` : undefined,
+        : undefined,
     }));
   }
   if (view.entry.tier < COLLECTION.maxTier) {
     body.append(action({
       label: 'Raise their tier',
       onClick: () => game.doRaiseHeroTier(view.id),
-      info: el('span', { class: 'rel-frag' },
-        iconEl('sparkle', { size: 'sm' }),
-        `${view.entry.fragments} / ${tierCost(view.entry.tier)} fragments`),
-      disabledReason: view.entry.fragments < tierCost(view.entry.tier)
+      costExtra: [{
+        icon: 'sparkle',
+        amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
+        short: view.entry.fragments < tierCost(view.entry.tier),
+      }],
+      info: view.entry.fragments < tierCost(view.entry.tier)
         ? 'Pull for them, or delve again' : undefined,
     }));
   }
@@ -350,8 +365,7 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
  * than predatory, and it only works if the player can see it working.
  */
 function bannerPanel(game: Game): HTMLElement {
-  const cost = pullCost();
-  const gems = game.effectiveWalletValue('Gems');
+  const cost = pullCost(game.state, STANDARD_BANNER);
   const pity = pityCount(game.state, STANDARD_BANNER);
   const toGuarantee = pullsToGuarantee(game.state, STANDARD_BANNER);
   const chance = heroChanceAt(pity);
@@ -370,17 +384,28 @@ function bannerPanel(game: Game): HTMLElement {
       el('div', { class: 'rel-line is-total' },
         el('span', {}, 'Guaranteed within'),
         el('b', {}, `${toGuarantee} call${toGuarantee === 1 ? '' : 's'}`))),
-    action({
-      label: 'Call',
-      kind: 'gem',
-      onClick: () => game.doPull(),
-      info: chip('Gems', cost, gems < cost),
-      disabledReason: gems < cost ? `Short ${cost - gems} Gems` : undefined,
-    }),
+    callAction(game, cost),
     el('div', { class: 'rel-note' },
       'Heroes can also be found by delving: fragments come back from every ruin, '
       + 'and enough of them raise anyone you already have.'),
   );
+}
+
+/** The summon button, split out so the quest hint can light it — `action()`
+ *  builds a whole row, so the class goes on afterwards rather than through a
+ *  new option nothing else would use. */
+function callAction(game: Game, cost: number): HTMLElement {
+  const row = action({
+    // A price of zero is not a price. The free first call says so on the
+    // button rather than rendering "0 💎", which reads as a bug.
+    label: cost === 0 ? 'Call — free' : 'Call',
+    kind: 'gem',
+    onClick: () => game.doPull(),
+    cost: cost === 0 ? undefined : { Gems: cost },
+    have: (c) => game.effectiveWalletValue(c),
+  });
+  if (game.uiHint() === 'banner') row.classList.add('hinted');
+  return row;
 }
 
 /** Which tab is open. Module-level so it survives the per-tick rebuild — the
@@ -388,6 +413,10 @@ function bannerPanel(game: Game): HTMLElement {
 let openTab: 'relics' | 'heroes' = 'relics';
 
 export function renderReliquarySheet(game: Game): HTMLElement {
+  // "Go summon a hero" has to LAND on the banner. The sheet remembers its tab
+  // across rebuilds, so a quest that points here would otherwise open on
+  // whatever the player last looked at — usually the relics.
+  if (game.uiHint() === 'banner') openTab = 'heroes';
   const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
   const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
 

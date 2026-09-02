@@ -144,8 +144,29 @@ export const attunedIn = (state: GameState, slot: number): ArtifactId | null =>
 export const isAttuned = (state: GameState, id: ArtifactId): boolean =>
   state.artifacts.attuned.includes(id);
 
+/**
+ * Relics currently underground — the "arm" half of attune-or-arm.
+ *
+ * A relic is carried for exactly as long as its delve is in `state.delves`,
+ * the same span `heroIsBusy` uses. It therefore comes home when the player
+ * COLLECTS, including after a failed push, rather than the moment the sim
+ * decides the run is over. A hero and the relic it carried are committed and
+ * released together, which is the only rule explicable in one line.
+ *
+ * It lives HERE rather than in `expeditions.ts` because it is a fact about an
+ * artifact, and because `attune` below has to ask it — the other direction of
+ * the same rule.
+ */
+export const artifactIsCarried = (state: GameState, id: ArtifactId): boolean =>
+  state.delves.some((d) => d.artifactId === id);
+
+/** Attuned to the kingdom, or in a party's pack. Neither socket is free. */
+export const artifactIsCommitted = (state: GameState, id: ArtifactId): boolean =>
+  isAttuned(state, id) || artifactIsCarried(state, id);
+
 export type AttuneResult =
-  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned';
+  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned'
+  | 'Carried';
 
 /**
  * Put `id` in `slot` (or empty it with null). The swap is IMMEDIATE — the new
@@ -164,6 +185,12 @@ export function attune(
     if (!ownsArtifact(state, id)) return 'NotOwned';
     const existing = state.artifacts.attuned.indexOf(id);
     if (existing !== -1 && existing !== slot) return 'AlreadyAttuned';
+    // The other direction of attune-OR-arm. A relic in a party's pack cannot
+    // also be feeding the kingdom a passive, and the sim will not recall it
+    // from underground to settle the question — it comes home when the party
+    // does. Checked HERE rather than in the caller so no route into the
+    // socket can miss it.
+    if (artifactIsCarried(state, id)) return 'Carried';
   }
   const was = state.artifacts.attuned[slot];
   if (was === id) return id === null ? 'Unattuned' : 'Attuned';

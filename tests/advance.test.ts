@@ -22,13 +22,15 @@ function onTheEdgeOfCommunities(): GameState {
   const state = freshGame();
   addBuilt(state, 'Housing', { x: 3, y: 2 });
   addBuilt(state, 'Housing', { x: 2, y: 3 });
-  state.city.population = 5;
+  // Two L1 houses (2 each) + the Townhall's own bed = 5. The SIXTH villager
+  // is the one waiting on Communities for a roof.
+  state.city.population = 6;
   completeTech(state, 'Forestry');
   completeTech(state, 'UrbanPlanning');
-  fund(state, { Gold: 10_000, Wood: 1000 });
-  const spent = getWallet(state.city.wallet, 'Gold');
+  fund(state, { Gold: 10_000, Wood: 1000, Knowledge: 1000 });
+  // Research is paid in Knowledge out of the KINGDOM purse, so the tech cost
+  // and the tax income no longer share a wallet — nothing to isolate.
   startTech(state, 'Communities', T0); // 90s
-  state.city.wallet.Gold = spent; // isolate the tax income from the tech cost
   state.city.lastTaxAt = T0;
   state.lastAdvance = T0;
   return state;

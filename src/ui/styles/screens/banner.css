@@ -82,7 +82,7 @@
 
 .b-text { min-width: 0; }
 .b-title {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -91,8 +91,9 @@
 .b-name {
   font-family: var(--font-display);
   font-size: 17px;
-  font-weight: 700;
   color: var(--ink);
+  /* Germania One ships one weight; 700 would be a synthesised smear. */
+  font-weight: 400;
 }
 .b-desc { font-size: var(--text-helper); color: var(--ink); opacity: 0.8; }
 

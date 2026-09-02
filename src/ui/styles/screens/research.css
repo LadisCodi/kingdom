@@ -5,9 +5,18 @@
  * still holds. Only the materials change — which is the whole point, and why
  * the doc's "most expensive item" turned out to be mostly CSS. */
 
+/* Reserves the two bars itself rather than leaning on #overlay's padding: an
+   absolutely positioned child resolves `inset` against the containing block's
+   PADDING BOX, which INCLUDES the padding — so `inset: 0` here would sit
+   under the header and the nav bar and hide the player's purse behind its own
+   top bar. The scrim still covers the whole screen; only this panel stops
+   short of the chrome. */
 .research-screen {
   position: absolute;
-  inset: 0;
+  top: var(--hud-h);
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  left: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -25,6 +34,8 @@
 .research-topbar h2 {
   font-family: var(--font-display);
   font-size: 18px;
+  /* <h2> is bold by user-agent default and the title face has no bold. */
+  font-weight: 400;
   color: var(--parchment);
 }
 
@@ -68,11 +79,15 @@
 .tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
 
 /* Wax-seal medallions. */
+/* SHAPE carries the kind, so the two never have to be told apart by size
+ * alone: a technology is a rounded SQUARE — a thing you research once — and an
+ * upgrade is a small CIRCLE hanging off it, a thing you buy again and again.
+ * At a glance the tree now reads as trunks with beads on them. */
 .tech-node {
   position: absolute;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 14px;
   font-size: 24px;
   padding: 0;
   display: flex;
@@ -96,14 +111,15 @@
   color: rgba(92, 58, 30, 0.5);
   box-shadow: none;
   cursor: default;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 22px;
 }
 
-/* Upgrades: small badges pinned below their parent. */
+/* Upgrades: small round badges pinned below their parent. */
 .tech-node.upgrade {
   width: 36px;
   height: 36px;
+  border-radius: 50%;
   font-size: 16px;
   border-width: 2px;
   background: var(--parchment);
@@ -111,6 +127,25 @@
 .tech-node.upgrade.done { background: var(--leaf); }
 .tech-node.upgrade.available { background: var(--gold); }
 .tech-node.upgrade.locked { background: var(--locked); opacity: 1; }
+/* "You can press this, now." The tree shows a lot of nodes the player cannot
+ * act on — done, running, unaffordable, prerequisite missing — and the
+ * `available` styling only means the prerequisites are met. The dot is the
+ * difference, and it sits top-right so it never collides with the level badge
+ * at bottom-right on an upgrade node. */
+.node-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--clay);
+  border: 2px solid var(--parchment);
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
+  pointer-events: none;
+}
+.tech-node.upgrade .node-dot { width: 12px; height: 12px; top: -2px; right: -2px; }
+
 .tech-node.upgrade .lvl {
   position: absolute;
   right: -5px;
@@ -120,7 +155,7 @@
   border-radius: 50%;
   background: var(--wood-dark);
   color: var(--parchment);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 11px;
   line-height: 17px;
   text-align: center;
@@ -155,7 +190,7 @@
   border-radius: var(--radius);
   box-shadow: 0 6px 0 rgba(60, 36, 18, 0.3), 0 12px 26px rgba(60, 36, 18, 0.35);
 }
-.tech-info h3 { font-family: var(--font-display); font-size: 17px; margin-bottom: 4px; }
+.tech-info h3 { font-family: var(--font-display); font-size: 17px; font-weight: 400; margin-bottom: 4px; }
 .tech-info .muted { color: var(--ink-muted); }
 .tech-info .blocked { color: var(--clay); }
 .tech-info .delta { color: var(--leaf-dark); font-weight: 700; }
@@ -175,7 +210,7 @@
 /* What this technology is FOR — the line the old screen never had. */
 .res-unlocks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
 .res-unlocks-label {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;

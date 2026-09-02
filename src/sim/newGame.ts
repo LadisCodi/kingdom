@@ -3,6 +3,7 @@
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { seedFog } from './fog';
+import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
 import { newSeed } from './rng';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
@@ -52,6 +53,9 @@ export function newGame(map: MapData, now: number): GameState {
       fragments: {}, xp: {}, partySlotsPurchased: 0,
     },
     gacha: { pullCounts: {}, pityCounters: {} },
+    // Ready from the first minute: a new kingdom starts with a full pool, so
+    // the offer simply waits for the player to spend down to half.
+    ads: { readyAt: now, claims: 0, pending: false },
     deepestDepth: 0,
     ruinsCleared: {},
     landmarks: { claimed: {}, cleared: {} },
@@ -86,6 +90,13 @@ export function newGame(map: MapData, now: number): GameState {
     visualVariant: 1,
     lastTapAt: 0,
   });
+
+  // A new kingdom starts with a FULL pool, not an empty one. Mana is what
+  // every house tap is paid from, so an empty pool at minute zero would gate
+  // the city's most-used verb behind a wait before the player has learned
+  // that the verb exists. Set after the Townhall is placed, because the cap
+  // is read from it.
+  state.city.wallet.Mana = manaCap(state);
 
   reconcileSchedule(state, now);
   seedFog(state, map);

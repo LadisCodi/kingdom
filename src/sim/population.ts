@@ -1,12 +1,13 @@
 // Population: housing, auto-assigned residents, passive tax gold, and the
 // Townhall's villager-training queue.
 
-import { CITY_DEF, DISTRICTS, TAXES, TRAINING, levelIndexed } from './data/definitions';
+import { CITY_DEF, DISTRICTS, TAP, TRAINING, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
-import { effectiveTaxRate } from './upgrades';
+import { effectiveAutoTapCooldownMs, effectiveTaxRate } from './upgrades';
+import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -77,11 +78,25 @@ export function residentsOf(state: GameState, district: District): number {
 
 // -------------------------------------------------------------------- training
 
-/** cost = round(base × growth^(currentPopulation − 1)) Food. */
-export const populationCost = (currentPopulation: number): number =>
-  Math.round(
-    CITY_DEF.populationCostBase * CITY_DEF.populationCostGrowth ** (currentPopulation - 1),
-  );
+/**
+ * Food for the NEXT villager, given how many you already have.
+ *
+ * Authored for the opening, exponential after it. The first handful of
+ * villagers ARE the early game — each one is a decision the player makes
+ * minutes apart, and the difference between 5 Food and 20 is the difference
+ * between a beat and a formality. No `base × growth^n` can be made to say
+ * 5, 20, 100, 300 without deforming everything past it, so it does not try:
+ * `city.population_cost_first` lists the authored prices in order, and the
+ * curve takes over from the LAST of them, so the two halves meet without a
+ * step.
+ */
+export const populationCost = (currentPopulation: number): number => {
+  const authored = CITY_DEF.populationCostFirst;
+  if (currentPopulation < authored.length) return authored[currentPopulation];
+  const last = authored[authored.length - 1];
+  const beyond = currentPopulation - (authored.length - 1);
+  return Math.round(last * CITY_DEF.populationCostGrowth ** beyond);
+};
 
 /** Villagers already paid for but not yet delivered. */
 export const queuedTraining = (state: GameState): number =>
@@ -112,60 +127,54 @@ export const trainingCompletesAt = (state: GameState): number | null =>
 // ---------------------------------------------------------------- house tap
 
 /**
- * The collection cycle of one house (Docs/features/balancing-v2.md §1.1).
+ * The house tap (Docs/features/balancing-v2.md §1.1, revised 2026-09-02).
  *
- * The tap used to rewind the CITY-WIDE tax clock by tapBoostSeconds with no
- * gate at all, which made it the only tap in the game without an exhaustion
- * analogue: 2 x rate / 60 gold per tap, at any speed the player could manage —
- * roughly 9,000 Gold/min against 900 idle at Townhall 3.
+ * A house taps like a TREE: as many times as you like, as fast as you like.
+ * What bounds it is **Mana** — one per tap — so the ceiling is the size of the
+ * pool rather than a per-house timer.
  *
- * Now every house runs a cycle, exactly like the Townhall's training cycle.
- * Tapping collects early WITHIN the current cycle and cannot exceed it, so
- * "tap" means "collect early" rather than "print money", and the idle backbone
- * the whole design rests on is the dominant income again.
+ * This replaces a 60s per-house collection cycle. The cycle did bound the tap,
+ * but it bounded it with a wait, and a wait is not a decision: there was
+ * nothing to spend, nothing to run out of, and nothing to buy. Paying Mana
+ * makes the same tap a draw against a pool the player can see, plan around and
+ * refill — and it puts the city's most-used verb on the one currency the
+ * design already builds pressure with.
  *
- * The boost is scaled by this house's SHARE of city income, which is what
- * bounds it: sweeping every house exactly once pulls forward one
- * tapBoostSeconds of the whole city's income, once per cycle — a fixed
- * percentage over idle, no matter how large the city grows.
+ * The boost is still scaled by this house's SHARE of city income, which is
+ * what stops a large city minting more per tap than a small one: a full sweep
+ * pulls forward one tapBoostSeconds of the WHOLE city's income and costs one
+ * Mana per house, whatever the city's size.
+ *
+ * Holding is paced by the same auto-tap cooldown a held tree uses, and a
+ * DELIBERATE tap is never paced — the asymmetry `effectiveAutoTapCooldownMs`
+ * exists to preserve.
  */
-export const houseCycleMs = (): number => TAXES.cycleSeconds * 1000;
-
-/** 0 → 1 across the current cycle; 1 = a collection is ready. */
-export function houseCycleProgress(district: District, now: number): number {
-  const cycle = houseCycleMs();
-  if (cycle <= 0) return 1;
-  return Math.min(1, Math.max(0, (now - district.lastTapAt) / cycle));
-}
-
-export const houseTapReady = (district: District, now: number): boolean =>
-  now - district.lastTapAt >= houseCycleMs();
-
-/** Seconds until this house can be collected again (0 = now). */
-export const houseTapReadyIn = (district: District, now: number): number =>
-  Math.max(0, (district.lastTapAt + houseCycleMs() - now) / 1000);
-
-export type HouseTapResult = 'Collected' | 'NoResidents' | 'NotReady';
+export type HouseTapResult = 'Collected' | 'NoResidents' | 'NoMana' | 'TooSoon';
 
 /**
  * Collect a house early. Returns the gold that matured from the pull-forward.
  *
- * `autoRepeat` is kept for the held-pointer path, but it no longer needs the
- * auto-tap cooldown: the cycle is a much harder gate than a 0.5s timer, and a
- * held pointer simply finds the house not ready.
+ * `autoRepeat` marks the held-pointer path, which waits out the auto-tap
+ * cooldown; a deliberate tap never does.
  */
 export function houseTap(
   state: GameState,
   district: District,
   now: number,
+  autoRepeat = false,
 ): { result: HouseTapResult; gold: number } {
   if (residentsOf(state, district) === 0) return { result: 'NoResidents', gold: 0 };
-  if (!houseTapReady(district, now)) return { result: 'NotReady', gold: 0 };
+  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
+    return { result: 'TooSoon', gold: 0 };
+  }
   const cityRate = cityGoldPerMinute(state);
   if (cityRate <= 0) return { result: 'NoResidents', gold: 0 };
+  // Charged LAST, so a tap that could not have paid out never takes the Mana.
+  if (!payMana(state, TAP.manaCost)) return { result: 'NoMana', gold: 0 };
   const share = houseGoldPerMinute(state, district) / cityRate;
   district.lastTapAt = now;
-  state.city.lastTaxAt -= TAXES.tapBoostSeconds * 1000 * share;
+  state.lastCollectTapAt = now;
+  state.city.lastTaxAt -= TAP.boostSeconds * 1000 * share;
   return { result: 'Collected', gold: advanceCityLife(state, now).gold };
 }
 

@@ -8,23 +8,30 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES, LANDMARK_ART, RUINS,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
+  LANDMARK_ART, LANDMARKS, RUINS,
   TECHNOLOGIES, TRAINING, UNITS,
 } from './sim/data/definitions';
 import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
 } from './sim/districts';
-import { explorationGate, fogState, revealCostForCell, revealTap } from './sim/fog';
+import { resourceDiscoveryKey } from './sim/discovery';
+import {
+  explorationGate, fogState, revealCostForCell, revealKnowledge, revealTap,
+} from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import { committedArmyPower, maxArmyPower, trainUnit, trainingTap } from './sim/army';
 import {
-  attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
+  artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
 } from './sim/artifacts';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
+import {
+  adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
+} from './sim/adOffers';
 import { availableRoster } from './sim/army';
 import { typeMultiplier } from './sim/combat';
 import {
@@ -34,7 +41,7 @@ import {
 } from './sim/expeditions';
 import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, manaUpkeep, refillManaWithGems,
+  mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
 } from './sim/mana';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
@@ -43,11 +50,16 @@ import {
   queueTraining, residentsOf, trainingCompletesAt,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
-import { buySlot, isTechComplete, startTech, techUnlocks } from './sim/research';
-import { buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield } from './sim/upgrades';
+import {
+  anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
+} from './sim/research';
+import {
+  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
+} from './sim/upgrades';
 import {
   coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
+  type FeatureId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type UpgradeId, type Wallet,
 } from './sim/state';
@@ -75,7 +87,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint';
+  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -111,8 +123,14 @@ export class Game {
   expeditionParty: PartySlotState[] = [];
   expeditionHero: HeroId | null = null;
   expeditionOrder: number | null = null;
+  /** The relic the player has chosen to send DOWN rather than wear. Null is
+   *  the common case and always a valid party. */
+  expeditionArtifact: ArtifactId | null = null;
   /** The delve whose checkpoint sheet is open. */
   openCheckpoint: string | null = null;
+  /** When the fake ad started playing. A UI moment, not sim state — a reload
+   *  mid-ad simply drops back to the offer, which is still standing. */
+  adWatchStartedAt: number | null = null;
   /** The map SITE whose card is open — a landmark or a ruin. Sites are not
    *  districts (they are authored content on a cell, not something the player
    *  built), so they get their own slot rather than being squeezed into
@@ -155,11 +173,21 @@ export class Game {
     this.toastListeners.push(fn);
   }
   notify(): void {
+    // The ad offer's latch. Here rather than in `tick()` because Mana crosses
+    // the 50% gate on a TAP, not on the second — and every command ends in a
+    // notify, so this sees the spend that made the player eligible instead of
+    // lagging it by up to a second. `tick()` calls notify() too, so the
+    // "after advance()" ordering the architecture needs still holds.
+    refreshAdOffer(this.state, this.now());
     // Move fresh sim discoveries into the banner queue BEFORE listeners run,
     // so the banner component sees them on this very render.
     for (const key of this.state.pendingDiscoveries.splice(0)) {
       const [kind, id] = key.split(':');
       if (kind === 'resource') this.queueBanner(resourceBanner(id as CurrencyId));
+      if (kind === 'site') {
+        const banner = siteBanner(id);
+        if (banner) this.queueBanner(banner);
+      }
     }
     // The moment the active quest's goal is met, ding — before any claim.
     const questDone = this.questInfo()?.complete ?? false;
@@ -316,13 +344,22 @@ export class Game {
         if (fog !== 'Discovered') return false;
         const result = revealTap(this.state, this.map, cell);
         if (result === 'NotEnoughGold') this.shake(['Gold']);
-        else if (result === 'TechLocked') {
+        else if (result === 'NotReachable') {
+          // Say the rule, not just "no". A player who has been told once that
+          // the frontier moves outward stops trying to buy the far tile.
+          playSfx('error');
+          this.toast('Clear a path to it first — the fog lifts from the edges');
+        } else if (result === 'TechLocked') {
           const gate = explorationGate(this.map, cell);
           if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} to explore this terrain`);
         } else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
           playSfx('revealDone');
-          this.floaters.add(cell, 'Revealed!');
+          // Say what clearing it PAID, not just that it worked. Fog is the
+          // main source of Knowledge and the only one the player controls
+          // minute to minute — if the floater stays silent about it, the
+          // research tree looks like it funds itself.
+          this.floaters.add(cell, `+${revealKnowledge(this.map, cell)} ${icon('Knowledge')}`);
         } else if (result === 'Paid') {
           playSfx('revealPaid');
           this.floaters.add(cell, `-1 ${icon('Gold')}`);
@@ -348,8 +385,8 @@ export class Game {
           if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
             this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
-          } else if (result === 'NotReady') {
-            playSfx('tapEmpty');
+          } else if (result === 'NoMana') {
+            this.outOfMana(cell);
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -359,12 +396,14 @@ export class Game {
         // as tapping the Townhall hurries a villager.
         if (district && district.state === 'Built' && DISTRICTS[district.definitionId].trains) {
           const tap = trainingTap(this.state, district, this.now());
-          if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
           if (tap === 'Complete') {
             playSfx('unitTrained');
             this.floaters.add(cell, `+1 ${DISTRICTS[district.definitionId].trains}`);
           } else if (tap === 'Boosted') {
             this.floaters.add(cell, '⏩');
+          } else if (tap === 'NoMana') {
+            this.outOfMana(cell);
           }
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
@@ -373,10 +412,11 @@ export class Game {
         // Townhall: tapping adds cycle progress (and opens/keeps its card).
         if (district?.definitionId === 'Townhall' && district.state === 'Built') {
           const tap = townhallTap(this.state, this.now());
-          if (tap !== 'NoTraining') this.tapFeedback(district.location);
+          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
           if (tap === 'TrainingComplete') playSfx('villagerTrained');
           if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
           else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
+          else if (tap === 'NoMana') this.outOfMana(cell);
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -408,6 +448,15 @@ export class Game {
     playSfx(sfx);
   }
 
+  /** Out of energy, said once and in one place: every tap that spends Mana
+   *  refuses the same way, so the player learns one refusal rather than four.
+   *  Names the pool, because a silent no reads as a broken tap. */
+  private outOfMana(cell: Coord): void {
+    playSfx('error');
+    this.shake(['Mana']);
+    this.floaters.add(cell, `${icon('Mana')} empty`);
+  }
+
   /** One collect on a resource cell, with feedback. `autoRepeat` marks the
    *  ticks a held pointer generates — those are cooldown-gated, deliberate
    *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
@@ -421,6 +470,17 @@ export class Game {
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
+    } else if (result === 'TechLocked' && !autoRepeat && source !== null) {
+      // Say WHICH research, by name. "You can see it and you cannot have it
+      // yet" is the whole point of the gate, and it only teaches anything if
+      // the player is told what would open it.
+      const gate = HARVEST[source].requiredTech;
+      playSfx('error');
+      if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} before you can work this`);
+    } else if (result === 'NoMana' && !autoRepeat) {
+      // A held pointer stays silent — it would otherwise shake the header
+      // once a frame for as long as the finger is down.
+      this.outOfMana(cell);
     }
     return result;
   }
@@ -441,11 +501,17 @@ export class Game {
     if (this.mode.kind !== 'normal' || this.openOverlay !== null) return false;
     const cell = this.camera.screenToCell(sx, sy);
     if (!this.map.terrain.has(coordKey(cell))) return false;
-    // Holding a house keeps collecting, but each one still waits out its cycle.
+    // Holding a house keeps collecting, paced by the same auto-tap cooldown a
+    // held tree uses, and stopping when the Mana runs out.
     const district = districtAt(this.state, cell);
     if (district && district.state === 'Built' &&
         districtCapacity(this.state, district) > 0) {
-      const { result, gold } = houseTap(this.state, district, this.now());
+      const { result, gold } = houseTap(this.state, district, this.now(), true);
+      if (result === 'NoMana') {
+        playSfx('error');
+        this.shake(['Mana']);
+        return false;
+      }
       if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
       this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
@@ -635,24 +701,65 @@ export class Game {
 
   /** Everything the header's Mana gauge shows: a pool and ONE net rate.
    *  Never three numbers — the breakdown belongs in the reliquary, on tap. */
-  manaInfo(): { value: number; cap: number; net: number; production: number; upkeep: number } {
+  manaInfo(): { value: number; cap: number; net: number; production: number; over: boolean } {
+    const value = mana(this.state);
+    const cap = manaCap(this.state);
     return {
-      value: mana(this.state),
-      cap: manaCap(this.state),
+      value,
+      cap,
       net: manaNetRegen(this.state),
       production: manaProduction(this.state),
-      upkeep: manaUpkeep(this.state),
+      /** An ad reward can push the pool past its ceiling; the UI shows that
+       *  differently from merely being full. */
+      over: value > cap,
     };
   }
 
-  /** Magic stays out of the HUD until the player has met it — a gauge with
-   *  nothing to spend on is exactly the spreadsheet chrome the redesign
-   *  exists to kill. Sticky once true. */
-  showsMana(): boolean {
-    return this.state.artifacts.owned.length > 0
-      || isTechComplete(this.state, 'Attunement')
-      || Object.keys(this.state.landmarks.claimed).length > 0
-      || visibleLandmarks(this.state, this.map).length > 0;
+  // ------------------------------------------------------------- ad offers
+
+  /** The standing offer, or null. Drives the widget and the popup. */
+  adOffer(): { reward: number } | null {
+    return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
+  }
+
+  openAdOffer(): void {
+    if (this.adOffer() === null) return;
+    this.setOverlay('adOffer');
+  }
+
+  /** "No thanks" and the X do the same thing: close the popup and leave the
+   *  offer standing. Only claiming consumes it. */
+  declineAdOffer(): void {
+    this.setOverlay(null);
+  }
+
+  startAdWatch(): void {
+    if (this.adOffer() === null) return;
+    this.adWatchStartedAt = this.now();
+    this.setOverlay(null); // the ad is its own surface, above everything
+    this.notify();
+  }
+
+  /** Seconds still to watch, and whether the reward is claimable. Derived from
+   *  a timestamp rather than a counted-down integer, so a throttled tab
+   *  resolves correctly the moment it comes back. */
+  adWatch(): { secondsLeft: number; ready: boolean } | null {
+    if (this.adWatchStartedAt === null) return null;
+    const elapsed = this.now() - this.adWatchStartedAt;
+    const left = Math.max(0, Math.ceil((AD.watchSeconds * 1000 - elapsed) / 1000));
+    return { secondsLeft: left, ready: left === 0 };
+  }
+
+  doClaimAdReward(): void {
+    const watch = this.adWatch();
+    if (watch === null || !watch.ready) return;
+    const reward = adOfferReward(this.state);
+    if (claimAdOffer(this.state, this.now()) === 'Claimed') {
+      playSfx('questComplete');
+      this.floaters.add(townhall(this.state).location, `+${reward} ${icon('Mana')}`);
+    }
+    this.adWatchStartedAt = null;
+    this.setOverlay(null);
   }
 
   confirmBuild(): void {
@@ -820,6 +927,16 @@ export class Game {
       case 'CompleteTechs':
         overlay('research');
         break;
+      case 'BuyUpgrade':
+        this.setUiHint(`upgrade:${quest.goalTarget}`);
+        overlay('research');
+        break;
+      case 'OwnHeroes':
+        // The banner lives on the Reliquary's heroes tab; the sheet opens
+        // there on its own when the roster is what was asked for.
+        this.setUiHint('banner');
+        overlay('reliquary');
+        break;
       case 'AssignWorkers': {
         const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);
         if (target) this.setUiHint('card:workers');
@@ -853,6 +970,25 @@ export class Game {
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
+      case 'DiscoverFeature': {
+        // Point at a DARK cell that has the thing on it. This is the whole
+        // reason the goal type exists: "clear five cells" can be satisfied in
+        // any direction, so it teaches the verb and nothing else, while "clear
+        // two with forest on them" is a heading — and the arrow has to give
+        // the player that heading or the quest is a riddle.
+        //
+        // Features draw through the fog, so a Discovered cell already shows
+        // what is on it; this tells the player nothing they cannot see.
+        const wanted = quest.goalTarget as FeatureId;
+        const target = this.nearestCell((c) =>
+          fogState(this.state, this.map, c) === 'Discovered'
+          && this.state.features[coordKey(c)] === wanted);
+        // Nothing of that kind in sight yet — fall back to the frontier,
+        // because the answer is still "go and explore".
+        centerCell(target
+          ?? this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      }
       case 'ClaimLandmarks': {
         // The nearest landmark that is visible and unclaimed; failing that,
         // the nearest frontier cell — because the answer is "explore".
@@ -911,7 +1047,12 @@ export class Game {
           break;
         }
         const cell = this.nearestCell((c) => {
-          if (this.state.fog.revealed[coordKey(c)] !== true) return false;
+          // DISCOVERED is enough. The berry bush and the wild game sit outside
+          // the opening reveal now, so a hint that only pointed at cleared
+          // ground would say nothing at exactly the moment the quest says
+          // "tap the bush". Features draw through the fog, so this points at
+          // something the player can already see.
+          if (fogState(this.state, this.map, c) === 'Undiscovered') return false;
           const source = harvestSourceAt(this.state, c);
           if (source === null) return false;
           // Food-valued sources (berries, meat, fish) satisfy a Food target.
@@ -994,7 +1135,7 @@ export class Game {
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
         name: LANDMARK_ART[def.kind].name,
-        desc: 'The kingdom draws more Mana every hour, for good.',
+        desc: 'A deeper Mana pool, for good — and the fog lifts all around it.',
         sprite: LANDMARK_ART[def.kind].sprite,
         tone: 'sky',
       });
@@ -1029,6 +1170,10 @@ export class Game {
     this.expeditionRuin = ruinId;
     this.expeditionHero = freeHeroes(this.state)[0] ?? null;
     this.expeditionOrder = null;
+    // Never pre-filled, unlike the party. Arming a hero means giving up a
+    // passive the player is living off, and the sheet must not make that
+    // choice on their behalf — an empty socket is the only honest default.
+    this.expeditionArtifact = null;
     const roster = availableRoster(this.state);
     const affinity = RUINS[ruinId].affinity;
     // Best-answering type first, then whatever else is on hand — a sensible
@@ -1065,14 +1210,47 @@ export class Game {
     this.notify();
   }
 
+  /** Tapping the socketed relic again takes it back out — the choice has to be
+   *  reversible right up until the party leaves. */
+  setExpeditionArtifact(artifactId: ArtifactId | null): void {
+    this.expeditionArtifact = this.expeditionArtifact === artifactId ? null : artifactId;
+    this.notify();
+  }
+
   setStandingOrder(depth: number | null): void {
     this.expeditionOrder = depth;
     this.notify();
   }
 
+  /**
+   * The relic this party would actually leave with. A relic that has since
+   * been attuned, or sent down with someone else, is NOT one of them.
+   *
+   * The block message still names the raw choice, so the player is told why —
+   * but the numbers must only ever describe a party the game would really
+   * send. A sheet that shows the stats of a party it is simultaneously
+   * refusing reads as the game arguing with itself.
+   */
+  private sendableArtifact(): ArtifactId | null {
+    const id = this.expeditionArtifact;
+    if (id === null || artifactIsCommitted(this.state, id)) return null;
+    return id;
+  }
+
   /** The launch read-out: what this party is, and how deep it is SAFE. */
   expeditionPreview(): ExpeditionPreview | null {
     if (this.expeditionRuin === null) return null;
+    return previewExpedition(
+      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
+      this.sendableArtifact());
+  }
+
+  /** The same party WITHOUT the relic, so the sheet can show what socketing it
+   *  actually bought. A defensive relic may not move the safe depth at all —
+   *  it buys survival past the floor rather than a deeper floor — so the
+   *  stat deltas have to be shown too, or it reads as doing nothing. */
+  expeditionPreviewUnarmed(): ExpeditionPreview | null {
+    if (this.expeditionRuin === null || this.sendableArtifact() === null) return null;
     return previewExpedition(
       this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
   }
@@ -1080,8 +1258,13 @@ export class Game {
   expeditionLaunchBlock(): string | null {
     if (this.expeditionRuin === null) return 'No ruin chosen';
     const block = launchBlock(
-      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
+      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
+      this.expeditionArtifact);
     if (block === null) return null;
+    // The supplies are printed in the button and turn clay when they cannot be
+    // paid (§6.4), so saying it again in words beside it is nagging. The
+    // button still refuses — the red is what disables it.
+    if (block === 'NotEnoughSupplies') return null;
     return LAUNCH_BLOCK_TEXT[block];
   }
 
@@ -1089,7 +1272,7 @@ export class Game {
     if (this.expeditionRuin === null || this.expeditionHero === null) return;
     const result = launchDelve(
       this.state, this.map, this.expeditionRuin, this.expeditionHero,
-      this.expeditionParty, this.now(), this.expeditionOrder,
+      this.expeditionParty, this.now(), this.expeditionOrder, this.expeditionArtifact,
     );
     if (result === 'Launched') {
       playSfx('unitTrained');
@@ -1266,6 +1449,13 @@ export class Game {
       if (cells.length === 0) return false;
       return canAfford(this.state.city.wallet, nextBuildCost(this.state, id));
     });
+  }
+
+  /** Per-second Research CTA: some tech can be started, or some upgrade
+   *  bought. The same shape as `buildCtaLit` — the tab only lights when the
+   *  screen behind it has something the player can actually press. */
+  researchCtaLit(): boolean {
+    return anyResearchActionable(this.state) || anyUpgradeActionable(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */
@@ -1503,6 +1693,14 @@ export class Game {
         return (tech !== null && isTechComplete(this.state, tech))
           || this.effectiveWalletValue(c) > 0;
       }),
+      // Knowledge is what the research tree is bought with, so it has to be
+      // on the plank — a currency the player spends and cannot see is the
+      // same bug as a price hidden outside its button. It has no unlocking
+      // tech; clearing the first cell of fog is what introduces it, and the
+      // DISCOVERY flag (not the balance) keeps it on the plank afterwards so
+      // it does not vanish the moment research spends it to zero.
+      ...(this.state.discoveries[resourceDiscoveryKey('Knowledge')] === true
+        ? (['Knowledge'] as CurrencyId[]) : []),
     ];
   }
 
@@ -1514,6 +1712,12 @@ export class Game {
    * workers only while something is being staffed. Showing the live one
    * turns three pieces of trivia into one piece of advice.
    */
+  /** Housed villagers and the homes to hold them — a plank read-out now, so
+   *  it is its own accessor rather than a case of the contextual slot. */
+  population(): { value: number; max: number } {
+    return { value: this.state.city.population, max: maxPopulation(this.state) };
+  }
+
   hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
@@ -1592,6 +1796,46 @@ function resourceBanner(currency: CurrencyId): Banner {
   return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
 }
 
+/**
+ * The card for a landmark or ruin coming into view for the first time.
+ *
+ * Sighted, not reached: the fog only has to have thinned enough to make it
+ * out. That is the moment it becomes a destination, and a destination the
+ * player has not been told about is just a sprite they may never walk to.
+ *
+ * Returns null for an id no longer in the workbook, so a save that remembers
+ * a site somebody has since deleted degrades to silence rather than a crash.
+ */
+function siteBanner(id: string): Banner | null {
+  const landmark = LANDMARKS.find((l) => l.id === id);
+  if (landmark) {
+    const art = LANDMARK_ART[landmark.kind];
+    return {
+      title: 'A place of power!',
+      icon: art.glyph,
+      name: art.name,
+      // What it is FOR, in one line — the site card carries the detail.
+      desc: landmark.defended
+        ? 'Something holds it. Clear a path, then clear the guard.'
+        : 'Clear a path to it and claim it.',
+      sprite: art.sprite,
+      tone: 'sky',
+    };
+  }
+  const ruin = Object.values(RUINS).find((r) => r.id === id);
+  if (ruin) {
+    return {
+      title: 'Ruins sighted!',
+      icon: ruin.glyph,
+      name: ruin.name,
+      desc: ruin.description,
+      sprite: ruin.sprite,
+      tone: 'gold',
+    };
+  }
+  return null;
+}
+
 /** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */
 export function formatAdjacency(goldPerMinute: number): string {
   const n = Math.abs(Number.isInteger(goldPerMinute)
@@ -1625,6 +1869,11 @@ const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
   NotEnoughUnits: 'You do not have that many at home',
   OverArmyCap: 'More than your army can field',
   NotEnoughSupplies: 'Not enough supplies for the trip',
+  ArtifactNotOwned: 'You do not have that relic',
+  // Naming the passive being given up is the whole point of the message: the
+  // choice is the feature, so the refusal has to read as one.
+  ArtifactAttuned: 'That relic is attuned — unsocket it from the Reliquary first',
+  ArtifactCarried: 'That relic is already with another party',
 };
 
 /** How well a unit type answers a ruin's affinity — used only to pre-fill a

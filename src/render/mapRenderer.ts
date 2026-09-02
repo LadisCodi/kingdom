@@ -6,9 +6,10 @@ import {
   CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART, TRAINING,
 } from '../sim/data/definitions';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
-import { fogState, revealCostForCell } from '../sim/fog';
+import { fogState, isReachable, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
+import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
@@ -42,23 +43,30 @@ export interface MarkerLayer {
 // Canvas text uses the same display face as the HUD, read from the CSS token
 // so tokens.css stays the one source of truth. Cached: this is called from
 // the render loop.
-let displayFontStack: string | null = null;
-function displayFont(): string {
-  if (displayFontStack === null) {
-    displayFontStack = getComputedStyle(document.documentElement)
-      .getPropertyValue('--font-display').trim() || 'ui-monospace, monospace';
+let labelFontStack: string | null = null;
+function labelFace(): string {
+  if (labelFontStack === null) {
+    labelFontStack = getComputedStyle(document.documentElement)
+      .getPropertyValue('--font-body').trim() || 'system-ui, sans-serif';
   }
-  return displayFontStack;
+  return labelFontStack;
 }
 
-/** A pixel face is crisp only at whole multiples of its grid, and these sizes
- *  are derived from a continuous zoom — so snap to 4px steps. */
-const snapPx = (px: number, floor: number): number =>
-  Math.max(floor, Math.round(px / 4) * 4);
+/**
+ * Map labels are NUMBERS and short counts, so they are set in the body face,
+ * not the title one — the same split the CSS makes.
+ *
+ * These used to snap to 4px steps because a pixel face is crisp only at whole
+ * multiples of its grid. PT Sans is an outline face with no grid to land on,
+ * so the quantising bought nothing and cost a size: a label wanting 13px got
+ * 12px, under the readability floor. Whole pixels are still worth keeping —
+ * a fractional size renders soft — but every whole pixel is now available.
+ */
+const snapPx = (px: number, floor: number): number => Math.max(floor, Math.round(px));
 
-/** Canvas font string in the display face, at a snapped size. */
+/** Canvas font string in the body face, at a whole-pixel size. */
 const labelFont = (px: number, floor: number, bold = false): string =>
-  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${displayFont()}`;
+  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${labelFace()}`;
 
 export function drawMap(
   canvas: HTMLCanvasElement,
@@ -147,6 +155,27 @@ export function drawMap(
     ctx.fillText(text, x + size - r - 2, y + r + 3);
   };
 
+  /** A dark pill of text centred on (cx) and sitting just ABOVE (bottomY) —
+   *  the same shape the yield labels use, so a count over a building and a
+   *  yield over a cell read as the same kind of thing. */
+  const drawCountPill = (cx: number, bottomY: number, text: string): void => {
+    const fontSize = snapPx(size * 0.17, 9);
+    ctx.font = labelFont(fontSize, 9, true);
+    const padX = fontSize * 0.5;
+    const pillW = ctx.measureText(text).width + padX * 2;
+    const pillH = fontSize * 1.45;
+    const pillX = cx - pillW / 2;
+    const pillY = bottomY - pillH;
+    ctx.fillStyle = PALETTE.labelPill;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = PALETTE.label;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx, pillY + pillH / 2 + fontSize * 0.05);
+  };
+
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
   // separate pass — a multi-cell sprite drawn here would be overpainted by
   // the terrain fill of the following footprint cells.
@@ -187,8 +216,14 @@ export function drawMap(
       // Landmarks and ruins: authored sites, drawn where a feature would be.
       // They are what the fog is FOR, so they get the same weight as a forest
       // and a badge saying whether they still want something from you.
+      //
+      // Drawn through the fog, exactly like a feature. A site you cannot see
+      // until you have already paid to stand on it is not a destination —
+      // it is a surprise, and the whole economy is built on the player
+      // choosing which direction to spend Gold in. The Discovered scrim below
+      // still dims them, so "there, and not yet yours" reads at a glance.
       const landmark = landmarkDefAt(cell);
-      if (landmark && fog === 'Revealed') {
+      if (landmark) {
         const art = LANDMARK_ART[landmark.kind];
         const claimed = state.landmarks.claimed[landmark.id] === true;
         punched(key, x, y, size, size, () => {
@@ -200,7 +235,7 @@ export function drawMap(
         if (!claimed) drawSiteBadge(x, y, landmark.defended ? '!' : '\u2726');
       }
       const ruin = ruinDefAt(cell);
-      if (ruin && fog === 'Revealed') {
+      if (ruin) {
         punched(key, x, y, size, size, () => {
           if (!drawSprite(ctx, ruin.sprite, x, y, size, size)) {
             drawGlyph(ctx, ruin.glyph, x, y, size, size * 0.5);
@@ -216,6 +251,15 @@ export function drawMap(
       if (fog === 'Discovered') {
         ctx.fillStyle = PALETTE.fogDiscovered;
         ctx.fillRect(x, y, size, size);
+        // A cell you can see but cannot reach yet sits under a second layer,
+        // so the payable frontier reads as a border rather than as every
+        // pale tile on screen. The rule is spatial, so it should be visible
+        // spatially — a toast on a refused tap is the fallback, not the
+        // teacher.
+        if (!isReachable(state, map, cell)) {
+          ctx.fillStyle = PALETTE.fogDiscovered;
+          ctx.fillRect(x, y, size, size);
+        }
         // Reveal progress only — the total cost is deliberately not shown.
         const paid = state.fog.progress[key] ?? 0;
         if (paid > 0) {
@@ -285,11 +329,21 @@ export function drawMap(
       // A district that is itself a resource cell (FarmLands → Crops,
       // lived-in Housing → Taxes): wear/recovery bar.
       if (def.providesHarvestSource !== null) drawResourceState(district.location, x, y);
-      // Townhall: villager-training progress bar.
-      if (district.definitionId === 'Townhall' && state.city.training !== null) {
-        const totalMs = TRAINING.seconds * 1000;
-        const progress = Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
-        drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+      // Townhall: villager-training progress bar, and the population count.
+      //
+      // Population is drawn HERE rather than in the header because the
+      // Townhall is where villagers come from: the number and the button that
+      // changes it are the same object, so wanting more people and knowing
+      // how many you have are one glance instead of two. It also buys the
+      // header back the width the widget was costing on a phone.
+      if (district.definitionId === 'Townhall') {
+        drawCountPill(x + fw / 2, y - 2, `👥 ${state.city.population}/${maxPopulation(state)}`);
+        if (state.city.training !== null) {
+          const totalMs = TRAINING.seconds * 1000;
+          const progress =
+            Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
+          drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+        }
       }
       // Needs-workers warning.
       if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {

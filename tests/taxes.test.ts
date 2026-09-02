@@ -1,12 +1,21 @@
 // Housing taxes: passive gold from housed villagers (the idle income), plus
 // the house tap — tapping fast-forwards the tax clock (buildings never
 // exhaust; that mechanic is for natural cells only).
+//
+// The tap is bounded by MANA, one per tap, and by nothing else: a house taps
+// like a tree, as often and as fast as the player likes. It used to run a 60s
+// per-house collection cycle, which bounded it with a WAIT — and a wait is
+// not a decision. The claim these tests protect is that the pool is the only
+// gate, that a refused tap costs nothing and moves nothing, and that the
+// share-scaling still stops a large city minting more per press than a small
+// one.
 import { describe, expect, it } from 'vitest';
-import { TAXES } from '../src/sim/data/definitions';
+import { TAP, TAXES } from '../src/sim/data/definitions';
 import { tapCell } from '../src/sim/harvest';
-import {
-  houseCycleProgress, houseTap, houseTapReady, houseTapReadyIn, queueTraining,
-} from '../src/sim/population';
+import { cityGoldPerMinute, houseTap, queueTraining } from '../src/sim/population';
+import { townhallTap } from '../src/sim/commands';
+import { mana } from '../src/sim/mana';
+import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import { getWallet, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
 
@@ -22,6 +31,7 @@ describe('passive tax gold', () => {
     addBuilt(state, 'Housing', HOUSE);
     addBuilt(state, 'Housing', HOUSE2); // capacity is 2 per house
     state.city.population = 2; // 2 housed × 30/min → 1 Gold every second
+    state.city.wallet.Gold = 0; // measuring INCOME, not the opening grant
     expect(TAXES.goldPerPopulationPerMinute).toBe(30);
     tickAt(state, T0 + 900);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
@@ -33,13 +43,15 @@ describe('passive tax gold', () => {
 
   it('only HOUSED villagers pay: no housing, no gold — and no banked time', () => {
     const state = freshGame();
-    state.city.population = 3; // roofless (Townhall houses nobody)
+    state.city.population = 3; // roofless — the Townhall houses nobody
+    state.city.wallet.Gold = 0; // measuring INCOME, not the opening grant
     tickAt(state, T0 + 600_000);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
-    // Housing arrives late: taxes start from then, not retroactively.
+    // Housing arrives late: taxes start from THEN, not retroactively —
+    // 2 housed (an L1 house holds two) × 30/min = 60/min over 30 s.
     addBuilt(state, 'Housing', HOUSE);
-    tickAt(state, T0 + 600_000 + 30_000); // 1 housed (capacity 1) → 30/min
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(15);
+    tickAt(state, T0 + 600_000 + 30_000);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(30);
   });
 
   it('one-call replay (with a training completion mid-window) matches stepped ticking', () => {
@@ -63,50 +75,78 @@ describe('passive tax gold', () => {
 });
 
 describe('collecting from a house', () => {
-  it('collects early within its cycle, and cannot exceed it', () => {
+  it('taps as often as you like, and Mana is what runs out', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     addBuilt(state, 'Housing', HOUSE2);
-    state.city.population = 2; // one resident each; 60/min city → 1s per gold
+    state.city.population = 4; // two residents each — one L1 house holds two
 
     // The boost is scaled by this house's SHARE of city income, so sweeping
     // every house exactly once pulls forward one tapBoostSeconds of the
-    // WHOLE city — which is what bounds it as the city grows.
+    // WHOLE city — which is what stops a big city minting more per tap.
+    // Half the city's income for boost_seconds, in whole gold — stated as a
+    // RATE so it survives the next change to housing capacity or the tax dial.
+    const halfTheCity = Math.floor((cityGoldPerMinute(state) / 60) * TAP.boostSeconds / 2);
     const first = houseTap(state, house(state), T0);
     expect(first.result).toBe('Collected');
-    expect(first.gold).toBe(TAXES.tapBoostSeconds / 2); // half the city's income
+    expect(first.gold).toBe(halfTheCity);
 
-    // Tapping the same house again inside the cycle does nothing at all.
-    expect(houseTap(state, house(state), T0).result).toBe('NotReady');
-    expect(houseTap(state, house(state), T0 + 1000).result).toBe('NotReady');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(TAXES.tapBoostSeconds / 2);
-
-    // The OTHER house is on its own cycle and still has one ready.
-    const second = state.city.districts.filter((d) => d.definitionId === 'Housing')[1];
-    expect(houseTap(state, second, T0).result).toBe('Collected');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(TAXES.tapBoostSeconds);
+    // The SAME house, immediately, as many times as the pool allows. This is
+    // the whole change: a house taps like a tree, and no timer is consulted.
+    expect(houseTap(state, house(state), T0).result).toBe('Collected');
+    expect(houseTap(state, house(state), T0).result).toBe('Collected');
+    expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThan(halfTheCity);
   });
 
-  it('the cycle rolls over, and the progress bar says when', () => {
+  it('charges one Mana a tap, and stops dead when the pool is dry', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
-    state.city.population = 1;
-    const h = house(state);
-    expect(houseCycleProgress(h, T0)).toBe(1); // a fresh house is ready
-    houseTap(state, h, T0);
-    expect(houseCycleProgress(h, T0)).toBe(0);
-    expect(houseTapReady(h, T0)).toBe(false);
-    const cycle = TAXES.cycleSeconds * 1000;
-    expect(houseCycleProgress(h, T0 + cycle / 2)).toBeCloseTo(0.5, 6);
-    expect(houseTapReadyIn(h, T0 + cycle / 2)).toBe(TAXES.cycleSeconds / 2);
-    expect(houseTapReady(h, T0 + cycle)).toBe(true);
-    expect(houseTap(state, h, T0 + cycle).result).toBe('Collected');
+    state.city.population = 2; // one in the Townhall bed, one in the house
+
+    const before = mana(state);
+    expect(before).toBeGreaterThan(0); // a new kingdom starts full
+    expect(houseTap(state, house(state), T0).result).toBe('Collected');
+    expect(mana(state)).toBe(before - TAP.manaCost);
+
+    // Drain it and the tap refuses — the pool IS the gate now.
+    state.city.wallet.Mana = 0;
+    const dry = houseTap(state, house(state), T0);
+    expect(dry.result).toBe('NoMana');
+    expect(dry.gold).toBe(0);
+
+    // A refused tap must not move the tax clock, or a dry pool would still
+    // be printing gold one failed press at a time.
+    const anchor = state.city.lastTaxAt;
+    houseTap(state, house(state), T0);
+    expect(state.city.lastTaxAt).toBe(anchor);
   });
 
-  it('a full sweep every cycle is a bounded percentage over idle, at any size', () => {
-    // The old tap was unbounded: gold per tap scaled with the WHOLE city's
-    // rate and nothing paced it. Sweeping now pulls forward exactly
-    // tapBoostSeconds of city income per cycle, however many houses there are.
+  it('never charges Mana for a tap that could not have paid out', () => {
+    const state = freshGame(); // population 0 — nobody lives there
+    addBuilt(state, 'Housing', HOUSE);
+    const before = mana(state);
+    expect(houseTap(state, house(state), T0).result).toBe('NoResidents');
+    expect(mana(state)).toBe(before);
+  });
+
+  it('paces a HELD pointer like a held tree, and a deliberate tap not at all', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    state.city.population = 2; // one in the Townhall bed, one in the house
+
+    expect(houseTap(state, house(state), T0, true).result).toBe('Collected');
+    // Inside the auto-tap cooldown a held pointer waits; a real tap does not.
+    expect(houseTap(state, house(state), T0 + 1, true).result).toBe('TooSoon');
+    expect(houseTap(state, house(state), T0 + 1).result).toBe('Collected');
+    const cooldown = effectiveAutoTapCooldownMs(state);
+    expect(houseTap(state, house(state), T0 + cooldown + 1, true).result).toBe('Collected');
+  });
+
+  it('a full sweep is a bounded percentage over idle, at any size', () => {
+    // Per-tap gold scales with the whole city's rate, so without the SHARE
+    // scaling a big city would mint more per press than a small one. One
+    // sweep pulls forward exactly tapBoostSeconds of city income and costs
+    // one Mana per house, however many houses there are.
     const sweepBonus = (houses: number): number => {
       const state = freshGame();
       // Spaced out: adjacent Housing carries a −1 gold/min penalty, which
@@ -124,7 +164,7 @@ describe('collecting from a house', () => {
     const rate = TAXES.goldPerPopulationPerMinute;
     for (const houses of [2, 4, 8]) {
       // tapBoostSeconds of the whole city's per-minute income.
-      const expected = (houses * rate * TAXES.tapBoostSeconds) / 60;
+      const expected = (houses * rate * TAP.boostSeconds) / 60;
       expect(Math.abs(sweepBonus(houses) - expected)).toBeLessThanOrEqual(1);
     }
   });
@@ -135,5 +175,27 @@ describe('collecting from a house', () => {
     expect(houseTap(state, house(state), T0).result).toBe('NoResidents');
     state.city.population = 2;
     expect(tapCell(state, map, HOUSE, T0)).toBe('NotHarvestable'); // no extraction
+  });
+});
+
+// Every tap that hurries a generator pays the same energy, so the rule is one
+// thing to learn rather than four. A tap with nothing to hurry is free.
+describe('hurrying a building costs the same energy', () => {
+  it('the Townhall villager tap charges, and an idle Townhall is free', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE); // somewhere for a villager to live
+    fund(state, { Food: 500 });
+    const before = mana(state);
+    expect(townhallTap(state, T0)).toBe('NoTraining'); // nothing training yet
+    expect(mana(state)).toBe(before);
+
+    queueTraining(state, T0);
+    expect(townhallTap(state, T0)).toBe('Boosted');
+    expect(mana(state)).toBe(before - TAP.manaCost);
+
+    state.city.wallet.Mana = 0;
+    const startedAt = state.city.training!.startedAt;
+    expect(townhallTap(state, T0)).toBe('NoMana');
+    expect(state.city.training!.startedAt).toBe(startedAt); // nothing hurried
   });
 });

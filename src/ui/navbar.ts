@@ -51,8 +51,13 @@ export function mountNavbar(game: Game, root: HTMLElement): void {
   const refresh = () => {
     for (const { def, button } of tabs) {
       button.classList.toggle('is-active', game.openOverlay === def.name);
-      // The CTA lights when something is both affordable and placeable.
-      button.classList.toggle('is-cta', def.name === 'build' && game.buildCtaLit());
+      // The CTA lights when the screen behind the tab has something the
+      // player can press right now: a district that is both affordable and
+      // placeable, or a tech/upgrade that can be started this second.
+      const cta = def.name === 'build' ? game.buildCtaLit()
+        : def.name === 'research' ? game.researchCtaLit()
+          : false;
+      button.classList.toggle('is-cta', cta);
     }
   };
   game.onChange(refresh);

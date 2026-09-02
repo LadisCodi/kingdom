@@ -15,11 +15,16 @@
 .k-panel,
 .k-card,
 .gal { font-family: var(--font-body); }
+/* Titles: a sheet's plank and a card's name are the two places the display
+ * face earns its keep in the kit. */
 .k-plank,
-.k-card .k-name,
+.k-card .k-name { font-family: var(--font-display); }
+/* Numbers. These used to share the rule above, back when one pixel face did
+ * both jobs — which is exactly what made it have to be legible at 13px. */
 .k-chip,
+.k-cost,
 .k-stat .k-stat-value,
-.k-trough .k-trough-label { font-family: var(--font-display); }
+.k-trough .k-trough-label { font-family: var(--font-body); font-weight: 700; }
 
 /* ---------------------------------------------------------------- surfaces */
 
@@ -96,7 +101,8 @@
   border-radius: 6px;
 }
 .k-card > .k-body { flex: 1; min-width: 0; }
-.k-card .k-name { font-weight: 700; }
+/* 400, not 700: the title face has one weight and would fake the bold. */
+.k-card .k-name { font-weight: 400; }
 .k-card .k-desc { font-size: var(--text-helper); color: var(--ink-muted); }
 
 .k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -117,7 +123,7 @@
   min-height: 56px;
   padding: 12px 20px;
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: 700;
   color: var(--ink-inverse);
@@ -137,6 +143,29 @@
 .k-btn--secondary { --slab: var(--wood); --slab-lip: var(--wood-dark); }
 .k-btn--destructive { --slab: var(--clay); --slab-lip: #8e3323; }
 .k-btn--gem { --slab: linear-gradient(160deg, var(--sky), #7a5bc7); --slab-lip: #3c2c73; }
+
+/* §6.4 — a price belongs INSIDE the button that spends it. The label rides on
+ * top, the cost sits under it, and the whole thing is one press-target that
+ * reads in a single glance instead of a caption the eye has to pair up. */
+.k-btn-label { display: inline-flex; align-items: center; gap: 8px; }
+.k-btn.has-cost {
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 18px;
+}
+.k-btn-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.k-cost { display: inline-flex; align-items: center; gap: 4px; }
+/* The red IS the reason the button is dead, so it has to survive the disabled
+ * fill — which is a warm tan, not a grey, and would swallow a subtler red. */
+.k-cost.is-short { color: var(--clay); }
+.k-btn:disabled .k-cost.is-short { color: #a8321c; }
+.k-btn:disabled .k-cost.is-short .icon { color: #a8321c; }
 
 /* Gated, not greyed: a warm fill, and never without a reason beside it. */
 .k-btn:disabled,
@@ -310,6 +339,8 @@
 }
 /* On a dark or saturated ground, flip it. */
 .k-plank .icon, .k-btn .icon { color: var(--ink-inverse); }
+/* …except a cost the player is short of, which stays clay icon and all. */
+.k-btn .k-cost.is-short .icon { color: var(--clay); }
 .icon--sm { --icon-size: 16px; }
 .icon--lg { --icon-size: 48px; }
 .icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }

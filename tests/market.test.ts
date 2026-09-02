@@ -21,7 +21,7 @@ describe('instant selling', () => {
   it('pays gold_value per unit, instantly, clamped to what is on hand', () => {
     const state = freshGame();
     addBuilt(state, 'Market', MARKET_CELL);
-    fund(state, { Wood: 10, Meat: 2 });
+    fund(state, { Wood: 10, Meat: 2, Gold: 0 }); // measuring the SALE, not the grant
     expect(sellGoods(state, 'Wood', 4)).toEqual({ result: 'Sold', units: 4, gold: 12 }); // 3 each
     expect(getWallet(state.city.wallet, 'Wood')).toBe(6);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(12);

@@ -1,14 +1,15 @@
-// Technologies: one-time researches that unlock content. Cost resources +
+// Technologies: one-time researches that unlock content. Cost Knowledge +
 // time; limited by concurrent SLOTS (base from Settings, more bought with
 // Gems at an escalating price); tree edges via `requires`. Completion runs
 // in real time through the unified advance (like the build queue).
 
-import { DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, UNITS, UPGRADES } from './data/definitions';
+import {
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
+} from './data/definitions';
 import {
   addToWallet, getWallet,
   type DistrictId, type GameState, type TechId, type UnitId, type UpgradeId,
 } from './state';
-import { canAfford, pay } from './wallet';
 
 /** Something a technology puts in the player's hands. */
 export type Unlock =
@@ -49,6 +50,22 @@ export function techUnlocks(id: TechId): Unlock[] {
   return unlocks;
 }
 
+/**
+ * What a technology costs: Knowledge, and only Knowledge.
+ *
+ * Knowledge is KINGDOM-scoped — it survives a city, and it comes from
+ * exploring the map and finishing quests rather than from anything the city
+ * produces. So research cannot be paid the way a building is, out of
+ * `city.wallet`; it has its own purse and this is the only sink that draws on
+ * it besides the collection. That is the whole point of the currency: the
+ * tree asks "have you been out there yet?", not "have you stockpiled Wood?".
+ *
+ * Instant upgrades stay Gold-only — they are the city economy's own sink.
+ */
+export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost, 'Knowledge');
+
+const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
+
 export const isTechComplete = (state: GameState, id: TechId): boolean =>
   state.research.completed.includes(id);
 
@@ -67,14 +84,33 @@ export type StartTechResult =
   | 'Started' | 'AlreadyDone' | 'AlreadyActive' | 'MissingRequirement'
   | 'NoFreeSlot' | 'NotEnoughResources';
 
+/**
+ * Could the player start this tech this second? Every gate `startTech` checks,
+ * asked without doing it.
+ *
+ * It exists so the dot on a node and the CTA on the nav tab cannot drift from
+ * what the button actually does — the failure mode being a lit tab that leads
+ * to a screen where nothing is pressable.
+ */
+export const canStartTech = (state: GameState, id: TechId): boolean =>
+  !isTechComplete(state, id)
+  && !isTechActive(state, id)
+  && requirementsMet(state, id)
+  && state.research.active.length < techSlots(state)
+  && knowledge(state) >= techCost(id);
+
+/** Anything at all worth a trip to the Research screen. */
+export const anyResearchActionable = (state: GameState): boolean =>
+  TECH_ORDER.some((id) => canStartTech(state, id));
+
 export function startTech(state: GameState, id: TechId, now: number): StartTechResult {
   if (isTechComplete(state, id)) return 'AlreadyDone';
   if (isTechActive(state, id)) return 'AlreadyActive';
   if (!requirementsMet(state, id)) return 'MissingRequirement';
   if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
-  const cost = TECHNOLOGIES[id].cost;
-  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
-  pay(state.city.wallet, cost);
+  const cost = techCost(id);
+  if (knowledge(state) < cost) return 'NotEnoughResources';
+  addToWallet(state.kingdom.wallet, 'Knowledge', -cost);
   state.research.active.push({ id, startedAt: now });
   return 'Started';
 }
