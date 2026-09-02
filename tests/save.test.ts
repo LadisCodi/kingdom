@@ -118,4 +118,37 @@ describe('save versions', () => {
     expect(migrate(save)).toBe(true);
     expect(save.SaveVersion).toBe(SAVE_VERSION);
   });
+
+  // v21: Berries, Meat, Fish and Iron stopped being wallet rows. A save's
+  // balances convert at the rates they were EARNED at — the old `countsAs`
+  // values and Iron's 3:1 against Stone — not at whatever a cell pays per tap
+  // today. Somebody who banked 10 Fish banked 10 Food's worth of buying
+  // power, whatever a shoal is worth now.
+  it('folds the retired currencies into Food and Stone', () => {
+    const state = freshGame();
+    fund(state, { Gold: 7, Food: 2, Stone: 1 });
+    const save = serialize(state, T0);
+    const city = (save.Modules['kingdom.cities'] as any).Cities[0];
+    Object.assign(city.Currencies, { Berries: 4, Meat: 3, Fish: 10, Iron: 5 });
+    save.SaveVersion = 20;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    // 2 + 4×1 + 3×3 + 10×1 = 25
+    expect(getWallet(restored.city.wallet, 'Food')).toBe(25);
+    // 1 + 5×3 = 16
+    expect(getWallet(restored.city.wallet, 'Stone')).toBe(16);
+    expect(getWallet(restored.city.wallet, 'Gold')).toBe(7); // untouched
+    for (const dead of ['Berries', 'Meat', 'Fish', 'Iron']) {
+      expect(restored.city.wallet).not.toHaveProperty(dead);
+    }
+  });
+
+  it('leaves a v21 save alone — the fold runs once, not on every load', () => {
+    const state = freshGame();
+    fund(state, { Food: 5, Stone: 3 });
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(getWallet(restored.city.wallet, 'Food')).toBe(5);
+    expect(getWallet(restored.city.wallet, 'Stone')).toBe(3);
+  });
 });

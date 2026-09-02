@@ -38,7 +38,9 @@ visual language of a 4X strategy HUD. Three concrete symptoms:
 - **The header is a spreadsheet.** Up to nine widgets — Gold, Food, Wood,
   Stone, Iron, Gems, Population, Builders, Free workers — wrap onto two
   rows on a phone, all in the same weight, none of them the thing the
-  player is about to spend.
+  player is about to spend. *(Since fixed twice over: §5.1 cut it to coins +
+  Mana + Gems, and the 2026-09-02 currency pass cut the coins themselves from
+  six to four — see questions 3 and 7.)*
 - **Menus are full-screen dark scrims.** Opening Build hides the kingdom
   behind `rgba(10,13,18,0.88)`. The player loses the thing they are playing
   with, and the menu is a list of rows, not a place.
@@ -177,7 +179,9 @@ Replace **every emoji** with a hand-made 32×32 (or 16×16 upscaled) pixel
 icon in the reference palette. The current emoji set is the placeholder
 map, and it is the single loudest reason the UI reads as a prototype:
 
-`🪙 Gold · 🍎 Food · 🪵 Wood · 🪨 Stone · ⚙️ Iron · 💎 Gems · 📜 Knowledge`
+`🪙 Gold · 🍎 Food · 🪵 Wood · 🪨 Stone · 💎 Gems · 📜 Knowledge`
+`🫐 Berries · 🍖 Meat · 🐟 Fish · ⚙️ Iron` *(cells now, not currencies —
+they pay Food and Stone, but the map still needs their art)*
 `👥 Population · 👷 Builders · 🧑‍🌾 Free workers · 📜 Quest · 🔍 Show me`
 `🏛️ Townhall · 🏠 Housing · 🌾 Farm · 🟩 FarmLands · 🪚 Sawmill ·`
 `🏪 Market · ⛏️ Quarry · ⚓ Docks · ⚒️ Mine`
@@ -253,6 +257,11 @@ same weight, so none of them reads. Stone and Iron are on screen from
 minute one even though nothing costs them until Masonry/Mining. The save
 badge is developer information occupying prime real estate.
 
+*(Fixed twice. This section cut the widgets; the 2026-09-02 currency pass then
+cut the currencies, so the equivalence tooltip described above no longer
+exists — see questions 3 and 7, and
+[`../features/currency-simplification.md`](../features/currency-simplification.md).)*
+
 **Show this.**
 
 - *Primary, always:* **Gold**, **Food**, **Wood** — the three that gate
@@ -265,15 +274,18 @@ badge is developer information occupying prime real estate.
   their own share of the row, while Mana and Gems never leave the screen.
   A player whose tap just refused must be able to read why without scrolling
   the header, and Gems is what refills it.
-- *Contextual:* Stone and Iron **appear once their gating tech is complete
-  (Masonry, Mining) or once the balance is above zero.** The tech clause is
-  what makes it sticky — a counter must not vanish when the player spends
-  back to zero; the balance clause covers a quest reward arriving early.
-  They slide in with a one-off banner ("Your quarry is bringing Stone home").
-- *Purse (tap to expand):* the full wallet including Berries / Meat /
-  Fish / Knowledge, each with its Food-equivalent value shown as
-  `🫐 12 × 1 = 12 🍎`. This is today's tooltip, promoted to a proper
-  sheet, and it is where the Food breakdown lives.
+- *Contextual:* **Stone** appears once its gating tech is complete (Masonry)
+  or once the balance is above zero. The tech clause is what makes it sticky —
+  a counter must not vanish when the player spends back to zero; the balance
+  clause covers a quest reward arriving early. It slides in with a one-off
+  banner ("Your quarry is bringing Stone home"). *(Amended 2026-09-02: Iron
+  was the other contextual coin. It is no longer a currency — a vein is a rich
+  Stone node — so the worst case here is one contextual coin, not two.)*
+- *Purse (tap to expand):* the full wallet — four coins, Gems, and Knowledge
+  once the player has met it. *(Amended 2026-09-02: this sheet existed largely
+  to explain the Food equivalence, `🫐 12 × 1 = 12 🍎`. Bushes, game and
+  shoals pay Food directly now, so there is no breakdown left to show and the
+  sheet is a plain list.)*
 - *City status — **one contextual slot**, not three permanent widgets.*
   A single small wooden plaque under the coins, showing whichever of the
   three numbers the player can currently act on:
@@ -874,15 +886,19 @@ large haul, unknown next) · scouted next depth · the failure report.
 - **Attunement slots at the top**, as physical sockets. A locked slot says
   whether research or Gems opens it. A slot in its **5-minute swap lock** shows
   the time remaining on the socket itself.
-- Each relic card carries its passive in plain words and its **upkeep in Mana per
-  hour** — the number the whole decision turns on.
-- **This is where the Mana breakdown lives**: production, minus upkeep, equals
-  the net rate the header shows as a single figure (§5.1). Never three numbers in
-  the HUD.
-- Knowledge and Fragments live here, not in the header.
+- Each relic card carries its passive in plain words. **Upkeep is gone**
+  (2026-09-02): nothing draws against the pool any more, so the number the
+  decision used to turn on is now *attune-or-arm* — a relic is worn by the
+  kingdom or carried by a hero, never both.
+- **This is where the Mana pool lives**: the gauge, the ceiling and the one
+  production figure the header shows (§5.1). Never three numbers in the HUD.
+- **Knowledge and Fragments live here, not in the header** — and Knowledge is
+  now permanently here, since it buys relic and hero levels and nothing else
+  ([`../features/knowledge.md`](../features/knowledge.md)). It reads as its own
+  parchment panel under the Mana pool, captioned with where it comes from.
 
-**States to mock.** One slot, empty · one filled · a slot mid-lock · a relic you
-cannot afford the upkeep of · the heroes tab.
+**States to mock.** One slot, empty · one filled · a slot mid-lock · a relic
+you cannot afford to Study · the heroes tab.
 
 ---
 
@@ -1409,7 +1425,7 @@ textures and loose decorations**.
 
 | Sheet | Grid | Contents |
 |---|---|---|
-| **UI-A** resources | 4×3 | Gold, Food, Wood, Stone, Iron, Gems, Knowledge, Population, Builders, Workers, Berries, Fish |
+| **UI-A** resources | 4×3 | Gold, Food, Wood, Stone, Iron, Gems, Knowledge, Population, Builders, Workers, Berries, Fish *(Iron/Berries/Fish are cell icons now, not coins — the art is unchanged)* |
 | **UI-B** buildings | 3×3 | Townhall, Housing, Farm, FarmLands, Sawmill, Market, Quarry, Docks, Mine |
 | **UI-C** actions | 4×3 | quest scroll, pointing hand, padlock, hourglass, clock, tick, ✕, +, −, pip, sparkle, `?` |
 | **UI-D** textures | 2×2 | wood grain, dark wood, parchment fibre, cloth — **tiling, not trimmed** |
@@ -1496,12 +1512,15 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
    **new class of art** — the world set is deliberately zoomed-out and
    impersonal, and a face is the opposite of that. The style question has to be
    answered before a set is generated. See `Docs/art/sprite-prompts.md`.
-3. **How many currencies should ever be visible?** §5.1 settles on three
-   coins plus a purse, with Stone and Iron revealed by "gating tech complete
-   **or** balance above zero". That rule is one-way — nothing ever hides
-   again — so a late-game player ends up back at five coins. If that reads as
-   crowded in playtest, the next cut is to hide a coin the player has not
-   spent or earned in N minutes.
+3. ~~**How many currencies should ever be visible?**~~ — **answered
+   2026-09-02**, not by a UI rule but by cutting the currencies. The wallet
+   went from eleven rows to seven: berry bushes, game and shoals pay Food and
+   iron veins pay Stone, so the plank's worst case is **four coins** (Gold,
+   Food, Wood, Stone) and its opening case is three. Knowledge left the header
+   entirely — it buys relic and hero levels and nothing else, so it reads in
+   the Reliquary beside what it pays for. The hide-an-unused-coin rule this
+   question floated is not needed. See
+   [`../features/currency-simplification.md`](../features/currency-simplification.md).
 4. **Research metaphor cost.** Re-skinning the tree as a parchment map is
    the most expensive item in this document. The mechanics stay identical,
    so it can ship last.
@@ -1510,11 +1529,10 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
    indecision rather than as a genuine fork in playtest, the fix is more contrast
    between the two paths — not promoting one of them to primary, which would
    answer the question for the player.
-7. **Does the header survive a sixth number?** §5.1 settles on three coins plus a
-   purse plus one contextual plaque, and warns that a late-game player ends up
-   back at five coins. Mana is permanent on top of that — it is the visit clock,
-   so it earns its slot — but it is the strongest argument yet for the
-   hide-an-unused-coin rule floated in question 3.
+7. ~~**Does the header survive a sixth number?**~~ — **answered 2026-09-02**:
+   there is no sixth number. Four coins at the worst, Mana's gauge (permanent,
+   it is the visit clock) and Gems past the rope. The currency cut in question
+   3 removed the pressure this question was about.
 5. ~~**Pixel font licensing**~~ — **decided**, then **revised 2026-09-02.**
    Originally: self-hosted OFL faces, **Pixelify Sans** (400/700) for display
    *and numbers*, **Nunito** (400/700) for body.

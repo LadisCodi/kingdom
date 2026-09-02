@@ -15,10 +15,12 @@
 .k-panel,
 .k-card,
 .gal { font-family: var(--font-body); }
-/* Titles: a sheet's plank and a card's name are the two places the display
- * face earns its keep in the kit. */
-.k-plank,
-.k-card .k-name { font-family: var(--font-display); }
+/* Titles: the sheet plank is the ONE place the display face earns its keep in
+ * the kit. A card's name used to share this rule, and cannot any more —
+ * BoldPixels is only crisp at 16/32/48, a list row has no business at 32, and
+ * at 16 its caps (8px) would be shorter than the body face's (11px), which is
+ * a title smaller than the text under it. Row names are body copy now. */
+.k-plank { font-family: var(--font-display); }
 /* Numbers. These used to share the rule above, back when one pixel face did
  * both jobs — which is exactly what made it have to be legible at 13px. */
 .k-chip,
@@ -62,7 +64,10 @@
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 var(--wood-dark);
   color: var(--parchment);
   font-size: var(--text-title);
-  font-weight: 700;
+  /* 400, not 700: BoldPixels has one weight, and `font-synthesis-weight: none`
+     refuses the fake — so 700 here was already rendering as 400 and only
+     misleading the next reader. */
+  font-weight: 400;
 }
 
 /* Rope grab handle on a sheet. */
@@ -157,7 +162,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-size: var(--text-helper);
+  font-size: var(--text-body);
   font-variant-numeric: tabular-nums;
 }
 .k-cost { display: inline-flex; align-items: center; gap: 4px; }
@@ -299,7 +304,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: var(--text-helper);
   font-weight: 700;
   color: var(--ink);
 }
@@ -319,9 +324,22 @@
 
 /* Until the atlas exists this is an emoji in a fixed box, so every call site
  * can be written against the real API now and upgrade in place later —
- * exactly the contract src/render/sprites.ts uses for world art. */
+ * exactly the contract src/render/sprites.ts uses for world art.
+ *
+ * THE SIZES ARE MULTIPLES OF THE ATLAS CELL, AND THAT IS NOT A STYLE CHOICE.
+ * The cell is 32px (scripts/ui-atlas.mjs, ATLAS_CELL) and the background
+ * scales by `--icon-size / cell`, so a size that is not a whole ratio of 32
+ * makes `image-rendering: pixelated` sample some source rows twice and others
+ * not at all. The default used to be 24 — a 0.75x downscale — and it visibly
+ * chewed the resource chips in the header: broken coin rims, ragged outlines,
+ * highlights eaten. It was read as "the icons are bad art" for months.
+ *
+ * 32 is 1:1 and stays whole at every DPR (2x, 3x). 16 is a clean half, and
+ * the -sm cells are authored at 16 anyway, so they land 1:1. 48 is the one
+ * compromise: 1.5x on a DPR-1 desktop, but a clean 3x on the phones this
+ * targets, and 64 would burst the 48px slots it sits in. */
 .icon {
-  --icon-size: 24px;
+  --icon-size: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -358,7 +376,7 @@
   font-size: var(--text-body);
 }
 .gal h2 {
-  font-size: 15px;
+  font-size: var(--text-body);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--gold);
@@ -369,7 +387,7 @@
 .gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
 .gal-item { margin: 8px 0; min-width: 0; }
 .gal-label {
-  font-size: 11px;
+  font-size: var(--text-helper);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-muted);

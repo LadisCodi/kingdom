@@ -1,5 +1,5 @@
-// Technologies: one-time researches that unlock content. Cost Knowledge +
-// time; limited by concurrent SLOTS (base from Settings, more bought with
+// Technologies: one-time researches that unlock content. Cost Gold from the
+// CITY purse + time; limited by concurrent SLOTS (base from Settings, more bought with
 // Gems at an escalating price); tree edges via `requires`. Completion runs
 // in real time through the unified advance (like the build queue).
 
@@ -51,20 +51,20 @@ export function techUnlocks(id: TechId): Unlock[] {
 }
 
 /**
- * What a technology costs: Knowledge, and only Knowledge.
+ * What a technology costs: Gold, and only Gold.
  *
- * Knowledge is KINGDOM-scoped — it survives a city, and it comes from
- * exploring the map and finishing quests rather than from anything the city
- * produces. So research cannot be paid the way a building is, out of
- * `city.wallet`; it has its own purse and this is the only sink that draws on
- * it besides the collection. That is the whole point of the currency: the
- * tree asks "have you been out there yet?", not "have you stockpiled Wood?".
+ * Research is paid out of `city.wallet` like everything else the city does,
+ * so the tree competes for the same purse as clearing fog and raising a
+ * building. Three calls on one budget is the decision the economy is built
+ * around; a second purse just removed the tree from that contest.
  *
- * Instant upgrades stay Gold-only — they are the city economy's own sink.
+ * Instant upgrades are Gold-only too. The line between them is no longer
+ * which currency they cost — it is that an upgrade is permanent and stacking
+ * while a technology is a one-time unlock.
  */
-export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost, 'Knowledge');
+export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost, 'Gold');
 
-const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
+const gold = (state: GameState): number => getWallet(state.city.wallet, 'Gold');
 
 export const isTechComplete = (state: GameState, id: TechId): boolean =>
   state.research.completed.includes(id);
@@ -97,7 +97,7 @@ export const canStartTech = (state: GameState, id: TechId): boolean =>
   && !isTechActive(state, id)
   && requirementsMet(state, id)
   && state.research.active.length < techSlots(state)
-  && knowledge(state) >= techCost(id);
+  && gold(state) >= techCost(id);
 
 /** Anything at all worth a trip to the Research screen. */
 export const anyResearchActionable = (state: GameState): boolean =>
@@ -109,8 +109,8 @@ export function startTech(state: GameState, id: TechId, now: number): StartTechR
   if (!requirementsMet(state, id)) return 'MissingRequirement';
   if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
   const cost = techCost(id);
-  if (knowledge(state) < cost) return 'NotEnoughResources';
-  addToWallet(state.kingdom.wallet, 'Knowledge', -cost);
+  if (gold(state) < cost) return 'NotEnoughResources';
+  addToWallet(state.city.wallet, 'Gold', -cost);
   state.research.active.push({ id, startedAt: now });
   return 'Started';
 }

@@ -102,10 +102,9 @@ const ARTIFACT_IDS = [
 ];
 
 const CURRENCY_IDS = [
-  'Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Mana',
-  'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems',
+  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Gems',
 ];
-const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone', 'Iron'];
+const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone'];
 
 const SETTINGS = [
   // [sheet key, json path, kind]
@@ -165,11 +164,9 @@ const SETTINGS = [
   ['collection.max_tier', 'collection.maxTier'],
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
-  ['knowledge.drip_per_ruin_per_hour', 'knowledge.dripPerRuinPerHour'],
-  // Knowledge for clearing one cell of fog, PER RING of distance from the
-  // Townhall: ring 3 pays 3× this. Linear, so the far map is worth going to
-  // without any one cell being a jackpot.
-  ['knowledge.per_reveal_ring', 'knowledge.perRevealRing'],
+  // Knowledge per hour per ruin the player has CLEARED. Discovery pays
+  // nothing: taking a dungeon to its bottom is what turns it into a faucet.
+  ['knowledge.drip_per_cleared_ruin_per_hour', 'knowledge.dripPerClearedRuinPerHour'],
   // Combat is a SCORING PASS, not a simulation — these six numbers are the
   // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
   // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
@@ -188,6 +185,9 @@ const SETTINGS = [
   ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
   ['delve.fail_haul_loss', 'delve.failHaulLoss'],
   ['delve.first_clear_gems', 'delve.firstClearGems'],
+  // The lump a first clear pays. Together with the drip above and the gacha,
+  // this is where ALL Knowledge comes from — clearing fog pays none.
+  ['delve.first_clear_knowledge', 'delve.firstClearKnowledge'],
   ['party.base_slots', 'party.baseSlots'],
   ['party.max_slots', 'party.maxSlots'],
   ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
@@ -200,6 +200,9 @@ const SETTINGS = [
   ['gacha.hard_pity_at', 'gacha.hardPityAt'],
   ['gacha.duplicate_fragments', 'gacha.duplicateFragments'],
   ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
+  // Every pull pays this, hero or not — Fragments only ever point at one
+  // hero, but Knowledge levels whoever the player already has.
+  ['gacha.pull_knowledge', 'gacha.pullKnowledge'],
   // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
   // the player can plan around; `eligible_below_fraction` is what keeps it an
   // answer to being short rather than an interruption.
@@ -216,11 +219,11 @@ const DISTRICT_COLUMNS = [
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'required_tech_per_level', 'army_cap_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
-  'build_cost_stone', 'build_cost_iron',
+  'build_cost_stone',
   'build_cost_multiplier', 'build_cost_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
   'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
-  'upgrade_cost_stone', 'upgrade_cost_iron',
+  'upgrade_cost_stone',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
 ];
 const DISTRICT_LIST_COLUMNS = [
@@ -233,18 +236,18 @@ const SHEETS = {
   Districts: DISTRICT_COLUMNS,
   Units: ['id', 'power', 'atk', 'def', 'hp',
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
-    'recruit_cost_stone', 'recruit_cost_iron', 'train_duration_seconds'],
+    'recruit_cost_stone', 'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
     'respawn_seconds', 'required_tech'],
-  Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
+  Currencies: ['id', 'cap', 'start', 'primary', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  // Research is paid in Knowledge and nothing else — one column, not a
-  // five-currency wallet. See the tech importer for why.
-  Technologies: ['id', 'cost_knowledge', 'duration_seconds', 'requires'],
+  // Research is paid in Gold and nothing else — one column, not a
+  // four-currency wallet. See the tech importer for why.
+  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
-    'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
+    'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
     'reward_gems', 'reward_knowledge'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
@@ -254,7 +257,7 @@ const SHEETS = {
     'atk_per_level', 'def_per_level', 'hp_per_level'],
   Landmarks: ['id', 'kind', 'x', 'y', 'defended', 'claim_cost'],
   Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
-    'max_depth', 'supply_food', 'supply_gold', 'supply_iron', 'affinity', 'artifact'],
+    'max_depth', 'supply_food', 'supply_gold', 'supply_stone', 'affinity', 'artifact'],
   Settings: ['key', 'value'],
 };
 
@@ -562,7 +565,7 @@ async function importXlsx() {
     delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
     landmarks: [], ruins: {}, artifacts: {},
     quests: [],
-    fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
+    fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
     offlineCapHours: 0,
   };
@@ -618,23 +621,10 @@ async function importXlsx() {
     if (goldValue !== null && (goldValue <= 0 || id === 'Gold')) {
       fail(where(r), 'gold_value must be positive and not on Gold itself');
     }
-    const countsAs = (r.counts_as === '' || r.counts_as === undefined) ? null : r.counts_as;
-    let countsAsOut = null;
-    if (countsAs !== null) {
-      if (!CURRENCY_IDS.includes(countsAs)) fail(where(r), `unknown counts_as currency "${countsAs}"`);
-      const baseRow = currencyRows.get(countsAs);
-      if (baseRow && baseRow.counts_as) fail(where(r), `counts_as chains are not allowed ("${countsAs}" is itself equivalent)`);
-      const value = num(r, 'unit_value');
-      if (value <= 0) fail(where(r), 'unit_value must be positive');
-      countsAsOut = { currency: countsAs, value };
-    } else if (r.unit_value !== '' && r.unit_value !== undefined) {
-      fail(where(r), 'unit_value without counts_as');
-    }
     out.currencies[id] = {
       cap: (r.cap === '' || r.cap === undefined) ? null : num(r, 'cap'),
       start: num(r, 'start'),
       primary,
-      countsAs: countsAsOut,
       goldValue,
     };
   }
@@ -661,15 +651,15 @@ async function importXlsx() {
       if (!TECH_IDS.includes(req)) fail(where(r), `unknown required tech "${req}"`);
       if (req === id) fail(where(r), 'a technology cannot require itself');
     }
-    // Knowledge, alone. A technology is what you learned by exploring, so it
-    // is bought with what exploring pays and nothing the city produces —
-    // which also keeps the whole tree spendable out of the KINGDOM purse,
-    // where Knowledge lives. Instant upgrades stay Gold; they are the sink
-    // the city's own economy feeds.
-    const knowledge = num(r, 'cost_knowledge');
-    if (knowledge < 1) fail(where(r), 'cost_knowledge must be at least 1');
+    // Gold, alone. Research is paid out of the CITY purse, so the tree
+    // competes with clearing fog and raising a building for one budget —
+    // which is the decision the economy is built around. Instant upgrades
+    // are Gold too; what separates them is that an upgrade is permanent and
+    // stacking while a technology is a one-time unlock.
+    const gold = num(r, 'cost_gold');
+    if (gold < 1) fail(where(r), 'cost_gold must be at least 1');
     out.technologies[id] = {
-      cost: { Knowledge: knowledge },
+      cost: { Gold: gold },
       durationSeconds: num(r, 'duration_seconds'),
       requires,
     };
@@ -816,7 +806,7 @@ async function importXlsx() {
     }
     if (!ARTIFACT_IDS.includes(r.artifact)) fail(where(r), `unknown artifact "${r.artifact}"`);
     const supplies = {};
-    for (const c of ['Food', 'Gold', 'Iron']) {
+    for (const c of ['Food', 'Gold', 'Stone']) {
       const v = num(r, `supply_${c.toLowerCase()}`, { blankAs: 0 });
       if (v > 0) supplies[c] = v;
     }
@@ -914,15 +904,14 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
     const c = b.currencies[id];
-    return [id, c.cap ?? '', c.start, c.primary ? 1 : '',
-      c.countsAs?.currency ?? '', c.countsAs?.value ?? '', c.goldValue ?? ''];
+    return [id, c.cap ?? '', c.start, c.primary ? 1 : '', c.goldValue ?? ''];
   }));
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, t.cost.Knowledge, t.durationSeconds, t.requires.join(',')];
+    return [id, t.cost.Gold, t.durationSeconds, t.requires.join(',')];
   }), (col) => col === 'requires');
 
   addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
@@ -958,7 +947,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Ruins', RUIN_IDS.map((id) => {
     const r = b.ruins[id];
     return [id, r.x, r.y, r.tier, r.difficulty, r.baseDepthSeconds, r.depthGrowth, r.maxDepth,
-      r.supplies.Food ?? '', r.supplies.Gold ?? '', r.supplies.Iron ?? '',
+      r.supplies.Food ?? '', r.supplies.Gold ?? '', r.supplies.Stone ?? '',
       r.affinity, r.artifact];
   }));
 

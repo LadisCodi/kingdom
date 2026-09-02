@@ -8,11 +8,15 @@ what you can improve is always shown in the context of how you unlocked it.
 
 One-time researches that **unlock new content** (buildings, units, upgrades).
 
-- Cost **Knowledge + time**; paid up front from the KINGDOM purse (not the
-  city's); complete through the unified advance (so they finish while away, in
-  real time like the build queue). Knowledge comes from clearing fog and from
-  quests — see [`knowledge.md`](knowledge.md). Instant upgrades below stay
-  Gold-only.
+- Cost **Gold + time**; paid up front from the CITY purse; complete through
+  the unified advance (so they finish while away, in real time like the build
+  queue). Gold and nothing else — no materials, no second currency — so the
+  tree competes with clearing fog and raising a building for **one budget**.
+  Three calls on one purse is the decision the economy is built around
+  ([`currency-simplification.md`](currency-simplification.md) §3).
+- The instant upgrades below are Gold too. **What separates them is not the
+  currency**: an upgrade is permanent and stacking; a technology is a one-time
+  unlock.
 - Limited by **concurrent research slots**: base 1. Additional slots are
   bought **with Gems** directly in the Research menu, at an escalating
   price (`slot_gem_cost_base × slot_gem_cost_growth^purchased`, capped by
@@ -57,7 +61,7 @@ The tree is discovered like the map:
 
 Everything numeric lives in the balance workbook:
 
-- `Technologies` sheet: `cost_knowledge`, duration, `requires` (comma-separated ids).
+- `Technologies` sheet: `cost_gold`, duration, `requires` (comma-separated ids).
 - `Upgrades` sheet: `cost_base, cost_growth, max_level, effect_per_level,
   required_tech`.
 - Settings: `research.tech_slots`, `research.max_slots`,
@@ -155,8 +159,10 @@ exclusive picks, and a maximum depth of 4. It is also fully exhausted inside the
 - **A `Sanctum` gate** for the Mana-capacity district, on the civics branch.
 
 Note that **upgrades and artifacts must not overlap**. Upgrades are permanent and
-stacking, bought with Gold; artifacts are exclusive and swappable, levelled with
-Knowledge. No single effect should be reachable through both — see
+stacking, bought with Gold out of the city; artifacts are exclusive and
+swappable, levelled with Knowledge out of the kingdom — and Knowledge only ever
+comes out of a dungeon or a banner ([`knowledge.md`](knowledge.md)). No single
+effect should be reachable through both — see
 [`magic.md`](magic.md) §"Keeping this out of stat-soup territory".
 
 The `effectiveX` helpers this document describes gain a third stage: **balance

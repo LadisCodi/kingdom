@@ -29,6 +29,20 @@ Townhall's population-tax Silver rate).
 
 - **Max population = Σ PopulationCapacityForLevel over active (built) districts.**
   Townhall provides 3, each Housing 2 → TH1 max 7, TH2 max 11.
+**Villagers queue in the city's one training line** (2026-09-02). They used to
+have a queue of their own — `city.training`, a bare count with one timestamp —
+while soldiers had a typed list. They were always the same mechanic in
+different clothes: pay up front, wait a duration, one at a time per building.
+Two of them meant two ways to be wrong about capacity, refunds and replay, and
+no way to show them alike. `city.trainingQueue` now holds both, keyed by
+`buildingId`, and a `Villager` is simply what the Townhall turns out.
+
+Two things follow. A villager completing is now a **boundary**, so `advance()`
+splits the window at it and the tax anchor is repriced at the exact instant the
+rate changed — the property `advanceCityLife` used to interleave by hand. And a
+building lists everything it can train (`trains` is an array), so one hall can
+offer a choice.
+
 - Population is bought **one point at a time with Food** (from the Housing/Townhall
   district card's Buy Population widget):
 

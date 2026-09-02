@@ -22,8 +22,12 @@
 }
 
 .dc-head { display: flex; align-items: flex-start; gap: 10px; }
+/* Move and Close, stacked in the corner. Close stays last so its position
+   never shifts — a close button that moves when a building happens to be
+   movable is a close button you have to look for. */
+.dc-tools { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .dc-id { flex: 1; min-width: 0; }
-.dc-name { font-family: var(--font-display); font-size: 18px; font-weight: 400; }
+.dc-name { font-family: var(--font-display); font-size: var(--text-title); font-weight: 400; }
 .dc-what { color: var(--ink-muted); line-height: 1.25; }
 
 /* Level as stars: a count you read rather than a fraction you parse. */
@@ -45,19 +49,44 @@
 .dc-body { min-height: 0; overflow-y: auto; margin-top: 8px; }
 .dc-note { color: var(--ink-muted); line-height: 1.3; margin: 4px 0; }
 
-/* Before → after, so an upgrade shows the thing growing. */
+/* The upgrade row: a mark, what the level buys, and the button that spends —
+ * the same three-column shape as the training panel above it. It replaced a
+ * pair of before/after building portraits that drew the eye hardest while
+ * carrying the least: the two pictures are nearly identical, and the numbers
+ * underneath were the whole point. */
 .dc-foot { margin-top: 8px; }
-.dc-ba { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.dc-ba .dc-portrait:last-of-type { border-color: var(--leaf-dark); background: var(--parchment); }
+.dc-up {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.dc-up-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--gold);
+  border: 2px solid var(--gold-dark);
+}
+.dc-up-body { min-width: 0; }
+.dc-up-title { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
+.dc-up > .k-action { grid-column: 1 / -1; }
 .dc-deltas {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 3px 10px;
   font-family: var(--font-body);
+  font-size: var(--text-helper);
   color: var(--leaf-dark);
 }
+.dc-delta { display: inline-flex; align-items: baseline; gap: 4px; }
+.dc-delta-what { color: var(--ink-muted); }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
@@ -189,3 +218,117 @@
 }
 .dc-army-note { color: var(--ink-muted); }
 .dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ------------------------------------------------- the training section ---
+ * Shared by every building that turns something out — the Townhall's
+ * villagers and a hall's soldiers are one mechanic, so they are one block.
+ * See src/ui/trainingSection.ts for why it looks like this. */
+
+.tr { display: flex; flex-direction: column; gap: 8px; }
+
+.tr-head {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* The line, as faces rather than a number: what you are waiting for, not just
+ * how many. It scrolls rather than wrapping, so a long queue never pushes the
+ * Train button off the card. */
+.tr-queue {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.tr-queue::-webkit-scrollbar { display: none; }
+.tr-slot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+/* The one on the bench, which is the one the bar below is counting down. */
+.tr-slot.is-active {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 2px var(--gold);
+}
+
+.tr-queue-row { display: flex; align-items: stretch; gap: 10px; }
+.tr-queue-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.tr-queue-row .k-btn { min-height: 40px; padding: 8px 12px; font-size: var(--text-helper); }
+
+/* What this hall can turn out. Only drawn when there is a choice to make. */
+.tr-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+.tr-pick {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.3);
+  cursor: pointer;
+}
+.tr-pick.is-on { background: var(--gold); border-color: var(--gold-dark); }
+.tr-pick.is-locked { opacity: 0.75; cursor: default; }
+.tr-pick:active { transform: translateY(2px); box-shadow: none; }
+
+/* The detail panel: portrait, what it is, and the one button that spends. */
+.tr-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 10px;
+  align-items: start;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.tr-portrait {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+}
+.tr-body { min-width: 0; }
+.tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
+.tr-tag {
+  display: inline-block;
+  margin: 1px 0 3px;
+  padding: 1px 8px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  background: var(--wood-dark);
+  border-radius: 999px;
+}
+.tr-desc { color: var(--ink-muted); font-size: var(--text-helper); }
+.tr-stats { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 6px; align-items: center; }
+/* The type chart in one phrase, styled like the stats beside it. */
+.tr-beats {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--leaf);
+  color: var(--parchment);
+}
+/* The Train button spans both columns, so it is the full width of the panel
+ * and unmistakably the thing that spends. */
+.tr-info > .k-action { grid-column: 1 / -1; }

@@ -1,5 +1,12 @@
 # Balancing v1 — the three-era arc
 
+> **PARTLY SUPERSEDED by [`balancing-v2.md`](balancing-v2.md) (2026-09-02),
+> and again by
+> [`currency-simplification.md`](currency-simplification.md) the same day** —
+> Iron is no longer a currency (a vein is a rich Stone node, 1 Iron = 3 Stone),
+> and the technology tree is priced in Gold from the city purse rather than in
+> Knowledge. Every Iron figure below reads as Stone at triple.
+>
 > **PARTLY SUPERSEDED by [`balancing-v2.md`](balancing-v2.md) (2026-09-02).**
 > Four things below no longer hold, and they are marked inline: the housing
 > capacity this document assumes was never what shipped, TH3 is no longer the

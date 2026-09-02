@@ -7,18 +7,20 @@
 //
 // The shell gives each variant the same frame: the building's own art at its
 // current level, its level as stars, one line saying what it does, and one
-// primary action at the bottom. The upgrade is a before → after strip, so the
-// player sees the thing growing rather than reading `radius 2→3`.
+// primary action at the bottom. The blocks inside it share a three-column
+// shape — a mark, what you are buying, the button that spends — so training
+// a unit and buying a level read the same way.
 
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, TAP, TECHNOLOGIES, TRAINING, UNITS, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, WORKER, levelIndexed,
 } from '../sim/data/definitions';
-import { committedArmyPower, maxArmyPower, trainingProgress } from '../sim/army';
+import { committedArmyPower, maxArmyPower } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
 import {
-  districtCount, requiredTechForLevel, requiredTownhallLevel, upgradeCost, upgradeDuration,
+  canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
+  requiredTownhallLevel, upgradeCost, upgradeDuration,
 } from '../sim/districts';
 import {
   districtCapacity, houseGoldPerMinute,
@@ -26,6 +28,7 @@ import {
 import { mana } from '../sim/mana';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
+import { trainingSection } from './trainingSection';
 import {
   coordKey, queueProgress, remainingSeconds, townhall, type District,
 } from '../sim/state';
@@ -79,6 +82,64 @@ function influenceThumb(game: Game, district: District): HTMLElement {
   return grid;
 }
 
+/**
+ * What a level actually buys, as a list of before → after.
+ *
+ * Every per-level number in the sim is here, and it is the ONLY reason to
+ * press Upgrade — so a building with nothing to say is a bug in the balance
+ * data rather than a card that quietly shows an empty row.
+ */
+function upgradeDeltas(game: Game, district: District, next: number): HTMLElement[] {
+  const def = DISTRICTS[district.definitionId];
+  const out: HTMLElement[] = [];
+  const delta = (label: string, from: number | string, to: number | string) =>
+    out.push(el('span', { class: 'dc-delta' },
+      el('span', { class: 'dc-delta-what' }, label),
+      el('b', {}, `${from} \u2192 ${to}`)));
+
+  if (def.influenceRadiusPerLevel.length > 0) {
+    delta('reach', influenceRadius(district), levelIndexed(def.influenceRadiusPerLevel, next));
+    delta('workers', assignableWorkerLimit(district), levelIndexed(def.maxWorkersPerLevel, next));
+  }
+  // A hall's level IS its army cap, and until now the only place that number
+  // appeared was a note further up the card — nowhere near the button that
+  // spends on it, which is the whole reason to upgrade a Barracks.
+  if (def.armyCapPerLevel.length > 0) {
+    delta('army cap',
+      levelIndexed(def.armyCapPerLevel, district.level),
+      levelIndexed(def.armyCapPerLevel, next));
+  }
+  if (def.populationCapacityPerLevel.length > 0) {
+    const capNow = districtCapacity(game.state, district);
+    delta('homes', capNow, capNow
+      + levelIndexed(def.populationCapacityPerLevel, next)
+      - levelIndexed(def.populationCapacityPerLevel, district.level));
+  }
+  // Mana is a per-level number too, on exactly two buildings — and neither
+  // had anything to show before, so both upgrades read as blank.
+  if (district.definitionId === 'Sanctum') {
+    delta('Mana held',
+      levelIndexed(MANA.sanctumCapPerLevel, district.level),
+      levelIndexed(MANA.sanctumCapPerLevel, next));
+  }
+  if (district.definitionId === 'Townhall') {
+    delta('Mana pool',
+      levelIndexed(MANA.baseCapPerTownhallLevel, district.level),
+      levelIndexed(MANA.baseCapPerTownhallLevel, next));
+    delta('Mana/h',
+      levelIndexed(MANA.productionPerTownhallLevel, district.level),
+      levelIndexed(MANA.productionPerTownhallLevel, next));
+    // The Townhall's real job: it is the gate on how much city there can be.
+    const room = (level: number) => Object.values(DISTRICTS)
+      .filter((d) => d.buildable && d.maxCountPerTownhallLevel.length > 0)
+      .reduce((n, d) => n + maxCountForTownhallLevel(d, level), 0);
+    const before = room(district.level);
+    const after = room(next);
+    if (after > before) delta('buildings allowed', before, after);
+  }
+  return out;
+}
+
 export function renderDistrictCard(game: Game, district: District): HTMLElement {
   const def = DISTRICTS[district.definitionId];
   const now = game.now();
@@ -89,40 +150,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   if (district.state === 'UnderConstruction') {
     body.append(el('div', { class: 'dc-note' }, 'Under construction.'));
   } else {
-    // The Townhall's job is growing the population, so the queue is the star.
-    if (district.definitionId === 'Townhall') {
-      const training = game.trainingInfo();
-      if (training.active) {
-        const bar = progress('gold');
-        bar.set(training.progress, `Next villager in ${Math.ceil(training.remainingSeconds)}s`);
-        body.append(bar.root);
-        if (training.queued > 1) {
-          body.append(el('div', { class: 'dc-queue' },
-            iconEl('population', { size: 'sm' }),
-            pips(1, training.queued),
-            el('span', {}, `${training.queued - 1} more waiting`)));
-        }
-        // The tap boost is an affordance on the BUILDING, so it is pointed
-        // at rather than described.
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }),
-          `Tap the Townhall itself to hurry it — +${TRAINING.tapBoostSeconds}s each tap`));
-      }
-      const trainAction = action({
-        label: 'Train',
-        kind: 'primary',
-        onClick: () => game.doQueueTraining(),
-        disabledReason: training.atMax
-          ? 'Nowhere to put them — build more Housing'
-          : undefined,
-        cost: { Food: training.cost },
-        have: (c) => game.effectiveWalletValue(c),
-        info: el('span', { class: 'dc-uptime' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(TRAINING.seconds)),
-      });
-      if (game.uiHint() === 'card:train') trainAction.classList.add('hinted');
-      body.append(trainAction);
-    }
+    // Every building that turns something out gets the same block — the
+    // Townhall's villagers and a hall's soldiers are one mechanic now, so
+    // they are one piece of UI. See trainingSection.ts.
+    const training = trainingSection(game, district);
+    if (training) body.append(training);
 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
@@ -182,56 +214,14 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       }
     }
 
-    // A military building trains its own unit, in its own line, exactly as
-    // the Townhall trains villagers. That symmetry is why the standing Army
-    // screen could disappear: an army only matters when it is SENT somewhere,
-    // and it is recruited where it is made.
-    if (def.trains !== null) {
-      const unitId = def.trains;
-      const unit = UNITS[unitId];
-      const cap = maxArmyPower(game.state);
-      const used = committedArmyPower(game.state);
-      const inLine = game.state.city.armyQueue.filter((i) => i.buildingId === district.uniqueId);
-      const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
-
+    // The army headroom line stays: it is about the CITY, not about any one
+    // unit, and it is the number that explains a refused Train.
+    if (def.trains.some((t) => t !== 'Villager')) {
       body.append(el('div', { class: 'dc-army' },
         iconEl('army', { size: 'sm' }),
-        el('span', {}, `Army ${used} of ${cap}`),
+        el('span', {}, `Army ${committedArmyPower(game.state)} of ${maxArmyPower(game.state)}`),
         el('span', { class: 'dc-army-note' },
           `this hall holds ${levelIndexed(def.armyCapPerLevel, district.level)} of it`)));
-
-      if (inLine.length > 0) {
-        const bar = progress('sky');
-        bar.set(
-          trainingProgress(game.state, district.uniqueId, game.now()),
-          inLine.length > 1
-            ? `${unit.name} — ${inLine.length} in the line`
-            : `${unit.name} in training`,
-        );
-        body.append(bar.root);
-        body.append(el('div', { class: 'dc-tapline' },
-          iconEl('showme', { size: 'sm' }),
-          `Tap the ${def.name} to hurry them along`));
-      }
-
-      const cost = unit.recruitCost;
-      body.append(action({
-        label: `Recruit ${unit.name}`,
-        kind: 'primary',
-        onClick: () => game.doTrain(unitId),
-        cost,
-        have: (c) => game.effectiveWalletValue(c),
-        disabledReason: !techOk
-          ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
-          : used + unit.power > cap
-            ? 'Your army is full — upgrade this hall'
-            : undefined,
-      }));
-      body.append(el('div', { class: 'dc-army-stats' },
-        stat('army', String(unit.atk), 'attack'),
-        stat('padlock', String(unit.def), 'defence'),
-        stat('population', String(unit.hp), 'health'),
-        stat('hourglass', formatDuration(unit.trainDurationSeconds), 'to train')));
     }
 
     // A worker building is an AREA and the people you put in it. Both were
@@ -306,7 +296,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       // The price used to be glued into the label with a separator. It is a
       // cost like any other, so it goes where every other cost now goes.
       cost: { Gems: gemRushCost(queueItem, now) },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
     });
     const buttons = el('div', { class: 'dc-actions' }, rush);
     if (queueItem.kind === 'build') {
@@ -335,32 +325,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
     }
 
-    // Before → after: the thing growing, rather than "radius 2→3".
-    const strip = el('div', { class: 'dc-ba' },
-      portrait(def, district.level),
-      iconEl('showme', { size: 'sm' }),
-      portrait(def, next));
-    const deltas = el('div', { class: 'dc-deltas' });
-    if (def.influenceRadiusPerLevel.length > 0) {
-      deltas.append(el('span', {}, `reach ${influenceRadius(district)} → `
-        + `${levelIndexed(def.influenceRadiusPerLevel, next)}`));
-      deltas.append(el('span', {}, `workers ${assignableWorkerLimit(district)} → `
-        + `${levelIndexed(def.maxWorkersPerLevel, next)}`));
-    }
-    if (def.populationCapacityPerLevel.length > 0) {
-      const capNow = districtCapacity(game.state, district);
-      const capNext = capNow + levelIndexed(def.populationCapacityPerLevel, next)
-        - levelIndexed(def.populationCapacityPerLevel, district.level);
-      deltas.append(el('span', {}, `homes ${capNow} → ${capNext}`));
-    }
-
     const upgrade = action({
       label: 'Upgrade',
       kind: 'primary',
       onClick: () => game.doUpgrade(district.uniqueId),
       disabledReason: reason,
       cost,
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       // What is left beside the button is the WAIT, which is a consequence
       // rather than a price and has no business inside the press-target.
       info: el('span', { class: 'dc-uptime' },
@@ -368,11 +339,34 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         formatDuration(upgradeDuration(district.definitionId, district.level))),
     });
     if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
-    foot.append(strip, deltas, upgrade);
+
+    // One row, the same shape as the training panel above it: a mark on the
+    // left, what you are buying in the middle, the button that spends on the
+    // right. It replaced a before/after pair of building portraits, which
+    // drew the eye hardest while carrying the least — the two pictures are
+    // nearly identical, and the numbers underneath were the whole point.
+    foot.append(el('div', { class: 'dc-up' },
+      // Default size, not lg: the 48px variant overflowed its own 40px well,
+      // and the mark is a symbol rather than a portrait — it has no business
+      // shouting louder than the unit art above it.
+      el('div', { class: 'dc-up-mark' }, iconEl('star')),
+      el('div', { class: 'dc-up-body' },
+        el('div', { class: 'dc-up-title' }, `Level ${next}`),
+        el('div', { class: 'dc-deltas' }, ...upgradeDeltas(game, district, next))),
+      upgrade));
   }
 
+  // Moving is not an upgrade path, so it does not belong in the footer's
+  // one-primary-action slot (§2.2). It is a quiet secondary on the head, next
+  // to Close: something you do TO the building rather than something you buy
+  // for it — and it is free, so it carries no price to show.
+  const head = el('div', { class: 'dc-tools' });
+  if (canMoveDistrict(district)) {
+    head.append(knob('✥', () => game.startMove(district.uniqueId), { label: 'Move' }));
+  }
   const close = knob('✕', () => game.dismiss(), { label: 'Close' });
   close.setAttribute('data-own-close', '');
+  head.append(close);
 
   return el('div', { class: 'dc' },
     el('div', { class: 'dc-head' },
@@ -381,7 +375,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         el('div', { class: 'dc-name' }, def.name),
         levelStars(district.level, def.maxLevel),
         el('div', { class: 'dc-what' }, def.description)),
-      close),
+      head),
     body,
     foot,
   );

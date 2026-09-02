@@ -39,6 +39,7 @@ import {
   ownsArtifact,
 } from './artifacts';
 import { addHeroXp } from './heroes';
+import { recordResourceDiscovery } from './discovery';
 import {
   depthDurationMs, guaranteedDepth, matchupAgainst, partyStats, resolveDepth,
   worstThreatFor, type CarriedArtifact, type Party, type PartySlot,
@@ -244,10 +245,10 @@ function depthHaul(ruinId: RuinId, depth: number, heroId: HeroId): {
     Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
     Knowledge: Math.round(DELVE.knowledgePerDepthPerTier * ruin.tier * depth * knowledgeBonus),
   };
-  // The deeper tiers pay materials the city cannot easily reach otherwise.
+  // The deeper tiers pay materials the city cannot easily reach otherwise —
+  // three times the haul, the rate a vein pays over a plain rock.
   const material = Math.round(DELVE.materialPerDepthPerTier * ruin.tier * depth);
-  if (ruin.tier >= 3) wallet.Iron = material;
-  else wallet.Stone = material;
+  wallet.Stone = ruin.tier >= 3 ? material * 3 : material;
   return {
     wallet,
     fragments: Math.round(DELVE.fragmentsPerDepth * ruin.tier * fragmentBonus),
@@ -314,6 +315,11 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
           artifact = ruin.artifact;
           // The recurring Gem faucet the design needs: one per ruin, once.
           addToWallet(state.player.wallet, 'Gems', DELVE.firstClearGems);
+          // And the lump that opens the levelling arc. A first clear is the
+          // moment Knowledge starts existing for this player: it pays here,
+          // and from here on the ruin drips (sim/mana.ts).
+          addToWallet(state.kingdom.wallet, 'Knowledge', DELVE.firstClearKnowledge);
+          recordResourceDiscovery(state, 'Knowledge');
         }
         delve.phase = 'checkpoint';
         events.push({
@@ -390,7 +396,10 @@ export function extract(state: GameState, delveId: string): ExtractReport {
   const artifactId = RUINS[delve.ruinId].artifact;
   for (const [c, n] of Object.entries(delve.haul)) {
     if (n <= 0) continue;
-    if (c === 'Knowledge') addToWallet(state.kingdom.wallet, 'Knowledge', n);
+    if (c === 'Knowledge') {
+      addToWallet(state.kingdom.wallet, 'Knowledge', n);
+      recordResourceDiscovery(state, 'Knowledge');
+    }
     else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }
   let granted: ArtifactId | null = null;

@@ -12,11 +12,12 @@
 import { describe, expect, it } from 'vitest';
 import { TAP, TAXES } from '../src/sim/data/definitions';
 import { tapCell } from '../src/sim/harvest';
-import { cityGoldPerMinute, houseTap, queueTraining } from '../src/sim/population';
+import { cityGoldPerMinute, houseTap } from '../src/sim/population';
+import { lineFor, trainUnit } from '../src/sim/army';
 import { townhallTap } from '../src/sim/commands';
 import { mana } from '../src/sim/mana';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
-import { getWallet, type GameState } from '../src/sim/state';
+import { getWallet, townhall, type GameState } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
 
 const house = (state: GameState) =>
@@ -61,7 +62,7 @@ describe('passive tax gold', () => {
       addBuilt(s, 'Housing', HOUSE2);
       s.city.population = 1;
       fund(s, { Food: 100 });
-      expect(queueTraining(s, T0)).toBe('Queued'); // housed 1 → 2 at T0+20s
+      expect(trainUnit(s, 'Villager', T0)).toBe('Queued'); // housed 1 → 2 at T0+20s
       return s;
     };
     const oneCall = mk();
@@ -189,13 +190,14 @@ describe('hurrying a building costs the same energy', () => {
     expect(townhallTap(state, T0)).toBe('NoTraining'); // nothing training yet
     expect(mana(state)).toBe(before);
 
-    queueTraining(state, T0);
+    trainUnit(state, 'Villager', T0);
     expect(townhallTap(state, T0)).toBe('Boosted');
     expect(mana(state)).toBe(before - TAP.manaCost);
 
     state.city.wallet.Mana = 0;
-    const startedAt = state.city.training!.startedAt;
+    const startedAt = lineFor(state, townhall(state).uniqueId)[0].startedAt;
     expect(townhallTap(state, T0)).toBe('NoMana');
-    expect(state.city.training!.startedAt).toBe(startedAt); // nothing hurried
+    expect(lineFor(state, townhall(state).uniqueId)[0].startedAt)
+      .toBe(startedAt); // nothing hurried
   });
 });

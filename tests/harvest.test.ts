@@ -8,15 +8,16 @@
 // free, so test setup and the sim can harvest without minting energy; only
 // `collectTap`, the thing a finger drives, pays.
 import { describe, expect, it } from 'vitest';
-import { HARVEST, TAP } from '../src/sim/data/definitions';
+import { DISTRICTS, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import {
   collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
 } from '../src/sim/harvest';
-import { getWallet } from '../src/sim/state';
+import { getWallet, type Coord } from '../src/sim/state';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import {
-  BERRIES, canGather, completeTech, FOREST, freshGame, map, reveal, T0,
+  addBuilt, BERRIES, canGather, completeTech, FOREST, freshGame, freshPresenter, map,
+  reveal, screenAt, T0,
 } from './helpers';
 
 
@@ -185,5 +186,66 @@ describe('Forestry is the only door out of the opening', () => {
       Berries: 'Forestry',
       Meat: 'Hunting',
     });
+  });
+});
+
+// A crop plot is a district that trains nothing AND a resource cell you tap.
+// Those two facts collided when `DistrictDef.trains` became an array: the
+// tap handler tested it for truthiness, an empty array is truthy, and every
+// non-trainer fell into the "hurry the unit in training" branch, which
+// consumed the tap and did nothing. Houses and trees were unaffected —
+// Housing has its own branch above it, and a forest cell is not a district
+// at all — so the plot was the one thing in the game you could no longer tap.
+describe('tapping a crop plot', () => {
+  const plot: Coord = { x: 2, y: 0 };
+
+  const withPlot = () => {
+    const state = freshGame();
+    reveal(state, [plot]);
+    addBuilt(state, 'FarmLands', plot);
+    const game = freshPresenter(state);
+    return { state, game };
+  };
+
+  it('collects Food, and does not vanish into the training branch', () => {
+    const { state, game } = withPlot();
+    expect(DISTRICTS.FarmLands.trains).toEqual([]); // trains nothing…
+    expect(harvestSourceAt(state, plot)).toBe('Crops'); // …but IS a resource cell
+
+    const before = getWallet(state.city.wallet, 'Food');
+    game.handleTap(...screenAt(game, plot));
+    expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(before);
+  });
+
+  it('still opens the plot card, so inspecting it stays useful', () => {
+    const { state, game } = withPlot();
+    game.handleTap(...screenAt(game, plot));
+    const district = state.city.districts.find((d) => d.definitionId === 'FarmLands')!;
+    expect(game.inspectedDistrictId).toBe(district.uniqueId);
+  });
+
+  it('spends Mana like every other collect tap', () => {
+    const { state, game } = withPlot();
+    const before = mana(state);
+    game.handleTap(...screenAt(game, plot));
+    expect(mana(state)).toBe(before - TAP.manaCost);
+  });
+
+  // The other half of the same slip: a building that DOES train still gets
+  // the training branch, and the floater names the unit rather than the
+  // building's whole offer list.
+  it('leaves a real trainer to the training branch', () => {
+    const state = freshGame();
+    const hall: Coord = { x: 3, y: 2 };
+    reveal(state, [hall]);
+    addBuilt(state, 'Barracks', hall);
+    expect(DISTRICTS.Barracks.trains.length).toBeGreaterThan(0);
+    const game = freshPresenter(state);
+    const before = getWallet(state.city.wallet, 'Food');
+    game.handleTap(...screenAt(game, hall));
+    // Nothing harvested — a Barracks is not a resource cell.
+    expect(getWallet(state.city.wallet, 'Food')).toBe(before);
+    const district = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
+    expect(game.inspectedDistrictId).toBe(district.uniqueId);
   });
 });

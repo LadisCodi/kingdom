@@ -58,9 +58,9 @@ reward that ends and a faucet that runs for months.
 
 | Found in the fog | Count | Gives | Verb |
 |---|---|---|---|
-| **Resources** | 42 features today | Wood, Stone, Iron, Food… | tap / work |
-| **Landmarks** | 8–12 | +1 Mana/h each, permanently | claim |
-| **Ruins** | 5 | Artifacts, Fragments, Knowledge | delve |
+| **Resources** | 42 features today | Wood, Stone, Food (bushes, game and shoals all pay it; veins pay Stone at 3) | tap / work |
+| **Landmarks** | 8–12 | **+10 max Mana** each, permanently | claim |
+| **Ruins** | 5 | Artifacts, Fragments, **Knowledge — the only source of it** | delve |
 
 Three distinct rewards, so exploration always has something to find and each
 answers a different need.
@@ -102,9 +102,14 @@ or four, and the run is *self-terminating* — you push until you choose to stop
 |---|---|---|---|---|---|---|---|---|
 | Hollow Barrow | ~3 | I | 3 min | ×1.15 | 5 | ~20 min | 20 Food + 50 G | Warrior |
 | Sunken Chapel | ~6 | II | 5 min | ×1.20 | 7 | ~65 min | 40 Food + 150 G | Archer |
-| Drowned Ironworks | ~8 | III | 8 min | ×1.25 | 9 | ~3.5 h | 60 Food + 400 G + 10 Iron | Lancer |
-| The Counting House | ~10 | IV | 12 min | ×1.30 | 11 | ~9 h | 100 Food + 900 G + 20 Iron | Cavalry |
-| Star Observatory | ~12 | V | 18 min | ×1.35 | 13 | ~1.5 days | 150 Food + 2000 G + 40 Iron | any |
+| Drowned Ironworks | ~8 | III | 8 min | ×1.25 | 9 | ~3.5 h | 60 Food + 400 G + 30 Stone | Lancer |
+| The Counting House | ~10 | IV | 12 min | ×1.30 | 11 | ~9 h | 100 Food + 900 G + 60 Stone | Cavalry |
+| Star Observatory | ~12 | V | 18 min | ×1.35 | 13 | ~1.5 days | 150 Food + 2000 G + 120 Stone | any |
+
+*(The deep supplies were 10 / 20 / 40 **Iron** until 2026-09-02. Iron stopped
+being a currency — a vein is a rich Stone node now — so they converted at the
+1:3 rate that made them equal. The gate is the same gate: only a city working
+the far-fog veins can supply a Tier III+ launch.)*
 
 `depthTime = base(tier) × growth^(depth − 1)`
 
@@ -227,10 +232,22 @@ building and upgrading them is what raises the cap.**
 
 | Building | Trains |
 |---|---|
-| **Barracks** | Warrior |
+| **Barracks** | Warrior · Lancer · Archer |
 | **Spear Hall** | Lancer |
 | **Shooting Grounds** | Archer |
 | **Stables** | Cavalry |
+
+**Revised 2026-09-02:** the Barracks turns out every foot soldier, and Cavalry
+keeps the Stables. `trains` is a list, so a hall can offer a choice — each unit
+still behind its own technology, so the choice fills in as the player
+researches rather than arriving all at once.
+
+That leaves the Spear Hall and Shooting Grounds as **specialists rather than
+sole sources**: a second hall is a second PARALLEL line and more army cap, not
+a different roster. Which building a unit is queued at therefore matters, and
+`trainUnit` takes the hall explicitly — the player pressed TRAIN on a specific
+card, and putting the unit in some other building's line would be answering a
+different question.
 
 Three things fall out, which is why the change is worth making:
 
@@ -252,10 +269,20 @@ being instant stops making sense once units are expedition capital.
 
 - **Haul accumulates per depth** and banks only on extraction.
 - **First clear of the max depth**: the ruin's artifact, guaranteed. No randomness
-  on the thing that gates a system.
+  on the thing that gates a system. Plus **10 Gems** and a **150 Knowledge**
+  lump, both banked immediately rather than on extraction — a party parked at
+  the bottom has already earned them.
+- **A cleared ruin then drips 2 Knowledge/h, forever.** Discovery pays
+  nothing; clearing is what turns a dungeon into a faucet. Five cleared ruins
+  are ~240/day, which is the whole idle half of the collection runway.
 - **Repeat delves**: Fragments, Knowledge and resources, scaling with depth
   reached.
-- **Hero XP** on every delve, banked or lost.
+- **Hero XP** on every delve, banked or lost. *(Still written and never read —
+  backlog gap 2 in [`heroes-and-gacha.md`](heroes-and-gacha.md).)*
+
+Ruins are the **only** place Knowledge comes from apart from the banner. That
+is new as of 2026-09-02 and it is what gives a dungeon a reason to exist past
+the run that first cleared it — see [`knowledge.md`](knowledge.md).
 
 **Throughput is the throttle.** No cooldowns. Concurrency is limited by heroes
 (one per delve), party slots, and units (committed until the party extracts). One

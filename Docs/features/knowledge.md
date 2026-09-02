@@ -1,126 +1,163 @@
-# Knowledge: what exploring is for
+# Knowledge: what dungeons are for
 
-**Built 2026-09-02.**
+**Built 2026-09-02. Rewritten 2026-09-02 by the currency simplification** —
+see [`currency-simplification.md`](currency-simplification.md).
 
 Knowledge existed from the first commit and did nothing. It had a currency
 row, an icon, a purse line and a drip from ruins — and `11-gaps` recorded the
-truth: *"Knowledge has no source or sink."* Artifact levelling spent it, but
-that is a late screen most players never reach, so for the whole early game it
-was a number that only went up.
+truth: *"Knowledge has no source or sink."*
 
-It is now the currency that buys the technology tree, and it is earned by
-going outside.
+The first fix made it buy the technology tree, earned by clearing fog. That
+gave it a job, but it gave it **three**: an exploration reward, a tech gate,
+and the levelling currency for relics and heroes. No comparable game asks a
+research currency to do that — in Elvenar, Forge of Empires and Rise of
+Cultures the research currency is a *clock*, accrued per hour and never
+earned, existing only to pace the tree.
+
+And the arithmetic said the tree was never really the point. The whole tree
+cost 655 Knowledge; one maxed collectible costs ~3,630, and there are ten.
+**Knowledge was already ~98% a collection currency**, and the 2% was what
+forced it onto the header.
+
+So the tree moved to Gold, and Knowledge kept the job it was always doing.
 
 ---
 
 ## 1. The rule
 
-- **Technologies cost Knowledge and nothing else.** No Gold, no Wood, no
-  Stone. The tree no longer asks "have you stockpiled?" — it asks **"have you
-  been out there?"**
-- **Instant upgrades stay Gold-only.** They are the city economy's own sink,
-  bought out of the city's own purse, and they are what the player spends on
-  between expeditions outward.
-- Knowledge is **kingdom-scoped**. It lives in `state.kingdom.wallet`, not the
-  city's, so `startTech` cannot be written the way `enqueueBuild` is — it pays
-  from a different purse, and `techCost(id)` is the one accessor that reads
-  the price.
+> **Knowledge comes out of dungeons, and buys nothing but heroes and relics.**
 
-That split is the point. Two currencies, two questions, two different things
-to do with an afternoon:
+- **It has exactly two sinks**: a relic's level and a hero's level, both
+  through the shared collection substrate (`src/sim/collection.ts`). Fragments
+  raise the tier cap; Knowledge buys levels within it.
+- **Technologies cost Gold**, out of the city purse, like everything else the
+  city does — see
+  [`research-and-upgrades.md`](research-and-upgrades.md).
+- **Clearing fog pays no currency at all.** A reveal buys *ground*: resource
+  cells, buildable land, ruins and landmarks, against a Gold price that
+  doubles from ring 4. That is a cleaner statement of what exploring is for
+  than a ring-value drip ever was.
+- Knowledge stays **kingdom-scoped**. It lives in `state.kingdom.wallet`, not
+  the city's, so it survives a region reset — which is what it is for when
+  Regions become the content treadmill.
+
+The two-axis split that made the old design work is still there. Only the
+second row changed:
 
 | | pays for | earned by | purse |
 |---|---|---|---|
-| **Gold** | buildings, upgrades, clearing fog | the city working | city |
-| **Knowledge** | the technology tree | exploring and quests | kingdom |
+| **Gold** | buildings, upgrades, fog, **the tech tree** | the city working | city |
+| **Knowledge** | relic and hero levels | **delving and pulling** | kingdom |
 
 ## 2. Where it comes from
 
-**Clearing a cell of fog pays Knowledge equal to its ring** — distance 3 pays
-3, distance 10 pays 10 (`knowledge.per_reveal_ring`, ×1). Only on the tap that
-*finishes* the cell; partial payments bank nothing. This is the game's opening
-move, not a side income: the first five cells are what buy Forestry.
+Four faucets, and every one of them is a dungeon or a banner:
 
-Linear, against a reveal cost that doubles from ring 4 (1, 3, 5, 10, 20, 40,
-80, 160, 320, 640 Gold). That gap is deliberate and it is the whole shape of
-the economy:
+| source | rate | where |
+|---|---|---|
+| **A first clear** | `delve.first_clear_knowledge` (150), once per ruin | `expeditions.ts` |
+| **The cleared-ruin drip** | `knowledge.drip_per_cleared_ruin_per_hour` (2/h) | `mana.ts` |
+| **A delve haul** | `delve.knowledge_per_depth_per_tier` (6) × tier × depth | `expeditions.ts` |
+| **A gacha pull** | `gacha.pull_knowledge` (50), on **every** pull | `heroes.ts` |
 
-- the far map is **worth going to** — ring 10 pays ten times ring 1;
-- but no single cell is a **jackpot** — you cannot buy the tree by finding one
-  lucky tile, only by pushing the border outward;
-- and because the Gold cost outruns the Knowledge yield, exploring stays a
-  real trade against building rather than a strictly better use of income.
+Plus the weekly **Conjunction** lump (60), which is live-ops content rather
+than a standing faucet, and the handful of **long-game quests** that pay it —
+`ClearRuins`, `ReachDepth`, `OwnArtifacts`, `OwnHeroes` and nothing else.
 
-**Quests pay Knowledge too**, from `Explorer` — the quest that first makes the
-player clear fog, and so the quest that teaches where Knowledge comes from —
-onward. Roughly `gold_reward / 10`, ramping from 3 to 90 across the chain.
+Two of those deserve their reasons written down.
 
-Ruins keep their existing drip (`knowledge.drip_per_ruin_per_hour`, 2/h each),
-and delves keep paying it by depth. Both are now sources of a currency that
-means something before the Reliquary opens.
+**The drip is gated on CLEARED ruins, not discovered ones.** It used to pay
+2/h the moment a ruin came out of the fog, which meant spotting one paid you
+forever for doing nothing with it. Now clearing a dungeon is what turns it
+into a permanent faucet. The idle floor a 30-minute-a-day game needs is still
+there — five cleared ruins drip ~240/day whether or not a party is out — but
+it has to be earned one dungeon at a time.
+
+**Every pull pays Knowledge, hero or not.** Fragments only ever point at one
+hero; Knowledge levels whoever the player already has. That is what stops a
+pull being dead once the roster fills up, and it is the second half of the
+doc's own "no dead pulls" rule.
 
 ## 3. Supply against demand
 
-| | Knowledge |
-|---|---|
-| the whole technology tree (23 techs) | **673** |
-| the quest chain (50 quests) | **575** |
-| revealing the entire map (342 cells) | **2,902** |
+The old arithmetic here compared three one-time totals — tree 655, quest chain
+571, whole map 2,902 — and all three are now zero or near it. Knowledge is not
+a stockpile you spend down; it is a **runway**.
 
-Tech prices started as the old Gold prices ÷ 10: Forestry 8, Urban Planning 20,
-Communities 45, Deep Mining 80. Saws (12) and Cartography (18) were authored
-against that scale by the onboarding rewrite; Crop Rotation was retired.
+**Demand.** `round(20 × 1.6^level)` to level 10 is ≈**3,630 per collectible**.
+Ten collectibles (five relics, five heroes) is ≈36,000, gated further by the
+Fragment-bought tier caps, so nothing is reachable in a hurry.
 
-Three properties, each asserted by a test rather than left to playtest:
+**Supply.** Five cleared ruins pay **240/day** while the player is away, plus
+whatever delving and pulling adds on top. One relic maxes in about fifteen
+days at the drip alone: **meaningful progress inside a month, an endgame
+horizon well past it** — which is the arc `heroes-and-gacha.md` asks for.
 
-1. **The chain covers most of the tree and deliberately not all of it**
-   (591 of 643). A player who only follows quests still has to have been on
-   the map to finish researching.
-2. **The map holds more than four times the tree.** About a quarter of the map
-   funds every technology there is; the rest is surplus that flows into
-   artifact and hero levelling, which is where Knowledge was always going.
-3. **The chain's first tech gate is reachable when it arrives.** Quest 2
-   (`Woodcraft`) *demands* Forestry, and quest 1 is the only thing before it —
-   and pays no Knowledge of its own. Every point comes from the fog quest 1
-   makes the player clear, so the sum that has to work is (cells asked for) ×
-   (the cheapest Knowledge any of them can pay) ≥ Forestry. Cheapest, because
-   the player picks the cells. See [`../onboarding.md`](../onboarding.md).
+The change that arc pays for is that the runway now **starts with a clear**.
+Before, exploring paid it and a player who never fought still progressed. Now
+the chain is: army → hero → discovered ruin → first clear → Knowledge → relic
+levels. That gives the military buildings a job outside dungeons, which
+`00-design-intent.md`'s backlog wants — and it is the thing to watch first in
+playtest, because a player who never delves now makes zero progress on the
+weeks-long arc. See §6.
+
+Asserted by tests rather than left to playtest
+(`tests/expeditions.test.ts`, "Knowledge comes out of dungeons"):
+
+1. **A ruin drips nothing until it has been cleared.**
+2. **Every cleared ruin adds its own hour rate**, banked in whole units
+   against an anchor, so live ticking and offline replay land on the same
+   integer.
+3. **Five cleared ruins carry the arc on a scale of weeks** — 240/day against
+   a ~3,630 collectible is between one and four weeks, asserted as a range so
+   a balance edit that makes it instant or hopeless fails here.
 
 ## 4. What the player sees
 
-- **The plank shows Knowledge** from the first cell cleared, and keeps showing
-  it afterwards — gated on the DISCOVERY flag, not the balance, so it does not
-  vanish the moment research spends it to zero. A currency the player spends
-  and cannot see is the same bug as a price hidden outside its button.
-- **The reveal floater says what the cell paid** (`+3 📜`) instead of
-  "Revealed!". Fog is the main source of Knowledge and the only one the player
-  controls minute to minute; if the floater stays silent about it, the tree
-  looks like it funds itself.
-- The first Knowledge triggers the standard **"new resource discovered"**
-  banner, like every other currency.
-- The research node's Start button carries its Knowledge price **inside the
-  button**, red when short, per the cost rule (`ui-menus-redesign.md` §6.4).
-  No screen needed changing for that — the button already read the cost as a
-  wallet, and `effectiveWalletValue` already routed Knowledge to the kingdom.
+- **Knowledge is not on the plank.** It buys relic and hero levels and nothing
+  else, so it reads in the **Reliquary**, beside the Study buttons that spend
+  it — the way Fragments do. A coin on the plank is a coin you spend from
+  anywhere; this is not one. That takes the header's worst case from six coins
+  to four.
+- **The Reliquary carries the purse** (`.rel-purse`, parchment against the
+  Mana pool's blue), captioned *"Won from dungeons and the banner"*. It is
+  hidden until the player has met the currency: a zero row would advertise a
+  system they have not reached.
+- **Clearing fog shows no floater.** It used to say `+3 📜`. There is nothing
+  to say now — what a reveal pays is the ground itself, which the player can
+  see.
+- The first Knowledge — from a first clear, a haul, a pull or the Conjunction
+  — triggers the standard **"new resource discovered"** banner. Supply and the
+  first sink now arrive together, which is what makes that banner land instead
+  of announcing a number with nowhere to go.
 
 ## 5. Balance surface
 
 | sheet | column | note |
 |---|---|---|
-| `Technologies` | `cost_knowledge` | replaces the five `cost_*` columns |
-| `Quests` | `reward_knowledge` | beside `reward_gems`; kingdom-scoped, so not part of `reward` |
-| `Settings` | `knowledge.per_reveal_ring` | Knowledge per ring of distance, ×1 |
+| `Settings` | `knowledge.drip_per_cleared_ruin_per_hour` | per **cleared** ruin |
+| `Settings` | `delve.first_clear_knowledge` | the lump, once per ruin |
+| `Settings` | `delve.knowledge_per_depth_per_tier` | the per-extraction haul |
+| `Settings` | `gacha.pull_knowledge` | every pull, hero or not |
+| `Quests` | `reward_knowledge` | long-game goal types only |
 
-The importer rejects a technology priced below 1, so the tree cannot silently
-become free.
+Retired with this pass: `knowledge.per_reveal_ring` (fog pays none) and
+`Technologies.cost_knowledge` (replaced by `cost_gold`).
 
 ## 6. Not done
 
-- **Other sources.** The user's brief said "we will add other sources later" —
-  a library district, a scholar assignment, and delve depth beyond the current
-  drip are the obvious candidates.
-- **The Gold sink that left with the tree.** Removing tech costs took 6,425
-  Gold of sink out of the city economy. Fog reveal and building costs still
-  absorb it, and the fog curve got *more* important as a result, but nobody
-  has measured whether Gold now runs long in the mid-game. That is the first
-  thing to look at after a real session.
+- **The delve gate is the standing risk.** A player who never sends a party
+  now makes no progress on the collection at all, where fog used to pay them
+  for exploring. That is deliberate — it is what gives the army a job — but it
+  is the first thing to look at in playtest. If it bites, the cheapest answer
+  is a small Knowledge-priced early sink in the Reliquary, **not** putting the
+  tech tree back.
+- **A library district and a scholar assignment are off the table.** The old
+  doc listed them as candidate sources. Both would put Knowledge back in the
+  city economy and contradict the rule in §1; they are dropped rather than
+  left as a standing ask.
+- **The restored Gold sink is unmeasured.** Pricing the tree in Gold puts
+  6,600 Gold of sink back into the city economy, roughly the 6,425 that left
+  when it went Knowledge-only. `tests/onboarding.test.ts` proves the first
+  fourteen steps still work on nothing but what the game grants; the mid-game
+  has not been played.

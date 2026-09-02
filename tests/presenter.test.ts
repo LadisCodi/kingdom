@@ -6,6 +6,7 @@
 // Node environment, no jsdom: `Game` constructs fine without a DOM, and the
 // views hold nothing but markup once the decisions live here.
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { lineFor } from '../src/sim/army';
 import { QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
@@ -304,11 +305,23 @@ describe('the HUD', () => {
   it('reveals a resource held before its tech — a quest reward, say', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    expect(game.visibleCurrencies()).not.toContain('Iron');
+    expect(game.visibleCurrencies()).not.toContain('Stone');
 
-    fund(state, { Iron: 3 });
+    fund(state, { Stone: 3 });
 
-    expect(game.visibleCurrencies()).toContain('Iron');
+    expect(game.visibleCurrencies()).toContain('Stone');
+  });
+
+  // Knowledge buys heroes and relics and nothing else, so it reads in the
+  // Reliquary next to what it pays for. A coin on the plank is a coin you
+  // spend from anywhere; this is not one.
+  it('never puts Knowledge on the plank, however much the kingdom holds', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Knowledge: 5000 });
+
+    expect(game.visibleCurrencies()).not.toContain('Knowledge');
+    expect(game.visibleCurrencies()).toEqual(['Gold', 'Food', 'Wood']);
   });
 
   // One plaque, not three permanent counters: whichever number the player
@@ -388,13 +401,15 @@ describe('shortfall', () => {
     expect(game.shortfall({ Wood: 20 })).toEqual({});
   });
 
-  it('counts food equivalents, so berries can cover a Food cost', () => {
+  it('reads each purse where it lives — city, kingdom, player', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    fund(state, { Food: 2, Berries: 5 }); // berries count as Food 1:1
+    fund(state, { Food: 7, Knowledge: 4, Gems: 2 });
 
     expect(game.shortfall({ Food: 7 })).toEqual({});
     expect(game.shortfall({ Food: 10 })).toEqual({ Food: 3 });
+    expect(game.shortfall({ Knowledge: 4, Gems: 2 })).toEqual({});
+    expect(game.shortfall({ Knowledge: 9 })).toEqual({ Knowledge: 5 });
   });
 });
 
@@ -425,7 +440,7 @@ describe('villager training', () => {
 
     expect(toasts).toEqual(['Population at max — build more Housing']);
     expect(shaken).toEqual([]);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
 
   it('with room but no Food, it shakes Food and queues nobody', () => {
@@ -438,7 +453,7 @@ describe('villager training', () => {
     game.doQueueTraining();
 
     expect(shaken).toEqual([['Food']]);
-    expect(state.city.training).toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
 
   it('an affordable train starts the clock and spends the Food', () => {
@@ -450,7 +465,7 @@ describe('villager training', () => {
 
     game.doQueueTraining();
 
-    expect(state.city.training).not.toBe(null);
+    expect(lineFor(state, townhall(state).uniqueId).length).toBeGreaterThan(0);
     expect(getWallet(state.city.wallet, 'Food')).toBeLessThan(before);
     expect(game.trainingInfo().active).toBe(true);
     expect(game.trainingInfo().remainingSeconds).toBeLessThanOrEqual(TRAINING.seconds);

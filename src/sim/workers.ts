@@ -209,6 +209,40 @@ export function addWorker(state: GameState, map: MapData, district: District, no
   tryDispatch(state, map, w, district, now);
 }
 
+/**
+ * The building moved: re-home its crew without taking anything from them.
+ *
+ * Two cases, and the split is the whole point. A worker **carrying** a load
+ * keeps its claim and simply walks to the new address instead of the old one
+ * — the deposit still lands on arrival, so relocating never costs the player
+ * a trip already worked for. A worker **not** carrying releases its claim and
+ * goes Idle at `now`, because the cell it was walking to may be outside the
+ * new influence radius; `tryDispatch` then picks one that is in range.
+ *
+ * `from` is the OLD location, and it has to be passed rather than read: the
+ * caller has already moved the district by the time the walk home is timed.
+ */
+export function relocateCrew(
+  state: GameState,
+  district: District,
+  from: Coord,
+  now: number,
+): void {
+  for (const w of state.workers) {
+    if (w.buildingId !== district.uniqueId) continue;
+    // Where the worker actually is right now, timed against the OLD home.
+    const at = w.activity === 'Idle' ? from
+      : w.activity === 'Working' ? (w.claimedCell ?? from)
+        : (workerPosition(state, w, now) ?? from);
+    if (w.carrying) {
+      setState(w, 'MovingHome', now, now + moveMs(at, district.location));
+    } else {
+      w.claimedCell = null;
+      setState(w, 'Idle', now, null);
+    }
+  }
+}
+
 /** Despawn the last worker of the building; its claim is released and any
  *  carried load is lost (design decision). */
 export function removeWorker(state: GameState, district: District): void {

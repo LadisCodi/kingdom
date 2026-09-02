@@ -561,8 +561,7 @@
       ],
       "buildCost": {
         "Wood": 120,
-        "Stone": 40,
-        "Iron": 10
+        "Stone": 70
       },
       "buildCostMultiplier": 1,
       "buildCostExponentialGrowth": 1,
@@ -571,8 +570,7 @@
       "buildDurationDistanceGrowth": 1.15,
       "upgradeCost": {
         "Wood": 360,
-        "Stone": 120,
-        "Iron": 30
+        "Stone": 210
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 180,
@@ -605,8 +603,8 @@
       "requiredTech": "Forestry"
     },
     "Meat": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
+      "yieldPerTap": 3,
+      "yieldPerWorker": 3,
       "tapsToExhaust": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 180,
@@ -621,16 +619,16 @@
       "requiredTech": null
     },
     "Fish": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
+      "yieldPerTap": 2,
+      "yieldPerWorker": 2,
       "tapsToExhaust": 5,
       "recoverySeconds": 0,
       "respawnSeconds": 90,
       "requiredTech": null
     },
     "Iron": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
+      "yieldPerTap": 3,
+      "yieldPerWorker": 3,
       "tapsToExhaust": 5,
       "recoverySeconds": 300,
       "respawnSeconds": 0,
@@ -642,86 +640,42 @@
       "cap": null,
       "start": 0,
       "primary": true,
-      "countsAs": null,
       "goldValue": null
     },
     "Food": {
       "cap": null,
       "start": 0,
       "primary": true,
-      "countsAs": null,
       "goldValue": 1
     },
     "Wood": {
       "cap": null,
       "start": 0,
       "primary": true,
-      "countsAs": null,
       "goldValue": 3
     },
     "Stone": {
       "cap": null,
       "start": 0,
       "primary": true,
-      "countsAs": null,
       "goldValue": 2
-    },
-    "Iron": {
-      "cap": null,
-      "start": 0,
-      "primary": true,
-      "countsAs": null,
-      "goldValue": 6
     },
     "Mana": {
       "cap": null,
       "start": 0,
       "primary": false,
-      "countsAs": null,
       "goldValue": null
-    },
-    "Berries": {
-      "cap": null,
-      "start": 0,
-      "primary": false,
-      "countsAs": {
-        "currency": "Food",
-        "value": 1
-      },
-      "goldValue": 1
-    },
-    "Meat": {
-      "cap": null,
-      "start": 0,
-      "primary": false,
-      "countsAs": {
-        "currency": "Food",
-        "value": 3
-      },
-      "goldValue": 3
-    },
-    "Fish": {
-      "cap": null,
-      "start": 0,
-      "primary": false,
-      "countsAs": {
-        "currency": "Food",
-        "value": 1
-      },
-      "goldValue": 2
     },
     "Knowledge": {
       "cap": null,
       "start": 0,
       "primary": false,
-      "countsAs": null,
       "goldValue": null
     },
     "Gems": {
       "cap": null,
       "start": 10,
       "primary": true,
-      "countsAs": null,
       "goldValue": null
     }
   },
@@ -769,7 +723,7 @@
       "recruitCost": {
         "Gold": 150,
         "Food": 40,
-        "Iron": 20
+        "Stone": 60
       },
       "trainDurationSeconds": 60
     }
@@ -777,14 +731,14 @@
   "technologies": {
     "Forestry": {
       "cost": {
-        "Knowledge": 8
+        "Gold": 25
       },
       "durationSeconds": 3,
       "requires": []
     },
     "UrbanPlanning": {
       "cost": {
-        "Knowledge": 20
+        "Gold": 200
       },
       "durationSeconds": 60,
       "requires": [
@@ -793,7 +747,7 @@
     },
     "Communities": {
       "cost": {
-        "Knowledge": 45
+        "Gold": 450
       },
       "durationSeconds": 90,
       "requires": [
@@ -802,7 +756,7 @@
     },
     "Architecture": {
       "cost": {
-        "Knowledge": 60
+        "Gold": 600
       },
       "durationSeconds": 120,
       "requires": [
@@ -811,7 +765,7 @@
     },
     "Saws": {
       "cost": {
-        "Knowledge": 12
+        "Gold": 175
       },
       "durationSeconds": 20,
       "requires": [
@@ -820,7 +774,7 @@
     },
     "Hunting": {
       "cost": {
-        "Knowledge": 12
+        "Gold": 150
       },
       "durationSeconds": 30,
       "requires": [
@@ -829,7 +783,7 @@
     },
     "Agriculture": {
       "cost": {
-        "Knowledge": 10
+        "Gold": 100
       },
       "durationSeconds": 45,
       "requires": [
@@ -838,7 +792,7 @@
     },
     "Farming": {
       "cost": {
-        "Knowledge": 25
+        "Gold": 250
       },
       "durationSeconds": 60,
       "requires": [
@@ -847,7 +801,7 @@
     },
     "Market": {
       "cost": {
-        "Knowledge": 15
+        "Gold": 150
       },
       "durationSeconds": 45,
       "requires": [
@@ -856,7 +810,7 @@
     },
     "Masonry": {
       "cost": {
-        "Knowledge": 10
+        "Gold": 100
       },
       "durationSeconds": 45,
       "requires": [
@@ -865,7 +819,7 @@
     },
     "Mining": {
       "cost": {
-        "Knowledge": 25
+        "Gold": 250
       },
       "durationSeconds": 60,
       "requires": [
@@ -874,7 +828,7 @@
     },
     "Engineering": {
       "cost": {
-        "Knowledge": 50
+        "Gold": 500
       },
       "durationSeconds": 90,
       "requires": [
@@ -883,7 +837,7 @@
     },
     "DeepMining": {
       "cost": {
-        "Knowledge": 80
+        "Gold": 800
       },
       "durationSeconds": 120,
       "requires": [
@@ -892,7 +846,7 @@
     },
     "Cartography": {
       "cost": {
-        "Knowledge": 18
+        "Gold": 200
       },
       "durationSeconds": 45,
       "requires": [
@@ -901,7 +855,7 @@
     },
     "Sailing": {
       "cost": {
-        "Knowledge": 20
+        "Gold": 150
       },
       "durationSeconds": 45,
       "requires": [
@@ -910,7 +864,7 @@
     },
     "Fishing": {
       "cost": {
-        "Knowledge": 10
+        "Gold": 100
       },
       "durationSeconds": 45,
       "requires": [
@@ -919,7 +873,7 @@
     },
     "Shipbuilding": {
       "cost": {
-        "Knowledge": 40
+        "Gold": 400
       },
       "durationSeconds": 90,
       "requires": [
@@ -928,7 +882,7 @@
     },
     "ScalingTools": {
       "cost": {
-        "Knowledge": 15
+        "Gold": 200
       },
       "durationSeconds": 60,
       "requires": [
@@ -937,7 +891,7 @@
     },
     "Warrior": {
       "cost": {
-        "Knowledge": 10
+        "Gold": 100
       },
       "durationSeconds": 30,
       "requires": [
@@ -946,7 +900,7 @@
     },
     "Spears": {
       "cost": {
-        "Knowledge": 15
+        "Gold": 150
       },
       "durationSeconds": 45,
       "requires": [
@@ -955,7 +909,7 @@
     },
     "Archery": {
       "cost": {
-        "Knowledge": 15
+        "Gold": 150
       },
       "durationSeconds": 60,
       "requires": [
@@ -964,7 +918,7 @@
     },
     "Cavalry": {
       "cost": {
-        "Knowledge": 40
+        "Gold": 400
       },
       "durationSeconds": 90,
       "requires": [
@@ -973,7 +927,7 @@
     },
     "Attunement": {
       "cost": {
-        "Knowledge": 40
+        "Gold": 400
       },
       "durationSeconds": 120,
       "requires": [
@@ -982,7 +936,7 @@
     },
     "Warband": {
       "cost": {
-        "Knowledge": 60
+        "Gold": 600
       },
       "durationSeconds": 180,
       "requires": [
@@ -1162,8 +1116,7 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
-    "dripPerRuinPerHour": 2,
-    "perRevealRing": 1
+    "dripPerClearedRuinPerHour": 2
   },
   "army": {
     "trainTapBoostSeconds": 3,
@@ -1176,10 +1129,11 @@
   "delve": {
     "goldPerDepthPerTier": 25,
     "materialPerDepthPerTier": 4,
-    "knowledgePerDepthPerTier": 2,
+    "knowledgePerDepthPerTier": 6,
     "fragmentsPerDepth": 1,
     "failHaulLoss": 0.5,
-    "firstClearGems": 10
+    "firstClearGems": 10,
+    "firstClearKnowledge": 150
   },
   "party": {
     "baseSlots": 2,
@@ -1193,7 +1147,8 @@
     "softPityAt": 40,
     "hardPityAt": 60,
     "duplicateFragments": 20,
-    "fragmentsPerMiss": 3
+    "fragmentsPerMiss": 3,
+    "pullKnowledge": 50
   },
   "heroes": {
     "Warden": {
@@ -1382,7 +1337,7 @@
       "supplies": {
         "Food": 60,
         "Gold": 400,
-        "Iron": 10
+        "Stone": 30
       },
       "affinity": "Lancer",
       "artifact": "ForemansSigil"
@@ -1398,7 +1353,7 @@
       "supplies": {
         "Food": 100,
         "Gold": 900,
-        "Iron": 20
+        "Stone": 60
       },
       "affinity": "Cavalry",
       "artifact": "GildedLedger"
@@ -1414,7 +1369,7 @@
       "supplies": {
         "Food": 150,
         "Gold": 2000,
-        "Iron": 40
+        "Stone": 120
       },
       "affinity": "Any",
       "artifact": "WanderersCompass"
@@ -1525,10 +1480,10 @@
       "goalAmount": 25,
       "goalLevel": null,
       "reward": {
-        "Gold": 15
+        "Gold": 35
       },
       "rewardGems": 0,
-      "rewardKnowledge": 2
+      "rewardKnowledge": 0
     },
     {
       "id": "ARoof",
@@ -1539,24 +1494,24 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 20
+        "Gold": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 2
+      "rewardKnowledge": 0
     },
     {
       "id": "Rations",
       "name": "Rations",
       "description": "Tap the berry bush west of your Townhall for Food. Villagers eat.",
       "goalType": "CollectResource",
-      "goalTarget": "Berries",
+      "goalTarget": "Food",
       "goalAmount": 5,
       "goalLevel": null,
       "reward": {
-        "Gold": 15
+        "Gold": 35
       },
       "rewardGems": 0,
-      "rewardKnowledge": 2
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstVillager",
@@ -1567,10 +1522,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 25
+        "Gold": 55
       },
       "rewardGems": 0,
-      "rewardKnowledge": 3
+      "rewardKnowledge": 0
     },
     {
       "id": "TaxDay",
@@ -1581,10 +1536,10 @@
       "goalAmount": 30,
       "goalLevel": null,
       "reward": {
-        "Gold": 20
+        "Gold": 50
       },
       "rewardGems": 0,
-      "rewardKnowledge": 3
+      "rewardKnowledge": 0
     },
     {
       "id": "Explorer",
@@ -1595,10 +1550,10 @@
       "goalAmount": 8,
       "goalLevel": null,
       "reward": {
-        "Gold": 30
+        "Gold": 80
       },
       "rewardGems": 0,
-      "rewardKnowledge": 5
+      "rewardKnowledge": 0
     },
     {
       "id": "Fields",
@@ -1609,10 +1564,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 30
+        "Gold": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 3
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstPlot",
@@ -1623,10 +1578,10 @@
       "goalAmount": 2,
       "goalLevel": null,
       "reward": {
-        "Gold": 25
+        "Gold": 55
       },
       "rewardGems": 0,
-      "rewardKnowledge": 3
+      "rewardKnowledge": 0
     },
     {
       "id": "ByHand",
@@ -1637,10 +1592,10 @@
       "goalAmount": 20,
       "goalLevel": null,
       "reward": {
-        "Gold": 30
+        "Gold": 70
       },
       "rewardGems": 0,
-      "rewardKnowledge": 4
+      "rewardKnowledge": 0
     },
     {
       "id": "Lumber",
@@ -1651,10 +1606,10 @@
       "goalAmount": 30,
       "goalLevel": null,
       "reward": {
-        "Gold": 30
+        "Gold": 70
       },
       "rewardGems": 0,
-      "rewardKnowledge": 4
+      "rewardKnowledge": 0
     },
     {
       "id": "Farmhand",
@@ -1665,10 +1620,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 35
+        "Gold": 85
       },
       "rewardGems": 0,
-      "rewardKnowledge": 5
+      "rewardKnowledge": 0
     },
     {
       "id": "ToWork",
@@ -1679,10 +1634,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 35
+        "Gold": 85
       },
       "rewardGems": 0,
-      "rewardKnowledge": 5
+      "rewardKnowledge": 0
     },
     {
       "id": "GrowingTown",
@@ -1693,10 +1648,10 @@
       "goalAmount": 2,
       "goalLevel": null,
       "reward": {
-        "Gold": 50
+        "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 6
+      "rewardKnowledge": 0
     },
     {
       "id": "Neighbors",
@@ -1707,10 +1662,10 @@
       "goalAmount": 3,
       "goalLevel": null,
       "reward": {
-        "Gold": 40
+        "Gold": 90
       },
       "rewardGems": 0,
-      "rewardKnowledge": 5
+      "rewardKnowledge": 0
     },
     {
       "id": "ProperCapital",
@@ -1721,10 +1676,10 @@
       "goalAmount": 1,
       "goalLevel": 2,
       "reward": {
-        "Gold": 80
+        "Gold": 180
       },
       "rewardGems": 3,
-      "rewardKnowledge": 10
+      "rewardKnowledge": 0
     },
     {
       "id": "SawTeeth",
@@ -1735,10 +1690,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 50
+        "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 6
+      "rewardKnowledge": 0
     },
     {
       "id": "TheSawmill",
@@ -1749,10 +1704,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 60
+        "Gold": 140
       },
       "rewardGems": 0,
-      "rewardKnowledge": 8
+      "rewardKnowledge": 0
     },
     {
       "id": "Crewed",
@@ -1763,10 +1718,10 @@
       "goalAmount": 3,
       "goalLevel": null,
       "reward": {
-        "Gold": 60
+        "Gold": 140
       },
       "rewardGems": 0,
-      "rewardKnowledge": 8
+      "rewardKnowledge": 0
     },
     {
       "id": "FurtherAfield",
@@ -1777,10 +1732,10 @@
       "goalAmount": 15,
       "goalLevel": null,
       "reward": {
-        "Gold": 80
+        "Gold": 200
       },
       "rewardGems": 0,
-      "rewardKnowledge": 12
+      "rewardKnowledge": 0
     },
     {
       "id": "OldStones",
@@ -1791,10 +1746,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 100
+        "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 15
+      "rewardKnowledge": 0
     },
     {
       "id": "Mapmakers",
@@ -1805,10 +1760,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 80
+        "Gold": 200
       },
       "rewardGems": 0,
-      "rewardKnowledge": 12
+      "rewardKnowledge": 0
     },
     {
       "id": "Surveyors",
@@ -1819,10 +1774,10 @@
       "goalAmount": 2,
       "goalLevel": null,
       "reward": {
-        "Gold": 100
+        "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 15
+      "rewardKnowledge": 0
     },
     {
       "id": "Highlands",
@@ -1833,10 +1788,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 100
+        "Gold": 220
       },
       "rewardGems": 0,
-      "rewardKnowledge": 12
+      "rewardKnowledge": 0
     },
     {
       "id": "PutToSea",
@@ -1847,10 +1802,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 120
+        "Gold": 270
       },
       "rewardGems": 0,
-      "rewardKnowledge": 15
+      "rewardKnowledge": 0
     },
     {
       "id": "ArmedMen",
@@ -1861,10 +1816,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 100
+        "Gold": 220
       },
       "rewardGems": 0,
-      "rewardKnowledge": 12
+      "rewardKnowledge": 0
     },
     {
       "id": "Mustered",
@@ -1875,10 +1830,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 150
+        "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstSoldier",
@@ -1889,10 +1844,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 150
+        "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstSummon",
@@ -1931,10 +1886,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 150
+        "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 10
+      "rewardKnowledge": 0
     },
     {
       "id": "Merchant",
@@ -1945,10 +1900,10 @@
       "goalAmount": 20,
       "goalLevel": null,
       "reward": {
-        "Gold": 180
+        "Gold": 290
       },
       "rewardGems": 0,
-      "rewardKnowledge": 11
+      "rewardKnowledge": 0
     },
     {
       "id": "Stoneworks",
@@ -1959,10 +1914,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 180
+        "Gold": 290
       },
       "rewardGems": 0,
-      "rewardKnowledge": 11
+      "rewardKnowledge": 0
     },
     {
       "id": "MoreRoom",
@@ -1973,10 +1928,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 150
+        "Gold": 240
       },
       "rewardGems": 0,
-      "rewardKnowledge": 9
+      "rewardKnowledge": 0
     },
     {
       "id": "SecondStory",
@@ -1987,11 +1942,11 @@
       "goalAmount": 1,
       "goalLevel": 2,
       "reward": {
-        "Gold": 180,
+        "Gold": 280,
         "Stone": 20
       },
       "rewardGems": 0,
-      "rewardKnowledge": 10
+      "rewardKnowledge": 0
     },
     {
       "id": "FullHouse",
@@ -2002,25 +1957,25 @@
       "goalAmount": 8,
       "goalLevel": null,
       "reward": {
-        "Gold": 200,
+        "Gold": 310,
         "Food": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 11
+      "rewardKnowledge": 0
     },
     {
       "id": "IronRoad",
       "name": "The iron road",
       "description": "Iron lies in the northern ridge. Bring back ten.",
       "goalType": "CollectResource",
-      "goalTarget": "Iron",
-      "goalAmount": 10,
+      "goalTarget": "Stone",
+      "goalAmount": 30,
       "goalLevel": null,
       "reward": {
-        "Gold": 250
+        "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 13
+      "rewardKnowledge": 0
     },
     {
       "id": "TheMine",
@@ -2031,10 +1986,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 250
+        "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 13
+      "rewardKnowledge": 0
     },
     {
       "id": "Architect",
@@ -2045,10 +2000,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 300
+        "Gold": 450
       },
       "rewardGems": 0,
-      "rewardKnowledge": 15
+      "rewardKnowledge": 0
     },
     {
       "id": "GrandCapital",
@@ -2059,10 +2014,10 @@
       "goalAmount": 1,
       "goalLevel": 3,
       "reward": {
-        "Gold": 400
+        "Gold": 600
       },
       "rewardGems": 5,
-      "rewardKnowledge": 20
+      "rewardKnowledge": 0
     },
     {
       "id": "Attuned",
@@ -2073,10 +2028,10 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 300
+        "Gold": 450
       },
       "rewardGems": 0,
-      "rewardKnowledge": 15
+      "rewardKnowledge": 0
     },
     {
       "id": "TheSanctum",
@@ -2087,11 +2042,11 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 350,
+        "Gold": 530,
         "Stone": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 18
+      "rewardKnowledge": 0
     },
     {
       "id": "AWarband",
@@ -2102,11 +2057,11 @@
       "goalAmount": 4,
       "goalLevel": null,
       "reward": {
-        "Gold": 300,
+        "Gold": 450,
         "Food": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 15
+      "rewardKnowledge": 0
     },
     {
       "id": "TheBarrowsPrize",
@@ -2145,11 +2100,11 @@
       "goalAmount": 4,
       "goalLevel": null,
       "reward": {
-        "Gold": 500,
+        "Gold": 750,
         "Stone": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 25
+      "rewardKnowledge": 0
     },
     {
       "id": "DeeperStill",
@@ -2161,7 +2116,7 @@
       "goalLevel": null,
       "reward": {
         "Gold": 600,
-        "Iron": 30
+        "Stone": 90
       },
       "rewardGems": 0,
       "rewardKnowledge": 30
@@ -2182,7 +2137,6 @@
     }
   ],
   "fog": {
-    "silverPerTap": 0,
     "rings": [
       {
         "distance": 1,

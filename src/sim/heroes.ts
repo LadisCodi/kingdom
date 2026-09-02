@@ -28,6 +28,7 @@
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
 import { COLLECTION, GACHA, HERO_ORDER, HEROES } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
 import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
 import { rand } from './rng';
 import { addToWallet, getWallet, type GameState, type HeroId } from './state';
@@ -153,6 +154,8 @@ export interface PullResult {
   /** Fragments paid — from a duplicate, or the consolation on a miss. */
   fragments: number;
   fragmentsOf: HeroId | null;
+  /** Knowledge paid — the same on every pull, hero or not. */
+  knowledge: number;
   /** Whether hard pity delivered this one. */
   guaranteed: boolean;
 }
@@ -167,7 +170,7 @@ export interface PullResult {
 export function pull(state: GameState, banner: string = STANDARD_BANNER): PullResult {
   const miss: PullResult = {
     result: 'NotEnoughGems', heroId: null, duplicate: false,
-    fragments: 0, fragmentsOf: null, guaranteed: false,
+    fragments: 0, fragmentsOf: null, knowledge: 0, guaranteed: false,
   };
   const cost = pullCost(state, banner);
   if (getWallet(state.player.wallet, 'Gems') < cost) return miss;
@@ -178,6 +181,12 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
   }
 
   addToWallet(state.player.wallet, 'Gems', -cost);
+  // Every pull pays Knowledge, before the roll is even read. A banner is one
+  // of the two places Knowledge comes from, and paying it up front is what
+  // makes the WHOLE pull worth something — the Fragments below only ever
+  // point at one hero, but Knowledge levels whoever the player already has.
+  addToWallet(state.kingdom.wallet, 'Knowledge', GACHA.pullKnowledge);
+  recordResourceDiscovery(state, 'Knowledge');
   const n = pullCount(state, banner);
   const pity = pityCount(state, banner);
   state.gacha.pullCounts[banner] = n + 1;
@@ -192,7 +201,8 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
       (state.heroes.fragments[target] ?? 0) + GACHA.fragmentsPerMiss;
     return {
       result: 'Pulled', heroId: null, duplicate: false,
-      fragments: GACHA.fragmentsPerMiss, fragmentsOf: target, guaranteed: false,
+      fragments: GACHA.fragmentsPerMiss, fragmentsOf: target,
+      knowledge: GACHA.pullKnowledge, guaranteed: false,
     };
   }
 
@@ -205,6 +215,7 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
     duplicate: outcome === 'Duplicate',
     fragments: outcome === 'Duplicate' ? GACHA.duplicateFragments : 0,
     fragmentsOf: outcome === 'Duplicate' ? heroId : null,
+    knowledge: GACHA.pullKnowledge,
     guaranteed: pity >= GACHA.hardPityAt - 1,
   };
 }

@@ -13,43 +13,46 @@
  * url() for the /kingdom/ base and content-hashes it, while a hand-written
  * <link href="/src/..."> works in dev and 404s on Pages.
  *
- * TWO FACES, AND THE SPLIT IS THE POINT. The pixel face this replaces
- * (Pixelify Sans) carried titles AND every number in the game, which is why
- * it had to be legible at 13px and never quite was. Germania One now takes
- * the titles alone — it is a display face and is used like one — while PT
- * Sans takes body copy and, crucially, EVERY NUMBER.
+ * TWO FACES, AND THE SPLIT IS THE POINT. BoldPixels takes titles alone; the
+ * body face takes body copy and, crucially, EVERY NUMBER.
  *
- * PT Sans for numbers is not arbitrary: its digits are all 545 units wide
- * (567 at bold), so counters are tabular WITHOUT the `tnum` feature, which
- * the font does not ship. Germania One's digits are proportional (464-483),
- * so a number set in it would jitter as it ticked — another reason numbers
- * never go in the title face.
+ * BOTH ARE PIXEL FACES, AND A PIXEL FACE HAS LEGAL SIZES. Each is drawn on a
+ * grid, and rendering it at anything but a whole multiple of that grid puts
+ * the outline between device pixels, where the rasteriser antialiases the
+ * square edges into grey mush — which is the entire thing a pixel face exists
+ * not to do. Measured over the 117 characters we actually ship:
+ *
+ *   BoldPixels   1024 upm / 64 = 16 px per em  -> 16, 32, 48
+ *   m6x11plus    1152 upm / 64 = 18 px per em  -> 18, 36
+ *
+ * That is why --text-title is 32 and not 22, and why --text-body and
+ * --text-helper are the same 18: there is no smaller size m6x11plus can be
+ * set at without going soft. The helper tier is now carried by --ink-muted
+ * instead of by size. tests/fonts.test.ts holds the sizes to the grids.
+ *
+ * The digits are tabular in both — BoldPixels 576 units across, m6x11plus 448
+ * — so counters do not jitter as they tick. That was the one property the
+ * previous pair was chosen for, and it survives.
  *
  * font-display: block on the title face: its metrics diverge sharply from
  * system-ui, so a swap would visibly reflow every heading; boot() waits for
- * it (with a ceiling) instead. PT Sans is close enough to system-ui that
- * swapping body copy is benign. */
+ * it (with a ceiling) instead. The body face is close enough to swap benignly.
+ *
+ * Attribution is REQUIRED for both, and BoldPixels is ShareAlike. See
+ * ../fonts/NOTICE.md — this is not the usual OFL situation. */
 @font-face {
   font-family: 'Kingdom Display';
-  src: url('../fonts/germania-one-latin.woff2') format('woff2');
+  src: url('../fonts/boldpixels-latin.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: block;
 }
-/* PT Sans is NOT a variable font, so 400 and 700 are two real files rather
- * than two instances of one — and a real bold beats a synthesised one at the
- * sizes the HUD uses. */
+/* One weight, one file. `font-synthesis-weight: none` below refuses the fake
+ * bold a `font-weight: 700` would otherwise smear over it. */
 @font-face {
   font-family: 'Kingdom Body';
-  src: url('../fonts/pt-sans-latin-400.woff2') format('woff2');
+  src: url('../fonts/m6x11plus-latin.woff2') format('woff2');
   font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Kingdom Body';
-  src: url('../fonts/pt-sans-latin-700.woff2') format('woff2');
-  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -90,12 +93,14 @@
   --nav-h: 68px;
 
   /* ---- type ----
-   * `--font-display` is TITLES ONLY — headings, sheet planks, proper names.
-   * `--font-body` is body copy AND every number, because a number has to be
-   * read at a glance at 13px and a display face is the wrong tool for that.
-   * Both fall back to a proportional sans now: the old monospace fallback
-   * existed to keep the PIXEL face's numbers from jittering, and PT Sans is
-   * naturally tabular, so the fallback should simply look like the font. */
+   * `--font-display` is TITLES ONLY — headings, sheet planks, proper names,
+   * and only at --text-title. `--font-body` is body copy AND every number.
+   *
+   * The fallbacks matter more than they used to: m6x11plus ships 228 glyphs
+   * and lacks several the UI sets inline (→ · − ✓ ✕ … ’). CSS falls back per
+   * GLYPH, so those render from the system face rather than as tofu — visibly
+   * not pixel art, but present. Anything that must look drawn belongs in the
+   * atlas, not in a string. */
   --font-display: 'Kingdom Display', Georgia, 'Times New Roman', serif;
   --font-body: 'Kingdom Body', system-ui, -apple-system, sans-serif;
 
@@ -107,11 +112,24 @@
    * forget than spelling out 400 on every title rule. */
   font-synthesis-weight: none;
 
-  /* 13px is the floor (§6.12): the current 11–12px helper text is unreadable
-   * on a phone in daylight. */
-  --text-title: 22px;
-  --text-body: 15px;
-  --text-helper: 13px;
+  /* Sized against the DEVICE, which is what "crisp" is actually a property of.
+   * A design pixel covers (css-size x dpr) / grid device pixels, so the target
+   * device decides the legal sizes, not the CSS pixel:
+   *
+   *   m6x11plus (18 grid) @ DPR 3  ->  every multiple of 6:  18, 24, 30, 36
+   *   BoldPixels (16 grid) @ DPR 3 ->  every multiple of 16:  16, 32, 48
+   *
+   * The target is an iPhone 17 — 402x874 CSS px at DPR 3 — so 24px is exactly
+   * 4 device pixels per design pixel there. 18 and 36 are the only sizes that
+   * stay whole at EVERY dpr; 24 is a deliberate trade, because 18px body copy
+   * measured too small to read on the device and legibility outranks being
+   * pixel-exact on a desktop nobody plays on.
+   *
+   * 24px body = 14.7px caps, comfortably past the 17px-SF iOS body it sits
+   * beside. 18px helper = 11px caps, which is what PT Sans gave at 15px. */
+  --text-title: 32px;
+  --text-body: 24px;
+  --text-helper: 18px;
 
   /* ---- form ---- */
   --gutter: 24px;
