@@ -200,6 +200,11 @@ is already no, and better to know it in week six than in month nine.
   grant with a visible `SIMULADO` marker so no playtester ever believes they
   bought something. Every step of the funnel logs: offer shown, card opened,
   confirmed, dismissed.
+  *(The second builder already ships as a priced offer raised by a refused
+  build — [`features/builders.md`](features/builders.md). What is left for
+  this phase is the store CARD, and the point of keeping both is that a
+  surface the player is sent to and one they stumble into answer different
+  questions.)*
 - **Rewarded video from one placement to five or six.** The current design is
   genuinely good — the ad pays a whole Mana pool, ten sanctuaries double the
   pool and therefore double every future ad, the offer only appears below half

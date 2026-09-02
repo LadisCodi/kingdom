@@ -25,6 +25,7 @@ import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
 import { renderAdOfferSheet } from './ui/adOfferSheet';
+import { renderBuilderSheet } from './ui/builderSheet';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
@@ -133,6 +134,7 @@ async function boot(): Promise<void> {
     expedition: renderExpeditionSheet,
     checkpoint: renderCheckpointSheet,
     adOffer: renderAdOfferSheet,
+    builder: renderBuilderSheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
@@ -175,7 +177,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer',
+        'adOffer', 'builder',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(

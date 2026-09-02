@@ -3,7 +3,7 @@
 // injectable rng so the sim stays deterministic and portable to a server.
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
-import { CITY_DEF, DISTRICTS } from './data/definitions';
+import { DISTRICTS } from './data/definitions';
 import type { Modifier } from './modifiers';
 
 export type CurrencyId =
@@ -416,14 +416,25 @@ export const townhall = (state: GameState): District =>
 export const builderCount = (state: GameState): number => Math.max(1, state.kingdom.builders);
 
 /**
- * How many items may sit in the build queue at all.
+ * How many jobs the city can have in flight — which is exactly the builder
+ * count, because THERE IS NO WAITING LINE.
  *
- * THE QUEUE FOLLOWS THE BUILDERS, and until now it did not: both gates in
- * commands.ts tested against the bare `CITY_DEF.buildQueueCapacity` constant
- * (1), so a kingdom with four builders still could not queue a second job and
- * every promotion path in queue.ts was unreachable. The authored dial stays
- * as the FLOOR — a city can always queue one thing — and the builder count
- * raises it from there.
+ * A build or upgrade either starts, because a builder is free, or it does not
+ * start at all; nothing is ever parked waiting for a slot. That is the design
+ * (`Docs/features/builders.md`), and it is what makes the refusal a moment
+ * worth selling into: the player is told "every builder is busy" and offered
+ * one more for Gems, rather than being quietly put in a line.
+ *
+ * It also means `advanceQueue`'s promotion path — the branch that stamps a
+ * waiting item with the moment its slot freed — is unreachable through play
+ * BY DESIGN rather than by accident. It is kept because it is the correct
+ * behaviour for a queue longer than its slots, and this rule is a design
+ * choice that could change; `tests/builders.test.ts` holds it to its
+ * contract directly.
+ *
+ * `city.build_queue_capacity` used to live beside this and is gone from the
+ * workbook: a second dial for the same number could only ever disagree with
+ * the first, which is how the original bug survived — both gates read the
+ * constant (1) and neither read the builders.
  */
-export const buildQueueCapacity = (state: GameState): number =>
-  Math.max(CITY_DEF.buildQueueCapacity, builderCount(state));
+export const buildQueueCapacity = (state: GameState): number => builderCount(state);

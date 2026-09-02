@@ -135,9 +135,16 @@ const SETTINGS = [
   // made to say 5, 20, 100 without deforming everything past it.
   ['city.population_cost_first', 'city.populationCostFirst', 'list'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
-  ['city.build_queue_capacity', 'city.buildQueueCapacity'],
+  // NO `city.build_queue_capacity`. There is no waiting line: a build either
+  // starts because a builder is free or it does not start at all, so the
+  // queue's length IS the builder count and a second dial for it could only
+  // ever disagree. See src/sim/state.ts `buildQueueCapacity`.
   ['kingdom.start_builders', 'kingdom.startBuilders'],
   ['kingdom.max_builders', 'kingdom.maxBuilders'],
+  // Buying the Nth builder, on the same escalating-slot curve as research,
+  // party and attunement slots: round(base x growth^purchased).
+  ['kingdom.builder_gem_cost_base', 'kingdom.builderGemCostBase'],
+  ['kingdom.builder_gem_cost_growth', 'kingdom.builderGemCostGrowth'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],

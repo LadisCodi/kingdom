@@ -59,6 +59,7 @@ with its own scope-and-status blockquote.
 | **[features/currency-simplification.md](features/currency-simplification.md)** | **Built 2026-09-02** — eleven wallet rows down to seven; four coins on the plank; how the competition does it |
 | **[features/moving-buildings.md](features/moving-buildings.md)** | **Built 2026-09-02** — relocating a built building, and dragging the placement ghost instead of panning |
 | **[onboarding.md](onboarding.md)** | **Built 2026-09-02** — the authored first-user experience, 26 steps; the quest chain and the tech gates that serve it |
+| **[features/builders.md](features/builders.md)** | **Built 2026-09-02** — no waiting line, and the Gem offer a refused build raises. The game's first real purchase surface |
 
 ### The MVP plan
 

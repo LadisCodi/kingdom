@@ -2197,12 +2197,13 @@
       500,
       1000
     ],
-    "populationCostGrowth": 1.45,
-    "buildQueueCapacity": 1
+    "populationCostGrowth": 1.45
   },
   "kingdom": {
     "startBuilders": 1,
-    "maxBuilders": 4
+    "maxBuilders": 4,
+    "builderGemCostBase": 30,
+    "builderGemCostGrowth": 2.5
   },
   "offlineCapHours": 8
 }

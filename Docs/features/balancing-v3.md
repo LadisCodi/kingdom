@@ -168,9 +168,19 @@ kingdom.maxBuilders    4
 ```
 
 `scripts/balance.mjs` maps the column, the workbook authors 4, and **nothing in
-`src/` ever raises it above 1**, so every promotion path in `queue.ts` is
-unreachable and `city.buildQueueCapacity` is 1 — in practice exactly one
-pending build or upgrade, forever.
+`src/` ever raises it above 1** — and both gates in `commands.ts` test
+`city.buildQueueCapacity` (1) rather than the builder count, so in practice
+exactly one build or upgrade at a time, forever.
+
+> **Correction, same day.** This section originally added "so every promotion
+> path in `queue.ts` is unreachable", implying that turning the dial on would
+> make it reachable. It does not: **there is no waiting line in this game.** A
+> build either starts because a builder is free or it does not start at all,
+> so the jobs in flight are exactly the builder count and the promotion branch
+> stays unreachable *by design*. `city.build_queue_capacity` is not a second
+> dial to reconcile with the builder count — it is a duplicate of it, and it
+> has been removed from the workbook. See
+> [`builders.md`](builders.md) §1.
 
 The competitive review filed this as backlog "gap 9, smaller". It is not
 smaller. **A second builder is the best-documented conversion surface in the
@@ -180,8 +190,14 @@ purchase design pillar 3 authorises: *comfort and breadth, never access*. It
 unlocks nothing; it makes two things happen at once.
 
 **Action in this pass:** make the dial live — a builder count that reads from
-state, a queue capacity that follows it, and one way to raise it (Phase 0: a
-dev-bar toggle; Phase 3: the store card). Ten lines and a test.
+state, a jobs-in-flight limit that follows it, and one way to raise it.
+
+**Scope grew, deliberately.** The plan said "Phase 0: a dev-bar toggle;
+Phase 3: the store card". It shipped with the **priced Gem purchase and the
+popup that raises it**, because the refusal is where a second builder means
+something and a dev toggle answers no question a playtester can be asked. The
+store *card* is still Phase 3; this is the offer, not the shop. Full design in
+[`builders.md`](builders.md).
 
 ## 6. Two doc gaps that are not contradictions
 
@@ -230,7 +246,7 @@ of the Mana pool itself.
 | Backlog gap 3 struck | `00-design-intent.md` gap 3, struck with the derivation |
 | Gap 9 split | gap 9 closed (builders), 9a `?dev=kit` gallery still open, 9b v1 tables recomputed and holding |
 | One new test asserting the faucet equals its budget | `tests/faucet.test.ts` — 4 assertions, including the *shape* of the payout, because the ordering argument in §3 depends on it |
-| `maxBuilders` reachable | `tests/builders.test.ts` — 9 assertions |
+| `maxBuilders` reachable | `tests/builders.test.ts` — 14 assertions, including the price curve and the refusal |
 
 ### What changed in the code
 

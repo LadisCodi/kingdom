@@ -56,7 +56,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('InvalidCell'); // behind Saws
     completeTech(state, 'Saws');
     expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('Started');
-    expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('QueueFull');
+    expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('NoBuilderFree');
     tickAt(state, now);
     expect(finishWithGems(state, map, state.city.queue[0].uniqueId, now)).toBe('Success');
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;

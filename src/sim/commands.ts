@@ -39,15 +39,12 @@ import {
 export type GrantBuilderResult = 'Granted' | 'AtCeiling';
 
 /**
- * Hire a builder: one more job running at once, and one more slot in the
- * queue that feeds it (see `buildQueueCapacity`).
+ * Hire a builder, free: one more job the city can have in flight.
  *
- * DELIBERATELY FREE AND UNPRICED here. The workbook authors the ceiling
- * (`KINGDOM_DEF.maxBuilders`, 4) and Phase 0's job is only to make the dial
- * reachable so the promotion logic in queue.ts stops being dead code —
- * `?dev` calls this. What it COSTS is a store question, and the store is
- * Phase 3 (`Docs/features/monetization-sim.md`); wrapping a price around
- * this function is that phase's work, not this one's.
+ * The unpriced door. Quests, events and `?dev` grant builders; the PLAYER
+ * buys one through `buyBuilder` below. Keeping the grant and the purchase
+ * apart is what lets a future event hand out a temporary builder without
+ * teaching the price curve anything.
  */
 export function grantBuilder(state: GameState): GrantBuilderResult {
   if (state.kingdom.builders >= KINGDOM_DEF.maxBuilders) return 'AtCeiling';
@@ -55,7 +52,39 @@ export function grantBuilder(state: GameState): GrantBuilderResult {
   return 'Granted';
 }
 
-export type EnqueueBuildResult = 'Started' | 'QueueFull' | 'NotEnoughResources' | 'InvalidCell';
+/**
+ * Gems for the NEXT builder, on the same escalating-slot curve the research,
+ * party and attunement slots already use: `round(base x growth^purchased)`.
+ *
+ * `purchased` is derived — `builders - startBuilders` — rather than counted
+ * in its own save field, because the two can never disagree that way. The
+ * cost of that: a granted builder makes the next PURCHASED one dearer. That
+ * is the right way round for a gift, and the alternative (a separate counter)
+ * is a field that has to be migrated and kept honest forever.
+ */
+export const builderGemCost = (state: GameState): number =>
+  Math.round(
+    KINGDOM_DEF.builderGemCostBase
+    * KINGDOM_DEF.builderGemCostGrowth ** Math.max(0, state.kingdom.builders - KINGDOM_DEF.startBuilders),
+  );
+
+export type BuyBuilderResult = 'Purchased' | 'AtMax' | 'NotEnoughGems';
+
+/** The player's own purchase. Same shape as `buySlot` / `buyPartySlot`. */
+export function buyBuilder(state: GameState): BuyBuilderResult {
+  if (state.kingdom.builders >= KINGDOM_DEF.maxBuilders) return 'AtMax';
+  const cost = builderGemCost(state);
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  state.kingdom.builders += 1;
+  return 'Purchased';
+}
+
+/** `NoBuilderFree`, not `QueueFull`: nothing is queued and nothing waits —
+ *  every builder is already on a job. It is the moment the Gem offer exists
+ *  for (`Docs/features/builders.md`). */
+export type EnqueueBuildResult =
+  | 'Started' | 'NoBuilderFree' | 'NotEnoughResources' | 'InvalidCell';
 
 export function enqueueBuild(
   state: GameState,
@@ -63,7 +92,7 @@ export function enqueueBuild(
   definitionId: DistrictId,
   cell: Coord,
 ): EnqueueBuildResult {
-  if (state.city.queue.length >= buildQueueCapacity(state)) return 'QueueFull';
+  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
   if (placementBlock(state, map, definitionId, cell) !== null) return 'InvalidCell';
   const cost = nextBuildCost(state, definitionId);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
@@ -142,7 +171,7 @@ export function moveDistrict(
 
 export type UpgradeResult =
   | 'Started' | 'AtMaxLevel' | 'AlreadyUpgrading' | 'RequirementsNotMet'
-  | 'QueueFull' | 'NotEnoughResources';
+  | 'NoBuilderFree' | 'NotEnoughResources';
 
 export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
   const district = districtById(state, districtUniqueId);
@@ -157,7 +186,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   }
   const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
   if (gateTech !== null && !isTechComplete(state, gateTech)) return 'RequirementsNotMet';
-  if (state.city.queue.length >= buildQueueCapacity(state)) return 'QueueFull';
+  if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
   const cost = upgradeCost(district.definitionId, districtCount(state, district.definitionId), district.level);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   pay(state.city.wallet, cost);

@@ -2,18 +2,23 @@
 // then never reachable.
 //
 // `kingdom.max_builders` is 4 in the workbook and `kingdom.start_builders` is
-// 1. Nothing in `src/` ever raised the state field between them, so
-// `advanceQueue`'s whole promotion path — the "stamp the promoted item with
-// the moment its slot actually freed" logic that makes an offline gap resolve
-// a chain of builds in true chronological order — was dead code that no
-// player could reach. Worse, both queue gates in `commands.ts` tested the
-// bare `CITY_DEF.buildQueueCapacity` constant rather than the builder count,
-// so even a state edited to 4 builders still refused the second job.
+// 1. Nothing in `src/` ever raised the state field between them, and both
+// gates in `commands.ts` tested the bare `CITY_DEF.buildQueueCapacity`
+// constant rather than the builder count — so even a state edited to 4
+// builders still refused the second job.
 //
-// Docs/features/balancing-v3.md §5. These are the assertions that keep it
-// live, because "unreachable" is a property no other test can notice.
+// THERE IS NO WAITING LINE. A build either starts because a builder is free
+// or it does not start at all; nothing is ever parked. So the number of jobs
+// in flight is exactly the builder count, and the refusal is a moment the
+// game sells into rather than an administrative one — see
+// Docs/features/builders.md.
+//
+// These are the assertions that keep the dial live, because "unreachable" is
+// a property no other test can notice.
 import { describe, expect, it } from 'vitest';
-import { advance, enqueueBuild, grantBuilder, upgradeDistrict } from '../src/sim/commands';
+import {
+  advance, buyBuilder, builderGemCost, enqueueBuild, grantBuilder, upgradeDistrict,
+} from '../src/sim/commands';
 import { DISTRICTS, KINGDOM_DEF } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import { advanceQueue } from '../src/sim/queue';
@@ -79,13 +84,64 @@ describe('the builder count', () => {
   });
 });
 
-describe('the queue follows the builders', () => {
+describe('buying a builder', () => {
+  const gems = (state: GameState) => state.player.wallet.Gems ?? 0;
+
+  it('prices the Nth builder on the same curve as every other slot', () => {
+    const state = freshGame();
+    // round(30 x 2.5^purchased), purchased = builders - startBuilders.
+    expect(builderGemCost(state)).toBe(30);
+    grantBuilder(state);
+    expect(builderGemCost(state)).toBe(75);
+    grantBuilder(state);
+    expect(builderGemCost(state)).toBe(188);
+  });
+
+  it('takes the Gems and hands over the builder', () => {
+    const state = freshGame();
+    state.player.wallet.Gems = 100;
+    const price = builderGemCost(state);
+    expect(buyBuilder(state)).toBe('Purchased');
+    expect(state.kingdom.builders).toBe(2);
+    expect(gems(state)).toBe(100 - price);
+  });
+
+  it('refuses without charging when the player is short', () => {
+    const state = freshGame();
+    state.player.wallet.Gems = builderGemCost(state) - 1;
+    const before = gems(state);
+    expect(buyBuilder(state)).toBe('NotEnoughGems');
+    expect(state.kingdom.builders).toBe(1);
+    expect(gems(state)).toBe(before);
+  });
+
+  it('refuses without charging at the ceiling', () => {
+    const state = freshGame();
+    state.kingdom.builders = KINGDOM_DEF.maxBuilders;
+    state.player.wallet.Gems = 10_000;
+    expect(buyBuilder(state)).toBe('AtMax');
+    expect(gems(state)).toBe(10_000);
+  });
+
+  // The purchase is what the player buys; the grant is what a quest or an
+  // event gives. Keeping them apart is what lets a gift exist without
+  // teaching the price curve anything — but a gift DOES make the next
+  // purchase dearer, which is the deliberate trade for deriving `purchased`
+  // instead of storing it.
+  it('lets a granted builder raise the price of the next bought one', () => {
+    const state = freshGame();
+    grantBuilder(state);
+    expect(builderGemCost(state)).toBe(75);
+  });
+});
+
+describe('the jobs in flight follow the builders', () => {
   it('refuses a second job with one builder', () => {
     const state = openGround(freshGame());
     fundCity(state);
     const [a, b] = legalCells(state, 2);
     expect(enqueueBuild(state, map, 'Housing', a)).toBe('Started');
-    expect(enqueueBuild(state, map, 'Housing', b)).toBe('QueueFull');
+    expect(enqueueBuild(state, map, 'Housing', b)).toBe('NoBuilderFree');
   });
 
   it('accepts a second job with two builders — the bug this pass fixes', () => {
@@ -95,7 +151,7 @@ describe('the queue follows the builders', () => {
     const [a, b, c] = legalCells(state, 3);
     expect(enqueueBuild(state, map, 'Housing', a)).toBe('Started');
     expect(enqueueBuild(state, map, 'Housing', b)).toBe('Started');
-    expect(enqueueBuild(state, map, 'Housing', c)).toBe('QueueFull');
+    expect(enqueueBuild(state, map, 'Housing', c)).toBe('NoBuilderFree');
   });
 
   // Upgrades share the queue with builds, and shared a gate that read the
@@ -136,9 +192,14 @@ describe('the queue follows the builders', () => {
   });
 });
 
-// The engine below the gate was always right; it just had no caller that
-// could exercise it. This is the promotion path, tested directly.
-describe('advanceQueue promotion', () => {
+// UNREACHABLE THROUGH PLAY, AND DELIBERATELY SO. With no waiting line the
+// queue is never longer than its slots, so `advanceQueue`'s promotion branch
+// never fires in a real game. It is kept because it is the correct behaviour
+// for a queue that IS longer than its slots, and "no waiting line" is a design
+// choice rather than a law of the engine — so it is tested here directly,
+// against its own contract, instead of being asserted through a game state
+// that cannot produce it.
+describe('advanceQueue promotion (engine contract, not a reachable state)', () => {
   const item = (uniqueId: string, durationSeconds: number, startedAt: number | null): QueueItem => ({
     uniqueId, kind: 'build', districtUniqueId: uniqueId, targetLevel: 1,
     durationSeconds, startedAt,

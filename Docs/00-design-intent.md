@@ -222,7 +222,7 @@ Ordered by how soon a player meets them.
 | 6 | **Adjacency is still one rule** (Housing↔Housing −1) — and five more districts now compete for the same ground, so spatial play got thinner in relative terms. | `balancing-v2.md` future work |
 | 7 | **The ghost is not draggable.** `wireInput` has no drag hooks; placement is still tap-only. | `art/ui-menus-redesign.md` §5.6 |
 | 8 | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | `audio-wishlist.md` |
-| 9 | ~~Smaller: … `kingdom.max_builders` is authored 4 and still unreachable past 1.~~ **DONE 2026-09-02.** The dial is live: the queue capacity follows the builder count, `grantBuilder()` raises it to the authored ceiling, and `tests/builders.test.ts` holds both. It was never "smaller" — a second builder is the best-documented conversion surface in the comparable set. | `balancing-v3.md` §5 |
+| 9 | ~~Smaller: … `kingdom.max_builders` is authored 4 and still unreachable past 1.~~ **DONE 2026-09-02.** The dial is live and priced: jobs in flight follow the builder count, a refused build raises a Gem offer instead of a toast, and `tests/builders.test.ts` holds it. It was never "smaller" — a second builder is the best-documented conversion surface in the comparable set. | `builders.md` |
 | 9a | Still open, and genuinely smaller: the `?dev=kit` gallery does not show the new primitives. | — |
 | 9b | `balancing-v1`'s income tables are annotated as corrected but were never recomputed. Checked against the workbook in `balancing-v3.md` §4 and they are **right**; the annotation is what needs removing. | `balancing-v1.md` |
 

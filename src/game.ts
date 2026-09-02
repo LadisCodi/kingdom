@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, collectTap,
+  advance, builderGemCost, buyBuilder, canAfford, cancelQueueItem, changeWorkers, collectTap,
   enqueueBuild, finishWithGems, moveDistrict, townhallTap, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
@@ -67,7 +67,7 @@ import {
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { QUESTS, type QuestDef } from './sim/data/definitions';
+import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { Villagers } from './render/villagers';
@@ -93,7 +93,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer';
+  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -858,8 +858,50 @@ export class Game {
       this.mode = { kind: 'normal' };
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      this.offerBuilder();
     } else {
-      this.toast(result === 'QueueFull' ? 'Build queue is full' : result);
+      this.toast(result);
+    }
+    this.notify();
+  }
+
+  /**
+   * Every builder is busy. Offer one more for Gems.
+   *
+   * The popup is raised from the REFUSAL rather than from a store tab,
+   * because that is the only moment the player has already decided they want
+   * the thing — `Docs/features/builders.md`. It opens at the ceiling too: the
+   * sheet then explains why there is nothing to buy, which is a better answer
+   * than a toast the player has to read in the corner of their eye.
+   *
+   * Placement mode is deliberately LEFT OPEN behind it. Dismissing the offer
+   * puts the player back on the ghost they had positioned, so declining costs
+   * them nothing they had already done.
+   */
+  offerBuilder(): void {
+    playSfx('error');
+    this.setOverlay('builder');
+  }
+
+  builderOffer(): { builders: number; ceiling: number; cost: number; affordable: boolean } {
+    const cost = builderGemCost(this.state);
+    return {
+      builders: builderCount(this.state),
+      ceiling: KINGDOM_DEF.maxBuilders,
+      cost,
+      affordable: this.walletValue('Gems') >= cost,
+    };
+  }
+
+  doBuyBuilder(): void {
+    const result = buyBuilder(this.state);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      this.setOverlay(null);
+      this.toast('A builder joins your kingdom');
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
     }
     this.notify();
   }
@@ -897,6 +939,10 @@ export class Game {
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
       this.shake(Object.keys(DISTRICTS[d.definitionId].upgradeCost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      // An upgrade occupies a builder exactly as a build does, so it hits the
+      // same wall and deserves the same offer rather than a bare refusal.
+      this.offerBuilder();
     } else if (result !== 'Started') {
       this.toast(result);
     }
