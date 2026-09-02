@@ -1,0 +1,59 @@
+/* The placement bar (§5.6). Slim on purpose: the map is the screen here. */
+
+/* The bottom panel becomes parchment when a migrated screen is in it. */
+#panel:has(.plc-bar) {
+  padding: 0;
+  background: none;
+  border: none;
+  max-height: none;
+  overflow: visible;
+}
+
+.plc-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  background: var(--parchment);
+  border-top: var(--outline) solid var(--wood-dark);
+  box-shadow: 0 -4px 14px rgba(60, 36, 18, 0.35);
+}
+
+.plc-art { flex: none; width: 44px; height: 44px; display: grid; place-items: center; }
+.plc-art img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+
+.plc-body { flex: 1; min-width: 0; }
+.plc-name { font-family: var(--font-display); font-size: 15px; font-weight: 400; }
+
+/* The actual decision, in words. */
+.plc-verdict { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-muted); }
+.plc-verdict.is-good { color: var(--leaf-dark); font-weight: 700; }
+.plc-verdict.is-bad { color: var(--clay); }
+
+/* The cost moved into the Build button (§6.4); the wait stays out here. */
+.plc-time {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  font-family: var(--font-body);
+  color: var(--ink-muted);
+}
+
+.plc-actions { display: flex; align-items: center; gap: 8px; }
+.plc-actions .k-btn { min-height: 46px; padding: 10px 16px; }
+/* The reason a blocked Build gives sits under the bar, not beside it —
+ * there is no room on one line at phone width. */
+.plc-actions .k-btn:disabled { font-size: var(--text-helper); }
+
+.plc-reason {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  color: var(--clay);
+  font-weight: 700;
+}

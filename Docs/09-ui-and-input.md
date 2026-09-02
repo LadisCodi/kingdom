@@ -1,5 +1,11 @@
 # 09 — UI & Input
 
+> **FROZEN — Unity as-built snapshot, 2026-08-17.** This file documents the
+> *Unity* prototype (hex grid, Silver, generator vaults), not the web build. It is
+> kept for provenance and for the formulas the port still uses. Where it disagrees
+> with [`00-design-intent.md`](00-design-intent.md) or with `Docs/features/`, those
+> win. Do not implement from this file without checking there first.
+
 This documents the screens' *behavior and data*, platform-agnostically. (The Unity
 implementation follows a strict MVP pattern — view / presenter / immutable data DTO —
 described at the end for reference.)

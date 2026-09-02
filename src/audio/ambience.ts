@@ -54,7 +54,29 @@ function fadeTo(audio: HTMLAudioElement, target: number): void {
  *  fades the named bed in and every other bed out; null silences all
  *  (music muted). Playback attempts are retried until a user gesture has
  *  unlocked audio, then become no-ops. */
+// A DEVICE preference of its own. Ambience used to be silenced by the MUSIC
+// toggle (main.ts passed null when musicMuted()), which meant there was no
+// way to keep the harp and drop the wind, or the reverse.
+const MUTE_KEY = 'kingdom.ambienceMuted';
+
+export const ambienceMuted = (): boolean => {
+  try {
+    return localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+export function setAmbienceMuted(muted: boolean): void {
+  try {
+    if (muted) localStorage.setItem(MUTE_KEY, '1');
+    else localStorage.removeItem(MUTE_KEY);
+  } catch { /* storage blocked — the toggle just won't persist */ }
+  if (muted) syncAmbience(null);
+}
+
 export function syncAmbience(name: AmbienceName | null): void {
+  if (ambienceMuted()) name = null;
   try {
     for (const [key, audio] of players) {
       if (key !== name && !audio.paused) fadeTo(audio, 0);

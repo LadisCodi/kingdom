@@ -1,191 +1,222 @@
-# Kingdom — Design Overview
+# Kingdom — Design Intent
 
-> A design-level guide to the Kingdom prototype. Describes what the game *is* and how it
-> *plays* — the fantasy, the loops, and the systems from the player's point of view.
-> No code, no architecture.
+> What the game *is* and how it *plays* — the fantasy, the loops, and the systems
+> from the player's point of view. No code, no architecture.
+>
+> **Scope note.** This document describes the **web build** and the design pass of
+> 2026-09-02. Files `01`–`11` in this folder are a frozen **Unity as-built
+> snapshot** from 2026-08-17 and describe a different, earlier game (hex grid,
+> Silver, generator vaults, spells). Where they disagree with this document or
+> with `Docs/features/`, they are history, not spec.
 
 ## The pitch
 
-Kingdom is a cozy **city-builder / idle-management** game set on a fog-shrouded fantasy
-hex map. You are a wizard-monarch growing a city from a single Townhall outward: you peel
-back the fog to discover land, claim and build on hex tiles, grow a population that works
-your districts, harvest resources that accrue over time (even while away), and use magic to
-shape and squeeze the land. Costs scale with distance and ambition, so play rewards
-thoughtful spatial and economic planning.
+Kingdom is a cozy **city-builder / idle-management** game on a fog-shrouded
+fantasy map. You are a wizard-monarch growing a city outward from a single
+Townhall: you buy back the map from the fog, build districts whose workers walk
+out and harvest for you, grow a population that pays taxes, and recover the lost
+magic buried in the ruins out there.
 
-The starter city is **Oakville**, in the starter region **Region_01**. Working title seen
-in mockups: "mini civ".
+Costs scale with distance and ambition, so play rewards thoughtful spatial and
+economic planning. The starter city is **Oakville**, in **Region_01**.
 
----
+**It is played in visits, not sittings.** Roughly half an hour a day across two
+or three check-ins. Every system below is shaped by that budget.
+
+## The three promises
+
+1. **Nothing you own is ever taken from you.** No raids, no decay, no
+   starvation, no failure state. Pressure comes from *opportunity that expires* —
+   a Mana pool that overflows, an event window that closes, a haul you chose to
+   risk — never from loss of property.
+2. **The best-managed economy wins.** Combat is a sink for the economy, not a
+   test of reflexes. A well-prepared expedition never fails.
+3. **Wallets buy comfort and breadth; play buys everything else.** Nothing is
+   purchase-only that cannot also be earned.
 
 ## The core loop
 
-1. **Reveal** — spend Silver to tap away the Fog of War, expanding your usable land outward
-   from the Townhall. The farther from home, the more each tile costs.
-2. **Build** — place districts on suitable revealed hexes (Housing near the core, Farms on
-   grassland, Lumber next to trees). Building costs resources up front and takes time.
-3. **Grow** — spend Food to buy population; population is your workforce and your tax base.
-4. **Staff** — assign population as workers to districts to drive their output.
-5. **Harvest** — resources fill each district's vault passively; tap to collect, or let it
-   bank while you're away.
-6. **Reinvest** — upgrade districts and the Townhall. The Townhall's level is the master
-   gate: raising it lifts caps and unlocks more and bigger districts.
-7. **Push control** — advance the region toward domination (long-term goal).
+1. **Reveal** — spend Gold, one tap at a time, to peel back the fog. Cost scales
+   steeply with distance from the Townhall, so exploration is a deliberate,
+   financed campaign. **The frontier stays connected**: you can only pay for a
+   cell that touches ground you have already cleared. A building's discover
+   radius reaches further than its reveal radius, so you can *see* further than
+   you can buy — and without the rule, exploring became a shopping list of
+   whichever distant tile looked interesting, which also let the player skip
+   the distance cost curve entirely by jumping to the cheap side of the map.
+2. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**, so
+   Mana is the energy behind hand-acceleration; cells still exhaust after a
+   number of taps and recover on a timer.
+3. **Build** — place districts on revealed land. Costs are charged up front;
+   construction takes time and runs while you are away.
+4. **Grow** — train villagers at the Townhall. Housed villagers pay taxes, which
+   is the idle backbone of the economy.
+5. **Staff** — assign workers to districts. Workers are units that walk to cells
+   within their building's area of influence, harvest, and carry back.
+6. **Reinvest** — upgrade districts, research technologies, buy upgrades.
+7. **Delve** — send a hero and a party into the ruins you have uncovered.
+8. **Empower** — attune the artifacts they bring back, and spend Mana on the
+   magic that makes the next loop cheaper.
 
-Woven around this: a **premium currency**
-(Gems) that skips waiting.
+## The map, and why the fog is the point
 
----
+Every cell has a terrain and optionally a feature, and can hold one district.
+Cells are **Undiscovered**, **Discovered** (payable frontier) or **Revealed**.
 
-## The map
+Paid fog is the mechanic the game is built around, so it has to pay back three
+different ways:
 
-- **Hex grid.** Every cell has a **terrain** and optionally a **terrain feature**, and can
-  hold one **district**.
-- **Terrains:** Grassland, Plains, Desert, Snow, Tundra, Water (Tropical art also exists).
-- **Features:** Trees (harvestable) and TreesCut (a forest that's been felled).
-- **Tile markers** communicate affordances at a glance: what's selected, which tiles a
-  district is actively working, valid build/expand spots (with the projected yield shown as
-  a label).
+| Found in the fog | Gives |
+|---|---|
+| **Resources** — forest, berries, game, rocks, shoals, iron | The raw materials |
+| **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
+| **Ruins** | Dungeons to delve — artifacts, Fragments, Knowledge |
 
-### Fog of War — buying back the map
+Landmarks are what make exploration *compound*: a bigger Mana pool is a bigger
+session AND a bigger ad — the reward refills a whole pool — so every shrine
+claimed makes every future refill permanently larger, and the next stretch of
+fog cheaper to clear.
+Ruins are what stop the fog from being a treadmill — a non-repeating reward at
+the end of an exponential cost curve.
 
-The world starts dark. Cells are **Undiscovered** (opaque, can't be interacted with),
-**Discovered** (dimmed, tappable to reveal — shows a small progress bar), or **Revealed**
-(fully in play). You spend **Silver, one tap at a time**, to reveal a Discovered cell; cost
-**scales with distance from the Townhall**. Your Townhall and its immediate neighbors start
-pre-revealed. Exploration is therefore a deliberate, paid expansion outward — not a free
-reveal.
+## The economy
 
----
+**City-local:** Gold (build, upgrade, reveal), Food (train villagers, supply
+expeditions), Wood, Stone, Iron, and the food-valued goods Berries, Meat and
+Fish. **Mana** is city-local too, and the only currency in the game with a cap.
 
-## The economy — currencies
+**Kingdom-wide:** Knowledge — the levelling currency for artifacts and heroes.
+Kingdom scope is deliberate: it survives a region reset, so it still works when
+Regions become the content treadmill.
 
-Resources are grouped by who owns them:
+**Player:** Gems. They buy comfort — rushing a timer, refilling Mana — and
+breadth: attunement slots, party slots, gacha pulls.
 
-**City-local** (each city has its own wallet):
-- **Food** — the growth currency. Spend it to buy population. Produced by Farms. Cost of
-  each new population point rises steeply.
-- **Silver** — the main build/economy currency. Earned by the Townhall taxing your whole
-  population. Pays for buildings, upgrades, and revealing fog.
-- **Wood** — construction material from Lumber camps; a secondary build cost.
+The everyday flow: **housing taxes → Gold → fog and buildings**; **harvest →
+materials → buildings**; **Mana → magic**; **delves → artifacts and Knowledge →
+a stronger economy**.
 
-**Kingdom-wide** (shared across the realm):
-- **Gold** — kingdom-level currency.
-- **Knowledge** — reserved for a future research tree (unlock kingdom improvements and new
-  future systems). Not yet spent anywhere.
+## Mana, and why it is capped
 
-**Player / premium:**
-- **Gems** — hard currency. Its main use is to **finish a build or upgrade instantly**,
-  priced by the time remaining.
+**Mana is the game's energy.** Every tap that hurries a generator along — a
+house's rent, a forest, a rock — costs 1 Mana, so the pool is what bounds
+hand-play. Paying fog is the exception: a reveal already costs Gold.
 
-The everyday flow: Farms → **Food** → buy **population**; population works districts and is
-taxed into **Silver**; Lumber → **Wood**; Silver + Wood → **build & upgrade**; Silver also →
-**reveal fog**; Gems → **skip timers**.
+It refills to a ceiling whether you are playing or not, and a new kingdom
+starts full (50). Since the pool became a **spend** budget rather than an
+absence budget, it deliberately no longer refills inside one absence — that
+gap is what a refill is worth buying for. A player who checks in two or three
+times a day spends more of it than one who checks in once; nobody loses
+anything they own, because unspent Mana is never taken, only capped.
 
----
+Attuned artifacts draw an hourly **upkeep** against production, so what you can
+wear is gated by the Mana economy you have built rather than by a paywall. Net
+production floors at zero: you can stall, never go bankrupt.
 
-## Cities, population & workers
+Full design: [`features/magic.md`](features/magic.md).
 
-A **city** is your settlement: a Townhall plus a growing cluster of districts, with its own
-Food/Silver/Wood wallet and its own build queue.
+## Artifacts
 
-- **Population is both the workforce and the throttle.** Your max population is the sum of
-  the housing your districts provide (Townhall + Housing). You buy population with Food, and
-  each new point costs more than the last.
-- **Workers come from a shared city pool.** Free workers can be assigned to worker districts
-  (Farm, Lumber). More population also means more Silver tax income automatically.
-- The UI shows free workers and warns when a built district has capacity but no one staffing
-  it (so it's sitting idle).
-- **Production runs continuously**, including offline — resources accrue in real time and
-  bank in district vaults until collected.
+Relics won from ruins. Each grants a **passive** while attuned to the kingdom and
+usually one **active** ability cast on the map. You start with a single
+attunement slot; a second comes from research and the rest cost Gems.
 
----
+An artifact is either attuned to the kingdom, or carried by a hero into a delve
+— never both. That exclusivity is the decision the whole design turns on.
 
-## Districts — the buildable unit
+## Expeditions
 
-A **district is one hex tile** — it's what the player places, staffs, upgrades, and collects
-from. There's no separate "building"; the district *is* the building. A district can be
-**Built** (active, producing), **Under Construction** (occupies the tile, produces nothing
-yet), or a **Preview** ghost while you're choosing where to place it.
+A ruin is a repeatable dungeon. Send **one hero** — mandatory — plus units, pay
+supplies, and the party clears one **depth** at a time. At every checkpoint it
+asks a single question: **go deeper, or come back with what you're carrying?**
+Failing costs half the haul and ends the run; the haul was never yours until you
+extracted it.
 
-| District  | Role | Placement rule |
-|-----------|------|----------------|
-| **Townhall** | Heart of the city. Provides housing, **taxes population into Silver**, and its **level gates how many of each district you can own** and how high each can level. | The city origin. |
-| **Housing** | Provides homes — raises max population. No workers. | Must be adjacent to the Townhall or other Housing, so the core grows as a connected blob. |
-| **Farm** | Produces Food. Works adjacent FarmLands for bonus Food. | On empty Grassland. |
-| **FarmLands** | Passive expansion tile: produces nothing alone; a neighbouring Farm works it to unlock extra worker slots and Food. Cheap and fast. | Adjacent to a Farm. |
-| **Lumber** | Produces Wood. Works nearby Trees for bonus Wood. | On an empty cell next to revealed Trees. |
+Combat is a scoring pass, not a simulation: units have ATK/DEF/HP, each dungeon
+has a threat type, and a matchup chart rewards composition. There is no battle
+screen. Party HP does not recover between depths, so danger rises visibly the
+deeper you go.
 
-**Worker model:** for a worker district, one worker runs the building's base output; each
-additional worker works one adjacent resource tile. You can't staff more workers than there
-are tiles to work.
+Full design: [`features/expeditions.md`](features/expeditions.md).
 
-**Design levers** that shape play: population capacity and worker slots per level; how many
-of each district a Townhall level allows; per-worked-tile yield; vault capacity; and
-**build/upgrade times that grow exponentially with distance from the Townhall and with how
-many you've already built** — so spamming one district type or sprawling far from home gets
-expensive fast.
+## Progression, in one line
 
-Each district has a **vault** that fills to a cap. Collecting is a **clicker-style tap**:
-one tap banks one unit of each stored resource. The cap limits how much you bank while away,
-nudging return visits.
+Three arcs run at different speeds. The **Townhall level** gates the city — how
+many of each district you can own and how high each can level. **Military
+buildings** gate the army, and therefore how deep you can delve. **Knowledge and
+Fragments** gate artifacts and heroes, and that arc is measured in weeks.
 
----
+## What is built
 
-## Construction & the build queue
+Nearly all of it, as of 2026-09-02, in the order `engine-seams.md` §8
+prescribes: the
+boundary loop, the save migration chain, seeded RNG, the modifier layer, Mana
+and the Sanctum, landmarks, ruins, artifacts and attunement, military buildings
+and unit stats, delves and checkpoints, the timeline and the Conjunction, the
+gacha, and the region discriminator.
 
-- Building charges the cost **up front**; the district then sits **under construction**
-  (occupying its tile, producing nothing) until its timer completes.
-- Each city has **one shared build queue** for both new builds and upgrades. Its capacity is
-  small at the start — a classic soft gate.
-- **Builders** are the concurrency limit: they set how many queued items can progress at
-  once; the rest wait their turn.
-- **Timers run offline** — coming back catches everything up in order.
-- **Rush with Gems** finishes an item immediately (same result as the timer completing).
-- Queued items can be **cancelled**.
+The load-bearing assertion is repeated at every step and holds at all of them:
+**one-call offline replay equals stepped ticking** — across a research
+completion, a modifier expiry, a Mana cap fill, a delve depth resolving, and a
+Conjunction window opening and closing.
 
----
+The quest chain now runs eleven quests past Townhall 3, through landmarks, the
+Sanctum, an army and the ruins, so the three-hour content cliff the 2026-09-01
+audit found is gone.
 
-## Regions, kingdom & the long game
+One design centrepiece did **not** make it — the contested landmark — and it is
+the first entry in the backlog below rather than being buried in it.
 
-- A **Region** is a self-contained playable area hosting one city. Its long-term goal is
-  **domination** — raising a "control" meter to 100%.
-- **Claiming** expands your footprint toward domination through a chain of objectives:
-  pay a cost, complete a prerequisite objective, or clear a point with your army (combat).
-  *This quest-chain / claim / army system is designed but still largely a future feature.*
-- A **Kingdom** is the top-level meta-entity that owns your regions and produces kingdom-wide
-  currency over time. There's a single player kingdom.
+**Attune-or-arm landed on 2026-09-02**, after the rest of the pass. An artifact
+is now attuned to the kingdom *or* carried by a hero into a delve, never both,
+and both directions refuse: a launch will not take a relic the kingdom is
+wearing, and the Reliquary will not take back one that is underground. Relics
+gained a `carried` stat block to have something to be on the "arm" side of the
+rule. Measured in the Drowned Ironworks, the Foreman's Sigil takes a party from
+safe-to-depth-2 to safe-to-depth-7 — the trade the design named, now real.
 
----
+The art landed with it: ten sheets covering the Sanctum, the four military
+halls, ten landmarks, five ruins, five relics and five heroes. Nothing in the
+game falls back to an emoji unintentionally, and `tests/icons.test.ts` refuses
+to let that quietly stop being true.
 
-## Screens the player sees
+## What is still open
 
-- **Header** — top resource bar: currencies plus Gems (with a buy button),
-  Population, Builders, and Free Workers.
-- **Nav bar** — bottom navigation, grouped into Build, Army and Research.
-- **Build menu** — full-screen scroll list, one row per buildable district type.
-- **Place district** — bottom panel during placement, with a ghost preview and highlighted
-  valid cells on the map, ending in a Build button.
-- **Tile / district card** — info + stats + upgrade for a built district, with Buy Population
-  (Housing), worker +/- (worker districts), Upgrade, and Finish-now (pay Gems).
-- **Research** — placeholder for a future research screen.
+**This section is the canonical backlog.** The per-feature docs mark their own
+steps done and point here rather than each keeping a partial list.
 
----
+### Gaps in what shipped
 
-## Progression gating, in one line
+Ordered by how soon a player meets them.
 
-Almost everything funnels through the **Townhall level**: it caps how many of each district
-you can build and how high each can level. Upgrading the Townhall is the main gate that opens
-up the rest of the game. Farther-reaching progression — Knowledge-based **research**, the POI
-**quest chain**, and **army combat** for claiming — is planned but not yet built.
+| # | Gap | Where |
+|---|---|---|
+| 1 | **Four of ten landmarks cannot be claimed.** `defended: true` is authored and claiming is gated on `landmarks.cleared`, but nothing in the codebase ever writes that field — the "send a party to clear it" encounter does not exist. A visible dead end, and the only thing giving combat a job outside dungeons. | `expeditions.md` §1 |
+| 2 | **Hero XP is written and never read.** Every extraction calls `addHeroXp`; nothing consumes it. Exactly the `train_duration_seconds` fault this pass removed, reintroduced. | `heroes-and-gacha.md` §1 |
+| 3 | **The Gem faucet is ~50% over budget** — 110 up front against the 75 the design sets, because the eleven new quests were given Gem rewards without re-deriving the total. | `balancing-v2.md` §1.3 |
+| 4 | **No gacha banner is authored.** The timeline carries a `banner` payload and `activeBanners()` exists, but `EVENTS` holds only the Conjunction, so rate-up is untested code. | `heroes-and-gacha.md` §4 |
+| 5 | **Timed-event rewards vs the 8h cap was decided rather than flagged.** Schedule events fire in the post-cap tail advance, so a 20h absence spanning a 24h Conjunction pays in full. `engine-seams.md` §5 explicitly asked for a marker at the call site instead of a policy. | `engine-seams.md` §5 |
+| 6 | **Adjacency is still one rule** (Housing↔Housing −1) — and five more districts now compete for the same ground, so spatial play got thinner in relative terms. | `balancing-v2.md` future work |
+| 7 | **The ghost is not draggable.** `wireInput` has no drag hooks; placement is still tap-only. | `art/ui-menus-redesign.md` §5.6 |
+| 8 | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | `audio-wishlist.md` |
+| 9 | Smaller: the `?dev=kit` gallery does not show the new primitives; `balancing-v1`'s income tables are annotated as corrected but not recomputed; `kingdom.max_builders` is authored 4 and still unreachable past 1. | — |
 
----
+### Decisions still to make
 
-## Status notes (for reference)
+- **How a defended landmark is cleared.** The sim can resolve it through the
+  same scoring pass a delve depth uses, so the cost is a UI decision: the full
+  expedition sheet with a hero and a party, or a lighter one-off that spends
+  army power and nothing else.
+- **Whether the 8h cap should limit timed-event rewards** (gap 5 above). The
+  rule the rest of the sim follows — *the cap limits what the city produces,
+  never what a timer does* — argues for the current behaviour, but an event
+  window is not obviously a timer.
+- **The 50% haul loss.** `expeditions.md` names this the number that most needs
+  playtest rather than argument.
+- **Ten progression systems.** `heroes-and-gacha.md` flags this as the standing
+  accepted risk. It is now real rather than hypothetical, and the single
+  collection substrate is the only thing keeping the list learnable.
 
-Systems that are intentionally forward-looking / not fully implemented yet:
-- **Research** (Knowledge spending, research screen) — placeholder.
-- **Region claim** — POI quest chain, cost/prerequisite/clear objectives, and **army combat**.
-- **Townhall upgrade** flow and **city↔region binding** — partially stubbed.
-- The legacy `Buildings` folder (e.g. GoldMine) is superseded by generators living on
-  Districts.
+### Not started at all
+
+Region control and domination, guild and social play, and a second region.

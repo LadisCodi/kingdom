@@ -47,8 +47,16 @@ describe('tech-gated upgrades', () => {
 });
 
 describe('per-level housing capacity', () => {
-  it('a level-2 house holds 4 villagers', () => {
+  // One house holds TWO (Docs/onboarding.md step 13): the tutorial trains a
+  // second villager before it asks for a second house, so the first house has
+  // to have somewhere to put them. The Townhall houses nobody — a roof is
+  // what permits a villager, which is onboarding steps 4-6 in order.
+  it('a level-2 house holds twice what a level-1 one does', () => {
     const state = freshGame();
+    const th = districtById(state, townhall(state).uniqueId)!;
+    expect(districtCapacity(state, th)).toBe(0);
+    expect(maxPopulation(state)).toBe(0); // nowhere to live until you build
+
     addBuilt(state, 'Housing', HOUSE);
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
     expect(districtCapacity(state, house)).toBe(2);
@@ -56,16 +64,17 @@ describe('per-level housing capacity', () => {
     house.level = 2;
     expect(districtCapacity(state, house)).toBe(4);
     expect(maxPopulation(state)).toBe(4);
-    expect(districtCapacity(state, districtById(state, townhall(state).uniqueId)!)).toBe(0);
   });
 
-  it('Communities adds +1 to every house (and only to houses)', () => {
+  // "+1 to every district that houses anyone" — the Townhall houses nobody,
+  // so it gets nothing.
+  it('Communities adds +1 to every district that houses anyone', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', HOUSE);
     addBuilt(state, 'Housing', { x: 0, y: -1 });
     expect(maxPopulation(state)).toBe(4);
     completeTech(state, 'Communities');
-    expect(maxPopulation(state)).toBe(6); // +1 per house
+    expect(maxPopulation(state)).toBe(6); // +1 per house, and only per house
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
     expect(districtCapacity(state, house)).toBe(3);
     expect(districtCapacity(state, districtById(state, townhall(state).uniqueId)!)).toBe(0);

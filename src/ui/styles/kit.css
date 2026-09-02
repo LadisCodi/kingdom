@@ -1,0 +1,404 @@
+/* The UI kit: parchment and carved wood, built entirely from geometry.
+ *
+ * Docs/art/ui-menus-redesign.md §3.2/§3.3 specify these shapes numerically
+ * ("3px outline + 8px frame + 2px bevels + 10px radius", "3px lip, pressed
+ * drops 3px"), so CSS reproduces them exactly — recolourable per variant,
+ * crisp at any DPR, and with no art to wait for. Only ICONS need the atlas,
+ * and they fall back to emoji until it exists.
+ *
+ * Everything is `k-` prefixed. Old and new coexist by namespace, not by
+ * scope, so a migrated screen and a legacy one render correctly side by
+ * side while style.css shrinks. */
+
+/* --font-body is on <body> now (src/style.css); these stay so a kit surface
+ * is still correct if dropped anywhere. */
+.k-panel,
+.k-card,
+.gal { font-family: var(--font-body); }
+/* Titles: a sheet's plank and a card's name are the two places the display
+ * face earns its keep in the kit. */
+.k-plank,
+.k-card .k-name { font-family: var(--font-display); }
+/* Numbers. These used to share the rule above, back when one pixel face did
+ * both jobs — which is exactly what made it have to be legible at 13px. */
+.k-chip,
+.k-cost,
+.k-stat .k-stat-value,
+.k-trough .k-trough-label { font-family: var(--font-body); font-weight: 700; }
+
+/* ---------------------------------------------------------------- surfaces */
+
+/* Parchment panel inside a carved wooden frame. The frame is a transparent
+ * border with a second background layer painted under it (padding-box vs
+ * border-box) — unlike border-image this keeps border-radius, which §3.2
+ * mandates at 10px. */
+.k-panel {
+  color: var(--ink);
+  border: 8px solid transparent;
+  border-radius: var(--radius);
+  padding: 14px;
+  background:
+    linear-gradient(var(--parchment), var(--parchment)) padding-box,
+    linear-gradient(var(--wood), var(--wood)) border-box;
+  box-shadow:
+    0 0 0 var(--outline) var(--wood-dark),
+    inset 2px 2px 0 var(--wood-light),
+    inset -2px -2px 0 var(--wood-dark),
+    0 6px 0 rgba(60, 36, 18, 0.3),
+    0 12px 26px rgba(60, 36, 18, 0.26);
+}
+
+/* Wooden header plank, bleeding to the frame's inner edge. */
+.k-plank {
+  margin: -14px -14px 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--wood);
+  border-bottom: var(--outline) solid var(--wood-dark);
+  border-radius: 4px 4px 0 0;
+  box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 var(--wood-dark);
+  color: var(--parchment);
+  font-size: var(--text-title);
+  font-weight: 700;
+}
+
+/* Rope grab handle on a sheet. */
+.k-grab {
+  width: 56px;
+  height: 6px;
+  margin: -6px auto 10px;
+  border-radius: 3px;
+  background: var(--wood-dark);
+  opacity: 0.65;
+}
+
+/* A list row / tile. The left slot always holds art, never a bare glyph. */
+.k-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 88px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
+  text-align: left;
+}
+.k-card.is-locked { background: var(--locked); }
+.k-card > .k-slot {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: 6px;
+}
+.k-card > .k-body { flex: 1; min-width: 0; }
+/* 400, not 700: the title face has one weight and would fake the bold. */
+.k-card .k-name { font-weight: 400; }
+.k-card .k-desc { font-size: var(--text-helper); color: var(--ink-muted); }
+
+.k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+/* Warm, 35% — the kingdom stays legible behind an open sheet (§3.2). */
+.k-scrim { position: absolute; inset: 0; background: var(--scrim); }
+
+/* ----------------------------------------------------------------- buttons */
+
+/* A pressable slab sitting on a darker lip; pressing drops it onto the lip. */
+.k-btn {
+  --slab: var(--wood);
+  --slab-lip: var(--wood-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 12px 20px;
+  margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--ink-inverse);
+  background: var(--slab);
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: var(--radius);
+  box-shadow: 0 var(--lip) 0 0 var(--slab-lip);
+  cursor: pointer;
+  transform: translateY(0);
+  /* steps(1), not an ease: a pixel-art slab snaps, it doesn't glide. */
+  transition: transform var(--motion-snap) steps(1), box-shadow var(--motion-snap) steps(1);
+}
+.k-btn:hover { filter: brightness(1.07); }
+.k-btn:active { transform: translateY(var(--lip)); box-shadow: 0 0 0 0 var(--slab-lip); }
+
+.k-btn--primary { --slab: var(--leaf); --slab-lip: var(--leaf-dark); }
+.k-btn--secondary { --slab: var(--wood); --slab-lip: var(--wood-dark); }
+.k-btn--destructive { --slab: var(--clay); --slab-lip: #8e3323; }
+.k-btn--gem { --slab: linear-gradient(160deg, var(--sky), #7a5bc7); --slab-lip: #3c2c73; }
+
+/* §6.4 — a price belongs INSIDE the button that spends it. The label rides on
+ * top, the cost sits under it, and the whole thing is one press-target that
+ * reads in a single glance instead of a caption the eye has to pair up. */
+.k-btn-label { display: inline-flex; align-items: center; gap: 8px; }
+.k-btn.has-cost {
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 18px;
+}
+.k-btn-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.k-cost { display: inline-flex; align-items: center; gap: 4px; }
+/* The red IS the reason the button is dead, so it has to survive the disabled
+ * fill — which is a warm tan, not a grey, and would swallow a subtler red. */
+.k-cost.is-short { color: var(--clay); }
+.k-btn:disabled .k-cost.is-short { color: #a8321c; }
+.k-btn:disabled .k-cost.is-short .icon { color: #a8321c; }
+
+/* Gated, not greyed: a warm fill, and never without a reason beside it. */
+.k-btn:disabled,
+.k-btn.is-locked {
+  --slab: var(--locked);
+  --slab-lip: #a79470;
+  color: var(--ink-muted);
+  cursor: default;
+}
+.k-btn:disabled:hover { filter: none; }
+.k-btn:disabled:active { transform: none; box-shadow: 0 var(--lip) 0 0 var(--slab-lip); }
+
+/* Round wooden knob — worker steppers, close, zoom. */
+.k-knob {
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+/* An action and the plain-language reason it is unavailable (§6.3). */
+.k-action { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.k-action .k-reason {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+.k-action .k-reason.is-blocked { color: var(--clay); }
+
+/* iOS-style switch, in wood. */
+.k-switch {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  margin-bottom: 0;
+  border-radius: 16px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.25);
+  transition: background var(--motion-snap) steps(1);
+}
+.k-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  transition: transform var(--motion-snap) steps(1);
+}
+.k-switch:active { transform: none; }
+.k-switch.is-on { background: var(--leaf); }
+.k-switch.is-on::after { transform: translateX(24px); }
+
+/* Segmented wooden toggles (the market's x1 / x10 / …). */
+.k-toggles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.k-toggles .k-btn {
+  min-height: 40px;
+  padding: 6px 12px;
+  font-size: var(--text-helper);
+}
+.k-toggles .k-btn.is-selected { --slab: var(--leaf); --slab-lip: var(--leaf-dark); }
+
+/* ------------------------------------------------------------------- stats */
+
+/* icon + number, e.g. a cost. Turns clay when the player is short. */
+.k-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+  border-radius: 999px;
+}
+.k-chip.is-short { color: var(--clay); border-color: var(--clay); }
+.k-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* icon + value + unit, for a rate or a count. */
+.k-stat { display: inline-flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.k-stat .k-stat-value { font-weight: 700; font-size: var(--text-body); }
+.k-stat .k-stat-unit { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* Countable progress, when the total is small enough to see at a glance. */
+.k-pips { display: inline-flex; gap: 4px; }
+.k-pip {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.k-pip.is-on { background: var(--gold); border-color: var(--gold-dark); }
+
+/* A carved trough with a fill — the progress bar. */
+.k-trough {
+  position: relative;
+  height: 18px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(60, 36, 18, 0.25);
+}
+.k-trough .k-fill {
+  height: 100%;
+  width: 0;
+  background: var(--leaf);
+  box-shadow: inset 0 -2px 0 var(--leaf-dark);
+  transition: width 240ms ease-out;
+}
+.k-trough.k-trough--sky .k-fill { background: var(--sky); box-shadow: inset 0 -2px 0 #2f7d9c; }
+.k-trough.k-trough--gold .k-fill { background: var(--gold); box-shadow: inset 0 -2px 0 var(--gold-dark); }
+.k-trough .k-trough-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* A row of unit pips — army strength and the like. */
+.k-meter { display: flex; flex-wrap: wrap; gap: 3px; }
+.k-meter .k-tick {
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--parchment-shade);
+  border: 1px solid var(--wood-dark);
+}
+.k-meter .k-tick.is-on { background: var(--gold); border-color: var(--gold-dark); }
+
+/* ------------------------------------------------------------------- icons */
+
+/* Until the atlas exists this is an emoji in a fixed box, so every call site
+ * can be written against the real API now and upgrade in place later —
+ * exactly the contract src/render/sprites.ts uses for world art. */
+.icon {
+  --icon-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  font-size: calc(var(--icon-size) * 0.9);
+  font-style: normal;
+  line-height: 1;
+  vertical-align: -0.18em;
+  /* Text-glyph fallbacks (+ − ✓ ✕ ?) are painted, not drawn, so they need a
+   * colour of their own — inheriting one is how an icon goes invisible on a
+   * surface nobody tested. Emoji ignore this; the atlas will too. */
+  color: var(--ink);
+}
+/* On a dark or saturated ground, flip it. */
+.k-plank .icon, .k-btn .icon { color: var(--ink-inverse); }
+/* …except a cost the player is short of, which stays clay icon and all. */
+.k-btn .k-cost.is-short .icon { color: var(--clay); }
+.icon--sm { --icon-size: 16px; }
+.icon--lg { --icon-size: 48px; }
+.icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
+
+/* ------------------------------------------------- the ?dev=kit gallery ---
+ * Not player-facing. Deliberately plain so the kit is what you look at. */
+.gal {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  overflow-y: auto;
+  padding: 20px 16px 60px;
+  background: #2b2119;
+  color: var(--parchment);
+  font-size: var(--text-body);
+}
+.gal h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  margin: 22px 0 10px;
+  border-bottom: 1px solid var(--wood-dark);
+  padding-bottom: 4px;
+}
+.gal-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.gal-item { margin: 8px 0; min-width: 0; }
+.gal-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
+}
+/* Icons get checked against every ground they actually sit on. */
+.gal-icons { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
+.gal-icons .gal-label { margin: 0 8px 0 0; }
+.gal-icons.on-parchment { background: var(--parchment); color: var(--ink); }
+.gal-icons.on-parchment .gal-label { color: var(--ink-muted); }
+.gal-icons.on-wood { background: var(--wood); color: var(--ink-inverse); }
+.gal-icons.on-wood .gal-label { color: var(--wood-dark); }
+.gal-icons.on-wood .icon { color: var(--ink-inverse); }
+.gal-icons.on-grass { background: #7ac74f; color: var(--ink); }
+.gal-icons.on-grass .gal-label { color: #2f5e1c; }
+
+/* A sheet fits the screen and scrolls inside itself, so its plank — and the
+ * close knob in it — stay put however long the content is. */
+.k-sheet { width: 100%; max-height: 100%; display: flex; }
+.k-sheet > .k-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+}
+.k-sheet-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* don't scroll the page behind it */
+  -webkit-overflow-scrolling: touch;
+}

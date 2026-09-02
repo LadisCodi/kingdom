@@ -5,16 +5,19 @@ import { changeWorkers, enqueueBuild, townhallTap } from '../src/sim/commands';
 import { populationCost, queueTraining } from '../src/sim/population';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
 import { isExhausted, tapCell } from '../src/sim/harvest';
-import { getWallet, type GameState } from '../src/sim/state';
+import { getWallet, type GameState, coordKey } from '../src/sim/state';
 import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
+import { effectiveTapYield, effectiveWorkerYield } from '../src/sim/upgrades';
 import { addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
-// Sawmill at (2,1): the L1 area (radius 2) reaches (2,2) and (2,3);
-// (4,4) sits at radius 3 and needs a level-2 sawmill.
-const SAWMILL_CELL = { x: 2, y: 1 };
-const FOREST_A = { x: 2, y: 2 }; // radius 1 — inside the completion's fog-reveal ring
+// Sawmill at (3,1), chosen so its own completion re-reveals exactly ONE tree
+// — the adjacent one. Every other tree in range stays under fog unless this
+// fixture reveals it, which is what lets each test below hand the sawmill a
+// precise number of workable cells.
+const SAWMILL_CELL = { x: 3, y: 1 };
+const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes it
 const FOREST_B = { x: 2, y: 3 }; // radius 2 — still in the L1 area
-const FOREST_C = { x: 4, y: 4 }; // radius 3 — needs a level-2 sawmill
+const FOREST_C = { x: 0, y: 3 }; // radius 3 — needs a level-2 sawmill
 
 // One harvest cycle from an adjacent (orthogonal) cell:
 // 2 × (1 / speed) move + workSeconds.
@@ -22,7 +25,10 @@ const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSe
 
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   fund(state, { Gold: 500, Wood: 500 });
-  completeTech(state, 'Forestry'); // the Sawmill sits behind this tech now
+  // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
+  // it for you (Docs/onboarding.md steps 3 and 15).
+  completeTech(state, 'Forestry');
+  completeTech(state, 'Saws');
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
   // near the origin, so start from black fog and reveal only the test cells.
   // (The sawmill's own completion re-reveals its radius-1 ring.)
@@ -84,7 +90,7 @@ describe('the harvest cycle', () => {
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // still walking home
     tickAt(state, start + CYCLE_MS + 100);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 1);
-    expect(state.harvest['2,2'].taps).toBe(1);
+    expect(state.harvest[coordKey(FOREST_A)].taps).toBe(1);
     expect(w.activity).toBe('MovingToCell'); // straight back out
   });
 
@@ -134,7 +140,10 @@ describe('the harvest cycle', () => {
     // Exhaust the cell while the worker is walking (move takes ~1.4s).
     for (let i = 0; i < 10; i++) tapCell(state, map, FOREST_A, start + 500);
     tickAt(state, start + CYCLE_MS + 100);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10); // player's taps only
+    // Player's taps only. A tap is worth boostSeconds of production now, and
+    // this sawmill is staffed, so that is well above the authored floor of 1.
+    const perTap = effectiveTapYield(state, HARVEST.Forest);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10 * perTap);
     expect(state.workers[0].activity).toBe('Idle');
   });
 
@@ -150,8 +159,10 @@ describe('the harvest cycle', () => {
     for (let i = 0; i < 10; i++) tapCell(state, map, FOREST_A, start + 3000);
     expect(isExhausted(state, FOREST_A, start + 3000)).toBe(true);
     tickAt(state, start + CYCLE_MS + 2000);
-    // 10 player taps + the secured delivery.
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 11);
+    // 10 player taps + the one delivery the worker had already secured.
+    const perTap = effectiveTapYield(state, HARVEST.Forest);
+    const perWorker = effectiveWorkerYield(state, HARVEST.Forest);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10 * perTap + perWorker);
   });
 
   it('two workers claim distinct cells', () => {
@@ -170,12 +181,12 @@ describe('the harvest cycle', () => {
 describe('Townhall villager training', () => {
   it('queues villagers, each paid up front, delivered in sequence', () => {
     const state = freshGame();
-    addBuilt(state, 'Housing', { x: 2, y: 0 }); // L1 capacity 2
+    addBuilt(state, 'Housing', { x: 2, y: 0 }); // one L1 house holds TWO
     fund(state, { Food: 100 });
-    expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 3
-    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3);
+    expect(queueTraining(state, T0)).toBe('Queued'); // populationCost(0) = 5
+    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5);
     expect(queueTraining(state, T0)).toBe('Queued'); // second one queues behind
-    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 3 - populationCost(1));
+    expect(getWallet(state.city.wallet, 'Food')).toBe(100 - 5 - populationCost(1));
     expect(queueTraining(state, T0)).toBe('AtMax'); // 0 pop + 2 queued = cap
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);

@@ -51,3 +51,53 @@ Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 Notes: `worker_deposit` and per-tax coin ticks were considered and skipped —
 they fire many times a minute and would fatigue fast; the floaters carry
 that feedback. If we ever want them, they need heavy rate-limiting.
+
+
+---
+
+## Wanted by the 2026-09-02 design pass *(not yet needed — designs only)*
+
+Grouped by the doc that introduces them. Nothing here blocks implementation; the
+existing SFX fallback behaviour applies.
+
+### Magic — [`features/magic.md`](features/magic.md)
+
+| Cue | When |
+|---|---|
+| `mana_full` | The pool reaches cap — a soft chime, **not** an alarm. Overflow is a missed opportunity, never a failure |
+| `spell_cast_divination` | Fog dissolves off a cell |
+| `spell_cast_bloom` | Exhausted cells recover in a radius |
+| `spell_cast_haste` | A timed buff begins |
+| `artifact_attuned` | A relic drops into a slot |
+| `artifact_locked` | A swap is refused because the slot is still in its 5-minute lock |
+| `landmark_claimed` | Mana production rises |
+
+### Expeditions — [`features/expeditions.md`](features/expeditions.md)
+
+| Cue | When |
+|---|---|
+| `delve_depart` | A party launches |
+| `depth_cleared` | A depth resolves — the checkpoint's arrival beat |
+| `delve_extract` | The haul banks safely. This is the reward sound and should feel like relief |
+| `delve_failed` | A push fails and half the haul is lost. **Deliberately understated** — the design frames this as a bet declined, not a punishment, and a harsh sting would undo that framing |
+| `ruin_discovered` | A ruin comes out of the fog |
+| `unit_recruited` | Replaces the instant-recruit cue once training takes time |
+
+### Heroes and gacha — [`features/heroes-and-gacha.md`](features/heroes-and-gacha.md)
+
+| Cue | When |
+|---|---|
+| `pull_common` / `pull_rare` | Escalating, with the rare cue distinct enough to be recognised before the art resolves |
+| `fragment_gained` | A duplicate converts |
+| `tier_up` | Fragments raise a tier cap |
+| `hero_levelled` | Knowledge spent |
+
+### Events
+
+| Cue | When |
+|---|---|
+| `conjunction_open` / `conjunction_close` | The weekly window |
+
+**Tone note.** The audit's positioning is cozy: nothing here should read as a
+threat. `delve_failed` and `mana_full` are the two cues most likely to be
+mis-designed as alarms, and both should be soft.

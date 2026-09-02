@@ -3,6 +3,9 @@
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { seedFog } from './fog';
+import { manaCap } from './mana';
+import { reconcileSchedule } from './timeline';
+import { newSeed } from './rng';
 import { TOWNHALL_ORIGIN, type MapData } from './grid';
 import { coordKey, type CurrencyId, type GameState, type Wallet } from './state';
 
@@ -15,6 +18,7 @@ export function newGame(map: MapData, now: number): GameState {
   }
 
   const state: GameState = {
+    regionId: 'oakville',
     city: {
       name: CITY_DEF.name,
       wallet: { ...CITY_DEF.initialCurrencies },
@@ -22,11 +26,14 @@ export function newGame(map: MapData, now: number): GameState {
       districts: [],
       queue: [],
       training: null,
+      armyQueue: [],
       lastTaxAt: now,
+      lastManaAt: now,
     },
     kingdom: {
       maxBuilders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
+      lastKnowledgeAt: now,
     },
     player: { wallet: playerWallet },
     fog: { revealed: {}, discovered: {}, progress: {} },
@@ -37,10 +44,31 @@ export function newGame(map: MapData, now: number): GameState {
     workers: [],
     army: [],
     research: { completed: [], active: [], slotsPurchased: 0 },
+    schedule: [],
+    delves: [],
+    // One hero free at the start — the gacha sells breadth and speed, never
+    // access, so the system has to be reachable without it.
+    heroes: {
+      owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
+      fragments: {}, xp: {}, partySlotsPurchased: 0,
+    },
+    gacha: { pullCounts: {}, pityCounters: {} },
+    // Ready from the first minute: a new kingdom starts with a full pool, so
+    // the offer simply waits for the player to spend down to half.
+    ads: { readyAt: now, claims: 0, pending: false },
+    deepestDepth: 0,
+    ruinsCleared: {},
+    landmarks: { claimed: {}, cleared: {} },
+    artifacts: {
+      owned: [], levels: {}, tiers: {}, fragments: {},
+      attuned: [null], slotsPurchased: 0, lockedUntil: [0],
+    },
     upgrades: {},
+    modifiers: [],
     quests: { index: 0, progress: 0 },
     discoveries: {},
     pendingDiscoveries: [],
+    seed: newSeed(),
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,
@@ -60,8 +88,17 @@ export function newGame(map: MapData, now: number): GameState {
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
+    lastTapAt: 0,
   });
 
+  // A new kingdom starts with a FULL pool, not an empty one. Mana is what
+  // every house tap is paid from, so an empty pool at minute zero would gate
+  // the city's most-used verb behind a wait before the player has learned
+  // that the verb exists. Set after the Townhall is placed, because the cap
+  // is read from it.
+  state.city.wallet.Mana = manaCap(state);
+
+  reconcileSchedule(state, now);
   seedFog(state, map);
 
   if (!state.fog.revealed[coordKey(TOWNHALL_ORIGIN)]) {

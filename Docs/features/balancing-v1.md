@@ -1,5 +1,18 @@
 # Balancing v1 — the three-era arc
 
+> **PARTLY SUPERSEDED by [`balancing-v2.md`](balancing-v2.md) (2026-09-02).**
+> Four things below no longer hold, and they are marked inline: the housing
+> capacity this document assumes was never what shipped, TH3 is no longer the
+> endgame, the army cap moves out of the Townhall, and most of the "future work"
+> list is now designed. The three-era arc itself stands.
+>
+> **Update (implementation):** the housing capacity is fixed. The workbook now
+> ships `[1, 2]` — the value this document always documented and derived every
+> pacing number from — so the income tables below are correct again rather than
+> 2–3x optimistic. The house tap is bounded by a collection cycle too, so "tap
+> income" is capped at `taxes.tap_boost_seconds` of *city* income per cycle
+> instead of scaling without limit.
+
 The first deliberate balance pass. Before it the progression was flat: 8 of
 10 technologies hung directly off Forestry, the Townhall stopped at level 2,
 building upgrades had no tech gates, and the quest chain dead-ended at
@@ -15,12 +28,12 @@ of active play, TH3 at ~2–3 h cumulative.
 
 | | TH1 — Founding | TH2 — Expansion | TH3 — Prosperity |
 |---|---|---|---|
-| Target time | 0–30 min | 30 min – 2.5 h | endgame (for now) |
+| Target time | 0–30 min | 30 min – 2.5 h | ~~endgame (for now)~~ **no longer the endgame** — see the note below |
 | Population cap | 2 (2 houses × 1) | 8 (4 houses × 2 w/ Urban Planning) | 12 (6 × 2) |
 | Housing count cap | 2 | 4 | 6 |
 | Sawmill/Quarry/Docks/Mine cap | 1 | 2 | 3 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 |
-| Army power cap | 10 | 20 | 30 |
+| Army power cap | ~~10~~ | ~~20~~ | ~~30~~ — **retired**, see below |
 | Gate to next TH level | 40 Wood + 20 Stone, 30 s | 156 Wood + 78 Stone, 120 s + **Architecture** (15 Iron) | — |
 
 The Townhall upgrade formula can't add a currency at a single level, so
@@ -63,6 +76,13 @@ card ("Research X required") and in the research-complete banner
 Housing capacity is now **per level** (`population_capacity` is a list:
 `1,2`) — a level-2 house holds 2 villagers, so Urban Planning doubles the tax
 base without new map footprint (and without new crowding penalties).
+
+> **DATA DRIFT, resolved 2026-09-02.** The shipped workbook carries `2,4`, not
+> the `1,2` this document assumes, so the real Townhall-3 population cap is 30
+> rather than 12 and idle income is 900 Gold/min rather than 360. **Every income
+> and pacing figure in this file is therefore 2–3× optimistic as written.**
+> `balancing-v2.md` §1.4 adopts the documented `1,2`; the tables here become
+> correct again once that lands.
 
 ## Retuned numbers
 
@@ -114,9 +134,27 @@ extra research slots (10 + 30).
 
 ## Future work (noted, not in this pass)
 
-- `kingdom.max_builders` is authored 4 but nothing raises builders past 1.
-- Knowledge currency has no faucet or sink.
-- `train_duration_seconds` is authored but army training is instant.
-- The army has no combat — it's a Gold/Iron sink and quest content.
-- Only one adjacency rule exists (Housing↔Housing −1); spatial play is thin.
-- More gem sinks (cosmetics? worker skins?) once the faucet exists.
+Status as of 2026-09-02 — most of this list is now designed:
+
+| Item | Status |
+|---|---|
+| `kingdom.max_builders` authored 4, nothing raises builders past 1 | **still open** — `queue.ts`'s promotion logic remains unreachable |
+| Knowledge currency has no faucet or sink | **designed** — the levelling currency for artifacts and heroes ([`magic.md`](magic.md), [`heroes-and-gacha.md`](heroes-and-gacha.md)) |
+| `train_duration_seconds` authored but training is instant | **designed** — goes live in [`balancing-v2.md`](balancing-v2.md) §1.5 |
+| The army has no combat — a Gold/Iron sink and quest content | **designed** — ATK/DEF/HP, a matchup chart and staged delves ([`expeditions.md`](expeditions.md)) |
+| Only one adjacency rule; spatial play is thin | **partly** — five new districts (four military + the Sanctum) compete for space, but no new adjacency rules |
+| More gem sinks once the faucet exists | **designed** — attunement slots, party slots, gacha pulls, Mana refills; the faucet is rebalanced in `balancing-v2.md` §1.3 |
+
+### The Townhall stops being the only gate
+
+TH3 was "endgame (for now)" because nothing existed past it. Three arcs now run
+past it at different speeds:
+
+- **Military buildings** gate army size and therefore delve depth — Tiers IV and
+  V of [`expeditions.md`](expeditions.md) need a cap of 36 and 50, reachable only
+  by building and upgrading all four. `army.power_cap_per_townhall_level` is
+  removed.
+- **The Mana economy** (production from landmarks, capacity from the Sanctum)
+  gates how many artifacts can be worn.
+- **Knowledge and Fragments** gate artifact and hero levels, on a curve measured
+  in weeks rather than hours.

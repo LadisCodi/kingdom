@@ -4,7 +4,16 @@
 
 import { DISTRICTS } from './data/definitions';
 import regionMap from './data/region-map.json';
-import { cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId } from './state';
+import {
+  cellsOfRect, coordKey, parseCoordKey,
+  type Coord, type FeatureId, type RegionId, type TerrainId,
+} from './state';
+
+/** Authored regions, by id. One entry today; a second is a JSON file and a
+ *  row, not a refactor. */
+const REGIONS: Record<RegionId, typeof regionMap> = {
+  oakville: regionMap,
+};
 
 const NEIGHBOR_OFFSETS: ReadonlyArray<Coord> = [
   { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
@@ -20,13 +29,14 @@ export interface MapData {
 
 export const TOWNHALL_ORIGIN: Coord = { x: 0, y: 0 }; // anchor (top-left of its footprint)
 
-export function buildMapData(): MapData {
+export function buildMapData(regionId: RegionId = 'oakville'): MapData {
+  const region = REGIONS[regionId];
   const terrain = new Map<string, TerrainId>();
-  for (const c of regionMap.terrain.cells) {
+  for (const c of region.terrain.cells) {
     terrain.set(coordKey({ x: c.x, y: c.y }), c.id as TerrainId);
   }
   const initialFeatures = new Map<string, FeatureId>();
-  for (const c of regionMap.features.cells) {
+  for (const c of region.features.cells) {
     initialFeatures.set(coordKey({ x: c.x, y: c.y }), c.id as FeatureId);
   }
 

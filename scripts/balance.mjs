@@ -48,19 +48,27 @@ const MAP_COLORS = { // conditional-formatting fills, keyed by code
 // The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
 const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
-const DISTRICT_IDS =
-  ['Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine'];
+const DISTRICT_IDS = [
+  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine',
+  'Sanctum',
+  // Military: each unit type is trained by its own building, and building and
+  // upgrading them is what raises the army cap.
+  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+];
 const TECH_IDS = [
   'Forestry',
   'UrbanPlanning', 'Communities', 'Architecture', // civics
-  'Agriculture', 'Farming', 'Market', 'CropRotation', // economics: farm side
+  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market', // economics: farm side
   'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
-  'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
+  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
   'Warrior', 'Spears', 'Archery', 'Cavalry', // military
+  'Attunement', 'Warband', // the magic and expedition leaves
 ];
 const UPGRADE_IDS = [
-  'TapPower', 'WorkerLoad', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks',
+  'TapPower', 'QuickHands', 'WorkerLoad',
+  'Sawpits', 'Butchery', 'Irrigation', 'Scythes',
+  'Surveying', 'Pitons', 'MarketStall', 'TradeRoutes',
+  'Stonecutting', 'BigNets', 'IronPicks', 'Resonance',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
@@ -70,12 +78,33 @@ const QUEST_GOAL_TYPES = {
   BuildDistrict: 'district', UpgradeDistrict: 'district', HoldResource: 'currency',
   ReachPopulation: null, CompleteTech: 'tech', CompleteTechs: null,
   AssignWorkers: null, TrainArmy: null,
+  // The long game: magic and expeditions.
+  ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
+  OwnHeroes: null, BuyUpgrade: 'upgrade',
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
+  // "clear two cells with forest on them" — a DiscoverCells that cares WHAT
+  // it uncovered, so the opening can point the player at the thing the next
+  // quest is about to need.
+  DiscoverFeature: 'feature',
 };
 
-const CURRENCY_IDS =
-  ['Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems'];
+const LANDMARK_KINDS = ['Shrine', 'StandingStones', 'Leyspring'];
+const RUIN_IDS = [
+  'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
+];
+const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
+const HERO_TRAITS = [
+  'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
+];
+const ARTIFACT_IDS = [
+  'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
+];
+
+const CURRENCY_IDS = [
+  'Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Mana',
+  'Berries', 'Meat', 'Fish', 'Knowledge', 'Gems',
+];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone', 'Iron'];
 
 const SETTINGS = [
@@ -86,23 +115,98 @@ const SETTINGS = [
   ['training.seconds', 'training.seconds'],
   ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
-  ['taxes.tap_boost_seconds', 'taxes.tapBoostSeconds'],
+  ['tap.mana_cost', 'tap.manaCost'],
+  // The one number behind every tap in the game: a tap hands you this many
+  // seconds of whatever you tapped is producing. Houses have always worked
+  // this way; resource cells now join them.
+  ['tap.boost_seconds', 'tap.boostSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
+  // Claiming a sanctuary lifts the fog around it: every cell within this many
+  // rings becomes DISCOVERED, never revealed. A claim buys you a place to
+  // look, not the ground itself — the paid reveal is still the sink.
+  ['fog.claim_discover_radius', 'fog.claimDiscoverRadius'],
   ['city.initial_population', 'city.initialPopulation'],
   ['city.initial_gold', 'city.initialCurrencies.Gold'],
   ['city.initial_food', 'city.initialCurrencies.Food'],
-  ['city.population_cost_base', 'city.populationCostBase'],
+  // Villager pricing is AUTHORED for the opening and exponential after it.
+  // A pure curve gave the designer no grip where it matters most: the first
+  // few villagers are the whole early game, and `base × growth^n` cannot be
+  // made to say 5, 20, 100 without deforming everything past it.
+  ['city.population_cost_first', 'city.populationCostFirst', 'list'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
   ['city.build_queue_capacity', 'city.buildQueueCapacity'],
-  ['city.max_army_power_per_townhall_level', 'city.maxArmyPowerPerTownhallLevel', 'list'],
   ['kingdom.start_builders', 'kingdom.startBuilders'],
   ['kingdom.max_builders', 'kingdom.maxBuilders'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
   ['research.slot_gem_cost_growth', 'research.slotGemCostGrowth'],
+  // Mana. The ceiling is DYNAMIC (Townhall level + Sanctum levels), so the
+  // Currencies sheet's static `cap` column stays blank for Mana and these are
+  // the numbers that actually decide it — see src/sim/mana.ts.
+  ['mana.production_per_townhall_level', 'mana.productionPerTownhallLevel', 'list'],
+  ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
+  ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
+  ['mana.landmark_cap', 'mana.landmarkCap'],
+  ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
+  ['attunement.base_slots', 'attunement.baseSlots'],
+  ['attunement.max_slots', 'attunement.maxSlots'],
+  ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
+  ['attunement.slot_gem_cost_growth', 'attunement.slotGemCostGrowth'],
+  ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
+  // The COLLECTION substrate: one set of rules shared by artifacts and heroes.
+  // Fragments raise a tier cap; Knowledge buys levels within it.
+  ['collection.level_cost_base', 'collection.levelCostBase'],
+  ['collection.level_cost_growth', 'collection.levelCostGrowth'],
+  ['collection.max_level', 'collection.maxLevel'],
+  ['collection.levels_per_tier', 'collection.levelsPerTier'],
+  ['collection.max_tier', 'collection.maxTier'],
+  ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
+  ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
+  ['knowledge.drip_per_ruin_per_hour', 'knowledge.dripPerRuinPerHour'],
+  // Knowledge for clearing one cell of fog, PER RING of distance from the
+  // Townhall: ring 3 pays 3× this. Linear, so the far map is worth going to
+  // without any one cell being a jackpot.
+  ['knowledge.per_reveal_ring', 'knowledge.perRevealRing'],
+  // Combat is a SCORING PASS, not a simulation — these six numbers are the
+  // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
+  // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
+  ['army.train_tap_boost_seconds', 'army.trainTapBoostSeconds'],
+  ['army.type_advantage', 'army.typeAdvantage'],
+  ['army.type_disadvantage', 'army.typeDisadvantage'],
+  ['army.threat_floor_fraction', 'army.threatFloorFraction'],
+  ['army.damage_per_strength', 'army.damagePerStrength'],
+  ['army.damage_absorbed_per_defence', 'army.damageAbsorbedPerDefence'],
+  // Delves. `fail_haul_loss` is the number that most needs playtest rather
+  // than argument: lower is gentler and may make pushing automatic, higher
+  // bites but starts to feel like the loss aversion the positioning rules out.
+  ['delve.gold_per_depth_per_tier', 'delve.goldPerDepthPerTier'],
+  ['delve.material_per_depth_per_tier', 'delve.materialPerDepthPerTier'],
+  ['delve.knowledge_per_depth_per_tier', 'delve.knowledgePerDepthPerTier'],
+  ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
+  ['delve.fail_haul_loss', 'delve.failHaulLoss'],
+  ['delve.first_clear_gems', 'delve.firstClearGems'],
+  ['party.base_slots', 'party.baseSlots'],
+  ['party.max_slots', 'party.maxSlots'],
+  ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
+  ['party.slot_gem_cost_growth', 'party.slotGemCostGrowth'],
+  // The gacha. Pity is MANDATORY: it is the single thing that makes a gacha
+  // read as fair rather than predatory, and it matters more in a cozy game.
+  ['gacha.pull_gem_cost', 'gacha.pullGemCost'],
+  ['gacha.hero_chance', 'gacha.heroChance'],
+  ['gacha.soft_pity_at', 'gacha.softPityAt'],
+  ['gacha.hard_pity_at', 'gacha.hardPityAt'],
+  ['gacha.duplicate_fragments', 'gacha.duplicateFragments'],
+  ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
+  // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
+  // the player can plan around; `eligible_below_fraction` is what keeps it an
+  // answer to being short rather than an interruption.
+  ['ads.cooldown_min_seconds', 'ads.cooldownMinSeconds'],
+  ['ads.cooldown_max_seconds', 'ads.cooldownMaxSeconds'],
+  ['ads.eligible_below_fraction', 'ads.eligibleBelowFraction'],
+  ['ads.watch_seconds', 'ads.watchSeconds'],
 ];
 
 const DISTRICT_COLUMNS = [
@@ -110,7 +214,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level',
+  'required_tech_per_level', 'army_cap_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone', 'build_cost_iron',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -122,24 +226,35 @@ const DISTRICT_COLUMNS = [
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level',
+  'required_tech_per_level', 'army_cap_per_level',
 ];
 
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
-  Units: ['id', 'power', 'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
+  Units: ['id', 'power', 'atk', 'def', 'hp',
+    'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'recruit_cost_iron', 'train_duration_seconds'],
   Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
-    'respawn_seconds'],
+    'respawn_seconds', 'required_tech'],
   Currencies: ['id', 'cap', 'start', 'primary', 'counts_as', 'unit_value', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  Technologies: ['id', 'cost_gold', 'cost_wood', 'cost_food', 'cost_stone', 'cost_iron',
-    'duration_seconds', 'requires'],
+  // Research is paid in Knowledge and nothing else — one column, not a
+  // five-currency wallet. See the tech importer for why.
+  Technologies: ['id', 'cost_knowledge', 'duration_seconds', 'requires'],
   Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone', 'reward_iron',
-    'reward_gems'],
+    'reward_gems', 'reward_knowledge'],
+  Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
+    'active_duration_seconds', 'active_radius',
+    'carried_atk', 'carried_def', 'carried_hp',
+    'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
+  Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
+    'atk_per_level', 'def_per_level', 'hp_per_level'],
+  Landmarks: ['id', 'kind', 'x', 'y', 'defended', 'claim_cost'],
+  Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
+    'max_depth', 'supply_food', 'supply_gold', 'supply_iron', 'affinity', 'artifact'],
   Settings: ['key', 'value'],
 };
 
@@ -216,6 +331,15 @@ function num(row, col, { blankAs = null } = {}) {
   return n;
 }
 
+/** A map coordinate: any integer, including negative ones. */
+function coord(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isInteger(n)) fail(where(row), `"${col}" is not an integer (got "${raw}")`);
+  return n;
+}
+
 /** Like num() but negatives are allowed (adjacency penalties); blank = 0. */
 function signedNum(row, col) {
   const raw = row[col];
@@ -254,6 +378,13 @@ function techList(row, col) {
     if (!TECH_IDS.includes(id)) fail(where(row), `"${col}" has an unknown tech ("${id}")`);
     return id;
   });
+}
+
+function techOrBlank(row, column) {
+  const v = row[column];
+  if (v === '' || v === undefined) return null;
+  if (!TECH_IDS.includes(String(v))) fail(where(row), `unknown technology "${v}"`);
+  return String(v);
 }
 
 function wallet(row, prefix) {
@@ -346,6 +477,24 @@ function importMap(workbook) {
   writeFileSync(MAP_PATH, JSON.stringify(
     { terrain: { cells: terrain }, features: { cells: features } }, null, 2) + '\n');
   console.log(`balance: wrote ${MAP_PATH} (${terrain.length} cells, ${features.length} features)`);
+  return byCoord;
+}
+
+/** Every landmark and ruin has to sit on a real, walkable, empty cell. Getting
+ *  this wrong authors a site nobody can ever reach, which is invisible until a
+ *  player fails to find it. */
+function checkSites(out, cells) {
+  const townhall = new Set(TOWNHALL_CELLS.map(([x, y]) => `${x},${y}`));
+  const check = (what, x, y) => {
+    const c = cells.get(`${x},${y}`);
+    if (!c) fail('sites', `${what} is on (${x},${y}), which is not a map cell`);
+    if (c.terrainId === 'Water') fail('sites', `${what} is on water at (${x},${y})`);
+    if (c.featureId) fail('sites', `${what} shares (${x},${y}) with a ${c.featureId}`);
+    if (townhall.has(`${x},${y}`)) fail('sites', `${what} is under the Townhall at (${x},${y})`);
+  };
+  for (const l of out.landmarks) check(`landmark ${l.id}`, l.x, l.y);
+  for (const [id, r] of Object.entries(out.ruins)) check(`ruin ${id}`, r.x, r.y);
+  console.log(`balance: ${out.landmarks.length} landmarks and ${Object.keys(out.ruins).length} ruins check out`);
 }
 
 /** region-map.json → Map sheet (with live color rules per code). */
@@ -409,6 +558,9 @@ async function importXlsx() {
     districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
+    mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
+    delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
+    landmarks: [], ruins: {}, artifacts: {},
     quests: [],
     fog: { silverPerTap: 0, rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -427,6 +579,7 @@ async function importXlsx() {
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
       requiredTechPerLevel: techList(r, 'required_tech_per_level'),
+      armyCapPerLevel: list(r, 'army_cap_per_level'),
       buildCost: wallet(r, 'build_cost'),
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
       buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
@@ -447,6 +600,11 @@ async function importXlsx() {
       tapsToExhaust: num(r, 'taps_to_exhaust'),
       recoverySeconds: num(r, 'recovery_seconds'),
       respawnSeconds: num(r, 'respawn_seconds', { blankAs: 0 }),
+      // Blank = anyone can tap it. A gate here is a TUTORIAL beat: the trees
+      // around the Townhall are visible from the first second and refuse the
+      // tap until Forestry is in, which is what makes the first research
+      // something the player wants rather than something they are told to do.
+      requiredTech: techOrBlank(r, 'required_tech'),
     };
   }
 
@@ -482,8 +640,15 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
+    const atk = num(r, 'atk');
+    // A unit's POWER — what it costs against the army cap — equals its ATK,
+    // so the cap table reads directly as attack potential.
+    if (num(r, 'power') !== atk) fail(where(r), `power must equal atk (${atk})`);
     out.units[id] = {
-      power: num(r, 'power'),
+      power: atk,
+      atk,
+      def: num(r, 'def'),
+      hp: num(r, 'hp'),
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
@@ -496,8 +661,15 @@ async function importXlsx() {
       if (!TECH_IDS.includes(req)) fail(where(r), `unknown required tech "${req}"`);
       if (req === id) fail(where(r), 'a technology cannot require itself');
     }
+    // Knowledge, alone. A technology is what you learned by exploring, so it
+    // is bought with what exploring pays and nothing the city produces —
+    // which also keeps the whole tree spendable out of the KINGDOM purse,
+    // where Knowledge lives. Instant upgrades stay Gold; they are the sink
+    // the city's own economy feeds.
+    const knowledge = num(r, 'cost_knowledge');
+    if (knowledge < 1) fail(where(r), 'cost_knowledge must be at least 1');
     out.technologies[id] = {
-      cost: wallet(r, 'cost'),
+      cost: { Knowledge: knowledge },
       durationSeconds: num(r, 'duration_seconds'),
       requires,
     };
@@ -540,7 +712,10 @@ async function importXlsx() {
     questIds.add(r.id);
     const targetKind = QUEST_GOAL_TYPES[r.goal_type];
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
-    const lists = { district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS };
+    const lists = {
+      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
+      feature: Object.values(FEATURE_CODES),
+    };
     if (targetKind === null && target !== null) {
       fail(where(r), `goal_type ${r.goal_type} takes no goal_target`);
     }
@@ -563,7 +738,99 @@ async function importXlsx() {
       goalLevel: level,
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
+      rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
     });
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Artifacts'), ARTIFACT_IDS)) {
+    out.artifacts[id] = {
+      passiveBase: signedNum(r, 'passive_base'),
+      passivePerLevel: signedNum(r, 'passive_per_level'),
+      activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
+      activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
+      activeRadius: num(r, 'active_radius', { blankAs: 0 }),
+      // What the relic is worth when a hero carries it DOWN instead of the
+      // kingdom wearing it. Attuning costs Mana every hour; carrying costs
+      // none — so the trade is never "which is cheaper" but "which do I need
+      // right now". A relic with no carried stats at all would make that a
+      // non-question, so every one of them earns its keep underground.
+      carriedAtk: num(r, 'carried_atk', { blankAs: 0 }),
+      carriedDef: num(r, 'carried_def', { blankAs: 0 }),
+      carriedHp: num(r, 'carried_hp', { blankAs: 0 }),
+      carriedAtkPerLevel: num(r, 'carried_atk_per_level', { blankAs: 0 }),
+      carriedDefPerLevel: num(r, 'carried_def_per_level', { blankAs: 0 }),
+      carriedHpPerLevel: num(r, 'carried_hp_per_level', { blankAs: 0 }),
+    };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Heroes'), HERO_IDS)) {
+    if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
+    if (!HERO_TRAITS.includes(r.trait)) fail(where(r), `unknown trait "${r.trait}"`);
+    out.heroes[id] = {
+      unitType: r.unit_type,
+      trait: r.trait,
+      traitValue: num(r, 'trait_value'),
+      atk: num(r, 'atk'),
+      def: num(r, 'def'),
+      hp: num(r, 'hp'),
+      atkPerLevel: num(r, 'atk_per_level'),
+      defPerLevel: num(r, 'def_per_level'),
+      hpPerLevel: num(r, 'hp_per_level'),
+    };
+  }
+
+  // Landmarks and ruins are MAP content authored by coordinate. The importer
+  // is the only place that can check the cell actually exists, is land, and is
+  // not already occupied by a feature or the Townhall — so it does.
+  const siteSeen = new Map();
+  const claimSite = (r, x, y, what) => {
+    const key = `${x},${y}`;
+    if (siteSeen.has(key)) fail(where(r), `two sites on cell (${key}) — ${siteSeen.get(key)} is already there`);
+    siteSeen.set(key, what);
+    return key;
+  };
+  const landmarkIds = new Set();
+  for (const r of readSheet(workbook, 'Landmarks')) {
+    if (!LANDMARK_KINDS.includes(r.kind)) fail(where(r), `unknown landmark kind "${r.kind}"`);
+    if (landmarkIds.has(r.id)) fail(where(r), `duplicate landmark id "${r.id}"`);
+    landmarkIds.add(r.id);
+    const x = coord(r, 'x');
+    const y = coord(r, 'y');
+    claimSite(r, x, y, r.id);
+    out.landmarks.push({
+      id: String(r.id), kind: r.kind, x, y,
+      defended: num(r, 'defended', { blankAs: 0 }) === 1,
+      // Authored per sanctuary, not derived from distance. The tiers ARE the
+      // design — one in sight you save weeks for, then two rings beyond it —
+      // and a curve cannot express "5,000 / 25,000 / 100,000" exactly.
+      claimCost: num(r, 'claim_cost'),
+    });
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Ruins'), RUIN_IDS)) {
+    const x = coord(r, 'x');
+    const y = coord(r, 'y');
+    claimSite(r, x, y, id);
+    if (r.affinity !== 'Any' && !UNIT_IDS.includes(r.affinity)) {
+      fail(where(r), `affinity must be a unit id or "Any" (got "${r.affinity}")`);
+    }
+    if (!ARTIFACT_IDS.includes(r.artifact)) fail(where(r), `unknown artifact "${r.artifact}"`);
+    const supplies = {};
+    for (const c of ['Food', 'Gold', 'Iron']) {
+      const v = num(r, `supply_${c.toLowerCase()}`, { blankAs: 0 });
+      if (v > 0) supplies[c] = v;
+    }
+    out.ruins[id] = {
+      x, y,
+      tier: num(r, 'tier'),
+      difficulty: num(r, 'difficulty'),
+      baseDepthSeconds: num(r, 'base_depth_seconds'),
+      depthGrowth: num(r, 'depth_growth'),
+      maxDepth: num(r, 'max_depth'),
+      supplies,
+      affinity: r.affinity,
+      artifact: r.artifact,
+    };
   }
 
   let lastDistance = 0;
@@ -586,7 +853,8 @@ async function importXlsx() {
 
   writeFileSync(JSON_PATH, JSON.stringify(out, null, 2) + '\n');
   console.log(`balance: wrote ${JSON_PATH}`);
-  importMap(workbook);
+  const cells = importMap(workbook);
+  checkSites(out, cells);
 }
 
 // ------------------------------------------------------------------- export
@@ -624,6 +892,7 @@ async function exportXlsx() {
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
+      listCell(d.armyCapPerLevel),
       ...costCells(d.buildCost),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
@@ -634,13 +903,13 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
-    return [id, u.power, ...costCells(u.recruitCost), u.trainDurationSeconds];
+    return [id, u.power, u.atk, u.def, u.hp, ...costCells(u.recruitCost), u.trainDurationSeconds];
   }));
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];
     return [id, h.yieldPerTap, h.yieldPerWorker, h.tapsToExhaust, h.recoverySeconds,
-      h.respawnSeconds || ''];
+      h.respawnSeconds || '', h.requiredTech ?? ''];
   }));
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
@@ -653,7 +922,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, ...costCells(t.cost), t.durationSeconds, t.requires.join(',')];
+    return [id, t.cost.Knowledge, t.durationSeconds, t.requires.join(',')];
   }), (col) => col === 'requires');
 
   addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
@@ -666,8 +935,32 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
-    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '',
+    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardKnowledge || '',
   ]));
+
+  addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
+    const a = b.artifacts[id];
+    return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
+      a.activeDurationSeconds || '', a.activeRadius || '',
+      a.carriedAtk || '', a.carriedDef || '', a.carriedHp || '',
+      a.carriedAtkPerLevel || '', a.carriedDefPerLevel || '', a.carriedHpPerLevel || ''];
+  }));
+
+  addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
+    const h = b.heroes[id];
+    return [id, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
+      h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
+  }));
+
+  addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>
+    [l.id, l.kind, l.x, l.y, l.defended ? 1 : '', l.claimCost]));
+
+  addSheet(workbook, 'Ruins', RUIN_IDS.map((id) => {
+    const r = b.ruins[id];
+    return [id, r.x, r.y, r.tier, r.difficulty, r.baseDepthSeconds, r.depthGrowth, r.maxDepth,
+      r.supplies.Food ?? '', r.supplies.Gold ?? '', r.supplies.Iron ?? '',
+      r.affinity, r.artifact];
+  }));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;

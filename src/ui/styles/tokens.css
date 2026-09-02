@@ -1,0 +1,126 @@
+/* Design tokens. Nothing here draws anything — it names the values the kit
+ * and the screens will draw with, so a change lands in one place.
+ *
+ * The palette is Docs/art/ui-menus-redesign.md §3.1, sampled so the chrome
+ * and the world read as one game: parchment and carved wood over the bright
+ * top-down pixel art, never the slate-blue strategy HUD it replaces.
+ *
+ * Rule the kit enforces: no pure black, no blue-grey, no #FFFFFF. Outlines
+ * are --wood-dark, and "disabled" is --locked (a warm fill), not opacity. */
+
+/* Self-hosted so the Pages build stays self-contained. These live in CSS
+ * rather than a <link> in index.html on purpose: Vite rewrites a relative
+ * url() for the /kingdom/ base and content-hashes it, while a hand-written
+ * <link href="/src/..."> works in dev and 404s on Pages.
+ *
+ * TWO FACES, AND THE SPLIT IS THE POINT. The pixel face this replaces
+ * (Pixelify Sans) carried titles AND every number in the game, which is why
+ * it had to be legible at 13px and never quite was. Germania One now takes
+ * the titles alone — it is a display face and is used like one — while PT
+ * Sans takes body copy and, crucially, EVERY NUMBER.
+ *
+ * PT Sans for numbers is not arbitrary: its digits are all 545 units wide
+ * (567 at bold), so counters are tabular WITHOUT the `tnum` feature, which
+ * the font does not ship. Germania One's digits are proportional (464-483),
+ * so a number set in it would jitter as it ticked — another reason numbers
+ * never go in the title face.
+ *
+ * font-display: block on the title face: its metrics diverge sharply from
+ * system-ui, so a swap would visibly reflow every heading; boot() waits for
+ * it (with a ceiling) instead. PT Sans is close enough to system-ui that
+ * swapping body copy is benign. */
+@font-face {
+  font-family: 'Kingdom Display';
+  src: url('../fonts/germania-one-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+/* PT Sans is NOT a variable font, so 400 and 700 are two real files rather
+ * than two instances of one — and a real bold beats a synthesised one at the
+ * sizes the HUD uses. */
+@font-face {
+  font-family: 'Kingdom Body';
+  src: url('../fonts/pt-sans-latin-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kingdom Body';
+  src: url('../fonts/pt-sans-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ---- surfaces ---- */
+  --parchment: #f4e4c1;
+  --parchment-shade: #e2cca0;
+  --wood: #a9713f;
+  --wood-dark: #5c3a1e;
+  --wood-light: #c89159;
+
+  /* ---- ink ---- */
+  --ink: #3b2412;
+  --ink-muted: #7a5c3e;
+  /* Label on a saturated slab, where --ink would not carry. */
+  --ink-inverse: #fff6e0;
+
+  /* ---- state ---- */
+  --leaf: #6fbf4a; /* affordable, confirm, progress */
+  --leaf-dark: #3f8a2e;
+  --gold: #f2b233; /* highlight, reward, the one lit CTA */
+  --gold-dark: #c98a16;
+  --clay: #d4553e; /* can't afford, destructive */
+  --sky: #4fa3c7; /* in progress, research, information */
+  --locked: #cbba96; /* gated — warm, never grey */
+
+  /* Warm, not near-black: the kingdom stays legible behind an open sheet. */
+  --scrim: rgba(60, 36, 18, 0.35);
+
+  /* ---- chrome metrics ----
+   * These two were hardcoded in six places (#notice, #panel, #overlay,
+   * .tech-info, #toast, .cast-banner), and the nav's height was only ever
+   * IMPLIED by its padding — which is where the magic 58 came from. Naming
+   * them is what lets the HUD and nav change height without silently
+   * misaligning five other screens. */
+  --hud-h: 78px;
+  --nav-h: 68px;
+
+  /* ---- type ----
+   * `--font-display` is TITLES ONLY — headings, sheet planks, proper names.
+   * `--font-body` is body copy AND every number, because a number has to be
+   * read at a glance at 13px and a display face is the wrong tool for that.
+   * Both fall back to a proportional sans now: the old monospace fallback
+   * existed to keep the PIXEL face's numbers from jittering, and PT Sans is
+   * naturally tabular, so the fallback should simply look like the font. */
+  --font-display: 'Kingdom Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Kingdom Body', system-ui, -apple-system, sans-serif;
+
+  /* The title face ships ONE weight, so a `font-weight: 700` anywhere near it
+   * — declared, or inherited from an <h2>'s user-agent default — would be
+   * faked by the browser into a smear. This refuses the fake globally: a face
+   * with a real bold (PT Sans, any system fallback) is unaffected, and a face
+   * without one renders the weight it actually has. Cheaper and far harder to
+   * forget than spelling out 400 on every title rule. */
+  font-synthesis-weight: none;
+
+  /* 13px is the floor (§6.12): the current 11–12px helper text is unreadable
+   * on a phone in daylight. */
+  --text-title: 22px;
+  --text-body: 15px;
+  --text-helper: 13px;
+
+  /* ---- form ---- */
+  --gutter: 24px;
+  --radius: 10px;
+  --radius-sm: 8px;
+  --outline: 3px; /* panel frame outline */
+  --lip: 3px; /* the drop under a pressable slab */
+
+  /* ---- motion ---- */
+  --motion-sheet: 180ms;
+  --motion-snap: 60ms; /* pixel-art slabs snap, they don't glide */
+}

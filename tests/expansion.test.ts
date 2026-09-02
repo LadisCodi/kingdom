@@ -6,19 +6,21 @@ import { trainUnit } from '../src/sim/army';
 import { changeWorkers, enqueueBuild, finishWithGems } from '../src/sim/commands';
 import { placementBlock } from '../src/sim/districts';
 import { tapCell } from '../src/sim/harvest';
-import { startTech } from '../src/sim/research';
+import { startTech, techCost } from '../src/sim/research';
 import { coordKey, getWallet } from '../src/sim/state';
 import { effectiveAmount, pay } from '../src/sim/wallet';
-import { completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
-const QUARRY_CELL = { x: 4, y: 0 }; // grassland beside them
+// The rocks sit in a mountain pocket: (5,0) and (5,-2) are their only land
+// neighbours, so the quarry goes diagonally beside them.
+const QUARRY_CELL = { x: 5, y: 0 };
 const COVE_WATER = { x: -3, y: -1 }; // open water west of the isle
 const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 // Docks anchor: 2×1 pier — (-6,3) is Water, (-5,3) is Grassland (mirrored case).
 const PIER = { x: -6, y: 3 };
 const PIER_LAND = { x: -5, y: 3 };
-const INLAND = { x: -1, y: 3 }; // (-1,3)+(0,3): two land cells, no shoreline
+const INLAND = { x: -1, y: 2 }; // (-1,2)+(0,2): two clear land cells, no shoreline
 
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
@@ -44,7 +46,7 @@ describe('stone line (Masonry → Quarry)', () => {
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
   it('the exploration branch: Fishing sits behind Sailing, not Agriculture', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 100, Food: 100 });
+    fund(state, { Knowledge: 200 });
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement'); // needs Sailing
@@ -56,7 +58,7 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
-    reveal(state, [SHOAL, PIER, PIER_LAND, INLAND, { x: 0, y: 3 }]);
+    reveal(state, [SHOAL, PIER, PIER_LAND, INLAND, { x: 0, y: 2 }]);
     completeTech(state, 'Fishing');
     expect(placementBlock(state, map, 'Docks', INLAND)).toBe('NeedsShoreline'); // all land
     expect(placementBlock(state, map, 'Docks', SHOAL)).not.toBe(null); // shoal blocks its cell
@@ -94,24 +96,30 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
 });
 
 describe('iron line (Mining ← Masonry) and the iron-gated army', () => {
-  it('Mining needs Masonry first and costs Stone', () => {
+  it('Mining needs Masonry first, and is paid for in Knowledge', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Stone: 50 });
+    // Deliberately rich in Stone and broke in Knowledge: research does not
+    // touch the city's materials any more, so a full quarry buys nothing.
+    fund(state, { Gold: 1000, Stone: 50, Knowledge: 0 });
     expect(startTech(state, 'Mining', T0)).toBe('MissingRequirement');
     completeTech(state, 'Masonry');
+    expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
+    fund(state, { Knowledge: techCost('Mining') });
     expect(startTech(state, 'Mining', T0)).toBe('Started');
-    expect(getWallet(state.city.wallet, 'Stone')).toBe(50 - 30);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(50); // untouched
   });
 
   it('the Cavalry costs Iron (foot units no longer do)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500 });
     completeTech(state, 'Warrior');
-    expect(trainUnit(state, 'Warrior')).toBe('Trained'); // wood-armed now
+    addAllTrainers(state); // the cap now comes from buildings, not the Townhall
+    expect(trainUnit(state, 'Warrior')).toBe('Queued'); // wood-armed now
     completeTech(state, 'Cavalry');
     expect(trainUnit(state, 'Cavalry')).toBe('NotEnoughResources'); // no Iron
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 20 });
-    expect(trainUnit(state, 'Cavalry')).toBe('Trained');
+    expect(trainUnit(state, 'Cavalry')).toBe('Queued');
     expect(getWallet(state.city.wallet, 'Iron')).toBe(0); // 20 spent
   });
 });

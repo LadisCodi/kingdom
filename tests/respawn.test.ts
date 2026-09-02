@@ -6,9 +6,9 @@ import { HARVEST } from '../src/sim/data/definitions';
 import { tapCell } from '../src/sim/harvest';
 import { deserialize, serialize } from '../src/sim/save';
 import { coordKey, parseCoordKey, type Coord, type GameState } from '../src/sim/state';
-import { freshGame, map, reveal, T0, tickAt } from './helpers';
+import { BERRIES, canGather, freshGame, map, reveal, T0, tickAt } from './helpers';
 
-const ORIGIN = { x: 0, y: 2 }; // authored BerryBush (below the Townhall)
+const ORIGIN = BERRIES; // the one authored BerryBush
 const RESPAWN_MS = HARVEST.Berries.respawnSeconds * 1000; // 120s
 
 const chebyshev = (a: Coord, b: Coord) =>
@@ -21,6 +21,7 @@ const bushCells = (state: GameState): Coord[] =>
 
 const drain = (state: GameState, cell: Coord, t: number) => {
   reveal(state, [cell]);
+  canGather(state); // berries sit behind Forestry now
   for (let i = 0; i < HARVEST.Berries.tapsToExhaust; i++) {
     expect(tapCell(state, map, cell, t)).toBe('Harvested');
   }
@@ -59,13 +60,15 @@ describe('feature respawning', () => {
 
   it('with no valid neighbor left, the feature is removed for good', () => {
     const state = freshGame();
-    // Block every open neighbor of the origin (the Townhall footprint and
-    // the authored Trees at (1,3) already block the other three).
-    for (const c of [
-      { x: -1, y: 1 }, { x: -1, y: 2 }, { x: 1, y: 2 },
-      { x: -1, y: 3 }, { x: 0, y: 3 },
-    ]) {
-      state.features[coordKey(c)] = 'Trees';
+    // Block every neighbour the bush could possibly land on. Derived from the
+    // map rather than listed by hand, so moving the bush on the Map sheet
+    // cannot quietly turn this into a test of nothing.
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const c = { x: ORIGIN.x + dx, y: ORIGIN.y + dy };
+        if (map.terrain.has(coordKey(c))) state.features[coordKey(c)] = 'Trees';
+      }
     }
     drain(state, ORIGIN, T0);
     tickAt(state, T0 + RESPAWN_MS + 1000);

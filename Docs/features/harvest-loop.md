@@ -62,7 +62,18 @@ CellHarvestState { taps: number, exhaustedUntil: number | null }
 ```
 
 - **Tapping** a revealed, non-exhausted resource cell yields its `yieldPerTap`
-  (1 unit) straight to the city wallet and registers 1 tap. Free.
+  straight to the city wallet and registers 1 tap. It costs `tap.mana_cost`
+  Mana ([`ad-economy.md`](ad-economy.md)).
+- A source may carry a **`required_tech`** gate (Harvest sheet). The **Forest
+  and the Berries** both carry **Forestry**, and they exist for the opening:
+  until that research lands, *no cell anywhere on the map answers a tap*, so
+  the only thing a new player can do is clear fog
+  ([`../onboarding.md`](../onboarding.md) steps 2-3). That is what keeps Food —
+  and therefore a villager, and therefore rent — from arriving early, and it
+  is what makes the first research something the player wants rather than a
+  chore. `harvestBlock` checks the gate BEFORE exhaustion, so a gated cell says
+  "you cannot work this yet" rather than "come back later", and a refused tap
+  costs no Mana.
 - At `tapsToExhaust` total taps the cell becomes **exhausted**:
   `exhaustedUntil = now + recoverySeconds`, taps reset. While exhausted it can't
   be tapped or worked, and shows its exhausted visual (Forest → stump 🪵,
@@ -237,6 +248,24 @@ game). Changes:
 4. `feat(render/ui):` worker rendering, exhaustion visuals, influence outline,
    card/menu changes, tap-chain rework.
 5. `docs:` update README deviations; `chore:` version bump.
+
+## Interactions added 2026-09-02
+
+Exhaustion stops being a hard ceiling and becomes a lever
+(see [`magic.md`](magic.md)):
+
+- The **Verdant Seal** artifact's passive cuts `recoverySeconds` by 25% while
+  attuned; its active, **Bloom**, clears `exhaustedUntil` outright on every
+  resource cell within a radius.
+- The **Foreman's Sigil**'s active, **Haste**, doubles worker yield for 60
+  minutes — the fix for workers delivering ~6 units/min against a tapper's 300.
+- The **Wanderer's Compass**'s active, **Beckon**, chooses where a finite feature
+  respawns instead of letting §1's deterministic hash pick an adjacent cell.
+
+All three reach the sim through the modifier layer and the `effectiveX` helpers,
+so none of them changes the rules in §1–§3 — they change the numbers those rules
+read. The TODO at `src/sim/upgrades.ts:52-54` (the dropped QuickHands upgrade)
+is resolved the same way: an `autoTapCooldown` modifier stat exists for it.
 
 ## 10. Out of scope (explicitly)
 

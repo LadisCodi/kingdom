@@ -3,23 +3,33 @@
 import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { enqueueBuild } from '../src/sim/commands';
-import { RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER } from '../src/sim/data/definitions';
-import { placementBlock } from '../src/sim/districts';
 import {
-  buySlot, isTechComplete, slotGemCost, startTech, techSlots,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
+} from '../src/sim/data/definitions';
+import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
+import {
+  anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
+  startTech, techCost, techSlots, techUnlocks,
 } from '../src/sim/research';
+import { edgeCells } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet } from '../src/sim/state';
-import { buyUpgrade } from '../src/sim/upgrades';
-import { completeTech, freshGame, fund, map, T0, tickAt } from './helpers';
+import { getWallet, type TechId, type UpgradeId } from '../src/sim/state';
+import { buyUpgrade, canBuyUpgrade } from '../src/sim/upgrades';
+import {
+  addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0, tickAt,
+} from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('technology basics', () => {
-  it('the farming chain: Agriculture unlocks FarmLands, Farming unlocks the Farm', () => {
+  // Docs/onboarding.md step 9: ONE research opens the plots and the Farm that
+  // works them. Splitting them across two techs put a second research between
+  // "tap this for Food" and "stop tapping this for Food", which is the beat
+  // the tutorial is actually built around. Farming now buys the Farm's level 2.
+  it('the farming chain: Agriculture unlocks crop plots AND the Farm', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Knowledge: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement'); // needs Agriculture
@@ -36,46 +46,63 @@ describe('technology basics', () => {
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
     expect(startTech(state, 'Agriculture', T0 + durationMs)).toBe('AlreadyDone');
 
-    // Crop plots open up; the Farm still needs the follow-up tech.
+    // Both open at once — no second research between tapping a plot and
+    // automating it.
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe(null);
-    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
-    completeTech(state, 'Farming');
+    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe(null);
     expect(enqueueBuild(state, map, 'Farm', FARM_CELL)).toBe('Started');
+    // Farming is what the Farm's second level costs.
+    expect(requiredTechForLevel('Farm', 2)).toBe('Farming');
   });
 
   it('gates units: every unit has its technology (Warrior, Archery)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 100 });
+    addAllTrainers(state);
     expect(trainUnit(state, 'Warrior')).toBe('TechRequired');
     completeTech(state, 'Warrior');
-    expect(trainUnit(state, 'Warrior')).toBe('Trained');
+    expect(trainUnit(state, 'Warrior')).toBe('Queued');
     expect(trainUnit(state, 'Archer')).toBe('TechRequired');
     completeTech(state, 'Archery');
-    expect(trainUnit(state, 'Archer')).toBe('Trained');
+    expect(trainUnit(state, 'Archer')).toBe('Queued');
   });
 
   it('the requires tree: Cavalry is blocked until Warrior is done', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
     completeTech(state, 'Warrior');
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
   });
 
-  it('costs are paid up front', () => {
+  // CLAIM: research is bought with Knowledge out of the KINGDOM purse, up
+  // front, and it never touches the city's money. That is what makes the tree
+  // a question about how far you have explored rather than how much you have
+  // stockpiled — and it is why a city reset cannot cost you a technology.
+  it('costs are paid up front, in Knowledge, from the kingdom purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500 });
+    fund(state, { Gold: 1000, Wood: 500, Knowledge: 100 });
     completeTech(state, 'Forestry');
-    startTech(state, 'Sailing', T0); // 150 Gold + 30 Wood
-    expect(state.city.wallet.Gold).toBe(1000 - 150);
-    expect(state.city.wallet.Wood).toBe(500 - 30);
+    completeTech(state, 'Cartography'); // the exploration branch heads here now
+    expect(startTech(state, 'Sailing', T0)).toBe('Started');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(100 - techCost('Sailing'));
+    expect(state.city.wallet.Gold).toBe(1000); // the city paid nothing
+    expect(state.city.wallet.Wood).toBe(500);
+  });
+
+  it('refuses a technology the kingdom cannot pay for, however rich the city', () => {
+    const state = freshGame();
+    fund(state, { Gold: 999_999, Wood: 999_999, Knowledge: techCost('Forestry') - 1 });
+    expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
+    fund(state, { Knowledge: techCost('Forestry') });
+    expect(startTech(state, 'Forestry', T0)).toBe('Started');
   });
 });
 
 describe('research slots', () => {
   it('base slot limits concurrency; a gem-bought slot lifts it', () => {
     const state = freshGame(); // 10 Gems
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
@@ -104,7 +131,7 @@ describe('research slots', () => {
   it('two active technologies complete independently, in time order', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    fund(state, { Knowledge: 500 });
     completeTech(state, 'Forestry');
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0); // 60s
@@ -122,7 +149,7 @@ describe('save round-trip', () => {
   it('restores completed techs, active researches, slots and upgrade levels', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Gold: 10_000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 10_000, Wood: 500, Food: 500, Knowledge: 500 });
     completeTech(state, 'Forestry');
     completeTech(state, 'Agriculture');
     buySlot(state);
@@ -146,22 +173,136 @@ describe('tree layout (layout is content)', () => {
     expect(new Set(nodes.map((n) => `${n.x},${n.y}`)).size).toBe(nodes.length);
   });
 
-  it('no H-then-V connector elbows on or crosses another node', () => {
+  // Reads the SAME route the renderer draws (src/ui/research/layout.ts)
+  // rather than a hand-copied description of it, so a change to the routing
+  // updates both at once instead of leaving this quietly asserting fiction.
+  it('edgeCells walks the route it claims to', () => {
+    // Same row: everything strictly between the endpoints.
+    expect(edgeCells({ x: 0, y: 0 }, { x: 3, y: 0 }))
+      .toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }]);
+    // Elbowed: horizontal first, so the corner is at (to.x, from.y) and IS
+    // reported — a node sitting there is exactly the failure to catch.
+    expect(edgeCells({ x: 0, y: 0 }, { x: 2, y: 2 }))
+      .toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }]);
+    // Adjacent nodes have nothing in between.
+    expect(edgeCells({ x: 0, y: 0 }, { x: 1, y: 0 })).toEqual([]);
+  });
+
+  it('no connector passes through an unrelated node', () => {
     for (const id of TECH_ORDER) {
       const to = TECHNOLOGIES[id].node;
       for (const req of TECHNOLOGIES[id].requires) {
         const from = TECHNOLOGIES[req].node;
-        // Horizontal leg at from.y, then vertical leg at to.x (the renderer's route).
-        for (let x = Math.min(from.x, to.x) + 1; x < Math.max(from.x, to.x); x++) {
-          expect(at(x, from.y)?.id).toBeUndefined();
-        }
-        for (let y = Math.min(from.y, to.y) + 1; y < Math.max(from.y, to.y); y++) {
-          expect(at(to.x, y)?.id).toBeUndefined();
-        }
-        if (to.x !== from.x && to.y !== from.y) {
-          expect(at(to.x, from.y)?.id).toBeUndefined(); // the elbow corner
+        for (const cell of edgeCells(from, to)) {
+          const blocker = at(cell.x, cell.y);
+          expect(blocker?.id, `${req} → ${id} runs through ${blocker?.id}`).toBeUndefined();
         }
       }
     }
+  });
+});
+
+// What a technology gives you. The completion banners have always derived
+// this after the fact; the research screen needs the same list BEFORE the
+// player commits, so it lives in one place that cannot drift from the gates.
+describe('techUnlocks', () => {
+  it('reports exactly what the gates check, and nothing else', () => {
+    for (const id of TECH_ORDER) {
+      for (const u of techUnlocks(id)) {
+        if (u.kind === 'district') expect(DISTRICTS[u.id].requiredTech).toBe(id);
+        if (u.kind === 'unit') expect(UNITS[u.id].requiredTech).toBe(id);
+        if (u.kind === 'upgrade') expect(UPGRADES[u.id].requiredTech).toBe(id);
+        if (u.kind === 'districtLevel') {
+          // A gate at index n unlocks level n+2 (the list is 0-indexed by level-1).
+          expect(DISTRICTS[u.id].requiredTechPerLevel[u.level - 2]).toBe(id);
+        }
+      }
+    }
+  });
+
+  it('leaves nothing gated behind — every gate is announced by its tech', () => {
+    const announced = new Set(
+      TECH_ORDER.flatMap((id) => techUnlocks(id).map((u) => `${u.kind}:${u.id}`)),
+    );
+    for (const def of Object.values(DISTRICTS)) {
+      if (def.requiredTech !== null) expect(announced).toContain(`district:${def.id}`);
+    }
+    for (const unit of Object.values(UNITS)) {
+      if (unit.requiredTech !== null) expect(announced).toContain(`unit:${unit.id}`);
+    }
+    for (const up of Object.values(UPGRADES)) {
+      if (up.requiredTech !== null) expect(announced).toContain(`upgrade:${up.id}`);
+    }
+  });
+
+  it('orders districts before units, so the banner sequence is unchanged', () => {
+    for (const id of TECH_ORDER) {
+      const kinds = techUnlocks(id).map((u) => u.kind);
+      // No findLastIndex — the tsconfig targets ES2022.
+      let lastDistrict = -1;
+      kinds.forEach((k, i) => { if (k.startsWith('district')) lastDistrict = i; });
+      const firstUnit = kinds.indexOf('unit');
+      if (lastDistrict !== -1 && firstUnit !== -1) expect(lastDistrict).toBeLessThan(firstUnit);
+    }
+  });
+
+  it('a tech that unlocks nothing returns an empty list', () => {
+    const barren = TECH_ORDER.filter((id) => techUnlocks(id).length === 0);
+    expect(barren.length).toBeLessThan(TECH_ORDER.length); // sanity: not all barren
+  });
+});
+
+// The CTA and the node dots (Docs/art/ui-menus-redesign.md §6.7).
+//
+// The claim they protect is that a lit tab never lies: it means the screen
+// behind it has something the player can press THIS SECOND. `canStartTech`
+// and `canBuyUpgrade` are the same gates the commands check, which is what
+// stops the light and the button drifting apart.
+describe('what the player can actually act on', () => {
+  it('agrees with startTech, gate for gate', () => {
+    const state = freshGame();
+    const id: TechId = 'Forestry';
+    // Broke: prerequisites fine, cost not.
+    expect(canStartTech(state, id)).toBe(false);
+    fund(state, TECHNOLOGIES[id].cost);
+    expect(canStartTech(state, id)).toBe(true);
+    expect(startTech(state, id, T0)).toBe('Started');
+    // Running is not startable, and it has taken the only slot.
+    expect(canStartTech(state, id)).toBe(false);
+    expect(startTech(state, id, T0)).toBe('AlreadyActive');
+  });
+
+  it('goes dark when every slot is busy, even with the money', () => {
+    const state = freshGame();
+    fund(state, { Knowledge: 99_999 });
+    expect(anyResearchActionable(state)).toBe(true);
+    // Fill every slot: nothing is startable even though everything is paid for.
+    while (state.research.active.length < techSlots(state)) {
+      const next = TECH_ORDER.find((t) => canStartTech(state, t));
+      expect(next).toBeDefined();
+      startTech(state, next!, T0);
+    }
+    expect(anyResearchActionable(state)).toBe(false);
+  });
+
+  it('agrees with buyUpgrade, gate for gate', () => {
+    const state = freshGame();
+    const id: UpgradeId = 'TapPower'; // requires Forestry
+    fund(state, { Gold: 99_999 });
+    expect(canBuyUpgrade(state, id)).toBe(false); // tech not done
+    completeTech(state, 'Forestry');
+    expect(canBuyUpgrade(state, id)).toBe(true);
+    expect(buyUpgrade(state, id)).toBe('Purchased');
+
+    // Maxed is not actionable, however rich you are.
+    state.upgrades[id] = UPGRADES[id].maxLevel;
+    expect(canBuyUpgrade(state, id)).toBe(false);
+  });
+
+  it('lights the presenter CTA only when something is pressable', () => {
+    const game = freshPresenter(freshGame());
+    expect(game.researchCtaLit()).toBe(false); // broke at the start
+    fund(game.state, TECHNOLOGIES.Forestry.cost);
+    expect(game.researchCtaLit()).toBe(true);
   });
 });

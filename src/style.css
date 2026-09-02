@@ -1,6 +1,20 @@
+/* The frame, and the last few things the kit has not absorbed.
+ *
+ * This file was 250 lines of slate-blue chrome. What remains is the app
+ * frame itself, the mount points, and the two affordances that are not
+ * screen-specific: the quest hint arrow and the ?dev bar. Everything else
+ * lives in src/ui/styles/, screen by screen. */
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; overflow: hidden; background: #05070b; }
-body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-select: none; -webkit-user-select: none; display: flex; justify-content: center; }
+html, body { height: 100%; overflow: hidden; background: #14100c; }
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  justify-content: center;
+}
 
 /* Portrait phone frame: never wider than 9:16 of the viewport height, so
    desktop gets pillarboxed like the mobile target; on a real phone the cap
@@ -9,7 +23,7 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
 #app {
   position: relative; width: 100%; height: 100%; overflow: hidden;
   max-width: calc(100vh * 9 / 16);
-  background: #10151c; box-shadow: 0 0 0 1px #2a3442;
+  background: #10151c; box-shadow: 0 0 0 1px var(--wood-dark);
 }
 
 /* Canvas is a replaced element: inset alone doesn't stretch it, and without a
@@ -19,232 +33,87 @@ body { font-family: system-ui, -apple-system, sans-serif; color: #e8e2d0; user-s
 #ui { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; }
 #ui > * { pointer-events: auto; }
 
-/* ---------- header ---------- */
-#header {
-  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
-  padding: 8px 12px; background: rgba(16, 21, 28, 0.92);
-  border-bottom: 1px solid #2a3442; font-size: 14px;
-}
-.res { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; position: relative; }
-.res b { font-variant-numeric: tabular-nums; }
-/* Breakdown tooltip for currencies with equivalents (hover, or tap to pin). */
-.res .tip {
-  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
-  min-width: 130px; padding: 8px 10px; font-size: 12px;
-  background: rgba(20, 26, 35, 0.97); border: 1px solid #3a4757; border-radius: 8px;
-}
-.res:hover .tip, .res.open .tip { display: block; }
-.res .tip .row { display: flex; justify-content: space-between; gap: 14px; }
-.res .tip .row.total { border-top: 1px solid #3a4757; margin-top: 4px; padding-top: 4px; font-weight: 600; }
-.res.shake { animation: shake 0.4s; color: #ff7a6e; }
-@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-#cloud-badge { margin-left: auto; font-size: 11px; opacity: 0.7; }
+/* ---------- mount points ---------- */
+#panel:empty { display: none; }
+/* Above the dev bar (z 4) and the overlay scrim (z 5): the placement and cast
+   bars are the bottom-most thing the player is meant to act on. */
+#panel { position: absolute; left: 0; right: 0; bottom: var(--nav-h); z-index: 6; }
 
-/* ---------- nav bar ---------- */
-#navbar {
-  margin-top: auto; display: flex; gap: 8px; justify-content: center;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: rgba(16, 21, 28, 0.92); border-top: 1px solid #2a3442;
-  position: relative; z-index: 10; /* above #overlay so Close stays reachable */
-}
-#navbar button { flex: 1; max-width: 140px; }
-#navbar button.close { max-width: 300px; }
-button {
-  font: inherit; color: inherit; background: #26303e; border: 1px solid #3a4757;
-  border-radius: 8px; padding: 9px 14px; cursor: pointer;
-}
-button:hover { background: #2f3b4c; }
-button:disabled { opacity: 0.45; cursor: default; }
-button.cta { background: #3d6f3d; border-color: #58a058; animation: pulse 1.5s infinite; }
-@keyframes pulse { 50% { filter: brightness(1.25); } }
-button.danger { background: #5a2c2c; border-color: #8a4444; }
-/* iOS-style switch: a pill track with a sliding knob; .on = right/green. */
-button.switch {
-  position: relative; flex: none; width: 52px; height: 30px; padding: 0;
-  border-radius: 15px; background: #3a4757; border-color: #4a5767;
-  transition: background 0.2s, border-color 0.2s;
-}
-button.switch:hover { filter: brightness(1.1); background: #3a4757; }
-button.switch::after {
-  content: ''; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px;
-  border-radius: 50%; background: #e8e2d0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s;
-}
-button.switch.on { background: #58a058; border-color: #6ab06a; }
-button.switch.on:hover { background: #58a058; }
-button.switch.on::after { transform: translateX(22px); }
+/* The ad surface. Above the nav (10), the settings knob (20) and the legacy
+   close knob (30): a rewarded video the player can tap around is not one. It
+   is a sibling of #overlay rather than a child BECAUSE #overlay's z-index
+   makes it a stacking context, so no descendant could ever climb past #tools.
+   `:empty` is load-bearing — #ui children are pointer-events:auto, so an
+   inset:0 element with nothing in it would swallow every tap on the map. */
+#ad:empty { display: none; }
+#ad { position: absolute; inset: 0; z-index: 200; }
 
-/* Quest hint: glow + a bouncing 👇 above the element, until interacted. */
-.hinted { box-shadow: 0 0 0 2px #ffe27a !important; position: relative; }
+/* The offer tab, flush to the right edge of the FRAME (#app), not the
+   viewport — everything inside positions against the 9:16 frame. */
+#adoffer[hidden] { display: none; }
+#adoffer {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4; /* under the overlay scrim, over the map */
+}
+
+/* The header and the nav bar outrank EVERY menu — full-screen ones included.
+   A menu is something you opened over the game, never a replacement for it:
+   your purse has to stay readable while you decide what to spend, and the
+   way out has to stay where it always is.
+
+   This used to make an exception for full-screen menus, on the reasoning that
+   they "own the view" and bring their own top bar. In practice that hid the
+   resource bar exactly when the player was reading prices — the Research
+   screen being the worst of it — so the exception is gone. The ONLY surface
+   that covers everything is the rewarded video (#ad, z 200), which has to be
+   inescapable to be worth anything.
+
+   The stack, bottom to top: map · ad-offer tab (4) · district card (6) ·
+   menus and sheets (7) · header (8) · nav bar (10) · settings knob (20) ·
+   the video (200). */
+#header { position: relative; z-index: 8; }
+
+#overlay:empty { display: none; }
+/* inset:0 and pointer-events:auto are load-bearing: this element is what
+   stops a tap beside a sheet reaching the canvas and firing a harvest. The
+   padding keeps content clear of the two bars it now sits under. */
+#overlay {
+  position: absolute; inset: 0; z-index: 7;
+  background: var(--scrim);
+  overflow-y: auto;
+  padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
+}
+
+/* ---------- the quest hint ---------- */
+/* Not screen-specific: any element the quest points at wears this. */
+.hinted { box-shadow: 0 0 0 3px var(--gold) !important; position: relative; }
 .hinted::after {
-  content: '👇'; position: absolute; top: -30px; left: 50%; margin-left: -11px;
-  font-size: 22px; z-index: 30; pointer-events: none;
+  content: '';
+  position: absolute; top: -26px; left: 50%; margin-left: -9px;
+  width: 0; height: 0; z-index: 30; pointer-events: none;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 12px solid var(--gold);
+  filter: drop-shadow(0 2px 0 var(--gold-dark));
   animation: hint-bob 0.7s ease-in-out infinite alternate;
 }
 @keyframes hint-bob { from { transform: translateY(0); } to { transform: translateY(6px); } }
 
-/* ---------- discovery banner (top, 5s) ---------- */
-#notice { position: absolute; top: 70px; left: 0; right: 0; display: flex;
-  justify-content: center; pointer-events: none; z-index: 25; }
-/* The card itself IS clickable (tap anywhere on it to dismiss). */
-.notice-card { pointer-events: auto; cursor: pointer; }
-.notice-card {
-  display: flex; align-items: center; gap: 12px; padding: 10px 18px;
-  background: rgba(20, 26, 35, 0.97); border: 1px solid #d9a536; border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  animation: notice-in 0.3s ease-out;
-}
-.notice-card.leaving { animation: notice-out 0.3s ease-in forwards; }
-.notice-card .big { font-size: 30px; }
-.notice-card .title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #d9a536; }
-.notice-card .name { font-weight: 700; }
-.notice-card .desc { font-size: 12px; opacity: 0.75; }
-@keyframes notice-in { from { transform: translateY(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes notice-out { to { transform: translateY(-16px); opacity: 0; } }
-
-/* ---------- quest tracker (under the header, main screen only) ---------- */
-/* Hidden while menus/panels are open (the widget unmounts), so no z-index games. */
-#quest { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
-.quest-card {
-  padding: 10px 12px; max-width: 320px; font-size: 13px;
-  background: rgba(20, 26, 35, 0.96); border: 1px solid #3a4757; border-radius: 10px;
-}
-.quest-card .name { font-weight: 600; margin-bottom: 2px; }
-.quest-card .action-row { margin-top: 8px; }
-
-/* ---------- bottom panel (placement / district card) ---------- */
-#panel:empty { display: none; }
-#panel {
-  position: absolute; left: 0; right: 0; bottom: 58px; max-height: 45%;
-  overflow-y: auto; background: rgba(20, 26, 35, 0.96);
-  border-top: 1px solid #3a4757; padding: 12px 14px; font-size: 14px;
-}
-#panel h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-#panel .rows, .menu .rows { display: flex; flex-direction: column; gap: 3px; margin: 8px 0; }
-#panel .row, .menu .row { display: flex; justify-content: space-between; gap: 12px; }
-#panel .delta { color: #7fd07f; }
-#panel .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-/* Action row: [description + cost ......... verb button] */
-.action-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-.action-row .info { flex: 1; min-width: 0; }
-.action-row .info .sub { font-size: 12px; opacity: 0.7; }
-.action-row button { white-space: nowrap; }
-.muted { opacity: 0.65; }
-.blocked { color: #ff9d8a; }
-.progress { position: relative; height: 14px; background: #223; border-radius: 7px; overflow: hidden; margin: 6px 0; }
-.progress .fill { position: absolute; inset: 0; background: #d9a536; transition: width 0.5s linear; }
-.progress .label { position: absolute; inset: 0; text-align: center; font-size: 10px; line-height: 14px; color: #fff; }
-
-/* ---------- overlays (build / army / research) ---------- */
-#overlay:empty { display: none; }
-#overlay {
-  position: absolute; inset: 0; background: rgba(10, 13, 18, 0.88);
-  overflow-y: auto; z-index: 5;
-  /* top clears the header (the quest tracker hides while a menu is open); bottom the navbar */
-  padding: 64px 16px calc(80px + env(safe-area-inset-bottom));
-}
-.menu { max-width: 560px; margin: 0 auto; }
-.menu h2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.menu-list { display: flex; flex-direction: column; gap: 10px; }
-.menu-row {
-  display: flex; gap: 12px; align-items: center; text-align: left;
-  background: #1c2430; border: 1px solid #313d4d; border-radius: 10px; padding: 12px;
-  width: 100%; font: inherit; color: inherit;
-}
-.menu-row .icon { font-size: 30px; width: 42px; text-align: center; }
-.menu-row .body { flex: 1; }
-.menu-row .body .name { font-weight: 600; }
-.menu-row .body .desc { font-size: 12px; opacity: 0.7; }
-.menu-row .meta { font-size: 12px; text-align: right; white-space: nowrap; }
-.menu-row.disabled { opacity: 0.5; cursor: default; }
-/* Market amount selector: what each row's Sell button queues. */
-.amount-row { display: flex; align-items: center; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
-.amount-row button { padding: 6px 10px; font-size: 13px; }
-.amount-row button.selected { background: #3d6f3d; border-color: #58a058; }
-/* Research: fullscreen drag-pannable tree + floating bottom info panel. */
-.research-screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
-.research-topbar {
-  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
-  background: rgba(16, 21, 28, 0.92); border-bottom: 1px solid #2a3442;
-}
-.research-topbar h2 { font-size: 18px; }
-.research-topbar .action-row { margin-top: 0; flex: 1; font-size: 13px; }
-/* Tech tree: pans by dragging (mouse or touch) in both axes; wheel works too. */
-.tech-tree {
-  flex: 1; overflow: auto; display: grid; background: #12181f;
-  touch-action: none; cursor: grab; scrollbar-width: none;
-}
-.tech-tree::-webkit-scrollbar { display: none; }
-/* margin auto centers the small early-game tree; a grown tree scrolls normally. */
-.tech-canvas { position: relative; margin: auto; }
-.tech-edges { position: absolute; inset: 0; }
-.tech-edge { fill: none; stroke: #3a4757; stroke-width: 3; stroke-dasharray: 4 5; }
-.tech-edge.open { stroke: #58a058; }
-.tech-edge.dim { stroke: #2a3442; }
-.tech-node {
-  position: absolute; width: 56px; height: 56px; border-radius: 12px;
-  font-size: 26px; padding: 0; display: flex; align-items: center; justify-content: center;
-  background: #1c2430; border: 2px solid #3a4757; cursor: pointer;
-}
-.tech-node.done { border-color: #58a058; }
-.tech-node.available { border-color: #d9a536; }
-.tech-node.active { border-color: #8ab4d8; }
-.tech-node.locked { opacity: 0.45; }
-.tech-node.selected { box-shadow: 0 0 0 2px #ffe27a; }
-/* Tree fog: an undiscovered tech one step ahead — anonymous, inert. */
-.tech-node.silhouette {
-  opacity: 0.4; cursor: default; color: #8b98a8; font-size: 22px;
-  border-style: dashed;
-}
-/* Upgrades: instant, leveled circles fanned below their parent tech. */
-.tech-node.upgrade { width: 36px; height: 36px; border-radius: 50%; font-size: 17px; }
-.tech-node.upgrade .lvl {
-  position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px;
-  border-radius: 50%; background: #d9a536; color: #12181f;
-  font-size: 11px; font-weight: 700; line-height: 16px; text-align: center;
-}
-.tech-node.upgrade.done .lvl { background: #58a058; }
-.tech-node .node-bar {
-  position: absolute; left: 6px; right: 6px; bottom: 4px; height: 4px;
-  background: rgba(0, 0, 0, 0.55); border-radius: 2px; overflow: hidden;
-}
-.tech-node .node-bar .fill { height: 100%; background: #8ab4d8; }
-/* Floating card above the navbar; mounted only while a node is selected. */
-.tech-info {
-  position: absolute; left: 10px; right: 10px;
-  bottom: calc(68px + env(safe-area-inset-bottom));
-  max-height: 40%; overflow-y: auto; z-index: 6;
-  background: rgba(20, 26, 35, 0.96); border: 1px solid #3a4757;
-  border-radius: 12px; padding: 12px 14px; font-size: 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-}
-.tech-info h3 { margin-bottom: 4px; }
-/* Upgrade level pips */
-.pips { display: flex; gap: 4px; margin: 4px 0; }
-.pip { width: 14px; height: 6px; border-radius: 3px; background: #2a3442; }
-.pip.on { background: #d9a536; }
-/* Market sale queue: one small card per queued resource. */
-.queue-cards { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-.queue-card {
-  display: flex; align-items: center; gap: 6px; padding: 8px 10px;
-  background: #1c2430; border: 1px solid #313d4d; border-radius: 10px; font-size: 14px;
-}
-.queue-card .big { font-size: 22px; }
-
-/* ---------- cast banner & toast ---------- */
-#toast {
-  position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
-  display: flex; flex-direction: column; gap: 6px; align-items: center; z-index: 9;
-  pointer-events: none;
-}
-.toast-msg {
-  background: rgba(20, 26, 35, 0.95); border: 1px solid #3a4757;
-  padding: 8px 16px; border-radius: 8px; font-size: 13px; animation: fadeout 2.5s forwards;
-}
 @keyframes fadeout { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- the ?dev bar ---------- */
 .cast-banner {
-  position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: calc(var(--nav-h) + 60px); left: 50%; transform: translateX(-50%);
   background: rgba(40, 40, 80, 0.95); border: 1px solid #5a5aa0;
-  padding: 10px 16px; border-radius: 10px; z-index: 6;
+  /* Below the overlay (z 5) is not enough — this bar is dev-only and must
+   * never sit on top of a sheet it is meant to help test. */
+  padding: 10px 16px; border-radius: 10px; z-index: 4; color: #e8e2d0;
   display: flex; gap: 12px; align-items: center; font-size: 14px;
+}
+.cast-banner button {
+  font: inherit; color: inherit; background: #26303e;
+  border: 1px solid #3a4757; border-radius: 8px; padding: 8px 12px; cursor: pointer;
 }

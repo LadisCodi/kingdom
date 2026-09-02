@@ -1,0 +1,184 @@
+/* The Reliquary: the pool, the sockets, the relics.
+ *
+ * Sockets come first and are large, because the SLOT is the constraint the
+ * whole magic design turns on — an empty one has to read as an opportunity,
+ * not as a gap. */
+
+.rel { display: flex; flex-direction: column; gap: 16px; }
+.rel-section { display: flex; flex-direction: column; gap: 8px; }
+
+.rel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+}
+.rel-heading-note { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* ------------------------------------------------------------- the pool --- */
+
+.rel-mana {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(96, 128, 208, 0.2), rgba(96, 128, 208, 0.06));
+  border: 2px solid rgba(72, 96, 168, 0.4);
+}
+.rel-mana-head { display: flex; align-items: center; gap: 8px; }
+.rel-mana-title { font-family: var(--font-display); font-size: var(--text-title); flex: 1; }
+.rel-mana-hint { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* The breakdown the header refuses to show. Here it IS the point. */
+.rel-breakdown { display: flex; flex-direction: column; gap: 2px; }
+.rel-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.rel-line b { font-family: var(--font-body); }
+.rel-line.is-cost b { color: var(--clay); }
+.rel-line.is-total {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 2px solid rgba(72, 96, 168, 0.35);
+  font-size: var(--text-body);
+}
+
+/* ---------------------------------------------------------- the sockets --- */
+
+.rel-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.rel-socket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 84px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 3px dashed var(--wood-dark);
+  background: rgba(92, 58, 30, 0.06);
+  color: var(--ink);
+  cursor: default;
+}
+.rel-socket.is-filled {
+  border-style: solid;
+  background: var(--parchment-warm, rgba(255, 240, 205, 0.7));
+  cursor: pointer;
+}
+.rel-socket.is-locked { opacity: 0.75; }
+.rel-socket-empty { font-size: 28px; line-height: 40px; color: var(--ink-muted); }
+.rel-socket-name {
+  font-size: var(--text-helper);
+  text-align: center;
+  line-height: 1.15;
+}
+.rel-socket-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+
+/* ----------------------------------------------------------- the relics --- */
+
+.rel-entry { display: flex; flex-direction: column; }
+.rel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid var(--wood-dark);
+  background: rgba(255, 246, 222, 0.55);
+}
+.rel-card-head { display: flex; align-items: center; gap: 10px; }
+.rel-art {
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+  border-radius: 8px;
+  background: rgba(92, 58, 30, 0.1);
+}
+.rel-art--glyph { display: grid; place-items: center; font-size: 26px; }
+.rel-art.is-locked { filter: grayscale(1) brightness(0.85); opacity: 0.65; }
+
+.rel-name { font-family: var(--font-display); font-size: var(--text-body); }
+.rel-tier {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+
+.rel-passive { display: flex; align-items: center; gap: 6px; font-size: var(--text-helper); }
+/* A relic that is underground. It has to say so, and it has to correct the
+ * upkeep line above it — carrying draws no Mana, which is the asymmetry the
+ * whole attune-or-arm trade rests on. */
+.rel-carried {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--text-helper); color: var(--gold, #d9a441); line-height: 1.3;
+}
+
+.rel-upkeep { font-size: var(--text-helper); color: var(--ink-muted); }
+
+.rel-active {
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(92, 58, 30, 0.08);
+}
+.rel-active-name { font-family: var(--font-body); font-size: var(--text-helper); }
+.rel-active-text { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.3; }
+
+.rel-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.rel-frag { display: inline-flex; align-items: center; gap: 4px; }
+.rel-locked-tag { display: inline-flex; align-items: center; }
+.rel-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+
+/* --------------------------------------------------------------- tabs ---
+ * Heroes and relics are two tabs of ONE screen because they share one set of
+ * rules. Two screens would teach the player the same lesson twice. */
+.rel-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(92, 58, 30, 0.12);
+}
+.rel-tab {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  cursor: pointer;
+}
+.rel-tab.is-active {
+  background: var(--parchment);
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.3);
+}
+
+.rel-hero-stats { display: flex; flex-wrap: wrap; gap: 10px; font-size: var(--text-helper); }
+
+/* The banner. Reachable from here rather than from the nav bar: a gacha with
+ * its own permanent tab is a different game from the one this is. */
+.rel-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(160, 120, 220, 0.2), rgba(160, 120, 220, 0.06));
+  border: 2px solid rgba(120, 90, 180, 0.45);
+}
+.rel-banner-head { display: flex; align-items: center; gap: 8px; }

@@ -344,3 +344,60 @@ balance sheet raises those caps.
 
 Overlay icons stay emoji for now: 🚧 construction, ⚠️ needs workers,
 and all UI/menu glyphs.
+
+
+---
+
+# Art wanted by the 2026-09-02 design pass
+
+Designs only — none of this is implemented, and every one keeps its emoji
+fallback until the PNG lands. All of it follows the same zoomed-out "manage from
+afar" style locked by `reference.png`, and the same normalization pipeline above.
+
+## World sprites
+
+Same treatment as the existing district and feature art.
+
+| Stem | What | Notes |
+|---|---|---|
+| `barracks_l1..l3` | Warrior training | drill post → timber hall → walled compound |
+| `spear_hall_l1..l3` | Lancer training | rack of spears → longhouse → pillared hall |
+| `shooting_grounds_l1..l3` | Archer training | straw butts → roofed range → tiered range |
+| `stables_l1..l3` | Cavalry training | paddock → stable block → stud farm |
+| `sanctum_l1..l3` | Mana capacity | standing stone → shrine → domed observatory |
+| `ruin` / `ruin_cleared` | Dungeon entrance | the single most important new sprite — see below |
+| `landmark` / `landmark_claimed` | Mana source | unclaimed reads dormant; claimed glows faintly |
+| `landmark_defended` | Contested landmark | an enemy banner or camp on it |
+
+**The ruin carries unusual weight.** The positioning audit singles out paid fog
+as the one uncontested mechanic and notes it is *filmable*; a relic pulled out
+from under the fog is the strongest creative asset the game has. The reveal of a
+ruin should be the best-looking three seconds in the build, and it is worth
+storyboarding as a UA creative before it is drawn as a tile.
+
+## Portraits — a new class of art
+
+Nothing in the current set is a character portrait, and two systems now need
+them. This is a **larger job than it looks** and should be scoped before either
+system is scheduled:
+
+- **5 heroes** — the roster in `features/heroes-and-gacha.md`. Portraits, not
+  tiles: they appear in the reliquary, the expedition sheet and the gacha reveal.
+- **4 unit types** — Warrior, Lancer, Archer, Cavalry. Already flagged as open
+  question 2 in `ui-menus-redesign.md` §8, and now firmly required: units have
+  ATK/DEF/HP and a matchup chart, so the player has to tell them apart at a
+  glance.
+- **5 artifacts** — relic icons, readable at both inventory and slot size.
+
+Portraits need a style decision the world art does not answer: the world is
+zoomed-out and impersonal by design, and a face is the opposite of that. Resolve
+that before generating a set. Note the audit's warning that the pixel style
+already pulls toward indie/core while the money audience is cozy management —
+portraits are where that tension will be most visible.
+
+## UI icons
+
+Additions to the atlas in `Docs/art/ui/` (see §3.5 of the redesign brief): mana
+drop, mana-overflow state, knowledge, fragment, artifact slot (empty / filled /
+locked), depth marker, threat-type glyphs ×4, party HP, haul pouch, and the
+matchup advantage/disadvantage arrows.

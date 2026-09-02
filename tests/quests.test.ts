@@ -2,56 +2,126 @@
 // counts), relative goals count events only while active, claims pay the
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
-import { QUESTS } from '../src/sim/data/definitions';
-import { revealTap } from '../src/sim/fog';
+import {
+  DISTRICTS, QUESTS, TECH_ORDER, type QuestDef,
+} from '../src/sim/data/definitions';
+import {
+  explorationGate, fogState, isReachable, revealCostForCell, revealKnowledge, revealTap,
+} from '../src/sim/fog';
 import { tapCell } from '../src/sim/harvest';
 import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
+import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, townhall } from '../src/sim/state';
-import { addBuilt, freshGame, fund, map, T0, tickAt } from './helpers';
+import {
+  addToWallet, coordKey, getWallet, parseCoordKey, townhall,
+  type FeatureId, type GameState,
+} from '../src/sim/state';
+import {
+  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt,
+} from './helpers';
 
-const FOREST = { x: 2, y: 2 };
 
 describe('the quest chain', () => {
-  it('ships 27 quests, starting with the tap tutorial', () => {
-    expect(QUESTS).toHaveLength(27);
-    expect(QUESTS.findIndex((q) => q.id === 'Rations'))
-      .toBe(QUESTS.findIndex((q) => q.id === 'FirstVillager') - 1); // food before mouths
-    expect(QUESTS[0]).toMatchObject({ id: 'FirstSteps', goalType: 'CollectTaps', goalAmount: 5 });
-    expect(QUESTS[1]).toMatchObject({ id: 'Timber', goalType: 'HoldResource', goalTarget: 'Wood' });
-    // The army needs no Iron anymore, but it still belongs to the TH2 era.
-    expect(QUESTS.findIndex((q) => q.id === 'FirstSoldier'))
-      .toBeGreaterThan(QUESTS.findIndex((q) => q.id === 'ProperCapital'));
+  // CLAIM: the chain IS Docs/onboarding.md, in order. That document is the
+  // authored first-user experience, and a chain that drifts from it is the
+  // one bug nobody notices until a playtest — so the order is asserted here
+  // beat by beat rather than described in prose that cannot fail.
+  it('follows the onboarding document, beat by beat', () => {
+    const at = (id: string) => {
+      const i = QUESTS.findIndex((q) => q.id === id);
+      expect(i, `quest ${id} is missing from the chain`).toBeGreaterThanOrEqual(0);
+      return i;
+    };
+    const inOrder = (...ids: string[]) => {
+      const seen = ids.map(at);
+      for (let i = 1; i < seen.length; i++) {
+        expect(seen[i], `${ids[i]} must come after ${ids[i - 1]}`).toBeGreaterThan(seen[i - 1]);
+      }
+    };
+
+    // Steps 1-3: the game opens on the FOG, not on a tap. Exploring is what
+    // pays for Forestry, and Forestry is the ONE door out of the opening —
+    // it gates the trees and the berries both, so until it lands the only
+    // thing a player can do is clear ground.
+    // The opening is a HEADING, not just fog: it names the forest, so the
+    // ground the player clears is the ground quest 3 then asks them to chop.
+    expect(QUESTS[0]).toMatchObject(
+      { id: 'FirstSteps', goalType: 'DiscoverFeature', goalTarget: 'Trees' });
+    expect(QUESTS[1]).toMatchObject({ id: 'Woodcraft', goalTarget: 'Forestry' });
+
+    inOrder(
+      'FirstSteps', 'Woodcraft',                  // 1-2  find the woods → the
+                                                  //        one research
+      'Timber', 'ARoof',                          // 3-4  chop, then a roof
+      'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
+                                                  //   a roof is what permits one
+      'TaxDay', 'Explorer',                       // 7    rent pays for more fog
+      'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
+      'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
+      'GrowingTown', 'Neighbors', 'ProperCapital',// 13-14 a House FIRST, then the
+                                                  //   citizen it makes room for
+                                                  //   (+ the Townhall, woven in)
+      'SawTeeth', 'TheSawmill', 'Crewed',         // 15-17 automate the wood
+      'FurtherAfield', 'OldStones',               // 18-19 explore, claim the shrine
+      'Mapmakers', 'Surveyors',                   // 20    exploration becomes a system
+      'Highlands', 'PutToSea',                    // 21-22 the terrain gates
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 23-24 something worth killing
+      'FirstSummon', 'IntoTheDark',               // 25-26 a hero, and the first depth
+    );
+
+    // 27+: the city economy the tutorial deferred, then the long game.
+    inOrder('IntoTheDark', 'ToMarket', 'Stoneworks', 'TheMine', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
-      { id: 'GrandCapital', goalType: 'UpgradeDistrict', goalLevel: 3, rewardGems: 10 });
+      { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
+  });
+
+  // The two goal kinds the onboarding rewrite needed and the sim did not have.
+  it('reads the new goal kinds off real state', () => {
+    const state = freshGame();
+    const surveyors = QUESTS.find((q) => q.id === 'Surveyors')!;
+    expect(questValue(state, surveyors)).toBe(0);
+    state.upgrades.Surveying = 2;
+    expect(isQuestComplete(state, surveyors)).toBe(true);
+
+    const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
+    expect(questValue(state, summon)).toBe(1); // the starting hero
+    state.heroes.owned.push('Scout');
+    expect(isQuestComplete(state, summon)).toBe(true);
   });
 
   it('gem rewards land in the PLAYER wallet', () => {
     const state = freshGame();
-    state.quests.index = QUESTS.findIndex((q) => q.id === 'GrandCapital');
+    const quest = QUESTS.find((q) => q.id === 'GrandCapital')!;
+    state.quests.index = QUESTS.indexOf(quest);
     townhall(state).level = 3;
-    const before = getWallet(state.player.wallet, 'Gems');
+    const gems = getWallet(state.player.wallet, 'Gems');
+    const gold = getWallet(state.city.wallet, 'Gold');
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(before + 10);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(300);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + quest.rewardGems);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold + quest.reward.Gold!);
   });
 
-  it('quests 1→2 overlap: tutorial taps count toward the wood stockpile', () => {
-    const state = freshGame();
-    for (let i = 0; i < 5; i++) expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
-    expect(isQuestComplete(state, activeQuest(state)!)).toBe(true); // 5 taps
+  // The tutorial's beats OVERLAP on purpose: the Wood quest 3 asks you to
+  // chop is the Wood quests 4 and 11 ask you to build with, so "collect it"
+  // and "spend it" are one action rather than two errands.
+  it('quests 3→4 overlap: the Wood you chopped is the House you build', () => {
+    const state = canGather(freshGame());
+    const timber = QUESTS.find((q) => q.id === 'Timber')!;
+    state.quests.index = QUESTS.indexOf(timber);
+    // Tapped through the raw primitive, so cell exhaustion is not the subject.
+    for (let i = 0; i < timber.goalAmount; i++) {
+      recordQuestEvent(state, { kind: 'collect', currency: 'Wood', amount: 1 });
+      addToWallet(state.city.wallet, 'Wood', 1);
+    }
+    expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(10); // reward
 
-    // Timber! is ABSOLUTE (HoldResource): the 5 wood already tapped count.
-    const timber = activeQuest(state)!;
-    expect(questValue(state, timber)).toBe(5);
-    for (let i = 0; i < 5; i++) tapCell(state, map, FOREST, T0);
-    expect(isQuestComplete(state, timber)).toBe(true);
-    expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(25);
+    expect(activeQuest(state)!.id).toBe('ARoof');
+    // Enough for the roof AND the crop plot that comes six beats later.
+    expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThanOrEqual(
+      DISTRICTS.Housing.buildCost.Wood! + DISTRICTS.FarmLands.buildCost.Wood!);
   });
 
   it('absolute goals complete instantly when the work was already done', () => {
@@ -64,6 +134,7 @@ describe('the quest chain', () => {
   it('relative goals ignore everything before activation', () => {
     const state = freshGame();
     state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay'); // CollectResource Gold 30
+    state.quests.progress = 0;
     fund(state, { Gold: 1000 }); // riches on hand — but not COLLECTED while active
     expect(questValue(state, activeQuest(state)!)).toBe(0);
     recordQuestEvent(state, { kind: 'collect', currency: 'Wood', amount: 50 }); // wrong currency
@@ -77,7 +148,7 @@ describe('the quest chain', () => {
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Explorer');
     fund(state, { Gold: 100 });
     let r: string = 'Paid';
-    while (r === 'Paid') r = revealTap(state, map, { x: 3, y: 0 });
+    while (r === 'Paid') r = revealTap(state, map, { x: 3, y: 1 }); // ungated grassland
     expect(r).toBe('Revealed');
     expect(state.quests.progress).toBe(1);
   });
@@ -93,7 +164,7 @@ describe('the quest chain', () => {
   it('progress survives the save and grows during offline replay', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 });
-    state.city.population = 1; // 30 gold/min in taxes
+    state.city.population = 1; // 30 gold/min in taxes (one of the two beds)
     state.quests.index = QUESTS.findIndex((q) => q.id === 'TaxDay');
     state.quests.progress = 7;
     tickAt(state, T0); // anchor the tax clock
@@ -107,7 +178,7 @@ describe('the quest chain', () => {
 
 describe('first-time discoveries', () => {
   it('announces a resource ONCE, ever — persisted across saves', () => {
-    const state = freshGame();
+    const state = canGather(freshGame());
     expect(state.pendingDiscoveries).toEqual([]);
     tapCell(state, map, FOREST, T0);
     expect(state.pendingDiscoveries).toEqual(['resource:Wood']);
@@ -121,10 +192,181 @@ describe('first-time discoveries', () => {
   });
 
   it('quest rewards discover their currencies too', () => {
-    const state = freshGame();
-    for (let i = 0; i < 5; i++) tapCell(state, map, FOREST, T0);
+    const state = canGather(freshGame());
+    state.quests.index = QUESTS.findIndex((q) => q.id === 'Timber');
+    state.quests.progress = QUESTS.find((q) => q.id === 'Timber')!.goalAmount;
+    tapCell(state, map, FOREST, T0);
     state.pendingDiscoveries = [];
-    expect(claimQuest(state)).toBe('Claimed'); // pays 10 Gold
-    expect(state.pendingDiscoveries).toEqual(['resource:Gold']);
+    expect(claimQuest(state)).toBe('Claimed'); // pays Gold
+    expect(state.pendingDiscoveries).toEqual(['resource:Gold', 'resource:Knowledge']);
+  });
+});
+
+// Docs/features/knowledge.md — the steady half of the research budget.
+//
+// CLAIM: quests pay Knowledge into the KINGDOM purse, and the chain pays out
+// more than the whole tech tree costs. Exploring is the half that scales;
+// this is the half that arrives on rails, so a player who follows the chain
+// is never hard-stuck behind a technology they cannot afford.
+describe('quests fund the research tree', () => {
+  it('pays its Knowledge into the kingdom purse, not the city', () => {
+    const state = freshGame();
+    const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
+    state.quests.index = explorer;
+    state.quests.progress = QUESTS[explorer].goalAmount;
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(QUESTS[explorer].rewardKnowledge);
+    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
+  });
+
+  // The chain carries MOST of the tree and deliberately not all of it: a
+  // player who follows the guided path still has to have been out on the map
+  // to finish researching, which is the whole reason the currency is earned
+  // by clearing fog. The map holds 2,902 on top of this, so the shortfall is
+  // a nudge rather than a wall.
+  it('the chain covers most of the tech tree, but never all of it', () => {
+    const chain = QUESTS.reduce((sum, q) => sum + q.rewardKnowledge, 0);
+    const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
+    expect(chain).toBe(571);
+    expect(chain).toBeGreaterThan(tree * 0.75);
+    expect(chain).toBeLessThan(tree);
+  });
+
+  /**
+   * The opening's one arithmetic dependency, and the whole game hangs off it:
+   * quest 2 DEMANDS Forestry, quest 1 is the only thing before it, and quest 1
+   * pays no Knowledge of its own. Every point of it comes from the fog quest 1
+   * makes the player clear.
+   *
+   * So the sum that has to work is: (cells quest 1 asks for) × (the CHEAPEST
+   * Knowledge any of them can pay) ≥ Forestry. Cheapest, because the player
+   * picks the cells and will pick the near ones — a floor that only holds for
+   * a considerate player is not a floor.
+   *
+   * And the Gold has to be there too: a new kingdom is handed a fixed purse
+   * (Docs/onboarding.md), and clearing those cells is the only thing it is
+   * for. This is the test that fails if anyone retunes the fog curve, the
+   * opening grant, the reveal yield, or Forestry's price in isolation.
+   */
+  it('the opening funds its own first research, at the worst frontier the player can pick', () => {
+    const state = freshGame();
+    const first = QUESTS[0];
+    expect(['DiscoverCells', 'DiscoverFeature']).toContain(first.goalType);
+
+    // Every cell the player could actually pay for right now — narrowed to
+    // the ones that COUNT, because a feature-specific opening quest cannot be
+    // finished on whatever ground happens to be cheapest.
+    const frontier = [...map.terrain.keys()]
+      .map(parseCoordKey)
+      .filter((c) => fogState(state, map, c) === 'Discovered'
+        && isReachable(state, map, c)
+        && explorationGate(map, c) === null
+        && (first.goalType !== 'DiscoverFeature'
+          || map.initialFeatures.get(coordKey(c)) === first.goalTarget));
+    expect(frontier.length, `fewer than ${first.goalAmount} cells can finish quest 1`)
+      .toBeGreaterThanOrEqual(first.goalAmount);
+
+    const cheapest = frontier
+      .map((c) => ({ k: revealKnowledge(map, c), gold: revealCostForCell(state, map, c) }))
+      .sort((a, b) => a.k - b.k)
+      .slice(0, first.goalAmount);
+
+    const knowledge = cheapest.reduce((sum, c) => sum + c.k, 0);
+    const gold = cheapest.reduce((sum, c) => sum + c.gold, 0);
+    expect(knowledge).toBeGreaterThanOrEqual(techCost('Forestry'));
+    expect(gold).toBeLessThanOrEqual(getWallet(state.city.wallet, 'Gold'));
+  });
+});
+
+// DiscoverFeature (2026-09-02): a DiscoverCells that cares WHAT it uncovered.
+//
+// "Clear five cells" can be satisfied in any direction, so it teaches the verb
+// and nothing else. "Clear two with forest on them" is a heading — it points
+// the opening at the thing the next quest is about to need, which is the
+// whole reason the goal type exists.
+describe('DiscoverFeature: revealing cells that have something on them', () => {
+  const questWith = (target: FeatureId, amount: number): QuestDef => ({
+    id: 'test', name: 'test', description: '',
+    goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
+    reward: {}, rewardGems: 0, rewardKnowledge: 0,
+  });
+
+  /** Put a made-up quest in the chain's active slot. */
+  const activate = (state: GameState, quest: QuestDef) => {
+    (QUESTS as QuestDef[]).splice(state.quests.index, 0, quest);
+    state.quests.progress = 0;
+    return () => { (QUESTS as QuestDef[]).splice(state.quests.index, 1); };
+  };
+
+  it('counts only reveals that uncovered the named feature', () => {
+    const state = freshGame();
+    const restore = activate(state, questWith('Trees', 2));
+    try {
+      recordQuestEvent(state, { kind: 'reveal', feature: null }); // bare ground
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Rocks' }); // wrong one
+      expect(state.quests.progress).toBe(0);
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      expect(state.quests.progress).toBe(1);
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
+  // The event has to carry the feature, because the reveal is the only moment
+  // that knows it: a berry bush is FINITE, so a player who drains it minutes
+  // later would otherwise retroactively un-complete the quest.
+  it('keeps the credit after the feature itself is used up', () => {
+    const state = canGather(freshGame());
+    const bush = BERRIES;
+    delete state.fog.revealed[coordKey(bush)]; // put it back under the fog
+    state.city.wallet.Gold = 500;
+
+    const restore = activate(state, questWith('BerryBush', 1));
+    try {
+      let r: string = 'Paid';
+      while (r === 'Paid') r = revealTap(state, map, bush);
+      expect(r).toBe('Revealed');
+      expect(state.quests.progress).toBe(1);
+
+      // Drain it to nothing — the bush leaves the map entirely.
+      while (tapCell(state, map, bush, T0) === 'Harvested') { /* eat it */ }
+      expect(state.features[coordKey(bush)]).toBeUndefined();
+      expect(state.quests.progress).toBe(1); // still counted
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
+  it('counts a real fog reveal, with the feature read off the cell', () => {
+    const state = freshGame();
+    state.city.wallet.Gold = 500;
+    // A Trees cell one ring out, reachable from the opening block.
+    const trees = [...map.terrain.keys()].map(parseCoordKey)
+      .filter((c) => map.initialFeatures.get(coordKey(c)) === 'Trees'
+        && fogState(state, map, c) === 'Discovered' && isReachable(state, map, c))[0];
+    expect(trees, 'no reachable forest at the opening').toBeDefined();
+
+    const restore = activate(state, questWith('Trees', 1));
+    try {
+      let r: string = 'Paid';
+      while (r === 'Paid') r = revealTap(state, map, trees);
+      expect(r).toBe('Revealed');
+      expect(state.quests.progress).toBe(1);
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
+  });
+
+  it('the plain DiscoverCells goal still counts every reveal, feature or not', () => {
+    const state = freshGame();
+    const restore = activate(state, {
+      id: 'test', name: 'test', description: '',
+      goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
+      reward: {}, rewardGems: 0, rewardKnowledge: 0,
+    });
+    try {
+      recordQuestEvent(state, { kind: 'reveal', feature: null });
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
+      expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
+    } finally { restore(); }
   });
 });

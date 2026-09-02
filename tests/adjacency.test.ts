@@ -26,7 +26,8 @@ describe('housing adjacency', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', A);
     addBuilt(state, 'Housing', B);
-    state.city.population = 4; // 2 residents each (capacity 2)
+    state.city.population = 4; // 2 residents each (an L1 house holds two)
+    state.city.wallet.Gold = 0; // measuring INCOME, not the opening grant
     // Each house: 2 × 30/min − 1 (one crowding neighbor) = 59.
     expect(houseGoldPerMinute(state, house(state, A))).toBe(59);
     expect(cityGoldPerMinute(state)).toBe(118);
@@ -42,7 +43,7 @@ describe('housing adjacency', () => {
     state.city.population = 6; // 2 residents each
     expect(houseGoldPerMinute(state, house(state, B))).toBe(58); // 60 − 2
     expect(cityGoldPerMinute(state)).toBe(59 + 58 + 59);
-    state.city.population = 4; // A: 2, B: 2, C: 0
+    state.city.population = 4; // A: 2, B: 2, C: 0 — houses fill in build order
     expect(cityGoldPerMinute(state)).toBe(59 + 58); // empty C pays nothing
   });
 

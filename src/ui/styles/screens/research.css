@@ -1,0 +1,228 @@
+/* Research (§5.9) — an illuminated manuscript, not a node graph on a grid.
+ *
+ * The TOPOLOGY is unchanged: same authored grid, same horizontal-then-
+ * vertical connectors, so the layout invariant in tests/research.test.ts
+ * still holds. Only the materials change — which is the whole point, and why
+ * the doc's "most expensive item" turned out to be mostly CSS. */
+
+/* Reserves the two bars itself rather than leaning on #overlay's padding: an
+   absolutely positioned child resolves `inset` against the containing block's
+   PADDING BOX, which INCLUDES the padding — so `inset: 0` here would sit
+   under the header and the nav bar and hide the player's purse behind its own
+   top bar. The scrim still covers the whole screen; only this panel stops
+   short of the chrome. */
+.research-screen {
+  position: absolute;
+  top: var(--hud-h);
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.research-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--wood);
+  border-bottom: var(--outline) solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 var(--wood-light);
+}
+.research-topbar h2 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  /* <h2> is bold by user-agent default and the title face has no bold. */
+  font-weight: 400;
+  color: var(--parchment);
+}
+
+/* Scholars at lecterns: a concurrency limit made picturable. */
+.res-scholars { flex: 1; display: flex; align-items: center; gap: 8px; }
+.res-desks { display: flex; gap: 4px; }
+.res-desk {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: 6px;
+  opacity: 0.55;
+}
+.res-desk.is-busy { background: var(--parchment); opacity: 1; }
+.res-desk-label { font-size: var(--text-helper); color: var(--parchment); }
+.research-topbar .k-btn { min-height: 40px; padding: 8px 14px; margin-bottom: 0; }
+
+/* Aged parchment ground, faintly stained. */
+.tech-tree {
+  flex: 1;
+  overflow: auto;
+  display: grid;
+  touch-action: none;
+  cursor: grab;
+  scrollbar-width: none;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
+    radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
+    var(--parchment);
+}
+.tech-tree::-webkit-scrollbar { display: none; }
+.tech-canvas { position: relative; margin: auto; }
+.tech-edges { position: absolute; inset: 0; }
+
+/* Inked trails; a finished one is gold-inked. */
+.tech-edge { fill: none; stroke: #a98a5c; stroke-width: 3; stroke-dasharray: 4 6; stroke-linecap: round; }
+.tech-edge.open { stroke: var(--gold-dark); stroke-dasharray: none; stroke-width: 4; }
+.tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
+
+/* Wax-seal medallions. */
+/* SHAPE carries the kind, so the two never have to be told apart by size
+ * alone: a technology is a rounded SQUARE — a thing you research once — and an
+ * upgrade is a small CIRCLE hanging off it, a thing you buy again and again.
+ * At a glance the tree now reads as trunks with beads on them. */
+.tech-node {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  font-size: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--parchment-shade);
+  border: 3px solid var(--wood-dark);
+  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
+  cursor: pointer;
+}
+.tech-node.done { background: var(--leaf); border-color: var(--leaf-dark); }
+.tech-node.available { background: var(--gold); border-color: var(--gold-dark); }
+.tech-node.active { background: var(--sky); border-color: #2f7d9c; }
+.tech-node.selected { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
+
+/* A fold in the parchment: the next tech along, not yet legible. */
+.tech-node.silhouette {
+  background: var(--parchment);
+  border-style: dashed;
+  border-color: rgba(92, 58, 30, 0.5);
+  color: rgba(92, 58, 30, 0.5);
+  box-shadow: none;
+  cursor: default;
+  font-family: var(--font-body);
+  font-size: 22px;
+}
+
+/* Upgrades: small round badges pinned below their parent. */
+.tech-node.upgrade {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 16px;
+  border-width: 2px;
+  background: var(--parchment);
+}
+.tech-node.upgrade.done { background: var(--leaf); }
+.tech-node.upgrade.available { background: var(--gold); }
+.tech-node.upgrade.locked { background: var(--locked); opacity: 1; }
+/* "You can press this, now." The tree shows a lot of nodes the player cannot
+ * act on — done, running, unaffordable, prerequisite missing — and the
+ * `available` styling only means the prerequisites are met. The dot is the
+ * difference, and it sits top-right so it never collides with the level badge
+ * at bottom-right on an upgrade node. */
+.node-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--clay);
+  border: 2px solid var(--parchment);
+  box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
+  pointer-events: none;
+}
+.tech-node.upgrade .node-dot { width: 12px; height: 12px; top: -2px; right: -2px; }
+
+.tech-node.upgrade .lvl {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--wood-dark);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 17px;
+  text-align: center;
+}
+.tech-node .node-bar {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 6px;
+  height: 4px;
+  background: rgba(60, 36, 18, 0.4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tech-node .node-bar .fill { height: 100%; background: var(--parchment); }
+
+/* The floating card, on parchment like everything else. */
+.tech-info {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
+  max-height: 46%;
+  overflow-y: auto;
+  z-index: 6;
+  padding: 12px 14px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  background: var(--parchment);
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 0 rgba(60, 36, 18, 0.3), 0 12px 26px rgba(60, 36, 18, 0.35);
+}
+.tech-info h3 { font-family: var(--font-display); font-size: 17px; font-weight: 400; margin-bottom: 4px; }
+.tech-info .muted { color: var(--ink-muted); }
+.tech-info .blocked { color: var(--clay); }
+.tech-info .delta { color: var(--leaf-dark); font-weight: 700; }
+.tech-info .rows { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
+.tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.tech-info .action-row .info { flex: 1; }
+.tech-info .progress { position: relative; height: 16px; margin: 8px 0; border-radius: 8px;
+  overflow: hidden; background: var(--parchment-shade); border: 2px solid var(--wood-dark); }
+.tech-info .progress .fill { position: absolute; inset: 0; background: var(--sky); }
+.tech-info .progress .label { position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; color: var(--ink); }
+.tech-info .pips { display: flex; gap: 4px; margin: 4px 0; }
+.tech-info .pip { width: 16px; height: 7px; border-radius: 3px;
+  background: var(--parchment-shade); border: 1px solid var(--wood-dark); }
+.tech-info .pip.on { background: var(--gold); border-color: var(--gold-dark); }
+
+/* What this technology is FOR — the line the old screen never had. */
+.res-unlocks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
+.res-unlocks-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.res-unlock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px 3px 4px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: 999px;
+}
+.res-unlock img { width: 22px; height: 22px; object-fit: contain; image-rendering: pixelated; }

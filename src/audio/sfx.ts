@@ -18,7 +18,7 @@ import questUrl from './sounds/quest_claimed.wav?url';
 import questCompleteUrl from './sounds/quest_complete.ogg?url';
 import researchDoneUrl from './sounds/research_complete.mp3?url';
 import researchUrl from './sounds/research_started.mp3?url';
-import revealDoneUrl from './sounds/reveal_done.wav?url';
+import revealDoneUrl from './sounds/reveal_done.ogg?url';
 import revealPaidUrl from './sounds/reveal_paid.ogg?url';
 import tapEmptyUrl from './sounds/tap_empty.mp3?url';
 import unitUrl from './sounds/unit_trained.mp3?url';
@@ -123,7 +123,27 @@ function warmAll(): void {
   }
 }
 
+// Like music's, this is a DEVICE preference, so it lives in its own
+// localStorage key rather than in the game save.
+const MUTE_KEY = 'kingdom.sfxMuted';
+
+export const sfxMuted = (): boolean => {
+  try {
+    return localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+export function setSfxMuted(muted: boolean): void {
+  try {
+    if (muted) localStorage.setItem(MUTE_KEY, '1');
+    else localStorage.removeItem(MUTE_KEY);
+  } catch { /* storage blocked — the toggle just won't persist */ }
+}
+
 export function playSfx(name: SfxName): void {
+  if (sfxMuted()) return;
   try {
     if (ctx === null) {
       ctx = new AudioContext();

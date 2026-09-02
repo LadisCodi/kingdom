@@ -1,11 +1,15 @@
 // Resource cells: tapping, exhaustion, lazy recovery
 // (Docs/features/harvest-loop.md §1, §4).
 
-import { DISTRICTS, FEATURES, HARVEST, type HarvestSpec } from './data/definitions';
+import { DISTRICTS, FEATURES, HARVEST, TAP, type HarvestSpec } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
+import { payMana } from './mana';
 import { recordQuestEvent } from './quests';
-import { effectiveCollectCooldownMs, effectiveTapYield } from './upgrades';
+import { isTechComplete } from './research';
+import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
 import { neighbors, type MapData } from './grid';
+import { resolve } from './modifiers';
+import { pick } from './rng';
 import {
   addToWallet, coordKey, districtAt, parseCoordKey,
   type CellHarvestState, type Coord, type GameState, type HarvestSourceId,
@@ -45,6 +49,13 @@ const cellState = (state: GameState, key: string): CellHarvestState => {
   }
   return s;
 };
+
+/** How long a cell stays exhausted, after the Verdant Seal and anything else
+ *  that shortens it. Stamped ONCE at the moment of exhaustion — a relic
+ *  attuned afterwards does not retroactively wake sleeping cells, which keeps
+ *  the timer a fact about the cell rather than a live query. */
+export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
+  Math.max(1000, Math.round(resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)));
 
 /** Lazy recovery: an elapsed exhaustedUntil resets the cell. */
 function recoverIfDue(s: CellHarvestState, now: number): void {
@@ -110,19 +121,11 @@ export function registerTap(
     delete state.harvest[key];
     return true;
   }
-  s.exhaustedUntil = now + spec.recoverySeconds * 1000;
+  s.exhaustedUntil = now + effectiveRecoveryMs(state, spec);
   return true;
 }
 
 // -------------------------------------------------------------- respawning
-
-/** Deterministic "random": the same origin + generation always picks the
- *  same candidate, so offline replay reproduces live play exactly. */
-function pickIndex(seed: string, length: number): number {
-  let h = 5381;
-  for (let i = 0; i < seed.length; i++) h = ((h << 5) + h + seed.charCodeAt(i)) >>> 0;
-  return h % length;
-}
 
 /** Place every due respawn: a random valid neighbor of the ORIGIN cell
  *  (the feature's respawn terrain — Grassland for bushes/animals, Water for
@@ -142,15 +145,38 @@ export function advanceRespawns(state: GameState, map: MapData, toTime: number):
         districtAt(state, c) === undefined;
     });
     if (candidates.length === 0) continue; // nowhere left — removed for good
-    const cell = candidates[pickIndex(`${r.origin}:${r.generation}`, candidates.length)];
+    // Keyed by the EVENT (this origin, this generation), so where a bush
+    // reappears is the same whether the window was replayed or ticked.
+    const cell = pick(state.seed, candidates, 'respawn', r.origin, r.generation);
     const key = coordKey(cell);
     state.features[key] = r.feature;
     state.featureMeta[key] = { origin: r.origin, generation: r.generation };
   }
 }
 
-export type TapCellResult = 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed';
-export type CollectTapResult = TapCellResult | 'OnCooldown';
+export type TapCellResult =
+  | 'Harvested' | 'Exhausted' | 'NotHarvestable' | 'NotRevealed' | 'TechLocked';
+export type CollectTapResult = TapCellResult | 'OnCooldown' | 'NoMana';
+
+/** Why this cell would refuse a tap, or null if it would harvest. Shared by
+ *  the raw primitive and the player's tap, so the energy charge can be decided
+ *  BEFORE anything is harvested without restating the guards. */
+export function harvestBlock(
+  state: GameState,
+  cell: Coord,
+  now: number,
+): Exclude<TapCellResult, 'Harvested'> | null {
+  if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
+  const source = harvestSourceAt(state, cell);
+  if (source === null) return 'NotHarvestable';
+  // Checked before exhaustion: "you cannot work this yet" is the useful thing
+  // to hear about a forest you have never been able to touch, and it is true
+  // whether or not somebody has already worn the cell out.
+  const gate = HARVEST[source].requiredTech;
+  if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
+  if (isExhausted(state, cell, now)) return 'Exhausted';
+  return null;
+}
 
 /** Free player tap on a resource cell: +yield to the city wallet, +1 tap.
  *  No cooldown — the raw primitive (also handy for test setup). */
@@ -161,11 +187,9 @@ export function tapCell(
   now: number,
 ): TapCellResult {
   void map;
-  if (!state.fog.revealed[coordKey(cell)]) return 'NotRevealed';
-  const source = harvestSourceAt(state, cell);
-  if (source === null) return 'NotHarvestable';
-  if (isExhausted(state, cell, now)) return 'Exhausted';
-  const spec = HARVEST[source];
+  const blocked = harvestBlock(state, cell, now);
+  if (blocked !== null) return blocked;
+  const spec = HARVEST[harvestSourceAt(state, cell)!];
   const units = tapYieldAt(state, cell);
   addToWallet(state.city.wallet, spec.currencyId, units);
   recordResourceDiscovery(state, spec.currencyId);
@@ -175,15 +199,34 @@ export function tapCell(
   return 'Harvested';
 }
 
-/** The PLAYER's collect tap: tapCell gated by the collect cooldown. The same
- *  gate paces hold-to-collect — the input layer retries and this decides. */
+/** The PLAYER's collect tap.
+ *
+ *  A deliberate tap is never gated by TIME — tapping fast is a skill. Only the
+ *  repeats a HELD pointer generates pass `autoRepeat`, and those wait out
+ *  `effectiveAutoTapCooldownMs` so holding stays the lazier, slower option.
+ *  Every successful collect stamps the clock, so starting a hold right after
+ *  a manual tap still waits one full cooldown.
+ *
+ *  It IS gated by energy: every collect costs `TAP.manaCost` Mana, the same
+ *  price a house tap pays. Mana is what lets a player accelerate any
+ *  generator by hand, so it is one budget across every tap in the game rather
+ *  than a rule that happens to apply to houses.
+ *
+ *  The cell is asked first and charged second: tapping an exhausted or
+ *  unrevealed cell costs nothing, and says the more useful thing. */
 export function collectTap(
   state: GameState,
   map: MapData,
   cell: Coord,
   now: number,
+  autoRepeat = false,
 ): CollectTapResult {
-  if (now - state.lastCollectTapAt < effectiveCollectCooldownMs(state)) return 'OnCooldown';
+  if (autoRepeat && now - state.lastCollectTapAt < effectiveAutoTapCooldownMs(state)) {
+    return 'OnCooldown';
+  }
+  const blocked = harvestBlock(state, cell, now);
+  if (blocked !== null) return blocked;
+  if (!payMana(state, TAP.manaCost)) return 'NoMana';
   const result = tapCell(state, map, cell, now);
   if (result === 'Harvested') state.lastCollectTapAt = now;
   return result;

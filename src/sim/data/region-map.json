@@ -624,7 +624,7 @@
       {
         "x": 2,
         "y": -4,
-        "id": "Grassland"
+        "id": "Mountain"
       },
       {
         "x": 3,
@@ -919,7 +919,7 @@
       {
         "x": 4,
         "y": -1,
-        "id": "Grassland"
+        "id": "Mountain"
       },
       {
         "x": 5,
@@ -1776,7 +1776,7 @@
         "id": "FishShoal"
       },
       {
-        "x": 2,
+        "x": -1,
         "y": -2,
         "id": "WildAnimals"
       },
@@ -1811,6 +1811,11 @@
         "id": "Rocks"
       },
       {
+        "x": -2,
+        "y": 1,
+        "id": "BerryBush"
+      },
+      {
         "x": 9,
         "y": 1,
         "id": "Rocks"
@@ -1821,12 +1826,7 @@
         "id": "FishShoal"
       },
       {
-        "x": 0,
-        "y": 2,
-        "id": "BerryBush"
-      },
-      {
-        "x": 2,
+        "x": 3,
         "y": 2,
         "id": "Trees"
       },
@@ -1841,17 +1841,17 @@
         "id": "Trees"
       },
       {
+        "x": 0,
+        "y": 3,
+        "id": "Trees"
+      },
+      {
         "x": 1,
         "y": 3,
         "id": "Trees"
       },
       {
         "x": 2,
-        "y": 3,
-        "id": "Trees"
-      },
-      {
-        "x": 3,
         "y": 3,
         "id": "Trees"
       },

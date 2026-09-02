@@ -1,5 +1,11 @@
 # 05 — City, Population & Workers
 
+> **FROZEN — Unity as-built snapshot, 2026-08-17.** This file documents the
+> *Unity* prototype (hex grid, Silver, generator vaults), not the web build. It is
+> kept for provenance and for the formulas the port still uses. Where it disagrees
+> with [`00-design-intent.md`](00-design-intent.md) or with `Docs/features/`, those
+> win. Do not implement from this file without checking there first.
+
 ## The city
 
 A **city** owns:
@@ -11,8 +17,8 @@ A **city** owns:
 
 Oakville's definition: name `Oakville`, Townhall district = `TownhallDistrict`,
 buildable districts in menu order = **Housing, Farm, FarmLands, Lumber**, initial
-population **2**, initial currencies **50 Silver + 5 Food**, population cost base **5**
-/ growth **1.45**, build queue capacity **1**, max army power per Townhall level
+population **2**, initial currencies **50 Silver + 5 Food**, villager prices
+authored then `× 1.45` (below), build queue capacity **1**, max army power per Townhall level
 **[10, 20, 30]**.
 
 City events that other systems react to: `CurrencyChanged`, `WorkersChanged`,
@@ -26,14 +32,25 @@ Townhall's population-tax Silver rate).
 - Population is bought **one point at a time with Food** (from the Housing/Townhall
   district card's Buy Population widget):
 
+**Authored for the opening, exponential after it** (2026-09-02). The first
+handful of villagers ARE the early game — each one is a decision the player
+makes minutes apart — and the difference between 5 Food and 20 is the
+difference between a beat and a formality. No `base × growth^n` can be made to
+say 5, 20, 100, 300 without deforming everything past it, so it does not try:
+`city.population_cost_first` lists the opening prices in order and the curve
+takes over from the LAST of them, which is what keeps the two halves meeting
+without a step.
+
 ```
-cost = round(PopulationCostBase × PopulationCostGrowth^(currentPopulation − 1))
-     = round(5 × 1.45^(pop − 1))
+cost(n) = population_cost_first[n]                            while authored
+        = round(last authored × growth^(n − lastIndex))       after that
 ```
 
-| From → to | 2→3 | 3→4 | 4→5 | 5→6 | 6→7 | 7→8 | 8→9 | 9→10 | 10→11 |
-|---|---|---|---|---|---|---|---|---|---|
-| Food cost | 7 | 11 | 15 | 22 | 32 | 46 | 67 | 98 | 142 |
+| Villager | 1st | 2nd | 3rd | 4th | 5th | 6th | 7th | 8th | 9th | 10th |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Food cost | **5** | **20** | **100** | **300** | **500** | **1000** | 1450 | 2103 | 3049 | 4421 |
+
+The bold six are authored; the rest is `× 1.45` from the last of them.
 
 - Results: `Success | AtMax | NotEnoughResources`. Buying fires `PopulationChanged`,
   which immediately raises the Townhall's Silver tax rate (5 Silver/min per point).

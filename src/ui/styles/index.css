@@ -1,0 +1,29 @@
+/* The kit's stylesheet barrel — the only CSS file main.ts imports besides
+ * the legacy style.css.
+ *
+ * One ordered list rather than a CSS import at the top of each component,
+ * because during the migration old and new rules can legitimately match the
+ * same node, so cascade order is load-bearing and must be reviewable in one
+ * place instead of being a side effect of the JS import graph. PostCSS
+ * inlines these at build time, so there is no runtime request cost.
+ *
+ * main.ts imports style.css FIRST, then this — kit rules win ties. */
+
+@import './tokens.css';
+@import './kit.css';
+@import '../assets/ui-atlas.css';
+@import './screens/hud.css';
+@import './screens/nav.css';
+@import './screens/quest.css';
+@import './screens/banner.css';
+@import './screens/build.css';
+@import './screens/placement.css';
+@import './screens/district.css';
+@import './screens/market.css';
+@import './screens/expedition.css';
+@import './screens/settings.css';
+@import './screens/welcome.css';
+@import './screens/research.css';
+@import './screens/site.css';
+@import './screens/reliquary.css';
+@import './screens/ads.css';

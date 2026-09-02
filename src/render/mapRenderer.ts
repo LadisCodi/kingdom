@@ -3,11 +3,13 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, TRAINING,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART, TRAINING,
 } from '../sim/data/definitions';
-import { fogState, revealCostForCell } from '../sim/fog';
+import { landmarkDefAt, ruinDefAt } from '../sim/sites';
+import { fogState, isReachable, revealCostForCell } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, tapFraction } from '../sim/harvest';
+import { maxPopulation } from '../sim/population';
 import { workerPosition } from '../sim/workers';
 import {
   queueProgress, remainingSeconds, coordKey, districtById, districtOccupies,
@@ -37,6 +39,34 @@ export interface MarkerLayer {
   /** Quest-hint cell: pulsing outline + bouncing arrow until interacted. */
   hintCell: Coord | null;
 }
+
+// Canvas text uses the same display face as the HUD, read from the CSS token
+// so tokens.css stays the one source of truth. Cached: this is called from
+// the render loop.
+let labelFontStack: string | null = null;
+function labelFace(): string {
+  if (labelFontStack === null) {
+    labelFontStack = getComputedStyle(document.documentElement)
+      .getPropertyValue('--font-body').trim() || 'system-ui, sans-serif';
+  }
+  return labelFontStack;
+}
+
+/**
+ * Map labels are NUMBERS and short counts, so they are set in the body face,
+ * not the title one — the same split the CSS makes.
+ *
+ * These used to snap to 4px steps because a pixel face is crisp only at whole
+ * multiples of its grid. PT Sans is an outline face with no grid to land on,
+ * so the quantising bought nothing and cost a size: a label wanting 13px got
+ * 12px, under the readability floor. Whole pixels are still worth keeping —
+ * a fractional size renders soft — but every whole pixel is now available.
+ */
+const snapPx = (px: number, floor: number): number => Math.max(floor, Math.round(px));
+
+/** Canvas font string in the body face, at a whole-pixel size. */
+const labelFont = (px: number, floor: number, bold = false): string =>
+  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${labelFace()}`;
 
 export function drawMap(
   canvas: HTMLCanvasElement,
@@ -108,6 +138,44 @@ export function drawMap(
     ctx.restore();
   };
 
+  /** A small corner tag on a site: what it still wants from the player. */
+  const drawSiteBadge = (x: number, y: number, text: string): void => {
+    const r = Math.max(6, size * 0.13);
+    ctx.beginPath();
+    ctx.arc(x + size - r - 2, y + r + 2, r, 0, Math.PI * 2);
+    ctx.fillStyle = PALETTE.siteBadge;
+    ctx.fill();
+    ctx.strokeStyle = PALETTE.siteBadgeEdge;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = PALETTE.siteBadgeInk;
+    ctx.font = labelFont(r * 1.2, 8, true);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + size - r - 2, y + r + 3);
+  };
+
+  /** A dark pill of text centred on (cx) and sitting just ABOVE (bottomY) —
+   *  the same shape the yield labels use, so a count over a building and a
+   *  yield over a cell read as the same kind of thing. */
+  const drawCountPill = (cx: number, bottomY: number, text: string): void => {
+    const fontSize = snapPx(size * 0.17, 9);
+    ctx.font = labelFont(fontSize, 9, true);
+    const padX = fontSize * 0.5;
+    const pillW = ctx.measureText(text).width + padX * 2;
+    const pillH = fontSize * 1.45;
+    const pillX = cx - pillW / 2;
+    const pillY = bottomY - pillH;
+    ctx.fillStyle = PALETTE.labelPill;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = PALETTE.label;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, cx, pillY + pillH / 2 + fontSize * 0.05);
+  };
+
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
   // separate pass — a multi-cell sprite drawn here would be overpainted by
   // the terrain fill of the following footprint cells.
@@ -145,15 +213,57 @@ export function drawMap(
         });
       }
 
+      // Landmarks and ruins: authored sites, drawn where a feature would be.
+      // They are what the fog is FOR, so they get the same weight as a forest
+      // and a badge saying whether they still want something from you.
+      //
+      // Drawn through the fog, exactly like a feature. A site you cannot see
+      // until you have already paid to stand on it is not a destination —
+      // it is a surprise, and the whole economy is built on the player
+      // choosing which direction to spend Gold in. The Discovered scrim below
+      // still dims them, so "there, and not yet yours" reads at a glance.
+      const landmark = landmarkDefAt(cell);
+      if (landmark) {
+        const art = LANDMARK_ART[landmark.kind];
+        const claimed = state.landmarks.claimed[landmark.id] === true;
+        punched(key, x, y, size, size, () => {
+          if (!drawSprite(ctx, art.sprite, x, y, size, size)) {
+            drawGlyph(ctx, art.glyph, x, y, size, size * 0.5);
+          }
+        });
+        // A star means "claimable"; a bang means "something is holding it".
+        if (!claimed) drawSiteBadge(x, y, landmark.defended ? '!' : '\u2726');
+      }
+      const ruin = ruinDefAt(cell);
+      if (ruin) {
+        punched(key, x, y, size, size, () => {
+          if (!drawSprite(ctx, ruin.sprite, x, y, size, size)) {
+            drawGlyph(ctx, ruin.glyph, x, y, size, size * 0.5);
+          }
+        });
+        // The tier alone: a bare digit reads at any zoom, and "T1" in a
+        // pixel display face is one stroke away from an arrow.
+        drawSiteBadge(x, y, String(ruin.tier));
+      }
+
       if (fog === 'Revealed') drawResourceState(cell, x, y);
 
       if (fog === 'Discovered') {
         ctx.fillStyle = PALETTE.fogDiscovered;
         ctx.fillRect(x, y, size, size);
+        // A cell you can see but cannot reach yet sits under a second layer,
+        // so the payable frontier reads as a border rather than as every
+        // pale tile on screen. The rule is spatial, so it should be visible
+        // spatially — a toast on a refused tap is the fallback, not the
+        // teacher.
+        if (!isReachable(state, map, cell)) {
+          ctx.fillStyle = PALETTE.fogDiscovered;
+          ctx.fillRect(x, y, size, size);
+        }
         // Reveal progress only — the total cost is deliberately not shown.
         const paid = state.fog.progress[key] ?? 0;
         if (paid > 0) {
-          const total = revealCostForCell(map, cell);
+          const total = revealCostForCell(state, map, cell);
           drawBar(ctx, x + size * 0.15, y + size * 0.62, size * 0.7, 5, paid / total, PALETTE.progressFill);
         }
       }
@@ -207,7 +317,7 @@ export function drawMap(
     } else {
       if (district.level > 1) {
         ctx.fillStyle = PALETTE.label;
-        ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
+        ctx.font = labelFont(size * 0.16, 8);
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(`L${district.level}`, x + fw - 3, y + 3);
@@ -219,11 +329,21 @@ export function drawMap(
       // A district that is itself a resource cell (FarmLands → Crops,
       // lived-in Housing → Taxes): wear/recovery bar.
       if (def.providesHarvestSource !== null) drawResourceState(district.location, x, y);
-      // Townhall: villager-training progress bar.
-      if (district.definitionId === 'Townhall' && state.city.training !== null) {
-        const totalMs = TRAINING.seconds * 1000;
-        const progress = Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
-        drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+      // Townhall: villager-training progress bar, and the population count.
+      //
+      // Population is drawn HERE rather than in the header because the
+      // Townhall is where villagers come from: the number and the button that
+      // changes it are the same object, so wanting more people and knowing
+      // how many you have are one glance instead of two. It also buys the
+      // header back the width the widget was costing on a phone.
+      if (district.definitionId === 'Townhall') {
+        drawCountPill(x + fw / 2, y - 2, `👥 ${state.city.population}/${maxPopulation(state)}`);
+        if (state.city.training !== null) {
+          const totalMs = TRAINING.seconds * 1000;
+          const progress =
+            Math.min(1, Math.max(0, (now - state.city.training.startedAt) / totalMs));
+          drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4, progress, PALETTE.progressFill);
+        }
       }
       // Needs-workers warning.
       if (def.maxWorkersPerLevel.length > 0 && district.assignedWorkers === 0) {
@@ -242,7 +362,7 @@ export function drawMap(
     const remaining = Math.ceil(remainingSeconds(item, now));
     drawBar(ctx, x + fw * 0.1, y + size * 0.1, fw * 0.8, 6, progress, PALETTE.progressFill);
     ctx.fillStyle = PALETTE.label;
-    ctx.font = `${Math.max(9, size * 0.15)}px system-ui`;
+    ctx.font = labelFont(size * 0.15, 8);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, x + fw / 2, y + size * 0.1 + 8);
@@ -286,7 +406,7 @@ export function drawMap(
     ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
     if (label) {
       ctx.fillStyle = markers.validColor;
-      ctx.font = `${Math.max(9, size * 0.16)}px system-ui`;
+      ctx.font = labelFont(size * 0.16, 8);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillText(label, x + size / 2, y + size - 4);
@@ -302,8 +422,8 @@ export function drawMap(
   // (the white working-area region is already drawn above).
   for (const { cell, label, tone } of markers.yieldCells) {
     const { x, y } = cellRect(cell);
-    const fontSize = Math.max(10, size * 0.18);
-    ctx.font = `bold ${fontSize}px system-ui`;
+    const fontSize = snapPx(size * 0.18, 8);
+    ctx.font = labelFont(fontSize, 8, true);
     const textWidth = ctx.measureText(label).width;
     const padX = fontSize * 0.5;
     const pillW = textWidth + padX * 2;
@@ -433,7 +553,7 @@ export function drawMap(
     const { x, y } = cellRect(f.cell);
     ctx.globalAlpha = 1 - f.t;
     ctx.fillStyle = f.color ?? PALETTE.floaterText;
-    ctx.font = `bold ${Math.max(11, size * 0.22)}px system-ui`;
+    ctx.font = labelFont(size * 0.22, 12, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(f.text, x + size / 2, y + size * 0.3 - f.t * size * 0.5);
@@ -510,6 +630,8 @@ function drawGlyph(
 ): void {
   // Emoji ink rarely matches the font's line box, so center on the measured
   // bounding box instead of relying on textBaseline: 'middle'.
+  // Stays on system-ui deliberately: this draws EMOJI, and forcing a pixel
+  // face here would break them. Becomes dead code as sprites cover every case.
   ctx.font = `${fontSize}px system-ui`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';

@@ -41,3 +41,16 @@ and a bay — crossing the water costs fog reveals, which paces each biome:
 Sprites pending (glyph fallbacks active): quarry, docks, mine, rocks,
 fish_shoal, iron_vein, fishing_boat(+_carrying) — stems listed in
 `src/render/assets/README.md`.
+
+## Iron's sink problem, resolved 2026-09-02
+
+As shipped, Iron is the most expensive resource to reach (fog distance 9–12) and
+the highest-value Market good at 6 Gold, with only two sinks totalling 35 units
+across the whole game (Cavalry ×20, Architecture ×15). Selling it was strictly
+better than using it.
+
+[`expeditions.md`](expeditions.md) and [`balancing-v2.md`](balancing-v2.md) give
+it three real ones: **Stables** (120 W + 40 S + **10 Iron**), and expedition
+**supplies** at Tier III and above (10 / 20 / 40 Iron per launch, recurring).
+Iron becomes the metal that decides how deep you can delve, which is what its
+position at the far end of the fog curve always implied.

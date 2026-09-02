@@ -9,29 +9,28 @@
 //    beyond a RESEARCHED or RESEARCHING tech show as anonymous "?"
 //    silhouettes; anything deeper is hidden.
 
-import { icon, type Game } from '../game';
+import type { Game } from '../game';
 import {
-  RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UPGRADES, UPGRADE_ORDER,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES, UPGRADE_ORDER,
 } from '../sim/data/definitions';
 import { canAfford } from '../sim/commands';
 import {
-  isTechActive, isTechComplete, requirementsMet, slotGemCost,
-  techCompletesAt, techSlots,
+  canStartTech, isTechActive, isTechComplete, requirementsMet, slotGemCost,
+  techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
-import { upgradeCost, upgradeLevel } from '../sim/upgrades';
-import { getWallet, type GameState, type TechId, type UpgradeId } from '../sim/state';
-import { button, el, formatCost, formatDuration } from './format';
+import { canBuyUpgrade, upgradeCost, upgradeLevel } from '../sim/upgrades';
+import { type GameState, type TechId, type UpgradeId } from '../sim/state';
+import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
+import { spriteUrl } from '../render/sprites';
+import { action, btn, iconEl, knob } from './kit';
+import { el, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
 type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId } | null;
 let selected: Selected = null;
-let treeScroll = { left: 0, top: 0 };
 
-const GRID = 120; // px per tree-grid step
-const NODE = 56; // tech node square size
-const UNODE = 36; // upgrade circle size
-const FAN_DY = 0.7 * GRID; // fan distance below the parent tech
-const FAN_DX = 56; // spacing between fanned circles
+// Geometry (GRID, NODE, UNODE, FAN_*) and the connector route come from
+// ./research/layout.ts, so the test reads the same route this draws.
 
 // ---- drag panning ----------------------------------------------------------
 // Pointer listeners live on window and act on the CURRENT tree element, so an
@@ -60,7 +59,6 @@ function wirePanOnce(): void {
     treeEl.scrollTop -= e.clientY - drag.y;
     drag.x = e.clientX;
     drag.y = e.clientY;
-    treeScroll = { left: treeEl.scrollLeft, top: treeEl.scrollTop };
   });
   const end = () => {
     if (drag?.moved) suppressClick = true;
@@ -101,16 +99,35 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const busy = state.research.active.length;
   const slots = techSlots(state);
 
-  // Slots line + gem purchase for the next one.
-  const slotsRow = el('div', { class: 'action-row' },
-    el('span', { class: 'info' }, `Slots: ${busy} busy / ${slots}`));
+  // Scholars at lecterns, not "Slots: 1 busy / 2". A concurrency limit is an
+  // abstraction; people at desks is something the player can picture.
+  const desks = el('div', { class: 'res-desks' });
+  for (let i = 0; i < slots; i++) {
+    desks.append(el('span', { class: `res-desk${i < busy ? ' is-busy' : ''}` },
+      iconEl(i < busy ? 'research' : 'clock', { size: 'sm' })));
+  }
+  const bar = el('div', { class: 'res-scholars' },
+    desks,
+    el('span', { class: 'res-desk-label' }, busy === 0
+      ? `${slots} ${slots === 1 ? 'scholar' : 'scholars'} idle`
+      : `${busy} of ${slots} at work`));
   if (slots < RESEARCH_SETTINGS.maxSlots) {
     const cost = slotGemCost(state);
-    const buyBtn = button('Buy', () => game.doBuySlot());
-    buyBtn.disabled = getWallet(state.player.wallet, 'Gems') < cost;
-    slotsRow.append(el('span', { class: 'muted' }, `extra slot — ${cost} ${icon('Gems')}`), buyBtn);
+    const hire = btn({
+      label: 'Hire',
+      kind: 'gem',
+      onClick: () => game.doBuySlot(),
+      // The price used to be spliced into the label, where it read as part of
+      // the verb rather than as something you pay.
+      cost: { Gems: cost },
+      have: (c) => game.effectiveWalletValue(c),
+    });
+    bar.append(hire);
   }
-  root.append(el('div', { class: 'research-topbar' }, el('h2', {}, 'Research'), slotsRow));
+  const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
+  close.setAttribute('data-own-close', '');
+  root.append(el('div', { class: 'research-topbar' },
+    el('h2', {}, 'Research'), bar, close));
 
   // ---- the tree canvas (sized to what the fog currently shows) ----
   const shown = TECH_ORDER.filter((id) => visibility(state, id) !== 'hidden');
@@ -126,8 +143,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
   if (fanned.some((id) => TECHNOLOGIES[id].node.y === yMax)) {
     height += FAN_DY + UNODE / 2 - GRID / 2 + 6;
   }
-  const cx = (id: TechId) => pad + (TECHNOLOGIES[id].node.x - x0) * GRID + GRID / 2;
-  const cy = (id: TechId) => pad + (TECHNOLOGIES[id].node.y - y0) * GRID + GRID / 2;
+  const px = (gx: number) => pad + (gx - x0) * GRID + GRID / 2;
+  const py = (gy: number) => pad + (gy - y0) * GRID + GRID / 2;
+  const cx = (id: TechId) => px(TECHNOLOGIES[id].node.x);
+  const cy = (id: TechId) => py(TECHNOLOGIES[id].node.y);
   const fanX = (id: TechId, i: number, n: number) => cx(id) + (i - (n - 1) / 2) * FAN_DX;
   const fanY = (id: TechId) => cy(id) + FAN_DY;
 
@@ -142,8 +161,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
   for (const id of shown) {
     for (const req of TECHNOLOGIES[id].requires) {
       const path = document.createElementNS(ns, 'path');
-      path.setAttribute('d',
-        `M ${cx(req)} ${cy(req)} L ${cx(id)} ${cy(req)} L ${cx(id)} ${cy(id)}`);
+      const route = edgePath(TECHNOLOGIES[req].node, TECHNOLOGIES[id].node)
+        .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x)} ${py(p.y)}`)
+        .join(' ');
+      path.setAttribute('d', route);
       path.setAttribute('class',
         visibility(state, id) === 'silhouette' ? 'tech-edge dim'
           : isTechComplete(state, req) ? 'tech-edge open' : 'tech-edge');
@@ -177,9 +198,14 @@ export function renderResearchMenu(game: Game): HTMLElement {
     const isSel = selected?.kind === 'tech' && selected.id === id;
     const hinted = game.uiHint() === `tech:${id}`;
     const node = el('button', {
-      class: `tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
+    // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
+    // the player cannot act on yet — done, running, unaffordable, missing a
+    // prerequisite — and "available" styling only means the prerequisites are
+    // met, not that you can press it. The dot is the difference.
+    if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
     if (active) {
       const completesAt = techCompletesAt(state, id)!;
       const total = TECHNOLOGIES[id].durationSeconds * 1000;
@@ -205,10 +231,12 @@ export function renderResearchMenu(game: Game): HTMLElement {
       const affordable = canAfford(state.city.wallet, { Gold: upgradeCost(u, level) });
       const cls = maxed ? 'done' : affordable ? 'available' : 'locked';
       const isSel = selected?.kind === 'upgrade' && selected.id === u;
+      const hinted = game.uiHint() === `upgrade:${u}`;
       const node = el('button', {
-        class: `tech-node upgrade ${cls}${isSel ? ' selected' : ''}`,
+        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
       }, def.glyph);
+      if (canBuyUpgrade(state, u)) node.append(el('span', { class: 'node-dot' }));
       if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));
       node.addEventListener('click', () => {
         if (consumeSuppressedClick()) return;
@@ -219,7 +247,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
     });
   }
 
-  const tree = el('div', { class: 'tech-tree' }, canvas);
+  const tree = el('div', { class: 'tech-tree', 'data-keep-scroll': '' }, canvas);
   treeEl = tree;
   wirePanOnce();
   tree.addEventListener('pointerdown', (e) => {
@@ -244,24 +272,24 @@ export function renderResearchMenu(game: Game): HTMLElement {
       game.notify();
     }
   });
-  // Preserve the pan across the per-tick re-render (wheel scrolling too).
-  tree.addEventListener('scroll', () => {
-    treeScroll = { left: tree.scrollLeft, top: tree.scrollTop };
-  });
-  requestAnimationFrame(() => {
-    // A hinted tech overrides the remembered pan — bring it into view.
-    const hint = game.uiHint();
-    const hintedTech = hint?.startsWith('tech:')
-      ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
-    if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
-      treeScroll = {
-        left: Math.max(0, cx(hintedTech) - tree.clientWidth / 2),
-        top: Math.max(0, cy(hintedTech) - tree.clientHeight / 2),
-      };
-    }
-    tree.scrollLeft = treeScroll.left;
-    tree.scrollTop = treeScroll.top;
-  });
+  // The pan across the per-tick re-render is the host's job now
+  // (data-keep-scroll above), which retires the module-level treeScroll and
+  // its rAF restore. Only the hint still needs to move the view, and it must
+  // run after the host has put the old position back.
+  const hint = game.uiHint();
+  // An upgrade circle hangs below its parent tech, so scrolling to the PARENT
+  // brings the hinted upgrade on screen with it — one code path for both.
+  const hintedTech = hint?.startsWith('tech:')
+    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null)
+    : hint?.startsWith('upgrade:')
+      ? (UPGRADES[hint.slice('upgrade:'.length) as UpgradeId]?.requiredTech ?? null)
+      : null;
+  if (hintedTech && visibility(state, hintedTech) !== 'hidden') {
+    requestAnimationFrame(() => {
+      tree.scrollLeft = Math.max(0, cx(hintedTech) - tree.clientWidth / 2);
+      tree.scrollTop = Math.max(0, cy(hintedTech) - tree.clientHeight / 2);
+    });
+  }
   root.append(tree);
 
   // ---- floating bottom info panel, only while something is selected ----
@@ -285,6 +313,33 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
         `Requires ${TECHNOLOGIES[req].name} ${isTechComplete(state, req) ? '✓' : '✗'}`))));
   }
 
+  // The single most valuable missing piece of information in the old UI: a
+  // player could not tell what a technology was FOR until it finished and a
+  // banner announced it. techUnlocks() has always known.
+  const unlocks = techUnlocks(id);
+  if (unlocks.length > 0) {
+    const row = el('div', { class: 'res-unlocks' },
+      el('span', { class: 'res-unlocks-label' }, 'Unlocks'));
+    for (const u of unlocks) {
+      if (u.kind === 'district') {
+        const url = spriteUrl(`${DISTRICTS[u.id].sprite}_l1`);
+        row.append(el('span', { class: 'res-unlock' },
+          url ? el('img', { src: url, alt: '' }) : iconEl(u.id, { size: 'sm' }),
+          DISTRICTS[u.id].name));
+      } else if (u.kind === 'districtLevel') {
+        row.append(el('span', { class: 'res-unlock' },
+          iconEl('star', { size: 'sm' }), `${DISTRICTS[u.id].name} lv${u.level}`));
+      } else if (u.kind === 'unit') {
+        row.append(el('span', { class: 'res-unlock' },
+          iconEl(u.id, { size: 'sm' }), UNITS[u.id].name));
+      } else {
+        row.append(el('span', { class: 'res-unlock' },
+          iconEl('sparkle', { size: 'sm' }), UPGRADES[u.id].name));
+      }
+    }
+    panel.append(row);
+  }
+
   if (isTechComplete(state, id)) {
     panel.append(el('div', { class: 'delta' }, 'Researched ✓'));
   } else if (isTechActive(state, id)) {
@@ -298,14 +353,20 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
     panel.append(bar);
   } else {
-    const affordable = canAfford(state.city.wallet, def.cost);
-    const startBtn = button('Start', () => game.doStartTech(id));
-    startBtn.disabled = !affordable || !requirementsMet(state, id) || busy >= slots;
-    panel.append(el('div', { class: 'action-row' },
-      el('span', { class: `info${affordable ? '' : ' blocked'}` },
-        `${formatCost(def.cost)} · ⏱ ${formatDuration(def.durationSeconds)}` +
-        (busy >= slots ? ' — all slots busy' : '')),
-      startBtn));
+    panel.append(action({
+      label: 'Start',
+      kind: 'primary',
+      onClick: () => game.doStartTech(id),
+      cost: def.cost,
+      have: (c) => game.effectiveWalletValue(c),
+      disabledReason: !requirementsMet(state, id)
+        ? 'Research what it needs first'
+        : busy >= slots
+          ? 'Every scholar is busy'
+          : undefined,
+      info: el('span', { class: 'res-time' },
+        iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
+    }));
   }
   return panel;
 }
@@ -329,13 +390,14 @@ function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
     panel.append(el('div', { class: 'delta' }, 'Maxed'));
   } else {
     const cost = upgradeCost(id, level);
-    const affordable = canAfford(state.city.wallet, { Gold: cost });
-    const buyBtn = button('Upgrade', () => game.doBuyUpgrade(id));
-    buyBtn.disabled = !affordable;
-    panel.append(el('div', { class: 'action-row' },
-      el('span', { class: `info${affordable ? '' : ' blocked'}` },
-        `${cost} ${icon('Gold')} · instant`),
-      buyBtn));
+    panel.append(action({
+      label: 'Upgrade',
+      kind: 'primary',
+      onClick: () => game.doBuyUpgrade(id),
+      cost: { Gold: cost },
+      have: (c) => game.effectiveWalletValue(c),
+      info: el('span', { class: 'res-time' }, 'instant'),
+    }));
   }
   return panel;
 }

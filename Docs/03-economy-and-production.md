@@ -1,5 +1,11 @@
 # 03 — Economy & Production
 
+> **FROZEN — Unity as-built snapshot, 2026-08-17.** This file documents the
+> *Unity* prototype (hex grid, Silver, generator vaults), not the web build. It is
+> kept for provenance and for the formulas the port still uses. Where it disagrees
+> with [`00-design-intent.md`](00-design-intent.md) or with `Docs/features/`, those
+> win. Do not implement from this file without checking there first.
+
 ## Currencies
 
 | Currency | Scope (wallet) | Capped | Start | Notes |
@@ -8,7 +14,7 @@
 | Silver | City | no | 50 | Main build/reveal currency; taxed from population by the Townhall *(web build: merged into Gold, earned at the Market)* |
 | Wood | City | no | 0 | Secondary build material |
 | Gold | Kingdom | no | 100 | No source or sink yet |
-| Knowledge | Kingdom | no | 0 | Reserved for research; no source or sink |
+| Knowledge | Kingdom | no | 0 | Buys the technology tree. Earned by clearing fog (ring N pays N), quests, ruins and delves — [`features/knowledge.md`](features/knowledge.md) |
 | Gems | Player | no | 10 | Premium; only sink is finishing queue items instantly |
 
 City starting amounts and population come from the city definition (Oakville:

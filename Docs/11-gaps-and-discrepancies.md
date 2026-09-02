@@ -1,5 +1,11 @@
 # 11 — Gaps, Stubs & Discrepancies
 
+> **FROZEN — Unity as-built snapshot, 2026-08-17.** This file documents the
+> *Unity* prototype (hex grid, Silver, generator vaults), not the web build. It is
+> kept for provenance and for the formulas the port still uses. Where it disagrees
+> with [`00-design-intent.md`](00-design-intent.md) or with `Docs/features/`, those
+> win. Do not implement from this file without checking there first.
+
 Everything here is true of the current build and worth an explicit decision before or
 during a reimplementation: keep the as-is behavior, or fix it to match intent.
 
@@ -24,7 +30,7 @@ during a reimplementation: keep the as-is behavior, or fix it to match intent.
 
 ## Stubbed / future systems (designed, not built)
 
-- **Research**: the Research screen is a placeholder; Knowledge has no source or sink.
+- ~~**Research**: the Research screen is a placeholder; Knowledge has no source or sink.~~ Closed 2026-09-02: Knowledge buys the whole technology tree and is earned by clearing fog and finishing quests ([`features/knowledge.md`](features/knowledge.md)).
 - **Region claim & domination**: `Region.DomainProgress`/`IsDominated` exist but
   nothing drives them; claim requirement classes (cost / quest / clear-with-army)
   exist unused; no combat.
