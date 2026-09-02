@@ -61,9 +61,6 @@
 }
 .q-desc { color: var(--ink-muted); margin-bottom: 7px; }
 
-.q-pips { display: flex; align-items: center; gap: 8px; font-family: var(--font-body); }
-.q-pips[hidden] { display: none; }
-
 /* Only ever on screen once the quest is done — it is the payout, so it
  * arrives with the payout. */
 .q-reward {

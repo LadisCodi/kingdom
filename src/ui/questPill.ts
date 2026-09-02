@@ -22,10 +22,7 @@ import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
 import type { CurrencyId } from '../sim/state';
 import { el } from './format';
-import { iconEl, progress, pips, currencyIcon } from './kit';
-
-/** Above this, a bar says it better than a row of stamps. */
-const PIP_LIMIT = 10;
+import { iconEl, progress, currencyIcon } from './kit';
 
 const rewardNodes = (quest: QuestDef): Node[] => {
   const parts: Node[] = [];
@@ -48,11 +45,10 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   const name = el('div', { class: 'q-name' });
   const desc = el('div', { class: 'q-desc' });
   const bar = progress('gold');
-  const stamps = el('div', { class: 'q-pips' });
   const reward = el('div', { class: 'q-reward' });
 
   const scroll = el('button', { class: 'q-scroll', type: 'button' },
-    chain, name, desc, bar.root, stamps, reward);
+    chain, name, desc, bar.root, reward);
   // Read the state at CLICK time, not at render time: a tap can land in the
   // same frame the goal completes, and claiming a quest that is not finished
   // is refused by the sim anyway — but pointing at a goal you just met would
@@ -79,12 +75,13 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       name.textContent = quest.name;
       desc.textContent = quest.description;
       reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
-      // Small, countable goals read better as stamps than as a percentage.
-      stamps.hidden = quest.goalAmount > PIP_LIMIT;
     }
-    bar.root.hidden = quest.goalAmount <= PIP_LIMIT;
-    if (quest.goalAmount > PIP_LIMIT) bar.set(value / quest.goalAmount, `${value}/${quest.goalAmount}`);
-    else stamps.replaceChildren(pips(value, quest.goalAmount), el('span', {}, `${value}/${quest.goalAmount}`));
+    // One read-out for every goal, large or small: a filled bar with the count
+    // written inside it. Small goals used to get a row of stamps instead,
+    // which meant the widget changed SHAPE from quest to quest — and the
+    // player had to re-find the number each time, on the one element whose
+    // whole job is to be scannable at a glance.
+    bar.set(value / quest.goalAmount, `${value}/${quest.goalAmount}`);
 
     scroll.classList.toggle('is-complete', complete);
     // The reward is the payout, so it arrives with the payout.

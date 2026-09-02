@@ -334,6 +334,10 @@ quest 3 of 12, so completing one has no arc.
 - One-sentence description (already good — keep the voice).
 - Progress: bar **plus** `4/10` **plus**, where the goal is countable and
   small (≤10), a row of pips/stamps that fill in.
+  *(Revised 2026-09-02: one read-out for every goal — the bar, with the count
+  written inside it. The pips meant the widget changed SHAPE from quest to
+  quest, so the player had to re-find the number each time, on the one element
+  whose whole job is to be scannable at a glance.)*
 - Chain position: `Quest 3 of 12` or twelve small notches — `questInfo()`
   already returns `index` and `total`, and it is currently unused by the UI.
 - Reward as **icons with counts**, not a sentence: the coin sprite, the
