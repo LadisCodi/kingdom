@@ -98,13 +98,24 @@ export type TrainResult =
  * Queue one unit. Cost is paid UP FRONT, exactly as villager training is, so
  * a queue can never be a way to reserve capacity you cannot afford.
  */
-export function trainUnit(state: GameState, trainee: TrainableId, now = 0): TrainResult {
+export function trainUnit(
+  state: GameState,
+  trainee: TrainableId,
+  now = 0,
+  /** Which hall to queue at. Only matters once two buildings can turn out the
+   *  same unit — the Barracks and a Spear Hall both make Lancers — and then it
+   *  matters a lot: the player pressed TRAIN on a specific card, and putting
+   *  the unit in some other building's line would be answering a different
+   *  question. Omitted, the first hall that can is used. */
+  at?: District,
+): TrainResult {
   if (trainee !== 'Villager') {
     const def = UNITS[trainee];
     if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return 'TechRequired';
   }
-  const building = trainerFor(state, trainee);
-  if (!building) return 'NoBuilding';
+  const building = at ?? trainerFor(state, trainee);
+  if (!building || !DISTRICTS[building.definitionId].trains.includes(trainee)) return 'NoBuilding';
+  if (building.state !== 'Built') return 'NoBuilding';
   // Two different ceilings, because they are two different scarcities: an army
   // is bounded by the halls that hold it, a population by the beds it sleeps
   // in. Queued trainees count against both — a queue must never be a way to

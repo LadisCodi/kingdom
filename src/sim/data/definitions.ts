@@ -336,7 +336,11 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     glyph: '🛖',
     sprite: 'barracks',
     requiredTech: 'Warrior',
-    trains: ['Warrior'],
+    // The Barracks turns out every foot soldier; each is still behind its own
+    // technology, so the row fills in as the player researches. The Spear Hall
+    // and Shooting Grounds keep their specialty as well — a second hall is a
+    // second PARALLEL line and more army cap, not a different roster.
+    trains: ['Warrior', 'Lancer', 'Archer'],
     ...districtBalance(balance.districts.Barracks),
   },
   SpearHall: {

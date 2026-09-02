@@ -227,10 +227,22 @@ building and upgrading them is what raises the cap.**
 
 | Building | Trains |
 |---|---|
-| **Barracks** | Warrior |
+| **Barracks** | Warrior · Lancer · Archer |
 | **Spear Hall** | Lancer |
 | **Shooting Grounds** | Archer |
 | **Stables** | Cavalry |
+
+**Revised 2026-09-02:** the Barracks turns out every foot soldier, and Cavalry
+keeps the Stables. `trains` is a list, so a hall can offer a choice — each unit
+still behind its own technology, so the choice fills in as the player
+researches rather than arriving all at once.
+
+That leaves the Spear Hall and Shooting Grounds as **specialists rather than
+sole sources**: a second hall is a second PARALLEL line and more army cap, not
+a different roster. Which building a unit is queued at therefore matters, and
+`trainUnit` takes the hall explicitly — the player pressed TRAIN on a specific
+card, and putting the unit in some other building's line would be answering a
+different question.
 
 Three things fall out, which is why the change is worth making:
 

@@ -98,12 +98,18 @@ export const addTrainer = (state: GameState, unitId: UnitId, location: Coord): v
   addBuilt(state, definitionId, location);
 };
 
-/** Drop the four military buildings somewhere out of the way, for tests that
- *  only care that the army exists. */
+/** Drop every military building somewhere out of the way, for tests that only
+ *  care that the army exists.
+ *
+ *  DISTINCT buildings — the Barracks turns out three of the four units, so
+ *  adding one per unit would stack three Barracks on the city and treble the
+ *  army cap. */
 export const addAllTrainers = (state: GameState): void => {
   const cells: Coord[] = [{ x: 4, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 }];
-  const units: UnitId[] = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
-  units.forEach((u, i) => addTrainer(state, u, cells[i]));
+  const halls = Object.values(DISTRICTS)
+    .filter((d) => d.armyCapPerLevel.length > 0)
+    .map((d) => d.id);
+  halls.forEach((id, i) => addBuilt(state, id, cells[i]));
 };
 
 /** Test setup: mark a technology as already researched. */
