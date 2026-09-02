@@ -296,7 +296,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       // The price used to be glued into the label with a separator. It is a
       // cost like any other, so it goes where every other cost now goes.
       cost: { Gems: gemRushCost(queueItem, now) },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
     });
     const buttons = el('div', { class: 'dc-actions' }, rush);
     if (queueItem.kind === 'build') {
@@ -331,7 +331,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       onClick: () => game.doUpgrade(district.uniqueId),
       disabledReason: reason,
       cost,
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       // What is left beside the button is the WAIT, which is a consequence
       // rather than a price and has no business inside the press-target.
       info: el('span', { class: 'dc-uptime' },

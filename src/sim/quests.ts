@@ -8,9 +8,10 @@ import {
   QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
-import { effectiveAmount, refund } from './wallet';
+import { refund } from './wallet';
 import {
-  addToWallet, type CurrencyId, type FeatureId, type GameState, type UpgradeId,
+  addToWallet, getWallet,
+  type CurrencyId, type FeatureId, type GameState, type UpgradeId,
 } from './state';
 import { upgradeLevel } from './upgrades';
 
@@ -69,7 +70,7 @@ export function questValue(state: GameState, quest: QuestDef): number {
         (d) => d.definitionId === quest.goalTarget && d.state === 'Built' &&
           d.level >= (quest.goalLevel ?? 1)).length;
     case 'HoldResource':
-      return effectiveAmount(state.city.wallet, quest.goalTarget as CurrencyId);
+      return getWallet(state.city.wallet, quest.goalTarget as CurrencyId);
     case 'ReachPopulation':
       return state.city.population;
     case 'CompleteTech':

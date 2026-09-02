@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, collectTap, effectiveAmount,
+  advance, canAfford, cancelQueueItem, changeWorkers, collectTap,
   enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
@@ -16,9 +16,8 @@ import {
   buildDurationForCell, districtCount, hasPlacementRestriction,
   maxCountForTownhallLevel, nextBuildCost, validPlacementCells,
 } from './sim/districts';
-import { resourceDiscoveryKey } from './sim/discovery';
 import {
-  explorationGate, fogState, revealCostForCell, revealKnowledge, revealTap,
+  explorationGate, fogState, revealCostForCell, revealTap,
 } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
@@ -357,11 +356,8 @@ export class Game {
         } else if (result === 'Revealed') {
           wakeIdleWorkersAt(this.state, this.now()); // new cells may be claimable
           playSfx('revealDone');
-          // Say what clearing it PAID, not just that it worked. Fog is the
-          // main source of Knowledge and the only one the player controls
-          // minute to minute — if the floater stays silent about it, the
-          // research tree looks like it funds itself.
-          this.floaters.add(cell, `+${revealKnowledge(this.map, cell)} ${icon('Knowledge')}`);
+          // No floater. Clearing a cell pays no currency any more — what it
+          // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
           this.floaters.add(cell, `-1 ${icon('Gold')}`);
@@ -1057,10 +1053,9 @@ export class Game {
           if (fogState(this.state, this.map, c) === 'Undiscovered') return false;
           const source = harvestSourceAt(this.state, c);
           if (source === null) return false;
-          // Food-valued sources (berries, meat, fish) satisfy a Food target.
-          const currency = HARVEST[source].currencyId;
-          return currency === quest.goalTarget ||
-            CURRENCIES[currency].countsAs?.currency === quest.goalTarget;
+          // Berries, game and shoals all pay Food, so a Food target points at
+          // any of them — the harvest table already resolves that.
+          return HARVEST[source].currencyId === quest.goalTarget;
         });
         if (cell) centerCell(cell);
         else centerCell(townhall(this.state).location);
@@ -1669,14 +1664,14 @@ export class Game {
     this.tapChain.dispatch(cell);
   }
 
+  /** The one accessor that knows about the three purses: Gems are the
+   *  player's, Knowledge is the kingdom's, everything else is the city's. */
   walletValue(c: CurrencyId): number {
     if (c === 'Gems') return getWallet(this.state.player.wallet, c);
     if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
     return getWallet(this.state.city.wallet, c);
   }
 
-  /** Widget value: base amount plus everything that counts as it (Food shows
-   *  Food + Berries + Meat×3). Same number every Food cost checks against. */
   // ------------------------------------------------------------------ the HUD
 
   /** The tech that first makes a currency obtainable — the requiredTech of
@@ -1695,31 +1690,27 @@ export class Game {
    * Coins the HUD shows, in order. Gems are not here — they are premium and
    * the header sets them apart.
    *
-   * Gold, Food and Wood gate the early game and are always up. Stone and
-   * Iron would otherwise be two permanent zeroes for the first hour, so they
-   * appear once their tech is researched OR the player holds any.
+   * Gold, Food and Wood gate the early game and are always up. Stone would
+   * otherwise be a permanent zero for the first hour, so it appears once its
+   * tech is researched OR the player holds any.
    *
    * The tech clause is what makes it STICKY: keyed on the balance alone, a
    * counter would vanish the moment the player spent back to zero.
+   *
+   * Knowledge is NOT here. It buys heroes and relics and nothing else, so it
+   * lives in the Reliquary next to what it pays for — like Fragments, and for
+   * the same reason. A coin on the plank is a coin you spend from anywhere.
    */
   visibleCurrencies(): CurrencyId[] {
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
-    const contextual: CurrencyId[] = ['Stone', 'Iron'];
+    const contextual: CurrencyId[] = ['Stone'];
     return [
       ...always,
       ...contextual.filter((c) => {
         const tech = this.techForCurrency(c);
         return (tech !== null && isTechComplete(this.state, tech))
-          || this.effectiveWalletValue(c) > 0;
+          || this.walletValue(c) > 0;
       }),
-      // Knowledge is what the research tree is bought with, so it has to be
-      // on the plank — a currency the player spends and cannot see is the
-      // same bug as a price hidden outside its button. It has no unlocking
-      // tech; clearing the first cell of fog is what introduces it, and the
-      // DISCOVERY flag (not the balance) keeps it on the plank afterwards so
-      // it does not vanish the moment research spends it to zero.
-      ...(this.state.discoveries[resourceDiscoveryKey('Knowledge')] === true
-        ? (['Knowledge'] as CurrencyId[]) : []),
     ];
   }
 
@@ -1778,16 +1769,10 @@ export class Game {
   shortfall(cost: Wallet): Wallet {
     const short: Wallet = {};
     for (const [c, n] of Object.entries(cost) as Array<[CurrencyId, number]>) {
-      const have = this.effectiveWalletValue(c);
+      const have = this.walletValue(c);
       if (have < n) short[c] = n - have;
     }
     return short;
-  }
-
-  effectiveWalletValue(c: CurrencyId): number {
-    if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
-    return effectiveAmount(this.state.city.wallet, c);
   }
 }
 
@@ -1805,13 +1790,11 @@ const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
 /** The discovery card for a first-collected resource. */
 function resourceBanner(currency: CurrencyId): Banner {
   const def = CURRENCIES[currency];
-  const desc = def.countsAs
-    ? `${def.countsAs.value} ${def.countsAs.currency}`
-    : currency === 'Gold'
-      ? 'Pays for everything'
-      : def.goldValue !== null
-        ? `Sells for ${def.goldValue} ${icon('Gold')}`
-        : '';
+  const desc = currency === 'Gold'
+    ? 'Pays for everything'
+    : def.goldValue !== null
+      ? `Sells for ${def.goldValue} ${icon('Gold')}`
+      : '';
   return { title: 'New resource discovered!', icon: icon(currency), name: currency, desc };
 }
 
@@ -1864,8 +1847,8 @@ export function formatAdjacency(goldPerMinute: number): string {
 
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
-    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️', Mana: '🔮',
-    Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
+    Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
+    Knowledge: '📜', Gems: '💎',
   };
   return icons[c];
 }

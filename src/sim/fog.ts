@@ -1,7 +1,7 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/02).
 
-import { DISTRICTS, FOG, KNOWLEDGE, LANDMARKS, RUINS } from './data/definitions';
-import { recordResourceDiscovery, recordSiteDiscovery } from './discovery';
+import { DISTRICTS, FOG, LANDMARKS, RUINS } from './data/definitions';
+import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
 import { effect } from './upgrades';
@@ -85,23 +85,6 @@ export function explorationGate(map: MapData, cell: Coord): TechId | null {
 }
 
 /**
- * Knowledge for clearing one cell: linear in its distance from the Townhall,
- * so ring 3 pays 3 and ring 10 pays 10.
- *
- * Linear against a reveal cost that grows steeply, which is the point — the
- * far map is where the research tree comes from, but no single cell is a
- * jackpot, so the player earns the tree by pushing the border outward rather
- * than by finding one lucky tile. Revealing the whole map pays 2,902 against
- * a 643-Knowledge tree; quests carry another 591. Exploring roughly a quarter
- * of the map funds all the research there is.
- *
- * The Townhall's own ring pays 0, which never comes up: ring 0 starts
- * revealed and this is only ever reached by paying for fog.
- */
-export const revealKnowledge = (map: MapData, cell: Coord): number =>
-  townhallDistance(map, cell) * KNOWLEDGE.perRevealRing;
-
-/**
  * How much reveal progress ONE tap on the fog buys.
  *
  * None of this makes a cell CHEAPER — the Gold a cell costs never moves. What
@@ -141,9 +124,10 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     delete state.fog.progress[key];
     delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
-    // Kingdom-scoped, like every other source of Knowledge.
-    addToWallet(state.kingdom.wallet, 'Knowledge', revealKnowledge(map, cell));
-    recordResourceDiscovery(state, 'Knowledge');
+    // Clearing fog pays no currency. What a reveal buys is MAP — resource
+    // cells, buildable ground, ruins and landmarks — against a Gold price
+    // that doubles from ring 4. Knowledge comes out of dungeons instead
+    // (sim/expeditions.ts), because heroes and relics are all it buys.
     recordQuestEvent(state, { kind: 'reveal', feature: state.features[key] ?? null });
     // Clearing a cell can bring a whole ring of new ground into view.
     recordVisibleSites(state, map);

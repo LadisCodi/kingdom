@@ -48,8 +48,11 @@
 // Mana regen IS city idle production, so it IS subject to the 8h cap.
 
 import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
-import { addToWallet, coordKey, getWallet, townhall, type GameState } from './state';
+import {
+  addToWallet, getWallet, townhall, type GameState, type RuinId,
+} from './state';
 
 /** Mana per hour. The Townhall alone — sanctuaries buy CAPACITY now, not
  *  rate, so the two dials stay genuinely different things. */
@@ -171,22 +174,29 @@ export function refillManaWithGems(state: GameState): RefillResult {
 // ------------------------------------------------------------- the Knowledge drip
 
 /**
- * Knowledge accrues from every ruin the player has FOUND, whether or not they
- * ever delve it. That is deliberate: the fog keeps paying between expeditions,
- * so the levelling arc has a floor that does not depend on having a party ready
- * — and finding a ruin is immediately worth something, before any combat exists.
+ * Knowledge accrues from every ruin the player has CLEARED — not from every
+ * ruin they have found. Discovery pays nothing; taking a dungeon to its bottom
+ * turns it into a permanent faucet.
+ *
+ * That is what keeps the currency honest now that it buys nothing but heroes
+ * and relics: the levelling arc is fed by the system it feeds. It still gives
+ * the arc a floor that survives between expeditions — five cleared ruins drip
+ * ~240 a day whether or not a party is out — but the floor has to be earned
+ * one dungeon at a time.
  *
  * Kingdom-scoped, like the currency itself, and modified by knowledgeYield (the
  * Wanderer's Compass). Same whole-units-against-an-anchor shape as taxes and
  * Mana, so all three replay identically.
  */
 export function knowledgePerHour(state: GameState): number {
-  let found = 0;
-  for (const r of Object.values(RUINS)) {
-    if (state.fog.revealed[coordKey(r.location)] === true) found += 1;
+  let cleared = 0;
+  for (const id of Object.keys(RUINS) as RuinId[]) {
+    if (state.ruinsCleared[id] === true) cleared += 1;
   }
-  if (found === 0) return 0;
-  return Math.max(0, resolve(state, 'knowledgeYield', found * KNOWLEDGE.dripPerRuinPerHour));
+  if (cleared === 0) return 0;
+  return Math.max(
+    0, resolve(state, 'knowledgeYield', cleared * KNOWLEDGE.dripPerClearedRuinPerHour),
+  );
 }
 
 export function accrueKnowledge(state: GameState, toTime: number): number {
@@ -200,5 +210,6 @@ export function accrueKnowledge(state: GameState, toTime: number): number {
   if (units <= 0) return 0;
   state.kingdom.lastKnowledgeAt += units * msPer;
   addToWallet(state.kingdom.wallet, 'Knowledge', units);
+  recordResourceDiscovery(state, 'Knowledge');
   return units;
 }

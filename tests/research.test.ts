@@ -29,7 +29,7 @@ describe('technology basics', () => {
   // the tutorial is actually built around. Farming now buys the Farm's level 2.
   it('the farming chain: Agriculture unlocks crop plots AND the Farm', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500, Knowledge: 500 });
+    fund(state, { Gold: 5000, Wood: 500, Food: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement'); // needs Agriculture
@@ -57,7 +57,7 @@ describe('technology basics', () => {
 
   it('gates units: every unit has its technology (Warrior, Archery)', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 100 });
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Stone: 300 });
     addAllTrainers(state);
     expect(trainUnit(state, 'Warrior', T0)).toBe('TechRequired');
     completeTech(state, 'Warrior');
@@ -69,32 +69,33 @@ describe('technology basics', () => {
 
   it('the requires tree: Cavalry is blocked until Warrior is done', () => {
     const state = freshGame();
-    fund(state, { Knowledge: 500 });
+    fund(state, { Gold: 5000 });
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
     completeTech(state, 'Warrior');
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
   });
 
-  // CLAIM: research is bought with Knowledge out of the KINGDOM purse, up
-  // front, and it never touches the city's money. That is what makes the tree
-  // a question about how far you have explored rather than how much you have
-  // stockpiled — and it is why a city reset cannot cost you a technology.
-  it('costs are paid up front, in Knowledge, from the kingdom purse', () => {
+  // CLAIM: research is bought with Gold out of the CITY purse, up front, and
+  // it costs nothing else. That is what puts the tree in the same contest as
+  // clearing fog and raising a building — three calls on one budget — and it
+  // is why a kingdom rich in Knowledge cannot buy a technology with it.
+  it('costs are paid up front, in Gold, from the city purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Knowledge: 100 });
+    fund(state, { Gold: 1000, Wood: 500, Knowledge: 5000 });
     completeTech(state, 'Forestry');
     completeTech(state, 'Cartography'); // the exploration branch heads here now
     expect(startTech(state, 'Sailing', T0)).toBe('Started');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(100 - techCost('Sailing'));
-    expect(state.city.wallet.Gold).toBe(1000); // the city paid nothing
-    expect(state.city.wallet.Wood).toBe(500);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - techCost('Sailing'));
+    expect(state.city.wallet.Wood).toBe(500); // no materials, only Gold
+    // Knowledge is untouched: it buys heroes and relics and nothing else.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(5000);
   });
 
-  it('refuses a technology the kingdom cannot pay for, however rich the city', () => {
+  it('refuses a technology the city cannot pay for, however much Knowledge the kingdom holds', () => {
     const state = freshGame();
-    fund(state, { Gold: 999_999, Wood: 999_999, Knowledge: techCost('Forestry') - 1 });
+    fund(state, { Gold: techCost('Forestry') - 1, Wood: 999_999, Knowledge: 999_999 });
     expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
-    fund(state, { Knowledge: techCost('Forestry') });
+    fund(state, { Gold: techCost('Forestry') });
     expect(startTech(state, 'Forestry', T0)).toBe('Started');
   });
 });
@@ -102,7 +103,7 @@ describe('technology basics', () => {
 describe('research slots', () => {
   it('base slot limits concurrency; a gem-bought slot lifts it', () => {
     const state = freshGame(); // 10 Gems
-    fund(state, { Knowledge: 500 });
+    fund(state, { Gold: 5000 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
@@ -131,7 +132,7 @@ describe('research slots', () => {
   it('two active technologies complete independently, in time order', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
-    fund(state, { Knowledge: 500 });
+    fund(state, { Gold: 5000 });
     completeTech(state, 'Forestry');
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0); // 60s
@@ -262,7 +263,10 @@ describe('what the player can actually act on', () => {
   it('agrees with startTech, gate for gate', () => {
     const state = freshGame();
     const id: TechId = 'Forestry';
-    // Broke: prerequisites fine, cost not.
+    // Broke: prerequisites fine, cost not. (A fresh city starts with enough
+    // Gold for the first research — the opening is authored that way — so
+    // this has to spend it first to reach the gate under test.)
+    fund(state, { Gold: 0 });
     expect(canStartTech(state, id)).toBe(false);
     fund(state, TECHNOLOGIES[id].cost);
     expect(canStartTech(state, id)).toBe(true);
@@ -274,7 +278,7 @@ describe('what the player can actually act on', () => {
 
   it('goes dark when every slot is busy, even with the money', () => {
     const state = freshGame();
-    fund(state, { Knowledge: 99_999 });
+    fund(state, { Gold: 99_999 });
     expect(anyResearchActionable(state)).toBe(true);
     // Fill every slot: nothing is startable even though everything is paid for.
     while (state.research.active.length < techSlots(state)) {
@@ -301,7 +305,8 @@ describe('what the player can actually act on', () => {
 
   it('lights the presenter CTA only when something is pressable', () => {
     const game = freshPresenter(freshGame());
-    expect(game.researchCtaLit()).toBe(false); // broke at the start
+    fund(game.state, { Gold: 0 }); // spent the opening purse on fog
+    expect(game.researchCtaLit()).toBe(false);
     fund(game.state, TECHNOLOGIES.Forestry.cost);
     expect(game.researchCtaLit()).toBe(true);
   });

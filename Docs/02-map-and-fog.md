@@ -121,11 +121,13 @@ cell of the city **plus all its neighbours** is revealed. With just the Townhall
   popup doesn't count).
 - Revealing a cell triggers a production recalculation for the active city (newly
   revealed Trees can join a Lumber camp's worked patch).
-- **Revealing a cell pays Knowledge equal to its ring** — distance 3 pays 3,
-  distance 10 pays 10 (`knowledge.per_reveal_ring`) — into the kingdom purse,
-  and only on the tap that finishes it. This is the main source of the
-  currency the technology tree is bought with; the floater says what the cell
-  paid. See [`features/knowledge.md`](features/knowledge.md).
+- ~~**Revealing a cell pays Knowledge equal to its ring.**~~ **Removed
+  2026-09-02.** Clearing fog pays no currency at all: what a reveal buys is
+  *ground* — resource cells, buildable land, ruins and landmarks — against a
+  Gold price that doubles from ring 4. The technology tree is bought with Gold
+  now, and Knowledge comes only out of dungeons and the gacha. There is no
+  reveal floater. See [`features/knowledge.md`](features/knowledge.md) and
+  [`features/currency-simplification.md`](features/currency-simplification.md).
 
 ### Reveal cost curve
 

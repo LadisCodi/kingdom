@@ -80,6 +80,13 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
   (`src/sim/market.ts:26-43`). The Townhall trains villagers over time
   (tap-boostable), replacing the instant population purchase. See
   [`Docs/features/economy-taxes-and-market.md`](Docs/features/economy-taxes-and-market.md).
+- **Four city coins, not six.** Berry bushes, game and shoals all pay **Food**
+  (1, 3 and 2 a tap) and an iron vein is a rich **Stone** node (3 a tap), so
+  Berries, Meat, Fish and Iron are cells rather than currencies. The wallet is
+  Gold · Food · Wood · Stone, plus Mana (the capped tap budget), Knowledge
+  (kingdom-scoped, won from dungeons, spent only on relic and hero levels) and
+  Gems. The technology tree is priced in Gold from the city purse. See
+  [`Docs/features/currency-simplification.md`](Docs/features/currency-simplification.md).
 - **Single tick driver** (the Unity build double-ticked its timer).
 - Save format v2; incompatible older saves start a fresh game.
 - Placeholder art: flat-color tiles + emoji glyphs; state-driven rendering so

@@ -7,9 +7,10 @@ import { DISTRICTS } from './data/definitions';
 import type { Modifier } from './modifiers';
 
 export type CurrencyId =
-  | 'Gold' | 'Food' | 'Wood' | 'Stone' | 'Iron' | 'Knowledge' | 'Gems'
+  | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
   | 'Mana' // the only capped currency — see sim/mana.ts
-  | 'Berries' | 'Meat' | 'Fish'; // food-valued (see CurrencyDef.countsAs)
+  | 'Knowledge' // kingdom-scoped; levels heroes and relics and nothing else
+  | 'Gems'; // player-scoped, premium
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Mine' | 'Sanctum'

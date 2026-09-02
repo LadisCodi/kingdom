@@ -30,7 +30,7 @@ during a reimplementation: keep the as-is behavior, or fix it to match intent.
 
 ## Stubbed / future systems (designed, not built)
 
-- ~~**Research**: the Research screen is a placeholder; Knowledge has no source or sink.~~ Closed 2026-09-02: Knowledge buys the whole technology tree and is earned by clearing fog and finishing quests ([`features/knowledge.md`](features/knowledge.md)).
+- ~~**Research**: the Research screen is a placeholder; Knowledge has no source or sink.~~ Closed 2026-09-02, then re-answered the same day: the technology tree is bought with **Gold** from the city purse, and Knowledge is a dungeon reward that levels relics and heroes and nothing else ([`features/knowledge.md`](features/knowledge.md), [`features/currency-simplification.md`](features/currency-simplification.md)).
 - **Region claim & domination**: `Region.DomainProgress`/`IsDominated` exist but
   nothing drives them; claim requirement classes (cost / quest / clear-with-army)
   exist unused; no combat.
@@ -45,8 +45,12 @@ during a reimplementation: keep the as-is behavior, or fix it to match intent.
 - **Builders never grow**: kingdom starts with 1 builder (max 4); no mechanic
   increases it. Combined with build-queue capacity 1, exactly one build/upgrade can be
   pending at a time in practice.
-- **Gold and Gems have no faucets**: Gold is granted once (100) and never spent; the
-  Gems "add" button in the header is a no-op.
+- ~~**Gold and Gems have no faucets**: Gold is granted once (100) and never spent; the
+  Gems "add" button in the header is a no-op.~~ Half closed: Gold now has housing
+  taxes, the Market, quests and delve hauls as faucets, and fog, buildings,
+  upgrades, units, claims and the technology tree as sinks. The Gems `+` button
+  is still a no-op (no IAP wired), though Gems have real faucets — quests, ruin
+  first-clears and the weekly Conjunction.
 
 ## Unreachable data
 

@@ -40,9 +40,10 @@ export const screenAt = (game: Game, cell: Coord): [number, number] => {
 };
 
 /**
- * Top up a purse. Routed the way `Game.effectiveWalletValue` routes reads, so
- * a test funds what it means to fund: Knowledge is KINGDOM-scoped (it buys
- * research) and Gems are the player's; everything else is the city's.
+ * Top up a purse. Routed the way `Game.walletValue` routes reads, so a test
+ * funds what it means to fund: Knowledge is KINGDOM-scoped (it levels heroes
+ * and relics) and Gems are the player's; everything else is the city's —
+ * research included, which is paid in Gold out of the city.
  */
 export const fund = (state: GameState, wallet: Record<string, number>): void => {
   const { Knowledge, Gems, ...city } = wallet;

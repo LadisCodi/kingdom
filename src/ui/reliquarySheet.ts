@@ -25,6 +25,7 @@ import {
 import { castBlock } from '../sim/casting';
 import { levelCapForTier, levelCost, tierCost } from '../sim/collection';
 import { manaRefillGemCost } from '../sim/mana';
+import { resourceDiscoveryKey } from '../sim/discovery';
 import { spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
@@ -87,10 +88,38 @@ function manaPanel(game: Game): HTMLElement {
         kind: 'gem',
         onClick: () => game.doRefillMana(),
         cost: { Gems: refillCost },
-        have: (c) => game.effectiveWalletValue(c),
+        have: (c) => game.walletValue(c),
       })
       : el('div', { class: 'rel-note' }, 'The pool is full.'),
   );
+}
+
+// ------------------------------------------------------------- the Knowledge
+
+/**
+ * The purse for this screen.
+ *
+ * Knowledge is the one currency with no coin on the plank: it buys levels for
+ * relics and heroes and nothing else, so it reads here, beside the Study
+ * buttons that spend it, the way Fragments do. A price with no purse in sight
+ * is the same bug as a purse with nothing to spend it on — this is the half
+ * that has to be here.
+ *
+ * It is hidden until the player has met it. Knowledge only ever comes out of
+ * a dungeon or a banner, so a zero row would advertise a system they have not
+ * reached yet.
+ */
+function knowledgePanel(game: Game): HTMLElement | null {
+  const held = game.walletValue('Knowledge');
+  if (held === 0 && game.state.discoveries[resourceDiscoveryKey('Knowledge')] !== true) {
+    return null;
+  }
+  return el('div', { class: 'rel-purse' },
+    iconEl('Knowledge', { size: 'lg' }),
+    el('div', { class: 'rel-purse-body' },
+      el('div', { class: 'rel-purse-title' }, 'Knowledge'),
+      el('div', { class: 'rel-purse-hint' }, 'Won from dungeons and the banner')),
+    el('b', { class: 'rel-purse-value' }, String(held)));
 }
 
 // ----------------------------------------------------------------- the slots
@@ -141,7 +170,7 @@ function slots(game: Game): HTMLElement {
       kind: 'gem',
       onClick: () => game.doBuyAttunementSlot(),
       cost: { Gems: gemCost },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
     }));
   }
   return body;
@@ -238,7 +267,7 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       // visible exactly when it could not be paid and invisible the rest of
       // the time. Inside the button it is always readable.
       cost: { Mana: def.active.manaCost },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       disabledReason: block === 'NotAttuned' ? 'Wear it first' : undefined,
     }));
   }
@@ -252,7 +281,7 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       label: 'Study',
       onClick: () => game.doLevelArtifact(id),
       cost: { Knowledge: levelCost(entry.level) },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       disabledReason: atLevelCap
         ? 'Its tier holds it back — raise it with Fragments'
         : undefined,
@@ -333,7 +362,7 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
       label: 'Train',
       onClick: () => game.doLevelHero(view.id),
       cost: { Knowledge: cost },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       disabledReason: view.entry.level >= view.levelCap
         ? 'Their tier holds them back — raise it with Fragments'
         : undefined,
@@ -402,7 +431,7 @@ function callAction(game: Game, cost: number): HTMLElement {
     kind: 'gem',
     onClick: () => game.doPull(),
     cost: cost === 0 ? undefined : { Gems: cost },
-    have: (c) => game.effectiveWalletValue(c),
+    have: (c) => game.walletValue(c),
   });
   if (game.uiHint() === 'banner') row.classList.add('hinted');
   return row;
@@ -453,8 +482,10 @@ export function renderReliquarySheet(game: Game): HTMLElement {
     ...roster.map((view) => heroCard(game, view)),
     bannerPanel(game));
 
+  const purse = knowledgePanel(game);
   const body = el('div', { class: 'rel' },
     manaPanel(game),
+    ...(purse === null ? [] : [purse]),
     slots(game),
     tabs,
     openTab === 'relics' ? relics : heroes,

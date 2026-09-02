@@ -28,6 +28,7 @@
 // argument the whole sim rests on collapses.
 
 import { CONJUNCTION_BOONS, EVENTS } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
 import { addModifier } from './modifiers';
 import { pick } from './rng';
 import {
@@ -165,6 +166,7 @@ function open(state: GameState, entry: ScheduledEntry, t: number): ScheduleEvent
     // Opening pays a lump, so a player who logs in inside the window is
     // rewarded for showing up rather than only for playing through it.
     addToWallet(state.kingdom.wallet, 'Knowledge', boon.knowledge);
+    recordResourceDiscovery(state, 'Knowledge');
     addToWallet(state.player.wallet, 'Gems', boon.gems);
     void t;
     return {

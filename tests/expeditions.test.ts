@@ -17,13 +17,16 @@ import {
 } from '../src/sim/combat';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
-import { ARMY, ARTIFACTS, DELVE, DISTRICTS, HEROES, RUINS, UNITS } from '../src/sim/data/definitions';
+import {
+  ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, RUINS, UNITS,
+} from '../src/sim/data/definitions';
 import {
   advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
   pushDeeper, supplyCost, unitSlots,
 } from '../src/sim/expeditions';
 import { artifactIsCarried } from '../src/sim/artifacts';
-import { mana, manaNetRegen, manaProduction } from '../src/sim/mana';
+import { levelCost } from '../src/sim/collection';
+import { knowledgePerHour, mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   getWallet, townhall, type ArtifactId, type GameState, type UnitId,
@@ -460,10 +463,15 @@ describe('the descent', () => {
     launchDelve(state, map, BARROW, 'Warden',
       [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
     const gems = getWallet(state.player.wallet, 'Gems');
+    const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
     advance(state, map, T0 + 86_400_000);
     expect(state.ruinsCleared[BARROW]).toBe(true);
     // The recurring Gem faucet the design needs — one per ruin, once.
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + DELVE.firstClearGems);
+    // And the lump that opens the levelling arc. Banked immediately, not on
+    // extraction: a party parked at the bottom has already earned it.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBeGreaterThanOrEqual(knowledge + DELVE.firstClearKnowledge);
 
     const report = extract(state, state.delves[0].id);
     expect(report.artifact).toBe(RUINS[BARROW].artifact);
@@ -805,5 +813,57 @@ describe('finishing a training line with gems', () => {
     expect(state.city.population).toBe(1);
     advance(state, map, T0 + 60_000);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(30); // a full minute of rent
+  });
+});
+
+// Docs/features/knowledge.md — where Knowledge actually comes from now.
+//
+// CLAIM: dungeons and the gacha, and nothing else. Clearing fog pays none
+// (tests/fog.test.ts), the early quest chain pays none (tests/quests.test.ts),
+// and the standing drip is earned one dungeon at a time rather than handed
+// out for spotting one through the fog.
+describe('Knowledge comes out of dungeons', () => {
+  it('a ruin drips nothing until it has been CLEARED', () => {
+    const state = readyToDelve();
+    // The Barrow is discovered — readyToDelve can launch into it — and still
+    // pays nothing per hour.
+    expect(knowledgePerHour(state)).toBe(0);
+    advance(state, map, T0 + 3_600_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+
+    state.ruinsCleared[BARROW] = true;
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
+  });
+
+  it('every cleared ruin adds its own hour rate, and the drip banks in whole units', () => {
+    const state = readyToDelve();
+    state.ruinsCleared[BARROW] = true;
+    state.ruinsCleared.SunkenChapel = true;
+    expect(knowledgePerHour(state)).toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+
+    state.kingdom.lastKnowledgeAt = T0;
+    advance(state, map, T0 + 3_600_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+  });
+
+  // The runway that replaces the old "the map holds more Knowledge than the
+  // tree costs" assertion in fog.test.ts. Demand is the collection; supply is
+  // what five cleared ruins pay while the player is away.
+  it('five cleared ruins carry the levelling arc on a scale of weeks', () => {
+    const state = readyToDelve();
+    for (const id of Object.keys(RUINS) as Array<keyof typeof RUINS>) {
+      state.ruinsCleared[id] = true;
+    }
+    const perDay = knowledgePerHour(state) * 24;
+    const oneCollectible = Array.from(
+      { length: COLLECTION.maxLevel - 1 },
+      (_, i) => levelCost(i + 1),
+    ).reduce((a, b) => a + b, 0);
+
+    expect(perDay).toBe(240);
+    // Meaningful progress inside a month, an endgame horizon past it.
+    expect(oneCollectible / perDay).toBeGreaterThan(7);
+    expect(oneCollectible / perDay).toBeLessThan(30);
   });
 });

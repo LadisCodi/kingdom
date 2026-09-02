@@ -120,7 +120,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       // The price used to be spliced into the label, where it read as part of
       // the verb rather than as something you pay.
       cost: { Gems: cost },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
     });
     bar.append(hire);
   }
@@ -358,7 +358,7 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       kind: 'primary',
       onClick: () => game.doStartTech(id),
       cost: def.cost,
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       disabledReason: !requirementsMet(state, id)
         ? 'Research what it needs first'
         : busy >= slots
@@ -395,7 +395,7 @@ function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
       kind: 'primary',
       onClick: () => game.doBuyUpgrade(id),
       cost: { Gold: cost },
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       info: el('span', { class: 'res-time' }, 'instant'),
     }));
   }

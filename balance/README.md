@@ -17,9 +17,9 @@ the script.
 |---|---|
 | `Districts` | One row per building: footprint, levels, workers, costs (Gold/Wood/Food/Stone/Iron columns), times, growth exponents |
 | `Units` | Army units: power, recruit costs |
-| `Harvest` | NATURAL resource cells (trees, crops, berries, animals): yield per tap, taps to exhaust, recovery, and `required_tech` — the research a player needs before they may tap it at all (blank = none; only `Forest` has one) |
-| `Currencies` | Starting amounts, caps, `primary` (header widget), `counts_as`/`unit_value` (food-valued), `gold_value` (Market instant-sell price; blank = not sellable) |
-| `Technologies` | One-time researches: `cost_knowledge` (research is paid in Knowledge and nothing else), duration, `requires` (comma-separated tech ids) |
+| `Harvest` | NATURAL resource cells (trees, crops, berries, animals, rocks, shoals, veins): yield per tap, taps to exhaust, recovery, and `required_tech` — the research a player needs before they may tap it at all. **The yield IS the exchange rate**: a bush pays 1 Food, game 3, a shoal 2, and an iron vein 3 Stone. Which currency each cell pays is wired in `definitions.ts`, not here |
+| `Currencies` | Seven rows — Gold, Food, Wood, Stone, Mana, Knowledge, Gems. Starting amounts, caps, `primary` (header widget), `gold_value` (Market instant-sell price; blank = not sellable). The `counts_as`/`unit_value` columns are gone: bushes, game and shoals pay Food directly at the `Harvest` sheet's own yields, so nothing needs a second wallet row to express its value |
+| `Technologies` | One-time researches: `cost_gold` (research is paid in Gold from the CITY purse and nothing else), duration, `requires` (comma-separated tech ids). 6,600 Gold across the tree |
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `Adjacency` | Gold/min a district gains **or loses** per adjacent neighbor of a given type (negative = crowding penalty); columns `district`, `neighbor`, `gold_per_minute` — negatives allowed, one row per pair |
 | `Quests` | The onboarding chain, one row per quest IN ORDER — **row order IS chain order**, so reordering the rows reorders the game. `goal_type` (absolute: BuildDistrict/UpgradeDistrict/HoldResource/ReachPopulation/CompleteTech/CompleteTechs/AssignWorkers/TrainArmy/ClaimLandmarks/ReachDepth/ClearRuins/OwnArtifacts/OwnHeroes/BuyUpgrade · relative: CollectResource/CollectTaps/DiscoverCells/SellGoods), `goal_target` (district/tech/currency/upgrade id where the type needs one), `goal_amount`, `goal_level` (UpgradeDistrict only), `reward_*` including `reward_gems` and `reward_knowledge` |
@@ -41,8 +41,8 @@ would reach for them (see `Docs/onboarding.md`):
 | The opening feels too tight / too generous with Gold | `Settings` → `city.initial_gold` (25). It buys the first five fog cells. |
 | Fog costs too many taps | `Settings` → `fog.gold_per_tap`, or the `Surveying` row in `Upgrades` (each level makes one tap count for one more) |
 | Fog costs too much Gold | `FogRings` — cost by distance ring |
-| Exploring pays too little / too much research | `Settings` → `knowledge.per_reveal_ring` (1 = a ring-3 cell pays 3) |
-| Research is too slow / too dear | `Technologies` → `duration_seconds`, `cost_knowledge`. Forestry is deliberately 3 s — it is the tutorial's first research. |
+| Research is too dear for the opening | `Technologies` → `Forestry.cost_gold` (25), against `city.initial_gold` (50) and what quest 1 spends on fog. `tests/quests.test.ts` asserts the sum at the dearest frontier |
+| Research is too slow / too dear | `Technologies` → `duration_seconds`, `cost_gold`. Forestry is deliberately 3 s — it is the tutorial's first research. |
 | Too much / too little tapping before the Sawmill | `Quests` → the `Timber` and `Lumber` rows' `goal_amount`; `Harvest` → `Forest.taps_to_exhaust` and `recovery_seconds` |
 | Taps run out of energy too fast | `Settings` → `tap.mana_cost`, `mana.base_cap_per_townhall_level` |
 | A beat arrives too early or too late | Reorder the `Quests` rows |
@@ -50,12 +50,15 @@ would reach for them (see `Docs/onboarding.md`):
 
 Two things to know before you retune the very opening:
 
-1. **Quest 1 has to pay for quest 2.** Quest 2 demands Forestry, quest 1 is the
-   only thing before it, and quest 1 pays no Knowledge of its own — every point
-   comes from the fog it makes the player clear. So
-   `FirstSteps.goal_amount × (cheapest ring yield) ≥ Forestry.cost_knowledge`,
-   and `city.initial_gold` has to cover those cells at `FogRings` prices. A
-   test asserts exactly this, at the worst frontier a player can pick.
+1. **One purse pays for quest 1 AND quest 2.** Quest 2 demands Forestry,
+   quest 1 is the only thing before it, and since research went Gold-priced
+   both the fog quest 1 asks for and Forestry itself come out of the same
+   opening grant. So
+   `FirstSteps.goal_amount × (DEAREST ring price) + Forestry.cost_gold
+   ≤ city.initial_gold + FirstSteps.reward_gold`.
+   Dearest, not cheapest — the player picks the cells and may pick badly, and
+   a floor that only holds for a considerate player is not a floor. A test
+   asserts exactly this, at the worst frontier a player can pick.
 2. **The early Wood has to add up across three beats.** `Timber.goal_amount`
    funds the House (step 4) *and* the crop plot (step 10);
    `Lumber.goal_amount` funds the Farm.

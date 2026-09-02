@@ -80,6 +80,31 @@ interface Migration {
 /** Ordered, gap-free, append-only. A version bump with no reshape needs NO
  *  entry here — the defensive readers below already default the new field. */
 const MIGRATIONS: readonly Migration[] = [
+  {
+    // v21 — Berries, Meat, Fish and Iron stopped being wallet rows. Bushes,
+    // game and shoals pay Food now and veins pay Stone, so a save's balances
+    // convert at the rates they were EARNED at: the old `countsAs` values
+    // (1, 3, 1) and Iron's Gold-value ratio against Stone (6/2 = 3).
+    //
+    // Not the new tap yields — a player who banked 10 Fish banked 10 Food's
+    // worth of buying power, whatever a shoal pays per tap today.
+    to: 21,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })
+        ?.Cities?.[0];
+      const w = city?.Currencies as Record<string, number> | undefined;
+      if (w === undefined) return;
+      const fold = (dead: string, base: string, rate: number): void => {
+        const held = w[dead];
+        if (typeof held === 'number' && held !== 0) w[base] = (w[base] ?? 0) + held * rate;
+        delete w[dead];
+      };
+      fold('Berries', 'Food', 1);
+      fold('Meat', 'Food', 3);
+      fold('Fish', 'Food', 1);
+      fold('Iron', 'Stone', 3);
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.

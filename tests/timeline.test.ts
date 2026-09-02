@@ -204,6 +204,36 @@ describe('the gacha', () => {
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
   });
 
+  // CLAIM: the gacha is one of the two places Knowledge comes from, and it
+  // pays on EVERY pull — hero, duplicate or miss. Fragments only ever point
+  // at one hero; Knowledge levels whoever the player already has, which is
+  // what stops a pull from being dead even when the roster is full.
+  it('every pull pays Knowledge into the kingdom purse', () => {
+    const state = rich();
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    // Past hard pity, so the run covers a miss AND a hero rather than one
+    // long unlucky streak.
+    const seen = new Set<string>();
+    for (let i = 1; i <= GACHA.hardPityAt + 10; i++) {
+      const result = pull(state);
+      expect(result.knowledge).toBe(GACHA.pullKnowledge);
+      expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(i * GACHA.pullKnowledge);
+      seen.add(result.heroId === null ? 'miss' : result.duplicate ? 'dupe' : 'hero');
+    }
+    // …and it really did pay across more than one kind of outcome.
+    expect(seen).toContain('miss');
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('a refused pull pays no Knowledge either', () => {
+    const state = freshGame();
+    state.player.wallet.Gems = 0;
+    pull(state); // the free one
+    const banked = getWallet(state.kingdom.wallet, 'Knowledge');
+    expect(pull(state).result).toBe('NotEnoughGems');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(banked);
+  });
+
   it('has no dead pulls — a miss still pays Fragments toward someone', () => {
     const state = rich();
     for (let i = 0; i < 30; i++) {

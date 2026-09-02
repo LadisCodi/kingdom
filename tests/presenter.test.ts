@@ -305,11 +305,23 @@ describe('the HUD', () => {
   it('reveals a resource held before its tech — a quest reward, say', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    expect(game.visibleCurrencies()).not.toContain('Iron');
+    expect(game.visibleCurrencies()).not.toContain('Stone');
 
-    fund(state, { Iron: 3 });
+    fund(state, { Stone: 3 });
 
-    expect(game.visibleCurrencies()).toContain('Iron');
+    expect(game.visibleCurrencies()).toContain('Stone');
+  });
+
+  // Knowledge buys heroes and relics and nothing else, so it reads in the
+  // Reliquary next to what it pays for. A coin on the plank is a coin you
+  // spend from anywhere; this is not one.
+  it('never puts Knowledge on the plank, however much the kingdom holds', () => {
+    const state = freshGame();
+    const game = freshPresenter(state);
+    fund(state, { Knowledge: 5000 });
+
+    expect(game.visibleCurrencies()).not.toContain('Knowledge');
+    expect(game.visibleCurrencies()).toEqual(['Gold', 'Food', 'Wood']);
   });
 
   // One plaque, not three permanent counters: whichever number the player
@@ -389,13 +401,15 @@ describe('shortfall', () => {
     expect(game.shortfall({ Wood: 20 })).toEqual({});
   });
 
-  it('counts food equivalents, so berries can cover a Food cost', () => {
+  it('reads each purse where it lives — city, kingdom, player', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    fund(state, { Food: 2, Berries: 5 }); // berries count as Food 1:1
+    fund(state, { Food: 7, Knowledge: 4, Gems: 2 });
 
     expect(game.shortfall({ Food: 7 })).toEqual({});
     expect(game.shortfall({ Food: 10 })).toEqual({ Food: 3 });
+    expect(game.shortfall({ Knowledge: 4, Gems: 2 })).toEqual({});
+    expect(game.shortfall({ Knowledge: 9 })).toEqual({ Knowledge: 5 });
   });
 });
 

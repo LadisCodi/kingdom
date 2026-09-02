@@ -94,7 +94,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
           kind: 'gem',
           onClick: () => game.doFinishTraining(district),
           cost: { Gems: rush },
-          have: (c) => game.effectiveWalletValue(c),
+          have: (c) => game.walletValue(c),
         })),
       // The tap boost is an affordance on the BUILDING, so it is pointed at
       // rather than described.
@@ -156,7 +156,7 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         kind: 'primary',
         onClick: () => game.doTrain(trainee, district),
         cost,
-        have: (c) => game.effectiveWalletValue(c),
+        have: (c) => game.walletValue(c),
         disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
         info: el('span', { class: 'dc-uptime' },
           iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
@@ -185,7 +185,7 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
       kind: 'primary',
       onClick: () => game.doTrain(trainee, district),
       cost,
-      have: (c) => game.effectiveWalletValue(c),
+      have: (c) => game.walletValue(c),
       disabledReason: !techOk
         ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
         : army.used + unit.power > army.cap

@@ -14,7 +14,7 @@
 // opening grants and the ones it earns.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FEATURES, HARVEST, QUESTS, TECHNOLOGIES,
+  CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
 import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
 import {
@@ -51,7 +51,6 @@ describe('a player can actually play the onboarding', () => {
     const tick = (seconds: number) => { now += seconds * 1000; advance(state, map, now); };
     const gold = () => getWallet(state.city.wallet, 'Gold');
     const wood = () => getWallet(state.city.wallet, 'Wood');
-    const knowledge = () => getWallet(state.kingdom.wallet, 'Knowledge');
     const clear = (cell: Coord) => {
       let r: string = 'Paid';
       while (r === 'Paid') r = revealTap(state, map, cell);
@@ -73,7 +72,7 @@ describe('a player can actually play the onboarding', () => {
       }
     };
     const research = (id: TechId) => {
-      expect(knowledge(), `cannot afford ${id}`).toBeGreaterThanOrEqual(techCost(id));
+      expect(gold(), `cannot afford ${id}`).toBeGreaterThanOrEqual(techCost(id));
       expect(startTech(state, id, now)).toBe('Started');
       tick(TECHNOLOGIES[id].durationSeconds);
       expect(isTechComplete(state, id)).toBe(true);
@@ -213,14 +212,17 @@ describe('a player can actually play the onboarding', () => {
   // thing most likely to be wrong: that every technology the chain demands is
   // still affordable out of what the chain itself pays, in the order it asks.
   it('never demands a technology the chain has not already paid for', () => {
-    // Knowledge arrives two ways, and both are counted at their FLOOR:
-    // a quest's authored reward, and the fog a DiscoverCells quest forces the
-    // player to clear. A cleared cell pays its ring, and the nearest ring the
-    // player can ever be standing at is 2 — the opening frontier, since the
-    // Townhall's own radius already covers ring 1. Every later frontier is
-    // further out and pays more, so 2 per cell is a floor that always holds.
-    const CHEAPEST_CELL = 2;
-    let purse = 0;
+    // Research is Gold now, so the purse counted here is the CITY's, and it
+    // is counted at its floor: the opening grant plus the quest rewards, and
+    // nothing else. Housing taxes, the Market and the harvest all pay on top
+    // of this, so a chain that works on rewards alone works for anyone.
+    //
+    // Fog is charged against the same purse, at its floor too — a
+    // DiscoverCells quest cannot cost less than its cells at the nearest ring
+    // the player can ever be standing at, which is 2 (the Townhall's own
+    // radius already covers ring 1).
+    const DEAREST_CELL = FOG.rings[1].cost;
+    let purse = CITY_DEF.initialCurrencies.Gold ?? 0;
     for (const quest of QUESTS) {
       if (quest.goalType === 'CompleteTech') {
         const id = quest.goalTarget as TechId;
@@ -229,9 +231,9 @@ describe('a player can actually play the onboarding', () => {
         purse -= techCost(id);
       }
       if (quest.goalType === 'DiscoverCells' || quest.goalType === 'DiscoverFeature') {
-        purse += quest.goalAmount * CHEAPEST_CELL;
+        purse -= quest.goalAmount * DEAREST_CELL;
       }
-      purse += quest.rewardKnowledge;
+      purse += quest.reward.Gold ?? 0;
     }
   });
 });

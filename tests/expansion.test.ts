@@ -1,14 +1,17 @@
 // The Stone / Fish / Iron expansion: new features and buildings, the
-// Masonry→Mining chain, coastal placement, water respawns, iron-gated army,
-// and Fish as a food-valued currency.
+// Masonry→Mining chain, coastal placement, water respawns, the stone-gated
+// army, and the rates at which shoals and veins pay.
+//
+// Shoals and veins are still CELLS with their own art, tech gates and timers.
+// What they stopped being is currencies: a shoal pays Food and a vein pays
+// Stone, at the rates the old wallet rows were worth.
 import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { changeWorkers, enqueueBuild, finishWithGems } from '../src/sim/commands';
 import { placementBlock } from '../src/sim/districts';
-import { tapCell } from '../src/sim/harvest';
+import { harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { startTech, techCost } from '../src/sim/research';
 import { coordKey, getWallet } from '../src/sim/state';
-import { effectiveAmount, pay } from '../src/sim/wallet';
 import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 const NEAR_ROCKS = { x: 4, y: -1 }; // mainland Rocks (authored)
@@ -21,6 +24,7 @@ const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 const PIER = { x: -6, y: 3 };
 const PIER_LAND = { x: -5, y: 3 };
 const INLAND = { x: -1, y: 2 }; // (-1,2)+(0,2): two clear land cells, no shoreline
+const IRON_VEIN = { x: -2, y: -8 }; // authored IronVein, deep in the northern fog
 
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
@@ -46,7 +50,7 @@ describe('stone line (Masonry → Quarry)', () => {
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
   it('the exploration branch: Fishing sits behind Sailing, not Agriculture', () => {
     const state = freshGame();
-    fund(state, { Knowledge: 200 });
+    fund(state, { Gold: 2000 });
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement'); // needs Sailing
@@ -69,7 +73,8 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     const docks = state.city.districts.find((d) => d.definitionId === 'Docks')!;
     expect(changeWorkers(state, map, docks.uniqueId, 1, T0)).toBe('Assigned');
     tickAt(state, T0 + 60_000);
-    expect(getWallet(state.city.wallet, 'Fish')).toBeGreaterThan(0);
+    // A shoal is a Food cell — the boats land Food, 2 a delivery.
+    expect(getWallet(state.city.wallet, 'Food')).toBeGreaterThan(0);
   });
 
   it('a drained shoal respawns on WATER next to its origin', () => {
@@ -87,39 +92,51 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     expect(map.terrain.get(back![0])).toBe('Water'); // never on land
   });
 
-  it('Fish pays Food costs at 1 Food each', () => {
-    const wallet = { Food: 0, Fish: 3 };
-    expect(effectiveAmount(wallet, 'Food')).toBe(3);
-    pay(wallet, { Food: 2 });
-    expect(wallet).toEqual({ Food: 0, Fish: 1 });
+  // The shoal used to be its own wallet row worth 1 Food as a cost and 2 Gold
+  // at the Market. Folding it had to pick one; it picked the higher, so the
+  // Docks line still earns the tech that opens it.
+  it('a shoal pays Food at 2 a tap', () => {
+    const state = freshGame();
+    reveal(state, [SHOAL]);
+    expect(harvestSourceAt(state, SHOAL)).toBe('Fish'); // still a shoal
+    expect(tapCell(state, map, SHOAL, T0)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Food')).toBe(2);
   });
 });
 
-describe('iron line (Mining ← Masonry) and the iron-gated army', () => {
-  it('Mining needs Masonry first, and is paid for in Knowledge', () => {
+describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
+  it('Mining needs Masonry first, and is paid for in Gold', () => {
     const state = freshGame();
-    // Deliberately rich in Stone and broke in Knowledge: research does not
-    // touch the city's materials any more, so a full quarry buys nothing.
-    fund(state, { Gold: 1000, Stone: 50, Knowledge: 0 });
-    expect(startTech(state, 'Mining', T0)).toBe('MissingRequirement');
+    // Deliberately rich in Stone and broke in Gold: research does not touch
+    // the city's materials, so a full quarry buys nothing.
+    fund(state, { Gold: 0, Stone: 50, Knowledge: 99_999 });
     completeTech(state, 'Masonry');
     expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
-    fund(state, { Knowledge: techCost('Mining') });
+    fund(state, { Gold: techCost('Mining') });
     expect(startTech(state, 'Mining', T0)).toBe('Started');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(0);
     expect(getWallet(state.city.wallet, 'Stone')).toBe(50); // untouched
   });
 
-  it('the Cavalry costs Iron (foot units no longer do)', () => {
+  it('a vein is a RICH stone node — 3 a tap against a rock\'s 1', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Food: 500 });
+    reveal(state, [IRON_VEIN]);
+    expect(harvestSourceAt(state, IRON_VEIN)).toBe('Iron'); // still a vein
+    expect(tapCell(state, map, IRON_VEIN, T0)).toBe('Harvested');
+    // The old exchange rate, carried into the yield: 1 Iron was worth 3 Stone.
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(3);
+  });
+
+  it('the Cavalry costs Stone at the vein rate (foot units cost none)', () => {
+    const state = freshGame();
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Stone: 0 });
     completeTech(state, 'Warrior');
     addAllTrainers(state); // the cap now comes from buildings, not the Townhall
     expect(trainUnit(state, 'Warrior', T0)).toBe('Queued'); // wood-armed now
     completeTech(state, 'Cavalry');
-    expect(trainUnit(state, 'Cavalry', T0)).toBe('NotEnoughResources'); // no Iron
-    fund(state, { Gold: 1000, Wood: 500, Food: 500, Iron: 20 });
+    expect(trainUnit(state, 'Cavalry', T0)).toBe('NotEnoughResources'); // no Stone
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Stone: 60 });
     expect(trainUnit(state, 'Cavalry', T0)).toBe('Queued');
-    expect(getWallet(state.city.wallet, 'Iron')).toBe(0); // 20 spent
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(0); // 60 spent — 20 Iron × 3
   });
 });

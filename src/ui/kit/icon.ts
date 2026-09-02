@@ -20,8 +20,14 @@ import type { CurrencyId, DistrictId, UnitId, Wallet } from '../../sim/state';
 import { el } from '../format';
 import { ATLAS_CELLS } from './atlas.generated';
 
-/** Names that are not currencies or districts. */
+/** Names that are not currencies or districts.
+ *
+ *  Berries, Meat, Fish and Iron live here rather than under `CurrencyId`.
+ *  They stopped being currencies when the harvest table started paying Food
+ *  and Stone directly, but they are still CELLS the player taps and the
+ *  atlas still holds their art — so the names survive as icons. */
 export type UiIconName =
+  | 'Berries' | 'Meat' | 'Fish' | 'Iron'
   | 'population' | 'builders' | 'workers'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
@@ -34,8 +40,10 @@ export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
  *  currency or district without a glyph fails `tsc`. */
 export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
-  Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Iron: '⚙️', Mana: '🔮',
-  Berries: '🫐', Meat: '🍖', Fish: '🐟', Knowledge: '📜', Gems: '💎',
+  Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
+  Knowledge: '📜', Gems: '💎',
+  // harvest cells that pay one of the above
+  Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
   Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️', Sanctum: '🔯',

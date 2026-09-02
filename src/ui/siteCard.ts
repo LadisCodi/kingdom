@@ -75,7 +75,7 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     kind: 'primary',
     onClick: () => game.doClaimLandmark(def.location),
     cost: { Gold: cost },
-    have: (c) => game.effectiveWalletValue(c),
+    have: (c) => game.walletValue(c),
     disabledReason: !cleared ? 'An enemy warband holds this place' : undefined,
   }));
   return panel(body);

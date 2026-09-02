@@ -22,7 +22,7 @@ import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
-import { canAfford, effectiveAmount, pay, refund } from './wallet';
+import { canAfford, pay, refund } from './wallet';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, removeWorker, type DepositEvent,
 } from './workers';
@@ -355,5 +355,5 @@ export function advance(state: GameState, map: MapData, toTime: number): Advance
   return result;
 }
 
-export { canAfford, effectiveAmount, collectTap, tapCell, assignableWorkerLimit };
+export { canAfford, collectTap, tapCell, assignableWorkerLimit };
 export type { CollectTapResult, TapCellResult };

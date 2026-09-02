@@ -107,17 +107,17 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
  * The authored yield is a FLOOR, not a fallback: it is what tapping is worth
  * before a single worker exists, which is most of the first session.
  */
-/** Resource-specific COLLECT-tap upgrades (each +1/level), the mirror of
+/** CELL-specific COLLECT-tap upgrades (each +1/level), the mirror of
  *  WORKER_YIELD_UPGRADES below. Both sit at the call site as small tables
  *  rather than as a general scoping mechanism, because that is what the
  *  handful of scoped upgrades in the game actually needs. */
-const TAP_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId>> = {
+const TAP_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
   Meat: 'Butchery',
-  Food: 'Scythes',
+  Crops: 'Scythes',
 };
 
 export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number => {
-  const specific = TAP_YIELD_UPGRADES[spec.currencyId];
+  const specific = TAP_YIELD_UPGRADES[spec.id];
   // The floor rises with the upgrades; the production pull does not, because
   // it is already whatever the city makes.
   const floor = spec.yieldPerTap + effect(state, 'TapPower')
@@ -147,10 +147,12 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
     state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,
   ));
 
-/** Resource-specific worker-delivery upgrades (each +1/level). */
-const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId>> = {
-  Wood: 'Sawpits',
-  Food: 'Irrigation',
+/** CELL-specific worker-delivery upgrades (each +1/level). Keyed on the
+ *  cell, not the currency: game and crop plots both pay Food, but Butchery
+ *  is about butchering and Irrigation is about fields. */
+const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
+  Forest: 'Sawpits',
+  Crops: 'Irrigation',
   Stone: 'Stonecutting',
   Fish: 'BigNets',
   Iron: 'IronPicks',
@@ -159,7 +161,7 @@ const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['currencyId'], UpgradeId
 /** Units a worker delivery deposits (global WorkerLoad + the resource's own
  *  upgrade: Stonecutting/BigNets/IronPicks). */
 export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): number {
-  const specific = WORKER_YIELD_UPGRADES[spec.currencyId];
+  const specific = WORKER_YIELD_UPGRADES[spec.id];
   const base = spec.yieldPerWorker + effect(state, 'WorkerLoad') +
     (specific ? effect(state, specific) : 0);
   return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));

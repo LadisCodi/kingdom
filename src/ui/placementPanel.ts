@@ -48,7 +48,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     kind: 'primary',
     onClick: () => game.confirmBuild(),
     cost: info.cost,
-    have: (c) => game.effectiveWalletValue(c),
+    have: (c) => game.walletValue(c),
     disabledReason: blockedBy,
   });
   const cancel = btn({ label: 'Cancel', onClick: () => game.dismiss() });
