@@ -347,6 +347,25 @@ quest 3 of 12, so completing one has no arc.
 final claim ("The chain is done" — today the tracker simply vanishes,
 which deserves a one-off celebratory card instead).
 
+#### Revised 2026-09-02 — the card IS the button
+
+The two controls above are gone, and so is the wax seal. At any moment
+exactly one of "Show me" and "Claim" was live, so the other was furniture,
+and both competed for taps with the card that was already the biggest target
+on screen. **Tapping the card does the only thing there is to do**: point you
+at the goal while the quest is running, take the reward when it is done. The
+finished state styles the whole widget as the claim button, so what to press
+needs no label.
+
+The **reward only appears once the quest is complete**. It is not a decision
+the player makes beforehand, so showing it early spends space on something
+they cannot act on — and its arrival is what makes finishing feel like a
+payout.
+
+It also **moved to the bottom left**. The top of the screen belongs to the
+resource bar and to the fog the player is tapping; the thumb lives at the
+bottom, and the widget is now a button that wants to be reachable.
+
 ---
 
 ### 5.3 Banner & toast
