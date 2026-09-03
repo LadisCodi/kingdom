@@ -532,65 +532,65 @@
   },
   "harvest": {
     "Forest": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 10,
+      "stock": 10,
       "recoverySeconds": 90,
       "respawnSeconds": 0,
       "requiredTech": "Forestry"
     },
     "Crops": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 8,
+      "stock": 10,
       "recoverySeconds": 60,
       "respawnSeconds": 0,
       "requiredTech": null
     },
     "Berries": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 10,
+      "stock": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 120,
       "requiredTech": "Forestry"
     },
     "Meat": {
-      "yieldPerTap": 3,
-      "yieldPerWorker": 3,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 3,
+      "secondsPerStrike": 20,
+      "stock": 30,
       "recoverySeconds": 0,
       "respawnSeconds": 180,
       "requiredTech": "Hunting"
     },
     "Stone": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 5,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 26,
+      "stock": 5,
       "recoverySeconds": 120,
       "respawnSeconds": 0,
       "requiredTech": "ScalingTools"
     },
     "Fish": {
-      "yieldPerTap": 2,
-      "yieldPerWorker": 2,
-      "tapsToExhaust": 5,
+      "unitsPerStrike": 2,
+      "secondsPerStrike": 20,
+      "stock": 10,
       "recoverySeconds": 0,
       "respawnSeconds": 90,
       "requiredTech": null
     },
     "MountainIron": {
-      "yieldPerTap": 5,
-      "yieldPerWorker": 5,
-      "tapsToExhaust": 5,
+      "unitsPerStrike": 5,
+      "secondsPerStrike": 60,
+      "stock": 25,
       "recoverySeconds": 300,
       "respawnSeconds": 0,
       "requiredTech": "Mining"
     },
     "MountainGold": {
-      "yieldPerTap": 3,
-      "yieldPerWorker": 3,
-      "tapsToExhaust": 5,
+      "unitsPerStrike": 3,
+      "secondsPerStrike": 60,
+      "stock": 15,
       "recoverySeconds": 300,
       "respawnSeconds": 0,
       "requiredTech": "DeepMining"
@@ -908,9 +908,9 @@
   "upgrades": {
     "TapPower": {
       "costBase": 50,
-      "costGrowth": 2.2,
-      "maxLevel": 5,
-      "effectPerLevel": 1,
+      "costGrowth": 1.9,
+      "maxLevel": 10,
+      "effectPerLevel": 0.2,
       "requiredTech": "Forestry"
     },
     "QuickHands": {
@@ -1019,17 +1019,15 @@
     "slotGemCostGrowth": 3
   },
   "worker": {
-    "moveSpeedTilesPerSecond": 1,
-    "workSeconds": 8
+    "moveSpeedTilesPerSecond": 1
   },
   "tap": {
     "collectCooldownSeconds": 0.5,
     "manaCost": 1,
-    "boostSeconds": 45
+    "workSeconds": 10
   },
   "training": {
-    "seconds": 20,
-    "tapBoostSeconds": 2
+    "seconds": 20
   },
   "taxes": {
     "goldPerPopulationPerMinute": 30
@@ -1058,7 +1056,7 @@
       72
     ],
     "landmarkCap": 10,
-    "gemRefillPerGem": 4
+    "gemRefillFraction": 0.34
   },
   "attunement": {
     "baseSlots": 1,
@@ -1080,7 +1078,6 @@
     "dripPerClearedRuinPerHour": 2
   },
   "army": {
-    "trainTapBoostSeconds": 3,
     "typeAdvantage": 1.5,
     "typeDisadvantage": 0.75,
     "threatFloorFraction": 0.4,

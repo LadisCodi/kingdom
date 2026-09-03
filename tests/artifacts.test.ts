@@ -17,10 +17,10 @@ import { levelCapForTier, levelCost, tierCost, totalLevelCost } from '../src/sim
 import { advance } from '../src/sim/commands';
 import { ARTIFACTS, ATTUNEMENT, COLLECTION, HARVEST, RUINS } from '../src/sim/data/definitions';
 import { fogState, revealCostForCell } from '../src/sim/fog';
-import { registerTap } from '../src/sim/harvest';
+import { drawFromCell } from '../src/sim/harvest';
 import { addMana, mana } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
-import { effectiveTaxRate, effectiveWorkerYield } from '../src/sim/upgrades';
+import { effectiveTaxRate, effectiveWorkerStrike } from '../src/sim/upgrades';
 import { coordKey, getWallet, type GameState } from '../src/sim/state';
 import { addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0 } from './helpers';
 
@@ -143,13 +143,13 @@ describe('attunement', () => {
     const state = withRelic('ForemansSigil'); // worker yield +1, +0.2/level
     state.kingdom.wallet.Knowledge = 100_000;
     attune(state, 0, 'ForemansSigil', T0);
-    const atLevel1 = effectiveWorkerYield(state, HARVEST.Forest);
+    const atLevel1 = effectiveWorkerStrike(state, HARVEST.Forest);
     expect(passiveValue(state, 'ForemansSigil')).toBe(ARTIFACTS.ForemansSigil.passive.base);
 
     levelUpArtifact(state, 'ForemansSigil');
     expect(passiveValue(state, 'ForemansSigil'))
       .toBeCloseTo(ARTIFACTS.ForemansSigil.passive.base + ARTIFACTS.ForemansSigil.passive.perLevel, 6);
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBeGreaterThanOrEqual(atLevel1);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBeGreaterThanOrEqual(atLevel1);
   });
 
   it('the modifier rebuild is idempotent — running it twice changes nothing', () => {
@@ -206,15 +206,13 @@ describe('the actives', () => {
     // opening reveal any more, so clear one first.
     reveal(state, [FOREST]);
     const forest = FOREST;
-    for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) {
-      registerTap(state, forest, HARVEST.Forest, T0);
-    }
+    drawFromCell(state, forest, HARVEST.Forest, HARVEST.Forest.stock, T0);
     expect(state.harvest[coordKey(forest)].exhaustedUntil).not.toBeNull();
 
     const report = cast(state, map, 'VerdantSeal', forest, T0);
     expect(report.result).toBe('Cast');
     expect(state.harvest[coordKey(forest)].exhaustedUntil).toBeNull();
-    expect(state.harvest[coordKey(forest)].taps).toBe(0);
+    expect(state.harvest[coordKey(forest)].units).toBe(HARVEST.Forest.stock);
   });
 
   it('Haste is a TIMED modifier that the boundary loop retires on schedule', () => {
@@ -223,14 +221,14 @@ describe('the actives', () => {
     attune(state, 0, 'ForemansSigil', T0);
     const duration = ARTIFACTS.ForemansSigil.active!.durationSeconds * 1000;
 
-    const base = effectiveWorkerYield(state, HARVEST.Forest);
+    const base = effectiveWorkerStrike(state, HARVEST.Forest);
     expect(cast(state, map, 'ForemansSigil', null, T0).result).toBe('Cast');
     advance(state, map, T0 + 1000);
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBe(base * 2);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(base * 2);
 
     const report = advance(state, map, T0 + duration + 1000);
     expect(report.expiredModifiers.some((m) => m.stat === 'workerYield')).toBe(true);
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBe(base);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(base);
   });
 
   it('refuses a target that is not on its own legal list', () => {

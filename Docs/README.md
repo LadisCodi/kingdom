@@ -34,7 +34,7 @@ usually that a more obvious alternative broke one of them — and the doc says s
 1. **It is played in visits, not sittings** — ~30 minutes a day across two or
    three check-ins. **If a feature needs more, the feature is wrong.**
 2. **Price every reward in a duration of the player's own production**, never in
-   absolute amounts. A tap pays 45 seconds of what you tapped is making; an order
+   absolute amounts. A tap pays 10 seconds of WORK on what you tapped; an order
    asks for N seconds of what you make. **Absolute numbers in a spreadsheet go
    stale on their own by era three.**
 3. **The offline cap limits what the city produces, never what a timer does.**
@@ -57,7 +57,7 @@ One file per feature, in the order a player meets them.
 | 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
 | 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map, and how much PvP the promises allow | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, the Market, what a tap is worth | built |
-| 4 | [Harvest](features/04-harvest.md) | the tap, exhaustion and recovery, areas of influence, workers as units that walk | built |
+| 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
 | 5 | [The city](features/05-city-and-districts.md) | all thirteen districts, the Townhall as era gate, cost curves, placement, moving a building | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
 | 7 | [Research](features/07-research.md) | the technology tree and instant upgrades today; **tomes, tiers-as-eras and Knowledge as a clock** next | built / designed |

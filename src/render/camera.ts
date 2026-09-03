@@ -42,6 +42,15 @@ export class Camera {
     };
   }
 
+  /** Is this cell inside the viewport (plus a cell of margin)? The strike
+   *  feedback asks: a hit you cannot see should not make a sound. */
+  isCellVisible(cell: Coord): boolean {
+    const { x, y, size } = this.cellToScreen(cell);
+    const w = this.canvas.clientWidth;
+    const h = this.canvas.clientHeight;
+    return x > -size && y > -size && x < w + size && y < h + size;
+  }
+
   cellToScreen(cell: Coord): { x: number; y: number; size: number } {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;

@@ -14,7 +14,7 @@
 import { formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
@@ -33,8 +33,8 @@ import { trainingSection } from './trainingSection';
 import {
   coordKey, queueProgress, remainingSeconds, townhall, type District,
 } from '../sim/state';
-import { recoversAt, tapFraction } from '../sim/harvest';
-import { effectiveTapYield, effectiveWorkerYield } from '../sim/upgrades';
+import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
+import { effectiveWorkerStrike, tapWorkSeconds } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
 import { action, btn, iconEl, knob, pips, progress, stat } from './kit';
@@ -160,18 +160,17 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
       const spec = HARVEST.Crops;
-      const left = Math.round(tapFraction(game.state, district.location, spec, now)
-        * spec.tapsToExhaust);
+      const left = stockAt(game.state, district.location, now);
       const readyAt = recoversAt(game.state, district.location, now);
       body.append(el('div', { class: 'dc-homes' },
         iconEl('Food', { size: 'sm' }),
-        pips(left, spec.tapsToExhaust),
+        pips(left, spec.stock),
         el('span', {}, readyAt === null
-          ? `${left} harvests left`
+          ? `${left} Food left in it`
           : `regrowing — ${formatDuration((readyAt - now) / 1000)}`)));
       body.append(el('div', { class: 'dc-tapline' },
         iconEl('showme', { size: 'sm' }),
-        `Tap the plot for +${effectiveTapYield(game.state, spec)} Food`));
+        `Tap the plot for +${tapYieldAt(game.state, district.location, now)} Food`));
     }
 
     // A house is people and the rent they pay, so show both as such.
@@ -198,15 +197,17 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
             ? `Crowded ${formatAdjacency(adjacency)}/min — houses too close together`
             : `Cosy neighbourhood ${formatAdjacency(adjacency)}/min`));
       }
-      // No cycle bar any more: the house has no timer to show. What bounds
+      // No cycle bar and no cap: a house has no timer to show and no advance
+      // budget to spend (one was built and removed on playtest — it read as an
+      // arbitrary refusal on the building the player taps most). What bounds
       // the tap is the Mana pool, so the card says the price and what is left
-      // to spend — a number the player can act on, where a countdown was only
-      // ever a number to wait out.
+      // to spend, which is a number the player can act on.
       body.append(el('div', { class: 'dc-tapline' },
         iconEl('showme', { size: 'sm' }),
         residents === 0
           ? 'Nobody lives here yet — train villagers at the Townhall'
-          : `Tap to pull ${TAP.boostSeconds}s of rent forward, as often as you like`));
+          : `Tap to pull ${Math.round(tapWorkSeconds(game.state))}s of rent forward, `
+            + 'as often as you like'));
       if (residents > 0) {
         const pool = mana(game.state);
         body.append(el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },
@@ -243,7 +244,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('b', {}, `×${n}`),
           el('span', {}, `${s} in reach`),
           el('span', { class: 'dc-area-rate' },
-            ` +${effectiveWorkerYield(game.state, spec)} per trip`));
+            ` +${effectiveWorkerStrike(game.state, spec)} every ${spec.secondsPerStrike}s`));
       });
 
       body.append(el('div', { class: 'dc-area' },
@@ -251,7 +252,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         el('div', {},
           ...perSource,
           el('div', { class: 'dc-area-rate' },
-            `about every ${Math.round(WORKER.workSeconds + 3)}s`))));
+            // Two cells per worker is the authoring law: a cell drains, then
+            // sits recovering, so a crew wants about twice its own number of
+            // cells in reach or the surplus stands around (04-harvest.md §3.1).
+            `${cells.length} in reach for ${district.assignedWorkers} — wants ~${
+              district.assignedWorkers * 2}`))));
 
       // Slots, not a fraction: filled ones are people, empty ones are room.
       const slots = el('div', { class: 'dc-slots' });
@@ -277,7 +282,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         const counts = new Map<string, number>();
         for (const w of busy) {
           const label = { Idle: 'waiting', MovingToCell: 'heading out',
-            Working: 'working', MovingHome: 'carrying home' }[w.activity];
+            Working: 'working' }[w.activity];
           counts.set(label, (counts.get(label) ?? 0) + 1);
         }
         body.append(el('div', { class: 'dc-note' },

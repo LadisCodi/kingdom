@@ -64,7 +64,7 @@ export const chestAvailable = (state: GameState, now: number): boolean =>
  * What step `step` pays, for this city, right now.
  *
  * Mana is a FRACTION of the pool and Gold is SECONDS of the city's own tax
- * income, both for the reason `tap.boostSeconds` exists: a reward priced in
+ * income, both for the reason `tap.workSeconds` exists: a reward priced in
  * the player's own production is worth the same fraction of progress at every
  * stage of the game, with nothing re-derived per era
  * (`Docs/README.md` — working rule 2). An absolute Gold number in a spreadsheet goes

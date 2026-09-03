@@ -13,7 +13,7 @@
 // yields.
 
 import {
-  DISTRICTS, HARVEST, TAP, TAXES, UPGRADES, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TAXES, UPGRADES,
   type HarvestSpec,
 } from './data/definitions';
 import type { CurrencyId, GameState, UpgradeId } from './state';
@@ -64,14 +64,16 @@ export const effect = (state: GameState, id: UpgradeId): number =>
 /**
  * What the city gathers of one resource per second, from its own numbers.
  *
- * A worker's loop is walk out, work, walk back. Cell distances vary, so this
- * takes the influence radius as the distance: a NOMINAL rate, not a measured
- * one. That is the point — it needs no map and no clock, so a tap can read it.
+ * A worker's rate is now exactly its chunk over its rhythm — there is no
+ * travel term to estimate, because a worker strikes the cell in place and
+ * credits the wallet on the strike (`04-harvest.md` §5). What is left nominal
+ * is only which cells exist to be worked.
  *
- * It lives here rather than beside `cityGoldPerMinute` in population.ts
- * because population imports THIS module; putting it there and reading it from
- * `effectiveTapYield` would be a cycle. The radius lookup is inlined for the
- * same reason (workers.ts imports upgrades.ts).
+ * **The tap does NOT read this**, and that is the whole story of the
+ * 2026-09-03 rebalance: pricing a tap against city-wide production made one
+ * tap on one tree pay 413 Wood in a maxed city. A tap is priced against the
+ * GROUND and the THUMB, never against the payroll. The remaining caller is
+ * order sizing, which is addressed to the city and so should read it.
  */
 export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): number {
   let total = 0;
@@ -80,58 +82,83 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
     const def = DISTRICTS[d.definitionId];
     const source = def.harvestSources.find((s) => HARVEST[s].currencyId === currencyId);
     if (source === undefined) continue;
-    const radius = def.influenceRadiusPerLevel.length === 0
-      ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
-    const cycleSeconds = (2 * radius) / WORKER.moveSpeedTilesPerSecond + WORKER.workSeconds;
-    if (cycleSeconds <= 0) continue;
+    const spec = HARVEST[source];
+    if (spec.secondsPerStrike <= 0) continue;
     // A building that goes after more than one thing splits its crew between
-    // them. Nominal, like the rest of this function — and for every district
-    // with a single source it divides by one, so no existing number moves.
+    // them. For every district with a single source it divides by one, so no
+    // existing number moves.
     const crew = d.assignedWorkers / def.harvestSources.length;
-    total += (crew * effectiveWorkerYield(state, HARVEST[source])) / cycleSeconds;
+    total += (crew * effectiveWorkerStrike(state, spec)) / spec.secondsPerStrike;
   }
   return total;
 }
 
-/**
- * Units a player collect tap yields.
+/** CELL-scoped ABUNDANCE upgrades (each +1 unit a strike). They lift the tap
+ *  and the worker ALIKE, because both draw from the same depot — which is the
+ *  change that unifies the two feelings: nobody creates matter, everyone pulls
+ *  from the same place at a different speed.
  *
- * A TAP HANDS YOU `tap.boostSeconds` OF WHAT YOU TAPPED IS PRODUCING. That is
- * the rule the house tap has always followed — it pulls `boostSeconds × share`
- * of city income forward, and `share × cityRate` IS that house's own rate — so
- * resource cells now say the same thing, and one sentence covers every tap in
- * the game: tapping hurries production along, and Mana is what it costs.
- *
- * It matters because the alternative goes stale. A flat yield is worth three
- * minutes of production against one Sawmill and two against six, so the whole
- * reason to spend Mana — and to watch an ad for more of it — evaporates as the
- * city grows. Priced against production, a full pool is worth the same
- * `cap × boostSeconds` of progress at every stage.
- *
- * The authored yield is a FLOOR, not a fallback: it is what tapping is worth
- * before a single worker exists, which is most of the first session.
- */
-/** CELL-specific COLLECT-tap upgrades (each +1/level), the mirror of
- *  WORKER_YIELD_UPGRADES below. Both sit at the call site as small tables
- *  rather than as a general scoping mechanism, because that is what the
- *  handful of scoped upgrades in the game actually needs. */
-const TAP_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
-  Meat: 'Butchery',
-  Crops: 'Scythes',
+ *  Keyed on the cell, not the currency: game and crop plots both pay Food, but
+ *  Butchery is about butchering and Irrigation is about fields. Crops carry two
+ *  and they simply stack. Table at the call site rather than a general scoping
+ *  mechanism, because that is what the handful of scoped upgrades needs. */
+const ABUNDANCE_UPGRADES: Partial<Record<HarvestSpec['id'], readonly UpgradeId[]>> = {
+  Forest: ['Sawpits'],
+  Crops: ['Irrigation', 'Scythes'],
+  Meat: ['Butchery'],
+  Stone: ['Stonecutting'],
+  Fish: ['BigNets'],
+  MountainIron: ['IronPicks'],
 };
 
-export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number => {
-  const specific = TAP_YIELD_UPGRADES[spec.id];
-  // The floor rises with the upgrades; the production pull does not, because
-  // it is already whatever the city makes.
-  const floor = spec.yieldPerTap + effect(state, 'TapPower')
-    + (specific ? effect(state, specific) : 0);
-  return Math.max(0, Math.round(resolve(
-    state,
-    'tapYield',
-    Math.max(floor, cityGatherPerSecond(state, spec.currencyId) * TAP.boostSeconds),
-    spec.currencyId,
-  )));
+/** Units one extraction takes out of this kind of cell — the chunk, after the
+ *  ground's own abundance upgrades. Shared by the thumb and the crew. */
+export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
+  let units = spec.unitsPerStrike;
+  for (const id of ABUNDANCE_UPGRADES[spec.id] ?? []) units += effect(state, id);
+  return Math.max(0, units);
+}
+
+/**
+ * Seconds of work one player tap is worth.
+ *
+ * > **One tap is `tap.workSeconds` of work on the thing you tapped.**
+ *
+ * `TapPower` buys this DURATION, +20% a level over ten levels, so it is a
+ * relative ladder that never goes stale (README working rule 2) and, priced in
+ * Gold, the permanent sink the economy loses when the tech tree runs out.
+ *
+ * It is also the number behind what a rewarded ad is worth: the thumb is worth
+ * `tapWorkSeconds / collectCooldown` workers, and **that has to stay ahead of
+ * the crew** or the hand stops beating the machine (`04-harvest.md` §4.3).
+ */
+export const tapWorkSeconds = (state: GameState): number =>
+  Math.max(0, resolve(state, 'tapYield', TAP.workSeconds * (1 + effect(state, 'TapPower'))));
+
+/** Units a tap owes on this kind of cell — a FRACTION on most ground, which is
+ *  why `tapCarry` exists. `carry` is the remainder the last tap could not pay.
+ *  The caller floors it, floors it at one unit, and caps it at what the cell
+ *  actually holds. */
+export const tapDraw = (state: GameState, spec: HarvestSpec, carry: number): number =>
+  (spec.secondsPerStrike <= 0 ? 0
+    : (tapWorkSeconds(state) * effectiveUnitsPerStrike(state, spec)) / spec.secondsPerStrike)
+  + carry;
+
+/** Units one worker strike deposits: the ground's abundance plus the global
+ *  WorkerLoad, which is the one payroll-only dial and therefore the pressure
+ *  generator — more units a strike empties a cell faster. */
+export function effectiveWorkerStrike(state: GameState, spec: HarvestSpec): number {
+  const base = effectiveUnitsPerStrike(state, spec) + effect(state, 'WorkerLoad');
+  return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
+}
+
+/** Milliseconds between one worker's strikes on this kind of cell. A property
+ *  of the CELL, not of the worker: a farm plot is fast and thirsty where an
+ *  iron mountain is a heavy swing. No modifier scales it yet — a worker-speed
+ *  stat would be a new `ModifierStat`, which is code, and nothing has asked. */
+export const workerStrikeMs = (state: GameState, spec: HarvestSpec): number => {
+  void state;
+  return Math.max(100, Math.round(spec.secondsPerStrike * 1000));
 };
 
 /** Cooldown between AUTO-taps — the repeats a held pointer generates, ms
@@ -145,31 +172,15 @@ export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number =
  *  It follows that QuickHands only ever speeds HOLDING up. That makes it a
  *  convenience upgrade rather than a raw-throughput one, which is the right
  *  shape: it narrows the gap toward manual tapping without closing it (0.5s
- *  down to 0.25s at level 5, still slower than a determined tapper). */
+ *  down to 0.25s at level 5, still slower than a determined tapper).
+ *
+ *  It is also half of what the thumb is worth: `tapWorkSeconds` over this is
+ *  how many workers a held finger is equal to, and that number has to stay
+ *  ahead of the crew (`04-harvest.md` §4.3). */
 export const effectiveAutoTapCooldownMs = (state: GameState): number =>
   Math.max(100, resolve(
     state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,
   ));
-
-/** CELL-specific worker-delivery upgrades (each +1/level). Keyed on the
- *  cell, not the currency: game and crop plots both pay Food, but Butchery
- *  is about butchering and Irrigation is about fields. */
-const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
-  Forest: 'Sawpits',
-  Crops: 'Irrigation',
-  Stone: 'Stonecutting',
-  Fish: 'BigNets',
-  MountainIron: 'IronPicks',
-};
-
-/** Units a worker delivery deposits (global WorkerLoad + the resource's own
- *  upgrade: Stonecutting/BigNets/IronPicks). */
-export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): number {
-  const specific = WORKER_YIELD_UPGRADES[spec.id];
-  const base = spec.yieldPerWorker + effect(state, 'WorkerLoad') +
-    (specific ? effect(state, specific) : 0);
-  return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
-}
 
 /** Multiplier on Market sale prices (MarketStall: +5%/level). */
 export const effectiveSalePriceMultiplier = (state: GameState): number =>

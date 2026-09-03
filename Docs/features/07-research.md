@@ -164,8 +164,10 @@ magic in this game* — but it reopens tuning that was deliberately closed, and
 the ad reward is priced as *one pool ≈ one span of production*.
 
 **Decided: a second trickle currency.** Mana stays what magic costs, the ad keeps
-its meaning, and `tap.boostSeconds` stays untouched. The cost is one more pool to
-reason about; the benefit is that nothing already tuned moves.
+its meaning, and what a tap is worth stays untouched by *this* feature. The cost
+is one more pool to reason about; the benefit is that nothing already tuned
+moves. (What a tap is worth did move, for unrelated reasons —
+[`04-harvest.md`](04-harvest.md) §4 — and with it what an ad is worth, OQ-51.)
 
 ### 3.2 Committed Knowledge is not a wallet balance
 

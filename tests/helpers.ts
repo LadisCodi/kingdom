@@ -1,11 +1,12 @@
 import { advance } from '../src/sim/commands';
+import { tapCell } from '../src/sim/harvest';
 import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { Camera } from '../src/render/camera';
 import { DISTRICTS, type DistrictDef } from '../src/sim/data/definitions';
 import {
-  coordKey, type Coord, type DistrictId, type GameState, type TechId, type UnitId,
+  coordKey, getWallet, type Coord, type DistrictId, type GameState, type TechId, type UnitId,
 } from '../src/sim/state';
 
 export const map = buildMapData();
@@ -82,11 +83,26 @@ export const reveal = (state: GameState, cells: Coord[]): void => {
 
 /** Test setup: drop an already-Built district onto the map (no cost, no
  *  placement checks) — e.g. Housing for population capacity. */
+/** Tap a cell until it stops answering, and return what it gave up. Written
+ *  against the DEPOT rather than a tap count, so it survives a change to
+ *  `tap.work_seconds` or to a cell's stock. */
+export const drain = (state: GameState, cell: Coord, now = T0): number => {
+  let taken = 0;
+  for (let i = 0; i < 200; i++) {
+    const before = getWallet(state.city.wallet, 'Gold') + getWallet(state.city.wallet, 'Wood')
+      + getWallet(state.city.wallet, 'Food') + getWallet(state.city.wallet, 'Stone');
+    if (tapCell(state, map, cell, now) !== 'Harvested') return taken;
+    const after = getWallet(state.city.wallet, 'Gold') + getWallet(state.city.wallet, 'Wood')
+      + getWallet(state.city.wallet, 'Food') + getWallet(state.city.wallet, 'Stone');
+    taken += after - before;
+  }
+  throw new Error('cell never drained');
+};
+
 export const addBuilt = (state: GameState, definitionId: DistrictId, location: Coord): void => {
   state.city.districts.push({
     uniqueId: `district_${definitionId}_${state.nextId++}`,
     definitionId, level: 1, assignedWorkers: 0, location, state: 'Built', visualVariant: 1,
-    lastTapAt: 0,
   });
 };
 

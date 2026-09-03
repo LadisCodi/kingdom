@@ -156,9 +156,17 @@ export function accrueMana(state: GameState, toTime: number): number {
   return addMana(state, units);
 }
 
+/** Mana one Gem buys: a FRACTION of the cap, never an absolute. One Gem is
+ *  worth what a daily chest step pays (0.34 of a pool), so it stays the same
+ *  offer at every stage of the game instead of going stale as the pool grows
+ *  — a flat 4 a Gem made a full refill cost 83 Gems against a lifetime faucet
+ *  of 75. */
+export const manaPerGem = (state: GameState): number =>
+  Math.max(1, Math.round(manaCap(state) * MANA.gemRefillFraction));
+
 /** Gems for a refill, priced on what is MISSING (so a full pool costs 0). */
 export const manaRefillGemCost = (state: GameState): number =>
-  Math.ceil(Math.max(0, manaCap(state) - mana(state)) / MANA.gemRefillPerGem);
+  Math.ceil(Math.max(0, manaCap(state) - mana(state)) / manaPerGem(state));
 
 export type RefillResult = 'Refilled' | 'AlreadyFull' | 'NotEnoughGems';
 

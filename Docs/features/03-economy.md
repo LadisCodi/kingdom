@@ -54,10 +54,10 @@ Knowledge is **city-scoped**, like Mana, because research belongs to this city.
 
 Berry bushes, wild game and fish shoals all pay **Food** — 1, 3 and 2 a tap. A
 bare mountain pays **Stone** at 1 and an iron mountain at 5 — and a gold
-mountain, the same landform again, pays **Gold**. The map keeps every bit of
-its texture — the art, the tech gates, the taps-to-exhaust, the respawn timers,
-whether the feature is finite — and the purse stops carrying four extra rows to
-express *a berry is a unit of food*.
+mountain, the same landform again, pays **Gold**. The map keeps every bit of its texture — the art,
+the tech gates, the taps-to-exhaust, the respawn timers, whether the feature is
+finite — and the purse stops carrying four extra rows to express *a berry is a
+unit of food*.
 
 This is `HarvestSpec.id` versus `HarvestSpec.currencyId`, and it is also what
 the cell-scoped upgrades hang on: **Butchery** is about butchering and **Big
@@ -118,7 +118,7 @@ neighbour.** Crowded rows tax worse; spreading out pays. A house clamps at 0,
 never negative. While placing, every affected neighbour and the ghost itself
 show a compact label.
 
-One rule against thirteen districts competing for the same ground is the
+One rule against fourteen districts competing for the same ground is the
 thinnest part of the whole design, and it is thin *because* the canvas grows by
 buying tiles ([`02-map-scopes.md`](02-map-scopes.md) §1). Widening the effect
 column beyond Gold once and authoring twenty rules is the most design depth per
@@ -135,40 +135,49 @@ villagers count against the cap.
 Cost is authored for the first six (`5, 20, 100, 300, 500, 1000`) and then
 `×1.45` per villager beyond.
 
-Tapping the Townhall boosts the current villager by
-`training.tapBoostSeconds` = 2 s; the next starts at the boosted completion
-moment.
+**Nothing hurries the line by hand.** The Townhall used to take a tap worth two
+seconds of training; that went on 2026-09-03, because a queue is a FIXED
+duration and a tap is a scaling one — at the top of the `TapPower` ladder a
+single press would finish a twenty-second villager. A tap buys **work**, and a
+queue is not work; timers take Gems ([`04-harvest.md`](04-harvest.md) §4.2).
 
 ## 5. A tap is priced in production, not in units
 
-> **A tap hands you `tap.boostSeconds` = 45 seconds of what the thing you
-> tapped is producing**, floored at the authored yield.
+> **A tap hands you `tap.workSeconds` = 10 seconds of work on the thing you
+> tapped**, floored at one unit.
 
 This is the best balance decision in the project and **the rule every new reward
-must follow.** It is what the house tap always did — pulling a share of city
-income forward — and resource cells simply joined it, collapsing two dials into
-one.
+must follow.** It is what the house tap always did — pulling a share of that
+house's own rent forward — and resource cells say the same thing, so one sentence
+covers every tap in the game.
 
-**Why it had to scale.** A flat yield is worth 73 minutes of production against
-one Sawmill and under three against six. Priced against production, a full Mana
-pool is worth the same fraction of progress at every stage, with nothing
+**Why it had to be a duration.** A flat yield goes stale: it is worth 73 minutes
+of production against one Sawmill and under three against six, so the reason to
+spend Mana evaporates as the city grows. Priced as a *duration of work*, a full
+pool buys about the same slice of progress at every stage, with nothing
 re-derived per era:
 
-| City | gather rate | tap yield | full pool | = production |
-|---|---|---|---|---|
-| no workers | 0/s | **1** (the floor) | 100 Wood | — |
-| 1 Sawmill L1 | 0.25/s | 11 | 1,100 | 73 min |
-| 2 Sawmills L2 | 0.71/s | 32 | 4,160 | 97 min |
-| 3 Sawmills L3 | 1.31/s | 59 | 9,440 | 120 min |
+| City | tap | full pool | = production |
+|---|---|---|---|
+| 1 Sawmill L1, 3 workers, `TapPower` 0, pool 100 | 1 Wood | 100 Wood | **5.6 min** |
+| 30 workers, `TapPower` 10, pool 332 | 3 Wood | ~1,000 Wood | **5.5 min** |
 
-The span grows only because the cap ladder grows — a bigger city buys a longer
-session, which is the intended progression feel.
+**The denominator was wrong until 2026-09-03**, and that is the whole story of
+this section. The shipped code prices a tap against `cityGatherPerSecond` — what
+*every* building of yours produces of that resource — so one tap on one tree pays
+413 Wood in a maxed city, the same tree is worth 10 Wood in the first hour and
+4,130 at the end, and a full pool is worth 137,000 Wood. Priced against the
+**ground and the thumb** instead, the span above is five and a half minutes
+against five and a half — and what holds it flat is `TapPower`, which buys the
+tap's DURATION (+20% a level over ten) rather than a flat bonus.
 
-The rate a tap reads is **nominal, not measured**: it takes the influence radius
-as the worker's travel distance, so it needs no map and no clock. A district
-whose cells are all adjacent under-reports; one working the rim over-reports.
-That is fine for a balance dial — a tap yield is an *estimate* of production
-rather than a promise.
+> **A tap is priced against the ground and the thumb, never against the payroll.**
+
+The rate a tap reads is now **measured, not nominal**. It used to take a
+building's influence radius as the worker's travel distance so that a tap could
+be priced without walking the map; with no round trip left to model
+([`04-harvest.md`](04-harvest.md) §5) a cell's rate is simply its chunk over its
+rhythm. Full design: [`04-harvest.md`](04-harvest.md) §4.
 
 **Every player tap costs 1 Mana**, except paying fog, which already costs Gold.
 Charging twice for one tap would price exploration out of both currencies at
@@ -221,7 +230,7 @@ over.** That measurement is the argument for eras
 | Dial | Value | Key |
 |---|---|---|
 | Tax rate | 30 Gold/pop/min | `taxes.gold_per_population_per_minute` |
-| Tap boost | **45 s of production** | `tap.boost_seconds` |
+| Seconds a tap is worth | **10 s of work** | `tap.work_seconds` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `Districts` sheet |
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.45 | `training.*`, `city.population_cost_*` |

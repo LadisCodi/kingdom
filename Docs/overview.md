@@ -212,14 +212,18 @@ without anybody ever losing a building in their city.
 
 Two of them, and they have earned their place by working:
 
-> **A tap hands you 45 seconds of what the thing you tapped is producing**,
-> floored at the authored yield.
+> **A tap hands you 10 seconds of work on the thing you tapped**,
+> floored at one unit.
 
-That means a full Mana pool is worth the same *fraction* of progress at every
-stage of the game, with nothing re-derived per era — 73 minutes of production
-against one Sawmill, 97 against two, 120 against three. **Every reward we author
-should follow it.** Absolute Gold amounts in a spreadsheet go stale on their own
-by era three; a duration of the player's own production does not.
+That means a full Mana pool buys about the same slice of progress at every stage
+of the game, with nothing re-derived per era — about five and a half minutes of
+production early and five and a half late. **Every reward we author should follow it.** Absolute Gold
+amounts in a spreadsheet go stale on their own by era three; a duration of the
+player's own production does not.
+
+The denominator matters as much as the rule, and getting it wrong is what forced
+the 2026-09-03 redesign of [`features/04-harvest.md`](features/04-harvest.md):
+a tap is priced against **the ground and the thumb, never against the payroll.**
 
 > **The offline cap limits what the city PRODUCES while you are away. It never
 > limits what a TIMER does.**

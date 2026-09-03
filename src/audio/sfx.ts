@@ -142,8 +142,28 @@ export function setSfxMuted(muted: boolean): void {
   } catch { /* storage blocked — the toggle just won't persist */ }
 }
 
-export function playSfx(name: SfxName): void {
+/** How a single play deviates from the sound's authored spec. */
+export interface PlayOptions {
+  /** Multiplier on the authored volume. Half for a worker's strike, so the
+   *  player's own tap stays the louder gesture. */
+  gain?: number;
+  /** EXTRA pitch jitter on top of the sound's own, as a fraction of rate.
+   *  Two identical takes landing together turn into a drone without it. */
+  jitter?: number;
+  /** Voice limiting: at most `limit` sounds of this group may be in flight,
+   *  and the rest are dropped in silence. Thirty workers striking is two a
+   *  second before upgrades, and a machine gun after them. */
+  group?: string;
+  limit?: number;
+}
+
+/** Sounds currently in flight, per voice-limit group. */
+const voices = new Map<string, number>();
+
+export function playSfx(name: SfxName, opts: PlayOptions = {}): void {
   if (sfxMuted()) return;
+  const group = opts.group;
+  if (group !== undefined && (voices.get(group) ?? 0) >= (opts.limit ?? 3)) return;
   try {
     if (ctx === null) {
       ctx = new AudioContext();
@@ -156,11 +176,16 @@ export function playSfx(name: SfxName): void {
     if (!buffer) return; // still decoding — only the very first moments
     const source = ctx.createBufferSource();
     source.buffer = buffer;
+    const jitter = spec.jitter + (opts.jitter ?? 0);
     source.playbackRate.value =
-      (spec.rate ?? 1) * (1 - spec.jitter + Math.random() * spec.jitter * 2);
+      (spec.rate ?? 1) * (1 - jitter + Math.random() * jitter * 2);
     const gain = ctx.createGain();
-    gain.gain.value = spec.volume;
+    gain.gain.value = spec.volume * (opts.gain ?? 1);
     source.connect(gain).connect(ctx.destination);
+    if (group !== undefined) {
+      voices.set(group, (voices.get(group) ?? 0) + 1);
+      source.onended = () => voices.set(group, Math.max(0, (voices.get(group) ?? 1) - 1));
+    }
     source.start();
   } catch {
     // No audio available (old browser, blocked) — feedback stays visual.

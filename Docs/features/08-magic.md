@@ -173,20 +173,35 @@ the cooldown maximum is the dial — lower it before anything else.
 
 ## 8. Dials, in the order to reach for them
 
-1. **`tap.boost_seconds`** — 45. What a tap is worth, and therefore what an ad
-   is worth. The strongest single dial in the loop.
-2. **`mana.base_cap_per_townhall_level`** — 100 / 130 / 160. Session length per
+1. **`tap.work_seconds`** — 10. What a tap is worth, and therefore what an ad
+   is worth: **a pool buys ~5.5 minutes of the city's own production, at both
+   ends of the game** ([`04-harvest.md`](04-harvest.md) §4.3). It was 45 seconds
+   of the WHOLE CITY's production until 2026-09-03, which made a pool worth
+   ~800× more than it now is. **The relation to hold is `work_seconds ÷
+   collect_cooldown` against the crew the city can house** — and at 10 it does
+   NOT hold at the bottom of the ladder: the thumb is worth 20 workers and
+   Townhall 3 houses 30, so a bare thumb is two thirds of the crew it already
+   owns and hand-play only pays once `QuickHands` and `TapPower` are bought
+   into. That was chosen for the feel of the gesture (ten taps to a tree), and
+   **this dial is the lever if a mature city's hand-play feels pointless —
+   doubling it doubles the ad with it.** Whether the ad ECONOMY balances on
+   ~5.5 minutes is OQ-51.
+2. **`mana.gem_refill_fraction`** — 0.34 of the cap a Gem, so a full pool is
+   **3 Gems** at every stage. A fraction rather than an absolute on purpose: the
+   old flat 4-a-Gem made a full refill cost 83 Gems against a lifetime faucet of
+   75, and one Gem now buys exactly what a daily chest step pays.
+3. **`mana.base_cap_per_townhall_level`** — 100 / 130 / 160. Session length per
    pool.
-3. **`ads.cooldown_max_seconds`** — 90. The rhythm between offers.
-4. **`mana.production_per_townhall_level`** — 10 / 13 / 16. How much a
+4. **`ads.cooldown_max_seconds`** — 90. The rhythm between offers.
+5. **`mana.production_per_townhall_level`** — 10 / 13 / 16. How much a
    non-watcher gets free.
-5. **`ads.eligible_below_fraction`** — 0.5. How early the offer shows up.
+6. **`ads.eligible_below_fraction`** — 0.5. How early the offer shows up.
 
 | Also | Value | Key |
 |---|---|---|
 | Sanctum capacity | +24 / 48 / 72 | `mana.sanctum_cap_per_level` |
 | Landmark capacity | **+10 each** | `mana.landmark_cap` |
-| Gem refill | 4 Mana a Gem | `mana.gem_refill_per_gem` |
+| Gem refill | **0.34 of the cap a Gem** — 3 Gems a full pool | `mana.gem_refill_fraction` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Ad reward | the whole cap | — |
 

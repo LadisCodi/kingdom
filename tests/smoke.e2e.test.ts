@@ -4,9 +4,9 @@
 import { describe, expect, it } from 'vitest';
 import { armyPower, maxArmyPower, trainUnit, lineFor } from '../src/sim/army';
 import {
-  changeWorkers, enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
+  changeWorkers, enqueueBuild, finishWithGems, upgradeDistrict,
 } from '../src/sim/commands';
-import { isExhausted, tapCell } from '../src/sim/harvest';
+import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { sellGoods } from '../src/sim/market';
 import { maxPopulation } from '../src/sim/population';
 import { isTechComplete, startTech } from '../src/sim/research';
@@ -43,8 +43,10 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     reveal(state, [FOREST]);
     expect(tapCell(state, map, FOREST, now)).toBe('TechLocked');
     completeTech(state, 'Forestry');
+    // Five taps of `tap.work_seconds` each, out of the tree's depot.
+    const perTap = tapYieldAt(state, FOREST, now);
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, FOREST, now)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(5 * perTap);
 
     // --- No taxes yet: villagers without a roof pay nothing.
     now += 60_000;
@@ -192,7 +194,6 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(maxPopulation(state)).toBe(12); // two L2 houses (4 each) + two L1 (2 each)
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
-    expect(townhallTap(state, now)).toBe('Boosted'); // taps speed the current one
     now += 20_000;
     tickAt(state, now);
     expect(state.city.population).toBe(5);

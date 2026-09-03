@@ -20,8 +20,7 @@
 // moment units are expedition capital rather than a quest gate, because it
 // removes the only pacing on party size.
 
-import { ARMY, DISTRICTS, TAP, TRAINING, UNITS, levelIndexed } from './data/definitions';
-import { payMana } from './mana';
+import { DISTRICTS, TRAINING, UNITS, levelIndexed } from './data/definitions';
 import { isTechComplete } from './research';
 import {
   cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
@@ -75,12 +74,10 @@ export const trainableAt = (district: District): readonly TrainableId[] =>
 export const trainSeconds = (trainee: TrainableId): number =>
   trainee === 'Villager' ? TRAINING.seconds : UNITS[trainee].trainDurationSeconds;
 
-/** Seconds one tap hurries a trainee along. Authored separately for villagers
- *  and soldiers, and it stays that way: the two are tuned against different
- *  durations, and one shared number would silently reprice whichever was not
- *  being thought about. */
-export const tapBoostSeconds = (trainee: TrainableId): number =>
-  trainee === 'Villager' ? TRAINING.tapBoostSeconds : ARMY.trainTapBoostSeconds;
+// There is no tap that hurries a trainee along. A queue is a FIXED duration
+// and a tap is a scaling one (`tap.workSeconds` x TapPower), so a maxed thumb
+// would finish a 20-second villager in a single press. Timers are hurried with
+// Gems; Mana buys work, and a queue is not work.
 
 /** What it costs right now. A villager's price climbs with the population —
  *  including the ones already queued, so a queue is never a way to buy at
@@ -180,25 +177,6 @@ export function trainingProgress(state: GameState, buildingId: string, now: numb
   if (!item || item.startedAt === null) return 0;
   const total = trainSeconds(item.trainee) * 1000;
   return total <= 0 ? 1 : Math.min(1, Math.max(0, (now - item.startedAt) / total));
-}
-
-export type TrainingTapResult = 'Boosted' | 'Complete' | 'NoTraining' | 'NoMana';
-
-/** Tap a military building to hurry the unit in training — the same beat the
- *  Townhall already has for villagers, so buildings behave consistently.
- *
- *  Costs energy for the same reason every other hurrying tap does, and only
- *  once there is something to hurry. */
-export function trainingTap(
-  state: GameState,
-  building: District,
-  now: number,
-): TrainingTapResult {
-  const item = unitInTraining(state, building.uniqueId);
-  if (!item || item.startedAt === null) return 'NoTraining';
-  if (!payMana(state, TAP.manaCost)) return 'NoMana';
-  item.startedAt -= tapBoostSeconds(item.trainee) * 1000;
-  return advanceTraining(state, now).length > 0 ? 'Complete' : 'Boosted';
 }
 
 /**

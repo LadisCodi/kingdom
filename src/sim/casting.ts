@@ -13,7 +13,7 @@
 import { ARTIFACTS, FEATURES, type ArtifactActiveId } from './data/definitions';
 import { fogState, revealCostForCell } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
-import { harvestSourceAt } from './harvest';
+import { harvestSourceAt, harvestSpecAt } from './harvest';
 import { mana, payMana } from './mana';
 import { addModifier, resolve } from './modifiers';
 import {
@@ -134,9 +134,10 @@ export function cast(
       for (const c of cells) {
         if (harvestSourceAt(state, c) === null) continue;
         if (state.fog.revealed[coordKey(c)] !== true) continue;
+        const spec = harvestSpecAt(state, c)!;
         const cell = state.harvest[coordKey(c)];
-        if (cell === undefined || (cell.taps === 0 && cell.exhaustedUntil === null)) continue;
-        cell.taps = 0;
+        if (cell === undefined || (cell.units >= spec.stock && cell.exhaustedUntil === null)) continue;
+        cell.units = spec.stock;
         cell.exhaustedUntil = null;
         report.affected.push(c);
       }

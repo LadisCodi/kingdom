@@ -7,7 +7,7 @@ import {
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration,
 } from './districts';
-import { advanceTraining, nextTrainingCompletion, trainingTap, unitInTraining } from './army';
+import { advanceTraining, nextTrainingCompletion } from './army';
 import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
 import { revealAroundDistrict } from './fog';
 import {
@@ -105,7 +105,6 @@ export function enqueueBuild(
     location: cell,
     state: 'UnderConstruction',
     visualVariant: 1,
-    lastTapAt: 0,
   };
   const duration = buildDurationForCell(state, definitionId, cell, map);
   state.city.districts.push(district);
@@ -159,7 +158,7 @@ export function moveDistrict(
   repriceTaxAnchorAround(state, now, () => {
     district.location = cell;
   });
-  relocateCrew(state, district, from, now);
+  relocateCrew(state, map, district, from, now);
   // The new address pushes back the fog exactly as finishing a build does —
   // otherwise a building could be moved to the frontier and sit there staring
   // at ground it has already paid to see.
@@ -292,28 +291,10 @@ export function changeWorkers(
   return 'Unassigned';
 }
 
-// -------------------------------------------------------------- townhall tap
-
-export type TownhallTapResult = 'Boosted' | 'TrainingComplete' | 'NoTraining' | 'NoMana';
-
-/** Tap the Townhall: add tapBoostSeconds of progress to the villager
- *  currently in training (completing it early when the boost covers the
- *  remainder — the next queued villager then starts immediately).
- *
- *  Costs energy like every other tap that hurries a generator along. Charged
- *  AFTER the "is anything training" check, so tapping an idle Townhall is
- *  free — you cannot pay for nothing. */
-export function townhallTap(state: GameState, now: number): TownhallTapResult {
-  // One tap, one mechanism: the Townhall hurries its line exactly the way a
-  // Barracks hurries its own, now that both draw from the same queue. The
-  // result names stay as they were — the presenter and its tests speak them.
-  const hall = townhall(state);
-  if (!hall || !unitInTraining(state, hall.uniqueId)) return 'NoTraining';
-  const result = trainingTap(state, hall, now);
-  return result === 'Complete' ? 'TrainingComplete'
-    : result === 'NoTraining' ? 'NoTraining'
-      : result === 'NoMana' ? 'NoMana' : 'Boosted';
-}
+// The Townhall no longer answers a tap. A training queue is a FIXED duration
+// and a tap is a scaling one, so a maxed thumb would finish a 20-second
+// villager in a single press — `Docs/features/04-harvest.md` §4.2. Timers are
+// hurried with Gems; Mana buys work, and a queue is not work.
 
 // ------------------------------------------------------------------- advance
 //

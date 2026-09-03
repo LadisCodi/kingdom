@@ -12,7 +12,7 @@ import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
 import {
   buyUpgrade, canBuyUpgrade, effectiveAutoTapCooldownMs, effectiveSalePriceMultiplier,
-  effectiveTapYield, effectiveTaxRate, effectiveWorkerYield, upgradeCost, upgradeLevel,
+  effectiveTaxRate, effectiveWorkerStrike, tapDraw, tapWorkSeconds, upgradeCost, upgradeLevel,
 } from '../src/sim/upgrades';
 import {
   addBuilt, canGather, completeTech, FOREST, freshGame, fund, map, T0, tickAt,
@@ -25,12 +25,12 @@ describe('buying upgrades', () => {
     fund(state, { Gold: 1000 });
     completeTech(state, 'Forestry');
     expect(upgradeCost('TapPower', 0)).toBe(50);
-    expect(upgradeCost('TapPower', 1)).toBe(110); // 50 × 2.2
+    expect(upgradeCost('TapPower', 1)).toBe(95); // 50 × 1.9
     expect(buyUpgrade(state, 'TapPower')).toBe('Purchased');
     expect(upgradeLevel(state, 'TapPower')).toBe(1);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(950);
     expect(buyUpgrade(state, 'TapPower')).toBe('Purchased');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(840);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(855);
   });
 
   it('hangs off its parent technology in the tree', () => {
@@ -59,13 +59,20 @@ describe('buying upgrades', () => {
 });
 
 describe('effects reach the sim', () => {
-  it('TapPower increases what a collect tap yields', () => {
+  it('TapPower buys the tap DURATION, and the carry pays out the fraction', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000 });
+    fund(state, { Gold: 100_000 });
     canGather(state);
-    buyUpgrade(state, 'TapPower'); // +1
+    const bare = tapWorkSeconds(state);
+    for (let i = 0; i < 5; i++) buyUpgrade(state, 'TapPower'); // +20% a level
+    expect(tapWorkSeconds(state)).toBeCloseTo(bare * 2, 6);
+
+    // A Forest strike is 10 s, so a doubled thumb owes 2 Wood a tap — and on
+    // ground where it owes a fraction the remainder rides in `tapCarry`
+    // until it adds up, which is what makes a percentage upgrade honest.
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(2); // 1 base + 1
+    expect(getWallet(state.city.wallet, 'Wood'))
+      .toBe(Math.floor(tapWorkSeconds(state) / HARVEST.Forest.secondsPerStrike));
   });
 
   // QuickHands shortens the gap between AUTO-taps only. A deliberate tap has
@@ -146,31 +153,46 @@ describe('every upgrade reaches the number it claims to', () => {
     }
   });
 
-  it('Butchery adds to what a tap on wild game yields, and to nothing else', () => {
+  // The seven cell-scoped upgrades are ABUNDANCE OF THE GROUND, so they lift
+  // the thumb and the crew alike — both draw the same depot, and that is the
+  // change that unifies the two feelings (04-harvest.md §8).
+  it('Butchery makes wild game richer for hand AND crew, and nothing else', () => {
     const state = freshGame();
-    const meat = effectiveTapYield(state, HARVEST.Meat);
-    const wood = effectiveTapYield(state, HARVEST.Forest);
+    const meatTap = tapDraw(state, HARVEST.Meat, 0);
+    const meatCrew = effectiveWorkerStrike(state, HARVEST.Meat);
+    const woodTap = tapDraw(state, HARVEST.Forest, 0);
     state.upgrades.Butchery = 2;
-    expect(effectiveTapYield(state, HARVEST.Meat)).toBe(meat + 2);
-    expect(effectiveTapYield(state, HARVEST.Forest)).toBe(wood); // scoped
+    expect(tapDraw(state, HARVEST.Meat, 0)).toBeGreaterThan(meatTap);
+    expect(effectiveWorkerStrike(state, HARVEST.Meat)).toBe(meatCrew + 2);
+    expect(tapDraw(state, HARVEST.Forest, 0)).toBe(woodTap); // scoped
   });
 
-  it('Scythes adds to a tap on crops', () => {
+  it('Scythes and Irrigation both enrich crops, and they stack', () => {
     const state = freshGame();
-    const before = effectiveTapYield(state, HARVEST.Crops);
+    const base = effectiveWorkerStrike(state, HARVEST.Crops);
     state.upgrades.Scythes = 3;
-    expect(effectiveTapYield(state, HARVEST.Crops)).toBe(before + 3);
+    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 3);
+    state.upgrades.Irrigation = 1;
+    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 4);
   });
 
-  it('Sawpits and Irrigation add to worker deliveries, each to its own resource', () => {
+  it('WorkerLoad is the one payroll-only dial — the crew, never the thumb', () => {
     const state = freshGame();
-    const wood = effectiveWorkerYield(state, HARVEST.Forest);
-    const crops = effectiveWorkerYield(state, HARVEST.Crops);
-    state.upgrades.Sawpits = 2;
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBe(wood + 2);
-    expect(effectiveWorkerYield(state, HARVEST.Crops)).toBe(crops);
-    state.upgrades.Irrigation = 1;
-    expect(effectiveWorkerYield(state, HARVEST.Crops)).toBe(crops + 1);
+    const wood = effectiveWorkerStrike(state, HARVEST.Forest);
+    const byHand = tapDraw(state, HARVEST.Forest, 0);
+    state.upgrades.WorkerLoad = 2;
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(wood + 2);
+    expect(tapDraw(state, HARVEST.Forest, 0)).toBe(byHand);
+  });
+
+  it('TapPower buys DURATION, so it never mints and never goes stale', () => {
+    const state = freshGame();
+    const seconds = tapWorkSeconds(state);
+    state.upgrades.TapPower = 5; // +20% a level
+    expect(tapWorkSeconds(state)).toBeCloseTo(seconds * 2, 6);
+    // And the units follow from the ground's own rate, not from a flat bonus.
+    expect(tapDraw(state, HARVEST.Forest, 0))
+      .toBeCloseTo(tapWorkSeconds(state) / HARVEST.Forest.secondsPerStrike, 6);
   });
 
   // Pitons and Surveying buy down two DIFFERENT costs — the Gold a cell wants

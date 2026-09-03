@@ -8,7 +8,8 @@
 > [`open-questions.md`](open-questions.md). Where this file names a question it
 > names it by id (`OQ-n`).
 >
-> **State: 43 test suites, 588 tests, green.**
+> **State: 43 test suites, 596 tests. 586 green; the 10 red are map-content
+> assertions left behind by the province being re-authored, not code.**
 
 ## 1. The engine contract
 
@@ -55,7 +56,7 @@ Two more that are design-visible:
 |---|---|---|
 | The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** |
 | Currencies, taxes, the Market, adjacency | [`03`](features/03-economy.md) | **built** — one adjacency rule (OQ-48) |
-| Harvest, exhaustion, workers as units, claims | [`04`](features/04-harvest.md) | **built** |
+| Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, cost curves, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced |
@@ -78,6 +79,7 @@ each has an answer, or has one waiting in a doc.
 
 | # | Hole | Where |
 |---|---|---|
+| ~~**H0**~~ | ~~**The tap mints matter, and the economy has no ceiling.**~~ **FIXED 2026-09-03** — §4 step 0. | [`04`](features/04-harvest.md) |
 | **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. A visible dead end, and the only thing that would give combat a job outside dungeons. | design in [`15`](features/15-social.md) §6; needs **OQ-35** |
 | **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. Give it a job or delete the field. | [`10`](features/10-heroes.md) §9 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §9 |
@@ -88,9 +90,65 @@ each has an answer, or has one waiting in a doc.
 
 ## 4. What is next, and what blocks it
 
-Five pieces of work. **Each row's "blocked on" column is a hard gate: do not
-start the row until those questions are answered**, because the answer changes
-the shape of what gets built, not just its numbers.
+Five pieces of work. **Step 0 is done** — it had to come first, because every
+number the others author is priced against production. Each row's "blocked on"
+column is a hard gate: do not start the row until those questions are answered,
+because the answer changes the shape of what gets built, not just its numbers.
+
+### Step 0 · The extraction rebalance — **DONE 2026-09-03**
+
+Fixed the two faults that left the economy without a ceiling: depletion counted
+in **taps** rather than units, so a cell's total output scaled with upgrade
+levels; and a tap priced against `cityGatherPerSecond` — *every* building's
+output of that resource — so one tap on one tree paid **413 Wood** in a maxed
+city and a full Mana pool was worth **~137,000 Wood**. `TapPower` was also dead
+from the first staffed Sawmill, because it only lifted a floor that city
+production beat.
+
+- **Design:** [`04-harvest.md`](features/04-harvest.md), which also amended
+  [`03-economy.md`](features/03-economy.md) §5,
+  [`05-city-and-districts.md`](features/05-city-and-districts.md) §4 and
+  [`08-magic.md`](features/08-magic.md) §8.
+- **What landed:** a cell is a **depot** of `stock` units that thumb and crew
+  both draw down; a tap is **`tap.workSeconds` = 20 seconds of the cell's own
+  work**, floored at one unit, with a per-currency carry so a +20% upgrade is
+  not lost to rounding; `TapPower` buys that **duration** (+20%/level over ten,
+  ×3); workers **strike in place** and credit on the strike — no load, no return
+  trip, and migration is what is left of travel; the seven cell-scoped upgrades
+  became **abundance of the ground**, lifting tap and crew alike; the queue taps
+  (villagers and soldiers) are **gone**; the Gem refill became a **fraction of the
+  cap** (0.34, so 3 Gems a pool); idle workers now loiter outside their
+  building. `SAVE_VERSION` 24 forgives the old wear.
+- **One piece was built and cut the same day:** a per-house **advance budget**,
+  capping how far a house's rent could be pulled forward and therefore capping a
+  house at twice its own rent. It was consistent and it read as an arbitrary
+  refusal in the hand, on the building the player taps most. The argument, the
+  numbers and the risk it leaves live are kept in
+  [`04-harvest.md`](features/04-harvest.md) §4.1.1 and **OQ-55**, because the
+  reasoning is still sound and somebody will reach for it again.
+- **The numbers:** `tap.workSeconds` is **10**, a tactile choice — about ten
+  taps to a ten-unit tree. It was briefly 20 (five taps) and came back down on
+  play. A full pool is then ~**5.5 minutes** of the city's own production **at
+  both ends of the game**, and the province has a stated ceiling of **180
+  Wood/min** across 57 trees — the first number in the project's history that
+  says what this map can make. What the halving costs is priced in
+  [`04-harvest.md`](features/04-harvest.md) §1.1 and §4.3: a bare thumb is worth
+  20 workers against a crew of 30, so hand-play in a mature city needs
+  `QuickHands` and `TapPower` bought into, and the ad halved with it (**OQ-51**).
+- **Left open:** **OQ-43** corrected (a watcher gathers ~5%, not 50%); **OQ-51**
+  (is the ad still worth six placements?); **OQ-44** and **OQ-54** (a full pool
+  only just fits in the ground the map holds — density is the recommended exit);
+  **OQ-52** (the thumb raiding its own crew's cells); **OQ-53** (a
+  `WorkerCollect` goal type).
+- **The strike's feedback landed with it:** the same punch and foley as the
+  player's tap at half volume and **without the white flash**, gated to
+  on-screen cells, silent below zoom 0.8, three voices maximum with ±5% extra
+  pitch jitter. `playSfx` grew per-call gain, jitter and voice-limit groups;
+  `TapFx` grew a strength so a strike punches without flashing; `DepositEvent`
+  now names the struck cell and its ground.
+- **Not done:** the intermediate depot art states (a half-cut tree between
+  full and stump), which are wanted rather than required — two states work
+  exactly as they do today.
 
 ### Step 1 · Generated orders
 

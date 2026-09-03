@@ -187,6 +187,30 @@ describe('the quest chain', () => {
   });
 });
 
+// A worker's strike looks exactly like the player's tap on screen now, and the
+// only thing keeping them apart is which quest event each path banks: both bank
+// a `collect`, and ONLY the thumb banks a `tap`. Unifying them would complete
+// every "tap N times" goal with the city standing idle, so the predicate that
+// depends on it gets a test rather than a comment
+// (Docs/features/04-harvest.md §5).
+describe('a tap and a strike are different asks', () => {
+  it('CollectTaps counts tap events and nothing else', () => {
+    const state = canGather(freshGame());
+    // Any quest will do as a carrier; what is under test is the predicate.
+    const carrier = QUESTS.findIndex((q) => q.goalType === 'CollectResource');
+    state.quests.index = carrier;
+    const goal = QUESTS[carrier];
+    state.quests.progress = 0;
+
+    // A collect moves a CollectResource goal…
+    recordQuestEvent(state, { kind: 'collect', currency: goal.goalTarget as never, amount: 1 });
+    const afterCollect = state.quests.progress;
+    // …and a bare tap event does not, because it carries no amount.
+    recordQuestEvent(state, { kind: 'tap' });
+    expect(state.quests.progress).toBe(afterCollect);
+  });
+});
+
 describe('first-time discoveries', () => {
   it('announces a resource ONCE, ever — persisted across saves', () => {
     const state = canGather(freshGame());

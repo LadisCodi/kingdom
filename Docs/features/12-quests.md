@@ -178,9 +178,15 @@ amount(res)          = round( cityGatherPerSecond(res) × ORDER.secondsOfProduct
 ```
 
 **`ORDER.secondsOfProduction` is the strongest dial in the feature** and the
-direct analogue of `tap.boostSeconds`. **An order asks for a duration of the
+direct analogue of `tap.workSeconds`. **An order asks for a duration of the
 player's own output, so it is neither trivial at hour 40 nor impossible at hour
 1, with nothing re-derived per era.**
+
+Note that orders are the *right* place to read city-wide production — an order
+is addressed to the city — which is exactly why a **tap** must not
+([`04-harvest.md`](04-harvest.md) §5). After that redesign `cityGatherPerSecond`
+has orders as its only caller, and becomes a measured rate rather than one that
+guesses a travel distance.
 
 ### 3.3 Rewards
 

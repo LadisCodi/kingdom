@@ -8,6 +8,7 @@
 // follow the building rather than being quietly re-bought.
 import { describe, expect, it } from 'vitest';
 import { advance, changeWorkers, moveDistrict } from '../src/sim/commands';
+import { workableCells } from '../src/sim/workers';
 import { canMoveDistrict, placementBlock, validPlacementCells } from '../src/sim/districts';
 import { districtAdjacency } from '../src/sim/adjacency';
 import { coordKey, districtById, getWallet, townhall, type Coord } from '../src/sim/state';
@@ -172,40 +173,52 @@ describe('the crew comes with it', () => {
     return { state, mill };
   };
 
-  it('a worker mid-walk is re-homed and keeps working', () => {
+  // The rule, stated as an invariant rather than as one outcome, because which
+  // tree a worker claims is the map's business: a claim the new address can
+  // still reach is KEPT, and any other is released. That replaced the old
+  // carrying/not-carrying split, which had a trip in transit to protect and
+  // now has none (04-harvest.md §5).
+  it('keeps a claim the new address reaches and releases any other', () => {
     const { state, mill } = staffedSawmill();
     advance(state, map, T0 + 2_000); // out on the trip
     const worker = state.workers.find((w) => w.buildingId === mill.uniqueId)!;
     expect(worker.claimedCell).not.toBeNull();
 
     expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + 2_000)).toBe('Moved');
-    // Not carrying: the claim is released, because the cell it was walking to
-    // may be outside the radius the building now has.
-    expect(worker.claimedCell).toBeNull();
-    expect(worker.activity).toBe('Idle');
-    // And it goes back to work from the new address rather than stalling.
+    if (worker.claimedCell === null) {
+      expect(worker.activity).toBe('Idle');
+    } else {
+      const reach = workableCells(state, map, mill).map((c) => coordKey(c));
+      expect(reach).toContain(coordKey(worker.claimedCell));
+      expect(worker.activity).toBe('Working');
+    }
+    // Either way it works from the new address rather than stalling.
     advance(state, map, T0 + 120_000);
     expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(0);
   });
 
-  it('a worker carrying a load still delivers it — a move costs no trip', () => {
+  // The old rule protected a load in transit: a carrying worker kept its
+  // claim so a move never cost a trip already worked for. There is no transit
+  // left to protect — a strike credits the wallet as it lands — so the rule is
+  // now one line, and this is it (04-harvest.md §5, 05-city §4).
+  it('a worker keeps striking a cell the new address still reaches', () => {
     const { state, mill } = staffedSawmill();
-    // Walk it forward until it is on its way home with a load.
-    let carrying = false;
-    for (let t = 1_000; t <= 60_000 && !carrying; t += 500) {
+    let working = false;
+    for (let t = 1_000; t <= 60_000 && !working; t += 500) {
       advance(state, map, T0 + t);
       const w = state.workers.find((x) => x.buildingId === mill.uniqueId)!;
-      carrying = w.carrying && w.activity === 'MovingHome';
-      if (carrying) {
-        const before = getWallet(state.city.wallet, 'Wood');
-        expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + t)).toBe('Moved');
-        expect(w.carrying).toBe(true); // the load is not confiscated
-        expect(w.activity).toBe('MovingHome'); // just to a new address
-        advance(state, map, T0 + t + 120_000);
-        expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
-      }
+      if (w.activity !== 'Working' || w.claimedCell === null) continue;
+      working = true;
+      const claimed = w.claimedCell;
+      const before = getWallet(state.city.wallet, 'Wood');
+      // One cell over: the tree it is on stays comfortably inside radius 2.
+      expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + t)).toBe('Moved');
+      expect(w.claimedCell && coordKey(w.claimedCell)).toBe(coordKey(claimed));
+      expect(w.activity).toBe('Working');
+      advance(state, map, T0 + t + 120_000);
+      expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
     }
-    expect(carrying, 'the worker never picked anything up').toBe(true);
+    expect(working, 'the worker never started striking').toBe(true);
   });
 });
 

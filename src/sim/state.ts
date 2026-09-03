@@ -77,11 +77,6 @@ export interface District {
   location: Coord;
   state: ConstructionState;
   visualVariant: number;
-  /** Housing: when this house's collection cycle last rolled over. A tap
-   *  collects early WITHIN the current cycle and cannot exceed it, so a house
-   *  can never pay more than a cycle's worth however fast you tap.
-   *  0 = never tapped (the first cycle is ready immediately). */
-  lastTapAt: number;
 }
 
 export interface QueueItem {
@@ -121,18 +116,19 @@ export interface City {
 
 /** Per-resource-cell harvest state. Absent entry = fresh cell (0 taps). */
 export interface CellHarvestState {
-  taps: number;
+  /** Units left in the depot. Everything that extracts — thumb or worker —
+   *  draws this down; at zero the cell is exhausted. */
+  units: number;
   exhaustedUntil: number | null; // epoch ms; recovery is lazy (derived from time)
 }
 
-export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';
+export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working';
 
 export interface Worker {
   id: string;
   buildingId: string; // district uniqueId
   activity: WorkerActivity;
   claimedCell: Coord | null;
-  carrying: boolean; // true on the way home with a harvested unit
   stateStartedAt: number; // epoch ms — for render interpolation
   stateUntil: number | null; // event time; null while Idle
 }
@@ -271,7 +267,7 @@ export interface GameState {
   featureRespawns: Array<{
     origin: string; feature: FeatureId; readyAt: number; generation: number;
   }>;
-  harvest: Record<string, CellHarvestState>; // coordKey → taps/exhaustion
+  harvest: Record<string, CellHarvestState>; // coordKey → depot/exhaustion
   workers: Worker[];
   army: ArmyUnit[];
   research: {
@@ -388,6 +384,11 @@ export interface GameState {
   /** Epoch ms of the last successful player collect tap (cooldown anchor).
    *  Transient — not persisted; resets on load. */
   lastCollectTapAt: number;
+  /** Fractional units a tap has earned but not yet been paid, per currency.
+   *  A tap is priced in SECONDS of work, so on most cells it owes a fraction;
+   *  carrying the remainder is what makes a +20% TapPower honest instead of
+   *  destroyed by rounding. Never negative, never a whole unit. */
+  tapCarry: Partial<Record<CurrencyId, number>>;
 }
 
 export const newId = (state: GameState, prefix: string): string => `${prefix}_${state.nextId++}`;

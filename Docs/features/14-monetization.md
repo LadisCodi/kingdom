@@ -214,7 +214,7 @@ there is currently no way to produce a D30 at all.**
 |---|---|---|
 | Gacha pull | 30 Gems | `gacha.pull_gem_cost` |
 | Second builder | 30 Gems, `×2.5` per builder | `kingdom.builder_gem_cost_*` |
-| Mana refill | 4 Mana a Gem — a 160 pool is **40 Gems** | `mana.gem_refill_per_gem` |
+| Mana refill | **0.34 of the cap a Gem** — any full pool is **3 Gems** | `mana.gem_refill_fraction` |
 | Research slot | 10, `×3` | `research.slot_gem_cost_*` |
 | Party slot | 25, `×2.2` | `party.slot_gem_cost_*` |
 | Attunement slot | 20, `×2.5` | `attunement.slot_gem_cost_*` |

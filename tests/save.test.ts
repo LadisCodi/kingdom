@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { SAVE_VERSION } from '../src/sim/data/definitions';
+import { HARVEST, SAVE_VERSION } from '../src/sim/data/definitions';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
@@ -36,7 +36,7 @@ describe('save round-trip', () => {
     // reveals more than one tree, so naming it here would only be a guess.
     const worked = Object.keys(state.harvest)[0];
     expect(worked, 'no cell was harvested').toBeDefined();
-    expect(state.harvest[worked].taps).toBeGreaterThan(0);
+    expect(state.harvest[worked].units).toBeLessThan(HARVEST.Forest.stock);
 
     const restored = deserialize(serialize(state, t), map, t)!;
     expect(restored).not.toBeNull();

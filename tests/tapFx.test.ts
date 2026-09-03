@@ -26,6 +26,20 @@ describe('tap punch', () => {
     expect(p.flash).toBeLessThan(0.2);
   });
 
+  // A worker's strike is the player's gesture performed by somebody else: the
+  // same punch, quieter, and WITHOUT the white flash — because the flash is
+  // what says "that was me", and thirty woodcutters would drown it
+  // (Docs/features/04-harvest.md §5).
+  it("a worker's strike punches but never flashes", () => {
+    let now = 0;
+    const fx = new TapFx(() => now);
+    fx.add('2,3', 0.55); // a strike
+    const p = fx.sample('2,3')!;
+    expect(p.flash).toBe(0);
+    expect(p.sx).toBeGreaterThan(1); // still squashes, so it still reads
+    expect(p.sx).toBeLessThan(at(0)!.sx); // but less than the player's own tap
+  });
+
   it('expires after the duration and cleans up; re-tap restarts', () => {
     expect(at(300)).toBeNull();
     let now = 0;

@@ -6,7 +6,7 @@ import { recordResourceDiscovery } from './discovery';
 import { payMana } from './mana';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
-import { effectiveAutoTapCooldownMs, effectiveTapYield } from './upgrades';
+import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import { resolve } from './modifiers';
 import { pick } from './rng';
@@ -35,16 +35,21 @@ export const harvestSpecAt = (state: GameState, cell: Coord): HarvestSpec | null
   return source === null ? null : HARVEST[source];
 };
 
-/** What ONE player collect tap on this cell pays (0 = not harvestable). */
-export function tapYieldAt(state: GameState, cell: Coord): number {
+/** What ONE player collect tap on this cell would pay right now, capped by
+ *  what the cell still holds (0 = not harvestable, or empty). For the UI —
+ *  the tap itself settles its own fraction, so this ignores the carry. */
+export function tapYieldAt(state: GameState, cell: Coord, now: number): number {
   const source = harvestSourceAt(state, cell);
-  return source === null ? 0 : effectiveTapYield(state, HARVEST[source]);
+  if (source === null) return 0;
+  const spec = HARVEST[source];
+  const want = Math.max(1, Math.floor(tapDraw(state, spec, 0)));
+  return Math.min(want, stockAt(state, cell, now));
 }
 
-const cellState = (state: GameState, key: string): CellHarvestState => {
+const cellState = (state: GameState, key: string, spec: HarvestSpec): CellHarvestState => {
   let s = state.harvest[key];
   if (!s) {
-    s = { taps: 0, exhaustedUntil: null };
+    s = { units: spec.stock, exhaustedUntil: null };
     state.harvest[key] = s;
   }
   return s;
@@ -57,51 +62,90 @@ const cellState = (state: GameState, key: string): CellHarvestState => {
 export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
   Math.max(1000, Math.round(resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)));
 
-/** Lazy recovery: an elapsed exhaustedUntil resets the cell. */
-function recoverIfDue(s: CellHarvestState, now: number): void {
+/** A depot with no capacity never runs down and never recovers, because it
+ *  never went anywhere: `stock` 0 is how the workbook says "this is bedrock".
+ *  Checked before the finite branch, so a 0 recovery on such a source cannot
+ *  be read as "consume the feature". */
+export const isInexhaustible = (spec: HarvestSpec): boolean => spec.stock <= 0;
+
+/** Lazy recovery: an elapsed exhaustedUntil refills the depot to full.
+ *
+ *  Binary, and chosen over continuous regrowth on purpose: a stump is the most
+ *  legible state in the game, emptying a cell is what sends a worker looking
+ *  for another one, and buying faster recovery is then something you can SEE
+ *  (Docs/features/04-harvest.md §3). */
+function recoverIfDue(s: CellHarvestState, spec: HarvestSpec, now: number): void {
   if (s.exhaustedUntil !== null && s.exhaustedUntil <= now) {
     s.exhaustedUntil = null;
-    s.taps = 0;
+    s.units = spec.stock;
   }
 }
 
-export function isExhausted(state: GameState, cell: Coord, now: number): boolean {
+/** Units this cell still holds. Bedrock is bottomless. */
+export function stockAt(state: GameState, cell: Coord, now: number): number {
+  const spec = harvestSpecAt(state, cell);
+  if (spec === null) return 0;
+  if (isInexhaustible(spec)) return Number.POSITIVE_INFINITY;
   const s = state.harvest[coordKey(cell)];
-  if (!s) return false;
-  recoverIfDue(s, now);
-  return s.exhaustedUntil !== null;
+  if (!s) return spec.stock;
+  recoverIfDue(s, spec, now);
+  return s.units;
+}
+
+export function isExhausted(state: GameState, cell: Coord, now: number): boolean {
+  return stockAt(state, cell, now) <= 0;
 }
 
 /** When the cell will next be workable; null if it is workable now. */
 export function recoversAt(state: GameState, cell: Coord, now: number): number | null {
+  const spec = harvestSpecAt(state, cell);
+  if (spec === null || isInexhaustible(spec)) return null;
   const s = state.harvest[coordKey(cell)];
   if (!s) return null;
-  recoverIfDue(s, now);
+  recoverIfDue(s, spec, now);
   return s.exhaustedUntil;
 }
 
-/** Remaining tap fraction for UI (1 = fresh, 0 = about to exhaust). */
-export function tapFraction(state: GameState, cell: Coord, spec: HarvestSpec, now: number): number {
-  const s = state.harvest[coordKey(cell)];
-  if (!s) return 1;
-  recoverIfDue(s, now);
-  return 1 - s.taps / spec.tapsToExhaust;
-}
-
-/** Register one extraction (player tap or worker delivery) against the cell.
- *  Returns true if this tap exhausted the cell. Caller has verified the cell
- *  is a live resource cell. */
-export function registerTap(
+/** Remaining depot fraction for UI (1 = full, 0 = empty). */
+export function stockFraction(
   state: GameState,
   cell: Coord,
   spec: HarvestSpec,
   now: number,
-): boolean {
+): number {
+  if (isInexhaustible(spec)) return 1;
+  const s = state.harvest[coordKey(cell)];
+  if (!s) return 1;
+  recoverIfDue(s, spec, now);
+  return Math.max(0, Math.min(1, s.units / spec.stock));
+}
+
+/** Draw up to `want` units out of the cell. Returns what was ACTUALLY there,
+ *  which may be less — and the shortfall is owed back to nobody: you paid one
+ *  Mana for what the tree held, and that waste is the signal that your thumb
+ *  has outgrown your ground. Caller has verified the cell is live.
+ *
+ *  This is the ONE place anything leaves the ground, and it is why no tap in
+ *  the game can mint matter: the thumb and the worker draw the same depot. */
+export function drawFromCell(
+  state: GameState,
+  cell: Coord,
+  spec: HarvestSpec,
+  want: number,
+  now: number,
+): number {
+  // A mountain does not get used up by picking at it. An inexhaustible source
+  // keeps NO cell state at all — there is no wear to remember, so there is
+  // nothing to persist and nothing to grow without bound in the save.
+  const asked = Math.max(0, Math.floor(want));
+  if (isInexhaustible(spec)) return asked;
   const key = coordKey(cell);
-  const s = cellState(state, key);
-  recoverIfDue(s, now);
-  s.taps += 1;
-  if (s.taps < spec.tapsToExhaust) return false;
+  const s = cellState(state, key, spec);
+  recoverIfDue(s, spec, now);
+  const taken = Math.min(asked, s.units);
+  if (taken <= 0) return 0;
+  s.units -= taken;
+  if (s.units > 0) return taken;
   if (spec.recoverySeconds <= 0) {
     // Finite source (Berry bush, Wild animals): consumed — the feature
     // vanishes from this cell. With respawnSeconds it later reappears in a
@@ -119,12 +163,11 @@ export function registerTap(
     delete state.features[key];
     delete state.featureMeta[key];
     delete state.harvest[key];
-    return true;
+    return taken;
   }
   s.exhaustedUntil = now + effectiveRecoveryMs(state, spec);
-  return true;
+  return taken;
 }
-
 // -------------------------------------------------------------- respawning
 
 /** Place every due respawn: a random valid neighbor of the ORIGIN cell
@@ -190,12 +233,26 @@ export function tapCell(
   const blocked = harvestBlock(state, cell, now);
   if (blocked !== null) return blocked;
   const spec = HARVEST[harvestSourceAt(state, cell)!];
-  const units = tapYieldAt(state, cell);
+  // A tap owes `tap.workSeconds` of this cell's own work — a fractional number
+  // of units on most ground — so the remainder rides along in `tapCarry` until
+  // it adds up. Without that, a +20% TapPower on a cell paying two units a tap
+  // is destroyed by rounding and the upgrade is decorative.
+  const carry = state.tapCarry[spec.currencyId] ?? 0;
+  const owed = tapDraw(state, spec, carry);
+  // Floored at one unit: ten seconds of work on slow ground is a fraction, and
+  // a tap that pays nothing is a bug the player experiences as one. The floor
+  // is generous on slow ground on purpose — that is where a worker is slowest
+  // and the thumb matters most.
+  const want = Math.max(1, Math.floor(owed));
+  state.tapCarry[spec.currencyId] = Math.max(0, owed - want);
+  const units = drawFromCell(state, cell, spec, want, now);
+  if (units <= 0) return 'Exhausted';
   addToWallet(state.city.wallet, spec.currencyId, units);
   recordResourceDiscovery(state, spec.currencyId);
   recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount: units });
+  // A WORKER's strike deliberately does NOT record this: the two look alike on
+  // screen now, but a quest asking the player to tap is asking for the hand.
   recordQuestEvent(state, { kind: 'tap' });
-  registerTap(state, cell, spec, now);
   return 'Harvested';
 }
 

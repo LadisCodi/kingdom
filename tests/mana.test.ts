@@ -19,6 +19,7 @@ import {
 import {
   accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction,
   manaRefillGemCost, refillManaWithGems,
+  manaPerGem,
 } from '../src/sim/mana';
 import { LANDMARKS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
@@ -228,7 +229,7 @@ describe('gem refills', () => {
   it('are priced on what is missing, so a full pool costs nothing', () => {
     const state = drained(freshGame());
     const cap = manaCap(state);
-    expect(manaRefillGemCost(state)).toBe(Math.ceil(cap / MANA.gemRefillPerGem));
+    expect(manaRefillGemCost(state)).toBe(Math.ceil(cap / manaPerGem(state)));
     addMana(state, cap);
     expect(manaRefillGemCost(state)).toBe(0);
     expect(refillManaWithGems(state)).toBe('AlreadyFull');

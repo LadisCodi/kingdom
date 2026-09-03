@@ -65,12 +65,19 @@ export interface HarvestSpec {
    *  key the cell-scoped upgrades (Butchery, Big Nets, Iron Picks) hang on. */
   id: HarvestSourceId;
   currencyId: CurrencyId;
-  /** Units per player tap (click collection). */
-  yieldPerTap: number;
-  /** Units per worker delivery (auto collection) — upgradeable separately. */
-  yieldPerWorker: number;
-  tapsToExhaust: number;
-  /** Seconds to recover after exhausting; 0 = FINITE — the feature is
+  /** Units one extraction takes — the CHUNK. Raised by this cell's abundance
+   *  upgrade, and it lifts the tap and the worker alike, because both draw
+   *  from the same depot. */
+  unitsPerStrike: number;
+  /** Seconds one extraction takes — the RHYTHM. Together with the chunk this
+   *  is the cell's rate, and it is what a tap is priced against: a tap pays
+   *  `tap.workSeconds` of it. Iron as three units every sixty seconds is a
+   *  heavy swing; crops as one every eight is a light tick. */
+  secondsPerStrike: number;
+  /** Units the cell holds when full — the BURST. 0 = bedrock: never runs
+   *  down, never recovers, keeps no cell state at all. */
+  stock: number;
+  /** Seconds to recover after emptying; 0 = FINITE — the feature is
    *  consumed and vanishes from the map when drained. */
   recoverySeconds: number;
   /** The technology a player needs before they may tap this at all; null =
@@ -112,18 +119,23 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   MountainGold: harvest('MountainGold', 'Gold', balance.harvest.MountainGold),
 };
 
-// Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
+// Worker travel. There is no global work time any more: how long an
+// extraction takes is a property of the CELL (`secondsPerStrike`), which is
+// what lets a farm plot be fast and thirsty where an iron mountain is slow.
 export const WORKER = balance.worker;
 
 // Player collect taps: cooldown between collects (upgradeable later).
 export const TAP = balance.tap;
 
 
-// Villager training at the Townhall: duration + tap boost (upgradeable later).
+// Villager training at the Townhall. There is no tap that hurries it: a queue
+// is a FIXED duration and a tap is a scaling one, so a maxed thumb would
+// finish a villager in one press. A timer is hurried with Gems, not Mana.
 export const TRAINING = balance.training;
 
 // Passive taxes: gold per housed villager per minute (boostable by
-// TradeRoutes); tapping a lived-in house adds tapBoostSeconds to the clock.
+// TradeRoutes); tapping a lived-in house sells `tap.workSeconds` of its own
+// rent forward, bounded by the Mana pool and nothing else.
 export const TAXES = balance.taxes;
 
 // Adjacency rules (Adjacency sheet): flat gold a district gains — or loses —
@@ -1368,4 +1380,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;

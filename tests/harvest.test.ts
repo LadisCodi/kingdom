@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { DISTRICTS, FEATURES, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import {
-  collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
+  collectTap, harvestSourceAt, isExhausted, stockFraction, tapCell, tapYieldAt,
 } from '../src/sim/harvest';
 import { getWallet, parseCoordKey, type Coord } from '../src/sim/state';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
@@ -32,22 +32,31 @@ describe('harvest sources', () => {
 });
 
 describe('tapping', () => {
-  it('a tap yields 1 Wood; the 10th tap exhausts the cell for 90 s', () => {
+  // A tap takes `tap.work_seconds` of the cell's own work out of its depot —
+  // two Wood on a forest — so five taps empty a tree and the tree's total is
+  // its STOCK however hard the thumb is upgraded. Nobody mints.
+  it('drains the depot and cannot take more than the cell holds', () => {
     const state = canGather(freshGame());
     reveal(state, [FOREST]);
-    for (let i = 1; i <= 9; i++) {
+    // One Forest strike takes 10 s, and a tap is worth `tap.workSeconds` of
+    // it — so the tree's stock over that is how many taps it stands.
+    const perTap = tapYieldAt(state, FOREST, T0);
+    expect(perTap).toBe(Math.max(1, Math.floor(
+      TAP.workSeconds * HARVEST.Forest.unitsPerStrike / HARVEST.Forest.secondsPerStrike)));
+    const taps = HARVEST.Forest.stock / perTap;
+    for (let i = 1; i < taps; i++) {
       expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
       expect(isExhausted(state, FOREST, T0)).toBe(false);
     }
-    expect(tapCell(state, map, FOREST, T0)).toBe('Harvested'); // 10th
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(10);
+    expect(tapCell(state, map, FOREST, T0)).toBe('Harvested'); // the last one
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(HARVEST.Forest.stock);
     expect(isExhausted(state, FOREST, T0)).toBe(true);
     expect(tapCell(state, map, FOREST, T0)).toBe('Exhausted');
     // Lazy recovery after recoverySeconds.
     const recoverAt = T0 + HARVEST.Forest.recoverySeconds * 1000;
     expect(isExhausted(state, FOREST, recoverAt - 1)).toBe(true);
     expect(isExhausted(state, FOREST, recoverAt)).toBe(false);
-    expect(tapFraction(state, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // taps reset
+    expect(stockFraction(state, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // depot refilled
     expect(tapCell(state, map, FOREST, recoverAt)).toBe('Harvested');
   });
 
@@ -56,25 +65,27 @@ describe('tapping', () => {
   // repeats are paced.
   it('manual taps are never gated — the player can tap as fast as they like', () => {
     const state = canGather(freshGame());
+    const perTap = tapYieldAt(state, FOREST, T0);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 2)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(3);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(3 * perTap);
   });
 
   it('held-pointer repeats wait out the auto-tap cooldown', () => {
     const state = canGather(freshGame());
     const cooldownMs = effectiveAutoTapCooldownMs(state);
+    const perTap = tapYieldAt(state, FOREST, T0);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     // The input layer retries every 100ms; those land as autoRepeat…
     expect(collectTap(state, map, FOREST, T0 + 100, true)).toBe('OnCooldown');
     expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1, true)).toBe('OnCooldown');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(1); // nothing collected meanwhile
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(perTap); // nothing meanwhile
     // …and the first retry at/after the cooldown collects again.
     expect(collectTap(state, map, FOREST, T0 + cooldownMs, true)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(2);
-    // A failed collect (exhausted cell) does NOT reset the cooldown anchor.
-    for (let i = 0; i < 8; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // exhaust (10 taps total)
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(2 * perTap);
+    // A failed collect (an empty cell) does NOT reset the cooldown anchor.
+    for (let i = 0; i < 20; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // drain it
     expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs, true)).toBe('Exhausted');
     expect(state.lastCollectTapAt).toBe(T0 + cooldownMs);
   });
@@ -106,7 +117,7 @@ describe('the energy a tap is paid from', () => {
     const state = canGather(freshGame());
     reveal(state, [FOREST]);
     // Exhaust it with the free primitive so the pool is untouched.
-    for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) tapCell(state, map, FOREST, T0);
+    for (let i = 0; i < HARVEST.Forest.stock; i++) tapCell(state, map, FOREST, T0);
     expect(isExhausted(state, FOREST, T0)).toBe(true);
 
     const before = mana(state);
@@ -286,7 +297,7 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
 
     completeTech(state, 'ScalingTools');
     expect(collectTap(state, map, peak!, T0)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Stone')).toBe(HARVEST.Stone.yieldPerTap);
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(tapYieldAt(state, peak!, T0));
     expect(mana(state)).toBe(before - TAP.manaCost);
   });
 
@@ -298,7 +309,7 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     completeTech(state, 'ScalingTools');
 
     const spec = HARVEST.Stone;
-    for (let i = 0; i < spec.tapsToExhaust; i++) {
+    for (let i = 0; i < spec.stock; i++) {
       expect(tapCell(state, map, peak!, T0), `strike ${i + 1}`).toBe('Harvested');
     }
     expect(isExhausted(state, peak!, T0)).toBe(true);
@@ -314,9 +325,11 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     expect(HARVEST.Stone.recoverySeconds).toBe(120);
     expect(HARVEST.MountainIron.recoverySeconds).toBe(300);
     expect(HARVEST.MountainGold.recoverySeconds).toBe(300);
-    for (const source of ['Stone', 'MountainIron', 'MountainGold'] as const) {
-      expect(HARVEST[source].tapsToExhaust, `${source} strikes`).toBe(5);
-    }
+    // And a metal peak is RICHER as well as slower: more units in the ground,
+    // not merely a bigger number per swing.
+    expect(HARVEST.Stone.stock).toBe(5);
+    expect(HARVEST.MountainIron.stock).toBeGreaterThan(HARVEST.Stone.stock);
+    expect(HARVEST.MountainGold.stock).toBeGreaterThan(HARVEST.Stone.stock);
   });
 
   it('is worked by the Quarry — the one building that goes after every peak', () => {

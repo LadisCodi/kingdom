@@ -14,7 +14,7 @@ import { cityGoldPerMinute } from '../src/sim/population';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState } from '../src/sim/state';
 import {
-  effectiveTapYield, effectiveTaxRate, effectiveWorkerYield,
+  effectiveTaxRate, effectiveWorkerStrike, tapWorkSeconds,
 } from '../src/sim/upgrades';
 import { addBuilt, freshGame, map, T0 } from './helpers';
 
@@ -147,19 +147,21 @@ describe('expiry', () => {
 });
 
 describe('the effectiveX pipeline', () => {
-  it('rounds integer stats once, at the boundary', () => {
+  it('scales what a tap is worth by scaling its DURATION', () => {
     const state = freshGame();
-    // Base Forest tap is 1; x1.5 must become 2, not 1.5 in the wallet.
+    // `tapYield` no longer multiplies units. A tap is priced in SECONDS of the
+    // cell's own work, so the modifier stretches the seconds and the units
+    // follow from the ground's rate — which is what stops a tap minting
+    // matter (Docs/features/04-harvest.md §4).
+    const base = tapWorkSeconds(state);
     addModifier(state, mod({ id: 'a', stat: 'tapYield', op: 'mul', value: 1.5 }));
-    const yielded = effectiveTapYield(state, HARVEST.Forest);
-    expect(Number.isInteger(yielded)).toBe(true);
-    expect(yielded).toBe(Math.round(HARVEST.Forest.yieldPerTap * 1.5));
+    expect(tapWorkSeconds(state)).toBeCloseTo(base * 1.5, 6);
   });
 
   it('never lets a stat go negative', () => {
     const state = freshGame();
     addModifier(state, mod({ id: 'a', stat: 'workerYield', op: 'add', value: -99 }));
-    expect(effectiveWorkerYield(state, HARVEST.Stone)).toBe(0);
+    expect(effectiveWorkerStrike(state, HARVEST.Stone)).toBe(0);
   });
 
   it('reaches the tax rate, and therefore the city income', () => {

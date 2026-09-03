@@ -72,6 +72,7 @@ export function newGame(map: MapData, now: number): GameState {
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,
+    tapCarry: {},
   };
 
   // Authored features from the map (static under the harvest model).
@@ -88,7 +89,6 @@ export function newGame(map: MapData, now: number): GameState {
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
-    lastTapAt: 0,
   });
 
   // A new kingdom starts with a FULL pool, not an empty one. Mana is what

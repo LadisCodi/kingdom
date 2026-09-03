@@ -12,6 +12,7 @@
 // keep running in real time).
 
 import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
+import { harvestSpecAt } from './harvest';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
 import { normaliseSlots } from './artifacts';
@@ -45,7 +46,6 @@ interface DistrictDto {
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
-  LastTapAt?: number;
 }
 
 interface QueueItemDto {
@@ -61,7 +61,6 @@ interface WorkerDto {
   BuildingID: string;
   Activity: string;
   ClaimedCell: Coord | null;
-  Carrying: boolean;
   StateStartedAt: string;
   StateUntil: string | null;
 }
@@ -127,6 +126,27 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v24 — a resource cell stopped counting TAPS and started holding UNITS
+    // (`Docs/features/04-harvest.md` §3). The old counter cannot be converted
+    // honestly: one old tap was one unit on a forest and three on a herd, and
+    // what a tap PAID scaled with the whole city's payroll, so the wear a save
+    // recorded does not mean the same thing twice.
+    //
+    // So the wear is forgiven: dropping the module makes the reader default
+    // every cell to a full depot with no exhaustion. It is worth a few seconds
+    // of production, it can only ever hand the player MORE than they had, and
+    // it is the only reading that cannot be wrong in the direction the first
+    // promise forbids.
+    //
+    // A house's `LastTapAt` goes the same way — written, persisted and never
+    // read — and its replacement `PulledUntil` defaults to a full advance
+    // budget, which is also the generous direction.
+    to: 24,
+    migrate: (modules) => {
+      delete modules['kingdom.cellHarvest'];
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -163,7 +183,6 @@ export function serialize(state: GameState, now: number): SaveFile {
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
-                LastTapAt: d.lastTapAt,
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -222,10 +241,9 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.cellHarvest': {
         Cells: Object.entries(state.harvest)
-          .filter(([, s]) => s.taps > 0 || s.exhaustedUntil !== null)
           .map(([k, s]) => ({
             Coord: parseCoordKey(k),
-            Taps: s.taps,
+            Units: s.units,
             ExhaustedUntil: isoOrNull(s.exhaustedUntil),
           })),
       },
@@ -235,7 +253,6 @@ export function serialize(state: GameState, now: number): SaveFile {
           BuildingID: w.buildingId,
           Activity: w.activity,
           ClaimedCell: w.claimedCell,
-          Carrying: w.carrying,
           StateStartedAt: iso(w.stateStartedAt),
           StateUntil: isoOrNull(w.stateUntil),
         })),
@@ -385,7 +402,6 @@ export function deserialize(
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
-        lastTapAt: d.LastTapAt ?? 0,
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -484,8 +500,12 @@ export function deserialize(
   const harvestDto = modules['kingdom.cellHarvest']?.Cells;
   if (harvestDto) {
     for (const c of harvestDto as any[]) {
+      const spec = harvestSpecAt(state, c.Coord);
       state.harvest[coordKey(c.Coord)] = {
-        taps: c.Taps ?? 0,
+        // A cell whose depot was never written is full; `Units` 0 is a real
+        // value (an emptied cell) and must survive the ?? that a missing key
+        // needs, so it is checked rather than defaulted.
+        units: typeof c.Units === 'number' ? c.Units : (spec?.stock ?? 0),
         exhaustedUntil: msOrNull(c.ExhaustedUntil),
       };
     }
@@ -499,7 +519,6 @@ export function deserialize(
         buildingId: w.BuildingID,
         activity: w.Activity as Worker['activity'],
         claimedCell: w.ClaimedCell,
-        carrying: !!w.Carrying,
         stateStartedAt: ms(w.StateStartedAt),
         stateUntil: msOrNull(w.StateUntil),
       }),

@@ -73,7 +73,7 @@ const applies = (m: Modifier, stat: ModifierStat, scope: ModifierScope): boolean
  *
  * Expiry is read off `state.lastAdvance` — the sim's own clock — rather than a
  * `now` parameter. Threading `now` was rejected deliberately: effectiveTaxRate
- * is reached from accrueTaxes and from three UI files, effectiveTapYield from
+ * is reached from accrueTaxes and from three UI files, tapWorkSeconds from
  * tapCell and game.ts, and so on. It would be a wide, noisy diff across six
  * sim files and several ui/ ones, and it would introduce two notions of "now"
  * that can disagree.

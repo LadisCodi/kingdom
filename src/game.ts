@@ -3,7 +3,7 @@
 
 import {
   advance, builderGemCost, buyBuilder, canAfford, cancelQueueItem, changeWorkers, collectTap,
-  enqueueBuild, finishWithGems, moveDistrict, townhallTap, upgradeDistrict,
+  enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
@@ -24,7 +24,7 @@ import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import {
   committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
-  trainingCompletesAt, trainingTap, unitInTraining,
+  trainingCompletesAt,
 } from './sim/army';
 import {
   artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
@@ -55,7 +55,7 @@ import {
   anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
 import {
-  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
+  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerStrike,
 } from './sim/upgrades';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
@@ -227,6 +227,7 @@ export class Game {
     const result = advance(this.state, this.map, this.now());
     for (const d of result.deposits) {
       this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
+      this.strikeFeedback(d.cell, d.source);
     }
     if (result.goldEarned > 0) {
       this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);
@@ -420,33 +421,12 @@ export class Game {
         // truthy. Testing it as a boolean sent every non-trainer down this
         // branch — which swallowed the tap on a crop plot, because a plot is
         // a district that trains nothing and the harvest branch is below.
+        // A training building answers a tap only by opening its card. There is
+        // no tap that hurries a queue: a queue is a FIXED duration and a tap is
+        // a scaling one, so a maxed thumb would finish a villager in one press
+        // (Docs/features/04-harvest.md §4.2). Timers take Gems.
         if (district && district.state === 'Built'
           && DISTRICTS[district.definitionId].trains.length > 0) {
-          // Read the trainee BEFORE the tap: a tap that completes the unit
-          // clears the line, and the floater has to name what came out.
-          const trainee = unitInTraining(this.state, district.uniqueId)?.trainee;
-          const tap = trainingTap(this.state, district, this.now());
-          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
-          if (tap === 'Complete') {
-            playSfx('unitTrained');
-            this.floaters.add(cell, `+1 ${trainee ?? ''}`.trim());
-          } else if (tap === 'Boosted') {
-            this.floaters.add(cell, '⏩');
-          } else if (tap === 'NoMana') {
-            this.outOfMana(cell);
-          }
-          this.inspectedDistrictId = district.uniqueId;
-          this.notify();
-          return true;
-        }
-        // Townhall: tapping adds cycle progress (and opens/keeps its card).
-        if (district?.definitionId === 'Townhall' && district.state === 'Built') {
-          const tap = townhallTap(this.state, this.now());
-          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
-          if (tap === 'TrainingComplete') playSfx('villagerTrained');
-          if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
-          else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
-          else if (tap === 'NoMana') this.outOfMana(cell);
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -478,6 +458,33 @@ export class Game {
     playSfx(sfx);
   }
 
+  /**
+   * A WORKER's strike: the player's own gesture, performed by somebody else.
+   *
+   * The same hit on the same cell with the same foley — **no white flash**,
+   * which stays the player's signature, and half the volume. That is the whole
+   * point of the strike model: automation should look like your hands, slower
+   * (`Docs/features/04-harvest.md` §5).
+   *
+   * Three rules keep thirty woodcutters from becoming a machine gun, and all
+   * three are presentation only — dropping a sound or a punch can never change
+   * what the sim did, which is what makes it safe to gate them on the camera:
+   *
+   * - **Only what is on screen.** A hit you cannot see makes no sound.
+   * - **Silent zoomed out.** Past the threshold you are looking at a city, not
+   *   at a tree, and every cell being audible at once is noise.
+   * - **At most three voices**, with extra pitch jitter so two strikes landing
+   *   together do not phase-lock into a drone.
+   */
+  private strikeFeedback(cell: Coord, source: HarvestSourceId): void {
+    if (!this.camera.isCellVisible(cell)) return;
+    this.tapFx.add(coordKey(cell), STRIKE_PUNCH);
+    if (this.camera.zoom < STRIKE_AUDIBLE_ZOOM) return;
+    playSfx(TAP_SOUNDS[source], {
+      gain: 0.5, jitter: 0.05, group: 'strike', limit: 3,
+    });
+  }
+
   /** Out of energy, said once and in one place: every tap that spends Mana
    *  refuses the same way, so the player learns one refusal rather than four.
    *  Names the pool, because a silent no reads as a broken tap. */
@@ -492,7 +499,7 @@ export class Game {
    *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
   private collectAt(cell: Coord, autoRepeat = false): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
-    const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
+    const units = tapYieldAt(this.state, cell, this.now()); // before the tap — it may empty the cell
     const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
@@ -2114,8 +2121,16 @@ function cellYieldLabel(state: GameState, cell: Coord): string {
   const source = harvestSourceAt(state, cell);
   if (source === null) return '';
   const spec = HARVEST[source];
-  return `+${effectiveWorkerYield(state, spec)} ${icon(spec.currencyId)}`;
+  return `+${effectiveWorkerStrike(state, spec)} ${icon(spec.currencyId)}`;
 }
+
+/** How hard a worker's strike punches the cell, against the player's 1. Enough
+ *  to read as the same gesture, not enough to compete with it. */
+const STRIKE_PUNCH = 0.55;
+
+/** Below this zoom a strike is silent: at that scale you are reading the city,
+ *  and every worked cell chiming at once is noise rather than feedback. */
+const STRIKE_AUDIBLE_ZOOM = 0.8;
 
 const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
   Forest: 'tapTree',

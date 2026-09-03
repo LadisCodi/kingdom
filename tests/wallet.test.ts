@@ -8,12 +8,13 @@
 // two different things, and the rates survived the fold.
 import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
+import { HARVEST, TAP } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
 import { harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { populationCost } from '../src/sim/population';
 import { canAfford, pay } from '../src/sim/wallet';
 import {
-  addBuilt, addTrainer, BERRIES, canGather, completeTech, freshGame, fund, map, T0,
+  addBuilt, addTrainer, BERRIES, canGather, completeTech, drain, freshGame, fund, map, T0,
 } from './helpers';
 
 const BERRY_BUSH = BERRIES; // the one authored bush
@@ -55,8 +56,10 @@ describe('finite map features', () => {
     const state = freshGame();
     canGather(state); // the bush sits behind Forestry now
     expect(harvestSourceAt(state, BERRY_BUSH)).toBe('Berries'); // the CELL is a bush
-    for (let i = 0; i < 10; i++) expect(tapCell(state, map, BERRY_BUSH, T0)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Food')).toBe(10); // but it PAYS Food, 1 a tap
+    // Its depot is the ceiling: however many times the thumb asks, a bush is
+    // worth exactly what is in it.
+    expect(drain(state, BERRY_BUSH)).toBe(HARVEST.Berries.stock);
+    expect(getWallet(state.city.wallet, 'Food')).toBe(HARVEST.Berries.stock); // it PAYS Food
     expect(state.features[coordKey(BERRY_BUSH)]).toBeUndefined(); // gone from the map
     expect(harvestSourceAt(state, BERRY_BUSH)).toBe(null);
     expect(tapCell(state, map, BERRY_BUSH, T0)).toBe('NotHarvestable');
@@ -70,7 +73,14 @@ describe('finite map features', () => {
     expect(tapCell(state, map, WILD_ANIMALS, T0)).toBe('TechLocked');
     completeTech(state, 'Hunting');
     expect(tapCell(state, map, WILD_ANIMALS, T0)).toBe('Harvested');
-    // The old exchange rate, carried into the yield: a Meat was 3 Food.
-    expect(getWallet(state.city.wallet, 'Food')).toBe(3);
+    // A herd is the richest FINITE node — three Food a swing against a bush's
+    // one — but a TAP is priced in seconds of that swing, not in the swing, so
+    // what the thumb gets is `tap.workSeconds` of butchering.
+    expect(getWallet(state.city.wallet, 'Food')).toBe(Math.max(1, Math.floor(
+      TAP.workSeconds * HARVEST.Meat.unitsPerStrike / HARVEST.Meat.secondsPerStrike)));
+    // Its richness is in the DEPOT and the CREW: a herd holds 30 against a
+    // bush's 10, and a hunter takes three a swing against a picker's one.
+    expect(HARVEST.Meat.stock).toBeGreaterThan(HARVEST.Berries.stock);
+    expect(HARVEST.Meat.unitsPerStrike).toBeGreaterThan(HARVEST.Berries.unitsPerStrike);
   });
 });

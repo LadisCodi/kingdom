@@ -1,11 +1,18 @@
-// Workers as units: claims, the Idle→MovingToCell→Working→MovingHome FSM, and
-// the event-driven advance that serves both the live tick and offline replay
+// Workers as units: claims, the Idle→MovingToCell→Working FSM, and the
+// event-driven advance that serves both the live tick and offline replay
 // (Docs/features/04-harvest.md §5).
+//
+// A worker walks out ONCE and then works the cell in place, STRIKING it every
+// `secondsPerStrike` and crediting the wallet on the strike. There is no load,
+// no return trip and no delivery — the strike is the player's tap performed by
+// somebody else. What is left of travel is MIGRATION: a worker whose cell
+// empties releases the claim and walks to another, and that is both where the
+// distance cost lives and the visible signal that you are over-extracting.
 
 import { DISTRICTS, HARVEST, WORKER, levelIndexed } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
-import { effectiveWorkerYield } from './upgrades';
-import { harvestSourceAt, isExhausted, recoversAt, registerTap } from './harvest';
+import { effectiveWorkerStrike, workerStrikeMs } from './upgrades';
+import { drawFromCell, harvestSourceAt, isExhausted, recoversAt } from './harvest';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import {
@@ -79,6 +86,14 @@ function findClaimableCell(
 const moveMs = (from: Coord, to: Coord): number =>
   (euclideanTiles(from, to) / WORKER.moveSpeedTilesPerSecond) * 1000;
 
+/** A stable angle per worker id, so an idle worker keeps its spot by the door
+ *  instead of jittering. Integer arithmetic, like every other hash here. */
+const unitPhase = (id: string): number => {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return ((h >>> 0) / 4294967296) * Math.PI * 2;
+};
+
 const setState = (
   w: Worker,
   activity: Worker['activity'],
@@ -102,9 +117,13 @@ function tryDispatch(state: GameState, map: MapData, w: Worker, building: Distri
   }
 }
 
-/** A worker deposit event, surfaced for UI floaters. */
+/** One worker strike, surfaced so the renderer can hit the cell — the same
+ *  feedback the player's tap gives, without the white flash and at half
+ *  volume. It is a CONSEQUENCE of the timer, never the trigger: the sim owns
+ *  the clock and the visual is derived from it. */
 export interface DepositEvent {
-  cell: Coord; // the building's cell
+  cell: Coord; // the cell that was struck
+  source: HarvestSourceId; // which ground — the renderer picks the foley from it
   currencyId: CurrencyId;
   amount: number;
 }
@@ -134,39 +153,41 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
       const cell = w.claimedCell!;
       if (isExhausted(state, cell, t)
         || !worksHere(DISTRICTS[building.definitionId].harvestSources, state, cell)) {
-        // Exhausted (or vanished) en route: turn back empty-handed.
+        // Emptied (or vanished) en route: nothing to walk home for any more,
+        // so release and look again from where the worker is standing.
         w.claimedCell = null;
-        w.carrying = false;
-        setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
+        tryDispatch(state, map, w, building, t);
       } else {
-        setState(w, 'Working', t, t + WORKER.workSeconds * 1000);
+        setState(w, 'Working', t, t + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!]));
       }
       break;
     }
     case 'Working': {
-      // Race rule: the unit is secured even if the cell exhausted mid-work.
-      w.carrying = true;
-      setState(w, 'MovingHome', t, t + moveMs(w.claimedCell!, building.location));
-      break;
-    }
-    case 'MovingHome': {
-      if (w.carrying && w.claimedCell) {
-        const source = harvestSourceAt(state, w.claimedCell);
-        if (source) {
-          const spec = HARVEST[source];
-          const amount = effectiveWorkerYield(state, spec);
-          addToWallet(state.city.wallet, spec.currencyId, amount);
-          recordResourceDiscovery(state, spec.currencyId);
-          recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
-          registerTap(state, w.claimedCell, spec, t);
-          deposits.push({ cell: building.location, currencyId: spec.currencyId, amount });
-        }
+      const cell = w.claimedCell!;
+      const source = harvestSourceAt(state, cell);
+      if (source === null
+        || !worksHere(DISTRICTS[building.definitionId].harvestSources, state, cell)) {
+        w.claimedCell = null;
+        tryDispatch(state, map, w, building, t);
+        break;
       }
-      w.carrying = false;
-      // Keep the claim if the cell is still workable; otherwise pick another.
-      if (w.claimedCell && !isExhausted(state, w.claimedCell, t) &&
-          worksHere(DISTRICTS[building.definitionId].harvestSources, state, w.claimedCell)) {
-        setState(w, 'MovingToCell', t, t + moveMs(building.location, w.claimedCell));
+      const spec = HARVEST[source];
+      // The strike. Whatever the depot actually held, up to the chunk — so a
+      // worker finishing off a cell takes the last two units rather than a
+      // whole delivery out of nothing.
+      const amount = drawFromCell(state, cell, spec, effectiveWorkerStrike(state, spec), t);
+      if (amount > 0) {
+        addToWallet(state.city.wallet, spec.currencyId, amount);
+        recordResourceDiscovery(state, spec.currencyId);
+        recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
+        // Deliberately NOT a { kind: 'tap' } event. The two look alike on
+        // screen now; a quest that asks the player to tap is asking for the
+        // hand, and unifying them would complete those with the city idle.
+        deposits.push({ cell, source, currencyId: spec.currencyId, amount });
+      }
+      // Keep the claim while the cell still holds something; otherwise migrate.
+      if (!isExhausted(state, cell, t)) {
+        setState(w, 'Working', t, t + workerStrikeMs(state, spec));
       } else {
         w.claimedCell = null;
         tryDispatch(state, map, w, building, t);
@@ -211,7 +232,6 @@ export function addWorker(state: GameState, map: MapData, district: District, no
     buildingId: district.uniqueId,
     activity: 'Idle',
     claimedCell: null,
-    carrying: false,
     stateStartedAt: now,
     stateUntil: null,
   };
@@ -223,30 +243,34 @@ export function addWorker(state: GameState, map: MapData, district: District, no
 /**
  * The building moved: re-home its crew without taking anything from them.
  *
- * Two cases, and the split is the whole point. A worker **carrying** a load
- * keeps its claim and simply walks to the new address instead of the old one
- * — the deposit still lands on arrival, so relocating never costs the player
- * a trip already worked for. A worker **not** carrying releases its claim and
- * goes Idle at `now`, because the cell it was walking to may be outside the
- * new influence radius; `tryDispatch` then picks one that is in range.
+ * This used to split on whether a worker was **carrying** — a loaded one kept
+ * its claim and walked to the new address, so a move never cost a trip already
+ * worked for. With no round trip left to protect (a strike credits the wallet
+ * on the spot) the rule is one line: **a worker whose claimed cell is still in
+ * range keeps working it; any other releases and re-claims.**
  *
  * `from` is the OLD location, and it has to be passed rather than read: the
- * caller has already moved the district by the time the walk home is timed.
+ * caller has already moved the district by the time this runs.
  */
 export function relocateCrew(
   state: GameState,
+  map: MapData,
   district: District,
   from: Coord,
   now: number,
 ): void {
+  void from;
+  const sources = DISTRICTS[district.definitionId].harvestSources;
+  const inRange = new Set(
+    workableCells(state, map, district).map((c) => coordKey(c)),
+  );
   for (const w of state.workers) {
     if (w.buildingId !== district.uniqueId) continue;
-    // Where the worker actually is right now, timed against the OLD home.
-    const at = w.activity === 'Idle' ? from
-      : w.activity === 'Working' ? (w.claimedCell ?? from)
-        : (workerPosition(state, w, now) ?? from);
-    if (w.carrying) {
-      setState(w, 'MovingHome', now, now + moveMs(at, district.location));
+    const cell = w.claimedCell;
+    if (cell !== null && inRange.has(coordKey(cell)) && worksHere(sources, state, cell)
+      && !isExhausted(state, cell, now)) {
+      // Still ours and still in range: carry on striking it from the new home.
+      setState(w, 'Working', now, now + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!]));
     } else {
       w.claimedCell = null;
       setState(w, 'Idle', now, null);
@@ -254,8 +278,8 @@ export function relocateCrew(
   }
 }
 
-/** Despawn the last worker of the building; its claim is released and any
- *  carried load is lost (design decision). */
+/** Despawn the last worker of the building; its claim is released. Nothing is
+ *  lost with it — a strike credits the wallet as it lands. */
 export function removeWorker(state: GameState, district: District): void {
   for (let i = state.workers.length - 1; i >= 0; i--) {
     if (state.workers[i].buildingId === district.uniqueId) {
@@ -266,17 +290,33 @@ export function removeWorker(state: GameState, district: District): void {
   }
 }
 
-/** Render helper: the worker's current position in cell coordinates. */
+/** Render helper: the worker's current position in cell coordinates.
+ *
+ *  An IDLE worker loiters just outside its building rather than standing on
+ *  it, and that is deliberate: a knot of people doing nothing by the door is
+ *  the most actionable fact in the game — *you over-hired, or you need more
+ *  ground* — and it was invisible while they waited inside
+ *  (`Docs/features/04-harvest.md` §7). The count lives in the district card;
+ *  the map shows the characters and nothing else.
+ *
+ *  The spot is a stable hash of the worker id, so a loiterer does not jitter
+ *  between frames and two of them rarely stand in the same place. */
 export function workerPosition(state: GameState, w: Worker, now: number): Coord | null {
   const building = districtById(state, w.buildingId);
   if (!building) return null;
   const home = building.location;
-  if (w.activity === 'Idle') return home;
+  if (w.activity === 'Idle') {
+    const size = DISTRICTS[building.definitionId].size;
+    const spot = unitPhase(w.id);
+    return {
+      x: home.x + (size.x - 1) / 2 + Math.cos(spot) * (size.x / 2 + 0.55),
+      y: home.y + (size.y - 1) / 2 + Math.sin(spot) * (size.y / 2 + 0.55),
+    };
+  }
   if (w.activity === 'Working') return w.claimedCell;
   const target = w.claimedCell;
-  // MovingHome after an aborted trip has no claim — interpolate from where it was.
-  const from = w.activity === 'MovingToCell' ? home : (target ?? home);
-  const to = w.activity === 'MovingToCell' ? (target ?? home) : home;
+  const from = home;
+  const to = target ?? home;
   const duration = (w.stateUntil ?? now) - w.stateStartedAt;
   const t = duration <= 0 ? 1 : Math.min(1, Math.max(0, (now - w.stateStartedAt) / duration));
   return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };

@@ -91,16 +91,15 @@ const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone'];
 const SETTINGS = [
   // [sheet key, json path, kind]
   ['worker.move_speed_tiles_per_second', 'worker.moveSpeedTilesPerSecond'],
-  ['worker.work_seconds', 'worker.workSeconds'],
   ['tap.collect_cooldown_seconds', 'tap.collectCooldownSeconds'],
   ['training.seconds', 'training.seconds'],
-  ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
   ['tap.mana_cost', 'tap.manaCost'],
-  // The one number behind every tap in the game: a tap hands you this many
-  // seconds of whatever you tapped is producing. Houses have always worked
-  // this way; resource cells now join them.
-  ['tap.boost_seconds', 'tap.boostSeconds'],
+  // The one number behind every tap in the game: a tap advances whatever you
+  // tapped by this many SECONDS OF ITS OWN WORK — a woodcutter's swing at a
+  // tree, a house's rent. Priced against the ground and the thumb, never
+  // against the payroll. TapPower buys this duration up, +20% a level.
+  ['tap.work_seconds', 'tap.workSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
   ['fog.gold_per_tap', 'fog.goldPerTap'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
@@ -145,7 +144,9 @@ const SETTINGS = [
   ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
-  ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
+  // A fraction of the CAP, not an absolute: one Gem buys what a daily chest
+  // step pays (0.34 of a pool), so it never goes stale as the pool grows.
+  ['mana.gem_refill_fraction', 'mana.gemRefillFraction'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
   ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
@@ -166,7 +167,6 @@ const SETTINGS = [
   // Combat is a SCORING PASS, not a simulation — these six numbers are the
   // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
   // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
-  ['army.train_tap_boost_seconds', 'army.trainTapBoostSeconds'],
   ['army.type_advantage', 'army.typeAdvantage'],
   ['army.type_disadvantage', 'army.typeDisadvantage'],
   ['army.threat_floor_fraction', 'army.threatFloorFraction'],
@@ -233,7 +233,10 @@ const SHEETS = {
   Units: ['id', 'power', 'atk', 'def', 'hp',
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'train_duration_seconds'],
-  Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
+  // A cell is a DEPOT: `stock` units, drawn `units_per_strike` at a time,
+  // one strike every `seconds_per_strike`. A tap is priced in SECONDS of that
+  // same work, so nobody mints matter. stock 0 = bedrock, never runs down.
+  Harvest: ['source', 'units_per_strike', 'seconds_per_strike', 'stock', 'recovery_seconds',
     'respawn_seconds', 'required_tech'],
   Currencies: ['id', 'cap', 'start', 'primary', 'gold_value'],
   FogRings: ['distance', 'cost'],
@@ -450,9 +453,9 @@ async function importXlsx() {
 
   for (const [id, r] of byId(readSheet(workbook, 'Harvest'), HARVEST_IDS, 'source')) {
     out.harvest[id] = {
-      yieldPerTap: num(r, 'yield_per_tap'),
-      yieldPerWorker: num(r, 'yield_per_worker'),
-      tapsToExhaust: num(r, 'taps_to_exhaust'),
+      unitsPerStrike: num(r, 'units_per_strike'),
+      secondsPerStrike: num(r, 'seconds_per_strike'),
+      stock: num(r, 'stock'),
       recoverySeconds: num(r, 'recovery_seconds'),
       respawnSeconds: num(r, 'respawn_seconds', { blankAs: 0 }),
       // Blank = anyone can tap it. A gate here is a TUTORIAL beat: the trees
@@ -694,7 +697,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];
-    return [id, h.yieldPerTap, h.yieldPerWorker, h.tapsToExhaust, h.recoverySeconds,
+    return [id, h.unitsPerStrike, h.secondsPerStrike, h.stock, h.recoverySeconds,
       h.respawnSeconds || '', h.requiredTech ?? ''];
   }));
 

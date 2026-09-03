@@ -17,7 +17,7 @@ gate that moves all of them at once.
 |---|---|---|---|
 | Target time | 0–30 min | 30 min – 2.5 h | ~3 h onward |
 | Housing cap | 2 | 4 | 6 |
-| Sawmill / Quarry / Docks cap | 1 | 2 | 3 |
+| Sawmill / Quarry / Docks / Mine cap | 1 | 2 | 3 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 |
 | Gate to the next level | 60 Wood | 156 W + 78 S + **Architecture** | — |
 
@@ -43,8 +43,9 @@ play, TH3 at ~2–3 h cumulative.
 | **FarmLands** (crop plot) | 1×1 | 1 | 6 / 6 / 12 | 10 W | 10 s | Agriculture |
 | **Farm** | 1×1 | 2 | 1 / 1 / 2 | 30 W | 20 s | Agriculture · Farming for L2 |
 | **Sawmill** | 1×1 | 3 | 1 / 2 / 3 | 20 W | 20 s | Saws · Engineering for L3 |
-| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry (← Scaling Tools) · Engineering for L2 — works **every** mountain |
+| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry (← Scaling Tools) · Engineering for L2 |
 | **Docks** | 2×1 pier | 2 | 1 / 2 / 3 | 25 W | 20 s | Fishing · Shipbuilding for L2 |
+| **Mine** | 1×1 | 2 | 1 / 2 / 3 | 40 W + 20 S | 30 s | Mining · Deep Mining for L2 — works iron **and** gold mountains |
 | **Market** | 1×1 | 1 | 1 | 40 W | 30 s | Market |
 | **Sanctum** | 1×1 | 3 | 1 | 300 G + 40 S | 90 s | Attunement branch |
 | **Barracks** | 1×1 | 3 | 1 | 60 W + 20 S | 45 s | Warrior |
@@ -52,16 +53,8 @@ play, TH3 at ~2–3 h cumulative.
 | **Shooting Grounds** | 1×1 | 3 | 1 | 80 W + 30 S | 60 s | Archery |
 | **Stables** | 1×1 | 3 | 1 | 120 W + 70 S | 90 s | Cavalry |
 
-Thirteen districts. Every one of them is a `Districts` row — a fourteenth needs
+Fourteen districts. Every one of them is a `Districts` row — a fifteenth needs
 no code beyond an id.
-
-**The Mine used to be a fourteenth** and was deleted: once iron stopped being a
-currency it was a second Quarry pointed at a second rock, and a building whose
-identity is *the other one of these* costs the player a lesson and returns
-nothing. The Quarry works every mountain now
-([`01-map-and-fog.md`](01-map-and-fog.md) §3). A Mine already standing in a save
-**becomes a Quarry** rather than disappearing — the promise is that nothing you
-own is taken from you, and that includes when a designer changes their mind.
 
 **Per-level tech gates** (`required_tech_per_level`) are the mechanic that makes
 the tree matter inside an era rather than only between them: entry 0 is what it
@@ -130,7 +123,14 @@ move on itself — standing next to where you already are is not neighbourliness
 **What follows the building:** adjacency (computed on read, so it just follows —
 but the tax anchor must be settled at that instant or the player is paid the new
 rate for time elapsed at the old one), the fog ring at the new address, and the
-crew, split as [`04-harvest.md`](04-harvest.md) §5 describes.
+crew.
+
+**The crew rule got simpler on 2026-09-03.** It used to split on whether a
+worker was *carrying* — a loaded worker kept its claim and walked to the new
+address so a move never cost a trip already worked for. With no round trip left
+to protect ([`04-harvest.md`](04-harvest.md) §5), the rule is one line: a worker
+whose claimed cell is still inside the new radius keeps working it, and any
+other releases and re-claims.
 
 ### The two gestures
 
@@ -163,7 +163,7 @@ not a mode that captures every drag.
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
 | Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
-| Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §4 |
+| Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §6 |
 | Army cap per level | 6 / 10 / 15, on the four military halls |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 

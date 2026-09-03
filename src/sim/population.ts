@@ -6,7 +6,7 @@ import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
-import { effectiveAutoTapCooldownMs, effectiveTaxRate } from './upgrades';
+import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
 
@@ -121,10 +121,22 @@ export const populationCost = (currentPopulation: number): number => {
  * refill — and it puts the city's most-used verb on the one currency the
  * design already builds pressure with.
  *
- * The boost is still scaled by this house's SHARE of city income, which is
- * what stops a large city minting more per tap than a small one: a full sweep
- * pulls forward one tapBoostSeconds of the WHOLE city's income and costs one
- * Mana per house, whatever the city's size.
+ * The pull is scaled by this house's SHARE of city income, which is what
+ * stops a large city minting more per tap than a small one: a full sweep of
+ * the neighbourhood sells one `tap.workSeconds` of the WHOLE city's income
+ * and costs one Mana a house, whatever the city's size.
+ *
+ * **The Mana pool is the only bound, and that is a decision.** A per-house
+ * advance budget was built and then REMOVED on playtest: capping how far a
+ * house could be pulled forward made the neighbourhood a once-a-minute round,
+ * and it read as an arbitrary refusal on the one building the player taps
+ * most. A house may be tapped as often as the pool allows.
+ *
+ * What that leaves live is the ratio: a house tap mints (§4.1 of
+ * `Docs/features/04-harvest.md` — an advance against a continuous accrual
+ * would otherwise be a no-op) and there are far fewer houses than workers, so
+ * Mana spent on rent is worth several times Mana spent on trees. Watching
+ * whether that makes the harvest tap vestigial is OQ-55.
  *
  * Holding is paced by the same auto-tap cooldown a held tree uses, and a
  * DELIBERATE tap is never paced — the asymmetry `effectiveAutoTapCooldownMs`
@@ -150,12 +162,12 @@ export function houseTap(
   }
   const cityRate = cityGoldPerMinute(state);
   if (cityRate <= 0) return { result: 'NoResidents', gold: 0 };
+  const seconds = tapWorkSeconds(state);
   // Charged LAST, so a tap that could not have paid out never takes the Mana.
   if (!payMana(state, TAP.manaCost)) return { result: 'NoMana', gold: 0 };
   const share = houseGoldPerMinute(state, district) / cityRate;
-  district.lastTapAt = now;
   state.lastCollectTapAt = now;
-  state.city.lastTaxAt -= TAP.boostSeconds * 1000 * share;
+  state.city.lastTaxAt -= seconds * 1000 * share;
   return { result: 'Collected', gold: advanceCityLife(state, now).gold };
 }
 
