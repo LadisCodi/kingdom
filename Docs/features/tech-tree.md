@@ -72,9 +72,24 @@ shows only its rank I until the next drop.
 
 Each tome has a spine whose ranks repeat one promise. **Rank I costs nothing
 and is granted the moment the tome opens** — it is the book's cover, and its
-job is to make the shape legible on the first look. Every keystone from II on
-`requires` **every technology in the era above it** — never an upgrade,
-because there are none.
+job is to make the shape legible on the first look. It is the one technology
+with no price and no clock, which is exactly how `isGranted` recognises it:
+without that, a cover page was startable for nothing and lit the Research tab
+on a fresh kingdom pointing at two books the player had not earned.
+
+> **A keystone requires every MAJOR of the era above it — not the ranks.**
+> Revised 2026-09-04, and it is open decision 1 answered by the build.
+
+Rule 5 originally said *every technology*. Implementing it produced the
+evidence against it: with the ranks included, "the player has Hunting"
+transitively meant "the player has Tap Power I", because Hunting sits behind a
+keystone that requires the whole era. Unrelated systems became coupled — a
+test measuring what a tap on wild game pays was silently measuring Tap Power
+as well — and the gate grew from five researches to thirteen.
+
+Majors are the content spine; ranks are optional depth you buy for yourself.
+Gating on the majors keeps an era a real threshold without making it a wall,
+and it keeps the lines independent of each other.
 
 > **6. Era 3's closing keystone is drawn and cannot be researched.**
 

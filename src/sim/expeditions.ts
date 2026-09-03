@@ -49,7 +49,6 @@ import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { pick } from './rng';
-import { isTechComplete } from './research';
 import {
   addToWallet, getWallet, newId,
   type ArtifactId, type Delve, type GameState, type HeroId, type RuinId,
@@ -65,12 +64,11 @@ import { canAfford, pay } from './wallet';
 export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
   Math.max(1000, Math.round(resolve(state, 'delveSpeed', depthDurationMs(ruinId, depth))));
 
-/** Two at the start (hero + one unit type), one from research, the rest with
- *  Gems — the same earned-breadth-first shape as attunement sockets. */
+/** Two at the start (hero + one unit type), the rest with Gems — the same
+ *  Gems-only shape as attunement sockets, for the same reason. */
 export function partySlots(state: GameState): number {
-  const fromResearch = isTechComplete(state, 'Warband') ? 1 : 0;
   return Math.min(
-    PARTY.baseSlots + fromResearch + state.heroes.partySlotsPurchased,
+    PARTY.baseSlots + state.heroes.partySlotsPurchased,
     PARTY.maxSlots,
   );
 }

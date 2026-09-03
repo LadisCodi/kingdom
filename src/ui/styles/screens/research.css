@@ -250,3 +250,45 @@
   border-radius: 999px;
 }
 .res-unlock img { width: 22px; height: 22px; object-fit: contain; image-rendering: pixelated; }
+
+/* --------------------------------------------------------- the shelf --- */
+
+/* One tab per tome the player has opened. It appears only when there is more
+ * than one book to choose between: a single tab is a label, not a choice. */
+.res-shelf {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 8px;
+  background: var(--wood);
+}
+.res-tome {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 10px 10px 0 0;
+  border: 3px solid var(--wood-dark);
+  border-bottom: none;
+  background: var(--wood-dark);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  cursor: pointer;
+}
+/* The open book sits forward and shares the page's colour, so the tab and the
+ * parchment below it read as one surface rather than two. */
+.res-tome.active {
+  background: var(--parchment);
+  color: var(--wood-dark);
+  transform: translateY(1px);
+}
+.res-blurb {
+  margin: 0;
+  padding: 8px 14px 0;
+  background: var(--parchment);
+  color: rgba(92, 58, 30, 0.75);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}

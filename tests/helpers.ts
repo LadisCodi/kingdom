@@ -3,7 +3,9 @@ import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
 import { Camera } from '../src/render/camera';
-import { DISTRICTS, TECH_LINES, type DistrictDef } from '../src/sim/data/definitions';
+import {
+  DISTRICTS, TECHNOLOGIES, TECH_LINES, type DistrictDef,
+} from '../src/sim/data/definitions';
 import {
   coordKey, type Coord, type DistrictId, type GameState, type TechId, type TechLineId, type UnitId,
 } from '../src/sim/state';
@@ -115,15 +117,34 @@ export const addAllTrainers = (state: GameState): void => {
 };
 
 /** Test setup: mark a technology as already researched. */
+/**
+ * Mark a technology done, AND everything it needs.
+ *
+ * Since the tree became three tomes paced by eras, "have Cavalry" means the
+ * Warfare cover page, the keystones above it and every technology those
+ * keystones require. A test that means "the player has researched this" wants
+ * all of it; spelling the chain out per test would be forty lines of setup
+ * that says nothing about what is under test.
+ */
 export const completeTech = (state: GameState, id: TechId): void => {
-  state.research.completed.push(id);
+  for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
+  if (!state.research.completed.includes(id)) state.research.completed.push(id);
 };
 
-/** Research the first `rank` steps of a minor line — the replacement for the
- *  `state.upgrades[line] = n` a levelled upgrade used to allow. Ranks complete
- *  in order, which is exactly what `lineRank` reads back. */
+/**
+ * Research the first `rank` steps of a minor line — the replacement for the
+ * `state.upgrades[line] = n` a levelled upgrade used to allow.
+ *
+ * Deliberately does NOT pull in the prerequisite chain the way `completeTech`
+ * does. `effect()` counts a line's own completed ranks and asks nothing about
+ * its parent, so pushing the ids alone is what ISOLATES the line under test:
+ * recursing would hand every other era-1 line to the test for free and a
+ * "Butchery adds +1" assertion would be measuring Tap Power as well.
+ */
 export const completeRanks = (state: GameState, line: TechLineId, rank: number): void => {
-  for (const id of TECH_LINES[line].slice(0, rank)) completeTech(state, id);
+  for (const id of TECH_LINES[line].slice(0, rank)) {
+    if (!state.research.completed.includes(id)) state.research.completed.push(id);
+  }
 };
 
 /** Advance the unified sim to a given time. */

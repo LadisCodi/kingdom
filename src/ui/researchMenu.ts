@@ -14,18 +14,22 @@
 import type { Game } from '../game';
 import {
   DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
-  UNITS, lineParent,
+  TOMES, TOME_ORDER, UNITS, lineParent,
 } from '../sim/data/definitions';
 import {
-  canStartTech, isTechActive, isTechComplete, requirementsMet, slotGemCost,
+  canStartTech, isTechActive, isTechComplete, isTomeOpen, requirementsMet, slotGemCost,
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
 import { lineMaxRank, lineRank } from '../sim/upgrades';
-import { type GameState, type TechId, type TechLineId } from '../sim/state';
+import { type GameState, type TechId, type TechLineId, type TomeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
 import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
+
+/** Which book is open on the lectern. Module-level so it survives the
+ *  per-tick re-render, like the selection below. */
+let activeTome: TomeId = 'Civics';
 
 // Module-level so selection/pan survive the per-tick re-render.
 type Selected = { kind: 'tech'; id: TechId } | null;
@@ -118,12 +122,41 @@ const beadRank = (state: GameState, line: TechLineId): TechId => {
 /** A major technology has an authored grid position; a rank does not. */
 const isMajor = (id: TechId): boolean => TECHNOLOGIES[id].node !== null;
 
+/** The shelf: one tab per tome the player has actually opened. A book they
+ *  have not earned is not shown at all — an empty tab is the same lie as a
+ *  lit nav button that leads nowhere. */
+function shelf(game: Game): HTMLElement | null {
+  const open = TOME_ORDER.filter((t) => isTomeOpen(game.state, t));
+  if (open.length < 2) return null; // one book is not a shelf
+  const row = el('div', { class: 'res-shelf' });
+  for (const id of open) {
+    const def = TOMES[id];
+    const tab = el('button', {
+      class: `btn res-tome${id === activeTome ? ' active' : ''}`,
+    }, iconEl('research', { size: 'sm' }), el('span', {}, def.name));
+    tab.addEventListener('click', () => {
+      if (activeTome === id) return;
+      activeTome = id;
+      selected = null; // a selection on another page is not on this one
+      game.notify();
+    });
+    row.append(tab);
+  }
+  return row;
+}
+
 export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;
   const root = el('div', { class: 'research-screen' });
 
-  // Drop a selection the fog no longer shows (e.g. after a fresh load).
-  if (selected?.kind === 'tech' && visibility(state, selected.id) !== 'normal') selected = null;
+  // A tome can close behind the player only by a save being loaded that never
+  // opened it, so fall back to the one book that is always open.
+  if (!isTomeOpen(state, activeTome)) { activeTome = 'Civics'; selected = null; }
+  // Drop a selection the fog no longer shows (e.g. after a fresh load), or one
+  // that belongs to a page the player has since turned away from.
+  if (selected?.kind === 'tech'
+    && (visibility(state, selected.id) !== 'normal'
+      || TECHNOLOGIES[selected.id].tome !== activeTome)) selected = null;
 
   const busy = state.research.active.length;
   const slots = techSlots(state);
@@ -155,12 +188,16 @@ export function renderResearchMenu(game: Game): HTMLElement {
   }
   const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
   close.setAttribute('data-own-close', '');
+  const tabs = shelf(game);
   root.append(el('div', { class: 'research-topbar' },
-    el('h2', {}, 'Research'), bar, close));
+    el('h2', {}, TOMES[activeTome].name), bar, close));
+  if (tabs) root.append(tabs);
+  root.append(el('p', { class: 'res-blurb' }, TOMES[activeTome].blurb));
 
   // ---- the tree canvas (sized to what the fog currently shows) ----
   const shown = TECH_ORDER.filter(
-    (id) => isMajor(id) && visibility(state, id) !== 'hidden');
+    (id) => isMajor(id) && TECHNOLOGIES[id].tome === activeTome
+      && visibility(state, id) !== 'hidden');
   const fanned = shown.filter((id) => isTechComplete(state, id) && linesUnder(id).length > 0);
   const xs = shown.map((id) => TECHNOLOGIES[id].node!.x);
   const ys = shown.map((id) => TECHNOLOGIES[id].node!.y);

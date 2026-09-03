@@ -4,11 +4,12 @@
 // in real time through the unified advance (like the build queue).
 
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
+  tomeCoverPage,
 } from './data/definitions';
 import {
   addToWallet, getWallet,
-  type DistrictId, type GameState, type TechId, type UnitId,
+  type DistrictId, type GameState, type TechId, type TomeId, type UnitId,
 } from './state';
 
 /** Something a technology puts in the player's hands. */
@@ -91,8 +92,20 @@ export type StartTechResult =
  * what the button actually does — the failure mode being a lit tab that leads
  * to a screen where nothing is pressable.
  */
+/**
+ * A tome's cover page: granted when the book opens, never bought.
+ *
+ * It is the one technology with no price and no clock, and without this it
+ * would be startable for nothing — which lit the Research tab on a fresh
+ * kingdom with an empty purse, pointing at two books the player had not
+ * earned yet.
+ */
+export const isGranted = (id: TechId): boolean =>
+  techCost(id) === 0 && TECHNOLOGIES[id].durationSeconds === 0;
+
 export const canStartTech = (state: GameState, id: TechId): boolean =>
-  !isTechComplete(state, id)
+  !isGranted(id)
+  && !isTechComplete(state, id)
   && !isTechActive(state, id)
   && requirementsMet(state, id)
   && state.research.active.length < techSlots(state)
@@ -103,6 +116,9 @@ export const anyResearchActionable = (state: GameState): boolean =>
   TECH_ORDER.some((id) => canStartTech(state, id));
 
 export function startTech(state: GameState, id: TechId, now: number): StartTechResult {
+  // A cover page is granted by an event in the world, so asking to research
+  // one is asking for something that has not happened yet.
+  if (isGranted(id)) return 'MissingRequirement';
   if (isTechComplete(state, id)) return 'AlreadyDone';
   if (isTechActive(state, id)) return 'AlreadyActive';
   if (!requirementsMet(state, id)) return 'MissingRequirement';
@@ -133,6 +149,35 @@ export function advanceResearch(state: GameState, toTime: number): TechId[] {
   }
   return due.map((d) => d.id);
 }
+
+// ----------------------------------------------------------------- tomes
+
+/**
+ * A tome is OPEN once its cover page is researched — and a cover page is
+ * granted by an event in the world, never bought.
+ *
+ * Civics is granted at the new-game seed because it is the game. Magic is
+ * granted on the first paid reveal and Warfare on the first discovered ruin
+ * (Docs/features/tomes-and-research.md §5). Nothing in the tree is reachable
+ * before its cover page, so this is the one gate that decides whether a book
+ * exists for the player at all.
+ */
+export const isTomeOpen = (state: GameState, tome: TomeId): boolean =>
+  isTechComplete(state, tomeCoverPage(tome));
+
+/** Open a tome, if it is not open already. Idempotent: it is called from
+ *  events that fire many times (every reveal, every fog recalculation) and
+ *  must cost nothing after the first. */
+export function openTome(state: GameState, tome: TomeId): boolean {
+  const cover = tomeCoverPage(tome);
+  if (isTechComplete(state, cover)) return false;
+  state.research.completed.push(cover);
+  return true;
+}
+
+/** The tomes the player can currently read. */
+export const openTomes = (state: GameState): TomeId[] =>
+  (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));
 
 // ------------------------------------------------------------- gem slots
 

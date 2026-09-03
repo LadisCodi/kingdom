@@ -47,13 +47,24 @@ export const FAN_DY = 0.5 * GRID;
 export const FAN_DX = 56;
 
 /**
- * The corner points of the connector from `from` to `to`: horizontal first,
- * then vertical. Two points when they share a row or column, three when the
- * route needs an elbow — and the elbow is at (to.x, from.y).
+ * The corner points of the connector from `from` to `to`.
+ *
+ * THE HORIZONTAL LEG ALWAYS RUNS ALONG AN EVEN ROW, and that is the whole
+ * rule. A tome page is a spine of keystones at (0, even) with each era's
+ * content spread across the odd row below it, so the even rows are empty
+ * except for the spine itself and the odd rows are full. Route along an odd
+ * row and the connector ploughs through whichever majors sit between the
+ * endpoint and the trunk — which is exactly what it did: `Forestry →
+ * Charter II` ran straight through `Urban Planning`.
+ *
+ * So the elbow is at (to.x, from.y) when `from` is on the even row, and at
+ * (from.x, to.y) when it is not. Two points when they already share a row or
+ * a column.
  */
 export function edgePath(from: GridPoint, to: GridPoint): GridPoint[] {
   if (from.x === to.x || from.y === to.y) return [from, to];
-  return [from, { x: to.x, y: from.y }, to];
+  const elbow = from.y % 2 === 0 ? { x: to.x, y: from.y } : { x: from.x, y: to.y };
+  return [from, elbow, to];
 }
 
 /** Every grid cell the connector passes through, endpoints excluded. */

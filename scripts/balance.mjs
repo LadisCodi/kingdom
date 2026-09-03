@@ -56,25 +56,27 @@ const DISTRICT_IDS = [
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
 const TECH_IDS = [
-  'Forestry', 'UrbanPlanning', 'Communities', 'Architecture',
-  'Saws', 'Hunting', 'Agriculture', 'Farming',
-  'Market', 'Masonry', 'Mining', 'Engineering',
-  'DeepMining', 'Cartography', 'Sailing', 'Fishing',
-  'Shipbuilding', 'ScalingTools', 'Warrior', 'Spears',
-  'Archery', 'Cavalry', 'Attunement', 'Warband',
-  'TapPowerI', 'TapPowerII', 'TapPowerIII', 'TapPowerIV',
-  'TapPowerV', 'QuickHandsI', 'QuickHandsII', 'QuickHandsIII',
-  'QuickHandsIV', 'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII',
-  'WorkerLoadIII', 'SawpitsI', 'SawpitsII', 'SawpitsIII',
-  'ButcheryI', 'ButcheryII', 'ButcheryIII', 'IrrigationI',
-  'IrrigationII', 'IrrigationIII', 'ScythesI', 'ScythesII',
-  'ScythesIII', 'SurveyingI', 'SurveyingII', 'PitonsI',
-  'PitonsII', 'MarketStallI', 'MarketStallII', 'MarketStallIII',
-  'MarketStallIV', 'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII',
-  'TradeRoutesIV', 'TradeRoutesV', 'StonecuttingI', 'StonecuttingII',
-  'StonecuttingIII', 'BigNetsI', 'BigNetsII', 'BigNetsIII',
-  'IronPicksI', 'IronPicksII', 'IronPicksIII', 'ResonanceI',
-  'ResonanceII',
+  'CharterI', 'CharterII', 'CharterIII', 'CharterIV',
+  'Forestry', 'UrbanPlanning', 'Saws', 'Agriculture',
+  'Masonry', 'Communities', 'Hunting', 'Farming',
+  'Market', 'Mining', 'Architecture', 'Engineering',
+  'DeepMining', 'WarbandI', 'WarbandII', 'WarbandIII',
+  'WarbandIV', 'Warrior', 'Spears', 'Archery',
+  'Cavalry', 'AttunementI', 'AttunementII', 'AttunementIII',
+  'AttunementIV', 'Cartography', 'Consecration', 'Sailing',
+  'ScalingTools', 'Fishing', 'Shipbuilding', 'TapPowerI',
+  'TapPowerII', 'TapPowerIII', 'TapPowerIV', 'TapPowerV',
+  'QuickHandsI', 'QuickHandsII', 'QuickHandsIII', 'QuickHandsIV',
+  'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII', 'WorkerLoadIII',
+  'SawpitsI', 'SawpitsII', 'SawpitsIII', 'ButcheryI',
+  'ButcheryII', 'ButcheryIII', 'IrrigationI', 'IrrigationII',
+  'IrrigationIII', 'ScythesI', 'ScythesII', 'ScythesIII',
+  'SurveyingI', 'SurveyingII', 'PitonsI', 'PitonsII',
+  'MarketStallI', 'MarketStallII', 'MarketStallIII', 'MarketStallIV',
+  'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII', 'TradeRoutesIV',
+  'TradeRoutesV', 'StonecuttingI', 'StonecuttingII', 'StonecuttingIII',
+  'BigNetsI', 'BigNetsII', 'BigNetsIII', 'IronPicksI',
+  'IronPicksII', 'IronPicksIII', 'ResonanceI', 'ResonanceII',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
@@ -107,6 +109,7 @@ const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
 ];
 
+const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
   'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'Gems',
 ];
@@ -165,9 +168,13 @@ const SETTINGS = [
   // Mana. The ceiling is DYNAMIC (Townhall level + Sanctum levels), so the
   // Currencies sheet's static `cap` column stays blank for Mana and these are
   // the numbers that actually decide it — see src/sim/mana.ts.
-  ['mana.production_per_townhall_level', 'mana.productionPerTownhallLevel', 'list'],
-  ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
+  // The Townhall produces no Mana and sets no ceiling — it gates and nothing
+  // else (Docs/features/tech-tree.md §12). A flat floor, then the Sanctum,
+  // then the sanctuaries: the whole curve lives in the Magic tome now.
+  ['mana.base_cap', 'mana.baseCap'],
+  ['mana.base_per_hour', 'mana.basePerHour'],
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
+  ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
   ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
   ['attunement.base_slots', 'attunement.baseSlots'],
@@ -275,8 +282,12 @@ const SHEETS = {
   // A minor technology carries a line id and a per-rank effect; a major one
   // leaves both blank. Ranks of a line are ordered by ROW ORDER, the same
   // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
+  // `tome` and `era` are the shelf (Docs/features/tomes-and-research.md §5):
+  // three books, each paced by eras whose keystone requires everything above
+  // it. `node_x`/`node_y` are per-PAGE positions and are blank for a minor
+  // rank, which is drawn in its line's bead under the parent instead.
   Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires',
-    'line', 'effect_per_rank'],
+    'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
@@ -689,15 +700,32 @@ async function importXlsx() {
     // which is the decision the economy is built around. Minor ranks are
     // Gold too; what separates them from a major is cost and time, not kind
     // (Docs/features/tech-tree.md §1 rule 3).
-    const gold = num(r, 'cost_gold');
-    if (gold < 1) fail(where(r), 'cost_gold must be at least 1');
+    // 0 is legal, and only for a spine's rank I: the cover page is GRANTED
+    // when its tome opens rather than researched, so it has no price.
+    const gold = num(r, 'cost_gold', { blankAs: 0 });
+    if (gold < 0) fail(where(r), 'cost_gold cannot be negative');
+    if (gold === 0 && !/^(Charter|Warband|Attunement)I$/.test(id)) {
+      fail(where(r), 'only a tome cover page may cost nothing');
+    }
     const line = (r.line === '' || r.line === undefined) ? null : String(r.line);
+    if (!TOME_IDS.includes(r.tome)) fail(where(r), `unknown tome "${r.tome}"`);
+    const era = num(r, 'era');
+    if (era < 1 || era > 4) fail(where(r), 'era must be 1-4');
+    const hasX = r.node_x !== '' && r.node_x !== undefined;
+    if (hasX !== (line === null)) {
+      fail(where(r), 'a major needs a node position and a minor rank must not have one');
+    }
     out.technologies[id] = {
       cost: { Gold: gold },
-      durationSeconds: num(r, 'duration_seconds'),
+      durationSeconds: num(r, 'duration_seconds', { blankAs: 0 }),
       requires,
       line,
       effectPerRank: num(r, 'effect_per_rank', { blankAs: 0 }),
+      tome: r.tome,
+      era,
+      // coord(), not num(): a page is centred on its spine, so x is negative
+      // on the left of the trunk.
+      node: hasX ? { x: coord(r, 'node_x'), y: coord(r, 'node_y') } : null,
     };
   }
 
@@ -933,8 +961,9 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, t.cost.Gold, t.durationSeconds, t.requires.join(','),
-      t.line ?? '', t.effectPerRank || ''];
+    return [id, t.cost.Gold || '', t.durationSeconds || '', t.requires.join(','),
+      t.line ?? '', t.effectPerRank || '', t.tome, t.era,
+      t.node ? t.node.x : '', t.node ? t.node.y : ''];
   }), (col) => col === 'requires');
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>

@@ -51,13 +51,29 @@ import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
 import {
-  addToWallet, getWallet, townhall, type GameState, type RuinId,
+  addToWallet, getWallet, type GameState, type RuinId,
 } from './state';
 
-/** Mana per hour. The Townhall alone — sanctuaries buy CAPACITY now, not
- *  rate, so the two dials stay genuinely different things. */
+/**
+ * Mana per hour: a flat floor, plus the Sanctum.
+ *
+ * The Townhall used to be the whole of it. It produces nothing now — it gates
+ * and nothing else (Docs/features/tech-tree.md §12) — so the Sanctum is the
+ * engine as well as the reservoir, and the whole Mana curve lives in the
+ * Magic tome where the fog, the landmarks and the ruins already are.
+ *
+ * The floor is what a kingdom regenerates before it has built anything, which
+ * has to be non-zero or the opening session has no Mana to tap with.
+ * Sanctuaries still buy CAPACITY rather than rate, so the two dials stay
+ * genuinely different things.
+ */
 export function manaProduction(state: GameState): number {
-  const base = levelIndexed(MANA.productionPerTownhallLevel, townhall(state).level);
+  let base = MANA.basePerHour;
+  for (const d of state.city.districts) {
+    if (d.definitionId === 'Sanctum' && d.state === 'Built') {
+      base += levelIndexed(MANA.sanctumPerHourPerLevel, d.level);
+    }
+  }
   return Math.max(0, resolve(state, 'manaRegen', base));
 }
 
@@ -68,8 +84,12 @@ export function manaProduction(state: GameState): number {
 export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduction(state));
 
 /**
- * The ceiling: the Townhall's own pool, the Sanctum's, and every sanctuary
- * claimed out in the fog.
+ * The ceiling: a flat floor, the Sanctum's levels, and every sanctuary
+ * claimed out in the fog. The Townhall is not in it — see `manaProduction`.
+ *
+ * The floor is 50, which is what `00-design-intent.md` has always said a new
+ * kingdom starts with. The old `base_cap_per_townhall_level` opened at 100
+ * and quietly contradicted it; Phase 0 was meant to catch that and did not.
  *
  * Sanctuaries raise CAPACITY rather than rate, which is what makes exploring
  * compound. An ad pays a whole pool, so every shrine claimed makes every
@@ -78,7 +98,7 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = levelIndexed(MANA.baseCapPerTownhallLevel, townhall(state).level);
+  let cap = MANA.baseCap;
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {

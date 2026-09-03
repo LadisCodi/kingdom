@@ -34,16 +34,22 @@ export type RuinId =
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
 export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout';
+/** The three tomes. The shelf is the layout: one bounded page per book,
+ *  each paced by eras (Docs/features/tomes-and-research.md §5). */
+export type TomeId = 'Civics' | 'Warfare' | 'Magic';
+
 export type TechId =
-  | 'Forestry'
-  | 'UrbanPlanning' | 'Communities' | 'Architecture' // civics (up)
-  | 'Saws' | 'Hunting' | 'Agriculture' | 'Farming' | 'Market' // economics: farm side
-  | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
-  | 'Cartography' | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration
-  | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry' // military (down)
-  | 'Attunement' | 'Warband' // the magic and expedition leaves
-  // ---- minor ranks. Docs/features/tech-tree.md §1 rule 2: every node is a
-  // technology, and a roman numeral is what tells you it is a small one.
+  // ---- majors: spine keystones, and the content each era hangs off them
+  | 'CharterI' | 'CharterII' | 'CharterIII' | 'CharterIV'
+  | 'Forestry' | 'UrbanPlanning' | 'Saws' | 'Agriculture'
+  | 'Masonry' | 'Communities' | 'Hunting' | 'Farming'
+  | 'Market' | 'Mining' | 'Architecture' | 'Engineering'
+  | 'DeepMining' | 'WarbandI' | 'WarbandII' | 'WarbandIII'
+  | 'WarbandIV' | 'Warrior' | 'Spears' | 'Archery'
+  | 'Cavalry' | 'AttunementI' | 'AttunementII' | 'AttunementIII'
+  | 'AttunementIV' | 'Cartography' | 'Consecration' | 'Sailing'
+  | 'ScalingTools' | 'Fishing' | 'Shipbuilding'
+  // ---- minor ranks. A roman numeral is what tells you it is a small one.
   | 'TapPowerI' | 'TapPowerII' | 'TapPowerIII' | 'TapPowerIV'
   | 'TapPowerV' | 'QuickHandsI' | 'QuickHandsII' | 'QuickHandsIII'
   | 'QuickHandsIV' | 'QuickHandsV' | 'WorkerLoadI' | 'WorkerLoadII'

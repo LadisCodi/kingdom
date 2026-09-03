@@ -23,9 +23,9 @@ describe('tech-gated upgrades', () => {
     expect(upgradeDistrict(state, house.uniqueId)).toBe('Started');
   });
 
-  it('Townhall L3 needs Architecture; L2 needs no tech', () => {
+  it('Townhall L3 needs Charter II; L2 needs no tech', () => {
     expect(requiredTechForLevel('Townhall', 2)).toBe(null);
-    expect(requiredTechForLevel('Townhall', 3)).toBe('Architecture');
+    expect(requiredTechForLevel('Townhall', 3)).toBe('CharterII');
     const state = freshGame();
     fund(state, { Wood: 1000, Stone: 1000 });
     const th = townhall(state);
@@ -100,30 +100,37 @@ describe('every upgradable building has something to show for the level', () => 
     'armyCapPerLevel', 'populationCapacityPerLevel',
   ] as const;
 
-  // The two that carry their per-level numbers in the Mana table rather than
-  // their own row, because the pool is one number the whole city shares.
-  const VIA_MANA: readonly DistrictId[] = ['Townhall', 'Sanctum'];
+  // The Sanctum carries its per-level numbers in the Mana table rather than
+  // its own row, because the pool is one number the whole city shares.
+  //
+  // The Townhall is exempt for a different reason and it is worth separating
+  // them: it has no per-level number of its own AT ALL any more. It gates —
+  // how many of each district may exist, and how high each may go — and every
+  // one of those numbers lives on the building being gated
+  // (Docs/features/tech-tree.md §12).
+  const VIA_MANA: readonly DistrictId[] = ['Sanctum'];
+  const GATES_ONLY: readonly DistrictId[] = ['Townhall'];
 
   it('names at least one number that changes at the next level', () => {
     const silent = (Object.keys(DISTRICTS) as DistrictId[]).filter((id) => {
       const def = DISTRICTS[id];
       if (def.maxLevel <= 1) return false; // nothing to upgrade, no row drawn
-      if (VIA_MANA.includes(id)) return false;
+      if (VIA_MANA.includes(id) || GATES_ONLY.includes(id)) return false;
       return !PER_LEVEL.some((k) => def[k].length > 0);
     });
     expect(silent).toEqual([]);
   });
 
-  // And the Mana pair really does grow, so their exemption above is earned
-  // rather than a way to opt out of the rule.
-  it('the Townhall and the Sanctum grow the Mana pool with every level', () => {
-    for (let level = 1; level < DISTRICTS.Townhall.maxLevel; level++) {
-      expect(levelIndexed(MANA.baseCapPerTownhallLevel, level + 1))
-        .toBeGreaterThan(levelIndexed(MANA.baseCapPerTownhallLevel, level));
-    }
+  // And the Sanctum really does grow, so its exemption above is earned rather
+  // than a way to opt out of the rule. It is BOTH Mana numbers now: the
+  // Townhall stopped producing and stopped setting the ceiling, so it is not
+  // in this test any more — its own rows are the district counts it gates.
+  it('the Sanctum grows both Mana numbers with every level', () => {
     for (let level = 1; level < DISTRICTS.Sanctum.maxLevel; level++) {
       expect(levelIndexed(MANA.sanctumCapPerLevel, level + 1))
         .toBeGreaterThan(levelIndexed(MANA.sanctumCapPerLevel, level));
+      expect(levelIndexed(MANA.sanctumPerHourPerLevel, level + 1))
+        .toBeGreaterThan(levelIndexed(MANA.sanctumPerHourPerLevel, level));
     }
   });
 });

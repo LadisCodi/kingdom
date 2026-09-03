@@ -4,16 +4,17 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_ORDER, UNITS,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
+  TOME_ORDER, UNITS, lineParent,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
-  anyResearchActionable, buySlot, canStartTech, isTechComplete, slotGemCost,
-  startTech, techCost, techSlots, techUnlocks,
+  anyResearchActionable, buySlot, canStartTech, isTechComplete, isTomeOpen, openTome,
+  slotGemCost, startTech, techCost, techSlots, techUnlocks,
 } from '../src/sim/research';
-import { edgeCells, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
+import { edgeCells, FAN_DX, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type TechId } from '../src/sim/state';
+import { getWallet, type TechId, type TomeId } from '../src/sim/state';
 import { lineMaxRank, lineRank } from '../src/sim/upgrades';
 import {
   addAllTrainers, completeRanks, completeTech, freshGame, freshPresenter, fund, map,
@@ -33,11 +34,12 @@ describe('technology basics', () => {
     fund(state, { Gold: 5000, Wood: 500, Food: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
-    expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement'); // needs Agriculture
+    // Farming is era 2 of Civics, so it waits on the era-1 keystone.
+    expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement');
 
-    // Everything hangs off Forestry — the intended first research.
-    expect(startTech(state, 'Agriculture', T0)).toBe('MissingRequirement');
-    completeTech(state, 'Forestry');
+    // Agriculture is era 1, and the Civics cover page is granted with the
+    // kingdom — so it is startable from the very first second.
+    expect(isTechComplete(state, 'CharterI')).toBe(true);
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
     expect(startTech(state, 'Agriculture', T0)).toBe('AlreadyActive');
     const durationMs = TECHNOLOGIES.Agriculture.durationSeconds * 1000;
@@ -68,12 +70,32 @@ describe('technology basics', () => {
     expect(trainUnit(state, 'Archer', T0)).toBe('Queued');
   });
 
-  it('the requires tree: Cavalry is blocked until Warrior is done', () => {
+  // The era gate replaced the pairwise one: Cavalry sits in Warfare era 2, so
+  // what blocks it is the keystone, and the keystone requires every
+  // technology in era 1 (Docs/features/tech-tree.md §1 rule 5).
+  it('the era gate: Cavalry waits on the keystone above it', () => {
     const state = freshGame();
-    fund(state, { Gold: 5000 });
+    fund(state, { Gold: 50_000 });
+    // The tome is not even open yet — no ruin has been seen.
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
-    completeTech(state, 'Warrior');
+    expect(startTech(state, 'WarbandII', T0)).toBe('MissingRequirement');
+
+    completeTech(state, 'WarbandIII');
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
+  });
+
+  // The cover page is granted by an event in the world, never bought.
+  it('opens a tome on the event that earns it, and not before', () => {
+    const state = freshGame();
+    expect(isTomeOpen(state, 'Civics')).toBe(true);   // granted with the kingdom
+    expect(isTomeOpen(state, 'Magic')).toBe(false);
+    expect(isTomeOpen(state, 'Warfare')).toBe(false);
+
+    expect(openTome(state, 'Magic')).toBe(true);
+    expect(isTomeOpen(state, 'Magic')).toBe(true);
+    // Idempotent: it is called from every reveal, and must cost nothing after
+    // the first.
+    expect(openTome(state, 'Magic')).toBe(false);
   });
 
   // CLAIM: research is bought with Gold out of the CITY purse, up front, and
@@ -82,11 +104,12 @@ describe('technology basics', () => {
   // is why a kingdom rich in Stardust cannot buy a technology with it.
   it('costs are paid up front, in Gold, from the city purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Stardust: 5000 });
-    completeTech(state, 'Forestry');
-    completeTech(state, 'Cartography'); // the exploration branch heads here now
+    fund(state, { Gold: 50_000, Wood: 500, Stardust: 5000 });
+    // Sailing sits in Magic era 2, so it wants the era-1 keystone above it.
+    completeTech(state, 'AttunementII');
+    const purse = getWallet(state.city.wallet, 'Gold');
     expect(startTech(state, 'Sailing', T0)).toBe('Started');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - techCost('Sailing'));
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(purse - techCost('Sailing'));
     expect(state.city.wallet.Wood).toBe(500); // no materials, only Gold
     // Stardust is untouched: it buys heroes and relics and nothing else.
     expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(5000);
@@ -168,14 +191,33 @@ describe('save round-trip', () => {
 });
 
 describe('tree layout (layout is content)', () => {
-  // Majors only. A minor rank is drawn in its line's fan under the parent, so
-  // it has no authored position to protect (tech-tree.md §1 rule 2).
+  // Majors only, and PER TOME. A minor rank is drawn as a bead under its
+  // line's parent, so it has no position to protect; and a position is now a
+  // coordinate on one bounded page, so two tomes sharing (0,0) is not a
+  // collision — each of them is its own spine's cover page.
   const MAJORS = TECH_ORDER.filter((id) => TECHNOLOGIES[id].node !== null);
-  const nodes = MAJORS.map((id) => ({ id, ...TECHNOLOGIES[id].node! }));
-  const at = (x: number, y: number) => nodes.find((n) => n.x === x && n.y === y);
+  const inTome = (tome: TomeId) =>
+    MAJORS.filter((id) => TECHNOLOGIES[id].tome === tome)
+      .map((id) => ({ id, ...TECHNOLOGIES[id].node! }));
 
-  it('no two technologies share a grid cell', () => {
-    expect(new Set(nodes.map((n) => `${n.x},${n.y}`)).size).toBe(nodes.length);
+  it('no two technologies share a cell on the same page', () => {
+    for (const tome of TOME_ORDER) {
+      const nodes = inTome(tome);
+      expect(new Set(nodes.map((n) => `${n.x},${n.y}`)).size, `${tome} has a collision`)
+        .toBe(nodes.length);
+    }
+  });
+
+  // The spine runs down x=0 and every era row leaves that column EMPTY, so a
+  // keystone's connector to the row above can elbow through it without
+  // crossing a node. It is the same trunk rule the old single canvas had, now
+  // per page.
+  it('leaves the spine column clear on every era row', () => {
+    for (const tome of TOME_ORDER) {
+      for (const n of inTome(tome)) {
+        if (n.y % 2 === 1) expect(n.x, `${n.id} sits on the spine trunk`).not.toBe(0);
+      }
+    }
   });
 
   // THE FAN HAS TO FIT BETWEEN TWO ROWS, and it did not: an upgrade circle
@@ -187,7 +229,7 @@ describe('tree layout (layout is content)', () => {
   // clear whatever sits one row down — and the second constraint is the one
   // that is easy to forget, because it involves a node the fan has nothing to
   // do with.
-  it('hangs an upgrade fan clear of its parent AND of the row below it', () => {
+  it('hangs a rank fan clear of its parent AND of the row below it', () => {
     const halfSquare = NODE / 2;
     const halfCircle = UNODE / 2;
     expect(FAN_DY, 'the fan overlaps its own parent').toBeGreaterThan(halfSquare + halfCircle);
@@ -195,9 +237,32 @@ describe('tree layout (layout is content)', () => {
       .toBeLessThan(GRID - halfSquare - halfCircle);
   });
 
-  // A tap target below ~40px is one a thumb misses, and the upgrade circle is
-  // the smallest thing in the game a player is asked to press.
-  it('keeps the upgrade circle a thumb-sized target', () => {
+  // A FAN MUST NOT REACH INTO THE NEXT COLUMN.
+  //
+  // Fanning one bead per line keeps the fan narrow, but "narrow" is a
+  // function of how many lines hang off one major and nothing stops a
+  // sixteenth being added to Forestry. Forestry already carries three, which
+  // is 152px of fan in a 120px column — it clears its neighbour's node by
+  // 16px and a fourth line would not.
+  //
+  // This is the headless half of the bug the browser found: there, every RANK
+  // was a bead and Forestry's fan was thirteen wide, straddling two branches.
+  it('keeps every fan clear of the node in the next column', () => {
+    const linesUnder = new Map<TechId, number>();
+    for (const line of TECH_LINE_ORDER) {
+      const parent = lineParent(line)!;
+      linesUnder.set(parent, (linesUnder.get(parent) ?? 0) + 1);
+    }
+    for (const [parent, n] of linesUnder) {
+      const halfFan = ((n - 1) * FAN_DX + UNODE) / 2;
+      expect(halfFan, `${parent}'s fan of ${n} reaches into the next column`)
+        .toBeLessThan(GRID - NODE / 2);
+    }
+  });
+
+  // A tap target below ~40px is one a thumb misses, and the rank bead is the
+  // smallest thing in the game a player is asked to press.
+  it('keeps the rank bead a thumb-sized target', () => {
     expect(UNODE).toBeGreaterThanOrEqual(40);
     expect(UNODE).toBeLessThan(NODE); // …and still unmistakably the smaller shape
   });
@@ -218,14 +283,18 @@ describe('tree layout (layout is content)', () => {
   });
 
   it('no connector passes through an unrelated node', () => {
-    for (const id of MAJORS) {
-      const to = TECHNOLOGIES[id].node!;
-      for (const req of TECHNOLOGIES[id].requires) {
-        const from = TECHNOLOGIES[req].node;
-        if (from === null) continue; // a rank's parent edge lives in the fan
-        for (const cell of edgeCells(from, to)) {
-          const blocker = at(cell.x, cell.y);
-          expect(blocker?.id, `${req} → ${id} runs through ${blocker?.id}`).toBeUndefined();
+    for (const tome of TOME_ORDER) {
+      const nodes = inTome(tome);
+      const at = (x: number, y: number) => nodes.find((n) => n.x === x && n.y === y);
+      for (const { id } of nodes) {
+        const to = TECHNOLOGIES[id].node!;
+        for (const req of TECHNOLOGIES[id].requires) {
+          const from = TECHNOLOGIES[req].node;
+          if (from === null) continue; // a rank's parent edge lives in the bead
+          for (const cell of edgeCells(from, to)) {
+            const blocker = at(cell.x, cell.y);
+            expect(blocker?.id, `${req} → ${id} runs through ${blocker?.id}`).toBeUndefined();
+          }
         }
       }
     }

@@ -8,7 +8,7 @@ import balance from './balance.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, TechId, TechLineId, TrainableId, UnitId, Wallet,
+  LandmarkKind, RuinId, TechId, TechLineId, TomeId, TrainableId, UnitId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -335,7 +335,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'A vault for raw magic. Each level holds more Mana against the hours you are away.',
     glyph: '🔯',
     sprite: 'sanctum',
-    requiredTech: 'Attunement',
+    requiredTech: 'Consecration',
     ...districtBalance(balance.districts.Sanctum),
   },
   Barracks: {
@@ -477,9 +477,14 @@ export interface TechnologyDef {
   name: string;
   description: string;
   glyph: string;
-  /** Hand-authored tree grid position (the layout IS content). NULL for a
-   *  minor rank: it is drawn in its line's fan under the parent, so there is
-   *  no position to author. */
+  /** Which tome this sits in, and how deep. The shelf IS the layout now:
+   *  three bounded pages instead of one unbounded canvas
+   *  (Docs/features/tomes-and-research.md §5). */
+  tome: TomeId;
+  era: number;
+  /** Hand-authored position ON ITS TOME'S PAGE (the layout is content). NULL
+   *  for a minor rank: it is drawn as a bead under its line's parent, so
+   *  there is no position to author. */
   node: { x: number; y: number } | null;
   cost: Wallet; // city currencies
   durationSeconds: number;
@@ -491,16 +496,17 @@ export interface TechnologyDef {
 }
 
 const tech = (
-  content: Omit<TechnologyDef, 'cost' | 'durationSeconds' | 'requires'
-    | 'line' | 'effectPerRank'>,
+  content: Pick<TechnologyDef, 'id' | 'name' | 'description' | 'glyph'>,
   b: {
     cost: Wallet; durationSeconds: number; requires: unknown;
     line: string | null; effectPerRank: number;
+    tome: string; era: number; node: { x: number; y: number } | null;
   },
 ): TechnologyDef => ({
   ...content, cost: b.cost, durationSeconds: b.durationSeconds,
   requires: b.requires as TechId[],
   line: b.line as TechLineId | null, effectPerRank: b.effectPerRank,
+  tome: b.tome as TomeId, era: b.era, node: b.node,
 });
 
 // Four branches out of Forestry (Docs/features/tech-tree.md): CIVICS up,
@@ -508,551 +514,536 @@ const tech = (
 // Cells (−1,0) and (1,0) stay EMPTY on purpose: the branch trunks route their
 // elbows through them, so no connector ever crosses another node.
 export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
+  CharterI: tech({
+    id: 'CharterI',
+    name: 'Charter I',
+    description: 'The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.',
+    glyph: '📜',
+  }, balance.technologies.CharterI),
+  CharterII: tech({
+    id: 'CharterII',
+    name: 'Charter II',
+    description: 'The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.',
+    glyph: '📜',
+  }, balance.technologies.CharterII),
+  CharterIII: tech({
+    id: 'CharterIII',
+    name: 'Charter III',
+    description: 'The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.',
+    glyph: '📜',
+  }, balance.technologies.CharterIII),
+  CharterIV: tech({
+    id: 'CharterIV',
+    name: 'Charter IV',
+    description: 'The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.',
+    glyph: '📜',
+  }, balance.technologies.CharterIV),
   Forestry: tech({
     id: 'Forestry',
     name: 'Forestry',
     description: 'Axes and foraging — you can work the woods and berry bushes around you.',
     glyph: '🪓',
-    node: { x: 0, y: 0 },
   }, balance.technologies.Forestry),
-  // ---- civics (up)
   UrbanPlanning: tech({
     id: 'UrbanPlanning',
     name: 'Urban Planning',
     description: 'Ordered streets — Housing reaches level 2.',
     glyph: '🏘️',
-    node: { x: 0, y: -1 },
   }, balance.technologies.UrbanPlanning),
-  Communities: tech({
-    id: 'Communities',
-    name: 'Communities',
-    description: 'Tighter neighborhoods — every Housing holds +1 resident.',
-    glyph: '👥',
-    node: { x: 0, y: -2 },
-  }, balance.technologies.Communities),
-  Architecture: tech({
-    id: 'Architecture',
-    name: 'Architecture',
-    description: 'Iron-braced monuments — the Townhall reaches level 3.',
-    glyph: '📐',
-    node: { x: 0, y: -3 },
-  }, balance.technologies.Architecture),
-  // ---- economics: farm side (left, row 0)
   Saws: tech({
     id: 'Saws',
     name: 'Saws',
     description: 'Unlocks the Sawmill — its workers chop nearby forests for you.',
     glyph: '🪚',
-    node: { x: -1, y: 1 },
   }, balance.technologies.Saws),
-  Hunting: tech({
-    id: 'Hunting',
-    name: 'Hunting',
-    description: 'Snares and spears — you can take the wild game on the plains.',
-    glyph: '🏹',
-    node: { x: 1, y: 1 },
-  }, balance.technologies.Hunting),
   Agriculture: tech({
     id: 'Agriculture',
     name: 'Agriculture',
     description: 'Unlocks crop plots and the Farm that works them.',
     glyph: '🌱',
-    node: { x: -2, y: 0 },
   }, balance.technologies.Agriculture),
+  Masonry: tech({
+    id: 'Masonry',
+    name: 'Masonry',
+    description: 'Unlocks the Quarry — its workers cut Stone from nearby rocks.',
+    glyph: '🧱',
+  }, balance.technologies.Masonry),
+  Communities: tech({
+    id: 'Communities',
+    name: 'Communities',
+    description: 'Tighter neighborhoods — every Housing holds +1 resident.',
+    glyph: '👥',
+  }, balance.technologies.Communities),
+  Hunting: tech({
+    id: 'Hunting',
+    name: 'Hunting',
+    description: 'Snares and spears — you can take the wild game on the plains.',
+    glyph: '🏹',
+  }, balance.technologies.Hunting),
   Farming: tech({
     id: 'Farming',
     name: 'Farming',
     description: 'Deeper furrows — the Farm reaches level 2.',
     glyph: '🚜',
-    node: { x: -3, y: 0 },
   }, balance.technologies.Farming),
   Market: tech({
     id: 'Market',
     name: 'Market',
     description: 'Organized trade — unlocks the Market building.',
     glyph: '🤝',
-    node: { x: -2, y: 1 },
   }, balance.technologies.Market),
-  // ---- economics: stone side (upper left, row −1)
-  Masonry: tech({
-    id: 'Masonry',
-    name: 'Masonry',
-    description: 'Unlocks the Quarry — its workers cut Stone from nearby rocks.',
-    glyph: '🧱',
-    node: { x: -1, y: -1 },
-  }, balance.technologies.Masonry),
   Mining: tech({
     id: 'Mining',
     name: 'Mining',
     description: 'Unlocks the Mine — its workers dig Iron, the army\'s metal.',
     glyph: '⛏️',
-    node: { x: -2, y: -1 },
   }, balance.technologies.Mining),
+  Architecture: tech({
+    id: 'Architecture',
+    name: 'Architecture',
+    description: 'Iron-braced monuments — the Townhall reaches level 3.',
+    glyph: '📐',
+  }, balance.technologies.Architecture),
   Engineering: tech({
     id: 'Engineering',
     name: 'Engineering',
     description: 'Cranes and gears — Quarry level 2 and Sawmill level 3.',
     glyph: '⚙️',
-    node: { x: -1, y: -2 },
   }, balance.technologies.Engineering),
   DeepMining: tech({
     id: 'DeepMining',
     name: 'Deep Mining',
     description: 'Braced shafts — the Mine reaches level 2.',
     glyph: '🕯️',
-    node: { x: -3, y: -1 },
   }, balance.technologies.DeepMining),
-  // ---- exploration (right)
-  //
-  // Cartography heads the branch and sits at (2,0): the trunk elbow at (1,0)
-  // stays empty, so the Forestry→Attunement connector still has it to itself.
-  Cartography: tech({
-    id: 'Cartography',
-    name: 'Cartography',
-    description: 'Survey and chart — every tap on the fog counts double. Opens rock and water.',
-    glyph: '🗺️',
-    node: { x: 2, y: 0 },
-  }, balance.technologies.Cartography),
-  Sailing: tech({
-    id: 'Sailing',
-    name: 'Sailing',
-    description: 'Rafts and rigging — sea cells can be explored.',
-    glyph: '⛵',
-    node: { x: 3, y: 0 },
-  }, balance.technologies.Sailing),
-  Fishing: tech({
-    id: 'Fishing',
-    name: 'Fishing',
-    description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
-    glyph: '🎣',
-    node: { x: 4, y: 0 },
-  }, balance.technologies.Fishing),
-  Shipbuilding: tech({
-    id: 'Shipbuilding',
-    name: 'Shipbuilding',
-    description: 'Sturdier hulls — the Docks reach level 2.',
-    glyph: '🛶',
-    node: { x: 5, y: 0 },
-  }, balance.technologies.Shipbuilding),
-  ScalingTools: tech({
-    id: 'ScalingTools',
-    name: 'Scaling Tools',
-    description: 'Ropes and pitons — mountain cells can be explored.',
-    glyph: '🧗',
-    node: { x: 2, y: 1 },
-  }, balance.technologies.ScalingTools),
-  // ---- military (down)
+  WarbandI: tech({
+    id: 'WarbandI',
+    name: 'Warband I',
+    description: 'Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.',
+    glyph: '🚩',
+  }, balance.technologies.WarbandI),
+  WarbandII: tech({
+    id: 'WarbandII',
+    name: 'Warband II',
+    description: 'Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.',
+    glyph: '🚩',
+  }, balance.technologies.WarbandII),
+  WarbandIII: tech({
+    id: 'WarbandIII',
+    name: 'Warband III',
+    description: 'Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.',
+    glyph: '🚩',
+  }, balance.technologies.WarbandIII),
+  WarbandIV: tech({
+    id: 'WarbandIV',
+    name: 'Warband IV',
+    description: 'Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.',
+    glyph: '🚩',
+  }, balance.technologies.WarbandIV),
   Warrior: tech({
     id: 'Warrior',
     name: 'Warrior',
     description: 'Unlocks the Warrior — a sturdy front line for your army.',
     glyph: '🗡️',
-    node: { x: 0, y: 2 },
   }, balance.technologies.Warrior),
   Spears: tech({
     id: 'Spears',
     name: 'Spears',
     description: 'Unlocks the Lancer — long reach that keeps the line safe.',
     glyph: '🔱',
-    node: { x: -1, y: 3 },
   }, balance.technologies.Spears),
   Archery: tech({
     id: 'Archery',
     name: 'Archery',
     description: 'Unlocks the Archer — ranged support for your army.',
     glyph: '🏹',
-    node: { x: 0, y: 3 },
   }, balance.technologies.Archery),
   Cavalry: tech({
     id: 'Cavalry',
     name: 'Cavalry',
     description: 'Unlocks the Cavalry — fast, hard-hitting mounted units.',
     glyph: '🐎',
-    node: { x: 1, y: 3 },
   }, balance.technologies.Cavalry),
-  // ---- magic (up-right) and the warband leaf (below the military trunk)
-  Attunement: tech({
-    id: 'Attunement',
-    name: 'Attunement',
-    description: 'Unlocks the Sanctum, and a second relic can be attuned at once.',
+  AttunementI: tech({
+    id: 'AttunementI',
+    name: 'Attunement I',
+    description: 'Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.',
     glyph: '🔯',
-    node: { x: 1, y: -1 },
-  }, balance.technologies.Attunement),
-  Warband: tech({
-    id: 'Warband',
-    name: 'Warband',
-    description: 'Marching order — one more companion joins every expedition.',
-    glyph: '🚩',
-    node: { x: 0, y: 4 },
-  }, balance.technologies.Warband),
-  // ------------------------------------------------- minor ranks
+  }, balance.technologies.AttunementI),
+  AttunementII: tech({
+    id: 'AttunementII',
+    name: 'Attunement II',
+    description: 'Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.',
+    glyph: '🔯',
+  }, balance.technologies.AttunementII),
+  AttunementIII: tech({
+    id: 'AttunementIII',
+    name: 'Attunement III',
+    description: 'Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.',
+    glyph: '🔯',
+  }, balance.technologies.AttunementIII),
+  AttunementIV: tech({
+    id: 'AttunementIV',
+    name: 'Attunement IV',
+    description: 'Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.',
+    glyph: '🔯',
+  }, balance.technologies.AttunementIV),
+  Cartography: tech({
+    id: 'Cartography',
+    name: 'Cartography',
+    description: 'Survey and chart — every tap on the fog counts double. Opens rock and water.',
+    glyph: '🗺️',
+  }, balance.technologies.Cartography),
+  Consecration: tech({
+    id: 'Consecration',
+    name: 'Consecration',
+    description: 'Unlocks the Sanctum — the well the kingdom draws its Mana from.',
+    glyph: '🔯',
+  }, balance.technologies.Consecration),
+  Sailing: tech({
+    id: 'Sailing',
+    name: 'Sailing',
+    description: 'Rafts and rigging — sea cells can be explored.',
+    glyph: '⛵',
+  }, balance.technologies.Sailing),
+  ScalingTools: tech({
+    id: 'ScalingTools',
+    name: 'Scaling Tools',
+    description: 'Ropes and pitons — mountain cells can be explored.',
+    glyph: '🧗',
+  }, balance.technologies.ScalingTools),
+  Fishing: tech({
+    id: 'Fishing',
+    name: 'Fishing',
+    description: 'Unlocks the Docks — send fishing boats out for Fish (worth 1 Food each).',
+    glyph: '🎣',
+  }, balance.technologies.Fishing),
+  Shipbuilding: tech({
+    id: 'Shipbuilding',
+    name: 'Shipbuilding',
+    description: 'Sturdier hulls — the Docks reach level 2.',
+    glyph: '🛶',
+  }, balance.technologies.Shipbuilding),
   TapPowerI: tech({
     id: 'TapPowerI',
     name: 'Tap Power I',
     description: '+1 resource per collect tap',
     glyph: '👆',
-    node: null,
   }, balance.technologies.TapPowerI),
   TapPowerII: tech({
     id: 'TapPowerII',
     name: 'Tap Power II',
     description: '+1 resource per collect tap',
     glyph: '👆',
-    node: null,
   }, balance.technologies.TapPowerII),
   TapPowerIII: tech({
     id: 'TapPowerIII',
     name: 'Tap Power III',
     description: '+1 resource per collect tap',
     glyph: '👆',
-    node: null,
   }, balance.technologies.TapPowerIII),
   TapPowerIV: tech({
     id: 'TapPowerIV',
     name: 'Tap Power IV',
     description: '+1 resource per collect tap',
     glyph: '👆',
-    node: null,
   }, balance.technologies.TapPowerIV),
   TapPowerV: tech({
     id: 'TapPowerV',
     name: 'Tap Power V',
     description: '+1 resource per collect tap',
     glyph: '👆',
-    node: null,
   }, balance.technologies.TapPowerV),
   QuickHandsI: tech({
     id: 'QuickHandsI',
     name: 'Quick Hands I',
     description: '−0.05s between auto-taps while holding',
     glyph: '⚡',
-    node: null,
   }, balance.technologies.QuickHandsI),
   QuickHandsII: tech({
     id: 'QuickHandsII',
     name: 'Quick Hands II',
     description: '−0.05s between auto-taps while holding',
     glyph: '⚡',
-    node: null,
   }, balance.technologies.QuickHandsII),
   QuickHandsIII: tech({
     id: 'QuickHandsIII',
     name: 'Quick Hands III',
     description: '−0.05s between auto-taps while holding',
     glyph: '⚡',
-    node: null,
   }, balance.technologies.QuickHandsIII),
   QuickHandsIV: tech({
     id: 'QuickHandsIV',
     name: 'Quick Hands IV',
     description: '−0.05s between auto-taps while holding',
     glyph: '⚡',
-    node: null,
   }, balance.technologies.QuickHandsIV),
   QuickHandsV: tech({
     id: 'QuickHandsV',
     name: 'Quick Hands V',
     description: '−0.05s between auto-taps while holding',
     glyph: '⚡',
-    node: null,
   }, balance.technologies.QuickHandsV),
   WorkerLoadI: tech({
     id: 'WorkerLoadI',
     name: 'Worker Load I',
     description: '+1 resource per worker delivery',
     glyph: '🎒',
-    node: null,
   }, balance.technologies.WorkerLoadI),
   WorkerLoadII: tech({
     id: 'WorkerLoadII',
     name: 'Worker Load II',
     description: '+1 resource per worker delivery',
     glyph: '🎒',
-    node: null,
   }, balance.technologies.WorkerLoadII),
   WorkerLoadIII: tech({
     id: 'WorkerLoadIII',
     name: 'Worker Load III',
     description: '+1 resource per worker delivery',
     glyph: '🎒',
-    node: null,
   }, balance.technologies.WorkerLoadIII),
   SawpitsI: tech({
     id: 'SawpitsI',
     name: 'Sawpits I',
     description: '+1 Wood per worker delivery',
     glyph: '🪵',
-    node: null,
   }, balance.technologies.SawpitsI),
   SawpitsII: tech({
     id: 'SawpitsII',
     name: 'Sawpits II',
     description: '+1 Wood per worker delivery',
     glyph: '🪵',
-    node: null,
   }, balance.technologies.SawpitsII),
   SawpitsIII: tech({
     id: 'SawpitsIII',
     name: 'Sawpits III',
     description: '+1 Wood per worker delivery',
     glyph: '🪵',
-    node: null,
   }, balance.technologies.SawpitsIII),
   ButcheryI: tech({
     id: 'ButcheryI',
     name: 'Butchery I',
     description: '+1 Food per tap on game',
     glyph: '🍖',
-    node: null,
   }, balance.technologies.ButcheryI),
   ButcheryII: tech({
     id: 'ButcheryII',
     name: 'Butchery II',
     description: '+1 Food per tap on game',
     glyph: '🍖',
-    node: null,
   }, balance.technologies.ButcheryII),
   ButcheryIII: tech({
     id: 'ButcheryIII',
     name: 'Butchery III',
     description: '+1 Food per tap on game',
     glyph: '🍖',
-    node: null,
   }, balance.technologies.ButcheryIII),
   IrrigationI: tech({
     id: 'IrrigationI',
     name: 'Irrigation I',
     description: '+1 Food per delivery from a farm',
     glyph: '💧',
-    node: null,
   }, balance.technologies.IrrigationI),
   IrrigationII: tech({
     id: 'IrrigationII',
     name: 'Irrigation II',
     description: '+1 Food per delivery from a farm',
     glyph: '💧',
-    node: null,
   }, balance.technologies.IrrigationII),
   IrrigationIII: tech({
     id: 'IrrigationIII',
     name: 'Irrigation III',
     description: '+1 Food per delivery from a farm',
     glyph: '💧',
-    node: null,
   }, balance.technologies.IrrigationIII),
   ScythesI: tech({
     id: 'ScythesI',
     name: 'Scythes I',
     description: '+1 Food per tap on a crop plot',
     glyph: '🌾',
-    node: null,
   }, balance.technologies.ScythesI),
   ScythesII: tech({
     id: 'ScythesII',
     name: 'Scythes II',
     description: '+1 Food per tap on a crop plot',
     glyph: '🌾',
-    node: null,
   }, balance.technologies.ScythesII),
   ScythesIII: tech({
     id: 'ScythesIII',
     name: 'Scythes III',
     description: '+1 Food per tap on a crop plot',
     glyph: '🌾',
-    node: null,
   }, balance.technologies.ScythesIII),
   SurveyingI: tech({
     id: 'SurveyingI',
     name: 'Surveying I',
     description: '+1 Gold of reveal progress per tap on the fog',
     glyph: '🧭',
-    node: null,
   }, balance.technologies.SurveyingI),
   SurveyingII: tech({
     id: 'SurveyingII',
     name: 'Surveying II',
     description: '+1 Gold of reveal progress per tap on the fog',
     glyph: '🧭',
-    node: null,
   }, balance.technologies.SurveyingII),
   PitonsI: tech({
     id: 'PitonsI',
     name: 'Pitons I',
     description: '−10% Gold to clear a cell of fog',
     glyph: '⛏️',
-    node: null,
   }, balance.technologies.PitonsI),
   PitonsII: tech({
     id: 'PitonsII',
     name: 'Pitons II',
     description: '−10% Gold to clear a cell of fog',
     glyph: '⛏️',
-    node: null,
   }, balance.technologies.PitonsII),
   MarketStallI: tech({
     id: 'MarketStallI',
     name: 'Market Stall I',
     description: '+5% Market sale prices',
     glyph: '🛒',
-    node: null,
   }, balance.technologies.MarketStallI),
   MarketStallII: tech({
     id: 'MarketStallII',
     name: 'Market Stall II',
     description: '+5% Market sale prices',
     glyph: '🛒',
-    node: null,
   }, balance.technologies.MarketStallII),
   MarketStallIII: tech({
     id: 'MarketStallIII',
     name: 'Market Stall III',
     description: '+5% Market sale prices',
     glyph: '🛒',
-    node: null,
   }, balance.technologies.MarketStallIII),
   MarketStallIV: tech({
     id: 'MarketStallIV',
     name: 'Market Stall IV',
     description: '+5% Market sale prices',
     glyph: '🛒',
-    node: null,
   }, balance.technologies.MarketStallIV),
   TradeRoutesI: tech({
     id: 'TradeRoutesI',
     name: 'Trade Routes I',
     description: '+10% tax income',
     glyph: '⛵',
-    node: null,
   }, balance.technologies.TradeRoutesI),
   TradeRoutesII: tech({
     id: 'TradeRoutesII',
     name: 'Trade Routes II',
     description: '+10% tax income',
     glyph: '⛵',
-    node: null,
   }, balance.technologies.TradeRoutesII),
   TradeRoutesIII: tech({
     id: 'TradeRoutesIII',
     name: 'Trade Routes III',
     description: '+10% tax income',
     glyph: '⛵',
-    node: null,
   }, balance.technologies.TradeRoutesIII),
   TradeRoutesIV: tech({
     id: 'TradeRoutesIV',
     name: 'Trade Routes IV',
     description: '+10% tax income',
     glyph: '⛵',
-    node: null,
   }, balance.technologies.TradeRoutesIV),
   TradeRoutesV: tech({
     id: 'TradeRoutesV',
     name: 'Trade Routes V',
     description: '+10% tax income',
     glyph: '⛵',
-    node: null,
   }, balance.technologies.TradeRoutesV),
   StonecuttingI: tech({
     id: 'StonecuttingI',
     name: 'Stonecutting I',
     description: '+1 Stone per worker delivery',
     glyph: '🪨',
-    node: null,
   }, balance.technologies.StonecuttingI),
   StonecuttingII: tech({
     id: 'StonecuttingII',
     name: 'Stonecutting II',
     description: '+1 Stone per worker delivery',
     glyph: '🪨',
-    node: null,
   }, balance.technologies.StonecuttingII),
   StonecuttingIII: tech({
     id: 'StonecuttingIII',
     name: 'Stonecutting III',
     description: '+1 Stone per worker delivery',
     glyph: '🪨',
-    node: null,
   }, balance.technologies.StonecuttingIII),
   BigNetsI: tech({
     id: 'BigNetsI',
     name: 'Big Nets I',
     description: '+1 Food per delivery from a shoal',
     glyph: '🕸️',
-    node: null,
   }, balance.technologies.BigNetsI),
   BigNetsII: tech({
     id: 'BigNetsII',
     name: 'Big Nets II',
     description: '+1 Food per delivery from a shoal',
     glyph: '🕸️',
-    node: null,
   }, balance.technologies.BigNetsII),
   BigNetsIII: tech({
     id: 'BigNetsIII',
     name: 'Big Nets III',
     description: '+1 Food per delivery from a shoal',
     glyph: '🕸️',
-    node: null,
   }, balance.technologies.BigNetsIII),
   IronPicksI: tech({
     id: 'IronPicksI',
     name: 'Iron Picks I',
     description: '+1 Stone per delivery from a vein',
     glyph: '⛏️',
-    node: null,
   }, balance.technologies.IronPicksI),
   IronPicksII: tech({
     id: 'IronPicksII',
     name: 'Iron Picks II',
     description: '+1 Stone per delivery from a vein',
     glyph: '⛏️',
-    node: null,
   }, balance.technologies.IronPicksII),
   IronPicksIII: tech({
     id: 'IronPicksIII',
     name: 'Iron Picks III',
     description: '+1 Stone per delivery from a vein',
     glyph: '⛏️',
-    node: null,
   }, balance.technologies.IronPicksIII),
   ResonanceI: tech({
     id: 'ResonanceI',
     name: 'Resonance I',
     description: '−20% Mana to cast a relic',
     glyph: '🔔',
-    node: null,
   }, balance.technologies.ResonanceI),
   ResonanceII: tech({
     id: 'ResonanceII',
     name: 'Resonance II',
     description: '−20% Mana to cast a relic',
     glyph: '🔔',
-    node: null,
   }, balance.technologies.ResonanceII),
 };
 
+/** Every technology, in workbook order — which is also RANK order inside a
+ *  line, so TECH_LINES can be derived from it rather than restated. */
 export const TECH_ORDER: TechId[] = [
-  'Forestry',
-  'UrbanPlanning', 'Communities', 'Architecture',
-  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market',
-  'Masonry', 'Mining', 'Engineering', 'DeepMining',
-  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
-  'Warrior', 'Spears', 'Archery', 'Cavalry',
-  'Attunement', 'Warband',
-  // minor ranks, in the order their lines are authored
-  'TapPowerI', 'TapPowerII', 'TapPowerIII', 'TapPowerIV',
-  'TapPowerV', 'QuickHandsI', 'QuickHandsII', 'QuickHandsIII',
-  'QuickHandsIV', 'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII',
-  'WorkerLoadIII', 'SawpitsI', 'SawpitsII', 'SawpitsIII',
-  'ButcheryI', 'ButcheryII', 'ButcheryIII', 'IrrigationI',
-  'IrrigationII', 'IrrigationIII', 'ScythesI', 'ScythesII',
-  'ScythesIII', 'SurveyingI', 'SurveyingII', 'PitonsI',
-  'PitonsII', 'MarketStallI', 'MarketStallII', 'MarketStallIII',
-  'MarketStallIV', 'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII',
-  'TradeRoutesIV', 'TradeRoutesV', 'StonecuttingI', 'StonecuttingII',
-  'StonecuttingIII', 'BigNetsI', 'BigNetsII', 'BigNetsIII',
-  'IronPicksI', 'IronPicksII', 'IronPicksIII', 'ResonanceI',
-  'ResonanceII',
+  'CharterI', 'CharterII', 'CharterIII', 'CharterIV',
+  'Forestry', 'UrbanPlanning', 'Saws', 'Agriculture',
+  'Masonry', 'Communities', 'Hunting', 'Farming',
+  'Market', 'Mining', 'Architecture', 'Engineering',
+  'DeepMining', 'WarbandI', 'WarbandII', 'WarbandIII',
+  'WarbandIV', 'Warrior', 'Spears', 'Archery',
+  'Cavalry', 'AttunementI', 'AttunementII', 'AttunementIII',
+  'AttunementIV', 'Cartography', 'Consecration', 'Sailing',
+  'ScalingTools', 'Fishing', 'Shipbuilding', 'TapPowerI',
+  'TapPowerII', 'TapPowerIII', 'TapPowerIV', 'TapPowerV',
+  'QuickHandsI', 'QuickHandsII', 'QuickHandsIII', 'QuickHandsIV',
+  'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII', 'WorkerLoadIII',
+  'SawpitsI', 'SawpitsII', 'SawpitsIII', 'ButcheryI',
+  'ButcheryII', 'ButcheryIII', 'IrrigationI', 'IrrigationII',
+  'IrrigationIII', 'ScythesI', 'ScythesII', 'ScythesIII',
+  'SurveyingI', 'SurveyingII', 'PitonsI', 'PitonsII',
+  'MarketStallI', 'MarketStallII', 'MarketStallIII', 'MarketStallIV',
+  'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII', 'TradeRoutesIV',
+  'TradeRoutesV', 'StonecuttingI', 'StonecuttingII', 'StonecuttingIII',
+  'BigNetsI', 'BigNetsII', 'BigNetsIII', 'IronPicksI',
+  'IronPicksII', 'IronPicksIII', 'ResonanceI', 'ResonanceII',
 ];
 
 // Slots & gem pricing for extra slots.
@@ -1070,6 +1061,54 @@ export const RESEARCH_SETTINGS = balance.research;
  * un-cozy end of the dial.
  */
 export const ARMY = balance.army;
+
+// ------------------------------------------------------------------ tomes
+
+export interface TomeDef {
+  id: TomeId;
+  name: string;
+  /** One sentence for what the book is FOR. If a tome cannot be described in
+   *  one, it is carrying two subjects and should be two tomes. */
+  blurb: string;
+  glyph: string;
+  /** The spine whose ranks pace it. Rank I is the cover page, granted when
+   *  the tome opens; every keystone after requires the whole era above it. */
+  spine: string;
+}
+
+/**
+ * The shelf, in reading order.
+ *
+ * Civics is open from the start because it is the game. Magic opens on the
+ * first PAID REVEAL — the fog is the magic, it is guaranteed inside two
+ * minutes, and it needs no landmark to have spawned nearby, which is what
+ * makes Cartography reachable when the `Mapmakers` quest asks for it. Warfare
+ * opens on the first discovered ruin, because that is the first moment an
+ * army is for anything.
+ */
+export const TOMES: Record<TomeId, TomeDef> = {
+  Civics: {
+    id: 'Civics', name: 'Civics', glyph: '🏛️', spine: 'Charter',
+    blurb: 'The city and its purse.',
+  },
+  Magic: {
+    id: 'Magic', name: 'Magic', glyph: '🔯', spine: 'Attunement',
+    blurb: 'The land’s magic, and what you can see of it.',
+  },
+  Warfare: {
+    id: 'Warfare', name: 'Warfare', glyph: '🚩', spine: 'Warband',
+    blurb: 'The army, and what it goes into the ground for.',
+  },
+};
+
+export const TOME_ORDER = Object.keys(TOMES) as TomeId[];
+
+/** A tome's cover page — the rank I granted when the book opens. */
+export const tomeCoverPage = (tome: TomeId): TechId => `${TOMES[tome].spine}I` as TechId;
+
+/** Every technology in one tome, in workbook order. */
+export const techsInTome = (tome: TomeId): TechId[] =>
+  TECH_ORDER.filter((id) => TECHNOLOGIES[id].tome === tome);
 
 // ------------------------------------------------------------- tech lines
 

@@ -407,13 +407,32 @@ reversals, so that nobody reading the diff has to guess which is current:
    `BuyUpgrade` quest goal type is retired. **The tree went from 6,600 Gold to
    26,625**, so the quest chain now covers a little under half of it instead
    of 1.8x — the inversion §0 asks for, held by `tests/quests.test.ts`.
-4. Tomes as screens: three tomes, era 1 of each authored, positions per page.
-5. Era 2 and 3 authored — the point at which the tree stops being a formality.
+4. ~~Tomes as screens.~~ **DONE 2026-09-04.** Three bounded pages with a
+   shelf of tabs, per-page positions, and the cover pages granted by events in
+   the world — Civics at the seed, Magic on the first paid reveal, Warfare on
+   the first ruin in sight.
+5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
+   assigned a tome and an era, the nine keystones exist and each unlocks a
+   real dial (Townhall level, hall levels, Sanctum levels), and the Townhall
+   Mana strip landed with them. What is NOT authored is the era-2 and era-3
+   *content* from [`tech-tree.md`](tech-tree.md) §3–5 — Field Medicine,
+   Veterancy, Siegecraft, Ley Lines, Ritual Casting and the rest — because
+   every one of them needs a mechanic that does not exist yet (§9), and a node
+   that unlocks nothing is the lie this design exists to avoid. That is the
+   next block of work and it is engineering, not authoring.
 6. Contested landmarks pay lumps — after the world map exists.
 7. Investing Knowledge in a guild structure — with `social-layer.md`.
 
 ## Open decisions
 
+0. **The Mana curve now sits on the law's boundary at every level.** Taking
+   Mana off the Townhall meant re-deriving both dials from scratch, and the
+   spend-budget law (`fill > 8 h`, so a pool can run out and a refill has
+   something to sell) pins them hard: 50 cap at 6/h is 8.3 h, and every
+   Sanctum level lands between 8.1 and 8.3. There is no slack left. The
+   onboarding drained the pool dry at the documented 4/h and only survives at
+   6 — which is the first real evidence that the tutorial's Mana budget and
+   the design's stated one disagree.
 1. **Does the Conjunction's 60 lump pay Knowledge or Stardust?** It reads as
    arcane insight, which argues Knowledge; it has always fed the collection,
    which argues Stardust. Cheapest answer: split it.

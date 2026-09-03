@@ -307,7 +307,9 @@ describe('launching', () => {
 
   it('refuses more unit TYPES than there are slots — breadth is the limit', () => {
     const state = readyToDelve({ Warrior: 2, Archer: 2, Lancer: 2 });
-    completeTech(state, 'Warband');
+    // Slots are Gems-only now — no technology grants one
+    // (Docs/features/tomes-and-research.md §8).
+    state.heroes.partySlotsPurchased = 1;
     expect(partySlots(state)).toBe(3);
     expect(unitSlots(state)).toBe(2); // the hero takes one
     const three = [
