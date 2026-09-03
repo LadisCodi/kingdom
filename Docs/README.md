@@ -74,6 +74,18 @@ design, and closes the open decisions §8 files against it.
 | 3 | [features/monetization-sim.md](features/monetization-sim.md) | **Designed, unstarted** — a store that never charges, more ad placements, and the telemetry that makes a D30 possible at all |
 | 4 | [features/social-layer.md](features/social-layer.md) | **Designed, unstarted** — Supabase as server authority, neighbours and capped daily help, a guild, a weekly collective bar |
 
+### Structural decisions
+
+Not phases. These decide *where* every future system lives, and one of their
+consequences — the shape of the save — cannot be changed retroactively, so they
+are written down before they are built.
+
+| File | What it decides |
+|---|---|
+| **[features/map-scopes.md](features/map-scopes.md)** | **Designed, unstarted** — the province bounded and authored, temporary provinces as the event format, a shared node graph for the world; and how much PvP the three promises allow |
+| **[features/relics-and-ingredients.md](features/relics-and-ingredients.md)** | **Designed, unstarted** — a nine-piece ingredient set per relic, split 1★/2★/3★ by source, replacing Fragments; Mana as what magic costs on both maps |
+| **[features/tomes-and-research.md](features/tomes-and-research.md)** | **Designed, unstarted** — Knowledge as a per-hour clock you commit, tomes as pages with tiers for eras, and the Knowledge ↔ Stardust rename |
+
 ### Reference, not a feature
 
 | File | What it covers |
