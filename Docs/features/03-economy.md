@@ -118,7 +118,7 @@ neighbour.** Crowded rows tax worse; spreading out pays. A house clamps at 0,
 never negative. While placing, every affected neighbour and the ghost itself
 show a compact label.
 
-One rule against fourteen districts competing for the same ground is the
+One rule against thirteen districts competing for the same ground is the
 thinnest part of the whole design, and it is thin *because* the canvas grows by
 buying tiles ([`02-map-scopes.md`](02-map-scopes.md) §1). Widening the effect
 column beyond Gold once and authoring twenty rules is the most design depth per

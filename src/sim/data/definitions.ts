@@ -316,10 +316,10 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Quarry',
     name: 'Quarry',
-    description: 'Sends workers to cut Stone from the mountains within its area of influence.',
+    description: 'Sends workers into every mountain within its area of influence — bare rock and metal alike.',
     glyph: '⛏️',
     sprite: 'quarry',
-    harvestSources: ['Stone'],
+    harvestSources: ['Stone', 'MountainIron', 'MountainGold'],
     requiredTech: 'Masonry',
     ...districtBalance(balance.districts.Quarry),
   },
@@ -392,22 +392,10 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     trains: ['Cavalry'],
     ...districtBalance(balance.districts.Stables),
   },
-  Mine: {
-    ...rules,
-    id: 'Mine',
-    name: 'Mine',
-    description: 'Sends workers into the metal mountains within its area of '
-      + 'influence — iron for Stone, gold for coin.',
-    glyph: '⚒️',
-    sprite: 'mine',
-    harvestSources: ['MountainIron', 'MountainGold'],
-    requiredTech: 'Mining',
-    ...districtBalance(balance.districts.Mine),
-  },
 };
 
 export const BUILDABLE_DISTRICTS: DistrictId[] = [
-  'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Mine', 'Market',
+  'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Market',
   'Sanctum',
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
@@ -1380,4 +1368,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;

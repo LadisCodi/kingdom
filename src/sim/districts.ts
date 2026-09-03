@@ -109,7 +109,6 @@ export function placementBlock(
     }
     case 'Sawmill': // no placement restriction — the influence range guides placement
     case 'Quarry':
-    case 'Mine':
     case 'Market':
     case 'Townhall':
       break;

@@ -312,6 +312,11 @@ describe('the chain never asks for a material the map cannot yet yield', () => {
     // currency -> the tech you need before ANY cell yields it. A single
     // ungated cell anywhere means no gate at all.
     const gate = new Map<string, TechId | null>();
+    // Rent pays Gold from the first villager and no research gates a house, so
+    // Gold is ungated however deep in the tree its MAP source sits. Without
+    // this the loop below infers "Gold needs Deep Mining" from the gold
+    // mountain and then demands that every Gold-priced building come after it.
+    gate.set('Gold', null);
     for (const [key, feature] of map.initialFeatures) {
       const source = FEATURES[feature].source;
       if (source === null) continue;

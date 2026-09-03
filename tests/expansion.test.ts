@@ -121,7 +121,8 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
   it('an iron mountain is a RICH stone node — 5 a tap against a bare peak\'s 1', () => {
     const state = freshGame();
     reveal(state, [IRON_MOUNTAIN]);
-    completeTech(state, 'ScalingTools'); // every mountain is behind it
+    completeTech(state, 'ScalingTools'); // onto the peak…
+    completeTech(state, 'Mining');       // …and the iron out of it
     expect(harvestSourceAt(state, IRON_MOUNTAIN)).toBe('MountainIron');
     expect(tapCell(state, map, IRON_MOUNTAIN, T0)).toBe('Harvested');
     // Five times a bare mountain: the same material, worth the walk out.

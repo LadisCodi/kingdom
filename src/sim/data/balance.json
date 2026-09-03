@@ -313,53 +313,6 @@
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5
     },
-    "Mine": {
-      "size": {
-        "x": 1,
-        "y": 1
-      },
-      "maxLevel": 2,
-      "populationCapacityPerLevel": [],
-      "fogRevealRadius": 1,
-      "fogDiscoverRadius": 2,
-      "maxWorkersPerLevel": [
-        3,
-        5
-      ],
-      "maxCountPerTownhallLevel": [
-        1,
-        2,
-        3
-      ],
-      "influenceRadiusPerLevel": [
-        2,
-        3,
-        4
-      ],
-      "requiredTownhallLevelPerLevel": [
-        2
-      ],
-      "requiredTechPerLevel": [
-        "DeepMining"
-      ],
-      "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 40,
-        "Stone": 20
-      },
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
-      "buildDurationSeconds": 30,
-      "buildDurationDistrictGrowth": 1.2,
-      "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 50,
-        "Stone": 25
-      },
-      "upgradeCostLevelGrowth": 1.5,
-      "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
-    },
     "Sanctum": {
       "size": {
         "x": 1,
@@ -630,17 +583,17 @@
       "yieldPerTap": 5,
       "yieldPerWorker": 5,
       "tapsToExhaust": 5,
-      "recoverySeconds": 120,
+      "recoverySeconds": 300,
       "respawnSeconds": 0,
-      "requiredTech": "ScalingTools"
+      "requiredTech": "Mining"
     },
     "MountainGold": {
       "yieldPerTap": 3,
       "yieldPerWorker": 3,
       "tapsToExhaust": 5,
-      "recoverySeconds": 120,
+      "recoverySeconds": 300,
       "respawnSeconds": 0,
-      "requiredTech": "ScalingTools"
+      "requiredTech": "DeepMining"
     }
   },
   "currencies": {
@@ -1868,11 +1821,11 @@
       "rewardKnowledge": 0
     },
     {
-      "id": "TheMine",
-      "name": "The Mine",
-      "description": "Build a Mine on the iron.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Mine",
+      "id": "DeepSeams",
+      "name": "Deep seams",
+      "description": "The peaks give up ordinary stone. Research Mining and your quarrymen bring the iron out of them too.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Mining",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {

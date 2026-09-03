@@ -34,7 +34,7 @@ const XLSX_PATH = join(ROOT, 'balance/balance.xlsx');
 const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 
 const DISTRICT_IDS = [
-  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine',
+  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks',
   'Sanctum',
   // Military: each unit type is trained by its own building, and building and
   // upgrading them is what raises the army cap.

@@ -83,7 +83,7 @@ describe('the quest chain', () => {
     );
 
     // 31+: the rest of the city economy the tutorial defers, then the long game.
-    inOrder('IntoTheDark', 'Stoneworks', 'TheMine', 'GrandCapital');
+    inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
       { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
   });

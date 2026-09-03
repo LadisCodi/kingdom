@@ -13,7 +13,7 @@ export type CurrencyId =
   | 'Gems'; // player-scoped, premium
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
-  | 'Quarry' | 'Docks' | 'Mine' | 'Sanctum'
+  | 'Quarry' | 'Docks' | 'Sanctum'
   | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables'; // military
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be

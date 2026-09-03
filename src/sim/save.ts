@@ -105,6 +105,28 @@ const MIGRATIONS: readonly Migration[] = [
       fold('Iron', 'Stone', 3);
     },
   },
+  {
+    // v23 — the Mine is gone as a building. The Quarry works every mountain
+    // now, bare rock and metal alike, so a Mine that a player already paid
+    // for BECOMES a Quarry rather than vanishing: the two had the same
+    // footprint, the same crew and the same radius, and the first promise is
+    // that nothing you own is taken from you.
+    //
+    // It can push a city one Quarry over its Townhall count cap. That is
+    // deliberate — the cap gates BUILDING one, and taking a standing building
+    // away to enforce it retroactively would be the very thing the promise
+    // forbids.
+    to: 23,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })
+        ?.Cities?.[0];
+      const districts = city?.Districts as Array<Record<string, any>> | undefined;
+      if (districts === undefined) return;
+      for (const d of districts) {
+        if (d.DefinitionID === 'Mine') d.DefinitionID = 'Quarry';
+      }
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.

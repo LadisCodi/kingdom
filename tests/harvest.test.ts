@@ -185,11 +185,13 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
-      // Every mountain is the same landform, so one research opens all
-      // three — bare rock for the Quarry, iron and gold for the Mine.
+      // One landform, three depths of skill. Scaling Tools gets you onto a
+      // peak at all; Mining gets the iron out of it; Deep Mining reaches the
+      // gold. One building works all three — the ladder is in the research,
+      // not in the buildings.
       Stone: 'ScalingTools',
-      MountainIron: 'ScalingTools',
-      MountainGold: 'ScalingTools',
+      MountainIron: 'Mining',
+      MountainGold: 'DeepMining',
     });
   });
 });
@@ -288,12 +290,44 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     expect(mana(state)).toBe(before - TAP.manaCost);
   });
 
-  it('is what the Quarry works, so the Quarry needs the same research', () => {
-    // The Quarry's source and the mountain's source are the same row: that
-    // single link is what makes "the Quarry cuts stone from every mountain in
-    // range" true without a rule of its own.
-    expect(DISTRICTS.Quarry.harvestSources).toEqual(['Stone']);
+  it('gives out after five strikes and comes back on a timer', () => {
+    const peak = someMountain();
+    expect(peak).not.toBeNull();
+    const state = freshGame();
+    reveal(state, [peak!]);
+    completeTech(state, 'ScalingTools');
+
+    const spec = HARVEST.Stone;
+    for (let i = 0; i < spec.tapsToExhaust; i++) {
+      expect(tapCell(state, map, peak!, T0), `strike ${i + 1}`).toBe('Harvested');
+    }
+    expect(isExhausted(state, peak!, T0)).toBe(true);
+    expect(tapCell(state, map, peak!, T0)).toBe('Exhausted');
+    expect(isExhausted(state, peak!, T0 + spec.recoverySeconds * 1000)).toBe(false);
+  });
+
+  // A rich node is throttled by how long it stays dead, not only by what it
+  // pays: iron and gold recover in five minutes against a bare peak's two.
+  // Written down because the value was silently halved once already, when
+  // MountainIron was created by copying the plain mountain's spec.
+  it('makes the metal mountains slower to come back than a bare one', () => {
+    expect(HARVEST.Stone.recoverySeconds).toBe(120);
+    expect(HARVEST.MountainIron.recoverySeconds).toBe(300);
+    expect(HARVEST.MountainGold.recoverySeconds).toBe(300);
+    for (const source of ['Stone', 'MountainIron', 'MountainGold'] as const) {
+      expect(HARVEST[source].tapsToExhaust, `${source} strikes`).toBe(5);
+    }
+  });
+
+  it('is worked by the Quarry — the one building that goes after every peak', () => {
+    // One building, three sources. The Mine was deleted rather than kept as a
+    // second quarry pointed at a second rock: what separates ordinary stone
+    // from metal is a technology, not a different shed.
+    expect(DISTRICTS.Quarry.harvestSources)
+      .toEqual(['Stone', 'MountainIron', 'MountainGold']);
     expect(FEATURES.Mountain.source).toBe('Stone');
-    expect(HARVEST.Stone.requiredTech).toBe('ScalingTools');
+    expect(FEATURES.MountainIron.source).toBe('MountainIron');
+    expect(FEATURES.MountainGold.source).toBe('MountainGold');
+    expect(Object.keys(DISTRICTS)).not.toContain('Mine');
   });
 });

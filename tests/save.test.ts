@@ -144,6 +144,32 @@ describe('save versions', () => {
     }
   });
 
+  // v23: the Mine stopped being a building. A player who already paid for one
+  // keeps it — as a Quarry, which does the Mine's whole job now. Deleting it
+  // would take away something they own, which is the one thing the design
+  // promises never to do.
+  it('turns a standing Mine into a Quarry rather than deleting it', () => {
+    const state = freshGame();
+    addBuilt(state, 'Quarry', { x: 4, y: -1 });
+    const save = serialize(state, T0);
+    const city = (save.Modules['kingdom.cities'] as any).Cities[0];
+    // Re-label it as the building that no longer exists, the way a save
+    // written before this change would have it on disk.
+    const standing = city.Districts.find((d: any) => d.DefinitionID === 'Quarry');
+    expect(standing).toBeDefined();
+    standing.DefinitionID = 'Mine';
+    standing.AssignedWorkers = 2;
+    save.SaveVersion = 22;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    const moved = restored.city.districts.find((d) => d.location.x === 4 && d.location.y === -1)!;
+    expect(moved.definitionId).toBe('Quarry');
+    // The crew came with the building; nobody was sent home.
+    expect(moved.assignedWorkers).toBe(2);
+    expect(restored.city.districts.some((d) => (d.definitionId as string) === 'Mine')).toBe(false);
+  });
+
   it('leaves a v21 save alone — the fold runs once, not on every load', () => {
     const state = freshGame();
     fund(state, { Food: 5, Stone: 3 });

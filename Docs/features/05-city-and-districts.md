@@ -17,7 +17,7 @@ gate that moves all of them at once.
 |---|---|---|---|
 | Target time | 0–30 min | 30 min – 2.5 h | ~3 h onward |
 | Housing cap | 2 | 4 | 6 |
-| Sawmill / Quarry / Docks / Mine cap | 1 | 2 | 3 |
+| Sawmill / Quarry / Docks cap | 1 | 2 | 3 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 |
 | Gate to the next level | 60 Wood | 156 W + 78 S + **Architecture** | — |
 
@@ -43,9 +43,8 @@ play, TH3 at ~2–3 h cumulative.
 | **FarmLands** (crop plot) | 1×1 | 1 | 6 / 6 / 12 | 10 W | 10 s | Agriculture |
 | **Farm** | 1×1 | 2 | 1 / 1 / 2 | 30 W | 20 s | Agriculture · Farming for L2 |
 | **Sawmill** | 1×1 | 3 | 1 / 2 / 3 | 20 W | 20 s | Saws · Engineering for L3 |
-| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry (← Scaling Tools) · Engineering for L2 |
+| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry (← Scaling Tools) · Engineering for L2 — works **every** mountain |
 | **Docks** | 2×1 pier | 2 | 1 / 2 / 3 | 25 W | 20 s | Fishing · Shipbuilding for L2 |
-| **Mine** | 1×1 | 2 | 1 / 2 / 3 | 40 W + 20 S | 30 s | Mining · Deep Mining for L2 — works iron **and** gold mountains |
 | **Market** | 1×1 | 1 | 1 | 40 W | 30 s | Market |
 | **Sanctum** | 1×1 | 3 | 1 | 300 G + 40 S | 90 s | Attunement branch |
 | **Barracks** | 1×1 | 3 | 1 | 60 W + 20 S | 45 s | Warrior |
@@ -53,8 +52,16 @@ play, TH3 at ~2–3 h cumulative.
 | **Shooting Grounds** | 1×1 | 3 | 1 | 80 W + 30 S | 60 s | Archery |
 | **Stables** | 1×1 | 3 | 1 | 120 W + 70 S | 90 s | Cavalry |
 
-Fourteen districts. Every one of them is a `Districts` row — a fifteenth needs
+Thirteen districts. Every one of them is a `Districts` row — a fourteenth needs
 no code beyond an id.
+
+**The Mine used to be a fourteenth** and was deleted: once iron stopped being a
+currency it was a second Quarry pointed at a second rock, and a building whose
+identity is *the other one of these* costs the player a lesson and returns
+nothing. The Quarry works every mountain now
+([`01-map-and-fog.md`](01-map-and-fog.md) §3). A Mine already standing in a save
+**becomes a Quarry** rather than disappearing — the promise is that nothing you
+own is taken from you, and that includes when a designer changes their mind.
 
 **Per-level tech gates** (`required_tech_per_level`) are the mechanic that makes
 the tree matter inside an era rather than only between them: entry 0 is what it

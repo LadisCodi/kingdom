@@ -46,7 +46,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
-  Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️', Sanctum: '🔯',
+  Market: '🏪', Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯',
   Barracks: '🛖', SpearHall: '🏚️', ShootingGrounds: '🎯', Stables: '🐴',
   // units
   Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',

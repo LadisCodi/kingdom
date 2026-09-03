@@ -58,7 +58,7 @@ One file per feature, in the order a player meets them.
 | 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map, and how much PvP the promises allow | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, the Market, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | the tap, exhaustion and recovery, areas of influence, workers as units that walk | built |
-| 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, cost curves, placement, moving a building | built |
+| 5 | [The city](features/05-city-and-districts.md) | all thirteen districts, the Townhall as era gate, cost curves, placement, moving a building | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
 | 7 | [Research](features/07-research.md) | the technology tree and instant upgrades today; **tomes, tiers-as-eras and Knowledge as a clock** next | built / designed |
 | 8 | [Magic](features/08-magic.md) | Mana, why it is capped, the Sanctum, landmarks, and the rewarded ad tuned as one loop | built |

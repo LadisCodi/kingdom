@@ -57,34 +57,60 @@ per biome ([`03-economy.md`](03-economy.md) §2).
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
 | **Mountain** | Stone | 1 | 5 | 120 s | **Scaling Tools** |
-| **Iron mountain** | Stone | **5** | 5 | 120 s | **Scaling Tools** |
-| **Gold mountain** | **Gold** | **3** | 5 | 120 s | **Scaling Tools** |
+| **Iron mountain** | Stone | **5** | 5 | **300 s** | **Scaling Tools** |
+| **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Scaling Tools** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
 
 Wild game pays three times a berry bush, which is what makes hunting worth a
 technology of its own.
 
-**Three mountains, one landform.** They share a silhouette, a research and a
-wear rate, and differ only in what the rock holds:
+**Three mountains, one landform.** They share a silhouette and the research
+that opens one to a pick, and differ in what the rock holds and how long it
+takes to come back:
 
-| | Pays | Worked by | Role |
+| | Pays | Opened by | Role |
 |---|---|---|---|
-| **Mountain** | Stone, 1 | the **Quarry** | the everyday building material |
-| **Iron mountain** | Stone, **5** | the **Mine** | the same material, five times over — worth the walk to the far fog |
-| **Gold mountain** | **Gold**, 3 | the **Mine** | the only thing on the map outside a lived-in house that pays the city's money |
+| **Mountain** | Stone, 1 | **Scaling Tools** | the everyday building material |
+| **Iron mountain** | Stone, **5** | **Mining** | the same material, five times over — worth the walk to the far fog |
+| **Gold mountain** | **Gold**, 3 | **Deep Mining** | the only thing on the map outside a lived-in house that pays the city's money |
+
+**One building works all three, and the ladder is in the research.** The Quarry
+goes after every peak in its area of influence; what separates ordinary stone
+from metal is a technology, not a different shed. Scaling Tools gets a
+quarryman onto a mountain at all, Mining gets the iron out of it, Deep Mining
+reaches the gold.
 
 That last row is the notable one. **Gold has come out of housing taxes and
 nothing else since Silver was folded into it.** A gold mountain is a second
-faucet, deliberately a modest one: a level-1 Mine with three miners is about 45
-Gold a minute against roughly 120 from a Townhall-1 city's rent, so it is a
-complement rather than a replacement for the idle backbone
+faucet, deliberately a modest one: a level-1 Quarry with three men on gold is
+about 45 Gold a minute against roughly 120 from a Townhall-1 city's rent, so it
+is a complement rather than a replacement for the idle backbone
 ([`03-economy.md`](03-economy.md) §3).
 
-It also gives the **Mine** a job again. When iron stopped being a currency the
-Mine became a second Quarry pointed at a second rock; now it is the building
-that goes after metal, and it is **the first district in the game that works two
-different sources at once** — which is why a district's harvest source is a
-list.
+**The Mine was deleted, not repurposed.** Once iron stopped being a currency the
+Mine was a second Quarry pointed at a second rock, and giving it two metal
+mountains to work only dressed that up. A building whose whole identity is
+*the other one of these* is a building the player has to learn for nothing, so
+the Quarry took the job and the Mine is gone. Its techs did not go with it:
+Mining and Deep Mining stopped gating a shed and started gating the **ore**,
+which is a thing the harvest table could already express.
+
+It leaves the Quarry as **the first district in the game that works more than
+one source at once** — which is why a district's harvest source is a list.
+
+**A mountain gives out like everything else**, and the temptation to exempt it
+was looked at and refused. *A mountain cannot be used up by picking at it* is
+true of the fiction and fatal to the economy: **exhaustion is the only throttle
+on stone.** Without it a quarryman never walks anywhere, and nothing but the
+Mana pool ends a tapping session — which contradicts the first rule of the
+extraction model, *nothing produces from nothing*
+([`04-harvest.md`](04-harvest.md) §1).
+
+What carries the fiction instead is **how long it stays dead**: a bare peak is
+back in two minutes, a metal one takes **five**. The rich node is throttled by
+availability rather than by yield, which is part of why it is worth the walk out
+to the far fog — and it makes the exhausted art a mine worked out for the
+afternoon rather than a mountain that ceased to exist.
 
 ### 3.1 Stone works exactly like Wood
 

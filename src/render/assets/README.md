@@ -21,7 +21,6 @@ prompts and the normalization pipeline.
 | `sawmill_l1..l3.png` | 🪚 | logging camp → saw hut → mill |
 | `market_l1..l3.png` | 🏪 | stall → two stalls → market square |
 | `quarry_l1..l3.png` | ⛏️ | stone pit → quarry → terraced quarry |
-| `mine_l1..l3.png` | ⚒️ | tunnel → mine + cart → mine complex |
 | `docks_l1..l3.png` | ⚓ | **256×128** (2×1 pier, land end LEFT; mirrored in code when the coast faces the other way) |
 | `forest.png` / `_exhausted` | 🌲 / 🪵 | |
 | `berry_bush.png` | 🫐 | finite — no exhausted variant |
