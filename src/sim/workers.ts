@@ -10,7 +10,8 @@ import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import {
   addToWallet, coordKey, districtById, newId, sameCell,
-  type Coord, type CurrencyId, type District, type GameState, type Worker,
+  type Coord, type CurrencyId, type District, type GameState,
+  type HarvestSourceId, type Worker,
 } from './state';
 
 // ------------------------------------------------------------ area of influence
@@ -28,12 +29,21 @@ export const influenceCells = (map: MapData, district: District): Coord[] =>
 /** Revealed resource cells of the building's source type in its area
  *  (exhausted cells count — workers wait for them to recover). */
 export function workableCells(state: GameState, map: MapData, district: District): Coord[] {
-  const source = DISTRICTS[district.definitionId].harvestSource;
-  if (!source) return [];
+  const sources = DISTRICTS[district.definitionId].harvestSources;
+  if (sources.length === 0) return [];
   return influenceCells(map, district).filter(
-    (c) => state.fog.revealed[coordKey(c)] === true && harvestSourceAt(state, c) === source,
+    (c) => state.fog.revealed[coordKey(c)] === true && worksHere(sources, state, c),
   );
 }
+
+/** Does this building go after whatever is on that cell? The Mine works two
+ *  different mountains, so "the building's source" is a set, not a value. */
+const worksHere = (
+  sources: readonly HarvestSourceId[], state: GameState, cell: Coord,
+): boolean => {
+  const here = harvestSourceAt(state, cell);
+  return here !== null && sources.includes(here);
+};
 
 /** The per-level worker cap. Workable cells in range don't limit assignment —
  *  workers beyond the available cells simply wait Idle. */
@@ -122,7 +132,8 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
       break;
     case 'MovingToCell': {
       const cell = w.claimedCell!;
-      if (isExhausted(state, cell, t) || harvestSourceAt(state, cell) !== DISTRICTS[building.definitionId].harvestSource) {
+      if (isExhausted(state, cell, t)
+        || !worksHere(DISTRICTS[building.definitionId].harvestSources, state, cell)) {
         // Exhausted (or vanished) en route: turn back empty-handed.
         w.claimedCell = null;
         w.carrying = false;
@@ -154,7 +165,7 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
       w.carrying = false;
       // Keep the claim if the cell is still workable; otherwise pick another.
       if (w.claimedCell && !isExhausted(state, w.claimedCell, t) &&
-          harvestSourceAt(state, w.claimedCell) === DISTRICTS[building.definitionId].harvestSource) {
+          worksHere(DISTRICTS[building.definitionId].harvestSources, state, w.claimedCell)) {
         setState(w, 'MovingToCell', t, t + moveMs(building.location, w.claimedCell));
       } else {
         w.claimedCell = null;

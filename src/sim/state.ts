@@ -27,9 +27,15 @@ export type TerrainId =
 // A mountain is a FEATURE, not a terrain: the Quarry works it the way the
 // Sawmill works a forest, and `state.features` already keeps a cell
 // unbuildable without a terrain rule of its own.
+// Three kinds of mountain: bare rock the Quarry cuts, and two that carry a
+// metal the Mine goes after. They are the same landform, so they share the
+// research that opens one to a pick and differ only in what they pay.
 export type FeatureId =
-  | 'Trees' | 'BerryBush' | 'WildAnimals' | 'Mountain' | 'FishShoal' | 'IronVein';
-export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';
+  | 'Trees' | 'BerryBush' | 'WildAnimals' | 'FishShoal'
+  | 'Mountain' | 'MountainIron' | 'MountainGold';
+export type HarvestSourceId =
+  | 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Fish'
+  | 'Stone' | 'MountainIron' | 'MountainGold';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';
 export type RuinId =

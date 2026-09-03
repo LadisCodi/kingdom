@@ -239,7 +239,7 @@ export class Game {
     let splashed = false;
     for (const w of this.state.workers) {
       const b = districtById(this.state, w.buildingId);
-      const isBoat = b !== undefined && DISTRICTS[b.definitionId].harvestSource === 'Fish';
+      const isBoat = b !== undefined && DISTRICTS[b.definitionId].harvestSources.includes('Fish');
       const out = w.activity === 'MovingToCell';
       if (isBoat && out && !this.boatsOut.has(w.id) && !splashed) {
         playSfx('boatSplash');
@@ -1662,12 +1662,14 @@ export class Game {
    *  previewing it at level 1 would understate the spot it is being moved to. */
   capturedCells(definitionId: DistrictId, cell: Coord, level = 1): Coord[] {
     const def = DISTRICTS[definitionId];
-    if (!def.harvestSource || def.influenceRadiusPerLevel.length === 0) return [];
+    if (def.harvestSources.length === 0 || def.influenceRadiusPerLevel.length === 0) return [];
     const radius = levelIndexed(def.influenceRadiusPerLevel, level);
     return cellsWithinRadiusOfRect(this.map, cell, def.size, radius).filter(
-      (c) =>
-        this.state.fog.revealed[coordKey(c)] === true &&
-        harvestSourceAt(this.state, c) === def.harvestSource,
+      (c) => {
+        if (this.state.fog.revealed[coordKey(c)] !== true) return false;
+        const here = harvestSourceAt(this.state, c);
+        return here !== null && def.harvestSources.includes(here);
+      },
     );
   }
 
@@ -1726,13 +1728,14 @@ export class Game {
         layer.influenceCells = cellsWithinRadiusOfRect(
           this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
         );
-        if (def.harvestSource) {
-          const spec = HARVEST[def.harvestSource];
+        if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
             // The placement preview shows what WORKERS will fetch per delivery.
+            // Read per CELL, not per building: the Mine captures iron and gold
+            // in one radius and they pay different coins.
             (cell) => ({
               cell,
-              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
+              label: cellYieldLabel(this.state, cell),
             }),
           );
         }
@@ -1777,13 +1780,12 @@ export class Game {
             this.map, this.mode.selected, def.size,
             levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
           );
-          if (def.harvestSource) {
-            const spec = HARVEST[def.harvestSource];
+          if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
               this.mode.definitionId, this.mode.selected, district?.level ?? 1,
             ).map((cell) => ({
               cell,
-              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
+              label: cellYieldLabel(this.state, cell),
             }));
           }
         }
@@ -2007,7 +2009,7 @@ export class Game {
    *  a tech or moving a resource behind a different one can't desync it. */
   private techForCurrency(c: CurrencyId): TechId | null {
     for (const def of Object.values(DISTRICTS)) {
-      if (def.harvestSource && HARVEST[def.harvestSource].currencyId === c) {
+      if (def.harvestSources.some((s) => HARVEST[s].currencyId === c)) {
         return def.requiredTech;
       }
     }
@@ -2105,13 +2107,24 @@ export class Game {
 }
 
 /** What a collect tap on each harvest source sounds like. */
+/** What one worker delivery from THIS cell is worth, as the placement preview
+ *  writes it. Per cell rather than per building, because a Mine's radius can
+ *  hold iron and gold at once and they do not pay the same coin. */
+function cellYieldLabel(state: GameState, cell: Coord): string {
+  const source = harvestSourceAt(state, cell);
+  if (source === null) return '';
+  const spec = HARVEST[source];
+  return `+${effectiveWorkerYield(state, spec)} ${icon(spec.currencyId)}`;
+}
+
 const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
   Forest: 'tapTree',
   Berries: 'tapBerries',
   Crops: 'tapBerries', // same gathering foley until a distinct take lands
   Meat: 'tapAnimals',
   Stone: 'tapStone',
-  Iron: 'tapIron',
+  MountainIron: 'tapIron',
+  MountainGold: 'tapIron',
   Fish: 'tapFish',
 };
 

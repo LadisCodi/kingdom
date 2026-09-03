@@ -45,7 +45,7 @@ play, TH3 at ~2–3 h cumulative.
 | **Sawmill** | 1×1 | 3 | 1 / 2 / 3 | 20 W | 20 s | Saws · Engineering for L3 |
 | **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry (← Scaling Tools) · Engineering for L2 |
 | **Docks** | 2×1 pier | 2 | 1 / 2 / 3 | 25 W | 20 s | Fishing · Shipbuilding for L2 |
-| **Mine** | 1×1 | 2 | 1 / 2 / 3 | 40 W + 20 S | 30 s | Mining · Deep Mining for L2 |
+| **Mine** | 1×1 | 2 | 1 / 2 / 3 | 40 W + 20 S | 30 s | Mining · Deep Mining for L2 — works iron **and** gold mountains |
 | **Market** | 1×1 | 1 | 1 | 40 W | 30 s | Market |
 | **Sanctum** | 1×1 | 3 | 1 | 300 G + 40 S | 90 s | Attunement branch |
 | **Barracks** | 1×1 | 3 | 1 | 60 W + 20 S | 45 s | Warrior |

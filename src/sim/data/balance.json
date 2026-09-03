@@ -626,13 +626,21 @@
       "respawnSeconds": 90,
       "requiredTech": null
     },
-    "Iron": {
+    "MountainIron": {
+      "yieldPerTap": 5,
+      "yieldPerWorker": 5,
+      "tapsToExhaust": 5,
+      "recoverySeconds": 120,
+      "respawnSeconds": 0,
+      "requiredTech": "ScalingTools"
+    },
+    "MountainGold": {
       "yieldPerTap": 3,
       "yieldPerWorker": 3,
       "tapsToExhaust": 5,
-      "recoverySeconds": 300,
+      "recoverySeconds": 120,
       "respawnSeconds": 0,
-      "requiredTech": null
+      "requiredTech": "ScalingTools"
     }
   },
   "currencies": {

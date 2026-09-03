@@ -57,13 +57,34 @@ per biome ([`03-economy.md`](03-economy.md) §2).
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
 | **Mountain** | Stone | 1 | 5 | 120 s | **Scaling Tools** |
+| **Iron mountain** | Stone | **5** | 5 | 120 s | **Scaling Tools** |
+| **Gold mountain** | **Gold** | **3** | 5 | 120 s | **Scaling Tools** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
-| **Iron vein** | Stone | **3** | 5 | 300 s | — |
 
 Wild game pays three times a berry bush, which is what makes hunting worth a
-technology of its own. An iron vein is a **rich Stone node** — 3 a tap against a
-mountain's 1, so a vein pays 15 a worker cycle where a mountain pays 5, visibly
-worth the walk at the far end of the fog curve where it has always sat.
+technology of its own.
+
+**Three mountains, one landform.** They share a silhouette, a research and a
+wear rate, and differ only in what the rock holds:
+
+| | Pays | Worked by | Role |
+|---|---|---|---|
+| **Mountain** | Stone, 1 | the **Quarry** | the everyday building material |
+| **Iron mountain** | Stone, **5** | the **Mine** | the same material, five times over — worth the walk to the far fog |
+| **Gold mountain** | **Gold**, 3 | the **Mine** | the only thing on the map outside a lived-in house that pays the city's money |
+
+That last row is the notable one. **Gold has come out of housing taxes and
+nothing else since Silver was folded into it.** A gold mountain is a second
+faucet, deliberately a modest one: a level-1 Mine with three miners is about 45
+Gold a minute against roughly 120 from a Townhall-1 city's rent, so it is a
+complement rather than a replacement for the idle backbone
+([`03-economy.md`](03-economy.md) §3).
+
+It also gives the **Mine** a job again. When iron stopped being a currency the
+Mine became a second Quarry pointed at a second rock; now it is the building
+that goes after metal, and it is **the first district in the game that works two
+different sources at once** — which is why a district's harvest source is a
+list.
 
 ### 3.1 Stone works exactly like Wood
 
@@ -85,11 +106,6 @@ Three things fall out, and all three are simplifications:
   *wants* rather than a chore, and **a refused tap costs no Mana**.
 - **Water becomes the only reveal gate**, so §5's tech gating has one rule
   instead of two.
-
-**An iron vein is now a mountain with different art**, since a vein already paid
-Stone and the Mine is already a second Quarry pointed at a second stone feature.
-That redundancy is deferred rather than resolved —
-[`../open-questions.md`](../open-questions.md) OQ-51.
 
 The cost, stated plainly: **stone is now gated behind a technology where it used
 to be free to tap.** The chain absorbs it — Scaling Tools is quest 28 and the

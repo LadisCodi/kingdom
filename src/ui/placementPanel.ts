@@ -35,13 +35,17 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   } else if (moving && info.unmoved) {
     // The honest state before the first drag: it is where it has always been.
     verdict = el('span', { class: 'plc-verdict' }, 'Drag it, or tap where it should go');
-  } else if (def.harvestSource) {
-    const source = HARVEST[def.harvestSource];
+  } else if (def.harvestSources.length > 0) {
+    // The verdict speaks for the building as a whole, so it leads with the
+    // first thing it goes after; the per-cell labels on the map already say
+    // which coin each captured cell pays.
+    const source = HARVEST[def.harvestSources[0]];
+    const wanted = def.harvestSources.join(' or ');
     const good = info.captured >= GOOD_ENOUGH;
     verdict = info.captured === 0
       ? el('span', { class: 'plc-verdict is-bad' },
           iconEl(source.currencyId, { size: 'sm' }),
-          el('span', {}, `Nothing to harvest here — no ${def.harvestSource} in range`))
+          el('span', {}, `Nothing to harvest here — no ${wanted} in range`))
       : el('span', { class: `plc-verdict ${good ? 'is-good' : 'is-bad'}` },
           iconEl(source.currencyId, { size: 'sm' }),
           el('b', {}, `×${info.captured}`),

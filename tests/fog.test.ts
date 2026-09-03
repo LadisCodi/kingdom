@@ -51,11 +51,12 @@ describe('map data', () => {
     const built = new Set(Object.values(DISTRICTS)
       .map((d) => d.providesHarvestSource).filter((s) => s !== null));
     for (const def of Object.values(DISTRICTS)) {
-      const source = def.harvestSource;
-      if (source === null || built.has(source)) continue;
-      expect(onMap.has(source),
-        `the ${def.name} works ${source} and the map holds no cell of it`)
-        .toBe(true);
+      for (const source of def.harvestSources) {
+        if (built.has(source)) continue;
+        expect(onMap.has(source),
+          `the ${def.name} works ${source} and the map holds no cell of it`)
+          .toBe(true);
+      }
     }
   });
   it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {

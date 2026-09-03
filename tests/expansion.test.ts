@@ -24,7 +24,7 @@ const SHOAL = { x: -5, y: 2 }; // authored FishShoal on Water
 const PIER = { x: -6, y: 3 };
 const PIER_LAND = { x: -5, y: 3 };
 const INLAND = { x: -1, y: 2 }; // (-1,2)+(0,2): two clear land cells, no shoreline
-const IRON_VEIN = { x: -2, y: -8 }; // authored IronVein, deep in the northern fog
+const IRON_MOUNTAIN = { x: -2, y: -8 }; // authored MountainIron, deep in the northern fog
 
 describe('stone line (Masonry → Quarry)', () => {
   it('the Quarry is tech-gated and its workers deliver Stone', () => {
@@ -118,13 +118,14 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     expect(getWallet(state.city.wallet, 'Stone')).toBe(50); // untouched
   });
 
-  it('a vein is a RICH stone node — 3 a tap against a rock\'s 1', () => {
+  it('an iron mountain is a RICH stone node — 5 a tap against a bare peak\'s 1', () => {
     const state = freshGame();
-    reveal(state, [IRON_VEIN]);
-    expect(harvestSourceAt(state, IRON_VEIN)).toBe('Iron'); // still a vein
-    expect(tapCell(state, map, IRON_VEIN, T0)).toBe('Harvested');
-    // The old exchange rate, carried into the yield: 1 Iron was worth 3 Stone.
-    expect(getWallet(state.city.wallet, 'Stone')).toBe(3);
+    reveal(state, [IRON_MOUNTAIN]);
+    completeTech(state, 'ScalingTools'); // every mountain is behind it
+    expect(harvestSourceAt(state, IRON_MOUNTAIN)).toBe('MountainIron');
+    expect(tapCell(state, map, IRON_MOUNTAIN, T0)).toBe('Harvested');
+    // Five times a bare mountain: the same material, worth the walk out.
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(5);
   });
 
   it('the Cavalry costs Stone at the vein rate (foot units cost none)', () => {

@@ -26,6 +26,7 @@ import {
   districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
 import { mana } from '../sim/mana';
+import { harvestSourceAt } from '../sim/harvest';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import { trainingSection } from './trainingSection';
@@ -226,21 +227,31 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
 
     // A worker building is an AREA and the people you put in it. Both were
     // numbers in a table; both are now pictures.
-    if (def.maxWorkersPerLevel.length > 0 && def.harvestSource) {
-      const spec = HARVEST[def.harvestSource];
+    if (def.maxWorkersPerLevel.length > 0 && def.harvestSources.length > 0) {
       const cells = game.workableCellsOf(district);
       const limit = assignableWorkerLimit(district);
+
+      // One line per thing this building goes after. For everything but the
+      // Mine that is a single line and reads exactly as it always did; the
+      // Mine gets two, because iron and gold do not pay the same coin and one
+      // averaged number would be a lie about both.
+      const perSource = def.harvestSources.map((s) => {
+        const spec = HARVEST[s];
+        const n = cells.filter((c) => harvestSourceAt(game.state, c) === s).length;
+        return el('div', { class: 'dc-area-count' },
+          iconEl(spec.currencyId, { size: 'sm' }),
+          el('b', {}, `×${n}`),
+          el('span', {}, `${s} in reach`),
+          el('span', { class: 'dc-area-rate' },
+            ` +${effectiveWorkerYield(game.state, spec)} per trip`));
+      });
 
       body.append(el('div', { class: 'dc-area' },
         influenceThumb(game, district),
         el('div', {},
-          el('div', { class: 'dc-area-count' },
-            iconEl(spec.currencyId, { size: 'sm' }),
-            el('b', {}, `×${cells.length}`),
-            el('span', {}, `${def.harvestSource} in reach`)),
+          ...perSource,
           el('div', { class: 'dc-area-rate' },
-            `+${effectiveWorkerYield(game.state, spec)} per trip, about every `
-            + `${Math.round(WORKER.workSeconds + 3)}s`))));
+            `about every ${Math.round(WORKER.workSeconds + 3)}s`))));
 
       // Slots, not a fraction: filled ones are people, empty ones are room.
       const slots = el('div', { class: 'dc-slots' });

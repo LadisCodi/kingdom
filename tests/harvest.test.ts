@@ -185,8 +185,11 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
-      // Stone comes out of mountains, and Scaling Tools is what opens one.
+      // Every mountain is the same landform, so one research opens all
+      // three — bare rock for the Quarry, iron and gold for the Mine.
       Stone: 'ScalingTools',
+      MountainIron: 'ScalingTools',
+      MountainGold: 'ScalingTools',
     });
   });
 });
@@ -289,7 +292,7 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     // The Quarry's source and the mountain's source are the same row: that
     // single link is what makes "the Quarry cuts stone from every mountain in
     // range" true without a rule of its own.
-    expect(DISTRICTS.Quarry.harvestSource).toBe('Stone');
+    expect(DISTRICTS.Quarry.harvestSources).toEqual(['Stone']);
     expect(FEATURES.Mountain.source).toBe('Stone');
     expect(HARVEST.Stone.requiredTech).toBe('ScalingTools');
   });

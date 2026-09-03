@@ -16,10 +16,10 @@
 
 | Currency | Source | Buys | Scope | On the plank? |
 |---|---|---|---|---|
-| **Gold** | housing taxes, quests, the Market | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
+| **Gold** | housing taxes, **gold mountains**, quests, the Market | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
 | **Food** | berries, game, shoals, crops | villagers, expedition supplies | city | yes |
 | **Wood** | forest | buildings | city | yes |
-| **Stone** | rocks, iron veins | buildings, deep supplies | city | yes |
+| **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every player tap · relic actives | city | a gauge, not a coin |
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
 | **Stardust** | dungeons | relic and hero levels | kingdom | no — reads in the Reliquary |
@@ -52,11 +52,12 @@ Knowledge is **city-scoped**, like Mana, because research belongs to this city.
 
 ## 2. A cell's identity and the coin it pays are different things
 
-Berry bushes, wild game and fish shoals all pay **Food** — 1, 3 and 2 a tap. An
-iron vein pays **Stone** at 3. The map keeps every bit of its texture — the art,
-the tech gates, the taps-to-exhaust, the respawn timers, whether the feature is
-finite — and the purse stops carrying four extra rows to express *a berry is a
-unit of food*.
+Berry bushes, wild game and fish shoals all pay **Food** — 1, 3 and 2 a tap. A
+bare mountain pays **Stone** at 1 and an iron mountain at 5 — and a gold
+mountain, the same landform again, pays **Gold**. The map keeps every bit of
+its texture — the art, the tech gates, the taps-to-exhaust, the respawn timers,
+whether the feature is finite — and the purse stops carrying four extra rows to
+express *a berry is a unit of food*.
 
 This is `HarvestSpec.id` versus `HarvestSpec.currencyId`, and it is also what
 the cell-scoped upgrades hang on: **Butchery** is about butchering and **Big

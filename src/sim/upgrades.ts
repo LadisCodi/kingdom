@@ -78,13 +78,17 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
   for (const d of state.city.districts) {
     if (d.state !== 'Built' || d.assignedWorkers === 0) continue;
     const def = DISTRICTS[d.definitionId];
-    const source = def.harvestSource;
-    if (source === null || HARVEST[source].currencyId !== currencyId) continue;
+    const source = def.harvestSources.find((s) => HARVEST[s].currencyId === currencyId);
+    if (source === undefined) continue;
     const radius = def.influenceRadiusPerLevel.length === 0
       ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
     const cycleSeconds = (2 * radius) / WORKER.moveSpeedTilesPerSecond + WORKER.workSeconds;
     if (cycleSeconds <= 0) continue;
-    total += (d.assignedWorkers * effectiveWorkerYield(state, HARVEST[source])) / cycleSeconds;
+    // A building that goes after more than one thing splits its crew between
+    // them. Nominal, like the rest of this function — and for every district
+    // with a single source it divides by one, so no existing number moves.
+    const crew = d.assignedWorkers / def.harvestSources.length;
+    total += (crew * effectiveWorkerYield(state, HARVEST[source])) / cycleSeconds;
   }
   return total;
 }
@@ -155,7 +159,7 @@ const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
   Crops: 'Irrigation',
   Stone: 'Stonecutting',
   Fish: 'BigNets',
-  Iron: 'IronPicks',
+  MountainIron: 'IronPicks',
 };
 
 /** Units a worker delivery deposits (global WorkerLoad + the resource's own

@@ -510,8 +510,12 @@ export function drawMap(
     if (!pos) continue;
     const building = districtById(state, worker.buildingId);
     if (!building) continue;
-    const source = DISTRICTS[building.definitionId].harvestSource;
-    const boat = source === 'Fish';
+    const sources = DISTRICTS[building.definitionId].harvestSources;
+    const boat = sources.includes('Fish');
+    // Read from the cell the worker CLAIMED, not from the building: a Mine
+    // works two mountains and its crew is on one or the other.
+    const source = worker.claimedCell !== null
+      ? harvestSourceAt(state, worker.claimedCell) : sources[0] ?? null;
     const { x, y } = cellRect(pos);
     const sx = x + size * 0.18;
     const sy = y + size * 0.18;
@@ -585,7 +589,8 @@ const WORK_ANIM: Partial<Record<HarvestSourceId, string>> = {
   Crops: 'farm',
   Forest: 'chop',
   Stone: 'mine',
-  Iron: 'mine',
+  MountainIron: 'mine',
+  MountainGold: 'mine',
 };
 
 const walkFrameKey = (stem: string, t: number): string =>

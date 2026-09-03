@@ -105,7 +105,11 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   Meat: harvest('Meat', 'Food', balance.harvest.Meat),
   Stone: harvest('Stone', 'Stone', balance.harvest.Stone),
   Fish: harvest('Fish', 'Food', balance.harvest.Fish),
-  Iron: harvest('Iron', 'Stone', balance.harvest.Iron),
+  // The two metal mountains. Iron is bare rock at FIVE times the yield —
+  // the same material, worth the walk. Gold is the first thing on the map
+  // outside a lived-in house that pays the city's money.
+  MountainIron: harvest('MountainIron', 'Stone', balance.harvest.MountainIron),
+  MountainGold: harvest('MountainGold', 'Gold', balance.harvest.MountainGold),
 };
 
 // Every delivery (of yieldPerWorker units) registers 1 tap of wear on the cell.
@@ -195,7 +199,11 @@ export interface DistrictDef {
   /** Chebyshev radius of the area of influence, by level. Empty = no area. */
   influenceRadiusPerLevel: readonly number[];
   /** What resource cells this building's workers harvest. */
-  harvestSource: HarvestSourceId | null;
+  /** Every source this building sends workers after; empty = it harvests
+   *  nothing. A LIST because the Mine goes after two different mountains —
+   *  iron pays Stone and gold pays Gold, so they cannot share a spec — and
+   *  the same reason `trains` is a list for the military halls. */
+  harvestSources: readonly HarvestSourceId[];
   /** This district's own cell IS a resource cell of this type (FarmLands → Crops). */
   providesHarvestSource: HarvestSourceId | null;
   maxLevel: number;
@@ -226,7 +234,7 @@ export interface DistrictDef {
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
 // balance.json; only identity, art, and rules wiring is authored here.
 const rules = {
-  buildable: true, harvestSource: null, providesHarvestSource: null, requiredTech: null,
+  buildable: true, harvestSources: [], providesHarvestSource: null, requiredTech: null,
   trains: [],
 } as const;
 
@@ -268,7 +276,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'Sends workers to harvest Crops within its area of influence.',
     glyph: '🌾',
     sprite: 'farm',
-    harvestSource: 'Crops',
+    harvestSources: ['Crops'],
     requiredTech: 'Agriculture',
     ...districtBalance(balance.districts.Farm),
   },
@@ -290,7 +298,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'Sends workers to harvest Forest cells within its area of influence.',
     glyph: '🪚',
     sprite: 'sawmill',
-    harvestSource: 'Forest',
+    harvestSources: ['Forest'],
     requiredTech: 'Saws',
     ...districtBalance(balance.districts.Sawmill),
   },
@@ -311,7 +319,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'Sends workers to cut Stone from the mountains within its area of influence.',
     glyph: '⛏️',
     sprite: 'quarry',
-    harvestSource: 'Stone',
+    harvestSources: ['Stone'],
     requiredTech: 'Masonry',
     ...districtBalance(balance.districts.Quarry),
   },
@@ -322,7 +330,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     description: 'A pier: one half on land, one on water. Its boats net Fish (1 Food each).',
     glyph: '⚓',
     sprite: 'docks',
-    harvestSource: 'Fish',
+    harvestSources: ['Fish'],
     requiredTech: 'Fishing',
     ...districtBalance(balance.districts.Docks),
   },
@@ -388,10 +396,11 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Mine',
     name: 'Mine',
-    description: 'Sends workers to dig Iron from veins within its area of influence.',
+    description: 'Sends workers into the metal mountains within its area of '
+      + 'influence — iron for Stone, gold for coin.',
     glyph: '⚒️',
     sprite: 'mine',
-    harvestSource: 'Iron',
+    harvestSources: ['MountainIron', 'MountainGold'],
     requiredTech: 'Mining',
     ...districtBalance(balance.districts.Mine),
   },
@@ -430,9 +439,13 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
     id: 'Mountain', name: 'Mountain', glyph: '🏔️', exhaustedGlyph: '🧱',
     sprite: 'mountain', source: 'Stone', respawnTerrain: 'Grassland',
   },
-  IronVein: {
-    id: 'IronVein', name: 'Iron vein', glyph: '⛰️', exhaustedGlyph: '🕳️',
-    sprite: 'iron_vein', source: 'Iron', respawnTerrain: 'Grassland',
+  MountainIron: {
+    id: 'MountainIron', name: 'Iron mountain', glyph: '⛰️', exhaustedGlyph: '🕳️',
+    sprite: 'mountain_iron', source: 'MountainIron', respawnTerrain: 'Grassland',
+  },
+  MountainGold: {
+    id: 'MountainGold', name: 'Gold mountain', glyph: '🏔️', exhaustedGlyph: '🕳️',
+    sprite: 'mountain_gold', source: 'MountainGold', respawnTerrain: 'Grassland',
   },
   // Finite sources (recovery 0): consumed and removed from the map when drained.
   BerryBush: {

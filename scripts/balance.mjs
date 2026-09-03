@@ -56,7 +56,7 @@ const UPGRADE_IDS = [
   'Stonecutting', 'BigNets', 'IronPicks', 'Resonance',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
-const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
+const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
   // absolute — goal_target validated against the named id list (null = none)
