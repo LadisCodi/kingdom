@@ -1,5 +1,20 @@
 # Knowledge: what dungeons are for
 
+> **SUPERSEDED 2026-09-03 by
+> [`tomes-and-research.md`](tomes-and-research.md).** Its §1 rule — *"Knowledge
+> comes out of dungeons, and buys nothing but heroes and relics"* — is now
+> split in two and inverted on one half: **Knowledge** became the research
+> clock, dripping from claimed landmarks and cleared ruins, and **Stardust**
+> took over the collection-levelling job described below. The §3 arithmetic
+> that justified moving the tree off Knowledge was correct for a 24-node tree
+> and does not survive the ~167-node one in
+> [`tech-tree.md`](tech-tree.md). The Fragment half is replaced separately by
+> [`relics-and-ingredients.md`](relics-and-ingredients.md).
+>
+> This file becomes `stardust.md` when the rename lands
+> ([`tomes-and-research.md`](tomes-and-research.md) §2.2). Until then it is
+> history, not spec.
+
 **Built 2026-09-02. Rewritten 2026-09-02 by the currency simplification** —
 see [`currency-simplification.md`](currency-simplification.md).
 

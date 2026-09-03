@@ -1,15 +1,22 @@
 # Feature: tomes and research — Knowledge as a clock, the tree as a shelf
 
-> Reworks research into an Elvenar-style **trickle-and-commit** currency, turns
-> the radial tech tree into **tomes of magic** whose tiers *are* eras, and
-> renames the dungeon currency to **Stardust** so that one name stops doing two
-> jobs. **Status: designed, unstarted.**
+> Reworks research into a **territorial trickle**, turns the radial tech tree
+> into **three tomes** whose tiers *are* eras, and renames the dungeon currency
+> to **Stardust** so that one name stops doing two jobs.
+> **Status: designed, unstarted.** Revised 2026-09-03 — see §10 for what
+> changed and why.
 >
-> Companion docs: [`research-and-upgrades.md`](research-and-upgrades.md) (the
-> tree this replaces), [`knowledge.md`](knowledge.md) (becoming `stardust.md`,
-> §2), [`magic.md`](magic.md) (Mana, which this deliberately does *not* touch),
-> [`social-layer.md`](social-layer.md) (§9, the prize this unlocks),
-> [`map-scopes.md`](map-scopes.md) (where the capacity landmarks live).
+> This document owns the **system**: the currency, the shelf, the rename, the
+> migration. [`tech-tree.md`](tech-tree.md) owns the **content** — all ~167
+> nodes, the era bands and what each unlocks.
+>
+> Companion docs: [`tech-tree.md`](tech-tree.md) (the nodes),
+> [`research-and-upgrades.md`](research-and-upgrades.md) (the tree this
+> replaces), [`knowledge.md`](knowledge.md) (becoming `stardust.md`, §2),
+> [`relics-and-ingredients.md`](relics-and-ingredients.md) (what Stardust
+> competes with), [`magic.md`](magic.md) (Mana),
+> [`social-layer.md`](social-layer.md) (§7, the prize this unlocks),
+> [`map-scopes.md`](map-scopes.md) (where the contested landmarks live).
 
 ## 0. Why, and the argument the repo already makes
 
@@ -27,51 +34,65 @@ the argument for the shape it should take:
 > of Empires and Rise of Cultures the research currency is a **clock**, accrued
 > per hour and never earned, existing only to pace the tree."*
 
-That is the model. This document adopts it.
+That is the model. This document adopts it, with one deliberate departure: in
+those games the clock runs on its own. **Here it runs on the ground you have
+taken.**
 
 ## 1. Knowledge, the clock
 
-- **Accrues with time to a cap.** Not earned, not dropped, not bought with
-  resources.
-- **Committed** into a technology: a tech takes N Knowledge poured in over
-  several visits, and *then* resources (Gold, Wood, Stone) plus build time to
-  develop.
-- **Gems finish it**, priced on the Knowledge still missing — Elvenar's model,
-  and a clean comfort purchase under pillar 3.
-- **Cap raised by contested world-map landmarks** (§8).
+- **Accrues per hour, and the rate is the territory you hold.** Claimed
+  landmarks and cleared ruins, and nothing else. Not dropped by harvest, not
+  bought with resources, not earned by playing well.
+- **Uncapped.** It accumulates until spent.
+- **A technology is paid for in one go** — Gold *and* Knowledge, up front, plus
+  research time, exactly like a build. No commitment, no part-payment.
+- **Gems finish the timer**, the way they finish a build.
+- Techs also cost **Gold**, so the tree keeps competing with fog and buildings
+  for one budget. Neither currency alone works at 167 nodes: Gold can *size* a
+  tree that big but cannot *pace* it, and Knowledge alone would hand Gold's
+  largest sink back to nothing.
 
-The commit step is what makes this better than a price tag: a tech becomes
-something you are *working towards* across visits, visible as `12 / 40`, which
-is a much better fit for a game played in two or three check-ins than a number
-you either can or cannot afford.
+**Why territorial rather than a plain hourly trickle.** Elvenar's clock is
+disconnected from play on purpose — it is a pure pacer. Kingdom already has a
+pure pacer in Mana, and it has something better available: paid fog.
+`../00-design-intent.md` says the fog has to pay back three ways — resources,
+landmarks (+10 max Mana), ruins (delves). **This is the fourth, and it is the
+first one that compounds into the tech tree**, which previously had nothing
+whatever to do with exploring.
 
 ### 1.1 Mana is not this currency, and that was the fork
 
-Mana is already a capped, time-generated pool: production 10/13/16 per hour, cap
-100/130/160, filling in 10 h. Making it pay for research too would have been
-elegant — one budget, three spends, and *"research is literally magic in this
-game"* — but it reopens the tuning that [`balancing-v3.md`](balancing-v3.md) §1
-just closed, and the ad reward is priced as *one pool ≈ one span of production*.
+Mana is already a capped, time-generated pool. Making it pay for research too
+would have been elegant — one budget, three spends, and *"research is literally
+magic in this game"* — but it reopens the tuning that
+[`balancing-v3.md`](balancing-v3.md) §1 just closed, and the ad reward is priced
+as *one pool ≈ one span of production*.
 
 **Decided: a second trickle currency.** Mana stays what magic costs
 ([`relics-and-ingredients.md`](relics-and-ingredients.md) §3), the ad keeps its
-meaning, and `tap.boostSeconds` = 45 stays untouched. The cost is one more pool
-to reason about; the benefit is that nothing already tuned moves.
+meaning, and `tap.boostSeconds` = 45 stays untouched.
 
-### 1.2 Committed Knowledge is not a wallet balance
+### 1.2 Knowledge is a plain wallet balance
 
-`wallet.ts` holds balances. Committed points are *"N unassigned plus M spread
-across half-finished techs"*, which is a different shape. **Commitments live on
-the tech's progress record; the wallet holds only uncommitted Knowledge.** That
-also makes the player read exactly what they see: *this tome is at 12 of 40*.
+An earlier draft had **trickle-and-commit** — N Knowledge poured into a tech
+across several visits, read as `12 / 40`, with commitments living on the tech's
+progress record rather than in `wallet.ts`.
 
-### 1.3 A lump payment against a cap
+**Cut 2026-09-03.** A technology is bought outright. The commit step bought one
+good thing — a tech you are *working towards* across visits, which suits a game
+played in two or three check-ins — at the price of a second balance shape, a
+second progress record, and a purchase flow unlike every other purchase in the
+game. The tree already has a "working towards it" mechanic: the research timer.
 
-The Conjunction pays a lump of 60. Against a capped pool, a lump gets eaten by
-the ceiling — which `adOffers.ts` already solved, with the rule written down:
-the reward **lands on top of the cap** (`grantMana` may overcharge), because
-*"a reward clamped to a ceiling the player is already near would pay nothing and
-read as broken"*. Knowledge lumps follow the same rule. No new argument needed.
+So Knowledge lives in the wallet like any other currency, and
+`buyTechnology` looks like `build`.
+
+### 1.3 Lumps need no special rule
+
+The Conjunction pays a lump of 60. Against a **capped** pool that would have
+needed the `adOffers.ts` overcharge rule — *"a reward clamped to a ceiling the
+player is already near would pay nothing and read as broken"*. Knowledge is
+uncapped, so a lump is just an addition. One fewer rule.
 
 ## 2. The rename: Knowledge ↔ Stardust
 
@@ -80,8 +101,8 @@ themselves, which Phase 0 just spent a pass cleaning up.
 
 | Name | Job | Source | Scope |
 |---|---|---|---|
-| **Knowledge** | the research clock | time, capped | **city** |
-| **Stardust** | levels of relics and heroes | dungeons | **kingdom** |
+| **Knowledge** | the research clock | claimed landmarks and cleared ruins, over time | **city** |
+| **Stardust** | levels of relics and heroes | dungeons and pulls | **kingdom** |
 
 Both names import a convention instead of teaching one: Knowledge is the word
 Elvenar and Rise of Cultures use for this exact mechanic, and Stardust reads
@@ -101,17 +122,21 @@ Keys that currently say Knowledge and now mean Stardust:
 | Key | Value |
 |---|---|
 | `delve.knowledgePerDepthPerTier` | 6 |
-| `delve.firstClearKnowledge` | 150 |
-| `knowledge.dripPerClearedRuinPerHour` | 2 |
+| `delve.firstClearKnowledge` | 150 → **splits**: the first clear pays a Knowledge lump *and* Stardust (§3) |
+| `knowledge.dripPerClearedRuinPerHour` | 2 → stays **Knowledge**, and becomes one of its three faucet terms |
 | `gacha.pullKnowledge` | 50 |
 | `rewardKnowledge` (Quests sheet) | 158 total |
 | `collection.levelCostBase` / `levelCostGrowth` | 20 / 1.6 |
 | `CONJUNCTION_BOONS[*].knowledge` | 60 — **decide: Stardust or the new Knowledge?** |
-| `technologies[*].cost.Gold` | 6,600 → becomes committed Knowledge + resources + time |
+| `technologies[*].cost.Gold` | 6,600 → reprices as Gold **+ Knowledge** + time across ~167 nodes ([`tech-tree.md`](tech-tree.md) §6) |
 
-`SAVE_VERSION` 21 → 22 **with a migrator**: move the balance from
-`kingdom.wallet.Knowledge` to `kingdom.wallet.Stardust`, and create
-`city.wallet.Knowledge` at zero.
+`SAVE_VERSION` 21 → 22 **with a migrator**, and it carries three reshapes at
+once — this one, the Fragment→ingredient conversion
+([`relics-and-ingredients.md`](relics-and-ingredients.md) §8) and
+`state.upgrades` → completed tech ids ([`tech-tree.md`](tech-tree.md) §8):
+
+- move the balance from `kingdom.wallet.Knowledge` to `kingdom.wallet.Stardust`,
+- create `city.wallet.Knowledge` at zero.
 
 **The trap, which is the same one the currency-simplification migrator had to
 avoid:** a player mid-flight holds a Knowledge balance **earned as collection
@@ -127,96 +152,189 @@ rename lands as one change: balance keys, code, migrator and docs together.**
 
 Docs that describe the wrong currency until then: `knowledge.md` (becomes
 `stardust.md` — its §1 is already the definition of Stardust),
-`00-design-intent.md`'s economy section, `currency-simplification.md`'s
-seven-row wallet table (which becomes eight), and
-`research-and-upgrades.md`. The frozen Unity snapshot (`01`–`11`) is **not**
-touched: it is history.
+`00-design-intent.md`'s economy section, `currency-simplification.md`'s wallet
+table, and `research-and-upgrades.md`. The frozen Unity snapshot (`01`–`11`) is
+**not** touched: it is history.
 
 No code collision: `research.ts`, `src/ui/research/` and `research.techSlots`
 stay valid. Research is the activity; Knowledge is the currency.
 
-## 3. Upgrades stay instant
+## 3. Where Knowledge comes from
 
-The idea of upgrades consuming a research slot is tempting and should be
-refused. Today an upgrade is **instant, Gold-only, cumulative**, applied through
-the `effectiveX` helpers. Put it in the queue and a purchase that used to be one
-tap now **blocks tech progress** — which makes players stop buying them. That
-prices out the small satisfying purchase that fills the gaps between the big
-ones.
+Three terms, all territorial, plus one-off lumps for taking the ground.
 
-**A slot's value comes from parallelising the slow things.** Make techs slower
-and Knowledge-gated and the second slot sells itself. Two rhythms, deliberately:
-the tome is the long deposit, the upgrade is the impulse buy.
+| Source | Rate | One-off |
+|---|---|---|
+| each **claimed landmark** | **+2/h** | **+50** on claiming |
+| each **cleared ruin** | **+3/h** | **+150** on first clear |
+| a ruin taken to its **deepest** depth (`Conquest`) | **+3/h** further | — |
 
-## 4. Tomes: the value is navigation, and eras come free
+A fully explored province — ten landmarks, five ruins — reaches **~35/h**, about
+**840 a day**.
+
+**There is no base rate, and that is the point.** A player who claims nothing
+generates nothing. Knowledge is not a wage for existing; it is what the land
+teaches you once you have taken some of it. The safety valve is not a floor —
+it is that **era 1 costs no Knowledge at all** ([`tech-tree.md`](tech-tree.md)
+§6), so the opening hours run on Gold and time exactly as they do today, and
+the clock starts with the first landmark.
+
+**The lumps are why claiming reads as an event.** A rate change alone is a
+number moving on a screen the player is not looking at. Fifty Knowledge in the
+hand is the fog paying out, which is what the fog is selling.
+
+**Which side of invariant 2 it is on:** Knowledge is **production**, so accrual
+stops at the 8-hour offline cap. The lumps ride the events that grant them, so
+a delve resolving in the uncapped tail pays in full. Both halves must say so
+out loud, because they land on opposite sides of the same rule.
+
+**Engine.** No new boundary source — an uncapped drip needs none. What it needs
+is for the accrual to be **settled at every rate change**: a landmark claimed, a
+ruin cleared, a `Conquest` completed. That is the same thing `mana.ts` already
+does when a cap changes, and it is the whole implementation.
+
+## 4. Upgrades are gone
+
+`research-and-upgrades.md` describes two kinds of node: technologies (Gold +
+time, one-time) and upgrades (Gold, **instant**, levelled).
+
+**Cut 2026-09-03. Every node is a technology.** What was a levelled upgrade
+becomes a **rank line** — `Sawpits I → II → III`, each a node requiring the one
+before, each with its own cost and duration.
+
+An earlier draft of this document argued the opposite, and the argument was
+good enough to record: *"a slot's value comes from parallelising the slow
+things… two rhythms, deliberately: the tome is the long deposit, the upgrade is
+the impulse buy."* What overturned it is that **cost and time already express
+"small"**. A 40-Gold, 20-second node is an impulse buy; it does not also need to
+be a different kind of object with a different shape, a different purchase flow
+and a separate `UPGRADES` table. And with every node on a timer, the pinch on
+research slots is constant instead of occasional — which is what makes the slot
+worth buying.
+
+What it costs, stated: the instant Gold purchase was the only impulse buy in
+the game, and it is gone. Era 1's 20–60 second nodes are what stands in for it,
+plus the Gem "finish now" surface, which gains a great deal of traffic here.
+
+## 5. Three tomes: the value is navigation, and eras come free
 
 The current tree is 24 techs at hand-authored `node:{x,y}` positions, depth 4,
-with the canvas sized to what is visible. At a hundred techs a radial
-hand-positioned canvas is ungovernable — and the bottleneck is not rendering, it
-is that **the layout is authored content**.
+with the canvas sized to what is visible. At ~167 techs a radial hand-positioned
+canvas is ungovernable — and the bottleneck is not rendering, it is that **the
+layout is authored content**.
 
 > **A tome is a screen, not a region of a canvas.** One unbounded canvas becomes
-> N bounded pages.
+> three bounded pages.
 
-Positions stay hand-authored, but each layout is ~8 nodes instead of a hundred.
-Navigation stops growing with content. The magic framing is a bonus; the saving
-is structural.
+Positions stay hand-authored, but each layout is one era of one tome instead of
+a hundred nodes at once. Navigation stops growing with content.
 
-**And tomes have tiers, which are the eras.** Age of Wonders 4's tomes are
-tiered, and that is the mechanism the tree is missing: exhaust the Tome of Earth
-I and the Tome of Earth II opens. It is an era gate, but **per branch instead of
-global** — better for a game where players specialise, and a content drop adds
-*Tome of Earth IV* as **a data row** rather than restructuring a global ladder.
+**And tomes have tiers, which are the eras.** Exhaust a tome's era and the next
+opens, gated by a **keystone** that requires every technology above it. It is an
+era gate, but **per tome instead of global** — better for a game where players
+specialise, and a content drop adds *era 4* as data rows rather than
+restructuring a global ladder.
 
-Initial shelf, mapping the existing branches: **Earth** (agriculture, harvest,
-terrain), **Stone** (masonry, mining, construction), **Tide** (sailing, fishing,
-water), **War** (units, military buildings), **Arcana** (attunement, casting,
-Mana). The current 24 techs redistribute across their first tiers.
+**The shelf is three tomes**, revised 2026-09-03 from five:
 
-## 5. Tomes found in ruins
+| Tome | Owns | Opens |
+|---|---|---|
+| **Civics** | the city and its purse | at game start |
+| **Magic** | the fog, Mana, relics and the ruins | your **first paid reveal** |
+| **Warfare** | the army, and what it goes into the ground for | your **first discovered ruin** |
 
-Not over-engineering — it fixes three things at once.
+Five (*Earth, Stone, Tide, War, Arcana*) split the economy across three books
+that each read as a fragment of the same subject. Three is the smallest number
+that gives each book a sentence: *the city*, *the land's magic*, *the army*. It
+also concentrates the fog, Mana, landmarks and ruins into one place, which is
+the direct answer to `00-design-intent.md`'s recorded complaint that the game
+*"reads like a generic village simulator (charming)"* — magic stops being a
+branch you can skip.
 
-**It gives the province a permanent reason to exist.** If tomes are *found* in
-the authored province's ruins, the province is the source of the tech tree's
-structure. Authored, so cheap and controllable.
+The full node list, era by era, is [`tech-tree.md`](tech-tree.md).
 
-**It gives ruins a second payload.** A first clear currently pays an artifact,
-10 Gems and 150 Stardust, then becomes a repeatable faucet. Adding "and a tome"
-makes the five ruins read as milestones of progress rather than difficulty
-tiers.
+## 6. Ruins pay the tree in Knowledge, not in tomes
 
-**And it gives the tree a narrative origin, which it completely lacks.** Right
-now you unlock Forestry because you unlock Forestry. `00-design-intent.md`
-admits the game *"reads like a generic village simulator (charming)"* after
-magic was cut. **Finding a grimoire in a ruin and having a branch of magic open
-that you did not have is a beat the current tree cannot produce**, and it is the
-differentiation against Kingshot and Whiteout that costs a column in the `Ruins`
-sheet.
+An earlier draft had **tomes found in ruins**: a first clear pays an artifact,
+Gems, Stardust *and a grimoire*, so the province is the source of the tree's
+structure and the tree gains a narrative origin it completely lacks.
 
-**Caution:** do not gate every tome behind a ruin. A ruin needs a hero and an
-army, and `knowledge.md` §6 already flags that delve gate as the live risk — a
-player who never delves makes no progress. **Two or three tomes available from
-the start; ruins open the rest.**
+**Retired 2026-09-03**, because with three tomes there is nothing left to find —
+all three open in the first session and gating any of them behind a ruin would
+put a third of the tree behind an army, which is the exact risk
+`knowledge.md` §6 flags.
 
-## 6. Contested landmarks raise the cap, not the rate
+The argument survives in a better form. **A ruin's first clear pays 150
+Knowledge and raises the drip by 3/h** (§3). That is the same beat — the ruin
+pays into the tree — delivered as the currency the tree already runs on, and it
+scales with every ruin instead of running out after five.
 
-Contested world-map landmarks that boost Knowledge are exactly the kind of thing
-players will fight over, which is the point. But a **rate** bonus is a
-compounding advantage, and compounding advantages held by whoever is already
-winning are how a competitive layer becomes a runaway: the guild holding them
-researches faster, grows stronger, and holds them harder.
+## 7. Contested landmarks pay lumps, not rate
 
-The repo already made this exact decision, for this exact reason.
-`ad-economy.md` §3b and `magic.md` §4: sanctuaries raise Mana **capacity, not
-production** (changed 2026-09-02), because *"+1 Mana/h was worth most on the day
-you found it and less every day after — production is a rate, and the things it
-competed with kept growing"*.
+Contested world-map landmarks ([`map-scopes.md`](map-scopes.md)) that boost
+Knowledge are exactly the kind of thing players will fight over, which is the
+point. But a **rate** bonus is a compounding advantage, and compounding
+advantages held by whoever is already winning are how a competitive layer
+becomes a runaway: the guild holding them researches faster, grows stronger, and
+holds them harder.
 
-> **A contested landmark raises your Knowledge cap.** You bank more research
-> between visits — highly visible, highly valuable, and it does not snowball.
+The repo already made this exact decision. `ad-economy.md` §3b and `magic.md`
+§4: sanctuaries raise Mana **capacity, not production**, because *"+1 Mana/h was
+worth most on the day you found it and less every day after"*.
 
-## 7. The prize nobody has claimed yet
+That doc's answer was to raise the Knowledge **cap**. There is no cap now, so:
+
+> **A contested landmark pays a Knowledge lump when you take it, and nothing
+> while you hold it.**
+
+Highly visible, highly valuable, worth fighting over repeatedly — and holding
+one does not compound. It also makes contested ground behave like a *raid* on
+the research clock rather than a tax on everyone else's, which is the friendlier
+half of the same mechanic.
+
+**Province landmarks are the exception and stay on rate** (§3), because nobody
+contests them — they are yours once claimed, and the compounding is the reward
+for exploring.
+
+## 8. Where every currency lands
+
+| Currency | Source | Buys | Scope |
+|---|---|---|---|
+| **Knowledge** | claimed landmarks and cleared ruins, over time; lumps from contested ground | technologies · **investment in guild structures** (§9) | city |
+| **Mana** | time, cap by the Sanctum + sanctuaries | taps · relic actives, on both maps | city |
+| **Stardust** | dungeons and pulls | relic and hero levels | kingdom |
+| **Ingredients** | 1★ province · 2★ events · 3★ world map | each relic's tier gate | kingdom |
+| **Gems** | quests, first clears, simulated store | comfort and breadth — **every slot in the game**, and finishing a timer | player |
+
+One job each, which is the rule `currency-simplification.md` fought to
+establish. **Fragments are deleted**
+([`relics-and-ingredients.md`](relics-and-ingredients.md) §8), so the row count
+does not grow: ingredients take the tier gate and Stardust keeps the level.
+
+And the plank does not grow either. `currency-simplification.md` cut eleven
+wallet rows to seven on purpose, and `CLAUDE.md` records that **adding a row
+needs an argument** — with the Fragments precedent, a counter where it is
+spent rather than a row on the plank, as the usual better answer. Neither of
+these currencies has that argument:
+
+> **A currency spent in exactly one screen lives in that screen's header, not
+> on the plank.**
+
+Gold, Food, Wood, Stone and Mana stay on the plank because they are spent
+across the map. Gems stay in the top bar. **Knowledge** moves to the Research
+header — with its **rate** beside the balance, and a time-to-afford line on any
+node the player cannot yet buy, because a trickle currency without one is a
+currency you cannot plan against. **Stardust** and ingredients live in the
+Reliquary and hero screens. The plank gets *shorter* than it is today.
+
+**Slots are bought with Gems, everywhere, and by nothing else** — research,
+attunement and party alike. No technology grants a slot. This reverses
+`research-and-upgrades.md`'s *"research is the earned half of both gates"* and
+does not break promise 3, because Gems are earnable: the chain pays 75, a first
+clear pays 10, and the daily chest pays at its week markers. The earning moved;
+it did not disappear.
+
+## 9. The prize nobody has claimed yet
 
 In Elvenar and Forge of Empires the trickle currency does not only pay for
 research. **Knowledge Points and Forge Points are invested into other players'
@@ -225,55 +343,64 @@ it completes.** That is the economy of favours behind FoE's FP market and The
 Arc — and it is the mechanic the 2026-09-02 competitive review named as the
 number-one missing pillar.
 
-So a trickle-and-commit currency buys **research and the best-documented social
-mechanic in the quadrant with the same verb**. The same "invest N points" action
-points at your own tome or at a guild structure, and a top-contributor payout
-does the rest.
+The same "invest N Knowledge" action points at a guild structure, and a
+top-contributor payout does the rest.
 
-That makes this feature a dependency of [`social-layer.md`](social-layer.md)
-rather than a neighbour of it, and it is the strongest argument for doing the
-rework at all.
+**One thing weakened when commitment was cut (§1.2):** the verb is no longer
+shared. In Elvenar you invest points into your own research *and* into a
+neighbour's wonder with the same gesture, and the second reads as natural
+because the first taught it. Here a technology is bought outright and only the
+guild structure is invested in, so the investment gesture has to teach itself.
+That is a UI problem, not a design one, and it is the price of §1.2 — worth
+naming so nobody rediscovers it during Phase 4.
 
-## 8. Where every currency lands
+This still makes the feature a dependency of
+[`social-layer.md`](social-layer.md) rather than a neighbour of it.
 
-| Currency | Source | Buys | Scope |
-|---|---|---|---|
-| **Knowledge** | time, cap raised by contested landmarks | commit techs · **invest in guild structures** | city |
-| **Mana** | time, cap by Townhall + sanctuaries | taps · relic actives, on both maps | city |
-| **Stardust** | dungeons | relic and hero levels | kingdom |
-| **Ingredients** | 1★ province · 2★ events · 3★ world map | each relic's tier gate | kingdom |
-| **Gems** | quests, first clears, simulated store | comfort and breadth — and finishing a tech early | player |
+## 10. What changed on 2026-09-03
 
-One job each, which is the rule `currency-simplification.md` fought to
-establish. Eight wallet rows, five things on the plank.
+This document was merged on 2026-09-02 and revised the next day. The five
+reversals, so that nobody reading the diff has to guess which is current:
 
-## 9. Build order
+| Was | Is | Why |
+|---|---|---|
+| Knowledge accrues on a plain hourly trickle, **capped** | accrues from **claimed landmarks and cleared ruins**, **uncapped** | it gives paid fog a fourth payback, and the 8-hour offline cap already does what a ceiling would (§3) |
+| **Trickle-and-commit** — `12 / 40` poured in over visits | **paid in one go**, Gold + Knowledge + time | one balance shape, one purchase flow; the timer already provides "working towards it" (§1.2) |
+| **Five tomes** — Earth, Stone, Tide, War, Arcana | **three** — Civics, Warfare, Magic | three is the smallest shelf where each book has a sentence, and it concentrates magic instead of scattering it (§5) |
+| **Upgrades stay instant and Gold-only** | upgrades are **deleted**; every node is a technology | cost and time already express "small", and universal timers are what make a slot worth buying (§4) |
+| **Tomes found in ruins** | ruins pay **Knowledge** into the tree instead | with three tomes there is nothing left to find, and it would put a third of the tree behind an army (§6) |
+| Contested landmarks raise the **cap** | they pay a **lump** on capture | there is no cap; the anti-snowball reasoning survives intact (§7) |
 
-1. The rename, whole (§2): keys, code, migrator, docs, one commit.
-2. Knowledge as a clock: accrual, cap, commit, the Gem finish. Techs reprice
-   from Gold to committed Knowledge + resources + time.
-3. Lumps land over the cap (§1.3), with the test.
-4. Tomes as screens: the shelf, five tomes, the existing 24 techs
-   redistributed. Positions stay authored, per page.
-5. Tome tiers, and the second tier of one tome authored to prove the era shape.
-6. Tomes from ruins: a column in `Ruins`, two or three tomes open at the start.
-7. Contested landmarks raise the cap — after the world map exists.
-8. Investing Knowledge in a guild structure — with `social-layer.md`.
+## 11. Build order
+
+1. The rename, whole (§2): keys, code, migrator, docs, one commit — landing
+   alongside the Fragment→ingredient reshape, which shares the migrator.
+2. Knowledge as a territorial clock: accrual settled at every rate change, the
+   lumps, the wallet row. Techs reprice from Gold to Gold + Knowledge + time.
+3. Upgrades collapse into technologies ([`tech-tree.md`](tech-tree.md) §8).
+4. Tomes as screens: three tomes, era 1 of each authored, positions per page.
+5. Era 2 and 3 authored — the point at which the tree stops being a formality.
+6. Contested landmarks pay lumps — after the world map exists.
+7. Investing Knowledge in a guild structure — with `social-layer.md`.
 
 ## Open decisions
 
 1. **Does the Conjunction's 60 lump pay Knowledge or Stardust?** It reads as
    arcane insight, which argues Knowledge; it has always fed the collection,
    which argues Stardust. Cheapest answer: split it.
-2. **What is a tech's Knowledge cost, and what is the accrual rate?** The whole
-   pacing of the game past hour three lives in these two numbers, and neither
-   can be derived — they need the 30-day playtest.
-3. **What Stardust does once ingredients are the real gate**
-   ([`relics-and-ingredients.md`](relics-and-ingredients.md) §8).
-4. **Do upgrades stay Gold-only forever?** §3 says yes for now. If Gold becomes
-   abundant once the fog is spent, upgrades are the natural place to put the
-   surplus, and that argues for repeatable levels with an exponential curve —
-   which `upgradeCost` already computes.
-5. **Naming the tomes.** *Earth, Stone, Tide, War, Arcana* is a first pass and
-   deliberately plain; the tome titles are one of the cheapest places to put
-   character into the game.
+2. **What is a tech's Knowledge cost, and what is the accrual rate?** §3 and
+   [`tech-tree.md`](tech-tree.md) §6 give a first pass — roughly six weeks of
+   tree at a full province's rate — but the whole pacing of the game past hour
+   three lives in these two numbers and neither survives contact without the
+   30-day playtest.
+3. **No base rate at all (§3) is the riskiest number here.** A player who
+   explores badly stalls the tree completely. Era 1 costing no Knowledge is the
+   mitigation; whether it is enough is a playtest question.
+4. **What Stardust is for once ingredients are the tier gate**
+   ([`relics-and-ingredients.md`](relics-and-ingredients.md) §8, and
+   `../road-to-mvp.md` §8 decision 15). Unchanged by this revision and still
+   the most load-bearing open question in the collection.
+5. **Do plot expansions come from the tree or from the world map?**
+   [`map-scopes.md`](map-scopes.md) §3.2 wants growth in authored increments and
+   §6 lists expansions as a world-map payout. Civics is the obvious other home
+   and they must not come from both.
