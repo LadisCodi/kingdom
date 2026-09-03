@@ -3,7 +3,7 @@
 > **Scope.** Identity, daily help, a persistent guild, a weekly collective bar,
 > and the siege that finally clears the four defended landmarks. Ingredient
 > trading is [`09-relics.md`](09-relics.md) §6; investing research points into a
-> guild structure is [`07-research.md`](07-research.md) §7.
+> guild structure is [`07-research.md`](07-research.md) §10.
 >
 > **Status: designed, unstarted.** The largest project in the design.
 
@@ -171,7 +171,7 @@ player was going to do anyway**, submitted as they happen:
 
 | Contribution | Weight |
 |---|---|
-| An **order** completed | its reward tier |
+| A **Wonder level** bought | its Gold cost |
 | A **delve depth** extracted | depth × tier |
 | A **landmark** claimed, a **ruin** first-cleared | flat, large |
 | Resources **donated** to the guild | a fraction of the city's hourly rate |

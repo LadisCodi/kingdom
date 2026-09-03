@@ -8,8 +8,16 @@
 > [`open-questions.md`](open-questions.md). Where this file names a question it
 > names it by id (`OQ-n`).
 >
-> **State: 43 test suites, 596 tests. 586 green; the 10 red are map-content
-> assertions left behind by the province being re-authored, not code.**
+> **State: 43 test suites, 606 tests, all green** (verified 2026-09-03, after
+> the province redraw closed the ten map-content assertions).
+>
+> **2026-09-03 was a design day and changed no code.** Four things were settled
+> and written: **generated orders were cut** and replaced by
+> **[`16-wonders.md`](features/16-wonders.md)**, the endless Gold sink; the
+> **tome rework** was closed in shape (§4, Step 1); the **relic actives became
+> tome spells**; and the research screen was **reshaped into three vertical
+> tomes**. **Step 1 is what starts next, and Step 1.1 under it is the
+> pending work.**
 
 ## 1. The engine contract
 
@@ -59,14 +67,15 @@ Two more that are design-visible:
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, cost curves, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
-| The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced |
+| The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
-| Five relics, passives, actives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients |
+| Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **built** — two holes, §3 |
 | Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks |
-| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders unstarted |
+| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03 |
 | The timeline, the weekly event, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
+| **Wonders — the ladder with no top** | [`16`](features/16-wonders.md) | **designed, reviewed and closed 2026-09-03.** Unstarted and deliberately unsequenced — late-game by construction, and the game's only unbounded sink |
 
 **The load-bearing assertion holds at every step** — across a research
 completion, a modifier expiry, a Mana cap fill, army training, a delve depth
@@ -90,10 +99,17 @@ each has an answer, or has one waiting in a doc.
 
 ## 4. What is next, and what blocks it
 
-Five pieces of work. **Step 0 is done** — it had to come first, because every
-number the others author is priced against production. Each row's "blocked on"
-column is a hard gate: do not start the row until those questions are answered,
-because the answer changes the shape of what gets built, not just its numbers.
+**Step 0 is done** — it had to come first, because every number the others
+author is priced against production. Each row's "blocked on" column is a hard
+gate: do not start the row until those questions are answered, because the
+answer changes the shape of what gets built, not just its numbers.
+
+**The late-game sink is designed and sits outside the sequence**, first below,
+because a closed design that a playtester will not reach for weeks should not
+hold a slot in front of work they meet in hour one.
+
+**Step 1 is the tome rework**, and the piece of it that is outstanding is
+**authoring the technologies themselves** — Step 1.1 is the brief.
 
 ### Step 0 · The extraction rebalance — **DONE 2026-09-03**
 
@@ -159,22 +175,174 @@ production beat.
   full and stump), which are wanted rather than required — two states work
   exactly as they do today.
 
-### Step 1 · Generated orders
+### The late-game sink · Wonders — **designed and closed, deliberately unsequenced**
 
-**The only infinite resource sink in the game**, and the cheapest thing on this
-list — the goal predicates, the replay-safe generator, the reward payment and the
-building it lives in all already exist. **It needs a generator, not new goal
-types.**
+**Replaces generated orders, which were cut on 2026-09-03**
+([`12-quests.md`](features/12-quests.md) §6). Same job, and the measurement that
+decided it: the game holds **~780,000 Gold of sink** — 527,000 in landmark
+claims, 194,142 in fog, 51,926 in the fifteen upgrades, 6,600 in the tree — and
+**every coin of it is one-time.** The end of the province is the end of the
+economy, while the city never stops producing. The fault was the *shape*, not
+the size, so the answer is a ladder with no last level rather than a daily
+errand.
 
-- **Design:** [`12-quests.md`](features/12-quests.md) §3 — complete.
-- **Blocked on:** nothing. **OQ-16** and **OQ-17** both have recommendations
-  strong enough to build against; if either flips it is a dial, not a rewrite.
-- **Acceptance:** a player who has finished every authored quest opens the game
-  on day 15 and **has three orders and a chest waiting**; an order's ask is a
-  similar *fraction* of hourly output at Townhall 1 and Townhall 3; the same
-  `(seed, day, slot)` produces the same order live and in replay; **no new goal
-  type was added to the union.**
-- **Size:** days.
+**A Wonder is a district you place whose level ladder is a CURVE rather than a
+TABLE** — Gold cost on a growth curve, effect linear in the level, and no
+`maxLevel` anywhere.
+
+- **Design:** [`16-wonders.md`](features/16-wonders.md) — complete, reviewed and
+  closed. **The three balance numbers are deliberately not set** (OQ-58): the
+  shape is design and the values need a late game to measure against.
+- **Blocked on:** nothing. **OQ-57** (art bill), **OQ-58** (the numbers) and
+  **OQ-59** (the social hook) are a schedule, a playtest and a later layer; none
+  changes the shape of what gets built. **OQ-60 closed on review.**
+- **Why it is NOT next:** **it is late-game content by construction.** It gates
+  on the last era, and it does not even need that gate for balance — while any of
+  the 780,000 of one-time sink is unbought, a Wonder level is simply the wrong
+  purchase, so the economy gates itself (§5.2). **A playtester who does not
+  reach the last era never meets this feature**, which makes it the wrong thing
+  to build before the things they meet in hour one.
+- **Why it will be cheap when it comes, and it is the rarest reason in this
+  codebase:** **a Wonder level adds no boundary.** It is instant on payment — no
+  queue item, no timer — so `nextBoundary` and `applyDueAt` are untouched and
+  invariant 1 has nothing new to hold. `District.level` is already a plain
+  number, so **the state needs no change and no migrator.**
+- **The five things that have to move**, and they are the whole cost:
+  `maxLevel` must stop being a wall (`commands.ts:179`, `upgrades.ts:38`/`:50`);
+  the per-level tables must be absent rather than long; **the count cap must be
+  a hard one** — an exponential ladder loses to N cheap copies at every level,
+  so a second copy defeats the sink (§3.2); the level cannot render as stars
+  (`districtCard.ts:392`); and the purchase is `buyUpgrade`-shaped, not
+  `upgradeDistrict`-shaped. Plus **one call site per Wonder** — `harvest.ts:88`,
+  `mana.ts:61`, `upgrades.ts:157` — which is the honest bound on the set size
+  (§7.1).
+- **It raises the price of leaving OQ-1 open.** An endless ladder on a *placed*
+  building with a deliberately oversized footprint is only a decision while
+  ground is scarce — so this is the third thing waiting on a bounded plot, after
+  adjacency v2 (OQ-48) and expansions.
+- **Size:** days, whenever it is scheduled.
+
+### Step 1 · The tome rework — **the shape is closed; the authoring is not**
+
+**The single largest reshape on this list, and the one that changed most on
+2026-09-03.** Four decisions were taken and written into
+[`07-research.md`](features/07-research.md), so what used to be *blocked on
+OQ-12 and OQ-13* is now **blocked only on numbers**:
+
+1. **A tome is a page of technologies** — the technology stays the unit you pour
+   Knowledge into. §4 of the doc said *a tome is a screen* and §3 said *a tome
+   takes N Knowledge poured in*; those were two different games and one of them
+   is now gone.
+2. **The Knowledge drip is flat and ungated**, and **cleared ruins raise the cap
+   rather than the rate.** Today's generator (`mana.ts`, 2 an hour per cleared
+   ruin) returns **zero with no cleared ruin** — pointing the research clock at
+   it would have put **the whole technology tree behind a dungeon** and turned
+   **OQ-41**'s live risk into the shape of the game.
+3. **The collection currency becomes Stardust**, freeing the name for the clock —
+   and the scopes swap with the names (§4, [`03`](features/03-economy.md) §1.1).
+4. **The tiers get newly authored technologies**, not a re-sort — and **the shelf
+   is three tomes: Civics, Warfare, Magic.** What ships spreads very unevenly
+   across them: **Civics 18, Warfare 5, Magic 5** once the spells are folded in.
+   So **Civics needs splitting** (the content exists), **Warfare needs one more
+   tier**, and **Magic needs the most invention** — its remit is *any effect the
+   fiction can carry as enchantment*, so the enchanted route to an economic
+   outcome is a legal node and none of them is written. Three is also what a tab
+   strip holds on a phone, which is what settled the count.
+
+**A sixth, taken 2026-09-03 from a reference layout: the page is a vertical
+spine at most three columns wide, with branch and join nodes, and a tier gate is
+a JOIN NODE** ([`07`](features/07-research.md) §6.3, §6.5–§6.6). **This is the
+piece that makes decision 4 affordable.** §2 names the real bottleneck — *the
+layout is authored content* — and a bounded vertical page deletes it rather than
+testing it: **a node authors its tome, its column (0–2) and its requires, and
+its row is derived** by longest-path layering. `node: {x, y}` goes away, and
+with it the only test in the repository protecting a UI decision (all but the
+same-column-skip case). **Authoring twenty new nodes stops also meaning
+authoring twenty positions that must not collide.**
+
+**And a fifth, taken the same day, which pulls a second feature into this
+rework: the four relic ACTIVES become tome SPELLS**
+([`09`](features/09-relics.md) §1.1, [`07`](features/07-research.md) §7). A
+relic is a passive and nothing else; a spell is a research node with upgrade
+circles under it. **It is the only part of the rework that deletes more than it
+adds** — three of the five cast blocks go, `ArtifactDef.active` goes, and
+`casting.ts` stops reading `ownsArtifact` and `isAttuned` — and the effect
+functions are untouched because they are already pure `(state, map, target,
+now)`. It also fixes a shipping fault nobody designed: **carrying a relic into a
+delve silently disarms its spell**, so the delve half of the game takes the
+player's magic away.
+
+- **Blocked on: OQ-13 only**, which is every number and needs the playtest.
+  **OQ-12** is a reward-table choice, and the new **OQ-61**, **OQ-62** and
+  **OQ-63** are the world map's landmark payloads, the authoring scope, and one
+  awkward node. **None of them changes the shape.** **OQ-42 closed** — the tiers
+  are the eras it was waiting for, so a technology's Gold is now priced per tier.
+- **The machinery is already built**, which is the cheapest thing about it:
+  `knowledgePerHour` and `accrueKnowledge` already accrue whole units against a
+  stored anchor, the same shape as taxes and Mana. **What changes is what
+  generates it, what bounds it and what it buys** — not how it accrues. And
+  because the pour is by hand and a ready technology is today's technology,
+  **`advance()` gains no boundary source** (the design's §12 records the auto-pour variant
+  that would have cost one).
+- **One bound is design rather than balance, and it is easy to miss.** Knowledge
+  accrual runs in the continuous pass, so it is **production** and invariant 2
+  stops it at the 8-hour offline cap. **The pool cap therefore only does any work
+  while it sits below eight hours of drip** — above that the visible ceiling is
+  decoration and an invariant the player cannot see does the limiting.
+  **Assert it before it is argued twice.**
+- **The real cost is authoring**, not engineering: six pages of technologies that
+  do not exist yet, with **Arcana first** because it stands at one node.
+- **Size:** weeks, most of it content.
+
+#### Step 1.1 · The authoring pass — **the pending work, and where this starts**
+
+> **Every technology has to be written, placed in a tome, given its column and
+> its prerequisites.** That is the outstanding piece of this rework, it is the
+> largest, and it is content rather than engineering.
+
+**The rules a node must satisfy**, all settled and all checkable:
+
+1. **It unlocks something** — a building, a level, a unit, a slot, an upgrade, a
+   spell. *A node that unlocks nothing is the same lie as a lit tab that leads
+   nowhere* ([`07`](features/07-research.md) §1.2, §6.4).
+2. **Its prerequisites point inside its own tome.** The tier ladder is the only
+   cross-tome gate (§6.2), and **a spell may not require a Civics node** (§7.2)
+   — the adjacency comes back as a named thumbnail, never as a dependency.
+3. **It authors `tome`, `column` (0–2) and `requires`. It does NOT author a
+   position** — the row is derived (§6.6).
+4. **Its band ends in a join node**, which carries the tier's name and numeral
+   and is the tier gate (§6.3).
+5. **Its Gold is priced for its tier** (§5.1) — the tiers are the eras OQ-42 was
+   waiting for.
+6. **It does not move a stat another tome moves** (§6.1.1). Two tomes may aim at
+   one outcome; two tomes may not own one number.
+
+**The three tomes need three different kinds of work:**
+
+| Tome | At | The work |
+|---|---|---|
+| **Civics** | 18 nodes | **splitting, not writing** — and the derived layering already produces the bands: `Forestry` / `UrbanPlanning · Saws · Hunting · Agriculture · Cartography · ScalingTools` / `Communities · Farming · Market · Masonry · Sailing` / `Architecture · Mining · Engineering · Fishing` / `DeepMining · Shipbuilding`. **Start here** — it is the opening game and the only tome authorable without inventing anything |
+| **Warfare** | 5 nodes | **one more tier.** Unit bonuses are the easiest honest nodes in the game: the stat exists and the sentence needs no explanation |
+| **Magic** | 5 with the spells folded in | **the most invention.** Every enchanted route to an economic outcome is a legal node and none is written |
+
+**Two cuts to make first, because everything else sits on them:** `Forestry →
+Warrior` and `Forestry → Attunement` are the only two cross-tome prerequisites
+left, and both have to go (§6.2). **Forestry gating the Barracks and the Sanctum
+was never saying anything.**
+
+**Where it lands, and the one code step that has to come first.** Tome, column,
+tier and the join threshold are columns on the `Technologies` sheet, and the
+workbook owns them — so **the importer schema in `scripts/balance.mjs` has to
+learn them before any of this can be authored**, following the procedure
+`CLAUDE.md` already documents: edit the JSON *and* the schema, then
+`npm run balance:export`, then `npm run balance`. `node: {x, y}` comes out in
+the same pass.
+
+**What is still undecided and does not block starting:** the band sizes
+(**OQ-62** — the three tomes will not want the same shape), the join thresholds
+and every Knowledge number (**OQ-13**), and the tome names (**OQ-15** — *Civics ·
+Warfare · Magic* are labels, and they should be named before a playtester sees
+them).
 
 ### Step 2 · Bound the plot
 
@@ -259,28 +427,31 @@ evaporating.**
   gift applied during an absence **still leaves the replay assertion true**.
 - **Size:** weeks.
 
-### The tomes rework, and the ingredient rework
+### The ingredient rework
 
-Both are **designed and deliberately not sequenced**, because both are large,
-both are reshapes rather than additions, and both need answers first.
+Designed and deliberately not sequenced — large, a reshape rather than an
+addition, and it needs answers first.
 
 | Rework | Design | Blocked on |
 |---|---|---|
-| **Knowledge ↔ Stardust, and Knowledge as a clock** | [`07`](features/07-research.md) §3, [`03`](features/03-economy.md) §1.1 | **OQ-12**, **OQ-13** |
 | **Nine-piece ingredient sets, replacing Fragments** | [`09`](features/09-relics.md) §4 | **OQ-7**, **OQ-8**, **OQ-9**, **OQ-10** |
 
 Two notes that will otherwise be rediscovered painfully:
 
-**The rename lands as ONE change — balance keys, code, migrator and docs
+**A rename lands as ONE change — balance keys, code, migrator and docs
 together.** Renaming in the docs first would leave them describing a currency the
 build does not have, which is exactly the doc/code drift this documentation pass
-exists to remove.
+exists to remove. **The tome rework's rename is the live example, and it is the
+inverse case:** the docs went first years ago and the code never followed, so
+twelve documents already say *Stardust* and the build has never heard the word.
 
 **Both reworks need a real migrator, not a version bump**, and both have the same
 trap: **a player mid-flight holds a balance earned under the old meaning.** A
 bare key rename hands the whole technology tree to anyone holding Knowledge.
 **Balances convert at the rates they were earned** — the rule the currency
-simplification's migrator already followed.
+simplification's migrator already followed. **The Stardust rename is the easy
+direction of that rule**: the balance keeps its meaning and only changes its
+name, so nothing converts — but the new `Knowledge` must be born at **zero**.
 
 ## 5. Deliberately after everything above
 
@@ -325,7 +496,7 @@ Data versus code, in one table:
 | **the whole map**, in the editor | a new terrain or feature id, or a sixth ruin |
 | the whole quest chain — **row order is chain order** | a new modifier stat (one line plus one call site) |
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
-| a seasonal hero = one hero row + one banner row | tech-tree node positions — **the layout is authored content** |
+| a seasonal hero = one hero row + one banner row | tech-tree node positions — **the layout is authored content today**, and the tome rework makes it derived ([`07`](features/07-research.md) §6.6) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
 
 ## 7. Testing conventions worth keeping

@@ -79,7 +79,7 @@ already exists:
 
 | Source | Why |
 |---|---|
-| Completing an **order** | ties the two habit pillars together |
+| Buying a **Wonder level** | the event pays for spending into the one ladder with no top ([`16-wonders.md`](16-wonders.md)) |
 | Extracting from a **delve** | scales with depth, so it rewards the deep arc |
 | Claiming a **landmark**, clearing a **ruin** depth | the differentiator pays |
 | **Taps**, at a low rate | so a player who only harvests still progresses |
@@ -158,7 +158,7 @@ Mid-core PvE builders have the **lowest** minutes per day in the whole
 competitive set — 26.6 / 29.1 / 29.4 — and this design is already written against
 ~30 min/day across two or three visits, which is unusually disciplined.
 
-**A 30-stage pass plus a weekly guild deadline plus three daily orders asks for
+**A 30-stage pass plus a weekly guild deadline plus a daily chest asks for
 fifty minutes without anyone deciding to.** So:
 
 > **Every event is dimensioned for ~30 minutes a day across 2–3 visits, and the

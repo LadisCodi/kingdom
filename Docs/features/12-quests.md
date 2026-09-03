@@ -1,11 +1,12 @@
 # 12 · Quests, onboarding and the daily habit
 
 > **Scope.** The single quest chain and the first-user experience it authors,
-> plus the two mechanics that give a player a reason to open the game on a day
-> nobody authored: the **daily chest** and **generated orders**.
+> plus the mechanic that gives a player a reason to open the game on a day
+> nobody authored: the **daily chest**.
 >
-> **Status: the chain and the daily chest are built. Generated orders are
-> designed and unstarted** (§3) — unblocked, and the next thing to build.
+> **Status: built.** Generated orders used to live here as §3 and were **cut on
+> 2026-09-03** — the reasoning is in §6, and the job they were carrying went to
+> [`16-wonders.md`](16-wonders.md).
 
 ## 1. The quest chain
 
@@ -31,7 +32,8 @@ it and doubles as the fog budget in an economy that starts with almost none.
 | BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature · SellGoods |
 
 **Goal types are code; goals are data.** A new *type* is a code change; a new
-*quest* is a row. That distinction is what makes orders nearly free (§3.2).
+*quest* is a row — which is why the whole chain is authored in the workbook and
+why a fiftieth quest costs nothing.
 
 **`DiscoverFeature` is the type the opening turns on**, and it is a
 `DiscoverCells` that cares *what* it uncovered. *Clear five cells* can be
@@ -97,9 +99,10 @@ three relics held at once.
    already persists.
 4. **The Market moved into the opening.** It had been cut for length, and that
    was right while its only job was converting surplus into Gold that also had
-   nowhere to go. **Orders give it a second job — the game's only infinite
-   resource sink — and a sink the player does not meet until hour three is a sink
-   that answers nothing.** So `Trade`, `ToMarket`, `Merchant` sit at quests
+   nowhere to go. **What earns it the slot is the far end of the chain it
+   starts:** materials become Gold, and Gold now has somewhere to go that has no
+   last level ([`16-wonders.md`](16-wonders.md)). So `Trade`, `ToMarket`,
+   `Merchant` sit at quests
    15–17, the first beat where the city produces more than it eats: research,
    build, use — the same three-beat shape as `Saws → Sawmill → Crewed`, because
    **a building the chain never taught the player to research is a building they
@@ -133,88 +136,15 @@ But **they are concentrated late** — quests 20, 34, 42 and 50. A player who
 stops after the authored arc has thirteen Gems, which buys nothing, so **every
 Gem price in the game is effectively invisible for the whole first session.**
 That is fine for slots and fatal for a store you want to instrument, which is
-why the daily chest's week marker (§4) is the fix.
+why the daily chest's week marker (§3) is the fix.
 
 **Stardust appears on exactly four goal types** — `ClearRuins`, `ReachDepth`,
 `OwnArtifacts`, `OwnHeroes` — so the currency first appears at the same moment
 the Reliquary does. Everywhere else the chain pays Gold, which it needs.
 
-## 3. Generated orders — the only infinite sink
+## 3. The daily chest, and a streak that cannot be lost
 
-### 3.1 What an order is
-
-> *"Bring me 40 Wood, 25 Stone and 10 Food — take 600 Gold and two ingredients."*
-
-**Three slots, refreshed daily**, drawn from the seeded RNG. It is the trains of
-Township, the Merchant of Family Island and the Order Board of the casual genre,
-and it is **the only infinite resource sink the genre has found.**
-
-**Why it is needed:** every sink in the game is finite and already measured.
-6,600 Gold of technology tree against a chain that pays 11,865. Buildings have
-count caps. Units and supplies are bounded by the army cap. **When the tree is
-done — three hours — surplus has nowhere to go, and the Market only converts it
-into Gold, which also has nowhere to go.**
-
-**Orders live in the Market, as a second tab.** It gives the Market the second
-job the design already wants for it, needs no new placement or count cap, and
-keeps the *tap the building* convention.
-
-### 3.2 Why it is nearly free
-
-> **An order needs a generator, not new goal types.**
-
-The predicates already exist (`HoldResource`, `CollectResource`, `SellGoods`,
-`CollectTaps`), reward delivery already exists, replay-safe generation already
-exists, and the Market already exists. Orders draw over the *existing* types, so
-this adds **no new type to the union** — which is what keeps it a shell around
-quests rather than a fourteenth system.
-
-```
-orderId(day, slot)   = order#<day>#<slot>
-resources(day, slot) = 1–3 of the currencies the player has unlocked,
-                       weighted toward the ones they produce
-amount(res)          = round( cityGatherPerSecond(res) × ORDER.secondsOfProduction )
-                       floored at an authored minimum, so slot 1 works on day 1
-```
-
-**`ORDER.secondsOfProduction` is the strongest dial in the feature** and the
-direct analogue of `tap.workSeconds`. **An order asks for a duration of the
-player's own output, so it is neither trivial at hour 40 nor impossible at hour
-1, with nothing re-derived per era.**
-
-Note that orders are the *right* place to read city-wide production — an order
-is addressed to the city — which is exactly why a **tap** must not
-([`04-harvest.md`](04-harvest.md) §5). After that redesign `cityGatherPerSecond`
-has orders as its only caller, and becomes a measured rate rather than one that
-guesses a travel distance.
-
-### 3.3 Rewards
-
-Priced the same way: **Gold worth N minutes of the city's tax income**, plus one
-of a small pool of extras — 1★ ingredients, Stardust, Gems on an occasional slot,
-and later event points.
-
-> **An order must never pay the resources it asked for.** It is a sink, and the
-> moment the loop closes on itself it becomes a laundering mechanic instead of a
-> reason to keep producing.
-
-### 3.4 No deadlines, but a reroll
-
-**An unclaimed order is replaced at the daily refresh, not failed.** No timer on
-the card, no *expires in* text.
-
-The reasoning is the same as §4.1: a daily deadline on a chore-shaped task is how
-a cozy game starts reading as work, and a ~30 min/day budget has no room for
-three mandatory errands. **What replaces the pressure is choice** — three slots,
-and you will not clear all three most days, so which one you take is the
-decision.
-
-A slot can be **rerolled** for a rewarded video or a small Gem cost — the comfort
-purchase the third promise authorises, and a clean second ad placement.
-
-## 4. The daily chest, and a streak that cannot be lost
-
-### 4.1 The pillar problem, and the design that solves it
+### 3.1 The pillar problem, and the design that solves it
 
 A conventional login streak resets to zero when you miss a day. **That is a loss
 of accumulated progress, and it breaks promise 1.** It is also exactly the
@@ -231,7 +161,7 @@ This also removes the whole class of bug where a timezone, a clock change or a
 device swap eats someone's streak, and it means the mechanic needs no *streak
 repair* purchase, which is the ugliest SKU in the genre.
 
-### 4.2 What it pays
+### 3.2 What it pays
 
 **Mana is the primary reward, and it is the obvious one:** already the thing a
 returning player wants, already the only capped currency, and already priced in
@@ -258,7 +188,7 @@ anyone yet.
 **The Gems at the week marker do a second job:** ~20 Gems a month is the
 recurring faucet §2.3 says the game needs and never had.
 
-### 4.3 It only glows
+### 3.3 It only glows
 
 **The chest is a pill, not a modal**, and **it never opens itself.** The whole
 design is about a game that does not make demands, and a build that opens with
@@ -270,7 +200,7 @@ The cost is real and accepted: **a player can finish a session without noticing
 the chest, and lose it** — which is the same sanctioned pressure a missed day
 already carries. It stays a one-line change if playtest disagrees.
 
-### 4.4 Two rules the mechanic depends on
+### 3.4 Two rules the mechanic depends on
 
 - **The rollover is UTC.** A local-midnight rollover would make the ladder depend
   on where the device thinks it is — a player crossing a timezone could claim
@@ -284,35 +214,57 @@ already carries. It stays a one-line change if playtest disagrees.
 is no countdown anywhere on the sheet.** Most progress UI exists to create
 urgency; this one exists to remove it.
 
-## 5. Dials, in the order to reach for them
+## 4. Dials, in the order to reach for them
 
-1. **`order.seconds_of_production`** — what an order asks for, and therefore
-   whether the feature is a sink or a nuisance.
-2. **`daily.mana_fractions`** — the seven-step ladder as fractions of the cap.
-3. **`order.slots`** — 3. More slots is more choice and more chore at the same
-   time; this is the number playtest will move first.
-4. **`daily.gems`** — 5 at the week marker. Also the recurring Gem faucet, so it
+1. **`daily.mana_fractions`** — the seven-step ladder as fractions of the cap.
+2. **`daily.gems`** — 5 at the week marker. Also the recurring Gem faucet, so it
    cannot be tuned without re-checking the faucet total.
-5. `order.reroll_gem_cost` and the reroll-by-ad cooldown.
-6. **`daily.gold_seconds` / `daily.gold_floor`** — the one Gold step.
-7. The chain itself — the `Quests` sheet, where **row order is chain order.**
+3. **`daily.gold_seconds` / `daily.gold_floor`** — the one Gold step.
+4. The chain itself — the `Quests` sheet, where **row order is chain order.**
 
-## 6. Acceptance
+## 5. Acceptance
 
 - A player who has completed every authored quest opens the game on day 15 and
-  has **three orders and a chest waiting.**
+  **has a chest waiting.**
 - The ladder survives a two-week absence at the step it reached.
-- The same `(seed, day, slot)` produces the same order on two devices, and an
-  order generated during an offline replay matches one generated live.
-- **An order's ask is a similar fraction of the player's hourly output at
-  Townhall 1 and at Townhall 3.**
+- The opening is played through the real sim with **nothing granted** — only
+  what the game gives and what it earns — and reaches the end of the authored
+  chain without a dead end.
 - No new goal type was added to the union.
 
-## 7. Deliberately not in this design
+## 6. Deliberately not in this design
 
-A streak that can be lost · a chest that opens itself · a deadline on an order ·
-an order that asks for **Mana** (OQ-17) · an order that pays back what it asked
-for · a second quest chain · branching quests.
+A streak that can be lost · a chest that opens itself · a second quest chain ·
+branching quests · **generated orders**.
 
-**Open questions:** OQ-16, OQ-17, and OQ-47 (the near-shrine price the chain
-points at).
+### Generated orders, cut 2026-09-03
+
+Three daily fetch-quests in a second Market tab, drawn from the seeded RNG and
+sized as a duration of the player's own output. They were designed in full,
+were unblocked, and were the next thing on the plan. **They do not fit the game
+this turned out to be.**
+
+The argument for them was that they are *the only infinite resource sink the
+genre has found*, and that argument does not survive being measured. It rested
+on *"when the tree is done — three hours — surplus has nowhere to go"*, which
+priced the problem against the **smallest** Gold sink in the game: the 6,600
+Gold tree, with 527,000 of landmark claims and 194,142 of fog sitting above it.
+**The problem was never the size of the sink — it was that every sink has a last
+level**, and the answer to that is a ladder with no top rather than a daily
+errand ([`16-wonders.md`](16-wonders.md) §1).
+
+**What is kept:** the rule the design died holding — *a sink must never pay
+back what it asked for* — which is now [`16-wonders.md`](16-wonders.md) §3.1,
+made structural rather than numerical. And the framing of working rule 2: an
+ask, like a reward, is priced in a duration of the player's own production.
+
+**What went with them:** OQ-16 (do orders expire) and OQ-17 (does an order ask
+for Mana), both moot; the order reroll as an ad placement and as a pass reward
+([`14-monetization.md`](14-monetization.md)); *an order completed* as an event
+task and as a guild contribution trigger. And `cityGatherPerSecond`
+(`src/sim/upgrades.ts:80`) now has **no caller in `src/` at all** — order sizing
+was the last one.
+
+**Open questions:** OQ-47 (the near-shrine price the chain points at) and OQ-53
+(`CollectResource` cannot tell the hand from the crew, so one authored quest is
+completable by the workers).

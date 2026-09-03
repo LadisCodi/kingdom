@@ -1,7 +1,7 @@
 # 8 · Magic — Mana, the Sanctum, and landmarks
 
 > **Scope.** What Mana is, why it is capped, where the ceiling comes from, and
-> the ad that refills it. What Mana *buys* — taps and relic actives — is
+> the ad that refills it. What Mana *buys* — taps and **spells** — is
 > [`04-harvest.md`](04-harvest.md) and [`09-relics.md`](09-relics.md); the ad's
 > place in the wider monetisation is [`14-monetization.md`](14-monetization.md).
 >
@@ -87,7 +87,7 @@ So: the only thing that spends Mana is the player.
 | Sink | Cost |
 |---|---|
 | Every player tap — a house, a tree, a rock | **1 Mana** |
-| Casting a relic active, either map | its authored Mana cost, −20%/level of Resonance |
+| Casting a **spell**, either map ([`07-research.md`](07-research.md) §7) | its authored Mana cost, −20%/level of Resonance |
 | Paying fog | **nothing** — a reveal already costs Gold |
 
 ## 5. The Sanctum
@@ -219,7 +219,8 @@ spent.
 Upkeep of any kind (§4) · ley lines as a spatial magic layer · spell schools or
 a magic tech tree · Mana as a build cost · Mana as a research currency
 ([`07-research.md`](07-research.md) §3.1) · Mana as the price of fog · offline
-casting · a Mana cost on an order ([`12-quests.md`](12-quests.md) §3).
+casting · **Mana as the price of a Wonder level** — Wonders are fed with Gold
+and nothing else ([`16-wonders.md`](16-wonders.md) §3).
 
 **Open questions:** OQ-27 (is a refill really worth more than a hero pull?),
 OQ-43, OQ-44, OQ-45, OQ-47.

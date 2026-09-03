@@ -457,9 +457,15 @@ a thumb does not walk. That is what a tap is priced against (§4).
 `cityGatherPerSecond` is the opposite case and keeps its travel term, including
 the old fudge of taking the influence radius as the distance: a NOMINAL rate,
 not a measured one. **The tap stopped reading it** — that was the whole 413-Wood
-fault — and its remaining caller is order sizing
-([`12-quests.md`](12-quests.md) §3.2), which is addressed to the city and so
-should read the city's real throughput, walking included.
+fault.
+
+**It now has no caller in `src/` at all.** Order sizing was the last one, and
+orders were cut ([`12-quests.md`](12-quests.md) §6). It is kept rather than
+deleted because *"a duration of the city's own production"* is working rule 2
+and something will ask for it again — but **it is dead code today, and a dead
+export with a nominal travel fudge in it is exactly the kind of thing that gets
+wired back into a tap by someone who does not know why it exists.** The comment
+above it says so; the alternative is deleting it and re-deriving it later.
 
 ## 6. Areas of influence, claims and migration
 
@@ -591,9 +597,8 @@ one next door was and the influence radius stopped deciding anything. What kept
 the fix without the cost was debiting the depot at the **strike** and crediting
 the wallet at the **shed** (§5), which nobody had tried.
 
-**Kept:** `cityGatherPerSecond`, travel term and nominal-distance fudge and all.
-Its only caller is order sizing, which is addressed to the city and so wants the
-city's real throughput.
+**Kept:** `cityGatherPerSecond`, travel term and nominal-distance fudge and all
+— though with orders cut it now has **no caller at all** (§5).
 
 **Deliberately not in this design:** pathfinding · continuous regrowth (§3) · a
 per-distance strike penalty (§6) · a worker reserve floor (§6) · **a per-house

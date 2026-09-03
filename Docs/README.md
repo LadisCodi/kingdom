@@ -34,9 +34,11 @@ usually that a more obvious alternative broke one of them — and the doc says s
 1. **It is played in visits, not sittings** — ~30 minutes a day across two or
    three check-ins. **If a feature needs more, the feature is wrong.**
 2. **Price every reward in a duration of the player's own production**, never in
-   absolute amounts. A tap pays 10 seconds of WORK on what you tapped; an order
-   asks for N seconds of what you make. **Absolute numbers in a spreadsheet go
-   stale on their own by era three.**
+   absolute amounts. A tap pays 10 seconds of WORK on what you tapped; a daily
+   chest pays a fraction of the pool. **Absolute numbers in a spreadsheet go
+   stale on their own by era three** — and the corollary is that a *ladder*
+   should be relative too, which is why a Wonder's cost is a curve rather than a
+   table.
 3. **The offline cap limits what the city produces, never what a timer does.**
 4. **Adding a wallet row needs an argument.** Eight rows, five things on the
    plank. A counter beside the thing it belongs to usually beats a coin.
@@ -60,15 +62,16 @@ One file per feature, in the order a player meets them.
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
 | 5 | [The city](features/05-city-and-districts.md) | all thirteen districts, the Townhall as era gate, cost curves, placement, moving a building | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
-| 7 | [Research](features/07-research.md) | the technology tree and instant upgrades today; **tomes, tiers-as-eras and Knowledge as a clock** next | built / designed |
+| 7 | [Research](features/07-research.md) | the technology tree and instant upgrades today; **three tomes — Civics, Warfare, Magic — tiers-as-eras, and Knowledge as a capped clock you pour by hand** — designed and closed 2026-09-03 | built / designed |
 | 8 | [Magic](features/08-magic.md) | Mana, why it is capped, the Sanctum, landmarks, and the rewarded ad tuned as one loop | built |
-| 9 | [Relics](features/09-relics.md) | the five relics, attune-or-arm, and the **nine-piece ingredient set** that replaces Fragments | built / designed |
+| 9 | [Relics](features/09-relics.md) | the five relics as **passives only** — the actives left for the tomes 2026-09-03 — attune-or-arm, and the **nine-piece ingredient set** that replaces Fragments | built / designed |
 | 10 | [Heroes and the gacha](features/10-heroes.md) | the shared collection substrate, five heroes, pity, no dead pulls | built |
 | 11 | [Expeditions](features/11-expeditions.md) | ruins as dungeons, staged delves and checkpoints, combat as a scoring pass, the army and the military halls | built |
-| 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest, **generated orders** | built / designed |
+| 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest | built |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built |
 | 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, six ad placements, and a **simulated** store that never charges | partly built |
 | 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the defended landmarks | designed |
+| 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends, and the ~780,000 Gold of one-time sink that is the reason they exist | designed |
 
 ## Reference
 

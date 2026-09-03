@@ -84,12 +84,12 @@ by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 | the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
-| a seasonal hero = one hero row + one banner row | tech-tree node positions (`node:{x,y}` in `definitions.ts` — the layout is content) |
+| a seasonal hero = one hero row + one banner row | tech-tree node positions (`node:{x,y}` in `definitions.ts` — the layout is content, though the tome rework replaces it with a derived row and an authored column: `Docs/features/07-research.md` §6.6) |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 
 ## Saves
 
-`SAVE_VERSION` is 21; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 24; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -120,9 +120,13 @@ than the build is rejected rather than downgraded.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
   `delvePill.ts`, `adOfferPill.ts`. They hide behind any sheet.
-- **Z-order is load-bearing.** `#overlay` is z 5 and is a stacking context, so
-  nothing inside it can rise above the nav (10) or the settings knob (20). The
-  ad screen lives at z 200 in its own mount for that reason, and carries
+- **Z-order is load-bearing.** The stack, bottom to top: map · ad-offer tab (4)
+  · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
+  (10) · settings knob (20) · the rewarded video (200). `#overlay` has a
+  z-index, so it is a **stacking context** and nothing inside it can rise above
+  the header or the nav — **which is the design, not a limitation**: a menu is
+  opened over the game, so the purse stays readable and the way out stays put.
+  The ad screen lives at z 200 in its own mount for that reason, and carries
   `:empty { display: none }` — without it an `inset: 0` element swallows every
   tap on the map.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a

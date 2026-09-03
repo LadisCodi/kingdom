@@ -1,4 +1,4 @@
-# 9 · Relics — passives, actives, and a set with a shape
+# 9 · Relics — passives, and a set with a shape
 
 > **Scope.** The five relics, what they do, how they are levelled, the
 > nine-piece **ingredient set** that replaces Fragments, and the attune-or-arm
@@ -8,12 +8,17 @@
 > **Status: the relics, attunement and attune-or-arm are built. Ingredients are
 > designed and unstarted** (§4–§7), replacing the Fragment counter that ships
 > today.
+>
+> **A relic grants a PASSIVE and nothing else, as of 2026-09-03.** The four
+> **actives** left this feature and became **spells in the Magic tome**
+> ([`07-research.md`](07-research.md) §7). §1.1 records why, because the
+> reasoning matters more than the move.
 
 ## 1. The model
 
-- Every relic grants a **passive** while attuned to the kingdom.
-- Most also grant an **active** — a magic action cast on the map for Mana.
-- Both scale with the relic's **level**.
+- Every relic grants a **passive** while attuned to the kingdom, and **that is
+  the whole of what it does at home.**
+- The passive scales with the relic's **level**.
 - A relic is **attuned to the kingdom** *or* **carried by a hero into a delve** —
   never both (§5).
 - **Levels cost Stardust**; **unlocking a relic and each tier after needs nine
@@ -30,28 +35,76 @@ as long as it is worn.
 legible effect. That is what keeps them cozy, and it is why duplicate-fusion
 with random stats is out of scope (§8).
 
+### 1.1 The actives left, 2026-09-03 — and the paragraph above is why
+
+**The argument in *Artifacts, not a spellbook* is correct, and it was followed
+to the wrong conclusion.** It proves that an ability does not belong in a
+loadout. What it was used to justify was **bundling the ability onto the passive
+so the slot would keep taxing it** — which is the same tax, collected
+indirectly. The code says so out loud, in `casting.ts`:
+
+> *"Casting requires the relic to be ATTUNED. That is the whole point of the
+> slot: an ability you can reach without committing a socket to its passive
+> would make the loadout limit free."*
+
+**That is the ability being held hostage to justify the slot.** Three symptoms,
+all of which ship today:
+
+1. **Carrying a relic into a delve silently disarms its spell.** `castBlock`
+   requires attunement and a launch refuses an attuned relic, so **sending the
+   Dowsing Rod underground turns Divination off for the length of the delve.**
+   Nobody designed that coupling; it falls out of the bundle, and it punishes
+   precisely the player engaging with both halves of the game.
+2. **A new kingdom has one attunement slot**, so a player can cast **exactly one
+   spell**, and only by giving up every other passive they own.
+3. **The Gilded Ledger has no active at all**, and the design called that *the
+   clearest proof that the slot rather than the ability is the constraint.* A
+   design point that needs a deliberately incomplete item to demonstrate it is a
+   design point arguing against itself.
+
+Underneath all three: **three orthogonal things were braided into one object** —
+a continuous effect, an instantaneous effect, and whether the object is worn.
+Untangling them costs nothing and each half gets simpler:
+
+| | Where it lives now | Gated by | Improved by |
+|---|---|---|---|
+| **Passive** | the relic | **being attuned** — a real loadout decision | the relic's **level** (Stardust) |
+| **Spell** | a **tome node** | **being discovered** — and then never again | **tome upgrades** (Gold, instant, stacking) |
+
+> **A relic is what you wear. A spell is what you know.** You cannot un-know a
+> spell, so the only thing standing between a discovered spell and a cast is
+> **Mana** — which is what Mana is for.
+
+**What attune-or-arm gains** is the honesty its own §5 already claimed: *the
+trade was never which is cheaper, it is which do I need right now.* With the
+spell removed, that is literally true instead of approximately true — there is
+no longer a hidden third cost hanging off the choice.
+
+**What the relics lose** is real and should be said: **a relic level now buys
+strictly less than it did**, because it moves the passive and the carried stats
+and no longer moves an ability. That devalues Stardust, which was already the
+weakest currency in the design — see §9 and **OQ-9**.
+
 ## 2. The five relics
 
-| Relic | Passive | Active | Mana | Won from |
-|---|---|---|---|---|
-| **Dowsing Rod** 🔮 | reveal costs −15% | **Divination** — pays a Discovered cell's *entire* remaining reveal cost | 8 | Hollow Barrow |
-| **Verdant Seal** 🌱 | cell recovery −25% | **Bloom** — clears exhaustion on every resource cell in radius 2 | 6 | Sunken Chapel |
-| **Foreman's Sigil** ⚡ | worker yield +1 | **Haste** — worker yield ×2 for 60 min | 10 | Drowned Ironworks |
-| **Gilded Ledger** 🪙 | tax rate +20% | *none* | — | The Counting House |
-| **Wanderer's Compass** 🧭 | Stardust +50% | **Beckon** — a finite feature respawns on a cell you choose | 5 | Star Observatory |
+| Relic | Passive | Won from |
+|---|---|---|
+| **Dowsing Rod** 🔮 | reveal costs −15% | Hollow Barrow |
+| **Verdant Seal** 🌱 | cell recovery −25% | Sunken Chapel |
+| **Foreman's Sigil** ⚡ | worker yield +1 | Drowned Ironworks |
+| **Gilded Ledger** 🪙 | tax rate +20% | The Counting House |
+| **Wanderer's Compass** 🧭 | Stardust +50% | Star Observatory |
 
-Three notes carry most of the design weight.
+**Five relics, five passives, one column.** That is the shape §1.1 bought: the
+Gilded Ledger stops being a special case that needed explaining, and **a sixth
+relic no longer has to have an ability invented for it** — which is what would
+have happened, because four of five having one made the fifth look broken.
 
-**Divination costs the same Mana at every distance, while the Gold reveal cost
-doubles every ring.** Its value therefore *grows with depth*, exactly where the
-pain is. This single relic converts the fog from a chore into a real economic
-decision: **Gold or Mana?**
-
-**Haste is cast on the way out.** Divination and Bloom reward being present;
-Haste rewards *leaving well*. A visit-based game needs a good departure move.
-
-**The Gilded Ledger has no active at all** — deliberate, and the clearest proof
-that the **slot** rather than the ability is the constraint.
+The four abilities and the arguments they carried — *Divination costs the same
+Mana at every distance while the Gold reveal cost doubles every ring*, and
+*Haste is the departure move a visit-based game needs* — are not lost. They
+moved intact to [`07-research.md`](07-research.md) §7, which is where they are
+now argued.
 
 ## 3. Mana is what magic costs, on both maps
 
@@ -61,17 +114,17 @@ that the **slot** rather than the ability is the constraint.
 | Action | Costs |
 |---|---|
 | Tap a province cell | **1 Mana** |
-| Cast a relic active, either map | **Mana** |
+| Cast a **spell**, either map ([`07-research.md`](07-research.md) §7) | **Mana** |
 | Reveal a world node | **Gold + time**, scaling with distance |
 | Send a party, claim, besiege | supplies, army commitment, time |
 
 That split is what stops the two scopes competing for one budget.
 
-**Actives aimed at other players need no new architecture.** A relic active
-pointed at a shared node or a guild siege is *a modifier with an expiry,
-delivered as a pending effect* — the exact mechanism the social layer already
-designs for daily help ([`15-social.md`](15-social.md) §3.1). Three examples
-from the catalogue that already exists:
+**Spells aimed at other players need no new architecture.** A spell pointed at
+a shared node or a guild siege is *a modifier with an expiry, delivered as a
+pending effect* — the exact mechanism the social layer already designs for daily
+help ([`15-social.md`](15-social.md) §3.1). Three examples from the catalogue
+that already exists:
 
 - **Reveal the threat on a contested node** before committing units — the
   Scout's trait, pointed at the world.
@@ -116,7 +169,7 @@ relic arc from being gated entirely behind the most expensive layer in the plan.
 
 | Rarity | Source | Role |
 |---|---|---|
-| **1★** | province ruins, delve hauls, orders, the daily chest | plentiful — carries a relic to level 2–3 alone |
+| **1★** | province ruins, delve hauls, the daily chest | plentiful — carries a relic to level 2–3 alone |
 | **2★** | hard province content and **temporary event provinces** | uncommon — gives an event a reason to be played |
 | **3★** | **the world map only**: contested ruins, siege spoils, guild chests | rare, and **the only tier that is really traded** |
 
@@ -162,11 +215,19 @@ piece that is actually missing. **OQ-8.**
 - **Slots:** 1 at start → a second through research → up to **5** with Gems, on
   an escalating price (`20 × 2.5^purchased`). Earned breadth first, so the paid
   gate is never the only thing between a player and the system.
-- **Swapping applies immediately, then locks that slot for 5 minutes.** The lock
-  kills hot-swapping a relic in for a single cast, without ever making the player
-  wait for a benefit they have already earned.
+- **Swapping applies immediately, then locks that slot for 5 minutes.**
 - **The real cost of a swap is never the timer.** It is going without the passive
-  you were living off.
+  you were living off — and since §1.1 that is the *only* cost, which is what
+  makes the sentence true rather than nearly true.
+
+**The swap lock needed a new reason, and it has one.** Its stated job was to
+kill *hot-swapping a relic in for a single cast* — and there are no relic casts
+any more, so that job is gone. It survives because **a passive can be
+hot-swapped for a single transaction**: attune the Dowsing Rod, pay off an
+expensive frontier cell at −15%, swap it straight back out. The lock is what
+stops a standing benefit being rented by the minute. **A lock with no live
+reason should be cut** — this one has one, and the reason is now written down
+where it can be checked.
 
 > **A relic is attuned to the kingdom, or carried by a hero into a delve. Never
 > both.**
@@ -263,7 +324,7 @@ the strongest pull the screen has. **OQ-11.**
 | Swap lock | 300 s | `attunement.swap_lock_seconds` |
 | Level cost | `round(20 × 1.6^level)`, max 10 → **3,612** to max one | `collection.level_cost_*` |
 | Tier ladder | 5 tiers, 2 levels each | `collection.max_tier`, `levels_per_tier` |
-| Passive base and per-level, active Mana cost | per relic | `Artifacts` sheet |
+| Passive base and per-level | per relic | `Artifacts` sheet |
 | Carried ATK / DEF / HP and per-level | per relic | `Artifacts` sheet |
 | **Ingredients per tier, and the 1★/2★/3★ split** | undecided | — |
 
@@ -286,13 +347,28 @@ afford. Two honest exits:
 
 **What should not happen is two gates where one never closes.** **OQ-9.**
 
+**And §1.1 made this worse, deliberately.** A relic level used to move a
+passive, a set of carried stats *and* an ability; it now moves the first two.
+So Stardust buys less per point than it did on a curve that was already the
+weakest in the design. **That is the price of untangling the three things, it
+was paid knowingly, and it moves OQ-9 from a question to a thing that has to be
+answered** — most likely by cutting the curve rather than by giving Stardust a
+new job it does not need.
+
 ## 10. Deliberately not in this design
 
-Upkeep · relics with random stat rolls · a second item system for hero equipment
+Upkeep · **an active on a relic** (§1.1) · **casting gated on a loadout slot**
+(§1.1) · relics with random stat rolls · a second item system for hero equipment
 — relics are dual-purpose instead · standalone equipment with duplicate fusion ·
 a relic reachable through an upgrade, or vice versa
 ([`07-research.md`](07-research.md) §1.4) · a power ceiling only a wallet can
 reach.
+
+**One that will be proposed again:** giving each relic *back* a small ability so
+the item feels richer. It reopens all three symptoms in §1.1 at once, and the
+richness it is reaching for belongs on the **spell's upgrade ladder**, where it
+is Gold-priced, stacking and visible in a tome — rather than smuggled back into
+an object whose job is to be worn.
 
 **Open questions:** OQ-7, OQ-8, OQ-9, OQ-10, OQ-11, and OQ-9 (Stardust) in
 [`../open-questions.md`](../open-questions.md).

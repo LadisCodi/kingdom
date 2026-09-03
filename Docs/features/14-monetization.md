@@ -35,7 +35,7 @@ price elasticity. Those need user acquisition and a real store.
 
 | Family | Examples | Why it is allowed |
 |---|---|---|
-| **Comfort** | rush a timer, refill Mana, reroll an order, refresh the shop | it buys back the player's *time* |
+| **Comfort** | rush a timer, refill Mana, refresh the shop | it buys back the player's *time* |
 | **Breadth** | attunement slots, party slots, builders, gacha pulls | more things at once, never stronger things |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
@@ -74,7 +74,6 @@ relative cost.**
 | **Event pass, paid track** | season | €4.99 | unlocks the paid column |
 | Fog charter | land | €2.99 | a bundle of instant reveals |
 | Mana refill | consumable | Gems | fills the pool |
-| Order reroll | consumable | Gems / ad | rerolls one slot |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Attunement / party slot | one-time ladder | Gems | exists today |
 | **Town banner set** | cosmetic | €2.99 | a visual variant — the probe, §5 |
@@ -153,7 +152,7 @@ pipeline decision with evidence behind it; if it does not, the cosmetic
 monetisation thesis is weaker than assumed and that is worth knowing.**
 **OQ-26.**
 
-## 6. Rewarded video: from one placement to six
+## 6. Rewarded video: from one placement to five
 
 The existing placement is the model, and it is genuinely good: the reward is a
 whole pool, ten sanctuaries double the pool and therefore **double every future
@@ -163,24 +162,38 @@ ad**, the offer only appears below half a pool, and the cooldown is randomised
 | # | Placement | Reward |
 |---|---|---|
 | 1 | **Mana refill** — ships today | a full pool |
-| 2 | Double a quest or order reward | ×2 on claim |
-| 3 | Reroll an order slot | one reroll |
-| 4 | Refresh the event shop | one refresh |
-| 5 | Skip a builder timer | a slice of the remaining build |
-| 6 | A second daily chest | one extra ladder claim |
+| 2 | Double a quest reward | ×2 on claim |
+| 3 | Refresh the event shop | one refresh |
+| 4 | Skip a builder timer | a slice of the remaining build |
+| 5 | A second daily chest | one extra ladder claim |
+
+**It was six until 2026-09-03**, and the sixth was *reroll an order slot* —
+the cleanest of the lot, because a reroll is pure comfort with no economic
+effect and it sat on a card the player had already opened. **It died with
+orders** ([`12-quests.md`](12-quests.md) §6), and nothing was invented to
+replace it: **Wonders offer no ad placement at all.** A Wonder has no timer to
+skip and no slot to reroll, and an ad that discounted a Wonder level would be
+selling permanent progression rather than comfort, which the §2 families
+forbid. So the list is five, and **that makes OQ-51 sharper rather than
+softer** — the question was whether the ad economy is worth building six
+placements around, and it can now field five.
 
 Two rules carry over, because they are what makes the existing one good:
 
 - **An offer answers a shortage rather than interrupting.** Placement 1 only
-  appears below half a pool; 3 and 4 only on a card the player already opened.
+  appears below half a pool; 3 and 5 only on a card the player already opened.
 - **The reward is priced in the player's own production**, never as an absolute,
   so an ad is worth the same fraction of progress at hour 1 and hour 40.
 
-**The per-day arithmetic has to be re-derived once all six exist.** Today's figure
-— ~10 ads/day adding ~12.5 h of production on top of 24 h idle, so a watcher
-progresses ~50% faster — is a *meaningful offer*. **Six placements can easily
-double that, and a watcher progressing twice as fast as a non-watcher is a
-different game rather than a meaningful offer.** **OQ-43, OQ-45.**
+**The per-day arithmetic has to be re-derived once all five exist**, and the
+figure that used to sit here — *~10 ads/day adding ~12.5 h of production, so a
+watcher progresses ~50% faster* — **was computed against a tap that minted and
+is wrong by roughly two orders of magnitude.** Priced against the ground, a full
+pool is ~5.5 minutes of the city's own production, so five ads a day buy a
+watcher about **2–3%**, not 50%. The concern the old number raised — that
+placements could stack into *a different game rather than a meaningful offer* —
+has inverted: the live risk is now that five placements are not worth building.
+**OQ-43, OQ-45, OQ-51.**
 
 ## 7. The read-out
 
@@ -193,7 +206,8 @@ One page, refreshed weekly:
 3. **The one honest caveat**, restated every time (§0).
 
 Everything else the telemetry collects — session count, session length, day index
-of last session, orders claimed, milestones reached — serves the retention
+of last session, quests claimed, Wonder levels bought, milestones reached —
+serves the retention
 read-out rather than this one. **No event pipeline exists today, which means
 there is currently no way to produce a D30 at all.**
 

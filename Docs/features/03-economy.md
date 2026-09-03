@@ -20,7 +20,7 @@
 | **Food** | berries, game, shoals, crops | villagers, expedition supplies | city | yes |
 | **Wood** | forest | buildings | city | yes |
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
-| **Mana** | time, capped | every player tap · relic actives | city | a gauge, not a coin |
+| **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
 | **Stardust** | dungeons | relic and hero levels | kingdom | no — reads in the Reliquary |
 | **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
@@ -202,9 +202,11 @@ entry — you **tap the built Market** to open it. It arrives at onboarding step
 - The old drip-sell queue, sale timers and gem rush are gone — taxes cover idle
   income now, so the Market no longer needs to run while away.
 
-**The Market's second job is orders** ([`12-quests.md`](12-quests.md) §3), which
-is the reason it moved into the opening. Converting surplus into Gold that also
-has nowhere to go is not a sink; an order is.
+**The Market is not a sink** — it converts a surplus into Gold, and until
+Wonders exist Gold is the thing with nowhere to go. What earns it its place in
+the opening is the far end of the chain it starts: materials become Gold, and
+Gold buys **Wonder levels**, which have no last one
+([`16-wonders.md`](16-wonders.md)).
 
 ## 7. Where Gold goes
 
@@ -217,13 +219,18 @@ the design turns on three calls competing for one purse.
 | The technology tree, 24 techs | 6,600 |
 | Expedition supplies, per launch | 50 → 2,000 by tier, recurring |
 | Landmark claims | 2,000 · 25,000 ×5 · 100,000 ×4 |
-| Buildings and upgrades | on a count and level curve |
+| Buildings and upgrades | on a count and level curve; the fifteen upgrades total **51,926** |
+| **Wonder levels** | **unbounded** — [`16-wonders.md`](16-wonders.md) |
 
 Against which the **quest chain pays 11,865 Gold across 50 quests** — 1.80× the
 whole tree. **The tree is not a sink; it is a formality the chain funds twice
 over.** That measurement is the argument for eras
-([`07-research.md`](07-research.md) §4) and for orders as the only infinite sink
-([`12-quests.md`](12-quests.md) §3).
+([`07-research.md`](07-research.md) §5.1).
+
+**Every row in that table is one-time, and that is the real fault** — the fifteen
+upgrades add **51,926** and the landmark claims **527,000**, so roughly 780,000
+Gold of sink exists and then nothing does, while the city keeps producing. The
+answer is a ladder with no last level: [`16-wonders.md`](16-wonders.md).
 
 ## 8. Dials, in the order to reach for them
 

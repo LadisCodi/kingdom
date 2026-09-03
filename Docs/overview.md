@@ -131,9 +131,15 @@ once a day wastes some. **You lose unspent potential, never property.**
 
 ## Relics, and the one rule the design turns on
 
-Relics are won from ruins. Each grants a **passive** while attuned to the kingdom
-and usually one **active** cast on the map for Mana. You start with a single
-attunement slot; a second comes from research and the rest cost Gems.
+Relics are won from ruins. Each grants a **passive** while attuned to the
+kingdom, **and that is all it does** — you start with a single attunement slot,
+a second comes from research and the rest cost Gems.
+
+**Spells are a separate thing, and they live in the Magic tome**: discovered as
+a research node, improved by the upgrades under it, and castable from then on
+for Mana, forever. **A relic is what you wear; a spell is what you know**
+([`features/07-research.md`](features/07-research.md) §7). They used to be one
+object and untangling them is what made the rule below honest.
 
 > **A relic is attuned to the kingdom, or carried by a hero into a delve. Never
 > both.**

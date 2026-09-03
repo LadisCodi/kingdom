@@ -671,7 +671,8 @@ and units are discovered.
 one unified tree, drag-pannable in both axes:
 
 - **Technologies** — 56px square nodes on a hand-authored grid, joined by
-  dotted orthogonal connectors. States: `done` (green rim), `active` (blue
+  dotted orthogonal connectors. **Both the grid and the hand-authoring are
+  going** — see the reshape note below. States: `done` (green rim), `active` (blue
   rim + a thin progress bar inside the node), `available` (gold rim), and
   **`silhouette`** — a dashed, 40%-opacity `?` for a tech exactly one step
   beyond something researched or researching. Anything deeper is not drawn.
@@ -679,7 +680,8 @@ one unified tree, drag-pannable in both axes:
   with a level badge; instant Gold purchases.
 - **Top bar** — "Research" and `Slots: 1 busy / 2`, plus
   `extra slot — 25 💎` + **Buy** when below `maxSlots`.
-- **Info panel** — floats above the nav bar only while a node is selected.
+- **Info panel** (`.tech-info`) — floats above the nav bar only while a node is
+  selected. **Being replaced by a centred sheet** — see the reshape note.
   Tech: glyph, name, description, `Requires Forestry ✓ / Masonry ✗`, then
   either `Researched ✓`, a countdown bar, or a cost line
   `40 📜 · ⏱ 2m — all slots busy` with **Start**.
@@ -690,6 +692,90 @@ one unified tree, drag-pannable in both axes:
 on a dark grid *is* the Civilization tech tree. It is also the screen with
 the best content — the silhouette fog and the upgrade fans are genuinely
 good ideas that just need a different costume.
+
+> **RESHAPED 2026-09-03.** The screen stops being one pannable canvas and
+> becomes **six vertical tomes behind tabs**, three columns wide, with branch
+> and join nodes — the structure is
+> [`../features/07-research.md`](../features/07-research.md) §6.5–§6.6 and it is
+> **design, not presentation**: the layout is derived rather than authored, so
+> nothing below may reintroduce a free 2D canvas. Everything else in this
+> section still describes the right costume.
+
+**The layout, which is now fixed:**
+
+- **Three tabs across the top, one per tome** — **Civics · Warfare · Magic**.
+  Three is what fits a phone, which is why the reference uses three and why the
+  shelf was cut to three: **the tab strip needs no scrolling and no second row**,
+  so nothing on this screen moves sideways at all.
+- **The page scrolls vertically and only vertically.** Drop horizontal pan.
+  Keep the hint auto-scroll and selection-clears-on-empty-tap.
+- **At most three parallel columns**, with **spine nodes** at full width where
+  the columns fan out (branch) and converge (join).
+- **A tier is a band, not a page.** You scroll from *Civics I* through its
+  columns to *Civics II*. **The next era is visible above the fold before it is
+  reachable** — draw it dimmed rather than hiding it, because the scroll is the
+  pull.
+- **Connectors are V–H–V**: down out of the parent, a rail in the gap between
+  rows, down into each child. Sibling edges from one parent **share the rail and
+  read as a single bar** — that is the reference's look and it falls out of the
+  geometry.
+
+**Tapping a node opens a centred sheet over the tree** — the content is the
+feature doc's §5.2, and it replaces `.tech-info`, the floating card pinned above
+the nav today. **The primitive already exists**: `sheet({ centred: true })` in
+`kit/surface.ts`, whose own docblock sanctions exactly this case, plus `scrim`,
+`panel`, `plank`, `card`, `meter` and `costTerms`. So the whole sheet is
+assembled from the kit with **one addition** — see below.
+
+- **Header plank**: title on the left-to-centre, the sheet's own `✕` knob on the
+  right. Drop the reference's second `(!)` button beside the meter: if the bar
+  carries the Knowledge icon it needs no explainer, and requirements are already
+  tappable medallions.
+- **The dim is already there and must not be doubled.** `#overlay` carries
+  `background: var(--scrim)` for the research screen itself, so a second scrim at
+  full strength over the tree reads as mud. **Blur the tree behind the sheet
+  rather than darkening it twice** — the reference does exactly that, and it
+  keeps the shape of the page legible underneath, which is what tells the player
+  they are still on the same page.
+- **The header and nav bar stay above the sheet**, which is the stack's standing
+  rule and names this screen as the reason it exists (`src/style.css`). The
+  reference agrees: its currency HUD sits above the dim while the modal sits
+  under it.
+- **Actions are one row of slabs at the bottom**: `Pour ▸ 18 📜` beside
+  `Finish ▸ 💎 4`, becoming a single `Research ▸ 500 🪙 · 2m` once the pour is
+  full. `costTerms` already turns an unpayable term clay, **which is the reason
+  the button is disabled and means no separate reason line is needed.**
+- **No `Intentos:` row and no cooldown line.** The reference meters pouring with
+  attempts that refill on a timer; the feature doc §5.3 rules it out.
+
+**One new kit primitive, and it is the most valuable block on the sheet:**
+
+```
+delta(label, from, to) →   Tap Power        +40%  →  +60%
+```
+
+A label, the current value, an arrow, and the value after this purchase in the
+**leaf** tone. Nothing in `kit/stats.ts` does this — it has `stat`, `pips`,
+`meter`, `chip`, `costTerms`, `costChips` and `progress`, all of which say *what
+is*, and none of which says *what changes*. **Every levelled thing in the game
+wants it**, not just upgrades: a district card's level-up, a relic level, a
+collection tier. It should be born in the kit rather than in this screen.
+
+**Two state axes that are easy to conflate, and both are needed:**
+
+| Axis | What it says | Drawn as |
+|---|---|---|
+| **Tree fog** (§1.3 of the feature) | *does the player know this exists* | the silhouette — a fold in the parchment with a `?` |
+| **Reachability** | *can the player pour into it yet* | **desaturated** — inked but colourless, the way a locked node greys out in the reference |
+
+A node can be known and unreachable, which is the common case and the one the
+current screen cannot express.
+
+**The node itself carries its pour**, which is where the reference's `1/5` badge
+maps onto Kingdom: a technology shows **`12 / 40`** on the medallion — the
+Knowledge committed against what it needs (§3.4). That badge is the single most
+important thing on the screen, because it is the only place the clock is
+legible.
 
 **Show this.** Keep every mechanic. Change the metaphor from *graph* to
 *a map / an illuminated manuscript*.
@@ -702,7 +788,10 @@ good ideas that just need a different costume.
   in progress, and the silhouette becomes a **fold in the parchment /
   scorched corner with a `?`** — mysterious, not disabled.
 - Upgrade circles become small **badges pinned below** their medallion,
-  with a pip row for level instead of a numeric badge.
+  with a pip row for level instead of a numeric badge. **They live in the row
+  gap, centred under the parent, at most two across and wrapping to a second
+  rank** — three across overflows a column, and Forestry already has three
+  (feature §6.6).
 - Slots: draw them as **desks/lecterns** — `🕯 1 of 2 scholars busy` with
   an empty stool for the free slot and a "hire another scholar" gem
   button for the purchase. That single change turns an abstract concurrency
@@ -715,7 +804,8 @@ good ideas that just need a different costume.
   gives them until it finishes and a banner announces it.
 - Requirements: `Requires Forestry ✓` becomes a small medallion thumbnail
   with a tick, tappable to pan there.
-- Keep drag-pan, keep the hint auto-pan, keep selection-clears-on-empty-tap.
+- Keep the hint auto-scroll and selection-clears-on-empty-tap. **Drag-pan
+  becomes vertical-only** — see the reshape note.
 
 ---
 
