@@ -164,13 +164,19 @@
 }
 .tech-node.rank .node-dot { width: 12px; height: 12px; top: -2px; right: -2px; }
 
+/* The ladder's progress, "1/5". It was a single digit — a levelled upgrade's
+ * level — and a circle 17px across fitted it exactly. Three characters do not,
+ * so this is a PILL: auto width with the height pinned, which keeps the badge
+ * the same size for "1/5" and "10/10" alike. */
 .tech-node.rank .lvl {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 17px;
+  right: -6px;
+  bottom: -6px;
+  min-width: 17px;
   height: 17px;
-  border-radius: 50%;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 9px;
   background: var(--wood-dark);
   color: var(--parchment);
   font-family: var(--font-body);

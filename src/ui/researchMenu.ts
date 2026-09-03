@@ -21,7 +21,7 @@ import {
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
 import { lineMaxRank, lineRank } from '../sim/upgrades';
-import { type GameState, type TechId } from '../sim/state';
+import { type GameState, type TechId, type TechLineId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
 import { action, btn, iconEl, knob } from './kit';
@@ -98,12 +98,22 @@ function visibility(state: GameState, id: TechId): Visibility {
   return 'hidden';
 }
 
-/** The rank nodes fanned under a major: every line whose parent is `id`,
- *  flattened in workbook order. Derived from TECH_LINES, so a line that moves
- *  in the workbook moves its fan with it. */
-const ranksUnder = (id: TechId): TechId[] =>
-  TECH_LINE_ORDER.filter((line) => lineParent(line) === id)
-    .flatMap((line) => TECH_LINES[line]);
+/** The LINES fanned under a major — one bead each, not one per rank.
+ *
+ *  Fanning every rank was tried and is unusable: Forestry alone carries three
+ *  lines worth 13 ranks, which spilled across two neighbouring branches and
+ *  drew five identical nodes of which exactly one was ever pressable. A line
+ *  is one thing to the player — a ladder they are part-way up — so it gets
+ *  one node showing how far up it they are. */
+const linesUnder = (id: TechId): TechLineId[] =>
+  TECH_LINE_ORDER.filter((line) => lineParent(line) === id);
+
+/** The rank a line's bead currently stands for: the next one to research, or
+ *  the last one if the ladder is finished. */
+const beadRank = (state: GameState, line: TechLineId): TechId => {
+  const ranks = TECH_LINES[line];
+  return ranks[Math.min(lineRank(state, line), ranks.length - 1)];
+};
 
 /** A major technology has an authored grid position; a rank does not. */
 const isMajor = (id: TechId): boolean => TECHNOLOGIES[id].node !== null;
@@ -151,7 +161,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // ---- the tree canvas (sized to what the fog currently shows) ----
   const shown = TECH_ORDER.filter(
     (id) => isMajor(id) && visibility(state, id) !== 'hidden');
-  const fanned = shown.filter((id) => isTechComplete(state, id) && ranksUnder(id).length > 0);
+  const fanned = shown.filter((id) => isTechComplete(state, id) && linesUnder(id).length > 0);
   const xs = shown.map((id) => TECHNOLOGIES[id].node!.x);
   const ys = shown.map((id) => TECHNOLOGIES[id].node!.y);
   const [x0, y0] = [Math.min(...xs), Math.min(...ys)];
@@ -194,10 +204,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
       svg.append(path);
     }
   }
-  // Straight spokes from a completed tech to the ranks fanned under it.
+  // Straight spokes from a completed tech to the lines fanned under it.
   for (const id of fanned) {
-    const ups = ranksUnder(id);
-    ups.forEach((_: TechId, i: number) => {
+    const ups = linesUnder(id);
+    ups.forEach((_: TechLineId, i: number) => {
       const path = document.createElementNS(ns, 'path');
       path.setAttribute('d', `M ${cx(id)} ${cy(id)} L ${fanX(id, i, ups.length)} ${fanY(id)}`);
       path.setAttribute('class', 'tech-edge open');
@@ -244,28 +254,25 @@ export function renderResearchMenu(game: Game): HTMLElement {
     canvas.append(node);
   }
 
-  // Minor-rank nodes, fanned below their completed parent. Same states and
-  // the same click as a major — they ARE majors, only cheaper and quicker.
+  // One bead per LINE, fanned below its completed parent. The bead stands for
+  // the next rank to research, so clicking it selects a real technology and
+  // the info panel is the ordinary one.
   for (const id of fanned) {
-    const ups = ranksUnder(id);
-    ups.forEach((u: TechId, i: number) => {
-      const def = TECHNOLOGIES[u];
-      const line = def.line!;
-      const done = isTechComplete(state, u);
-      const active = isTechActive(state, u);
-      const cls = done ? 'done' : active ? 'active' : canStartTech(state, u) ? 'available'
-        : requirementsMet(state, u) ? 'available' : 'locked';
+    const ups = linesUnder(id);
+    ups.forEach((line: TechLineId, i: number) => {
+      const u = beadRank(state, line);
+      const rank = lineRank(state, line);
+      const maxed = rank >= lineMaxRank(line);
+      const cls = maxed ? 'done' : isTechActive(state, u) ? 'active'
+        : canStartTech(state, u) ? 'available' : 'locked';
       const isSel = selected?.kind === 'tech' && selected.id === u;
-      const hinted = game.uiHint() === `tech:${u}`;
+      const hinted = TECH_LINES[line].some((r) => game.uiHint() === `tech:${r}`);
       const node = el('button', {
         class: `btn tech-node rank ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
-      }, def.glyph);
+      }, TECHNOLOGIES[u].glyph);
       if (canStartTech(state, u)) node.append(el('span', { class: 'node-dot' }));
-      // The line's progress, on every rank of it: "2/5" reads as a ladder
-      // where a bare per-node tick would read as fifteen unrelated things.
-      node.append(el('span', { class: 'lvl' },
-        `${lineRank(state, line)}/${lineMaxRank(line)}`));
+      node.append(el('span', { class: 'lvl' }, `${rank}/${lineMaxRank(line)}`));
       node.addEventListener('click', () => {
         if (consumeSuppressedClick()) return;
         selected = { kind: 'tech', id: u };
