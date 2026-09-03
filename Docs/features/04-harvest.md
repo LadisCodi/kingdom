@@ -83,11 +83,17 @@ cell, globally — prevents double-working.
 
 | Building | Works | Radius by level | Max workers by level |
 |---|---|---|---|
-| **Sawmill** | Forest | 2 / 3 / 4 | 3 / 5 / 7 |
+| **Sawmill** | Forests | 2 / 3 / 4 | 3 / 5 / 7 |
+| **Quarry** | **Mountains** | 2 / 3 / 4 | 3 / 5 |
 | **Farm** | Crops | 1 / 2 | 3 / 5 |
-| **Quarry** | Rocks | 2 / 3 / 4 | 3 / 5 |
 | **Mine** | Iron veins | 2 / 3 / 4 | 3 / 5 |
 | **Docks** | Fish shoals | 4 / 6 | 3 / 5 |
+
+**Wood and Stone are the same mechanic with different art.** The Sawmill takes
+Wood from every forest in range; the Quarry cuts Stone from every mountain in
+range. A district names a harvest source, a feature names the same one, and the
+worker search matches them — so unifying the two was a content change, not an
+engine one ([`01-map-and-fog.md`](01-map-and-fog.md) §3.1).
 
 **Workable cells in range do not cap assignment.** The worker limit is the
 per-level cap; surplus workers wait Idle and pick up work as cells recover, get
@@ -155,6 +161,7 @@ timestamps and build queues resolve in the uncapped tail.
 | Yield per tap, per feature | §3 of [`01-map-and-fog.md`](01-map-and-fog.md) | `Harvest` sheet |
 | Taps to exhaust | 10 (Forest, Crops, Berries, Meat) · 5 (Stone, Fish, Iron) | `Harvest` sheet |
 | Recovery | Forest 90 s · Crops 60 s · Stone 120 s · Iron 300 s | `Harvest` sheet |
+| Which research opens a source | Forestry (Forest, Berries) · Hunting (Meat) · **Scaling Tools (Stone)** | `Harvest.required_tech` |
 | Respawn (finite features) | 120 s | `Harvest.respawn_seconds` |
 | Worker move speed | 1 tile/s | `worker.move_speed_tiles_per_second` |
 | Worker work time | 8 s | `worker.work_seconds` |

@@ -45,7 +45,7 @@ export interface MapValidation {
 }
 
 export const TERRAIN_IDS: TerrainId[] =
-  ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water', 'Mountain'];
+  ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
 export const FEATURE_IDS = Object.keys(FEATURES) as FeatureId[];
 export const LANDMARK_KINDS = Object.keys(LANDMARK_ART) as Array<keyof typeof LANDMARK_ART>;
 

@@ -75,12 +75,16 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
 export const isReachable = (state: GameState, map: MapData, cell: Coord): boolean =>
   neighbors(map, cell).some((n) => state.fog.revealed[coordKey(n)] === true);
 
-/** Exploration gates: sea and mountain cells need their tech before the
- *  player can pay to reveal them (building fog radii ignore this). */
+/** Exploration gate: sea cells need Sailing before the player can pay to
+ *  reveal them (building fog radii ignore this).
+ *
+ *  Mountains used to be gated here too, as a TERRAIN. They are a feature
+ *  now, so Scaling Tools gates WORKING one rather than reaching it — the
+ *  same shape as Forestry on the forest, and a refused tap costs no Mana.
+ *  See Docs/features/01-map-and-fog.md §3. */
 export function explorationGate(map: MapData, cell: Coord): TechId | null {
   const terrain = map.terrain.get(coordKey(cell));
   if (terrain === 'Water') return 'Sailing';
-  if (terrain === 'Mountain') return 'ScalingTools';
   return null;
 }
 

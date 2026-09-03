@@ -28,17 +28,21 @@ follows the shape of the world rather than the shape of the coordinate system.
 
 ## 2. Terrain
 
-Grassland, Plains, Tundra, Snow, Water, Mountain, and Desert (declared, zero
-cells). Terrain decides three things and nothing else: whether a cell is
-buildable, which features may sit on it, and which technology is needed to
-reveal it.
+Grassland, Plains, Tundra, Snow, Water, and Desert (declared, zero cells).
+Terrain decides three things and nothing else: whether a cell is buildable,
+which features may sit on it, and which technology is needed to reveal it.
 
-- **Water** needs **Sailing** to reveal. Unbuildable except by the Docks, a 2×1
-  pier with one cell on land and one on water.
-- **Mountain** needs **Scaling Tools** to reveal. Unbuildable — the northern
-  iron ridge, the eastern peaks, the foothills by the home rocks.
+- **Water** needs **Sailing** to reveal, and is the **only** terrain that gates
+  a reveal. Unbuildable except by the Docks, a 2×1 pier with one cell on land
+  and one on water.
 - A building's own fog radius **ignores** the tech gate; only a player's reveal
   tap is refused.
+
+> **A mountain is a feature, not a terrain**, and that is a deliberate
+> unification (§3). Ground is ground; what makes a cell unbuildable is the thing
+> standing on it. The old `Mountain` terrain needed a placement rule of its own
+> saying "nothing builds here", which said exactly what the feature check
+> already said — so the model lost an id *and* a rule at once.
 
 ## 3. Features
 
@@ -52,14 +56,45 @@ per biome ([`03-economy.md`](03-economy.md) §2).
 | **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
-| **Rocks** | Stone | 1 | 5 | 120 s | — |
+| **Mountain** | Stone | 1 | 5 | 120 s | **Scaling Tools** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
 | **Iron vein** | Stone | **3** | 5 | 300 s | — |
 
 Wild game pays three times a berry bush, which is what makes hunting worth a
 technology of its own. An iron vein is a **rich Stone node** — 3 a tap against a
-plain rock's 1, so a vein pays 15 a worker cycle where a rock pays 5, visibly
+mountain's 1, so a vein pays 15 a worker cycle where a mountain pays 5, visibly
 worth the walk at the far end of the fog curve where it has always sat.
+
+### 3.1 Stone works exactly like Wood
+
+> **The Quarry cuts Stone from every mountain in its area of influence, the way
+> the Sawmill takes Wood from every forest in its own.**
+
+One sentence, and it needed no new machinery: a district names a **harvest
+source**, a feature names the same one, and the worker search already matches
+them. What changed is the content model — `Mountain` stopped being a terrain and
+became the feature that pays Stone, replacing `Rocks`.
+
+Three things fall out, and all three are simplifications:
+
+- **The unbuildable rule disappears.** A feature already blocks a footprint, so
+  "nothing builds on a mountain" stopped needing to be said twice.
+- **Scaling Tools moves from reaching a mountain to working one** — the exact
+  shape Forestry has on the forest. The mountain is visible and refusing from
+  the first second, which is what makes the research something the player
+  *wants* rather than a chore, and **a refused tap costs no Mana**.
+- **Water becomes the only reveal gate**, so §5's tech gating has one rule
+  instead of two.
+
+**An iron vein is now a mountain with different art**, since a vein already paid
+Stone and the Mine is already a second Quarry pointed at a second stone feature.
+That redundancy is deferred rather than resolved —
+[`../open-questions.md`](../open-questions.md) OQ-51.
+
+The cost, stated plainly: **stone is now gated behind a technology where it used
+to be free to tap.** The chain absorbs it — Scaling Tools is quest 28 and the
+first thing priced in Stone is the Barracks at quest 31 — but that ordering is
+now load-bearing and a test derives it from the map rather than trusting it.
 
 **A finite feature respawns rather than dying.** `respawnTerrain` decides where:
 shoals wander across water exactly as berries wander on grass. Placement is a

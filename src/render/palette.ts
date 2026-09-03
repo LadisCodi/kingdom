@@ -9,7 +9,6 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
   Snow: '#dfe7ec',
   Tundra: '#8b9a94',
   Water: '#2e5d8a',
-  Mountain: '#6b6f78',
 };
 
 export const PALETTE = {

@@ -43,8 +43,8 @@ and carries the three global upgrades. Five branches leave it.
 | **Civics** | Urban Planning (Housing L2) → Communities (+1 bed everywhere) → Architecture (Townhall L3) |
 | **Economics — wood** | Saws (the Sawmill) · Hunting (the wild-game tap) |
 | **Economics — farm** | Agriculture (FarmLands **and** the Farm) → Farming (Farm L2) · Agriculture → Market |
-| **Economics — stone** | Masonry (Quarry) → Mining (Mine) → Deep Mining (Mine L2) · Masonry → Engineering (Quarry L2, Sawmill L3) |
-| **Exploration** | Cartography (**every fog tap counts double**) → Sailing (water) → Fishing (Docks) → Shipbuilding (Docks L2) · Cartography → Scaling Tools (mountains) |
+| **Economics — stone** | **Scaling Tools** (mountains answer a pick) → Masonry (Quarry) → Mining (Mine) → Deep Mining (Mine L2) · Masonry → Engineering (Quarry L2, Sawmill L3) |
+| **Exploration** | Cartography (**every fog tap counts double**) → Sailing (water) → Fishing (Docks) → Shipbuilding (Docks L2) |
 | **Military** | Warrior (Barracks) → Spears (Spear Hall) · Archery (Shooting Grounds) → Warband · Cavalry (Stables) |
 | **Arcana** | Attunement (the Sanctum, the second attunement slot, Resonance) |
 
@@ -52,7 +52,17 @@ Two shapes here are deliberate and easy to undo by accident:
 
 - **Chopping by hand and automating it are two separate decisions**, ten
   onboarding beats apart. That is why **Saws** hangs off Forestry separately
-  rather than Forestry unlocking the Sawmill.
+  rather than Forestry unlocking the Sawmill. **Stone repeats the pattern
+  exactly**: Scaling Tools opens a mountain to the pick, Masonry unlocks the
+  Quarry that automates it. Masonry cannot come first, or researching it would
+  hand the player a Quarry with nothing to quarry — the same lie as a node that
+  unlocks nothing.
+- **Scaling Tools left the exploration branch**, because it no longer gates
+  reaching anything: mountains became a feature, so it gates *working* one
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §3.1). Its upgrade **Pitons** stayed
+  behind with the fog and now hangs off Cartography, beside Surveying — which is
+  where the two of them always belonged, since one discounts the Gold a cell
+  costs and the other buys back the taps.
 - **Agriculture unlocks the Farm as well as FarmLands** — one research, so
   nothing sits between tapping a plot and automating it. When it took over the
   Farm, `Farming` inherited the level-2 gate and **Crop Rotation was retired**:
@@ -91,7 +101,7 @@ all.
 | Sawpits · Irrigation · Stonecutting · Big Nets · Iron Picks | their line | +1 per delivery | 3 |
 | Butchery · Scythes | Hunting · Farming | +1 per collect tap | 3 |
 | Surveying | Cartography | +1 more cell per fog tap | 2 |
-| Pitons | Scaling Tools | −10% on the Gold a cell costs | 2 |
+| Pitons | Cartography | −10% on the Gold a cell costs | 2 |
 | MarketStall | Market | +5% sale prices | 4 |
 | TradeRoutes | Market | +10% tax income | 5 |
 | Resonance | Attunement | −20% on a relic's Mana cast cost | 2 |

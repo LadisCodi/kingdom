@@ -330,7 +330,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, questWith('Trees', 2));
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null }); // bare ground
-      recordQuestEvent(state, { kind: 'reveal', feature: 'Rocks' }); // wrong one
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Mountain' }); // wrong one
       expect(state.quests.progress).toBe(0);
       recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
       expect(state.quests.progress).toBe(1);

@@ -62,8 +62,9 @@ export function placementBlock(
     if (sitting && sitting.uniqueId !== movingId) return 'Occupied';
     // Only the Docks (which checks its own land+water mix) may touch Water.
     if (definitionId !== 'Docks' && map.terrain.get(coordKey(c)) === 'Water') return 'NeedsLand';
-    // Nothing builds on a Mountain — it's territory to explore, not settle.
-    if (map.terrain.get(coordKey(c)) === 'Mountain') return 'NeedsLand';
+    // Mountains needed a rule of their own while they were a TERRAIN. They
+    // are a feature now, so the HasFeature check above already refuses
+    // them — one rule instead of two saying the same thing.
   }
   if (
     movingId === undefined &&

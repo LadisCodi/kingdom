@@ -23,8 +23,12 @@ export type DistrictId =
 export type RegionId = 'oakville';
 
 export type TerrainId =
-  | 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water' | 'Mountain';
-export type FeatureId = 'Trees' | 'BerryBush' | 'WildAnimals' | 'Rocks' | 'FishShoal' | 'IronVein';
+  | 'Grassland' | 'Plains' | 'Desert' | 'Snow' | 'Tundra' | 'Water';
+// A mountain is a FEATURE, not a terrain: the Quarry works it the way the
+// Sawmill works a forest, and `state.features` already keeps a cell
+// unbuildable without a terrain rule of its own.
+export type FeatureId =
+  | 'Trees' | 'BerryBush' | 'WildAnimals' | 'Mountain' | 'FishShoal' | 'IronVein';
 export type HarvestSourceId = 'Forest' | 'Crops' | 'Berries' | 'Meat' | 'Stone' | 'Fish' | 'Iron';
 export type UnitId = 'Warrior' | 'Lancer' | 'Archer' | 'Cavalry';
 export type LandmarkKind = 'Shrine' | 'StandingStones' | 'Leyspring';

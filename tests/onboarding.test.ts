@@ -298,14 +298,15 @@ describe('the chain never asks for a building the city cannot hold', () => {
   });
 });
 
-// Every rock and every iron vein now sits on MOUNTAIN terrain, which cannot be
-// revealed — and so cannot be tapped or worked — until Scaling Tools. That
-// makes Stone and Iron mid-game materials, and it makes the chain's ORDER
-// load-bearing in a way it was not before: a quest asking for a building
-// priced in Stone before that research is a wall the player cannot see coming.
+// Stone comes out of mountains, and a mountain does not answer a pick until
+// Scaling Tools — the same shape as Forestry on the forest. That makes Stone a
+// mid-game material and it makes the chain's ORDER load-bearing: a quest asking
+// for a building priced in Stone before that research is a wall the player
+// cannot see coming.
 //
-// Derived from the map's own terrain rather than a hand-written list, so
-// moving a feature onto or off a mountain re-checks the whole chain by itself.
+// Derived from the map and the harvest table rather than a hand-written list,
+// so re-gating a source or moving a feature re-checks the whole chain by
+// itself.
 describe('the chain never asks for a material the map cannot yet yield', () => {
   it('orders every gated material cost after the research that opens it', () => {
     // currency -> the tech you need before ANY cell yields it. A single
@@ -315,9 +316,10 @@ describe('the chain never asks for a material the map cannot yet yield', () => {
       const source = FEATURES[feature].source;
       if (source === null) continue;
       const currency = HARVEST[source].currencyId;
-      const terrain = map.terrain.get(key);
-      const tech: TechId | null = terrain === 'Mountain' ? 'ScalingTools'
-        : terrain === 'Water' ? 'Sailing' : null;
+      // Two gates can stand between a player and a cell: the source's own
+      // research (working it) and the terrain's (reaching it at all).
+      const tech: TechId | null = HARVEST[source].requiredTech
+        ?? (map.terrain.get(key) === 'Water' ? 'Sailing' : null);
       if (tech === null || gate.get(currency) === null) gate.set(currency, null);
       else if (!gate.has(currency)) gate.set(currency, tech);
     }

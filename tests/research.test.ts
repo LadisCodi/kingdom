@@ -107,13 +107,15 @@ describe('research slots', () => {
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
-    expect(startTech(state, 'Masonry', T0)).toBe('NoFreeSlot');
+    // Hunting, not Masonry: Masonry sits behind Scaling Tools now, so it would
+    // fail on its REQUIREMENT and never reach the slot check this test is about.
+    expect(startTech(state, 'Hunting', T0)).toBe('NoFreeSlot');
 
     expect(slotGemCost(state)).toBe(10);
     expect(buySlot(state)).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
     expect(techSlots(state)).toBe(2);
-    expect(startTech(state, 'Masonry', T0)).toBe('Started');
+    expect(startTech(state, 'Hunting', T0)).toBe('Started');
 
     // Escalating price for the next one — and 0 gems left.
     expect(slotGemCost(state)).toBe(30);

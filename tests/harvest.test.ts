@@ -8,12 +8,12 @@
 // free, so test setup and the sim can harvest without minting energy; only
 // `collectTap`, the thing a finger drives, pays.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, HARVEST, TAP } from '../src/sim/data/definitions';
+import { DISTRICTS, FEATURES, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import {
   collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
 } from '../src/sim/harvest';
-import { getWallet, type Coord } from '../src/sim/state';
+import { getWallet, parseCoordKey, type Coord } from '../src/sim/state';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import {
   addBuilt, BERRIES, canGather, completeTech, FOREST, freshGame, freshPresenter, map,
@@ -185,6 +185,8 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
+      // Stone comes out of mountains, and Scaling Tools is what opens one.
+      Stone: 'ScalingTools',
     });
   });
 });
@@ -247,5 +249,48 @@ describe('tapping a crop plot', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBe(before);
     const district = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
     expect(game.inspectedDistrictId).toBe(district.uniqueId);
+  });
+});
+
+// Mountains used to be a TERRAIN gated by Scaling Tools at REVEAL time. They
+// are a feature now, and the gate moved to working one — the same shape
+// Forestry has on the forest, and for the same reason: the mountain is visible
+// and refusing from the first second, so the research is something the player
+// wants rather than a chore. Docs/features/01-map-and-fog.md §3.
+describe('a mountain does not answer a pick until Scaling Tools', () => {
+  /** Found rather than pinned: the region is repainted often, and a moved
+   *  mountain is not a broken gate. */
+  const someMountain = (): Coord | null => {
+    for (const [key, feature] of [...map.initialFeatures].sort()) {
+      if (feature === 'Mountain') return parseCoordKey(key);
+    }
+    return null;
+  };
+
+  it('refuses the tap, charges no Mana, then works once researched', () => {
+    const peak = someMountain();
+    expect(peak, 'the map holds no Mountain feature to test the gate with').not.toBeNull();
+    const state = freshGame();
+    reveal(state, [peak!]);
+
+    const before = mana(state);
+    expect(collectTap(state, map, peak!, T0)).toBe('TechLocked');
+    // A tap a technology refused is a tap that cost nothing.
+    expect(mana(state)).toBe(before);
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(0);
+
+    completeTech(state, 'ScalingTools');
+    expect(collectTap(state, map, peak!, T0)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(HARVEST.Stone.yieldPerTap);
+    expect(mana(state)).toBe(before - TAP.manaCost);
+  });
+
+  it('is what the Quarry works, so the Quarry needs the same research', () => {
+    // The Quarry's source and the mountain's source are the same row: that
+    // single link is what makes "the Quarry cuts stone from every mountain in
+    // range" true without a rule of its own.
+    expect(DISTRICTS.Quarry.harvestSource).toBe('Stone');
+    expect(FEATURES.Mountain.source).toBe('Stone');
+    expect(HARVEST.Stone.requiredTech).toBe('ScalingTools');
   });
 });

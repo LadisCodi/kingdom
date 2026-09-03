@@ -616,7 +616,7 @@
       "tapsToExhaust": 5,
       "recoverySeconds": 120,
       "respawnSeconds": 0,
-      "requiredTech": null
+      "requiredTech": "ScalingTools"
     },
     "Fish": {
       "yieldPerTap": 2,
@@ -814,7 +814,7 @@
       },
       "durationSeconds": 45,
       "requires": [
-        "Forestry"
+        "ScalingTools"
       ]
     },
     "Mining": {
@@ -886,7 +886,7 @@
       },
       "durationSeconds": 60,
       "requires": [
-        "Cartography"
+        "Forestry"
       ]
     },
     "Warrior": {
@@ -1006,7 +1006,7 @@
       "costGrowth": 2.5,
       "maxLevel": 2,
       "effectPerLevel": 0.1,
-      "requiredTech": "ScalingTools"
+      "requiredTech": "Cartography"
     },
     "MarketStall": {
       "costBase": 100,

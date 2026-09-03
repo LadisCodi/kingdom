@@ -308,7 +308,7 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     ...rules,
     id: 'Quarry',
     name: 'Quarry',
-    description: 'Sends workers to cut Stone from Rocks within its area of influence.',
+    description: 'Sends workers to cut Stone from the mountains within its area of influence.',
     glyph: '⛏️',
     sprite: 'quarry',
     harvestSource: 'Stone',
@@ -421,9 +421,14 @@ export const FEATURES: Record<FeatureId, FeatureDef> = {
     id: 'Trees', name: 'Forest', glyph: '🌲', exhaustedGlyph: '🪵',
     sprite: 'forest', source: 'Forest', respawnTerrain: 'Grassland',
   },
-  Rocks: {
-    id: 'Rocks', name: 'Rocks', glyph: '🪨', exhaustedGlyph: '🧱',
-    sprite: 'rocks', source: 'Stone', respawnTerrain: 'Grassland',
+  // A mountain is where Stone comes from, and the Quarry works every one in
+  // range exactly as the Sawmill works every forest. It replaced the `Rocks`
+  // feature and the `Mountain` TERRAIN at once: the ground under a peak is
+  // ordinary, and what makes the cell unbuildable is the feature sitting on
+  // it — which `placementBlock` already refused before this existed.
+  Mountain: {
+    id: 'Mountain', name: 'Mountain', glyph: '🏔️', exhaustedGlyph: '🧱',
+    sprite: 'mountain', source: 'Stone', respawnTerrain: 'Grassland',
   },
   IronVein: {
     id: 'IronVein', name: 'Iron vein', glyph: '⛰️', exhaustedGlyph: '🕳️',
@@ -561,33 +566,44 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     node: { x: -2, y: 1 },
   }, balance.technologies.Market),
   // ---- economics: stone side (upper left, row −1)
+  // Scaling Tools heads the stone line now: it opens a mountain to the pick
+  // the way Forestry opens the forest, and Masonry automates it the way Saws
+  // does. Two decisions, and Masonry cannot come first or it would hand the
+  // player a Quarry with nothing to quarry.
+  ScalingTools: tech({
+    id: 'ScalingTools',
+    name: 'Scaling Tools',
+    description: 'Ropes and pitons — the mountains can be worked for Stone.',
+    glyph: '🧗',
+    node: { x: -1, y: -1 },
+  }, balance.technologies.ScalingTools),
   Masonry: tech({
     id: 'Masonry',
     name: 'Masonry',
-    description: 'Unlocks the Quarry — its workers cut Stone from nearby rocks.',
+    description: 'Unlocks the Quarry — its workers cut Stone from the mountains.',
     glyph: '🧱',
-    node: { x: -1, y: -1 },
+    node: { x: -2, y: -1 },
   }, balance.technologies.Masonry),
   Mining: tech({
     id: 'Mining',
     name: 'Mining',
     description: 'Unlocks the Mine — its workers dig Iron, the army\'s metal.',
     glyph: '⛏️',
-    node: { x: -2, y: -1 },
+    node: { x: -3, y: -1 },
   }, balance.technologies.Mining),
   Engineering: tech({
     id: 'Engineering',
     name: 'Engineering',
     description: 'Cranes and gears — Quarry level 2 and Sawmill level 3.',
     glyph: '⚙️',
-    node: { x: -1, y: -2 },
+    node: { x: -2, y: -2 },
   }, balance.technologies.Engineering),
   DeepMining: tech({
     id: 'DeepMining',
     name: 'Deep Mining',
     description: 'Braced shafts — the Mine reaches level 2.',
     glyph: '🕯️',
-    node: { x: -3, y: -1 },
+    node: { x: -4, y: -1 },
   }, balance.technologies.DeepMining),
   // ---- exploration (right)
   //
@@ -596,7 +612,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Cartography: tech({
     id: 'Cartography',
     name: 'Cartography',
-    description: 'Survey and chart — every tap on the fog counts double. Opens rock and water.',
+    description: 'Survey and chart — every tap on the fog counts double. Opens the water.',
     glyph: '🗺️',
     node: { x: 2, y: 0 },
   }, balance.technologies.Cartography),
@@ -621,13 +637,6 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🛶',
     node: { x: 5, y: 0 },
   }, balance.technologies.Shipbuilding),
-  ScalingTools: tech({
-    id: 'ScalingTools',
-    name: 'Scaling Tools',
-    description: 'Ropes and pitons — mountain cells can be explored.',
-    glyph: '🧗',
-    node: { x: 2, y: 1 },
-  }, balance.technologies.ScalingTools),
   // ---- military (down)
   Warrior: tech({
     id: 'Warrior',

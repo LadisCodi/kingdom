@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER,
+  DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, recordVisibleSites, revealAroundDistrict,
@@ -18,16 +18,45 @@ import { coordKey, getWallet, parseCoordKey, type Coord } from '../src/sim/state
 const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
 
+/** A land cell touching water, and the water beside it — in reading order, so
+ *  the answer is stable for a given map without being written down. */
+function firstShore(): { land: Coord; sea: Coord } | null {
+  const cells = [...map.terrain.keys()].map(parseCoordKey)
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+  for (const land of cells) {
+    if (map.terrain.get(coordKey(land)) === 'Water') continue;
+    for (const d of [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }]) {
+      const sea = { x: land.x + d.x, y: land.y + d.y };
+      if (map.terrain.get(coordKey(sea)) === 'Water') return { land, sea };
+    }
+  }
+  return null;
+}
+
 describe('map data', () => {
-  it('loads 342 terrain cells across six biomes and 42 features', () => {
-    expect(map.terrain.size).toBe(342);
-    expect([...map.terrain.values()].filter((t) => t === 'Grassland').length).toBe(91);
-    expect([...map.terrain.values()].filter((t) => t === 'Plains').length).toBe(23);
-    expect([...map.terrain.values()].filter((t) => t === 'Snow').length).toBe(18);
-    expect([...map.terrain.values()].filter((t) => t === 'Mountain').length).toBe(30);
-    expect([...map.terrain.values()].filter((t) => t === 'Water').length).toBe(171);
-    expect([...map.terrain.values()].filter((t) => t === 'Tundra').length).toBe(9);
-    expect(map.initialFeatures.size).toBe(42);
+  // A per-biome census had to be hand-corrected after every paint, and it
+  // guaranteed nothing: `regionMap.test.ts` already proves the map is LEGAL.
+  // What nobody was checking is the thing that actually breaks the game —
+  // a map that is perfectly legal and still leaves a worker building with
+  // nothing to work. See Docs/open-questions.md OQ-50.
+  it('loads, and every district that sends workers out has something to work', () => {
+    expect(map.terrain.size).toBeGreaterThan(0);
+    expect(map.initialFeatures.size).toBeGreaterThan(0);
+
+    const onMap = new Set(
+      [...map.initialFeatures.values()].map((f) => FEATURES[f].source),
+    );
+    // A crop plot IS its own Crops cell, so that source is built rather than
+    // authored and never shows up as a map feature.
+    const built = new Set(Object.values(DISTRICTS)
+      .map((d) => d.providesHarvestSource).filter((s) => s !== null));
+    for (const def of Object.values(DISTRICTS)) {
+      const source = def.harvestSource;
+      if (source === null || built.has(source)) continue;
+      expect(onMap.has(source),
+        `the ${def.name} works ${source} and the map holds no cell of it`)
+        .toBe(true);
+    }
   });
   it('4-neighbor adjacency: distance 0 across the 2x2 footprint, 2 diagonal from it', () => {
     expect(townhallDistance(map, { x: 0, y: 0 })).toBe(0);
@@ -64,8 +93,7 @@ describe('paying to reveal', () => {
   it('accumulates 1 Gold per tap and reveals when total cost is met', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 50; // the start has 0 Gold
-    // Distance 2 from the footprint → cost 3. Must be an UNGATED terrain:
-    // (3,0) is Mountain and now needs Scaling Tools (see the gates block below).
+    // Distance 2 from the footprint → cost 3, on ungated ground.
     const cell = { x: 3, y: 1 };
     expect(revealTap(state, map, cell)).toBe('Paid');
     expect(revealTap(state, map, cell)).toBe('Paid');
@@ -123,25 +151,20 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
   it('sea cells are locked until Sailing is researched', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
-    const sea = { x: -3, y: 0 };
+    // Water is the ONE remaining reveal gate (mountains became a feature, so
+    // Scaling Tools gates working one instead — see explorationGate). The
+    // cell is found rather than pinned: the coastline moves whenever the
+    // region is repainted, and a moved coast is not a broken gate.
+    const shore = firstShore();
+    expect(shore, 'the map has no land cell touching water').not.toBeNull();
+    const { land, sea } = shore!;
     // Stand on the shore first: the frontier rule is a separate gate, and
-    // this test is about the TECH one. Clearing the shore also DISCOVERS the
-    // sea beside it, which the Townhall's radius-2 no longer reaches.
-    state.fog.revealed[coordKey({ x: -2, y: 0 })] = true;
+    // this test is about the TECH one.
+    state.fog.revealed[coordKey(land)] = true;
     expect(fogState(state, map, sea)).toBe('Discovered');
     expect(revealTap(state, map, sea)).toBe('TechLocked');
     state.research.completed.push('Sailing');
     expect(revealTap(state, map, sea)).toBe('Paid');
-  });
-
-  it('mountain cells are locked until Scaling Tools is researched', () => {
-    const state = newGame(map, NOW);
-    state.city.wallet.Gold = 5000;
-    const peak = { x: 0, y: -9 }; // the northern ridge
-    state.fog.revealed[coordKey({ x: 0, y: -8 })] = true; // walk the frontier up
-    expect(revealTap(state, map, peak)).toBe('TechLocked');
-    state.research.completed.push('ScalingTools');
-    expect(revealTap(state, map, peak)).toBe('Paid');
   });
 });
 

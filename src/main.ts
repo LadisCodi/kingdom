@@ -250,7 +250,7 @@ async function boot(): Promise<void> {
     const terrain = map.terrain.get(coordKey(center));
     if (terrain === undefined) return lastBiome;
     lastBiome = terrain === 'Water' ? 'coast'
-      : terrain === 'Snow' || terrain === 'Tundra' || terrain === 'Mountain' ? 'snow' : 'meadow';
+      : terrain === 'Snow' || terrain === 'Tundra' ? 'snow' : 'meadow';
     return lastBiome;
   };
 
