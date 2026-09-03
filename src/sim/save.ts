@@ -164,9 +164,15 @@ export function serialize(state: GameState, now: number): SaveFile {
         ],
       },
       'kingdom.kingdoms': {
-        MaxBuilders: state.kingdom.maxBuilders,
+        // The DTO key stays `MaxBuilders` even though the field was renamed
+        // to `builders`: changing it would need a migrator to buy nothing.
+        MaxBuilders: state.kingdom.builders,
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
+        Daily: {
+          LadderStep: state.kingdom.daily.ladderStep,
+          LastClaimedDay: state.kingdom.daily.lastClaimedDay,
+        },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
@@ -410,10 +416,18 @@ export function deserialize(
 
   const kingdomDto = modules['kingdom.kingdoms'];
   if (kingdomDto) {
-    state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
+    state.kingdom.builders = kingdomDto.MaxBuilders ?? state.kingdom.builders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
+    // Additive: a save written before the chest existed has no Daily block and
+    // the defaults below start the ladder at zero, which is exactly right for
+    // a player meeting it for the first time. No migrator (engine-seams §4).
+    const daily = kingdomDto.Daily as { LadderStep?: number; LastClaimedDay?: number | null };
+    if (daily) {
+      state.kingdom.daily.ladderStep = daily.LadderStep ?? 0;
+      state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
+    }
   }
 
   const fogDto = modules['kingdom.fogOfWar'];

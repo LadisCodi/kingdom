@@ -1,0 +1,102 @@
+/* The daily chest: the pill that waits, and the ladder it opens.
+ *
+ * Docs/features/habit-loop.md §1. The visual job here is unusual — most
+ * progress UI exists to create urgency, and this one exists to remove it. So:
+ * no countdown, no timer bar, nothing red, and the rungs behind you stay lit
+ * rather than greying out. What the player should read off it is "look how far
+ * I have got", never "look what I am about to lose". */
+
+/* --------------------------------------------------------------- the pill */
+
+/* Under the header, above the quest scroll's corner — its own row in the #ui
+ * flex column, so it never lands on the settings knob (which is why #delves
+ * carries a right padding; this one is narrow enough not to need one). */
+#daily { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+#daily[hidden] { display: none; }
+
+.dly-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 10px;
+  border: 3px solid var(--gold-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  /* A glow, not a bob: the quest scroll already bobs when it is claimable and
+     two things bobbing at once is a busy screen. */
+  animation: dly-glow 2s ease-in-out infinite;
+}
+.dly-pill:hover { filter: brightness(1.04); }
+.dly-pill:active { transform: translateY(2px); box-shadow: none; }
+@keyframes dly-glow {
+  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 14px rgba(242, 178, 51, 0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dly-pill { animation: none; }
+}
+.dly-pill-body { display: flex; flex-direction: column; }
+.dly-pill-title { font-family: var(--font-body); font-size: var(--text-body); }
+.dly-pill-day { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* -------------------------------------------------------------- the sheet */
+
+.dly { display: flex; flex-direction: column; gap: 12px; }
+.dly-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+
+/* Seven rungs across. They have to fit one row at 402px without scrolling —
+   the ladder read as a whole is the entire point, and a ladder you have to
+   swipe is a list. */
+.dly-ladder { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.dly-rung {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+/* Behind you: LIT, not greyed. A claimed day is something you have. */
+.dly-rung.is-claimed { background: var(--leaf); border-color: var(--leaf-dark); }
+.dly-rung.is-today {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 0 3px var(--gold), 0 2px 0 rgba(60, 36, 18, 0.3);
+}
+/* The week marker, which is where the Gems are. */
+.dly-rung.is-marker { border-style: double; border-width: 4px; }
+.dly-rung-day {
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+  /* The day number has to survive a 50px column, so it loses the word. */
+  white-space: nowrap;
+}
+.dly-rung.is-claimed .dly-rung-day,
+.dly-rung.is-today .dly-rung-day { color: var(--ink); }
+.dly-rung-prize { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+
+.dly-prize {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Today's haul, large, under the button that takes it. */
+.dly-today {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: var(--text-body);
+}
+.dly-today .dly-prize { font-size: var(--text-body); }
+.dly-claim { display: flex; }
+.dly-claim .k-btn { flex: 1; }

@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, collectTap,
+  advance, builderGemCost, buyBuilder, canAfford, cancelQueueItem, changeWorkers, collectTap,
   enqueueBuild, finishWithGems, moveDistrict, townhallTap, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
@@ -58,16 +58,19 @@ import {
   anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
 } from './sim/upgrades';
 import {
-  coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
   type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type UpgradeId, type Wallet,
 } from './sim/state';
+import {
+  chestAvailable, chestReward, claimDailyChest, ladderLength, nextStep,
+} from './sim/daily';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { QUESTS, type QuestDef } from './sim/data/definitions';
+import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { Villagers } from './render/villagers';
@@ -93,7 +96,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer';
+  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder' | 'daily';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -804,6 +807,52 @@ export class Game {
   // ------------------------------------------------------------- ad offers
 
   /** The standing offer, or null. Drives the widget and the popup. */
+  // ------------------------------------------------------------ daily chest
+
+  /**
+   * Today's chest, or null when it has already been taken.
+   *
+   * `ladder` is the whole cycle rather than just this step, because the sheet
+   * draws it: a ladder you can see is what makes step 5 feel like somewhere
+   * you got to rather than a number in a corner.
+   */
+  dailyChest(): {
+    step: number;
+    length: number;
+    reward: Wallet;
+    ladder: Array<{ step: number; reward: Wallet; claimed: boolean; isToday: boolean }>;
+  } | null {
+    if (!chestAvailable(this.state, this.now())) return null;
+    const step = nextStep(this.state);
+    const length = ladderLength();
+    return {
+      step,
+      length,
+      reward: chestReward(this.state, step),
+      ladder: Array.from({ length }, (_, i) => ({
+        step: i + 1,
+        reward: chestReward(this.state, i + 1),
+        // Everything before today's step in THIS cycle is already taken.
+        claimed: i + 1 < step,
+        isToday: i + 1 === step,
+      })),
+    };
+  }
+
+  doClaimDailyChest(): void {
+    const chest = this.dailyChest();
+    if (chest === null) return;
+    if (claimDailyChest(this.state, this.now()) !== 'Claimed') return;
+    playSfx('quest');
+    this.setOverlay(null);
+    // The reward is the point, so it is said out loud rather than left to be
+    // spotted in the header.
+    const parts = (Object.entries(chest.reward) as Array<[CurrencyId, number]>)
+      .map(([c, n]) => `+${n} ${c}`);
+    this.toast(parts.join(' · '));
+    this.notify();
+  }
+
   adOffer(): { reward: number } | null {
     return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
   }
@@ -858,8 +907,50 @@ export class Game {
       this.mode = { kind: 'normal' };
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      this.offerBuilder();
     } else {
-      this.toast(result === 'QueueFull' ? 'Build queue is full' : result);
+      this.toast(result);
+    }
+    this.notify();
+  }
+
+  /**
+   * Every builder is busy. Offer one more for Gems.
+   *
+   * The popup is raised from the REFUSAL rather than from a store tab,
+   * because that is the only moment the player has already decided they want
+   * the thing — `Docs/features/builders.md`. It opens at the ceiling too: the
+   * sheet then explains why there is nothing to buy, which is a better answer
+   * than a toast the player has to read in the corner of their eye.
+   *
+   * Placement mode is deliberately LEFT OPEN behind it. Dismissing the offer
+   * puts the player back on the ghost they had positioned, so declining costs
+   * them nothing they had already done.
+   */
+  offerBuilder(): void {
+    playSfx('error');
+    this.setOverlay('builder');
+  }
+
+  builderOffer(): { builders: number; ceiling: number; cost: number; affordable: boolean } {
+    const cost = builderGemCost(this.state);
+    return {
+      builders: builderCount(this.state),
+      ceiling: KINGDOM_DEF.maxBuilders,
+      cost,
+      affordable: this.walletValue('Gems') >= cost,
+    };
+  }
+
+  doBuyBuilder(): void {
+    const result = buyBuilder(this.state);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      this.setOverlay(null);
+      this.toast('A builder joins your kingdom');
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
     }
     this.notify();
   }
@@ -897,6 +988,10 @@ export class Game {
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
       this.shake(Object.keys(DISTRICTS[d.definitionId].upgradeCost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      // An upgrade occupies a builder exactly as a build does, so it hits the
+      // same wall and deserves the same offer rather than a bare refusal.
+      this.offerBuilder();
     } else if (result !== 'Started') {
       this.toast(result);
     }
@@ -1964,7 +2059,7 @@ export class Game {
   hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
-      const max = this.state.kingdom.maxBuilders;
+      const max = builderCount(this.state);
       return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
     }
     // Staffing something → workers assigned vs. the whole workforce.

@@ -13,12 +13,18 @@
 > endgame, the army cap moves out of the Townhall, and most of the "future work"
 > list is now designed. The three-era arc itself stands.
 >
-> **Update (implementation):** the housing capacity is fixed. The workbook now
-> ships `[1, 2]` — the value this document always documented and derived every
-> pacing number from — so the income tables below are correct again rather than
-> 2–3x optimistic. The house tap is bounded by a collection cycle too, so "tap
-> income" is capped at `taxes.tap_boost_seconds` of *city* income per cycle
-> instead of scaling without limit.
+> **Update (implementation), verified 2026-09-02.** The housing capacity is
+> fixed: the workbook ships `[1, 2]`, the value this document always assumed
+> and derived every pacing number from. **The income tables below have now been
+> recomputed against the workbook rather than merely annotated** — at
+> `taxes.goldPerPopulationPerMinute` 30, TH1 with two level-1 Houses is
+> 2 villagers × 30 = **60 Gold/min idle**, which is what they say. They hold.
+> (`balancing-v3.md` §4.)
+>
+> The house-tap bound has changed shape since: there is no per-building
+> collection cycle any more, and every tap in the game — houses included — pays
+> `tap.boostSeconds` (45 s) of that building's own production, floored at the
+> authored yield, for 1 Mana. See [`harvest-loop.md`](harvest-loop.md) §2.
 
 The first deliberate balance pass. Before it the progression was flat: 8 of
 10 technologies hung directly off Forestry, the Townhall stopped at level 2,
@@ -84,12 +90,11 @@ Housing capacity is now **per level** (`population_capacity` is a list:
 `1,2`) — a level-2 house holds 2 villagers, so Urban Planning doubles the tax
 base without new map footprint (and without new crowding penalties).
 
-> **DATA DRIFT, resolved 2026-09-02.** The shipped workbook carries `2,4`, not
-> the `1,2` this document assumes, so the real Townhall-3 population cap is 30
-> rather than 12 and idle income is 900 Gold/min rather than 360. **Every income
-> and pacing figure in this file is therefore 2–3× optimistic as written.**
-> `balancing-v2.md` §1.4 adopts the documented `1,2`; the tables here become
-> correct again once that lands.
+> **DATA DRIFT — CLOSED 2026-09-02.** The workbook briefly carried `2,4`
+> instead of the `1,2` this document assumes, which would have made every
+> income figure here 2–3× optimistic. `balancing-v2.md` §1.4 adopted the
+> documented `1,2` and it shipped, so the figures below are correct as
+> written. Nothing in this file needs the discount any more.
 
 ## Retuned numbers
 
@@ -97,6 +102,9 @@ base without new map footprint (and without new crowding penalties).
   collect cooldown active tapping is now ~5× idle income (was 10×), so the
   sinks below keep their weight. Income: TH1 ≈ 60 g/min idle / ~300
   tapping; TH2 with Urban Planning (8 housed) ≈ 240 idle / ~1,200 tapping.
+  *(The dial is gone — `taxes.tap_boost_seconds` was folded into the global
+  `tap.boostSeconds` of 45 s. The idle figures stand; the tapping multiples
+  are era-one history.)*
 - **2nd-instance cliff softened** for Sawmill/Quarry/Docks/Mine:
   `build_cost_multiplier` 4 → 2.5, exponent 1.45 → 1.15. The 2nd instance
   now costs ×5.5 instead of ×10.9 (Sawmill 20 → 110 → 353). Farm base

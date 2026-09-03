@@ -1261,6 +1261,10 @@ export const GACHA = balance.gacha;
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;
 
+/** The daily chest ladder — Docs/features/habit-loop.md §1.2. Three parallel
+ *  lists, one per reward kind; their length IS the length of the ladder. */
+export const DAILY = balance.daily;
+
 // ------------------------------------------------------------ the timeline
 
 /**
@@ -1346,4 +1350,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/features/engine-seams.md §4).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;

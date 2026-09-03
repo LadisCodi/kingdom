@@ -221,10 +221,29 @@ export interface GameState {
   regionId: RegionId;
   city: City;
   kingdom: {
-    maxBuilders: number;
+    /** How many builders the kingdom OWNS — the number of build/upgrade jobs
+     *  that run at once, and the length of the queue that feeds them.
+     *
+     *  Not to be confused with `KINGDOM_DEF.maxBuilders`, which is the
+     *  authored CEILING this may be raised to. That collision of names is why
+     *  the dial sat dead: the workbook authors 4, `startBuilders` is 1, and
+     *  a field called `maxBuilders` holding 1 reads like the ceiling IS 1. */
+    builders: number;
     wallet: Wallet;
     /** Epoch ms anchor for the Knowledge drip (whole units only). */
     lastKnowledgeAt: number;
+    /** The daily chest ladder. KINGDOM-scoped on purpose, like Knowledge, so
+     *  it survives a region reset — a habit is a property of the player, not
+     *  of the city they happen to be playing. See sim/daily.ts. */
+    daily: {
+      /** Days PLAYED, not days elapsed. The ladder position is this modulo
+       *  the ladder's length, so it cycles and never resets. */
+      ladderStep: number;
+      /** `dayIndex` of the last claim, or null if none — stamped rather than
+       *  incremented, so a second claim in one day is impossible however the
+       *  clock moves, including backwards. */
+      lastClaimedDay: number | null;
+    };
   };
   player: { wallet: Wallet };
   fog: {
@@ -401,3 +420,33 @@ export const districtById = (state: GameState, uniqueId: string): District | und
 
 export const townhall = (state: GameState): District =>
   state.city.districts.find((d) => d.definitionId === 'Townhall')!;
+
+/**
+ * Jobs that build at once. Floored at 1 so a corrupt or pre-builders save can
+ * never deadlock the queue.
+ */
+export const builderCount = (state: GameState): number => Math.max(1, state.kingdom.builders);
+
+/**
+ * How many jobs the city can have in flight — which is exactly the builder
+ * count, because THERE IS NO WAITING LINE.
+ *
+ * A build or upgrade either starts, because a builder is free, or it does not
+ * start at all; nothing is ever parked waiting for a slot. That is the design
+ * (`Docs/features/builders.md`), and it is what makes the refusal a moment
+ * worth selling into: the player is told "every builder is busy" and offered
+ * one more for Gems, rather than being quietly put in a line.
+ *
+ * It also means `advanceQueue`'s promotion path — the branch that stamps a
+ * waiting item with the moment its slot freed — is unreachable through play
+ * BY DESIGN rather than by accident. It is kept because it is the correct
+ * behaviour for a queue longer than its slots, and this rule is a design
+ * choice that could change; `tests/builders.test.ts` holds it to its
+ * contract directly.
+ *
+ * `city.build_queue_capacity` used to live beside this and is gone from the
+ * workbook: a second dial for the same number could only ever disagree with
+ * the first, which is how the original bug survived — both gates read the
+ * constant (1) and neither read the builders.
+ */
+export const buildQueueCapacity = (state: GameState): number => builderCount(state);

@@ -182,7 +182,7 @@ respect.
 
 ### Collection (`heroes-and-gacha.md`)
 
-Level cost `round(20 × 1.6^level)`, max level 10 → ≈3,630 Knowledge to max one
+Level cost `round(20 × 1.6^level)`, max level 10 → 3,612 Knowledge to max one
 collectible. Knowledge drip 2/h per discovered ruin.
 
 ### Delves (`expeditions.md`)
@@ -220,15 +220,21 @@ Event and banner **schedules do not go in the workbook** — see
 
 ## Status (2026-09-02)
 
-Everything in Parts 1–4 landed. Two numbers need a second pass:
+Everything in Parts 1–4 landed. Both numbers this section flagged for a second
+pass have since been checked against the workbook (`balancing-v3.md`), and
+**both were already correct** — the prose was what had drifted:
 
-- **The Gem faucet overshot.** §1.3 budgets 75 up front; it is 110 (10 start +
-  50 quests + 50 ruin first-clears), because the eleven quests added to the
-  chain were given Gem rewards without re-deriving the total. The sinks are
-  unchanged, so slots and pulls are cheaper in practice than intended.
-- **`balancing-v1`'s income tables are annotated as corrected but not
-  recomputed.** The `[1, 2]` capacity fix makes them right again in principle;
-  nobody has re-run the arithmetic.
+- ~~**The Gem faucet overshot.**~~ **It did not.** §1.3 budgets 75 up front and
+  the workbook pays exactly 75: 10 start + **15** across the chain + 50 ruin
+  first-clears. The claim of 110 assumed eleven quests carried Gem rewards;
+  four do (`A proper capital` 3 · `Into the dark` 3 · `A grand capital` 5 ·
+  `The Reliquary` 4). `tests/faucet.test.ts` now asserts the total, because
+  this number has been derived from the data twice to answer the same
+  question.
+- ~~**`balancing-v1`'s income tables are annotated as corrected but not
+  recomputed.**~~ **Recomputed 2026-09-02 and they hold.**
+  `taxes.goldPerPopulationPerMinute` 30 with `population_capacity [1, 2]` gives
+  TH1 ≈ 60 Gold/min, which is what the tables say. The annotation can go.
 
 The tier ladder in Part 2 IS verified — `tests/expeditions.test.ts` asserts that
 each rung of military development opens the next tier and leaves the one after

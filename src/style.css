@@ -105,8 +105,20 @@ body {
 }
 
 /* ---------- the quest hint ---------- */
-/* Not screen-specific: any element the quest points at wears this. */
-.hinted { box-shadow: 0 0 0 3px var(--gold) !important; position: relative; }
+/* Not screen-specific: any element the quest points at wears this.
+ *
+ * TWO RINGS, dark inside gold, and that is not decoration. A single gold ring
+ * is invisible on a gold ground — and the commonest thing the hint points at
+ * is a research node the player can start RIGHT NOW, which `.tech-node
+ * .available` paints in exactly `--gold`. So every `CompleteTech` quest in
+ * the chain has been pointing at a node with a gold ring around a gold
+ * square, which is nothing at all. The dark ring separates the gold from
+ * whatever is under it, so the mark now reads on parchment, on wood and on
+ * the gold node alike. */
+.hinted {
+  box-shadow: 0 0 0 3px var(--wood-dark), 0 0 0 6px var(--gold) !important;
+  position: relative;
+}
 .hinted::after {
   content: '';
   position: absolute; top: -26px; left: 50%; margin-left: -9px;

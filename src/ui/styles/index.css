@@ -15,6 +15,7 @@
 @import './screens/hud.css';
 @import './screens/nav.css';
 @import './screens/quest.css';
+@import './screens/daily.css';
 @import './screens/banner.css';
 @import './screens/build.css';
 @import './screens/placement.css';

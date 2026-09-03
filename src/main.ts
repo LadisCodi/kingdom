@@ -15,6 +15,7 @@ import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
 import { forceConjunction } from './sim/timeline';
+import { grantBuilder } from './sim/commands';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -24,6 +25,9 @@ import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
 import { renderAdOfferSheet } from './ui/adOfferSheet';
+import { renderBuilderSheet } from './ui/builderSheet';
+import { renderDailySheet } from './ui/dailySheet';
+import { mountDailyPill } from './ui/dailyPill';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
@@ -99,6 +103,7 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
+  mountDailyPill(game, document.getElementById('daily')!);
   mountDelvePill(game, document.getElementById('delves')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
@@ -132,6 +137,8 @@ async function boot(): Promise<void> {
     expedition: renderExpeditionSheet,
     checkpoint: renderCheckpointSheet,
     adOffer: renderAdOfferSheet,
+    builder: renderBuilderSheet,
+    daily: renderDailySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
   };
 
@@ -174,7 +181,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer',
+        'adOffer', 'builder', 'daily',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
@@ -326,6 +333,12 @@ async function boot(): Promise<void> {
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
+      // The only way to raise the builder count until the store exists
+      // (Phase 3). See grantBuilder() for why it is unpriced.
+      button('👷 +1 builder', () => {
+        if (grantBuilder(game.state) === 'AtCeiling') game.toast('Builders are at the ceiling');
+        runTick();
+      }),
       button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {

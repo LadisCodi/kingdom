@@ -22,8 +22,19 @@ export const GRID = 120;
 export const NODE = 56;
 /** Upgrade circle. */
 export const UNODE = 40;
-/** How far below its parent an upgrade fan hangs. */
-export const FAN_DY = 0.7 * GRID;
+/**
+ * How far below its parent an upgrade fan hangs.
+ *
+ * 0.5, not 0.7. The window is narrow and both ends of it are hard: a circle
+ * must clear its PARENT square (28 + 20 = 48px of half-heights) and it must
+ * clear the tech one row BELOW it (another 48, out of the 120 the row is
+ * worth). So FAN_DY has to sit between 48 and 72, and 0.7 x 120 = 84 was
+ * outside it — the fan overlapped the node underneath by 12px, which
+ * `tests/research.test.ts` never saw because its invariant is about
+ * connector elbows crossing nodes, not about nodes crossing each other.
+ * 0.5 x 120 = 60 centres the fan in the gap with 12px clear on each side.
+ */
+export const FAN_DY = 0.5 * GRID;
 /** Spacing between fanned upgrade circles. */
 export const FAN_DX = 56;
 

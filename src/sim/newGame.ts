@@ -30,8 +30,9 @@ export function newGame(map: MapData, now: number): GameState {
       lastManaAt: now,
     },
     kingdom: {
-      maxBuilders: KINGDOM_DEF.startBuilders,
+      builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
+      daily: { ladderStep: 0, lastClaimedDay: null },
       lastKnowledgeAt: now,
     },
     player: { wallet: playerWallet },

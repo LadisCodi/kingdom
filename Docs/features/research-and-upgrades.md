@@ -141,9 +141,17 @@ tree that unlocks nothing is the same lie as a lit tab that leads nowhere.
 ## Changes from 2026-09-02
 
 The tree today is a **checklist rather than a tree**: one root gate (Forestry,
-with 6 of 20 techs hanging off it), five branches that never reconverge, no
-exclusive picks, and a maximum depth of 4. It is also fully exhausted inside the
-2–3 hour arc. Three changes, none of which alter the mechanics above:
+with **8 of 24** technologies hanging directly off it), five branches that never
+reconverge, no exclusive picks, and a maximum depth of 4. It is also fully
+exhausted inside the 2–3 hour arc.
+
+> The count was **20** here and 24 in `currency-simplification.md` §3. The
+> workbook settles it: **24 technology rows costing 6,600 Gold in total**
+> (`balancing-v3.md` §2). And the number that matters more than the count —
+> the quest chain pays **11,865 Gold**, so the whole tree is **56 %** of what
+> finishing the chain hands you. The tree is not a Gold sink; it is a
+> formality the chain funds twice over, which is the argument for eras in
+> [`../road-to-mvp.md`](../road-to-mvp.md) §9. Three changes, none of which alter the mechanics above:
 
 - **The military branch now unlocks buildings, not just units.** `Warrior`,
   `Spears`, `Archery` and `Cavalry` currently unlock units that do nothing. Each

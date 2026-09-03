@@ -4,7 +4,9 @@
 > the pillars the 2026-09-02 competitive review found missing, and the register
 > of design decisions that have to be closed along the way.
 >
-> **Status: the plan is live; every phase below is unstarted.**
+> **Status: the plan is live. Phase 0 is BUILT; Phase 1 is half built — the
+> daily chest ships, generated orders are blocked on decision 3. Phases 2–5
+> are unstarted.** (2026-09-02)
 >
 > This file owns the *sequence* and the *gates*. It does not own designs — each
 > pillar has its own doc in [`features/`](features/), listed in §8. The
@@ -100,7 +102,7 @@ of strangers. We are building it for real (Phase 4) but the prototype's
 population is playtesters we know, so the answer will be about mechanics, not
 about community.
 
-## 2. Phase 0 · Firm ground
+## 2. Phase 0 · Firm ground — **BUILT 2026-09-02**
 
 **Doc:** [`features/balancing-v3.md`](features/balancing-v3.md)
 
@@ -121,10 +123,14 @@ Four numbers and one dead dial:
   of `queue.ts`'s promotion logic is unreachable. Turning it on is the cheapest
   monetisation surface in the game (see §5).
 
-**Gate:** `npm test` green, and a reader can find one number for each dial
-without choosing between three. **Cost:** days.
+**Gate — met.** `npm test` green (41 suites, 556 tests) and a reader can find
+one number for each dial without choosing between three. Gap 3 turned out not
+to reproduce and is struck; the builder dial is live and priced by nobody yet,
+which is Phase 3's problem. Two questions outlived the pass and are logged as
+open decisions: the Mana-refill price (→ decision 4's neighbourhood) and when
+to re-derive the tree's Gold (→ eras, §9). **Cost:** one session, as predicted.
 
-## 3. Phase 1 · The habit layer
+## 3. Phase 1 · The habit layer — **daily chest BUILT 2026-09-02**
 
 **Doc:** [`features/habit-loop.md`](features/habit-loop.md)
 
@@ -150,6 +156,11 @@ new types.
 **Gate:** a player who has finished all authored content still has a reason to
 open the game tomorrow, and it did not cost a designer an afternoon.
 **Cost:** days.
+
+**Half met.** The daily chest ships with a ladder that advances on days
+*played* and therefore cannot be lost — decisions 1 and 2 closed. Generated
+orders are still unstarted and blocked on decision 3 (which building they live
+in), which is the one §8 marks as needing a decision rather than a preference.
 
 ## 4. Phase 2 · The event archetype
 
@@ -195,6 +206,11 @@ is already no, and better to know it in week six than in month nine.
   grant with a visible `SIMULADO` marker so no playtester ever believes they
   bought something. Every step of the funnel logs: offer shown, card opened,
   confirmed, dismissed.
+  *(The second builder already ships as a priced offer raised by a refused
+  build — [`features/builders.md`](features/builders.md). What is left for
+  this phase is the store CARD, and the point of keeping both is that a
+  surface the player is sent to and one they stumble into answer different
+  questions.)*
 - **Rewarded video from one placement to five or six.** The current design is
   genuinely good — the ad pays a whole Mana pool, ten sanctuaries double the
   pool and therefore double every future ad, the offer only appears below half
@@ -268,6 +284,10 @@ index.
 | 8 | **Does helping touch the other player's state, or only your own?** The cheap version pays the helper and leaves a modifier for the helped, which needs no live session on the other side. | Phase 4 | `social-layer.md` |
 | 9 | **How is a defended landmark cleared** — the full expedition sheet with a hero and a party, or a lighter one-off that spends army power? Open since 2026-09-02 in `00-design-intent.md`. | Phase 4 | `expeditions.md` |
 | 10 | **Does the 8 h offline cap limit event rewards?** Backlog gap 5, decided rather than flagged. Harmless while there is one event; a support ticket once there is a calendar. | Phase 2 | `engine-seams.md` §5 |
+| 12 | **Does the world map ever allow raiding a player's city?** Promise 1 says "no raids" by name, so this is the Dinasty/Kingdom fork the audit named — it decides the audience, not the feature list. `map-scopes.md` §5 argues that contested *territory* gets the same session-time benefit without reopening the promise. | the whole shape of the game | `map-scopes.md` |
+| 13 | **Is the province plot bounded?** A balance number, not a refactor — and the thing that makes placement a decision and adjacency matter. Cheap enough to land inside the MVP. | Phase 1 onward | `map-scopes.md` §7 |
+| 14 | **Are 3★ relic ingredients world-map-only?** It ties the game's only week-scale arc to the most expensive layer in the plan. | Phase 4 | `relics-and-ingredients.md` §2 |
+| 15 | **What Stardust is for once ingredients are the tier gate.** Two gates where one never closes is worse than either alone. | with the rename | `relics-and-ingredients.md` §8 |
 | 11 | **How many systems can this game carry?** `heroes-and-gacha.md` files ten progression systems as a standing accepted risk. This plan adds four more. The currency half was cut on 2026-09-02; the systems half never was. | every phase | `road-to-mvp.md`, here |
 
 Decision 11 is the one that should make everyone uncomfortable, so it gets said
@@ -282,12 +302,18 @@ has stopped being a shell and should be cut instead of shipped.
 
 Named here so nobody has to rediscover them, and so they stay out of scope.
 
-- **Eras.** The tech tree, by its own doc, is *"more a checklist than a tree"* —
-  one root gate, five branches that never reconverge, depth 4, exhausted inside
-  the 2–3 hour arc. The genre's answer is ~20 ages (Forge of Empires) or ~25
-  chapters (Elvenar): the same shape, repeated and scaled. It is also the only
-  Gold sink capable of growing with the city. Year-two work, and the conversion
-  is structural, not more nodes.
+- **Eras — now specified.** The tech tree, by its own doc, is *"more a
+  checklist than a tree"*. The conversion is designed in
+  [`features/tomes-and-research.md`](features/tomes-and-research.md): tomes as
+  pages, and **tome tiers as per-branch eras**, which is cheaper and more
+  specialisable than a global age ladder. Still after the MVP, but no longer an
+  open question.
+- **The world map.** [`features/map-scopes.md`](features/map-scopes.md) is the
+  structural decision this plan sits inside: the province bounded and authored,
+  temporary provinces as the event format, and a shared node graph for the
+  social and contested layer. Not MVP — but §7 of that doc lists the four cheap
+  things to spend now, because the save is the one artefact that cannot be
+  changed retroactively.
 - **Adjacency v2.** There is exactly **one** adjacency rule in the whole game
   (Housing next to Housing, −1 Gold/min) and this last pass added five more
   buildings competing for the same ground. It is pure data — the `Adjacency`
@@ -328,5 +354,9 @@ reward table survive ten content drops without a rebalancing pass.
 | `features/event-archetype.md` | Phase 2 — seam widenings, the archetype, the pass |
 | `features/monetization-sim.md` | Phase 3 — simulated store, ad placements, telemetry |
 | `features/social-layer.md` | Phase 4 — Supabase authority, neighbours, guild, collective bar |
+| `features/builders.md` | the builder dial, and the first comfort purchase |
+| `features/map-scopes.md` | **structural** — province, temporary provinces, world map, and how much PvP the promises allow |
+| `features/relics-and-ingredients.md` | **structural** — the nine-piece ingredient set, the rarity split by source, Mana on both maps |
+| `features/tomes-and-research.md` | **structural** — Knowledge as a clock, tomes as pages, tiers as eras, the Stardust rename |
 | `00-design-intent.md` | what the game is, and the canonical backlog of what shipped |
 | `features/engine-seams.md` | the seams every phase above builds on |

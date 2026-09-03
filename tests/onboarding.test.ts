@@ -20,7 +20,9 @@ import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
+import { placementBlock } from '../src/sim/districts';
 import { collectTap } from '../src/sim/harvest';
+import { sellGoods } from '../src/sim/market';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
 import { maxPopulation } from '../src/sim/population';
@@ -28,7 +30,8 @@ import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { isTechComplete, startTech, techCost } from '../src/sim/research';
 import {
-  coordKey, getWallet, parseCoordKey, type Coord, type TechId,
+  coordKey, getWallet, parseCoordKey, type Coord, type CurrencyId, type DistrictId,
+  type TechId,
 } from '../src/sim/state';
 import { BERRIES, FOREST, map, T0 } from './helpers';
 
@@ -36,7 +39,7 @@ const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
-  it('runs steps 1-14 on nothing but what the game gives them', () => {
+  it('runs steps 1-17 on nothing but what the game gives them', () => {
     const state = newGame(map, T0);
     let now = T0;
 
@@ -93,7 +96,7 @@ describe('a player can actually play the onboarding', () => {
         if (!any) tick(30); // every reachable cell is spent — wait for recovery
       }
     };
-    const build = (id: 'Housing' | 'FarmLands' | 'Farm', cell: Coord) => {
+    const build = (id: DistrictId, cell: Coord) => {
       expect(enqueueBuild(state, map, id, cell), `could not queue ${id}`).toBe('Started');
       tick(600); // long enough for anything this early
       expect(state.city.districts.some((d) => d.definitionId === id && d.state === 'Built'))
@@ -184,7 +187,42 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- steps 13-14: a second House, and the villager it makes room for ----
+    // ---- steps 13-15: somewhere for the surplus to go ----
+    // The Market moved here from quest 32 so that generated orders have a home
+    // inside the opening (habit-loop.md §2). This is the beat that has to hold
+    // up: 150 Gold for the technology and 40 Wood for the building, out of
+    // nothing but what the chain has paid so far.
+    //
+    // Research, then build, then use — the same three-beat shape the chain
+    // uses for every other building worth explaining.
+    research('Market');
+    finish('Trade');
+    chop(Math.max(0, DISTRICTS.Market.buildCost.Wood! - wood()));
+    // Found rather than authored, like `clearNearest` above: a hardcoded cell
+    // is a test that breaks when the map is re-authored, and this beat is
+    // about affording the Market, not about where it goes.
+    const spot = [...map.terrain.keys()].map(parseCoordKey)
+      .find((c) => placementBlock(state, map, 'Market', c) === null);
+    expect(spot, 'nowhere legal to put the Market').toBeDefined();
+    build('Market', spot!);
+    finish('ToMarket');
+
+    // And there has to be something to sell. Whatever the plots and the trees
+    // have piled up, sold down to the twenty the quest asks for.
+    let sold = 0;
+    let guard = 0;
+    while (sold < 20) {
+      expect(guard++, 'nothing left to sell').toBeLessThan(200);
+      for (const c of ['Food', 'Wood'] as CurrencyId[]) {
+        if (sold >= 20) break;
+        const { result, units } = sellGoods(state, c, 20 - sold);
+        if (result === 'Sold') sold += units;
+      }
+      if (sold < 20) tick(30); // let the plots and the forest come back
+    }
+    finish('Merchant');
+
+    // ---- steps 16-17: a second House, and the villager it makes room for ----
     chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
     build('Housing', { x: 0, y: -1 });
     finish('GrowingTown');
@@ -198,7 +236,7 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Neighbors');
 
-    // The player is now fourteen beats in and has never been handed anything.
+    // The player is now seventeen beats in and has never been handed anything.
     expect(activeQuest(state)!.id).toBe('ProperCapital');
 
     // And the energy held out. Mana is what every tap is paid from, so an

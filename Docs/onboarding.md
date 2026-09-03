@@ -60,10 +60,23 @@ records how each became a mechanic, and the four decisions taken to get there.
    grants 10. The first call on the standard banner is now **free**, tracked on
    the pull counter that already persists for pity — no new save field. The
    button reads "Call — free" rather than rendering a price of zero.
-4. **Cut content.** The Market, Quarry, Mine and Townhall 3 are absent from the
-   26 steps; they moved to quests 32+. **Townhall 2 was woven in** at quest 17,
-   because Townhall 1 caps the city at 2 Houses and 1 Sawmill and step 17
-   reaches that cap.
+4. **Cut content.** The Quarry, Mine and Townhall 3 are absent from the arc;
+   they stay at quests 30+. **Townhall 2 was woven in** at quest 19, because
+   Townhall 1 caps the city at 2 Houses and 1 Sawmill and that step reaches
+   the cap.
+
+   **The Market came BACK IN on 2026-09-03**, at steps 13-14. It had been cut
+   with the rest for length, and that was right while the Market's only job
+   was converting surplus into Gold that had nowhere to go. Generated orders
+   ([`features/habit-loop.md`](features/habit-loop.md) §2) give it a second
+   job — the game's only infinite resource sink — and a sink the player does
+   not meet until hour three is a sink that does not answer the MVP's first
+   question. So the arc is **29 steps** now, and steps 13-15 are the first
+   beat at which the city produces more than it eats — a research beat, a
+   build beat and a use beat, so the player is *led* to the Market rather
+   than left to find it. `tests/onboarding.test.ts` plays all three: 150 Gold
+   for the technology and 40 Wood for the building, out of nothing but what
+   the chain has already paid.
 
 ### Step by step
 
@@ -75,9 +88,10 @@ records how each became a mechanic, and the four decisions taken to get there.
 | 7 | `TaxDay` | Added back into the chain: rent is what pays for more fog, and step 7 asks for more fog. |
 | 8 | `WildGame` | Wild animals at (2,-2), inside the opening discover radius. Game pays **3 Food** a tap — three times a berry bush, which is what makes hunting worth its own technology. |
 | 9-12 | `Fields` … `ToWork` | **Agriculture now unlocks the Farm as well as FarmLands** — one research, so nothing sits between tapping a plot and automating it. Farming inherited the Farm's level-2 gate; **Crop Rotation was retired**, since it then unlocked nothing. |
-| 13-14 | `Neighbors`, `GrowingTown` | **A level-1 House holds 2** (was 1), so the second villager needs no second roof. |
-| 15-17 | `SawTeeth`, `TheSawmill`, `Crewed` | New tech **Saws** (Forestry → Saws → Sawmill). Chopping by hand and automating it are two decisions, ten beats apart. |
-| 18-19 | `FurtherAfield`, `OldStones` | The Thorned Shrine at 400 Gold. |
+| 13-15 | `Trade`, `ToMarket`, `Merchant` | **Added 2026-09-03.** The first beat at which the city makes more than it eats, so the first at which somewhere-for-the-surplus means anything. **Research, build, use** — the same three-beat shape as `SawTeeth` → `TheSawmill` → `Crewed`, because a building the chain never taught the player to research is a building they find by accident. `Trade` pays 100; the other two were re-priced to 110/120 from the 250/290 they carried at quest 32, since 540 Gold here would have nearly doubled the early economy. |
+| 16-17 | `GrowingTown`, `Neighbors` | **A level-1 House holds 2** (was 1), so the second villager needs no second roof. |
+| 18-20 | `SawTeeth`, `TheSawmill`, `Crewed` | New tech **Saws** (Forestry → Saws → Sawmill). Chopping by hand and automating it are two decisions, ten beats apart. |
+| 21-22 | `FurtherAfield`, `OldStones` | The Thorned Shrine at 400 Gold. |
 | 20 | `Mapmakers`, `Surveyors` | New tech **Cartography** and new upgrade **Surveying** (max 2): each level makes one tap on the fog do the work of one more. It does **not** make a cell cheaper — the Gold is unchanged. What it buys back is the player's *time*, which is what exploring actually spends once the far rings cost 320 and 640 Gold at one Gold a tap. |
 | 21-22 | `Highlands`, `PutToSea` | Scaling Tools and Sailing already existed; they now hang off Cartography, so steps 20→22 are one branch. |
 | 23-26 | `ArmedMen` … `IntoTheDark` | The Hollow Barrow is discovered at (-2,2) from the first second. The Barracks needs 20 Stone, which the rock outcrop at (4,-1) supplies by hand — the Quarry is not until quest 34. |

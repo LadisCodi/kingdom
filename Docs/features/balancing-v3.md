@@ -5,7 +5,10 @@
 >
 > It does **one** job: make the documentation agree with the workbook, so that
 > the four pillars the MVP adds can be balanced on top of numbers that only
-> exist once. **Status: unstarted.**
+> exist once. **Status: BUILT 2026-09-02.** Every action below is applied; the
+> exit gate in §8 is met. Two things outlived the pass and are recorded as
+> open questions rather than fixed: the Mana-refill price and when to re-derive
+> the tree's Gold.
 >
 > The 2026-09-02 competitive review listed five numeric contradictions as
 > blockers. **Reading `src/sim/data/balance.json` resolves three of them
@@ -79,7 +82,7 @@ exactly 6,600 Gold.**
 `research-and-upgrades.md` to 24, and re-check the fraction while there.
 
 **And the finding that matters more than the count.** The quest chain pays
-**12,075 Gold** against a tree that costs 6,600. The tree is not a sink; it is
+**11,865 Gold** against a tree that costs 6,600. The tree is not a sink; it is
 a formality that the chain funds twice over. That is not a Phase 0 fix — it is
 the argument for eras in `../road-to-mvp.md` §9 — but it should be recorded as
 the measured number rather than an impression.
@@ -87,8 +90,14 @@ the measured number rather than an impression.
 | | Gold |
 |---|---|
 | Whole technology tree, 24 techs | 6,600 |
-| Quest chain rewards, 49 quests | **12,075** |
-| Ratio | **1.83×** |
+| Quest chain rewards, 50 quests | **11,865** |
+| Ratio | **1.80×** |
+
+> Measured at 12,075 across 49 quests on 2026-09-02. The next day the two
+> Market beats moved into the opening and were re-priced to their new position
+> (250/290 → 110/120), and a third beat — `Trade`, the research that opens
+> them — was added in front at 100. Held by `tests/quests.test.ts`, so the
+> next move has to come here and say so. See `../onboarding.md` steps 13-15.
 
 ## 3. The Gem faucet — resolved, and the review had it backwards.
 
@@ -100,11 +109,17 @@ rewards without re-deriving the total.
 
 | Source | Gems | Where |
 |---|---|---|
-| Starting grant | 10 | `city.initialCurrencies` / newGame |
-| Quest chain | **15** | `ProperCapital` 3 · `IntoTheDark` 3 · `GrandCapital` 5 · `TheReliquary` 4 |
+| Starting grant | 10 | `currencies.Gems.start` — Gems are PLAYER-scoped, so this is not in `city.initialCurrencies` |
+| Quest chain | **15** | quests #17 *A proper capital* 3 · #31 *Into the dark* 3 · #41 *A grand capital* 5 · #49 *The Reliquary* 4 (`rewardGems`, a field of its own — not part of `reward`) |
 | Ruin first clears | 50 | `delve.firstClearGems` 10 × 5 ruins |
 | **Total up front** | **75** | |
-| Conjunction, weekly | 5 | `CONJUNCTION_BOONS[*].gems` |
+| Conjunction, weekly | 5 | `CONJUNCTION_BOONS[*].gems` — every boon pays the same 5 |
+
+> Two shapes worth naming, because both are how a hand-derived total goes
+> wrong: Gem rewards live in `rewardGems` beside `reward`, not inside it, and
+> the opening grant is a currency's `start` rather than a city currency. Add
+> them up from the wrong two places and you get 65, or 0. `tests/faucet.test.ts`
+> reads them the way the game does.
 
 **75, which is exactly the §1.3 budget.** Either the over-authoring was
 corrected and the doc was not, or it never happened. Against the sinks —
@@ -159,9 +174,19 @@ kingdom.maxBuilders    4
 ```
 
 `scripts/balance.mjs` maps the column, the workbook authors 4, and **nothing in
-`src/` ever raises it above 1**, so every promotion path in `queue.ts` is
-unreachable and `city.buildQueueCapacity` is 1 — in practice exactly one
-pending build or upgrade, forever.
+`src/` ever raises it above 1** — and both gates in `commands.ts` test
+`city.buildQueueCapacity` (1) rather than the builder count, so in practice
+exactly one build or upgrade at a time, forever.
+
+> **Correction, same day.** This section originally added "so every promotion
+> path in `queue.ts` is unreachable", implying that turning the dial on would
+> make it reachable. It does not: **there is no waiting line in this game.** A
+> build either starts because a builder is free or it does not start at all,
+> so the jobs in flight are exactly the builder count and the promotion branch
+> stays unreachable *by design*. `city.build_queue_capacity` is not a second
+> dial to reconcile with the builder count — it is a duplicate of it, and it
+> has been removed from the workbook. See
+> [`builders.md`](builders.md) §1.
 
 The competitive review filed this as backlog "gap 9, smaller". It is not
 smaller. **A second builder is the best-documented conversion surface in the
@@ -171,8 +196,14 @@ purchase design pillar 3 authorises: *comfort and breadth, never access*. It
 unlocks nothing; it makes two things happen at once.
 
 **Action in this pass:** make the dial live — a builder count that reads from
-state, a queue capacity that follows it, and one way to raise it (Phase 0: a
-dev-bar toggle; Phase 3: the store card). Ten lines and a test.
+state, a jobs-in-flight limit that follows it, and one way to raise it.
+
+**Scope grew, deliberately.** The plan said "Phase 0: a dev-bar toggle;
+Phase 3: the store card". It shipped with the **priced Gem purchase and the
+popup that raises it**, because the refusal is where a second builder means
+something and a dev toggle answers no question a playtester can be asked. The
+store *card* is still Phase 3; this is the offer, not the shop. Full design in
+[`builders.md`](builders.md).
 
 ## 6. Two doc gaps that are not contradictions
 
@@ -212,14 +243,44 @@ decision, `../road-to-mvp.md` §8 decision 11), the adjacency table (one row, an
 deliberately post-MVP), the `Desert` terrain with zero cells, and any re-tuning
 of the Mana pool itself.
 
-## 8. Exit gate
+## 8. Exit gate — met 2026-09-02
 
-- `npm test` green.
-- Every dial named above has exactly one value findable in one place.
-- Backlog gap 3 struck, gap 9 split into "recompute v1 tables" (done) and
-  "second builder" (done).
-- One new test asserting the authored Gem faucet equals its budget.
-- `maxBuilders` reachable.
+| Gate | Evidence |
+|---|---|
+| `npm test` green | 41 suites, 556 tests |
+| Every dial named above has exactly one value findable in one place | §1 §2 §4 §6 applied; `magic.md` §6 now carries the authored values and says so |
+| Backlog gap 3 struck | `00-design-intent.md` gap 3, struck with the derivation |
+| Gap 9 split | gap 9 closed (builders), 9a `?dev=kit` gallery still open, 9b v1 tables recomputed and holding |
+| One new test asserting the faucet equals its budget | `tests/faucet.test.ts` — 4 assertions, including the *shape* of the payout, because the ordering argument in §3 depends on it |
+| `maxBuilders` reachable | `tests/builders.test.ts` — 14 assertions, including the price curve and the refusal |
+
+### What changed in the code
+
+Only §5 needed any. Three edits and a dev-bar button:
+
+- `state.kingdom.maxBuilders` → **`state.kingdom.builders`**. The old name
+  collided with `KINGDOM_DEF.maxBuilders` (the authored *ceiling*, 4), and a
+  field called `maxBuilders` holding 1 is exactly why nobody noticed the dial
+  was dead. The save DTO key stays `MaxBuilders`, so **no migrator**.
+- **`buildQueueCapacity(state)`** in `state.ts`, and both gates in
+  `commands.ts` now call it. They tested the bare `CITY_DEF.buildQueueCapacity`
+  constant, so a kingdom with four builders still could not queue a second job
+  — every promotion path in `queue.ts` was unreachable. The authored dial is
+  the floor; the builder count raises it.
+- **`grantBuilder(state)`**, deliberately free and unpriced. Phase 0's job is
+  to make the dial reachable; what a builder *costs* is a store question and
+  the store is Phase 3.
+- `?dev` gains **👷 +1 builder**, which is the "one way to raise it" §5 asked
+  for.
+
+### What was left alone on purpose
+
+- **The doc-vs-doc `3,630` → `3,612`** rounding was corrected across four files
+  while in there, because this pass had just introduced the exact figure and
+  leaving both would have created the very contradiction it exists to remove.
+- Nothing in §7 was touched.
+- Neither open question below was answered. Both need a decision, not a
+  lookup, and both belong to a later phase's doc.
 
 ## Open questions
 
