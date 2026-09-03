@@ -94,30 +94,30 @@ function manaPanel(game: Game): HTMLElement {
   );
 }
 
-// ------------------------------------------------------------- the Knowledge
+// -------------------------------------------------------------- the Stardust
 
 /**
  * The purse for this screen.
  *
- * Knowledge is the one currency with no coin on the plank: it buys levels for
- * relics and heroes and nothing else, so it reads here, beside the Study
- * buttons that spend it, the way Fragments do. A price with no purse in sight
- * is the same bug as a purse with nothing to spend it on — this is the half
- * that has to be here.
+ * Stardust has no coin on the plank: it buys levels for relics and heroes and
+ * nothing else, so it reads here, beside the Study buttons that spend it, the
+ * way Fragments do. A price with no purse in sight is the same bug as a purse
+ * with nothing to spend it on — this is the half that has to be here.
  *
- * It is hidden until the player has met it. Knowledge only ever comes out of
- * a dungeon or a banner, so a zero row would advertise a system they have not
- * reached yet.
+ * It is hidden until the player has met it. Stardust only ever comes out of a
+ * dungeon or a banner, so a zero row would advertise a system they have not
+ * reached yet. (Knowledge used to be this currency; it is the research clock
+ * now and reads in the Research screen — tomes-and-research.md §8.)
  */
-function knowledgePanel(game: Game): HTMLElement | null {
-  const held = game.walletValue('Knowledge');
-  if (held === 0 && game.state.discoveries[resourceDiscoveryKey('Knowledge')] !== true) {
+function stardustPanel(game: Game): HTMLElement | null {
+  const held = game.walletValue('Stardust');
+  if (held === 0 && game.state.discoveries[resourceDiscoveryKey('Stardust')] !== true) {
     return null;
   }
   return el('div', { class: 'rel-purse' },
-    iconEl('Knowledge', { size: 'lg' }),
+    iconEl('Stardust', { size: 'lg' }),
     el('div', { class: 'rel-purse-body' },
-      el('div', { class: 'rel-purse-title' }, 'Knowledge'),
+      el('div', { class: 'rel-purse-title' }, 'Stardust'),
       el('div', { class: 'rel-purse-hint' }, 'Won from dungeons and the banner')),
     el('b', { class: 'rel-purse-value' }, String(held)));
 }
@@ -273,14 +273,14 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   }
   body.append(controls);
 
-  // Levelling: Knowledge buys levels, Fragments raise the ceiling.
+  // Levelling: Stardust buys levels, Fragments raise the ceiling.
   const atLevelCap = entry.level >= levelCapForTier(entry.tier);
   const maxed = entry.level >= COLLECTION.maxLevel;
   if (!maxed) {
     body.append(action({
       label: 'Study',
       onClick: () => game.doLevelArtifact(id),
-      cost: { Knowledge: levelCost(entry.level) },
+      cost: { Stardust: levelCost(entry.level) },
       have: (c) => game.walletValue(c),
       disabledReason: atLevelCap
         ? 'Its tier holds it back — raise it with Fragments'
@@ -310,7 +310,7 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
 // -------------------------------------------------------------- the heroes
 //
 // Heroes and relics are TWO TABS OF ONE SCREEN because they share one set of
-// rules — Fragments raise a tier cap, Knowledge buys levels within it. Two
+// rules — Fragments raise a tier cap, Stardust buys levels within it. Two
 // screens would teach the player the same lesson twice and neither would feel
 // special.
 
@@ -361,7 +361,7 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
     body.append(action({
       label: 'Train',
       onClick: () => game.doLevelHero(view.id),
-      cost: { Knowledge: cost },
+      cost: { Stardust: cost },
       have: (c) => game.walletValue(c),
       disabledReason: view.entry.level >= view.levelCap
         ? 'Their tier holds them back — raise it with Fragments'
@@ -482,7 +482,7 @@ export function renderReliquarySheet(game: Game): HTMLElement {
     ...roster.map((view) => heroCard(game, view)),
     bannerPanel(game));
 
-  const purse = knowledgePanel(game);
+  const purse = stardustPanel(game);
   const body = el('div', { class: 'rel' },
     manaPanel(game),
     ...(purse === null ? [] : [purse]),

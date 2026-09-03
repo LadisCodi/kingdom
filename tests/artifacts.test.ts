@@ -52,11 +52,11 @@ describe('owning relics', () => {
 });
 
 describe('the collection substrate', () => {
-  it('Knowledge buys levels; Fragments raise the ceiling they run into', () => {
+  it('Stardust buys levels; Fragments raise the ceiling they run into', () => {
     const state = withRelic('DowsingRod');
-    state.kingdom.wallet.Knowledge = 100_000;
+    state.kingdom.wallet.Stardust = 100_000;
 
-    // Tier 1 allows two levels, then Knowledge has nowhere to go.
+    // Tier 1 allows two levels, then Stardust has nowhere to go.
     expect(levelUpArtifact(state, 'DowsingRod')).toBe('Levelled');
     expect(artifactEntry(state, 'DowsingRod').level).toBe(2);
     expect(levelCapForTier(1)).toBe(COLLECTION.levelsPerTier);
@@ -71,17 +71,17 @@ describe('the collection substrate', () => {
 
   it('charges the authored curve, and the runway is the documented one', () => {
     const state = withRelic('DowsingRod');
-    state.kingdom.wallet.Knowledge = 1000;
+    state.kingdom.wallet.Stardust = 1000;
     levelUpArtifact(state, 'DowsingRod');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(1000 - levelCost(1));
-    // ~3,630 Knowledge to max one collectible (balancing-v2 §4).
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000 - levelCost(1));
+    // ~3,630 Stardust to max one collectible (balancing-v2 §4).
     expect(totalLevelCost()).toBeGreaterThan(3400);
     expect(totalLevelCost()).toBeLessThan(3900);
   });
 
   it('refuses to level a relic that has not been found', () => {
     const state = freshGame();
-    state.kingdom.wallet.Knowledge = 10_000;
+    state.kingdom.wallet.Stardust = 10_000;
     expect(levelUpArtifact(state, 'DowsingRod')).toBe('NotOwned');
   });
 });
@@ -141,7 +141,7 @@ describe('attunement', () => {
 
   it('the passive scales with level, and levelling re-applies it live', () => {
     const state = withRelic('ForemansSigil'); // worker yield +1, +0.2/level
-    state.kingdom.wallet.Knowledge = 100_000;
+    state.kingdom.wallet.Stardust = 100_000;
     attune(state, 0, 'ForemansSigil', T0);
     const atLevel1 = effectiveWorkerYield(state, HARVEST.Forest);
     expect(passiveValue(state, 'ForemansSigil')).toBe(ARTIFACTS.ForemansSigil.passive.base);

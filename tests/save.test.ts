@@ -151,4 +151,35 @@ describe('save versions', () => {
     expect(getWallet(restored.city.wallet, 'Food')).toBe(5);
     expect(getWallet(restored.city.wallet, 'Stone')).toBe(3);
   });
+
+  // v23: Knowledge and Stardust swapped jobs. Every Knowledge a live save
+  // holds was earned as COLLECTION currency, so it must keep buying relics
+  // and heroes — it becomes Stardust. This is the whole point of the migrator
+  // and the one thing a bare key rename would have got catastrophically
+  // wrong: it would hand the entire research tree to anybody with a balance.
+  it('converts a banked Knowledge balance into Stardust, not into research', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const kingdom = (save.Modules['kingdom.kingdoms'] as any);
+    kingdom.Currencies = { ...kingdom.Currencies, Knowledge: 4200 };
+    save.SaveVersion = 22;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    // It buys what it was earned for.
+    expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(4200);
+    // And it buys no research at all: the clock starts at zero and is earned
+    // from the ground the player holds.
+    expect(getWallet(restored.city.wallet, 'Knowledge')).toBe(0);
+    expect(restored.kingdom.wallet).not.toHaveProperty('Knowledge');
+  });
+
+  it('leaves a v23 save alone — the swap runs once, not on every load', () => {
+    const state = freshGame();
+    state.kingdom.wallet.Stardust = 900;
+    state.city.wallet.Knowledge = 40;
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(900);
+    expect(getWallet(restored.city.wallet, 'Knowledge')).toBe(40);
+  });
 });

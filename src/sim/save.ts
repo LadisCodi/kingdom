@@ -105,6 +105,33 @@ const MIGRATIONS: readonly Migration[] = [
       fold('Iron', 'Stone', 3);
     },
   },
+  {
+    // v23 — Knowledge and Stardust swapped jobs
+    // (Docs/features/tomes-and-research.md §2.1). Knowledge became the
+    // CITY-scoped research clock; the collection currency it used to be is now
+    // Stardust, still kingdom-scoped so it survives a region reset.
+    //
+    // Every Knowledge a live save holds was earned as COLLECTION currency —
+    // out of a delve haul, a first clear, a pull or a quest — so it must keep
+    // buying what it was earned for. The same rule the currency-simplification
+    // migrator followed: balances convert at the rates they were earned.
+    //
+    // A bare key rename would have been the bug: it hands the whole research
+    // tree to anyone holding a collection balance. The city's Knowledge is
+    // deliberately NOT seeded here — a returning player starts the research
+    // clock at zero and earns it from the ground they hold.
+    to: 23,
+    migrate: (modules) => {
+      const w = (modules['kingdom.kingdoms'] as { Currencies?: Record<string, number> })
+        ?.Currencies;
+      if (w === undefined) return;
+      const held = w['Knowledge'];
+      if (typeof held === 'number' && held !== 0) {
+        w['Stardust'] = (w['Stardust'] ?? 0) + held;
+      }
+      delete w['Knowledge'];
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.

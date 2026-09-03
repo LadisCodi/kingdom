@@ -672,6 +672,12 @@
       "primary": false,
       "goldValue": null
     },
+    "Stardust": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "goldValue": null
+    },
     "Gems": {
       "cap": null,
       "start": 10,
@@ -1159,11 +1165,12 @@
   "delve": {
     "goldPerDepthPerTier": 25,
     "materialPerDepthPerTier": 4,
-    "knowledgePerDepthPerTier": 6,
+    "stardustPerDepthPerTier": 6,
     "fragmentsPerDepth": 1,
     "failHaulLoss": 0.5,
     "firstClearGems": 10,
-    "firstClearKnowledge": 150
+    "firstClearKnowledge": 150,
+    "firstClearStardust": 150
   },
   "party": {
     "baseSlots": 2,
@@ -1178,7 +1185,7 @@
     "hardPityAt": 60,
     "duplicateFragments": 20,
     "fragmentsPerMiss": 3,
-    "pullKnowledge": 50
+    "pullStardust": 50
   },
   "heroes": {
     "Warden": {
@@ -1485,7 +1492,7 @@
         "Gold": 10
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Woodcraft",
@@ -1499,7 +1506,7 @@
         "Gold": 15
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Timber",
@@ -1513,7 +1520,7 @@
         "Gold": 35
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "ARoof",
@@ -1527,7 +1534,7 @@
         "Gold": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Rations",
@@ -1541,7 +1548,7 @@
         "Gold": 35
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "FirstVillager",
@@ -1555,7 +1562,7 @@
         "Gold": 55
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "TaxDay",
@@ -1569,7 +1576,7 @@
         "Gold": 50
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Explorer",
@@ -1583,7 +1590,7 @@
         "Gold": 80
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Fields",
@@ -1597,7 +1604,7 @@
         "Gold": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "FirstPlot",
@@ -1611,7 +1618,7 @@
         "Gold": 55
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "ByHand",
@@ -1625,7 +1632,7 @@
         "Gold": 70
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Lumber",
@@ -1639,7 +1646,7 @@
         "Gold": 70
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Farmhand",
@@ -1653,7 +1660,7 @@
         "Gold": 85
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "ToWork",
@@ -1667,7 +1674,7 @@
         "Gold": 85
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Trade",
@@ -1681,7 +1688,7 @@
         "Gold": 100
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "ToMarket",
@@ -1695,7 +1702,7 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Merchant",
@@ -1709,7 +1716,7 @@
         "Gold": 120
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "GrowingTown",
@@ -1723,7 +1730,7 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Neighbors",
@@ -1737,7 +1744,7 @@
         "Gold": 90
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "ProperCapital",
@@ -1751,7 +1758,7 @@
         "Gold": 180
       },
       "rewardGems": 3,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "SawTeeth",
@@ -1765,7 +1772,7 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "TheSawmill",
@@ -1779,7 +1786,7 @@
         "Gold": 140
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Crewed",
@@ -1793,7 +1800,7 @@
         "Gold": 140
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "FurtherAfield",
@@ -1807,7 +1814,7 @@
         "Gold": 200
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "OldStones",
@@ -1821,7 +1828,7 @@
         "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Mapmakers",
@@ -1835,7 +1842,7 @@
         "Gold": 200
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Surveyors",
@@ -1849,7 +1856,7 @@
         "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Highlands",
@@ -1863,7 +1870,7 @@
         "Gold": 220
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "PutToSea",
@@ -1877,7 +1884,7 @@
         "Gold": 270
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "ArmedMen",
@@ -1891,7 +1898,7 @@
         "Gold": 220
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Mustered",
@@ -1905,7 +1912,7 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "FirstSoldier",
@@ -1919,7 +1926,7 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "FirstSummon",
@@ -1933,7 +1940,7 @@
         "Gold": 150
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardStardust": 20
     },
     {
       "id": "IntoTheDark",
@@ -1947,7 +1954,7 @@
         "Gold": 200
       },
       "rewardGems": 3,
-      "rewardKnowledge": 25
+      "rewardStardust": 25
     },
     {
       "id": "Stoneworks",
@@ -1961,7 +1968,7 @@
         "Gold": 290
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "MoreRoom",
@@ -1975,7 +1982,7 @@
         "Gold": 240
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "SecondStory",
@@ -1990,7 +1997,7 @@
         "Stone": 20
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "FullHouse",
@@ -2005,7 +2012,7 @@
         "Food": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "IronRoad",
@@ -2019,7 +2026,7 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "TheMine",
@@ -2033,7 +2040,7 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Architect",
@@ -2047,7 +2054,7 @@
         "Gold": 450
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "GrandCapital",
@@ -2061,7 +2068,7 @@
         "Gold": 600
       },
       "rewardGems": 5,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "Attuned",
@@ -2075,7 +2082,7 @@
         "Gold": 450
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "TheSanctum",
@@ -2090,7 +2097,7 @@
         "Stone": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "AWarband",
@@ -2105,7 +2112,7 @@
         "Food": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "TheBarrowsPrize",
@@ -2119,7 +2126,7 @@
         "Gold": 400
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardStardust": 20
     },
     {
       "id": "WornWell",
@@ -2133,7 +2140,7 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 18
+      "rewardStardust": 18
     },
     {
       "id": "Leylines",
@@ -2148,7 +2155,7 @@
         "Stone": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0
     },
     {
       "id": "DeeperStill",
@@ -2163,7 +2170,7 @@
         "Stone": 90
       },
       "rewardGems": 0,
-      "rewardKnowledge": 30
+      "rewardStardust": 30
     },
     {
       "id": "TheReliquary",
@@ -2177,7 +2184,7 @@
         "Gold": 900
       },
       "rewardGems": 4,
-      "rewardKnowledge": 45
+      "rewardStardust": 45
     }
   ],
   "fog": {

@@ -117,11 +117,11 @@ export function claimQuest(state: GameState): ClaimResult {
     addToWallet(state.player.wallet, 'Gems', quest.rewardGems);
     recordResourceDiscovery(state, 'Gems');
   }
-  // Into the KINGDOM purse — Knowledge outlives the city that earned it, and
-  // it is what the research tree is bought with.
-  if (quest.rewardKnowledge > 0) {
-    addToWallet(state.kingdom.wallet, 'Knowledge', quest.rewardKnowledge);
-    recordResourceDiscovery(state, 'Knowledge');
+  // Into the KINGDOM purse — Stardust outlives the city that earned it, which
+  // is what the collection arc needs when regions become the treadmill.
+  if (quest.rewardStardust > 0) {
+    addToWallet(state.kingdom.wallet, 'Stardust', quest.rewardStardust);
+    recordResourceDiscovery(state, 'Stardust');
   }
   state.quests.index += 1;
   state.quests.progress = 0;

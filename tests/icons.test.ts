@@ -29,6 +29,9 @@ const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
  * lands, leaving the name here fails.
  */
 const AWAITING_ART: readonly string[] = [
+  // Stardust — the renamed collection currency (2026-09-03). Knowledge kept
+  // its scroll; the dust that levels a relic needs its own cell.
+  'Stardust',
 ];
 
 const pending = new Set(AWAITING_ART);

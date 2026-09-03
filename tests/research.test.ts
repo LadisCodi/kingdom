@@ -78,22 +78,22 @@ describe('technology basics', () => {
   // CLAIM: research is bought with Gold out of the CITY purse, up front, and
   // it costs nothing else. That is what puts the tree in the same contest as
   // clearing fog and raising a building — three calls on one budget — and it
-  // is why a kingdom rich in Knowledge cannot buy a technology with it.
+  // is why a kingdom rich in Stardust cannot buy a technology with it.
   it('costs are paid up front, in Gold, from the city purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000, Wood: 500, Knowledge: 5000 });
+    fund(state, { Gold: 1000, Wood: 500, Stardust: 5000 });
     completeTech(state, 'Forestry');
     completeTech(state, 'Cartography'); // the exploration branch heads here now
     expect(startTech(state, 'Sailing', T0)).toBe('Started');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 - techCost('Sailing'));
     expect(state.city.wallet.Wood).toBe(500); // no materials, only Gold
-    // Knowledge is untouched: it buys heroes and relics and nothing else.
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(5000);
+    // Stardust is untouched: it buys heroes and relics and nothing else.
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(5000);
   });
 
-  it('refuses a technology the city cannot pay for, however much Knowledge the kingdom holds', () => {
+  it('refuses a technology the city cannot pay for, however much Stardust the kingdom holds', () => {
     const state = freshGame();
-    fund(state, { Gold: techCost('Forestry') - 1, Wood: 999_999, Knowledge: 999_999 });
+    fund(state, { Gold: techCost('Forestry') - 1, Wood: 999_999, Stardust: 999_999 });
     expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
     fund(state, { Gold: techCost('Forestry') });
     expect(startTech(state, 'Forestry', T0)).toBe('Started');

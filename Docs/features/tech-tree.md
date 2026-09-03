@@ -402,7 +402,7 @@ surface.
 | quest `Surveyors` | goal type `BuyUpgrade` → `CompleteTech`, target `SurveyingI` |
 | quest `Attuned` | target `Attunement` → `Consecration` |
 | goal type `BuyUpgrade` | retired — it has no other user |
-| `SAVE_VERSION` | 21 → 22, **with a migrator** — `state.upgrades: Record<UpgradeId, number>` reshapes into completed tech ids. A reshape, not an additive change, so the defensive-reader rule does not cover it |
+| `SAVE_VERSION` | bumped **with a migrator** — `state.upgrades: Record<UpgradeId, number>` reshapes into completed tech ids. A reshape, not an additive change, so the defensive-reader rule does not cover it |
 
 Every other quest survives untouched, including `ArmedMen` → `Warrior`,
 `Mapmakers` → `Cartography` and `Architect` → `Architecture`. Three of them now

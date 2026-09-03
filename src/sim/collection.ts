@@ -24,7 +24,7 @@ export interface CollectionEntry {
 
 export const emptyEntry = (): CollectionEntry => ({ level: 1, tier: 1, fragments: 0 });
 
-/** Knowledge for the NEXT level. `round(base × growth^level)` — the same
+/** Stardust for the NEXT level. `round(base × growth^level)` — the same
  *  formula the gold upgrades already use, reused rather than reinvented. */
 export const levelCost = (level: number): number =>
   Math.round(COLLECTION.levelCostBase * COLLECTION.levelCostGrowth ** level);
@@ -34,7 +34,7 @@ export const tierCost = (tier: number): number =>
   Math.round(COLLECTION.fragmentsPerTierBase * COLLECTION.fragmentsPerTierGrowth ** (tier - 1));
 
 /** The highest level this tier allows. A tier is worth exactly two levels, so
- *  a chase for Fragments always converts into somewhere for Knowledge to go. */
+ *  a chase for Fragments always converts into somewhere for Stardust to go. */
 export const levelCapForTier = (tier: number): number =>
   Math.min(COLLECTION.maxLevel, tier * COLLECTION.levelsPerTier);
 
@@ -42,12 +42,12 @@ export const isMaxLevel = (e: CollectionEntry): boolean => e.level >= COLLECTION
 export const isMaxTier = (e: CollectionEntry): boolean => e.tier >= COLLECTION.maxTier;
 
 /** Everything the UI needs to explain why a level-up button is grey. */
-export type LevelBlock = 'AtMaxLevel' | 'TierCapped' | 'NotEnoughKnowledge';
+export type LevelBlock = 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
 
-export function levelBlock(e: CollectionEntry, knowledge: number): LevelBlock | null {
+export function levelBlock(e: CollectionEntry, stardust: number): LevelBlock | null {
   if (isMaxLevel(e)) return 'AtMaxLevel';
   if (e.level >= levelCapForTier(e.tier)) return 'TierCapped';
-  if (knowledge < levelCost(e.level)) return 'NotEnoughKnowledge';
+  if (stardust < levelCost(e.level)) return 'NotEnoughStardust';
   return null;
 }
 
@@ -59,7 +59,7 @@ export function tierBlock(e: CollectionEntry): TierBlock | null {
   return null;
 }
 
-/** Total Knowledge from level 1 to the cap — the runway, in one number. */
+/** Total Stardust from level 1 to the cap — the runway, in one number. */
 export const totalLevelCost = (): number => {
   let sum = 0;
   for (let l = 1; l < COLLECTION.maxLevel; l++) sum += levelCost(l);

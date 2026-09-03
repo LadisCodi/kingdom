@@ -174,19 +174,19 @@ export function refillManaWithGems(state: GameState): RefillResult {
 // ------------------------------------------------------------- the Knowledge drip
 
 /**
- * Knowledge accrues from every ruin the player has CLEARED — not from every
- * ruin they have found. Discovery pays nothing; taking a dungeon to its bottom
- * turns it into a permanent faucet.
+ * Knowledge is the research clock, and its rate is the ground you have taken:
+ * every ruin CLEARED, and (next step) every landmark claimed. Discovery pays
+ * nothing; taking a dungeon to its bottom turns it into a permanent faucet.
  *
- * That is what keeps the currency honest now that it buys nothing but heroes
- * and relics: the levelling arc is fed by the system it feeds. It still gives
- * the arc a floor that survives between expeditions — five cleared ruins drip
- * ~240 a day whether or not a party is out — but the floor has to be earned
- * one dungeon at a time.
+ * There is deliberately NO base rate. A player who claims nothing generates
+ * nothing — Knowledge is not a wage for existing, it is what the land teaches
+ * you once you have taken some of it. The safety valve is that era 1 of the
+ * tree costs no Knowledge at all, so the opening hours run on Gold and time.
+ * See Docs/features/tomes-and-research.md §3.
  *
- * Kingdom-scoped, like the currency itself, and modified by knowledgeYield (the
- * Wanderer's Compass). Same whole-units-against-an-anchor shape as taxes and
- * Mana, so all three replay identically.
+ * CITY-scoped, because research belongs to this city, and modified by
+ * knowledgeYield (the Wanderer's Compass). Same whole-units-against-an-anchor
+ * shape as taxes and Mana, so all three replay identically.
  */
 export function knowledgePerHour(state: GameState): number {
   let cleared = 0;
@@ -209,7 +209,7 @@ export function accrueKnowledge(state: GameState, toTime: number): number {
   const units = Math.floor((toTime - state.kingdom.lastKnowledgeAt) / msPer);
   if (units <= 0) return 0;
   state.kingdom.lastKnowledgeAt += units * msPer;
-  addToWallet(state.kingdom.wallet, 'Knowledge', units);
+  addToWallet(state.city.wallet, 'Knowledge', units);
   recordResourceDiscovery(state, 'Knowledge');
   return units;
 }

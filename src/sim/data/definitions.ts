@@ -48,7 +48,11 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   // Mana's ceiling is DYNAMIC (Townhall level + Sanctum levels), so its `cap`
   // column stays blank and sim/mana.ts owns the real number.
   Mana: currency('city', balance.currencies.Mana),
-  Knowledge: currency('kingdom', balance.currencies.Knowledge),
+  // Knowledge is the research clock and belongs to THIS city; Stardust is the
+  // collection currency and is kingdom-scoped so it survives a region reset.
+  // They swapped jobs on 2026-09-03 — Docs/features/tomes-and-research.md §2.
+  Knowledge: currency('city', balance.currencies.Knowledge),
+  Stardust: currency('kingdom', balance.currencies.Stardust),
   Gems: currency('player', balance.currencies.Gems),
 };
 
@@ -160,7 +164,7 @@ export interface QuestDef {
   /** Kingdom-scoped, so it is NOT part of `reward` — that wallet is the
    *  city's. Quests are the steady half of the research budget; exploring
    *  is the half that scales. */
-  rewardKnowledge: number;
+  rewardStardust: number;
 }
 
 /** The chain, in sheet order — one quest active at a time. */
@@ -1350,4 +1354,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/features/engine-seams.md §4).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;

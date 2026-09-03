@@ -34,7 +34,7 @@ export interface CostTerm {
 }
 
 const CURRENCY_ICON_IDS = new Set<string>([
-  'Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Knowledge', 'Gems', 'Mana',
+  'Gold', 'Food', 'Wood', 'Stone', 'Iron', 'Knowledge', 'Stardust', 'Gems', 'Mana',
   'Berries', 'Meat', 'Fish',
 ]);
 

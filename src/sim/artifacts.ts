@@ -56,18 +56,19 @@ export function addArtifactFragments(state: GameState, id: ArtifactId, amount: n
   state.artifacts.fragments[id] = (state.artifacts.fragments[id] ?? 0) + amount;
 }
 
-export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughKnowledge';
+export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
 
-/** Spend Knowledge for one level. Knowledge is KINGDOM-scoped deliberately: it
+/** Spend Stardust for one level. Stardust is KINGDOM-scoped deliberately: it
  *  survives a region reset, so it still works when regions become the content
- *  treadmill. */
+ *  treadmill. Knowledge used to do this job and now buys technologies out of
+ *  the CITY purse instead — see Docs/features/tomes-and-research.md §2. */
 export function levelUpArtifact(state: GameState, id: ArtifactId): LevelUpResult {
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const entry = artifactEntry(state, id);
-  const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
-  const block = levelBlock(entry, knowledge);
+  const stardust = getWallet(state.kingdom.wallet, 'Stardust');
+  const block = levelBlock(entry, stardust);
   if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Knowledge', -levelCost(entry.level));
+  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
   state.artifacts.levels[id] = entry.level + 1;
   syncArtifactModifiers(state); // the passive scales with level
   return 'Levelled';

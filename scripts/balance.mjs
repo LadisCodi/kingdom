@@ -102,7 +102,7 @@ const ARTIFACT_IDS = [
 ];
 
 const CURRENCY_IDS = [
-  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Gems',
+  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'Gems',
 ];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone'];
 
@@ -195,13 +195,14 @@ const SETTINGS = [
   // bites but starts to feel like the loss aversion the positioning rules out.
   ['delve.gold_per_depth_per_tier', 'delve.goldPerDepthPerTier'],
   ['delve.material_per_depth_per_tier', 'delve.materialPerDepthPerTier'],
-  ['delve.knowledge_per_depth_per_tier', 'delve.knowledgePerDepthPerTier'],
+  ['delve.stardust_per_depth_per_tier', 'delve.stardustPerDepthPerTier'],
   ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
   ['delve.fail_haul_loss', 'delve.failHaulLoss'],
   ['delve.first_clear_gems', 'delve.firstClearGems'],
   // The lump a first clear pays. Together with the drip above and the gacha,
   // this is where ALL Knowledge comes from — clearing fog pays none.
   ['delve.first_clear_knowledge', 'delve.firstClearKnowledge'],
+  ['delve.first_clear_stardust', 'delve.firstClearStardust'],
   ['party.base_slots', 'party.baseSlots'],
   ['party.max_slots', 'party.maxSlots'],
   ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
@@ -216,7 +217,7 @@ const SETTINGS = [
   ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
   // Every pull pays this, hero or not — Fragments only ever point at one
   // hero, but Knowledge levels whoever the player already has.
-  ['gacha.pull_knowledge', 'gacha.pullKnowledge'],
+  ['gacha.pull_stardust', 'gacha.pullStardust'],
   // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
   // the player can plan around; `eligible_below_fraction` is what keeps it an
   // answer to being short rather than an interruption.
@@ -262,7 +263,7 @@ const SHEETS = {
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_knowledge'],
+    'reward_gems', 'reward_stardust'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -743,7 +744,7 @@ async function importXlsx() {
       goalLevel: level,
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
-      rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
+      rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
     });
   }
 
@@ -939,7 +940,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
-    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardKnowledge || '',
+    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

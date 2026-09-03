@@ -9,7 +9,8 @@ import type { Modifier } from './modifiers';
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
   | 'Mana' // the only capped currency — see sim/mana.ts
-  | 'Knowledge' // kingdom-scoped; levels heroes and relics and nothing else
+  | 'Knowledge' // CITY-scoped research clock; buys technologies and nothing else
+  | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
   | 'Gems'; // player-scoped, premium
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
@@ -345,7 +346,7 @@ export interface GameState {
   artifacts: {
     owned: ArtifactId[];
     levels: Partial<Record<ArtifactId, number>>;
-    /** Fragments raise a TIER cap; Knowledge buys levels within it. */
+    /** Fragments raise a TIER cap; Stardust buys levels within it. */
     tiers: Partial<Record<ArtifactId, number>>;
     fragments: Partial<Record<ArtifactId, number>>;
     attuned: Array<ArtifactId | null>;

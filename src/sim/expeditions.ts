@@ -239,11 +239,11 @@ function depthHaul(ruinId: RuinId, depth: number, heroId: HeroId): {
 } {
   const ruin = RUINS[ruinId];
   const hero = HEROES[heroId];
-  const knowledgeBonus = hero.trait === 'KnowledgeBonus' ? 1 + hero.traitValue : 1;
+  const stardustBonus = hero.trait === 'KnowledgeBonus' ? 1 + hero.traitValue : 1;
   const fragmentBonus = hero.trait === 'FragmentBonus' ? 1 + hero.traitValue : 1;
   const wallet: Wallet = {
     Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
-    Knowledge: Math.round(DELVE.knowledgePerDepthPerTier * ruin.tier * depth * knowledgeBonus),
+    Stardust: Math.round(DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus),
   };
   // The deeper tiers pay materials the city cannot easily reach otherwise —
   // three times the haul, the rate a vein pays over a plain rock.
@@ -315,10 +315,13 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
           artifact = ruin.artifact;
           // The recurring Gem faucet the design needs: one per ruin, once.
           addToWallet(state.player.wallet, 'Gems', DELVE.firstClearGems);
-          // And the lump that opens the levelling arc. A first clear is the
-          // moment Knowledge starts existing for this player: it pays here,
-          // and from here on the ruin drips (sim/mana.ts).
-          addToWallet(state.kingdom.wallet, 'Knowledge', DELVE.firstClearKnowledge);
+          // Conquest pays Knowledge, plunder pays Stardust. Taking the ruin
+          // to its bottom is the conquest: it opens the levelling arc with a
+          // Stardust lump AND starts this ruin's permanent Knowledge drip into
+          // the city's research clock (sim/mana.ts).
+          addToWallet(state.kingdom.wallet, 'Stardust', DELVE.firstClearStardust);
+          recordResourceDiscovery(state, 'Stardust');
+          addToWallet(state.city.wallet, 'Knowledge', DELVE.firstClearKnowledge);
           recordResourceDiscovery(state, 'Knowledge');
         }
         delve.phase = 'checkpoint';
@@ -396,9 +399,9 @@ export function extract(state: GameState, delveId: string): ExtractReport {
   const artifactId = RUINS[delve.ruinId].artifact;
   for (const [c, n] of Object.entries(delve.haul)) {
     if (n <= 0) continue;
-    if (c === 'Knowledge') {
-      addToWallet(state.kingdom.wallet, 'Knowledge', n);
-      recordResourceDiscovery(state, 'Knowledge');
+    if (c === 'Stardust') {
+      addToWallet(state.kingdom.wallet, 'Stardust', n);
+      recordResourceDiscovery(state, 'Stardust');
     }
     else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }

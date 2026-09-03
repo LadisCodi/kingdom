@@ -762,7 +762,7 @@ export class Game {
   doLevelArtifact(id: ArtifactId): void {
     const result = levelUpArtifact(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
     this.notify();
   }
@@ -1560,7 +1560,7 @@ export class Game {
   doLevelHero(id: HeroId): void {
     const result = levelUpHero(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
     this.notify();
   }
@@ -1992,12 +1992,16 @@ export class Game {
     this.tapChain.dispatch(cell);
   }
 
-  /** The one accessor that knows about the three purses: Gems are the
-   *  player's, Knowledge is the kingdom's, everything else is the city's. */
+  /** The one accessor that knows about the three purses. It reads the scope
+   *  off `CURRENCIES` rather than naming currencies here, so a currency that
+   *  changes purse — as Knowledge and Stardust did on 2026-09-03 — cannot
+   *  desync the presenter from the sim. */
   walletValue(c: CurrencyId): number {
-    if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
-    return getWallet(this.state.city.wallet, c);
+    switch (CURRENCIES[c].scope) {
+      case 'player': return getWallet(this.state.player.wallet, c);
+      case 'kingdom': return getWallet(this.state.kingdom.wallet, c);
+      default: return getWallet(this.state.city.wallet, c);
+    }
   }
 
   // ------------------------------------------------------------------ the HUD
@@ -2025,9 +2029,11 @@ export class Game {
    * The tech clause is what makes it STICKY: keyed on the balance alone, a
    * counter would vanish the moment the player spent back to zero.
    *
-   * Knowledge is NOT here. It buys heroes and relics and nothing else, so it
-   * lives in the Reliquary next to what it pays for — like Fragments, and for
-   * the same reason. A coin on the plank is a coin you spend from anywhere.
+   * Stardust and Knowledge are NOT here. Each is spent in exactly one screen
+   * — Stardust in the Reliquary next to the levels it buys, Knowledge in the
+   * Research screen next to the tomes — so each reads there, like Fragments
+   * and for the same reason. A coin on the plank is a coin you spend from
+   * anywhere; neither of those is one.
    */
   visibleCurrencies(): CurrencyId[] {
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
@@ -2176,7 +2182,7 @@ export function formatAdjacency(goldPerMinute: number): string {
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-    Knowledge: '📜', Gems: '💎',
+    Knowledge: '📜', Stardust: '🌟', Gems: '💎',
   };
   return icons[c];
 }

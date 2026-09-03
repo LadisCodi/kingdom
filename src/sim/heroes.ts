@@ -1,7 +1,7 @@
 // Heroes and the gacha (Docs/features/heroes-and-gacha.md).
 //
 // Heroes reuse the collection substrate verbatim: Fragments raise a tier cap,
-// Knowledge buys levels within it. That is the whole point of building the
+// Stardust buys levels within it. That is the whole point of building the
 // substrate first — a hero and a relic are two KINDS OF THING, not two systems
 // with two vocabularies, and the player learns the rules once.
 //
@@ -60,14 +60,14 @@ export function grantHero(state: GameState, id: HeroId): 'Granted' | 'Duplicate'
 }
 
 export type HeroLevelResult =
-  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughKnowledge';
+  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
 
 export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
-  const block = levelBlock(entry, getWallet(state.kingdom.wallet, 'Knowledge'));
+  const block = levelBlock(entry, getWallet(state.kingdom.wallet, 'Stardust'));
   if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Knowledge', -levelCost(entry.level));
+  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
   state.heroes.levels[id] = entry.level + 1;
   return 'Levelled';
 }
@@ -154,8 +154,8 @@ export interface PullResult {
   /** Fragments paid — from a duplicate, or the consolation on a miss. */
   fragments: number;
   fragmentsOf: HeroId | null;
-  /** Knowledge paid — the same on every pull, hero or not. */
-  knowledge: number;
+  /** Stardust paid — the same on every pull, hero or not. */
+  stardust: number;
   /** Whether hard pity delivered this one. */
   guaranteed: boolean;
 }
@@ -170,7 +170,7 @@ export interface PullResult {
 export function pull(state: GameState, banner: string = STANDARD_BANNER): PullResult {
   const miss: PullResult = {
     result: 'NotEnoughGems', heroId: null, duplicate: false,
-    fragments: 0, fragmentsOf: null, knowledge: 0, guaranteed: false,
+    fragments: 0, fragmentsOf: null, stardust: 0, guaranteed: false,
   };
   const cost = pullCost(state, banner);
   if (getWallet(state.player.wallet, 'Gems') < cost) return miss;
@@ -181,12 +181,12 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
   }
 
   addToWallet(state.player.wallet, 'Gems', -cost);
-  // Every pull pays Knowledge, before the roll is even read. A banner is one
-  // of the two places Knowledge comes from, and paying it up front is what
+  // Every pull pays Stardust, before the roll is even read. A banner is one
+  // of the two places Stardust comes from, and paying it up front is what
   // makes the WHOLE pull worth something — the Fragments below only ever
-  // point at one hero, but Knowledge levels whoever the player already has.
-  addToWallet(state.kingdom.wallet, 'Knowledge', GACHA.pullKnowledge);
-  recordResourceDiscovery(state, 'Knowledge');
+  // point at one hero, but Stardust levels whoever the player already has.
+  addToWallet(state.kingdom.wallet, 'Stardust', GACHA.pullStardust);
+  recordResourceDiscovery(state, 'Stardust');
   const n = pullCount(state, banner);
   const pity = pityCount(state, banner);
   state.gacha.pullCounts[banner] = n + 1;
@@ -202,7 +202,7 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
     return {
       result: 'Pulled', heroId: null, duplicate: false,
       fragments: GACHA.fragmentsPerMiss, fragmentsOf: target,
-      knowledge: GACHA.pullKnowledge, guaranteed: false,
+      stardust: GACHA.pullStardust, guaranteed: false,
     };
   }
 
@@ -215,7 +215,7 @@ export function pull(state: GameState, banner: string = STANDARD_BANNER): PullRe
     duplicate: outcome === 'Duplicate',
     fragments: outcome === 'Duplicate' ? GACHA.duplicateFragments : 0,
     fragmentsOf: outcome === 'Duplicate' ? heroId : null,
-    knowledge: GACHA.pullKnowledge,
+    stardust: GACHA.pullStardust,
     guaranteed: pity >= GACHA.hardPityAt - 1,
   };
 }

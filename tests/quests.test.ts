@@ -229,7 +229,7 @@ describe('quests fund the research tree', () => {
     state.quests.progress = QUESTS[explorer].goalAmount;
     expect(claimQuest(state)).toBe('Claimed');
     expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(QUESTS[explorer].rewardKnowledge);
+      .toBe(QUESTS[explorer].rewardStardust);
     expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
   });
 
@@ -256,9 +256,9 @@ describe('quests fund the research tree', () => {
   it('only the long-game quests pay Knowledge at all', () => {
     const LONG_GAME = ['ClearRuins', 'ReachDepth', 'OwnArtifacts', 'OwnHeroes'];
     for (const q of QUESTS) {
-      if (q.rewardKnowledge > 0) expect(LONG_GAME).toContain(q.goalType);
+      if (q.rewardStardust > 0) expect(LONG_GAME).toContain(q.goalType);
     }
-    expect(QUESTS.filter((q) => q.rewardKnowledge > 0).length).toBeGreaterThan(0);
+    expect(QUESTS.filter((q) => q.rewardStardust > 0).length).toBeGreaterThan(0);
   });
 
   /**
@@ -315,7 +315,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test', description: '',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardKnowledge: 0,
+    reward: {}, rewardGems: 0, rewardStardust: 0,
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -387,7 +387,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test', description: '',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardKnowledge: 0,
+      reward: {}, rewardGems: 0, rewardStardust: 0,
     });
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null });

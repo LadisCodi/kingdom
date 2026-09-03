@@ -410,14 +410,14 @@ describe('the descent', () => {
     expect(state.delves).toHaveLength(0); // the hero and the units come home
   });
 
-  it('Knowledge from a delve goes to the KINGDOM wallet, where it survives a reset', () => {
+  it('Stardust from a delve goes to the KINGDOM wallet, where it survives a reset', () => {
     const state = readyToDelve();
     launch(state);
     advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    const before = getWallet(state.kingdom.wallet, 'Knowledge');
+    const before = getWallet(state.kingdom.wallet, 'Stardust');
     const report = extract(state, state.delves[0].id);
-    expect(report.wallet.Knowledge).toBeGreaterThan(0);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + report.wallet.Knowledge!);
+    expect(report.wallet.Stardust).toBeGreaterThan(0);
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(before + report.wallet.Stardust!);
   });
 
   it('pushing deeper rolls the next threat only when the party commits', () => {
@@ -463,14 +463,20 @@ describe('the descent', () => {
     launchDelve(state, map, BARROW, 'Warden',
       [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
     const gems = getWallet(state.player.wallet, 'Gems');
-    const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
+    const stardust = getWallet(state.kingdom.wallet, 'Stardust');
+    const knowledge = getWallet(state.city.wallet, 'Knowledge');
     advance(state, map, T0 + 86_400_000);
     expect(state.ruinsCleared[BARROW]).toBe(true);
     // The recurring Gem faucet the design needs — one per ruin, once.
     expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + DELVE.firstClearGems);
     // And the lump that opens the levelling arc. Banked immediately, not on
     // extraction: a party parked at the bottom has already earned it.
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+    expect(getWallet(state.kingdom.wallet, 'Stardust'))
+      .toBeGreaterThanOrEqual(stardust + DELVE.firstClearStardust);
+    // Conquest pays the research clock, out of the CITY purse. A floor, not
+    // an equality: this ruin's drip is already running by the time the party
+    // reaches the bottom.
+    expect(getWallet(state.city.wallet, 'Knowledge'))
       .toBeGreaterThanOrEqual(knowledge + DELVE.firstClearKnowledge);
 
     const report = extract(state, state.delves[0].id);
@@ -816,20 +822,21 @@ describe('finishing a training line with gems', () => {
   });
 });
 
-// Docs/features/knowledge.md — where Knowledge actually comes from now.
+// Docs/features/tomes-and-research.md §3 — Knowledge is the research clock,
+// it is CITY-scoped, and its rate is the ground you have taken.
 //
 // CLAIM: dungeons and the gacha, and nothing else. Clearing fog pays none
 // (tests/fog.test.ts), the early quest chain pays none (tests/quests.test.ts),
 // and the standing drip is earned one dungeon at a time rather than handed
 // out for spotting one through the fog.
-describe('Knowledge comes out of dungeons', () => {
+describe('Knowledge is the research clock, and cleared ruins drive it', () => {
   it('a ruin drips nothing until it has been CLEARED', () => {
     const state = readyToDelve();
     // The Barrow is discovered — readyToDelve can launch into it — and still
     // pays nothing per hour.
     expect(knowledgePerHour(state)).toBe(0);
     advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
 
     state.ruinsCleared[BARROW] = true;
     expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
@@ -843,7 +850,7 @@ describe('Knowledge comes out of dungeons', () => {
 
     state.kingdom.lastKnowledgeAt = T0;
     advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+    expect(getWallet(state.city.wallet, 'Knowledge'))
       .toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
   });
 

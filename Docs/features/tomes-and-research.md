@@ -130,13 +130,17 @@ Keys that currently say Knowledge and now mean Stardust:
 | `CONJUNCTION_BOONS[*].knowledge` | 60 — **decide: Stardust or the new Knowledge?** |
 | `technologies[*].cost.Gold` | 6,600 → reprices as Gold **+ Knowledge** + time across ~167 nodes ([`tech-tree.md`](tech-tree.md) §6) |
 
-`SAVE_VERSION` 21 → 22 **with a migrator**, and it carries three reshapes at
-once — this one, the Fragment→ingredient conversion
+`SAVE_VERSION` **22 → 23 with a migrator** (landed 2026-09-03), and two more
+reshapes follow it on their own entries — the Fragment→ingredient conversion
 ([`relics-and-ingredients.md`](relics-and-ingredients.md) §8) and
-`state.upgrades` → completed tech ids ([`tech-tree.md`](tech-tree.md) §8):
+`state.upgrades` → completed tech ids ([`tech-tree.md`](tech-tree.md) §8).
+`MIGRATIONS` is append-only, so each is its own entry rather than one shared
+migrator.
 
-- move the balance from `kingdom.wallet.Knowledge` to `kingdom.wallet.Stardust`,
-- create `city.wallet.Knowledge` at zero.
+The v23 entry moves the balance from `kingdom.wallet.Knowledge` to
+`kingdom.wallet.Stardust` and leaves the city's Knowledge unseeded: a
+returning player starts the research clock at zero and earns it from the
+ground they hold.
 
 **The trap, which is the same one the currency-simplification migrator had to
 avoid:** a player mid-flight holds a Knowledge balance **earned as collection

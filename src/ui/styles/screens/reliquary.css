@@ -31,9 +31,9 @@
 .rel-mana-title { font-family: var(--font-display); font-size: var(--text-title); flex: 1; }
 .rel-mana-hint { font-size: var(--text-helper); color: var(--ink-muted); }
 
-/* --------------------------------------------------------- the Knowledge --- */
+/* ---------------------------------------------------------- the Stardust --- */
 
-/* Knowledge has no coin on the plank — it buys relic and hero levels and
+/* Stardust has no coin on the plank — it buys relic and hero levels and
    nothing else, so its purse reads here, beside the Study buttons that spend
    it. Parchment against the pool's blue: two different kinds of resource, and
    the eye should not have to read the label to tell them apart. */
