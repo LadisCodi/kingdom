@@ -97,7 +97,7 @@ describe('save round-trip', () => {
   });
 });
 
-// The migration chain (Docs/features/engine-seams.md §4). Additive changes
+// The migration chain (Docs/implementation-plan.md §1). Additive changes
 // need no migrator — a version bump plus the defensive readers is enough —
 // so this covers the two gates that DO have to hold on every bump.
 describe('save versions', () => {

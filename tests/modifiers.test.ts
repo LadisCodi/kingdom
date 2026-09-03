@@ -1,4 +1,4 @@
-// The modifier layer (Docs/features/engine-seams.md §2).
+// The modifier layer (Docs/implementation-plan.md §1).
 //
 // Two clients exist on day one, and both shapes are exercised here: artifact
 // PASSIVES are permanent modifiers, artifact ACTIVES are timed ones. The

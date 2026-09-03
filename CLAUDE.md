@@ -4,18 +4,24 @@ A cozy square-grid city-builder / idle game. Vite + TypeScript, Canvas 2D, no
 framework. `src/sim/` is a **pure** simulation core — no DOM, no clock,
 injectable randomness — so it can later run server-side.
 
-**Read [`Docs/00-design-intent.md`](Docs/00-design-intent.md) before changing
-behaviour**, and [`Docs/road-to-mvp.md`](Docs/road-to-mvp.md) for what is being
-built next and why. `Docs/features/*.md` is the live source of truth per
-feature. `Docs/01`–`11` is a **frozen Unity as-built snapshot** describing an
-earlier, different game (hex grid, Silver, generator vaults, spells) — it is
-history, not spec, and it says so at the top of each file.
+**Read [`Docs/overview.md`](Docs/overview.md) before changing behaviour** — the
+game in five minutes. Then:
+
+| Where | What it holds |
+|---|---|
+| [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
+| `Docs/features/01`–`15` | **the live source of truth, one file per feature** |
+| [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`) |
+| [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
+
+`Docs/` is **design**: no implementation detail unless a decision turned on it.
+Code-level contracts are the invariants below.
 
 ## Commands
 
 ```bash
 npm run dev          # vite; predev runs the balance import
-npm test             # vitest run — 39 suites, keep them all green
+npm test             # vitest run — 43 suites, keep them all green
 npm run build        # tsc --noEmit && vite build
 npm run balance      # balance.xlsx  → src/sim/data/balance.json
 npm run balance:export   # balance.json → balance.xlsx  (the other direction)
@@ -128,16 +134,15 @@ than the build is rejected rather than downgraded.
 
 Feature docs open with a `>` blockquote giving scope and **status**, use
 numbered `##` sections referenced elsewhere as `§n`, carry a table of dials
-"in the order to reach for them", and end with **Open questions** /
-**Open decisions**. They record *why* a number is what it is and what was
-deliberately cut, and they mark their own steps done and point at the canonical
-backlog in `00-design-intent.md` rather than each keeping a partial list.
+"in the order to reach for them", and end with **deliberately not in this
+design**. They record *why* a number is what it is and what was deliberately
+cut. **Open questions do not live in the feature doc** — they live in
+`Docs/open-questions.md`, and the feature names them by id (`OQ-n`).
 Docs are written in **English**. Keep it that way.
 
 When a doc and the code disagree, **the code is usually right and the doc is
-stale** — `Docs/features/balancing-v3.md` found three of these in one pass. Fix
-the doc in the same commit, and prefer a test over a paragraph for any number
-that has now been argued twice.
+stale.** Fix the doc in the same commit, and prefer a test over a paragraph for
+any number that has now been argued twice.
 
 ## Don't
 
@@ -145,10 +150,10 @@ that has now been argued twice.
   `src/sim/data/region-map.json` is allowed but pointless — use `?dev=map`,
   which validates as you go.
 - Don't re-express upgrade levels as modifiers, or pass `now` through the
-  `effectiveX` helpers — both were cut deliberately (`engine-seams.md` §10).
-- Don't restructure `GameState` into `regions: Record<RegionId, RegionState>`
-  without reading `engine-seams.md` §6 first; it touches every sim file and
-  every test, and it is deliberately deferred.
+  `effectiveX` helpers — both were cut deliberately.
+- Don't restructure `GameState` into `regions: Record<RegionId, RegionState>`;
+  it touches every sim file and every test, and it is deliberately deferred
+  (`Docs/implementation-plan.md` §5).
 - Don't re-type a file's contents from tool output when editing — read and
   modify in place.
 - Don't commit or push unless asked. Branch off `develop`.

@@ -1,4 +1,4 @@
-// Heroes and the gacha (Docs/features/heroes-and-gacha.md).
+// Heroes and the gacha (Docs/features/10-heroes.md).
 //
 // Heroes reuse the collection substrate verbatim: Fragments raise a tier cap,
 // Knowledge buys levels within it. That is the whole point of building the
@@ -108,7 +108,7 @@ export const STANDARD_BANNER = 'standard';
 /**
  * What the NEXT pull costs on this banner.
  *
- * The first one on the standard banner is free (Docs/onboarding.md, step 25).
+ * The first one on the standard banner is free (Docs/features/12-quests.md §2, quest 33).
  * The tutorial hands the player a hero rather than a price list: a summon they
  * have never seen is not something they can judge the cost of, and a banner
  * whose first impression is "you cannot afford this" teaches the wrong thing

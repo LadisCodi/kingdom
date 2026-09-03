@@ -108,7 +108,7 @@ export const populationCost = (currentPopulation: number): number => {
 // ---------------------------------------------------------------- house tap
 
 /**
- * The house tap (Docs/features/balancing-v2.md §1.1, revised 2026-09-02).
+ * The house tap (Docs/features/03-economy.md §5, revised 2026-09-02).
  *
  * A house taps like a TREE: as many times as you like, as fast as you like.
  * What bounds it is **Mana** — one per tap — so the ceiling is the size of the

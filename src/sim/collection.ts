@@ -1,4 +1,4 @@
-// The collection substrate (Docs/features/heroes-and-gacha.md §"The
+// The collection substrate (Docs/features/10-heroes.md §"The
 // load-bearing constraint").
 //
 // Heroes-with-a-gacha and artifacts are structurally the same thing: collect →

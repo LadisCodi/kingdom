@@ -1,4 +1,4 @@
-// The four artifact ACTIVES (Docs/features/magic.md §2).
+// The four artifact ACTIVES (Docs/features/08-magic.md §2).
 //
 // Cast mode reuses PLACEMENT mode wholesale: select → valid cells highlight →
 // tap to commit is exactly what placementInfo(), markers() and the priority-300

@@ -3,7 +3,7 @@
 // A conventional login streak resets to zero on a missed day. This one does
 // not — the ladder advances on days PLAYED, and missing a day costs that day's
 // chest and nothing else — because promise 1 is *nothing you own is ever taken
-// from you* (Docs/features/habit-loop.md §1.1).
+// from you* (Docs/features/12-quests.md §4.1).
 //
 // That is a design commitment rather than a number, so it is the thing these
 // tests defend. "The ladder survives a two-week absence at the step it
@@ -161,7 +161,7 @@ describe('persistence', () => {
 
   // Additive module key, so a save written before the chest existed needs no
   // migrator — it deserialises to a player meeting the ladder for the first
-  // time, which is exactly right (engine-seams.md §4).
+  // time, which is exactly right (Docs/implementation-plan.md §1).
   it('starts a pre-chest save at the bottom of the ladder', () => {
     const state = freshGame();
     const file = serialize(state, T0);

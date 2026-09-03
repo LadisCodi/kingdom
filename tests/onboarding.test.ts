@@ -1,4 +1,4 @@
-// Docs/onboarding.md — the authored first-user experience, PLAYED.
+// Docs/features/12-quests.md §2 — the authored first-user experience, PLAYED.
 //
 // The quest-order test in `quests.test.ts` asserts the chain lists the right
 // beats in the right sequence. This one asserts something stronger and much
@@ -187,9 +187,9 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- steps 13-15: somewhere for the surplus to go ----
+    // ---- quests 15-17: somewhere for the surplus to go ----
     // The Market moved here from quest 32 so that generated orders have a home
-    // inside the opening (habit-loop.md §2). This is the beat that has to hold
+    // inside the opening (Docs/features/12-quests.md §3). This is the beat that has to hold
     // up: 150 Gold for the technology and 40 Wood for the building, out of
     // nothing but what the chain has paid so far.
     //

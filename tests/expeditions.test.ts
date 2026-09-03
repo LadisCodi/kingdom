@@ -1,5 +1,5 @@
 // Combat as a scoring pass, and delves as staged pushes
-// (Docs/features/expeditions.md §2, §4, §5).
+// (Docs/features/11-expeditions.md §2, §4, §5).
 //
 // The claim these tests exist to protect is "a well-prepared run never fails".
 // It is not a slogan: `guaranteedDepth` computes exactly how far a party is
@@ -121,7 +121,7 @@ describe('the army cap is a city decision', () => {
   });
 
   it('the tier ladder actually holds at the authored numbers', () => {
-    // The arc balancing-v2 Part 2 promises, asserted rather than hoped for:
+    // The arc Docs/features/11-expeditions.md §6 promises, asserted rather than hoped for:
     // each rung of military development opens the next tier and leaves the one
     // after it as a real stretch. `guaranteedDepth` assumes the WORST matchup,
     // so these are floors, not best cases.
@@ -513,7 +513,7 @@ describe('the descent', () => {
   });
 });
 
-// Attune OR arm (Docs/features/heroes-and-gacha.md §2).
+// Attune OR arm (Docs/features/10-heroes.md §2).
 //
 // The claim these tests protect is the one the design calls "the best decision
 // in the design": an artifact is attuned to the kingdom OR carried by a hero,
@@ -816,7 +816,7 @@ describe('finishing a training line with gems', () => {
   });
 });
 
-// Docs/features/knowledge.md — where Knowledge actually comes from now.
+// Docs/features/10-heroes.md §4 — where Knowledge actually comes from now.
 //
 // CLAIM: dungeons and the gacha, and nothing else. Clearing fog pays none
 // (tests/fog.test.ts), the early quest chain pays none (tests/quests.test.ts),

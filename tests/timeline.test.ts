@@ -1,5 +1,5 @@
 // The timeline, the Conjunction and the gacha
-// (Docs/features/engine-seams.md §5/§7, heroes-and-gacha.md §4).
+// (Docs/implementation-plan.md §1/§7, Docs/features/10-heroes.md §5).
 //
 // The three things the design says are easy to get wrong are the three things
 // asserted here: reconciliation reaches an existing save, a window that opened
@@ -172,7 +172,7 @@ describe('the gacha', () => {
     return state;
   };
 
-  // Docs/onboarding.md step 25: the first call on the standard banner is a
+  // Docs/features/12-quests.md §2 (quest 33): the first call on the standard banner is a
   // gift, and every one after it is the authored price. No new save field —
   // the pull counter already persists for pity, and "have you pulled here
   // yet" is exactly what it records.

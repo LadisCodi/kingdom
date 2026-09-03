@@ -6,9 +6,11 @@ Map editor
 > editor, the shared rule module every consumer validates against, and the
 > dev-only save path.
 >
-> **Status: built, 2026-09-03.** Replaces the `Map`, `Landmarks` and `Ruins`
-> sheets, which are gone from `balance.xlsx`. Backlog lives in
-> [`00-design-intent.md`](00-design-intent.md).
+> **Status: built.** Replaces the `Map`, `Landmarks` and `Ruins` sheets, which
+> are gone from `balance.xlsx`. This is a **tool**, not a game feature — the map
+> content it authors is designed in
+> [`features/01-map-and-fog.md`](features/01-map-and-fog.md). Open questions
+> live in [`open-questions.md`](open-questions.md) (OQ-49, OQ-50).
 
 ## 1. Why the map left the workbook
 
@@ -183,7 +185,7 @@ In the order to reach for them.
   three sheets are gone, not stale.
 - **Multi-region.** The editor edits `oakville` because that is the only
   authored region. A second is a second JSON file and a row in `REGIONS` —
-  see `engine-seams.md` §6 before assuming it is only that.
+  see [`implementation-plan.md`](implementation-plan.md) §5 before assuming it is only that.
 - **Undo as a command stack.** Whole-document snapshots, because a few hundred
   cells makes a `structuredClone` free and a diff stack is the thing that would
   quietly get a case wrong.
@@ -192,17 +194,9 @@ In the order to reach for them.
 
 ## Open questions
 
-- **Should a map change force a `SAVE_VERSION` bump?** Today it is a note in
-  `balance/README.md` and a human remembering. The editor knows exactly which
-  cells moved and could tell you when a change touches ground a live save has
-  revealed — but "which edits actually break a save" has not been pinned down,
-  and guessing it wrong in either direction is worse than the note.
-- **Should the census have budgets?** It counts, and a designer compares
-  against a number in their head. Authoring "ring ≤ 4 wants ≥ 12 Wood" would
-  turn the census into a second validator — useful, but it is a balance
-  statement and those live in the workbook, which no longer knows where
-  anything is.
-- **Tests pin cells near the Townhall.** `onboarding.test.ts` and friends play
-  the real opening over the real map, so repainting the first few rings breaks
-  them — correctly, but with an error that talks about quests rather than about
-  the cell that moved.
+- **Should a map change force a `SAVE_VERSION` bump?** — OQ-49.
+- **Should the census have budgets?** — OQ-50.
+- **Tests pin cells near the Townhall.** The onboarding tests play the real
+  opening over the real map, so repainting the first few rings breaks them —
+  correctly, but with an error that talks about quests rather than about the
+  cell that moved.

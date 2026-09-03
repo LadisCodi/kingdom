@@ -1,7 +1,7 @@
 // The daily-chest pill.
 //
 // Glows and waits. It does NOT auto-open the sheet on the first session of a
-// day — habit-loop.md §1.4, and the reasoning is the whole design: a game
+// day — Docs/features/12-quests.md §4.3, and the reasoning is the whole design: a game
 // built around never making demands should not open with one. The cost is that
 // a player can miss the chest entirely on a day they play; that is the
 // sanctioned pressure, and it costs them one chest and no ladder progress.

@@ -920,7 +920,7 @@ export class Game {
    *
    * The popup is raised from the REFUSAL rather than from a store tab,
    * because that is the only moment the player has already decided they want
-   * the thing — `Docs/features/builders.md`. It opens at the ceiling too: the
+   * the thing — `Docs/features/06-construction.md`. It opens at the ceiling too: the
    * sheet then explains why there is nothing to buy, which is a better answer
    * than a toast the player has to read in the corner of their eye.
    *

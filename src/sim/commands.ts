@@ -82,7 +82,7 @@ export function buyBuilder(state: GameState): BuyBuilderResult {
 
 /** `NoBuilderFree`, not `QueueFull`: nothing is queued and nothing waits —
  *  every builder is already on a job. It is the moment the Gem offer exists
- *  for (`Docs/features/builders.md`). */
+ *  for (`Docs/features/06-construction.md`). */
 export type EnqueueBuildResult =
   | 'Started' | 'NoBuilderFree' | 'NotEnoughResources' | 'InvalidCell';
 

@@ -60,7 +60,7 @@ that feedback. If we ever want them, they need heavy rate-limiting.
 Grouped by the doc that introduces them. Nothing here blocks implementation; the
 existing SFX fallback behaviour applies.
 
-### Magic — [`features/magic.md`](features/magic.md)
+### Magic — [`features/08-magic.md`](features/08-magic.md)
 
 | Cue | When |
 |---|---|
@@ -72,7 +72,7 @@ existing SFX fallback behaviour applies.
 | `artifact_locked` | A swap is refused because the slot is still in its 5-minute lock |
 | `landmark_claimed` | Mana production rises |
 
-### Expeditions — [`features/expeditions.md`](features/expeditions.md)
+### Expeditions — [`features/11-expeditions.md`](features/11-expeditions.md)
 
 | Cue | When |
 |---|---|
@@ -83,7 +83,7 @@ existing SFX fallback behaviour applies.
 | `ruin_discovered` | A ruin comes out of the fog |
 | `unit_recruited` | Replaces the instant-recruit cue once training takes time |
 
-### Heroes and gacha — [`features/heroes-and-gacha.md`](features/heroes-and-gacha.md)
+### Heroes and gacha — [`features/10-heroes.md`](features/10-heroes.md)
 
 | Cue | When |
 |---|---|

@@ -433,7 +433,7 @@ export const builderCount = (state: GameState): number => Math.max(1, state.king
  *
  * A build or upgrade either starts, because a builder is free, or it does not
  * start at all; nothing is ever parked waiting for a slot. That is the design
- * (`Docs/features/builders.md`), and it is what makes the refusal a moment
+ * (`Docs/features/06-construction.md`), and it is what makes the refusal a moment
  * worth selling into: the player is told "every builder is busy" and offered
  * one more for Gems, rather than being quietly put in a line.
  *

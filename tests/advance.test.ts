@@ -1,4 +1,4 @@
-// The boundary loop (Docs/features/engine-seams.md §1).
+// The boundary loop (Docs/implementation-plan.md §1).
 //
 // `advance()` used to pivot only on build-queue completions and apply research
 // ONCE at the end of the window. A technology completing mid-absence therefore

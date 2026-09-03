@@ -1,4 +1,4 @@
-// Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/02).
+// Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
 import { DISTRICTS, FOG, LANDMARKS, RUINS } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';

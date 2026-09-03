@@ -145,7 +145,7 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
   });
 });
 
-// Docs/features/knowledge.md — clearing fog pays no currency at all.
+// Docs/features/10-heroes.md §4 — clearing fog pays no currency at all.
 //
 // CLAIM: a reveal buys GROUND. Resource cells, buildable land, ruins and
 // landmarks, against a Gold price that doubles from ring 4 — and nothing
@@ -180,7 +180,7 @@ describe('exploring pays in ground, not in currency', () => {
   });
 });
 
-// Docs/onboarding.md step 20 — the point where exploring stops being a chore.
+// Docs/features/12-quests.md §2 (quest 27) — the point where exploring stops being a chore.
 //
 // Surveying does NOT make a cell cheaper. The Gold is unchanged; what it buys
 // back is the player's TIME, which is what exploring actually spends once the

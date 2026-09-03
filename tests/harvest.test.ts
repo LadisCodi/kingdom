@@ -127,7 +127,7 @@ describe('the energy a tap is paid from', () => {
   });
 });
 
-// Docs/onboarding.md steps 2-3, revised: Forestry gates BOTH the woods and
+// Docs/features/12-quests.md §2 (quests 2-3), revised: Forestry gates BOTH the woods and
 // the berry bushes, so during the first-time experience the only thing a
 // player can do is tap fog. That is the point — it is what stops Food (and
 // therefore a villager, and therefore rent) arriving before it is meant to,

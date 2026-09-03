@@ -1,7 +1,7 @@
 // "Every builder is busy" — the offer raised by a refused build.
 //
 // THE REFUSAL IS THE OFFER, and that is the whole design (see
-// Docs/features/builders.md). There is no waiting line in this game: a build
+// Docs/features/06-construction.md). There is no waiting line in this game: a build
 // either starts because a builder is free or it does not start at all. That
 // makes the refusal a real moment rather than an administrative one — the
 // player has already chosen the building and placed the ghost, so "you cannot

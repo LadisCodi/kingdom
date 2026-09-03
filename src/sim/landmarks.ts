@@ -1,4 +1,4 @@
-// Landmarks (Docs/features/magic.md §4): small, numerous, passive map sites
+// Landmarks (Docs/features/08-magic.md §4): small, numerous, passive map sites
 // that raise Mana CAPACITY permanently when claimed.
 //
 // They are what makes exploration compound rather than merely pay:

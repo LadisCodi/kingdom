@@ -1,5 +1,5 @@
 // The army: what it costs to keep, what raises the ceiling, and how long a
-// unit takes to appear (Docs/features/expeditions.md §6, balancing-v2 Part 2).
+// unit takes to appear (Docs/features/11-expeditions.md §6, Docs/features/11-expeditions.md §6).
 //
 // Two things changed here, and they are the same change from two directions.
 //

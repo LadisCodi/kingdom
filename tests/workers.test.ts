@@ -32,7 +32,7 @@ const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSe
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   fund(state, { Gold: 500, Wood: 500 });
   // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
-  // it for you (Docs/onboarding.md steps 3 and 15).
+  // it for you (Docs/features/12-quests.md §2 steps 3 and 15).
   completeTech(state, 'Forestry');
   completeTech(state, 'Saws');
   // Fog-independent setup: the Townhall's fog radius would reveal every tree

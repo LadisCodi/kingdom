@@ -1,4 +1,4 @@
-// The checkpoint (Docs/features/expeditions.md §8).
+// The checkpoint (Docs/features/11-expeditions.md §8).
 //
 // One question, two answers of EQUAL VISUAL WEIGHT: go deeper, or take the
 // haul. It has to read as an offer, never as a threat — a screen that styles

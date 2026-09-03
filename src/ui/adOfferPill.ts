@@ -1,4 +1,4 @@
-// The ad-offer tab (Docs/features/ad-economy.md): a small slab that slides in
+// The ad-offer tab (Docs/features/08-magic.md §7): a small slab that slides in
 // from the right edge when there is a rewarded video worth watching.
 //
 // Built once and mutated, never rebuilt — the same reason the quest pill is

@@ -1,37 +1,33 @@
-# Feature: map scopes — the province, the temporary provinces, and the world
+# 2 · Map scopes — the province, the temporary provinces, and the world
 
-> **Status: designed, unstarted. This is a structural decision, not a feature.**
-> It decides where every future system lives, and one of its consequences —
-> the shape of the save — cannot be changed retroactively.
+> **Scope.** Where every future system lives. This is a structural decision
+> rather than a feature: one of its consequences — the shape of the save —
+> cannot be changed retroactively, which is why it is written down before it is
+> built.
 >
-> Companion docs: [`engine-seams.md`](engine-seams.md) §6 (the region
-> discriminator this finally justifies), [`social-layer.md`](social-layer.md)
-> (which needs to know where a siege happens),
-> [`event-archetype.md`](event-archetype.md) §3.3 (the temporary province, by
-> another name), [`../road-to-mvp.md`](../road-to-mvp.md).
+> **Status: designed, unstarted.** One piece of it is cheap enough to land
+> early and is worth landing early: bounding the buildable plot (§7).
 
 ## 0. The problem, with numbers
 
 The map is a single grid that is simultaneously the city canvas, the resource
 hinterland and the adventure space. Two measurements say that cannot hold.
 
-**The fog runs dry in an afternoon.** `balancing-v2.md` §2 puts the whole map at
-**194,142 Gold** across 253 cells, and §1 puts a Townhall-3 city at **900
-Gold/min idle**. That is **3.6 hours of end-game income for the entire map** —
-the differentiator, the main Gold sink and 253 hand-placed cells. The
-exponential curve misleads because it feels brutal early (a distance-9 iron vein
-is 320 taps) and is trivial late.
+**The fog runs dry in an afternoon.** The whole map is **194,142 Gold** across
+253 cells; a Townhall-3 city makes **~900 Gold/min idle**. That is **3.6 hours
+of end-game income for the entire map** — the differentiator, the main Gold sink
+and 253 hand-placed cells.
 
 **And the influence radii oversubscribe the map before the fog even runs out.**
 A district at level 3 covers Chebyshev radius 3 — **48 cells of influence** on a
 253-cell map. Three Sawmills at L3 is 144 cells, 57% of everything. But the
-binding constraint is worse: a Sawmill L3 fields **7 workers**, and the whole
-map holds on the order of 13–17 forest cells. **Three maxed Sawmills are 21
-worker slots competing for 17 trees**, and the claim system (one worker per
-cell) leaves the rest Idle.
+binding constraint is worse: a Sawmill L3 fields **7 workers**, and the map
+holds on the order of 13–17 forest cells. **Three maxed Sawmills are 21 worker
+slots competing for 17 trees**, and the claim system (one worker per cell)
+leaves the rest Idle.
 
-So the map does not "eventually run out". **The buildings ask for more cells than
-the map contains, long before the fog runs out of tiles to sell.**
+So the map does not "eventually run out". **The buildings ask for more cells
+than the map contains, long before the fog runs out of tiles to sell.**
 
 ## 1. Three jobs, and two of them contradict
 
@@ -46,17 +42,16 @@ canvas becomes infinite, so placement stops mattering. Bound it for the canvas
 and the treadmill ends — which is the three-hour content cliff wearing a
 different hat.
 
-This also explains backlog gap 6 (*"adjacency is still one rule, and five more
-districts now compete for the same ground"*). It is not that rules are missing:
-**adjacency rules cannot matter on a canvas that grows by buying tiles.**
-Scarcity is the precondition for spatial play.
+This also explains why **one adjacency rule** has never been enough (OQ-48). It
+is not that rules are missing: **adjacency rules cannot matter on a canvas that
+grows by buying tiles.** Scarcity is the precondition for spatial play.
 
 ## 2. What the genre does, which is unanimous
 
 | Game | City | Exploration |
 |---|---|---|
-| Forge of Empires | bounded plot; **expansions** bought with diamonds, tech, quests | **Campaign Map**, separate — provinces negotiated or fought, *paying expansions and goods back into the city* |
-| Elvenar | bounded plot + expansions (premium ones diamonds-only, 47 of them) | **World Map** of provinces scouted → relics + expansions |
+| Forge of Empires | bounded plot; **expansions** bought with diamonds, tech, quests | **Campaign Map**, separate — provinces negotiated or fought, paying expansions and goods back into the city |
+| Elvenar | bounded plot + expansions (47 premium ones, diamonds-only) | **World Map** of provinces scouted → relics + expansions |
 | Whiteout / Kingshot / Last War | fixed plot, grows by building levels not tiles | shared server map |
 | Township | plot + land expansion paid with **tools from trains** | mine, zoo, islands, Expedition — each its own screen |
 | Family Island | one island | **other islands** — Adventure Island expeditions |
@@ -74,10 +69,11 @@ lives in a separate scope.** Nobody puts both on one grid.
 
 ### 3.1 Why an identical authored province is the right call
 
-One map to balance, one FTUE to tune — and `tests/quests.test.ts` already pins
-it beat by beat — and **retention numbers that are comparable between
-players**, which is what the MVP has to measure. It also removes the procedural
-region generator from the plan entirely: `region-map.json` stays as it is.
+One map to balance, one FTUE to tune — and the quest chain is already pinned
+beat by beat against it — and **retention numbers that are comparable between
+players**, which is what the prototype has to measure. It also removes the
+procedural region generator from the plan entirely: `region-map.json` stays as
+it is.
 
 ### 3.2 Why the province plot must be bounded
 
@@ -93,37 +89,37 @@ The failure mode this whole document exists to avoid is a **transition**: the
 game you learned in week one being gone by month two. The fix is that the
 province's verbs never retire — they become **the event format**.
 
-That is already the plan. [`event-archetype.md`](event-archetype.md) §3.3
-specifies the event minigame as *"a small map, shrouded, where event points buy
-reveals and the rewards are under the fog"*. Naming it a temporary province
-changes nothing about the work and clarifies what it is.
+That is already the plan. [`13-events.md`](13-events.md) §2.3 specifies the
+event minigame as *a small map, shrouded, where event points buy reveals and the
+rewards are under the fog.* Naming it a temporary province changes nothing about
+the work and clarifies what it is.
 
-Precedent in the exact comparable set: Family Island's **Adventure Island
-expeditions**, Township's **Expedition**, Klondike's sled expeditions to foggy
-new locations, Sunrise Village's **Maze** events.
+Precedent in the exact comparable set: Family Island's **Adventure Island**
+expeditions, Township's **Expedition**, Klondike's sled expeditions, Sunrise
+Village's **Maze**.
 
-The payoff is the Phase 2 gate: **every content drop reuses the most expensive
-systems already built** — fog, harvest, placement, workers, exhaustion — instead
-of needing new ones. An event becomes a map and a reward table.
+The payoff: **every content drop reuses the most expensive systems already
+built** — fog, harvest, placement, workers, exhaustion — instead of needing new
+ones. An event becomes a map and a reward table.
 
-**Build it as a lightweight state module, not a region.** No buildings, no
-workers, no economy: things are *found* there, not produced. That avoids the
-`GameState` reshape and is a dry run for it.
+**A lightweight state module, not a region.** No buildings, no workers, no
+economy: things are *found* there, not produced. That avoids the `GameState`
+reshape and is a dry run for it.
 
 ### 3.4 The world map is a node graph, not a tile grid
 
 - A graph **generates procedurally** in a few lines; 253 hand-placed cells do
   not.
 - A node is a large tap target. A tile at the current zoom floor is ~29 px,
-  under both the 44 pt (Apple) and 48 dp (Material) minimums — see §4.
+  under both the 44 pt (Apple) and 48 dp (Material) minimums.
 - It is what an expedition actually needs: a ruin is a **destination**, not
   somewhere you build. Today dungeons sit between wheat fields, which also
   forces the province grid out to distance 12.
 - It makes a second region a data row.
 
-**Outposts, not cities** (§5): one or two structures per node, so the placement
-verb survives at world scale without multiplying city management. A player with
-N cities is a player with an N× session, and the budget is ~30 min/day.
+**Outposts, not cities:** one or two structures per node, so the placement verb
+survives at world scale without multiplying city management. A player with N
+cities is a player with an N× session, and the budget is ~30 min/day.
 
 ## 4. The verb split, and the expensive problem it deletes
 
@@ -144,21 +140,21 @@ the genre does it** — the shared-map 4X titles show the whole world.
 > touched* — a handful of ids — and compute the fog client-side as a radius
 > around them. State goes from O(cells) to O(nodes visited).
 
-That is the same shape as `fog.claimDiscoverRadius` = 5, which already lifts fog
-in a radius around a claimed landmark and leaves the cells **Discovered, never
-Revealed**. The Discovered/Revealed distinction the game already has *is* a
-world-layer in embryo.
+That is the same shape as the claim discover radius, which already lifts fog
+around a claimed landmark and leaves the cells **Discovered, never Revealed**.
+The Discovered/Revealed distinction the game already has *is* a world layer in
+embryo.
 
 Revealing a world node costs **Gold and time, scaling with distance** —
-Elvenar's scouting. Not Mana (§ [`relics-and-ingredients.md`](relics-and-ingredients.md) §3).
-That also gives Gold a sink at world scale, which it badly needs once the
-province's 194,142 is spent.
+Elvenar's scouting. **Not Mana** ([`09-relics.md`](09-relics.md) §3). That also
+gives Gold a sink at world scale, which it badly needs once the province's
+194,142 is spent.
 
 ## 5. How much PvP the promises allow
 
-Promise 1 says, in as many words: *"Nothing you own is ever taken from you. **No
+Promise 1 says, in as many words: *nothing you own is ever taken from you. **No
 raids**, no decay, no starvation, no failure state. Pressure comes from
-opportunity that expires."*
+opportunity that expires.*
 
 "PvP" is a gradient and only its far end breaks that.
 
@@ -166,7 +162,7 @@ opportunity that expires."*
 |---|---|---|
 | Leagues and rankings | status | No |
 | **Contested claim** — first to a node keeps it | **the opportunity** | **No** — "opportunity that expires", with another player as the clock |
-| **Territory that changes hands** — hold a node, it produces for you, it can be taken | **the node, never your property** | **No** — what is lost is future rent from something that was never in your city |
+| **Territory that changes hands** — hold a node, it produces for you, it can be taken | **the node, never your property** | **No** — what is lost is future rent from something never in your city |
 | Raiding another player's city | **their property** | **Yes, head-on** |
 
 > **Your village can never be attacked. Everything outside it can be
@@ -180,8 +176,7 @@ world map shared and server-authoritative.
 hour, Tournaments and the Spire are competitive, there are leagues with
 promotion and relegation — and **nobody ever loses a building in their city** in
 either Forge of Empires or Elvenar. Twelve and nine years of territorial PvP
-with no looting. That precedent sits in *this* quadrant rather than the survival
-4X one.
+with no looting, in *this* quadrant rather than the survival 4X one.
 
 **An outpost is a claim, not a building.** If it falls, the node reverts to
 unclaimed and the player keeps everything it already produced.
@@ -198,32 +193,30 @@ swapped.
 | **Plot expansions** | a bigger province |
 | Resources the province cannot produce | province sinks |
 
-See [`relics-and-ingredients.md`](relics-and-ingredients.md) §2 for the rarity
-split. The loop: world → 3★ → maxed relics → economy passives → a stronger
-province → more capacity to contest the world. It is the same structure as
-Guild Expeditions → goods and blueprints → Great Buildings → city economy, which
-has run for twelve years.
+The loop: world → 3★ → maxed relics → economy passives → a stronger province →
+more capacity to contest the world. Same structure as Guild Expeditions → goods
+and blueprints → Great Buildings → city economy, which has run twelve years.
+Rarity split: [`09-relics.md`](09-relics.md) §2.
 
 ## 7. The minimum to spend now
 
 This is larger than the `regions: Record<RegionId, RegionState>` reshape that
-`engine-seams.md` §6 deliberately cut, and it is **not** an MVP item. But that
-doc's argument applies with more force here than where it was written: **the
-save is the only artefact that cannot be changed retroactively.** A save that
-assumes one grid where city and content coexist makes scope separation later a
-migration nightmare.
+was deliberately deferred, and it is **not** an early item. But the argument
+applies with more force here: **the save is the only artefact that cannot be
+changed retroactively.** A save that assumes one grid where city and content
+coexist makes scope separation later a migration nightmare.
 
 1. **Bound the buildable area in data** — a `city.maxBuildDistance` or a
    buildable flag on the plot. A balance number, not a refactor, and it puts the
-   placement decision **inside the MVP**, which is a 30-day-retention question.
-   Adjacency starts earning its keep the same day.
+   placement decision **inside the prototype**, which is a 30-day-retention
+   question. Adjacency starts earning its keep the same day. (OQ-1.)
 2. **Leave the fog as it is**, but stop treating "more tiles" as its only
    reward: the far ring pays **content access**. Nearly true already — ruins and
    landmarks sit at distance 3–12 and the far cells are mostly mountain and
    water, which are not buildable.
 3. **Let the save say which scope a thing is in.** Cheap now, impossible later.
-4. **Move the siege to the world map in the design** — the decision that
-   unblocks Phase 4 of the roadmap.
+4. **Move the siege to the world map in the design** — which is what
+   [`15-social.md`](15-social.md) §6 does.
 
 ## 8. Staged build
 
@@ -232,28 +225,18 @@ Each step is playable before the next exists.
 1. Bound the plot. Expansions as authored increments.
 2. **The world map's first node is the guild siege** — a screen showing one
    node, co-op, no shard, no PvP. It is the world map with a single entry, and
-   it is the same code path the full scope needs later.
-3. Temporary provinces ship as the event format (Phase 2 work, already funded).
+   the same code path the full scope needs later.
+3. Temporary provinces ship as the event format ([`13-events.md`](13-events.md)).
 4. The node graph proper: generation, scouting, derived fog, outposts.
 5. Shards, seasons, and contested claims — the point at which PvP exists.
-6. Server-side combat resolution. Feasible because `combat.ts` is a
-   deterministic scoring pass rather than a simulation — ATK/DEF/HP, a type
-   chart, one pass — which is about the simplest thing there is to port.
+6. Server-side combat resolution. Feasible because combat is a deterministic
+   scoring pass rather than a simulation — ATK/DEF/HP, a type chart, one pass.
 
-## 9. Open decisions
+## 9. Deliberately not in this design
 
-1. **Does the world map ever allow raiding a player's city?** Recommendation:
-   **no**, per §5. This is the Dinasty/Kingdom fork the 2026-09-01 audit named,
-   and it decides the audience rather than the feature list. **If the answer
-   becomes yes, promise 1 has to be reopened deliberately and said out loud in
-   the pitch** — not discovered by a playtester losing their granary.
-2. **Shard size and season length.** Decides whether the world feels populated
-   or empty, and whether a new player lands beside a maxed one.
-3. **Is the temporary province generated or authored per drop?** Authored is
-   cheaper to make good and does not need the generator; generated is the only
-   version that scales past a designer's throughput.
-4. **Does a claimed node open as a temporary province for a one-off clear?** It
-   would merge conquest and events into one system serving three purposes.
-   Elegant, and possibly more than a prototype needs.
-5. **What happens to committed units if a player leaves the guild mid-siege?**
-   Cheapest: the commitment stands until the deadline, then returns.
+A procedural province generator · per-cell shared-map fog · cities on the world
+map · raiding (§5) · anything multi-region beyond the `regionId` discriminator
+that already exists.
+
+**Open questions:** OQ-1, OQ-2, OQ-3, OQ-4, OQ-5 in
+[`../open-questions.md`](../open-questions.md).

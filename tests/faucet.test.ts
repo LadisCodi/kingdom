@@ -1,13 +1,13 @@
 // The Gem faucet, budgeted once and then argued from prose twice.
 //
-// `balancing-v2.md` §1.3 set the up-front budget at **75 Gems**. The
+// `Docs/features/12-quests.md` §2.3 set the up-front budget at **75 Gems**. The
 // 2026-09-02 competitive review then reported the faucet had overshot it to
 // 110, because eleven quests were given Gem rewards without re-deriving the
 // total, and filed it as backlog gap 3.
 //
 // Reading the workbook settles it: the chain pays 15 Gems from four quests,
 // not 110, so the faucet is exactly 75 and the review had it backwards
-// (Docs/features/balancing-v3.md §3). This file is the point of that
+// (Docs/features/12-quests.md §2.3). This file is the point of that
 // exercise. The number has now been derived from the data twice, by two
 // different people, to answer the same question — so it stops living in
 // prose and becomes an assertion. The next drift is a red test rather than
@@ -18,7 +18,7 @@
 import { describe, expect, it } from 'vitest';
 import { CURRENCIES, DELVE, QUESTS, RUINS } from '../src/sim/data/definitions';
 
-/** `balancing-v2.md` §1.3. The number every source below has to add up to. */
+/** `Docs/features/12-quests.md` §2.3. The number every source below has to add up to. */
 const GEM_BUDGET = 75;
 
 // Gems are PLAYER-scoped, so the opening grant is the currency's own `start`
@@ -43,7 +43,7 @@ describe('the up-front Gem faucet', () => {
 
   // Every Gem sink is invisible for the whole first session because of this,
   // which is why the daily chest's week markers are Phase 1 and not later
-  // (balancing-v3.md §3, habit-loop.md). If the shape changes, the argument
+  // (Docs/features/12-quests.md §2.3 and §4). If the shape changes, the argument
   // for that ordering changes with it.
   it('pays its quest Gems late, from a handful of quests', () => {
     const paying = QUESTS.map((q, i) => ({ i, gems: q.rewardGems ?? 0 }))

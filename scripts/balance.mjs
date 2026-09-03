@@ -127,7 +127,7 @@ const SETTINGS = [
   // party and attunement slots: round(base x growth^purchased).
   ['kingdom.builder_gem_cost_base', 'kingdom.builderGemCostBase'],
   ['kingdom.builder_gem_cost_growth', 'kingdom.builderGemCostGrowth'],
-  // The daily chest ladder (Docs/features/habit-loop.md §1.2). Three parallel
+  // The daily chest ladder (Docs/features/12-quests.md §4.2). Three parallel
   // seven-long lists, one per reward kind, so a step is a column rather than a
   // sheet — and so the ladder's LENGTH is the length of these lists.
   ['daily.mana_fractions', 'daily.manaFractions', 'list'],

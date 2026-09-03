@@ -1,6 +1,6 @@
 // Workers as units: claims, the Idle→MovingToCell→Working→MovingHome FSM, and
 // the event-driven advance that serves both the live tick and offline replay
-// (Docs/features/harvest-loop.md §3).
+// (Docs/features/04-harvest.md §5).
 
 import { DISTRICTS, HARVEST, WORKER, levelIndexed } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';

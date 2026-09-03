@@ -1,4 +1,4 @@
-// Artifacts, attunement and the four actives (Docs/features/magic.md §2, §3).
+// Artifacts, attunement and the four actives (Docs/features/08-magic.md §2, §3).
 //
 // The load-bearing rule is that a passive is only worth a SLOT if wearing it
 // costs you the alternative. Everything here is really testing one shape:
@@ -74,7 +74,7 @@ describe('the collection substrate', () => {
     state.kingdom.wallet.Knowledge = 1000;
     levelUpArtifact(state, 'DowsingRod');
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(1000 - levelCost(1));
-    // ~3,630 Knowledge to max one collectible (balancing-v2 §4).
+    // ~3,630 Knowledge to max one collectible (Docs/features/10-heroes.md §3).
     expect(totalLevelCost()).toBeGreaterThan(3400);
     expect(totalLevelCost()).toBeLessThan(3900);
   });
@@ -298,7 +298,7 @@ describe('the fog discount reaches both the bar and the charge', () => {
   });
 });
 
-// The socket half of attune-or-arm (Docs/features/heroes-and-gacha.md §2).
+// The socket half of attune-or-arm (Docs/features/10-heroes.md §2).
 // The delve half lives in expeditions.test.ts; what matters HERE is that the
 // Reliquary cannot take back a relic the sim has already committed, and that
 // a carried relic draws no upkeep — the asymmetry the whole trade rests on.

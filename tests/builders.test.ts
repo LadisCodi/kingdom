@@ -11,7 +11,7 @@
 // or it does not start at all; nothing is ever parked. So the number of jobs
 // in flight is exactly the builder count, and the refusal is a moment the
 // game sells into rather than an administrative one — see
-// Docs/features/builders.md.
+// Docs/features/06-construction.md.
 //
 // These are the assertions that keep the dial live, because "unreachable" is
 // a property no other test can notice.

@@ -24,7 +24,7 @@ import {
 
 
 describe('the quest chain', () => {
-  // CLAIM: the chain IS Docs/onboarding.md, in order. That document is the
+  // CLAIM: the chain IS Docs/features/12-quests.md §2, in order. That document is the
   // authored first-user experience, and a chain that drifts from it is the
   // one bug nobody notices until a playtest — so the order is asserted here
   // beat by beat rather than described in prose that cannot fail.
@@ -67,7 +67,7 @@ describe('the quest chain', () => {
                                                   //   means anything. Moved up from
                                                   //   27+ to give generated orders a
                                                   //   home inside the opening
-                                                  //   (habit-loop.md §2).
+                                                  //   (Docs/features/12-quests.md §3).
                                                   //   Research, THEN build — the
                                                   //   same two-beat shape as
                                                   //   Saws -> TheSawmill.
@@ -215,7 +215,7 @@ describe('first-time discoveries', () => {
   });
 });
 
-// Docs/features/knowledge.md — the steady half of the research budget.
+// Docs/features/10-heroes.md §4 — the steady half of the research budget.
 //
 // CLAIM: quests pay Knowledge into the KINGDOM purse, and the chain pays out
 // more than the whole tech tree costs. Exploring is the half that scales;
@@ -265,7 +265,7 @@ describe('quests fund the research tree', () => {
    * The opening's one arithmetic dependency, and the whole game hangs off it:
    * quest 2 DEMANDS Forestry, quest 1 is the only thing before it, and both
    * the fog quest 1 asks for and Forestry itself are paid out of the same
-   * fixed opening purse (Docs/onboarding.md).
+   * fixed opening purse (Docs/features/12-quests.md §2).
    *
    * So the sum that has to work is: (the cells quest 1 asks for, at their
    * DEAREST) + Forestry ≤ the opening grant + what quest 1 pays back.

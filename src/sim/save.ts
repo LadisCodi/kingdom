@@ -422,7 +422,7 @@ export function deserialize(
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     // Additive: a save written before the chest existed has no Daily block and
     // the defaults below start the ladder at zero, which is exactly right for
-    // a player meeting it for the first time. No migrator (engine-seams §4).
+    // a player meeting it for the first time. No migrator (Docs/implementation-plan.md §1).
     const daily = kingdomDto.Daily as { LadderStep?: number; LastClaimedDay?: number | null };
     if (daily) {
       state.kingdom.daily.ladderStep = daily.LadderStep ?? 0;
@@ -537,7 +537,7 @@ export function deserialize(
       heroId: d.HeroID,
       // A save written before attune-or-arm shipped has no relic aboard, and
       // reads back as a party that carried nothing — which is exactly what it
-      // was. Additive, so no migrator; see engine-seams.md §4.
+      // was. Additive, so no migrator; see Docs/implementation-plan.md §1
       artifactId: d.ArtifactID ?? null,
       artifactLevel: d.ArtifactLevel ?? 1,
       party: ((d.Party ?? []) as any[]).map((p) => ({ unitId: p.UnitID, count: p.Count })),

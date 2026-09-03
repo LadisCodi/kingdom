@@ -1,4 +1,4 @@
-// Mana (Docs/features/magic.md §1): the only capped currency in the game, and
+// Mana (Docs/features/08-magic.md §1): the only capped currency in the game, and
 // the only pressure the design applies to a player who stays away.
 //
 // TWO DIALS THAT MUST KEEP DOING DIFFERENT JOBS.

@@ -381,7 +381,7 @@ Nothing in the current set is a character portrait, and two systems now need
 them. This is a **larger job than it looks** and should be scoped before either
 system is scheduled:
 
-- **5 heroes** — the roster in `features/heroes-and-gacha.md`. Portraits, not
+- **5 heroes** — the roster in `Docs/features/10-heroes.md`. Portraits, not
   tiles: they appear in the reliquary, the expedition sheet and the gacha reveal.
 - **4 unit types** — Warrior, Lancer, Archer, Cavalry. Already flagged as open
   question 2 in `ui-menus-redesign.md` §8, and now firmly required: units have

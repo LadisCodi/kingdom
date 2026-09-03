@@ -1,4 +1,4 @@
-// The Reliquary (Docs/features/magic.md §5) — where relics live.
+// The Reliquary (Docs/features/08-magic.md §5) — where relics live.
 //
 // The screen has one job the HUD deliberately refuses to do: explain the Mana
 // arithmetic. The header shows a pool and ONE net rate, because

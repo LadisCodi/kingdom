@@ -8,8 +8,8 @@
 > simulation — every number quoted below already exists in `src/sim/`.
 > This is the visual and informational contract the menus should honour.
 >
-> Companion docs: [`09-ui-and-input.md`](../09-ui-and-input.md) (as-built
-> behaviour), [`sprite-prompts.md`](sprite-prompts.md) (world art),
+> Companion docs: [`../README.md`](../README.md) (the feature index),
+> [`sprite-prompts.md`](sprite-prompts.md) (world art),
 > [`reference.png`](reference.png) (the style anchor).
 
 ---
@@ -260,7 +260,7 @@ badge is developer information occupying prime real estate.
 *(Fixed twice. This section cut the widgets; the 2026-09-02 currency pass then
 cut the currencies, so the equivalence tooltip described above no longer
 exists — see questions 3 and 7, and
-[`../features/currency-simplification.md`](../features/currency-simplification.md).)*
+[`../features/03-economy.md`](../features/03-economy.md).)*
 
 **Show this.**
 
@@ -441,7 +441,7 @@ reachable by finding and tapping the Market building on the map.
   > (§5.13) and loses its standing destination — the same reasoning that moved
   > Settings off the bar. **Artifacts** takes the freed tab: it is opened every
   > session to weigh a relic's Mana upkeep against its passive, which is exactly
-  > the test a tab has to pass. See `Docs/features/magic.md`.
+  > the test a tab has to pass. See `Docs/features/08-magic.md`.
 - **Settings leaves the bar.** It is not a destination with the weight of
   the other three, and giving it an equal tab flattens the hierarchy — it
   is a drawer you open twice a month, sitting next to the thing you tap
@@ -730,7 +730,7 @@ good ideas that just need a different costume.
 > **unit portraits stop being optional** (units gain ATK/DEF/HP and a matchup
 > chart, so the player must tell them apart at a glance), and the header line
 > "Your Townhall can't support more" is wrong — the cap comes from the military
-> buildings. See `Docs/features/expeditions.md`.
+> buildings. See `Docs/features/11-expeditions.md`.
 
 **Purpose.** Spend surplus on power; a long-term goal placeholder today.
 
@@ -817,7 +817,7 @@ single strongest retention beat is invisible.
 
 ---
 
-### 5.13 Expedition *(new — `Docs/features/expeditions.md`)*
+### 5.13 Expedition *(new — `Docs/features/11-expeditions.md`)*
 
 **Purpose.** Commit a party to a ruin. The only place army composition matters.
 
@@ -875,7 +875,7 @@ large haul, unknown next) · scouted next depth · the failure report.
 
 ---
 
-### 5.15 Reliquary *(new — `Docs/features/magic.md`)*
+### 5.15 Reliquary *(new — `Docs/features/08-magic.md`)*
 
 **Purpose.** Decide what magic you can afford to keep switched on.
 
@@ -894,7 +894,7 @@ large haul, unknown next) · scouted next depth · the failure report.
   production figure the header shows (§5.1). Never three numbers in the HUD.
 - **Knowledge and Fragments live here, not in the header** — and Knowledge is
   now permanently here, since it buys relic and hero levels and nothing else
-  ([`../features/knowledge.md`](../features/knowledge.md)). It reads as its own
+  ([`../features/10-heroes.md`](../features/10-heroes.md)). It reads as its own
   parchment panel under the Mana pool, captioned with where it comes from.
 
 **States to mock.** One slot, empty · one filled · a slot mid-lock · a relic
@@ -902,7 +902,7 @@ you cannot afford to Study · the heroes tab.
 
 ---
 
-### 5.16 Banner *(new — `Docs/features/heroes-and-gacha.md`)*
+### 5.16 Banner *(new — `Docs/`Docs/features/10-heroes.md`)*
 
 **Purpose.** Spend Gems on a pull.
 
@@ -1023,7 +1023,7 @@ Two consequences worth knowing:
   actually on screen.
 
 The one thing above everything is the rewarded-video surface, which is not in
-`#overlay` at all — see `Docs/features/ad-economy.md` §5.
+`#overlay` at all — see `Docs/features/08-magic.md` §7.
 
 ### 6.6 A centred sheet, for a question
 
@@ -1520,7 +1520,7 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
    entirely — it buys relic and hero levels and nothing else, so it reads in
    the Reliquary beside what it pays for. The hide-an-unused-coin rule this
    question floated is not needed. See
-   [`../features/currency-simplification.md`](../features/currency-simplification.md).
+   [`../features/03-economy.md`](../features/03-economy.md).
 4. **Research metaphor cost.** Re-skinning the tree as a parchment map is
    the most expensive item in this document. The mechanics stay identical,
    so it can ship last.

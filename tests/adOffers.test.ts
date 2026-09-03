@@ -1,4 +1,4 @@
-// Ad offers (Docs/features/ad-economy.md): the rewarded-video refill, and the
+// Ad offers (Docs/features/08-magic.md §7): the rewarded-video refill, and the
 // thing the Mana pool was made scarce for.
 //
 // Two claims are load-bearing. First, that `advance()` NEVER touches an

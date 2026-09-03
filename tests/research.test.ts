@@ -23,7 +23,7 @@ const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('technology basics', () => {
-  // Docs/onboarding.md step 9: ONE research opens the plots and the Farm that
+  // Docs/features/12-quests.md §2 (quest 9): ONE research opens the plots and the Farm that
   // works them. Splitting them across two techs put a second research between
   // "tap this for Food" and "stop tapping this for Food", which is the beat
   // the tutorial is actually built around. Farming now buys the Farm's level 2.

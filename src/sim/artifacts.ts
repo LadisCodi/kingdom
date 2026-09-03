@@ -1,4 +1,4 @@
-// Artifacts (Docs/features/magic.md §2, §3): the relics won from ruins, the
+// Artifacts (Docs/features/08-magic.md §2, §3): the relics won from ruins, the
 // slots they compete for, and the four abilities they cast.
 //
 // WHY RELICS AND NOT A SPELLBOOK. A loadout limit only has weight when the

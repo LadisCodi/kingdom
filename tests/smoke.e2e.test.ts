@@ -39,7 +39,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11);
 
     // --- The Forest is seed-revealed and REFUSES until Forestry is in: the
-    // opening beat of the whole game (Docs/onboarding.md steps 2-3).
+    // opening beat of the whole game (Docs/features/12-quests.md §2 (quests 2-3)).
     reveal(state, [FOREST]);
     expect(tapCell(state, map, FOREST, now)).toBe('TechLocked');
     completeTech(state, 'Forestry');
@@ -92,7 +92,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBe(foodBeforeTap + 1);
 
     // --- Agriculture already opened the Farm too, so automating the plot is
-    // the very next thing the player can do (Docs/onboarding.md steps 9-12).
+    // the very next thing the player can do (Docs/features/12-quests.md §2 steps 9-12).
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;

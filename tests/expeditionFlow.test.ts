@@ -167,7 +167,7 @@ describe('the pre-filled party is always launchable', () => {
   });
 });
 
-// The socket next to the hero (Docs/features/heroes-and-gacha.md §2).
+// The socket next to the hero (Docs/features/10-heroes.md §2).
 //
 // The rule is in the sim; what these prove is that the SHEET presents it as a
 // choice — the socket starts empty, a worn relic is visible-but-refused rather

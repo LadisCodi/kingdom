@@ -1,4 +1,4 @@
-// The modifier layer (Docs/features/engine-seams.md §2).
+// The modifier layer (Docs/implementation-plan.md §1).
 //
 // Before this, effects came only from upgrade LEVELS, read through the five
 // effectiveX helpers in upgrades.ts. Nothing could apply a temporary or

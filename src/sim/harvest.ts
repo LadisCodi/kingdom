@@ -1,5 +1,5 @@
 // Resource cells: tapping, exhaustion, lazy recovery
-// (Docs/features/harvest-loop.md §1, §4).
+// (Docs/features/04-harvest.md §2, §4).
 
 import { DISTRICTS, FEATURES, HARVEST, TAP, type HarvestSpec } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';

@@ -1,4 +1,4 @@
-// Every worked example from Docs/04-districts.md becomes an assertion.
+// Every worked example from Docs/features/05-city-and-districts.md becomes an assertion.
 import { describe, expect, it } from 'vitest';
 import { buildCost, buildDuration, upgradeCost, upgradeDuration } from '../src/sim/districts';
 import { gemRushCost } from '../src/sim/commands';
@@ -47,7 +47,7 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
     expect(upgradeDuration('Sawmill', 2)).toBe(45);
   });
   // Wood ONLY, deliberately: the onboarding chain reaches Townhall 2 before
-  // it reaches the Quarry (Docs/onboarding.md, woven in around step 14), and
+  // it reaches the Quarry (Docs/features/12-quests.md §2 (quest 35)), and
   // an upgrade that asks for Stone the player has no building for is a wall,
   // not a goal.
   it('Townhall L1→L2 = 60 Wood in 30 s; L2→L3 = 234 Wood in 120 s', () => {

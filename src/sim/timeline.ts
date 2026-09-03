@@ -1,4 +1,4 @@
-// The timeline (Docs/features/engine-seams.md §5, §7).
+// The timeline (Docs/implementation-plan.md §1).
 //
 // Everything that HAPPENS ON A SCHEDULE or STOPS BEING TRUE goes through here:
 // seasons, events, gacha banners, and the Conjunction. It exists so that

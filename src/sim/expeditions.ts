@@ -1,4 +1,4 @@
-// Delves (Docs/features/expeditions.md §2, §5, §7).
+// Delves (Docs/features/11-expeditions.md §2, §5, §7).
 //
 // A ruin is a repeatable DUNGEON, not a chest. Commit one hero plus units, pay
 // supplies once, and the party clears one DEPTH at a time. After each depth it

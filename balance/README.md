@@ -27,7 +27,7 @@ the map editor — see [§ The map](#the-map) below.
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `Adjacency` | Gold/min a district gains **or loses** per adjacent neighbor of a given type (negative = crowding penalty); columns `district`, `neighbor`, `gold_per_minute` — negatives allowed, one row per pair |
 | `Quests` | The onboarding chain, one row per quest IN ORDER — **row order IS chain order**, so reordering the rows reorders the game. `goal_type` (absolute: BuildDistrict/UpgradeDistrict/HoldResource/ReachPopulation/CompleteTech/CompleteTechs/AssignWorkers/TrainArmy/ClaimLandmarks/ReachDepth/ClearRuins/OwnArtifacts/OwnHeroes/BuyUpgrade · relative: CollectResource/CollectTaps/DiscoverCells/SellGoods), `goal_target` (district/tech/currency/upgrade id where the type needs one), `goal_amount`, `goal_level` (UpgradeDistrict only), `reward_*` including `reward_gems` and `reward_knowledge` |
-| `Artifacts` · `Heroes` | Relics and the hero roster — see `Docs/features/magic.md`, `heroes-and-gacha.md` |
+| `Artifacts` · `Heroes` | Relics and the hero roster — see `Docs/features/08-magic.md`, `Docs/features/10-heroes.md` |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate + tap boost (`taxes.*`), offline cap, population costs… |
 
@@ -35,7 +35,7 @@ the map editor — see [§ The map](#the-map) below.
 
 The first ten minutes are the most interlocked part of the workbook, because
 several sheets have to add up together. The dials, roughly in the order you
-would reach for them (see `Docs/onboarding.md`):
+would reach for them (see `Docs/features/12-quests.md` §2):
 
 | Want | Change |
 |---|---|
@@ -72,7 +72,7 @@ there rather than in your session.
 **Event and gacha-banner schedules do NOT belong in the workbook.** The xlsx is
 for numbers designers tune; schedules are live-ops content with wall-clock dates
 that change after ship. They live in a hand-written `src/sim/data/events.json`.
-See `Docs/features/engine-seams.md` §5.
+See `Docs/features/13-events.md` §1.
 
 Format notes:
 
@@ -89,7 +89,7 @@ Format notes:
   doesn't recognize, on purpose. New buildings/units need code
   (`definitions.ts`) anyway.
 - The cost/time **formulas** consuming these values are documented in
-  `Docs/03` and `Docs/04`.
+  `Docs/features/05-city-and-districts.md` §3.
 
 ## The map
 

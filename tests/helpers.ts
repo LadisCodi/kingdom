@@ -64,7 +64,7 @@ export const ANIMALS: Coord = { x: -1, y: -2 };
  * A kingdom that can actually gather: Forestry researched, and the forest and
  * berry cells cleared.
  *
- * Forestry gates BOTH the Forest and the Berries (Docs/onboarding.md steps
+ * Forestry gates BOTH the Forest and the Berries (Docs/features/12-quests.md §2 steps
  * 2-3, revised): during the first-time experience the only thing the player
  * can do is tap fog, so no Food arrives before it is meant to. Every test
  * about the harvest loop, workers, taxes or offline replay is about what

@@ -1,4 +1,4 @@
-// Mana and landmarks (Docs/features/magic.md §1, §4).
+// Mana and landmarks (Docs/features/08-magic.md §1, §4).
 //
 // Mana is the only capped currency in the game, and the cap IS the mechanic:
 // pressure that costs the player nothing they own. Two things therefore have

@@ -1,4 +1,4 @@
-// Sending a party into a ruin (Docs/features/expeditions.md §8).
+// Sending a party into a ruin (Docs/features/11-expeditions.md §8).
 //
 // The screen has one job above all others: make the GUARANTEED DEPTH the
 // biggest thing on it. "A well-prepared run never fails" is a property of the

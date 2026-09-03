@@ -9,7 +9,7 @@
 //
 // Reached from a pill that glows and waits, never auto-opened — a daily
 // reward that interrupts the first tap of a session is the single most
-// disliked screen in the genre (habit-loop.md §1.4).
+// disliked screen in the genre (Docs/features/12-quests.md §4.3).
 
 import type { Game } from '../game';
 import type { CurrencyId, Wallet } from '../sim/state';

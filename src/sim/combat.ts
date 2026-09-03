@@ -1,4 +1,4 @@
-// Combat: a SCORING PASS, not a simulation (Docs/features/expeditions.md §4).
+// Combat: a SCORING PASS, not a simulation (Docs/features/11-expeditions.md §4).
 //
 // There is no battle screen and there never will be. Resolving a depth is one
 // deterministic pass over the party:

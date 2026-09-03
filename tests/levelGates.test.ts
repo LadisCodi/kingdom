@@ -48,7 +48,7 @@ describe('tech-gated upgrades', () => {
 });
 
 describe('per-level housing capacity', () => {
-  // One house holds TWO (Docs/onboarding.md step 13): the tutorial trains a
+  // One house holds TWO (Docs/features/12-quests.md §2 (quests 18-19)): the tutorial trains a
   // second villager before it asks for a second house, so the first house has
   // to have somewhere to put them. The Townhall houses nobody — a roof is
   // what permits a villager, which is onboarding steps 4-6 in order.

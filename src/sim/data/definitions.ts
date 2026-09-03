@@ -490,7 +490,7 @@ const tech = (
   requires: b.requires as TechId[]
 });
 
-// Four branches out of Forestry (Docs/features/tech-tree.md): CIVICS up,
+// Four branches out of Forestry (Docs/features/07-research.md §1.2): CIVICS up,
 // ECONOMICS left (farm row 0, stone row −1), EXPLORATION right, MILITARY down.
 // Cells (−1,0) and (1,0) stay EMPTY on purpose: the branch trunks route their
 // elbows through them, so no connector ever crosses another node.
@@ -1273,7 +1273,7 @@ export const GACHA = balance.gacha;
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;
 
-/** The daily chest ladder — Docs/features/habit-loop.md §1.2. Three parallel
+/** The daily chest ladder — Docs/features/12-quests.md §4.2. Three parallel
  *  lists, one per reward kind; their length IS the length of the ladder. */
 export const DAILY = balance.daily;
 
@@ -1355,7 +1355,7 @@ export const CONJUNCTION_BOONS: readonly ConjunctionBoon[] = [
 export const GAME_VERSION = '0.1.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
 // ADDITIVE, and every module read in save.ts defaults — so this bump needs no
-// migrator, only the version (see Docs/features/engine-seams.md §4).
+// migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
 export const SAVE_VERSION = 22;

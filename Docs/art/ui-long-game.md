@@ -141,7 +141,7 @@ every future ad — permanently bigger has learned the opposite.
 
 (Capacity, not rate. A flat +1/h was worth most on the day you found it and
 less every day after; against a pool the ad reward is measured in, a claim
-compounds. See [`../features/magic.md`](../features/magic.md).)
+compounds. See [`../features/08-magic.md`](../features/08-magic.md).)
 
 The ruin card names the relic waiting at the bottom, its depth count, its full
 clear time, and which unit type answers it best — everything the player can

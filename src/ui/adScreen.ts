@@ -1,4 +1,4 @@
-// The fake rewarded video (Docs/features/ad-economy.md).
+// The fake rewarded video (Docs/features/08-magic.md §7).
 //
 // NOT an overlay, deliberately. `#overlay` sits at z-index 5 and that makes it
 // a stacking context, so nothing inside it can rise above the nav bar (10) or

@@ -48,7 +48,7 @@ their emoji fallback until then. Prompts in `Docs/art/sprite-prompts.md`.
 | `shooting_grounds_l1..l3.png` | 🏹 | trains Archers |
 | `stables_l1..l3.png` | 🐎 | trains Cavalry |
 | `sanctum_l1..l3.png` | 🔮 | raises the Mana cap |
-| `ruin.png` / `_cleared` | 🏚️ | dungeon entrance — see `Docs/features/expeditions.md` |
+| `ruin.png` / `_cleared` | 🏚️ | dungeon entrance — see `Docs/features/11-expeditions.md` |
 | `landmark.png` / `_claimed` / `_defended` | 🗿 | +1 Mana/h once claimed |
 
 **Hero, unit and artifact portraits do NOT belong here.** They are UI art, not

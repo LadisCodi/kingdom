@@ -20,7 +20,7 @@
 // advance in save.ts is uncapped. Nothing in the sim reads the chest; claiming
 // is always a live player command. So `advance()` never touches it.
 //
-// Docs/features/habit-loop.md §1.
+// Docs/features/12-quests.md §4.
 
 import { DAILY } from './data/definitions';
 import { addToWallet, getWallet, type GameState, type Wallet } from './state';
@@ -67,7 +67,7 @@ export const chestAvailable = (state: GameState, now: number): boolean =>
  * income, both for the reason `tap.boostSeconds` exists: a reward priced in
  * the player's own production is worth the same fraction of progress at every
  * stage of the game, with nothing re-derived per era
- * (`Docs/road-to-mvp.md` §10). An absolute Gold number in a spreadsheet goes
+ * (`Docs/README.md` — working rule 2). An absolute Gold number in a spreadsheet goes
  * stale on its own by era three.
  */
 export function chestReward(state: GameState, step: number): Wallet {
