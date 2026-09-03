@@ -87,10 +87,37 @@ an automation building sitting behind a technology.
 **Where a building may go** is one question asked in two situations. A spot you
 may not build on is a spot you may not move to.
 
-The gates: terrain, features and sites already on the cell, fog, the technology,
-the shoreline rule for the Docks, the count cap, and housing adjacency. Placement
-mode draws the area of influence for the hovered cell and highlights the resource
-cells it would capture, with a count.
+The gates: features and sites already on the cell, fog, the technology, the
+shoreline rule for the Docks, the count cap, and housing adjacency. **Terrain no
+longer gates anything but Water** — a farm on sand is a bad farm rather than an
+illegal one, which is a decision where a wall was only a wall
+([`01-map-and-fog.md`](01-map-and-fog.md) §2).
+
+### The ghost has to say what the ground is worth
+
+Placement mode draws the area of influence for the hovered cell and highlights
+the resource cells it would capture, with a count. On top of that it labels
+cells with **how much is in them**, because since the ground multiplies a cell's
+depot ([`04-harvest.md`](04-harvest.md) §3.2) that number is the placement
+decision and nothing else on screen admits it:
+
+| Placing | Labels | Reads |
+|---|---|---|
+| **A crop plot** (it *is* the resource) | its own ghost | 13 Food on grass, 5 on sand — **the number moves as you drag it across a biome** |
+| **A Sawmill, Farm, Quarry, Docks** (a radius over other people's cells) | every captured cell | which trees in reach are worth more than the others |
+
+Two details, both deliberate:
+
+- **It reports the DEPOT, not what one delivery fetches.** A delivery is the
+  same on every cell in range, so a label saying it would read identically
+  everywhere — and a label that never changes is not information. A depot is the
+  ground times what the ground does to it.
+- **It is toned against the authored stock** — good above, bad below, untouched
+  at the baseline — so richer and poorer read at a glance instead of asking the
+  player to remember that a plain tree is 10.
+
+It reuses the same pill the housing adjacency preview already draws, which is
+why it cost a label and not a screen.
 
 > **A move is free, instant, and it never fails halfway.**
 
@@ -165,6 +192,7 @@ not a mode that captures every drag.
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
 | Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §6 |
+| What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §3.2 |
 | Army cap per level | 6 / 10 / 15, on the four military halls |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 

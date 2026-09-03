@@ -21,7 +21,8 @@ import type { Floaters } from './floaters';
 import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from './palette';
-import { drawSprite } from './sprites';
+import { drawIcon, drawSprite } from './sprites';
+import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 
 export interface MarkerLayer {
   selected: Coord | null;
@@ -32,7 +33,9 @@ export interface MarkerLayer {
   claimedCells: Coord[]; // cells claimed by the inspected building's workers
   /** Workable cells inside the previewed building's range, with their yield;
    *  'bad' tone renders the label red (negative adjacency). */
-  yieldCells: Array<{ cell: Coord; label: string; tone?: 'good' | 'bad' }>;
+  yieldCells: Array<{
+    cell: Coord; label: string; icon?: string; tone?: 'good' | 'bad';
+  }>;
   previewCell: Coord | null;
   previewGlyph: string | null;
   previewSprite: string | null;
@@ -61,13 +64,24 @@ function labelFace(): string {
  * Map labels are NUMBERS and short counts, so they are set in the body face,
  * not the title one — the same split the CSS makes.
  *
- * These used to snap to 4px steps because a pixel face is crisp only at whole
- * multiples of its grid. PT Sans is an outline face with no grid to land on,
- * so the quantising bought nothing and cost a size: a label wanting 13px got
- * 12px, under the readability floor. Whole pixels are still worth keeping —
- * a fractional size renders soft — but every whole pixel is now available.
+ * **And the body face is a PIXEL face**, which is the whole reason this
+ * function exists. `m6x11plus` is drawn on an 18-per-em grid, so a design
+ * pixel covers `(css size x dpr) / 18` device pixels and anything that is not
+ * a whole number gets antialiased into grey — the one thing a pixel face is
+ * chosen not to do. At the target dpr of 3 the legal sizes are the multiples
+ * of **6**, which is exactly the rule `tests/fonts.test.ts` enforces across
+ * the stylesheets.
+ *
+ * That test reads CSS and cannot see a canvas, so these sizes had been off the
+ * grid since the faces changed: the comment here still described PT Sans, an
+ * OUTLINE face with no grid to land on, and concluded that "every whole pixel
+ * is now available". True of PT Sans, false since — and invisible in exactly
+ * the way that test's own header warns about, because every individual number
+ * looks reasonable.
  */
-const snapPx = (px: number, floor: number): number => Math.max(floor, Math.round(px));
+const BODY_GRID_PX = 6;
+const snapPx = (px: number, floor: number): number =>
+  Math.max(floor, Math.round(px / BODY_GRID_PX) * BODY_GRID_PX);
 
 /** Canvas font string in the body face, at a whole-pixel size. */
 const labelFont = (px: number, floor: number, bold = false): string =>
@@ -109,7 +123,7 @@ export function drawMap(
   const drawResourceState = (cell: Coord, x: number, y: number) => {
     const source = harvestSourceAt(state, cell);
     if (source === null) return;
-    const recovery = recoversAt(state, cell, now);
+    const recovery = recoversAt(state, map, cell, now);
     const spec = HARVEST[source];
     if (recovery !== null) {
       ctx.fillStyle = PALETTE.exhaustedOverlay;
@@ -117,7 +131,7 @@ export function drawMap(
       const remaining = (recovery - now) / (spec.recoverySeconds * 1000);
       drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, 1 - Math.min(1, remaining), PALETTE.recoveryFill);
     } else {
-      const fraction = stockFraction(state, cell, spec, now);
+      const fraction = stockFraction(state, map, cell, spec, now);
       if (fraction < 1) {
         drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, fraction, PALETTE.vaultFill);
       }
@@ -154,31 +168,60 @@ export function drawMap(
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = PALETTE.siteBadgeInk;
-    ctx.font = labelFont(r * 1.2, 8, true);
+    ctx.font = labelFont(r * 1.2, 12, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, x + size - r - 2, y + r + 3);
   };
 
-  /** A dark pill of text centred on (cx) and sitting just ABOVE (bottomY) —
-   *  the same shape the yield labels use, so a count over a building and a
-   *  yield over a cell read as the same kind of thing. */
-  const drawCountPill = (cx: number, bottomY: number, text: string): void => {
-    const fontSize = snapPx(size * 0.17, 9);
-    ctx.font = labelFont(fontSize, 9, true);
+  /**
+   * The one pill on the map: **icon, then amount**, in that order everywhere.
+   *
+   * The icon comes from the UI atlas rather than being written into the string
+   * as an emoji — a `🪵` renders from the system face and sits visibly outside
+   * the art next to the world's own sprites, which is the quiet fallback
+   * `CLAUDE.md` refuses. It falls back to the glyph only when the atlas has no
+   * cell or has not loaded yet, exactly as `drawSprite` does.
+   *
+   * Shared by the population count and the placement yield labels, so a count
+   * over a building and a yield over a cell read as the same kind of thing.
+   */
+  const drawPill = (
+    cx: number,
+    bottomY: number,
+    text: string,
+    opts: { icon?: string; ink?: string; fontScale?: number } = {},
+  ): void => {
+    const fontSize = snapPx(size * (opts.fontScale ?? 0.17), 12);
+    ctx.font = labelFont(fontSize, 12, true);
     const padX = fontSize * 0.5;
-    const pillW = ctx.measureText(text).width + padX * 2;
-    const pillH = fontSize * 1.45;
+    const iconSize = opts.icon ? Math.round(fontSize * 1.15) : 0;
+    const gap = opts.icon ? fontSize * 0.25 : 0;
+    const textW = ctx.measureText(text).width;
+    const pillW = iconSize + gap + textW + padX * 2;
+    const pillH = Math.max(fontSize * 1.45, iconSize + 4);
     const pillX = cx - pillW / 2;
     const pillY = bottomY - pillH;
     ctx.fillStyle = PALETTE.labelPill;
     ctx.beginPath();
     ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
     ctx.fill();
-    ctx.fillStyle = PALETTE.label;
-    ctx.textAlign = 'center';
+    ctx.strokeStyle = PALETTE.labelPillEdge;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    const midY = pillY + pillH / 2;
+    let cursor = pillX + padX;
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, cx, pillY + pillH / 2 + fontSize * 0.05);
+    if (opts.icon) {
+      if (!drawIcon(ctx, opts.icon, cursor, midY - iconSize / 2, iconSize)) {
+        ctx.fillStyle = PALETTE.label;
+        ctx.fillText(ICON_EMOJI[opts.icon as IconName] ?? '', cursor, midY);
+      }
+      cursor += iconSize + gap;
+    }
+    ctx.fillStyle = opts.ink ?? PALETTE.label;
+    ctx.fillText(text, cursor, midY + fontSize * 0.05);
   };
 
   // Pass 1: terrain + fog + features + resource cells. Districts come in a
@@ -210,7 +253,7 @@ export function drawMap(
       // Features (Forest): normal or exhausted sprite, emoji fallback.
       if (feature) {
         const def = FEATURES[feature];
-        const exhausted = recoversAt(state, cell, now) !== null;
+        const exhausted = recoversAt(state, map, cell, now) !== null;
         punched(key, x, y, size, size, () => {
           if (!drawSprite(ctx, exhausted ? `${def.sprite}_exhausted` : def.sprite, x, y, size, size)) {
             drawGlyph(ctx, exhausted ? def.exhaustedGlyph : def.glyph, x, y, size, size * 0.5);
@@ -282,13 +325,17 @@ export function drawMap(
     // original as a faint outline of itself so the address it is leaving
     // stays legible without competing with the ghost.
     const lifted = district.uniqueId === markers.liftedDistrictId;
-    if (lifted) ctx.globalAlpha = 0.28;
     const { x, y } = cellRect(district.location);
     const def = DISTRICTS[district.definitionId];
     const fw = size * def.size.x;
     const fh = size * def.size.y;
     if (x + fw < 0 || y + fh < 0 || x > w || y > h) continue; // offscreen
-    const exhausted = recoversAt(state, district.location, now) !== null;
+    // Set AFTER the offscreen bail. Setting it before meant that moving a
+    // building the camera had left behind leaked 0.28 into the rest of the
+    // frame — every marker, label, worker and floater drawn faint for as long
+    // as the ghost was out.
+    if (lifted) ctx.globalAlpha = 0.28;
+    const exhausted = recoversAt(state, map, district.location, now) !== null;
     // Exhausted crop plot gets its own base sprite when available;
     // otherwise the normal sprite (or glyph) plus the withered overlay.
     const exhaustedPlot = district.definitionId === 'FarmLands' &&
@@ -327,7 +374,7 @@ export function drawMap(
     } else {
       if (district.level > 1) {
         ctx.fillStyle = PALETTE.label;
-        ctx.font = labelFont(size * 0.16, 8);
+        ctx.font = labelFont(size * 0.16, 12);
         ctx.textAlign = 'right';
         ctx.textBaseline = 'top';
         ctx.fillText(`L${district.level}`, x + fw - 3, y + 3);
@@ -347,7 +394,8 @@ export function drawMap(
       // how many you have are one glance instead of two. It also buys the
       // header back the width the widget was costing on a phone.
       if (district.definitionId === 'Townhall') {
-        drawCountPill(x + fw / 2, y - 2, `👥 ${state.city.population}/${maxPopulation(state)}`);
+        drawPill(x + fw / 2, y - 2, `${state.city.population}/${maxPopulation(state)}`,
+          { icon: 'population' });
         const inLine = unitInTraining(state, district.uniqueId);
         if (inLine) {
           drawBar(ctx, x + fw * 0.12, y + fh - 7, fw * 0.76, 4,
@@ -372,7 +420,7 @@ export function drawMap(
     const remaining = Math.ceil(remainingSeconds(item, now));
     drawBar(ctx, x + fw * 0.1, y + size * 0.1, fw * 0.8, 6, progress, PALETTE.progressFill);
     ctx.fillStyle = PALETTE.label;
-    ctx.font = labelFont(size * 0.15, 8);
+    ctx.font = labelFont(size * 0.15, 12);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(item.startedAt === null ? 'queued' : `${remaining}s`, x + fw / 2, y + size * 0.1 + 8);
@@ -416,7 +464,7 @@ export function drawMap(
     ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
     if (label) {
       ctx.fillStyle = markers.validColor;
-      ctx.font = labelFont(size * 0.16, 8);
+      ctx.font = labelFont(size * 0.16, 12);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillText(label, x + size / 2, y + size - 4);
@@ -427,27 +475,6 @@ export function drawMap(
     ctx.strokeStyle = PALETTE.workedTile;
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
-  }
-  // Cells that WILL be worked: green "positive" yield label on a dark pill
-  // (the white working-area region is already drawn above).
-  for (const { cell, label, tone } of markers.yieldCells) {
-    const { x, y } = cellRect(cell);
-    const fontSize = snapPx(size * 0.18, 8);
-    ctx.font = labelFont(fontSize, 8, true);
-    const textWidth = ctx.measureText(label).width;
-    const padX = fontSize * 0.5;
-    const pillW = textWidth + padX * 2;
-    const pillH = fontSize * 1.4;
-    const pillX = x + size / 2 - pillW / 2;
-    const pillY = y + size - 5 - pillH;
-    ctx.fillStyle = PALETTE.labelPill;
-    ctx.beginPath();
-    ctx.roundRect(pillX, pillY, pillW, pillH, pillH / 2);
-    ctx.fill();
-    ctx.fillStyle = tone === 'bad' ? PALETTE.yieldNegative : PALETTE.yieldPositive;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, x + size / 2, pillY + pillH / 2 + fontSize * 0.05);
   }
   if (markers.previewCell && markers.previewGlyph) {
     const { x, y } = cellRect(markers.previewCell);
@@ -471,6 +498,34 @@ export function drawMap(
     ctx.strokeStyle = PALETTE.selected;
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 1.5, y + 1.5, sw - 3, sh - 3);
+  }
+
+  // What a cell HOLDS, on the same pill a count uses.
+  //
+  // **Drawn LAST of the markers, after the ghost and the selection outline**,
+  // and that order is load-bearing. A crop plot's label sits on the ghost's
+  // OWN cell (it is the only district that becomes a resource cell), so the
+  // 60%-opaque preview sprite used to be painted straight over it and washed
+  // it out — while a house's labels sit on its neighbours, which the ghost
+  // never covers, so moving a house looked fine and moving a plot did not.
+  // Nothing may paint over a number the player is reading.
+  //
+  // The pill is near-opaque and the ink bright for the same reason at one
+  // remove: it is drawn over the influence wash, the brightest thing on the
+  // map, and a translucent pill borrows whatever is under it.
+  //
+  // Untoned labels are WHITE. Only ground that is actually richer or poorer
+  // than its authored stock gets colour, so the colour means something rather
+  // than decorating every label on screen.
+  for (const { cell, label, icon, tone } of markers.yieldCells) {
+    if (label === '') continue;
+    const { x, y } = cellRect(cell);
+    drawPill(x + size / 2, y + size - 5, label, {
+      icon,
+      fontScale: 0.2,
+      ink: tone === 'bad' ? PALETTE.yieldNegative
+        : tone === 'good' ? PALETTE.yieldPositive : PALETTE.label,
+    });
   }
 
   // Pass 3.9: ambient villagers — unassigned population strolling around
@@ -566,12 +621,27 @@ export function drawMap(
   // Pass 5: floaters.
   for (const f of floaters.alive()) {
     const { x, y } = cellRect(f.cell);
+    const fontSize = snapPx(size * 0.22, 12);
     ctx.globalAlpha = 1 - f.t;
-    ctx.fillStyle = f.color ?? PALETTE.floaterText;
-    ctx.font = labelFont(size * 0.22, 12, true);
-    ctx.textAlign = 'center';
+    ctx.font = labelFont(fontSize, 12, true);
+    const iconSize = f.icon ? Math.round(fontSize * 1.15) : 0;
+    const gap = f.icon ? fontSize * 0.25 : 0;
+    const textW = ctx.measureText(f.text).width;
+    const cx = x + size / 2;
+    const midY = y + size * 0.3 - f.t * size * 0.5;
+    // Icon first, then the amount — the same order the pills use.
+    let cursor = cx - (iconSize + gap + textW) / 2;
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(f.text, x + size / 2, y + size * 0.3 - f.t * size * 0.5);
+    if (f.icon) {
+      if (!drawIcon(ctx, f.icon, cursor, midY - iconSize / 2, iconSize)) {
+        ctx.fillStyle = PALETTE.floaterText;
+        ctx.fillText(ICON_EMOJI[f.icon as IconName] ?? '', cursor, midY);
+      }
+      cursor += iconSize + gap;
+    }
+    ctx.fillStyle = f.color ?? PALETTE.floaterText;
+    ctx.fillText(f.text, cursor, midY);
     ctx.globalAlpha = 1;
   }
 }

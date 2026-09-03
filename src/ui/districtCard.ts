@@ -160,8 +160,8 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
       const spec = HARVEST.Crops;
-      const left = stockAt(game.state, district.location, now);
-      const readyAt = recoversAt(game.state, district.location, now);
+      const left = stockAt(game.state, game.map, district.location, now);
+      const readyAt = recoversAt(game.state, game.map, district.location, now);
       body.append(el('div', { class: 'dc-homes' },
         iconEl('Food', { size: 'sm' }),
         pips(left, spec.stock),
@@ -170,7 +170,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           : `regrowing — ${formatDuration((readyAt - now) / 1000)}`)));
       body.append(el('div', { class: 'dc-tapline' },
         iconEl('showme', { size: 'sm' }),
-        `Tap the plot for +${tapYieldAt(game.state, district.location, now)} Food`));
+        `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, now)} Food`));
     }
 
     // A house is people and the rent they pay, so show both as such.

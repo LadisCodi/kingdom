@@ -57,6 +57,7 @@ const UPGRADE_IDS = [
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
+const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
   // absolute — goal_target validated against the named id list (null = none)
@@ -233,6 +234,12 @@ const SHEETS = {
   Units: ['id', 'power', 'atk', 'def', 'hp',
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'train_duration_seconds'],
+  // What the ground under a cell does to what comes out of it. A multiplier
+  // per currency, applied to the cell's STOCK — the only quantity with room
+  // for a ±25% in whole units, since a chunk of 1 rounds any percentage away.
+  // Blank = 1. Water is authored at 1 on purpose: fish shoals sit on it and
+  // pay Food, and nobody asked for wet fields to change fishing.
+  Terrain: ['terrain', 'food', 'wood', 'stone'],
   // A cell is a DEPOT: `stock` units, drawn `units_per_strike` at a time,
   // one strike every `seconds_per_strike`. A tap is priced in SECONDS of that
   // same work, so nobody mints matter. stock 0 = bedrock, never runs down.
@@ -412,7 +419,7 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
+    districts: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
@@ -448,6 +455,14 @@ async function importXlsx() {
       upgradeCostLevelGrowth: num(r, 'upgrade_cost_level_growth'),
       upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
       upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
+    };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Terrain'), TERRAIN_IDS, 'terrain')) {
+    out.terrain[id] = {
+      Food: num(r, 'food', { blankAs: 1 }),
+      Wood: num(r, 'wood', { blankAs: 1 }),
+      Stone: num(r, 'stone', { blankAs: 1 }),
     };
   }
 
@@ -693,6 +708,11 @@ async function exportXlsx() {
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
     return [id, u.power, u.atk, u.def, u.hp, ...costCells(u.recruitCost), u.trainDurationSeconds];
+  }));
+
+  addSheet(workbook, 'Terrain', TERRAIN_IDS.map((id) => {
+    const m = b.terrain[id];
+    return [id, m.Food, m.Wood, m.Stone];
   }));
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {

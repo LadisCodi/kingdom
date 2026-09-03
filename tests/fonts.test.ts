@@ -135,3 +135,28 @@ describe('the pixel faces are only ever set at a legal size', () => {
     expect(wrong).toEqual([]);
   });
 });
+
+// The stylesheets are not the only place a pixel face gets sized. The map is a
+// CANVAS, and `ctx.font` takes a number this test cannot compute — so it reads
+// the renderer's own floors instead. They had been off the grid since the faces
+// changed: the comment there still described PT Sans, an OUTLINE face with no
+// grid, and concluded that every whole pixel was available. True of PT Sans.
+describe('the canvas sizes its labels on the same grid', () => {
+  const src = readFileSync(
+    new URL('../src/render/mapRenderer.ts', import.meta.url), 'utf8',
+  );
+
+  it('snaps to a step that is legal for the body face', () => {
+    const m = /const BODY_GRID_PX = (\d+);/.exec(src);
+    expect(m, 'mapRenderer no longer declares its grid step').not.toBeNull();
+    expect(crisp(Number(m![1]), BODY_GRID)).toBe(true);
+  });
+
+  it('floors every label at a legal size', () => {
+    const floors = [...src.matchAll(/labelFont\([^,]+,\s*(\d+)/g)]
+      .map((m) => Number(m[1]));
+    expect(floors.length).toBeGreaterThan(0);
+    const offGrid = floors.filter((px) => !crisp(px, BODY_GRID));
+    expect(offGrid, `off-grid canvas floors: ${offGrid.join(', ')}`).toEqual([]);
+  });
+});

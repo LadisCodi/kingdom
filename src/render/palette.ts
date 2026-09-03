@@ -26,9 +26,17 @@ export const PALETTE = {
   workedTile: 'rgba(255, 226, 122, 0.75)',
   influenceFill: 'rgba(255, 255, 255, 0.16)',
   influenceBorder: 'rgba(255, 255, 255, 0.85)',
-  yieldPositive: '#7fd07f',
-  yieldNegative: '#ff8a7a',
-  labelPill: 'rgba(0, 0, 0, 0.5)',
+  // Brighter than the old #7fd07f / #ff8a7a: these sit on the label pill,
+  // which is drawn over the influence wash, and pale ink on a washed pill is
+  // what made the placement labels unreadable.
+  yieldPositive: '#9dff9d',
+  yieldNegative: '#ff9a86',
+  /** Near-opaque on purpose. A translucent pill borrows whatever it is over,
+   *  and these are drawn on top of the influence highlight — the brightest
+   *  thing on the map. The thin light edge keeps it from melting into a dark
+   *  background too. */
+  labelPill: 'rgba(18, 16, 14, 0.88)',
+  labelPillEdge: 'rgba(255, 255, 255, 0.35)',
   exhaustedOverlay: 'rgba(40, 30, 20, 0.45)',
   recoveryFill: '#8ab4d8',
   progressBg: 'rgba(0, 0, 0, 0.55)',

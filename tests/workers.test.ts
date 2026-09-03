@@ -167,13 +167,13 @@ describe('the harvest cycle', () => {
     const sawmill = builtSawmill(state, [FOREST_A]);
     const start = state.lastAdvance;
     // Leave exactly one unit in the ground; the worker's first strike takes it.
-    const perTap = tapYieldAt(state, FOREST_A, start);
+    const perTap = tapYieldAt(state, map, FOREST_A, start);
     for (let i = 0; i < (HARVEST.Forest.stock - 1) / perTap; i++) {
       expect(tapCell(state, map, FOREST_A, start)).toBe('Harvested');
     }
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
     tickAt(state, start + CYCLE_MS + 100);
-    expect(isExhausted(state, FOREST_A, start + CYCLE_MS + 100)).toBe(true);
+    expect(isExhausted(state, map, FOREST_A, start + CYCLE_MS + 100)).toBe(true);
     const w = state.workers[0];
     expect(w.activity).toBe('Idle');
     // It resumes automatically after the 90s recovery.
@@ -214,7 +214,7 @@ describe('the harvest cycle', () => {
     expect(state.workers[0].activity).toBe('Working');
     const claimed = state.workers[0].claimedCell!;
     for (let i = 0; i < 10; i++) tapCell(state, map, claimed, start + 3000);
-    expect(isExhausted(state, claimed, start + 3000)).toBe(true);
+    expect(isExhausted(state, map, claimed, start + 3000)).toBe(true);
     const afterTaps = getWallet(state.city.wallet, 'Wood');
     expect(afterTaps).toBe(woodBefore + HARVEST.Forest.stock);
 

@@ -20,7 +20,7 @@ import {
   explorationGate, fogState, revealCostForCell, revealTap,
 } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
-import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
+import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
 import {
   committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
@@ -55,7 +55,7 @@ import {
   anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
 import {
-  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerStrike,
+  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
@@ -230,14 +230,14 @@ export class Game {
     // happened and the number is where it arrived.
     for (const s of result.strikes) this.strikeFeedback(s.cell, s.source);
     for (const d of result.deposits) {
-      this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
+      this.floaters.add(d.cell, `+${d.amount}`, d.currencyId);
     }
     if (result.goldEarned > 0) {
-      this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);
+      this.floaters.add(townhall(this.state).location, `+${result.goldEarned}`, 'Gold');
     }
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
-      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation} 👥`);
+      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation}`, 'population');
     }
     // A quiet splash when a fishing boat sets out (one per tick, max).
     let splashed = false;
@@ -386,7 +386,7 @@ export class Game {
           // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
-          this.floaters.add(cell, `-1 ${icon('Gold')}`);
+          this.floaters.add(cell, '\u22121', 'Gold');
         }
         this.notify();
         return true;
@@ -408,7 +408,8 @@ export class Game {
           const { result, gold } = houseTap(this.state, district, this.now());
           if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
-            this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+            if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
+            else this.floaters.add(cell, '⏩');
           } else if (result === 'NoMana') {
             this.outOfMana(cell);
           }
@@ -494,7 +495,7 @@ export class Game {
   private outOfMana(cell: Coord): void {
     playSfx('error');
     this.shake(['Mana']);
-    this.floaters.add(cell, `${icon('Mana')} empty`);
+    this.floaters.add(cell, 'empty', 'Mana');
   }
 
   /** One collect on a resource cell, with feedback. `autoRepeat` marks the
@@ -502,11 +503,11 @@ export class Game {
    *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
   private collectAt(cell: Coord, autoRepeat = false): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
-    const units = tapYieldAt(this.state, cell, this.now()); // before the tap — it may empty the cell
+    const units = tapYieldAt(this.state, this.map, cell, this.now()); // before the tap — it may empty the cell
     const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
-      this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
+      this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
@@ -554,14 +555,15 @@ export class Game {
       }
       if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
-      this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+      if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
+            else this.floaters.add(cell, '⏩');
       this.notify();
       return true;
     }
     if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
     if (harvestSourceAt(this.state, cell) === null) return false;
     if (!this.state.fog.revealed[coordKey(cell)]) return false;
-    if (isExhausted(this.state, cell, this.now())) return false; // quiet — no 💤 spam
+    if (isExhausted(this.state, this.map, cell, this.now())) return false; // quiet — no 💤 spam
     if (this.collectAt(cell, true) !== 'Harvested') return false;
     this.notify();
     return true;
@@ -582,7 +584,7 @@ export class Game {
       this.floaters.add(cell, 'Revealed!');
     } else {
       playSfx('revealPaid');
-      this.floaters.add(cell, `-1 ${icon('Gold')}`);
+      this.floaters.add(cell, '\u22121', 'Gold');
     }
     this.notify();
     return true;
@@ -727,7 +729,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
-      this.floaters.add(target, `Saved ${report.goldSaved} ${icon('Gold')}`);
+      this.floaters.add(target, `Saved ${report.goldSaved}`, 'Gold');
     }
     if (report.activeId === 'Bloom' && target) {
       this.floaters.add(target, `${report.affected.length} cells renewed`);
@@ -901,7 +903,7 @@ export class Game {
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
-      this.floaters.add(townhall(this.state).location, `+${reward} ${icon('Mana')}`);
+      this.floaters.add(townhall(this.state).location, `+${reward}`, 'Mana');
     }
     this.adWatchStartedAt = null;
     this.setOverlay(null);
@@ -973,7 +975,7 @@ export class Game {
       playSfx('coinSale');
       const market = this.state.city.districts.find(
         (d) => d.definitionId === 'Market' && d.state === 'Built');
-      if (market) this.floaters.add(market.location, `+${gold} ${icon('Gold')}`);
+      if (market) this.floaters.add(market.location, `+${gold}`, 'Gold');
     }
     this.notify();
   }
@@ -1283,9 +1285,12 @@ export class Game {
       // The LAST claim gets the victory sting instead of the usual chime.
       const finished = activeQuest(this.state) === null;
       playSfx(finished ? 'chainFinished' : 'quest');
-      const parts = Object.entries(quest.reward)
-        .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
-      this.floaters.add(townhall(this.state).location, parts.join(' '));
+      // One floater per currency rather than one string listing them all:
+      // each carries its own atlas icon, and an emoji in a joined string is
+      // exactly the fallback the art rules refuse.
+      for (const [c, n] of Object.entries(quest.reward)) {
+        this.floaters.add(townhall(this.state).location, `+${n}`, c);
+      }
       // Finishing the chain used to just make the tracker vanish, which reads
       // as a bug rather than an ending. Say something.
       if (finished) {
@@ -1324,7 +1329,7 @@ export class Game {
     const result = claimLandmark(this.state, this.map, cell);
     if (result === 'Claimed') {
       playSfx('upgradeBought');
-      this.floaters.add(cell, `+${manaProduction(this.state) - before} ${icon('Mana')}/h`);
+      this.floaters.add(cell, `+${manaProduction(this.state) - before}/h`, 'Mana');
       this.queueBanner({
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
@@ -1722,17 +1727,24 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatAdjacency(g.goldPerMinute),
+            label: formatSigned(g.goldPerMinute),
+            icon: 'Gold',
             tone: g.goldPerMinute < 0 ? 'bad' : 'good',
           });
         }
         if (adj.received !== 0) {
           layer.yieldCells.push({
             cell: this.mode.selected,
-            label: formatAdjacency(adj.received),
+            label: formatSigned(adj.received),
+            icon: 'Gold',
             tone: adj.received < 0 ? 'bad' : 'good',
           });
         }
+      }
+      // A crop plot IS the resource, so what it would hold goes on the ghost.
+      if (this.mode.selected) {
+        const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
+        if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
         layer.influenceCells = cellsWithinRadiusOfRect(
@@ -1740,13 +1752,9 @@ export class Game {
         );
         if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
-            // The placement preview shows what WORKERS will fetch per delivery.
-            // Read per CELL, not per building: the Mine captures iron and gold
-            // in one radius and they pay different coins.
-            (cell) => ({
-              cell,
-              label: cellYieldLabel(this.state, cell),
-            }),
+            // What each captured cell HOLDS, so a Sawmill's radius shows which
+            // trees are worth more before the shed is paid for.
+            (cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }),
           );
         }
       }
@@ -1773,17 +1781,21 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatAdjacency(g.goldPerMinute),
+            label: formatSigned(g.goldPerMinute),
+            icon: 'Gold',
             tone: g.goldPerMinute < 0 ? 'bad' : 'good',
           });
         }
         if (adj.received !== 0) {
           layer.yieldCells.push({
             cell: this.mode.selected,
-            label: formatAdjacency(adj.received),
+            label: formatSigned(adj.received),
+            icon: 'Gold',
             tone: adj.received < 0 ? 'bad' : 'good',
           });
         }
+        const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
+        if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
           layer.influenceCells = cellsWithinRadiusOfRect(
@@ -1793,10 +1805,7 @@ export class Game {
           if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
               this.mode.definitionId, this.mode.selected, district?.level ?? 1,
-            ).map((cell) => ({
-              cell,
-              label: cellYieldLabel(this.state, cell),
-            }));
+            ).map((cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }));
           }
         }
       }
@@ -1817,7 +1826,8 @@ export class Game {
         if (active.id === 'Divination') {
           layer.yieldCells = [{
             cell: this.mode.selected,
-            label: `${divinationSaving(this.state, this.map, this.mode.selected)} ${icon('Gold')}`,
+            label: String(divinationSaving(this.state, this.map, this.mode.selected)),
+            icon: 'Gold',
             tone: 'good',
           }];
         }
@@ -2118,13 +2128,41 @@ export class Game {
 
 /** What a collect tap on each harvest source sounds like. */
 /** What one worker delivery from THIS cell is worth, as the placement preview
- *  writes it. Per cell rather than per building, because a Mine's radius can
- *  hold iron and gold at once and they do not pay the same coin. */
-function cellYieldLabel(state: GameState, cell: Coord): string {
+ *  writes it. Per cell rather than per building, because a Quarry's radius can
+ *  hold iron and gold at once and they do not pay the same coin.
+ *
+ *  It reports what is IN the cell — its whole depot — rather than what one
+ *  delivery fetches, and the reason is that only one of the two carries any
+ *  information at placement time. A delivery is the same on every cell in
+ *  range; a depot is the ground times what the ground does to it, so **the
+ *  label changes as the ghost crosses a biome**, which is the decision the
+ *  player is actually making (`Docs/features/04-harvest.md` §3.2). */
+/** For a district that BECOMES a resource cell — a crop plot — what it would
+ *  hold on the ground it is standing on. The plot is the resource, so there is
+ *  no radius to preview and nothing on the cell to read yet: the number has to
+ *  come from the definition plus the terrain under the ghost. It is the whole
+ *  reason to show it, since dragging a plot from grass to sand takes it from
+ *  13 Food to 5 and there is otherwise nothing on screen that says so. */
+function providedYieldLabel(
+  map: MapData, definitionId: DistrictId, cell: Coord,
+): YieldLabel | null {
+  const provides = DISTRICTS[definitionId].providesHarvestSource;
+  if (provides === null) return null;
+  const spec = HARVEST[provides];
+  const held = effectiveStock(map, cell, spec);
+  const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
+  return { label: String(held), icon: spec.currencyId, tone };
+}
+
+function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel {
   const source = harvestSourceAt(state, cell);
-  if (source === null) return '';
+  if (source === null) return { label: '' };
   const spec = HARVEST[source];
-  return `+${effectiveWorkerStrike(state, spec)} ${icon(spec.currencyId)}`;
+  const held = effectiveStock(map, cell, spec);
+  // Toned against the authored stock, so richer and poorer ground read at a
+  // glance rather than needing the player to remember the baseline.
+  const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
+  return { label: String(held), icon: spec.currencyId, tone };
 }
 
 /** How hard a worker's strike punches the cell, against the player's 1. Enough
@@ -2197,13 +2235,34 @@ function siteBanner(id: string): Banner | null {
   return null;
 }
 
-/** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */
-export function formatAdjacency(goldPerMinute: number): string {
-  const n = Math.abs(Number.isInteger(goldPerMinute)
-    ? goldPerMinute : Number(goldPerMinute.toFixed(1)));
-  return `${goldPerMinute > 0 ? '+' : '\u2212'}${n} 🪙`;
+/** A map label: the amount as text, the icon as an ATLAS NAME. Never an emoji
+ *  in a string — the pill draws the icon from the same atlas the HUD uses
+ *  (`Docs/features/05-city-and-districts.md` §4). */
+export interface YieldLabel {
+  label: string;
+  icon?: CurrencyId;
+  tone?: 'good' | 'bad';
 }
 
+/** "+2" / "−1" — a signed gold/min adjacency modifier, without its icon. */
+export function formatSigned(goldPerMinute: number): string {
+  const n = Math.abs(Number.isInteger(goldPerMinute)
+    ? goldPerMinute : Number(goldPerMinute.toFixed(1)));
+  return `${goldPerMinute > 0 ? '+' : '\u2212'}${n}`;
+}
+
+/** "+2 🪙" / "−1 🪙" — for the DOM, which sets its own icon beside the text. */
+export const formatAdjacency = (goldPerMinute: number): string =>
+  `${formatSigned(goldPerMinute)} 🪙`;
+
+/**
+ * A currency's emoji, as a STRING.
+ *
+ * The last legitimate callers are DOM banners that have not moved to `iconEl`
+ * yet. **Nothing on the canvas may use this** — the map draws its icons from
+ * the UI atlas through `drawIcon`, because an emoji renders from the system
+ * face and sits visibly outside the art (`CLAUDE.md`: no emoji fallbacks).
+ */
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',

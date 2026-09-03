@@ -44,7 +44,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(tapCell(state, map, FOREST, now)).toBe('TechLocked');
     completeTech(state, 'Forestry');
     // Five taps of `tap.work_seconds` each, out of the tree's depot.
-    const perTap = tapYieldAt(state, FOREST, now);
+    const perTap = tapYieldAt(state, map, FOREST, now);
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, FOREST, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Wood')).toBe(5 * perTap);
 
@@ -72,12 +72,12 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(woodAfterCycles).toBeGreaterThan(5); // deliveries landed
     // Player finishes off the cell's remaining taps.
     while (tapCell(state, map, FOREST, now) === 'Harvested') { /* drain */ }
-    expect(isExhausted(state, FOREST, now)).toBe(true);
+    expect(isExhausted(state, map, FOREST, now)).toBe(true);
 
     // --- The cell recovers on its own after 90s; the worker resumes after.
     now += 91_000;
     tickAt(state, now);
-    expect(isExhausted(state, FOREST, now)).toBe(false);
+    expect(isExhausted(state, map, FOREST, now)).toBe(false);
 
     // --- Crop plots are gated behind Agriculture.
     expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('InvalidCell'); // locked

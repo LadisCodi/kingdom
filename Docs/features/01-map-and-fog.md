@@ -28,9 +28,30 @@ follows the shape of the world rather than the shape of the coordinate system.
 
 ## 2. Terrain
 
-Grassland, Plains, Tundra, Snow, Water, and Desert (declared, zero cells).
-Terrain decides three things and nothing else: whether a cell is buildable,
-which features may sit on it, and which technology is needed to reveal it.
+Grassland, Plains, Tundra, Snow, Desert and Water. Terrain decides **four**
+things: whether a cell is buildable, which features may sit on it, which
+technology is needed to reveal it, and — since 2026-09-03 — **how much of a
+given resource the ground under a cell holds**.
+
+That fourth job is the one with design in it, and the test a biome has to pass
+is **whether it is a reason to walk somewhere** rather than a change of palette:
+
+- **Grassland** grows things — a tree here is worth 13 Wood against a plain 10.
+- **Desert** starves you and pays in rock: 5 Wood, 8 Stone.
+- **Tundra** is the cold frontier — as poor as Snow at food, and the **best
+  timber and stone in the world** at ×1.5 each.
+- **Snow** is simply hard, and a map needs somewhere that is.
+
+The multipliers live on the terrain because the same sand has to reach a
+Forest, a FarmLands and a rock alike. Full table and the reason it scales a
+cell's stock rather than a single swing:
+[`04-harvest.md`](04-harvest.md) §3.2.
+
+**Nothing but the Docks may build on Water; everything else builds on any
+land.** Farms and crop plots were Grassland-only until the multipliers landed,
+which is what made the rule unnecessary: a farm on sand is now a bad farm
+rather than an illegal one, and *bad but allowed* is a decision where *illegal*
+was only a wall.
 
 - **Water** needs **Sailing** to reveal, and is the **only** terrain that gates
   a reveal. Unbuildable except by the Docks, a 2×1 pier with one cell on land

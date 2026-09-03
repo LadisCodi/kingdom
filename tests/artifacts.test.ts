@@ -17,7 +17,7 @@ import { levelCapForTier, levelCost, tierCost, totalLevelCost } from '../src/sim
 import { advance } from '../src/sim/commands';
 import { ARTIFACTS, ATTUNEMENT, COLLECTION, HARVEST, RUINS } from '../src/sim/data/definitions';
 import { fogState, revealCostForCell } from '../src/sim/fog';
-import { drawFromCell } from '../src/sim/harvest';
+import { drawFromCell, effectiveStock } from '../src/sim/harvest';
 import { addMana, mana } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { effectiveTaxRate, effectiveWorkerStrike } from '../src/sim/upgrades';
@@ -206,13 +206,15 @@ describe('the actives', () => {
     // opening reveal any more, so clear one first.
     reveal(state, [FOREST]);
     const forest = FOREST;
-    drawFromCell(state, forest, HARVEST.Forest, HARVEST.Forest.stock, T0);
+    drawFromCell(state, map, forest, HARVEST.Forest,
+      effectiveStock(map, forest, HARVEST.Forest), T0);
     expect(state.harvest[coordKey(forest)].exhaustedUntil).not.toBeNull();
 
     const report = cast(state, map, 'VerdantSeal', forest, T0);
     expect(report.result).toBe('Cast');
     expect(state.harvest[coordKey(forest)].exhaustedUntil).toBeNull();
-    expect(state.harvest[coordKey(forest)].units).toBe(HARVEST.Forest.stock);
+    expect(state.harvest[coordKey(forest)].units)
+      .toBe(effectiveStock(map, forest, HARVEST.Forest));
   });
 
   it('Haste is a TIMED modifier that the boundary loop retires on schedule', () => {

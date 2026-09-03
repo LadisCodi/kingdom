@@ -76,7 +76,7 @@ function findClaimableCell(
   except?: Worker,
 ): Coord | null {
   for (const cell of workableCells(state, map, district)) {
-    if (!isClaimed(state, cell, except) && !isExhausted(state, cell, now)) return cell;
+    if (!isClaimed(state, cell, except) && !isExhausted(state, map, cell, now)) return cell;
   }
   return null;
 }
@@ -150,7 +150,7 @@ function nextEventAt(state: GameState, map: MapData, w: Worker, building: Distri
   let earliest: number | null = null;
   for (const cell of workableCells(state, map, building)) {
     if (isClaimed(state, cell, w)) continue;
-    const at = Math.max(w.stateStartedAt, recoversAt(state, cell, w.stateStartedAt) ?? w.stateStartedAt);
+    const at = Math.max(w.stateStartedAt, recoversAt(state, map, cell, w.stateStartedAt) ?? w.stateStartedAt);
     if (earliest === null || at < earliest) earliest = at;
   }
   return earliest;
@@ -173,7 +173,7 @@ function step(
       break;
     case 'MovingToCell': {
       const cell = w.claimedCell!;
-      if (isExhausted(state, cell, t) || !worksHere(sources, state, cell)) {
+      if (isExhausted(state, map, cell, t) || !worksHere(sources, state, cell)) {
         // Emptied (or vanished) en route: turn back empty-handed rather than
         // standing over a stump. It costs the trip, which is the honest price
         // of the player having got there first.
@@ -197,7 +197,7 @@ function step(
       // — not on arrival home. That is what stops the player and the worker
       // taking the same wood twice: a load in transit is already out of the
       // ground, and the cell shows a stump while it is still being carried.
-      w.carrying = drawFromCell(state, cell, spec, effectiveWorkerStrike(state, spec), t);
+      w.carrying = drawFromCell(state, map, cell, spec, effectiveWorkerStrike(state, spec), t);
       w.carriedSource = w.carrying > 0 ? source : null;
       if (w.carrying > 0) strikes.push({ cell, source });
       setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
@@ -221,7 +221,7 @@ function step(
       w.carrying = 0;
       w.carriedSource = null;
       // Keep the claim while the cell still holds something; otherwise migrate.
-      if (w.claimedCell !== null && !isExhausted(state, w.claimedCell, t)
+      if (w.claimedCell !== null && !isExhausted(state, map, w.claimedCell, t)
         && worksHere(sources, state, w.claimedCell)) {
         setState(w, 'MovingToCell', t, t + moveMs(building.location, w.claimedCell));
       } else {

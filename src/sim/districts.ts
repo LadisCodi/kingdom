@@ -25,7 +25,7 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsGrassland' | 'NeedsShoreline'
+  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsShoreline'
   | 'NeedsLand'
   | 'HasSite';
 
@@ -90,14 +90,6 @@ export function placementBlock(
       if (!ok) return 'NeedsHousingAdjacency';
       break;
     }
-    case 'Farm':
-      if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
-      break;
-    case 'FarmLands':
-      // Any revealed Grassland — the player taps it by hand until a Farm
-      // is built nearby to send workers.
-      if (footprint.some((c) => map.terrain.get(coordKey(c)) !== 'Grassland')) return 'NeedsGrassland';
-      break;
     case 'Docks': {
       // A pier spanning the shoreline: its 2×1 footprint needs exactly ONE
       // cell on Water and one on land. Horizontal only — no rotation; the

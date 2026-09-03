@@ -7,6 +7,10 @@ export interface Floater {
   text: string;
   bornAt: number;
   color?: string;
+  /** A UI-atlas icon drawn BEFORE the text, so a floater reads `(icon) +2`
+   *  like every other label on the map. An atlas NAME, never an emoji in the
+   *  string — see `drawIcon` in ./sprites.ts for why. */
+  icon?: string;
 }
 
 const LIFETIME_MS = 1200;
@@ -14,8 +18,8 @@ const LIFETIME_MS = 1200;
 export class Floaters {
   private items: Floater[] = [];
 
-  add(cell: Coord, text: string, color?: string): void {
-    this.items.push({ cell, text, bornAt: performance.now(), color });
+  add(cell: Coord, text: string, icon?: string, color?: string): void {
+    this.items.push({ cell, text, bornAt: performance.now(), color, icon });
   }
 
   /** Live floaters with their age fraction [0,1]; prunes the dead. */

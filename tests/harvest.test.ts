@@ -11,9 +11,12 @@ import { describe, expect, it } from 'vitest';
 import { DISTRICTS, FEATURES, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
 import {
-  collectTap, harvestSourceAt, isExhausted, stockFraction, tapCell, tapYieldAt,
+  collectTap, effectiveStock, harvestSourceAt, isExhausted, stockFraction, tapCell,
+  tapYieldAt,
 } from '../src/sim/harvest';
-import { getWallet, parseCoordKey, type Coord } from '../src/sim/state';
+import {
+  coordKey, getWallet, parseCoordKey, type Coord, type TerrainId,
+} from '../src/sim/state';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import {
   addBuilt, BERRIES, canGather, completeTech, FOREST, freshGame, freshPresenter, map,
@@ -40,23 +43,26 @@ describe('tapping', () => {
     reveal(state, [FOREST]);
     // One Forest strike takes 10 s, and a tap is worth `tap.workSeconds` of
     // it — so the tree's stock over that is how many taps it stands.
-    const perTap = tapYieldAt(state, FOREST, T0);
+    const perTap = tapYieldAt(state, map, FOREST, T0);
     expect(perTap).toBe(Math.max(1, Math.floor(
       TAP.workSeconds * HARVEST.Forest.unitsPerStrike / HARVEST.Forest.secondsPerStrike)));
-    const taps = HARVEST.Forest.stock / perTap;
+    // What the tree actually holds is its authored stock times the GROUND
+    // under it — a grassland tree is richer than a desert one.
+    const held = effectiveStock(map, FOREST, HARVEST.Forest);
+    const taps = Math.ceil(held / perTap);
     for (let i = 1; i < taps; i++) {
       expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
-      expect(isExhausted(state, FOREST, T0)).toBe(false);
+      expect(isExhausted(state, map, FOREST, T0)).toBe(false);
     }
     expect(tapCell(state, map, FOREST, T0)).toBe('Harvested'); // the last one
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(HARVEST.Forest.stock);
-    expect(isExhausted(state, FOREST, T0)).toBe(true);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(held);
+    expect(isExhausted(state, map, FOREST, T0)).toBe(true);
     expect(tapCell(state, map, FOREST, T0)).toBe('Exhausted');
     // Lazy recovery after recoverySeconds.
     const recoverAt = T0 + HARVEST.Forest.recoverySeconds * 1000;
-    expect(isExhausted(state, FOREST, recoverAt - 1)).toBe(true);
-    expect(isExhausted(state, FOREST, recoverAt)).toBe(false);
-    expect(stockFraction(state, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // depot refilled
+    expect(isExhausted(state, map, FOREST, recoverAt - 1)).toBe(true);
+    expect(isExhausted(state, map, FOREST, recoverAt)).toBe(false);
+    expect(stockFraction(state, map, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // depot refilled
     expect(tapCell(state, map, FOREST, recoverAt)).toBe('Harvested');
   });
 
@@ -65,7 +71,7 @@ describe('tapping', () => {
   // repeats are paced.
   it('manual taps are never gated — the player can tap as fast as they like', () => {
     const state = canGather(freshGame());
-    const perTap = tapYieldAt(state, FOREST, T0);
+    const perTap = tapYieldAt(state, map, FOREST, T0);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 2)).toBe('Harvested');
@@ -75,7 +81,7 @@ describe('tapping', () => {
   it('held-pointer repeats wait out the auto-tap cooldown', () => {
     const state = canGather(freshGame());
     const cooldownMs = effectiveAutoTapCooldownMs(state);
-    const perTap = tapYieldAt(state, FOREST, T0);
+    const perTap = tapYieldAt(state, map, FOREST, T0);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     // The input layer retries every 100ms; those land as autoRepeat…
     expect(collectTap(state, map, FOREST, T0 + 100, true)).toBe('OnCooldown');
@@ -98,6 +104,69 @@ describe('tapping', () => {
   });
 });
 
+// The ground under a cell decides how much is IN it. The multiplier lands on
+// the depot rather than on a single extraction, and it has to: a chunk is 1
+// unit on most cells and 1 x 0.75 rounds straight back to 1, so a percentage
+// on the chunk would be a no-op (04-harvest.md §3.3).
+describe('the ground under a cell', () => {
+  const cellOf = (kind: TerrainId): Coord | null =>
+    map.cells.find((c) => map.terrain.get(coordKey(c)) === kind) ?? null;
+
+  it('scales what a cell holds, by currency, and never below one unit', () => {
+    const state = freshGame();
+    for (const [kind, food, wood] of [
+      ['Grassland', 1.25, 1.25], ['Plains', 1, 1],
+      ['Desert', 0.5, 0.5], ['Snow', 0.75, 0.75], ['Tundra', 0.75, 1.5],
+    ] as const) {
+      const cell = cellOf(kind);
+      if (cell === null) continue; // the province may not paint every biome
+      expect(effectiveStock(map, cell, HARVEST.Forest), `${kind} wood`)
+        .toBe(Math.max(1, Math.round(HARVEST.Forest.stock * wood)));
+      expect(effectiveStock(map, cell, HARVEST.Crops), `${kind} food`)
+        .toBe(Math.max(1, Math.round(HARVEST.Crops.stock * food)));
+    }
+    void state;
+  });
+
+  it('is a DESERT that gives up stone: poor in food and wood, rich in rock', () => {
+    const sand = cellOf('Desert');
+    if (sand === null) return; // no desert painted yet
+    expect(effectiveStock(map, sand, HARVEST.Forest))
+      .toBeLessThan(HARVEST.Forest.stock);
+    expect(effectiveStock(map, sand, HARVEST.Stone))
+      .toBeGreaterThan(HARVEST.Stone.stock);
+  });
+
+  it('is a TUNDRA that pays in materials: hungry, and the best timber there is', () => {
+    const cold = cellOf('Tundra');
+    if (cold === null) return; // no tundra painted yet
+    expect(effectiveStock(map, cold, HARVEST.Crops))
+      .toBeLessThan(HARVEST.Crops.stock);
+    // Better timber than the grassland that grows the food, which is the whole
+    // trade: you go there for materials and you do not eat there.
+    const grass = cellOf('Grassland');
+    if (grass !== null) {
+      expect(effectiveStock(map, cold, HARVEST.Forest))
+        .toBeGreaterThan(effectiveStock(map, grass, HARVEST.Forest));
+    }
+    expect(effectiveStock(map, cold, HARVEST.Stone))
+      .toBeGreaterThan(HARVEST.Stone.stock);
+  });
+
+  it('leaves Water alone, because shoals sit on it and pay Food', () => {
+    const wet = cellOf('Water');
+    expect(wet).not.toBeNull();
+    expect(effectiveStock(map, wet!, HARVEST.Fish)).toBe(HARVEST.Fish.stock);
+  });
+
+  it('does not touch bedrock, which has no depot to scale', () => {
+    const sand = cellOf('Desert');
+    if (sand === null) return;
+    const bedrock = { ...HARVEST.Stone, stock: 0 };
+    expect(effectiveStock(map, sand, bedrock)).toBe(0);
+  });
+});
+
 describe('the energy a tap is paid from', () => {
   it('charges one Mana per collect, and refuses when the pool is dry', () => {
     const state = canGather(freshGame());
@@ -117,8 +186,8 @@ describe('the energy a tap is paid from', () => {
     const state = canGather(freshGame());
     reveal(state, [FOREST]);
     // Exhaust it with the free primitive so the pool is untouched.
-    for (let i = 0; i < HARVEST.Forest.stock; i++) tapCell(state, map, FOREST, T0);
-    expect(isExhausted(state, FOREST, T0)).toBe(true);
+    while (tapCell(state, map, FOREST, T0) === 'Harvested') { /* drain it */ }
+    expect(isExhausted(state, map, FOREST, T0)).toBe(true);
 
     const before = mana(state);
     expect(collectTap(state, map, FOREST, T0)).toBe('Exhausted');
@@ -297,7 +366,7 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
 
     completeTech(state, 'ScalingTools');
     expect(collectTap(state, map, peak!, T0)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Stone')).toBe(tapYieldAt(state, peak!, T0));
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(tapYieldAt(state, map, peak!, T0));
     expect(mana(state)).toBe(before - TAP.manaCost);
   });
 
@@ -312,9 +381,9 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     for (let i = 0; i < spec.stock; i++) {
       expect(tapCell(state, map, peak!, T0), `strike ${i + 1}`).toBe('Harvested');
     }
-    expect(isExhausted(state, peak!, T0)).toBe(true);
+    expect(isExhausted(state, map, peak!, T0)).toBe(true);
     expect(tapCell(state, map, peak!, T0)).toBe('Exhausted');
-    expect(isExhausted(state, peak!, T0 + spec.recoverySeconds * 1000)).toBe(false);
+    expect(isExhausted(state, map, peak!, T0 + spec.recoverySeconds * 1000)).toBe(false);
   });
 
   // A rich node is throttled by how long it stays dead, not only by what it

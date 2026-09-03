@@ -176,7 +176,58 @@ wild crops. Giving it its own rhythm — fast and thirsty where the wild kind is
 slow and patient — needs a new harvest source id, which is code rather than
 data. Small, and worth doing; not done.
 
-### 3.2 The map now has a ceiling
+### 3.2 The ground under the cell
+
+> **Terrain multiplies what a cell HOLDS, per currency.** A grassland tree is
+> worth thirteen Wood, a snowy one eight, a desert one five.
+
+| Terrain | Food | Wood | Stone | What it is |
+|---|---|---|---|---|
+| **Grassland** | ×1.25 | ×1.25 | ×1 | the good ground: farm and forest here |
+| **Plains** | ×1 | ×1 | ×1 | the baseline everything else is read against |
+| **Snow** | ×0.75 | ×0.75 | ×1 | poor, and poor at nothing in particular |
+| **Desert** | ×0.5 | ×0.5 | **×1.5** | starves you and pays in rock |
+| **Tundra** | ×0.75 | **×1.5** | **×1.5** | as poor as Snow at food, and **the best timber AND stone in the world** |
+| Water | ×1 | ×1 | ×1 | left alone — see below |
+
+**Every terrain except Snow now has a reason to be walked to**, and that is the
+test a biome has to pass: Grassland grows things, Desert pays in rock, Tundra is
+the frontier you go to for timber and stone at the price of not eating there.
+Snow is the one that is only a penalty, which is fine — a map needs somewhere
+that is simply hard.
+
+**It lives on the terrain rather than on the building**, because it is a fact
+about the ground and it has to reach several different things: a Forest, a
+FarmLands and a rock on the same sand all want it, and none of them is a Farm.
+
+**And it scales the STOCK rather than a single extraction, which was forced
+rather than chosen.** `unitsPerStrike` is 1 on most cells and `1 × 0.75` rounds
+straight back to 1 — a percentage on a chunk of one is a no-op. Stock runs 5 to
+30, which has room for a quarter either way in whole units. Two consequences
+worth knowing:
+
+- **The thumb and the crew are both affected, with no second set of books**,
+  because they draw the same depot (§1).
+- **Poor ground is bad twice.** Total per cycle scales exactly with the
+  multiplier, but the *sustainable rate* falls further, because recovery is a
+  fixed cost the poorer cell still pays: a desert forest drains in 50 s and
+  then sits out 90, so it yields 2.1 Wood/min against a grassland tree's 3.5 —
+  61%, not 50%. And its workers-per-cell drops from 0.59 to 0.36, so **a desert
+  needs about three cells per worker where a grassland needs under two.** A
+  desert should feel like that.
+
+**Water is authored at ×1 on purpose.** Fish shoals sit on it and pay Food, and
+a wet-field multiplier silently retuning the whole fishing line is not what
+anybody asked for.
+
+**But a multiplier only exists where the map puts something to harvest**, and
+today it mostly does not. Counted on the province as painted: Grassland holds 44
+of the 57 trees, so its timber bonus is fully live — while **Desert's stone
+bonus reaches exactly one mountain in 81 cells, and Tundra holds no trees at
+all**, so the best timber in the world is currently unreachable. The dials are
+authored; the map has not caught up (OQ-56).
+
+### 3.3 The map now has a ceiling
 
 `stock ÷ (drain + recovery)` is a cell's sustainable rate, so the province has
 one too. At **57 Trees** on the map as authored today, with sheds next door:
@@ -191,7 +242,9 @@ one too. At **57 Trees** on the map as authored today, with sheds next door:
 
 That number is the thing three balance passes have been missing. It is also a
 census the map editor can compute, and it should
-([`../map-editor.md`](../map-editor.md), OQ-50).
+([`../map-editor.md`](../map-editor.md), OQ-50) — and it now has to weigh
+each cell by its ground, because the same tree is worth 13 or 5 depending on
+what it stands on.
 
 ## 4. The tap
 
@@ -501,6 +554,7 @@ which side of that line anything sits on.
 | `TapPower` | **+20%/level, 10 levels** (→ ×3) | `Upgrades` |
 | Chunk and rhythm, per cell | §3.1 | `Harvest.units_per_strike`, `.seconds_per_strike` |
 | Stock, per cell | §3.1 | `Harvest.stock` |
+| Ground multiplier, per terrain × currency | §3.2 | `Terrain` sheet |
 | Recovery, per cell | §3.1 | `Harvest.recovery_seconds` |
 | Respawn, finite features | 120 s | `Harvest.respawn_seconds` |
 | Worker move speed | 1 tile/s | `worker.move_speed_tiles_per_second` |

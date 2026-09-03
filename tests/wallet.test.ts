@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { HARVEST, TAP } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
-import { harvestSourceAt, tapCell } from '../src/sim/harvest';
+import { effectiveStock, harvestSourceAt, tapCell } from '../src/sim/harvest';
 import { populationCost } from '../src/sim/population';
 import { canAfford, pay } from '../src/sim/wallet';
 import {
@@ -58,8 +58,11 @@ describe('finite map features', () => {
     expect(harvestSourceAt(state, BERRY_BUSH)).toBe('Berries'); // the CELL is a bush
     // Its depot is the ceiling: however many times the thumb asks, a bush is
     // worth exactly what is in it.
-    expect(drain(state, BERRY_BUSH)).toBe(HARVEST.Berries.stock);
-    expect(getWallet(state.city.wallet, 'Food')).toBe(HARVEST.Berries.stock); // it PAYS Food
+    // Its depot is the ceiling — and the depot is the authored stock times the
+    // GROUND under it, so a bush on grassland is richer than one on sand.
+    const held = effectiveStock(map, BERRY_BUSH, HARVEST.Berries);
+    expect(drain(state, BERRY_BUSH)).toBe(held);
+    expect(getWallet(state.city.wallet, 'Food')).toBe(held); // it PAYS Food
     expect(state.features[coordKey(BERRY_BUSH)]).toBeUndefined(); // gone from the map
     expect(harvestSourceAt(state, BERRY_BUSH)).toBe(null);
     expect(tapCell(state, map, BERRY_BUSH, T0)).toBe('NotHarvestable');

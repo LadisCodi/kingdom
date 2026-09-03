@@ -4,7 +4,8 @@ import { HARVEST, SAVE_VERSION } from '../src/sim/data/definitions';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
-import { getWallet } from '../src/sim/state';
+import { getWallet, parseCoordKey } from '../src/sim/state';
+import { effectiveStock } from '../src/sim/harvest';
 import {
   addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
@@ -36,7 +37,8 @@ describe('save round-trip', () => {
     // reveals more than one tree, so naming it here would only be a guess.
     const worked = Object.keys(state.harvest)[0];
     expect(worked, 'no cell was harvested').toBeDefined();
-    expect(state.harvest[worked].units).toBeLessThan(HARVEST.Forest.stock);
+    expect(state.harvest[worked].units)
+      .toBeLessThan(effectiveStock(map, parseCoordKey(worked), HARVEST.Forest));
 
     const restored = deserialize(serialize(state, t), map, t)!;
     expect(restored).not.toBeNull();

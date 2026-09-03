@@ -13,7 +13,7 @@ import regionMap from './region-map.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, TechId, TrainableId, UnitId, UpgradeId, Wallet,
+  LandmarkKind, RuinId, TechId, TerrainId, TrainableId, UnitId, UpgradeId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -118,6 +118,28 @@ export const HARVEST: Record<HarvestSourceId, HarvestSpec> = {
   MountainIron: harvest('MountainIron', 'Stone', balance.harvest.MountainIron),
   MountainGold: harvest('MountainGold', 'Gold', balance.harvest.MountainGold),
 };
+
+/**
+ * What the ground under a cell does to what comes out of it.
+ *
+ * A multiplier per currency, and it scales the cell's **STOCK** — how much is
+ * in the ground — rather than what a single extraction takes. That is forced
+ * rather than chosen: a chunk is 1 unit on most cells, and 1 x 0.75 rounds
+ * straight back to 1, so a percentage on the chunk is a no-op. Stock runs
+ * 5 to 30, which has room for a quarter either way in whole units.
+ *
+ * It therefore applies to the thumb and the crew alike and needs no second
+ * set of books, because both draw the same depot.
+ *
+ * Blank = 1. Water is authored at 1 deliberately: fish shoals sit on it and
+ * pay Food, and a fishing multiplier is not what anybody asked for.
+ */
+export const TERRAIN_YIELD = balance.terrain as
+  Record<TerrainId, Partial<Record<CurrencyId, number>>>;
+
+/** The ground's multiplier on this currency; 1 for anything unauthored. */
+export const terrainYield = (terrain: TerrainId, currency: CurrencyId): number =>
+  TERRAIN_YIELD[terrain]?.[currency] ?? 1;
 
 // Worker travel. There is no global work time any more: how long an
 // extraction takes is a property of the CELL (`secondsPerStrike`), which is

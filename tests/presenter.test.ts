@@ -7,12 +7,16 @@
 // views hold nothing but markup once the decisions live here.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lineFor } from '../src/sim/army';
-import { QUESTS, TRAINING } from '../src/sim/data/definitions';
+import { HARVEST, QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
+import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
 import { townhallDistance } from '../src/sim/grid';
-import { getWallet, townhall, type CurrencyId } from '../src/sim/state';
 import {
-  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map, screenAt,
+  coordKey, getWallet, townhall, type Coord, type CurrencyId, type TerrainId,
+} from '../src/sim/state';
+import {
+  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map,
+  reveal, screenAt,
 } from './helpers';
 
 afterEach(() => {
@@ -469,5 +473,65 @@ describe('villager training', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBeLessThan(before);
     expect(game.trainingInfo().active).toBe(true);
     expect(game.trainingInfo().remainingSeconds).toBeLessThanOrEqual(TRAINING.seconds);
+  });
+});
+
+// Terrain multiplies what a cell HOLDS (04-harvest.md §3.2), and a placement
+// is the one moment that number is a decision — so the ghost has to say it.
+// Dragging a crop plot from grass to sand takes it from 13 Food to 5 and there
+// is otherwise nothing on screen that admits it.
+describe('placement labels read the ground', () => {
+  const cellOf = (kind: TerrainId): Coord | undefined =>
+    map.cells.find((c) => map.terrain.get(coordKey(c)) === kind
+      && harvestSourceAt(freshGame(), c) === null);
+
+  it('a crop plot labels its own ghost, and the number moves with the biome', () => {
+    const state = freshGame();
+    completeTech(state, 'Farming');
+    const game = freshPresenter(state);
+    game.startPlacement('FarmLands');
+
+    const seen: Array<{ kind: TerrainId; label: string; tone?: string }> = [];
+    for (const kind of ['Grassland', 'Plains', 'Desert', 'Snow'] as TerrainId[]) {
+      const cell = cellOf(kind);
+      if (!cell) continue;
+      reveal(state, [cell]);
+      (game.mode as { selected: Coord }).selected = cell;
+      const mine = game.markers().yieldCells.find((y) => coordKey(y.cell) === coordKey(cell));
+      expect(mine, `${kind} has no label`).toBeDefined();
+      seen.push({ kind, label: mine!.label, tone: mine!.tone });
+    }
+    // Whatever the province happens to paint, richer ground reads higher and
+    // is toned for it — that is the whole job of the label.
+    const grass = seen.find((s) => s.kind === 'Grassland');
+    const sand = seen.find((s) => s.kind === 'Desert');
+    if (grass && sand) {
+      expect(parseInt(grass.label, 10)).toBeGreaterThan(parseInt(sand.label, 10));
+      expect(grass.tone).toBe('good');
+      expect(sand.tone).toBe('bad');
+    }
+    const plains = seen.find((s) => s.kind === 'Plains');
+    if (plains) expect(plains.tone).toBeUndefined(); // the baseline is untoned
+  });
+
+  it('a Sawmill labels every tree in reach with what is in it', () => {
+    const state = freshGame();
+    completeTech(state, 'Saws');
+    // Stand the ghost next to a known tree, so "in reach" is not the map's
+    // business — the subject is what the label SAYS, not which cells qualify.
+    const shed = { x: FOREST.x + 1, y: FOREST.y - 1 };
+    reveal(state, [FOREST, shed]);
+    const game = freshPresenter(state);
+    game.startPlacement('Sawmill');
+    (game.mode as { selected: Coord }).selected = shed;
+
+    const labels = game.markers().yieldCells;
+    expect(labels.length).toBeGreaterThan(0);
+    for (const y of labels) {
+      // Every label sits on a tree, and says the tree's whole depot.
+      expect(harvestSourceAt(state, y.cell)).toBe('Forest');
+      expect(parseInt(y.label, 10))
+        .toBe(effectiveStock(map, y.cell, HARVEST.Forest));
+    }
   });
 });

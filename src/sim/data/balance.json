@@ -530,6 +530,38 @@
       "upgradeDurationLevelGrowth": 1.6
     }
   },
+  "terrain": {
+    "Grassland": {
+      "Food": 1.25,
+      "Wood": 1.25,
+      "Stone": 1
+    },
+    "Plains": {
+      "Food": 1,
+      "Wood": 1,
+      "Stone": 1
+    },
+    "Desert": {
+      "Food": 0.5,
+      "Wood": 0.5,
+      "Stone": 1.5
+    },
+    "Snow": {
+      "Food": 0.75,
+      "Wood": 0.75,
+      "Stone": 1
+    },
+    "Tundra": {
+      "Food": 0.75,
+      "Wood": 1.5,
+      "Stone": 1.5
+    },
+    "Water": {
+      "Food": 1,
+      "Wood": 1,
+      "Stone": 1
+    }
+  },
   "harvest": {
     "Forest": {
       "unitsPerStrike": 1,
