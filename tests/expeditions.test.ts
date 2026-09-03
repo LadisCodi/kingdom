@@ -18,7 +18,8 @@ import {
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
 import {
-  ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, RUINS, UNITS,
+  ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
+  UNITS,
 } from '../src/sim/data/definitions';
 import {
   advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
@@ -26,6 +27,7 @@ import {
 } from '../src/sim/expeditions';
 import { artifactIsCarried } from '../src/sim/artifacts';
 import { levelCost } from '../src/sim/collection';
+import { claimLandmark } from '../src/sim/landmarks';
 import { knowledgePerHour, mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import {
@@ -839,6 +841,84 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
 
     state.ruinsCleared[BARROW] = true;
     expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
+  });
+
+  // The other half of the rate, and the reason the fog compounds into the
+  // tree: a claimed landmark is territory too. Docs §3 — "Knowledge is not a
+  // wage for existing, it is what the land teaches you once you have taken
+  // some of it."
+  it('a claimed landmark drips too, and pays a lump for taking the ground', () => {
+    const state = freshGame();
+    fund(state, { Gold: 1_000_000 });
+    const def = LANDMARKS.find((l) => !l.defended)!;
+    reveal(state, [def.location]);
+    expect(knowledgePerHour(state)).toBe(0); // no territory, no clock
+
+    expect(claimLandmark(state, map, def.location)).toBe('Claimed');
+    // The lump lands the moment the ground is taken.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(KNOWLEDGE.landmarkClaimLump);
+    // …and the rate is now running.
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.perClaimedLandmarkPerHour);
+  });
+
+  // There is deliberately NO base rate. A player who has taken nothing
+  // generates nothing — era 1 of the tree costing no Knowledge is what keeps
+  // that from being a wall (Docs §3, and its own open decision 3).
+  it('pays nothing at all to a player who has taken no ground', () => {
+    const state = freshGame();
+    advance(state, map, T0 + 24 * 3_600_000);
+    expect(knowledgePerHour(state)).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+  });
+
+  // THE LOAD-BEARING ASSERTION, for a rate that CHANGES mid-window.
+  //
+  // The drip banks whole units against an anchor, and the obvious worry is
+  // that a rate change mid-walk re-measures the leftover remainder against
+  // the new rate, landing the anchor somewhere the other path never puts it.
+  //
+  // It does not, and the reason is worth writing down because it looks like
+  // an accident and is not: `advance` runs `runContinuous` UP TO a boundary
+  // before `applyDueAt` does the discrete work at it, so the drip is always
+  // settled at the exact instant before anything can change the rate. The
+  // anchor is therefore `T0 + k × msPer` in both paths, and `floor` makes the
+  // granularity of every observation in between irrelevant.
+  //
+  // What this test guards is narrower, and worth being honest about: the
+  // ORDERING in `advance` is already held by `taxes.test.ts` and
+  // `workers.test.ts`, which fail loudly if it moves. This one holds that the
+  // Knowledge drip specifically stays replay-identical when its own rate
+  // changes mid-window — the case those two do not exercise, because taxes
+  // and training rates do not move underneath them.
+  it('one-call replay equals stepped ticking across a rate change', () => {
+    // The rate really does change DURING the window: the party walks to the
+    // bottom of the Barrow part-way through, and the clear starts that ruin's
+    // drip at a moment that is not a whole number of drip units.
+    const armed = () => {
+      const s = readyToDelve({ Warrior: 8 });
+      s.kingdom.lastKnowledgeAt = T0;
+      s.landmarks.claimed.Deepwell = true; // a rate is already running
+      launchDelve(s, map, BARROW, 'Warden',
+        [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
+      return s;
+    };
+    const oneCall = armed();
+    const stepped = armed();
+    const END = T0 + 5 * 3_600_000;
+    advance(oneCall, map, END);
+    for (let t = 60_000; t <= 5 * 3_600_000; t += 60_000) advance(stepped, map, T0 + t);
+
+    // The clear happened inside the window in both paths…
+    expect(oneCall.ruinsCleared[BARROW]).toBe(true);
+    expect(stepped.ruinsCleared[BARROW]).toBe(true);
+    // …and the rate really did change part-way through.
+    expect(knowledgePerHour(oneCall))
+      .toBe(KNOWLEDGE.perClaimedLandmarkPerHour + KNOWLEDGE.dripPerClearedRuinPerHour);
+    // …and both paths banked exactly the same Knowledge, off the same anchor.
+    expect(getWallet(stepped.kingdom.wallet, 'Knowledge'))
+      .toBe(getWallet(oneCall.kingdom.wallet, 'Knowledge'));
+    expect(stepped.kingdom.lastKnowledgeAt).toBe(oneCall.kingdom.lastKnowledgeAt);
   });
 
   it('every cleared ruin adds its own hour rate, and the drip banks in whole units', () => {

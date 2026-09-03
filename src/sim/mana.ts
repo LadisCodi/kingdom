@@ -189,16 +189,30 @@ export function refillManaWithGems(state: GameState): RefillResult {
  * lumps live on the world map, not in any one city. Modified by
  * knowledgeYield (the Wanderer's Compass). Same whole-units-against-an-anchor
  * shape as taxes and Mana, so all three replay identically.
+ *
+ * The rate CHANGES in play — a ruin cleared, a landmark claimed — and that is
+ * safe without any settling step, because `advance` runs the continuous sims
+ * up to a boundary BEFORE applying the discrete work at it. The anchor is
+ * always `T0 + k × msPer` at the instant the rate moves, in a one-call replay
+ * and in stepped ticking alike. That ordering is held by `taxes.test.ts` and
+ * `workers.test.ts`; `expeditions.test.ts` holds the drip's own behaviour
+ * across a rate change. An earlier draft added a `settleKnowledge` that
+ * snapped the anchor at every rate change — it was unnecessary for the reason
+ * above, and it silently discarded up to one unit each time it fired.
  */
 export function knowledgePerHour(state: GameState): number {
   let cleared = 0;
   for (const id of Object.keys(RUINS) as RuinId[]) {
     if (state.ruinsCleared[id] === true) cleared += 1;
   }
-  if (cleared === 0) return 0;
-  return Math.max(
-    0, resolve(state, 'knowledgeYield', cleared * KNOWLEDGE.dripPerClearedRuinPerHour),
-  );
+  let claimed = 0;
+  for (const id of Object.keys(state.landmarks.claimed)) {
+    if (state.landmarks.claimed[id] === true) claimed += 1;
+  }
+  const raw = cleared * KNOWLEDGE.dripPerClearedRuinPerHour
+    + claimed * KNOWLEDGE.perClaimedLandmarkPerHour;
+  if (raw === 0) return 0;
+  return Math.max(0, resolve(state, 'knowledgeYield', raw));
 }
 
 export function accrueKnowledge(state: GameState, toTime: number): number {

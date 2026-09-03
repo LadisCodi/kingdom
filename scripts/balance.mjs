@@ -181,6 +181,13 @@ const SETTINGS = [
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   ['knowledge.drip_per_cleared_ruin_per_hour', 'knowledge.dripPerClearedRuinPerHour'],
+  // The research clock's rate is the ground you have taken, and nothing else:
+  // there is deliberately NO base term, so a player who claims nothing
+  // generates nothing. Era 1 of the tree costs no Knowledge, which is what
+  // keeps that from being a wall (Docs/features/tomes-and-research.md §3).
+  ['knowledge.per_claimed_landmark_per_hour', 'knowledge.perClaimedLandmarkPerHour'],
+  // Taking ground is an EVENT, not just a rate change a nobody is looking at.
+  ['knowledge.landmark_claim_lump', 'knowledge.landmarkClaimLump'],
   // Combat is a SCORING PASS, not a simulation — these six numbers are the
   // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
   // bad guess feel like a wasted trip, which is the un-cozy end of the dial.

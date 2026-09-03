@@ -1122,7 +1122,9 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
-    "dripPerClearedRuinPerHour": 2
+    "dripPerClearedRuinPerHour": 2,
+    "perClaimedLandmarkPerHour": 2,
+    "landmarkClaimLump": 50
   },
   "army": {
     "trainTapBoostSeconds": 3,

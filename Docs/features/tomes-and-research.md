@@ -200,10 +200,19 @@ stops at the 8-hour offline cap. The lumps ride the events that grant them, so
 a delve resolving in the uncapped tail pays in full. Both halves must say so
 out loud, because they land on opposite sides of the same rule.
 
-**Engine.** No new boundary source — an uncapped drip needs none. What it needs
-is for the accrual to be **settled at every rate change**: a landmark claimed, a
-ruin cleared, a `Conquest` completed. That is the same thing `mana.ts` already
-does when a cap changes, and it is the whole implementation.
+**Engine.** No new boundary source — an uncapped drip needs none. And, contrary
+to what this section said when it was written, **no settling step at a rate
+change either**. The worry was that a landmark claimed or a ruin cleared
+mid-window would re-measure the drip's leftover remainder against the new rate
+and land the anchor somewhere a one-call replay never puts it. It cannot:
+`advance` runs the continuous sims *up to* a boundary before applying the
+discrete work at it, so the anchor is `T0 + k × msPer` in both paths at the
+instant the rate moves, and `floor` makes every observation in between
+irrelevant. A `settleKnowledge` was written, found unnecessary, and removed —
+it also discarded up to one unit each time it fired.
+
+`tests/expeditions.test.ts` holds a one-call-equals-stepped assertion across a
+real clear happening mid-window.
 
 ## 4. Upgrades are gone
 
@@ -385,10 +394,13 @@ reversals, so that nobody reading the diff has to guess which is current:
 
 ## 11. Build order
 
-1. The rename, whole (§2): keys, code, migrator, docs, one commit — landing
-   alongside the Fragment→ingredient reshape, which shares the migrator.
-2. Knowledge as a territorial clock: accrual settled at every rate change, the
-   lumps, the wallet row. Techs reprice from Gold to Gold + Knowledge + time.
+1. ~~The rename, whole (§2): keys, code, migrator, docs, one commit.~~
+   **DONE 2026-09-03.** The Fragment→ingredient reshape follows on its own
+   migrator entry rather than sharing this one.
+2. **Knowledge as a territorial clock — the rate and the lumps are DONE
+   2026-09-03**; the claimed-landmark term, the 50-Gold-ground lump and the
+   150 first-clear lump are live, and there is no base rate. Still to do:
+   techs reprice from Gold to Gold + Knowledge + time.
 3. Upgrades collapse into technologies ([`tech-tree.md`](tech-tree.md) §8).
 4. Tomes as screens: three tomes, era 1 of each authored, positions per page.
 5. Era 2 and 3 authored — the point at which the tree stops being a formality.

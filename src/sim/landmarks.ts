@@ -26,7 +26,8 @@
 //    rather than a permanent commitment: the army is never locked up holding
 //    ground.
 
-import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
+import { FOG, KNOWLEDGE, LANDMARKS, type LandmarkDef } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
 import { fogState, recordVisibleSites } from './fog';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
@@ -69,6 +70,9 @@ export function claimLandmark(state: GameState, map: MapData, cell: Coord): Clai
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
   state.landmarks.claimed[def.id] = true;
+  // Taking ground is an event, not a rate change nobody is looking at.
+  addToWallet(state.kingdom.wallet, 'Knowledge', KNOWLEDGE.landmarkClaimLump);
+  recordResourceDiscovery(state, 'Knowledge');
   discoverAroundLandmark(state, map, def);
   return 'Claimed';
 }
