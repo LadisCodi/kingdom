@@ -48,10 +48,13 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   // Mana's ceiling is DYNAMIC (Townhall level + Sanctum levels), so its `cap`
   // column stays blank and sim/mana.ts owns the real number.
   Mana: currency('city', balance.currencies.Mana),
-  // Knowledge is the research clock and belongs to THIS city; Stardust is the
-  // collection currency and is kingdom-scoped so it survives a region reset.
-  // They swapped jobs on 2026-09-03 — Docs/features/tomes-and-research.md §2.
-  Knowledge: currency('city', balance.currencies.Knowledge),
+  // Both are kingdom-scoped, and for the same reason: they outlive the city
+  // that earned them. Knowledge is the research clock — a technology is
+  // something the KINGDOM knows, and contested world-map landmarks pay
+  // Knowledge lumps, which a city purse could not coherently receive.
+  // Stardust is the collection currency. They swapped jobs on 2026-09-03 —
+  // Docs/features/tomes-and-research.md §2.
+  Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Stardust: currency('kingdom', balance.currencies.Stardust),
   Gems: currency('player', balance.currencies.Gems),
 };

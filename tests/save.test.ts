@@ -169,17 +169,17 @@ describe('save versions', () => {
     // It buys what it was earned for.
     expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(4200);
     // And it buys no research at all: the clock starts at zero and is earned
-    // from the ground the player holds.
-    expect(getWallet(restored.city.wallet, 'Knowledge')).toBe(0);
+    // back from the ground the player holds. Same purse, different job.
+    expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(0);
     expect(restored.kingdom.wallet).not.toHaveProperty('Knowledge');
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {
     const state = freshGame();
     state.kingdom.wallet.Stardust = 900;
-    state.city.wallet.Knowledge = 40;
+    state.kingdom.wallet.Knowledge = 40;
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(900);
-    expect(getWallet(restored.city.wallet, 'Knowledge')).toBe(40);
+    expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(40);
   });
 });

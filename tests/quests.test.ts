@@ -217,20 +217,20 @@ describe('first-time discoveries', () => {
 
 // Docs/features/knowledge.md — the steady half of the research budget.
 //
-// CLAIM: quests pay Knowledge into the KINGDOM purse, and the chain pays out
-// more than the whole tech tree costs. Exploring is the half that scales;
+// CLAIM: quests pay Stardust into the KINGDOM purse, and the chain pays out
+// more Gold than the whole tech tree costs. Exploring is the half that scales;
 // this is the half that arrives on rails, so a player who follows the chain
 // is never hard-stuck behind a technology they cannot afford.
 describe('quests fund the research tree', () => {
-  it('pays its Knowledge into the kingdom purse, not the city', () => {
+  it('pays its Stardust into the kingdom purse, not the city', () => {
     const state = freshGame();
     const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
     state.quests.index = explorer;
     state.quests.progress = QUESTS[explorer].goalAmount;
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+    expect(getWallet(state.kingdom.wallet, 'Stardust'))
       .toBe(QUESTS[explorer].rewardStardust);
-    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.city.wallet, 'Stardust')).toBe(0);
   });
 
   // The chain carries MOST of the tree in Gold and deliberately not all of

@@ -184,7 +184,9 @@ export function refillManaWithGems(state: GameState): RefillResult {
  * tree costs no Knowledge at all, so the opening hours run on Gold and time.
  * See Docs/features/tomes-and-research.md §3.
  *
- * CITY-scoped, because research belongs to this city, and modified by
+ * KINGDOM-scoped: a technology is something the kingdom knows, so the tree
+ * survives a province reset — and the contested landmarks that will pay it
+ * lumps live on the world map, not in any one city. Modified by
  * knowledgeYield (the Wanderer's Compass). Same whole-units-against-an-anchor
  * shape as taxes and Mana, so all three replay identically.
  */
@@ -209,7 +211,7 @@ export function accrueKnowledge(state: GameState, toTime: number): number {
   const units = Math.floor((toTime - state.kingdom.lastKnowledgeAt) / msPer);
   if (units <= 0) return 0;
   state.kingdom.lastKnowledgeAt += units * msPer;
-  addToWallet(state.city.wallet, 'Knowledge', units);
+  addToWallet(state.kingdom.wallet, 'Knowledge', units);
   recordResourceDiscovery(state, 'Knowledge');
   return units;
 }

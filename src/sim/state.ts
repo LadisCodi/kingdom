@@ -9,7 +9,7 @@ import type { Modifier } from './modifiers';
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
   | 'Mana' // the only capped currency — see sim/mana.ts
-  | 'Knowledge' // CITY-scoped research clock; buys technologies and nothing else
+  | 'Knowledge' // kingdom-scoped research clock; buys technologies and nothing else
   | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
   | 'Gems'; // player-scoped, premium
 export type DistrictId =

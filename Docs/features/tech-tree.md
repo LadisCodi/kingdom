@@ -89,9 +89,10 @@ buildings for one budget — the decision the economy is built around. Knowledge
 is the clock, so a rich city cannot skip an era. Neither alone works at this
 size: Gold can *size* 167 nodes but cannot *pace* them.
 
-Knowledge is **city-scoped** and comes only from claimed landmarks and cleared
-ruins ([`tomes-and-research.md`](tomes-and-research.md) §3). It has no base
-rate, which is why era 1 charges none of it.
+Knowledge is **kingdom-scoped** — a technology is something the kingdom knows,
+so the tree survives a province reset — and comes only from claimed landmarks
+and cleared ruins ([`tomes-and-research.md`](tomes-and-research.md) §3). It has
+no base rate, which is why era 1 charges none of it.
 
 **Era 1 costs no Knowledge at all** (§5). It is the one era small enough not to
 need pacing, and charging for it would strangle the first session.

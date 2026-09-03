@@ -464,7 +464,7 @@ describe('the descent', () => {
       [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
     const gems = getWallet(state.player.wallet, 'Gems');
     const stardust = getWallet(state.kingdom.wallet, 'Stardust');
-    const knowledge = getWallet(state.city.wallet, 'Knowledge');
+    const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
     advance(state, map, T0 + 86_400_000);
     expect(state.ruinsCleared[BARROW]).toBe(true);
     // The recurring Gem faucet the design needs — one per ruin, once.
@@ -473,10 +473,9 @@ describe('the descent', () => {
     // extraction: a party parked at the bottom has already earned it.
     expect(getWallet(state.kingdom.wallet, 'Stardust'))
       .toBeGreaterThanOrEqual(stardust + DELVE.firstClearStardust);
-    // Conquest pays the research clock, out of the CITY purse. A floor, not
-    // an equality: this ruin's drip is already running by the time the party
-    // reaches the bottom.
-    expect(getWallet(state.city.wallet, 'Knowledge'))
+    // Conquest pays the research clock. A floor, not an equality: this ruin's
+    // drip is already running by the time the party reaches the bottom.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
       .toBeGreaterThanOrEqual(knowledge + DELVE.firstClearKnowledge);
 
     const report = extract(state, state.delves[0].id);
@@ -823,7 +822,7 @@ describe('finishing a training line with gems', () => {
 });
 
 // Docs/features/tomes-and-research.md §3 — Knowledge is the research clock,
-// it is CITY-scoped, and its rate is the ground you have taken.
+// it is kingdom-scoped, and its rate is the ground you have taken.
 //
 // CLAIM: dungeons and the gacha, and nothing else. Clearing fog pays none
 // (tests/fog.test.ts), the early quest chain pays none (tests/quests.test.ts),
@@ -836,7 +835,7 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
     // pays nothing per hour.
     expect(knowledgePerHour(state)).toBe(0);
     advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
 
     state.ruinsCleared[BARROW] = true;
     expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
@@ -850,7 +849,7 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
 
     state.kingdom.lastKnowledgeAt = T0;
     advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.city.wallet, 'Knowledge'))
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
       .toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
   });
 

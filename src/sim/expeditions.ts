@@ -321,7 +321,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
           // the city's research clock (sim/mana.ts).
           addToWallet(state.kingdom.wallet, 'Stardust', DELVE.firstClearStardust);
           recordResourceDiscovery(state, 'Stardust');
-          addToWallet(state.city.wallet, 'Knowledge', DELVE.firstClearKnowledge);
+          addToWallet(state.kingdom.wallet, 'Knowledge', DELVE.firstClearKnowledge);
           recordResourceDiscovery(state, 'Knowledge');
         }
         delve.phase = 'checkpoint';

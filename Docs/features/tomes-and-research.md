@@ -101,7 +101,7 @@ themselves, which Phase 0 just spent a pass cleaning up.
 
 | Name | Job | Source | Scope |
 |---|---|---|---|
-| **Knowledge** | the research clock | claimed landmarks and cleared ruins, over time | **city** |
+| **Knowledge** | the research clock | claimed landmarks and cleared ruins, over time | **kingdom** |
 | **Stardust** | levels of relics and heroes | dungeons and pulls | **kingdom** |
 
 Both names import a convention instead of teaching one: Knowledge is the word
@@ -112,10 +112,18 @@ string. A currency with two names in two files is how balance bugs are born.
 
 ### 2.1 This is a migrator, not a find-and-replace
 
-**The scopes swap.** Knowledge lives in `state.kingdom.wallet` today,
-deliberately kingdom-scoped *so it survives a region reset*. That reasoning now
-describes **Stardust**. The new Knowledge is **city-scoped**, like Mana, because
-research belongs to this city.
+**The jobs swap; the purse does not.** Knowledge lives in
+`state.kingdom.wallet` today, deliberately kingdom-scoped *so it survives a
+region reset*. That reasoning now describes **Stardust** — and it describes the
+new Knowledge just as well, so **both stay in the kingdom purse**.
+
+Two arguments settle it. **A technology is something the kingdom knows**, so
+the tree has to survive a province reset the same way the collection does; a
+city-scoped tree would be re-researched every time the map scope changed
+([`map-scopes.md`](map-scopes.md) §3). And **§7's contested landmarks pay
+Knowledge lumps from the world map**, which no single city's purse could
+coherently receive. A city-scoped clock was considered and rejected on those
+two grounds.
 
 Keys that currently say Knowledge and now mean Stardust:
 
@@ -304,7 +312,7 @@ for exploring.
 
 | Currency | Source | Buys | Scope |
 |---|---|---|---|
-| **Knowledge** | claimed landmarks and cleared ruins, over time; lumps from contested ground | technologies · **investment in guild structures** (§9) | city |
+| **Knowledge** | claimed landmarks and cleared ruins, over time; lumps from contested ground | technologies · **investment in guild structures** (§9) | kingdom |
 | **Mana** | time, cap by the Sanctum + sanctuaries | taps · relic actives, on both maps | city |
 | **Stardust** | dungeons and pulls | relic and hero levels | kingdom |
 | **Ingredients** | 1★ province · 2★ events · 3★ world map | each relic's tier gate | kingdom |
