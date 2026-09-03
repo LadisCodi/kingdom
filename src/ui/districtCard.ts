@@ -282,7 +282,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         const counts = new Map<string, number>();
         for (const w of busy) {
           const label = { Idle: 'waiting', MovingToCell: 'heading out',
-            Working: 'working' }[w.activity];
+            Working: 'working', MovingHome: 'carrying home' }[w.activity];
           counts.set(label, (counts.get(label) ?? 0) + 1);
         }
         body.append(el('div', { class: 'dc-note' },

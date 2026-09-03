@@ -125,12 +125,13 @@ but the tax anchor must be settled at that instant or the player is paid the new
 rate for time elapsed at the old one), the fog ring at the new address, and the
 crew.
 
-**The crew rule got simpler on 2026-09-03.** It used to split on whether a
-worker was *carrying* — a loaded worker kept its claim and walked to the new
-address so a move never cost a trip already worked for. With no round trip left
-to protect ([`04-harvest.md`](04-harvest.md) §5), the rule is one line: a worker
-whose claimed cell is still inside the new radius keeps working it, and any
-other releases and re-claims.
+**The crew rule splits on whether a worker is carrying**, and the split is the
+whole point. A loaded worker keeps its load and walks to the new address instead
+of the old one — the units left the ground when the swing landed
+([`04-harvest.md`](04-harvest.md) §5), so confiscating them would destroy matter
+*and* charge the player for a trip already worked for. An empty-handed worker
+releases its claim and goes Idle, because the cell it was walking to may sit
+outside the radius the building now has.
 
 ### The two gestures
 

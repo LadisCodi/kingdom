@@ -225,9 +225,12 @@ export class Game {
 
   tick(): void {
     const result = advance(this.state, this.map, this.now());
+    // A strike hits the CELL and a haul lands at the BUILDING, which is the
+    // whole reason the trip is worth watching: the hit is where the work
+    // happened and the number is where it arrived.
+    for (const s of result.strikes) this.strikeFeedback(s.cell, s.source);
     for (const d of result.deposits) {
       this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
-      this.strikeFeedback(d.cell, d.source);
     }
     if (result.goldEarned > 0) {
       this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);

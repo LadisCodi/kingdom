@@ -13,7 +13,7 @@
 // yields.
 
 import {
-  DISTRICTS, HARVEST, TAP, TAXES, UPGRADES,
+  DISTRICTS, HARVEST, TAP, TAXES, UPGRADES, WORKER, levelIndexed,
   type HarvestSpec,
 } from './data/definitions';
 import type { CurrencyId, GameState, UpgradeId } from './state';
@@ -64,16 +64,18 @@ export const effect = (state: GameState, id: UpgradeId): number =>
 /**
  * What the city gathers of one resource per second, from its own numbers.
  *
- * A worker's rate is now exactly its chunk over its rhythm — there is no
- * travel term to estimate, because a worker strikes the cell in place and
- * credits the wallet on the strike (`04-harvest.md` §5). What is left nominal
- * is only which cells exist to be worked.
+ * A worker's loop is walk out, strike, walk back. Cell distances vary, so this
+ * takes the influence radius as the distance: a NOMINAL rate, not a measured
+ * one. That is the point — it needs no map and no clock.
  *
  * **The tap does NOT read this**, and that is the whole story of the
  * 2026-09-03 rebalance: pricing a tap against city-wide production made one
  * tap on one tree pay 413 Wood in a maxed city. A tap is priced against the
- * GROUND and the THUMB, never against the payroll. The remaining caller is
- * order sizing, which is addressed to the city and so should read it.
+ * GROUND and the THUMB, never against the payroll — the ground's rate is its
+ * chunk over its rhythm, with no travel in it, because travel is a property of
+ * where you put the shed rather than of the cell. The remaining caller here is
+ * order sizing, which is addressed to the CITY and so should read the city's
+ * real throughput, travel and all.
  */
 export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): number {
   let total = 0;
@@ -83,12 +85,15 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
     const source = def.harvestSources.find((s) => HARVEST[s].currencyId === currencyId);
     if (source === undefined) continue;
     const spec = HARVEST[source];
-    if (spec.secondsPerStrike <= 0) continue;
+    const radius = def.influenceRadiusPerLevel.length === 0
+      ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
+    const cycleSeconds = (2 * radius) / WORKER.moveSpeedTilesPerSecond + spec.secondsPerStrike;
+    if (cycleSeconds <= 0) continue;
     // A building that goes after more than one thing splits its crew between
     // them. For every district with a single source it divides by one, so no
     // existing number moves.
     const crew = d.assignedWorkers / def.harvestSources.length;
-    total += (crew * effectiveWorkerStrike(state, spec)) / spec.secondsPerStrike;
+    total += (crew * effectiveWorkerStrike(state, spec)) / cycleSeconds;
   }
   return total;
 }

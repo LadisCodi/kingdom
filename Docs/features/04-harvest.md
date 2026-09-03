@@ -111,9 +111,9 @@ therefore the thumb has no claim on worked ground.
 
 ### 3.1 The authoring law
 
-A cell drains in `stock ÷ unitsPerStrike × secondsPerStrike` seconds and is then
-dead for `recoverySeconds`. That ratio is not a detail — it **is** how many
-workers a cell can keep busy:
+A cell drains over `stock ÷ unitsPerStrike` **round trips** and is then dead for
+`recoverySeconds`. That ratio is not a detail — it **is** how many workers a
+cell can keep busy:
 
 ```
 workers a cell supports = drain ÷ (drain + recovery)
@@ -123,22 +123,35 @@ It can never reach 1, which gives the law the whole economy hangs off:
 
 > **Under binary recovery you need roughly two cells per worker.**
 >
-> Author `secondsPerStrike ÷ unitsPerStrike ≈ 1.2 × (recoverySeconds ÷ stock)`
-> and every cell supports **0.55** workers.
+> Author `secondsPerStrike ÷ unitsPerStrike ≈ 1.1 × (recoverySeconds ÷ stock)`
+> and a cell supports about **0.55** workers, rising with the walk — 0.59 for a
+> Forest cell next door, because a longer trip drains it more slowly.
+
+The law authors the **cell**; the trip belongs to wherever the player put the
+shed. That split is why the table below can be a property of the ground and the
+rate column still varies with distance.
 
 **As authored.** The rhythms come from the law; `tap.workSeconds` = 10 comes
 from wanting **about ten taps to a tree** (§4).
 
-| Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker | workers/cell | units/min per cell |
-|---|---|---|---|---|---|---|---|---|---|
-| **Forest** | 1 | 10 | 10 | 90 | **1** | **10** | 6.0/min | 0.53 | 3.2 |
-| **Crops** | 1 | 8 | 10 | 60 | 1 (+¼ carried) | 8 | 7.5/min | 0.57 | 4.3 |
-| **Berries** | 1 | 10 | 10 | finite | 1 | 10 | 6.0/min | — | — |
-| **Meat** | 3 | 20 | 30 | finite | 1 (+½ carried) | 20 | 9.0/min | — | — |
-| **Stone** | 1 | 26 | 5 | 120 | 1 *(floor)* | 5 | 2.3/min | 0.52 | 1.2 |
-| **Fish** | 2 | 20 | 10 | finite | 1 | 10 | 6.0/min | — | — |
-| **MountainIron** | 5 | 60 | 25 | 300 | 1 *(floor)* | 25 | 5.0/min | 0.50 | 2.5 |
-| **MountainGold** | 3 | 60 | 15 | 300 | 1 *(floor)* | 15 | 3.0/min | 0.50 | 1.5 |
+The worker column is a **round trip**, so it is quoted at both ends of a
+level-3 radius — that spread is the influence radius earning its keep.
+
+| Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker, next door → radius 4 | workers/cell |
+|---|---|---|---|---|---|---|---|---|
+| **Forest** | 1 | 10 | 10 | 90 | **1** | **10** | 4.7 → 3.3/min | 0.59 |
+| **Crops** | 1 | 8 | 10 | 60 | 1 (+¼ carried) | 8 | 5.6 → 3.8/min | 0.64 |
+| **Berries** | 1 | 10 | 10 | finite | 1 | 10 | 4.7 → 3.3/min | — |
+| **Meat** | 3 | 20 | 30 | finite | 1 (+½ carried) | 20 | 7.9 → 6.4/min | — |
+| **Stone** | 1 | 26 | 5 | 120 | 1 *(floor)* | 5 | 2.1 → 1.8/min | 0.55 |
+| **Fish** | 2 | 20 | 10 | finite | 1 | 10 | 5.3 → 4.3/min | — |
+| **MountainIron** | 5 | 60 | 25 | 300 | 1 *(floor)* | 25 | 4.8 → 4.4/min | 0.51 |
+| **MountainGold** | 3 | 60 | 15 | 300 | 1 *(floor)* | 15 | 2.9 → 2.6/min | 0.51 |
+
+Note how the spread narrows as the ground slows: a tree next door is worth 1.4×
+one at radius 4, an iron peak only 1.1×, because a sixty-second swing swallows
+the walk. **Fast ground rewards placing the shed close; slow ground does not
+care** — which is a placement lesson nobody had to author.
 
 The renewables hold the law to within a hundredth. Two things about this column
 of ones are worth saying out loud:
@@ -166,13 +179,15 @@ data. Small, and worth doing; not done.
 ### 3.2 The map now has a ceiling
 
 `stock ÷ (drain + recovery)` is a cell's sustainable rate, so the province has
-one too. At **57 Trees** on the map as authored today:
+one too. At **57 Trees** on the map as authored today, with sheds next door:
 
-- **180 Wood/min** is everything this province can grow, ever, at these dials.
-- It takes **30 workers** to collect all of it — and 30 is also the largest
-  population Townhall 3 can house, so the map as painted is authored almost
-  exactly for the biggest crew the city can hire. Not by design; it is worth
-  knowing before either number moves.
+- **157 Wood/min** is everything this province can grow, ever, at these dials.
+- It takes **33 workers** to collect all of it — against the 30 a Townhall-3
+  city can house, so the map as painted is authored almost exactly for the
+  biggest crew the city can hire, with a little room left. Not by design; it is
+  worth knowing before either number moves.
+- Both figures move with the walk: sheds further from their trees collect less
+  of the same ceiling, and need more bodies to do it.
 
 That number is the thing three balance passes have been missing. It is also a
 census the map editor can compute, and it should
@@ -312,17 +327,51 @@ Three consequences worth saying plainly:
   promise 3 wants. OQ-43 said 50% and was computed on the inflated tap; it is
   corrected there.
 
-## 5. The strike, and why nobody carries anything home
+## 5. The strike, and the haul
 
-A worker walks out to its claimed cell **once** and then works it in place,
-**striking** it every `secondsPerStrike` and crediting the wallet on the spot.
-There is no load, no return trip and no delivery.
+A worker walks out to its claimed cell, **strikes** it once, and walks the load
+home. Then it goes out again. The loop is `Idle → MovingToCell → Working →
+MovingHome`, and the whole of it is worth watching because of where the units
+are at each moment:
+
+> **Units leave the DEPOT when the swing lands. They reach the WALLET when the
+> worker gets home.**
+
+That one detail is what makes the round trip better than either thing it
+replaced. The shipped model credited the wallet on delivery but debited the cell
+by a **tap count**, so the player and the worker could take the same wood twice
+and the counter never matched the matter. A middle version had workers strike in
+place and credit instantly, which fixed the double-dip and cost the map its
+life: with no journey, a cell at distance 4 was worth exactly as much as one
+next door and the influence radius stopped being a decision.
+
+Debiting at the strike and crediting at the shed keeps both. **A load in transit
+is real matter** — already out of the ground, not yet yours — and everything
+else follows from taking that literally:
+
+- **Nobody double-dips.** Tap the tree your own woodcutter just swung at and you
+  get what is left, because their load is already gone from it. The cell can
+  show a stump while it is still being carried.
+- **Moving a building has something to protect again.** A carrying worker keeps
+  its load and walks to the new address (§6, and
+  [`05-city-and-districts.md`](05-city-and-districts.md) §4). Confiscating it
+  would destroy matter *and* charge the player for a trip already worked for.
+- **Unassigning a loaded worker loses the load**, deliberately and visibly.
+  Those units left the ground; somebody has to eat them.
+- **The walk is the distance cost**, and it is legible: 4.7 Wood a minute from a
+  tree next door against 3.3 from one at radius 4. A per-distance penalty on
+  the strike *rate* was designed and rejected for exactly this reason — the
+  player cannot see why a worker standing still is slower than another worker
+  standing still, but they can see one walking further.
 
 - **The strike is the player's tap, performed by somebody else.** Same hit on
   the same cell with the same foley, at **half volume** and **without the white
   flash** — the flash is what says *that was me*, and thirty woodcutters would
   drown it. The punch is scaled to **0.55** of the player's, enough to read as
   the same gesture and not enough to compete with it.
+- **The hit and the number are in different places, on purpose.** A strike
+  punches the **cell**; the haul's floater pops at the **building**, when the
+  wallet actually moves. The gap between them is the walk.
 - **The strike IS a simulation boundary**, and the feedback is a consequence of
   it. It has to be: the strike moves the wallet and the depot, so a second,
   derived clock for the visual could only drift from the one that pays. What the
@@ -347,17 +396,17 @@ There is no load, no return trip and no delivery.
   standing idle — so it carries a comment at both call sites and a test in
   `quests.test.ts`. The reverse gap, a goal that asks to *automate*, is OQ-53.
 
-**What this buys.** The rate of a worker becomes exactly
-`unitsPerStrike ÷ secondsPerStrike` — no travel term, no estimate. The shipped
-model had to *fake* the distance (`cityGatherPerSecond` "takes the influence
-radius as the distance: a NOMINAL rate, not a measured one") because a tap could
-not afford to walk the map. **The tap stops reading that function entirely**, and
-the function itself survives — generated orders size their ask from it
-([`12-quests.md`](12-quests.md) §3.2) — but it loses the fudge and becomes a
-measured rate. And the strike is **3.6× cheaper to simulate**: four boundary
-events per twelve-second cycle becomes one per eleven seconds.
+**What the tap reads, and what it does not.** A cell's rate is its chunk over
+its rhythm, `unitsPerStrike ÷ secondsPerStrike`, with **no travel in it** —
+because travel is a property of where you put the shed, not of the ground, and
+a thumb does not walk. That is what a tap is priced against (§4).
 
-**What it costs.** Fewer figures in transit, which is the point of §7.
+`cityGatherPerSecond` is the opposite case and keeps its travel term, including
+the old fudge of taking the influence radius as the distance: a NOMINAL rate,
+not a measured one. **The tap stopped reading it** — that was the whole 413-Wood
+fault — and its remaining caller is order sizing
+([`12-quests.md`](12-quests.md) §3.2), which is addressed to the city and so
+should read the city's real throughput, walking included.
 
 ## 6. Areas of influence, claims and migration
 
@@ -366,20 +415,17 @@ itself. Revealed cells only. **One worker per cell, globally** — a claim syste
 keeps two crews off the same tree, and `tryDispatch` takes the nearest unclaimed
 cell, which is what spreads a crew out without any smarter assignment.
 
-A worker whose cell exhausts releases the claim and walks to another. **That
-migration is where the distance cost lives now**, and it was deliberately not
-modelled any other way:
+A worker whose cell exhausts releases the claim and walks to another, so the
+radius decides **two** things at once and both are visible:
 
-> A per-distance penalty on the strike rate was designed and **rejected**: the
-> player cannot see why a worker standing still is slower than another worker
-> standing still. Migration produces the same gradient as a person walking
-> across the screen — 3–6 seconds of march per ~110 seconds of work, a 3–5%
-> drag. Small, honest, and visible.
+- **The gradient**, through the round trip (§5): a tree next door pays 1.4× one
+  at radius 4, and you can watch the difference as a longer walk.
+- **Coverage** — how many cells of the right type the building can reach at all,
+  which under the two-cells-per-worker law (§3.1) is what decides how many of
+  its plazas are ever busy rather than loitering (§7).
 
-So the influence radius stops being a hidden 1.6× productivity gradient and
-becomes **coverage**: how many cells of the right type this building can reach.
-Coverage is countable, visible, and decided at placement — which is what a
-gradient nobody could perceive never was.
+Coverage is countable and the gradient is watchable, which is the standard a
+placement decision has to meet.
 
 **No reserve floor.** Making workers stop at 20% of stock would guarantee the
 thumb something to draw on worked ground, and it was cut because it is
@@ -420,7 +466,7 @@ building.
 |---|---|---|---|
 | **The ground** | abundance (`stock`), recovery, richness (`unitsPerStrike`) | what the map can give | "everything is a stump" · "they never stop walking" |
 | **The thumb** | `TapPower` | seconds per tap | "I want it now" |
-| **The payroll** | `WorkerLoad`, plazas per level | extraction rate | "I am collecting too slowly" |
+| **The payroll** | `WorkerLoad`, plazas per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
 
 **The seven cell-scoped upgrades become abundance of the ground** — Sawpits,
 Irrigation, Stonecutting, Big Nets, Iron Picks, Butchery, Scythes — and therefore
@@ -480,15 +526,20 @@ matters as much:
 
 **Deleted:** the tap counter (`taps_to_exhaust`), `yield_per_tap` — already
 identical to `yield_per_worker` in all seven rows, so the law was already
-believed as a coincidence — the global `worker.work_seconds`, the tap's reading
-of city-wide production, the `MovingHome` and `Deposit` worker states, the
-carried load, and the crew-splitting rule that a building move needed to protect
-a trip already worked for. Five moving parts fewer.
+believed as a coincidence — the global `worker.work_seconds`, and the tap's
+reading of city-wide production.
 
-**Kept, and cleaned:** `cityGatherPerSecond`. Its only remaining caller is order
-sizing, and with no round trip to estimate it stops taking the influence radius
-as a travel distance and becomes what it always claimed to be — a measured
-rate.
+**Built, deleted and restored the same day:** the worker's round trip. A version
+that had crews strike in place and credit instantly is recorded here because its
+argument was good and it still lost: it fixed the double-dip, and it cost the
+map its life, since with no journey a cell at radius 4 was worth exactly what
+one next door was and the influence radius stopped deciding anything. What kept
+the fix without the cost was debiting the depot at the **strike** and crediting
+the wallet at the **shed** (§5), which nobody had tried.
+
+**Kept:** `cityGatherPerSecond`, travel term and nominal-distance fudge and all.
+Its only caller is order sizing, which is addressed to the city and so wants the
+city's real throughput.
 
 **Deliberately not in this design:** pathfinding · continuous regrowth (§3) · a
 per-distance strike penalty (§6) · a worker reserve floor (§6) · **a per-house

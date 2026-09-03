@@ -117,15 +117,28 @@ function tryDispatch(state: GameState, map: MapData, w: Worker, building: Distri
   }
 }
 
-/** One worker strike, surfaced so the renderer can hit the cell — the same
- *  feedback the player's tap gives, without the white flash and at half
- *  volume. It is a CONSEQUENCE of the timer, never the trigger: the sim owns
- *  the clock and the visual is derived from it. */
-export interface DepositEvent {
-  cell: Coord; // the cell that was struck
+/** A strike: the axe landing on the CELL. The renderer hits that cell with
+ *  the player's own punch and foley, at half volume and without the flash.
+ *  Carries no amount because the units are not the player's yet — they are in
+ *  a pair of hands, walking. */
+export interface StrikeEvent {
+  cell: Coord;
   source: HarvestSourceId; // which ground — the renderer picks the foley from it
+}
+
+/** A haul landing at the BUILDING. This is where the wallet moves and where
+ *  the number pops, and the gap between it and the strike that earned it is
+ *  the walk you can watch. */
+export interface DepositEvent {
+  cell: Coord; // the building
   currencyId: CurrencyId;
   amount: number;
+}
+
+/** Everything one advance of the crews produced, for the renderer. */
+export interface CrewEvents {
+  strikes: StrikeEvent[];
+  deposits: DepositEvent[];
 }
 
 /** When this worker next needs processing; null = never (blocked Idle). */
@@ -144,19 +157,28 @@ function nextEventAt(state: GameState, map: MapData, w: Worker, building: Distri
 }
 
 /** Process one worker event at time t. */
-function step(state: GameState, map: MapData, w: Worker, building: District, t: number, deposits: DepositEvent[]): void {
+function step(
+  state: GameState,
+  map: MapData,
+  w: Worker,
+  building: District,
+  t: number,
+  strikes: StrikeEvent[],
+  deposits: DepositEvent[],
+): void {
+  const sources = DISTRICTS[building.definitionId].harvestSources;
   switch (w.activity) {
     case 'Idle':
       tryDispatch(state, map, w, building, t);
       break;
     case 'MovingToCell': {
       const cell = w.claimedCell!;
-      if (isExhausted(state, cell, t)
-        || !worksHere(DISTRICTS[building.definitionId].harvestSources, state, cell)) {
-        // Emptied (or vanished) en route: nothing to walk home for any more,
-        // so release and look again from where the worker is standing.
+      if (isExhausted(state, cell, t) || !worksHere(sources, state, cell)) {
+        // Emptied (or vanished) en route: turn back empty-handed rather than
+        // standing over a stump. It costs the trip, which is the honest price
+        // of the player having got there first.
         w.claimedCell = null;
-        tryDispatch(state, map, w, building, t);
+        setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
       } else {
         setState(w, 'Working', t, t + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!]));
       }
@@ -165,29 +187,43 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
     case 'Working': {
       const cell = w.claimedCell!;
       const source = harvestSourceAt(state, cell);
-      if (source === null
-        || !worksHere(DISTRICTS[building.definitionId].harvestSources, state, cell)) {
+      if (source === null || !worksHere(sources, state, cell)) {
         w.claimedCell = null;
-        tryDispatch(state, map, w, building, t);
+        setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
         break;
       }
       const spec = HARVEST[source];
-      // The strike. Whatever the depot actually held, up to the chunk — so a
-      // worker finishing off a cell takes the last two units rather than a
-      // whole delivery out of nothing.
-      const amount = drawFromCell(state, cell, spec, effectiveWorkerStrike(state, spec), t);
-      if (amount > 0) {
+      // THE STRIKE. Units leave the depot HERE, at the moment the swing lands
+      // — not on arrival home. That is what stops the player and the worker
+      // taking the same wood twice: a load in transit is already out of the
+      // ground, and the cell shows a stump while it is still being carried.
+      w.carrying = drawFromCell(state, cell, spec, effectiveWorkerStrike(state, spec), t);
+      w.carriedSource = w.carrying > 0 ? source : null;
+      if (w.carrying > 0) strikes.push({ cell, source });
+      setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
+      break;
+    }
+    case 'MovingHome': {
+      // THE HAUL LANDS. The wallet is credited only now, which is why the
+      // trip is worth watching: what you see walking is matter you do not
+      // have yet.
+      if (w.carrying > 0 && w.carriedSource !== null) {
+        const spec = HARVEST[w.carriedSource];
+        const amount = w.carrying;
         addToWallet(state.city.wallet, spec.currencyId, amount);
         recordResourceDiscovery(state, spec.currencyId);
         recordQuestEvent(state, { kind: 'collect', currency: spec.currencyId, amount });
         // Deliberately NOT a { kind: 'tap' } event. The two look alike on
-        // screen now; a quest that asks the player to tap is asking for the
-        // hand, and unifying them would complete those with the city idle.
-        deposits.push({ cell, source, currencyId: spec.currencyId, amount });
+        // screen; a quest that asks the player to tap is asking for the hand,
+        // and unifying them would complete those with the city idle.
+        deposits.push({ cell: building.location, currencyId: spec.currencyId, amount });
       }
+      w.carrying = 0;
+      w.carriedSource = null;
       // Keep the claim while the cell still holds something; otherwise migrate.
-      if (!isExhausted(state, cell, t)) {
-        setState(w, 'Working', t, t + workerStrikeMs(state, spec));
+      if (w.claimedCell !== null && !isExhausted(state, w.claimedCell, t)
+        && worksHere(sources, state, w.claimedCell)) {
+        setState(w, 'MovingToCell', t, t + moveMs(building.location, w.claimedCell));
       } else {
         w.claimedCell = null;
         tryDispatch(state, map, w, building, t);
@@ -198,8 +234,8 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
 }
 
 /** Advance all workers to `toTime`, processing events in chronological order. */
-export function advanceWorkers(state: GameState, map: MapData, toTime: number): DepositEvent[] {
-  const deposits: DepositEvent[] = [];
+export function advanceWorkers(state: GameState, map: MapData, toTime: number): CrewEvents {
+  const out: CrewEvents = { strikes: [], deposits: [] };
   for (;;) {
     let next: Worker | null = null;
     let nextAt = Infinity;
@@ -212,12 +248,12 @@ export function advanceWorkers(state: GameState, map: MapData, toTime: number): 
         nextAt = at;
       }
     }
-    if (next === null) return deposits;
+    if (next === null) return out;
     const building = districtById(state, next.buildingId)!;
     // Guard against zero-length loops: an Idle worker whose dispatch fails
     // advances its own reference time so the same wake isn't reprocessed.
     const before = next.activity;
-    step(state, map, next, building, nextAt, deposits);
+    step(state, map, next, building, nextAt, out.strikes, out.deposits);
     if (before === 'Idle' && next.activity === 'Idle') {
       next.stateStartedAt = nextAt + 1;
     }
@@ -232,6 +268,8 @@ export function addWorker(state: GameState, map: MapData, district: District, no
     buildingId: district.uniqueId,
     activity: 'Idle',
     claimedCell: null,
+    carrying: 0,
+    carriedSource: null,
     stateStartedAt: now,
     stateUntil: null,
   };
@@ -243,14 +281,19 @@ export function addWorker(state: GameState, map: MapData, district: District, no
 /**
  * The building moved: re-home its crew without taking anything from them.
  *
- * This used to split on whether a worker was **carrying** — a loaded one kept
- * its claim and walked to the new address, so a move never cost a trip already
- * worked for. With no round trip left to protect (a strike credits the wallet
- * on the spot) the rule is one line: **a worker whose claimed cell is still in
- * range keeps working it; any other releases and re-claims.**
+ * Two cases, and the split is the whole point.
+ *
+ * A worker **carrying** a load keeps it and simply walks to the new address
+ * instead of the old one. The units are already out of the ground (they left
+ * the depot when the swing landed), so confiscating them would destroy matter
+ * and charge the player for a trip they had already worked for.
+ *
+ * A worker **empty-handed** releases its claim and goes Idle at `now`, because
+ * the cell it was walking to may be outside the radius the building now has;
+ * `tryDispatch` then picks one that is in range.
  *
  * `from` is the OLD location, and it has to be passed rather than read: the
- * caller has already moved the district by the time this runs.
+ * caller has already moved the district by the time the walk home is timed.
  */
 export function relocateCrew(
   state: GameState,
@@ -259,18 +302,15 @@ export function relocateCrew(
   from: Coord,
   now: number,
 ): void {
-  void from;
-  const sources = DISTRICTS[district.definitionId].harvestSources;
-  const inRange = new Set(
-    workableCells(state, map, district).map((c) => coordKey(c)),
-  );
+  void map;
   for (const w of state.workers) {
     if (w.buildingId !== district.uniqueId) continue;
-    const cell = w.claimedCell;
-    if (cell !== null && inRange.has(coordKey(cell)) && worksHere(sources, state, cell)
-      && !isExhausted(state, cell, now)) {
-      // Still ours and still in range: carry on striking it from the new home.
-      setState(w, 'Working', now, now + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!]));
+    // Where the worker actually is right now, timed against the OLD home.
+    const at = w.activity === 'Idle' ? from
+      : w.activity === 'Working' ? (w.claimedCell ?? from)
+        : (workerPosition(state, w, now) ?? from);
+    if (w.carrying > 0) {
+      setState(w, 'MovingHome', now, now + moveMs(at, district.location));
     } else {
       w.claimedCell = null;
       setState(w, 'Idle', now, null);
@@ -278,8 +318,9 @@ export function relocateCrew(
   }
 }
 
-/** Despawn the last worker of the building; its claim is released. Nothing is
- *  lost with it — a strike credits the wallet as it lands. */
+/** Despawn the last worker of the building; its claim is released and any
+ *  carried load is LOST. Kept simple on purpose, and honest: those units left
+ *  the ground already, so somebody has to eat them. */
 export function removeWorker(state: GameState, district: District): void {
   for (let i = state.workers.length - 1; i >= 0; i--) {
     if (state.workers[i].buildingId === district.uniqueId) {
@@ -315,8 +356,10 @@ export function workerPosition(state: GameState, w: Worker, now: number): Coord 
   }
   if (w.activity === 'Working') return w.claimedCell;
   const target = w.claimedCell;
-  const from = home;
-  const to = target ?? home;
+  // A MovingHome worker whose trip was aborted has no claim left, so it
+  // interpolates from wherever it turned round.
+  const from = w.activity === 'MovingToCell' ? home : (target ?? home);
+  const to = w.activity === 'MovingToCell' ? (target ?? home) : home;
   const duration = (w.stateUntil ?? now) - w.stateStartedAt;
   const t = duration <= 0 ? 1 : Math.min(1, Math.max(0, (now - w.stateStartedAt) / duration));
   return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };

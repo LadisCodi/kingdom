@@ -113,12 +113,21 @@ production beat.
   both draw down; a tap is **`tap.workSeconds` = 20 seconds of the cell's own
   work**, floored at one unit, with a per-currency carry so a +20% upgrade is
   not lost to rounding; `TapPower` buys that **duration** (+20%/level over ten,
-  ×3); workers **strike in place** and credit on the strike — no load, no return
-  trip, and migration is what is left of travel; the seven cell-scoped upgrades
-  became **abundance of the ground**, lifting tap and crew alike; the queue taps
+  ×3); workers **strike** the cell and **haul the load home** — the
+  units leave the depot when the swing lands and reach the wallet at the shed,
+  which is what stops the player and the crew taking the same wood twice while
+  keeping the walk worth watching; the seven cell-scoped upgrades became
+  **abundance of the ground**, lifting tap and crew alike; the queue taps
   (villagers and soldiers) are **gone**; the Gem refill became a **fraction of the
   cap** (0.34, so 3 Gems a pool); idle workers now loiter outside their
   building. `SAVE_VERSION` 24 forgives the old wear.
+- **A strike-in-place model was built, played and reverted:** crews that
+  worked a cell without walking home. It fixed the double-dip and cost the map
+  its life — with no journey, a cell at radius 4 was worth exactly what one next
+  door was, and the influence radius stopped deciding anything. The round trip
+  is back with the fix intact (depot debited at the strike, wallet credited at
+  the shed), and the gradient with it: 4.7 Wood a minute from a tree next door
+  against 3.3 from radius 4.
 - **One piece was built and cut the same day:** a per-house **advance budget**,
   capping how far a house's rent could be pulled forward and therefore capping a
   house at twice its own rent. It was consistent and it read as an arbitrary
@@ -129,7 +138,7 @@ production beat.
 - **The numbers:** `tap.workSeconds` is **10**, a tactile choice — about ten
   taps to a ten-unit tree. It was briefly 20 (five taps) and came back down on
   play. A full pool is then ~**5.5 minutes** of the city's own production **at
-  both ends of the game**, and the province has a stated ceiling of **180
+  both ends of the game**, and the province has a stated ceiling of **157
   Wood/min** across 57 trees — the first number in the project's history that
   says what this map can make. What the halving costs is priced in
   [`04-harvest.md`](features/04-harvest.md) §1.1 and §4.3: a bare thumb is worth

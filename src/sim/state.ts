@@ -122,13 +122,23 @@ export interface CellHarvestState {
   exhaustedUntil: number | null; // epoch ms; recovery is lazy (derived from time)
 }
 
-export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working';
+export type WorkerActivity = 'Idle' | 'MovingToCell' | 'Working' | 'MovingHome';
 
 export interface Worker {
   id: string;
   buildingId: string; // district uniqueId
   activity: WorkerActivity;
   claimedCell: Coord | null;
+  /** Units in hand, walking home. They left the DEPOT the instant the strike
+   *  finished — so nobody can take them twice — and they reach the WALLET only
+   *  when the worker gets back. Matter in transit, and it is real: unassigning
+   *  a loaded worker loses the load. */
+  carrying: number;
+  /** WHAT is in the hands. Held rather than re-read off the claimed cell,
+   *  because the last strike on a bush or a herd CONSUMES it: by the time the
+   *  worker gets home the cell is bare, and the Food it is carrying still has
+   *  to land somewhere. */
+  carriedSource: HarvestSourceId | null;
   stateStartedAt: number; // epoch ms — for render interpolation
   stateUntil: number | null; // event time; null while Idle
 }

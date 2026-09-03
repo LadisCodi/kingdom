@@ -521,28 +521,29 @@ export function drawMap(
     const sy = y + size * 0.18;
     const uw = size * 0.6;
     const t = now + unitPhase(worker.id);
-    // There is no walk home any more: a worker in motion is MIGRATING to a
-    // cell it just claimed, which is why movement now reads as a signal.
-    const moving = worker.activity === 'MovingToCell';
+    const moving = worker.activity === 'MovingToCell' || worker.activity === 'MovingHome';
     const working = worker.activity === 'Working';
 
-    // Facing: mirror the sprite while walking left.
+    // Facing: mirror the sprite while the current leg heads left.
     let flip = false;
     if (moving && worker.claimedCell) {
-      flip = worker.claimedCell.x - building.location.x < 0;
+      const dx = worker.claimedCell.x - building.location.x;
+      flip = (worker.activity === 'MovingToCell' ? dx : -dx) < 0;
     }
 
-    // Sprite chain: animation frame → base.
+    // Sprite chain: animation frame → static (carrying) sprite → base.
+    const carrying = worker.carrying > 0;
     const stem = boat ? 'fishing_boat' : 'worker';
     const keys: string[] = [];
     if (boat) {
-      if (moving) keys.push(workFrameKey('fishing_boat_row', t));
+      if (moving && !carrying) keys.push(workFrameKey('fishing_boat_row', t));
     } else if (moving) {
-      keys.push(walkFrameKey('worker_walk', t));
+      keys.push(walkFrameKey(carrying ? 'worker_carry' : 'worker_walk', t));
     } else if (working) {
       const anim = source ? WORK_ANIM[source] : undefined;
       if (anim) keys.push(workFrameKey(`worker_${anim}`, t));
     }
+    if (carrying) keys.push(`${stem}_carrying`);
     keys.push(stem);
 
     // Squash & stretch: a bounce per footfall on land; a slow bob afloat.
@@ -555,6 +556,9 @@ export function drawMap(
     unitTransform(ctx, sx + uw / 2, sy + uw, flip, amp, period, t, () => {
       if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
         drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
+        if (carrying) {
+          drawGlyph(ctx, boat ? '🐟' : '🎒', x + size * 0.42, y - size * 0.02, size * 0.5, size * 0.2);
+        }
       }
     });
   }

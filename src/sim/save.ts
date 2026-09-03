@@ -61,6 +61,8 @@ interface WorkerDto {
   BuildingID: string;
   Activity: string;
   ClaimedCell: Coord | null;
+  Carrying?: number;
+  CarriedSource?: string | null;
   StateStartedAt: string;
   StateUntil: string | null;
 }
@@ -253,6 +255,8 @@ export function serialize(state: GameState, now: number): SaveFile {
           BuildingID: w.buildingId,
           Activity: w.activity,
           ClaimedCell: w.claimedCell,
+          Carrying: w.carrying,
+          CarriedSource: w.carriedSource,
           StateStartedAt: iso(w.stateStartedAt),
           StateUntil: isoOrNull(w.stateUntil),
         })),
@@ -519,6 +523,8 @@ export function deserialize(
         buildingId: w.BuildingID,
         activity: w.Activity as Worker['activity'],
         claimedCell: w.ClaimedCell,
+        carrying: w.Carrying ?? 0,
+        carriedSource: (w.CarriedSource ?? null) as Worker['carriedSource'],
         stateStartedAt: ms(w.StateStartedAt),
         stateUntil: msOrNull(w.StateUntil),
       }),

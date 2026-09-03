@@ -12,7 +12,7 @@ import {
 import { advanceWorkers, assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt,
+  addAllTrainers, addBuilt, canGather, completeTech, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
 
 // Sawmill at (3,1), chosen so its own completion re-reveals exactly ONE tree
@@ -24,12 +24,12 @@ const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes i
 const FOREST_B = { x: 2, y: 3 }; // radius 2 — still in the L1 area
 const FOREST_C = { x: 0, y: 3 }; // radius 3 — needs a level-2 sawmill
 
-// A worker walks out ONCE and then strikes in place, so the first unit lands
-// one move plus one strike after dispatch and every unit after that is a
-// strike apart. There is no walk home any more.
+// One harvest cycle from an adjacent (orthogonal) cell: out, one strike, and
+// home again. The units leave the DEPOT at the strike and reach the WALLET on
+// arrival, so a cycle is what the wallet waits for.
 const MOVE_MS = (1 / WORKER.moveSpeedTilesPerSecond) * 1000;
 const STRIKE_MS = HARVEST.Forest.secondsPerStrike * 1000;
-const CYCLE_MS = MOVE_MS + STRIKE_MS;
+const CYCLE_MS = 2 * MOVE_MS + STRIKE_MS;
 
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   fund(state, { Gold: 500, Wood: 500 });
@@ -94,12 +94,53 @@ describe('the harvest cycle', () => {
     const w = state.workers[0];
     expect(w.activity).toBe('MovingToCell');
     expect(w.claimedCell).toEqual(FOREST_A);
-    tickAt(state, start + CYCLE_MS - 100);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // mid-swing
+    // The units leave the DEPOT when the swing lands, one move-and-strike in…
+    tickAt(state, start + MOVE_MS + STRIKE_MS + 100);
+    expect(state.harvest[coordKey(FOREST_A)].units).toBe(HARVEST.Forest.stock - 1);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // …still walking
+    expect(w.carrying).toBe(1); // matter in transit, and it is real
+    // …and reach the WALLET only when the worker gets home.
     tickAt(state, start + CYCLE_MS + 100);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 1);
-    expect(state.harvest[coordKey(FOREST_A)].units).toBe(HARVEST.Forest.stock - 1);
-    expect(w.activity).toBe('Working'); // stays on the cell and swings again
+    expect(w.carrying).toBe(0);
+    expect(w.activity).toBe('MovingToCell'); // straight back out
+  });
+
+  // The reason the depot is debited at the SWING and not on arrival. The old
+  // model credited the wallet on delivery but debited the cell by a tap count,
+  // so the player and the worker could take the same wood twice and the
+  // counter never matched the matter (04-harvest.md §5).
+  it('a load in transit is already out of the ground — nobody takes it twice', () => {
+    const state = canGather(freshGame());
+    state.city.population = 3;
+    const sawmill = builtSawmill(state, [FOREST_A]);
+    const start = state.lastAdvance;
+    changeWorkers(state, map, sawmill.uniqueId, 1, start);
+    const woodBefore = getWallet(state.city.wallet, 'Wood'); // the fixture funds it
+
+    // Catch the worker on its way home with a load.
+    tickAt(state, start + MOVE_MS + STRIKE_MS + 100);
+    const w = state.workers[0];
+    expect(w.activity).toBe('MovingHome');
+    expect(w.carrying).toBeGreaterThan(0);
+    const inHand = w.carrying;
+    const inGround = state.harvest[coordKey(FOREST_A)].units;
+    expect(inGround).toBe(HARVEST.Forest.stock - inHand); // already debited
+
+    // Drain the cell by hand while the load is still walking. The thumb can
+    // only get what is LEFT — the carried units are gone from the ground.
+    let byHand = 0;
+    while (tapCell(state, map, FOREST_A, start + MOVE_MS + STRIKE_MS + 200) === 'Harvested') {
+      byHand += 1;
+      if (byHand > 50) throw new Error('cell never drained');
+    }
+    expect(getWallet(state.city.wallet, 'Wood') - woodBefore)
+      .toBe(inGround); // the thumb got the remainder and no more
+
+    // And the load still lands, so the tree paid its stock exactly once.
+    tickAt(state, start + CYCLE_MS + 200);
+    expect(getWallet(state.city.wallet, 'Wood') - woodBefore)
+      .toBe(HARVEST.Forest.stock);
   });
 
   it('one-call replay equals second-by-second ticking (determinism)', () => {
@@ -232,11 +273,17 @@ describe('Townhall villager training', () => {
     const start = state.lastAdvance;
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
     tickAt(state, start + MOVE_MS + 100);
-    const deposits = advanceWorkers(state, map, start + 4 * CYCLE_MS);
+    const { strikes, deposits } = advanceWorkers(state, map, start + 4 * CYCLE_MS);
+    // The STRIKE lands on the tree, and names the ground so the foley matches.
+    expect(strikes.length).toBeGreaterThan(0);
+    for (const s of strikes) {
+      expect(s.source).toBe('Forest');
+      expect(harvestSourceAt(state, s.cell)).toBe('Forest'); // the TREE
+    }
+    // The HAUL lands at the mill, and that is where the number pops.
     expect(deposits.length).toBeGreaterThan(0);
     for (const d of deposits) {
-      expect(d.source).toBe('Forest');
-      expect(harvestSourceAt(state, d.cell)).toBe('Forest'); // the TREE, not the mill
+      expect(coordKey(d.cell)).toBe(coordKey(sawmill.location)); // the SHED
       expect(d.amount).toBeGreaterThan(0);
     }
   });

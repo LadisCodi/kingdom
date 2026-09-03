@@ -25,7 +25,7 @@ import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modi
 import { canAfford, pay, refund } from './wallet';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, relocateCrew, removeWorker,
-  type DepositEvent,
+  type DepositEvent, type StrikeEvent,
 } from './workers';
 import {
   addToWallet, builderCount, buildQueueCapacity, completesAt, districtById, getWallet,
@@ -324,6 +324,10 @@ export function changeWorkers(
 // multi-second one, to fix an inaccuracy both paths share identically.
 
 export interface AdvanceResult {
+  /** Axe-lands-on-cell events: the renderer hits the CELL with them. */
+  strikes: StrikeEvent[];
+  /** Haul-lands-at-building events: the wallet moved, so the number pops
+   *  at the BUILDING. The gap between a strike and its deposit is the walk. */
   deposits: DepositEvent[];
   completedItems: QueueItem[];
   completedResearch: TechId[];
@@ -344,7 +348,7 @@ export interface AdvanceResult {
 }
 
 const emptyResult = (): AdvanceResult => ({
-  deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
+  strikes: [], deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
   trainedUnits: [], delveEvents: [], scheduleEvents: [],
 });
@@ -385,7 +389,9 @@ function applyDueAt(
 /** The continuous sims, run only BETWEEN boundaries. */
 function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceResult): void {
   advanceRespawns(state, map, t);
-  out.deposits.push(...advanceWorkers(state, map, t));
+  const crew = advanceWorkers(state, map, t);
+  out.strikes.push(...crew.strikes);
+  out.deposits.push(...crew.deposits);
   out.goldEarned += advanceCityLife(state, t).gold;
   // Mana regen is city idle PRODUCTION, so it belongs here with the workers
   // and the taxes — and the 8h offline cap applies to it, unlike a timer.
