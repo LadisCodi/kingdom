@@ -1,1930 +1,443 @@
 {
   "terrain": {
     "cells": [
-      {
-        "x": -8,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": -3,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": -2,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": -1,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": 0,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": 1,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": 2,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": 3,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": 4,
-        "y": -10,
-        "id": "Snow"
-      },
-      {
-        "x": 5,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -10,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -9,
-        "id": "Snow"
-      },
-      {
-        "x": -3,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": -2,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": -1,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": 0,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": 1,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": 2,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": 3,
-        "y": -9,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -9,
-        "id": "Snow"
-      },
-      {
-        "x": 5,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -9,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": -3,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": -2,
-        "y": -8,
-        "id": "Mountain"
-      },
-      {
-        "x": -1,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": 0,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": 1,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": 2,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": 3,
-        "y": -8,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -8,
-        "id": "Snow"
-      },
-      {
-        "x": 5,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -8,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": -3,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": -2,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": -1,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": 0,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": 1,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": 2,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": 3,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": 4,
-        "y": -7,
-        "id": "Tundra"
-      },
-      {
-        "x": 5,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -7,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -2,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -1,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 0,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 1,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 2,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 3,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 4,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 5,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -6,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": -5,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": -5,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": -5,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": -5,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": -5,
-        "id": "Mountain"
-      },
-      {
-        "x": 2,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 3,
-        "y": -5,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 5,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -5,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": -4,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": -4,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": -4,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": -4,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": -4,
-        "id": "Mountain"
-      },
-      {
-        "x": 2,
-        "y": -4,
-        "id": "Mountain"
-      },
-      {
-        "x": 3,
-        "y": -4,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -4,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": -4,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": -4,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": -3,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": -3,
-        "id": "Mountain"
-      },
-      {
-        "x": 2,
-        "y": -3,
-        "id": "Mountain"
-      },
-      {
-        "x": 3,
-        "y": -3,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -3,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": -3,
-        "id": "Plains"
-      },
-      {
-        "x": 9,
-        "y": -3,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": -3,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -2,
-        "y": -2,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": -2,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": -2,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": -2,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": -2,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": -2,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -2,
-        "id": "Mountain"
-      },
-      {
-        "x": 5,
-        "y": -2,
-        "id": "Grassland"
-      },
-      {
-        "x": 6,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -2,
-        "id": "Plains"
-      },
-      {
-        "x": 8,
-        "y": -2,
-        "id": "Plains"
-      },
-      {
-        "x": 9,
-        "y": -2,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": -2,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": -2,
-        "y": -1,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": -1,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": -1,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": -1,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": -1,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": -1,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": -1,
-        "id": "Mountain"
-      },
-      {
-        "x": 5,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": -1,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": -1,
-        "id": "Plains"
-      },
-      {
-        "x": 8,
-        "y": -1,
-        "id": "Mountain"
-      },
-      {
-        "x": 9,
-        "y": -1,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": -1,
-        "id": "Plains"
-      },
-      {
-        "x": -8,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": -2,
-        "y": 0,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 0,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 0,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 0,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 0,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 0,
-        "id": "Mountain"
-      },
-      {
-        "x": 4,
-        "y": 0,
-        "id": "Mountain"
-      },
-      {
-        "x": 5,
-        "y": 0,
-        "id": "Grassland"
-      },
-      {
-        "x": 6,
-        "y": 0,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 0,
-        "id": "Plains"
-      },
-      {
-        "x": 8,
-        "y": 0,
-        "id": "Mountain"
-      },
-      {
-        "x": 9,
-        "y": 0,
-        "id": "Mountain"
-      },
-      {
-        "x": 10,
-        "y": 0,
-        "id": "Mountain"
-      },
-      {
-        "x": -8,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": -2,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": 4,
-        "y": 1,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": 1,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 1,
-        "id": "Plains"
-      },
-      {
-        "x": 8,
-        "y": 1,
-        "id": "Plains"
-      },
-      {
-        "x": 9,
-        "y": 1,
-        "id": "Mountain"
-      },
-      {
-        "x": 10,
-        "y": 1,
-        "id": "Plains"
-      },
-      {
-        "x": -8,
-        "y": 2,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 2,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": 2,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 2,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": -3,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 4,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": 2,
-        "id": "Grassland"
-      },
-      {
-        "x": 6,
-        "y": 2,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 2,
-        "id": "Plains"
-      },
-      {
-        "x": 8,
-        "y": 2,
-        "id": "Plains"
-      },
-      {
-        "x": 9,
-        "y": 2,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": 2,
-        "id": "Plains"
-      },
-      {
-        "x": -8,
-        "y": 3,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": -6,
-        "y": 3,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": -4,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": -3,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 4,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": 3,
-        "id": "Grassland"
-      },
-      {
-        "x": 6,
-        "y": 3,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 3,
-        "id": "Mountain"
-      },
-      {
-        "x": 8,
-        "y": 3,
-        "id": "Mountain"
-      },
-      {
-        "x": 9,
-        "y": 3,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": 3,
-        "id": "Plains"
-      },
-      {
-        "x": -8,
-        "y": 4,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": -6,
-        "y": 4,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 4,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": -3,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 4,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": 4,
-        "id": "Grassland"
-      },
-      {
-        "x": 6,
-        "y": 4,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 4,
-        "id": "Plains"
-      },
-      {
-        "x": 8,
-        "y": 4,
-        "id": "Plains"
-      },
-      {
-        "x": 9,
-        "y": 4,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": 4,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": -3,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 4,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": 5,
-        "id": "Grassland"
-      },
-      {
-        "x": 6,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": 5,
-        "id": "Plains"
-      },
-      {
-        "x": 9,
-        "y": 5,
-        "id": "Plains"
-      },
-      {
-        "x": 10,
-        "y": 5,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": -2,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": -1,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": 0,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": 1,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": 2,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": 3,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": 4,
-        "y": 6,
-        "id": "Grassland"
-      },
-      {
-        "x": 5,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": 6,
-        "id": "Water"
-      },
-      {
-        "x": -8,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -7,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -6,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -5,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -4,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -3,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -2,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": -1,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 0,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 1,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 2,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 3,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 4,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 5,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 6,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 7,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 8,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 9,
-        "y": 7,
-        "id": "Water"
-      },
-      {
-        "x": 10,
-        "y": 7,
-        "id": "Water"
-      }
+      { "x": -8, "y": -10, "id": "Water" },
+      { "x": -7, "y": -10, "id": "Water" },
+      { "x": -6, "y": -10, "id": "Water" },
+      { "x": -5, "y": -10, "id": "Water" },
+      { "x": -4, "y": -10, "id": "Snow" },
+      { "x": -3, "y": -10, "id": "Snow" },
+      { "x": -2, "y": -10, "id": "Snow" },
+      { "x": -1, "y": -10, "id": "Snow" },
+      { "x": 0, "y": -10, "id": "Snow" },
+      { "x": 1, "y": -10, "id": "Snow" },
+      { "x": 2, "y": -10, "id": "Snow" },
+      { "x": 3, "y": -10, "id": "Snow" },
+      { "x": 4, "y": -10, "id": "Snow" },
+      { "x": 5, "y": -10, "id": "Water" },
+      { "x": 6, "y": -10, "id": "Water" },
+      { "x": 7, "y": -10, "id": "Water" },
+      { "x": 8, "y": -10, "id": "Water" },
+      { "x": 9, "y": -10, "id": "Water" },
+      { "x": 10, "y": -10, "id": "Water" },
+      { "x": -8, "y": -9, "id": "Water" },
+      { "x": -7, "y": -9, "id": "Water" },
+      { "x": -6, "y": -9, "id": "Water" },
+      { "x": -5, "y": -9, "id": "Water" },
+      { "x": -4, "y": -9, "id": "Snow" },
+      { "x": -3, "y": -9, "id": "Mountain" },
+      { "x": -2, "y": -9, "id": "Mountain" },
+      { "x": -1, "y": -9, "id": "Mountain" },
+      { "x": 0, "y": -9, "id": "Mountain" },
+      { "x": 1, "y": -9, "id": "Mountain" },
+      { "x": 2, "y": -9, "id": "Mountain" },
+      { "x": 3, "y": -9, "id": "Mountain" },
+      { "x": 4, "y": -9, "id": "Snow" },
+      { "x": 5, "y": -9, "id": "Water" },
+      { "x": 6, "y": -9, "id": "Water" },
+      { "x": 7, "y": -9, "id": "Water" },
+      { "x": 8, "y": -9, "id": "Water" },
+      { "x": 9, "y": -9, "id": "Water" },
+      { "x": 10, "y": -9, "id": "Water" },
+      { "x": -8, "y": -8, "id": "Water" },
+      { "x": -7, "y": -8, "id": "Water" },
+      { "x": -6, "y": -8, "id": "Water" },
+      { "x": -5, "y": -8, "id": "Water" },
+      { "x": -4, "y": -8, "id": "Snow" },
+      { "x": -3, "y": -8, "id": "Snow" },
+      { "x": -2, "y": -8, "id": "Mountain" },
+      { "x": -1, "y": -8, "id": "Snow" },
+      { "x": 0, "y": -8, "id": "Snow" },
+      { "x": 1, "y": -8, "id": "Snow" },
+      { "x": 2, "y": -8, "id": "Snow" },
+      { "x": 3, "y": -8, "id": "Mountain" },
+      { "x": 4, "y": -8, "id": "Snow" },
+      { "x": 5, "y": -8, "id": "Water" },
+      { "x": 6, "y": -8, "id": "Water" },
+      { "x": 7, "y": -8, "id": "Water" },
+      { "x": 8, "y": -8, "id": "Water" },
+      { "x": 9, "y": -8, "id": "Water" },
+      { "x": 10, "y": -8, "id": "Water" },
+      { "x": -8, "y": -7, "id": "Water" },
+      { "x": -7, "y": -7, "id": "Water" },
+      { "x": -6, "y": -7, "id": "Water" },
+      { "x": -5, "y": -7, "id": "Water" },
+      { "x": -4, "y": -7, "id": "Tundra" },
+      { "x": -3, "y": -7, "id": "Tundra" },
+      { "x": -2, "y": -7, "id": "Tundra" },
+      { "x": -1, "y": -7, "id": "Tundra" },
+      { "x": 0, "y": -7, "id": "Tundra" },
+      { "x": 1, "y": -7, "id": "Tundra" },
+      { "x": 2, "y": -7, "id": "Tundra" },
+      { "x": 3, "y": -7, "id": "Tundra" },
+      { "x": 4, "y": -7, "id": "Tundra" },
+      { "x": 5, "y": -7, "id": "Water" },
+      { "x": 6, "y": -7, "id": "Water" },
+      { "x": 7, "y": -7, "id": "Water" },
+      { "x": 8, "y": -7, "id": "Water" },
+      { "x": 9, "y": -7, "id": "Water" },
+      { "x": 10, "y": -7, "id": "Water" },
+      { "x": -8, "y": -6, "id": "Water" },
+      { "x": -7, "y": -6, "id": "Water" },
+      { "x": -6, "y": -6, "id": "Water" },
+      { "x": -5, "y": -6, "id": "Water" },
+      { "x": -4, "y": -6, "id": "Water" },
+      { "x": -3, "y": -6, "id": "Water" },
+      { "x": -2, "y": -6, "id": "Water" },
+      { "x": -1, "y": -6, "id": "Water" },
+      { "x": 0, "y": -6, "id": "Water" },
+      { "x": 1, "y": -6, "id": "Water" },
+      { "x": 2, "y": -6, "id": "Water" },
+      { "x": 3, "y": -6, "id": "Water" },
+      { "x": 4, "y": -6, "id": "Water" },
+      { "x": 5, "y": -6, "id": "Water" },
+      { "x": 6, "y": -6, "id": "Water" },
+      { "x": 7, "y": -6, "id": "Water" },
+      { "x": 8, "y": -6, "id": "Water" },
+      { "x": 9, "y": -6, "id": "Water" },
+      { "x": 10, "y": -6, "id": "Water" },
+      { "x": -8, "y": -5, "id": "Water" },
+      { "x": -7, "y": -5, "id": "Water" },
+      { "x": -6, "y": -5, "id": "Water" },
+      { "x": -5, "y": -5, "id": "Water" },
+      { "x": -4, "y": -5, "id": "Water" },
+      { "x": -3, "y": -5, "id": "Grassland" },
+      { "x": -2, "y": -5, "id": "Grassland" },
+      { "x": -1, "y": -5, "id": "Grassland" },
+      { "x": 0, "y": -5, "id": "Grassland" },
+      { "x": 1, "y": -5, "id": "Mountain" },
+      { "x": 2, "y": -5, "id": "Water" },
+      { "x": 3, "y": -5, "id": "Mountain" },
+      { "x": 4, "y": -5, "id": "Water" },
+      { "x": 5, "y": -5, "id": "Water" },
+      { "x": 6, "y": -5, "id": "Water" },
+      { "x": 7, "y": -5, "id": "Water" },
+      { "x": 8, "y": -5, "id": "Water" },
+      { "x": 9, "y": -5, "id": "Water" },
+      { "x": 10, "y": -5, "id": "Water" },
+      { "x": -8, "y": -4, "id": "Water" },
+      { "x": -7, "y": -4, "id": "Water" },
+      { "x": -6, "y": -4, "id": "Water" },
+      { "x": -5, "y": -4, "id": "Water" },
+      { "x": -4, "y": -4, "id": "Water" },
+      { "x": -3, "y": -4, "id": "Grassland" },
+      { "x": -2, "y": -4, "id": "Grassland" },
+      { "x": -1, "y": -4, "id": "Grassland" },
+      { "x": 0, "y": -4, "id": "Grassland" },
+      { "x": 1, "y": -4, "id": "Mountain" },
+      { "x": 2, "y": -4, "id": "Mountain" },
+      { "x": 3, "y": -4, "id": "Mountain" },
+      { "x": 4, "y": -4, "id": "Grassland" },
+      { "x": 5, "y": -4, "id": "Water" },
+      { "x": 6, "y": -4, "id": "Water" },
+      { "x": 7, "y": -4, "id": "Water" },
+      { "x": 8, "y": -4, "id": "Water" },
+      { "x": 9, "y": -4, "id": "Water" },
+      { "x": 10, "y": -4, "id": "Water" },
+      { "x": -8, "y": -3, "id": "Water" },
+      { "x": -7, "y": -3, "id": "Water" },
+      { "x": -6, "y": -3, "id": "Water" },
+      { "x": -5, "y": -3, "id": "Grassland" },
+      { "x": -4, "y": -3, "id": "Grassland" },
+      { "x": -3, "y": -3, "id": "Grassland" },
+      { "x": -2, "y": -3, "id": "Grassland" },
+      { "x": -1, "y": -3, "id": "Grassland" },
+      { "x": 0, "y": -3, "id": "Grassland" },
+      { "x": 1, "y": -3, "id": "Mountain" },
+      { "x": 2, "y": -3, "id": "Mountain" },
+      { "x": 3, "y": -3, "id": "Mountain" },
+      { "x": 4, "y": -3, "id": "Grassland" },
+      { "x": 5, "y": -3, "id": "Water" },
+      { "x": 6, "y": -3, "id": "Water" },
+      { "x": 7, "y": -3, "id": "Water" },
+      { "x": 8, "y": -3, "id": "Plains" },
+      { "x": 9, "y": -3, "id": "Plains" },
+      { "x": 10, "y": -3, "id": "Water" },
+      { "x": -8, "y": -2, "id": "Water" },
+      { "x": -7, "y": -2, "id": "Water" },
+      { "x": -6, "y": -2, "id": "Water" },
+      { "x": -5, "y": -2, "id": "Water" },
+      { "x": -4, "y": -2, "id": "Water" },
+      { "x": -3, "y": -2, "id": "Water" },
+      { "x": -2, "y": -2, "id": "Grassland" },
+      { "x": -1, "y": -2, "id": "Grassland" },
+      { "x": 0, "y": -2, "id": "Grassland" },
+      { "x": 1, "y": -2, "id": "Grassland" },
+      { "x": 2, "y": -2, "id": "Grassland" },
+      { "x": 3, "y": -2, "id": "Mountain" },
+      { "x": 4, "y": -2, "id": "Mountain" },
+      { "x": 5, "y": -2, "id": "Grassland" },
+      { "x": 6, "y": -2, "id": "Water" },
+      { "x": 7, "y": -2, "id": "Plains" },
+      { "x": 8, "y": -2, "id": "Plains" },
+      { "x": 9, "y": -2, "id": "Plains" },
+      { "x": 10, "y": -2, "id": "Water" },
+      { "x": -8, "y": -1, "id": "Water" },
+      { "x": -7, "y": -1, "id": "Water" },
+      { "x": -6, "y": -1, "id": "Water" },
+      { "x": -5, "y": -1, "id": "Water" },
+      { "x": -4, "y": -1, "id": "Water" },
+      { "x": -3, "y": -1, "id": "Water" },
+      { "x": -2, "y": -1, "id": "Grassland" },
+      { "x": -1, "y": -1, "id": "Grassland" },
+      { "x": 0, "y": -1, "id": "Grassland" },
+      { "x": 1, "y": -1, "id": "Grassland" },
+      { "x": 2, "y": -1, "id": "Grassland" },
+      { "x": 3, "y": -1, "id": "Mountain" },
+      { "x": 4, "y": -1, "id": "Mountain" },
+      { "x": 5, "y": -1, "id": "Water" },
+      { "x": 6, "y": -1, "id": "Water" },
+      { "x": 7, "y": -1, "id": "Plains" },
+      { "x": 8, "y": -1, "id": "Mountain" },
+      { "x": 9, "y": -1, "id": "Plains" },
+      { "x": 10, "y": -1, "id": "Plains" },
+      { "x": -8, "y": 0, "id": "Water" },
+      { "x": -7, "y": 0, "id": "Water" },
+      { "x": -6, "y": 0, "id": "Water" },
+      { "x": -5, "y": 0, "id": "Water" },
+      { "x": -4, "y": 0, "id": "Water" },
+      { "x": -3, "y": 0, "id": "Water" },
+      { "x": -2, "y": 0, "id": "Grassland" },
+      { "x": -1, "y": 0, "id": "Grassland" },
+      { "x": 0, "y": 0, "id": "Grassland" },
+      { "x": 1, "y": 0, "id": "Grassland" },
+      { "x": 2, "y": 0, "id": "Grassland" },
+      { "x": 3, "y": 0, "id": "Mountain" },
+      { "x": 4, "y": 0, "id": "Mountain" },
+      { "x": 5, "y": 0, "id": "Grassland" },
+      { "x": 6, "y": 0, "id": "Water" },
+      { "x": 7, "y": 0, "id": "Plains" },
+      { "x": 8, "y": 0, "id": "Mountain" },
+      { "x": 9, "y": 0, "id": "Mountain" },
+      { "x": 10, "y": 0, "id": "Mountain" },
+      { "x": -8, "y": 1, "id": "Water" },
+      { "x": -7, "y": 1, "id": "Water" },
+      { "x": -6, "y": 1, "id": "Water" },
+      { "x": -5, "y": 1, "id": "Water" },
+      { "x": -4, "y": 1, "id": "Water" },
+      { "x": -3, "y": 1, "id": "Water" },
+      { "x": -2, "y": 1, "id": "Grassland" },
+      { "x": -1, "y": 1, "id": "Grassland" },
+      { "x": 0, "y": 1, "id": "Grassland" },
+      { "x": 1, "y": 1, "id": "Grassland" },
+      { "x": 2, "y": 1, "id": "Grassland" },
+      { "x": 3, "y": 1, "id": "Grassland" },
+      { "x": 4, "y": 1, "id": "Grassland" },
+      { "x": 5, "y": 1, "id": "Water" },
+      { "x": 6, "y": 1, "id": "Water" },
+      { "x": 7, "y": 1, "id": "Plains" },
+      { "x": 8, "y": 1, "id": "Plains" },
+      { "x": 9, "y": 1, "id": "Mountain" },
+      { "x": 10, "y": 1, "id": "Plains" },
+      { "x": -8, "y": 2, "id": "Water" },
+      { "x": -7, "y": 2, "id": "Water" },
+      { "x": -6, "y": 2, "id": "Water" },
+      { "x": -5, "y": 2, "id": "Water" },
+      { "x": -4, "y": 2, "id": "Grassland" },
+      { "x": -3, "y": 2, "id": "Grassland" },
+      { "x": -2, "y": 2, "id": "Grassland" },
+      { "x": -1, "y": 2, "id": "Grassland" },
+      { "x": 0, "y": 2, "id": "Grassland" },
+      { "x": 1, "y": 2, "id": "Grassland" },
+      { "x": 2, "y": 2, "id": "Grassland" },
+      { "x": 3, "y": 2, "id": "Grassland" },
+      { "x": 4, "y": 2, "id": "Grassland" },
+      { "x": 5, "y": 2, "id": "Grassland" },
+      { "x": 6, "y": 2, "id": "Water" },
+      { "x": 7, "y": 2, "id": "Plains" },
+      { "x": 8, "y": 2, "id": "Plains" },
+      { "x": 9, "y": 2, "id": "Plains" },
+      { "x": 10, "y": 2, "id": "Plains" },
+      { "x": -8, "y": 3, "id": "Water" },
+      { "x": -7, "y": 3, "id": "Grassland" },
+      { "x": -6, "y": 3, "id": "Water" },
+      { "x": -5, "y": 3, "id": "Grassland" },
+      { "x": -4, "y": 3, "id": "Grassland" },
+      { "x": -3, "y": 3, "id": "Grassland" },
+      { "x": -2, "y": 3, "id": "Grassland" },
+      { "x": -1, "y": 3, "id": "Grassland" },
+      { "x": 0, "y": 3, "id": "Grassland" },
+      { "x": 1, "y": 3, "id": "Grassland" },
+      { "x": 2, "y": 3, "id": "Grassland" },
+      { "x": 3, "y": 3, "id": "Grassland" },
+      { "x": 4, "y": 3, "id": "Grassland" },
+      { "x": 5, "y": 3, "id": "Grassland" },
+      { "x": 6, "y": 3, "id": "Water" },
+      { "x": 7, "y": 3, "id": "Mountain" },
+      { "x": 8, "y": 3, "id": "Mountain" },
+      { "x": 9, "y": 3, "id": "Plains" },
+      { "x": 10, "y": 3, "id": "Plains" },
+      { "x": -8, "y": 4, "id": "Water" },
+      { "x": -7, "y": 4, "id": "Grassland" },
+      { "x": -6, "y": 4, "id": "Water" },
+      { "x": -5, "y": 4, "id": "Water" },
+      { "x": -4, "y": 4, "id": "Grassland" },
+      { "x": -3, "y": 4, "id": "Grassland" },
+      { "x": -2, "y": 4, "id": "Grassland" },
+      { "x": -1, "y": 4, "id": "Grassland" },
+      { "x": 0, "y": 4, "id": "Grassland" },
+      { "x": 1, "y": 4, "id": "Grassland" },
+      { "x": 2, "y": 4, "id": "Grassland" },
+      { "x": 3, "y": 4, "id": "Grassland" },
+      { "x": 4, "y": 4, "id": "Grassland" },
+      { "x": 5, "y": 4, "id": "Grassland" },
+      { "x": 6, "y": 4, "id": "Water" },
+      { "x": 7, "y": 4, "id": "Plains" },
+      { "x": 8, "y": 4, "id": "Plains" },
+      { "x": 9, "y": 4, "id": "Plains" },
+      { "x": 10, "y": 4, "id": "Water" },
+      { "x": -8, "y": 5, "id": "Water" },
+      { "x": -7, "y": 5, "id": "Water" },
+      { "x": -6, "y": 5, "id": "Water" },
+      { "x": -5, "y": 5, "id": "Water" },
+      { "x": -4, "y": 5, "id": "Grassland" },
+      { "x": -3, "y": 5, "id": "Grassland" },
+      { "x": -2, "y": 5, "id": "Grassland" },
+      { "x": -1, "y": 5, "id": "Grassland" },
+      { "x": 0, "y": 5, "id": "Grassland" },
+      { "x": 1, "y": 5, "id": "Grassland" },
+      { "x": 2, "y": 5, "id": "Grassland" },
+      { "x": 3, "y": 5, "id": "Grassland" },
+      { "x": 4, "y": 5, "id": "Grassland" },
+      { "x": 5, "y": 5, "id": "Grassland" },
+      { "x": 6, "y": 5, "id": "Water" },
+      { "x": 7, "y": 5, "id": "Water" },
+      { "x": 8, "y": 5, "id": "Plains" },
+      { "x": 9, "y": 5, "id": "Plains" },
+      { "x": 10, "y": 5, "id": "Water" },
+      { "x": -8, "y": 6, "id": "Water" },
+      { "x": -7, "y": 6, "id": "Water" },
+      { "x": -6, "y": 6, "id": "Water" },
+      { "x": -5, "y": 6, "id": "Water" },
+      { "x": -4, "y": 6, "id": "Water" },
+      { "x": -3, "y": 6, "id": "Grassland" },
+      { "x": -2, "y": 6, "id": "Grassland" },
+      { "x": -1, "y": 6, "id": "Grassland" },
+      { "x": 0, "y": 6, "id": "Grassland" },
+      { "x": 1, "y": 6, "id": "Grassland" },
+      { "x": 2, "y": 6, "id": "Grassland" },
+      { "x": 3, "y": 6, "id": "Grassland" },
+      { "x": 4, "y": 6, "id": "Grassland" },
+      { "x": 5, "y": 6, "id": "Water" },
+      { "x": 6, "y": 6, "id": "Water" },
+      { "x": 7, "y": 6, "id": "Water" },
+      { "x": 8, "y": 6, "id": "Water" },
+      { "x": 9, "y": 6, "id": "Water" },
+      { "x": 10, "y": 6, "id": "Water" },
+      { "x": -8, "y": 7, "id": "Water" },
+      { "x": -7, "y": 7, "id": "Water" },
+      { "x": -6, "y": 7, "id": "Water" },
+      { "x": -5, "y": 7, "id": "Water" },
+      { "x": -4, "y": 7, "id": "Water" },
+      { "x": -3, "y": 7, "id": "Water" },
+      { "x": -2, "y": 7, "id": "Water" },
+      { "x": -1, "y": 7, "id": "Water" },
+      { "x": 0, "y": 7, "id": "Water" },
+      { "x": 1, "y": 7, "id": "Water" },
+      { "x": 2, "y": 7, "id": "Water" },
+      { "x": 3, "y": 7, "id": "Water" },
+      { "x": 4, "y": 7, "id": "Water" },
+      { "x": 5, "y": 7, "id": "Water" },
+      { "x": 6, "y": 7, "id": "Water" },
+      { "x": 7, "y": 7, "id": "Water" },
+      { "x": 8, "y": 7, "id": "Water" },
+      { "x": 9, "y": 7, "id": "Water" },
+      { "x": 10, "y": 7, "id": "Water" }
     ]
   },
   "features": {
     "cells": [
-      {
-        "x": -3,
-        "y": -9,
-        "id": "IronVein"
-      },
-      {
-        "x": 1,
-        "y": -9,
-        "id": "IronVein"
-      },
-      {
-        "x": -2,
-        "y": -8,
-        "id": "IronVein"
-      },
-      {
-        "x": 3,
-        "y": -8,
-        "id": "IronVein"
-      },
-      {
-        "x": 0,
-        "y": -7,
-        "id": "WildAnimals"
-      },
-      {
-        "x": -7,
-        "y": -6,
-        "id": "FishShoal"
-      },
-      {
-        "x": 7,
-        "y": -6,
-        "id": "FishShoal"
-      },
-      {
-        "x": -2,
-        "y": -4,
-        "id": "WildAnimals"
-      },
-      {
-        "x": -1,
-        "y": -4,
-        "id": "Trees"
-      },
-      {
-        "x": 0,
-        "y": -4,
-        "id": "Trees"
-      },
-      {
-        "x": 2,
-        "y": -4,
-        "id": "Rocks"
-      },
-      {
-        "x": 5,
-        "y": -3,
-        "id": "FishShoal"
-      },
-      {
-        "x": -1,
-        "y": -2,
-        "id": "WildAnimals"
-      },
-      {
-        "x": 9,
-        "y": -2,
-        "id": "Trees"
-      },
-      {
-        "x": -4,
-        "y": -1,
-        "id": "FishShoal"
-      },
-      {
-        "x": 4,
-        "y": -1,
-        "id": "Rocks"
-      },
-      {
-        "x": 8,
-        "y": -1,
-        "id": "Rocks"
-      },
-      {
-        "x": -6,
-        "y": 0,
-        "id": "FishShoal"
-      },
-      {
-        "x": 10,
-        "y": 0,
-        "id": "Rocks"
-      },
-      {
-        "x": -2,
-        "y": 1,
-        "id": "BerryBush"
-      },
-      {
-        "x": 9,
-        "y": 1,
-        "id": "Rocks"
-      },
-      {
-        "x": -5,
-        "y": 2,
-        "id": "FishShoal"
-      },
-      {
-        "x": 3,
-        "y": 2,
-        "id": "Trees"
-      },
-      {
-        "x": -3,
-        "y": 3,
-        "id": "Trees"
-      },
-      {
-        "x": -2,
-        "y": 3,
-        "id": "Trees"
-      },
-      {
-        "x": 0,
-        "y": 3,
-        "id": "Trees"
-      },
-      {
-        "x": 1,
-        "y": 3,
-        "id": "Trees"
-      },
-      {
-        "x": 2,
-        "y": 3,
-        "id": "Trees"
-      },
-      {
-        "x": 8,
-        "y": 3,
-        "id": "Rocks"
-      },
-      {
-        "x": -8,
-        "y": 4,
-        "id": "FishShoal"
-      },
-      {
-        "x": -3,
-        "y": 4,
-        "id": "Trees"
-      },
-      {
-        "x": -2,
-        "y": 4,
-        "id": "Trees"
-      },
-      {
-        "x": -1,
-        "y": 4,
-        "id": "Trees"
-      },
-      {
-        "x": 0,
-        "y": 4,
-        "id": "Trees"
-      },
-      {
-        "x": 4,
-        "y": 4,
-        "id": "Trees"
-      },
-      {
-        "x": 7,
-        "y": 4,
-        "id": "WildAnimals"
-      },
-      {
-        "x": 2,
-        "y": 5,
-        "id": "Trees"
-      },
-      {
-        "x": 3,
-        "y": 5,
-        "id": "Trees"
-      },
-      {
-        "x": -4,
-        "y": 6,
-        "id": "FishShoal"
-      },
-      {
-        "x": -2,
-        "y": 6,
-        "id": "Trees"
-      },
-      {
-        "x": 4,
-        "y": 6,
-        "id": "WildAnimals"
-      },
-      {
-        "x": 2,
-        "y": 7,
-        "id": "FishShoal"
-      }
+      { "x": -3, "y": -9, "id": "IronVein" },
+      { "x": 1, "y": -9, "id": "IronVein" },
+      { "x": -2, "y": -8, "id": "IronVein" },
+      { "x": 3, "y": -8, "id": "IronVein" },
+      { "x": 0, "y": -7, "id": "WildAnimals" },
+      { "x": -7, "y": -6, "id": "FishShoal" },
+      { "x": 7, "y": -6, "id": "FishShoal" },
+      { "x": -2, "y": -4, "id": "WildAnimals" },
+      { "x": -1, "y": -4, "id": "Trees" },
+      { "x": 0, "y": -4, "id": "Trees" },
+      { "x": 2, "y": -4, "id": "Rocks" },
+      { "x": 5, "y": -3, "id": "FishShoal" },
+      { "x": -1, "y": -2, "id": "WildAnimals" },
+      { "x": 9, "y": -2, "id": "Trees" },
+      { "x": -4, "y": -1, "id": "FishShoal" },
+      { "x": 4, "y": -1, "id": "Rocks" },
+      { "x": 8, "y": -1, "id": "Rocks" },
+      { "x": -6, "y": 0, "id": "FishShoal" },
+      { "x": 10, "y": 0, "id": "Rocks" },
+      { "x": -2, "y": 1, "id": "BerryBush" },
+      { "x": 9, "y": 1, "id": "Rocks" },
+      { "x": -5, "y": 2, "id": "FishShoal" },
+      { "x": 3, "y": 2, "id": "Trees" },
+      { "x": -3, "y": 3, "id": "Trees" },
+      { "x": -2, "y": 3, "id": "Trees" },
+      { "x": 0, "y": 3, "id": "Trees" },
+      { "x": 1, "y": 3, "id": "Trees" },
+      { "x": 2, "y": 3, "id": "Trees" },
+      { "x": 8, "y": 3, "id": "Rocks" },
+      { "x": -8, "y": 4, "id": "FishShoal" },
+      { "x": -3, "y": 4, "id": "Trees" },
+      { "x": -2, "y": 4, "id": "Trees" },
+      { "x": -1, "y": 4, "id": "Trees" },
+      { "x": 0, "y": 4, "id": "Trees" },
+      { "x": 4, "y": 4, "id": "Trees" },
+      { "x": 7, "y": 4, "id": "WildAnimals" },
+      { "x": 2, "y": 5, "id": "Trees" },
+      { "x": 3, "y": 5, "id": "Trees" },
+      { "x": -4, "y": 6, "id": "FishShoal" },
+      { "x": -2, "y": 6, "id": "Trees" },
+      { "x": 4, "y": 6, "id": "WildAnimals" },
+      { "x": 2, "y": 7, "id": "FishShoal" }
     ]
+  },
+  "landmarks": [
+    { "id": "ThornedShrine", "kind": "Shrine", "x": 3, "y": 4, "defended": false, "claimCost": 2000 },
+    { "id": "WhisperingStones", "kind": "StandingStones", "x": -4, "y": 5, "defended": false, "claimCost": 25000 },
+    { "id": "BrightLeyspring", "kind": "Leyspring", "x": -1, "y": 6, "defended": false, "claimCost": 25000 },
+    { "id": "OldOakShrine", "kind": "Shrine", "x": -2, "y": -5, "defended": false, "claimCost": 25000 },
+    { "id": "CircleOfNine", "kind": "StandingStones", "x": 8, "y": 4, "defended": true, "claimCost": 100000 },
+    { "id": "SunkenLeyspring", "kind": "Leyspring", "x": 5, "y": 2, "defended": false, "claimCost": 25000 },
+    { "id": "CliffShrine", "kind": "Shrine", "x": 3, "y": -9, "defended": true, "claimCost": 100000 },
+    { "id": "FallenStones", "kind": "StandingStones", "x": -5, "y": -3, "defended": false, "claimCost": 25000 },
+    { "id": "MirrorLeyspring", "kind": "Leyspring", "x": -3, "y": -10, "defended": true, "claimCost": 100000 },
+    { "id": "WindwardShrine", "kind": "Shrine", "x": 10, "y": 2, "defended": true, "claimCost": 100000 }
+  ],
+  "ruins": {
+    "HollowBarrow": {
+      "x": 1, "y": 6,
+      "tier": 1, "difficulty": 6,
+      "baseDepthSeconds": 180, "depthGrowth": 1.15, "maxDepth": 5,
+      "supplies": { "Food": 20, "Gold": 50 },
+      "affinity": "Warrior", "artifact": "DowsingRod"
+    },
+    "SunkenChapel": {
+      "x": 5, "y": 3,
+      "tier": 2, "difficulty": 14,
+      "baseDepthSeconds": 300, "depthGrowth": 1.2, "maxDepth": 7,
+      "supplies": { "Food": 40, "Gold": 150 },
+      "affinity": "Archer", "artifact": "VerdantSeal"
+    },
+    "DrownedIronworks": {
+      "x": -3, "y": 6,
+      "tier": 3, "difficulty": 24,
+      "baseDepthSeconds": 480, "depthGrowth": 1.25, "maxDepth": 9,
+      "supplies": { "Food": 60, "Gold": 400, "Stone": 30 },
+      "affinity": "Lancer", "artifact": "ForemansSigil"
+    },
+    "CountingHouse": {
+      "x": 8, "y": -3,
+      "tier": 4, "difficulty": 36,
+      "baseDepthSeconds": 720, "depthGrowth": 1.3, "maxDepth": 11,
+      "supplies": { "Food": 100, "Gold": 900, "Stone": 60 },
+      "affinity": "Cavalry", "artifact": "GildedLedger"
+    },
+    "StarObservatory": {
+      "x": -2, "y": -10,
+      "tier": 5, "difficulty": 50,
+      "baseDepthSeconds": 1080, "depthGrowth": 1.35, "maxDepth": 13,
+      "supplies": { "Food": 150, "Gold": 2000, "Stone": 120 },
+      "affinity": "Any", "artifact": "WanderersCompass"
+    }
   }
 }

@@ -1,15 +1,15 @@
 // Balance data bridge:
 //   balance/balance.xlsx  ⇄  src/sim/data/balance.json  (data sheets)
-//   balance/balance.xlsx  ⇄  src/sim/data/region-map.json  (the Map sheet)
 //
 //   node scripts/balance.mjs import   xlsx → json (validates; the normal flow)
 //   node scripts/balance.mjs export   json → xlsx (regenerate the workbook)
 //
-// The Map sheet IS the world: row 1 holds x labels, column A holds y labels,
-// and each grid cell is one map cell — lowercase terrain code, uppercase
-// feature code (feature alone implies Grassland), blank = void:
-//   g Grassland  w Water  p Plains  d Desert  s Snow  u Tundra
-//   T Trees  B BerryBush  A WildAnimals   (compound like "pT" also works)
+// MAP content is NOT here. Terrain, features, landmarks and ruins are authored
+// by coordinate, which a spreadsheet expresses badly and a painting tool
+// expresses well, so they live in src/sim/data/region-map.json and are edited
+// in the map editor (npm run dev, then ?dev=map). Their rules are enforced by
+// src/sim/data/mapRules.ts and gated by tests/regionMap.test.ts.
+// See Docs/map-editor.md.
 //
 // The workbook is the human-edited source of truth (Excel / LibreOffice /
 // Google Sheets); the JSON is generated and consumed by definitions.ts.
@@ -32,21 +32,6 @@ import ExcelJS from 'exceljs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const XLSX_PATH = join(ROOT, 'balance/balance.xlsx');
 const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
-const MAP_PATH = join(ROOT, 'src/sim/data/region-map.json');
-
-const TERRAIN_CODES = {
-  g: 'Grassland', w: 'Water', p: 'Plains', d: 'Desert', s: 'Snow', u: 'Tundra', m: 'Mountain',
-};
-const FEATURE_CODES = {
-  T: 'Trees', B: 'BerryBush', A: 'WildAnimals', R: 'Rocks', F: 'FishShoal', I: 'IronVein',
-};
-const MAP_COLORS = { // conditional-formatting fills, keyed by code
-  g: 'FF6FA84F', w: 'FF3D6F9E', p: 'FF9AA34F', d: 'FFC9B26A', s: 'FFDFE7EC', u: 'FF8B9A94',
-  m: 'FF6B6F78',
-  T: 'FF2E6B2E', B: 'FF7A4FA8', A: 'FF8A5A34', R: 'FF7A7F87', F: 'FF2E86AB', I: 'FF4A4E57',
-};
-// The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
-const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
 const DISTRICT_IDS = [
   'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine',
@@ -89,10 +74,7 @@ const QUEST_GOAL_TYPES = {
   DiscoverFeature: 'feature',
 };
 
-const LANDMARK_KINDS = ['Shrine', 'StandingStones', 'Leyspring'];
-const RUIN_IDS = [
-  'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
-];
+const FEATURE_IDS = ['Trees', 'BerryBush', 'WildAnimals', 'Rocks', 'FishShoal', 'IronVein'];
 const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
 const HERO_TRAITS = [
   'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
@@ -269,9 +251,6 @@ const SHEETS = {
     'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
   Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
-  Landmarks: ['id', 'kind', 'x', 'y', 'defended', 'claim_cost'],
-  Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
-    'max_depth', 'supply_food', 'supply_gold', 'supply_stone', 'affinity', 'artifact'],
   Settings: ['key', 'value'],
 };
 
@@ -348,15 +327,6 @@ function num(row, col, { blankAs = null } = {}) {
   return n;
 }
 
-/** A map coordinate: any integer, including negative ones. */
-function coord(row, col) {
-  const raw = row[col];
-  if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
-  const n = typeof raw === 'number' ? raw : Number(raw);
-  if (!Number.isInteger(n)) fail(where(row), `"${col}" is not an integer (got "${raw}")`);
-  return n;
-}
-
 /** Like num() but negatives are allowed (adjacency penalties); blank = 0. */
 function signedNum(row, col) {
   const raw = row[col];
@@ -427,139 +397,6 @@ function byId(rows, expectedIds, idColumn = 'id') {
   return seen;
 }
 
-// ---------------------------------------------------------------- Map sheet
-
-/** Read the Map sheet's coordinate labels: row 1 → x per column, col A → y per row. */
-function readMapLabels(ws) {
-  const xByCol = new Map();
-  const yByRow = new Map();
-  ws.getRow(1).eachCell({ includeEmpty: false }, (cell, col) => {
-    if (col === 1) return;
-    const v = cellValue(cell.value);
-    if (v === '') return;
-    if (typeof v !== 'number' || !Number.isInteger(v)) fail('Map', `row 1: bad x label "${v}"`);
-    xByCol.set(col, v);
-  });
-  ws.eachRow((row, rowNumber) => {
-    if (rowNumber === 1) return;
-    const v = cellValue(row.getCell(1).value);
-    if (v === '') return;
-    if (typeof v !== 'number' || !Number.isInteger(v)) fail('Map', `column A: bad y label "${v}"`);
-    yByRow.set(rowNumber, v);
-  });
-  if (xByCol.size === 0 || yByRow.size === 0) fail('Map', 'missing coordinate labels');
-  return { xByCol, yByRow };
-}
-
-/** Map sheet → region-map.json. */
-function importMap(workbook) {
-  const ws = workbook.getWorksheet('Map');
-  if (!ws) fail('Map', 'sheet not found — run "npm run balance:export" to regenerate the workbook');
-  const { xByCol, yByRow } = readMapLabels(ws);
-
-  const terrain = [];
-  const features = [];
-  const byCoord = new Map();
-  ws.eachRow((row, rowNumber) => {
-    const y = yByRow.get(rowNumber);
-    if (y === undefined) return;
-    row.eachCell({ includeEmpty: false }, (cell, col) => {
-      const x = xByCol.get(col);
-      if (x === undefined) return;
-      const code = String(cellValue(cell.value)).trim();
-      if (code === '') return;
-      const m = code.match(/^([a-z])?([A-Z])?$/);
-      if (!m || (!m[1] && !m[2])) fail('Map', `cell (${x},${y}): unknown code "${code}"`);
-      const terrainId = m[1] ? TERRAIN_CODES[m[1]] : 'Grassland'; // bare feature = grass
-      if (m[1] && !terrainId) fail('Map', `cell (${x},${y}): unknown terrain code "${m[1]}"`);
-      const featureId = m[2] ? FEATURE_CODES[m[2]] : null;
-      if (m[2] && !featureId) fail('Map', `cell (${x},${y}): unknown feature code "${m[2]}"`);
-      terrain.push({ x, y, id: terrainId });
-      if (featureId) features.push({ x, y, id: featureId });
-      byCoord.set(`${x},${y}`, { terrainId, featureId });
-    });
-  });
-  if (terrain.length === 0) fail('Map', 'the map is empty');
-
-  for (const [x, y] of TOWNHALL_CELLS) {
-    const c = byCoord.get(`${x},${y}`);
-    if (!c || c.terrainId !== 'Grassland' || c.featureId) {
-      fail('Map', `the Townhall footprint cell (${x},${y}) must be feature-free Grassland ("g")`);
-    }
-  }
-
-  const order = (a, b) => a.y - b.y || a.x - b.x;
-  terrain.sort(order);
-  features.sort(order);
-  writeFileSync(MAP_PATH, JSON.stringify(
-    { terrain: { cells: terrain }, features: { cells: features } }, null, 2) + '\n');
-  console.log(`balance: wrote ${MAP_PATH} (${terrain.length} cells, ${features.length} features)`);
-  return byCoord;
-}
-
-/** Every landmark and ruin has to sit on a real, walkable, empty cell. Getting
- *  this wrong authors a site nobody can ever reach, which is invisible until a
- *  player fails to find it. */
-function checkSites(out, cells) {
-  const townhall = new Set(TOWNHALL_CELLS.map(([x, y]) => `${x},${y}`));
-  const check = (what, x, y) => {
-    const c = cells.get(`${x},${y}`);
-    if (!c) fail('sites', `${what} is on (${x},${y}), which is not a map cell`);
-    if (c.terrainId === 'Water') fail('sites', `${what} is on water at (${x},${y})`);
-    if (c.featureId) fail('sites', `${what} shares (${x},${y}) with a ${c.featureId}`);
-    if (townhall.has(`${x},${y}`)) fail('sites', `${what} is under the Townhall at (${x},${y})`);
-  };
-  for (const l of out.landmarks) check(`landmark ${l.id}`, l.x, l.y);
-  for (const [id, r] of Object.entries(out.ruins)) check(`ruin ${id}`, r.x, r.y);
-  console.log(`balance: ${out.landmarks.length} landmarks and ${Object.keys(out.ruins).length} ruins check out`);
-}
-
-/** region-map.json → Map sheet (with live color rules per code). */
-function exportMap(workbook) {
-  const m = JSON.parse(readFileSync(MAP_PATH, 'utf8'));
-  const featureAt = new Map(m.features.cells.map((c) => [`${c.x},${c.y}`, c.id]));
-  const xs = m.terrain.cells.map((c) => c.x);
-  const ys = m.terrain.cells.map((c) => c.y);
-  const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
-  const [y0, y1] = [Math.min(...ys), Math.max(...ys)];
-
-  const ws = workbook.addWorksheet('Map', { views: [{ state: 'frozen', xSplit: 1, ySplit: 1 }] });
-  ws.getColumn(1).width = 4;
-  for (let x = x0; x <= x1; x++) {
-    ws.getRow(1).getCell(x - x0 + 2).value = x;
-    ws.getColumn(x - x0 + 2).width = 3.5;
-  }
-  ws.getRow(1).font = { bold: true };
-  for (let y = y0; y <= y1; y++) {
-    const row = ws.getRow(y - y0 + 2);
-    row.getCell(1).value = y;
-    row.getCell(1).font = { bold: true };
-  }
-  const terrainLetter = Object.fromEntries(
-    Object.entries(TERRAIN_CODES).map(([k, v]) => [v, k]));
-  const featureLetter = Object.fromEntries(
-    Object.entries(FEATURE_CODES).map(([k, v]) => [v, k]));
-  for (const c of m.terrain.cells) {
-    const feature = featureAt.get(`${c.x},${c.y}`);
-    const code = feature
-      ? (c.id === 'Grassland' ? '' : terrainLetter[c.id]) + featureLetter[feature]
-      : terrainLetter[c.id];
-    const cell = ws.getRow(c.y - y0 + 2).getCell(c.x - x0 + 2);
-    cell.value = code;
-    cell.numFmt = '@';
-    cell.alignment = { horizontal: 'center' };
-  }
-  // Live colors: the fill follows the code as you type.
-  const ref = `B2:${ws.getColumn(x1 - x0 + 2).letter}${y1 - y0 + 2}`;
-  ws.addConditionalFormatting({
-    ref,
-    rules: Object.entries(MAP_COLORS).map(([code, argb], i) => ({
-      type: 'cellIs', operator: 'equal', formulae: [`"${code}"`], priority: i + 1,
-      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb } } },
-    })),
-  });
-}
-
 // ------------------------------------------------------------------- import
 
 async function importXlsx() {
@@ -578,7 +415,7 @@ async function importXlsx() {
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
     delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
-    landmarks: [], ruins: {}, artifacts: {},
+    artifacts: {},
     quests: [],
     fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {},
@@ -719,7 +556,7 @@ async function importXlsx() {
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
     const lists = {
       district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
-      feature: Object.values(FEATURE_CODES),
+      feature: FEATURE_IDS,
     };
     if (targetKind === null && target !== null) {
       fail(where(r), `goal_type ${r.goal_type} takes no goal_target`);
@@ -784,60 +621,6 @@ async function importXlsx() {
     };
   }
 
-  // Landmarks and ruins are MAP content authored by coordinate. The importer
-  // is the only place that can check the cell actually exists, is land, and is
-  // not already occupied by a feature or the Townhall — so it does.
-  const siteSeen = new Map();
-  const claimSite = (r, x, y, what) => {
-    const key = `${x},${y}`;
-    if (siteSeen.has(key)) fail(where(r), `two sites on cell (${key}) — ${siteSeen.get(key)} is already there`);
-    siteSeen.set(key, what);
-    return key;
-  };
-  const landmarkIds = new Set();
-  for (const r of readSheet(workbook, 'Landmarks')) {
-    if (!LANDMARK_KINDS.includes(r.kind)) fail(where(r), `unknown landmark kind "${r.kind}"`);
-    if (landmarkIds.has(r.id)) fail(where(r), `duplicate landmark id "${r.id}"`);
-    landmarkIds.add(r.id);
-    const x = coord(r, 'x');
-    const y = coord(r, 'y');
-    claimSite(r, x, y, r.id);
-    out.landmarks.push({
-      id: String(r.id), kind: r.kind, x, y,
-      defended: num(r, 'defended', { blankAs: 0 }) === 1,
-      // Authored per sanctuary, not derived from distance. The tiers ARE the
-      // design — one in sight you save weeks for, then two rings beyond it —
-      // and a curve cannot express "5,000 / 25,000 / 100,000" exactly.
-      claimCost: num(r, 'claim_cost'),
-    });
-  }
-
-  for (const [id, r] of byId(readSheet(workbook, 'Ruins'), RUIN_IDS)) {
-    const x = coord(r, 'x');
-    const y = coord(r, 'y');
-    claimSite(r, x, y, id);
-    if (r.affinity !== 'Any' && !UNIT_IDS.includes(r.affinity)) {
-      fail(where(r), `affinity must be a unit id or "Any" (got "${r.affinity}")`);
-    }
-    if (!ARTIFACT_IDS.includes(r.artifact)) fail(where(r), `unknown artifact "${r.artifact}"`);
-    const supplies = {};
-    for (const c of ['Food', 'Gold', 'Stone']) {
-      const v = num(r, `supply_${c.toLowerCase()}`, { blankAs: 0 });
-      if (v > 0) supplies[c] = v;
-    }
-    out.ruins[id] = {
-      x, y,
-      tier: num(r, 'tier'),
-      difficulty: num(r, 'difficulty'),
-      baseDepthSeconds: num(r, 'base_depth_seconds'),
-      depthGrowth: num(r, 'depth_growth'),
-      maxDepth: num(r, 'max_depth'),
-      supplies,
-      affinity: r.affinity,
-      artifact: r.artifact,
-    };
-  }
-
   let lastDistance = 0;
   for (const r of readSheet(workbook, 'FogRings')) {
     const distance = num(r, 'distance');
@@ -858,8 +641,6 @@ async function importXlsx() {
 
   writeFileSync(JSON_PATH, JSON.stringify(out, null, 2) + '\n');
   console.log(`balance: wrote ${JSON_PATH}`);
-  const cells = importMap(workbook);
-  checkSites(out, cells);
 }
 
 // ------------------------------------------------------------------- export
@@ -956,24 +737,12 @@ async function exportXlsx() {
       h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
   }));
 
-  addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>
-    [l.id, l.kind, l.x, l.y, l.defended ? 1 : '', l.claimCost]));
-
-  addSheet(workbook, 'Ruins', RUIN_IDS.map((id) => {
-    const r = b.ruins[id];
-    return [id, r.x, r.y, r.tier, r.difficulty, r.baseDepthSeconds, r.depthGrowth, r.maxDepth,
-      r.supplies.Food ?? '', r.supplies.Gold ?? '', r.supplies.Stone ?? '',
-      r.affinity, r.artifact];
-  }));
-
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
     for (const part of path.split('.')) value = value[part];
     return [key, kind === 'list' ? listCell(value) : value];
   }), (col, row) => col === 'value' &&
     SETTINGS.some(([key, , kind]) => key === row[0] && kind === 'list'));
-
-  exportMap(workbook);
 
   await workbook.xlsx.writeFile(XLSX_PATH);
   console.log(`balance: wrote ${XLSX_PATH}`);

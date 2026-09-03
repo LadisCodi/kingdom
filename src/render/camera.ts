@@ -27,11 +27,19 @@ export class Camera {
   }
 
   screenToCell(sx: number, sy: number): Coord {
+    const c = this.screenToCellExact(sx, sy);
+    return { x: Math.floor(c.x), y: Math.floor(c.y) };
+  }
+
+  /** The FRACTIONAL cell under a screen point. Zooming about the pointer needs
+   *  the sub-cell position, which the floored form has already thrown away. */
+  screenToCellExact(sx: number, sy: number): { x: number; y: number } {
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
-    const wx = this.x + (sx - w / 2) / this.zoom;
-    const wy = this.y + (sy - h / 2) / this.zoom;
-    return { x: Math.floor(wx / TILE_SIZE), y: Math.floor(wy / TILE_SIZE) };
+    return {
+      x: (this.x + (sx - w / 2) / this.zoom) / TILE_SIZE,
+      y: (this.y + (sy - h / 2) / this.zoom) / TILE_SIZE,
+    };
   }
 
   cellToScreen(cell: Coord): { x: number; y: number; size: number } {

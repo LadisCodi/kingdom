@@ -3,8 +3,13 @@
 // balance.json, which is generated from the editable balance/*.csv sheets
 // (edit those, then run: npm run balance).
 // Lists indexed "per level" are 1-based by (level − 1) and clamp to the last entry.
+//
+// MAP content is the exception: terrain, features, landmarks and ruins are
+// authored by coordinate, so they live in region-map.json and are edited in
+// the map editor (?dev=map), not in the workbook. See Docs/map-editor.md.
 
 import balance from './balance.json';
+import regionMap from './region-map.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
@@ -900,7 +905,7 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
   Leyspring: { name: 'Leyspring', glyph: '💧', sprite: 'landmark_leyspring' },
 };
 
-export const LANDMARKS: LandmarkDef[] = (balance.landmarks as Array<{
+export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
   id: string; kind: string; x: number; y: number; defended: boolean; claimCost: number;
 }>).map((l) => ({
   id: l.id,
@@ -1145,14 +1150,21 @@ const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph'
   },
 };
 
-const ruinBalance = balance.ruins as Record<RuinId, {
+const ruinBalance = regionMap.ruins as Record<RuinId, {
   x: number; y: number; tier: number; difficulty: number; baseDepthSeconds: number;
   depthGrowth: number; maxDepth: number; supplies: Wallet; affinity: string; artifact: string;
 }>;
 
+/** Every ruin the code knows about. RuinId is a union, so the roster is fixed
+ *  in code and the map editor may move and retune a ruin but not add one. */
+export const RUIN_ORDER: RuinId[] = Object.keys(ruinContent) as RuinId[];
+
 export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
-  (Object.keys(ruinContent) as RuinId[]).map((id) => {
+  RUIN_ORDER.map((id) => {
     const b = ruinBalance[id];
+    // A hand-edit that drops a ruin would otherwise white-screen the app on a
+    // TypeError three frames from here.
+    if (!b) throw new Error(`region-map.json is missing the ruin "${id}"`);
     return [id, {
       id,
       ...ruinContent[id],
@@ -1338,10 +1350,6 @@ export const CONJUNCTION_BOONS: readonly ConjunctionBoon[] = [
     id: 'lentSocket', text: 'The sky lends you a socket — one extra relic, for now.',
     stat: 'attunementSlots', op: 'add', value: 1, knowledge: 60, gems: 5,
   },
-];
-
-export const RUIN_ORDER: RuinId[] = [
-  'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
 ];
 
 export const GAME_VERSION = '0.1.0';

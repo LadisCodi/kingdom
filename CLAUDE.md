@@ -24,7 +24,10 @@ npm run art:check    # verify it
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
-reset). `?dev=kit` opens the UI primitive gallery.
+reset). `?dev=kit` opens the UI primitive gallery. `?dev=map` opens the map
+editor (`Docs/map-editor.md`) — paint terrain and features, place
+landmarks and ruins; it saves straight into `src/sim/data/region-map.json`
+through a dev-only Vite middleware.
 
 ## Five invariants. Breaking one is a bug even if the tests pass.
 
@@ -54,17 +57,25 @@ a stream would desync because `advance()` groups work differently in replay
 than in live ticking, and a new consumer would shift every later roll. Integer
 arithmetic (`Math.imul`, `>>> 0`) so it is bit-identical across engines.
 
-**5. The workbook is the source of truth.** `balance/balance.xlsx` →
-`npm run balance` → `src/sim/data/balance.json`. **Editing `balance.json` by
-hand is silently overwritten** on the next dev/build. To add a column: edit the
-JSON *and* the importer schema in `scripts/balance.mjs`, then
-`npm run balance:export`, then `npm run balance`.
+**5. The workbook is the source of truth for every NUMBER; the map editor is
+the source of truth for the MAP.** `balance/balance.xlsx` → `npm run balance` →
+`src/sim/data/balance.json`. **Editing `balance.json` by hand is silently
+overwritten** on the next dev/build. To add a column: edit the JSON *and* the
+importer schema in `scripts/balance.mjs`, then `npm run balance:export`, then
+`npm run balance`.
+Map *content* — terrain, features, landmarks and ruins — is authored by
+coordinate, which a spreadsheet expresses badly, so it lives in
+`src/sim/data/region-map.json` and is edited in `?dev=map`
+(`Docs/map-editor.md`). `npm run balance` does not touch that file.
+What a legal map is lives in **one** place, `src/sim/data/mapRules.ts`, checked
+by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 
 ## Data or code?
 
 | Data — no code change | Code |
 |---|---|
-| every balance number (`Districts`, `Harvest`, `Technologies`, `Upgrades`, `Quests`, `Currencies`, `Units`, `Ruins`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
+| every balance number (`Districts`, `Harvest`, `Technologies`, `Upgrades`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
+| the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a seasonal hero = one hero row + one banner row | tech-tree node positions (`node:{x,y}` in `definitions.ts` — the layout is content) |
@@ -130,7 +141,9 @@ that has now been argued twice.
 
 ## Don't
 
-- Don't hand-edit `src/sim/data/balance.json`.
+- Don't hand-edit `src/sim/data/balance.json`. Hand-editing
+  `src/sim/data/region-map.json` is allowed but pointless — use `?dev=map`,
+  which validates as you go.
 - Don't re-express upgrade levels as modifiers, or pass `now` through the
   `effectiveX` helpers — both were cut deliberately (`engine-seams.md` §10).
 - Don't restructure `GameState` into `regions: Record<RegionId, RegionState>`

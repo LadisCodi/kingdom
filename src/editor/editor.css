@@ -1,0 +1,148 @@
+/* The map editor's chrome. Deliberately nothing like the game's: it is a tool
+   in the repo, not a screen in the product, and looking like a tool is what
+   stops a screenshot of it being mistaken for one. */
+
+.ed-root {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 148px 1fr 320px;
+  grid-template-rows: 1fr 34px;
+  grid-template-areas:
+    'tools stage side'
+    'status status status';
+  background: #0b0e13;
+  color: #d6dee9;
+  font: 12px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --line: #222b38;
+  --ink-dim: #7c8899;
+  --accent: #f0b429;
+}
+
+/* min-height: 0 on all three columns. A grid item defaults to min-height:auto,
+   so a long census would push the 1fr row past the viewport, the page would
+   scroll, and the absolutely-positioned canvas would grow with the stage. */
+.ed-toolbar {
+  grid-area: tools;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  border-right: 1px solid var(--line);
+  background: #10151d;
+}
+
+.ed-stage { grid-area: stage; position: relative; min-height: 0; overflow: hidden; }
+.ed-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.ed-canvas[data-mode='select'] { cursor: grab; }
+.ed-canvas[data-mode='place'] { cursor: copy; }
+.ed-canvas[data-mode='erase'] { cursor: alias; }
+
+.ed-side {
+  grid-area: side;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  border-left: 1px solid var(--line);
+  background: #10151d;
+}
+
+.ed-status {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-top: 1px solid var(--line);
+  background: #10151d;
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-brand { font-weight: 700; letter-spacing: .04em; color: var(--accent); margin-bottom: 8px; }
+.ed-label { margin: 10px 0 4px; color: var(--ink-dim); text-transform: uppercase; font-size: 10px; letter-spacing: .08em; }
+.ed-spacer { flex: 1; }
+.ed-readout { color: var(--ink-dim); }
+
+/* ---------- buttons ---------- */
+
+.ed-tools, .ed-sizes { display: flex; gap: 4px; flex-wrap: wrap; }
+.ed-tool, .ed-size, .ed-toggle, .ed-btn, .ed-swatch, .ed-danger {
+  background: #1a2230;
+  color: #d6dee9;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+}
+.ed-tool { width: 26px; height: 26px; font-size: 13px; line-height: 1; }
+.ed-size { width: 22px; height: 22px; }
+.ed-tool.on, .ed-size.on, .ed-toggle.on, .ed-swatch.on {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.ed-tool:hover, .ed-size:hover, .ed-toggle:hover, .ed-swatch:hover, .ed-btn:hover:not(:disabled) { background: #243044; }
+
+/* The Sites tool's three verbs. Full-width rows, not icons: "what does a
+   click do right now" is the one thing this tool has to answer out loud. */
+.ed-modes { display: flex; flex-direction: column; gap: 3px; }
+.ed-mode { padding: 4px 6px; text-align: left; }
+.ed-mode.on.place { border-color: #6fbf7f; box-shadow: inset 0 0 0 1px #6fbf7f; }
+.ed-mode.on.erase { border-color: #e0555f; box-shadow: inset 0 0 0 1px #e0555f; }
+.ed-note { margin: 6px 0 0; color: var(--ink-dim); font-size: 11px; }
+
+.ed-overlays { display: flex; flex-direction: column; gap: 3px; }
+.ed-toggle { padding: 3px 6px; text-align: left; }
+
+.ed-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ed-swatch { aspect-ratio: 1; padding: 2px; display: grid; place-items: center; overflow: hidden; }
+.ed-swatch img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; border-radius: 3px; }
+.ed-swatch span { font-size: 13px; }
+
+.ed-btn { padding: 3px 9px; }
+.ed-btn:disabled { opacity: .4; cursor: default; }
+.ed-btn.primary { background: #2b6b3f; border-color: #3f8f57; font-weight: 600; }
+.ed-btn.primary.dirty { background: #8a6a12; border-color: var(--accent); }
+.ed-danger { margin-top: 8px; padding: 4px 8px; width: 100%; background: #55212a; border-color: #7d2f3c; }
+.ed-danger:hover { background: #6d2934; }
+
+/* ---------- side panel ---------- */
+
+.ed-card { border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin-bottom: 8px; background: #131a24; }
+.ed-card h2 { margin: 0 0 6px; font-size: 12px; letter-spacing: .03em; }
+.ed-hint { margin: 4px 0 8px; color: var(--ink-dim); }
+.ed-ok { margin: 0; color: #7fd07f; }
+
+.ed-issue {
+  display: block; width: 100%; margin-bottom: 3px; padding: 4px 6px;
+  text-align: left; border: 0; border-left: 3px solid; border-radius: 3px;
+  background: #1a2230; color: #d6dee9; cursor: pointer; font: inherit;
+}
+.ed-issue:disabled { cursor: default; }
+.ed-issue.err { border-color: #e0555f; background: #2a1a1e; }
+.ed-issue.warn { border-color: var(--accent); background: #2a2415; }
+.ed-issue:hover:not(:disabled) { filter: brightness(1.25); }
+
+.ed-field { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 6px; margin-bottom: 4px; }
+.ed-field > span { color: var(--ink-dim); }
+.ed-field input, .ed-field select {
+  width: 100%; padding: 2px 5px; background: #0e131b; color: #d6dee9;
+  border: 1px solid var(--line); border-radius: 4px; font: inherit;
+}
+.ed-field input[type='checkbox'] { width: auto; }
+
+.ed-chips { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 6px; }
+.ed-chip { padding: 1px 6px; border-radius: 9px; background: #1a2230; border: 1px solid var(--line); font-size: 11px; }
+.ed-chip.feat { background: #1b2a20; border-color: #2c4433; }
+
+.ed-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ed-table th { text-align: left; color: var(--ink-dim); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.ed-table td, .ed-table th { padding: 1px 4px 1px 0; border-bottom: 1px solid #1a212c; }
+
+/* ---------- toast ---------- */
+
+.ed-toast {
+  position: fixed; left: 50%; bottom: 48px; transform: translateX(-50%);
+  padding: 7px 14px; border-radius: 6px; z-index: 10;
+  background: #24402c; border: 1px solid #3f8f57; color: #dff3e4;
+  max-width: 60ch;
+}
+.ed-toast.bad { background: #3a1d22; border-color: #7d2f3c; color: #ffd9dd; }

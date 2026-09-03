@@ -1,8 +1,8 @@
 # Game balance workbook
 
 `balance.xlsx` is the **editable source of truth** for every balancing number
-in the game. Open it in Excel, LibreOffice Calc, or Google Sheets, tweak,
-save, then apply:
+in the game. Open it in Excel, LibreOffice Calc, or Google Sheets, tweak, save,
+then apply:
 
 ```bash
 npm run balance    # validates the workbook and regenerates src/sim/data/balance.json
@@ -12,6 +12,10 @@ npm test           # the formula tests catch anything that breaks the worked exa
 The dev server picks the change up on the next reload. The generated
 `balance.json` is committed too, so a fresh clone builds without running
 the script.
+
+**The map is not in here.** Terrain, features, landmarks and ruins are authored
+by coordinate, so they live in `src/sim/data/region-map.json` and are painted in
+the map editor — see [§ The map](#the-map) below.
 
 | Sheet | What |
 |---|---|
@@ -23,11 +27,9 @@ the script.
 | `Upgrades` | Instant gold boosts: `cost_base`/`cost_growth`, `max_level`, `effect_per_level`, `required_tech` |
 | `Adjacency` | Gold/min a district gains **or loses** per adjacent neighbor of a given type (negative = crowding penalty); columns `district`, `neighbor`, `gold_per_minute` — negatives allowed, one row per pair |
 | `Quests` | The onboarding chain, one row per quest IN ORDER — **row order IS chain order**, so reordering the rows reorders the game. `goal_type` (absolute: BuildDistrict/UpgradeDistrict/HoldResource/ReachPopulation/CompleteTech/CompleteTechs/AssignWorkers/TrainArmy/ClaimLandmarks/ReachDepth/ClearRuins/OwnArtifacts/OwnHeroes/BuyUpgrade · relative: CollectResource/CollectTaps/DiscoverCells/SellGoods), `goal_target` (district/tech/currency/upgrade id where the type needs one), `goal_amount`, `goal_level` (UpgradeDistrict only), `reward_*` including `reward_gems` and `reward_knowledge` |
-| `Landmarks` | The shrines: position, whether they are defended, `claim_cost` in Gold |
-| `Artifacts` · `Heroes` · `Ruins` | Relics, the hero roster and the dungeons — see `Docs/features/magic.md`, `heroes-and-gacha.md`, `expeditions.md` |
+| `Artifacts` · `Heroes` | Relics and the hero roster — see `Docs/features/magic.md`, `heroes-and-gacha.md` |
 | `FogRings` | Fog reveal cost by distance ring |
 | `Settings` | Everything singleton: worker speed, collect cooldown, training time, tax rate + tap boost (`taxes.*`), offline cap, population costs… |
-| `Map` | The world itself — one spreadsheet cell per map cell (see below) |
 
 ## Tuning the opening
 
@@ -89,29 +91,36 @@ Format notes:
 - The cost/time **formulas** consuming these values are documented in
   `Docs/03` and `Docs/04`.
 
-## The Map sheet
+## The map
 
-The grid IS the map (`npm run balance` writes it to
-`src/sim/data/region-map.json`). Row 1 holds x coordinates, column A holds
-y coordinates (y grows downward); each cell is one map cell:
+**The map is not in this workbook.** The `Map`, `Landmarks` and `Ruins` sheets
+were removed on 2026-09-03: a grid of letter codes could not show you the map,
+could not put a landmark's row next to the cell it stands on, and above all
+could not show a **derived** number — and every fog price in the game is a BFS
+distance from the Townhall, which a spreadsheet cell cannot know about itself.
 
-- **Terrain** (lowercase): `g` Grassland · `w` Water · `p` Plains ·
-  `d` Desert · `s` Snow · `u` Tundra. **Blank = void** (outside the world).
-- **Features** (uppercase): `T` Trees · `B` Berry bush · `A` Wild animals ·
-  `R` Rocks · `F` Fish shoal (water: write `wF`) · `I` Iron vein.
-  A bare feature letter implies Grassland; `pT` puts Trees on Plains.
-  *Planned (2026-09-02):* `U` Ruin · `L` Landmark — see
-  `Docs/features/expeditions.md` and `Docs/features/magic.md`.
-- Cells are color-coded by conditional formatting, so the map stays visible
-  as you type.
-- The Townhall anchors at (0,0) and occupies (0,0)–(1,1) — those four cells
-  must be feature-free `g` (the importer refuses otherwise).
-- To grow the world, add new coordinate labels in row 1 / column A and fill
-  cells. Mind that gameplay near the origin (fog seed, reveal costs, the
-  starting economy) derives from this map, and a few tests pin cells close
-  to the Townhall.
-- Map edits don't reach existing saves cleanly — bump `SAVE_VERSION` after
-  a map change that matters.
+Terrain, features, landmarks and ruins now live in
+`src/sim/data/region-map.json` and are edited by painting:
 
-`npm run balance:export` regenerates the workbook from `balance.json` +
-`region-map.json` if it ever gets mangled.
+```bash
+npm run dev      # then open http://localhost:5173/?dev=map
+```
+
+Save (`Ctrl+S`) writes the JSON directly, through a middleware that only exists
+under `npm run dev`. The editor validates continuously against
+`src/sim/data/mapRules.ts` — the same module `tests/regionMap.test.ts` gates the
+build on — so a map that would fail the build cannot be saved. It also draws the
+distance and Gold cost of every cell, warns about land the Townhall cannot walk
+to, and counts cells and features **per distance ring**.
+
+Two things that have not changed:
+
+- The Townhall anchors at (0,0) and occupies (0,0)–(1,1); those four cells must
+  be feature-free Grassland. The editor refuses to save otherwise.
+- Map edits don't reach existing saves cleanly — bump `SAVE_VERSION` after a map
+  change that matters.
+
+`npm run balance` no longer reads or writes the map, and
+`npm run balance:export` no longer emits those three sheets.
+
+Full reference: [`Docs/map-editor.md`](../Docs/map-editor.md).
