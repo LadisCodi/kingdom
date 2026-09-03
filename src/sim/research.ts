@@ -4,19 +4,18 @@
 // in real time through the unified advance (like the build queue).
 
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS,
 } from './data/definitions';
 import {
   addToWallet, getWallet,
-  type DistrictId, type GameState, type TechId, type UnitId, type UpgradeId,
+  type DistrictId, type GameState, type TechId, type UnitId,
 } from './state';
 
 /** Something a technology puts in the player's hands. */
 export type Unlock =
   | { kind: 'district'; id: DistrictId }
   | { kind: 'districtLevel'; id: DistrictId; level: number }
-  | { kind: 'unit'; id: UnitId }
-  | { kind: 'upgrade'; id: UpgradeId };
+  | { kind: 'unit'; id: UnitId };
 
 /**
  * What researching `id` gives you — derived from the definitions, so it can
@@ -29,7 +28,10 @@ export type Unlock =
  *
  * Order is load-bearing for the banners — districts (with their per-level
  * gates interleaved, as authored) then units, matching the sequence players
- * already see. Upgrades come last because the banners don't announce them.
+ * already see.
+ *
+ * A MINOR RANK unlocks nothing here, and that is correct: what it gives is its
+ * own numeric effect, which the info panel reads off `effectPerRank`.
  */
 export function techUnlocks(id: TechId): Unlock[] {
   const unlocks: Unlock[] = [];
@@ -44,9 +46,6 @@ export function techUnlocks(id: TechId): Unlock[] {
   for (const unit of Object.values(UNITS)) {
     if (unit.requiredTech === id) unlocks.push({ kind: 'unit', id: unit.id });
   }
-  for (const upgrade of Object.values(UPGRADES)) {
-    if (upgrade.requiredTech === id) unlocks.push({ kind: 'upgrade', id: upgrade.id });
-  }
   return unlocks;
 }
 
@@ -58,9 +57,9 @@ export function techUnlocks(id: TechId): Unlock[] {
  * building. Three calls on one budget is the decision the economy is built
  * around; a second purse just removed the tree from that contest.
  *
- * Instant upgrades are Gold-only too. The line between them is no longer
- * which currency they cost — it is that an upgrade is permanent and stacking
- * while a technology is a one-time unlock.
+ * Minor ranks cost Gold too. What separates a minor from a major is cost and
+ * time, and nothing else — the tree says "small" with money and a clock,
+ * which is what a tree is already made of (tech-tree.md §1 rule 3).
  */
 export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost, 'Gold');
 

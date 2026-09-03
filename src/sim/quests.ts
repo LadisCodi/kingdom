@@ -11,9 +11,8 @@ import { recordResourceDiscovery } from './discovery';
 import { refund } from './wallet';
 import {
   addToWallet, getWallet,
-  type CurrencyId, type FeatureId, type GameState, type UpgradeId,
+  type CurrencyId, type FeatureId, type GameState,
 } from './state';
-import { upgradeLevel } from './upgrades';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
   QUESTS[state.quests.index] ?? null;
@@ -91,8 +90,6 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.artifacts.owned.length;
     case 'OwnHeroes':
       return state.heroes.owned.length;
-    case 'BuyUpgrade':
-      return upgradeLevel(state, quest.goalTarget as UpgradeId);
     default:
       return 0;
   }

@@ -5,6 +5,8 @@ import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
+import { isTechComplete } from '../src/sim/research';
+import { effect, lineRank } from '../src/sim/upgrades';
 import {
   addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
@@ -172,6 +174,28 @@ describe('save versions', () => {
     // back from the ground the player holds. Same purse, different job.
     expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(0);
     expect(restored.kingdom.wallet).not.toHaveProperty('Knowledge');
+  });
+
+  // v24: upgrades stopped being a separate kind of thing. A player mid-flight
+  // holds `UpgradeLevels: { TapPower: 3 }` and must come back holding three
+  // COMPLETED technologies — every level they paid for, and no research time
+  // charged for them a second time.
+  it('turns banked upgrade levels into completed ranks', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const research = (save.Modules['kingdom.research'] as any);
+    research.UpgradeLevels = { TapPower: 3, Resonance: 1 };
+    save.SaveVersion = 23;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    expect(lineRank(restored, 'TapPower')).toBe(3);
+    expect(lineRank(restored, 'Resonance')).toBe(1);
+    // Exactly the ranks paid for, and not one more.
+    expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
+    expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
+    // And the effect the player had actually bought still reaches the sim.
+    expect(effect(restored, 'TapPower')).toBe(3);
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {

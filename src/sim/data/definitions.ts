@@ -8,7 +8,7 @@ import balance from './balance.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, TechId, TrainableId, UnitId, UpgradeId, Wallet,
+  LandmarkKind, RuinId, TechId, TechLineId, TrainableId, UnitId, Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -144,7 +144,7 @@ export type QuestGoalType =
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature' | 'SellGoods'
   | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts'
-  | 'OwnHeroes' | 'BuyUpgrade';
+  | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
   new Set([
@@ -477,19 +477,30 @@ export interface TechnologyDef {
   name: string;
   description: string;
   glyph: string;
-  /** Hand-authored tree grid position (the layout IS content). */
-  node: { x: number; y: number };
+  /** Hand-authored tree grid position (the layout IS content). NULL for a
+   *  minor rank: it is drawn in its line's fan under the parent, so there is
+   *  no position to author. */
+  node: { x: number; y: number } | null;
   cost: Wallet; // city currencies
   durationSeconds: number;
   requires: TechId[]; // tree edges — all must be completed first
+  /** Set on a MINOR rank; null on a major. Ranks of one line share it. */
+  line: TechLineId | null;
+  /** What one completed rank of this line adds. 0 on a major. */
+  effectPerRank: number;
 }
 
 const tech = (
-  content: Omit<TechnologyDef, 'cost' | 'durationSeconds' | 'requires'>,
-  b: { cost: Wallet; durationSeconds: number; requires: unknown },
+  content: Omit<TechnologyDef, 'cost' | 'durationSeconds' | 'requires'
+    | 'line' | 'effectPerRank'>,
+  b: {
+    cost: Wallet; durationSeconds: number; requires: unknown;
+    line: string | null; effectPerRank: number;
+  },
 ): TechnologyDef => ({
   ...content, cost: b.cost, durationSeconds: b.durationSeconds,
-  requires: b.requires as TechId[]
+  requires: b.requires as TechId[],
+  line: b.line as TechLineId | null, effectPerRank: b.effectPerRank,
 });
 
 // Four branches out of Forestry (Docs/features/tech-tree.md): CIVICS up,
@@ -674,6 +685,350 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     glyph: '🚩',
     node: { x: 0, y: 4 },
   }, balance.technologies.Warband),
+  // ------------------------------------------------- minor ranks
+  TapPowerI: tech({
+    id: 'TapPowerI',
+    name: 'Tap Power I',
+    description: '+1 resource per collect tap',
+    glyph: '👆',
+    node: null,
+  }, balance.technologies.TapPowerI),
+  TapPowerII: tech({
+    id: 'TapPowerII',
+    name: 'Tap Power II',
+    description: '+1 resource per collect tap',
+    glyph: '👆',
+    node: null,
+  }, balance.technologies.TapPowerII),
+  TapPowerIII: tech({
+    id: 'TapPowerIII',
+    name: 'Tap Power III',
+    description: '+1 resource per collect tap',
+    glyph: '👆',
+    node: null,
+  }, balance.technologies.TapPowerIII),
+  TapPowerIV: tech({
+    id: 'TapPowerIV',
+    name: 'Tap Power IV',
+    description: '+1 resource per collect tap',
+    glyph: '👆',
+    node: null,
+  }, balance.technologies.TapPowerIV),
+  TapPowerV: tech({
+    id: 'TapPowerV',
+    name: 'Tap Power V',
+    description: '+1 resource per collect tap',
+    glyph: '👆',
+    node: null,
+  }, balance.technologies.TapPowerV),
+  QuickHandsI: tech({
+    id: 'QuickHandsI',
+    name: 'Quick Hands I',
+    description: '−0.05s between auto-taps while holding',
+    glyph: '⚡',
+    node: null,
+  }, balance.technologies.QuickHandsI),
+  QuickHandsII: tech({
+    id: 'QuickHandsII',
+    name: 'Quick Hands II',
+    description: '−0.05s between auto-taps while holding',
+    glyph: '⚡',
+    node: null,
+  }, balance.technologies.QuickHandsII),
+  QuickHandsIII: tech({
+    id: 'QuickHandsIII',
+    name: 'Quick Hands III',
+    description: '−0.05s between auto-taps while holding',
+    glyph: '⚡',
+    node: null,
+  }, balance.technologies.QuickHandsIII),
+  QuickHandsIV: tech({
+    id: 'QuickHandsIV',
+    name: 'Quick Hands IV',
+    description: '−0.05s between auto-taps while holding',
+    glyph: '⚡',
+    node: null,
+  }, balance.technologies.QuickHandsIV),
+  QuickHandsV: tech({
+    id: 'QuickHandsV',
+    name: 'Quick Hands V',
+    description: '−0.05s between auto-taps while holding',
+    glyph: '⚡',
+    node: null,
+  }, balance.technologies.QuickHandsV),
+  WorkerLoadI: tech({
+    id: 'WorkerLoadI',
+    name: 'Worker Load I',
+    description: '+1 resource per worker delivery',
+    glyph: '🎒',
+    node: null,
+  }, balance.technologies.WorkerLoadI),
+  WorkerLoadII: tech({
+    id: 'WorkerLoadII',
+    name: 'Worker Load II',
+    description: '+1 resource per worker delivery',
+    glyph: '🎒',
+    node: null,
+  }, balance.technologies.WorkerLoadII),
+  WorkerLoadIII: tech({
+    id: 'WorkerLoadIII',
+    name: 'Worker Load III',
+    description: '+1 resource per worker delivery',
+    glyph: '🎒',
+    node: null,
+  }, balance.technologies.WorkerLoadIII),
+  SawpitsI: tech({
+    id: 'SawpitsI',
+    name: 'Sawpits I',
+    description: '+1 Wood per worker delivery',
+    glyph: '🪵',
+    node: null,
+  }, balance.technologies.SawpitsI),
+  SawpitsII: tech({
+    id: 'SawpitsII',
+    name: 'Sawpits II',
+    description: '+1 Wood per worker delivery',
+    glyph: '🪵',
+    node: null,
+  }, balance.technologies.SawpitsII),
+  SawpitsIII: tech({
+    id: 'SawpitsIII',
+    name: 'Sawpits III',
+    description: '+1 Wood per worker delivery',
+    glyph: '🪵',
+    node: null,
+  }, balance.technologies.SawpitsIII),
+  ButcheryI: tech({
+    id: 'ButcheryI',
+    name: 'Butchery I',
+    description: '+1 Food per tap on game',
+    glyph: '🍖',
+    node: null,
+  }, balance.technologies.ButcheryI),
+  ButcheryII: tech({
+    id: 'ButcheryII',
+    name: 'Butchery II',
+    description: '+1 Food per tap on game',
+    glyph: '🍖',
+    node: null,
+  }, balance.technologies.ButcheryII),
+  ButcheryIII: tech({
+    id: 'ButcheryIII',
+    name: 'Butchery III',
+    description: '+1 Food per tap on game',
+    glyph: '🍖',
+    node: null,
+  }, balance.technologies.ButcheryIII),
+  IrrigationI: tech({
+    id: 'IrrigationI',
+    name: 'Irrigation I',
+    description: '+1 Food per delivery from a farm',
+    glyph: '💧',
+    node: null,
+  }, balance.technologies.IrrigationI),
+  IrrigationII: tech({
+    id: 'IrrigationII',
+    name: 'Irrigation II',
+    description: '+1 Food per delivery from a farm',
+    glyph: '💧',
+    node: null,
+  }, balance.technologies.IrrigationII),
+  IrrigationIII: tech({
+    id: 'IrrigationIII',
+    name: 'Irrigation III',
+    description: '+1 Food per delivery from a farm',
+    glyph: '💧',
+    node: null,
+  }, balance.technologies.IrrigationIII),
+  ScythesI: tech({
+    id: 'ScythesI',
+    name: 'Scythes I',
+    description: '+1 Food per tap on a crop plot',
+    glyph: '🌾',
+    node: null,
+  }, balance.technologies.ScythesI),
+  ScythesII: tech({
+    id: 'ScythesII',
+    name: 'Scythes II',
+    description: '+1 Food per tap on a crop plot',
+    glyph: '🌾',
+    node: null,
+  }, balance.technologies.ScythesII),
+  ScythesIII: tech({
+    id: 'ScythesIII',
+    name: 'Scythes III',
+    description: '+1 Food per tap on a crop plot',
+    glyph: '🌾',
+    node: null,
+  }, balance.technologies.ScythesIII),
+  SurveyingI: tech({
+    id: 'SurveyingI',
+    name: 'Surveying I',
+    description: '+1 Gold of reveal progress per tap on the fog',
+    glyph: '🧭',
+    node: null,
+  }, balance.technologies.SurveyingI),
+  SurveyingII: tech({
+    id: 'SurveyingII',
+    name: 'Surveying II',
+    description: '+1 Gold of reveal progress per tap on the fog',
+    glyph: '🧭',
+    node: null,
+  }, balance.technologies.SurveyingII),
+  PitonsI: tech({
+    id: 'PitonsI',
+    name: 'Pitons I',
+    description: '−10% Gold to clear a cell of fog',
+    glyph: '⛏️',
+    node: null,
+  }, balance.technologies.PitonsI),
+  PitonsII: tech({
+    id: 'PitonsII',
+    name: 'Pitons II',
+    description: '−10% Gold to clear a cell of fog',
+    glyph: '⛏️',
+    node: null,
+  }, balance.technologies.PitonsII),
+  MarketStallI: tech({
+    id: 'MarketStallI',
+    name: 'Market Stall I',
+    description: '+5% Market sale prices',
+    glyph: '🛒',
+    node: null,
+  }, balance.technologies.MarketStallI),
+  MarketStallII: tech({
+    id: 'MarketStallII',
+    name: 'Market Stall II',
+    description: '+5% Market sale prices',
+    glyph: '🛒',
+    node: null,
+  }, balance.technologies.MarketStallII),
+  MarketStallIII: tech({
+    id: 'MarketStallIII',
+    name: 'Market Stall III',
+    description: '+5% Market sale prices',
+    glyph: '🛒',
+    node: null,
+  }, balance.technologies.MarketStallIII),
+  MarketStallIV: tech({
+    id: 'MarketStallIV',
+    name: 'Market Stall IV',
+    description: '+5% Market sale prices',
+    glyph: '🛒',
+    node: null,
+  }, balance.technologies.MarketStallIV),
+  TradeRoutesI: tech({
+    id: 'TradeRoutesI',
+    name: 'Trade Routes I',
+    description: '+10% tax income',
+    glyph: '⛵',
+    node: null,
+  }, balance.technologies.TradeRoutesI),
+  TradeRoutesII: tech({
+    id: 'TradeRoutesII',
+    name: 'Trade Routes II',
+    description: '+10% tax income',
+    glyph: '⛵',
+    node: null,
+  }, balance.technologies.TradeRoutesII),
+  TradeRoutesIII: tech({
+    id: 'TradeRoutesIII',
+    name: 'Trade Routes III',
+    description: '+10% tax income',
+    glyph: '⛵',
+    node: null,
+  }, balance.technologies.TradeRoutesIII),
+  TradeRoutesIV: tech({
+    id: 'TradeRoutesIV',
+    name: 'Trade Routes IV',
+    description: '+10% tax income',
+    glyph: '⛵',
+    node: null,
+  }, balance.technologies.TradeRoutesIV),
+  TradeRoutesV: tech({
+    id: 'TradeRoutesV',
+    name: 'Trade Routes V',
+    description: '+10% tax income',
+    glyph: '⛵',
+    node: null,
+  }, balance.technologies.TradeRoutesV),
+  StonecuttingI: tech({
+    id: 'StonecuttingI',
+    name: 'Stonecutting I',
+    description: '+1 Stone per worker delivery',
+    glyph: '🪨',
+    node: null,
+  }, balance.technologies.StonecuttingI),
+  StonecuttingII: tech({
+    id: 'StonecuttingII',
+    name: 'Stonecutting II',
+    description: '+1 Stone per worker delivery',
+    glyph: '🪨',
+    node: null,
+  }, balance.technologies.StonecuttingII),
+  StonecuttingIII: tech({
+    id: 'StonecuttingIII',
+    name: 'Stonecutting III',
+    description: '+1 Stone per worker delivery',
+    glyph: '🪨',
+    node: null,
+  }, balance.technologies.StonecuttingIII),
+  BigNetsI: tech({
+    id: 'BigNetsI',
+    name: 'Big Nets I',
+    description: '+1 Food per delivery from a shoal',
+    glyph: '🕸️',
+    node: null,
+  }, balance.technologies.BigNetsI),
+  BigNetsII: tech({
+    id: 'BigNetsII',
+    name: 'Big Nets II',
+    description: '+1 Food per delivery from a shoal',
+    glyph: '🕸️',
+    node: null,
+  }, balance.technologies.BigNetsII),
+  BigNetsIII: tech({
+    id: 'BigNetsIII',
+    name: 'Big Nets III',
+    description: '+1 Food per delivery from a shoal',
+    glyph: '🕸️',
+    node: null,
+  }, balance.technologies.BigNetsIII),
+  IronPicksI: tech({
+    id: 'IronPicksI',
+    name: 'Iron Picks I',
+    description: '+1 Stone per delivery from a vein',
+    glyph: '⛏️',
+    node: null,
+  }, balance.technologies.IronPicksI),
+  IronPicksII: tech({
+    id: 'IronPicksII',
+    name: 'Iron Picks II',
+    description: '+1 Stone per delivery from a vein',
+    glyph: '⛏️',
+    node: null,
+  }, balance.technologies.IronPicksII),
+  IronPicksIII: tech({
+    id: 'IronPicksIII',
+    name: 'Iron Picks III',
+    description: '+1 Stone per delivery from a vein',
+    glyph: '⛏️',
+    node: null,
+  }, balance.technologies.IronPicksIII),
+  ResonanceI: tech({
+    id: 'ResonanceI',
+    name: 'Resonance I',
+    description: '−20% Mana to cast a relic',
+    glyph: '🔔',
+    node: null,
+  }, balance.technologies.ResonanceI),
+  ResonanceII: tech({
+    id: 'ResonanceII',
+    name: 'Resonance II',
+    description: '−20% Mana to cast a relic',
+    glyph: '🔔',
+    node: null,
+  }, balance.technologies.ResonanceII),
 };
 
 export const TECH_ORDER: TechId[] = [
@@ -684,6 +1039,20 @@ export const TECH_ORDER: TechId[] = [
   'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools',
   'Warrior', 'Spears', 'Archery', 'Cavalry',
   'Attunement', 'Warband',
+  // minor ranks, in the order their lines are authored
+  'TapPowerI', 'TapPowerII', 'TapPowerIII', 'TapPowerIV',
+  'TapPowerV', 'QuickHandsI', 'QuickHandsII', 'QuickHandsIII',
+  'QuickHandsIV', 'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII',
+  'WorkerLoadIII', 'SawpitsI', 'SawpitsII', 'SawpitsIII',
+  'ButcheryI', 'ButcheryII', 'ButcheryIII', 'IrrigationI',
+  'IrrigationII', 'IrrigationIII', 'ScythesI', 'ScythesII',
+  'ScythesIII', 'SurveyingI', 'SurveyingII', 'PitonsI',
+  'PitonsII', 'MarketStallI', 'MarketStallII', 'MarketStallIII',
+  'MarketStallIV', 'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII',
+  'TradeRoutesIV', 'TradeRoutesV', 'StonecuttingI', 'StonecuttingII',
+  'StonecuttingIII', 'BigNetsI', 'BigNetsII', 'BigNetsIII',
+  'IronPicksI', 'IronPicksII', 'IronPicksIII', 'ResonanceI',
+  'ResonanceII',
 ];
 
 // Slots & gem pricing for extra slots.
@@ -702,105 +1071,34 @@ export const RESEARCH_SETTINGS = balance.research;
  */
 export const ARMY = balance.army;
 
-// ----------------------------------------------------------------- upgrades
-
-export interface UpgradeDef {
-  id: UpgradeId;
-  name: string;
-  description: string; // include the per-level effect, player-facing
-  glyph: string;
-  costBase: number; // gold; level L costs round(costBase * costGrowth^L)
-  costGrowth: number;
-  maxLevel: number;
-  effectPerLevel: number; // applied by src/sim/upgrades.ts effective helpers
-  requiredTech: TechId | null;
-}
-
-const upgrade = (
-  content: Pick<UpgradeDef, 'id' | 'name' | 'description' | 'glyph'>,
-  b: Omit<UpgradeDef, 'id' | 'name' | 'description' | 'glyph' | 'requiredTech'>
-    & { requiredTech: unknown },
-): UpgradeDef => ({ ...content, ...b, requiredTech: (b.requiredTech ?? null) as TechId | null });
-
-export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
-  TapPower: upgrade({
-    id: 'TapPower', name: 'Tap Power', glyph: '👆',
-    description: '+1 resource per collect tap',
-  }, balance.upgrades.TapPower),
-  QuickHands: upgrade({
-    id: 'QuickHands', name: 'Quick Hands', glyph: '⚡',
-    // Only holding is paced, so this only ever speeds holding up. A
-    // deliberate tap has no cooldown to shave.
-    description: '−0.05s between auto-taps while holding',
-  }, balance.upgrades.QuickHands),
-  WorkerLoad: upgrade({
-    id: 'WorkerLoad', name: 'Worker Load', glyph: '🎒',
-    description: '+1 resource per worker delivery',
-  }, balance.upgrades.WorkerLoad),
-  Sawpits: upgrade({
-    id: 'Sawpits', name: 'Sawpits', glyph: '🪵',
-    description: '+1 Wood per worker delivery',
-  }, balance.upgrades.Sawpits),
-  Butchery: upgrade({
-    id: 'Butchery', name: 'Butchery', glyph: '🍖',
-    description: '+1 Food per tap on game',
-  }, balance.upgrades.Butchery),
-  Irrigation: upgrade({
-    id: 'Irrigation', name: 'Irrigation', glyph: '💧',
-    description: '+1 Food per delivery from a farm',
-  }, balance.upgrades.Irrigation),
-  Scythes: upgrade({
-    id: 'Scythes', name: 'Scythes', glyph: '🌾',
-    description: '+1 Food per tap on a crop plot',
-  }, balance.upgrades.Scythes),
-  Pitons: upgrade({
-    id: 'Pitons', name: 'Pitons', glyph: '⛏️',
-    description: '−10% Gold to clear a cell of fog',
-  }, balance.upgrades.Pitons),
-  Resonance: upgrade({
-    id: 'Resonance', name: 'Resonance', glyph: '🔔',
-    description: '−20% Mana to cast a relic',
-  }, balance.upgrades.Resonance),
-  Surveying: upgrade({
-    id: 'Surveying', name: 'Surveying', glyph: '🧭',
-    // Each level makes one tap on the fog do the work of one more. The Gold
-    // a cell costs is unchanged — this buys the player's TIME back, which is
-    // the thing exploration actually spends once the far rings get expensive.
-    description: '+1 Gold of reveal progress per tap on the fog',
-  }, balance.upgrades.Surveying),
-  MarketStall: upgrade({
-    id: 'MarketStall', name: 'Market Stall', glyph: '🛒',
-    description: '+5% Market sale prices',
-  }, balance.upgrades.MarketStall),
-  TradeRoutes: upgrade({
-    id: 'TradeRoutes', name: 'Trade Routes', glyph: '⛵',
-    description: '+10% tax income',
-  }, balance.upgrades.TradeRoutes),
-  Stonecutting: upgrade({
-    id: 'Stonecutting', name: 'Stonecutting', glyph: '🪨',
-    description: '+1 Stone per worker delivery',
-  }, balance.upgrades.Stonecutting),
-  BigNets: upgrade({
-    id: 'BigNets', name: 'Big Nets', glyph: '🕸️',
-    description: '+1 Food per delivery from a shoal',
-  }, balance.upgrades.BigNets),
-  IronPicks: upgrade({
-    id: 'IronPicks', name: 'Iron Picks', glyph: '⛏️',
-    description: '+1 Stone per delivery from a vein',
-  }, balance.upgrades.IronPicks),
-};
+// ------------------------------------------------------------- tech lines
 
 /**
- * Display order, DERIVED from the definitions above rather than restated.
+ * The ranks of each minor line, in order, DERIVED from `TECH_ORDER` rather
+ * than restated.
  *
- * It used to be a hand-written list, and it silently went stale: Surveying was
- * added, never listed, and so never appeared in the tech tree at all — while a
- * quest cheerfully pointed the player at it. The tree groups upgrades with
- * `UPGRADE_ORDER.filter(...)`, so anything missing here is invisible in the
- * game. A second list of the same names could only ever be a chance to forget
- * one.
+ * The list it replaces (`UPGRADE_ORDER`) was hand-written once and silently
+ * went stale — Surveying was added, never listed, and so never drew in the
+ * tree at all while a quest pointed the player straight at it. A second list
+ * of the same names can only ever be a chance to forget one.
  */
-export const UPGRADE_ORDER: UpgradeId[] = Object.keys(UPGRADES) as UpgradeId[];
+export const TECH_LINES: Record<TechLineId, TechId[]> = (() => {
+  const out = {} as Record<TechLineId, TechId[]>;
+  for (const id of TECH_ORDER) {
+    const line = TECHNOLOGIES[id].line;
+    if (line === null) continue;
+    (out[line] ??= []).push(id);
+  }
+  return out;
+})();
+
+/** Every line id, in the order the workbook authors them. */
+export const TECH_LINE_ORDER = Object.keys(TECH_LINES) as TechLineId[];
+
+/** The major technology a line hangs under — the first rank's requirement.
+ *  Derived, so moving a line in the workbook moves its fan in the tree. */
+export const lineParent = (line: TechLineId): TechId | null =>
+  TECHNOLOGIES[TECH_LINES[line][0]].requires[0] ?? null;
 
 // -------------------------------------------------------------------- units
 
@@ -1357,4 +1655,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/features/engine-seams.md §4).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;

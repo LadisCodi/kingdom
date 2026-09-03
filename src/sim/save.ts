@@ -11,7 +11,9 @@
 // time beyond the cap pauses workers/townhall (queue timers and cell recovery
 // keep running in real time).
 
-import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
+import {
+  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECH_LINES,
+} from './data/definitions';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
 import { normaliseSlots } from './artifacts';
@@ -21,7 +23,8 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ArtifactId, type TechId, type UpgradeId, type Wallet, type Worker,
+  type ArtifactId, type TechId, type Wallet, type Worker,
+  type TechLineId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -130,6 +133,35 @@ const MIGRATIONS: readonly Migration[] = [
         w['Stardust'] = (w['Stardust'] ?? 0) + held;
       }
       delete w['Knowledge'];
+    },
+  },
+  {
+    // v24 — upgrades stopped being a separate kind of thing. Every level of
+    // a levelled upgrade is now its own TECHNOLOGY in a rank ladder
+    // (Docs/features/tech-tree.md §1 rule 2, §8).
+    //
+    // `Upgrades: { TapPower: 3 }` becomes three completed techs,
+    // `TapPowerI/II/III`. Ranks complete in order, so level N maps to the
+    // first N ids of the line and `lineRank` reads back exactly what the
+    // player had bought. A player mid-flight keeps every level they paid
+    // for, and pays no research time for them a second time.
+    to: 24,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; UpgradeLevels?: Record<string, number> } | undefined;
+      if (research === undefined) return;
+      const levels = research.UpgradeLevels;
+      if (levels !== undefined) {
+        const completed = research.Completed ?? (research.Completed = []);
+        for (const [line, level] of Object.entries(levels)) {
+          const ranks = TECH_LINES[line as TechLineId];
+          if (ranks === undefined) continue; // a line this build no longer has
+          for (const id of ranks.slice(0, level)) {
+            if (!completed.includes(id)) completed.push(id);
+          }
+        }
+        delete research.UpgradeLevels;
+      }
     },
   },
 ];
@@ -262,7 +294,6 @@ export function serialize(state: GameState, now: number): SaveFile {
           StartedAtUtc: iso(a.startedAt),
         })),
         SlotsPurchased: state.research.slotsPurchased,
-        UpgradeLevels: state.upgrades,
       },
       'kingdom.schedule': {
         Entries: state.schedule.map((e) => ({
@@ -527,7 +558,6 @@ export function deserialize(
         (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
-    state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
   }
 
   const discoveriesDto = modules['kingdom.discoveries'];

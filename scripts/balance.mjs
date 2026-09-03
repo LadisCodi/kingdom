@@ -56,19 +56,25 @@ const DISTRICT_IDS = [
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
 const TECH_IDS = [
-  'Forestry',
-  'UrbanPlanning', 'Communities', 'Architecture', // civics
-  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market', // economics: farm side
-  'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
-  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
-  'Warrior', 'Spears', 'Archery', 'Cavalry', // military
-  'Attunement', 'Warband', // the magic and expedition leaves
-];
-const UPGRADE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad',
-  'Sawpits', 'Butchery', 'Irrigation', 'Scythes',
-  'Surveying', 'Pitons', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks', 'Resonance',
+  'Forestry', 'UrbanPlanning', 'Communities', 'Architecture',
+  'Saws', 'Hunting', 'Agriculture', 'Farming',
+  'Market', 'Masonry', 'Mining', 'Engineering',
+  'DeepMining', 'Cartography', 'Sailing', 'Fishing',
+  'Shipbuilding', 'ScalingTools', 'Warrior', 'Spears',
+  'Archery', 'Cavalry', 'Attunement', 'Warband',
+  'TapPowerI', 'TapPowerII', 'TapPowerIII', 'TapPowerIV',
+  'TapPowerV', 'QuickHandsI', 'QuickHandsII', 'QuickHandsIII',
+  'QuickHandsIV', 'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII',
+  'WorkerLoadIII', 'SawpitsI', 'SawpitsII', 'SawpitsIII',
+  'ButcheryI', 'ButcheryII', 'ButcheryIII', 'IrrigationI',
+  'IrrigationII', 'IrrigationIII', 'ScythesI', 'ScythesII',
+  'ScythesIII', 'SurveyingI', 'SurveyingII', 'PitonsI',
+  'PitonsII', 'MarketStallI', 'MarketStallII', 'MarketStallIII',
+  'MarketStallIV', 'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII',
+  'TradeRoutesIV', 'TradeRoutesV', 'StonecuttingI', 'StonecuttingII',
+  'StonecuttingIII', 'BigNetsI', 'BigNetsII', 'BigNetsIII',
+  'IronPicksI', 'IronPicksII', 'IronPicksIII', 'ResonanceI',
+  'ResonanceII',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
@@ -80,7 +86,7 @@ const QUEST_GOAL_TYPES = {
   AssignWorkers: null, TrainArmy: null,
   // The long game: magic and expeditions.
   ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
-  OwnHeroes: null, BuyUpgrade: 'upgrade',
+  OwnHeroes: null,
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
   // "clear two cells with forest on them" — a DiscoverCells that cares WHAT
@@ -265,8 +271,12 @@ const SHEETS = {
   FogRings: ['distance', 'cost'],
   // Research is paid in Gold and nothing else — one column, not a
   // four-currency wallet. See the tech importer for why.
-  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires'],
-  Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
+  // `line` and `effect_per_rank` are what is left of the Upgrades sheet.
+  // A minor technology carries a line id and a per-rank effect; a major one
+  // leaves both blank. Ranks of a line are ordered by ROW ORDER, the same
+  // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
+  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires',
+    'line', 'effect_per_rank'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
@@ -580,7 +590,7 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
+    districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
@@ -676,32 +686,21 @@ async function importXlsx() {
     }
     // Gold, alone. Research is paid out of the CITY purse, so the tree
     // competes with clearing fog and raising a building for one budget —
-    // which is the decision the economy is built around. Instant upgrades
-    // are Gold too; what separates them is that an upgrade is permanent and
-    // stacking while a technology is a one-time unlock.
+    // which is the decision the economy is built around. Minor ranks are
+    // Gold too; what separates them from a major is cost and time, not kind
+    // (Docs/features/tech-tree.md §1 rule 3).
     const gold = num(r, 'cost_gold');
     if (gold < 1) fail(where(r), 'cost_gold must be at least 1');
+    const line = (r.line === '' || r.line === undefined) ? null : String(r.line);
     out.technologies[id] = {
       cost: { Gold: gold },
       durationSeconds: num(r, 'duration_seconds'),
       requires,
+      line,
+      effectPerRank: num(r, 'effect_per_rank', { blankAs: 0 }),
     };
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Upgrades'), UPGRADE_IDS)) {
-    const requiredTech = (r.required_tech === '' || r.required_tech === undefined)
-      ? null : r.required_tech;
-    if (requiredTech !== null && !TECH_IDS.includes(requiredTech)) {
-      fail(where(r), `unknown required_tech "${requiredTech}"`);
-    }
-    out.upgrades[id] = {
-      costBase: num(r, 'cost_base'),
-      costGrowth: num(r, 'cost_growth'),
-      maxLevel: num(r, 'max_level'),
-      effectPerLevel: num(r, 'effect_per_level'),
-      requiredTech,
-    };
-  }
 
   const adjacencySeen = new Set();
   for (const r of readSheet(workbook, 'Adjacency')) {
@@ -726,7 +725,7 @@ async function importXlsx() {
     const targetKind = QUEST_GOAL_TYPES[r.goal_type];
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
     const lists = {
-      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
+      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS,
       feature: Object.values(FEATURE_CODES),
     };
     if (targetKind === null && target !== null) {
@@ -934,13 +933,9 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, t.cost.Gold, t.durationSeconds, t.requires.join(',')];
+    return [id, t.cost.Gold, t.durationSeconds, t.requires.join(','),
+      t.line ?? '', t.effectPerRank || ''];
   }), (col) => col === 'requires');
-
-  addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
-    const u = b.upgrades[id];
-    return [id, u.costBase, u.costGrowth, u.maxLevel, u.effectPerLevel, u.requiredTech ?? ''];
-  }));
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
     [a.district, a.neighbor, a.goldPerMinute]));

@@ -740,7 +740,9 @@
         "Gold": 25
       },
       "durationSeconds": 3,
-      "requires": []
+      "requires": [],
+      "line": null,
+      "effectPerRank": 0
     },
     "UrbanPlanning": {
       "cost": {
@@ -749,7 +751,9 @@
       "durationSeconds": 60,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Communities": {
       "cost": {
@@ -758,7 +762,9 @@
       "durationSeconds": 90,
       "requires": [
         "UrbanPlanning"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Architecture": {
       "cost": {
@@ -767,7 +773,9 @@
       "durationSeconds": 120,
       "requires": [
         "Communities"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Saws": {
       "cost": {
@@ -776,7 +784,9 @@
       "durationSeconds": 20,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Hunting": {
       "cost": {
@@ -785,7 +795,9 @@
       "durationSeconds": 30,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Agriculture": {
       "cost": {
@@ -794,7 +806,9 @@
       "durationSeconds": 45,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Farming": {
       "cost": {
@@ -803,7 +817,9 @@
       "durationSeconds": 60,
       "requires": [
         "Agriculture"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Market": {
       "cost": {
@@ -812,7 +828,9 @@
       "durationSeconds": 45,
       "requires": [
         "Agriculture"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Masonry": {
       "cost": {
@@ -821,7 +839,9 @@
       "durationSeconds": 45,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Mining": {
       "cost": {
@@ -830,7 +850,9 @@
       "durationSeconds": 60,
       "requires": [
         "Masonry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Engineering": {
       "cost": {
@@ -839,7 +861,9 @@
       "durationSeconds": 90,
       "requires": [
         "Masonry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "DeepMining": {
       "cost": {
@@ -848,7 +872,9 @@
       "durationSeconds": 120,
       "requires": [
         "Mining"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Cartography": {
       "cost": {
@@ -857,7 +883,9 @@
       "durationSeconds": 45,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Sailing": {
       "cost": {
@@ -866,7 +894,9 @@
       "durationSeconds": 45,
       "requires": [
         "Cartography"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Fishing": {
       "cost": {
@@ -875,7 +905,9 @@
       "durationSeconds": 45,
       "requires": [
         "Sailing"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Shipbuilding": {
       "cost": {
@@ -884,7 +916,9 @@
       "durationSeconds": 90,
       "requires": [
         "Fishing"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "ScalingTools": {
       "cost": {
@@ -893,7 +927,9 @@
       "durationSeconds": 60,
       "requires": [
         "Cartography"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Warrior": {
       "cost": {
@@ -902,7 +938,9 @@
       "durationSeconds": 30,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Spears": {
       "cost": {
@@ -911,7 +949,9 @@
       "durationSeconds": 45,
       "requires": [
         "Warrior"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Archery": {
       "cost": {
@@ -920,7 +960,9 @@
       "durationSeconds": 60,
       "requires": [
         "Warrior"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Cavalry": {
       "cost": {
@@ -929,7 +971,9 @@
       "durationSeconds": 90,
       "requires": [
         "Warrior"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Attunement": {
       "cost": {
@@ -938,7 +982,9 @@
       "durationSeconds": 120,
       "requires": [
         "Forestry"
-      ]
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
     "Warband": {
       "cost": {
@@ -947,114 +993,548 @@
       "durationSeconds": 180,
       "requires": [
         "Archery"
-      ]
-    }
-  },
-  "upgrades": {
-    "TapPower": {
-      "costBase": 50,
-      "costGrowth": 2.2,
-      "maxLevel": 5,
-      "effectPerLevel": 1,
-      "requiredTech": "Forestry"
+      ],
+      "line": null,
+      "effectPerRank": 0
     },
-    "QuickHands": {
-      "costBase": 75,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Forestry"
+    "TapPowerI": {
+      "cost": {
+        "Gold": 50
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 1
     },
-    "WorkerLoad": {
-      "costBase": 200,
-      "costGrowth": 2.5,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Forestry"
+    "TapPowerII": {
+      "cost": {
+        "Gold": 110
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "TapPowerI"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 1
     },
-    "Sawpits": {
-      "costBase": 120,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Saws"
+    "TapPowerIII": {
+      "cost": {
+        "Gold": 242
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "TapPowerII"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 1
     },
-    "Butchery": {
-      "costBase": 80,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Hunting"
+    "TapPowerIV": {
+      "cost": {
+        "Gold": 532
+      },
+      "durationSeconds": 70,
+      "requires": [
+        "TapPowerIII"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 1
     },
-    "Irrigation": {
-      "costBase": 120,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Agriculture"
+    "TapPowerV": {
+      "cost": {
+        "Gold": 1171
+      },
+      "durationSeconds": 105,
+      "requires": [
+        "TapPowerIV"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 1
     },
-    "Scythes": {
-      "costBase": 90,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Farming"
+    "QuickHandsI": {
+      "cost": {
+        "Gold": 75
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05
     },
-    "Surveying": {
-      "costBase": 150,
-      "costGrowth": 3,
-      "maxLevel": 2,
-      "effectPerLevel": 1,
-      "requiredTech": "Cartography"
+    "QuickHandsII": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "QuickHandsI"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05
     },
-    "Pitons": {
-      "costBase": 200,
-      "costGrowth": 2.5,
-      "maxLevel": 2,
-      "effectPerLevel": 0.1,
-      "requiredTech": "ScalingTools"
+    "QuickHandsIII": {
+      "cost": {
+        "Gold": 300
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "QuickHandsII"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05
     },
-    "MarketStall": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 4,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Market"
+    "QuickHandsIV": {
+      "cost": {
+        "Gold": 600
+      },
+      "durationSeconds": 70,
+      "requires": [
+        "QuickHandsIII"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05
     },
-    "TradeRoutes": {
-      "costBase": 150,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.1,
-      "requiredTech": "Market"
+    "QuickHandsV": {
+      "cost": {
+        "Gold": 1200
+      },
+      "durationSeconds": 105,
+      "requires": [
+        "QuickHandsIV"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05
     },
-    "Stonecutting": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Masonry"
+    "WorkerLoadI": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ],
+      "line": "WorkerLoad",
+      "effectPerRank": 1
     },
-    "BigNets": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Fishing"
+    "WorkerLoadII": {
+      "cost": {
+        "Gold": 500
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "WorkerLoadI"
+      ],
+      "line": "WorkerLoad",
+      "effectPerRank": 1
     },
-    "IronPicks": {
-      "costBase": 150,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Mining"
+    "WorkerLoadIII": {
+      "cost": {
+        "Gold": 1250
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "WorkerLoadII"
+      ],
+      "line": "WorkerLoad",
+      "effectPerRank": 1
     },
-    "Resonance": {
-      "costBase": 250,
-      "costGrowth": 2.5,
-      "maxLevel": 2,
-      "effectPerLevel": 0.2,
-      "requiredTech": "Attunement"
+    "SawpitsI": {
+      "cost": {
+        "Gold": 120
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Saws"
+      ],
+      "line": "Sawpits",
+      "effectPerRank": 1
+    },
+    "SawpitsII": {
+      "cost": {
+        "Gold": 240
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "SawpitsI"
+      ],
+      "line": "Sawpits",
+      "effectPerRank": 1
+    },
+    "SawpitsIII": {
+      "cost": {
+        "Gold": 480
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "SawpitsII"
+      ],
+      "line": "Sawpits",
+      "effectPerRank": 1
+    },
+    "ButcheryI": {
+      "cost": {
+        "Gold": 80
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Hunting"
+      ],
+      "line": "Butchery",
+      "effectPerRank": 1
+    },
+    "ButcheryII": {
+      "cost": {
+        "Gold": 160
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "ButcheryI"
+      ],
+      "line": "Butchery",
+      "effectPerRank": 1
+    },
+    "ButcheryIII": {
+      "cost": {
+        "Gold": 320
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "ButcheryII"
+      ],
+      "line": "Butchery",
+      "effectPerRank": 1
+    },
+    "IrrigationI": {
+      "cost": {
+        "Gold": 120
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Agriculture"
+      ],
+      "line": "Irrigation",
+      "effectPerRank": 1
+    },
+    "IrrigationII": {
+      "cost": {
+        "Gold": 240
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "IrrigationI"
+      ],
+      "line": "Irrigation",
+      "effectPerRank": 1
+    },
+    "IrrigationIII": {
+      "cost": {
+        "Gold": 480
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "IrrigationII"
+      ],
+      "line": "Irrigation",
+      "effectPerRank": 1
+    },
+    "ScythesI": {
+      "cost": {
+        "Gold": 90
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Farming"
+      ],
+      "line": "Scythes",
+      "effectPerRank": 1
+    },
+    "ScythesII": {
+      "cost": {
+        "Gold": 180
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "ScythesI"
+      ],
+      "line": "Scythes",
+      "effectPerRank": 1
+    },
+    "ScythesIII": {
+      "cost": {
+        "Gold": 360
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "ScythesII"
+      ],
+      "line": "Scythes",
+      "effectPerRank": 1
+    },
+    "SurveyingI": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Cartography"
+      ],
+      "line": "Surveying",
+      "effectPerRank": 1
+    },
+    "SurveyingII": {
+      "cost": {
+        "Gold": 450
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "SurveyingI"
+      ],
+      "line": "Surveying",
+      "effectPerRank": 1
+    },
+    "PitonsI": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "ScalingTools"
+      ],
+      "line": "Pitons",
+      "effectPerRank": 0.1
+    },
+    "PitonsII": {
+      "cost": {
+        "Gold": 500
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "PitonsI"
+      ],
+      "line": "Pitons",
+      "effectPerRank": 0.1
+    },
+    "MarketStallI": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Market"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05
+    },
+    "MarketStallII": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "MarketStallI"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05
+    },
+    "MarketStallIII": {
+      "cost": {
+        "Gold": 400
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "MarketStallII"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05
+    },
+    "MarketStallIV": {
+      "cost": {
+        "Gold": 800
+      },
+      "durationSeconds": 70,
+      "requires": [
+        "MarketStallIII"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05
+    },
+    "TradeRoutesI": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Market"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1
+    },
+    "TradeRoutesII": {
+      "cost": {
+        "Gold": 300
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "TradeRoutesI"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1
+    },
+    "TradeRoutesIII": {
+      "cost": {
+        "Gold": 600
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "TradeRoutesII"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1
+    },
+    "TradeRoutesIV": {
+      "cost": {
+        "Gold": 1200
+      },
+      "durationSeconds": 70,
+      "requires": [
+        "TradeRoutesIII"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1
+    },
+    "TradeRoutesV": {
+      "cost": {
+        "Gold": 2400
+      },
+      "durationSeconds": 105,
+      "requires": [
+        "TradeRoutesIV"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1
+    },
+    "StonecuttingI": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Masonry"
+      ],
+      "line": "Stonecutting",
+      "effectPerRank": 1
+    },
+    "StonecuttingII": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "StonecuttingI"
+      ],
+      "line": "Stonecutting",
+      "effectPerRank": 1
+    },
+    "StonecuttingIII": {
+      "cost": {
+        "Gold": 400
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "StonecuttingII"
+      ],
+      "line": "Stonecutting",
+      "effectPerRank": 1
+    },
+    "BigNetsI": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Fishing"
+      ],
+      "line": "BigNets",
+      "effectPerRank": 1
+    },
+    "BigNetsII": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "BigNetsI"
+      ],
+      "line": "BigNets",
+      "effectPerRank": 1
+    },
+    "BigNetsIII": {
+      "cost": {
+        "Gold": 400
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "BigNetsII"
+      ],
+      "line": "BigNets",
+      "effectPerRank": 1
+    },
+    "IronPicksI": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Mining"
+      ],
+      "line": "IronPicks",
+      "effectPerRank": 1
+    },
+    "IronPicksII": {
+      "cost": {
+        "Gold": 300
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "IronPicksI"
+      ],
+      "line": "IronPicks",
+      "effectPerRank": 1
+    },
+    "IronPicksIII": {
+      "cost": {
+        "Gold": 600
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "IronPicksII"
+      ],
+      "line": "IronPicks",
+      "effectPerRank": 1
+    },
+    "ResonanceI": {
+      "cost": {
+        "Gold": 250
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Attunement"
+      ],
+      "line": "Resonance",
+      "effectPerRank": 0.2
+    },
+    "ResonanceII": {
+      "cost": {
+        "Gold": 625
+      },
+      "durationSeconds": 30,
+      "requires": [
+        "ResonanceI"
+      ],
+      "line": "Resonance",
+      "effectPerRank": 0.2
     }
   },
   "research": {
@@ -1849,10 +2329,10 @@
     {
       "id": "Surveyors",
       "name": "Surveyors",
-      "description": "Buy Surveying twice. Each tap on the fog will count for three.",
-      "goalType": "BuyUpgrade",
-      "goalTarget": "Surveying",
-      "goalAmount": 2,
+      "description": "Research Surveying twice. Each tap on the fog will count for three.",
+      "goalType": "CompleteTech",
+      "goalTarget": "SurveyingII",
+      "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 250

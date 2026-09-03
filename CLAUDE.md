@@ -72,7 +72,7 @@ JSON *and* the importer schema in `scripts/balance.mjs`, then
 
 ## Saves
 
-`SAVE_VERSION` is 23; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 24; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),

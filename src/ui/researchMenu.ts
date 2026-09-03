@@ -2,31 +2,33 @@
 //  - Technologies: square icon nodes on a hand-authored grid, dotted
 //    orthogonal connectors; researching takes time in a concurrent slot
 //    (extra slots bought with Gems at an escalating price).
-//  - Upgrades: small CIRCLE nodes fanned below their parent technology —
-//    instant gold purchases, leveled. The fan appears when the parent
-//    completes: the visible reward of the research.
+//  - Minor RANKS: smaller square nodes fanned below the technology their
+//    line hangs under. They are technologies like any other — Gold and time,
+//    in a slot — and the fan appears when the parent completes, which is the
+//    visible reward of the research. (The fan is a stopgap layout; see
+//    research/layout.ts FAN_DY.)
 //  - Tree fog: researched/available techs render normally; techs one step
 //    beyond a RESEARCHED or RESEARCHING tech show as anonymous "?"
 //    silhouettes; anything deeper is hidden.
 
 import type { Game } from '../game';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES, UPGRADE_ORDER,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
+  UNITS, lineParent,
 } from '../sim/data/definitions';
-import { canAfford } from '../sim/commands';
 import {
   canStartTech, isTechActive, isTechComplete, requirementsMet, slotGemCost,
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
-import { canBuyUpgrade, upgradeCost, upgradeLevel } from '../sim/upgrades';
-import { type GameState, type TechId, type UpgradeId } from '../sim/state';
+import { lineMaxRank, lineRank } from '../sim/upgrades';
+import { type GameState, type TechId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
 import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
 // Module-level so selection/pan survive the per-tick re-render.
-type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId } | null;
+type Selected = { kind: 'tech'; id: TechId } | null;
 let selected: Selected = null;
 
 // Geometry (GRID, NODE, UNODE, FAN_*) and the connector route come from
@@ -96,8 +98,15 @@ function visibility(state: GameState, id: TechId): Visibility {
   return 'hidden';
 }
 
-const upgradesOf = (id: TechId): UpgradeId[] =>
-  UPGRADE_ORDER.filter((u) => UPGRADES[u].requiredTech === id);
+/** The rank nodes fanned under a major: every line whose parent is `id`,
+ *  flattened in workbook order. Derived from TECH_LINES, so a line that moves
+ *  in the workbook moves its fan with it. */
+const ranksUnder = (id: TechId): TechId[] =>
+  TECH_LINE_ORDER.filter((line) => lineParent(line) === id)
+    .flatMap((line) => TECH_LINES[line]);
+
+/** A major technology has an authored grid position; a rank does not. */
+const isMajor = (id: TechId): boolean => TECHNOLOGIES[id].node !== null;
 
 export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;
@@ -105,10 +114,6 @@ export function renderResearchMenu(game: Game): HTMLElement {
 
   // Drop a selection the fog no longer shows (e.g. after a fresh load).
   if (selected?.kind === 'tech' && visibility(state, selected.id) !== 'normal') selected = null;
-  if (selected?.kind === 'upgrade') {
-    const parent = UPGRADES[selected.id].requiredTech;
-    if (parent !== null && !isTechComplete(state, parent)) selected = null;
-  }
 
   const busy = state.research.active.length;
   const slots = techSlots(state);
@@ -144,23 +149,24 @@ export function renderResearchMenu(game: Game): HTMLElement {
     el('h2', {}, 'Research'), bar, close));
 
   // ---- the tree canvas (sized to what the fog currently shows) ----
-  const shown = TECH_ORDER.filter((id) => visibility(state, id) !== 'hidden');
-  const fanned = shown.filter((id) => isTechComplete(state, id) && upgradesOf(id).length > 0);
-  const xs = shown.map((id) => TECHNOLOGIES[id].node.x);
-  const ys = shown.map((id) => TECHNOLOGIES[id].node.y);
+  const shown = TECH_ORDER.filter(
+    (id) => isMajor(id) && visibility(state, id) !== 'hidden');
+  const fanned = shown.filter((id) => isTechComplete(state, id) && ranksUnder(id).length > 0);
+  const xs = shown.map((id) => TECHNOLOGIES[id].node!.x);
+  const ys = shown.map((id) => TECHNOLOGIES[id].node!.y);
   const [x0, y0] = [Math.min(...xs), Math.min(...ys)];
   const yMax = Math.max(...ys);
   const pad = 40;
   const width = (Math.max(...xs) - x0 + 1) * GRID + pad * 2;
   let height = (yMax - y0 + 1) * GRID + pad * 2;
   // A fan below a bottom-row tech pokes past the grid — give it room.
-  if (fanned.some((id) => TECHNOLOGIES[id].node.y === yMax)) {
+  if (fanned.some((id) => TECHNOLOGIES[id].node!.y === yMax)) {
     height += FAN_DY + UNODE / 2 - GRID / 2 + 6;
   }
   const px = (gx: number) => pad + (gx - x0) * GRID + GRID / 2;
   const py = (gy: number) => pad + (gy - y0) * GRID + GRID / 2;
-  const cx = (id: TechId) => px(TECHNOLOGIES[id].node.x);
-  const cy = (id: TechId) => py(TECHNOLOGIES[id].node.y);
+  const cx = (id: TechId) => px(TECHNOLOGIES[id].node!.x);
+  const cy = (id: TechId) => py(TECHNOLOGIES[id].node!.y);
   const fanX = (id: TechId, i: number, n: number) => cx(id) + (i - (n - 1) / 2) * FAN_DX;
   const fanY = (id: TechId) => cy(id) + FAN_DY;
 
@@ -174,8 +180,11 @@ export function renderResearchMenu(game: Game): HTMLElement {
   svg.classList.add('tech-edges');
   for (const id of shown) {
     for (const req of TECHNOLOGIES[id].requires) {
+      // A rank's requirement is its previous rank, which lives in the fan and
+      // has no grid position — the fan draws its own spokes below.
+      if (!isMajor(req)) continue;
       const path = document.createElementNS(ns, 'path');
-      const route = edgePath(TECHNOLOGIES[req].node, TECHNOLOGIES[id].node)
+      const route = edgePath(TECHNOLOGIES[req].node!, TECHNOLOGIES[id].node!)
         .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x)} ${py(p.y)}`)
         .join(' ');
       path.setAttribute('d', route);
@@ -185,10 +194,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
       svg.append(path);
     }
   }
-  // Straight spokes from a completed tech to its upgrade circles.
+  // Straight spokes from a completed tech to the ranks fanned under it.
   for (const id of fanned) {
-    const ups = upgradesOf(id);
-    ups.forEach((_, i) => {
+    const ups = ranksUnder(id);
+    ups.forEach((_: TechId, i: number) => {
       const path = document.createElementNS(ns, 'path');
       path.setAttribute('d', `M ${cx(id)} ${cy(id)} L ${fanX(id, i, ups.length)} ${fanY(id)}`);
       path.setAttribute('class', 'tech-edge open');
@@ -235,26 +244,31 @@ export function renderResearchMenu(game: Game): HTMLElement {
     canvas.append(node);
   }
 
-  // Upgrade nodes (circles), fanned below their completed parent.
+  // Minor-rank nodes, fanned below their completed parent. Same states and
+  // the same click as a major — they ARE majors, only cheaper and quicker.
   for (const id of fanned) {
-    const ups = upgradesOf(id);
-    ups.forEach((u, i) => {
-      const def = UPGRADES[u];
-      const level = upgradeLevel(state, u);
-      const maxed = level >= def.maxLevel;
-      const affordable = canAfford(state.city.wallet, { Gold: upgradeCost(u, level) });
-      const cls = maxed ? 'done' : affordable ? 'available' : 'locked';
-      const isSel = selected?.kind === 'upgrade' && selected.id === u;
-      const hinted = game.uiHint() === `upgrade:${u}`;
+    const ups = ranksUnder(id);
+    ups.forEach((u: TechId, i: number) => {
+      const def = TECHNOLOGIES[u];
+      const line = def.line!;
+      const done = isTechComplete(state, u);
+      const active = isTechActive(state, u);
+      const cls = done ? 'done' : active ? 'active' : canStartTech(state, u) ? 'available'
+        : requirementsMet(state, u) ? 'available' : 'locked';
+      const isSel = selected?.kind === 'tech' && selected.id === u;
+      const hinted = game.uiHint() === `tech:${u}`;
       const node = el('button', {
-        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+        class: `btn tech-node rank ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
       }, def.glyph);
-      if (canBuyUpgrade(state, u)) node.append(el('span', { class: 'node-dot' }));
-      if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));
+      if (canStartTech(state, u)) node.append(el('span', { class: 'node-dot' }));
+      // The line's progress, on every rank of it: "2/5" reads as a ladder
+      // where a bare per-node tick would read as fifteen unrelated things.
+      node.append(el('span', { class: 'lvl' },
+        `${lineRank(state, line)}/${lineMaxRank(line)}`));
       node.addEventListener('click', () => {
         if (consumeSuppressedClick()) return;
-        selected = { kind: 'upgrade', id: u };
+        selected = { kind: 'tech', id: u };
         game.notify();
       });
       canvas.append(node);
@@ -294,13 +308,13 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // its rAF restore. Only the hint still needs to move the view, and it must
   // run after the host has put the old position back.
   const hint = game.uiHint();
-  // An upgrade circle hangs below its parent tech, so scrolling to the PARENT
-  // brings the hinted upgrade on screen with it — one code path for both.
-  const hintedTech = hint?.startsWith('tech:')
-    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null)
-    : hint?.startsWith('upgrade:')
-      ? (UPGRADES[hint.slice('upgrade:'.length) as UpgradeId]?.requiredTech ?? null)
-      : null;
+  // A rank hangs in the fan below the major its line sits under, which has
+  // no grid position of its own — so a hint at a rank scrolls to that PARENT
+  // and brings the rank on screen with it. One code path for both.
+  const hinted = hint?.startsWith('tech:')
+    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
+  const hintedTech = hinted === null ? null
+    : isMajor(hinted) ? hinted : lineParent(TECHNOLOGIES[hinted].line!);
   // Where the eye should land. A hint wins outright — it is the game asking
   // for attention at a specific node. Otherwise: the WORK, meaning whatever
   // is running or startable right now, and failing that the last thing
@@ -323,8 +337,6 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // ---- floating bottom info panel, only while something is selected ----
   if (selected?.kind === 'tech') {
     root.append(techInfoPanel(game, selected.id, busy, slots));
-  } else if (selected?.kind === 'upgrade') {
-    root.append(upgradeInfoPanel(game, selected.id));
   }
   return root;
 }
@@ -360,9 +372,6 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       } else if (u.kind === 'unit') {
         row.append(el('span', { class: 'res-unlock' },
           iconEl(u.id, { size: 'sm' }), UNITS[u.id].name));
-      } else {
-        row.append(el('span', { class: 'res-unlock' },
-          iconEl('sparkle', { size: 'sm' }), UPGRADES[u.id].name));
       }
     }
     panel.append(row);
@@ -399,33 +408,3 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
   return panel;
 }
 
-function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
-  const state = game.state;
-  const def = UPGRADES[id];
-  const level = upgradeLevel(state, id);
-  const maxed = level >= def.maxLevel;
-  const panel = el('div', { class: 'tech-info' });
-  panel.append(el('h3', {}, `${def.glyph} ${def.name} — Lv ${level}/${def.maxLevel}`));
-  panel.append(el('div', { class: 'muted' }, def.description));
-
-  const pips = el('div', { class: 'pips' });
-  for (let i = 0; i < def.maxLevel; i++) {
-    pips.append(el('span', { class: `pip${i < level ? ' on' : ''}` }));
-  }
-  panel.append(pips);
-
-  if (maxed) {
-    panel.append(el('div', { class: 'delta' }, 'Maxed'));
-  } else {
-    const cost = upgradeCost(id, level);
-    panel.append(action({
-      label: 'Upgrade',
-      kind: 'primary',
-      onClick: () => game.doBuyUpgrade(id),
-      cost: { Gold: cost },
-      have: (c) => game.walletValue(c),
-      info: el('span', { class: 'res-time' }, 'instant'),
-    }));
-  }
-  return panel;
-}

@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, QUESTS, TECH_ORDER, type QuestDef,
+  DISTRICTS, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -19,8 +19,7 @@ import {
   type FeatureId, type GameState,
 } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt,
-} from './helpers';
+  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt, completeRanks } from './helpers';
 
 
 describe('the quest chain', () => {
@@ -93,7 +92,7 @@ describe('the quest chain', () => {
     const state = freshGame();
     const surveyors = QUESTS.find((q) => q.id === 'Surveyors')!;
     expect(questValue(state, surveyors)).toBe(0);
-    state.upgrades.Surveying = 2;
+    completeRanks(state, 'Surveying', 2);
     expect(isQuestComplete(state, surveyors)).toBe(true);
 
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
@@ -233,11 +232,16 @@ describe('quests fund the research tree', () => {
     expect(getWallet(state.city.wallet, 'Stardust')).toBe(0);
   });
 
-  // The chain carries MOST of the tree in Gold and deliberately not all of
-  // it: a player who follows the guided path still has to have run a city to
-  // finish researching. The gap is a nudge rather than a wall — housing taxes
-  // and the Market close it.
-  it('the chain covers most of the tech tree, but never all of it', () => {
+  // THE RATIO INVERTED ON 2026-09-04, on purpose.
+  //
+  // The chain used to pay 1.8x the whole tree, which
+  // Docs/features/tomes-and-research.md §0 names as the problem: "the tree is
+  // not a sink, it is a formality". Collapsing the upgrades into 49 ranked
+  // technologies took the tree from 6,600 to 26,625, so the chain now covers
+  // a little under half of it and the rest has to be earned by running a
+  // city. That is the point — but it is also the number most likely to make
+  // the early game feel poor, so it is asserted rather than assumed.
+  it('the chain no longer covers the tree — the tree is a real sink now', () => {
     const chain = QUESTS.reduce((sum, q) => sum + (q.reward.Gold ?? 0), 0);
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
     // 11,865: the two Market beats moved into the opening and were re-priced
@@ -245,8 +249,13 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(chain).toBeGreaterThan(tree * 0.75);
-    expect(chain).toBeLessThan(tree * 2);
+    expect(tree).toBe(26_625);
+    // Still enough to carry the player well past the opening: the majors
+    // alone (what the chain used to be measured against) cost 6,600.
+    const majors = TECH_ORDER.filter((id) => TECHNOLOGIES[id].line === null)
+      .reduce((sum, id) => sum + techCost(id), 0);
+    expect(majors).toBe(6600);
+    expect(chain).toBeGreaterThan(majors);
   });
 
   // CLAIM: Knowledge appears with the Reliquary, not before it. Every quest

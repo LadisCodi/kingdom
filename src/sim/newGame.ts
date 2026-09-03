@@ -63,7 +63,6 @@ export function newGame(map: MapData, now: number): GameState {
       owned: [], levels: {}, tiers: {}, fragments: {},
       attuned: [null], slotsPurchased: 0, lockedUntil: [0],
     },
-    upgrades: {},
     modifiers: [],
     quests: { index: 0, progress: 0 },
     discoveries: {},

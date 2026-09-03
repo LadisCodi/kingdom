@@ -55,14 +55,14 @@ import {
   anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
 import {
-  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
+  effectiveAutoTapCooldownMs, effectiveWorkerYield,
 } from './sim/upgrades';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
   type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
-  type UpgradeId, type Wallet,
+  type Wallet,
 } from './sim/state';
 import {
   chestAvailable, chestReward, claimDailyChest, ladderLength, nextStep,
@@ -271,8 +271,8 @@ export class Game {
         desc: tech.description, tone: 'sky', sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
-      // Upgrades are deliberately not announced — they appear as the fan of
-      // circles under the tech, which is the reward being made visible.
+      // A minor RANK unlocks nothing and announces nothing: its reward is the
+      // number in its own description, and a banner per rank would be noise.
       for (const unlock of techUnlocks(id)) {
         if (unlock.kind === 'district') {
           const def = DISTRICTS[unlock.id];
@@ -1025,13 +1025,6 @@ export class Game {
     this.notify();
   }
 
-  doBuyUpgrade(id: UpgradeId): void {
-    const result = buyUpgrade(this.state, id);
-    if (result === 'Purchased') playSfx('upgradeBought');
-    if (result === 'NotEnoughResources') this.shake(['Gold']);
-    this.notify();
-  }
-
   /** Renderers ask: is this UI key currently hinted? */
   uiHint(): string | null {
     if (this.hint?.kind !== 'ui' || this.hint.until < this.now()) return null;
@@ -1106,10 +1099,6 @@ export class Game {
         overlay('research');
         break;
       case 'CompleteTechs':
-        overlay('research');
-        break;
-      case 'BuyUpgrade':
-        this.setUiHint(`upgrade:${quest.goalTarget}`);
         overlay('research');
         break;
       case 'OwnHeroes':
@@ -1649,11 +1638,14 @@ export class Game {
     });
   }
 
-  /** Per-second Research CTA: some tech can be started, or some upgrade
-   *  bought. The same shape as `buildCtaLit` — the tab only lights when the
-   *  screen behind it has something the player can actually press. */
+  /** Per-second Research CTA: some technology can be started. The same shape
+   *  as `buildCtaLit` — the tab only lights when the screen behind it has
+   *  something the player can actually press.
+   *
+   *  It used to be two questions, because an upgrade was a different kind of
+   *  purchase. Every node is a technology now, so it is one. */
   researchCtaLit(): boolean {
-    return anyResearchActionable(this.state) || anyUpgradeActionable(this.state);
+    return anyResearchActionable(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */

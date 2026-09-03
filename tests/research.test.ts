@@ -2,9 +2,9 @@
 // completion through the unified advance, and the save round-trip.
 import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
-import { enqueueBuild } from '../src/sim/commands';
+import { advance, enqueueBuild } from '../src/sim/commands';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
@@ -13,10 +13,11 @@ import {
 } from '../src/sim/research';
 import { edgeCells, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type TechId, type UpgradeId } from '../src/sim/state';
-import { buyUpgrade, canBuyUpgrade } from '../src/sim/upgrades';
+import { getWallet, type TechId } from '../src/sim/state';
+import { lineMaxRank, lineRank } from '../src/sim/upgrades';
 import {
-  addAllTrainers, completeTech, freshGame, freshPresenter, fund, map, T0, tickAt,
+  addAllTrainers, completeRanks, completeTech, freshGame, freshPresenter, fund, map,
+  T0, tickAt,
 } from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
@@ -147,7 +148,7 @@ describe('research slots', () => {
 });
 
 describe('save round-trip', () => {
-  it('restores completed techs, active researches, slots and upgrade levels', () => {
+  it('restores completed techs, active researches, slots and line ranks', () => {
     const state = freshGame();
     state.player.wallet.Gems = 10;
     fund(state, { Gold: 10_000, Wood: 500, Food: 500, Knowledge: 500 });
@@ -155,19 +156,22 @@ describe('save round-trip', () => {
     completeTech(state, 'Agriculture');
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0);
-    expect(buyUpgrade(state, 'TapPower')).toBe('Purchased');
+    completeRanks(state, 'TapPower', 1);
 
     // Reload mid-research: it finishes in real time during the absence.
     const restored = deserialize(serialize(state, T0 + 10_000), map, T0 + 600_000)!;
     expect(isTechComplete(restored, 'Agriculture')).toBe(true);
     expect(isTechComplete(restored, 'UrbanPlanning')).toBe(true);
     expect(restored.research.slotsPurchased).toBe(1);
-    expect(restored.upgrades.TapPower).toBe(1);
+    expect(lineRank(restored, 'TapPower')).toBe(1);
   });
 });
 
 describe('tree layout (layout is content)', () => {
-  const nodes = TECH_ORDER.map((id) => ({ id, ...TECHNOLOGIES[id].node }));
+  // Majors only. A minor rank is drawn in its line's fan under the parent, so
+  // it has no authored position to protect (tech-tree.md §1 rule 2).
+  const MAJORS = TECH_ORDER.filter((id) => TECHNOLOGIES[id].node !== null);
+  const nodes = MAJORS.map((id) => ({ id, ...TECHNOLOGIES[id].node! }));
   const at = (x: number, y: number) => nodes.find((n) => n.x === x && n.y === y);
 
   it('no two technologies share a grid cell', () => {
@@ -214,10 +218,11 @@ describe('tree layout (layout is content)', () => {
   });
 
   it('no connector passes through an unrelated node', () => {
-    for (const id of TECH_ORDER) {
-      const to = TECHNOLOGIES[id].node;
+    for (const id of MAJORS) {
+      const to = TECHNOLOGIES[id].node!;
       for (const req of TECHNOLOGIES[id].requires) {
         const from = TECHNOLOGIES[req].node;
+        if (from === null) continue; // a rank's parent edge lives in the fan
         for (const cell of edgeCells(from, to)) {
           const blocker = at(cell.x, cell.y);
           expect(blocker?.id, `${req} → ${id} runs through ${blocker?.id}`).toBeUndefined();
@@ -236,7 +241,6 @@ describe('techUnlocks', () => {
       for (const u of techUnlocks(id)) {
         if (u.kind === 'district') expect(DISTRICTS[u.id].requiredTech).toBe(id);
         if (u.kind === 'unit') expect(UNITS[u.id].requiredTech).toBe(id);
-        if (u.kind === 'upgrade') expect(UPGRADES[u.id].requiredTech).toBe(id);
         if (u.kind === 'districtLevel') {
           // A gate at index n unlocks level n+2 (the list is 0-indexed by level-1).
           expect(DISTRICTS[u.id].requiredTechPerLevel[u.level - 2]).toBe(id);
@@ -254,9 +258,6 @@ describe('techUnlocks', () => {
     }
     for (const unit of Object.values(UNITS)) {
       if (unit.requiredTech !== null) expect(announced).toContain(`unit:${unit.id}`);
-    }
-    for (const up of Object.values(UPGRADES)) {
-      if (up.requiredTech !== null) expect(announced).toContain(`upgrade:${up.id}`);
     }
   });
 
@@ -280,9 +281,10 @@ describe('techUnlocks', () => {
 // The CTA and the node dots (Docs/art/ui-menus-redesign.md §6.7).
 //
 // The claim they protect is that a lit tab never lies: it means the screen
-// behind it has something the player can press THIS SECOND. `canStartTech`
-// and `canBuyUpgrade` are the same gates the commands check, which is what
-// stops the light and the button drifting apart.
+// behind it has something the player can press THIS SECOND. `canStartTech` is
+// the same gate the command checks, which is what stops the light and the
+// button drifting apart. It used to be two gates, because an upgrade was a
+// different kind of purchase; every node is a technology now.
 describe('what the player can actually act on', () => {
   it('agrees with startTech, gate for gate', () => {
     const state = freshGame();
@@ -313,18 +315,25 @@ describe('what the player can actually act on', () => {
     expect(anyResearchActionable(state)).toBe(false);
   });
 
-  it('agrees with buyUpgrade, gate for gate', () => {
+  it('gates a minor rank on its line, one rank at a time', () => {
     const state = freshGame();
-    const id: UpgradeId = 'TapPower'; // requires Forestry
     fund(state, { Gold: 99_999 });
-    expect(canBuyUpgrade(state, id)).toBe(false); // tech not done
+    // Rank I hangs off Forestry, exactly as the upgrade used to.
+    expect(canStartTech(state, 'TapPowerI')).toBe(false); // parent not done
     completeTech(state, 'Forestry');
-    expect(canBuyUpgrade(state, id)).toBe(true);
-    expect(buyUpgrade(state, id)).toBe('Purchased');
+    expect(canStartTech(state, 'TapPowerI')).toBe(true);
+    // …and rank II is not reachable until rank I is done, which is what makes
+    // the line a ladder rather than five independent purchases.
+    expect(canStartTech(state, 'TapPowerII')).toBe(false);
+    expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
+    advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
+    expect(lineRank(state, 'TapPower')).toBe(1);
+    expect(canStartTech(state, 'TapPowerII')).toBe(true);
 
-    // Maxed is not actionable, however rich you are.
-    state.upgrades[id] = UPGRADES[id].maxLevel;
-    expect(canBuyUpgrade(state, id)).toBe(false);
+    // A finished line is not actionable, however rich you are.
+    completeRanks(state, 'TapPower', lineMaxRank('TapPower'));
+    expect(lineRank(state, 'TapPower')).toBe(lineMaxRank('TapPower'));
+    for (const id of TECH_LINES.TapPower) expect(canStartTech(state, id)).toBe(false);
   });
 
   it('lights the presenter CTA only when something is pressable', () => {

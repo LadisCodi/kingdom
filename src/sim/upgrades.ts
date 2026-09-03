@@ -1,4 +1,10 @@
-// Upgrades: instant, gold-only, leveled boosts to existing mechanics.
+// Minor ranks: what used to be instant, gold-only, LEVELLED upgrades.
+//
+// Every node in the tree is a technology now (Docs/features/tech-tree.md §1
+// rule 2), so a level became a rank: `Sawpits I -> II -> III`, each requiring
+// the one before, each costing Gold AND time like anything else in the tree.
+// `effect()` is the whole difference — it counts completed ranks where it used
+// to read a stored level.
 //
 // The effective-value helpers below are the ONE place effects are applied, and
 // each is now a three-stage pipeline: base -> upgrade levels -> the modifier
@@ -13,53 +19,36 @@
 // yields.
 
 import {
-  DISTRICTS, HARVEST, TAP, TAXES, UPGRADES, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TECH_LINES, WORKER, levelIndexed,
   type HarvestSpec,
 } from './data/definitions';
-import type { CurrencyId, GameState, UpgradeId } from './state';
+import type { CurrencyId, GameState, TechLineId } from './state';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
-import { canAfford, pay } from './wallet';
 
-export const upgradeLevel = (state: GameState, id: UpgradeId): number =>
-  state.upgrades[id] ?? 0;
+/** How many ranks of a line the kingdom has researched. */
+export const lineRank = (state: GameState, line: TechLineId): number => {
+  let n = 0;
+  for (const id of TECH_LINES[line]) {
+    if (!isTechComplete(state, id)) break; // ranks complete in order
+    n += 1;
+  }
+  return n;
+};
 
-/** Gold for the NEXT level (level is 0-based: first purchase costs costBase). */
-export const upgradeCost = (id: UpgradeId, level: number): number =>
-  Math.round(UPGRADES[id].costBase * UPGRADES[id].costGrowth ** level);
-
-export type BuyUpgradeResult = 'Purchased' | 'AtMax' | 'TechRequired' | 'NotEnoughResources';
-
-/** Could the player buy this upgrade this second? Mirrors every gate
- *  `buyUpgrade` checks, so the node dot and the button never disagree. */
-export function canBuyUpgrade(state: GameState, id: UpgradeId): boolean {
-  const def = UPGRADES[id];
-  const level = upgradeLevel(state, id);
-  if (level >= def.maxLevel) return false;
-  if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return false;
-  return canAfford(state.city.wallet, { Gold: upgradeCost(id, level) });
-}
-
-/** Anything on the upgrade side worth a trip to the Research screen. */
-export const anyUpgradeActionable = (state: GameState): boolean =>
-  (Object.keys(UPGRADES) as UpgradeId[]).some((id) => canBuyUpgrade(state, id));
-
-export function buyUpgrade(state: GameState, id: UpgradeId): BuyUpgradeResult {
-  const def = UPGRADES[id];
-  const level = upgradeLevel(state, id);
-  if (level >= def.maxLevel) return 'AtMax';
-  if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return 'TechRequired';
-  const cost = { Gold: upgradeCost(id, level) };
-  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
-  pay(state.city.wallet, cost);
-  state.upgrades[id] = level + 1;
-  return 'Purchased';
-}
+/** The highest rank a line goes to. */
+export const lineMaxRank = (line: TechLineId): number => TECH_LINES[line].length;
 
 // -------------------------------------------------- effective values
 
-export const effect = (state: GameState, id: UpgradeId): number =>
-  upgradeLevel(state, id) * UPGRADES[id].effectPerLevel;
+/**
+ * What a line is currently worth: completed ranks x the per-rank effect.
+ *
+ * The per-rank value is read off the FIRST rank because every rank of a line
+ * carries the same number — one column in the workbook, not a ladder of them.
+ */
+export const effect = (state: GameState, line: TechLineId): number =>
+  lineRank(state, line) * TECHNOLOGIES[TECH_LINES[line][0]].effectPerRank;
 
 /**
  * What the city gathers of one resource per second, from its own numbers.
@@ -107,17 +96,17 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
  * The authored yield is a FLOOR, not a fallback: it is what tapping is worth
  * before a single worker exists, which is most of the first session.
  */
-/** CELL-specific COLLECT-tap upgrades (each +1/level), the mirror of
- *  WORKER_YIELD_UPGRADES below. Both sit at the call site as small tables
+/** CELL-specific COLLECT-tap lines (each +1/rank), the mirror of
+ *  WORKER_YIELD_LINES below. Both sit at the call site as small tables
  *  rather than as a general scoping mechanism, because that is what the
- *  handful of scoped upgrades in the game actually needs. */
-const TAP_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
+ *  handful of scoped lines in the game actually needs. */
+const TAP_YIELD_LINES: Partial<Record<HarvestSpec['id'], TechLineId>> = {
   Meat: 'Butchery',
   Crops: 'Scythes',
 };
 
 export const effectiveTapYield = (state: GameState, spec: HarvestSpec): number => {
-  const specific = TAP_YIELD_UPGRADES[spec.id];
+  const specific = TAP_YIELD_LINES[spec.id];
   // The floor rises with the upgrades; the production pull does not, because
   // it is already whatever the city makes.
   const floor = spec.yieldPerTap + effect(state, 'TapPower')
@@ -147,10 +136,10 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
     state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,
   ));
 
-/** CELL-specific worker-delivery upgrades (each +1/level). Keyed on the
+/** CELL-specific worker-delivery lines (each +1/rank). Keyed on the
  *  cell, not the currency: game and crop plots both pay Food, but Butchery
  *  is about butchering and Irrigation is about fields. */
-const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
+const WORKER_YIELD_LINES: Partial<Record<HarvestSpec['id'], TechLineId>> = {
   Forest: 'Sawpits',
   Crops: 'Irrigation',
   Stone: 'Stonecutting',
@@ -161,7 +150,7 @@ const WORKER_YIELD_UPGRADES: Partial<Record<HarvestSpec['id'], UpgradeId>> = {
 /** Units a worker delivery deposits (global WorkerLoad + the resource's own
  *  upgrade: Stonecutting/BigNets/IronPicks). */
 export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): number {
-  const specific = WORKER_YIELD_UPGRADES[spec.id];
+  const specific = WORKER_YIELD_LINES[spec.id];
   const base = spec.yieldPerWorker + effect(state, 'WorkerLoad') +
     (specific ? effect(state, specific) : 0);
   return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));

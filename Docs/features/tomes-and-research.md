@@ -401,7 +401,12 @@ reversals, so that nobody reading the diff has to guess which is current:
    2026-09-03**; the claimed-landmark term, the 50-Gold-ground lump and the
    150 first-clear lump are live, and there is no base rate. Still to do:
    techs reprice from Gold to Gold + Knowledge + time.
-3. Upgrades collapse into technologies ([`tech-tree.md`](tech-tree.md) §8).
+3. ~~Upgrades collapse into technologies.~~ **DONE 2026-09-04.** The 15
+   levelled upgrades became 49 ranked technologies; `UPGRADES`, `buyUpgrade`
+   and `state.upgrades` are gone, `effect()` counts completed ranks, and the
+   `BuyUpgrade` quest goal type is retired. **The tree went from 6,600 Gold to
+   26,625**, so the quest chain now covers a little under half of it instead
+   of 1.8x — the inversion §0 asks for, held by `tests/quests.test.ts`.
 4. Tomes as screens: three tomes, era 1 of each authored, positions per page.
 5. Era 2 and 3 authored — the point at which the tree stops being a formality.
 6. Contested landmarks pay lumps — after the world map exists.

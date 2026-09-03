@@ -400,10 +400,10 @@ surface.
 | the five `effectiveX` helpers | keep the three-stage pipeline (base → ranks → modifiers); only stage two changes its source |
 | `TAP_YIELD_UPGRADES`, `WORKER_YIELD_UPGRADES` | stay as call-site tables, keyed on tech ids |
 | the tree UI | circles disappear entirely; minor vs major becomes node size or frame weight |
-| quest `Surveyors` | goal type `BuyUpgrade` → `CompleteTech`, target `SurveyingI` |
+| quest `Surveyors` | goal type `BuyUpgrade` → `CompleteTech`, target `SurveyingII` — "buy it twice" becomes "reach rank II", since a rank implies the ones below it |
 | quest `Attuned` | target `Attunement` → `Consecration` |
 | goal type `BuyUpgrade` | retired — it has no other user |
-| `SAVE_VERSION` | bumped **with a migrator** — `state.upgrades: Record<UpgradeId, number>` reshapes into completed tech ids. A reshape, not an additive change, so the defensive-reader rule does not cover it |
+| `SAVE_VERSION` | **23 → 24 with a migrator** (landed 2026-09-04) — `UpgradeLevels: { TapPower: 3 }` becomes three completed ranks. A reshape, not an additive change, so the defensive-reader rule does not cover it |
 
 Every other quest survives untouched, including `ArmedMen` → `Warrior`,
 `Mapmakers` → `Cartography` and `Architect` → `Architecture`. Three of them now

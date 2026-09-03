@@ -41,12 +41,30 @@ export type TechId =
   | 'Masonry' | 'Mining' | 'Engineering' | 'DeepMining' // economics: stone side
   | 'Cartography' | 'Sailing' | 'Fishing' | 'Shipbuilding' | 'ScalingTools' // exploration
   | 'Warrior' | 'Spears' | 'Archery' | 'Cavalry' // military (down)
-  | 'Attunement' | 'Warband'; // the magic and expedition leaves
-export type UpgradeId =
-  | 'TapPower' | 'QuickHands' | 'WorkerLoad'
-  | 'Sawpits' | 'Butchery' | 'Irrigation' | 'Scythes'
-  | 'Surveying' | 'Pitons' | 'MarketStall' | 'TradeRoutes'
-  | 'Stonecutting' | 'BigNets' | 'IronPicks' | 'Resonance';
+  | 'Attunement' | 'Warband' // the magic and expedition leaves
+  // ---- minor ranks. Docs/features/tech-tree.md §1 rule 2: every node is a
+  // technology, and a roman numeral is what tells you it is a small one.
+  | 'TapPowerI' | 'TapPowerII' | 'TapPowerIII' | 'TapPowerIV'
+  | 'TapPowerV' | 'QuickHandsI' | 'QuickHandsII' | 'QuickHandsIII'
+  | 'QuickHandsIV' | 'QuickHandsV' | 'WorkerLoadI' | 'WorkerLoadII'
+  | 'WorkerLoadIII' | 'SawpitsI' | 'SawpitsII' | 'SawpitsIII'
+  | 'ButcheryI' | 'ButcheryII' | 'ButcheryIII' | 'IrrigationI'
+  | 'IrrigationII' | 'IrrigationIII' | 'ScythesI' | 'ScythesII'
+  | 'ScythesIII' | 'SurveyingI' | 'SurveyingII' | 'PitonsI'
+  | 'PitonsII' | 'MarketStallI' | 'MarketStallII' | 'MarketStallIII'
+  | 'MarketStallIV' | 'TradeRoutesI' | 'TradeRoutesII' | 'TradeRoutesIII'
+  | 'TradeRoutesIV' | 'TradeRoutesV' | 'StonecuttingI' | 'StonecuttingII'
+  | 'StonecuttingIII' | 'BigNetsI' | 'BigNetsII' | 'BigNetsIII'
+  | 'IronPicksI' | 'IronPicksII' | 'IronPicksIII' | 'ResonanceI'
+  | 'ResonanceII';
+
+/** A ladder of ranks that used to be one levelled upgrade. `effect()` in
+ *  sim/upgrades.ts counts how many of a line's ranks are complete. */
+export type TechLineId =
+  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Sawpits'
+  | 'Butchery' | 'Irrigation' | 'Scythes' | 'Surveying'
+  | 'Pitons' | 'MarketStall' | 'TradeRoutes' | 'Stonecutting'
+  | 'BigNets' | 'IronPicks' | 'Resonance';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -356,7 +374,6 @@ export interface GameState {
     lockedUntil: number[];
   };
   /** Upgrade levels (instant, gold-bought); absent = level 0. */
-  upgrades: Partial<Record<UpgradeId, number>>;
   /** The modifier stack: artifact passives (permanent), actives and seasons
    *  (timed). Kingdom-scoped concepts, so this sits beside `upgrades` at the
    *  top level rather than inside `city`. See sim/modifiers.ts. */

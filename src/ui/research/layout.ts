@@ -20,12 +20,16 @@ export interface GridPoint {
 export const GRID = 120;
 /** Tech node square. */
 export const NODE = 56;
-/** Upgrade circle. */
+/**
+ * Minor-rank node. Smaller than a major, and that is now the ONLY thing the
+ * shape says: a rank is a technology like any other (tech-tree.md §1 rule 3),
+ * so it is a square too, not the circle an upgrade used to be.
+ */
 export const UNODE = 40;
 /**
- * How far below its parent an upgrade fan hangs.
+ * How far below its parent a rank fan hangs.
  *
- * 0.5, not 0.7. The window is narrow and both ends of it are hard: a circle
+ * 0.5, not 0.7. The window is narrow and both ends of it are hard: a rank
  * must clear its PARENT square (28 + 20 = 48px of half-heights) and it must
  * clear the tech one row BELOW it (another 48, out of the 120 the row is
  * worth). So FAN_DY has to sit between 48 and 72, and 0.7 x 120 = 84 was
@@ -33,9 +37,13 @@ export const UNODE = 40;
  * `tests/research.test.ts` never saw because its invariant is about
  * connector elbows crossing nodes, not about nodes crossing each other.
  * 0.5 x 120 = 60 centres the fan in the gap with 12px clear on each side.
+ *
+ * The fan is a STOPGAP: it is what keeps ~49 rank nodes on screen without
+ * authoring 49 positions. Docs/features/tomes-and-research.md §5 replaces the
+ * whole layout with one bounded page per tome, at which point this goes.
  */
 export const FAN_DY = 0.5 * GRID;
-/** Spacing between fanned upgrade circles. */
+/** Spacing between fanned rank nodes. */
 export const FAN_DX = 56;
 
 /**
