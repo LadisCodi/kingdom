@@ -37,7 +37,6 @@ export const PALETTE = {
    *  background too. */
   labelPill: 'rgba(18, 16, 14, 0.88)',
   labelPillEdge: 'rgba(255, 255, 255, 0.35)',
-  exhaustedOverlay: 'rgba(40, 30, 20, 0.45)',
   recoveryFill: '#8ab4d8',
   progressBg: 'rgba(0, 0, 0, 0.55)',
   progressFill: '#d9a536',

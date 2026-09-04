@@ -119,15 +119,14 @@ export function drawMap(
 
   const cellRect = (cell: Coord) => camera.cellToScreen(cell);
 
-  // The per-cell resource-state overlay (exhaustion dim + recovery/tap bar).
+  // The per-cell resource-state overlay (recovery/tap bar). An exhausted
+  // feature already swaps to its own sprite; no extra dim on top of it.
   const drawResourceState = (cell: Coord, x: number, y: number) => {
     const source = harvestSourceAt(state, cell);
     if (source === null) return;
     const recovery = recoversAt(state, map, cell, now);
     const spec = HARVEST[source];
     if (recovery !== null) {
-      ctx.fillStyle = PALETTE.exhaustedOverlay;
-      ctx.fillRect(x, y, size, size);
       const remaining = (recovery - now) / (spec.recoverySeconds * 1000);
       drawBar(ctx, x + size * 0.15, y + size - 7, size * 0.7, 4, 1 - Math.min(1, remaining), PALETTE.recoveryFill);
     } else {
