@@ -22,6 +22,8 @@ import type { TapFx } from './tapFx';
 import type { Villagers } from './villagers';
 import { PALETTE, TERRAIN_COLORS, TILE_SIZE } from './palette';
 import { drawIcon, drawSprite } from './sprites';
+import { drawCharacter, unitScale } from './characters';
+import { animFor, castFor, villagerFor, type UnitPose } from './cast';
 import { ICON_EMOJI, type IconName } from '../ui/kit/icon';
 
 export interface MarkerLayer {
@@ -536,8 +538,11 @@ export function drawMap(
     const uw = size * 0.6;
     const t = now + v.phase;
     const keys = v.walking ? [walkFrameKey('worker_walk', t), 'worker'] : ['worker'];
+    // Cast by phase: it is per agent and stable, so a villager keeps its face.
+    const [who, anim] = animFor(villagerFor(v.phase), v.walking ? 'walk' : 'idle');
     unitTransform(ctx, sx + uw / 2, sy + uw, v.walking && v.dx < 0,
       v.walking ? WALK_SQUASH : 0, WALK_FRAME_MS * 2, t, () => {
+        if (drawCharacter(ctx, who, anim, t, sx + uw / 2, sy + uw, unitScale(size))) return;
         if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
           drawGlyph(ctx, '🧍', sx, sy, uw, size * 0.34);
         }
@@ -607,7 +612,16 @@ export function drawMap(
       amp = boat ? BOAT_SQUASH : moving ? WALK_SQUASH : WORK_SQUASH;
       period = boat ? BOAT_BOB_MS : moving ? WALK_FRAME_MS * 2 : WORK_FRAME_MS;
     }
+    // The atlas cast first — a farmer for the Farm, a lumberjack for the
+    // Sawmill — then the legacy sprite chain, then the emoji. Boats have no
+    // cast and skip straight to the chain.
+    const member = boat ? null : castFor(building.definitionId, unitPhase(worker.id));
+    const pose: UnitPose = moving ? 'walk' : working ? 'work' : 'idle';
+    const cast = member ? animFor(member, pose) : null;
     unitTransform(ctx, sx + uw / 2, sy + uw, flip, amp, period, t, () => {
+      if (cast && drawCharacter(ctx, cast[0], cast[1], t, sx + uw / 2, sy + uw, unitScale(size))) {
+        return;
+      }
       if (!keys.some((k) => drawSprite(ctx, k, sx, sy, uw, uw))) {
         drawGlyph(ctx, boat ? '⛵' : '🧑‍🌾', sx, sy, uw, size * 0.34);
         if (carrying) {

@@ -27,6 +27,7 @@ npm run balance      # balance.xlsx  → src/sim/data/balance.json
 npm run balance:export   # balance.json → balance.xlsx  (the other direction)
 npm run art          # rebuild the UI atlas
 npm run art:check    # verify it
+npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ (atlas + index)
 ```
 
 `?dev` in the URL adds the dev bar (time-warp to demo offline progress, save
@@ -87,6 +88,7 @@ by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
 | a seasonal hero = one hero row + one banner row; a major technology's place on its tome page (`node_x`/`node_y`), its tome, era and Knowledge price; a minor line's ranks (row order) | a new tome or a new minor line (`TomeId` and `TechLineId` are unions), or a new effect hook for a line (`modifiers.ts`) |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
+| a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
 
 ## Saves
 

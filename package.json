@@ -13,7 +13,8 @@
     "balance": "node scripts/balance.mjs import",
     "balance:export": "node scripts/balance.mjs export",
     "art": "node scripts/ui-atlas.mjs build",
-    "art:check": "node scripts/ui-atlas.mjs check"
+    "art:check": "node scripts/ui-atlas.mjs check",
+    "art:characters": "node scripts/char-atlas.mjs build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"

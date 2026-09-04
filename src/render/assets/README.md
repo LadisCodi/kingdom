@@ -28,7 +28,7 @@ prompts and the normalization pipeline.
 | `rocks.png` (+ `_exhausted`) | 🪨 / 🧱 | |
 | `iron_vein.png` (+ `_exhausted`) | ⛰️ / 🕳️ | |
 | `fish_shoal.png` | 🐟 | drawn over water; fish + ripples only |
-| `worker.png` / `_carrying` | 🧑‍🌾 / 🎒 | drawn at 0.6 tile; statics = each cycle's frame 2 |
+| `worker.png` / `_carrying` | 🧑‍🌾 / 🎒 | **fallback only** since the character atlas (below); drawn at 0.6 tile |
 | `worker_walk_1..4.png` / `worker_carry_1..4.png` | — | 4-frame walk cycles (140 ms/frame) |
 | `worker_chop_1/2` · `worker_mine_1/2` · `worker_farm_1/2` | — | 2-frame work loops by harvest source (320 ms); pending generation |
 | `fishing_boat_row_1/2.png` | — | 2-frame rowing loop; pending generation |
@@ -50,6 +50,19 @@ their emoji fallback until then. Prompts in `Docs/art/sprite-prompts.md`.
 | `ruin.png` / `_cleared` | 🏚️ | dungeon entrance — see `Docs/features/11-expeditions.md` |
 | `landmark.png` / `_claimed` / `_defended` | 🗿 | +1 Mana/h once claimed |
 | `gems_pouch.png` … `gems_treasury.png` | 💎 (fallback) | the six store packs, in ladder order: pouch, purse, chest, vault, hoard, treasury. **64×64**, padded from `Docs/art/ui/icon_pack_gems_1..6.png` without scaling; drawn at 64 px in the store (`storeSheet.ts`), never on the map |
+
+## People and animals are NOT here either
+
+Every animated character on the map — the crews of the Farm, Sawmill and
+Quarry, the strolling villagers — comes from **one atlas**,
+`src/render/characters/atlas.png`, built by `npm run art:characters` from the
+loose frames in `Docs/art/characters/` (`scripts/char-atlas.mjs`). The
+generated index carries each frame's rect and its **feet anchor**; the
+renderer plants the feet on the ground at an integer scale
+(`src/render/characters.ts`). Who plays whom lives in `src/render/cast.ts`
+and is checked by `tests/characters.test.ts`. The `worker_*` files above are
+the fallback while the atlas loads, and the Docks still use the boats.
+Review the pack at `Docs/art/characters/contact.html` (served by Vite).
 
 **Hero, unit and artifact portraits do NOT belong here.** They are UI art, not
 world tiles, and this directory is globbed **eagerly** by
