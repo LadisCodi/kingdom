@@ -1697,4 +1697,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/features/engine-seams.md §4).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
