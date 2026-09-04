@@ -115,7 +115,7 @@ now argued.
 |---|---|
 | Tap a province cell | **1 Mana** |
 | Cast a **spell**, either map ([`07-research.md`](07-research.md) §7) | **Mana** |
-| Reveal a world node | **Gold + time**, scaling with distance |
+| Reveal a world hex | **Gold + time**, scaling with distance |
 | Send a party, claim, besiege | supplies, army commitment, time |
 
 That split is what stops the two scopes competing for one budget.

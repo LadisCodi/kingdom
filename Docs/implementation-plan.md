@@ -352,7 +352,7 @@ bite on. It is also the one item on this list that is a **30-day retention
 question** rather than a content question, which is why it comes early despite
 belonging to a post-prototype structure.
 
-- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §7.
+- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §8.
 - **Blocked on: OQ-1.** And once it lands, **OQ-48** (adjacency v2) becomes worth
   doing and is the best design-depth-per-hour in the repository.
 - **Also do:** let the save record which *scope* a thing is in. **Cheap now,
@@ -457,10 +457,11 @@ name, so nothing converts — but the new `Knowledge` must be born at **zero**.
 
 Named here so nobody rediscovers them, and so they stay out of scope.
 
-- **The world map.** The node graph, scouting, derived fog, outposts, shards and
-  contested claims. [`02-map-scopes.md`](features/02-map-scopes.md) §8 stages it,
-  and §7 lists the four cheap things to spend *now* — because the save cannot be
-  changed retroactively.
+- **The world map.** The hex lattice, scouting, per-player client-side fog,
+  outposts, shards and contested claims.
+  [`02-map-scopes.md`](features/02-map-scopes.md) §9 stages it, and §8 lists the
+  four cheap things to spend *now* — because the save cannot be changed
+  retroactively.
 - **A guild league.** Small once the bar exists, and meaningless at prototype
   population (OQ-33).
 - **Cosmetics as a pipeline**, if and only if the probe ranks (OQ-26).

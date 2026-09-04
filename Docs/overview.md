@@ -204,7 +204,7 @@ So the map splits into three layers, each with its own verb:
 |---|---|---|
 | **Your province** | authored, identical for every player, **bounded** | **tapped** |
 | **Temporary provinces** | event maps inside a window — the event format | tapped |
-| **The world map** | a shared node graph, outposts not cities | **sent to** |
+| **The world map** | a shared hex lattice, outposts not cities | **sent to** |
 
 > **Your village can never be attacked. Everything outside it can be contested.**
 

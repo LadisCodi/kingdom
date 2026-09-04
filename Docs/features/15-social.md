@@ -272,7 +272,7 @@ Each step is playable before the next exists.
 ## 10. Deliberately not in this design
 
 Chat · avatars and friend requests · a leaderboard at prototype population ·
-raiding or looting of any kind ([`02-map-scopes.md`](02-map-scopes.md) §5) ·
+raiding or looting of any kind ([`02-map-scopes.md`](02-map-scopes.md) §6) ·
 writing into another player's save · a live-presence requirement anywhere · the
 sim on the server.
 
