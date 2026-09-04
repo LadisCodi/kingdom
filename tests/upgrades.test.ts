@@ -8,7 +8,7 @@ import {
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
-import { revealCostForCell, revealPerTap } from '../src/sim/fog';
+import { effectiveDiscoverRadius, revealCostForCell, revealPerTap } from '../src/sim/fog';
 import { collectTap } from '../src/sim/harvest';
 import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
@@ -526,5 +526,41 @@ describe('the combat lines reach the fight', () => {
     expect(typeMultiplier('Warrior', 'Archer', 5)).toBe(1); // capped at neutral
     // The good matchup is untouched: Manoeuvre is about not wasting a trip.
     expect(typeMultiplier('Archer', 'Warrior', drill.disadvantageOffset)).toBe(ARMY.typeAdvantage);
+  });
+});
+
+// Fourth: Farsight, the one hook with a DISCRETE effect at completion.
+describe('Farsight reaches the fog', () => {
+  it('widens how far a building marks the fog, and re-discovers around standing ones', () => {
+    const state = freshGame();
+    fund(state, { Gold: 99_999, Knowledge: 99_999 });
+    const before = Object.keys(state.fog.discovered).length;
+    expect(effectiveDiscoverRadius(state, 2)).toBe(2);
+
+    // Research the rank through the real clock, so the re-discover fires
+    // where it lives — inside the boundary walk.
+    completeTech(state, 'ScalingTools');
+    expect(startTech(state, 'FarsightI', T0)).toBe('Started');
+    advance(state, map, T0 + TECHNOLOGIES.FarsightI.durationSeconds * 1000);
+
+    expect(effectiveDiscoverRadius(state, 2)).toBe(3);
+    expect(Object.keys(state.fog.discovered).length, 'the Townhall should see farther now')
+      .toBeGreaterThan(before);
+  });
+
+  it('one-call replay equals stepped ticking across a Farsight landing', () => {
+    const setup = () => {
+      const s = freshGame();
+      fund(s, { Gold: 99_999, Knowledge: 99_999 });
+      completeTech(s, 'ScalingTools');
+      expect(startTech(s, 'FarsightI', T0)).toBe('Started');
+      return s;
+    };
+    const oneCall = setup(); const stepped = setup();
+    const END = T0 + 2 * TECHNOLOGIES.FarsightI.durationSeconds * 1000;
+    advance(oneCall, map, END);
+    for (let t = 1000; t <= END - T0; t += 1000) advance(stepped, map, T0 + t);
+    expect(Object.keys(stepped.fog.discovered).sort())
+      .toEqual(Object.keys(oneCall.fog.discovered).sort());
   });
 });

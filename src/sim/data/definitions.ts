@@ -1423,6 +1423,24 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     description: '+2% off the penalty for a bad matchup',
     glyph: '♟️',
   }, balance.technologies.ManoeuvreIII),
+  FarsightI: tech({
+    id: 'FarsightI',
+    name: 'Farsight I',
+    description: '+1 to how far every building can see into the fog',
+    glyph: '🔭',
+  }, balance.technologies.FarsightI),
+  FarsightII: tech({
+    id: 'FarsightII',
+    name: 'Farsight II',
+    description: '+1 to how far every building can see into the fog',
+    glyph: '🔭',
+  }, balance.technologies.FarsightII),
+  FarsightIII: tech({
+    id: 'FarsightIII',
+    name: 'Farsight III',
+    description: '+1 to how far every building can see into the fog',
+    glyph: '🔭',
+  }, balance.technologies.FarsightIII),
 };
 
 /** Every technology, in workbook order — which is also RANK order inside a
@@ -1465,7 +1483,8 @@ export const TECH_ORDER: TechId[] = [
   'ShieldWallI', 'ShieldWallII', 'ShieldWallIII', 'FletchingI',
   'FletchingII', 'FletchingIII', 'BardingI', 'BardingII',
   'BardingIII', 'WarhornsI', 'WarhornsII', 'WarhornsIII',
-  'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII',
+  'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII', 'FarsightI',
+  'FarsightII', 'FarsightIII',
 ];
 
 // Slots & gem pricing for extra slots.

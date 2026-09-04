@@ -289,7 +289,7 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(tree).toBe(78_335);
+    expect(tree).toBe(79_725);
     // Still enough to carry the player through the majors — the content
     // spine, keystones included — which is what the chain used to be
     // measured against. The ranks are the depth you pay for yourself.

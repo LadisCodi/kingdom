@@ -436,8 +436,8 @@ reversals, so that nobody reading the diff has to guess which is current:
    `ModifierStat` hooks and their ten minor lines ([`tech-tree.md`](tech-tree.md)
    §9), then the Warfare batch — six more lines on `armyCap`, `recruitCost`,
    `supplyCost`, `haulLoss`, `heroXp` and the existing `delveSpeed`; then the
-   five combat lines, carried into pure `combat.ts` as a `Drill` on the Party.
-   The tree is 151 technologies.
+   five combat lines, carried into pure `combat.ts` as a `Drill` on the Party;
+   then Farsight. **Every hook in §9 is in.** The tree is 154 technologies.
 5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
    assigned a tome and an era, the nine keystones exist and each unlocks a
    real dial (Townhall level, hall levels, Sanctum levels), and the Townhall

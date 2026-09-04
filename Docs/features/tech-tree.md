@@ -469,8 +469,12 @@ replayed from its inputs alone. Manoeuvre softens the disadvantage multiplier
 and never past neutral: a bad matchup stays bad, it just stops being a wasted
 trip. Five lines, 15 ranks; the tree is 151.
 
-**Not yet:** Farsight, because a radius change should re-discover around every
-standing building and that wants the map at completion time.
+**Landed 2026-09-04, last: Farsight.** `discoverRadius` on every building's
+fog-discover radius, never its reveal radius — seeing farther is not owning
+farther, and the paid reveal stays the economy's main sink. A rank landing
+re-applies every standing building's radii, inside `advance()` where the map
+is, so replay and stepped ticking discover the same cells. **All seventeen §9
+hooks are now in**; the tree is 154 technologies.
 
 **Pricing:** the new ranks sit on the *legacy* Gold scale the existing ranks
 use, not on §6's bands — a rank priced to the bands beside a 275-Gold era-3

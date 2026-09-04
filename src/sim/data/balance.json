@@ -3217,6 +3217,54 @@
       "tome": "Warfare",
       "era": 3,
       "node": null
+    },
+    "FarsightI": {
+      "cost": {
+        "Gold": 150,
+        "Knowledge": 30
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "ScalingTools",
+        "AttunementII"
+      ],
+      "line": "Farsight",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "FarsightII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "FarsightI",
+        "AttunementII"
+      ],
+      "line": "Farsight",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "FarsightIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "FarsightII",
+        "AttunementIII"
+      ],
+      "line": "Farsight",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
     }
   },
   "research": {

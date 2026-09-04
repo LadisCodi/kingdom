@@ -54,7 +54,8 @@ export type ModifierStat =
   // relic already travel in.
   | 'unitAtk'         // flat ATK on every unit
   | 'unitDef'         // flat DEF on every unit
-  | 'typeDisadvantage'; // the multiplier a bad matchup applies
+  | 'typeDisadvantage' // the multiplier a bad matchup applies
+  | 'discoverRadius';  // how far a building sees into the fog
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 
