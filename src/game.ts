@@ -1453,7 +1453,7 @@ export class Game {
       this.expeditionRuin = null;
       this.setOverlay(null);
     } else if (result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(supplyCost(this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
+      this.shake(Object.keys(supplyCost(this.state, this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
     } else {
       this.toast(LAUNCH_BLOCK_TEXT[result]);
     }

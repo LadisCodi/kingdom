@@ -323,8 +323,8 @@ describe('launching', () => {
 
   it('pays supplies once, up front, and the Quartermaster packs lighter', () => {
     const state = readyToDelve();
-    const full = supplyCost(BARROW, 'Warden');
-    const light = supplyCost(BARROW, 'Quartermaster');
+    const full = supplyCost(state, BARROW, 'Warden');
+    const light = supplyCost(state, BARROW, 'Quartermaster');
     expect(light.Food!).toBeLessThan(full.Food!);
 
     const food = getWallet(state.city.wallet, 'Food');

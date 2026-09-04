@@ -1213,6 +1213,126 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     description: '+5% Stardust carried out of a ruin',
     glyph: '💫',
   }, balance.technologies.ProspectingIII),
+  ColoursI: tech({
+    id: 'ColoursI',
+    name: 'Colours I',
+    description: '+2 to the army power the halls can field',
+    glyph: '🎌',
+  }, balance.technologies.ColoursI),
+  ColoursII: tech({
+    id: 'ColoursII',
+    name: 'Colours II',
+    description: '+2 to the army power the halls can field',
+    glyph: '🎌',
+  }, balance.technologies.ColoursII),
+  ColoursIII: tech({
+    id: 'ColoursIII',
+    name: 'Colours III',
+    description: '+2 to the army power the halls can field',
+    glyph: '🎌',
+  }, balance.technologies.ColoursIII),
+  ColoursIV: tech({
+    id: 'ColoursIV',
+    name: 'Colours IV',
+    description: '+2 to the army power the halls can field',
+    glyph: '🎌',
+  }, balance.technologies.ColoursIV),
+  ColoursV: tech({
+    id: 'ColoursV',
+    name: 'Colours V',
+    description: '+2 to the army power the halls can field',
+    glyph: '🎌',
+  }, balance.technologies.ColoursV),
+  MusterDrillI: tech({
+    id: 'MusterDrillI',
+    name: 'Muster Drill I',
+    description: '−10% to what a unit costs to recruit',
+    glyph: '📣',
+  }, balance.technologies.MusterDrillI),
+  MusterDrillII: tech({
+    id: 'MusterDrillII',
+    name: 'Muster Drill II',
+    description: '−10% to what a unit costs to recruit',
+    glyph: '📣',
+  }, balance.technologies.MusterDrillII),
+  MusterDrillIII: tech({
+    id: 'MusterDrillIII',
+    name: 'Muster Drill III',
+    description: '−10% to what a unit costs to recruit',
+    glyph: '📣',
+  }, balance.technologies.MusterDrillIII),
+  RationsI: tech({
+    id: 'RationsI',
+    name: 'Rations I',
+    description: '−5% to what an expedition costs to provision',
+    glyph: '🥖',
+  }, balance.technologies.RationsI),
+  RationsII: tech({
+    id: 'RationsII',
+    name: 'Rations II',
+    description: '−5% to what an expedition costs to provision',
+    glyph: '🥖',
+  }, balance.technologies.RationsII),
+  RationsIII: tech({
+    id: 'RationsIII',
+    name: 'Rations III',
+    description: '−5% to what an expedition costs to provision',
+    glyph: '🥖',
+  }, balance.technologies.RationsIII),
+  DrillmasterI: tech({
+    id: 'DrillmasterI',
+    name: 'Drillmaster I',
+    description: '+5% XP a hero brings back from a delve',
+    glyph: '🎖️',
+  }, balance.technologies.DrillmasterI),
+  DrillmasterII: tech({
+    id: 'DrillmasterII',
+    name: 'Drillmaster II',
+    description: '+5% XP a hero brings back from a delve',
+    glyph: '🎖️',
+  }, balance.technologies.DrillmasterII),
+  DrillmasterIII: tech({
+    id: 'DrillmasterIII',
+    name: 'Drillmaster III',
+    description: '+5% XP a hero brings back from a delve',
+    glyph: '🎖️',
+  }, balance.technologies.DrillmasterIII),
+  BearersI: tech({
+    id: 'BearersI',
+    name: 'Bearers I',
+    description: '−3% of the haul lost when a depth goes wrong',
+    glyph: '🎒',
+  }, balance.technologies.BearersI),
+  BearersII: tech({
+    id: 'BearersII',
+    name: 'Bearers II',
+    description: '−3% of the haul lost when a depth goes wrong',
+    glyph: '🎒',
+  }, balance.technologies.BearersII),
+  BearersIII: tech({
+    id: 'BearersIII',
+    name: 'Bearers III',
+    description: '−3% of the haul lost when a depth goes wrong',
+    glyph: '🎒',
+  }, balance.technologies.BearersIII),
+  PathfindersI: tech({
+    id: 'PathfindersI',
+    name: 'Pathfinders I',
+    description: '−10% time to resolve each depth of a ruin',
+    glyph: '🐎',
+  }, balance.technologies.PathfindersI),
+  PathfindersII: tech({
+    id: 'PathfindersII',
+    name: 'Pathfinders II',
+    description: '−10% time to resolve each depth of a ruin',
+    glyph: '🐎',
+  }, balance.technologies.PathfindersII),
+  PathfindersIII: tech({
+    id: 'PathfindersIII',
+    name: 'Pathfinders III',
+    description: '−10% time to resolve each depth of a ruin',
+    glyph: '🐎',
+  }, balance.technologies.PathfindersIII),
 };
 
 /** Every technology, in workbook order — which is also RANK order inside a
@@ -1247,6 +1367,11 @@ export const TECH_ORDER: TechId[] = [
   'ScriptoriumI', 'ScriptoriumII', 'ScriptoriumIII', 'VigilsI',
   'VigilsII', 'VigilsIII', 'PilgrimageI', 'PilgrimageII',
   'PilgrimageIII', 'ProspectingI', 'ProspectingII', 'ProspectingIII',
+  'ColoursI', 'ColoursII', 'ColoursIII', 'ColoursIV',
+  'ColoursV', 'MusterDrillI', 'MusterDrillII', 'MusterDrillIII',
+  'RationsI', 'RationsII', 'RationsIII', 'DrillmasterI',
+  'DrillmasterII', 'DrillmasterIII', 'BearersI', 'BearersII',
+  'BearersIII', 'PathfindersI', 'PathfindersII', 'PathfindersIII',
 ];
 
 // Slots & gem pricing for extra slots.

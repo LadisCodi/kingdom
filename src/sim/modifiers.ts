@@ -41,7 +41,14 @@ export type ModifierStat =
   | 'workerSpeed'     // tiles per second a worker walks
   | 'manaCap'         // the ceiling of the pool
   | 'claimCost'       // Gold to claim a landmark
-  | 'stardustYield';  // Stardust a depth pays
+  | 'stardustYield'   // Stardust a depth pays
+  // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
+  // adding a twin of it.
+  | 'armyCap'         // power the halls can field
+  | 'supplyCost'      // what an expedition costs to provision
+  | 'haulLoss'        // the fraction a failed depth loses
+  | 'heroXp'          // XP a delve pays a hero
+  | 'recruitCost';    // what a unit costs to recruit
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

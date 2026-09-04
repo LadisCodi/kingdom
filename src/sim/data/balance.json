@@ -2667,6 +2667,320 @@
       "tome": "Magic",
       "era": 3,
       "node": null
+    },
+    "ColoursI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Warrior"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null
+    },
+    "ColoursII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "ColoursI",
+        "WarbandII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "ColoursIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ColoursII",
+        "WarbandIII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "ColoursIV": {
+      "cost": {
+        "Gold": 1750,
+        "Knowledge": 200
+      },
+      "durationSeconds": 3600,
+      "requires": [
+        "ColoursIII",
+        "WarbandIII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "ColoursV": {
+      "cost": {
+        "Gold": 3150,
+        "Knowledge": 200
+      },
+      "durationSeconds": 4500,
+      "requires": [
+        "ColoursIV",
+        "WarbandIII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "MusterDrillI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Warrior"
+      ],
+      "line": "MusterDrill",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null
+    },
+    "MusterDrillII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "MusterDrillI",
+        "WarbandII"
+      ],
+      "line": "MusterDrill",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "MusterDrillIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "MusterDrillII",
+        "WarbandIII"
+      ],
+      "line": "MusterDrill",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "RationsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Spears"
+      ],
+      "line": "Rations",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null
+    },
+    "RationsII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "RationsI",
+        "WarbandII"
+      ],
+      "line": "Rations",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "RationsIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "RationsII",
+        "WarbandIII"
+      ],
+      "line": "Rations",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "DrillmasterI": {
+      "cost": {
+        "Gold": 150,
+        "Knowledge": 30
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Archery",
+        "WarbandII"
+      ],
+      "line": "Drillmaster",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "DrillmasterII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "DrillmasterI",
+        "WarbandII"
+      ],
+      "line": "Drillmaster",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "DrillmasterIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "DrillmasterII",
+        "WarbandIII"
+      ],
+      "line": "Drillmaster",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "BearersI": {
+      "cost": {
+        "Gold": 150,
+        "Knowledge": 30
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Archery",
+        "WarbandII"
+      ],
+      "line": "Bearers",
+      "effectPerRank": 0.03,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "BearersII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "BearersI",
+        "WarbandII"
+      ],
+      "line": "Bearers",
+      "effectPerRank": 0.03,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "BearersIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "BearersII",
+        "WarbandIII"
+      ],
+      "line": "Bearers",
+      "effectPerRank": 0.03,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "PathfindersI": {
+      "cost": {
+        "Gold": 300,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Cavalry",
+        "WarbandIII"
+      ],
+      "line": "Pathfinders",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "PathfindersII": {
+      "cost": {
+        "Gold": 540,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "PathfindersI",
+        "WarbandIII"
+      ],
+      "line": "Pathfinders",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "PathfindersIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "PathfindersII",
+        "WarbandIII"
+      ],
+      "line": "Pathfinders",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
     }
   },
   "research": {

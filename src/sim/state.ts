@@ -70,7 +70,12 @@ export type TechId =
   | 'WaypostsIII' | 'ScriptoriumI' | 'ScriptoriumII' | 'ScriptoriumIII'
   | 'VigilsI' | 'VigilsII' | 'VigilsIII' | 'PilgrimageI'
   | 'PilgrimageII' | 'PilgrimageIII' | 'ProspectingI' | 'ProspectingII'
-  | 'ProspectingIII';
+  | 'ProspectingIII' | 'ColoursI' | 'ColoursII' | 'ColoursIII'
+  | 'ColoursIV' | 'ColoursV' | 'MusterDrillI' | 'MusterDrillII'
+  | 'MusterDrillIII' | 'RationsI' | 'RationsII' | 'RationsIII'
+  | 'DrillmasterI' | 'DrillmasterII' | 'DrillmasterIII' | 'BearersI'
+  | 'BearersII' | 'BearersIII' | 'PathfindersI' | 'PathfindersII'
+  | 'PathfindersIII';
 
 /** A ladder of ranks that used to be one levelled upgrade. `effect()` in
  *  sim/upgrades.ts counts how many of a line's ranks are complete. */
@@ -81,7 +86,8 @@ export type TechLineId =
   | 'BigNets' | 'IronPicks' | 'Resonance' | 'Carpentry'
   | 'Scriveners' | 'Cartage' | 'DeepWells' | 'LeyTaps'
   | 'Wayposts' | 'Scriptorium' | 'Vigils' | 'Pilgrimage'
-  | 'Prospecting';
+  | 'Prospecting' | 'Colours' | 'MusterDrill' | 'Rations'
+  | 'Drillmaster' | 'Bearers' | 'Pathfinders';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;

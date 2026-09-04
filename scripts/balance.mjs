@@ -85,6 +85,11 @@ const TECH_IDS = [
   'ScriptoriumI', 'ScriptoriumII', 'ScriptoriumIII', 'VigilsI',
   'VigilsII', 'VigilsIII', 'PilgrimageI', 'PilgrimageII',
   'PilgrimageIII', 'ProspectingI', 'ProspectingII', 'ProspectingIII',
+  'ColoursI', 'ColoursII', 'ColoursIII', 'ColoursIV',
+  'ColoursV', 'MusterDrillI', 'MusterDrillII', 'MusterDrillIII',
+  'RationsI', 'RationsII', 'RationsIII', 'DrillmasterI',
+  'DrillmasterII', 'DrillmasterIII', 'BearersI', 'BearersII',
+  'BearersIII', 'PathfindersI', 'PathfindersII', 'PathfindersIII',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];

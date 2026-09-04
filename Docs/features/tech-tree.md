@@ -454,12 +454,18 @@ Two things the batch settled:
   Scriveners under Architecture. Three lines per major is the fan's limit
   (`tests/research.test.ts` holds it); Cartography and Consecration are at it.
 
+**Landed 2026-09-04, second batch (Warfare):** `armyCap` (Colours),
+`recruitCost` (Muster Drill), `supplyCost` (Rations), `haulLoss` (Bearers),
+`heroXp` (Drillmaster), and Pathfinders on the existing `delveSpeed` rather than
+a twin of it. Six lines, 20 ranks; the tree is 136. Colours adds to the cap the
+halls provide and nothing to a kingdom with no hall — a bigger banner, not a
+barracks of its own. Bearers floors at one fifth so a run can never be wiped.
+
 **Not yet:** the unit-stat lines (Shield Wall, Fletching, Barding, Warhorns)
 and Manoeuvre, because `combat.ts` is deliberately pure and they need bonuses
-passed in the way `heroLevel` and the carried relic already are; Farsight,
+passed in the way `heroLevel` and the carried relic already are; and Farsight,
 because a radius change should re-discover around every standing building and
-that wants the map at completion time; and the Warfare batch (Colours,
-Rations, Bearers, Drillmaster, Muster Drill, Pathfinders), which is next.
+that wants the map at completion time.
 
 **Pricing:** the new ranks sit on the *legacy* Gold scale the existing ranks
 use, not on §6's bands — a rank priced to the bands beside a 275-Gold era-3

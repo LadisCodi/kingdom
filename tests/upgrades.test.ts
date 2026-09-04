@@ -3,8 +3,8 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  FOG, HARVEST, LANDMARKS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER, WORKER,
-  lineParent,
+  DELVE, DISTRICTS, FOG, HARVEST, LANDMARKS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
+  TECH_ORDER, WORKER, levelIndexed, lineParent,
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
@@ -20,6 +20,9 @@ import {
   lineMaxRank, lineRank,
 } from '../src/sim/upgrades';
 import { buildDuration, upgradeDuration } from '../src/sim/districts';
+import { maxArmyPower, trainCost } from '../src/sim/army';
+import { depthMs, effectiveHaulLoss, supplyCost } from '../src/sim/expeditions';
+import { addHeroXp } from '../src/sim/heroes';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
 import {
@@ -409,5 +412,63 @@ describe('the era-2/3 lines reach their numbers', () => {
     expect(techCompletesAt(stepped, 'CharterIV')).toBe(authored);
     expect(stepped.research.completed).toEqual(oneCall.research.completed);
     expect(stepped.research.active).toEqual(oneCall.research.active);
+  });
+});
+
+// Second batch: Warfare. Same discipline.
+describe('the Warfare lines reach their numbers', () => {
+  it('Colours adds to what the halls can field, and nothing to a kingdom with no hall', () => {
+    const state = freshGame();
+    completeRanks(state, 'Colours', 3); // +6
+    expect(maxArmyPower(state), 'a banner is not a barracks').toBe(0);
+    addBuilt(state, 'Barracks', { x: 3, y: 1 });
+    const halls = levelIndexed(DISTRICTS.Barracks.armyCapPerLevel, 1);
+    expect(maxArmyPower(state)).toBe(halls + 6);
+  });
+
+  it('Muster Drill discounts every coin of a recruit, floor 1', () => {
+    const state = freshGame();
+    const full = trainCost(state, 'Warrior');
+    completeRanks(state, 'MusterDrill', 2); // −20%
+    const cut = trainCost(state, 'Warrior');
+    for (const c of Object.keys(full)) {
+      expect(cut[c]).toBe(Math.max(1, Math.round(full[c] * 0.8)));
+    }
+    // A villager is priced by population, not by the drill.
+    expect(trainCost(state, 'Villager')).toEqual(trainCost(freshGame(), 'Villager'));
+  });
+
+  it('Rations cuts the provisioning, and stacks with the Quartermaster', () => {
+    const state = freshGame();
+    const full = supplyCost(state, 'HollowBarrow', null);
+    completeRanks(state, 'Rations', 2); // −10%
+    const cut = supplyCost(state, 'HollowBarrow', null);
+    for (const c of Object.keys(full) as Array<keyof typeof full>) {
+      expect(cut[c]).toBe(Math.max(1, Math.round(full[c]! * 0.9)));
+    }
+  });
+
+  it('Bearers keeps more of a failed haul, down to a floor of one fifth', () => {
+    const state = freshGame();
+    expect(effectiveHaulLoss(state)).toBe(DELVE.failHaulLoss);
+    completeRanks(state, 'Bearers', 3); // −9%
+    expect(effectiveHaulLoss(state)).toBeCloseTo(DELVE.failHaulLoss - 0.09);
+    expect(effectiveHaulLoss(state)).toBeGreaterThanOrEqual(0.2);
+  });
+
+  it('Pathfinders shortens every depth, through the same door a Conjunction uses', () => {
+    const state = freshGame();
+    const full = depthMs(state, 'HollowBarrow', 1);
+    completeRanks(state, 'Pathfinders', 2); // −20%
+    expect(depthMs(state, 'HollowBarrow', 1)).toBe(Math.max(1000, Math.round(full * 0.8)));
+  });
+
+  it('Drillmaster pays a hero more XP for the same delve', () => {
+    const state = freshGame();
+    addHeroXp(state, 'Warden', 20);
+    expect(state.heroes.xp.Warden).toBe(20);
+    completeRanks(state, 'Drillmaster', 2); // +10%
+    addHeroXp(state, 'Warden', 20);
+    expect(state.heroes.xp.Warden).toBe(42);
   });
 });

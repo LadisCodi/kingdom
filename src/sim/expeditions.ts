@@ -63,7 +63,8 @@ import { canAfford, pay } from './wallet';
  *  Conjunction that speeds delves up cannot apply to the launch and not to the
  *  push, or to the timer and not to the estimate on the sheet. */
 export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
-  Math.max(1000, Math.round(resolve(state, 'delveSpeed', depthDurationMs(ruinId, depth))));
+  Math.max(1000, Math.round(resolve(state, 'delveSpeed',
+    depthDurationMs(ruinId, depth) * Math.max(0.25, 1 - effect(state, 'Pathfinders')))));
 
 /** Two at the start (hero + one unit type), the rest with Gems — the same
  *  Gems-only shape as attunement sockets, for the same reason. */
@@ -96,16 +97,27 @@ export function buyPartySlot(state: GameState): BuyPartySlotResult {
 /** Supplies are a FLAT cost at launch, not per depth, so the depth decision is
  *  purely risk against reward with nothing else muddying it. The
  *  Quartermaster's whole trait is a discount on this. */
-export function supplyCost(ruinId: RuinId, heroId: HeroId | null): Wallet {
+export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | null): Wallet {
   const base = RUINS[ruinId].supplies;
   const discount = heroId !== null && HEROES[heroId].trait === 'SupplyDiscount'
     ? HEROES[heroId].traitValue : 0;
+  // Rations stacks with the Quartermaster's trait the way a rank and a relic
+  // stack everywhere else: the trait is a discount, the line is a discount,
+  // and the modifier stack rides on the product.
+  const mult = Math.max(0, resolve(state, 'supplyCost',
+    (1 - discount) * (1 - effect(state, 'Rations'))));
   const out: Wallet = {};
   for (const [c, n] of Object.entries(base)) {
-    out[c as keyof Wallet] = Math.max(1, Math.round(n * (1 - discount)));
+    out[c as keyof Wallet] = Math.max(1, Math.round(n * mult));
   }
   return out;
 }
+
+/** The fraction of the haul a failed depth costs (Bearers: −3%/rank, floor
+ *  20%). Half by default — enough that a bad push is a real loss, never so
+ *  much that a run can be wiped, which promise 1 would not allow. */
+export const effectiveHaulLoss = (state: GameState): number =>
+  Math.min(1, Math.max(0.2, resolve(state, 'haulLoss', DELVE.failHaulLoss - effect(state, 'Bearers'))));
 
 // ------------------------------------------------------------------- heroes
 
@@ -152,7 +164,7 @@ export function launchBlock(
   }
   const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
   if (power > maxArmyPower(state)) return 'OverArmyCap';
-  if (!canAfford(state.city.wallet, supplyCost(ruinId, heroId))) return 'NotEnoughSupplies';
+  if (!canAfford(state.city.wallet, supplyCost(state, ruinId, heroId))) return 'NotEnoughSupplies';
   if (artifactId !== null) {
     if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
     // Attune OR arm. Refusing here rather than silently un-attuning is the
@@ -178,7 +190,7 @@ export function launchDelve(
 ): LaunchResult {
   const block = launchBlock(state, map, ruinId, heroId, slots, artifactId);
   if (block !== null) return block;
-  pay(state.city.wallet, supplyCost(ruinId, heroId));
+  pay(state.city.wallet, supplyCost(state, ruinId, heroId));
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const artifactLevel = artifactId === null ? 1 : artifactEntry(state, artifactId).level;
   const artifact = artifactId === null ? null : { id: artifactId, level: artifactLevel };
@@ -288,10 +300,11 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       if (!survived) {
         // A failed push costs HALF the haul and ends the run. Nothing you OWN
         // is taken — you declined a sure thing.
+        const loss = effectiveHaulLoss(state);
         for (const [c, n] of Object.entries(delve.haul)) {
-          delve.haul[c as keyof Wallet] = Math.floor(n * (1 - DELVE.failHaulLoss));
+          delve.haul[c as keyof Wallet] = Math.floor(n * (1 - loss));
         }
-        delve.haulFragments = Math.floor(delve.haulFragments * (1 - DELVE.failHaulLoss));
+        delve.haulFragments = Math.floor(delve.haulFragments * (1 - loss));
         delve.partyHp = Math.max(1, delve.partyHp - outcome.damage);
         delve.phase = 'done';
         delve.outcome = 'failed';
@@ -459,7 +472,7 @@ export function previewExpedition(
   const stats = partyStats(party, level);
   return {
     ruinId,
-    supplies: supplyCost(ruinId, heroId),
+    supplies: supplyCost(state, ruinId, heroId),
     stats,
     safeDepth: guaranteedDepth(party, ruinId, level),
     maxDepth: RUINS[ruinId].maxDepth,
