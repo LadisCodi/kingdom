@@ -2981,6 +2981,242 @@
       "tome": "Warfare",
       "era": 3,
       "node": null
+    },
+    "ShieldWallI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Warrior"
+      ],
+      "line": "ShieldWall",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null
+    },
+    "ShieldWallII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "ShieldWallI",
+        "WarbandII"
+      ],
+      "line": "ShieldWall",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "ShieldWallIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ShieldWallII",
+        "WarbandIII"
+      ],
+      "line": "ShieldWall",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "FletchingI": {
+      "cost": {
+        "Gold": 150,
+        "Knowledge": 30
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Archery",
+        "WarbandII"
+      ],
+      "line": "Fletching",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "FletchingII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "FletchingI",
+        "WarbandII"
+      ],
+      "line": "Fletching",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "FletchingIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "FletchingII",
+        "WarbandIII"
+      ],
+      "line": "Fletching",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "BardingI": {
+      "cost": {
+        "Gold": 300,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Cavalry",
+        "WarbandIII"
+      ],
+      "line": "Barding",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "BardingII": {
+      "cost": {
+        "Gold": 540,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "BardingI",
+        "WarbandIII"
+      ],
+      "line": "Barding",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "BardingIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "BardingII",
+        "WarbandIII"
+      ],
+      "line": "Barding",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "WarhornsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Spears"
+      ],
+      "line": "Warhorns",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null
+    },
+    "WarhornsII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "WarhornsI",
+        "WarbandII"
+      ],
+      "line": "Warhorns",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null
+    },
+    "WarhornsIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "WarhornsII",
+        "WarbandIII"
+      ],
+      "line": "Warhorns",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "ManoeuvreI": {
+      "cost": {
+        "Gold": 300,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Cavalry",
+        "WarbandIII"
+      ],
+      "line": "Manoeuvre",
+      "effectPerRank": 0.02,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "ManoeuvreII": {
+      "cost": {
+        "Gold": 540,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "ManoeuvreI",
+        "WarbandIII"
+      ],
+      "line": "Manoeuvre",
+      "effectPerRank": 0.02,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
+    },
+    "ManoeuvreIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ManoeuvreII",
+        "WarbandIII"
+      ],
+      "line": "Manoeuvre",
+      "effectPerRank": 0.02,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null
     }
   },
   "research": {

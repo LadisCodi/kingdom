@@ -48,7 +48,13 @@ export type ModifierStat =
   | 'supplyCost'      // what an expedition costs to provision
   | 'haulLoss'        // the fraction a failed depth loses
   | 'heroXp'          // XP a delve pays a hero
-  | 'recruitCost';    // what a unit costs to recruit
+  | 'recruitCost'     // what a unit costs to recruit
+  // Combat. combat.ts stays PURE — these are resolved in expeditions.ts into a
+  // `Drill` carried on the Party, the way the hero's level and the carried
+  // relic already travel in.
+  | 'unitAtk'         // flat ATK on every unit
+  | 'unitDef'         // flat DEF on every unit
+  | 'typeDisadvantage'; // the multiplier a bad matchup applies
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

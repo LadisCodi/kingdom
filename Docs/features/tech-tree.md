@@ -461,11 +461,16 @@ a twin of it. Six lines, 20 ranks; the tree is 136. Colours adds to the cap the
 halls provide and nothing to a kingdom with no hall — a bigger banner, not a
 barracks of its own. Bearers floors at one fifth so a run can never be wiped.
 
-**Not yet:** the unit-stat lines (Shield Wall, Fletching, Barding, Warhorns)
-and Manoeuvre, because `combat.ts` is deliberately pure and they need bonuses
-passed in the way `heroLevel` and the carried relic already are; and Farsight,
-because a radius change should re-discover around every standing building and
-that wants the map at completion time.
+**Landed 2026-09-04, third batch (combat):** Shield Wall, Fletching, Barding,
+Warhorns and Manoeuvre. `combat.ts` stays pure — the lines are resolved in
+`expeditions.ts` into a `Drill` carried on the `Party`, exactly the way the
+hero's level and the carried relic already travel in, so a fight can still be
+replayed from its inputs alone. Manoeuvre softens the disadvantage multiplier
+and never past neutral: a bad matchup stays bad, it just stops being a wasted
+trip. Five lines, 15 ranks; the tree is 151.
+
+**Not yet:** Farsight, because a radius change should re-discover around every
+standing building and that wants the map at completion time.
 
 **Pricing:** the new ranks sit on the *legacy* Gold scale the existing ranks
 use, not on §6's bands — a rank priced to the bands beside a 275-Gold era-3

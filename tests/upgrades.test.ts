@@ -3,7 +3,7 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  DELVE, DISTRICTS, FOG, HARVEST, LANDMARKS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
+  ARMY, DELVE, DISTRICTS, FOG, HARVEST, LANDMARKS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
   TECH_ORDER, WORKER, levelIndexed, lineParent,
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
@@ -21,7 +21,9 @@ import {
 } from '../src/sim/upgrades';
 import { buildDuration, upgradeDuration } from '../src/sim/districts';
 import { maxArmyPower, trainCost } from '../src/sim/army';
-import { depthMs, effectiveHaulLoss, supplyCost } from '../src/sim/expeditions';
+import { depthMs, drillOf, effectiveHaulLoss, partyOf, supplyCost } from '../src/sim/expeditions';
+import { effectiveAttack, partyStats, typeMultiplier } from '../src/sim/combat';
+import type { GameState } from '../src/sim/state';
 import { addHeroXp } from '../src/sim/heroes';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
@@ -470,5 +472,59 @@ describe('the Warfare lines reach their numbers', () => {
     completeRanks(state, 'Drillmaster', 2); // +10%
     addHeroXp(state, 'Warden', 20);
     expect(state.heroes.xp.Warden).toBe(42);
+  });
+});
+
+// Third batch: the combat lines. combat.ts is pure, so these are carried in on
+// the Party as a Drill — asserted through the numbers a fight is decided by.
+describe('the combat lines reach the fight', () => {
+  const melee = (state: GameState) =>
+    partyStats(partyOf(state, [{ unitId: 'Warrior', count: 2 }]));
+  const ranged = (state: GameState) =>
+    partyStats(partyOf(state, [{ unitId: 'Archer', count: 2 }]));
+
+  it('Shield Wall hardens Melee and leaves Distance alone', () => {
+    const state = freshGame();
+    const m0 = melee(state).def; const r0 = ranged(state).def;
+    completeRanks(state, 'ShieldWall', 2); // +2 DEF each
+    expect(melee(state).def).toBe(m0 + 4);
+    expect(ranged(state).def).toBe(r0);
+  });
+
+  it('Fletching sharpens Distance and leaves Melee alone', () => {
+    const state = freshGame();
+    const m0 = melee(state).atk; const r0 = ranged(state).atk;
+    completeRanks(state, 'Fletching', 1);
+    expect(ranged(state).atk).toBe(r0 + 2);
+    expect(melee(state).atk).toBe(m0);
+  });
+
+  it('Barding armours Mounted — Cavalry is Mounted AND Melee, so it takes both', () => {
+    const state = freshGame();
+    const cav = () => partyStats(partyOf(state, [{ unitId: 'Cavalry', count: 1 }])).def;
+    const c0 = cav();
+    completeRanks(state, 'Barding', 1);
+    completeRanks(state, 'ShieldWall', 1);
+    expect(cav()).toBe(c0 + 2);
+  });
+
+  it('Warhorns lifts every unit, and reaches the attack roll', () => {
+    const state = freshGame();
+    const party = partyOf(state, [{ unitId: 'Warrior', count: 3 }]);
+    const a0 = effectiveAttack(party, 'Any');
+    completeRanks(state, 'Warhorns', 2); // +2 ATK each
+    expect(effectiveAttack(partyOf(state, party.slots), 'Any')).toBe(a0 + 6);
+  });
+
+  it('Manoeuvre softens a bad matchup, and never past neutral', () => {
+    const state = freshGame();
+    const bad = ARMY.typeDisadvantage;
+    expect(typeMultiplier('Warrior', 'Archer')).toBe(bad); // shields lose to arrows
+    completeRanks(state, 'Manoeuvre', 3); // +6%
+    const drill = drillOf(state);
+    expect(typeMultiplier('Warrior', 'Archer', drill.disadvantageOffset)).toBeCloseTo(bad + 0.06);
+    expect(typeMultiplier('Warrior', 'Archer', 5)).toBe(1); // capped at neutral
+    // The good matchup is untouched: Manoeuvre is about not wasting a trip.
+    expect(typeMultiplier('Archer', 'Warrior', drill.disadvantageOffset)).toBe(ARMY.typeAdvantage);
   });
 });

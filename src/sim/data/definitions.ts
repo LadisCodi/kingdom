@@ -1333,6 +1333,96 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     description: '−10% time to resolve each depth of a ruin',
     glyph: '🐎',
   }, balance.technologies.PathfindersIII),
+  ShieldWallI: tech({
+    id: 'ShieldWallI',
+    name: 'Shield Wall I',
+    description: '+1 DEF to every Melee unit',
+    glyph: '🛡️',
+  }, balance.technologies.ShieldWallI),
+  ShieldWallII: tech({
+    id: 'ShieldWallII',
+    name: 'Shield Wall II',
+    description: '+1 DEF to every Melee unit',
+    glyph: '🛡️',
+  }, balance.technologies.ShieldWallII),
+  ShieldWallIII: tech({
+    id: 'ShieldWallIII',
+    name: 'Shield Wall III',
+    description: '+1 DEF to every Melee unit',
+    glyph: '🛡️',
+  }, balance.technologies.ShieldWallIII),
+  FletchingI: tech({
+    id: 'FletchingI',
+    name: 'Fletching I',
+    description: '+1 ATK to every Distance unit',
+    glyph: '🪶',
+  }, balance.technologies.FletchingI),
+  FletchingII: tech({
+    id: 'FletchingII',
+    name: 'Fletching II',
+    description: '+1 ATK to every Distance unit',
+    glyph: '🪶',
+  }, balance.technologies.FletchingII),
+  FletchingIII: tech({
+    id: 'FletchingIII',
+    name: 'Fletching III',
+    description: '+1 ATK to every Distance unit',
+    glyph: '🪶',
+  }, balance.technologies.FletchingIII),
+  BardingI: tech({
+    id: 'BardingI',
+    name: 'Barding I',
+    description: '+1 DEF to every Mounted unit',
+    glyph: '🐴',
+  }, balance.technologies.BardingI),
+  BardingII: tech({
+    id: 'BardingII',
+    name: 'Barding II',
+    description: '+1 DEF to every Mounted unit',
+    glyph: '🐴',
+  }, balance.technologies.BardingII),
+  BardingIII: tech({
+    id: 'BardingIII',
+    name: 'Barding III',
+    description: '+1 DEF to every Mounted unit',
+    glyph: '🐴',
+  }, balance.technologies.BardingIII),
+  WarhornsI: tech({
+    id: 'WarhornsI',
+    name: 'Warhorns I',
+    description: '+1 ATK to every unit',
+    glyph: '📯',
+  }, balance.technologies.WarhornsI),
+  WarhornsII: tech({
+    id: 'WarhornsII',
+    name: 'Warhorns II',
+    description: '+1 ATK to every unit',
+    glyph: '📯',
+  }, balance.technologies.WarhornsII),
+  WarhornsIII: tech({
+    id: 'WarhornsIII',
+    name: 'Warhorns III',
+    description: '+1 ATK to every unit',
+    glyph: '📯',
+  }, balance.technologies.WarhornsIII),
+  ManoeuvreI: tech({
+    id: 'ManoeuvreI',
+    name: 'Manoeuvre I',
+    description: '+2% off the penalty for a bad matchup',
+    glyph: '♟️',
+  }, balance.technologies.ManoeuvreI),
+  ManoeuvreII: tech({
+    id: 'ManoeuvreII',
+    name: 'Manoeuvre II',
+    description: '+2% off the penalty for a bad matchup',
+    glyph: '♟️',
+  }, balance.technologies.ManoeuvreII),
+  ManoeuvreIII: tech({
+    id: 'ManoeuvreIII',
+    name: 'Manoeuvre III',
+    description: '+2% off the penalty for a bad matchup',
+    glyph: '♟️',
+  }, balance.technologies.ManoeuvreIII),
 };
 
 /** Every technology, in workbook order — which is also RANK order inside a
@@ -1372,6 +1462,10 @@ export const TECH_ORDER: TechId[] = [
   'RationsI', 'RationsII', 'RationsIII', 'DrillmasterI',
   'DrillmasterII', 'DrillmasterIII', 'BearersI', 'BearersII',
   'BearersIII', 'PathfindersI', 'PathfindersII', 'PathfindersIII',
+  'ShieldWallI', 'ShieldWallII', 'ShieldWallIII', 'FletchingI',
+  'FletchingII', 'FletchingIII', 'BardingI', 'BardingII',
+  'BardingIII', 'WarhornsI', 'WarhornsII', 'WarhornsIII',
+  'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII',
 ];
 
 // Slots & gem pricing for extra slots.

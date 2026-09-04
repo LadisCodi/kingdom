@@ -42,7 +42,7 @@ import { addHeroXp } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
   depthDurationMs, guaranteedDepth, matchupAgainst, partyStats, resolveDepth,
-  worstThreatFor, type CarriedArtifact, type Party, type PartySlot,
+  worstThreatFor, type CarriedArtifact, type Party, type PartySlot, type Drill,
 } from './combat';
 import { availableRoster, maxArmyPower } from './army';
 import { fogState } from './fog';
@@ -112,6 +112,34 @@ export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | nu
   }
   return out;
 }
+
+/**
+ * The kingdom's drill: what the Warfare lines add to every soldier sent, in
+ * the shape combat.ts takes it. Resolved HERE, once per launch or preview, so
+ * combat stays pure and a fight replays from its inputs. The `all` terms go
+ * through the modifier stack; the per-tag ones are lines and nothing else.
+ */
+export function drillOf(state: GameState): Drill {
+  return {
+    atk: {
+      all: Math.round(resolve(state, 'unitAtk', effect(state, 'Warhorns'))),
+      Distance: effect(state, 'Fletching'),
+    },
+    def: {
+      all: Math.round(resolve(state, 'unitDef', 0)),
+      Melee: effect(state, 'ShieldWall'),
+      Mounted: effect(state, 'Barding'),
+    },
+    disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0) + effect(state, 'Manoeuvre')),
+  };
+}
+
+/** A Party as combat sees it, with the kingdom's drill attached. The one
+ *  place a Party is assembled, so no launch or preview can forget the drill. */
+export const partyOf = (
+  state: GameState, slots: readonly PartySlot[], heroId: HeroId | null = null,
+  artifact: CarriedArtifact | null = null,
+): Party => ({ heroId, slots, artifact, drill: drillOf(state) });
 
 /** The fraction of the haul a failed depth costs (Bearers: −3%/rank, floor
  *  20%). Half by default — enough that a bad push is a real loss, never so
@@ -194,7 +222,7 @@ export function launchDelve(
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const artifactLevel = artifactId === null ? 1 : artifactEntry(state, artifactId).level;
   const artifact = artifactId === null ? null : { id: artifactId, level: artifactLevel };
-  const party: Party = { heroId, slots: committed, artifact };
+  const party = partyOf(state, committed, heroId, artifact);
   const hp = partyStats(party, heroLevel(state, heroId)).hp;
   state.delves.push({
     id: newId(state, 'delve'),
@@ -292,6 +320,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       const depth = delve.depth + 1;
       const party: Party = {
         heroId: delve.heroId, slots: delve.party, artifact: carriedOf(delve),
+        drill: drillOf(state),
       };
       const level = heroLevel(state, delve.heroId);
       const outcome = resolveDepth(party, delve.ruinId, depth, delve.threat, level);
@@ -467,7 +496,7 @@ export function previewExpedition(
   const artifact: CarriedArtifact | null = artifactId === null
     ? null
     : { id: artifactId, level: artifactEntry(state, artifactId).level };
-  const party: Party = { heroId, slots: committed, artifact };
+  const party = partyOf(state, committed, heroId, artifact);
   const level = heroId === null ? 1 : heroLevel(state, heroId);
   const stats = partyStats(party, level);
   return {
