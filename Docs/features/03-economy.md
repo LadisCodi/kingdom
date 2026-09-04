@@ -138,7 +138,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 
 | Sink | Size |
 |---|---|
-| The whole map's fog | 194,142 |
+| The whole map's fog | 28,517,245 |
 | The technology tree, 24 techs | 6,600 |
 | Expedition supplies, per launch | 50 → 2,000 by tier, recurring |
 | Landmark claims | 2,000 · 25,000 ×5 · 100,000 ×4 |

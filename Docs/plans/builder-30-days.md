@@ -70,30 +70,37 @@ programme, so it was written before anything it measures.
 
 ### 1.1 The baseline it measured
 
-| Week | Townhall | Population | Districts | Maxed | Techs | Gold | Knowledge |
-|---|---|---|---|---|---|---|---|
-| 1 | 2 | 6 | 12 | 4 | 21 | 903,175 | 208 |
-| 2 | 3 | 16 | 22 | 7 | 41 | 4,317,320 | 855 |
-| 3 | 3 | 18 | 31 | 13 | 62 | 9,394,060 | 1,134 |
-| 4 | 3 | 19 | 32 | 13 | 83 | 15,122,155 | 1,951 |
-| 30 d | 3 | 20 | 32 | 15 | 89 | 16,849,389 | 1,806 |
+The scripted player plays **both halves**: the city, and the ruins. Delving is
+not optional colour — Knowledge comes only from claimed landmarks and cleared
+ruins, and the Townhall's fourth level is `Charter III`, a Civics era-3
+keystone priced in it. The late builder is behind the delve loop.
+
+| Week | Townhall | Pop | Districts | Techs | Gold | Knowledge | Army | Ruins | Landmarks |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 2 | 6 | 12 | 21 | 862,233 | 728 | 14 | 1 | 2 |
+| 2 | 3 | 16 | 23 | 42 | 3,826,439 | 1,640 | 14 | 1 | 2 |
+| 3 | 3 | 18 | 32 | 63 | 9,076,457 | 2,105 | 40 | 1 | 2 |
+| 4 | 3 | 20 | 32 | 84 | 14,993,474 | 3,086 | 67 | 1 | 3 |
+| 30 d | 3 | 20 | 32 | 90 | 16,774,884 | 3,091 | 67 | 1 | 3 |
+
+At day 30: **457 of 1,470 cells uncovered**, 2 of 5 ruins found and 1 cleared,
+3 of 10 landmarks claimed, 16 delves launched.
 
 Four findings, now assertions in the harness:
 
-- **The Townhall stalls at 3 of 4, in week 2**, and nothing in the city can
-  move it: `Charter III` wants every built Civics era-3 major, and those are
-  priced in Knowledge.
-- **The builder is finished by week 4** — the last week adds no building at
-  all.
-- **Gold outgrows every sink**: 16.8 M in hand against a whole tech tree of
-  550,165 and a whole fog of 194,142.
-- **Knowledge stays scarce** — 1,806 — because the drip is territorial and
-  this player never delves.
+- **The Townhall stalls at 3 of 4, in week 2.** Level 4 is `Charter III`, and
+  the Knowledge that buys it is territorial.
+- **The builder is finished by week 4** — the last week adds no building.
+- **It is not the purse that stops it.** This player ends on 16.8 M Gold.
+- **What starves is the ground.** At the designed session length a player
+  uncovers under a third of the province in a month, so they meet a minority
+  of the ruins and landmarks the Knowledge drip is made of. The drip tops out
+  near 8/h against the 30/h a fully claimed province gives.
 
-Together they are the case for the programme: the city's ladder has to be
-priced in something the city itself produces (goods, §2–§3) and in ground
-(Harmony, §6), not in Knowledge, and it has to have somewhere for the Gold to
-go.
+The consequence for this programme: the city's own ladder has to be priced in
+what the city produces — goods (§2–§3) and ground (§6) — because the currency
+that gates it today is paced by exploration, and exploration is paced by the
+thumb.
 
 ### 1.2 What it found on the way — a sim bug, fixed
 
@@ -453,7 +460,7 @@ The one new mechanic; last, and in three commits.
 | 4 | Producers' L6+ buy yield and speed, not crew | proposal §1.1 |
 | 5 | The `Adjacency` sheet gains `stat` and `magnitude` | **OQ-48** |
 | 6 | Harmony surplus bonus lands on taxes | proposal §4.1; **OQ-1** for the plot |
-| 7 | Townhall 5–10 gated by goods and Harmony, not keystones | proposal §1.2 |
+| 7 | Townhall 5–10 gated by goods and Harmony, not keystones. **Level 4 keeps `Charter III`**: the late city stays behind the delve loop, which is what welds the two halves together (settled 2026-09-04) | proposal §1.2; `07-research.md` §3 |
 | 8 | Runestone and the Reliquary L9 recipe as the province route past relic L3 | **OQ-7**, **OQ-9** |
 | 9 | The banner moves from the store to the Tavern | proposal §11; `14-monetization.md` §2.1 |
 | 11 | A creature slot sits outside the Gem slot ladder | proposal §3; the slots rule in `07-research.md` §1 |

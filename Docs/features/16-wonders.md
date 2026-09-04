@@ -16,11 +16,11 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
 | Sink | Total | Ceiling |
 |---|---|---|
 | Landmark claims | **527,000 Gold** | ten landmarks; 2,000 · 25,000 ×5 · 100,000 ×4 |
-| The whole map's fog | **194,142 Gold** | a last cell |
+| The whole map's fog | **28,517,245 Gold** | a last cell |
 | The fifteen upgrades, fully bought | **51,926 Gold** | `maxLevel` on every one; `TapPower` is **34,006** of it (65%, `cost_growth` 1.9 over ten levels) |
 | The technology tree, 24 techs | **6,600 Gold** | a last node |
 | Buildings and their levels | on a curve | `maxCountPerTownhallLevel`, and `maxLevel` on every district |
-| | **≈ 780,000 Gold** | nothing after it |
+| | **≈ 29,100,000 Gold** | nothing after it |
 
 - Expedition supplies (50 → 2,000 a launch) repeat, but are gated by the army
   cap and delve frequency: a drip, not a sink for a surplus.

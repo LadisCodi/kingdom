@@ -12,7 +12,7 @@
 
 - A square grid. Every cell has a **terrain**, optionally one **feature**, and
   can hold one district.
-- The starter region is **Oakville**: 253 cells, an island ringed by sea plus
+- The starter region is **Oakville**: 1,470 cells, an island ringed by sea plus
   two outer islands and a bay.
 - Three distance metrics coexist:
 
@@ -138,9 +138,10 @@ Authored per ring, doubling from ring 4, with a ×1.25 fallback past ring 10.
 - **Cartography** and **Surveying** make one tap do the work of two, three or
   four. They do **not** make a cell cheaper.
 - **Pitons** discounts the Gold (−10%/level). The two stack.
-- **The whole map is 194,142 Gold across 253 cells.** Against a Townhall-3 city
-  at ~900 Gold/min idle, that is **3.6 hours of end-game income for the entire
-  world** ([`02-map-scopes.md`](02-map-scopes.md)).
+- **The whole map is 28,517,245 Gold across 1,466 priced cells.** It is the
+  largest Gold sink in the game by two orders of magnitude, and what limits
+  how fast it is spent is the tapping, not the purse
+  ([`02-map-scopes.md`](02-map-scopes.md)).
 
 ## 6. What the fog holds
 

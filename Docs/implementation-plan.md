@@ -179,8 +179,8 @@ production beat.
 
 **Replaces generated orders, which were cut on 2026-09-03**
 ([`12-quests.md`](features/12-quests.md) §6). Same job, and the measurement that
-decided it: the game holds **~780,000 Gold of sink** — 527,000 in landmark
-claims, 194,142 in fog, 51,926 in the fifteen upgrades, 6,600 in the tree — and
+decided it: the game holds **~29,100,000 Gold of sink** — 28,517,245 in fog,
+527,000 in landmark claims, 51,926 in the fifteen upgrades, 6,600 in the tree — and
 **every coin of it is one-time.** The end of the province is the end of the
 economy, while the city never stops producing. The fault was the *shape*, not
 the size, so the answer is a ladder with no last level rather than a daily

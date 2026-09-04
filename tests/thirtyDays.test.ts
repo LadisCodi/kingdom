@@ -30,8 +30,15 @@ import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { canStartTech, startTech, techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { choosePayerProfile } from '../src/sim/store';
-import { trainUnit } from '../src/sim/army';
+import {
+  armyPower, availableRoster, maxArmyPower, trainUnit, trainerFor,
+} from '../src/sim/army';
+import {
+  discoveredRuins, extract, freeHeroes, launchDelve, pushDeeper,
+} from '../src/sim/expeditions';
+import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { influenceCells } from '../src/sim/workers';
+import type { UnitId } from '../src/sim/state';
 import {
   coordKey, getWallet, type Coord, type District, type DistrictId, type GameState,
 } from '../src/sim/state';
@@ -44,7 +51,11 @@ const DAYS = Number(process.env.KINGDOM_DAYS ?? 30);
  *  eleven hours, so every night crosses the 8 h offline cap on purpose. */
 const VISIT_HOURS = [8, 14, 21];
 const TAPS_PER_VISIT = 120; // a thumb budget: Mana runs out first anyway
-const REVEALS_PER_VISIT = 6;
+/** The thumb's budget for FOG, which is what actually paces exploration: the
+ *  purse is never the limit (this player ends on millions of Gold), the
+ *  tapping is. A visit is ~10 minutes and a tap is half a second, so a
+ *  thousand of them is a generous reading of the design's session length. */
+const FOG_TAPS_PER_VISIT = 1_000;
 
 /** What the scripted player builds, in the order they reach for it. Each
  *  entry is tried while the count cap, the technology and the purse allow. */
@@ -55,7 +66,8 @@ const BUILD_ORDER: DistrictId[] = [
 
 interface WeekRow {
   week: number; townhall: number; population: number; districts: number;
-  maxed: number; techs: number; gold: number; knowledge: number; idleDays: number;
+  maxed: number; techs: number; gold: number; knowledge: number;
+  army: number; ruins: number; landmarks: number; idleDays: number;
 }
 
 const townhall = (state: GameState): District =>
@@ -97,6 +109,10 @@ function chooseCell(state: GameState, def: DistrictDef): Coord | null {
   // anywhere legal if no Farm exists yet.
   return cells[0];
 }
+
+/** Delve bookkeeping, for the run's closing diagnostic. */
+let launched = 0;
+let extracted = 0;
 
 /** One visit. Returns true if the player did anything that moves the city. */
 function playVisit(state: GameState, now: number): boolean {
@@ -208,7 +224,51 @@ function playVisit(state: GameState, now: number): boolean {
     acted = true;
   }
 
-  // 6. Research the cheapest thing that can start.
+  // 6. The army, and the ruins it is for. Knowledge only comes from ground
+  //    the kingdom holds — claimed landmarks and CLEARED RUINS — so a player
+  //    who never delves never reaches the era-3 keystones the late city is
+  //    gated behind (Docs/features/07-research.md §3). Delving is on the
+  //    critical path of the builder, and the harness has to walk it.
+  for (let i = 0; i < 30; i++) {
+    const cheapest = (Object.keys(UNITS) as UnitId[])
+      .filter((u) => trainerFor(state, u) !== undefined)
+      .sort((a, b) => UNITS[a].power - UNITS[b].power)[0];
+    if (!cheapest) break;
+    if (armyPower(state) + UNITS[cheapest].power > maxArmyPower(state)) break;
+    if (trainUnit(state, cheapest, t) !== 'Queued') break;
+    acted = true;
+  }
+
+  // Answer every party waiting at a checkpoint: press on while the party is
+  // healthy and there is more ruin below, otherwise come home with the haul.
+  for (const delve of [...state.delves]) {
+    if (delve.phase !== 'checkpoint') continue;
+    const healthy = delve.partyHp > delve.maxPartyHp / 2;
+    const deeper = delve.depth < RUINS[delve.ruinId].maxDepth;
+    if (healthy && deeper) pushDeeper(state, delve.id, t);
+    else { extract(state, delve.id); extracted += 1; }
+    acted = true;
+  }
+
+  // Send whoever is free at whatever is open, biggest party the cap allows.
+  for (const heroId of freeHeroes(state)) {
+    const busy = new Set(state.delves.map((d) => d.ruinId));
+    const ruin = discoveredRuins(state, map).find((r) => !busy.has(r));
+    if (!ruin) break;
+    const roster = availableRoster(state);
+    const best = (Object.keys(roster) as UnitId[])
+      .filter((u) => roster[u] > 0)
+      .sort((a, b) => UNITS[b].power - UNITS[a].power)[0];
+    if (!best) break;
+    const room = Math.floor(maxArmyPower(state) / UNITS[best].power);
+    const count = Math.max(1, Math.min(roster[best], room));
+    if (launchDelve(state, map, ruin, heroId, [{ unitId: best, count }], t) === 'Launched') {
+      acted = true;
+      launched += 1;
+    } else break;
+  }
+
+  // 7. Research the cheapest thing that can start.
   for (let i = 0; i < 6; i++) {
     const next = TECH_ORDER.filter((id) => canStartTech(state, id))
       .sort((a, b) => techCost(a) - techCost(b))[0];
@@ -216,22 +276,22 @@ function playVisit(state: GameState, now: number): boolean {
     acted = true;
   }
 
-  // 7. Claim an affordable landmark: Mana capacity and the research clock.
+  // 8. Claim an affordable landmark: Mana capacity and the research clock.
   for (const lm of visibleLandmarks(state, map)) {
     if (lm.defended || isLandmarkClaimed(state, lm.id)) continue;
     if (claimLandmark(state, map, lm.location) === 'Claimed') acted = true;
   }
 
-  // 8. Push the border with what is left: the cheapest reachable cells.
+  // 9. Push the border with what is left: the cheapest reachable cells.
   let fogTaps = 0;
-  for (let i = 0; i < REVEALS_PER_VISIT && fogTaps < 2_000; i++) {
+  for (let i = 0; fogTaps < FOG_TAPS_PER_VISIT; i++) {
     const next = map.cells
       .filter((c) => fogState(state, map, c) === 'Discovered'
         && isReachable(state, map, c) && explorationGate(map, c) === null)
       .sort((a, b) => revealCostForCell(state, map, a) - revealCostForCell(state, map, b))[0];
     if (!next) break;
     let r: string = 'Paid';
-    while (r === 'Paid' && fogTaps++ < 2_000) r = revealTap(state, map, next);
+    while (r === 'Paid' && fogTaps++ < FOG_TAPS_PER_VISIT) r = revealTap(state, map, next);
     if (r !== 'Revealed') break;
     acted = true;
   }
@@ -256,6 +316,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const weeks: WeekRow[] = [];
     let idleDays = 0;
     let idleInWeek = 0;
+    launched = 0; extracted = 0;
 
     for (let day = 0; day < DAYS; day++) {
       let actedToday = false;
@@ -278,6 +339,9 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           techs: state.research.completed.length,
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
           knowledge: Math.round(getWallet(state.kingdom.wallet, 'Knowledge')),
+          army: maxArmyPower(state),
+          ruins: Object.keys(state.ruinsCleared).length,
+          landmarks: Object.keys(state.landmarks.claimed).length,
           idleDays: idleInWeek,
         });
         idleInWeek = 0;
@@ -286,6 +350,16 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
 
     // eslint-disable-next-line no-console
     console.table(weeks);
+    // eslint-disable-next-line no-console
+    console.log('ruins', discoveredRuins(state, map).length, 'of', Object.keys(RUINS).length,
+      'discovered;', Object.keys(state.ruinsCleared).length, 'cleared; deepest',
+      state.deepestDepth,
+      '| landmarks visible', visibleLandmarks(state, map).length,
+      'defended', visibleLandmarks(state, map).filter((l) => l.defended).length,
+      'claimed', Object.keys(state.landmarks.claimed).length,
+      '| launched', launched, 'extracted', extracted,
+      '| revealed cells', map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length,
+      'of', map.cells.length);
 
     // The city never goes backwards, and no save was lost on the way.
     for (let i = 1; i < weeks.length; i++) {
@@ -299,8 +373,9 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const prev = weeks[weeks.length - 2];
 
     // 1. The Townhall stalls one level short of its own sheet, and does so in
-    //    week 2. Nothing in the city can move it: Charter III wants every
-    //    built Civics era-3 major, and those are priced in Knowledge.
+    //    week 2. Level 4 is Charter III, an era-3 keystone priced in
+    //    Knowledge, and Knowledge is territorial — so the late city is behind
+    //    the delve half of the game by design (07-research.md §3).
     expect(weeks[0].townhall, 'Townhall at the end of week 1').toBe(2);
     expect(end.townhall, 'Townhall at day 30').toBe(3);
     expect(end.townhall, 'a level still on the sheet, unreached in thirty days')
@@ -310,12 +385,19 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    week adds no building at all.
     expect(end.districts, 'buildings added in the last week').toBe(prev.districts);
 
-    // 3. And the purse has outgrown every sink in the game — the whole tree is
-    //    550,165 Gold and the fog is 194,142.
+    // 3. And it is not the purse that stops it — this player ends on millions
+    //    with the whole tech tree costing 550,165.
     expect(end.gold, 'Gold in hand at day 30').toBeGreaterThan(10_000_000);
 
-    // 4. While the currency that actually gates the city stays scarce: the
-    //    drip is territorial, and a player who never delves barely moves it.
-    expect(end.knowledge, 'Knowledge in hand at day 30').toBeLessThan(5_000);
+    // 4. What actually starves is the ground. A player at the designed
+    //    session length uncovers well under half the province in a month, so
+    //    they meet a minority of the ruins and landmarks the Knowledge drip
+    //    is made of — and the drip is what the late city is gated behind.
+    const revealed = map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length;
+    expect(revealed / map.cells.length, 'share of the province uncovered by day 30')
+      .toBeLessThan(0.5);
+    expect(end.ruins, 'ruins cleared by day 30').toBeLessThan(3);
+    expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThan(5);
+    expect(end.knowledge, 'Knowledge in hand at day 30').toBeLessThan(10_000);
   }, 120_000);
 });
