@@ -1,7 +1,7 @@
 {
   "cell": 32,
   "atlasCols": 16,
-  "note": "Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. UI-A's slots 8-10 held illustrated characters (villagers, a builder, a farmer) that turned to mush inline; UI-D replaces them with flat symbols, so they are skipped here rather than being generated and immediately overwritten. UI-F is drawn left-to-right as spearman, swordsman, archer, horseman, which maps to Lancer, Warrior, Archer, Cavalry.",
+  "note": "Names must match IconName in src/ui/kit/icon.ts \u2014 tests/icons.test.ts holds us to it. A null entry skips that grid cell. UI-A's slots 8-10 held illustrated characters (villagers, a builder, a farmer) that turned to mush inline; UI-D replaces them with flat symbols, so they are skipped here rather than being generated and immediately overwritten. UI-F is drawn left-to-right as spearman, swordsman, archer, horseman, which maps to Lancer, Warrior, Archer, Cavalry.",
   "sheets": [
     {
       "file": "sheets/ui-a-resources.png",
@@ -114,12 +114,31 @@
       ]
     },
     {
+      "file": "sheets/ui-h-goods.png",
+      "grid": {
+        "rows": 2,
+        "cols": 4
+      },
+      "fill": 0.92,
+      "names": [
+        "Planks",
+        "CutStone",
+        "Runestone",
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "note": "The refined goods of the builder programme. Cells 4-7 are drawn (a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel) and wait for Carpenter, MasonsYard, Smelter and RuneCarver to become DistrictId \u2014 a name here that the kit cannot resolve fails the atlas's first gate, so they stay null until those rows land. Iron is NOT here: the ore icon from ui-a doubles as the ingot, which at 16px is the same picture."
+    },
+    {
       "file": "sheets/currencies-16.png",
       "dense": {
         "size": 16,
         "cols": 8
       },
-      "note": "Hand-authored 16px pack, keyed by the author: row 1 Gems, Gold, Mana, Builders, Knowledge, Silver, Food, Wood; row 2 Time, Population, Population cap, Population not working, Army power. LISTED LAST ON PURPOSE: slices are written by name, so this sheet deliberately overrides the ui-a-resources cells of the same name, and the build prints every override. ui-a keeps its full names list because its scale pass measures the largest icon on the sheet — nulling entries there would silently resize the icons it still owns. Silver, the two extra population states and Time have no call site, so they are null rather than shipped as cells nothing names.",
+      "note": "Hand-authored 16px pack, keyed by the author: row 1 Gems, Gold, Mana, Builders, Knowledge, Silver, Food, Wood; row 2 Time, Population, Population cap, Population not working, Army power. LISTED LAST ON PURPOSE: slices are written by name, so this sheet deliberately overrides the ui-a-resources cells of the same name, and the build prints every override. ui-a keeps its full names list because its scale pass measures the largest icon on the sheet \u2014 nulling entries there would silently resize the icons it still owns. Silver, the two extra population states and Time have no call site, so they are null rather than shipped as cells nothing names.",
       "names": [
         "Gems",
         "Gold",

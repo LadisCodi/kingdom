@@ -231,3 +231,39 @@ magick spr-d-heroes.png -region 64x64+0+0 -fuzz 2% -transparent black +region sp
 
 The guard was not relaxed to let the file through — it fired, and the file was
 fixed until it passed. That distinction is the whole value of having it.
+
+---
+
+## UI-H — the refined goods
+
+- **Date:** 2026-09-05
+- **Conversation:** <https://chatgpt.com/c/6a9b4302-7a5c-83ed-84c4-bf6d9fa629b2>
+  ("Crear atlas de iconos PNG", Codigames workspace, GPT-5.6 Sol)
+- **Model:** 5.6 Sol
+- **File:** `sheets/ui-h-goods.png` — 1024×1024, true alpha
+- **Prompt:** the §7.16 coarse-cell block at 2 rows × 4 columns, but anchored on
+  an attachment rather than on `reference.png`: a `magick montage` of six
+  icons already in the atlas (Wood, Stone, Iron, Gold, Food, Knowledge, on
+  parchment) with *"they must be indistinguishable in style from those"*. For a
+  sheet that has to sit inside an existing atlas that anchor is stronger than
+  the style block — one round came back in style.
+- **Contents** (reading order): sawn planks, a dressed stone block, a rune
+  stone, a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel,
+  and one deliberately empty cell.
+- **Named in the manifest:** `Planks`, `CutStone`, `Runestone` only. The four
+  workshop cells are drawn but held at `null` until Carpenter, MasonsYard,
+  Smelter and RuneCarver are `DistrictId` — the atlas's first gate ("ships no
+  cell the kit cannot name") fails on a name the kit cannot resolve, which is a
+  different gate from `AWAITING_ART`.
+
+### The one thing this sheet taught
+
+**A refined good must not look like the raw one it is made from.** The first
+pass drew Planks as a stack of round logs with visible end grain — which is
+exactly what the shipped `Wood` icon is, so at 32 px the player could not tell
+the input from the output. The fix was to name the confusion in the request
+("my game already has an icon for raw wood, and it is the third icon in the
+attachment") and to specify the silhouette rather than the subject: *thin flat
+rectangular boards, square-cut ends, no bark, no end-grain rings*. Ask for a
+single-cell redraw and the model merges it into the approved sheet rather than
+regenerating the other seven.
