@@ -217,6 +217,8 @@ export interface DistrictDef {
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
   /** Technology gating each upgrade; index 0 = requirement to REACH level 2. */
   requiredTechPerLevel: readonly (TechId | null)[];
+  /** One more of this district may stand once this technology is done. */
+  extraCountTech: TechId | null;
   /** Army cap this building contributes at each level (TOTAL, not
    *  incremental). Empty = it is not a military building. */
   armyCapPerLevel: readonly number[];
@@ -237,9 +239,12 @@ const rules = {
 
 /** The per-level tech gates arrive from JSON as plain strings — the importer
  *  already validated them against the tech id list. */
-const districtBalance = <B extends { requiredTechPerLevel: readonly (string | null)[] }>(
+const districtBalance = <B extends {
+  requiredTechPerLevel: readonly (string | null)[]; extraCountTech: string | null;
+}>(
   b: B,
-): Omit<B, 'requiredTechPerLevel'> & { requiredTechPerLevel: readonly (TechId | null)[] } =>
+): Omit<B, 'requiredTechPerLevel' | 'extraCountTech'>
+  & { requiredTechPerLevel: readonly (TechId | null)[]; extraCountTech: TechId | null } =>
   b as never;
 
 export const DISTRICTS: Record<DistrictId, DistrictDef> = {
@@ -496,6 +501,9 @@ export interface TechnologyDef {
   line: TechLineId | null;
   /** What one completed rank of this line adds. 0 on a major. */
   effectPerRank: number;
+  /** On the tree for its shape; does nothing yet. Badged, and never required
+   *  by a keystone (tech-tree.md §13). */
+  planned: boolean;
 }
 
 const tech = (
@@ -503,13 +511,13 @@ const tech = (
   b: {
     cost: Wallet; durationSeconds: number; requires: unknown;
     line: string | null; effectPerRank: number;
-    tome: string; era: number; node: { x: number; y: number } | null;
+    tome: string; era: number; node: { x: number; y: number } | null; planned: boolean;
   },
 ): TechnologyDef => ({
   ...content, cost: b.cost, durationSeconds: b.durationSeconds,
   requires: b.requires as TechId[],
   line: b.line as TechLineId | null, effectPerRank: b.effectPerRank,
-  tome: b.tome as TomeId, era: b.era, node: b.node,
+  tome: b.tome as TomeId, era: b.era, node: b.node, planned: b.planned,
 });
 
 // Four branches out of Forestry (Docs/features/tech-tree.md): CIVICS up,
@@ -1441,6 +1449,162 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
     description: '+1 to how far every building can see into the fog',
     glyph: '🔭',
   }, balance.technologies.FarsightIII),
+  Aqueducts: tech({
+    id: 'Aqueducts',
+    name: 'Aqueducts',
+    description: 'Channelled water — Housing reaches level 3.',
+    glyph: '🚰',
+  }, balance.technologies.Aqueducts),
+  Guildhalls: tech({
+    id: 'Guildhalls',
+    name: 'Guildhalls',
+    description: 'Chartered trades — a second Market may be built.',
+    glyph: '🏪',
+  }, balance.technologies.Guildhalls),
+  Roadworks: tech({
+    id: 'Roadworks',
+    name: 'Roadworks',
+    description: 'Paved ways — every worker walks a quarter faster.',
+    glyph: '🛤️',
+  }, balance.technologies.Roadworks),
+  LandSurvey: tech({
+    id: 'LandSurvey',
+    name: 'Land Survey',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Chains and stakes — every building works one cell farther out.',
+    glyph: '📏',
+  }, balance.technologies.LandSurvey),
+  Apprenticeships: tech({
+    id: 'Apprenticeships',
+    name: 'Apprenticeships',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Masters and their apprentices — the Townhall trains two villagers at once.',
+    glyph: '👥',
+  }, balance.technologies.Apprenticeships),
+  FieldMedicine: tech({
+    id: 'FieldMedicine',
+    name: 'Field Medicine',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Bandages and splints — the party recovers some HP between depths.',
+    glyph: '🩹',
+  }, balance.technologies.FieldMedicine),
+  Veterancy: tech({
+    id: 'Veterancy',
+    name: 'Veterancy',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Hard-won experience — heroes gain levels from delving.',
+    glyph: '🎖️',
+  }, balance.technologies.Veterancy),
+  Siegecraft: tech({
+    id: 'Siegecraft',
+    name: 'Siegecraft',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Ladders and rams — a party can clear a defended landmark.',
+    glyph: '🏰',
+  }, balance.technologies.Siegecraft),
+  Tactics: tech({
+    id: 'Tactics',
+    name: 'Tactics',
+    description: 'Reading the ground — a bad matchup costs a tenth less.',
+    glyph: '♟️',
+  }, balance.technologies.Tactics),
+  Scouting: tech({
+    id: 'Scouting',
+    name: 'Scouting',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Eyes ahead — a ruin shows its threat before you launch.',
+    glyph: '🔍',
+  }, balance.technologies.Scouting),
+  Salvage: tech({
+    id: 'Salvage',
+    name: 'Salvage',
+    description: 'Pick over the losses — a failed depth costs 35% of the haul, not half.',
+    glyph: '⚒️',
+  }, balance.technologies.Salvage),
+  Vanguard: tech({
+    id: 'Vanguard',
+    name: 'Vanguard',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Known ground — the first depth of a ruin you have cleared resolves at once.',
+    glyph: '🏇',
+  }, balance.technologies.Vanguard),
+  Standards: tech({
+    id: 'Standards',
+    name: 'Standards',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Regimental colours — the army cap rises with every hall level.',
+    glyph: '🏴',
+  }, balance.technologies.Standards),
+  Conquest: tech({
+    id: 'Conquest',
+    name: 'Conquest',
+    description: 'Held ground — every cleared ruin teaches you more, hour by hour.',
+    glyph: '👑',
+  }, balance.technologies.Conquest),
+  Meditation: tech({
+    id: 'Meditation',
+    name: 'Meditation',
+    description: 'Stillness — the kingdom holds 30 more Mana.',
+    glyph: '🧘',
+  }, balance.technologies.Meditation),
+  LeyReading: tech({
+    id: 'LeyReading',
+    name: 'Ley Reading',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Reading the lines — a landmark shows what it grants before you pay.',
+    glyph: '🔮',
+  }, balance.technologies.LeyReading),
+  Scrying: tech({
+    id: 'Scrying',
+    name: 'Scrying',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Seeing into stone — a ruin shows its tier before you commit a party.',
+    glyph: '🪞',
+  }, balance.technologies.Scrying),
+  Invocation: tech({
+    id: 'Invocation',
+    name: 'Invocation',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Spoken twice — a relic\'s active gains a second charge.',
+    glyph: '✨',
+  }, balance.technologies.Invocation),
+  Lorekeeping: tech({
+    id: 'Lorekeeping',
+    name: 'Lorekeeping',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Records of the deep — ruins give up more of what they hold.',
+    glyph: '📚',
+  }, balance.technologies.Lorekeeping),
+  Wayshrines: tech({
+    id: 'Wayshrines',
+    name: 'Wayshrines',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Shrines on the road — a cleared defended landmark becomes claimable.',
+    glyph: '⛩️',
+  }, balance.technologies.Wayshrines),
+  LeyLines: tech({
+    id: 'LeyLines',
+    name: 'Ley Lines',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. The land\'s own current — a district beside the Sanctum produces a tenth more.',
+    glyph: '🕸️',
+  }, balance.technologies.LeyLines),
+  FrugalRites: tech({
+    id: 'FrugalRites',
+    name: 'Frugal Rites',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Economy of gesture — some taps cost no Mana.',
+    glyph: '🕯️',
+  }, balance.technologies.FrugalRites),
+  SanctifiedRuins: tech({
+    id: 'SanctifiedRuins',
+    name: 'Sanctified Ruins',
+    description: 'Consecrated ground — a cleared ruin\'s Knowledge drip doubles.',
+    glyph: '⛪',
+  }, balance.technologies.SanctifiedRuins),
+  RitualCasting: tech({
+    id: 'RitualCasting',
+    name: 'Ritual Casting',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Rites over the roof — a relic\'s active can target a building.',
+    glyph: '🌀',
+  }, balance.technologies.RitualCasting),
+  LeyStorm: tech({
+    id: 'LeyStorm',
+    name: 'Ley Storm',
+    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Once a day — a kingdom-wide surge of production for a while.',
+    glyph: '🌩️',
+  }, balance.technologies.LeyStorm),
+  SecondSanctum: tech({
+    id: 'SecondSanctum',
+    name: 'Second Sanctum',
+    description: 'Twin wells — a second Sanctum may be built.',
+    glyph: '🔯',
+  }, balance.technologies.SecondSanctum),
 };
 
 /** Every technology, in workbook order — which is also RANK order inside a
@@ -1484,7 +1648,13 @@ export const TECH_ORDER: TechId[] = [
   'FletchingII', 'FletchingIII', 'BardingI', 'BardingII',
   'BardingIII', 'WarhornsI', 'WarhornsII', 'WarhornsIII',
   'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII', 'FarsightI',
-  'FarsightII', 'FarsightIII',
+  'FarsightII', 'FarsightIII', 'Aqueducts', 'Guildhalls',
+  'Roadworks', 'LandSurvey', 'Apprenticeships', 'FieldMedicine',
+  'Veterancy', 'Siegecraft', 'Tactics', 'Scouting',
+  'Salvage', 'Vanguard', 'Standards', 'Conquest',
+  'Meditation', 'LeyReading', 'Scrying', 'Invocation',
+  'Lorekeeping', 'Wayshrines', 'LeyLines', 'FrugalRites',
+  'SanctifiedRuins', 'RitualCasting', 'LeyStorm', 'SecondSanctum',
 ];
 
 // Slots & gem pricing for extra slots.

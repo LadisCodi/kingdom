@@ -162,7 +162,9 @@ export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): numbe
  *  one-call replay and stepped ticking on the same StateUntil. */
 export const effectiveWorkerSpeed = (state: GameState): number =>
   Math.max(0.1, resolve(state, 'workerSpeed',
-    WORKER.moveSpeedTilesPerSecond * (1 + effect(state, 'Cartage'))));
+    WORKER.moveSpeedTilesPerSecond
+      * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
+      * (1 + effect(state, 'Cartage'))));
 
 /** Multiplier on build and upgrade time (Carpentry: −5%/rank), floor 0.25. */
 export const effectiveBuildTimeMultiplier = (state: GameState): number =>

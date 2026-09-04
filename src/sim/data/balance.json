@@ -19,6 +19,7 @@
         "CharterII",
         "CharterIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {},
       "buildCostMultiplier": 2,
@@ -38,10 +39,11 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 3,
       "populationCapacityPerLevel": [
         2,
-        4
+        4,
+        6
       ],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -55,8 +57,10 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [
-        "UrbanPlanning"
+        "UrbanPlanning",
+        "Aqueducts"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 10
@@ -103,6 +107,7 @@
       "requiredTechPerLevel": [
         "Farming"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 30
@@ -138,6 +143,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 10
@@ -187,6 +193,7 @@
         "Engineering",
         "Architecture"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 20
@@ -219,6 +226,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [],
+      "extraCountTech": "Guildhalls",
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 40
@@ -265,6 +273,7 @@
         "Engineering",
         "Architecture"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 30
@@ -308,6 +317,7 @@
       "requiredTechPerLevel": [
         "Shipbuilding"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 25
@@ -356,6 +366,7 @@
         "DeepMining",
         "Architecture"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 40,
@@ -400,6 +411,7 @@
         "AttunementII",
         "AttunementIII"
       ],
+      "extraCountTech": "SecondSanctum",
       "armyCapPerLevel": [],
       "buildCost": {
         "Gold": 300,
@@ -444,6 +456,7 @@
         "WarbandII",
         "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
@@ -494,6 +507,7 @@
         "WarbandII",
         "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
@@ -544,6 +558,7 @@
         "WarbandII",
         "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
@@ -594,6 +609,7 @@
         "WarbandII",
         "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
@@ -790,11 +806,12 @@
       "node": {
         "x": 0,
         "y": 0
-      }
+      },
+      "planned": false
     },
     "CharterII": {
       "cost": {
-        "Gold": 550,
+        "Gold": 700,
         "Knowledge": 40
       },
       "durationSeconds": 900,
@@ -813,7 +830,8 @@
       "node": {
         "x": 0,
         "y": 2
-      }
+      },
+      "planned": false
     },
     "CharterIII": {
       "cost": {
@@ -834,18 +852,22 @@
       "node": {
         "x": 0,
         "y": 4
-      }
+      },
+      "planned": false
     },
     "CharterIV": {
       "cost": {
-        "Gold": 6100,
+        "Gold": 8750,
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
       "requires": [
         "Architecture",
         "Engineering",
-        "DeepMining"
+        "DeepMining",
+        "Aqueducts",
+        "Guildhalls",
+        "Roadworks"
       ],
       "line": null,
       "effectPerRank": 0,
@@ -854,7 +876,8 @@
       "node": {
         "x": 0,
         "y": 6
-      }
+      },
+      "planned": false
     },
     "Forestry": {
       "cost": {
@@ -871,7 +894,8 @@
       "node": {
         "x": -3,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "UrbanPlanning": {
       "cost": {
@@ -886,9 +910,10 @@
       "tome": "Civics",
       "era": 1,
       "node": {
-        "x": 2,
+        "x": -2,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Saws": {
       "cost": {
@@ -903,9 +928,10 @@
       "tome": "Civics",
       "era": 1,
       "node": {
-        "x": -2,
+        "x": -1,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Agriculture": {
       "cost": {
@@ -920,9 +946,10 @@
       "tome": "Civics",
       "era": 1,
       "node": {
-        "x": -1,
+        "x": 1,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Masonry": {
       "cost": {
@@ -937,9 +964,10 @@
       "tome": "Civics",
       "era": 1,
       "node": {
-        "x": 1,
+        "x": 2,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Communities": {
       "cost": {
@@ -957,7 +985,8 @@
       "node": {
         "x": -2,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "Hunting": {
       "cost": {
@@ -975,7 +1004,8 @@
       "node": {
         "x": -1,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "Farming": {
       "cost": {
@@ -993,7 +1023,8 @@
       "node": {
         "x": 1,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "Market": {
       "cost": {
@@ -1010,7 +1041,8 @@
       "node": {
         "x": 3,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Mining": {
       "cost": {
@@ -1028,7 +1060,8 @@
       "node": {
         "x": 2,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "Architecture": {
       "cost": {
@@ -1044,9 +1077,10 @@
       "tome": "Civics",
       "era": 3,
       "node": {
-        "x": -3,
+        "x": -4,
         "y": 5
-      }
+      },
+      "planned": false
     },
     "Engineering": {
       "cost": {
@@ -1062,9 +1096,10 @@
       "tome": "Civics",
       "era": 3,
       "node": {
-        "x": -2,
+        "x": -3,
         "y": 5
-      }
+      },
+      "planned": false
     },
     "DeepMining": {
       "cost": {
@@ -1080,9 +1115,10 @@
       "tome": "Civics",
       "era": 3,
       "node": {
-        "x": -1,
+        "x": -2,
         "y": 5
-      }
+      },
+      "planned": false
     },
     "WarbandI": {
       "cost": {
@@ -1097,7 +1133,8 @@
       "node": {
         "x": 0,
         "y": 0
-      }
+      },
+      "planned": false
     },
     "WarbandII": {
       "cost": {
@@ -1116,16 +1153,18 @@
       "node": {
         "x": 0,
         "y": 2
-      }
+      },
+      "planned": false
     },
     "WarbandIII": {
       "cost": {
-        "Gold": 500,
+        "Gold": 1500,
         "Knowledge": 500
       },
       "durationSeconds": 3600,
       "requires": [
-        "Archery"
+        "Archery",
+        "Tactics"
       ],
       "line": null,
       "effectPerRank": 0,
@@ -1134,16 +1173,19 @@
       "node": {
         "x": 0,
         "y": 4
-      }
+      },
+      "planned": false
     },
     "WarbandIV": {
       "cost": {
-        "Gold": 500,
+        "Gold": 8050,
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
       "requires": [
-        "Cavalry"
+        "Cavalry",
+        "Salvage",
+        "Conquest"
       ],
       "line": null,
       "effectPerRank": 0,
@@ -1152,7 +1194,8 @@
       "node": {
         "x": 0,
         "y": 6
-      }
+      },
+      "planned": false
     },
     "Warrior": {
       "cost": {
@@ -1167,9 +1210,10 @@
       "tome": "Warfare",
       "era": 1,
       "node": {
-        "x": -3,
+        "x": -2,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Spears": {
       "cost": {
@@ -1184,9 +1228,10 @@
       "tome": "Warfare",
       "era": 1,
       "node": {
-        "x": -2,
+        "x": -1,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Archery": {
       "cost": {
@@ -1202,9 +1247,10 @@
       "tome": "Warfare",
       "era": 2,
       "node": {
-        "x": -1,
+        "x": -3,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "Cavalry": {
       "cost": {
@@ -1220,9 +1266,10 @@
       "tome": "Warfare",
       "era": 3,
       "node": {
-        "x": -1,
+        "x": -3,
         "y": 5
-      }
+      },
+      "planned": false
     },
     "AttunementI": {
       "cost": {
@@ -1237,17 +1284,19 @@
       "node": {
         "x": 0,
         "y": 0
-      }
+      },
+      "planned": false
     },
     "AttunementII": {
       "cost": {
-        "Gold": 500,
+        "Gold": 750,
         "Knowledge": 40
       },
       "durationSeconds": 900,
       "requires": [
         "Cartography",
-        "Consecration"
+        "Consecration",
+        "Meditation"
       ],
       "line": null,
       "effectPerRank": 0,
@@ -1256,11 +1305,12 @@
       "node": {
         "x": 0,
         "y": 2
-      }
+      },
+      "planned": false
     },
     "AttunementIII": {
       "cost": {
-        "Gold": 850,
+        "Gold": 2200,
         "Knowledge": 500
       },
       "durationSeconds": 3600,
@@ -1275,17 +1325,20 @@
       "node": {
         "x": 0,
         "y": 4
-      }
+      },
+      "planned": false
     },
     "AttunementIV": {
       "cost": {
-        "Gold": 500,
+        "Gold": 6500,
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
       "requires": [
         "Fishing",
-        "Shipbuilding"
+        "Shipbuilding",
+        "SanctifiedRuins",
+        "SecondSanctum"
       ],
       "line": null,
       "effectPerRank": 0,
@@ -1294,7 +1347,8 @@
       "node": {
         "x": 0,
         "y": 6
-      }
+      },
+      "planned": false
     },
     "Cartography": {
       "cost": {
@@ -1311,7 +1365,8 @@
       "node": {
         "x": -3,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Consecration": {
       "cost": {
@@ -1328,7 +1383,8 @@
       "node": {
         "x": -2,
         "y": 1
-      }
+      },
+      "planned": false
     },
     "Sailing": {
       "cost": {
@@ -1346,7 +1402,8 @@
       "node": {
         "x": -3,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "ScalingTools": {
       "cost": {
@@ -1364,7 +1421,8 @@
       "node": {
         "x": -2,
         "y": 3
-      }
+      },
+      "planned": false
     },
     "Fishing": {
       "cost": {
@@ -1382,7 +1440,8 @@
       "node": {
         "x": -3,
         "y": 5
-      }
+      },
+      "planned": false
     },
     "Shipbuilding": {
       "cost": {
@@ -1400,7 +1459,8 @@
       "node": {
         "x": -2,
         "y": 5
-      }
+      },
+      "planned": false
     },
     "TapPowerI": {
       "cost": {
@@ -1414,7 +1474,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TapPowerII": {
       "cost": {
@@ -1430,7 +1491,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TapPowerIII": {
       "cost": {
@@ -1446,7 +1508,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TapPowerIV": {
       "cost": {
@@ -1462,7 +1525,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TapPowerV": {
       "cost": {
@@ -1478,7 +1542,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "QuickHandsI": {
       "cost": {
@@ -1492,7 +1557,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "QuickHandsII": {
       "cost": {
@@ -1508,7 +1574,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "QuickHandsIII": {
       "cost": {
@@ -1524,7 +1591,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "QuickHandsIV": {
       "cost": {
@@ -1540,7 +1608,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "QuickHandsV": {
       "cost": {
@@ -1556,7 +1625,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WorkerLoadI": {
       "cost": {
@@ -1570,7 +1640,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WorkerLoadII": {
       "cost": {
@@ -1586,7 +1657,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WorkerLoadIII": {
       "cost": {
@@ -1602,7 +1674,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "SawpitsI": {
       "cost": {
@@ -1616,7 +1689,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "SawpitsII": {
       "cost": {
@@ -1632,7 +1706,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "SawpitsIII": {
       "cost": {
@@ -1648,7 +1723,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ButcheryI": {
       "cost": {
@@ -1664,7 +1740,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ButcheryII": {
       "cost": {
@@ -1680,7 +1757,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ButcheryIII": {
       "cost": {
@@ -1696,7 +1774,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "IrrigationI": {
       "cost": {
@@ -1710,7 +1789,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "IrrigationII": {
       "cost": {
@@ -1726,7 +1806,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "IrrigationIII": {
       "cost": {
@@ -1742,7 +1823,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScythesI": {
       "cost": {
@@ -1758,7 +1840,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScythesII": {
       "cost": {
@@ -1774,7 +1857,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScythesIII": {
       "cost": {
@@ -1790,7 +1874,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "SurveyingI": {
       "cost": {
@@ -1804,7 +1889,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "SurveyingII": {
       "cost": {
@@ -1820,7 +1906,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PitonsI": {
       "cost": {
@@ -1836,7 +1923,8 @@
       "effectPerRank": 0.1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PitonsII": {
       "cost": {
@@ -1852,7 +1940,8 @@
       "effectPerRank": 0.1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MarketStallI": {
       "cost": {
@@ -1866,7 +1955,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MarketStallII": {
       "cost": {
@@ -1882,7 +1972,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MarketStallIII": {
       "cost": {
@@ -1898,7 +1989,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MarketStallIV": {
       "cost": {
@@ -1914,7 +2006,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TradeRoutesI": {
       "cost": {
@@ -1928,7 +2021,8 @@
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TradeRoutesII": {
       "cost": {
@@ -1944,7 +2038,8 @@
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TradeRoutesIII": {
       "cost": {
@@ -1960,7 +2055,8 @@
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TradeRoutesIV": {
       "cost": {
@@ -1976,7 +2072,8 @@
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "TradeRoutesV": {
       "cost": {
@@ -1992,7 +2089,8 @@
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "StonecuttingI": {
       "cost": {
@@ -2006,7 +2104,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "StonecuttingII": {
       "cost": {
@@ -2022,7 +2121,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "StonecuttingIII": {
       "cost": {
@@ -2038,7 +2138,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BigNetsI": {
       "cost": {
@@ -2054,7 +2155,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BigNetsII": {
       "cost": {
@@ -2070,7 +2172,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BigNetsIII": {
       "cost": {
@@ -2086,7 +2189,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "IronPicksI": {
       "cost": {
@@ -2102,7 +2206,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "IronPicksII": {
       "cost": {
@@ -2118,7 +2223,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "IronPicksIII": {
       "cost": {
@@ -2134,7 +2240,8 @@
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ResonanceI": {
       "cost": {
@@ -2148,7 +2255,8 @@
       "effectPerRank": 0.2,
       "tome": "Magic",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ResonanceII": {
       "cost": {
@@ -2164,7 +2272,8 @@
       "effectPerRank": 0.2,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "CarpentryI": {
       "cost": {
@@ -2178,7 +2287,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "CarpentryII": {
       "cost": {
@@ -2194,7 +2304,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "CarpentryIII": {
       "cost": {
@@ -2210,7 +2321,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScrivenersI": {
       "cost": {
@@ -2226,7 +2338,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScrivenersII": {
       "cost": {
@@ -2242,7 +2355,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScrivenersIII": {
       "cost": {
@@ -2258,7 +2372,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "CartageI": {
       "cost": {
@@ -2267,14 +2382,15 @@
       },
       "durationSeconds": 1200,
       "requires": [
-        "Engineering",
+        "Roadworks",
         "CharterIII"
       ],
       "line": "Cartage",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "CartageII": {
       "cost": {
@@ -2290,7 +2406,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "CartageIII": {
       "cost": {
@@ -2306,7 +2423,8 @@
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DeepWellsI": {
       "cost": {
@@ -2320,7 +2438,8 @@
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DeepWellsII": {
       "cost": {
@@ -2336,7 +2455,8 @@
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DeepWellsIII": {
       "cost": {
@@ -2352,7 +2472,8 @@
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DeepWellsIV": {
       "cost": {
@@ -2368,7 +2489,8 @@
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DeepWellsV": {
       "cost": {
@@ -2384,7 +2506,8 @@
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "LeyTapsI": {
       "cost": {
@@ -2398,7 +2521,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "LeyTapsII": {
       "cost": {
@@ -2414,7 +2538,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "LeyTapsIII": {
       "cost": {
@@ -2430,7 +2555,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WaypostsI": {
       "cost": {
@@ -2444,7 +2570,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WaypostsII": {
       "cost": {
@@ -2460,7 +2587,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WaypostsIII": {
       "cost": {
@@ -2476,7 +2604,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScriptoriumI": {
       "cost": {
@@ -2490,7 +2619,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScriptoriumII": {
       "cost": {
@@ -2506,7 +2636,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ScriptoriumIII": {
       "cost": {
@@ -2522,7 +2653,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "VigilsI": {
       "cost": {
@@ -2538,7 +2670,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "VigilsII": {
       "cost": {
@@ -2554,7 +2687,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "VigilsIII": {
       "cost": {
@@ -2570,7 +2704,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PilgrimageI": {
       "cost": {
@@ -2586,7 +2721,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PilgrimageII": {
       "cost": {
@@ -2602,7 +2738,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PilgrimageIII": {
       "cost": {
@@ -2618,7 +2755,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ProspectingI": {
       "cost": {
@@ -2634,7 +2772,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ProspectingII": {
       "cost": {
@@ -2650,7 +2789,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ProspectingIII": {
       "cost": {
@@ -2666,7 +2806,8 @@
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ColoursI": {
       "cost": {
@@ -2680,7 +2821,8 @@
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ColoursII": {
       "cost": {
@@ -2696,7 +2838,8 @@
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ColoursIII": {
       "cost": {
@@ -2712,7 +2855,8 @@
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ColoursIV": {
       "cost": {
@@ -2728,7 +2872,8 @@
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ColoursV": {
       "cost": {
@@ -2744,7 +2889,8 @@
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MusterDrillI": {
       "cost": {
@@ -2758,7 +2904,8 @@
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MusterDrillII": {
       "cost": {
@@ -2774,7 +2921,8 @@
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "MusterDrillIII": {
       "cost": {
@@ -2790,7 +2938,8 @@
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "RationsI": {
       "cost": {
@@ -2804,7 +2953,8 @@
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "RationsII": {
       "cost": {
@@ -2820,7 +2970,8 @@
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "RationsIII": {
       "cost": {
@@ -2836,7 +2987,8 @@
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DrillmasterI": {
       "cost": {
@@ -2852,7 +3004,8 @@
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DrillmasterII": {
       "cost": {
@@ -2868,7 +3021,8 @@
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "DrillmasterIII": {
       "cost": {
@@ -2884,7 +3038,8 @@
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BearersI": {
       "cost": {
@@ -2900,7 +3055,8 @@
       "effectPerRank": 0.03,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BearersII": {
       "cost": {
@@ -2916,7 +3072,8 @@
       "effectPerRank": 0.03,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BearersIII": {
       "cost": {
@@ -2932,7 +3089,8 @@
       "effectPerRank": 0.03,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PathfindersI": {
       "cost": {
@@ -2948,7 +3106,8 @@
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PathfindersII": {
       "cost": {
@@ -2964,7 +3123,8 @@
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "PathfindersIII": {
       "cost": {
@@ -2980,7 +3140,8 @@
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ShieldWallI": {
       "cost": {
@@ -2994,7 +3155,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ShieldWallII": {
       "cost": {
@@ -3010,7 +3172,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ShieldWallIII": {
       "cost": {
@@ -3026,7 +3189,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "FletchingI": {
       "cost": {
@@ -3042,7 +3206,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "FletchingII": {
       "cost": {
@@ -3058,7 +3223,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "FletchingIII": {
       "cost": {
@@ -3074,7 +3240,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BardingI": {
       "cost": {
@@ -3090,7 +3257,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BardingII": {
       "cost": {
@@ -3106,7 +3274,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "BardingIII": {
       "cost": {
@@ -3122,7 +3291,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WarhornsI": {
       "cost": {
@@ -3136,7 +3306,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 1,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WarhornsII": {
       "cost": {
@@ -3152,7 +3323,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "WarhornsIII": {
       "cost": {
@@ -3168,7 +3340,8 @@
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ManoeuvreI": {
       "cost": {
@@ -3184,7 +3357,8 @@
       "effectPerRank": 0.02,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ManoeuvreII": {
       "cost": {
@@ -3200,7 +3374,8 @@
       "effectPerRank": 0.02,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "ManoeuvreIII": {
       "cost": {
@@ -3216,7 +3391,8 @@
       "effectPerRank": 0.02,
       "tome": "Warfare",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "FarsightI": {
       "cost": {
@@ -3232,7 +3408,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "FarsightII": {
       "cost": {
@@ -3248,7 +3425,8 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null
+      "node": null,
+      "planned": false
     },
     "FarsightIII": {
       "cost": {
@@ -3264,7 +3442,497 @@
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null
+      "node": null,
+      "planned": false
+    },
+    "Aqueducts": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": -1,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Guildhalls": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 1,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Roadworks": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "LandSurvey": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 3,
+        "y": 5
+      },
+      "planned": true
+    },
+    "Apprenticeships": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 4,
+        "y": 5
+      },
+      "planned": true
+    },
+    "FieldMedicine": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "WarbandI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 1,
+      "node": {
+        "x": 1,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Veterancy": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": -2,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Siegecraft": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": -1,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Tactics": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": 1,
+        "y": 3
+      },
+      "planned": false
+    },
+    "Scouting": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": 2,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Salvage": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": -2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Vanguard": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": -1,
+        "y": 5
+      },
+      "planned": true
+    },
+    "Standards": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": 1,
+        "y": 5
+      },
+      "planned": true
+    },
+    "Conquest": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": 2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Meditation": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": -1,
+        "y": 1
+      },
+      "planned": false
+    },
+    "LeyReading": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 1,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Scrying": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 2,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Invocation": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 3,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Lorekeeping": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": -1,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Wayshrines": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 1,
+        "y": 3
+      },
+      "planned": true
+    },
+    "LeyLines": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 2,
+        "y": 3
+      },
+      "planned": true
+    },
+    "FrugalRites": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 100
+      },
+      "durationSeconds": 600,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 3,
+        "y": 3
+      },
+      "planned": true
+    },
+    "SanctifiedRuins": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": -1,
+        "y": 5
+      },
+      "planned": false
+    },
+    "RitualCasting": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 1,
+        "y": 5
+      },
+      "planned": true
+    },
+    "LeyStorm": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 2,
+        "y": 5
+      },
+      "planned": true
+    },
+    "SecondSanctum": {
+      "cost": {
+        "Gold": 400,
+        "Knowledge": 800
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 3,
+        "y": 5
+      },
+      "planned": false
     }
   },
   "research": {
@@ -3314,6 +3982,7 @@
       16
     ],
     "landmarkCap": 10,
+    "meditationCap": 30,
     "gemRefillPerGem": 4
   },
   "attunement": {
@@ -3335,7 +4004,8 @@
   "knowledge": {
     "dripPerClearedRuinPerHour": 2,
     "perClaimedLandmarkPerHour": 2,
-    "landmarkClaimLump": 50
+    "landmarkClaimLump": 50,
+    "conquestPerClearedRuinPerHour": 3
   },
   "army": {
     "trainTapBoostSeconds": 3,

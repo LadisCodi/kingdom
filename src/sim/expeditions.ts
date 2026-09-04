@@ -48,6 +48,7 @@ import { availableRoster, maxArmyPower } from './army';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
+import { isTechComplete } from './research';
 import { effect } from './upgrades';
 import { pick } from './rng';
 import {
@@ -130,7 +131,9 @@ export function drillOf(state: GameState): Drill {
       Melee: effect(state, 'ShieldWall'),
       Mounted: effect(state, 'Barding'),
     },
-    disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0) + effect(state, 'Manoeuvre')),
+    disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0)
+      + effect(state, 'Manoeuvre')
+      + (isTechComplete(state, 'Tactics') ? 0.10 : 0)), // reading the ground
   };
 }
 
@@ -145,7 +148,10 @@ export const partyOf = (
  *  20%). Half by default — enough that a bad push is a real loss, never so
  *  much that a run can be wiped, which promise 1 would not allow. */
 export const effectiveHaulLoss = (state: GameState): number =>
-  Math.min(1, Math.max(0.2, resolve(state, 'haulLoss', DELVE.failHaulLoss - effect(state, 'Bearers'))));
+  Math.min(1, Math.max(0.2, resolve(state, 'haulLoss',
+    DELVE.failHaulLoss
+      - (isTechComplete(state, 'Salvage') ? 0.15 : 0) // half becomes 35%
+      - effect(state, 'Bearers'))));
 
 // ------------------------------------------------------------------- heroes
 

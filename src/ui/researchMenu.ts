@@ -284,7 +284,8 @@ export function renderResearchMenu(game: Game): HTMLElement {
     const isSel = selected?.kind === 'tech' && selected.id === id;
     const hinted = game.uiHint() === `tech:${id}`;
     const node = el('button', {
-      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`
+        + (TECHNOLOGIES[id].planned ? ' planned' : ''),
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
     // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
@@ -407,6 +408,12 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
   const panel = el('div', { class: 'tech-info' });
   panel.append(el('h3', {}, `${def.glyph} ${def.name}`));
   panel.append(el('div', { class: 'muted' }, def.description));
+  if (def.planned) {
+    // Said in the game, not only in a doc: a playtester who researches this
+    // must know before they pay that it does nothing yet.
+    panel.append(el('div', { class: 'res-planned' },
+      iconEl('hourglass', { size: 'sm' }), 'Not yet in the prototype'));
+  }
   if (def.requires.length > 0) {
     panel.append(el('div', { class: 'rows' }, ...def.requires.map((req) =>
       el('div', { class: isTechComplete(state, req) ? 'muted' : 'blocked' },

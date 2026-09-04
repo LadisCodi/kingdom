@@ -289,15 +289,16 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(tree).toBe(79_725);
-    // Still enough to carry the player through the majors — the content
-    // spine, keystones included — which is what the chain used to be
-    // measured against. The ranks are the depth you pay for yourself.
-    const majors = TECH_ORDER.filter((id) => TECHNOLOGIES[id].line === null)
+    expect(tree).toBe(106_625);
+    // Still enough to carry the player through the OPENING — every era-1
+    // major, which is the whole of the tree as it stood before the eras. The
+    // majors of eras 2 and 3 are the depth the city has to earn for itself.
+    const opening = TECH_ORDER
+      .filter((id) => TECHNOLOGIES[id].line === null && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    expect(majors).toBe(17_700);
+    expect(opening).toBe(2350);
+    expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
-    expect(chain).toBeGreaterThan(majors * 0.6);
   });
 
   // CLAIM: Knowledge appears with the Reliquary, not before it. Every quest

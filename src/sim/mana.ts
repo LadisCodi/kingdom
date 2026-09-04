@@ -50,6 +50,7 @@
 import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
+import { isTechComplete } from './research';
 import { effect } from './upgrades';
 import {
   addToWallet, getWallet, type GameState, type RuinId,
@@ -112,7 +113,8 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = MANA.baseCap + effect(state, 'DeepWells');
+  let cap = MANA.baseCap + effect(state, 'DeepWells')
+    + (isTechComplete(state, 'Meditation') ? MANA.meditationCap : 0);
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {
@@ -240,7 +242,13 @@ export function knowledgePerHour(state: GameState): number {
   // Each source has its own line: Vigils per ruin, Wayposts per landmark —
   // and Scriptorium is a percentage on the whole, applied where the modifier
   // stack applies, so a relic and a rank read the same number the same way.
-  const raw = cleared * (KNOWLEDGE.dripPerClearedRuinPerHour + effect(state, 'Vigils'))
+  // Per ruin: the drip, doubled by Sanctified Ruins, plus Vigils and — for
+  // ground held to its deepest depth, which is what a clear IS — Conquest.
+  const perRuin = KNOWLEDGE.dripPerClearedRuinPerHour
+    * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1)
+    + effect(state, 'Vigils')
+    + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestPerClearedRuinPerHour : 0);
+  const raw = cleared * perRuin
     + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour + effect(state, 'Wayposts'));
   if (raw === 0) return 0;
   return Math.max(0, resolve(state, 'knowledgeYield', raw * (1 + effect(state, 'Scriptorium'))));

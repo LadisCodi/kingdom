@@ -189,7 +189,7 @@ Architecture survives with a different job (era 3).
 | **Deep Mining** | Mine L2 |
 | **Architecture** | Quarry L3, Sawmill L4, Mine L3 |
 | **Aqueducts** *(new)* | Housing L3 |
-| **Guildhalls** *(new)* | a second Market, and Market L2 |
+| **Guildhalls** *(new)* | a second Market |
 | **Roadworks** *(new)* | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |
 | **Land Survey** *(new)* | +1 influence radius on every district |
 | **Apprenticeships** *(new)* | the Townhall trains two villagers at once |
@@ -563,6 +563,42 @@ The tree lines do the rest: `Meditation` and `Deep Wells I–V` raise the ceilin
 `Ley Taps I–III` raise regeneration per landmark, `Resonance` and `Thrift` cut
 what a spend costs. This edits [`magic.md`](magic.md), which
 [`tomes-and-research.md`](tomes-and-research.md) §1.1 otherwise leaves alone.
+
+## 13. Planned nodes — on the tree, not yet in the game
+
+**Added 2026-09-04, by decision.** The era-2/3 majors whose mechanics do not
+exist yet are on the tree anyway, so the shape of each tome can be seen and
+played against. Rule 6 says a node that unlocks nothing is a lie; the mitigation
+is to make the lie impossible to tell by accident:
+
+- **`planned: 1` in the workbook.** The node is drawn dashed and hatched, the
+  way the fog's `?` is — "not here yet", never "locked".
+- **The panel says it**, above the Start button: *Not yet in the prototype.*
+  And the description opens with the same words, so a test can hold it.
+- **No keystone requires a planned node**, so no era is walled behind a
+  no-op. Keystones require the era's *built* majors.
+- **No minor line hangs off one**, so no working ladder is gated by vaporware.
+  The lines keep their stopgap parents until their own major works.
+
+`tests/research.test.ts` holds all four.
+
+**Planned (17):** Land Survey, Apprenticeships · Field Medicine, Veterancy,
+Siegecraft, Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
+Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
+
+**Live (9), because each was a line or two against a dial that already
+existed:** Aqueducts (Housing L3), Guildhalls (a second Market — not a Market L2, which
+would have changed no number and is exactly what rule 6 forbids),
+Roadworks (workers a quarter faster; Cartage now hangs off it), Tactics (a
+tenth off a bad matchup, through the Drill), Salvage (a failed depth costs 35%,
+not half), Conquest (+3 Knowledge/h per cleared ruin), Meditation (+30 Mana
+ceiling), Sanctified Ruins (the ruin drip doubles), Second Sanctum. Guildhalls
+and Second Sanctum needed one small general mechanism — `extra_count_tech` on a
+district, one more of it once the named technology is done — rather than a
+per-count gate nobody else needs.
+
+The tree is **180 technologies**. Each planned node that comes alive is a
+matter of building its mechanic and clearing the flag.
 
 ## Open decisions
 

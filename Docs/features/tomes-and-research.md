@@ -438,6 +438,9 @@ reversals, so that nobody reading the diff has to guess which is current:
    `supplyCost`, `haulLoss`, `heroXp` and the existing `delveSpeed`; then the
    five combat lines, carried into pure `combat.ts` as a `Drill` on the Party;
    then Farsight. **Every hook in §9 is in.** The tree is 154 technologies.
+5c. **Era-2/3 majors added — DONE 2026-09-04.** Twenty-six majors on the
+   tree: nine live against existing dials, seventeen **planned** and badged as
+   such in the game ([`tech-tree.md`](tech-tree.md) §13). The tree is 180.
 5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
    assigned a tome and an era, the nine keystones exist and each unlocks a
    real dial (Townhall level, hall levels, Sanctum levels), and the Townhall

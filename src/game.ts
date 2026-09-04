@@ -14,7 +14,7 @@ import {
 } from './sim/data/definitions';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
-  maxCountForTownhallLevel, nextBuildCost, placementBlock, validPlacementCells,
+  maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
 } from './sim/districts';
 import {
   explorationGate, fogState, revealCostForCell, revealTap,
@@ -1630,7 +1630,7 @@ export class Game {
     return BUILDABLE_DISTRICTS.some((id) => {
       const def = DISTRICTS[id];
       const capped =
-        districtCount(this.state, id) >= maxCountForTownhallLevel(def, townhall(this.state).level);
+        districtCount(this.state, id) >= maxDistrictCount(this.state, def);
       if (capped) return false;
       const cells = validPlacementCells(this.state, this.map, id);
       if (cells.length === 0) return false;

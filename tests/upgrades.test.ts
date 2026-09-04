@@ -3,7 +3,7 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  ARMY, DELVE, DISTRICTS, FOG, HARVEST, LANDMARKS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
+  ARMY, DELVE, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
   TECH_ORDER, WORKER, levelIndexed, lineParent,
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
@@ -19,7 +19,7 @@ import {
   effectiveTapYield, effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerYield,
   lineMaxRank, lineRank,
 } from '../src/sim/upgrades';
-import { buildDuration, upgradeDuration } from '../src/sim/districts';
+import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
 import { maxArmyPower, trainCost } from '../src/sim/army';
 import { depthMs, drillOf, effectiveHaulLoss, partyOf, supplyCost } from '../src/sim/expeditions';
 import { effectiveAttack, partyStats, typeMultiplier } from '../src/sim/combat';
@@ -393,7 +393,7 @@ describe('the era-2/3 lines reach their numbers', () => {
       fund(s, { Gold: 99_999, Knowledge: 99_999 });
       // Charter IV is the six-hour keystone; Scriveners I is twenty minutes.
       // Architecture brings Charter III and every era-2 major with it.
-      for (const id of ['Architecture', 'Engineering', 'DeepMining'] as const) completeTech(s, id);
+      for (const id of TECHNOLOGIES.CharterIV.requires) completeTech(s, id);
       s.research.slotsPurchased = 2;
       expect(startTech(s, 'CharterIV', T0)).toBe('Started');   // long
       expect(startTech(s, 'ScrivenersI', T0)).toBe('Started'); // short
@@ -562,5 +562,68 @@ describe('Farsight reaches the fog', () => {
     for (let t = 1000; t <= END - T0; t += 1000) advance(stepped, map, T0 + t);
     expect(Object.keys(stepped.fog.discovered).sort())
       .toEqual(Object.keys(oneCall.fog.discovered).sort());
+  });
+});
+
+// The era-2/3 MAJORS that work against dials the game already had.
+describe('the era-2/3 majors that are live', () => {
+  it('Aqueducts lets Housing reach level 3 with a third tier of beds', () => {
+    expect(DISTRICTS.Housing.maxLevel).toBe(3);
+    expect(requiredTechForLevel('Housing', 3)).toBe('Aqueducts');
+    expect(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 3))
+      .toBeGreaterThan(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 2));
+  });
+
+  it('Guildhalls and Second Sanctum each let one more of their district stand', () => {
+    const state = freshGame();
+    const market = maxDistrictCount(state, DISTRICTS.Market);
+    const sanctum = maxDistrictCount(state, DISTRICTS.Sanctum);
+    completeTech(state, 'Guildhalls');
+    completeTech(state, 'SecondSanctum');
+    expect(maxDistrictCount(state, DISTRICTS.Market)).toBe(market + 1);
+    expect(maxDistrictCount(state, DISTRICTS.Sanctum)).toBe(sanctum + 1);
+  });
+
+  it('Roadworks is a quarter faster, and stacks with Cartage', () => {
+    const state = freshGame();
+    const base = effectiveWorkerSpeed(state);
+    completeTech(state, 'Roadworks');
+    expect(effectiveWorkerSpeed(state)).toBeCloseTo(base * 1.25);
+    completeRanks(state, 'Cartage', 1);
+    expect(effectiveWorkerSpeed(state)).toBeCloseTo(base * 1.25 * 1.05);
+  });
+
+  it('Tactics takes a tenth off a bad matchup, through the Drill', () => {
+    const state = freshGame();
+    completeTech(state, 'Tactics');
+    expect(drillOf(state).disadvantageOffset).toBeCloseTo(0.10);
+    expect(typeMultiplier('Warrior', 'Archer', drillOf(state).disadvantageOffset))
+      .toBeCloseTo(ARMY.typeDisadvantage + 0.10);
+  });
+
+  it('Salvage turns a half-lost haul into 35%, and Bearers still stacks under it', () => {
+    const state = freshGame();
+    completeTech(state, 'Salvage');
+    expect(effectiveHaulLoss(state)).toBeCloseTo(DELVE.failHaulLoss - 0.15);
+    completeRanks(state, 'Bearers', 1);
+    expect(effectiveHaulLoss(state)).toBeCloseTo(DELVE.failHaulLoss - 0.18);
+  });
+
+  it('Meditation raises the ceiling by the authored step', () => {
+    const state = freshGame();
+    const cap = manaCap(state);
+    completeTech(state, 'Meditation');
+    expect(manaCap(state)).toBe(cap + MANA.meditationCap);
+  });
+
+  it('Conquest and Sanctified Ruins both pay per cleared ruin, and compose', () => {
+    const state = freshGame();
+    state.ruinsCleared.HollowBarrow = true;
+    const drip = KNOWLEDGE.dripPerClearedRuinPerHour;
+    expect(knowledgePerHour(state)).toBe(drip);
+    completeTech(state, 'Conquest');
+    expect(knowledgePerHour(state)).toBe(drip + KNOWLEDGE.conquestPerClearedRuinPerHour);
+    completeTech(state, 'SanctifiedRuins');
+    expect(knowledgePerHour(state)).toBe(drip * 2 + KNOWLEDGE.conquestPerClearedRuinPerHour);
   });
 });

@@ -455,3 +455,37 @@ describe('what the player can actually act on', () => {
     expect(game.researchCtaLit()).toBe(true);
   });
 });
+
+// Docs/features/tech-tree.md §13 — PLANNED nodes. They are on the tree so its
+// shape can be seen, and they do nothing yet. Four things keep that honest.
+describe('planned technologies', () => {
+  const PLANNED = TECH_ORDER.filter((id) => TECHNOLOGIES[id].planned);
+
+  it('exist, and every one says in its own words that it does nothing yet', () => {
+    expect(PLANNED.length).toBeGreaterThan(0);
+    for (const id of PLANNED) {
+      expect(TECHNOLOGIES[id].description, `${id} does not say it is planned`)
+        .toMatch(/Not yet in the prototype/);
+    }
+  });
+
+  it('are never required by a keystone, so no era is walled behind a no-op', () => {
+    for (const id of TECH_ORDER) {
+      if (!/^(Charter|Warband|Attunement)(II|III|IV)$/.test(id)) continue;
+      for (const req of TECHNOLOGIES[id].requires) {
+        expect(TECHNOLOGIES[req].planned, `${id} requires planned ${req}`).toBe(false);
+      }
+    }
+  });
+
+  it('unlock nothing — the gates agree they are inert', () => {
+    for (const id of PLANNED) expect(techUnlocks(id)).toEqual([]);
+  });
+
+  it("are never a minor line's parent, so no working line hangs off a no-op", () => {
+    for (const line of TECH_LINE_ORDER) {
+      const parent = lineParent(line)!;
+      expect(TECHNOLOGIES[parent].planned, `${line} hangs off planned ${parent}`).toBe(false);
+    }
+  });
+});

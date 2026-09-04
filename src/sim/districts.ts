@@ -22,6 +22,16 @@ export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number
   return levelIndexed(def.maxCountPerTownhallLevel, townhallLevel);
 }
 
+/** How many of a district may stand right now: the Townhall's permission,
+ *  plus one if the district's `extraCountTech` is researched (Guildhalls buys
+ *  a second Market, Second Sanctum a second Sanctum). */
+export function maxDistrictCount(state: GameState, def: DistrictDef): number {
+  const base = maxCountForTownhallLevel(def, townhall(state).level);
+  if (base === Infinity) return base;
+  const extra = def.extraCountTech !== null && isTechComplete(state, def.extraCountTech) ? 1 : 0;
+  return base + extra;
+}
+
 // ----------------------------------------------------------------- placement
 
 export type PlacementBlock =
@@ -68,7 +78,7 @@ export function placementBlock(
   }
   if (
     movingId === undefined &&
-    districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)
+    districtCount(state, definitionId) >= maxDistrictCount(state, def)
   ) {
     return 'CountLimit';
   }
