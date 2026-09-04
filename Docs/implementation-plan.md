@@ -458,6 +458,23 @@ simplification's migrator already followed. **The Stardust rename is the easy
 direction of that rule**: the balance keeps its meaning and only changes its
 name, so nothing converts — but the new `Knowledge` must be born at **zero**.
 
+### Step 6 · The builder for thirty days
+
+The city runs out of things to build in the first week. This step gives it a
+30-day ladder: levels 6–10 for every building, four workshops turning Wood,
+Stone and Mana into refined goods, decorations that supply Harmony, and the
+Reliquary, Tavern, Watchtower and Dragon's Nest as the buildings that unlock
+their systems.
+
+- **Proposal:** [`proposals/builder-30-days.md`](proposals/builder-30-days.md).
+- **Plan:** [`plans/builder-30-days.md`](plans/builder-30-days.md) — eleven
+  steps, data before logic before UI, each closing with its own tests and a
+  row in a thirty-day pacing harness.
+- **Blocked on:** nothing for steps 1–4 (harness, goods, workshops, levels
+  6–7); **OQ-48** for adjacency v2; **OQ-1** and **OQ-71** for Harmony; the
+  banner's home (`14-monetization.md` §2.1) for the Tavern.
+- **Size:** weeks; steps 2–4 alone are about two.
+
 ## 5. Deliberately after everything above
 
 Named here so nobody rediscovers them, and so they stay out of scope.

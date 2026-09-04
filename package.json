@@ -10,6 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "harness": "KINGDOM_HARNESS=1 vitest run tests/thirtyDays.test.ts",
     "balance": "node scripts/balance.mjs import",
     "balance:export": "node scripts/balance.mjs export",
     "art": "node scripts/ui-atlas.mjs build",

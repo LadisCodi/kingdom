@@ -12,3 +12,7 @@ declare module 'node:fs' {
   export function readFileSync(path: string | URL, encoding: 'utf8' | 'latin1'): string;
   export function readdirSync(path: string | URL): string[];
 }
+
+// And the one global: a slow harness reads an env knob to shorten a run while
+// its policy is being written (`tests/thirtyDays.test.ts`).
+declare const process: { env: Record<string, string | undefined> };
