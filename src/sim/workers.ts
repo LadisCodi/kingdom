@@ -1,6 +1,6 @@
 // Workers as units: claims, the Idle→MovingToCell→Working FSM, and the
 // event-driven advance that serves both the live tick and offline replay
-// (Docs/features/04-harvest.md §5).
+// (Docs/features/04-harvest.md §4).
 //
 // A worker walks out ONCE and then works the cell in place, STRIKING it every
 // `secondsPerStrike` and crediting the wallet on the strike. There is no load,
@@ -340,7 +340,7 @@ export function removeWorker(state: GameState, district: District): void {
  *  it, and that is deliberate: a knot of people doing nothing by the door is
  *  the most actionable fact in the game — *you over-hired, or you need more
  *  ground* — and it was invisible while they waited inside
- *  (`Docs/features/04-harvest.md` §7). The count lives in the district card;
+ *  (`Docs/features/04-harvest.md` §6). The count lives in the district card;
  *  the map shows the characters and nothing else.
  *
  *  The spot is a stable hash of the worker id, so a loiterer does not jitter

@@ -124,7 +124,7 @@ production beat.
 - **Design:** [`04-harvest.md`](features/04-harvest.md), which also amended
   [`03-economy.md`](features/03-economy.md) §5,
   [`05-city-and-districts.md`](features/05-city-and-districts.md) §4 and
-  [`08-magic.md`](features/08-magic.md) §8.
+  [`08-magic.md`](features/08-magic.md) §7.
 - **What landed:** a cell is a **depot** of `stock` units that thumb and crew
   both draw down; a tap is **`tap.workSeconds` = 20 seconds of the cell's own
   work**, floored at one unit, with a per-currency carry so a +20% upgrade is
@@ -149,7 +149,7 @@ production beat.
   house at twice its own rent. It was consistent and it read as an arbitrary
   refusal in the hand, on the building the player taps most. The argument, the
   numbers and the risk it leaves live are kept in
-  [`04-harvest.md`](features/04-harvest.md) §4.1.1 and **OQ-55**, because the
+  [`04-harvest.md`](features/04-harvest.md) §3.1 and **OQ-55**, because the
   reasoning is still sound and somebody will reach for it again.
 - **The numbers:** `tap.workSeconds` is **10**, a tactile choice — about ten
   taps to a ten-unit tree. It was briefly 20 (five taps) and came back down on
@@ -157,7 +157,7 @@ production beat.
   both ends of the game**, and the province has a stated ceiling of **157
   Wood/min** across 57 trees — the first number in the project's history that
   says what this map can make. What the halving costs is priced in
-  [`04-harvest.md`](features/04-harvest.md) §1.1 and §4.3: a bare thumb is worth
+  [`04-harvest.md`](features/04-harvest.md) §1.1 and §3.3: a bare thumb is worth
   20 workers against a crew of 30, so hand-play in a mature city needs
   `QuickHands` and `TapPower` bought into, and the ad halved with it (**OQ-51**).
 - **Left open:** **OQ-43** corrected (a watcher gathers ~5%, not 50%); **OQ-51**
@@ -251,7 +251,7 @@ OQ-12 and OQ-13* is now **blocked only on numbers**:
 
 **A sixth, taken 2026-09-03 from a reference layout: the page is a vertical
 spine at most three columns wide, with branch and join nodes, and a tier gate is
-a JOIN NODE** ([`07`](features/07-research.md) §6.3, §6.5–§6.6). **This is the
+a JOIN NODE** ([`07`](features/07-research.md) §2.1, §2.2). **This is the
 piece that makes decision 4 affordable.** §2 names the real bottleneck — *the
 layout is authored content* — and a bounded vertical page deletes it rather than
 testing it: **a node authors its tome, its column (0–2) and its requires, and
@@ -262,7 +262,7 @@ authoring twenty positions that must not collide.**
 
 **And a fifth, taken the same day, which pulls a second feature into this
 rework: the four relic ACTIVES become tome SPELLS**
-([`09`](features/09-relics.md) §1.1, [`07`](features/07-research.md) §7). A
+([`09`](features/09-relics.md) §1, [`07`](features/07-research.md) §6). A
 relic is a passive and nothing else; a spell is a research node with upgrade
 circles under it. **It is the only part of the rework that deletes more than it
 adds** — three of the five cast blocks go, `ArtifactDef.active` goes, and
@@ -304,7 +304,7 @@ player's magic away.
 
 1. **It unlocks something** — a building, a level, a unit, a slot, an upgrade, a
    spell. *A node that unlocks nothing is the same lie as a lit tab that leads
-   nowhere* ([`07`](features/07-research.md) §1.2, §6.4).
+   nowhere* ([`07`](features/07-research.md) §1, §2.1).
 2. **Its prerequisites point inside its own tome.** The tier ladder is the only
    cross-tome gate (§6.2), and **a spell may not require a Civics node** (§7.2)
    — the adjacency comes back as a named thumbnail, never as a dependency.
@@ -352,7 +352,7 @@ bite on. It is also the one item on this list that is a **30-day retention
 question** rather than a content question, which is why it comes early despite
 belonging to a post-prototype structure.
 
-- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §8.
+- **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §6.
 - **Blocked on: OQ-1.** And once it lands, **OQ-48** (adjacency v2) becomes worth
   doing and is the best design-depth-per-hour in the repository.
 - **Also do:** let the save record which *scope* a thing is in. **Cheap now,
@@ -464,7 +464,7 @@ Named here so nobody rediscovers them, and so they stay out of scope.
 
 - **The world map.** The hex lattice, scouting, per-player client-side fog,
   outposts, shards and contested claims.
-  [`02-map-scopes.md`](features/02-map-scopes.md) §9 stages it, and §8 lists the
+  [`02-map-scopes.md`](features/02-map-scopes.md) §7 stages it, and §8 lists the
   four cheap things to spend *now* — because the save cannot be changed
   retroactively.
 - **A guild league.** Small once the bar exists, and meaningless at prototype
@@ -502,7 +502,7 @@ Data versus code, in one table:
 | **the whole map**, in the editor | a new terrain or feature id, or a sixth ruin |
 | the whole quest chain — **row order is chain order** | a new modifier stat (one line plus one call site) |
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
-| a seasonal hero = one hero row + one banner row | tech-tree node positions — **the layout is authored content today**, and the tome rework makes it derived ([`07`](features/07-research.md) §6.6) |
+| a seasonal hero = one hero row + one banner row | tech-tree node positions — `node_x` / `node_y` are authored content ([`07`](features/07-research.md) §2.2) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
 
 ## 7. Testing conventions worth keeping

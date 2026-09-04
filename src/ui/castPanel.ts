@@ -1,4 +1,4 @@
-// Casting a relic's ability (Docs/features/08-magic.md §5).
+// Casting a relic's ability (Docs/features/08-magic.md §4).
 //
 // Deliberately the same slim bar as placement, because it is the same
 // interaction: the MAP is the screen, the panel only says what the tap will

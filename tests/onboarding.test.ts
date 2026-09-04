@@ -257,7 +257,7 @@ describe('a player can actually play the onboarding', () => {
     //
     // THE GUARANTEE COVERS THE OPENING — every era-1 technology and the
     // keystone that closes era 1 — and stops there on purpose. Since the tree
-    // was repriced to tech-tree.md §6's bands (2026-09-04) an era-2 major
+    // was repriced to tech-tree.md §5's bands (2026-09-04) an era-2 major
     // costs 1,000–2,500 Gold, and the chain's later asks (Sailing, Scaling
     // Tools, Surveying II) are meant to be paid out of a RUNNING city: by
     // then the player has a Market, taxes and workers, and the doc's own

@@ -9,9 +9,9 @@
 
 ## 1. The Townhall level is the era
 
-The city's whole shape hangs off one number. The Townhall gates **how many of
-each district you may own** and **how high each may level**, and it is the only
-gate that moves all of them at once.
+- The Townhall level gates **how many of each district the city may own** and
+  **how high each may level**. It is the only gate that moves all of them at
+  once.
 
 | | TH1 — Founding | TH2 — Expansion | TH3 — Prosperity |
 |---|---|---|---|
@@ -21,18 +21,17 @@ gate that moves all of them at once.
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 |
 | Gate to the next level | 60 Wood | 156 W + 78 S + **Architecture** | — |
 
-Pacing target, decided and tunable: **snappy** — TH2 in ~25–35 min of active
-play, TH3 at ~2–3 h cumulative.
+- Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 
-**TH3 is no longer the endgame.** Three arcs run past it at different speeds:
+Three arcs run past TH3:
 
-- **Military buildings** gate army size and therefore delve depth. Tiers IV and
-  V need a cap of 36 and 50, reachable only by building and upgrading all four
-  ([`11-expeditions.md`](11-expeditions.md) §6).
+- **Military buildings** gate army size and therefore delve depth. Tiers IV
+  and V need a cap of 36 and 50, reached only by building and upgrading all
+  four halls ([`11-expeditions.md`](11-expeditions.md) §6).
 - **The Mana economy** — capacity from the Sanctum and from landmarks — gates
-  how long a session is ([`08-magic.md`](08-magic.md)).
+  session length ([`08-magic.md`](08-magic.md)).
 - **Ingredients and Stardust** gate relic and hero levels, on a curve measured
-  in weeks rather than hours ([`09-relics.md`](09-relics.md)).
+  in weeks ([`09-relics.md`](09-relics.md)).
 
 ## 2. The districts
 
@@ -53,18 +52,14 @@ play, TH3 at ~2–3 h cumulative.
 | **Shooting Grounds** | 1×1 | 3 | 1 | 80 W + 30 S | 60 s | Archery |
 | **Stables** | 1×1 | 3 | 1 | 120 W + 70 S | 90 s | Cavalry |
 
-Fourteen districts. Every one of them is a `Districts` row — a fifteenth needs
-no code beyond an id.
-
-**Per-level tech gates** (`required_tech_per_level`) are the mechanic that makes
-the tree matter inside an era rather than only between them: entry 0 is what it
-takes to reach level 2. A district card says *Research X required* rather than
-just refusing, and a research-complete banner says *Housing can now reach level
-2*.
+- Fourteen districts; each is a `Districts` row. A fifteenth needs no code
+  beyond an id.
+- Per-level tech gates (`required_tech_per_level`): entry 0 is the technology
+  needed to reach level 2.
+- A district card says *Research X required*; a research-complete banner says
+  *Housing can now reach level 2*.
 
 ## 3. Cost curves
-
-Three curves, and none of them takes distance into the **cost**.
 
 ```
 buildCost(n)     = floor(base × max(mult × n × (n+1)^exp, 1))       n = existing count
@@ -72,115 +67,82 @@ upgradeCost(L)   = floor(base × countMult × levelGrowth^(L−1))
 buildDuration    = round(seconds × districtGrowth^n × distanceGrowth^d)
 ```
 
-**Distance is priced in time, not in Gold.** A building far from the Townhall
-takes longer to raise; it does not cost more. The Gold price of distance is
-already the fog, and charging twice would make the far map unreachable in two
-currencies at once.
-
-**The second-instance cliff was softened** for the worker buildings — multiplier
-4 → 2.5, exponent 1.45 → 1.15 — so the second Sawmill is ×5.5 rather than
-×10.9 (20 → 110 → 353). The Farm's base went 10 → 30 Wood instead, because it is
-an automation building sitting behind a technology.
+- Distance is priced in build **time**, never in cost.
+- Worker buildings use multiplier 2.5 and exponent 1.15: the second Sawmill
+  costs ×5.5 the first (20 → 110 → 353).
+- The Farm's base cost is 30 Wood.
 
 ## 4. Placement, and moving
 
-**Where a building may go** is one question asked in two situations. A spot you
-may not build on is a spot you may not move to.
+- One legality check serves building and moving: a cell you may not build on
+  is a cell you may not move to.
+- Gates: features and sites already on the cell, fog, the technology, the
+  shoreline rule for the Docks, the count cap, and housing adjacency.
+- Terrain gates only Water ([`01-map-and-fog.md`](01-map-and-fog.md) §2). A
+  farm on sand is legal.
 
-The gates: features and sites already on the cell, fog, the technology, the
-shoreline rule for the Docks, the count cap, and housing adjacency. **Terrain no
-longer gates anything but Water** — a farm on sand is a bad farm rather than an
-illegal one, which is a decision where a wall was only a wall
-([`01-map-and-fog.md`](01-map-and-fog.md) §2).
+### 4.1 The placement ghost
 
-### The ghost has to say what the ground is worth
-
-Placement mode draws the area of influence for the hovered cell and highlights
-the resource cells it would capture, with a count. On top of that it labels
-cells with **how much is in them**, because since the ground multiplies a cell's
-depot ([`04-harvest.md`](04-harvest.md) §3.2) that number is the placement
-decision and nothing else on screen admits it:
+- Draws the area of influence for the hovered cell and highlights the resource
+  cells it would capture, with a count.
+- Labels cells with their depot; the ground multiplies a cell's depot
+  ([`04-harvest.md`](04-harvest.md) §2.2):
 
 | Placing | Labels | Reads |
 |---|---|---|
-| **A crop plot** (it *is* the resource) | its own ghost | 13 Food on grass, 5 on sand — **the number moves as you drag it across a biome** |
-| **A Sawmill, Farm, Quarry, Docks** (a radius over other people's cells) | every captured cell | which trees in reach are worth more than the others |
+| **A crop plot** (it *is* the resource) | its own ghost | 13 Food on grass, 5 on sand — the number moves as it is dragged across a biome |
+| **A Sawmill, Farm, Quarry, Docks** (a radius over other cells) | every captured cell | which trees in reach are worth more than the others |
 
-Two details, both deliberate:
+- The label reports the **depot** — the ground times what the ground does to
+  it — not what one delivery fetches.
+- The label is toned against the authored stock: good above, bad below,
+  untouched at the baseline (a plain tree is 10).
+- It reuses the pill drawn by the housing adjacency preview.
 
-- **It reports the DEPOT, not what one delivery fetches.** A delivery is the
-  same on every cell in range, so a label saying it would read identically
-  everywhere — and a label that never changes is not information. A depot is the
-  ground times what the ground does to it.
-- **It is toned against the authored stock** — good above, bad below, untouched
-  at the baseline — so richer and poorer read at a glance instead of asking the
-  player to remember that a plain tree is 10.
+### 4.2 Moving
 
-It reuses the same pill the housing adjacency preview already draws, which is
-why it cost a label and not a screen.
+- A move is free, instant, and never fails halfway.
+- The building never leaves the Built state, never enters the queue, never
+  stops paying taxes or working its cells.
+- Only position changes. Everything that reads position follows: housing
+  adjacency, influence radius, worker walking distance, the fog ring.
 
-> **A move is free, instant, and it never fails halfway.**
+What may move:
 
-Free because the alternative is a tax on tidying up — Clash of Clans and Everdale
-both move buildings for nothing, and a priced move would be another Gold sink to
-balance for no design gain. Instant because there is nothing to build: the
-building never leaves the Built state, never enters the queue, never stops paying
-taxes or working its cells.
+- **Built only.** An unfinished building's card offers **Cancel** (a full
+  refund) instead.
+- **Buildable only**, which excludes exactly the Townhall.
 
-**A move gains the player nothing directly.** What it changes is *position*, and
-position is already priced by everything that reads it: housing adjacency,
-influence radius, worker walking distance, the fog the building pushes back. The
-move is free precisely because it is never free of consequence.
+Placement rules that change for a move, and only these:
 
-Two gates on what may move, and both are the same gate said twice:
+- The mover does not block itself.
+- The count cap does not apply.
+- A house does not count its own old footprint as a neighbour.
 
-- **Built only.** An unfinished building's duration is measured from the
-  Townhall, so relocating one mid-build would silently reprice the wait. Its card
-  already offers **Cancel**, a full refund.
-- **Buildable only**, which excludes exactly the Townhall. It is the origin every
-  fog ring, every build duration and every worker distance is measured from;
-  moving it would reprice the whole world without saying so.
+What follows the building:
 
-Moving changes **two placement rules and nothing else**: the mover does not
-block *itself* (without which nothing could move by less than its own
-footprint, which is most of the moves a player wants), and the count cap does
-not apply (a move adds nothing to the count). A house may not anchor its own
-move on itself — standing next to where you already are is not neighbourliness.
+- Adjacency, computed on read. The tax anchor is settled at the instant of the
+  move.
+- The fog ring, at the new address.
+- The crew:
+  - a loaded worker keeps its load and walks to the new address
+    ([`04-harvest.md`](04-harvest.md) §4);
+  - an empty-handed worker releases its claim and goes Idle.
 
-**What follows the building:** adjacency (computed on read, so it just follows —
-but the tax anchor must be settled at that instant or the player is paid the new
-rate for time elapsed at the old one), the fog ring at the new address, and the
-crew.
+### 4.3 The two gestures
 
-**The crew rule splits on whether a worker is carrying**, and the split is the
-whole point. A loaded worker keeps its load and walks to the new address instead
-of the old one — the units left the ground when the swing landed
-([`04-harvest.md`](04-harvest.md) §5), so confiscating them would destroy matter
-*and* charge the player for a trip already worked for. An empty-handed worker
-releases its claim and goes Idle, because the cell it was walking to may sit
-outside the radius the building now has.
-
-### The two gestures
-
-**Tap** a legal cell to send the ghost there. **Drag** the ghost to carry it.
-
-The split is decided **once, at pointerdown**: a press inside the ghost's
-footprint drags the ghost, anything else pans the camera. Deciding on press is
-what stops the two fighting mid-flick, and it means the rest of the world stays
-reachable while a ghost is out — the ghost is a thing you put your finger on,
-not a mode that captures every drag.
-
-- **The anchor follows the finger by cell, not by pixel offset**, and an illegal
-  cell is simply not taken. Dragging across a lake leaves the ghost on the shore
-  rather than following the finger somewhere it would snap back from: the ghost
-  always shows where a release would actually put it.
-- **A press on the ghost never starts the hold-to-collect timer.**
-- The building **draws faint at its old address** while its ghost is out.
-  Without it the player sees two of the same building and no way to tell which
-  is real.
-- **Cancel and dropping it home mean the same thing** — confirming a move to the
-  cell it started on is a cancel, not an error.
-- **Confirming reopens the card** it was started from.
+- **Tap** a legal cell to send the ghost there. **Drag** the ghost to carry it.
+- The split is decided once, at pointerdown: a press inside the ghost's
+  footprint drags the ghost; anything else pans the camera.
+- The anchor follows the finger by cell, not by pixel offset. An illegal cell
+  is not taken: dragging across a lake leaves the ghost on the shore.
+- A press on the ghost never starts the hold-to-collect timer.
+- The building draws faint at its old address while its ghost is out.
+- Confirming a move to the cell it started on is a cancel, not an error.
+- Confirming reopens the card the move was started from.
+- Known rough edge: a refused drag leaves the ghost where it was, and the only
+  feedback is the green outline of legal cells, which is drawn for restricted
+  buildings only.
 
 ## 5. Dials, in the order to reach for them
 
@@ -191,21 +153,18 @@ not a mode that captures every drag.
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
 | Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
-| Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §6 |
-| What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §3.2 |
+| Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
+| What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
 | Army cap per level | 6 / 10 / 15, on the four military halls |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 
 ## 6. Deliberately not in this design
 
-A priced or timed move · undo (the remedy for a bad move is another move, which
-is fine while moves are free and stops being fine the moment anyone prices
-them) · multi-select moves · moving the Townhall · a distance term in build
-*cost* · `Desert`, which is a declared terrain with zero cells.
+- A priced or timed move.
+- Undo.
+- Multi-select moves.
+- Moving the Townhall.
+- A distance term in build **cost**.
+- `Desert`, a declared terrain with zero cells.
 
-**Known rough edge:** dragging onto ground the building may not occupy leaves
-the ghost where it was, and the only feedback is the green outline of the legal
-cells — which is drawn for restricted buildings only. For an unrestricted
-building a refused drag looks like a dropped gesture. Worth a playtest.
-
-**Open questions:** OQ-1 (a bounded plot), OQ-46, OQ-48.
+**Open questions:** OQ-1, OQ-46, OQ-48.

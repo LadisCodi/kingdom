@@ -137,7 +137,7 @@ export function cast(
         const spec = harvestSpecAt(state, c)!;
         // Refill to what the GROUND holds, not to the authored stock: a Bloom
         // on grassland puts back more than one on sand, which is the same rule
-        // recovery follows (04-harvest.md §3).
+        // recovery follows (04-harvest.md §2).
         const full = effectiveStock(map, c, spec);
         const cell = state.harvest[coordKey(c)];
         if (cell === undefined || (cell.units >= full && cell.exhaustedUntil === null)) continue;

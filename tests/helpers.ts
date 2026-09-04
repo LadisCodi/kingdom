@@ -52,7 +52,7 @@ export const screenAt = (game: Game, cell: Coord): [number, number] => {
  * Top up a purse. Routed the way `Game.walletValue` routes reads, so a test
  * funds what it means to fund: KNOWLEDGE and STARDUST are kingdom-scoped —
  * both outlive the city that earned them — and Gems are the player's;
- * everything else is the city's (Docs/features/tomes-and-research.md §2.1).
+ * everything else is the city's (Docs/features/07-research.md §4).
  */
 export const fund = (state: GameState, wallet: Record<string, number>): void => {
   const { Knowledge, Stardust, Gems, ...city } = wallet;

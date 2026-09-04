@@ -60,7 +60,7 @@ import {
  * Mana per hour: a flat floor, plus the Sanctum.
  *
  * The Townhall used to be the whole of it. It produces nothing now — it gates
- * and nothing else (Docs/features/tech-tree.md §12) — so the Sanctum is the
+ * and nothing else (Docs/features/08-magic.md §2) — so the Sanctum is the
  * engine as well as the reservoir, and the whole Mana curve lives in the
  * Magic tome where the fog, the landmarks and the ruins already are.
  *
@@ -227,7 +227,7 @@ export function refillManaWithGems(state: GameState): RefillResult {
  * nothing — Knowledge is not a wage for existing, it is what the land teaches
  * you once you have taken some of it. The safety valve is that era 1 of the
  * tree costs no Knowledge at all, so the opening hours run on Gold and time.
- * See Docs/features/tomes-and-research.md §3.
+ * See Docs/features/07-research.md §3.
  *
  * KINGDOM-scoped: a technology is something the kingdom knows, so the tree
  * survives a province reset — and the contested landmarks that will pay it

@@ -107,7 +107,7 @@ describe('tapping', () => {
 // The ground under a cell decides how much is IN it. The multiplier lands on
 // the depot rather than on a single extraction, and it has to: a chunk is 1
 // unit on most cells and 1 x 0.75 rounds straight back to 1, so a percentage
-// on the chunk would be a no-op (04-harvest.md §3.3).
+// on the chunk would be a no-op (04-harvest.md §2.3).
 describe('the ground under a cell', () => {
   const cellOf = (kind: TerrainId): Coord | null =>
     map.cells.find((c) => map.terrain.get(coordKey(c)) === kind) ?? null;

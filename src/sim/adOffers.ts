@@ -1,4 +1,4 @@
-// Rewarded-ad offers (Docs/features/08-magic.md §7): the first monetisation
+// Rewarded-ad offers (Docs/features/08-magic.md §6): the first monetisation
 // surface, and the thing the Mana pool was made scarce FOR.
 //
 // Mana is the energy every tap is paid from, and `magic.md` records that its

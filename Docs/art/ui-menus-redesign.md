@@ -696,7 +696,7 @@ good ideas that just need a different costume.
 > **RESHAPED 2026-09-03.** The screen stops being one pannable canvas and
 > becomes **six vertical tomes behind tabs**, three columns wide, with branch
 > and join nodes — the structure is
-> [`../features/07-research.md`](../features/07-research.md) §6.5–§6.6 and it is
+> [`../features/07-research.md`](../features/07-research.md) §2.2 and it is
 > **design, not presentation**: the layout is derived rather than authored, so
 > nothing below may reintroduce a free 2D canvas. Everything else in this
 > section still describes the right costume.
@@ -1113,7 +1113,7 @@ Two consequences worth knowing:
   actually on screen.
 
 The one thing above everything is the rewarded-video surface, which is not in
-`#overlay` at all — see `Docs/features/08-magic.md` §7.
+`#overlay` at all — see `Docs/features/08-magic.md` §6.
 
 ### 6.6 A centred sheet, for a question
 

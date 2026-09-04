@@ -200,12 +200,12 @@ describe('exploring pays in ground, not in currency', () => {
     // technologies and brought their Gold with them, and the three tomes
     // added nine keystones on top — each priced at ~40% of the era it closes,
     // so a gate reads as a real gate without dwarfing what it gates.
-    // tomes-and-research.md §0 calls a tree the quest chain funds twice over
+    // 07-research.md calls a tree the quest chain funds twice over
     // "not a sink, a formality"; this is the other side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
     expect(tree).toBe(550_165);
     // Every tech is Gold plus, from era 2 on, Knowledge — the research clock
-    // (tomes-and-research.md §1). Never materials: a full quarry buys no
+    // (07-research.md §3). Never materials: a full quarry buys no
     // research, which is what keeps the tree in the same contest as fog and
     // buildings.
     for (const id of TECH_ORDER) {

@@ -1,4 +1,4 @@
-// Artifacts, attunement and the four actives (Docs/features/08-magic.md §2, §3).
+// Artifacts, attunement and the four actives (Docs/features/08-magic.md §2).
 //
 // The load-bearing rule is that a passive is only worth a SLOT if wearing it
 // costs you the alternative. Everything here is really testing one shape:
@@ -91,7 +91,7 @@ describe('attunement', () => {
     const state = freshGame();
     expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots);
     // No technology grants a socket: slots are Gems everywhere and nothing
-    // else (Docs/features/tomes-and-research.md §8). Promise 3 survives
+    // else (Docs/features/07-research.md §4). Promise 3 survives
     // because Gems are earnable — the chain pays 75 — so the earning moved
     // off the tree rather than disappearing.
     completeTech(state, 'Consecration');

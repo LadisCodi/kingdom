@@ -109,7 +109,7 @@ describe('the harvest cycle', () => {
   // The reason the depot is debited at the SWING and not on arrival. The old
   // model credited the wallet on delivery but debited the cell by a tap count,
   // so the player and the worker could take the same wood twice and the
-  // counter never matched the matter (04-harvest.md §5).
+  // counter never matched the matter (04-harvest.md §4).
   it('a load in transit is already out of the ground — nobody takes it twice', () => {
     const state = canGather(freshGame());
     state.city.population = 3;
@@ -296,7 +296,7 @@ describe('Townhall villager training', () => {
     trainUnit(state, 'Villager', T0);
     trainUnit(state, 'Villager', T0);
     // Nothing the player can do hurries this — the queue is a timer, and a
-    // tap buys work rather than time (04-harvest.md §4.2).
+    // tap buys work rather than time (04-harvest.md §3.2).
     tickAt(state, T0 + 19_000);
     expect(state.city.population).toBe(0);
     tickAt(state, T0 + 20_000);

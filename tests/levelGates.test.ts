@@ -107,7 +107,7 @@ describe('every upgradable building has something to show for the level', () => 
   // them: it has no per-level number of its own AT ALL any more. It gates —
   // how many of each district may exist, and how high each may go — and every
   // one of those numbers lives on the building being gated
-  // (Docs/features/tech-tree.md §12).
+  // (Docs/features/08-magic.md §2).
   const VIA_MANA: readonly DistrictId[] = ['Sanctum'];
   const GATES_ONLY: readonly DistrictId[] = ['Townhall'];
 

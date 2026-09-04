@@ -119,7 +119,7 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   // Mana is a per-level number too, on exactly two buildings — and neither
   // had anything to show before, so both upgrades read as blank.
   // The Sanctum owns BOTH Mana numbers now — it is the engine as well as the
-  // reservoir, since the Townhall stopped producing (tech-tree.md §12).
+  // reservoir, since the Townhall stopped producing (08-magic.md §2).
   if (district.definitionId === 'Sanctum') {
     delta('Mana held',
       levelIndexed(MANA.sanctumCapPerLevel, district.level),
@@ -253,7 +253,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('div', { class: 'dc-area-rate' },
             // Two cells per worker is the authoring law: a cell drains, then
             // sits recovering, so a crew wants about twice its own number of
-            // cells in reach or the surplus stands around (04-harvest.md §3.1).
+            // cells in reach or the surplus stands around (04-harvest.md §2.1).
             `${cells.length} in reach for ${district.assignedWorkers} — wants ~${
               district.assignedWorkers * 2}`))));
 

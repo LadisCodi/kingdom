@@ -1,4 +1,4 @@
-// Artifacts (Docs/features/08-magic.md §2, §3): the relics won from ruins, the
+// Artifacts (Docs/features/08-magic.md §2): the relics won from ruins, the
 // slots they compete for, and the four abilities they cast.
 //
 // WHY RELICS AND NOT A SPELLBOOK. A loadout limit only has weight when the
@@ -60,7 +60,7 @@ export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped
 /** Spend Stardust for one level. Stardust is KINGDOM-scoped deliberately: it
  *  survives a region reset, so it still works when regions become the content
  *  treadmill. Knowledge used to do this job and now buys technologies out of
- *  the CITY purse instead — see Docs/features/tomes-and-research.md §2. */
+ *  the CITY purse instead — see Docs/features/07-research.md §4. */
 export function levelUpArtifact(state: GameState, id: ArtifactId): LevelUpResult {
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const entry = artifactEntry(state, id);
@@ -89,7 +89,7 @@ export function raiseArtifactTier(state: GameState, id: ArtifactId): RaiseTierRe
 
 /** One at start, the rest with Gems. No technology grants a socket: slots are
  *  bought with Gems everywhere and by nothing else
- *  (Docs/features/tomes-and-research.md §8). Promise 3 survives because Gems
+ *  (Docs/features/07-research.md §4). Promise 3 survives because Gems
  *  are earnable — the chain pays 75 and a first clear pays 10 — so the earning
  *  moved off the tree rather than disappearing. */
 export function attunementSlots(state: GameState): number {

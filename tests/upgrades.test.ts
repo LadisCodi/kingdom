@@ -46,7 +46,7 @@ describe('researching a rank', () => {
     fund(state, { Gold: 1000 });
     completeTech(state, 'Forestry');
     // Rank I is era 1 and keeps the price the opening was tuned around; rank
-    // II is era 2 and sits in tech-tree.md §6's minor band (250–800).
+    // II is era 2 and sits in tech-tree.md §5's minor band (250–800).
     expect(TECHNOLOGIES.TapPowerI.cost.Gold).toBe(50);
     expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBeGreaterThanOrEqual(250);
     expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBeLessThanOrEqual(800);
@@ -193,7 +193,7 @@ describe('every line reaches the number it claims to', () => {
 
   // The seven cell-scoped upgrades are ABUNDANCE OF THE GROUND, so they lift
   // the thumb and the crew alike — both draw the same depot, and that is the
-  // change that unifies the two feelings (04-harvest.md §8).
+  // change that unifies the two feelings (04-harvest.md §7).
   it('Butchery makes wild game richer for hand AND crew, and nothing else', () => {
     const state = freshGame();
     const meatTap = tapDraw(state, HARVEST.Meat, 0);
@@ -322,7 +322,7 @@ describe('every line reaches the number it claims to', () => {
   });
 });
 
-// The era-2/3 hooks (Docs/features/tech-tree.md §9), first batch: Civics and
+// The era-2/3 hooks (Docs/features/tech-tree.md §6.2), first batch: Civics and
 // Magic. Same discipline as above — a line is asserted where the PLAYER meets
 // the number, never on the effect table.
 describe('the era-2/3 lines reach their numbers', () => {

@@ -190,7 +190,7 @@ describe('the quest chain', () => {
 // a `collect`, and ONLY the thumb banks a `tap`. Unifying them would complete
 // every "tap N times" goal with the city standing idle, so the predicate that
 // depends on it gets a test rather than a comment
-// (Docs/features/04-harvest.md §5).
+// (Docs/features/04-harvest.md §4).
 describe('a tap and a strike are different asks', () => {
   it('CollectTaps counts tap events and nothing else', () => {
     const state = canGather(freshGame());
@@ -299,7 +299,7 @@ describe('quests fund the research tree', () => {
   // THE RATIO INVERTED ON 2026-09-04, on purpose.
   //
   // The chain used to pay 1.8x the whole tree, which
-  // Docs/features/tomes-and-research.md §0 names as the problem: "the tree is
+  // Docs/features/07-research.md names as the problem: "the tree is
   // not a sink, it is a formality". Collapsing the upgrades into 49 ranked
   // technologies took the tree from 6,600 to 26,625, so the chain now covers
   // a little under half of it and the rest has to be earned by running a

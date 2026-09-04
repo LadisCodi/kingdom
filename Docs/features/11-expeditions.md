@@ -1,9 +1,8 @@
 # 11 · Expeditions — ruins, delves, the army and combat
 
 > **Scope.** The army, what it is made of, how a fight is resolved, and the
-> staged delve that is the only decision-under-uncertainty in the game. What a
-> ruin *pays* is [`10-heroes.md`](10-heroes.md) §4; what it *holds* is
-> [`01-map-and-fog.md`](01-map-and-fog.md) §6.
+> staged delve. What a ruin *pays* is [`10-heroes.md`](10-heroes.md) §4; what it
+> *holds* is [`01-map-and-fog.md`](01-map-and-fog.md) §6.
 >
 > **Status: built**, minus contested landmarks — see
 > [`15-social.md`](15-social.md) §6.
@@ -17,23 +16,18 @@
 4. **A failed push costs 50% of the carried haul** and ends the run.
 5. **A well-prepared run never fails.** The safe depth is computable and shown
    before launch.
-6. **Delve timers never pause.** The offline cap governs the city's idle economy
-   only.
+6. **Delve timers never pause.** The offline cap governs the city's idle
+   economy only.
 7. **Military buildings raise the army cap; the Townhall does not.**
 
 ## 2. The delve
 
-Commit **one hero** plus **units** → pay **supplies** → the party clears one
-**depth** at a time. After each depth it stops at a checkpoint and asks one
-question:
-
-> **Go deeper, or come back with what you're carrying?**
-
-Deeper pays more. Failing loses half the haul and ends the run.
-
-**This is what gives a visit texture.** A single long expedition produces one
-decision per visit, so some visits contain nothing; staged depths produce three
-or four, and the run is **self-terminating** — you push until you choose to stop.
+- Commit **one hero** plus **units** → pay **supplies** → the party clears one
+  **depth** at a time.
+- After each depth the party stops at a checkpoint: **go deeper, or come back
+  with what you're carrying?**
+- Deeper pays more. Failing loses half the haul and ends the run.
+- The run is self-terminating: it ends when the player stops.
 
 ### The five ruins
 
@@ -49,41 +43,27 @@ or four, and the run is **self-terminating** — you push until you choose to st
 depthTime = base(tier) × growth^(depth − 1)
 ```
 
-**Time grows with depth inside a run**, not only across tiers. That is what makes
-*one more depth* a real escalation — each further step is a longer commitment
-before the next safe point — and it naturally caps how far anyone pushes in one
-sitting. **Tier I teaches the loop inside a single visit; Tier V is a multi-day
-project held together by its checkpoints.**
-
-A ruin's **affinity** is the threat type dominating its depths, so a dungeon
-rewards a *composition* rather than a single unit.
-
-**Supplies are a flat cost at launch, not per depth.** The depth decision should
-be purely risk against reward, with nothing else muddying it.
+- Depth time grows with depth inside a run, not only across tiers.
+- A ruin's **affinity** is the threat type dominating its depths.
+- **Supplies are a flat cost at launch, not per depth.**
 
 ## 3. The party
 
-**A hero is mandatory** — every party is one hero commanding troops. Heroes carry
-a unit type of their own, so the hero choice feeds the same matchup chart as the
-troops, and a second hero becomes valuable for **coverage** as well as
-concurrency.
-
-**Party slots** start at **2** (hero + one unit) and expand to **5**. One slot
-unlocks through **research** — which gives the tree new leaves and a reason to
-matter past the three-hour mark — and the rest cost **Gems**
-(`25 × 2.2^purchased`). Research is the earned half of the gate, so the paid gate
-is never the only route in.
-
-A party may also carry **one relic** ([`09-relics.md`](09-relics.md) §5.1).
+- **A hero is mandatory.** Every party is one hero commanding troops.
+- The hero's own unit type counts in the matchup chart.
+- **Party slots** start at **2** (hero + one unit) and expand to **5**.
+  - One slot unlocks through **research**.
+  - The rest cost **Gems**: `25 × 2.2^purchased`.
+- A party may carry **one relic** ([`09-relics.md`](09-relics.md) §5.1).
 
 ## 4. Combat — a scoring pass
 
-Units carry **ATK / DEF / HP**. Each depth carries an authored **threat profile**
-(type + strength). Resolving a depth is one deterministic pass over the party:
-
-- **ATK vs the threat**, multiplied by the type chart → did you clear the depth?
-- **The threat vs DEF** → damage, absorbed by party HP.
-- **HP does not regenerate between depths.** That is the attrition.
+- Units carry **ATK / DEF / HP**. Each depth carries an authored **threat
+  profile** (type + strength).
+- Resolving a depth is one deterministic pass over the party:
+  - **ATK vs the threat**, multiplied by the type chart → is the depth cleared?
+  - **The threat vs DEF** → damage, absorbed by party HP.
+  - **HP does not regenerate between depths.**
 
 | Unit | ATK / power | DEF | HP | Recruit | Train |
 |---|---|---|---|---|---|
@@ -92,14 +72,8 @@ Units carry **ATK / DEF / HP**. Each depth carries an authored **threat profile*
 | **Archer** | 6 | 1 | 6 | 60 G + 30 W | 25 s |
 | **Cavalry** | 7 | 2 | 10 | 150 G + 40 F + 60 S | 60 s |
 
-A unit's **power** — what it costs against the army cap — equals its ATK, so the
-cap reads directly as attack potential.
-
-**The trade is deliberate.** Archers buy the most ATK per Gold and the least
-survivability, so a glass party clears shallow depths cheaply but cannot sustain
-a deep push, where attrition decides. Warriors are the opposite. **Neither is
-correct on its own, which is the point** — and it is what earns DEF and HP their
-place: a pure power score would not need them.
+- A unit's **power** — its cost against the army cap — equals its ATK.
+- Archers: most ATK per Gold, least survivability. Warriors: the opposite.
 
 | Beats | Why |
 |---|---|
@@ -108,76 +82,45 @@ place: a pure power score would not need them.
 | **Archer** → Warrior | arrows beat heavy infantry at range |
 | **Warrior** → Lancer | shields close the gap on spears |
 
-**×1.5 advantage / ×0.75 disadvantage.** Sharper values (×2/×0.5) are more
-dramatic but make one bad guess feel like a wasted trip, which is the un-cozy end
-of the dial.
+- **×1.5 advantage / ×0.75 disadvantage.**
+- The type chart applies at **composition time**; there is no in-fight decision.
+- **No battle screen.** Resolution is instant and reported at the checkpoint:
+  what was cleared, what it cost in HP, what is carried.
+- **Units return wounded and recover fully on reaching the city.** No healing
+  management, no second timer.
 
-**The type chart does its work at COMPOSITION time**, which is where the decision
-belongs in a management game. A tactical resolution would move the decision
-inside a fight — a different genre, and one that eats the 30-minute session
-budget. And the middle option is the worst of the three: **simulating combat in
-detail without showing it means the player sees only win or lose and learns
-nothing from all that machinery.**
+## 5. Determinism and information
 
-**No battle screen.** Resolution is instant and reported at the checkpoint: what
-you cleared, what it cost in HP, what you carry. The moment there is a fight to
-watch, the game is spending its scarcest resource on the part that is not the
-pitch.
-
-**Units return wounded and recover fully on reaching the city** — no healing
-management, no second timer.
-
-## 5. The law on randomness, and how the gamble respects it
-
-**A well-prepared run never fails.** Everything in §4 is deterministic, so a
-party's **guaranteed depth is computable and shown before launch.**
-
-> The gamble is **information, not dice.**
-
-You do not know the next depth's threat type until you commit to it. That
-preserves the law — you are never robbed by a roll, you simply did not know what
-was down there — and it gives a hero trait something to sell: **The Scout**
-reveals the next depth, turning information into a purchasable advantage.
-
-**Attrition is what makes the risk curve emergent rather than authored.** The
-deeper you go, the more worn the party, so danger rises visibly on a depleting
-bar instead of following a probability curve someone invented.
-
-> Your economy decides how deep you go **safely**. Everything past that is a
-> gamble you opt into, on information you chose not to wait for.
-
-Seeded RNG rolls only *which* rewards drop. And the safe floor must be **truly
-safe**: it has to assume the **worst matchup the depth can produce**, not the
-ruin's affinity — the threat draw is weighted toward the affinity but can still
-produce any of the four types. A safe depth that is not safe turns
-push-your-luck into being robbed.
+- **A well-prepared run never fails.** Everything in §4 is deterministic, so a
+  party's **guaranteed depth is computable and shown before launch.**
+- The gamble is **information, not dice**: the next depth's threat type is
+  unknown until the party commits to it.
+- **The Scout** reveals the next depth's threat.
+- Attrition makes the risk curve emergent: the deeper the run, the more worn
+  the party.
+- Seeded RNG rolls only *which* rewards drop.
+- The safe depth assumes the **worst matchup the depth can produce**, not the
+  ruin's affinity. The threat draw is weighted toward the affinity but can
+  produce any of the four types.
 
 ### Two rules that keep this cozy
 
-- **The haul is not yours until you extract it.** That framing is what makes a
-  50% loss legitimate under *nothing you own is ever taken* — nothing you *own*
-  is taken; you declined a sure thing. Identical logic to Mana overflow:
-  unrealised gain, never property. **The UI must sell this from the first depth**
-  or players will feel robbed whatever the technicality.
-- **A checkpoint never expires.** The party waits at depth 3 indefinitely — no
-  decision timer, no interrupt, no auto-fail while away. That is what stops the
-  system becoming an interruption engine, and it turns a parked delve into a
-  return hook: *your party waits at depth 3 — 12 pieces so far.* The cost of not
-  deciding is real but gentle: that hero stays committed until you do.
+- **The haul is not the player's until extracted.** A 50% loss is unrealised
+  gain, never property — the same logic as Mana overflow. The UI must make
+  this plain from the first depth.
+- **A checkpoint never expires.** The party waits at a depth indefinitely: no
+  decision timer, no interrupt, no auto-fail while away. The hero stays
+  committed until the player decides.
 
 ### Standing orders — the opt-out
 
-Set **"delve to depth N, then return"** at launch and the whole run resolves
-offline with no prompts. **Push-your-luck becomes the engaged player's mode;
-anyone else sets it and leaves.** Deeper standing orders are exactly the comfort
-purchase the third promise authorises. Both modes ship, so they can be compared
-directly.
+- Set **"delve to depth N, then return"** at launch; the run resolves offline
+  with no prompts.
+- Both modes ship: push-your-luck and standing orders.
 
 ## 6. Military buildings raise the army cap
 
-Army size stops being a passive consequence of a gate the player was going to
-pass anyway and becomes a **city-building decision**. Each unit type is trained
-by its own building, each gated behind the military branch that already exists.
+Each unit type is trained by a building, each gated behind the military branch.
 
 | Building | Trains | Cap per level |
 |---|---|---|
@@ -186,15 +129,14 @@ by its own building, each gated behind the military branch that already exists.
 | **Shooting Grounds** | Archer | 6 / 10 / 15 |
 | **Stables** | Cavalry | 6 / 10 / 15 |
 
-**The Barracks turns out every foot soldier and Cavalry keeps the Stables**, with
-each unit still behind its own technology — so the choice fills in as the player
-researches rather than arriving all at once. That leaves the Spear Hall and
-Shooting Grounds as **specialists rather than sole sources**: a second hall is a
-second *parallel* training line and more army cap, not a different roster. Which
-building a unit is queued at therefore matters, and training takes the hall
-explicitly — the player pressed TRAIN on a specific card.
+- The Barracks trains every foot soldier; the Stables trains Cavalry. Each unit
+  is still behind its own technology.
+- The Spear Hall and Shooting Grounds are specialists, not sole sources: a
+  parallel training line plus army cap.
+- Training is queued at a specific hall (the card the player pressed TRAIN on).
+- **Training takes time**, boostable at the relevant hall.
 
-The curve lines up exactly with the five ruins:
+The cap curve lines up with the five ruins:
 
 | Military development | Army cap | Unlocks |
 |---|---|---|
@@ -204,57 +146,38 @@ The curve lines up exactly with the five ruins:
 | All four, L2 | 40 | Tier IV (36) |
 | All four, L3 | 60 | Tier V (50) |
 
-Three things fall out, which is why the change was worth making:
-
-- **Tiers IV–V become reachable by building, not by waiting.** The deepest ruins
-  stop being locked behind a Townhall level and start being locked behind a city
-  you chose to build — which is the pitch.
-- **Composition costs map space.** Wanting Cavalry means placing Stables, so the
-  type chart reaches back into the city-builder rather than living only in a
-  party screen. **This is the strongest link between the two halves of the
-  game.**
-- **Training takes time**, boostable at the relevant hall. Instant training
-  stopped making sense once units became expedition capital.
-
-A full roster of Warriors at cap 24 fields 24 effective ATK against a neutral
-depth and 18 against an unfavourable one — so **Tier III is exactly clearable
-with the right composition and not with the wrong one.**
+- Tiers IV–V are reached by building, not by Townhall level.
+- A full roster of Warriors at cap 24 fields 24 effective ATK against a neutral
+  depth and 18 against an unfavourable one: Tier III is clearable with the
+  right composition and not with the wrong one.
 
 ## 7. Rewards and throughput
 
 - **The haul accumulates per depth** and banks only on extraction.
-- **First clear of the max depth** pays the ruin's **relic, guaranteed** — no
-  randomness on the thing that gates a system — plus **500 Gems** and a **150
-  Stardust** lump, both banked immediately rather than on extraction. A party
-  parked at the bottom has already earned them.
-- **A cleared ruin then drips 2 Stardust/h, forever.** Discovery pays nothing;
-  **clearing is what turns a dungeon into a faucet.**
+- **First clear of the max depth** pays the ruin's **relic, guaranteed**, plus
+  **500 Gems** and a **150 Stardust** lump — both banked immediately, not on
+  extraction.
+- **A cleared ruin drips 2 Stardust/h, forever.** Discovery pays nothing.
 - **Repeat delves** pay ingredients, Stardust and resources, scaling with depth
   reached: 25 Gold, 4 material and 6 Stardust per depth per tier.
-- **Hero XP** on every delve — currently written and never read
+- **Hero XP** on every delve — written and never read
   ([`10-heroes.md`](10-heroes.md) §9).
-
-**Throughput is the throttle.** No cooldowns. Concurrency is limited by heroes
-(one per delve), party slots, and units (committed until the party extracts). One
-hero means one delve at a time, **which makes the second hero a genuine prize.**
+- **Throughput is the throttle.** No cooldowns. Concurrency is limited by
+  heroes (one per delve), party slots, and units (committed until the party
+  extracts).
 
 ## 8. Landmarks, and the four that cannot be claimed
 
-Claiming comes in two flavours, which is what keeps them from being a formality:
-
 - **Undefended** — pay a one-off Gold cost, authored per sanctuary in tiers
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §6). A pure economic decision, and
-  another sink on the fog's own curve.
-- **Defended** — an enemy army holds it. Clear it, then claim. This gives combat
-  a second job outside dungeons, and it is a **one-off encounter, not a permanent
-  commitment**: the army is never locked up holding ground.
-
-A contested landmark resolves through the same scoring pass a delve depth uses,
-so it costs no new machinery — one threat profile per landmark.
-
-**Four of the ten are defended and none of them can be claimed today**, because
-nothing writes the cleared flag. The design for clearing them is a siege that
-scales from one player to ten: [`15-social.md`](15-social.md) §6. **OQ-35.**
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §6).
+- **Defended** — an enemy army holds it. Clear it, then claim. A **one-off
+  encounter, not a permanent commitment**: the army is never locked up holding
+  ground.
+- A contested landmark resolves through the same scoring pass as a delve depth:
+  one threat profile per landmark.
+- **Four of the ten are defended and none can be claimed** (not built: nothing
+  writes the cleared flag). Clearing them is a siege that scales from one
+  player to ten: [`15-social.md`](15-social.md) §6. **OQ-35.**
 
 ## 9. The screens
 
@@ -262,15 +185,12 @@ scales from one player to ten: [`15-social.md`](15-social.md) §6. **OQ-35.**
   slot, supply cost, the **guaranteed-depth** read (*safe to depth 4*), the
   matchup read against the ruin's affinity, standing orders, one big green
   Launch.
-- **Checkpoint**: party HP, haul so far, what is known about the next depth, and
-  two choices of **equal visual weight** — *go deeper* and *take the haul*. It
-  must read as an offer, never a threat, and must make plain that the haul is not
+- **Checkpoint**: party HP, haul so far, what is known about the next depth,
+  and two choices of **equal visual weight** — *go deeper* and *take the haul*.
+  It reads as an offer, never a threat, and makes plain that the haul is not
   banked yet.
-- **A delve pill**, so a parked party is visible without a screen. The
-  *checkpoint never expires* rule needs it.
-- **The army has no nav tab.** An army only matters at the moment it is sent
-  somewhere, so composition is set inside the expedition sheet and the standing
-  screen does not exist.
+- **A delve pill**, so a parked party is visible without a screen.
+- **The army has no nav tab.** Composition is set inside the expedition sheet.
 
 ## 10. Dials, in the order to reach for them
 
@@ -289,9 +209,14 @@ scales from one player to ten: [`15-social.md`](15-social.md) §6. **OQ-35.**
 
 ## 11. Deliberately not in this design
 
-Tactical or round-based combat · a battle screen · unit casualties · healing
-timers · permanent garrisons · per-depth supply costs · a decision timer on a
-checkpoint · PvP · an army cap that comes from the Townhall level.
+- Tactical or round-based combat
+- A battle screen
+- Unit casualties
+- Healing timers
+- Permanent garrisons
+- Per-depth supply costs
+- A decision timer on a checkpoint
+- PvP
+- An army cap that comes from the Townhall level
 
-**Open questions:** OQ-35 (how a defended landmark is cleared), OQ-40 (the 50%),
-OQ-41.
+**Open questions:** OQ-35, OQ-40, OQ-41.

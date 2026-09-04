@@ -1,4 +1,4 @@
-// The Reliquary (Docs/features/08-magic.md §5) — where relics live.
+// The Reliquary (Docs/features/08-magic.md §4) — where relics live.
 //
 // The screen has one job the HUD deliberately refuses to do: explain the Mana
 // arithmetic. The header shows a pool and ONE net rate, because
@@ -105,7 +105,7 @@ function manaPanel(game: Game): HTMLElement {
  * It is hidden until the player has met it. Stardust only ever comes out of a
  * dungeon or a banner, so a zero row would advertise a system they have not
  * reached yet. (Knowledge used to be this currency; it is the research clock
- * now and reads in the Research screen — tomes-and-research.md §8.)
+ * now and reads in the Research screen — 07-research.md §4.)
  */
 function stardustPanel(game: Game): HTMLElement | null {
   const held = game.walletValue('Stardust');

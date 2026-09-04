@@ -1,4 +1,4 @@
-// The offer popup (Docs/features/08-magic.md §7): "watch a short ad and
+// The offer popup (Docs/features/08-magic.md §6): "watch a short ad and
 // collect".
 //
 // Two ways out and both are the same way out — the X on the plank and "No

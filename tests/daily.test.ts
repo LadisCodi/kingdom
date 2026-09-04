@@ -3,7 +3,7 @@
 // A conventional login streak resets to zero on a missed day. This one does
 // not — the ladder advances on days PLAYED, and missing a day costs that day's
 // chest and nothing else — because promise 1 is *nothing you own is ever taken
-// from you* (Docs/features/12-quests.md §4.1).
+// from you* (Docs/features/12-quests.md §3.1).
 //
 // That is a design commitment rather than a number, so it is the thing these
 // tests defend. "The ladder survives a two-week absence at the step it

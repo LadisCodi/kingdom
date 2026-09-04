@@ -112,7 +112,7 @@ than the build is rejected rather than downgraded.
   Four coins on the plank is the genre's ceiling, not its floor — adding a
   wallet row needs an argument, and the Fragments precedent (a per-collectible
   counter, not a row) is usually the better answer.
-- **A tap is priced in production, not in units.** `tap.boostSeconds` (45)
+- **A tap is priced in production, not in units.** `tap.workSeconds` (10)
   hands the player that many seconds of what they tapped is producing, floored
   at the authored yield. **Follow this for every new reward** — absolute
   amounts in a spreadsheet go stale on their own as the city grows.

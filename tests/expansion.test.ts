@@ -60,7 +60,7 @@ describe('stone line (Masonry → Quarry)', () => {
 });
 
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
-  // Exploration lives in the MAGIC tome now (tech-tree.md §2): the fog is the
+  // Exploration lives in the MAGIC tome now (07-research.md §2): the fog is the
   // surface Kingdom's magic presents to the player, so Sailing and Fishing
   // sit beside Mana and the ruins rather than beside the farms.
   it('the exploration branch is in the Magic tome, behind its own eras', () => {
@@ -155,7 +155,7 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
   // sixty-second swing is slow ground — so twenty seconds of it is a fraction
   // and the floor pays 1, the same as a bare rock. What makes a vein worth the
   // walk is that there is five times as much in it and a miner takes five
-  // units a swing (Docs/features/04-harvest.md §3.1).
+  // units a swing (Docs/features/04-harvest.md §2.1).
   it('an iron mountain is a RICH stone node — in the ground, not in the tap', () => {
     const state = freshGame();
     reveal(state, [IRON_MOUNTAIN]);

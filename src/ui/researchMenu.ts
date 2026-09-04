@@ -472,7 +472,7 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
         iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
     // A trickle currency without a time-to-afford line is one the player
-    // cannot plan against (tomes-and-research.md §8). Only when Knowledge is
+    // cannot plan against (07-research.md §4). Only when Knowledge is
     // the thing short: Gold has its own answer, which is to go and earn it.
     const wait = knowledgeShortfallMs(state, id, knowledgePerHour(state));
     if (wait > 0) {

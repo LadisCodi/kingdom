@@ -1,7 +1,7 @@
 # World map mockup prompts (ChatGPT / GPT-4o images)
 
 Prompts for mocking up the shared world map described in
-[`../features/02-map-scopes.md`](../features/02-map-scopes.md) §3.4–§5.
+[`../features/02-map-scopes.md`](../features/02-map-scopes.md) §1.3–§3.
 
 **Updated 2026-09-04** against two rounds of real renders. Prompt 1 now asks for
 what actually worked — **three hexagons across, not four** — and both prompts
@@ -32,7 +32,7 @@ design question rather than an art one: icons are **read**, the hexagon is
 Round 1 also produced **three fog states** rather than the two asked for —
 revealed, half-veiled with silhouettes showing through, and opaque — which is
 better than the spec and is now the spec
-([`02-map-scopes.md`](../features/02-map-scopes.md) §4.4).
+([`02-map-scopes.md`](../features/02-map-scopes.md) §2.3).
 
 ## Workflow — the same one that worked for the v2 sprites
 
@@ -54,7 +54,7 @@ traps apply:
 5. Image models fake pixel art at high resolution. Fine for a mockup; downscale
    nearest-neighbour if a crisp version is wanted
    (`magick in.png -filter point -resize ... out.png`).
-6. For the **place composition library** (`02-map-scopes.md` §3.4 — ~15–20
+6. For the **place composition library** (`02-map-scopes.md` §1.3 — ~15–20
    reusable compositions), generate in **2×2 sheets, four compositions per
    image**, which is what gave the v2 sprite set its style and scale consistency.
 
@@ -199,4 +199,4 @@ visible strip above the sheet.
 
 **What this image is for:** proving that a place's contents can be listed and
 acted on from a sheet, so a hexagon never needs a screen of its own —
-`02-map-scopes.md` §3.5, and the reason icons on the map can stay read-only.
+`02-map-scopes.md` §1.4, and the reason icons on the map can stay read-only.

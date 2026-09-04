@@ -1,4 +1,4 @@
-// Mana and landmarks (Docs/features/08-magic.md §1, §4).
+// Mana and landmarks (Docs/features/08-magic.md §1, §3).
 //
 // Mana is the only capped currency in the game, and the cap IS the mechanic:
 // pressure that costs the player nothing they own. Two things therefore have
@@ -47,7 +47,7 @@ describe('the two dials', () => {
   // THE TOWNHALL IS IN NEITHER DIAL ANY MORE (2026-09-04). It gates and
   // nothing else, so the whole Mana curve is a flat floor plus the Sanctum
   // plus the sanctuaries — all of it inside the Magic tome, where the fog and
-  // the landmarks and the ruins already live (tech-tree.md §12).
+  // the landmarks and the ruins already live (08-magic.md §2).
   it('production is the floor plus the Sanctum, and the landmarks it is not', () => {
     const state = freshGame();
     expect(manaProduction(state)).toBe(MANA.basePerHour);

@@ -180,7 +180,7 @@ describe('collecting from a house', () => {
 
 // A tap buys WORK. A training queue is not work — it is a fixed duration —
 // and a tap is a scaling one, so a maxed thumb would finish a 20-second
-// villager in a single press. Timers take Gems (04-harvest.md §4.2).
+// villager in a single press. Timers take Gems (04-harvest.md §3.2).
 describe('a training queue cannot be hurried by hand', () => {
   it('runs on its own clock whatever the player does', () => {
     const state = freshGame();

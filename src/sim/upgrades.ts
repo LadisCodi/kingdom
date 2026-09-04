@@ -125,7 +125,7 @@ export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): nu
  *
  * It is also the number behind what a rewarded ad is worth: the thumb is worth
  * `tapWorkSeconds / collectCooldown` workers, and **that has to stay ahead of
- * the crew** or the hand stops beating the machine (`04-harvest.md` §4.3).
+ * the crew** or the hand stops beating the machine (`04-harvest.md` §3.3).
  */
 export const tapWorkSeconds = (state: GameState): number =>
   Math.max(0, resolve(state, 'tapYield', TAP.workSeconds * (1 + effect(state, 'TapPower'))));
@@ -172,7 +172,7 @@ export const workerStrikeMs = (state: GameState, spec: HarvestSpec): number => {
  *
  *  It is also half of what the thumb is worth: `tapWorkSeconds` over this is
  *  how many workers a held finger is equal to, and that number has to stay
- *  ahead of the crew (`04-harvest.md` §4.3). */
+ *  ahead of the crew (`04-harvest.md` §3.3). */
 export const effectiveAutoTapCooldownMs = (state: GameState): number =>
   Math.max(100, resolve(
     state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,

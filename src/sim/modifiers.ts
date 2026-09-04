@@ -33,7 +33,7 @@ export type ModifierStat =
   | 'activeCost'      // Mana an artifact ability costs to cast
   | 'delveSpeed'      // how fast a depth resolves
   | 'attunementSlots' // sockets, for a season that lends you one
-  // The era-2/3 hooks (Docs/features/tech-tree.md §9). Each is reached by a
+  // The era-2/3 hooks (Docs/features/tech-tree.md §6.2). Each is reached by a
   // minor line through `effect()` AND by this stack, in the helper that owns
   // the number — three stages, one place, like everything above.
   | 'buildTime'       // seconds to raise or upgrade a building

@@ -168,7 +168,7 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
     if (fogState(state, map, r.location) === 'Undiscovered') continue;
     recordSiteDiscovery(state, r.id);
     // A ruin in sight is the first moment an army is FOR anything, so it is
-    // what opens the Warfare tome (tomes-and-research.md §5).
+    // what opens the Warfare tome (07-research.md §2).
     openTome(state, 'Warfare');
   }
 }

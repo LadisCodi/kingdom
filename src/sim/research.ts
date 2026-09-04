@@ -57,7 +57,7 @@ export function techUnlocks(id: TechId): Unlock[] {
  * Gold is paid from `city.wallet` like everything else the city does, so the
  * tree keeps competing with clearing fog and raising a building for one
  * budget — the decision the economy is built around. Knowledge is paid from
- * `kingdom.wallet`: it is the research CLOCK (tomes-and-research.md §1), a
+ * `kingdom.wallet`: it is the research CLOCK (07-research.md §3), a
  * currency that drips from the ground you hold and buys nothing else, so a
  * rich city cannot skip an era. Neither alone works at this size — Gold can
  * size a tree but cannot pace it.
@@ -84,7 +84,7 @@ export const canAffordTech = (state: GameState, id: TechId): boolean =>
  * How long until the kingdom can afford a technology's Knowledge, in ms —
  * 0 when it already can, Infinity when nothing is dripping. A trickle
  * currency without a time-to-afford line is a currency the player cannot plan
- * against (tomes-and-research.md §8), and this is that line's source.
+ * against (07-research.md §4), and this is that line's source.
  */
 export function knowledgeShortfallMs(state: GameState, id: TechId, ratePerHour: number): number {
   const short = techKnowledgeCost(id) - knowledge(state);
@@ -189,7 +189,7 @@ export function advanceResearch(state: GameState, toTime: number): TechId[] {
  *
  * Civics is granted at the new-game seed because it is the game. Magic is
  * granted on the first paid reveal and Warfare on the first discovered ruin
- * (Docs/features/tomes-and-research.md §5). Nothing in the tree is reachable
+ * (Docs/features/07-research.md §2). Nothing in the tree is reachable
  * before its cover page, so this is the one gate that decides whether a book
  * exists for the player at all.
  */

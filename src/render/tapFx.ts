@@ -14,7 +14,7 @@ export class TapFx {
   /** anchor coordKey → [start ms, strength 0..1]. Strength scales the flash
    *  and the punch together, which is how a WORKER's strike is told apart from
    *  the player's tap: same gesture, quieter. The white flash stays the
-   *  player's signature (`Docs/features/04-harvest.md` §5). */
+   *  player's signature (`Docs/features/04-harvest.md` §4). */
   private punches = new Map<string, [number, number]>();
   private readonly clock: () => number;
 

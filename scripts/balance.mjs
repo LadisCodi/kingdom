@@ -181,7 +181,7 @@ const SETTINGS = [
   ['payer.dolphin_monthly_usd', 'payer.dolphinMonthlyUsd'],
   ['payer.whale_monthly_usd', 'payer.whaleMonthlyUsd'],
   ['payer.super_whale_monthly_usd', 'payer.superWhaleMonthlyUsd'],
-  // The daily chest ladder (Docs/features/12-quests.md §4.2). Three parallel
+  // The daily chest ladder (Docs/features/12-quests.md §3.1). Three parallel
   // seven-long lists, one per reward kind, so a step is a column rather than a
   // sheet — and so the ladder's LENGTH is the length of these lists.
   ['daily.mana_fractions', 'daily.manaFractions', 'list'],
@@ -196,7 +196,7 @@ const SETTINGS = [
   // Currencies sheet's static `cap` column stays blank for Mana and these are
   // the numbers that actually decide it — see src/sim/mana.ts.
   // The Townhall produces no Mana and sets no ceiling — it gates and nothing
-  // else (Docs/features/tech-tree.md §12). A flat floor, then the Sanctum,
+  // else (Docs/features/08-magic.md §2). A flat floor, then the Sanctum,
   // then the sanctuaries: the whole curve lives in the Magic tome now.
   ['mana.base_cap', 'mana.baseCap'],
   ['mana.base_per_hour', 'mana.basePerHour'],
@@ -228,7 +228,7 @@ const SETTINGS = [
   // The research clock's rate is the ground you have taken, and nothing else:
   // there is deliberately NO base term, so a player who claims nothing
   // generates nothing. Era 1 of the tree costs no Knowledge, which is what
-  // keeps that from being a wall (Docs/features/tomes-and-research.md §3).
+  // keeps that from being a wall (Docs/features/07-research.md §3).
   ['knowledge.per_claimed_landmark_per_hour', 'knowledge.perClaimedLandmarkPerHour'],
   // Taking ground is an EVENT, not just a rate change a nobody is looking at.
   ['knowledge.landmark_claim_lump', 'knowledge.landmarkClaimLump'],
@@ -322,16 +322,16 @@ const SHEETS = {
   // A minor technology carries a line id and a per-rank effect; a major one
   // leaves both blank. Ranks of a line are ordered by ROW ORDER, the same
   // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
-  // `tome` and `era` are the shelf (Docs/features/tomes-and-research.md §5):
+  // `tome` and `era` are the shelf (Docs/features/07-research.md §2):
   // three books, each paced by eras whose keystone requires everything above
   // it. `node_x`/`node_y` are per-PAGE positions and are blank for a minor
   // rank, which is drawn in its line's bead under the parent instead.
-  // `cost_knowledge` is the clock's price (tomes-and-research.md §1): blank
+  // `cost_knowledge` is the clock's price (07-research.md §3): blank
   // in era 1, where the clock has not started; the era-1 keystone is the
   // first node that charges it.
   // `planned` = 1 marks a node that is on the tree for its SHAPE and does
   // nothing yet. It is badged in the game, its description says so, and no
-  // keystone requires it (tech-tree.md §13).
+  // keystone requires it (tech-tree.md §7).
   Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds', 'requires',
     'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y', 'planned'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],

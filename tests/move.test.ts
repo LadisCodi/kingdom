@@ -191,7 +191,7 @@ describe('the crew comes with it', () => {
 
   // The units left the ground when the swing landed, so confiscating them on
   // a move would destroy matter AND charge the player for a trip they had
-  // already worked for (04-harvest.md §5, 05-city §4).
+  // already worked for (04-harvest.md §4, 05-city §4).
   it('a worker carrying a load still delivers it — a move costs no trip', () => {
     const { state, mill } = staffedSawmill();
     let carried = false;

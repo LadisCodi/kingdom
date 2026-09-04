@@ -1,91 +1,51 @@
 # 6 · Construction — builders, and the offer a refusal raises
 
 > **Scope.** How many things the city can build at once, what happens when it
-> cannot build one more, and the first real purchase surface in the game.
+> cannot build one more, and the builder purchase surface.
 >
 > **Status: built.**
 
 ## 1. The rule
 
-> **There is no waiting line. A build either starts, because a builder is free,
-> or it does not start at all.**
-
-Nothing is ever parked. The number of jobs in flight is *exactly* the builder
-count.
-
-This is the decision the rest of the feature falls out of, so it is worth saying
-why. A waiting line is administratively convenient and dramatically inert: the
-player queues five things, walks away, and **never meets the constraint**.
-Without one, the constraint has a *moment* — the tap that gets refused — and a
-moment is something a game can build on. It is also simply more honest about
-what a builder is: a person who is either free or busy.
-
-An **upgrade occupies a builder exactly as a build does**, so both hit the same
-gate and get the same answer.
-
-**Cancel is a full refund**, recomputed from the formula rather than from a
-stored snapshot, so a cancelled build is never worth more or less than it cost.
+- There is no waiting line. A build starts if a builder is free; otherwise it is
+  refused.
+- Jobs in flight = builder count.
+- An upgrade occupies a builder exactly as a build does.
+- Cancel refunds the full cost, recomputed from the cost formula.
 
 ## 2. The offer
 
-When a build or an upgrade is refused for want of a builder, the game does not
-toast. It opens a sheet.
-
-> **The refusal is the offer.**
-
-This is the whole design. The player has already chosen the building, already
-placed the ghost, already pressed Build — they have done everything except the
-thing they cannot do. That is the only point at which "a second builder" means
-something concrete rather than abstract, and it is why the offer is raised *from
-the refusal* rather than waiting in a store tab for someone to browse it.
-
-It replaced a toast reading *"Build queue is full"*, which was wrong twice over:
-there is no queue, and a slip in the corner of the screen is not an answer to
-something the player just tried to do.
-
-Two states, one sheet:
+- A build or upgrade refused for want of a builder opens a sheet. No toast.
+- Two states, one sheet:
 
 | State | Shows |
 |---|---|
 | Below the ceiling | what is happening, the crew as pips, and one priced button |
-| **At** the ceiling | the same, and **no button** — there is nothing to sell |
+| **At** the ceiling | the same, and **no button** |
 
-A store that offers what it cannot deliver is worse than one that says so, so
-the ceiling case is a real screen rather than a disabled button.
-
-**Placement mode stays open behind it.** Dismissing the offer puts the player
-back on the ghost they had positioned, so declining costs them nothing they had
-already done.
+- Placement mode stays open behind the sheet. Dismissing it returns the player
+  to the positioned ghost.
+- The sheet says a job can be finished to free a builder; it does not sell the
+  Gem rush.
 
 ## 3. The price
 
-`round(base × growth^purchased)`, the same escalating-slot curve the research,
-party and attunement slots use. A fourth spelling of the same idea would be a
-fourth thing to learn.
+- `round(base × growth^purchased)`: the same escalating-slot curve as the
+  research, party and attunement slots.
+- `purchased` is **derived**, `builders − startBuilders`, not stored. A
+  *granted* builder (a quest, an event) makes the next *bought* one dearer.
+- Every Gem sink is priced on the 500-Gems-a-dollar ladder
+  ([`14-monetization.md`](14-monetization.md) §2.2). Each builder is the next
+  pack up (`×2`).
+- The up-front Gem faucet is 3,750 Gems.
 
-| Builder | Gems |
-|---|---|
-| 2nd | **30** |
-| 3rd | 75 |
-| 4th | 188 |
+| Builder | Gems | Pack |
+|---|---|---|
+| 2nd | **2,500** | $4.99 |
+| 3rd | 5,000 | $9.99 |
+| 4th | 10,000 | $19.99 |
 
-**Why 2,500 for the second.** It is the $4.99 Gem pack to the coin — the price
-Kingshot sells its second builder at — and each builder after it is the next
-pack up ($9.99, $19.99; `×2`). Repriced 2026-09-04 with every Gem sink to the
-500-Gems-a-dollar ladder ([`14-monetization.md`](14-monetization.md) §2.2). The
-up-front faucet is 3,750 Gems, so the second builder is still affordable inside
-the first arc; the third is a real saving, or a real purchase.
-
-`purchased` is **derived** — `builders − startBuilders` — rather than stored,
-because two numbers that must agree eventually will not. The trade: a *granted*
-builder (a quest, an event) makes the next *bought* one dearer. That is the right
-way round for a gift.
-
-**A second builder is the best-documented conversion surface in the whole
-comparable set** — Whiteout sells it as the Construction Queue Pack with a
-15-minute free trial, Last War hands it out at VIP 6 — and it is exactly the
-purchase the third promise authorises: *comfort and breadth, never access.* It
-unlocks nothing; it makes two things happen at once.
+- A builder unlocks nothing; it lets two things happen at once.
 
 ## 4. Dials, in the order to reach for them
 
@@ -93,24 +53,14 @@ unlocks nothing; it makes two things happen at once.
 |---|---|---|
 | Builders at the start | 1 | `kingdom.start_builders` |
 | Ceiling | 4 | `kingdom.max_builders` |
-| Price of the next builder | `round(30 × 2.5^purchased)` | `kingdom.builder_gem_cost_base`, `…_growth` |
+| Price of the next builder | `round(2500 × 2^purchased)` | `kingdom.builder_gem_cost_base`, `…_growth` |
 
 ## 5. Deliberately not in this design
 
-- **A waiting line**, and therefore any promotion or reordering logic. §1.
-- **A second dial for the same number.** A `build_queue_capacity` alongside a
-  builder count can only ever disagree with it — which is exactly how the
-  original bug survived review, with both gates reading the constant and neither
-  reading the builders.
-- **A free trial.** Well-evidenced in the comparables, but a trial is a timer, a
-  state and an expiry path, and none of that should be built before the plain
-  purchase has been watched.
-- **Rushing offered inline.** The sheet says a job can be finished to free a
-  builder; it does not sell the Gem rush in the same modal. Two purchases in one
-  sheet is a decision about a decision.
-- **A store card**, which belongs to [`14-monetization.md`](14-monetization.md)
-  §2. This offer stays either way: a surface the player is *sent* to and one
-  they *stumble into* answer different questions.
+- A waiting line, and any promotion or reordering logic (§1).
+- A `build_queue_capacity` dial alongside the builder count.
+- A free trial of a builder.
+- Rushing offered inline in the offer sheet.
+- A store card for builders ([`14-monetization.md`](14-monetization.md) §2).
 
-**Open questions:** OQ-31, OQ-32. OQ-30 closed 2026-09-04: the second builder
-is 2,500 Gems, the $4.99 pack.
+**Open questions:** OQ-31, OQ-32.

@@ -319,7 +319,7 @@ describe('the HUD', () => {
   // Stardust buys heroes and relics and nothing else, so it reads in the
   // Reliquary next to what it pays for. A coin on the plank is a coin you
   // spend from anywhere; this is not one — and neither is Knowledge, which
-  // reads in the Research screen (Docs/features/tomes-and-research.md §8).
+  // reads in the Research screen (Docs/features/07-research.md §4).
   it('never puts Stardust on the plank, however much the kingdom holds', () => {
     const state = freshGame();
     const game = freshPresenter(state);
@@ -477,7 +477,7 @@ describe('villager training', () => {
   });
 });
 
-// Terrain multiplies what a cell HOLDS (04-harvest.md §3.2), and a placement
+// Terrain multiplies what a cell HOLDS (04-harvest.md §2.2), and a placement
 // is the one moment that number is a decision — so the ghost has to say it.
 // Dragging a crop plot from grass to sand takes it from 13 Food to 5 and there
 // is otherwise nothing on screen that admits it.

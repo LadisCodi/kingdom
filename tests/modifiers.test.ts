@@ -152,7 +152,7 @@ describe('the effectiveX pipeline', () => {
     // `tapYield` no longer multiplies units. A tap is priced in SECONDS of the
     // cell's own work, so the modifier stretches the seconds and the units
     // follow from the ground's rate — which is what stops a tap minting
-    // matter (Docs/features/04-harvest.md §4).
+    // matter (Docs/features/04-harvest.md §3).
     const base = tapWorkSeconds(state);
     addModifier(state, mod({ id: 'a', stat: 'tapYield', op: 'mul', value: 1.5 }));
     expect(tapWorkSeconds(state)).toBeCloseTo(base * 1.5, 6);

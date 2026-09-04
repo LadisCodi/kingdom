@@ -45,7 +45,7 @@ export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
 export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout';
 /** The three tomes. The shelf is the layout: one bounded page per book,
- *  each paced by eras (Docs/features/tomes-and-research.md §5). */
+ *  each paced by eras (Docs/features/07-research.md §2). */
 export type TomeId = 'Civics' | 'Warfare' | 'Magic';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */

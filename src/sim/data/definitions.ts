@@ -59,7 +59,7 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   // something the KINGDOM knows, and contested world-map landmarks pay
   // Knowledge lumps, which a city purse could not coherently receive.
   // Stardust is the collection currency. They swapped jobs on 2026-09-03 —
-  // Docs/features/tomes-and-research.md §2.
+  // Docs/features/07-research.md §4.
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Stardust: currency('kingdom', balance.currencies.Stardust),
   Gems: currency('player', balance.currencies.Gems),
@@ -216,7 +216,7 @@ export interface QuestDef {
    *  is the half that scales. */
   rewardStardust: number;
   /** The research clock, seeded by the chain before the first landmark drips
-   *  (tomes-and-research.md §3). */
+   *  (07-research.md §3). */
   rewardKnowledge: number;
 }
 
@@ -536,7 +536,7 @@ export interface TechnologyDef {
   glyph: string;
   /** Which tome this sits in, and how deep. The shelf IS the layout now:
    *  three bounded pages instead of one unbounded canvas
-   *  (Docs/features/tomes-and-research.md §5). */
+   *  (Docs/features/07-research.md §2). */
   tome: TomeId;
   era: number;
   /** Hand-authored position ON ITS TOME'S PAGE (the layout is content). NULL
@@ -551,7 +551,7 @@ export interface TechnologyDef {
   /** What one completed rank of this line adds. 0 on a major. */
   effectPerRank: number;
   /** On the tree for its shape; does nothing yet. Badged, and never required
-   *  by a keystone (tech-tree.md §13). */
+   *  by a keystone (tech-tree.md §7). */
   planned: boolean;
 }
 
@@ -569,7 +569,7 @@ const tech = (
   tome: b.tome as TomeId, era: b.era, node: b.node, planned: b.planned,
 });
 
-// Four branches out of Forestry (Docs/features/07-research.md §1.2): CIVICS up,
+// Four branches out of Forestry (Docs/features/07-research.md §2.2): CIVICS up,
 // ECONOMICS left (farm row 0, stone row −1), EXPLORATION right, MILITARY down.
 // Cells (−1,0) and (1,0) stay EMPTY on purpose: the branch trunks route their
 // elbows through them, so no connector ever crosses another node.
@@ -2313,7 +2313,7 @@ export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
  *  (Docs/features/14-monetization.md §3). */
 export const PAYER = balance.payer;
 
-/** The daily chest ladder — Docs/features/12-quests.md §4.2. Three parallel
+/** The daily chest ladder — Docs/features/12-quests.md §3.1. Three parallel
  *  lists, one per reward kind; their length IS the length of the ladder. */
 export const DAILY = balance.daily;
 

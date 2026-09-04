@@ -442,7 +442,7 @@ export class Game {
         // A training building answers a tap only by opening its card. There is
         // no tap that hurries a queue: a queue is a FIXED duration and a tap is
         // a scaling one, so a maxed thumb would finish a villager in one press
-        // (Docs/features/04-harvest.md §4.2). Timers take Gems.
+        // (Docs/features/04-harvest.md §3.2). Timers take Gems.
         if (district && district.state === 'Built'
           && DISTRICTS[district.definitionId].trains.length > 0) {
           this.inspectedDistrictId = district.uniqueId;
@@ -482,7 +482,7 @@ export class Game {
    * The same hit on the same cell with the same foley — **no white flash**,
    * which stays the player's signature, and half the volume. That is the whole
    * point of the strike model: automation should look like your hands, slower
-   * (`Docs/features/04-harvest.md` §5).
+   * (`Docs/features/04-harvest.md` §4).
    *
    * Three rules keep thirty woodcutters from becoming a machine gun, and all
    * three are presentation only — dropping a sound or a punch can never change
@@ -2221,7 +2221,7 @@ export class Game {
  *  information at placement time. A delivery is the same on every cell in
  *  range; a depot is the ground times what the ground does to it, so **the
  *  label changes as the ghost crosses a biome**, which is the decision the
- *  player is actually making (`Docs/features/04-harvest.md` §3.2). */
+ *  player is actually making (`Docs/features/04-harvest.md` §2.2). */
 /** For a district that BECOMES a resource cell — a crop plot — what it would
  *  hold on the ground it is standing on. The plot is the resource, so there is
  *  no radius to preview and nothing on the cell to read yet: the number has to

@@ -29,7 +29,7 @@ describe('tap punch', () => {
   // A worker's strike is the player's gesture performed by somebody else: the
   // same punch, quieter, and WITHOUT the white flash — because the flash is
   // what says "that was me", and thirty woodcutters would drown it
-  // (Docs/features/04-harvest.md §5).
+  // (Docs/features/04-harvest.md §4).
   it("a worker's strike punches but never flashes", () => {
     let now = 0;
     const fx = new TapFx(() => now);

@@ -113,7 +113,7 @@ const MIGRATIONS: readonly Migration[] = [
   },
   {
     // v23 — Knowledge and Stardust swapped jobs
-    // (Docs/features/tomes-and-research.md §2.1). Knowledge became the
+    // (Docs/features/07-research.md §4). Knowledge became the
     // research clock; the collection currency it used to be is now Stardust.
     // Both stay kingdom-scoped: each outlives the city that earned it.
     //
@@ -169,7 +169,7 @@ const MIGRATIONS: readonly Migration[] = [
   },
   {
     // v25 — tomes have COVER PAGES, granted by events in the world rather than
-    // researched (tomes-and-research.md §5). A save written before they
+    // researched (07-research.md §2). A save written before they
     // existed has none, so every era-1 technology sits behind a requirement
     // nothing will ever complete and the Civics page shows one lonely scroll.
     //
@@ -226,7 +226,7 @@ const MIGRATIONS: readonly Migration[] = [
   },
   {
     // v27 — a resource cell stopped counting TAPS and started holding UNITS
-    // (`Docs/features/04-harvest.md` §3). The old counter cannot be converted
+    // (`Docs/features/04-harvest.md` §2). The old counter cannot be converted
     // honestly: one old tap was one unit on a forest and three on a herd, and
     // what a tap PAID scaled with the whole city's payroll, so the wear a save
     // recorded does not mean the same thing twice.

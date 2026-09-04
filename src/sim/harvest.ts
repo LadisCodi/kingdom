@@ -1,5 +1,5 @@
 // Resource cells: tapping, exhaustion, lazy recovery
-// (Docs/features/04-harvest.md §2, §4).
+// (Docs/features/04-harvest.md §2, §3).
 
 import {
   DISTRICTS, FEATURES, HARVEST, TAP, terrainYield, type HarvestSpec,
@@ -98,7 +98,7 @@ export const isInexhaustible = (spec: HarvestSpec): boolean => spec.stock <= 0;
  *  Binary, and chosen over continuous regrowth on purpose: a stump is the most
  *  legible state in the game, emptying a cell is what sends a worker looking
  *  for another one, and buying faster recovery is then something you can SEE
- *  (Docs/features/04-harvest.md §3). */
+ *  (Docs/features/04-harvest.md §2). */
 function recoverIfDue(
   s: CellHarvestState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
 ): void {

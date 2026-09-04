@@ -39,7 +39,7 @@ export const UNODE = 40;
  * 0.5 x 120 = 60 centres the fan in the gap with 12px clear on each side.
  *
  * The fan is a STOPGAP: it is what keeps ~49 rank nodes on screen without
- * authoring 49 positions. Docs/features/tomes-and-research.md §5 replaces the
+ * authoring 49 positions. Docs/features/07-research.md §2 replaces the
  * whole layout with one bounded page per tome, at which point this goes.
  */
 export const FAN_DY = 0.5 * GRID;

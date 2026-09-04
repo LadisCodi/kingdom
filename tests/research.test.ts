@@ -87,7 +87,7 @@ describe('technology basics', () => {
 
   // THE CLOCK IS A PRICE. Knowledge is paid from the kingdom purse alongside
   // the Gold from the city's — two purses, one gate — and era 1 charges none,
-  // because the clock has not started yet (tomes-and-research.md §1, §3).
+  // because the clock has not started yet (07-research.md §3, §3).
   it('charges Gold from the city AND Knowledge from the kingdom, from era 2 on', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000 });
@@ -459,7 +459,7 @@ describe('what the player can actually act on', () => {
   });
 });
 
-// Docs/features/tech-tree.md §13 — PLANNED nodes. They are on the tree so its
+// Docs/features/tech-tree.md §7 — PLANNED nodes. They are on the tree so its
 // shape can be seen, and they do nothing yet. Four things keep that honest.
 describe('planned technologies', () => {
   const PLANNED = TECH_ORDER.filter((id) => TECHNOLOGIES[id].planned);

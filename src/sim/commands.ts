@@ -295,7 +295,7 @@ export function changeWorkers(
 
 // The Townhall no longer answers a tap. A training queue is a FIXED duration
 // and a tap is a scaling one, so a maxed thumb would finish a 20-second
-// villager in a single press — `Docs/features/04-harvest.md` §4.2. Timers are
+// villager in a single press — `Docs/features/04-harvest.md` §3.2. Timers are
 // hurried with Gems; Mana buys work, and a queue is not work.
 
 // ------------------------------------------------------------------- advance
