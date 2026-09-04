@@ -461,12 +461,15 @@ describe('what the player can actually act on', () => {
 describe('planned technologies', () => {
   const PLANNED = TECH_ORDER.filter((id) => TECHNOLOGIES[id].planned);
 
-  it('exist, and every one says in its own words that it does nothing yet', () => {
-    expect(PLANNED.length).toBeGreaterThan(0);
-    for (const id of PLANNED) {
-      expect(TECHNOLOGIES[id].description, `${id} does not say it is planned`)
-        .toMatch(/Not yet in the prototype/);
-    }
+  // The flag is the statement: it draws the hatched node and the panel's
+  // "Not yet in the prototype" line. Pinning the SET stops one being quietly
+  // un-flagged (shipping a no-op as content) or a new no-op arriving unflagged.
+  it('are exactly the seventeen the design lists, and no more', () => {
+    expect(PLANNED.sort()).toEqual([
+      'Apprenticeships', 'FieldMedicine', 'FrugalRites', 'Invocation', 'LandSurvey',
+      'LeyLines', 'LeyReading', 'LeyStorm', 'Lorekeeping', 'RitualCasting', 'Scouting',
+      'Scrying', 'Siegecraft', 'Standards', 'Vanguard', 'Veterancy', 'Wayshrines',
+    ].sort());
   });
 
   it('are never required by a keystone, so no era is walled behind a no-op', () => {

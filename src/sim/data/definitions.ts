@@ -1470,31 +1470,31 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   LandSurvey: tech({
     id: 'LandSurvey',
     name: 'Land Survey',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Chains and stakes — every building works one cell farther out.',
+    description: 'Chains and stakes — every building works one cell farther out.',
     glyph: '📏',
   }, balance.technologies.LandSurvey),
   Apprenticeships: tech({
     id: 'Apprenticeships',
     name: 'Apprenticeships',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Masters and their apprentices — the Townhall trains two villagers at once.',
+    description: 'Masters and their apprentices — the Townhall trains two villagers at once.',
     glyph: '👥',
   }, balance.technologies.Apprenticeships),
   FieldMedicine: tech({
     id: 'FieldMedicine',
     name: 'Field Medicine',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Bandages and splints — the party recovers some HP between depths.',
+    description: 'Bandages and splints — the party recovers some HP between depths.',
     glyph: '🩹',
   }, balance.technologies.FieldMedicine),
   Veterancy: tech({
     id: 'Veterancy',
     name: 'Veterancy',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Hard-won experience — heroes gain levels from delving.',
+    description: 'Hard-won experience — heroes gain levels from delving.',
     glyph: '🎖️',
   }, balance.technologies.Veterancy),
   Siegecraft: tech({
     id: 'Siegecraft',
     name: 'Siegecraft',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Ladders and rams — a party can clear a defended landmark.',
+    description: 'Ladders and rams — a party can clear a defended landmark.',
     glyph: '🏰',
   }, balance.technologies.Siegecraft),
   Tactics: tech({
@@ -1506,7 +1506,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Scouting: tech({
     id: 'Scouting',
     name: 'Scouting',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Eyes ahead — a ruin shows its threat before you launch.',
+    description: 'Eyes ahead — a ruin shows its threat before you launch.',
     glyph: '🔍',
   }, balance.technologies.Scouting),
   Salvage: tech({
@@ -1518,13 +1518,13 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   Vanguard: tech({
     id: 'Vanguard',
     name: 'Vanguard',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Known ground — the first depth of a ruin you have cleared resolves at once.',
+    description: 'Known ground — the first depth of a ruin you have cleared resolves at once.',
     glyph: '🏇',
   }, balance.technologies.Vanguard),
   Standards: tech({
     id: 'Standards',
     name: 'Standards',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Regimental colours — the army cap rises with every hall level.',
+    description: 'Regimental colours — the army cap rises with every hall level.',
     glyph: '🏴',
   }, balance.technologies.Standards),
   Conquest: tech({
@@ -1542,43 +1542,43 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   LeyReading: tech({
     id: 'LeyReading',
     name: 'Ley Reading',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Reading the lines — a landmark shows what it grants before you pay.',
+    description: 'Reading the lines — a landmark shows what it grants before you pay.',
     glyph: '🔮',
   }, balance.technologies.LeyReading),
   Scrying: tech({
     id: 'Scrying',
     name: 'Scrying',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Seeing into stone — a ruin shows its tier before you commit a party.',
+    description: 'Seeing into stone — a ruin shows its tier before you commit a party.',
     glyph: '🪞',
   }, balance.technologies.Scrying),
   Invocation: tech({
     id: 'Invocation',
     name: 'Invocation',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Spoken twice — a relic\'s active gains a second charge.',
+    description: 'Spoken twice — a relic\'s active gains a second charge.',
     glyph: '✨',
   }, balance.technologies.Invocation),
   Lorekeeping: tech({
     id: 'Lorekeeping',
     name: 'Lorekeeping',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Records of the deep — ruins give up more of what they hold.',
+    description: 'Records of the deep — ruins give up more of what they hold.',
     glyph: '📚',
   }, balance.technologies.Lorekeeping),
   Wayshrines: tech({
     id: 'Wayshrines',
     name: 'Wayshrines',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Shrines on the road — a cleared defended landmark becomes claimable.',
+    description: 'Shrines on the road — a cleared defended landmark becomes claimable.',
     glyph: '⛩️',
   }, balance.technologies.Wayshrines),
   LeyLines: tech({
     id: 'LeyLines',
     name: 'Ley Lines',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. The land\'s own current — a district beside the Sanctum produces a tenth more.',
+    description: 'The land\'s own current — a district beside the Sanctum produces a tenth more.',
     glyph: '🕸️',
   }, balance.technologies.LeyLines),
   FrugalRites: tech({
     id: 'FrugalRites',
     name: 'Frugal Rites',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Economy of gesture — some taps cost no Mana.',
+    description: 'Economy of gesture — some taps cost no Mana.',
     glyph: '🕯️',
   }, balance.technologies.FrugalRites),
   SanctifiedRuins: tech({
@@ -1590,13 +1590,13 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = {
   RitualCasting: tech({
     id: 'RitualCasting',
     name: 'Ritual Casting',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Rites over the roof — a relic\'s active can target a building.',
+    description: 'Rites over the roof — a relic\'s active can target a building.',
     glyph: '🌀',
   }, balance.technologies.RitualCasting),
   LeyStorm: tech({
     id: 'LeyStorm',
     name: 'Ley Storm',
-    description: 'Not yet in the prototype — this technology is on the tree so its shape can be seen, and does nothing until a later build. Once a day — a kingdom-wide surge of production for a while.',
+    description: 'Once a day — a kingdom-wide surge of production for a while.',
     glyph: '🌩️',
   }, balance.technologies.LeyStorm),
   SecondSanctum: tech({

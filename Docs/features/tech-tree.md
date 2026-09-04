@@ -574,7 +574,8 @@ is to make the lie impossible to tell by accident:
 - **`planned: 1` in the workbook.** The node is drawn dashed and hatched, the
   way the fog's `?` is — "not here yet", never "locked".
 - **The panel says it**, above the Start button: *Not yet in the prototype.*
-  And the description opens with the same words, so a test can hold it.
+  The flag is the statement; a test pins the exact set of seventeen, so one
+  cannot be quietly un-flagged or a new no-op arrive unflagged.
 - **No keystone requires a planned node**, so no era is walled behind a
   no-op. Keystones require the era's *built* majors.
 - **No minor line hangs off one**, so no working ladder is gated by vaporware.
