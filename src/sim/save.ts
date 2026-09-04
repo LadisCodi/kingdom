@@ -12,7 +12,8 @@
 // keep running in real time).
 
 import {
-  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECH_LINES,
+  GAME_VERSION, OFFLINE_CAP_HOURS, RUINS, SAVE_VERSION, TECHNOLOGIES, TECH_LINES,
+  tomeCoverPage,
 } from './data/definitions';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
@@ -24,7 +25,7 @@ import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
   type ArtifactId, type TechId, type Wallet, type Worker,
-  type TechLineId,
+  type TechLineId, type TomeId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -164,6 +165,36 @@ const MIGRATIONS: readonly Migration[] = [
       }
     },
   },
+  {
+    // v25 — tomes have COVER PAGES, granted by events in the world rather than
+    // researched (tomes-and-research.md §5). A save written before they
+    // existed has none, so every era-1 technology sits behind a requirement
+    // nothing will ever complete and the Civics page shows one lonely scroll.
+    //
+    // Civics is always open — it is the game. Magic and Warfare are granted
+    // when the save shows the event that would have opened them already
+    // happened: a Magic technology done or a landmark claimed for Magic, a
+    // Warfare technology done or a ruin sighted for Warfare. Anyone short of
+    // those events opens them the ordinary way, on the next reveal or ruin.
+    to: 25,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as { Completed?: string[] } | undefined;
+      if (research === undefined) return;
+      const completed = research.Completed ?? (research.Completed = []);
+      const grant = (id: string): void => { if (!completed.includes(id)) completed.push(id); };
+      const inTome = (tome: TomeId): boolean =>
+        completed.some((id) => TECHNOLOGIES[id as TechId]?.tome === tome);
+      const claimed = (modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined)
+        ?.Claimed ?? [];
+      const keys = (modules['kingdom.discoveries'] as { Keys?: string[] } | undefined)?.Keys ?? [];
+      const ruinSeen = keys.some((k) => k.startsWith('site:')
+        && (Object.keys(RUINS) as string[]).includes(k.slice('site:'.length)));
+
+      grant(tomeCoverPage('Civics'));
+      if (inTome('Magic') || claimed.length > 0) grant(tomeCoverPage('Magic'));
+      if (inTome('Warfare') || ruinSeen) grant(tomeCoverPage('Warfare'));
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -292,6 +323,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Active: state.research.active.map((a) => ({
           ID: a.id,
           StartedAtUtc: iso(a.startedAt),
+          DurationMs: a.durationMs ?? null, // additive; older saves have none
         })),
         SlotsPurchased: state.research.slotsPurchased,
       },
@@ -554,8 +586,12 @@ export function deserialize(
   if (researchDto) {
     state.research = {
       completed: [...((researchDto.Completed ?? []) as TechId[])],
-      active: ((researchDto.Active ?? []) as Array<{ ID: TechId; StartedAtUtc: string }>).map(
-        (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
+      active: ((researchDto.Active ?? []) as
+        Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
+        (a) => ({
+          id: a.ID, startedAt: ms(a.StartedAtUtc),
+          ...(typeof a.DurationMs === 'number' ? { durationMs: a.DurationMs } : {}),
+        })),
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
   }

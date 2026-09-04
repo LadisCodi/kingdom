@@ -180,11 +180,18 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
   for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogRevealRadius)) {
     state.fog.revealed[coordKey(cell)] = true;
   }
-  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogDiscoverRadius)) {
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size,
+    effectiveDiscoverRadius(state, def.fogDiscoverRadius))) {
     if (!state.fog.revealed[coordKey(cell)]) state.fog.discovered[coordKey(cell)] = true;
   }
   recordVisibleSites(state, map);
 }
+
+/** How far a building marks the fog Discovered (Farsight: +1/rank). Reveal
+ *  radius is untouched: seeing farther is not the same as owning farther, and
+ *  the paid reveal stays the economy's main sink. */
+export const effectiveDiscoverRadius = (state: GameState, base: number): number =>
+  Math.max(0, Math.round(resolve(state, 'discoverRadius', base + effect(state, 'Farsight'))));
 
 /** New-game seed: every district applies its fog radii. */
 export function seedFog(state: GameState, map: MapData): void {

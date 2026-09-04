@@ -3,6 +3,7 @@
 
 import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
 import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
+import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
 import {
@@ -19,6 +20,16 @@ export const districtCount = (state: GameState, definitionId: DistrictId): numbe
 export function maxCountForTownhallLevel(def: DistrictDef, townhallLevel: number): number {
   if (def.maxCountPerTownhallLevel.length === 0) return Infinity;
   return levelIndexed(def.maxCountPerTownhallLevel, townhallLevel);
+}
+
+/** How many of a district may stand right now: the Townhall's permission,
+ *  plus one if the district's `extraCountTech` is researched (Guildhalls buys
+ *  a second Market, Second Sanctum a second Sanctum). */
+export function maxDistrictCount(state: GameState, def: DistrictDef): number {
+  const base = maxCountForTownhallLevel(def, townhall(state).level);
+  if (base === Infinity) return base;
+  const extra = def.extraCountTech !== null && isTechComplete(state, def.extraCountTech) ? 1 : 0;
+  return base + extra;
 }
 
 // ----------------------------------------------------------------- placement
@@ -67,7 +78,7 @@ export function placementBlock(
   }
   if (
     movingId === undefined &&
-    districtCount(state, definitionId) >= maxCountForTownhallLevel(def, townhall(state).level)
+    districtCount(state, definitionId) >= maxDistrictCount(state, def)
   ) {
     return 'CountLimit';
   }
@@ -173,20 +184,26 @@ export function upgradeCost(definitionId: DistrictId, n: number, currentLevel: n
   return out;
 }
 
-/** Build time in seconds. Rounding: round. */
-export const buildDuration = (definitionId: DistrictId, n: number, d: number): number => {
+/** Build time in seconds (Carpentry: −5%/rank). Rounding: round. */
+export const buildDuration = (
+  state: GameState, definitionId: DistrictId, n: number, d: number,
+): number => {
   const def = DISTRICTS[definitionId];
   return Math.round(
     def.buildDurationSeconds *
       def.buildDurationDistrictGrowth ** n *
-      def.buildDurationDistanceGrowth ** d,
+      def.buildDurationDistanceGrowth ** d *
+      effectiveBuildTimeMultiplier(state),
   );
 };
 
-/** Upgrade time in seconds. Rounding: round. */
-export const upgradeDuration = (definitionId: DistrictId, currentLevel: number): number => {
+/** Upgrade time in seconds (Carpentry: −5%/rank). Rounding: round. */
+export const upgradeDuration = (
+  state: GameState, definitionId: DistrictId, currentLevel: number,
+): number => {
   const def = DISTRICTS[definitionId];
   return Math.round(
+    effectiveBuildTimeMultiplier(state) *
     def.upgradeDurationSeconds * def.upgradeDurationLevelGrowth ** (currentLevel - 1),
   );
 };
@@ -196,7 +213,7 @@ export const nextBuildCost = (state: GameState, definitionId: DistrictId): Walle
   buildCost(definitionId, districtCount(state, definitionId));
 
 export const buildDurationForCell = (state: GameState, definitionId: DistrictId, cell: Coord, map: MapData): number =>
-  buildDuration(definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
+  buildDuration(state, definitionId, districtCount(state, definitionId), townhallDistance(map, cell));
 
 // -------------------------------------------------------- upgrade requirement
 

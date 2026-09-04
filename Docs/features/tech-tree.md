@@ -189,7 +189,7 @@ Architecture survives with a different job (era 3).
 | **Deep Mining** | Mine L2 |
 | **Architecture** | Quarry L3, Sawmill L4, Mine L3 |
 | **Aqueducts** *(new)* | Housing L3 |
-| **Guildhalls** *(new)* | a second Market, and Market L2 |
+| **Guildhalls** *(new)* | a second Market |
 | **Roadworks** *(new)* | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |
 | **Land Survey** *(new)* | +1 influence radius on every district |
 | **Apprenticeships** *(new)* | the Townhall trains two villagers at once |
@@ -363,6 +363,26 @@ available of what the tome is for.
 The bands are the design; the exact rows are the workbook's. **Era 1 costs no
 Knowledge**, for the reason in rule 7.
 
+**Repriced to these bands on 2026-09-04 — eras 2, 3 and the keystones.** Majors
+climb across their band left to right along the era row; a line's ranks climb
+across theirs by position within the era. **Era 1 was deliberately left as
+authored** (Forestry at 25 Gold and 3 seconds is the tutorial's first beat, and
+`tests/onboarding.test.ts` pins the opening beat by beat), so its majors sit
+*below* the band and that is correct. The tree is **550,165 Gold and 50,495
+Knowledge**; era 3 alone is 37,675 Knowledge, which against a fully claimed
+province's ~35/h is about six weeks — the number `../road-to-mvp.md` §1.1 asks
+for.
+
+**What the repricing changed about the chain.** An era-2 major now costs
+1,000–2,500 Gold, so the quest chain's later asks — Sailing, Scaling Tools,
+Surveying II — are no longer payable out of quest rewards alone. That is by
+design: the chain funds the **opening** (every era-1 technology and the
+keystone that closes it), and the depth is the city's to earn. By quest 25 the
+player has a Market, taxes and workers. Funding those asks from rewards would
+mean 1,000-Gold quests at beat 25 and double the early economy — the exact
+distortion `balancing-v3.md` pulled the Market beats back from. The onboarding
+test's guarantee is scoped to the opening and says so.
+
 | | Minor | Major | Keystone |
 |---|---|---|---|
 | **Era 1** | 40–150 G · 20–60 s | 200–500 G · 2–5 min | 800 G · 40 K · 15 min |
@@ -430,6 +450,56 @@ send the player to a different tab than the one they are standing in, and
 About seventeen, and most are already on `../road-to-mvp.md` §4's planned
 `ModifierStat` widening list — so this pass and Phase 2 want the same seam
 opened once.
+
+**Landed 2026-09-04, first batch (Civics and Magic):** `buildTime`
+(Carpentry), `researchTime` (Scriveners), `workerSpeed` (Cartage), `manaCap`
+(Deep Wells), `claimCost` (Pilgrimage), `stardustYield` (Prospecting), plus
+Ley Taps, Wayposts and Vigils as per-source terms and Scriptorium on the
+existing `knowledgeYield`. Ten lines, 32 ranks, every one asserted where the
+player meets the number.
+
+Two things the batch settled:
+
+- **Scriveners is fixed when a research starts and persisted on it** — the one
+  hook that touches a boundary. A rank landing mid-research must not move that
+  research's completion into the past, which one-call replay and stepped
+  ticking would then land on differently. The scholar works at the pace they
+  started at; the *next* research is quicker.
+- **Stopgap parents.** The majors these lines are meant to hang off
+  (Meditation, Ley Reading, Lorekeeping, Sanctified Ruins, Roadworks) do not
+  exist yet, so each line hangs off the nearest existing major and moves when
+  its own arrives: Deep Wells and Scriptorium under Consecration, Ley Taps and
+  Wayposts under Cartography, Vigils under Scaling Tools, Pilgrimage under
+  Sailing, Prospecting under Shipbuilding, Cartage under Engineering,
+  Scriveners under Architecture. Three lines per major is the fan's limit
+  (`tests/research.test.ts` holds it); Cartography and Consecration are at it.
+
+**Landed 2026-09-04, second batch (Warfare):** `armyCap` (Colours),
+`recruitCost` (Muster Drill), `supplyCost` (Rations), `haulLoss` (Bearers),
+`heroXp` (Drillmaster), and Pathfinders on the existing `delveSpeed` rather than
+a twin of it. Six lines, 20 ranks; the tree is 136. Colours adds to the cap the
+halls provide and nothing to a kingdom with no hall — a bigger banner, not a
+barracks of its own. Bearers floors at one fifth so a run can never be wiped.
+
+**Landed 2026-09-04, third batch (combat):** Shield Wall, Fletching, Barding,
+Warhorns and Manoeuvre. `combat.ts` stays pure — the lines are resolved in
+`expeditions.ts` into a `Drill` carried on the `Party`, exactly the way the
+hero's level and the carried relic already travel in, so a fight can still be
+replayed from its inputs alone. Manoeuvre softens the disadvantage multiplier
+and never past neutral: a bad matchup stays bad, it just stops being a wasted
+trip. Five lines, 15 ranks; the tree is 151.
+
+**Landed 2026-09-04, last: Farsight.** `discoverRadius` on every building's
+fog-discover radius, never its reveal radius — seeing farther is not owning
+farther, and the paid reveal stays the economy's main sink. A rank landing
+re-applies every standing building's radii, inside `advance()` where the map
+is, so replay and stepped ticking discover the same cells. **All seventeen §9
+hooks are now in**; the tree is 154 technologies.
+
+**Pricing:** the new ranks sit on the *legacy* Gold scale the existing ranks
+use, not on §6's bands — a rank priced to the bands beside a 275-Gold era-3
+major is incoherent, and repricing the majors is a single deliberate pass
+(open decision below), not a side effect of adding lines.
 
 Build time · research time · unit ATK/DEF by tag · Mana capacity · Mana regen ·
 discover radius · influence radius · worker move speed · Knowledge drip rate ·
@@ -514,8 +584,48 @@ The tree lines do the rest: `Meditation` and `Deep Wells I–V` raise the ceilin
 what a spend costs. This edits [`magic.md`](magic.md), which
 [`tomes-and-research.md`](tomes-and-research.md) §1.1 otherwise leaves alone.
 
+## 13. Planned nodes — on the tree, not yet in the game
+
+**Added 2026-09-04, by decision.** The era-2/3 majors whose mechanics do not
+exist yet are on the tree anyway, so the shape of each tome can be seen and
+played against. Rule 6 says a node that unlocks nothing is a lie; the mitigation
+is to make the lie impossible to tell by accident:
+
+- **`planned: 1` in the workbook.** The node is drawn dashed and hatched, the
+  way the fog's `?` is — "not here yet", never "locked".
+- **The panel says it**, above the Start button: *Not yet in the prototype.*
+  The flag is the statement; a test pins the exact set of seventeen, so one
+  cannot be quietly un-flagged or a new no-op arrive unflagged.
+- **No keystone requires a planned node**, so no era is walled behind a
+  no-op. Keystones require the era's *built* majors.
+- **No minor line hangs off one**, so no working ladder is gated by vaporware.
+  The lines keep their stopgap parents until their own major works.
+
+`tests/research.test.ts` holds all four.
+
+**Planned (17):** Land Survey, Apprenticeships · Field Medicine, Veterancy,
+Siegecraft, Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
+Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
+
+**Live (9), because each was a line or two against a dial that already
+existed:** Aqueducts (Housing L3), Guildhalls (a second Market — not a Market L2, which
+would have changed no number and is exactly what rule 6 forbids),
+Roadworks (workers a quarter faster; Cartage now hangs off it), Tactics (a
+tenth off a bad matchup, through the Drill), Salvage (a failed depth costs 35%,
+not half), Conquest (+3 Knowledge/h per cleared ruin), Meditation (+30 Mana
+ceiling), Sanctified Ruins (the ruin drip doubles), Second Sanctum. Guildhalls
+and Second Sanctum needed one small general mechanism — `extra_count_tech` on a
+district, one more of it once the named technology is done — rather than a
+per-count gate nobody else needs.
+
+The tree is **180 technologies**. Each planned node that comes alive is a
+matter of building its mechanic and clearing the flag.
+
 ## Open decisions
 
+0. ~~When does the tree get repriced to §6's bands?~~ **Decided and done
+   2026-09-04** — eras 2–4 on the bands, era 1 as tuned (§6). The chain's Gold
+   guarantee now covers the opening only, deliberately.
 1. **All-of, or N-of-M?** A keystone requiring all 26 nodes of Civics era 3 is
    a wall, and a player who does not care about fishing meets it. `25 of 26`
    keeps the pacing and removes the wall. This is the biggest risk in the
@@ -524,10 +634,11 @@ what a spend costs. This edits [`magic.md`](magic.md), which
    stripped off it (§12). It is a player verb with a Food cost rather than a
    passive faucet, and nothing else in the game can train — but if the Townhall
    is to be *nothing* but permission, training needs a home first.
-3. **Warfare is the smallest tome** at 47 against 64 and 56. Left there on
-   purpose: it opens last, and a player who never delves can ignore it without
-   the city stalling. Worth revisiting once `Conquest` and Knowledge make
-   delving matter to the tree.
+3. ~~Warfare is the smallest tome.~~ **Decided 2026-09-04: it opens as
+   designed, on the first ruin in sight**, thin or not. It now carries its
+   era-2/3 majors — three live (Tactics, Salvage, Conquest) and five planned
+   (§13) — so it is a shape with gaps rather than a stub, and a player who never
+   delves can still ignore it without the city stalling.
 4. **Three tomes at ~167 nodes is a doubling of the authoring surface.** About
    40% is rank II/III rows — same name, next number, next price — so the cost
    is far below the node count. It is still the largest content commitment in

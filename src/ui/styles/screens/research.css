@@ -292,3 +292,53 @@
   font-family: var(--font-body);
   font-size: var(--text-helper);
 }
+
+/* ------------------------------------------------------- the clock --- */
+
+/* Knowledge, in the one screen it is spent. Balance in bold, rate beside it. */
+.res-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(60, 36, 18, 0.25);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}
+.res-clock-rate { opacity: 0.8; }
+.res-wait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ------------------------------------------------------- planned nodes --- */
+
+/* On the tree for its shape; does nothing yet. Dashed like the fog's `?`, so
+ * it reads as "not here yet" rather than "locked" — and never as pressable
+ * content that quietly turns out to be a no-op. */
+.tech-node.planned { border-style: dashed; opacity: 0.85; }
+.tech-node.planned::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(92, 58, 30, 0.10) 6px 8px);
+  pointer-events: none;
+}
+.res-planned {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(92, 58, 30, 0.10);
+  color: var(--wood-dark);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}

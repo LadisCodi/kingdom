@@ -42,12 +42,14 @@ import { addHeroXp } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
   depthDurationMs, guaranteedDepth, matchupAgainst, partyStats, resolveDepth,
-  worstThreatFor, type CarriedArtifact, type Party, type PartySlot,
+  worstThreatFor, type CarriedArtifact, type Party, type PartySlot, type Drill,
 } from './combat';
 import { availableRoster, maxArmyPower } from './army';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
+import { isTechComplete } from './research';
+import { effect } from './upgrades';
 import { pick } from './rng';
 import {
   addToWallet, getWallet, newId,
@@ -62,7 +64,8 @@ import { canAfford, pay } from './wallet';
  *  Conjunction that speeds delves up cannot apply to the launch and not to the
  *  push, or to the timer and not to the estimate on the sheet. */
 export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
-  Math.max(1000, Math.round(resolve(state, 'delveSpeed', depthDurationMs(ruinId, depth))));
+  Math.max(1000, Math.round(resolve(state, 'delveSpeed',
+    depthDurationMs(ruinId, depth) * Math.max(0.25, 1 - effect(state, 'Pathfinders')))));
 
 /** Two at the start (hero + one unit type), the rest with Gems — the same
  *  Gems-only shape as attunement sockets, for the same reason. */
@@ -95,16 +98,60 @@ export function buyPartySlot(state: GameState): BuyPartySlotResult {
 /** Supplies are a FLAT cost at launch, not per depth, so the depth decision is
  *  purely risk against reward with nothing else muddying it. The
  *  Quartermaster's whole trait is a discount on this. */
-export function supplyCost(ruinId: RuinId, heroId: HeroId | null): Wallet {
+export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | null): Wallet {
   const base = RUINS[ruinId].supplies;
   const discount = heroId !== null && HEROES[heroId].trait === 'SupplyDiscount'
     ? HEROES[heroId].traitValue : 0;
+  // Rations stacks with the Quartermaster's trait the way a rank and a relic
+  // stack everywhere else: the trait is a discount, the line is a discount,
+  // and the modifier stack rides on the product.
+  const mult = Math.max(0, resolve(state, 'supplyCost',
+    (1 - discount) * (1 - effect(state, 'Rations'))));
   const out: Wallet = {};
   for (const [c, n] of Object.entries(base)) {
-    out[c as keyof Wallet] = Math.max(1, Math.round(n * (1 - discount)));
+    out[c as keyof Wallet] = Math.max(1, Math.round(n * mult));
   }
   return out;
 }
+
+/**
+ * The kingdom's drill: what the Warfare lines add to every soldier sent, in
+ * the shape combat.ts takes it. Resolved HERE, once per launch or preview, so
+ * combat stays pure and a fight replays from its inputs. The `all` terms go
+ * through the modifier stack; the per-tag ones are lines and nothing else.
+ */
+export function drillOf(state: GameState): Drill {
+  return {
+    atk: {
+      all: Math.round(resolve(state, 'unitAtk', effect(state, 'Warhorns'))),
+      Distance: effect(state, 'Fletching'),
+    },
+    def: {
+      all: Math.round(resolve(state, 'unitDef', 0)),
+      Melee: effect(state, 'ShieldWall'),
+      Mounted: effect(state, 'Barding'),
+    },
+    disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0)
+      + effect(state, 'Manoeuvre')
+      + (isTechComplete(state, 'Tactics') ? 0.10 : 0)), // reading the ground
+  };
+}
+
+/** A Party as combat sees it, with the kingdom's drill attached. The one
+ *  place a Party is assembled, so no launch or preview can forget the drill. */
+export const partyOf = (
+  state: GameState, slots: readonly PartySlot[], heroId: HeroId | null = null,
+  artifact: CarriedArtifact | null = null,
+): Party => ({ heroId, slots, artifact, drill: drillOf(state) });
+
+/** The fraction of the haul a failed depth costs (Bearers: −3%/rank, floor
+ *  20%). Half by default — enough that a bad push is a real loss, never so
+ *  much that a run can be wiped, which promise 1 would not allow. */
+export const effectiveHaulLoss = (state: GameState): number =>
+  Math.min(1, Math.max(0.2, resolve(state, 'haulLoss',
+    DELVE.failHaulLoss
+      - (isTechComplete(state, 'Salvage') ? 0.15 : 0) // half becomes 35%
+      - effect(state, 'Bearers'))));
 
 // ------------------------------------------------------------------- heroes
 
@@ -151,7 +198,7 @@ export function launchBlock(
   }
   const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
   if (power > maxArmyPower(state)) return 'OverArmyCap';
-  if (!canAfford(state.city.wallet, supplyCost(ruinId, heroId))) return 'NotEnoughSupplies';
+  if (!canAfford(state.city.wallet, supplyCost(state, ruinId, heroId))) return 'NotEnoughSupplies';
   if (artifactId !== null) {
     if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
     // Attune OR arm. Refusing here rather than silently un-attuning is the
@@ -177,11 +224,11 @@ export function launchDelve(
 ): LaunchResult {
   const block = launchBlock(state, map, ruinId, heroId, slots, artifactId);
   if (block !== null) return block;
-  pay(state.city.wallet, supplyCost(ruinId, heroId));
+  pay(state.city.wallet, supplyCost(state, ruinId, heroId));
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const artifactLevel = artifactId === null ? 1 : artifactEntry(state, artifactId).level;
   const artifact = artifactId === null ? null : { id: artifactId, level: artifactLevel };
-  const party: Party = { heroId, slots: committed, artifact };
+  const party = partyOf(state, committed, heroId, artifact);
   const hp = partyStats(party, heroLevel(state, heroId)).hp;
   state.delves.push({
     id: newId(state, 'delve'),
@@ -232,7 +279,7 @@ export interface DelveEvent {
 
 /** The haul one depth pays, before the hero's traits. Scales with depth AND
  *  tier, so pushing deeper is worth more than delving a shallow ruin twice. */
-function depthHaul(ruinId: RuinId, depth: number, heroId: HeroId): {
+function depthHaul(state: GameState, ruinId: RuinId, depth: number, heroId: HeroId): {
   wallet: Wallet; fragments: number;
 } {
   const ruin = RUINS[ruinId];
@@ -241,7 +288,9 @@ function depthHaul(ruinId: RuinId, depth: number, heroId: HeroId): {
   const fragmentBonus = hero.trait === 'FragmentBonus' ? 1 + hero.traitValue : 1;
   const wallet: Wallet = {
     Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
-    Stardust: Math.round(DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus),
+    Stardust: Math.round(resolve(state, 'stardustYield',
+      DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus
+        * (1 + effect(state, 'Prospecting')))),
   };
   // The deeper tiers pay materials the city cannot easily reach otherwise —
   // three times the haul, the rate a vein pays over a plain rock.
@@ -277,6 +326,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       const depth = delve.depth + 1;
       const party: Party = {
         heroId: delve.heroId, slots: delve.party, artifact: carriedOf(delve),
+        drill: drillOf(state),
       };
       const level = heroLevel(state, delve.heroId);
       const outcome = resolveDepth(party, delve.ruinId, depth, delve.threat, level);
@@ -285,10 +335,11 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       if (!survived) {
         // A failed push costs HALF the haul and ends the run. Nothing you OWN
         // is taken — you declined a sure thing.
+        const loss = effectiveHaulLoss(state);
         for (const [c, n] of Object.entries(delve.haul)) {
-          delve.haul[c as keyof Wallet] = Math.floor(n * (1 - DELVE.failHaulLoss));
+          delve.haul[c as keyof Wallet] = Math.floor(n * (1 - loss));
         }
-        delve.haulFragments = Math.floor(delve.haulFragments * (1 - DELVE.failHaulLoss));
+        delve.haulFragments = Math.floor(delve.haulFragments * (1 - loss));
         delve.partyHp = Math.max(1, delve.partyHp - outcome.damage);
         delve.phase = 'done';
         delve.outcome = 'failed';
@@ -301,7 +352,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       delve.partyHp -= outcome.damage;
       delve.depth = depth;
       state.deepestDepth = Math.max(state.deepestDepth, depth);
-      const paid = depthHaul(delve.ruinId, depth, delve.heroId);
+      const paid = depthHaul(state, delve.ruinId, depth, delve.heroId);
       addHaul(delve, paid.wallet, paid.fragments);
 
       if (depth >= ruin.maxDepth) {
@@ -451,12 +502,12 @@ export function previewExpedition(
   const artifact: CarriedArtifact | null = artifactId === null
     ? null
     : { id: artifactId, level: artifactEntry(state, artifactId).level };
-  const party: Party = { heroId, slots: committed, artifact };
+  const party = partyOf(state, committed, heroId, artifact);
   const level = heroId === null ? 1 : heroLevel(state, heroId);
   const stats = partyStats(party, level);
   return {
     ruinId,
-    supplies: supplyCost(ruinId, heroId),
+    supplies: supplyCost(state, ruinId, heroId),
     stats,
     safeDepth: guaranteedDepth(party, ruinId, level),
     maxDepth: RUINS[ruinId].maxDepth,

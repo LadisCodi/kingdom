@@ -11,10 +11,9 @@
 // target, not a small Select button beside it.
 
 import { CITY_DEF, DISTRICTS } from '../sim/data/definitions';
-import { buildCost, buildDuration, districtCount, maxCountForTownhallLevel } from '../sim/districts';
+import { buildCost, buildDuration, districtCount, maxDistrictCount } from '../sim/districts';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
-import { townhall } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
 import { costChips, iconEl, pips, sheet } from './kit';
@@ -33,7 +32,6 @@ const PROMISE: Partial<Record<string, string>> = {
 };
 
 export function renderBuildMenu(game: Game): HTMLElement {
-  const thLevel = townhall(game.state).level;
   const cards: HTMLElement[] = [];
 
   for (const id of CITY_DEF.buildMenuOrder) {
@@ -43,7 +41,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
     if (def.requiredTech !== null && !isTechComplete(game.state, def.requiredTech)) continue;
 
     const count = districtCount(game.state, id);
-    const maxCount = maxCountForTownhallLevel(def, thLevel);
+    const maxCount = maxDistrictCount(game.state, def);
     const capped = count >= maxCount;
     const cost = buildCost(id, count);
 
@@ -70,7 +68,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
       el('div', { class: 'bld-cost' }, costChips(cost, (c) => game.walletValue(c))),
       el('div', { class: 'bld-meta' },
         iconEl('hourglass', { size: 'sm' }),
-        el('span', {}, formatDuration(buildDuration(id, count, 0))),
+        el('span', {}, formatDuration(buildDuration(game.state, id, count, 0))),
         // Owned as filled pips: "2 of 4" without making the player parse a
         // fraction. An unbounded count falls back to the number.
         Number.isFinite(maxCount)

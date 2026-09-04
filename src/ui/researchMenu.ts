@@ -17,9 +17,12 @@ import {
   TOMES, TOME_ORDER, UNITS, lineParent,
 } from '../sim/data/definitions';
 import {
-  canStartTech, isTechActive, isTechComplete, isTomeOpen, requirementsMet, slotGemCost,
+  canStartTech, isTechActive, isTechComplete, isTomeOpen, knowledgeShortfallMs, requirementsMet,
+  slotGemCost,
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
+import { knowledgePerHour } from '../sim/mana';
+import { resourceDiscoveryKey } from '../sim/discovery';
 import { lineMaxRank, lineRank } from '../sim/upgrades';
 import { type GameState, type TechId, type TechLineId, type TomeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
@@ -188,6 +191,19 @@ export function renderResearchMenu(game: Game): HTMLElement {
   }
   const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
   close.setAttribute('data-own-close', '');
+  // The clock, where it is spent. Knowledge has no coin on the plank — it is
+  // paid in exactly one screen, so it reads in that screen's header, with its
+  // RATE beside the balance because a drip you cannot see the speed of is a
+  // drip you cannot plan against. Hidden until the player has met it: a zero
+  // row would advertise a currency the tutorial has not yet introduced.
+  const held = game.walletValue('Knowledge');
+  const rate = knowledgePerHour(state);
+  if (held > 0 || rate > 0 || state.discoveries[resourceDiscoveryKey('Knowledge')] === true) {
+    bar.append(el('span', { class: 'res-clock' },
+      iconEl('Knowledge', { size: 'sm' }),
+      el('b', {}, String(held)),
+      el('span', { class: 'res-clock-rate' }, rate > 0 ? `+${rate}/h` : 'no drip')));
+  }
   const tabs = shelf(game);
   root.append(el('div', { class: 'research-topbar' },
     el('h2', {}, TOMES[activeTome].name), bar, close));
@@ -268,7 +284,8 @@ export function renderResearchMenu(game: Game): HTMLElement {
     const isSel = selected?.kind === 'tech' && selected.id === id;
     const hinted = game.uiHint() === `tech:${id}`;
     const node = el('button', {
-      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`
+        + (TECHNOLOGIES[id].planned ? ' planned' : ''),
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
     // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
@@ -391,6 +408,12 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
   const panel = el('div', { class: 'tech-info' });
   panel.append(el('h3', {}, `${def.glyph} ${def.name}`));
   panel.append(el('div', { class: 'muted' }, def.description));
+  if (def.planned) {
+    // Said in the game, not only in a doc: a playtester who researches this
+    // must know before they pay that it does nothing yet.
+    panel.append(el('div', { class: 'res-planned' },
+      iconEl('hourglass', { size: 'sm' }), 'Not yet in the prototype'));
+  }
   if (def.requires.length > 0) {
     panel.append(el('div', { class: 'rows' }, ...def.requires.map((req) =>
       el('div', { class: isTechComplete(state, req) ? 'muted' : 'blocked' },
@@ -448,6 +471,17 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       info: el('span', { class: 'res-time' },
         iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
+    // A trickle currency without a time-to-afford line is one the player
+    // cannot plan against (tomes-and-research.md §8). Only when Knowledge is
+    // the thing short: Gold has its own answer, which is to go and earn it.
+    const wait = knowledgeShortfallMs(state, id, knowledgePerHour(state));
+    if (wait > 0) {
+      panel.append(el('div', { class: 'muted res-wait' },
+        iconEl('Knowledge', { size: 'sm' }),
+        Number.isFinite(wait)
+          ? `Enough Knowledge in about ${formatDuration(wait / 1000)}`
+          : 'Claim a landmark or clear a ruin — nothing is dripping yet'));
+    }
   }
   return panel;
 }

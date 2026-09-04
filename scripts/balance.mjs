@@ -77,6 +77,30 @@ const TECH_IDS = [
   'TradeRoutesV', 'StonecuttingI', 'StonecuttingII', 'StonecuttingIII',
   'BigNetsI', 'BigNetsII', 'BigNetsIII', 'IronPicksI',
   'IronPicksII', 'IronPicksIII', 'ResonanceI', 'ResonanceII',
+  'CarpentryI', 'CarpentryII', 'CarpentryIII', 'ScrivenersI',
+  'ScrivenersII', 'ScrivenersIII', 'CartageI', 'CartageII',
+  'CartageIII', 'DeepWellsI', 'DeepWellsII', 'DeepWellsIII',
+  'DeepWellsIV', 'DeepWellsV', 'LeyTapsI', 'LeyTapsII',
+  'LeyTapsIII', 'WaypostsI', 'WaypostsII', 'WaypostsIII',
+  'ScriptoriumI', 'ScriptoriumII', 'ScriptoriumIII', 'VigilsI',
+  'VigilsII', 'VigilsIII', 'PilgrimageI', 'PilgrimageII',
+  'PilgrimageIII', 'ProspectingI', 'ProspectingII', 'ProspectingIII',
+  'ColoursI', 'ColoursII', 'ColoursIII', 'ColoursIV',
+  'ColoursV', 'MusterDrillI', 'MusterDrillII', 'MusterDrillIII',
+  'RationsI', 'RationsII', 'RationsIII', 'DrillmasterI',
+  'DrillmasterII', 'DrillmasterIII', 'BearersI', 'BearersII',
+  'BearersIII', 'PathfindersI', 'PathfindersII', 'PathfindersIII',
+  'ShieldWallI', 'ShieldWallII', 'ShieldWallIII', 'FletchingI',
+  'FletchingII', 'FletchingIII', 'BardingI', 'BardingII',
+  'BardingIII', 'WarhornsI', 'WarhornsII', 'WarhornsIII',
+  'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII', 'FarsightI',
+  'FarsightII', 'FarsightIII', 'Aqueducts', 'Guildhalls',
+  'Roadworks', 'LandSurvey', 'Apprenticeships', 'FieldMedicine',
+  'Veterancy', 'Siegecraft', 'Tactics', 'Scouting',
+  'Salvage', 'Vanguard', 'Standards', 'Conquest',
+  'Meditation', 'LeyReading', 'Scrying', 'Invocation',
+  'Lorekeeping', 'Wayshrines', 'LeyLines', 'FrugalRites',
+  'SanctifiedRuins', 'RitualCasting', 'LeyStorm', 'SecondSanctum',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
@@ -176,6 +200,7 @@ const SETTINGS = [
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
   ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
+  ['mana.meditation_cap', 'mana.meditationCap'],
   ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
@@ -201,6 +226,7 @@ const SETTINGS = [
   ['knowledge.per_claimed_landmark_per_hour', 'knowledge.perClaimedLandmarkPerHour'],
   // Taking ground is an EVENT, not just a rate change a nobody is looking at.
   ['knowledge.landmark_claim_lump', 'knowledge.landmarkClaimLump'],
+  ['knowledge.conquest_per_cleared_ruin_per_hour', 'knowledge.conquestPerClearedRuinPerHour'],
   // Combat is a SCORING PASS, not a simulation — these six numbers are the
   // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
   // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
@@ -252,7 +278,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level',
+  'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -264,7 +290,7 @@ const DISTRICT_COLUMNS = [
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level',
+  'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
 ];
 
 const SHEETS = {
@@ -286,12 +312,18 @@ const SHEETS = {
   // three books, each paced by eras whose keystone requires everything above
   // it. `node_x`/`node_y` are per-PAGE positions and are blank for a minor
   // rank, which is drawn in its line's bead under the parent instead.
-  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires',
-    'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y'],
+  // `cost_knowledge` is the clock's price (tomes-and-research.md §1): blank
+  // in era 1, where the clock has not started; the era-1 keystone is the
+  // first node that charges it.
+  // `planned` = 1 marks a node that is on the tree for its SHAPE and does
+  // nothing yet. It is badged in the game, its description says so, and no
+  // keystone requires it (tech-tree.md §13).
+  Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds', 'requires',
+    'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y', 'planned'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_stardust'],
+    'reward_gems', 'reward_stardust', 'reward_knowledge'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -626,6 +658,11 @@ async function importXlsx() {
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
       requiredTechPerLevel: techList(r, 'required_tech_per_level'),
+      // One more of this district may stand once the named technology is
+      // done — how Guildhalls buys a second Market and Second Sanctum a
+      // second Sanctum, without a per-count gate mechanism nobody else needs.
+      extraCountTech: (r.extra_count_tech === '' || r.extra_count_tech === undefined)
+        ? null : r.extra_count_tech,
       armyCapPerLevel: list(r, 'army_cap_per_level'),
       buildCost: wallet(r, 'build_cost'),
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
@@ -715,8 +752,14 @@ async function importXlsx() {
     if (hasX !== (line === null)) {
       fail(where(r), 'a major needs a node position and a minor rank must not have one');
     }
+    const knowledge = num(r, 'cost_knowledge', { blankAs: 0 });
+    if (knowledge > 0 && era === 1 && !/^(Charter|Warband|Attunement)II$/.test(id)) {
+      // Era 1 runs on Gold and time alone: the research clock has not started,
+      // and charging for it there would strangle the opening (§3).
+      fail(where(r), 'an era-1 technology must not cost Knowledge');
+    }
     out.technologies[id] = {
-      cost: { Gold: gold },
+      cost: knowledge > 0 ? { Gold: gold, Knowledge: knowledge } : { Gold: gold },
       durationSeconds: num(r, 'duration_seconds', { blankAs: 0 }),
       requires,
       line,
@@ -726,6 +769,7 @@ async function importXlsx() {
       // coord(), not num(): a page is centred on its spine, so x is negative
       // on the left of the trunk.
       node: hasX ? { x: coord(r, 'node_x'), y: coord(r, 'node_y') } : null,
+      planned: num(r, 'planned', { blankAs: 0 }) === 1,
     };
   }
 
@@ -779,6 +823,7 @@ async function importXlsx() {
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
       rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
+      rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
     });
   }
 
@@ -932,7 +977,7 @@ async function exportXlsx() {
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
-      listCell(d.armyCapPerLevel),
+      listCell(d.armyCapPerLevel), d.extraCountTech ?? '',
       ...costCells(d.buildCost),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
@@ -961,9 +1006,9 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, t.cost.Gold || '', t.durationSeconds || '', t.requires.join(','),
-      t.line ?? '', t.effectPerRank || '', t.tome, t.era,
-      t.node ? t.node.x : '', t.node ? t.node.y : ''];
+    return [id, t.cost.Gold || '', t.cost.Knowledge || '', t.durationSeconds || '',
+      t.requires.join(','), t.line ?? '', t.effectPerRank || '', t.tome, t.era,
+      t.node ? t.node.x : '', t.node ? t.node.y : '', t.planned ? 1 : ''];
   }), (col) => col === 'requires');
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
@@ -972,6 +1017,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
+    q.rewardKnowledge || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

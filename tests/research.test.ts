@@ -9,8 +9,9 @@ import {
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
-  anyResearchActionable, buySlot, canStartTech, isTechComplete, isTomeOpen, openTome,
-  slotGemCost, startTech, techCost, techSlots, techUnlocks,
+  anyResearchActionable, buySlot, canStartTech, isTechComplete, isTomeOpen,
+  knowledgeShortfallMs, openTome, slotGemCost, startTech, techCost, techKnowledgeCost,
+  techSlots, techUnlocks,
 } from '../src/sim/research';
 import { edgeCells, FAN_DX, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
@@ -75,13 +76,50 @@ describe('technology basics', () => {
   // technology in era 1 (Docs/features/tech-tree.md §1 rule 5).
   it('the era gate: Cavalry waits on the keystone above it', () => {
     const state = freshGame();
-    fund(state, { Gold: 50_000 });
+    fund(state, { Gold: 50_000, Knowledge: 5_000 });
     // The tome is not even open yet — no ruin has been seen.
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
     expect(startTech(state, 'WarbandII', T0)).toBe('MissingRequirement');
 
     completeTech(state, 'WarbandIII');
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
+  });
+
+  // THE CLOCK IS A PRICE. Knowledge is paid from the kingdom purse alongside
+  // the Gold from the city's — two purses, one gate — and era 1 charges none,
+  // because the clock has not started yet (tomes-and-research.md §1, §3).
+  it('charges Gold from the city AND Knowledge from the kingdom, from era 2 on', () => {
+    const state = freshGame();
+    fund(state, { Gold: 50_000 });
+    // Era 1 is Gold and time alone — the clock has not started.
+    expect(techKnowledgeCost('Forestry')).toBe(0);
+    expect(canStartTech(state, 'Forestry')).toBe(true);
+
+    // The era-1 keystone is the first node with a Knowledge price.
+    completeTech(state, 'Forestry'); completeTech(state, 'Saws');
+    completeTech(state, 'Agriculture'); completeTech(state, 'Masonry');
+    completeTech(state, 'UrbanPlanning'); completeTech(state, 'Market');
+    const k = techKnowledgeCost('CharterII');
+    expect(k).toBeGreaterThan(0);
+    expect(canStartTech(state, 'CharterII'), 'rich in Gold, no Knowledge').toBe(false);
+    expect(startTech(state, 'CharterII', T0)).toBe('NotEnoughResources');
+
+    fund(state, { Knowledge: k });
+    const gold = getWallet(state.city.wallet, 'Gold');
+    expect(startTech(state, 'CharterII', T0)).toBe('Started');
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - techCost('CharterII'));
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+  });
+
+  it('says how long until the Knowledge is there, or that nothing is dripping', () => {
+    const state = freshGame();
+    // 100 short at 20/h is five hours.
+    expect(knowledgeShortfallMs(state, 'ScalingTools', 20))
+      .toBe((techKnowledgeCost('ScalingTools') / 20) * 3_600_000);
+    // …and with no territory there is no answer but "go and take some".
+    expect(knowledgeShortfallMs(state, 'ScalingTools', 0)).toBe(Infinity);
+    fund(state, { Knowledge: 10_000 });
+    expect(knowledgeShortfallMs(state, 'ScalingTools', 0)).toBe(0);
   });
 
   // The cover page is granted by an event in the world, never bought.
@@ -104,7 +142,7 @@ describe('technology basics', () => {
   // is why a kingdom rich in Stardust cannot buy a technology with it.
   it('costs are paid up front, in Gold, from the city purse', () => {
     const state = freshGame();
-    fund(state, { Gold: 50_000, Wood: 500, Stardust: 5000 });
+    fund(state, { Gold: 50_000, Wood: 500, Stardust: 5000, Knowledge: 5_000 });
     // Sailing sits in Magic era 2, so it wants the era-1 keystone above it.
     completeTech(state, 'AttunementII');
     const purse = getWallet(state.city.wallet, 'Gold');
@@ -397,6 +435,10 @@ describe('what the player can actually act on', () => {
     expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
     advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
     expect(lineRank(state, 'TapPower')).toBe(1);
+    // Rank II sits in era 2, so it waits on the era-1 keystone as well.
+    expect(canStartTech(state, 'TapPowerII')).toBe(false);
+    completeTech(state, 'CharterII');
+    fund(state, { Knowledge: 5_000 });
     expect(canStartTech(state, 'TapPowerII')).toBe(true);
 
     // A finished line is not actionable, however rich you are.
@@ -411,5 +453,42 @@ describe('what the player can actually act on', () => {
     expect(game.researchCtaLit()).toBe(false);
     fund(game.state, TECHNOLOGIES.Forestry.cost);
     expect(game.researchCtaLit()).toBe(true);
+  });
+});
+
+// Docs/features/tech-tree.md §13 — PLANNED nodes. They are on the tree so its
+// shape can be seen, and they do nothing yet. Four things keep that honest.
+describe('planned technologies', () => {
+  const PLANNED = TECH_ORDER.filter((id) => TECHNOLOGIES[id].planned);
+
+  // The flag is the statement: it draws the hatched node and the panel's
+  // "Not yet in the prototype" line. Pinning the SET stops one being quietly
+  // un-flagged (shipping a no-op as content) or a new no-op arriving unflagged.
+  it('are exactly the seventeen the design lists, and no more', () => {
+    expect(PLANNED.sort()).toEqual([
+      'Apprenticeships', 'FieldMedicine', 'FrugalRites', 'Invocation', 'LandSurvey',
+      'LeyLines', 'LeyReading', 'LeyStorm', 'Lorekeeping', 'RitualCasting', 'Scouting',
+      'Scrying', 'Siegecraft', 'Standards', 'Vanguard', 'Veterancy', 'Wayshrines',
+    ].sort());
+  });
+
+  it('are never required by a keystone, so no era is walled behind a no-op', () => {
+    for (const id of TECH_ORDER) {
+      if (!/^(Charter|Warband|Attunement)(II|III|IV)$/.test(id)) continue;
+      for (const req of TECHNOLOGIES[id].requires) {
+        expect(TECHNOLOGIES[req].planned, `${id} requires planned ${req}`).toBe(false);
+      }
+    }
+  });
+
+  it('unlock nothing — the gates agree they are inert', () => {
+    for (const id of PLANNED) expect(techUnlocks(id)).toEqual([]);
+  });
+
+  it("are never a minor line's parent, so no working line hangs off a no-op", () => {
+    for (const line of TECH_LINE_ORDER) {
+      const parent = lineParent(line)!;
+      expect(TECHNOLOGIES[parent].planned, `${line} hangs off planned ${parent}`).toBe(false);
+    }
   });
 });

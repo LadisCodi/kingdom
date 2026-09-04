@@ -29,6 +29,10 @@ const rewardNodes = (quest: QuestDef): Node[] => {
   for (const [c, n] of Object.entries(quest.reward) as Array<[CurrencyId, number]>) {
     parts.push(el('span', { class: 'q-reward-item' }, currencyIcon(c, { size: 'sm' }), String(n)));
   }
+  if (quest.rewardKnowledge > 0) {
+    parts.push(el('span', { class: 'q-reward-item' },
+      iconEl('Knowledge', { size: 'sm' }), String(quest.rewardKnowledge)));
+  }
   if (quest.rewardStardust > 0) {
     parts.push(el('span', { class: 'q-reward-item' },
       iconEl('Stardust', { size: 'sm' }), String(quest.rewardStardust)));

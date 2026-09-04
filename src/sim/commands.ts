@@ -1,7 +1,8 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { DISTRICTS, KINGDOM_DEF } from './data/definitions';
+import { DISTRICTS, KINGDOM_DEF, TECHNOLOGIES,
+} from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
@@ -195,7 +196,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
     kind: 'upgrade',
     districtUniqueId: district.uniqueId,
     targetLevel: district.level + 1,
-    durationSeconds: upgradeDuration(district.definitionId, district.level),
+    durationSeconds: upgradeDuration(state, district.definitionId, district.level),
     startedAt: null,
   });
   return 'Started';
@@ -385,7 +386,17 @@ function applyDueAt(
       completeQueueItem(state, map, item, Math.min(completesAt(item), t));
       out.completedItems.push(item);
     }
-    out.completedResearch.push(...advanceResearch(state, t));
+    const finished = advanceResearch(state, t);
+    out.completedResearch.push(...finished);
+    // Farsight widens what every STANDING building can see, not only the next
+    // one built — so a rank landing re-applies each district's fog radii. It
+    // happens here, inside the walk, because this is where the map is; and it
+    // is deterministic, so replay and stepped ticking discover the same cells.
+    if (finished.some((id) => TECHNOLOGIES[id].line === 'Farsight')) {
+      for (const d of state.city.districts) {
+        if (d.state === 'Built') revealAroundDistrict(state, map, d);
+      }
+    }
     out.expiredModifiers.push(...pruneExpiredModifiers(state, t));
     // One line, two kinds of trainee: villagers land on the population, units
     // in the army, and the caller is told about each separately.

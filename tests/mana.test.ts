@@ -285,7 +285,7 @@ describe('landmarks', () => {
   it('cost Gold on the fog’s own distance curve, and pay capacity forever', () => {
     const state = freshGame();
     reveal(state, [first.location]);
-    const cost = landmarkClaimCost(first);
+    const cost = landmarkClaimCost(state, first);
     expect(cost).toBeGreaterThan(0);
 
     expect(claimLandmark(state, map, first.location)).toBe('NotEnoughGold');
@@ -318,7 +318,8 @@ describe('landmarks', () => {
   });
 
   it('get farther and dearer, so exploration compounds instead of paying flat', () => {
-    const costs = LANDMARKS.map((l) => landmarkClaimCost(l));
+    const state = freshGame();
+    const costs = LANDMARKS.map((l) => landmarkClaimCost(state, l));
     expect(Math.max(...costs)).toBeGreaterThan(Math.min(...costs) * 4);
   });
 
@@ -347,24 +348,25 @@ describe('landmarks', () => {
     const byDistance = [...LANDMARKS]
       .sort((a, b) => townhallDistance(map, a.location) - townhallDistance(map, b.location));
     const [nearest, ...rest] = byDistance;
-    const cheapest = Math.min(...LANDMARKS.map(landmarkClaimCost));
-    expect(landmarkClaimCost(nearest)).toBe(cheapest);
+    const cheapest = Math.min(...LANDMARKS.map((l) => landmarkClaimCost(state, l)));
+    expect(landmarkClaimCost(state, nearest)).toBe(cheapest);
 
     // ...and nothing else shares its price, so "the near one" is unambiguous.
     for (const l of rest) {
-      expect(landmarkClaimCost(l), `${l.id} is no dearer than the nearest`)
-        .toBeGreaterThan(landmarkClaimCost(nearest));
+      expect(landmarkClaimCost(state, l), `${l.id} is no dearer than the nearest`)
+        .toBeGreaterThan(landmarkClaimCost(state, nearest));
     }
 
     // Many times what a new kingdom is handed: a save, not a pickup.
-    expect(landmarkClaimCost(nearest))
+    expect(landmarkClaimCost(state, nearest))
       .toBeGreaterThan(5 * getWallet(state.city.wallet, 'Gold'));
   });
 
   it('reserves the dearest tier for the ones an army has to clear', () => {
-    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(l)));
+    const state = freshGame();
+    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(state, l)));
     for (const l of LANDMARKS) {
-      if (landmarkClaimCost(l) === dearest) expect(l.defended).toBe(true);
+      if (landmarkClaimCost(state, l) === dearest) expect(l.defended).toBe(true);
     }
   });
 
@@ -392,7 +394,7 @@ describe('claiming a sanctuary lifts the fog around it', () => {
     const state = freshGame();
     const def = LANDMARKS[0];
     reveal(state, [def.location]);
-    state.city.wallet.Gold = landmarkClaimCost(def) + 10;
+    state.city.wallet.Gold = landmarkClaimCost(state, def) + 10;
     return { state, def };
   };
 

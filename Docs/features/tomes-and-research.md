@@ -191,6 +191,15 @@ it is that **era 1 costs no Knowledge at all** ([`tech-tree.md`](tech-tree.md)
 §6), so the opening hours run on Gold and time exactly as they do today, and
 the clock starts with the first landmark.
 
+**And the chain seeds it.** The quest chain asks for era-2 technologies
+(Surveying II, Scaling Tools, Sailing) before a chain-follower has claimed more
+than one landmark, so the chain pays Knowledge itself — 340 across seven
+quests, all on the Magic-tome beats where the fog is teaching the player what
+the land holds. The rule the tests hold: **walking the chain with zero drip,
+every technology it asks for is affordable when asked.** Zero drip is the
+player who does the whole opening in one sitting, and they must never be told
+to go and wait.
+
 **The lumps are why claiming reads as an event.** A rate change alone is a
 number moving on a screen the player is not looking at. Fifty Knowledge in the
 hand is the fog paying out, which is what the fog is selling.
@@ -411,6 +420,30 @@ reversals, so that nobody reading the diff has to guess which is current:
    shelf of tabs, per-page positions, and the cover pages granted by events in
    the world — Civics at the seed, Magic on the first paid reveal, Warfare on
    the first ruin in sight.
+5a. ~~Techs reprice from Gold to Gold + Knowledge + time.~~ **DONE 2026-09-04.**
+   Every technology from the era-1 keystone on carries a Knowledge price beside
+   its Gold one; era 1 charges none. **The chain seeds the clock**: a player
+   early in the chain holds no territory, so seven quests — the Magic-tome
+   beats from `OldStones` to `PutToSea`, plus `SecondStory` ahead of the
+   Charter — pay 340 Knowledge between them, and `tests/quests.test.ts` walks
+   the whole chain with ZERO drip and holds that every technology it asks for
+   is affordable when asked, with at least 30 to spare. Two chain fixes fell
+   out of the era structure: `Attuned` moved from quest 42 to right after the
+   first claim (its keystone gates the exploration beats at 26–28), and
+   `Architect` now asks for `Charter II`, which is the thing that actually
+   raises the Townhall.
+5b. **Era-2/3 content, first batch — DONE 2026-09-04.** The Civics and Magic
+   `ModifierStat` hooks and their ten minor lines ([`tech-tree.md`](tech-tree.md)
+   §9), then the Warfare batch — six more lines on `armyCap`, `recruitCost`,
+   `supplyCost`, `haulLoss`, `heroXp` and the existing `delveSpeed`; then the
+   five combat lines, carried into pure `combat.ts` as a `Drill` on the Party;
+   then Farsight. **Every hook in §9 is in.** The tree is 154 technologies.
+5c. **Era-2/3 majors added — DONE 2026-09-04.** Twenty-six majors on the
+   tree: nine live against existing dials, seventeen **planned** and badged as
+   such in the game ([`tech-tree.md`](tech-tree.md) §13). The tree is 180.
+5d. **Repriced to the bands — DONE 2026-09-04** ([`tech-tree.md`](tech-tree.md)
+   §6): eras 2–4 on the bands, era 1 as the tutorial tuned it. 550,165 Gold,
+   50,495 Knowledge, about six weeks of tree at a full province's drip.
 5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
    assigned a tome and an era, the nine keystones exist and each unlocks a
    real dial (Townhall level, hall levels, Sanctum levels), and the Townhall

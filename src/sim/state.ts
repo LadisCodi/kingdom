@@ -48,7 +48,14 @@ export type TechId =
   | 'WarbandIV' | 'Warrior' | 'Spears' | 'Archery'
   | 'Cavalry' | 'AttunementI' | 'AttunementII' | 'AttunementIII'
   | 'AttunementIV' | 'Cartography' | 'Consecration' | 'Sailing'
-  | 'ScalingTools' | 'Fishing' | 'Shipbuilding'
+  | 'ScalingTools' | 'Fishing' | 'Shipbuilding' | 'Aqueducts'
+  | 'Guildhalls' | 'Roadworks' | 'LandSurvey' | 'Apprenticeships'
+  | 'FieldMedicine' | 'Veterancy' | 'Siegecraft' | 'Tactics'
+  | 'Scouting' | 'Salvage' | 'Vanguard' | 'Standards'
+  | 'Conquest' | 'Meditation' | 'LeyReading' | 'Scrying'
+  | 'Invocation' | 'Lorekeeping' | 'Wayshrines' | 'LeyLines'
+  | 'FrugalRites' | 'SanctifiedRuins' | 'RitualCasting' | 'LeyStorm'
+  | 'SecondSanctum'
   // ---- minor ranks. A roman numeral is what tells you it is a small one.
   | 'TapPowerI' | 'TapPowerII' | 'TapPowerIII' | 'TapPowerIV'
   | 'TapPowerV' | 'QuickHandsI' | 'QuickHandsII' | 'QuickHandsIII'
@@ -62,7 +69,24 @@ export type TechId =
   | 'TradeRoutesIV' | 'TradeRoutesV' | 'StonecuttingI' | 'StonecuttingII'
   | 'StonecuttingIII' | 'BigNetsI' | 'BigNetsII' | 'BigNetsIII'
   | 'IronPicksI' | 'IronPicksII' | 'IronPicksIII' | 'ResonanceI'
-  | 'ResonanceII';
+  | 'ResonanceII' | 'CarpentryI' | 'CarpentryII' | 'CarpentryIII'
+  | 'ScrivenersI' | 'ScrivenersII' | 'ScrivenersIII' | 'CartageI'
+  | 'CartageII' | 'CartageIII' | 'DeepWellsI' | 'DeepWellsII'
+  | 'DeepWellsIII' | 'DeepWellsIV' | 'DeepWellsV' | 'LeyTapsI'
+  | 'LeyTapsII' | 'LeyTapsIII' | 'WaypostsI' | 'WaypostsII'
+  | 'WaypostsIII' | 'ScriptoriumI' | 'ScriptoriumII' | 'ScriptoriumIII'
+  | 'VigilsI' | 'VigilsII' | 'VigilsIII' | 'PilgrimageI'
+  | 'PilgrimageII' | 'PilgrimageIII' | 'ProspectingI' | 'ProspectingII'
+  | 'ProspectingIII' | 'ColoursI' | 'ColoursII' | 'ColoursIII'
+  | 'ColoursIV' | 'ColoursV' | 'MusterDrillI' | 'MusterDrillII'
+  | 'MusterDrillIII' | 'RationsI' | 'RationsII' | 'RationsIII'
+  | 'DrillmasterI' | 'DrillmasterII' | 'DrillmasterIII' | 'BearersI'
+  | 'BearersII' | 'BearersIII' | 'PathfindersI' | 'PathfindersII'
+  | 'PathfindersIII' | 'ShieldWallI' | 'ShieldWallII' | 'ShieldWallIII'
+  | 'FletchingI' | 'FletchingII' | 'FletchingIII' | 'BardingI'
+  | 'BardingII' | 'BardingIII' | 'WarhornsI' | 'WarhornsII'
+  | 'WarhornsIII' | 'ManoeuvreI' | 'ManoeuvreII' | 'ManoeuvreIII'
+  | 'FarsightI' | 'FarsightII' | 'FarsightIII';
 
 /** A ladder of ranks that used to be one levelled upgrade. `effect()` in
  *  sim/upgrades.ts counts how many of a line's ranks are complete. */
@@ -70,7 +94,13 @@ export type TechLineId =
   | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Sawpits'
   | 'Butchery' | 'Irrigation' | 'Scythes' | 'Surveying'
   | 'Pitons' | 'MarketStall' | 'TradeRoutes' | 'Stonecutting'
-  | 'BigNets' | 'IronPicks' | 'Resonance';
+  | 'BigNets' | 'IronPicks' | 'Resonance' | 'Carpentry'
+  | 'Scriveners' | 'Cartage' | 'DeepWells' | 'LeyTaps'
+  | 'Wayposts' | 'Scriptorium' | 'Vigils' | 'Pilgrimage'
+  | 'Prospecting' | 'Colours' | 'MusterDrill' | 'Rations'
+  | 'Drillmaster' | 'Bearers' | 'Pathfinders' | 'ShieldWall'
+  | 'Fletching' | 'Barding' | 'Warhorns' | 'Manoeuvre'
+  | 'Farsight';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -292,7 +322,12 @@ export interface GameState {
   research: {
     completed: TechId[];
     /** Technologies in progress — length is capped by techSlots(). */
-    active: Array<{ id: TechId; startedAt: number }>;
+    /** `durationMs` is fixed when the research STARTS (Scriveners applies then,
+     *  not retroactively): a rank landing mid-research must not move a
+     *  boundary into the past, which one-call replay and stepped ticking
+     *  would then land on differently. Absent on older saves → the authored
+     *  duration, which is what they were started at. */
+    active: Array<{ id: TechId; startedAt: number; durationMs?: number }>;
     /** Extra concurrent slots bought with Gems (escalating price). */
     slotsPurchased: number;
   };

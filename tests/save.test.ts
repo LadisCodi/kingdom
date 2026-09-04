@@ -5,7 +5,7 @@ import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
 import { getWallet } from '../src/sim/state';
-import { isTechComplete } from '../src/sim/research';
+import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { effect, lineRank } from '../src/sim/upgrades';
 import {
   addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
@@ -196,6 +196,35 @@ describe('save versions', () => {
     expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
     // And the effect the player had actually bought still reaches the sim.
     expect(effect(restored, 'TapPower')).toBe(3);
+  });
+
+  // v25: tomes have cover pages, granted rather than researched. A save from
+  // before they existed has none, so every era-1 technology hides behind a
+  // requirement nothing will ever complete — the Civics page showed one
+  // lonely scroll. Found by loading a real save in the browser.
+  it('grants the cover pages a pre-tome save never had', () => {
+    const state = freshGame();
+    state.research.completed = []; // as a v24 save would be: no CharterI
+    const save = serialize(state, T0);
+    save.SaveVersion = 24;
+    const restored = deserialize(save, map, T0)!;
+    expect(isTomeOpen(restored, 'Civics')).toBe(true);
+    // No event that opens the other two has happened, so they stay shut and
+    // open the ordinary way — on the next reveal, or the next ruin in sight.
+    expect(isTomeOpen(restored, 'Magic')).toBe(false);
+    expect(isTomeOpen(restored, 'Warfare')).toBe(false);
+  });
+
+  it('opens Magic and Warfare for a save that had already earned them', () => {
+    const state = freshGame();
+    state.research.completed = ['Cartography', 'Warrior']; // no cover pages, as v24
+    const save = serialize(state, T0);
+    save.SaveVersion = 24;
+    const restored = deserialize(save, map, T0)!;
+    expect(isTomeOpen(restored, 'Magic')).toBe(true);
+    expect(isTomeOpen(restored, 'Warfare')).toBe(true);
+    // And it does not double-grant.
+    expect(restored.research.completed.filter((t) => t === 'AttunementI')).toHaveLength(1);
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {
