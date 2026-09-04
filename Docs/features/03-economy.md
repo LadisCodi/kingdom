@@ -69,7 +69,7 @@
 - A lived-in house is a tappable Gold cell (§5).
 - **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
   +20% while attuned, through the modifier layer.
-- Housing capacity per level: `populationCapacityPerLevel = [2, 4]` (OQ-46).
+- Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
 - Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 120
   Gold/min idle.
 

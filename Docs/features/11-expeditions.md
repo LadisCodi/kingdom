@@ -120,14 +120,15 @@ depthTime = base(tier) × growth^(depth − 1)
 
 ## 6. Military buildings raise the army cap
 
-Each unit type is trained by a building, each gated behind the military branch.
+Each unit type is trained by a building, each gated behind its own technology.
+Level gates and costs: [`buildings.md`](buildings.md) §4.9.
 
 | Building | Trains | Cap per level |
 |---|---|---|
-| **Barracks** | Warrior · Lancer · Archer | 6 / 10 / 15 |
-| **Spear Hall** | Lancer | 6 / 10 / 15 |
-| **Shooting Grounds** | Archer | 6 / 10 / 15 |
-| **Stables** | Cavalry | 6 / 10 / 15 |
+| **Barracks** | Warrior · Lancer · Archer | 6 / 10 / 15 / 21 / 28 |
+| **Spear Hall** | Lancer | 6 / 10 / 15 / 21 / 28 |
+| **Shooting Grounds** | Archer | 6 / 10 / 15 / 21 / 28 |
+| **Stables** | Cavalry | 6 / 10 / 15 / 21 / 28 |
 
 - The Barracks trains every foot soldier; the Stables trains Cavalry. Each unit
   is still behind its own technology.
@@ -145,6 +146,7 @@ The cap curve lines up with the five ruins:
 | All four, L1 | 24 | Tier III (24) |
 | All four, L2 | 40 | Tier IV (36) |
 | All four, L3 | 60 | Tier V (50) |
+| All four, L5 (`Warband III`) | 112 | — |
 
 - Tiers IV–V are reached by building, not by Townhall level.
 - A full roster of Warriors at cap 24 fields 24 effective ATK against a neutral

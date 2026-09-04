@@ -54,7 +54,7 @@
 | **Hunting** | the wild game tap |
 | **Farming** | Farm level 2 |
 | **Market** | the Market |
-| **Mining** | the Mine |
+| **Mining** | the iron vein — the Quarry works it for Stone |
 | **Communities** | +1 resident in every Housing |
 
 ### 2.3 Era 3 · Borough — 34 nodes
@@ -62,8 +62,8 @@
 | Major | Unlocks |
 |---|---|
 | **Engineering** | Quarry L2, Sawmill L3 |
-| **Deep Mining** | Mine L2 |
-| **Architecture** | Quarry L3, Sawmill L4, Mine L3 |
+| **Deep Mining** | the gold mountain — the Quarry works it for Gold |
+| **Architecture** | Quarry L3, Sawmill L4 |
 | **Aqueducts** | Housing L3 |
 | **Guildhalls** | a second Market (`extra_count_tech` on the district) |
 | **Roadworks** | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |

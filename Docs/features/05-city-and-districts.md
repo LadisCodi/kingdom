@@ -1,9 +1,9 @@
 # 5 · The city — districts, placement and moving
 
-> **Scope.** Every district, what gates it, the cost curves, where a building
-> may go, and how it is moved. Construction itself is
-> [`06-construction.md`](06-construction.md); what workers do is
-> [`04-harvest.md`](04-harvest.md).
+> **Scope.** The Townhall as era gate, the cost curves, where a building may
+> go, and how it is moved. The building list is [`buildings.md`](buildings.md);
+> construction itself is [`06-construction.md`](06-construction.md); what
+> workers do is [`04-harvest.md`](04-harvest.md).
 >
 > **Status: built.**
 
@@ -13,13 +13,13 @@
   **how high each may level**. It is the only gate that moves all of them at
   once.
 
-| | TH1 — Founding | TH2 — Expansion | TH3 — Prosperity |
-|---|---|---|---|
-| Target time | 0–30 min | 30 min – 2.5 h | ~3 h onward |
-| Housing cap | 2 | 4 | 6 |
-| Sawmill / Quarry / Docks / Mine cap | 1 | 2 | 3 |
-| Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 |
-| Gate to the next level | 60 Wood | 156 W + 78 S + **Architecture** | — |
+| | TH1 | TH2 | TH3 | TH4 |
+|---|---|---|---|---|
+| Target time | 0–30 min | 30 min – 2.5 h | ~3 h onward | late game |
+| Housing cap | 2 | 4 | 6 | 9 |
+| Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
+| Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
+| Gate to the next level | 60 Wood | `Charter II` | `Charter III` | `Charter IV` (sealed) |
 
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 
@@ -35,25 +35,10 @@ Three arcs run past TH3:
 
 ## 2. The districts
 
-| District | Size | Max level | Count cap by TH | Base cost | Build time | Gate |
-|---|---|---|---|---|---|---|
-| **Townhall** | 2×2 | 3 | 1 | — | — | Architecture for L3 |
-| **Housing** | 1×1 | 2 | 2 / 4 / 6 | 10 W | 20 s | Urban Planning for L2 |
-| **FarmLands** (crop plot) | 1×1 | 1 | 6 / 6 / 12 | 10 W | 10 s | Agriculture |
-| **Farm** | 1×1 | 2 | 1 / 1 / 2 | 30 W | 20 s | Agriculture · Farming for L2 |
-| **Sawmill** | 1×1 | 3 | 1 / 2 / 3 | 20 W | 20 s | Saws · Engineering for L3 |
-| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry · Engineering for L2 |
-| **Docks** | 2×1 pier | 2 | 1 / 2 / 3 | 25 W | 20 s | Fishing · Shipbuilding for L2 |
-| **Mine** | 1×1 | 2 | 1 / 2 / 3 | 40 W + 20 S | 30 s | Mining · Deep Mining for L2 — works iron **and** gold mountains |
-| **Market** | 1×1 | 1 | 1 | 40 W | 30 s | Market |
-| **Sanctum** | 1×1 | 3 | 1 | 300 G + 40 S | 90 s | Attunement branch |
-| **Barracks** | 1×1 | 3 | 1 | 60 W + 20 S | 45 s | Warrior |
-| **Spear Hall** | 1×1 | 3 | 1 | 80 W + 30 S | 60 s | Spears |
-| **Shooting Grounds** | 1×1 | 3 | 1 | 80 W + 30 S | 60 s | Archery |
-| **Stables** | 1×1 | 3 | 1 | 120 W + 70 S | 90 s | Cavalry |
-
 - Fourteen districts; each is a `Districts` row. A fifteenth needs no code
   beyond an id.
+- Every building, its job, its count cap and its level ladder:
+  [`buildings.md`](buildings.md).
 - Per-level tech gates (`required_tech_per_level`): entry 0 is the technology
   needed to reach level 2.
 - A district card says *Research X required*; a research-complete banner says
@@ -155,7 +140,7 @@ What follows the building:
 | Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
-| Army cap per level | 6 / 10 / 15, on the four military halls |
+| Army cap per level | 6 / 10 / 15 / 21 / 28, on the four military halls ([`buildings.md`](buildings.md) §4.9) |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 
 ## 6. Deliberately not in this design
