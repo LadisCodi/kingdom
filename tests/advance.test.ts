@@ -46,25 +46,29 @@ describe('the boundary loop', () => {
     const before = cityGoldPerMinute(state);
     const gold0 = getWallet(state.city.wallet, 'Gold');
 
-    // 120s in ONE call, spanning the 90s completion.
-    advance(state, map, T0 + 120_000);
+    // The whole research plus 30s, in ONE call, spanning the completion.
+    // Derived from the authored duration: Communities is an era-2 major and
+    // was repriced to a real research, not the 90s it was as a checklist item.
+    const secs = COMMUNITIES_MS / 1000;
+    advance(state, map, T0 + COMMUNITIES_MS + 30_000);
     const after = cityGoldPerMinute(state);
     expect(after).toBeGreaterThan(before); // the fifth villager got a roof
 
-    // 90s at the old rate + 30s at the new one — NOT 120s at the old rate.
+    // The research at the old rate + 30s at the new one — NOT all at the old.
     const earned = getWallet(state.city.wallet, 'Gold') - gold0;
-    const oldRateOnly = (120 / 60) * before;
-    const correct = (90 / 60) * before + (30 / 60) * after;
+    const oldRateOnly = ((secs + 30) / 60) * before;
+    const correct = (secs / 60) * before + (30 / 60) * after;
     expect(earned).toBeGreaterThan(oldRateOnly);
     expect(Math.abs(earned - correct)).toBeLessThanOrEqual(2); // whole-gold rounding
   });
 
   it('one-call replay equals stepped ticking across the same window', () => {
+    const WINDOW = COMMUNITIES_MS + 30_000;
     const oneCall = onTheEdgeOfCommunities();
-    advance(oneCall, map, T0 + 120_000);
+    advance(oneCall, map, T0 + WINDOW);
 
     const stepped = onTheEdgeOfCommunities();
-    for (let t = 1000; t <= 120_000; t += 1000) advance(stepped, map, T0 + t);
+    for (let t = 1000; t <= WINDOW; t += 1000) advance(stepped, map, T0 + t);
 
     expect(getWallet(stepped.city.wallet, 'Gold'))
       .toBe(getWallet(oneCall.city.wallet, 'Gold'));

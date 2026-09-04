@@ -249,11 +249,22 @@ describe('a player can actually play the onboarding', () => {
   // running for minutes, an army, and a delve. What CAN be checked is the
   // thing most likely to be wrong: that every technology the chain demands is
   // still affordable out of what the chain itself pays, in the order it asks.
-  it('never demands a technology the chain has not already paid for', () => {
+  it('never demands an OPENING technology the chain has not already paid for', () => {
     // Research is Gold now, so the purse counted here is the CITY's, and it
     // is counted at its floor: the opening grant plus the quest rewards, and
     // nothing else. Housing taxes, the Market and the harvest all pay on top
     // of this, so a chain that works on rewards alone works for anyone.
+    //
+    // THE GUARANTEE COVERS THE OPENING — every era-1 technology and the
+    // keystone that closes era 1 — and stops there on purpose. Since the tree
+    // was repriced to tech-tree.md §6's bands (2026-09-04) an era-2 major
+    // costs 1,000–2,500 Gold, and the chain's later asks (Sailing, Scaling
+    // Tools, Surveying II) are meant to be paid out of a RUNNING city: by
+    // then the player has a Market, taxes and workers, and the doc's own
+    // words are "the depth is the city's to earn". Funding them from rewards
+    // would mean 1,000-Gold quests at beat 25, which would double the early
+    // economy — the exact distortion balancing-v3 pulled the Market beats back
+    // from.
     //
     // Fog is charged against the same purse, at its floor too — a
     // DiscoverCells quest cannot cost less than its cells at the nearest ring
@@ -264,9 +275,12 @@ describe('a player can actually play the onboarding', () => {
     for (const quest of QUESTS) {
       if (quest.goalType === 'CompleteTech') {
         const id = quest.goalTarget as TechId;
-        expect(purse, `the chain asks for ${id} before it can afford it`)
-          .toBeGreaterThanOrEqual(techCost(id));
-        purse -= techCost(id);
+        const opening = TECHNOLOGIES[id].era === 1 || /^(Charter|Warband|Attunement)II$/.test(id);
+        if (opening) {
+          expect(purse, `the chain asks for ${id} before it can afford it`)
+            .toBeGreaterThanOrEqual(techCost(id));
+          purse -= techCost(id);
+        }
       }
       if (quest.goalType === 'DiscoverCells' || quest.goalType === 'DiscoverFeature') {
         purse -= quest.goalAmount * DEAREST_CELL;

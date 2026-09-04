@@ -289,7 +289,7 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(tree).toBe(106_625);
+    expect(tree).toBe(550_165);
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.

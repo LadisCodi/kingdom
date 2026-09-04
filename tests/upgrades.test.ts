@@ -41,13 +41,15 @@ const research = (state: ReturnType<typeof freshGame>, id: Parameters<typeof sta
 };
 
 describe('researching a rank', () => {
-  it('costs Gold and TIME, on the curve the upgrade levels used to charge', () => {
+  it('costs Gold and TIME — the opening rank as authored, the later ones on the bands', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
     completeTech(state, 'Forestry');
-    // The old cost curve is preserved exactly: base 50, growth 2.2.
+    // Rank I is era 1 and keeps the price the opening was tuned around; rank
+    // II is era 2 and sits in tech-tree.md §6's minor band (250–800).
     expect(TECHNOLOGIES.TapPowerI.cost.Gold).toBe(50);
-    expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBe(110); // 50 × 2.2
+    expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBeGreaterThanOrEqual(250);
+    expect(TECHNOLOGIES.TapPowerII.cost.Gold).toBeLessThanOrEqual(800);
     // …and unlike an upgrade, it is not instant.
     expect(TECHNOLOGIES.TapPowerI.durationSeconds).toBeGreaterThan(0);
 

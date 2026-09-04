@@ -811,7 +811,7 @@
     },
     "CharterII": {
       "cost": {
-        "Gold": 700,
+        "Gold": 800,
         "Knowledge": 40
       },
       "durationSeconds": 900,
@@ -835,7 +835,7 @@
     },
     "CharterIII": {
       "cost": {
-        "Gold": 1700,
+        "Gold": 5000,
         "Knowledge": 500
       },
       "durationSeconds": 3600,
@@ -857,7 +857,7 @@
     },
     "CharterIV": {
       "cost": {
-        "Gold": 8750,
+        "Gold": 30000,
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
@@ -971,10 +971,10 @@
     },
     "Communities": {
       "cost": {
-        "Gold": 450,
-        "Knowledge": 100
+        "Gold": 1000,
+        "Knowledge": 80
       },
-      "durationSeconds": 90,
+      "durationSeconds": 900,
       "requires": [
         "CharterII"
       ],
@@ -990,10 +990,10 @@
     },
     "Hunting": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 100
+        "Gold": 1500,
+        "Knowledge": 120
       },
-      "durationSeconds": 30,
+      "durationSeconds": 1200,
       "requires": [
         "CharterII"
       ],
@@ -1009,10 +1009,10 @@
     },
     "Farming": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 2000,
+        "Knowledge": 160
       },
-      "durationSeconds": 60,
+      "durationSeconds": 1500,
       "requires": [
         "CharterII"
       ],
@@ -1046,10 +1046,10 @@
     },
     "Mining": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 2500,
+        "Knowledge": 200
       },
-      "durationSeconds": 60,
+      "durationSeconds": 1800,
       "requires": [
         "CharterII"
       ],
@@ -1065,10 +1065,10 @@
     },
     "Architecture": {
       "cost": {
-        "Gold": 600,
-        "Knowledge": 800
+        "Gold": 6000,
+        "Knowledge": 600
       },
-      "durationSeconds": 120,
+      "durationSeconds": 3600,
       "requires": [
         "CharterIII"
       ],
@@ -1084,10 +1084,10 @@
     },
     "Engineering": {
       "cost": {
-        "Gold": 500,
-        "Knowledge": 800
+        "Gold": 7285,
+        "Knowledge": 730
       },
-      "durationSeconds": 90,
+      "durationSeconds": 4620,
       "requires": [
         "CharterIII"
       ],
@@ -1103,10 +1103,10 @@
     },
     "DeepMining": {
       "cost": {
-        "Gold": 800,
-        "Knowledge": 800
+        "Gold": 8570,
+        "Knowledge": 855
       },
-      "durationSeconds": 120,
+      "durationSeconds": 5640,
       "requires": [
         "CharterIII"
       ],
@@ -1138,7 +1138,7 @@
     },
     "WarbandII": {
       "cost": {
-        "Gold": 500,
+        "Gold": 800,
         "Knowledge": 40
       },
       "durationSeconds": 900,
@@ -1158,7 +1158,7 @@
     },
     "WarbandIII": {
       "cost": {
-        "Gold": 1500,
+        "Gold": 5000,
         "Knowledge": 500
       },
       "durationSeconds": 3600,
@@ -1178,7 +1178,7 @@
     },
     "WarbandIV": {
       "cost": {
-        "Gold": 8050,
+        "Gold": 30000,
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
@@ -1235,10 +1235,10 @@
     },
     "Archery": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 100
+        "Gold": 1000,
+        "Knowledge": 80
       },
-      "durationSeconds": 60,
+      "durationSeconds": 900,
       "requires": [
         "WarbandII"
       ],
@@ -1254,10 +1254,10 @@
     },
     "Cavalry": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 6000,
+        "Knowledge": 600
       },
-      "durationSeconds": 90,
+      "durationSeconds": 3600,
       "requires": [
         "WarbandIII"
       ],
@@ -1289,7 +1289,7 @@
     },
     "AttunementII": {
       "cost": {
-        "Gold": 750,
+        "Gold": 800,
         "Knowledge": 40
       },
       "durationSeconds": 900,
@@ -1310,7 +1310,7 @@
     },
     "AttunementIII": {
       "cost": {
-        "Gold": 2200,
+        "Gold": 5000,
         "Knowledge": 500
       },
       "durationSeconds": 3600,
@@ -1330,7 +1330,7 @@
     },
     "AttunementIV": {
       "cost": {
-        "Gold": 6500,
+        "Gold": 30000,
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
@@ -1388,10 +1388,10 @@
     },
     "Sailing": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 100
+        "Gold": 1000,
+        "Knowledge": 80
       },
-      "durationSeconds": 45,
+      "durationSeconds": 900,
       "requires": [
         "AttunementII"
       ],
@@ -1407,10 +1407,10 @@
     },
     "ScalingTools": {
       "cost": {
-        "Gold": 200,
-        "Knowledge": 100
+        "Gold": 1300,
+        "Knowledge": 105
       },
-      "durationSeconds": 60,
+      "durationSeconds": 1080,
       "requires": [
         "AttunementII"
       ],
@@ -1426,10 +1426,10 @@
     },
     "Fishing": {
       "cost": {
-        "Gold": 100,
-        "Knowledge": 800
+        "Gold": 6000,
+        "Knowledge": 600
       },
-      "durationSeconds": 45,
+      "durationSeconds": 3600,
       "requires": [
         "AttunementIII"
       ],
@@ -1445,10 +1445,10 @@
     },
     "Shipbuilding": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 7800,
+        "Knowledge": 780
       },
-      "durationSeconds": 90,
+      "durationSeconds": 5040,
       "requires": [
         "AttunementIII"
       ],
@@ -1479,10 +1479,10 @@
     },
     "TapPowerII": {
       "cost": {
-        "Gold": 110,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "TapPowerI",
         "CharterII"
@@ -1496,10 +1496,10 @@
     },
     "TapPowerIII": {
       "cost": {
-        "Gold": 242,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1200,
       "requires": [
         "TapPowerII",
         "CharterIII"
@@ -1513,10 +1513,10 @@
     },
     "TapPowerIV": {
       "cost": {
-        "Gold": 532,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 70,
+      "durationSeconds": 1950,
       "requires": [
         "TapPowerIII",
         "CharterIII"
@@ -1530,10 +1530,10 @@
     },
     "TapPowerV": {
       "cost": {
-        "Gold": 1171,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 105,
+      "durationSeconds": 2700,
       "requires": [
         "TapPowerIV",
         "CharterIII"
@@ -1562,10 +1562,10 @@
     },
     "QuickHandsII": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "QuickHandsI",
         "CharterII"
@@ -1579,10 +1579,10 @@
     },
     "QuickHandsIII": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1200,
       "requires": [
         "QuickHandsII",
         "CharterIII"
@@ -1596,10 +1596,10 @@
     },
     "QuickHandsIV": {
       "cost": {
-        "Gold": 600,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 70,
+      "durationSeconds": 1950,
       "requires": [
         "QuickHandsIII",
         "CharterIII"
@@ -1613,10 +1613,10 @@
     },
     "QuickHandsV": {
       "cost": {
-        "Gold": 1200,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 105,
+      "durationSeconds": 2700,
       "requires": [
         "QuickHandsIV",
         "CharterIII"
@@ -1645,10 +1645,10 @@
     },
     "WorkerLoadII": {
       "cost": {
-        "Gold": 500,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "WorkerLoadI",
         "CharterII"
@@ -1662,10 +1662,10 @@
     },
     "WorkerLoadIII": {
       "cost": {
-        "Gold": 1250,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "WorkerLoadII",
         "CharterIII"
@@ -1694,10 +1694,10 @@
     },
     "SawpitsII": {
       "cost": {
-        "Gold": 240,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "SawpitsI",
         "CharterII"
@@ -1711,10 +1711,10 @@
     },
     "SawpitsIII": {
       "cost": {
-        "Gold": 480,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "SawpitsII",
         "CharterIII"
@@ -1728,10 +1728,10 @@
     },
     "ButcheryI": {
       "cost": {
-        "Gold": 80,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
-      "durationSeconds": 20,
+      "durationSeconds": 180,
       "requires": [
         "Hunting",
         "CharterII"
@@ -1745,10 +1745,10 @@
     },
     "ButcheryII": {
       "cost": {
-        "Gold": 160,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 30,
+      "durationSeconds": 480,
       "requires": [
         "ButcheryI",
         "CharterII"
@@ -1762,10 +1762,10 @@
     },
     "ButcheryIII": {
       "cost": {
-        "Gold": 320,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "ButcheryII",
         "CharterIII"
@@ -1794,10 +1794,10 @@
     },
     "IrrigationII": {
       "cost": {
-        "Gold": 240,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "IrrigationI",
         "CharterII"
@@ -1811,10 +1811,10 @@
     },
     "IrrigationIII": {
       "cost": {
-        "Gold": 480,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "IrrigationII",
         "CharterIII"
@@ -1828,10 +1828,10 @@
     },
     "ScythesI": {
       "cost": {
-        "Gold": 90,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
-      "durationSeconds": 20,
+      "durationSeconds": 180,
       "requires": [
         "Farming",
         "CharterII"
@@ -1845,10 +1845,10 @@
     },
     "ScythesII": {
       "cost": {
-        "Gold": 180,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 30,
+      "durationSeconds": 480,
       "requires": [
         "ScythesI",
         "CharterII"
@@ -1862,10 +1862,10 @@
     },
     "ScythesIII": {
       "cost": {
-        "Gold": 360,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "ScythesII",
         "CharterIII"
@@ -1894,10 +1894,10 @@
     },
     "SurveyingII": {
       "cost": {
-        "Gold": 450,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "SurveyingI",
         "AttunementII"
@@ -1911,10 +1911,10 @@
     },
     "PitonsI": {
       "cost": {
-        "Gold": 200,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
-      "durationSeconds": 20,
+      "durationSeconds": 180,
       "requires": [
         "ScalingTools",
         "AttunementII"
@@ -1928,10 +1928,10 @@
     },
     "PitonsII": {
       "cost": {
-        "Gold": 500,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 30,
+      "durationSeconds": 480,
       "requires": [
         "PitonsI",
         "AttunementII"
@@ -1960,10 +1960,10 @@
     },
     "MarketStallII": {
       "cost": {
-        "Gold": 200,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "MarketStallI",
         "CharterII"
@@ -1977,10 +1977,10 @@
     },
     "MarketStallIII": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1200,
       "requires": [
         "MarketStallII",
         "CharterIII"
@@ -1994,10 +1994,10 @@
     },
     "MarketStallIV": {
       "cost": {
-        "Gold": 800,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 70,
+      "durationSeconds": 2700,
       "requires": [
         "MarketStallIII",
         "CharterIII"
@@ -2026,10 +2026,10 @@
     },
     "TradeRoutesII": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "TradeRoutesI",
         "CharterII"
@@ -2043,10 +2043,10 @@
     },
     "TradeRoutesIII": {
       "cost": {
-        "Gold": 600,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1200,
       "requires": [
         "TradeRoutesII",
         "CharterIII"
@@ -2060,10 +2060,10 @@
     },
     "TradeRoutesIV": {
       "cost": {
-        "Gold": 1200,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 70,
+      "durationSeconds": 1950,
       "requires": [
         "TradeRoutesIII",
         "CharterIII"
@@ -2077,10 +2077,10 @@
     },
     "TradeRoutesV": {
       "cost": {
-        "Gold": 2400,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 105,
+      "durationSeconds": 2700,
       "requires": [
         "TradeRoutesIV",
         "CharterIII"
@@ -2109,10 +2109,10 @@
     },
     "StonecuttingII": {
       "cost": {
-        "Gold": 200,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "StonecuttingI",
         "CharterII"
@@ -2126,10 +2126,10 @@
     },
     "StonecuttingIII": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "StonecuttingII",
         "CharterIII"
@@ -2143,10 +2143,10 @@
     },
     "BigNetsI": {
       "cost": {
-        "Gold": 100,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 20,
+      "durationSeconds": 1200,
       "requires": [
         "Fishing",
         "AttunementIII"
@@ -2160,10 +2160,10 @@
     },
     "BigNetsII": {
       "cost": {
-        "Gold": 200,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 30,
+      "durationSeconds": 1950,
       "requires": [
         "BigNetsI",
         "AttunementIII"
@@ -2177,10 +2177,10 @@
     },
     "BigNetsIII": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 45,
+      "durationSeconds": 2700,
       "requires": [
         "BigNetsII",
         "AttunementIII"
@@ -2194,10 +2194,10 @@
     },
     "IronPicksI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
-      "durationSeconds": 20,
+      "durationSeconds": 180,
       "requires": [
         "Mining",
         "CharterII"
@@ -2211,10 +2211,10 @@
     },
     "IronPicksII": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 30,
+      "durationSeconds": 480,
       "requires": [
         "IronPicksI",
         "CharterII"
@@ -2228,10 +2228,10 @@
     },
     "IronPicksIII": {
       "cost": {
-        "Gold": 600,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1950,
       "requires": [
         "IronPicksII",
         "CharterIII"
@@ -2260,10 +2260,10 @@
     },
     "ResonanceII": {
       "cost": {
-        "Gold": 625,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 30,
+      "durationSeconds": 330,
       "requires": [
         "ResonanceI",
         "AttunementII"
@@ -2292,10 +2292,10 @@
     },
     "CarpentryII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "CarpentryI",
         "CharterII"
@@ -2309,10 +2309,10 @@
     },
     "CarpentryIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "CarpentryII",
         "CharterIII"
@@ -2326,8 +2326,8 @@
     },
     "ScrivenersI": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
       "durationSeconds": 1200,
       "requires": [
@@ -2343,10 +2343,10 @@
     },
     "ScrivenersII": {
       "cost": {
-        "Gold": 540,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 1950,
       "requires": [
         "ScrivenersI",
         "CharterIII"
@@ -2360,8 +2360,8 @@
     },
     "ScrivenersIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
       "durationSeconds": 2700,
       "requires": [
@@ -2377,8 +2377,8 @@
     },
     "CartageI": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
       "durationSeconds": 1200,
       "requires": [
@@ -2394,10 +2394,10 @@
     },
     "CartageII": {
       "cost": {
-        "Gold": 540,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 1950,
       "requires": [
         "CartageI",
         "CharterIII"
@@ -2411,8 +2411,8 @@
     },
     "CartageIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
       "durationSeconds": 2700,
       "requires": [
@@ -2443,10 +2443,10 @@
     },
     "DeepWellsII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "DeepWellsI",
         "AttunementII"
@@ -2460,10 +2460,10 @@
     },
     "DeepWellsIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1200,
       "requires": [
         "DeepWellsII",
         "AttunementIII"
@@ -2477,10 +2477,10 @@
     },
     "DeepWellsIV": {
       "cost": {
-        "Gold": 1750,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 3600,
+      "durationSeconds": 1950,
       "requires": [
         "DeepWellsIII",
         "AttunementIII"
@@ -2494,10 +2494,10 @@
     },
     "DeepWellsV": {
       "cost": {
-        "Gold": 3150,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 4500,
+      "durationSeconds": 2700,
       "requires": [
         "DeepWellsIV",
         "AttunementIII"
@@ -2526,10 +2526,10 @@
     },
     "LeyTapsII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "LeyTapsI",
         "AttunementII"
@@ -2543,10 +2543,10 @@
     },
     "LeyTapsIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "LeyTapsII",
         "AttunementIII"
@@ -2575,10 +2575,10 @@
     },
     "WaypostsII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "WaypostsI",
         "AttunementII"
@@ -2592,10 +2592,10 @@
     },
     "WaypostsIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "WaypostsII",
         "AttunementIII"
@@ -2624,10 +2624,10 @@
     },
     "ScriptoriumII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "ScriptoriumI",
         "AttunementII"
@@ -2641,10 +2641,10 @@
     },
     "ScriptoriumIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "ScriptoriumII",
         "AttunementIII"
@@ -2658,8 +2658,8 @@
     },
     "VigilsI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
@@ -2675,10 +2675,10 @@
     },
     "VigilsII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 300,
+      "durationSeconds": 480,
       "requires": [
         "VigilsI",
         "AttunementII"
@@ -2692,10 +2692,10 @@
     },
     "VigilsIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "VigilsII",
         "AttunementIII"
@@ -2709,8 +2709,8 @@
     },
     "PilgrimageI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
@@ -2726,10 +2726,10 @@
     },
     "PilgrimageII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 300,
+      "durationSeconds": 480,
       "requires": [
         "PilgrimageI",
         "AttunementII"
@@ -2743,10 +2743,10 @@
     },
     "PilgrimageIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "PilgrimageII",
         "AttunementIII"
@@ -2760,8 +2760,8 @@
     },
     "ProspectingI": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
       "durationSeconds": 1200,
       "requires": [
@@ -2777,10 +2777,10 @@
     },
     "ProspectingII": {
       "cost": {
-        "Gold": 540,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 1950,
       "requires": [
         "ProspectingI",
         "AttunementIII"
@@ -2794,8 +2794,8 @@
     },
     "ProspectingIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
       "durationSeconds": 2700,
       "requires": [
@@ -2826,10 +2826,10 @@
     },
     "ColoursII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "ColoursI",
         "WarbandII"
@@ -2843,10 +2843,10 @@
     },
     "ColoursIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1200,
       "requires": [
         "ColoursII",
         "WarbandIII"
@@ -2860,10 +2860,10 @@
     },
     "ColoursIV": {
       "cost": {
-        "Gold": 1750,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 3600,
+      "durationSeconds": 1950,
       "requires": [
         "ColoursIII",
         "WarbandIII"
@@ -2877,10 +2877,10 @@
     },
     "ColoursV": {
       "cost": {
-        "Gold": 3150,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
-      "durationSeconds": 4500,
+      "durationSeconds": 2700,
       "requires": [
         "ColoursIV",
         "WarbandIII"
@@ -2909,10 +2909,10 @@
     },
     "MusterDrillII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "MusterDrillI",
         "WarbandII"
@@ -2926,10 +2926,10 @@
     },
     "MusterDrillIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "MusterDrillII",
         "WarbandIII"
@@ -2958,10 +2958,10 @@
     },
     "RationsII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "RationsI",
         "WarbandII"
@@ -2975,10 +2975,10 @@
     },
     "RationsIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "RationsII",
         "WarbandIII"
@@ -2992,8 +2992,8 @@
     },
     "DrillmasterI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
@@ -3009,10 +3009,10 @@
     },
     "DrillmasterII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 300,
+      "durationSeconds": 480,
       "requires": [
         "DrillmasterI",
         "WarbandII"
@@ -3026,10 +3026,10 @@
     },
     "DrillmasterIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "DrillmasterII",
         "WarbandIII"
@@ -3043,8 +3043,8 @@
     },
     "BearersI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
@@ -3060,10 +3060,10 @@
     },
     "BearersII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 300,
+      "durationSeconds": 480,
       "requires": [
         "BearersI",
         "WarbandII"
@@ -3077,10 +3077,10 @@
     },
     "BearersIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "BearersII",
         "WarbandIII"
@@ -3094,8 +3094,8 @@
     },
     "PathfindersI": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
       "durationSeconds": 1200,
       "requires": [
@@ -3111,10 +3111,10 @@
     },
     "PathfindersII": {
       "cost": {
-        "Gold": 540,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 1950,
       "requires": [
         "PathfindersI",
         "WarbandIII"
@@ -3128,8 +3128,8 @@
     },
     "PathfindersIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
       "durationSeconds": 2700,
       "requires": [
@@ -3160,10 +3160,10 @@
     },
     "ShieldWallII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "ShieldWallI",
         "WarbandII"
@@ -3177,10 +3177,10 @@
     },
     "ShieldWallIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "ShieldWallII",
         "WarbandIII"
@@ -3194,8 +3194,8 @@
     },
     "FletchingI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
@@ -3211,10 +3211,10 @@
     },
     "FletchingII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 300,
+      "durationSeconds": 480,
       "requires": [
         "FletchingI",
         "WarbandII"
@@ -3228,10 +3228,10 @@
     },
     "FletchingIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "FletchingII",
         "WarbandIII"
@@ -3245,8 +3245,8 @@
     },
     "BardingI": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
       "durationSeconds": 1200,
       "requires": [
@@ -3262,10 +3262,10 @@
     },
     "BardingII": {
       "cost": {
-        "Gold": 540,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 1950,
       "requires": [
         "BardingI",
         "WarbandIII"
@@ -3279,8 +3279,8 @@
     },
     "BardingIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
       "durationSeconds": 2700,
       "requires": [
@@ -3311,10 +3311,10 @@
     },
     "WarhornsII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 525,
+        "Knowledge": 40
       },
-      "durationSeconds": 300,
+      "durationSeconds": 330,
       "requires": [
         "WarhornsI",
         "WarbandII"
@@ -3328,10 +3328,10 @@
     },
     "WarhornsIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "WarhornsII",
         "WarbandIII"
@@ -3345,8 +3345,8 @@
     },
     "ManoeuvreI": {
       "cost": {
-        "Gold": 300,
-        "Knowledge": 200
+        "Gold": 1500,
+        "Knowledge": 150
       },
       "durationSeconds": 1200,
       "requires": [
@@ -3362,10 +3362,10 @@
     },
     "ManoeuvreII": {
       "cost": {
-        "Gold": 540,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 1950,
       "requires": [
         "ManoeuvreI",
         "WarbandIII"
@@ -3379,8 +3379,8 @@
     },
     "ManoeuvreIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 5000,
+        "Knowledge": 400
       },
       "durationSeconds": 2700,
       "requires": [
@@ -3396,8 +3396,8 @@
     },
     "FarsightI": {
       "cost": {
-        "Gold": 150,
-        "Knowledge": 30
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
@@ -3413,10 +3413,10 @@
     },
     "FarsightII": {
       "cost": {
-        "Gold": 270,
-        "Knowledge": 30
+        "Gold": 800,
+        "Knowledge": 60
       },
-      "durationSeconds": 300,
+      "durationSeconds": 480,
       "requires": [
         "FarsightI",
         "AttunementII"
@@ -3430,10 +3430,10 @@
     },
     "FarsightIII": {
       "cost": {
-        "Gold": 970,
-        "Knowledge": 200
+        "Gold": 3250,
+        "Knowledge": 275
       },
-      "durationSeconds": 2700,
+      "durationSeconds": 1950,
       "requires": [
         "FarsightII",
         "AttunementIII"
@@ -3447,10 +3447,10 @@
     },
     "Aqueducts": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 9855,
+        "Knowledge": 985
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 6660,
       "requires": [
         "CharterIII"
       ],
@@ -3466,10 +3466,10 @@
     },
     "Guildhalls": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 11145,
+        "Knowledge": 1115
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 7740,
       "requires": [
         "CharterIII"
       ],
@@ -3485,10 +3485,10 @@
     },
     "Roadworks": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 12430,
+        "Knowledge": 1245
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 8760,
       "requires": [
         "CharterIII"
       ],
@@ -3504,10 +3504,10 @@
     },
     "LandSurvey": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 13715,
+        "Knowledge": 1370
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 9780,
       "requires": [
         "CharterIII"
       ],
@@ -3523,10 +3523,10 @@
     },
     "Apprenticeships": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 15000,
+        "Knowledge": 1500
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 10800,
       "requires": [
         "CharterIII"
       ],
@@ -3560,10 +3560,10 @@
     },
     "Veterancy": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 1375,
+        "Knowledge": 110
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1140,
       "requires": [
         "WarbandII"
       ],
@@ -3579,10 +3579,10 @@
     },
     "Siegecraft": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 1750,
+        "Knowledge": 140
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1320,
       "requires": [
         "WarbandII"
       ],
@@ -3598,10 +3598,10 @@
     },
     "Tactics": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 2125,
+        "Knowledge": 170
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1560,
       "requires": [
         "WarbandII"
       ],
@@ -3617,10 +3617,10 @@
     },
     "Scouting": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 2500,
+        "Knowledge": 200
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1800,
       "requires": [
         "WarbandII"
       ],
@@ -3636,10 +3636,10 @@
     },
     "Salvage": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 8250,
+        "Knowledge": 825
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 5400,
       "requires": [
         "WarbandIII"
       ],
@@ -3655,10 +3655,10 @@
     },
     "Vanguard": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 10500,
+        "Knowledge": 1050
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 7200,
       "requires": [
         "WarbandIII"
       ],
@@ -3674,10 +3674,10 @@
     },
     "Standards": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 12750,
+        "Knowledge": 1275
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 9000,
       "requires": [
         "WarbandIII"
       ],
@@ -3693,10 +3693,10 @@
     },
     "Conquest": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 15000,
+        "Knowledge": 1500
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 10800,
       "requires": [
         "WarbandIII"
       ],
@@ -3784,10 +3784,10 @@
     },
     "Lorekeeping": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 1600,
+        "Knowledge": 130
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1260,
       "requires": [
         "AttunementII"
       ],
@@ -3803,10 +3803,10 @@
     },
     "Wayshrines": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 1900,
+        "Knowledge": 150
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1440,
       "requires": [
         "AttunementII"
       ],
@@ -3822,10 +3822,10 @@
     },
     "LeyLines": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 2200,
+        "Knowledge": 175
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1620,
       "requires": [
         "AttunementII"
       ],
@@ -3841,10 +3841,10 @@
     },
     "FrugalRites": {
       "cost": {
-        "Gold": 250,
-        "Knowledge": 100
+        "Gold": 2500,
+        "Knowledge": 200
       },
-      "durationSeconds": 600,
+      "durationSeconds": 1800,
       "requires": [
         "AttunementII"
       ],
@@ -3860,10 +3860,10 @@
     },
     "SanctifiedRuins": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 9600,
+        "Knowledge": 960
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 6480,
       "requires": [
         "AttunementIII"
       ],
@@ -3879,10 +3879,10 @@
     },
     "RitualCasting": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 11400,
+        "Knowledge": 1140
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 7920,
       "requires": [
         "AttunementIII"
       ],
@@ -3898,10 +3898,10 @@
     },
     "LeyStorm": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 13200,
+        "Knowledge": 1320
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 9360,
       "requires": [
         "AttunementIII"
       ],
@@ -3917,10 +3917,10 @@
     },
     "SecondSanctum": {
       "cost": {
-        "Gold": 400,
-        "Knowledge": 800
+        "Gold": 15000,
+        "Knowledge": 1500
       },
-      "durationSeconds": 1800,
+      "durationSeconds": 10800,
       "requires": [
         "AttunementIII"
       ],

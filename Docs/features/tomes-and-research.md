@@ -441,6 +441,9 @@ reversals, so that nobody reading the diff has to guess which is current:
 5c. **Era-2/3 majors added — DONE 2026-09-04.** Twenty-six majors on the
    tree: nine live against existing dials, seventeen **planned** and badged as
    such in the game ([`tech-tree.md`](tech-tree.md) §13). The tree is 180.
+5d. **Repriced to the bands — DONE 2026-09-04** ([`tech-tree.md`](tech-tree.md)
+   §6): eras 2–4 on the bands, era 1 as the tutorial tuned it. 550,165 Gold,
+   50,495 Knowledge, about six weeks of tree at a full province's drip.
 5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
    assigned a tome and an era, the nine keystones exist and each unlocks a
    real dial (Townhall level, hall levels, Sanctum levels), and the Townhall

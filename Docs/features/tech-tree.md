@@ -363,6 +363,26 @@ available of what the tome is for.
 The bands are the design; the exact rows are the workbook's. **Era 1 costs no
 Knowledge**, for the reason in rule 7.
 
+**Repriced to these bands on 2026-09-04 — eras 2, 3 and the keystones.** Majors
+climb across their band left to right along the era row; a line's ranks climb
+across theirs by position within the era. **Era 1 was deliberately left as
+authored** (Forestry at 25 Gold and 3 seconds is the tutorial's first beat, and
+`tests/onboarding.test.ts` pins the opening beat by beat), so its majors sit
+*below* the band and that is correct. The tree is **550,165 Gold and 50,495
+Knowledge**; era 3 alone is 37,675 Knowledge, which against a fully claimed
+province's ~35/h is about six weeks — the number `../road-to-mvp.md` §1.1 asks
+for.
+
+**What the repricing changed about the chain.** An era-2 major now costs
+1,000–2,500 Gold, so the quest chain's later asks — Sailing, Scaling Tools,
+Surveying II — are no longer payable out of quest rewards alone. That is by
+design: the chain funds the **opening** (every era-1 technology and the
+keystone that closes it), and the depth is the city's to earn. By quest 25 the
+player has a Market, taxes and workers. Funding those asks from rewards would
+mean 1,000-Gold quests at beat 25 and double the early economy — the exact
+distortion `balancing-v3.md` pulled the Market beats back from. The onboarding
+test's guarantee is scoped to the opening and says so.
+
 | | Minor | Major | Keystone |
 |---|---|---|---|
 | **Era 1** | 40–150 G · 20–60 s | 200–500 G · 2–5 min | 800 G · 40 K · 15 min |
@@ -603,13 +623,9 @@ matter of building its mechanic and clearing the flag.
 
 ## Open decisions
 
-0. **When does the tree get repriced to §6's bands?** Every major still costs
-   what it did as a 24-node tree (an era-3 major is 275–450 Gold), while the
-   bands say 6,000–15,000. New ranks are deliberately priced to the legacy
-   scale so the tree stays coherent with itself. Repricing is one pass over the
-   `Technologies` sheet — but it changes the quest chain's Gold guarantee and
-   the onboarding's feel, so it is a decision to make once, not a side effect
-   of adding content.
+0. ~~When does the tree get repriced to §6's bands?~~ **Decided and done
+   2026-09-04** — eras 2–4 on the bands, era 1 as tuned (§6). The chain's Gold
+   guarantee now covers the opening only, deliberately.
 1. **All-of, or N-of-M?** A keystone requiring all 26 nodes of Civics era 3 is
    a wall, and a player who does not care about fishing meets it. `25 of 26`
    keeps the pacing and removes the wall. This is the biggest risk in the
@@ -618,10 +634,11 @@ matter of building its mechanic and clearing the flag.
    stripped off it (§12). It is a player verb with a Food cost rather than a
    passive faucet, and nothing else in the game can train — but if the Townhall
    is to be *nothing* but permission, training needs a home first.
-3. **Warfare is the smallest tome** at 47 against 64 and 56. Left there on
-   purpose: it opens last, and a player who never delves can ignore it without
-   the city stalling. Worth revisiting once `Conquest` and Knowledge make
-   delving matter to the tree.
+3. ~~Warfare is the smallest tome.~~ **Decided 2026-09-04: it opens as
+   designed, on the first ruin in sight**, thin or not. It now carries its
+   era-2/3 majors — three live (Tactics, Salvage, Conquest) and five planned
+   (§13) — so it is a shape with gaps rather than a stub, and a player who never
+   delves can still ignore it without the city stalling.
 4. **Three tomes at ~167 nodes is a doubling of the authoring surface.** About
    40% is rank II/III rows — same name, next number, next price — so the cost
    is far below the node count. It is still the largest content commitment in
