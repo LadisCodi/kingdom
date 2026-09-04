@@ -16,7 +16,7 @@ import { drawFromCell, harvestSourceAt, isExhausted, recoversAt } from './harves
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import {
-  addToWallet, coordKey, districtById, newId, sameCell,
+  addToWallet, coordKey, districtById, newId,
   type Coord, type CurrencyId, type District, type GameState,
   type HarvestSourceId, type Worker,
 } from './state';
@@ -62,10 +62,64 @@ export function assignableWorkerLimit(district: District): number {
 
 // ------------------------------------------------------------------------ claims
 
-const isClaimed = (state: GameState, cell: Coord, except?: Worker): boolean =>
-  state.workers.some(
-    (w) => w !== except && w.claimedCell !== null && sameCell(w.claimedCell, cell),
-  );
+/**
+ * The two lookups behind every worker event, indexed for the duration of one
+ * advance.
+ *
+ * The loop asks the same two questions for every worker on every event —
+ * *which cells can this building work*, and *who has already claimed one* —
+ * and asked directly both are O(cells × workers). A crew of 24 on maxed
+ * Sawmills made an 8-hour offline catch-up cost **13 seconds**, all of it
+ * here. Neither answer moves often:
+ *
+ * - **Workable cells** move only when a cell stops holding what the building
+ *   works, and inside one advance the only thing that does that is a finite
+ *   feature being consumed — `drawFromCell` deletes it. Fog, districts and
+ *   levels are fixed for the duration, so the memo is dropped when, and only
+ *   when, the feature count moves.
+ * - **Claims** move on nearly every step, so that half is rebuilt each time:
+ *   one pass over the crew, against the whole-area scan it replaces.
+ *
+ * It is an index, never a decision: every caller sees the same cells in the
+ * same nearest-first order it would have computed itself.
+ */
+function crewIndex(state: GameState, map: MapData) {
+  const cells = new Map<string, Coord[]>();
+  const claims = new Map<string, Worker>();
+  for (const w of state.workers) {
+    if (w.claimedCell !== null) claims.set(coordKey(w.claimedCell), w);
+  }
+  return {
+    workable(district: District): Coord[] {
+      const hit = cells.get(district.uniqueId);
+      if (hit !== undefined) return hit;
+      const fresh = workableCells(state, map, district);
+      cells.set(district.uniqueId, fresh);
+      return fresh;
+    },
+    /** The worker holding `cell`, if any. At most one: a claim is taken only
+     *  through `findClaimableCell`, which skips what is already held. */
+    claimedBy(cell: Coord): Worker | undefined {
+      return claims.get(coordKey(cell));
+    },
+    /**
+     * Fold one step back in. A step mutates exactly one worker, so the claim
+     * index moves by one entry; and the only cell that can leave a building's
+     * list is the one just struck, when the strike consumed a finite feature
+     * outright.
+     */
+    after(w: Worker, hadClaim: Coord | null, struck: Coord | null): void {
+      if (hadClaim !== null) {
+        const key = coordKey(hadClaim);
+        if (claims.get(key) === w) claims.delete(key);
+      }
+      if (w.claimedCell !== null) claims.set(coordKey(w.claimedCell), w);
+      if (struck !== null && harvestSourceAt(state, struck) === null) cells.clear();
+    },
+  };
+}
+
+type CrewIndex = ReturnType<typeof crewIndex>;
 
 /** Nearest unclaimed, non-exhausted workable cell (workableCells is nearest-first). */
 function findClaimableCell(
@@ -73,10 +127,12 @@ function findClaimableCell(
   map: MapData,
   district: District,
   now: number,
+  index: CrewIndex,
   except?: Worker,
 ): Coord | null {
-  for (const cell of workableCells(state, map, district)) {
-    if (!isClaimed(state, cell, except) && !isExhausted(state, map, cell, now)) return cell;
+  for (const cell of index.workable(district)) {
+    const by = index.claimedBy(cell);
+    if ((by === undefined || by === except) && !isExhausted(state, map, cell, now)) return cell;
   }
   return null;
 }
@@ -109,8 +165,15 @@ const setState = (
 };
 
 /** From the building: claim a cell and head out, or go/stay Idle. */
-function tryDispatch(state: GameState, map: MapData, w: Worker, building: District, at: number): void {
-  const cell = findClaimableCell(state, map, building, at, w);
+function tryDispatch(
+  state: GameState,
+  map: MapData,
+  w: Worker,
+  building: District,
+  at: number,
+  index: CrewIndex,
+): void {
+  const cell = findClaimableCell(state, map, building, at, index, w);
   if (cell) {
     w.claimedCell = cell;
     setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell));
@@ -145,14 +208,21 @@ export interface CrewEvents {
 }
 
 /** When this worker next needs processing; null = never (blocked Idle). */
-function nextEventAt(state: GameState, map: MapData, w: Worker, building: District): number | null {
+function nextEventAt(
+  state: GameState,
+  map: MapData,
+  w: Worker,
+  building: District,
+  index: CrewIndex,
+): number | null {
   if (w.activity !== 'Idle') return w.stateUntil;
   // Idle: wake when any unclaimed workable cell exists or recovers — never
   // before stateStartedAt (which completion/reveal events bump forward, so a
   // cell that appeared mid-absence isn't worked retroactively).
   let earliest: number | null = null;
-  for (const cell of workableCells(state, map, building)) {
-    if (isClaimed(state, cell, w)) continue;
+  for (const cell of index.workable(building)) {
+    const by = index.claimedBy(cell);
+    if (by !== undefined && by !== w) continue;
     const at = Math.max(w.stateStartedAt, recoversAt(state, map, cell, w.stateStartedAt) ?? w.stateStartedAt);
     if (earliest === null || at < earliest) earliest = at;
   }
@@ -168,11 +238,12 @@ function step(
   t: number,
   strikes: StrikeEvent[],
   deposits: DepositEvent[],
+  index: CrewIndex,
 ): void {
   const sources = DISTRICTS[building.definitionId].harvestSources;
   switch (w.activity) {
     case 'Idle':
-      tryDispatch(state, map, w, building, t);
+      tryDispatch(state, map, w, building, t, index);
       break;
     case 'MovingToCell': {
       const cell = w.claimedCell!;
@@ -229,7 +300,7 @@ function step(
         setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell));
       } else {
         w.claimedCell = null;
-        tryDispatch(state, map, w, building, t);
+        tryDispatch(state, map, w, building, t, index);
       }
       break;
     }
@@ -239,13 +310,14 @@ function step(
 /** Advance all workers to `toTime`, processing events in chronological order. */
 export function advanceWorkers(state: GameState, map: MapData, toTime: number): CrewEvents {
   const out: CrewEvents = { strikes: [], deposits: [] };
+  const index = crewIndex(state, map);
   for (;;) {
     let next: Worker | null = null;
     let nextAt = Infinity;
     for (const w of state.workers) {
       const building = districtById(state, w.buildingId);
       if (!building || building.state !== 'Built') continue;
-      const at = nextEventAt(state, map, w, building);
+      const at = nextEventAt(state, map, w, building, index);
       if (at !== null && at <= toTime && at < nextAt) {
         next = w;
         nextAt = at;
@@ -256,10 +328,12 @@ export function advanceWorkers(state: GameState, map: MapData, toTime: number): 
     // Guard against zero-length loops: an Idle worker whose dispatch fails
     // advances its own reference time so the same wake isn't reprocessed.
     const before = next.activity;
-    step(state, map, next, building, nextAt, out.strikes, out.deposits);
+    const hadClaim = next.claimedCell;
+    step(state, map, next, building, nextAt, out.strikes, out.deposits, index);
     if (before === 'Idle' && next.activity === 'Idle') {
       next.stateStartedAt = nextAt + 1;
     }
+    index.after(next, hadClaim, before === 'Working' ? hadClaim : null);
   }
 }
 
@@ -278,7 +352,7 @@ export function addWorker(state: GameState, map: MapData, district: District, no
   };
   state.workers.push(w);
   district.assignedWorkers += 1;
-  tryDispatch(state, map, w, district, now);
+  tryDispatch(state, map, w, district, now, crewIndex(state, map));
 }
 
 /**
