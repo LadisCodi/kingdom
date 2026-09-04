@@ -49,6 +49,7 @@ their emoji fallback until then. Prompts in `Docs/art/sprite-prompts.md`.
 | `sanctum_l1..l3.png` | 🔮 | raises the Mana cap |
 | `ruin.png` / `_cleared` | 🏚️ | dungeon entrance — see `Docs/features/11-expeditions.md` |
 | `landmark.png` / `_claimed` / `_defended` | 🗿 | +1 Mana/h once claimed |
+| `gems_pouch.png` … `gems_treasury.png` | 💎 (fallback) | the six store packs, in ladder order: pouch, purse, chest, vault, hoard, treasury. **64×64**, padded from `Docs/art/ui/icon_pack_gems_1..6.png` without scaling; drawn at 64 px in the store (`storeSheet.ts`), never on the map |
 
 **Hero, unit and artifact portraits do NOT belong here.** They are UI art, not
 world tiles, and this directory is globbed **eagerly** by

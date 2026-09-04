@@ -51,7 +51,7 @@ describe('save round-trip', () => {
     expect(restored.workers[0].activity).toBe(state.workers[0].activity);
     expect(restored.harvest[worked]).toEqual(state.harvest[worked]);
     expect(restored.army).toEqual([{ uniqueId: 'unit_1', definitionId: 'Archer' }]);
-    expect(restored.player.wallet.Gems).toBe(10);
+    expect(restored.player.wallet.Gems).toBe(500);
     expect(getWallet(restored.city.wallet, 'Wood')).toBe(woodAtSave); // zero-time load adds nothing
   });
 

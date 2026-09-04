@@ -66,13 +66,13 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
 });
 
 describe('gem rush cost (Docs/06)', () => {
-  it('10 seconds per gem, minimum 1', () => {
+  it('RUSH.secondsPerGem seconds per gem (5), minimum 1', () => {
     const now = 1_000_000;
     const item = {
       uniqueId: 'x', kind: 'build' as const, districtUniqueId: 'd',
       durationSeconds: 95, startedAt: now,
     };
-    expect(gemRushCost(item, now)).toBe(10); // ceil(95/10)
+    expect(gemRushCost(item, now)).toBe(19); // ceil(95/5)
     expect(gemRushCost(item, now + 94_000)).toBe(1); // 1s left
     expect(gemRushCost(item, now + 95_000)).toBe(1); // 0s left → still min 1
   });

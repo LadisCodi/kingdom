@@ -69,10 +69,12 @@ fourth thing to learn.
 | 3rd | 75 |
 | 4th | 188 |
 
-**Why 30 for the second.** It is exactly a gacha pull, which makes the first
-real choice in the Gem economy a legible one: *a hero, or a second builder?* The
-up-front faucet is 75 Gems, so the second builder is affordable inside the first
-arc and the third is a genuine saving.
+**Why 2,500 for the second.** It is the $4.99 Gem pack to the coin — the price
+Kingshot sells its second builder at — and each builder after it is the next
+pack up ($9.99, $19.99; `×2`). Repriced 2026-09-04 with every Gem sink to the
+500-Gems-a-dollar ladder ([`14-monetization.md`](14-monetization.md) §2.2). The
+up-front faucet is 3,750 Gems, so the second builder is still affordable inside
+the first arc; the third is a real saving, or a real purchase.
 
 `purchased` is **derived** — `builders − startBuilders` — rather than stored,
 because two numbers that must agree eventually will not. The trade: a *granted*
@@ -110,4 +112,5 @@ unlocks nothing; it makes two things happen at once.
   §2. This offer stays either way: a surface the player is *sent* to and one
   they *stumble into* answer different questions.
 
-**Open questions:** OQ-30, OQ-31, OQ-32.
+**Open questions:** OQ-31, OQ-32. OQ-30 closed 2026-09-04: the second builder
+is 2,500 Gems, the $4.99 pack.

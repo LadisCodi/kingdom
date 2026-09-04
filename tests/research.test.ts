@@ -164,7 +164,8 @@ describe('technology basics', () => {
 
 describe('research slots', () => {
   it('base slot limits concurrency; a gem-bought slot lifts it', () => {
-    const state = freshGame(); // 10 Gems
+    const state = freshGame();
+    state.player.wallet.Gems = 2500; // exactly the second slot
     fund(state, { Gold: 5000 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     completeTech(state, 'Forestry');
@@ -173,20 +174,20 @@ describe('research slots', () => {
     // REQUIREMENT and never reach the slot check this test is about.
     expect(startTech(state, 'Masonry', T0)).toBe('NoFreeSlot');
 
-    expect(slotGemCost(state)).toBe(10);
+    expect(slotGemCost(state)).toBe(2500);
     expect(buySlot(state)).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
     expect(techSlots(state)).toBe(2);
     expect(startTech(state, 'Masonry', T0)).toBe('Started');
 
     // Escalating price for the next one — and 0 gems left.
-    expect(slotGemCost(state)).toBe(30);
+    expect(slotGemCost(state)).toBe(5000);
     expect(buySlot(state)).toBe('NotEnoughGems');
   });
 
   it('slots are capped at research.max_slots', () => {
     const state = freshGame();
-    state.player.wallet.Gems = 999;
+    state.player.wallet.Gems = 99_999;
     expect(buySlot(state)).toBe('Purchased'); // → 2
     expect(buySlot(state)).toBe('Purchased'); // → 3 = max
     expect(buySlot(state)).toBe('AtMax');
@@ -195,7 +196,7 @@ describe('research slots', () => {
 
   it('two active technologies complete independently, in time order', () => {
     const state = freshGame();
-    state.player.wallet.Gems = 10;
+    state.player.wallet.Gems = 2500;
     fund(state, { Gold: 5000 });
     completeTech(state, 'Forestry');
     buySlot(state);
@@ -213,7 +214,7 @@ describe('research slots', () => {
 describe('save round-trip', () => {
   it('restores completed techs, active researches, slots and line ranks', () => {
     const state = freshGame();
-    state.player.wallet.Gems = 10;
+    state.player.wallet.Gems = 2500;
     fund(state, { Gold: 10_000, Wood: 500, Food: 500, Knowledge: 500 });
     completeTech(state, 'Forestry');
     completeTech(state, 'Agriculture');

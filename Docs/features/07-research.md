@@ -46,8 +46,9 @@ slots, and levels of buildings you already own.
   paces, Gold prices.
 - Complete through the same advance the build queue uses, so they finish while
   you are away, in real time.
-- Limited by **concurrent research slots**: base 1, max 3. Slot 2 costs 10 Gems,
-  slot 3 costs 30 (`base × growth^purchased`).
+- Limited by **concurrent research slots**: base 1, max 3. Slot 2 costs 2,500
+  Gems, slot 3 costs 5,000 (`base × growth^purchased`) — a second queue is
+  priced as a second builder.
 - Each lists `requires`; content gates on `requiredTech`.
 
 **24 technologies, 6,600 Gold in total.** Against a quest chain that pays

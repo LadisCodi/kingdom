@@ -52,7 +52,7 @@ describe('reconciliation', () => {
     const past = state.schedule.filter((e) => (e.endsAt ?? 0) <= T0);
     expect(past.length).toBeGreaterThan(0);
     for (const e of past) expect(e.phase).toBe('done');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(10); // the starting grant, no more
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(500); // the starting grant, no more
   });
 
   it('reaches a save written before the content existed', () => {

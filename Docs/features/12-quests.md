@@ -14,7 +14,7 @@
 order. Completing a quest lights the pill's **Claim**, which pays the reward and
 activates the next. The pill disappears when the chain ends.
 
-**50 quests, paying 11,865 Gold, 15 Gems and 158 Stardust.** Gold is the bulk of
+**50 quests, paying 11,865 Gold, 750 Gems and 158 Stardust.** Gold is the bulk of
 it and doubles as the fog budget in an economy that starts with almost none.
 
 ### 1.1 Absolute versus relative, decided by the goal TYPE
@@ -94,7 +94,7 @@ three relics held at once.
 2. **A gated forest is the reason the first research is wanted.** The trees are
    visible and refusing from the first second, and the refusal says *research
    Forestry before you can work this* rather than *come back later*.
-3. **The free first summon.** A pull costs 30 Gems and a new game grants 10. The
+3. **The free first summon.** A pull costs 1,000 Gems and a new game grants 500. The
    first call on the standard banner is free, tracked on the pity counter that
    already persists.
 4. **The Market moved into the opening.** It had been cut for length, and that
@@ -128,13 +128,18 @@ what the game grants and what it earns — is what found these:
 
 ### 2.3 Where Gems and Stardust appear
 
-**Gem rewards sit in four late quests** (3 + 3 + 5 + 4 = 15), on top of the 10 a
-new game grants and the 50 from five ruin first-clears — **75 up front**, which
-is exactly the budget, and enough to reach research slot 3 by play.
+**Gem rewards sit in four late quests** (150 + 150 + 250 + 200 = 750), on top of
+the 500 a new game grants and the 2,500 from five ruin first-clears — **3,750 up
+front**, which is exactly the budget. Rescaled ×50 on 2026-09-04 when every Gem
+sink moved to the 500-Gems-a-dollar ladder
+([`14-monetization.md`](14-monetization.md) §2.2): it reaches the second
+builder (2,500) and a pull by play; the later rungs arrive at one a month from
+the daily chest, or from a wallet.
 
 But **they are concentrated late** — quests 20, 34, 42 and 50. A player who
-stops after the authored arc has thirteen Gems, which buys nothing, so **every
-Gem price in the game is effectively invisible for the whole first session.**
+stops after the authored arc has 800 Gems, which buys a Mana refill and nothing
+else, so **every other Gem price in the game is effectively invisible for the
+whole first session.**
 That is fine for slots and fatal for a store you want to instrument, which is
 why the daily chest's week marker (§3) is the fix.
 
@@ -175,7 +180,7 @@ city grows.
 | 4 | Mana ~⅓ + a Gold sum |
 | 5 | Mana, ~½ pool |
 | 6 | Mana, ~⅓ pool |
-| **7 · week marker** | **a full pool + 5 Gems** |
+| **7 · week marker** | **a full pool + 250 Gems** |
 | 8+ | the same seven-step cycle, repeating |
 
 The Mana amounts are **fractions of the cap, not absolute numbers**, for the same
@@ -185,8 +190,9 @@ priced in seconds of the city's own tax income** with an authored floor, so it
 neither goes stale by era three nor pays zero to a city that has not housed
 anyone yet.
 
-**The Gems at the week marker do a second job:** ~20 Gems a month is the
-recurring faucet §2.3 says the game needs and never had.
+**The Gems at the week marker do a second job:** ~1,000 Gems a month is the
+recurring faucet §2.3 says the game needs and never had — a pull, or two
+refills, every month by play.
 
 ### 3.3 It only glows
 
@@ -217,8 +223,8 @@ urgency; this one exists to remove it.
 ## 4. Dials, in the order to reach for them
 
 1. **`daily.mana_fractions`** — the seven-step ladder as fractions of the cap.
-2. **`daily.gems`** — 5 at the week marker. Also the recurring Gem faucet, so it
-   cannot be tuned without re-checking the faucet total.
+2. **`daily.gems`** — 250 at the week marker. Also the recurring Gem faucet, so
+   it cannot be tuned without re-checking the faucet total.
 3. **`daily.gold_seconds` / `daily.gold_floor`** — the one Gold step.
 4. The chain itself — the `Quests` sheet, where **row order is chain order.**
 

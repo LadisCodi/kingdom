@@ -157,6 +157,9 @@ export const WORKER = balance.worker;
 // Player collect taps: cooldown between collects (upgradeable later).
 export const TAP = balance.tap;
 
+// Buying time with Gems: seconds of a build or training line one Gem finishes.
+export const RUSH = balance.rush;
+
 
 // Villager training at the Townhall. There is no tap that hurries it: a queue
 // is a FIXED duration and a tap is a scaling one, so a maxed thumb would

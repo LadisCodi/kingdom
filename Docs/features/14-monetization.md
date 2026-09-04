@@ -59,9 +59,11 @@ Gems at the week marker. **The paid gate is never the only route in.**
   refills — and **three of those are one-time ladders.** A one-time ladder cannot
   carry a subscription-shaped revenue curve, which is what *months active*
   implies.
-- **The faucet is 75 up front plus ~20/month** and it is enough to buy the whole
-  slot ladder by play. That is correct for the promise, and it means **there is
-  currently nothing a wallet is needed for.**
+- **The faucet is 3,750 up front plus ~1,000/month** — 500 to start, 750 across
+  the chain, 500 a first clear, 250 at the week marker — rescaled ×50 on
+  2026-09-04 with the sinks. It buys the second builder and a pull by play and
+  the later rungs at one a month, so **a wallet now has something to be for**
+  without any ladder being purchase-only.
 
 ## 2. The catalogue
 
@@ -72,8 +74,8 @@ a relative cost.** The six Gem packs are **built** and live in the workbook's
 
 | SKU | Family | Price | Grants |
 |---|---|---|---|
-| **Gems ×80 / ×220 / ×500 / ×1200 / ×3200 / ×7000** | currency | **$1.99 / $4.99 / $9.99 / $19.99 / $49.99 / $99.99** | Gems — built; six packs on a 3×2 grid |
-| **Second builder** | permanent comfort | Gems (30, ×2.5) | +1 builder — built, priced in Gems rather than dollars |
+| **Gems ×500 / ×2,500 / ×5,000 / ×10,000 / ×25,000 / ×50,000** | currency | **$0.99 / $4.99 / $9.99 / $19.99 / $49.99 / $99.99** | Gems — built; six packs on a 3×2 grid, **Kingshot's ladder** (§2.2) |
+| **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built, priced in Gems rather than dollars: one pack a builder |
 | Third builder | permanent comfort | Gems | +1 more — built |
 | **Monthly card** | subscription | $4.99/mo | Gems daily for 30 days |
 | **Event pass, paid track** | season | $4.99 | unlocks the paid column |
@@ -104,7 +106,24 @@ sections under it:
 |---|---|---|
 | **Heroes** | **the banner itself**, first — chance, pity, the Call button. A call for aid is a purchase, so the gacha is pulled from the store; the Reliquary's heroes tab keeps the roster and points here | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
-| **Gems** | last: six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`, the Gems icon until it lands). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
+| **Gems** | last: six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`, landed 2026-09-04). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
+
+### 2.2 The Gem ladder is Kingshot's
+
+Copied on 2026-09-04, amounts and prices alike: **500 Gems to the dollar, flat
+across every tier** — $0.99 buys 500, $99.99 buys 50,000, and no tier is a
+better deal than another. Kingshot's $1.99 and $2.99 tiers were dropped to fit
+the 3×2 grid; the six that remain are the tiers every comparable sells. Using
+the genre's own ladder means a playtester who has bought Gems anywhere before
+sees numbers they already have an intuition for, and the read-out compares with
+the comparables' pack mix without conversion.
+
+**Every Gem sink was repriced to the ladder the same day** (§9). The anchors
+are Kingshot's own: a second builder is the $4.99 pack, a hero pull is the
+1,000-Gem epic shard, an hour of speed-up is 720 Gems against Kingshot's 800.
+Before that a pull was 30 Gems and the $0.99 pack bought the entire slot
+ladder with change. The faucet scaled ×50 with the sinks (§1.1), so promise 3
+holds: the first rung of every ladder is still earned by play.
 
 **The banner moved here from the Reliquary on 2026-09-04.** The reliquary
 doc's argument — *a gacha with its own permanent tab is a different game* —
@@ -324,21 +343,24 @@ there is currently no way to produce a D30 at all.**
 
 | Dial | Value | Key |
 |---|---|---|
-| Gacha pull | 30 Gems | `gacha.pull_gem_cost` |
-| Second builder | 30 Gems, `×2.5` per builder | `kingdom.builder_gem_cost_*` |
-| Mana refill | **0.34 of the cap a Gem** — any full pool is **3 Gems** | `mana.gem_refill_fraction` |
-| Research slot | 10, `×3` | `research.slot_gem_cost_*` |
-| Party slot | 25, `×2.2` | `party.slot_gem_cost_*` |
-| Attunement slot | 20, `×2.5` | `attunement.slot_gem_cost_*` |
+| Gacha pull | **1,000** Gems ($1.99) | `gacha.pull_gem_cost` |
+| Second builder | **2,500**, `×2` per builder ($4.99 / $9.99 / $19.99) | `kingdom.builder_gem_cost_*` |
+| Mana refill | **500 Gems a full pool** ($0.99), pro rata on what is missing | `mana.gem_refill_full_pool` |
+| Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44; Kingshot 800) | `rush.seconds_per_gem` |
+| Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
+| Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
+| Attunement slot | 1,000, `×2` ($1.99 / $3.99 / $7.99 / $15.99) | `attunement.slot_gem_cost_*` |
+| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · 250 at the week marker | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
 | Ad eligibility | below half a pool | `ads.eligible_below_fraction` |
-| Gem packs | 80 / 500 / 1200 for $1.99 / $9.99 / $19.99 | `Store` sheet |
+| Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — Kingshot's 500/$ | `Store` sheet |
 | Monthly budgets | F2P $0 · Minnow $10 · Dolphin $50 · Whale $250 · Super Whale $2,000 | `payer.*_monthly_usd` |
 
-**The first price in the game a player can put side by side is a Mana refill at
-40 Gems against a hero pull at 30.** A refill is consumable and a hero is
-permanent, so it may well be right — but it has never been argued, and it is
-therefore the first price that can *feel* wrong. **OQ-27.**
+**The first pair of prices a player can put side by side is a Mana refill
+against a hero pull: 500 against 1,000.** A refill is consumable and a hero is
+permanent, so half a pull for a whole pool reads right — and it is a pouch
+against two pouches on the store, which is the comparison the ladder was built
+to make legible (OQ-27, closed).
 
 ## 10. Deliberately not in this design
 
@@ -347,4 +369,4 @@ A real charge, ever · a second premium currency · a gacha-exclusive power ceil
 streak-repair SKU · loot boxes beyond the hero banner · an ad that gates rather
 than accelerates · a cosmetic *pipeline* before the probe reports.
 
-**Open questions:** OQ-25, OQ-26, OQ-27, OQ-29, OQ-30, OQ-31, OQ-32, OQ-43, OQ-45. OQ-28 (the budget's size and cadence) was closed on 2026-09-04 by the monthly profiles of §3.
+**Open questions:** OQ-25, OQ-26, OQ-29, OQ-31, OQ-32, OQ-43, OQ-45. Closed on 2026-09-04: OQ-28 (the budget's size and cadence) by the monthly profiles of §3, and OQ-27 and OQ-30 (the Gem prices) by the repricing to the ladder in §9.

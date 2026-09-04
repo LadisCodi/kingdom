@@ -81,8 +81,8 @@ describe('the monthly budget', () => {
     choosePayerProfile(state, 'Whale', T0);
     buySku(state, 'GemsPouch', T0);
     buySku(state, 'GemsChest', T0);
-    expect(state.player.payer?.spentCentsThisMonth).toBe(199 + 999);
-    expect(budgetRemainingCents(state, T0)).toBe(monthlyBudgetCents('Whale') - 1198);
+    expect(state.player.payer?.spentCentsThisMonth).toBe(99 + 999);
+    expect(budgetRemainingCents(state, T0)).toBe(monthlyBudgetCents('Whale') - 1098);
   });
 
   it('refuses what the budget cannot cover, grants nothing, and counts the refusal', () => {
@@ -97,7 +97,7 @@ describe('the monthly budget', () => {
     expect(state.player.payer?.refusals).toBe(1);
     expect(state.player.payer?.purchases).toEqual([]);
 
-    // A chest is $9.99; a pouch on top would be $11.98 against $10.00.
+    // A chest is $9.99; a pouch on top would be $10.98 against $10.00.
     expect(buySku(state, 'GemsChest', T0)).toBe('Purchased');
     expect(buySku(state, 'GemsPouch', T0)).toBe('NoBudget');
     expect(state.player.payer?.refusals).toBe(2);
@@ -138,7 +138,7 @@ describe('the save', () => {
     const state = blank();
     choosePayerProfile(state, 'Minnow', T0);
     buySku(state, 'GemsPouch', T0);
-    buySku(state, 'GemsVault', T0); // refused: $19.99 against $8.01 left
+    buySku(state, 'GemsVault', T0); // refused: $19.99 against $9.01 left
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(restored.player.payer).toEqual(state.player.payer);
     expect(getWallet(restored.player.wallet, 'Gems')).toBe(getWallet(state.player.wallet, 'Gems'));
@@ -202,7 +202,7 @@ describe('the presenter', () => {
 
   it('keeps the store open when a builder is hired from it', () => {
     const game = freshPresenter();
-    game.state.player.wallet.Gems = 1000;
+    game.state.player.wallet.Gems = 5000;
     game.setOverlay('store');
     game.doBuyBuilder({ closeSheet: false });
     expect(game.openOverlay).toBe('store');

@@ -150,7 +150,7 @@ Three reasons, in order of weight:
    `upgradeDurationLevelGrowth` means a Wonder level eventually takes days —
    and the queue holds one item per builder, so a single Wonder would occupy
    the player's only builder for days. That collides with the second-builder
-   offer being the game's first conversion surface (**OQ-30**) and with the
+   offer being the game's first conversion surface (OQ-30, now closed) and with the
    whole *no waiting line* decision behind [`06`](06-construction.md).
 2. **It adds no boundary to `advance()`.** Nothing is scheduled and nothing
    expires, so invariant 1 has nothing new to hold: no `consider()` in

@@ -137,6 +137,10 @@ const SETTINGS = [
   ['training.seconds', 'training.seconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
   ['tap.mana_cost', 'tap.manaCost'],
+  // Buying time: one Gem finishes this many seconds of a build or a training
+  // line. One rule wherever the player meets it. Kingshot charges 800 Gems an
+  // hour; 5 s a Gem is 720 (14-monetization.md §9).
+  ['rush.seconds_per_gem', 'rush.secondsPerGem'],
   // The one number behind every tap in the game: a tap advances whatever you
   // tapped by this many SECONDS OF ITS OWN WORK — a woodcutter's swing at a
   // tree, a house's rent. Priced against the ground and the thumb, never
@@ -200,9 +204,10 @@ const SETTINGS = [
   ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
   ['mana.meditation_cap', 'mana.meditationCap'],
-  // A fraction of the CAP, not an absolute: one Gem buys what a daily chest
-  // step pays (0.34 of a pool), so it never goes stale as the pool grows.
-  ['mana.gem_refill_fraction', 'mana.gemRefillFraction'],
+  // Gems for a FULL pool. Priced against the cap rather than per Mana, so a
+  // refill is the same offer at every stage of the game — one $0.99 pouch
+  // (14-monetization.md §2.2) — and half a pool is half that.
+  ['mana.gem_refill_full_pool', 'mana.gemRefillFullPool'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
   ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
@@ -514,7 +519,7 @@ async function importXlsx() {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
     store: {}, payer: {},
-    research: {},
+    research: {}, rush: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
     daily: {},

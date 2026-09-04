@@ -727,7 +727,7 @@
     },
     "Gems": {
       "cap": null,
-      "start": 10,
+      "start": 500,
       "primary": true,
       "goldValue": null
     }
@@ -3926,28 +3926,28 @@
   },
   "store": {
     "GemsPouch": {
-      "priceUsd": 1.99,
-      "gems": 80
+      "priceUsd": 0.99,
+      "gems": 500
     },
     "GemsPurse": {
       "priceUsd": 4.99,
-      "gems": 220
+      "gems": 2500
     },
     "GemsChest": {
       "priceUsd": 9.99,
-      "gems": 500
+      "gems": 5000
     },
     "GemsVault": {
       "priceUsd": 19.99,
-      "gems": 1200
+      "gems": 10000
     },
     "GemsHoard": {
       "priceUsd": 49.99,
-      "gems": 3200
+      "gems": 25000
     },
     "GemsTreasury": {
       "priceUsd": 99.99,
-      "gems": 7000
+      "gems": 50000
     }
   },
   "payer": {
@@ -3960,8 +3960,11 @@
   "research": {
     "techSlots": 1,
     "maxSlots": 3,
-    "slotGemCostBase": 10,
-    "slotGemCostGrowth": 3
+    "slotGemCostBase": 2500,
+    "slotGemCostGrowth": 2
+  },
+  "rush": {
+    "secondsPerGem": 5
   },
   "worker": {
     "moveSpeedTilesPerSecond": 1
@@ -4003,13 +4006,13 @@
     ],
     "landmarkCap": 10,
     "meditationCap": 30,
-    "gemRefillFraction": 0.34
+    "gemRefillFullPool": 500
   },
   "attunement": {
     "baseSlots": 1,
     "maxSlots": 5,
-    "slotGemCostBase": 20,
-    "slotGemCostGrowth": 2.5,
+    "slotGemCostBase": 1000,
+    "slotGemCostGrowth": 2,
     "swapLockSeconds": 300
   },
   "collection": {
@@ -4060,7 +4063,7 @@
       0,
       0,
       0,
-      5
+      250
     ],
     "goldFloor": 100
   },
@@ -4070,18 +4073,18 @@
     "stardustPerDepthPerTier": 6,
     "fragmentsPerDepth": 1,
     "failHaulLoss": 0.5,
-    "firstClearGems": 10,
+    "firstClearGems": 500,
     "firstClearKnowledge": 150,
     "firstClearStardust": 150
   },
   "party": {
     "baseSlots": 2,
     "maxSlots": 5,
-    "slotGemCostBase": 25,
-    "slotGemCostGrowth": 2.2
+    "slotGemCostBase": 1500,
+    "slotGemCostGrowth": 2
   },
   "gacha": {
-    "pullGemCost": 30,
+    "pullGemCost": 1000,
     "heroChance": 0.06,
     "softPityAt": 40,
     "hardPityAt": 60,
@@ -4516,7 +4519,7 @@
       "reward": {
         "Gold": 180
       },
-      "rewardGems": 3,
+      "rewardGems": 150,
       "rewardStardust": 0,
       "rewardKnowledge": 0
     },
@@ -4741,7 +4744,7 @@
       "reward": {
         "Gold": 200
       },
-      "rewardGems": 3,
+      "rewardGems": 150,
       "rewardStardust": 25,
       "rewardKnowledge": 0
     },
@@ -4863,7 +4866,7 @@
       "reward": {
         "Gold": 600
       },
-      "rewardGems": 5,
+      "rewardGems": 250,
       "rewardStardust": 0,
       "rewardKnowledge": 0
     },
@@ -4972,7 +4975,7 @@
       "reward": {
         "Gold": 900
       },
-      "rewardGems": 4,
+      "rewardGems": 200,
       "rewardStardust": 45,
       "rewardKnowledge": 0
     }
@@ -5043,8 +5046,8 @@
   "kingdom": {
     "startBuilders": 1,
     "maxBuilders": 4,
-    "builderGemCostBase": 30,
-    "builderGemCostGrowth": 2.5
+    "builderGemCostBase": 2500,
+    "builderGemCostGrowth": 2
   },
   "offlineCapHours": 8
 }

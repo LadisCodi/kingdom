@@ -22,7 +22,7 @@
 
 import { resolve } from './modifiers';
 import { effect } from './upgrades';
-import { DISTRICTS, TRAINING, UNITS, levelIndexed } from './data/definitions';
+import { DISTRICTS, RUSH, TRAINING, UNITS, levelIndexed } from './data/definitions';
 import { isTechComplete } from './research';
 import {
   cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
@@ -264,10 +264,11 @@ export function lineRemainingSeconds(
   return total;
 }
 
-/** Gems to finish the WHOLE line, at the build queue's rate of ten seconds a
- *  gem. One rule for buying time, wherever the player meets it. */
+/** Gems to finish the WHOLE line, at the build queue's rate
+ *  (`rush.secondsPerGem`). One rule for buying time, wherever the player
+ *  meets it. */
 export const lineRushCost = (state: GameState, buildingId: string, now: number): number =>
-  Math.max(1, Math.ceil(lineRemainingSeconds(state, buildingId, now) / 10));
+  Math.max(1, Math.ceil(lineRemainingSeconds(state, buildingId, now) / RUSH.secondsPerGem));
 
 export type RushTrainingResult = 'Success' | 'NothingTraining' | 'NotEnoughGems';
 

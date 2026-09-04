@@ -117,7 +117,7 @@ Standard RPG-gacha grammar, kept minimal.
 
 | Dial | Value | Key |
 |---|---|---|
-| Pull price | **30 Gems** | `gacha.pull_gem_cost` |
+| Pull price | **1,000 Gems** ($1.99 on the ladder; Kingshot's epic shard) | `gacha.pull_gem_cost` |
 | Base hero chance | **6%** | `gacha.hero_chance` |
 | Soft pity from | pull **40** | `gacha.soft_pity_at` |
 | Hard pity at | pull **60** | `gacha.hard_pity_at` |

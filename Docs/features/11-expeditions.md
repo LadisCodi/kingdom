@@ -224,7 +224,7 @@ with the right composition and not with the wrong one.**
 
 - **The haul accumulates per depth** and banks only on extraction.
 - **First clear of the max depth** pays the ruin's **relic, guaranteed** — no
-  randomness on the thing that gates a system — plus **10 Gems** and a **150
+  randomness on the thing that gates a system — plus **500 Gems** and a **150
   Stardust** lump, both banked immediately rather than on extraction. A party
   parked at the bottom has already earned them.
 - **A cleared ruin then drips 2 Stardust/h, forever.** Discovery pays nothing;
@@ -282,7 +282,7 @@ scales from one player to ten: [`15-social.md`](15-social.md) §6. **OQ-35.**
 | Damage per strength, absorbed per defence | 0.9 / 0.5 | `army.damage_*` |
 | Threat floor fraction | 0.4 | `army.threat_floor_fraction` |
 | Haul per depth per tier | 25 G · 4 material · 6 Stardust · 1 piece | `delve.*` |
-| First clear | 10 Gems + 150 Stardust | `delve.first_clear_*` |
+| First clear | 500 Gems + 150 Stardust | `delve.first_clear_*` |
 | Party slots | 2 → 5, `25 × 2.2^n` Gems | `party.*` |
 | Army cap per hall level | 6 / 10 / 15 | `Districts.army_cap_per_level` |
 | Unit stats and train time | §4 | `Units` sheet |

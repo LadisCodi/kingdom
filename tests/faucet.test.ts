@@ -16,10 +16,13 @@
 // Deliberately NOT a lower bound: raising the faucet is a real design move
 // and should have to come here and say so, next to the budget it changes.
 import { describe, expect, it } from 'vitest';
-import { CURRENCIES, DELVE, QUESTS, RUINS } from '../src/sim/data/definitions';
+import { CURRENCIES, DELVE, KINGDOM_DEF, QUESTS, RUINS } from '../src/sim/data/definitions';
 
-/** `Docs/features/12-quests.md` §2.3. The number every source below has to add up to. */
-const GEM_BUDGET = 75;
+/** `Docs/features/12-quests.md` §2.3, rescaled 2026-09-04 to the Gem ladder
+ *  (500 Gems to the dollar, 14-monetization.md §2.2): 500 to start, 750 across
+ *  the chain, 2,500 from first clears. The number every source below has to
+ *  add up to. */
+const GEM_BUDGET = 3750;
 
 // Gems are PLAYER-scoped, so the opening grant is the currency's own `start`
 // and not part of `city.initialCurrencies` — which is the sort of thing that
@@ -35,10 +38,10 @@ describe('the up-front Gem faucet', () => {
 
   // The split matters as much as the total: it is what decides whether the
   // Gem sinks are reachable by play or only by a wallet.
-  it('is 10 to start, 15 across the quest chain, 50 from first clears', () => {
-    expect(startingGems()).toBe(10);
-    expect(questGems()).toBe(15);
-    expect(ruinGems()).toBe(50);
+  it('is 500 to start, 750 across the quest chain, 2,500 from first clears', () => {
+    expect(startingGems()).toBe(500);
+    expect(questGems()).toBe(750);
+    expect(ruinGems()).toBe(2500);
   });
 
   // Every Gem sink is invisible for the whole first session because of this,
@@ -55,9 +58,13 @@ describe('the up-front Gem faucet', () => {
 });
 
 describe('the Gem sinks the faucet has to reach', () => {
-  // `research.maxSlots` 3 at 10 + 30 Gems was the original complaint behind
-  // gap 3: a third scholar that no amount of play could buy.
-  it('leaves the third research slot reachable without a purchase', () => {
-    expect(startingGems() + questGems() + ruinGems()).toBeGreaterThanOrEqual(10 + 30);
+  // Promise 3: every paid ladder is earned FIRST. Since the sinks were priced
+  // to the Gem ladder (2026-09-04) the up-front faucet no longer buys every
+  // slot by play — it buys the second builder and a pull, and the rest comes
+  // at a rung a month from the daily chest. What it must always reach is the
+  // first rung of the ladder a new player meets: the second builder.
+  it('leaves the second builder reachable without a purchase', () => {
+    expect(startingGems() + questGems() + ruinGems())
+      .toBeGreaterThanOrEqual(KINGDOM_DEF.builderGemCostBase);
   });
 });

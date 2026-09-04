@@ -19,7 +19,6 @@ import {
 import {
   accrueMana, addMana, mana, manaCap, manaFillHours, manaNetRegen, manaProduction,
   manaRefillGemCost, refillManaWithGems,
-  manaPerGem,
 } from '../src/sim/mana';
 import { LANDMARKS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
@@ -253,7 +252,10 @@ describe('gem refills', () => {
   it('are priced on what is missing, so a full pool costs nothing', () => {
     const state = drained(freshGame());
     const cap = manaCap(state);
-    expect(manaRefillGemCost(state)).toBe(Math.ceil(cap / manaPerGem(state)));
+    // An empty pool is the authored full-pool price; half a pool is half of it.
+    expect(manaRefillGemCost(state)).toBe(MANA.gemRefillFullPool);
+    addMana(state, cap / 2);
+    expect(manaRefillGemCost(state)).toBe(Math.ceil(MANA.gemRefillFullPool / 2));
     addMana(state, cap);
     expect(manaRefillGemCost(state)).toBe(0);
     expect(refillManaWithGems(state)).toBe('AlreadyFull');
@@ -261,11 +263,11 @@ describe('gem refills', () => {
 
   it('fill the pool and charge the gems', () => {
     const state = drained(freshGame());
-    state.player.wallet.Gems = 100;
+    state.player.wallet.Gems = 1000;
     const cost = manaRefillGemCost(state);
     expect(refillManaWithGems(state)).toBe('Refilled');
     expect(mana(state)).toBe(manaCap(state));
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(100 - cost);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(1000 - cost);
   });
 
   it('refuse politely when the purse is empty', () => {

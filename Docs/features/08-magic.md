@@ -186,10 +186,11 @@ the cooldown maximum is the dial — lower it before anything else.
    **this dial is the lever if a mature city's hand-play feels pointless —
    doubling it doubles the ad with it.** Whether the ad ECONOMY balances on
    ~5.5 minutes is OQ-51.
-2. **`mana.gem_refill_fraction`** — 0.34 of the cap a Gem, so a full pool is
-   **3 Gems** at every stage. A fraction rather than an absolute on purpose: the
-   old flat 4-a-Gem made a full refill cost 83 Gems against a lifetime faucet of
-   75, and one Gem now buys exactly what a daily chest step pays.
+2. **`mana.gem_refill_full_pool`** — a full pool is **500 Gems** at every stage
+   (one $0.99 pouch, [`14-monetization.md`](14-monetization.md) §2.2), and a
+   half-empty pool half that. Priced against the cap rather than per Mana on
+   purpose: the old flat 4-a-Gem made a full refill cost 83 Gems against a
+   lifetime faucet of 75, and went stale the moment the pool grew.
 3. **`mana.base_cap_per_townhall_level`** — 100 / 130 / 160. Session length per
    pool.
 4. **`ads.cooldown_max_seconds`** — 90. The rhythm between offers.
@@ -201,7 +202,7 @@ the cooldown maximum is the dial — lower it before anything else.
 |---|---|---|
 | Sanctum capacity | +24 / 48 / 72 | `mana.sanctum_cap_per_level` |
 | Landmark capacity | **+10 each** | `mana.landmark_cap` |
-| Gem refill | **0.34 of the cap a Gem** — 3 Gems a full pool | `mana.gem_refill_fraction` |
+| Gem refill | **500 Gems a full pool**, pro rata on what is missing | `mana.gem_refill_full_pool` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Ad reward | the whole cap | — |
 
@@ -222,5 +223,5 @@ a magic tech tree · Mana as a build cost · Mana as a research currency
 casting · **Mana as the price of a Wonder level** — Wonders are fed with Gold
 and nothing else ([`16-wonders.md`](16-wonders.md) §3).
 
-**Open questions:** OQ-27 (is a refill really worth more than a hero pull?),
-OQ-43, OQ-44, OQ-45, OQ-47.
+**Open questions:** OQ-43, OQ-44, OQ-45, OQ-47. OQ-27 closed 2026-09-04: a
+refill is 500 Gems, half a pull.

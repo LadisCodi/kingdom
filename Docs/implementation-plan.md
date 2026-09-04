@@ -401,8 +401,9 @@ which means there is currently no way to produce a D30.**
   the pipeline exists.
 - **Blocked on: OQ-25** (how a pass is bought), **OQ-26** (does cosmetic content
   exist), **OQ-29** (disclosure — settle this before a playtester sees a price).
-  **OQ-27**, **OQ-30** and **OQ-31** are prices to watch rather than gates.
-  OQ-28 closed with the monthly profiles.
+  **OQ-31** is a price to watch rather than a gate. OQ-28 closed with the
+  monthly profiles; OQ-27 and OQ-30 with the repricing of every Gem sink to
+  the 500-a-dollar ladder.
 - **Gate:** a one-page ranking of surfaces by intent from at least two weeks of
   playtester sessions, with the caveat attached — and **if the ranking is not
   stable between week one and week two, the sample is the finding.**

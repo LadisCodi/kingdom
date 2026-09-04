@@ -89,21 +89,22 @@ describe('buying a builder', () => {
 
   it('prices the Nth builder on the same curve as every other slot', () => {
     const state = freshGame();
-    // round(30 x 2.5^purchased), purchased = builders - startBuilders.
-    expect(builderGemCost(state)).toBe(30);
+    // round(2500 x 2^purchased), purchased = builders - startBuilders: one
+    // Gem pack a builder ($4.99, $9.99, $19.99 — 14-monetization.md §9).
+    expect(builderGemCost(state)).toBe(2500);
     grantBuilder(state);
-    expect(builderGemCost(state)).toBe(75);
+    expect(builderGemCost(state)).toBe(5000);
     grantBuilder(state);
-    expect(builderGemCost(state)).toBe(188);
+    expect(builderGemCost(state)).toBe(10000);
   });
 
   it('takes the Gems and hands over the builder', () => {
     const state = freshGame();
-    state.player.wallet.Gems = 100;
+    state.player.wallet.Gems = 5000;
     const price = builderGemCost(state);
     expect(buyBuilder(state)).toBe('Purchased');
     expect(state.kingdom.builders).toBe(2);
-    expect(gems(state)).toBe(100 - price);
+    expect(gems(state)).toBe(5000 - price);
   });
 
   it('refuses without charging when the player is short', () => {
@@ -118,9 +119,9 @@ describe('buying a builder', () => {
   it('refuses without charging at the ceiling', () => {
     const state = freshGame();
     state.kingdom.builders = KINGDOM_DEF.maxBuilders;
-    state.player.wallet.Gems = 10_000;
+    state.player.wallet.Gems = 50_000;
     expect(buyBuilder(state)).toBe('AtMax');
-    expect(gems(state)).toBe(10_000);
+    expect(gems(state)).toBe(50_000);
   });
 
   // The purchase is what the player buys; the grant is what a quest or an
@@ -131,7 +132,7 @@ describe('buying a builder', () => {
   it('lets a granted builder raise the price of the next bought one', () => {
     const state = freshGame();
     grantBuilder(state);
-    expect(builderGemCost(state)).toBe(75);
+    expect(builderGemCost(state)).toBe(5000);
   });
 });
 

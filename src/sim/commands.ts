@@ -3,6 +3,7 @@
 
 import { DISTRICTS, KINGDOM_DEF, TECHNOLOGIES,
 } from './data/definitions';
+import { RUSH } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
@@ -243,9 +244,9 @@ function completeQueueItem(state: GameState, map: MapData, item: QueueItem, t: n
 
 export type RushResult = 'Success' | 'NotFound' | 'NotEnoughGems';
 
-/** gemCost = max(1, ceil(remainingSeconds / 10)) — 10 seconds per gem. */
+/** gemCost = max(1, ceil(remainingSeconds / RUSH.secondsPerGem)). */
 export const gemRushCost = (item: QueueItem, now: number): number =>
-  Math.max(1, Math.ceil(remainingSeconds(item, now) / 10));
+  Math.max(1, Math.ceil(remainingSeconds(item, now) / RUSH.secondsPerGem));
 
 export function finishWithGems(
   state: GameState,

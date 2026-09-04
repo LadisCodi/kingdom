@@ -733,7 +733,7 @@ describe('a hall can turn out more than one unit', () => {
 });
 
 // Buying the wait (2026-09-02). The FINISH button on the training card takes
-// the WHOLE line, priced at the build queue's rate — ten seconds a gem — so
+// the WHOLE line, priced at the build queue's rate (`rush.secondsPerGem`) — so
 // the player meets one rule for buying time wherever they meet it.
 describe('finishing a training line with gems', () => {
   const barracksOf = (state: GameState) =>
@@ -748,9 +748,9 @@ describe('finishing a training line with gems', () => {
 
     // Ten seconds in: 20 left on the bench + a full 30 behind it.
     expect(lineRemainingSeconds(state, hall.uniqueId, T0 + 10_000)).toBe(50);
-    expect(lineRushCost(state, hall.uniqueId, T0 + 10_000)).toBe(5);
+    expect(lineRushCost(state, hall.uniqueId, T0 + 10_000)).toBe(10); // 50 s at 5 s a Gem
     // ...and it falls as the bench empties.
-    expect(lineRushCost(state, hall.uniqueId, T0 + 25_000)).toBe(4);
+    expect(lineRushCost(state, hall.uniqueId, T0 + 25_000)).toBe(7); // 35 s
   });
 
   it('delivers every unit in the line and charges once', () => {
@@ -759,13 +759,13 @@ describe('finishing a training line with gems', () => {
     const hall = barracksOf(state);
     trainUnit(state, 'Warrior', T0, hall);
     trainUnit(state, 'Warrior', T0, hall);
-    state.player.wallet.Gems = 100;
+    state.player.wallet.Gems = 1000;
 
     const cost = lineRushCost(state, hall.uniqueId, T0);
     expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
     expect(state.army).toHaveLength(2);
     expect(lineFor(state, hall.uniqueId)).toHaveLength(0);
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(100 - cost);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(1000 - cost);
 
     // And the advance cannot hand them over a second time.
     advance(state, map, T0 + 120_000);
