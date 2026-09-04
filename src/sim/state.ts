@@ -48,6 +48,35 @@ export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'S
  *  each paced by eras (Docs/features/tomes-and-research.md §5). */
 export type TomeId = 'Civics' | 'Warfare' | 'Magic';
 
+/** A real-money SKU of the simulated store (definitions.ts `STORE`). */
+export type StoreSkuId =
+  | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury';
+
+/** Who the playtester says they are (Docs/features/14-monetization.md §3). One
+ *  choice per save; the only way to another profile is a fresh game. */
+export type PayerProfile = 'F2P' | 'Minnow' | 'Dolphin' | 'Whale' | 'SuperWhale';
+
+/** One simulated purchase, kept so the read-out can be produced from the save
+ *  alone until a real event pipeline exists. */
+export interface Purchase {
+  sku: StoreSkuId;
+  priceCents: number;
+  at: number; // epoch ms
+}
+
+export interface PayerState {
+  profile: PayerProfile;
+  chosenAt: number;
+  /** The calendar month (`monthIndex`, UTC) the running spend belongs to. A
+   *  read in a later month sees a fresh budget; nothing rolls over. */
+  monthIndex: number;
+  /** Cents, never dollars: 1.99 + 9.99 has to add up exactly. */
+  spentCentsThisMonth: number;
+  purchases: Purchase[];
+  /** Taps on a price the budget could not cover — unmet demand, counted. */
+  refusals: number;
+}
+
 export type TechId =
   // ---- majors: spine keystones, and the content each era hangs off them
   | 'CharterI' | 'CharterII' | 'CharterIII' | 'CharterIV'
@@ -316,7 +345,12 @@ export interface GameState {
       lastClaimedDay: number | null;
     };
   };
-  player: { wallet: Wallet };
+  player: {
+    wallet: Wallet;
+    /** The simulated payer, or null until the player has picked a profile —
+     *  which the UI forces before anything else (14-monetization.md §3). */
+    payer: PayerState | null;
+  };
   fog: {
     revealed: Record<string, true>; // coordKey → revealed
     /** coordKey → discovered by a building's discover radius. (Cells adjacent

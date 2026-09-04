@@ -3,6 +3,7 @@ import { tapCell } from '../src/sim/harvest';
 import { Game } from '../src/game';
 import { buildMapData } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
+import { choosePayerProfile } from '../src/sim/store';
 import { Camera } from '../src/render/camera';
 import {
   DISTRICTS, TECHNOLOGIES, TECH_LINES, type DistrictDef,
@@ -26,6 +27,10 @@ export const TEST_SEED = 0x5eed;
 export const freshGame = (): GameState => {
   const state = newGame(map, T0);
   state.seed = TEST_SEED;
+  // A payer profile, so the presenter does not hold every test behind the
+  // profile sheet. Dolphin: enough budget to buy a pack, not everything.
+  // tests/store.test.ts builds its own games to exercise the choice itself.
+  choosePayerProfile(state, 'Dolphin', T0);
   return state;
 };
 

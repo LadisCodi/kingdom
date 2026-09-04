@@ -90,7 +90,9 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     el('span', { class: 'hud-plus' }, '+'),
   );
   const gemValue = gems.querySelector('b')!;
-  gems.addEventListener('click', () => game.setOverlay('purse'));
+  // The Gems plaque IS the store's door: its `+` was a no-op for the whole
+  // life of the prototype (14-monetization.md §1.1). Coins still open the purse.
+  gems.addEventListener('click', () => game.setOverlay('store'));
 
   const plaqueIcon = el('span', { class: 'hud-plaque-icon' });
   const plaqueValue = el('b', {}, '');

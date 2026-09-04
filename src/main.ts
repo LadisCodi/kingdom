@@ -41,6 +41,9 @@ import { renderReliquarySheet } from './ui/reliquarySheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
+import { renderStoreSheet } from './ui/storeSheet';
+import { renderPayerSheet } from './ui/payerSheet';
+import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountDelvePill } from './ui/delvePill';
 import { mountBanner } from './ui/banner';
@@ -149,6 +152,11 @@ async function boot(): Promise<void> {
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
+    store: renderStoreSheet,
+    payerProfile: renderPayerSheet,
+    // The confirmation needs a SKU; with none pending it falls back to the
+    // store rather than drawing an empty sheet.
+    iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
   };
 
   // Each mount point holds one keyed screen: same key → re-render in place,
@@ -190,7 +198,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer', 'builder', 'daily',
+        'adOffer', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
@@ -205,6 +213,11 @@ async function boot(): Promise<void> {
   if (catchUp !== null && (catchUp as CatchUpReport).elapsedMs >= WELCOME_MIN_MS) {
     game.setOverlay('welcome');
   }
+  // A save with no payer profile stops here until one is chosen
+  // (Docs/features/14-monetization.md §3). setOverlay already forces the
+  // profile sheet over anything else asked for, so this only matters when
+  // nothing else was — a fresh game with no welcome report.
+  if (game.state.player.payer === null) game.setOverlay('payerProfile');
 
   game.onChange(refreshScreens);
 

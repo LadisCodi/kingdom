@@ -58,6 +58,12 @@ import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
+  PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
+  monthResetsAt, monthlyBudgetCents,
+} from './sim/store';
+import { pullCost } from './sim/heroes';
+import type { PayerProfile, StoreSkuId } from './sim/state';
+import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
   type FeatureId, type TrainableId,
@@ -96,7 +102,8 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder' | 'daily';
+  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder' | 'daily'
+  | 'store' | 'payerProfile' | 'iapConfirm';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -137,6 +144,13 @@ export class Game {
   expeditionArtifact: ArtifactId | null = null;
   /** The delve whose checkpoint sheet is open. */
   openCheckpoint: string | null = null;
+  /** The store SKU whose confirmation sheet is open. */
+  pendingSku: StoreSkuId | null = null;
+  /** What was asked for while the payer-profile sheet had the screen. The
+   *  profile sheet is modal in the strong sense (14-monetization.md §3), so
+   *  whatever wanted to open — the welcome report, chiefly — waits here and
+   *  opens the moment a profile is chosen. */
+  afterProfileOverlay: OverlayName | null = null;
   /** When the fake ad started playing. A UI moment, not sim state — a reload
    *  mid-ad simply drops back to the offer, which is still standing. */
   adWatchStartedAt: number | null = null;
@@ -955,16 +969,81 @@ export class Game {
     };
   }
 
-  doBuyBuilder(): void {
+  doBuyBuilder(opts: { closeSheet?: boolean } = {}): void {
     const result = buyBuilder(this.state);
     if (result === 'Purchased') {
       playSfx('gemSpend');
-      this.setOverlay(null);
+      // The refused-build offer closes on purchase — the player was placing
+      // something. The store stays open: they came to shop.
+      if (opts.closeSheet !== false) this.setOverlay(null);
       this.toast('A builder joins your kingdom');
     } else if (result === 'NotEnoughGems') {
       this.shake(['Gems']);
     }
     this.notify();
+  }
+
+  // ----------------------------------------------------------- the store
+
+  /** The simulated payer, for the store's budget line and the confirmation
+   *  sheet. Null until a profile is chosen. Cents, never dollars. */
+  payerInfo(): {
+    profile: PayerProfile; label: string; budgetCents: number; remainingCents: number;
+    resetsIn: string;
+  } | null {
+    const payer = this.state.player.payer;
+    if (payer === null) return null;
+    const now = this.now();
+    return {
+      profile: payer.profile,
+      label: PROFILE_LABEL[payer.profile],
+      budgetCents: monthlyBudgetCents(payer.profile),
+      remainingCents: budgetRemainingCents(this.state, now) ?? 0,
+      resetsIn: describeWait(monthResetsAt(now) - now),
+    };
+  }
+
+  canAffordSku(id: StoreSkuId): boolean {
+    return canAffordSku(this.state, id, this.now());
+  }
+
+  pullCost(): number {
+    return pullCost(this.state);
+  }
+
+  /** Choosing a profile is the one command that runs with no profile chosen.
+   *  It hands the screen to whatever was waiting behind the sheet. */
+  doChoosePayerProfile(profile: PayerProfile): void {
+    if (choosePayerProfile(this.state, profile, this.now()) !== 'Chosen') return;
+    playSfx('click');
+    const next = this.afterProfileOverlay;
+    this.afterProfileOverlay = null;
+    this.openOverlay = next;
+    this.notify();
+  }
+
+  /** A price was tapped: open the confirmation, which is where the price meets
+   *  the budget. Nothing is granted from the store card itself. */
+  openIap(id: StoreSkuId): void {
+    this.pendingSku = id;
+    this.setOverlay('iapConfirm');
+  }
+
+  confirmIap(): void {
+    const id = this.pendingSku;
+    if (id === null) return;
+    const result = buySku(this.state, id, this.now());
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      this.pendingSku = null;
+      this.toast('Gems added to your purse');
+      this.setOverlay('store');
+    } else {
+      // A refusal is data (store.ts) and a denial (the shake). The sheet
+      // stays put so the player can read the numbers that said no.
+      this.shake(['Gems']);
+      this.notify();
+    }
   }
 
   // -------------------------------------------------------------- UI commands
@@ -1114,10 +1193,10 @@ export class Game {
         overlay('research');
         break;
       case 'OwnHeroes':
-        // The banner lives on the Reliquary's heroes tab; the sheet opens
-        // there on its own when the roster is what was asked for.
+        // The banner is the first thing on the store, and the hint lights
+        // its Call button.
         this.setUiHint('banner');
-        overlay('reliquary');
+        overlay('store');
         break;
       case 'AssignWorkers': {
         const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);
@@ -1611,6 +1690,12 @@ export class Game {
   }
 
   setOverlay(name: OverlayName | null): void {
+    // No payer profile, no game: the profile sheet has the screen until one
+    // is chosen (14-monetization.md §3). Whatever was asked for waits.
+    if (this.state.player.payer === null && name !== 'payerProfile') {
+      if (name !== null) this.afterProfileOverlay = name;
+      name = 'payerProfile';
+    }
     this.openOverlay = name;
     if (name !== null) {
       this.inspectedDistrictId = null;
@@ -1631,10 +1716,12 @@ export class Game {
   /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
   dismiss(): void {
     this.mode = { kind: 'normal' };
-    this.openOverlay = null;
+    // The profile sheet cannot be dismissed — there is nothing behind it yet.
+    this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
     this.openCheckpoint = null;
+    this.pendingSku = null;
     this.notify();
   }
 
@@ -2298,3 +2385,14 @@ const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
  *  sensible party, never to decide anything. */
 const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
   typeMultiplier(unitId, affinity) * UNITS[unitId].atk;
+
+/** "in 3 days" / "in 5 hours" / "in 12 minutes" — coarse on purpose; the
+ *  budget refills on the first of the month, not on a stopwatch. */
+function describeWait(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  if (minutes < 60) return `in ${minutes} minute${minutes === 1 ? '' : 's'}`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `in ${hours} hour${hours === 1 ? '' : 's'}`;
+  const days = Math.round(hours / 24);
+  return `in ${days} day${days === 1 ? '' : 's'}`;
+}

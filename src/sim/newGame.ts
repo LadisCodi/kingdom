@@ -35,7 +35,7 @@ export function newGame(map: MapData, now: number): GameState {
       daily: { ladderStep: 0, lastClaimedDay: null },
       lastKnowledgeAt: now,
     },
-    player: { wallet: playerWallet },
+    player: { wallet: playerWallet, payer: null },
     fog: { revealed: {}, discovered: {}, progress: {} },
     features: {},
     featureMeta: {},

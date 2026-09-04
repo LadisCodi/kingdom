@@ -68,6 +68,13 @@ export function renderSettingsMenu(
         el('div', { class: 'set-hint' },
           `Your kingdom keeps working for up to ${OFFLINE_CAP_HOURS} hours while you are away.`))),
 
+    el('div', { class: 'set-section' }, 'Playing as'),
+    el('div', { class: 'set-row' },
+      el('div', {},
+        el('div', { class: 'set-label' }, game.payerInfo()?.label ?? 'No profile yet'),
+        el('div', { class: 'set-hint' },
+          'Fixed for this kingdom. Starting over lets you pick another.'))),
+
     el('div', { class: 'set-section' }, 'Start over'),
     reset,
 

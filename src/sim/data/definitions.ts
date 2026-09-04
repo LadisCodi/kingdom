@@ -13,7 +13,8 @@ import regionMap from './region-map.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, TechId, TechLineId, TerrainId, TomeId, TrainableId, UnitId, Wallet,
+  LandmarkKind, RuinId, StoreSkuId, TechId, TechLineId, TerrainId, TomeId, TrainableId, UnitId,
+  Wallet,
 } from '../state';
 
 /** 1-based per-level list lookup that clamps to the last entry (the docs' convention). */
@@ -2268,6 +2269,47 @@ export const GACHA = balance.gacha;
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;
 
+// ------------------------------------------------------------------ the store
+
+/** A real-money SKU of the SIMULATED store (Docs/features/14-monetization.md
+ *  §2). Nothing here ever charges: the price is deducted from the player's
+  *  monthly budget (`PAYER`), which is the whole instrument. */
+export interface StoreSkuDef {
+  id: StoreSkuId;
+  name: string;
+  description: string;
+  /** Dollars, as displayed and as deducted from the monthly budget. */
+  priceUsd: number;
+  gems: number;
+  /** The pack's own art: `render/assets/<sprite>.png`. Falls back to the Gems
+   *  icon until the file lands, like every other sprite. */
+  sprite: string;
+}
+
+const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 'sprite'>> = {
+  GemsPouch: { name: 'Pouch of Gems', description: "A handful \u2014 a builder, or a pull.", sprite: 'gems_pouch' },
+  GemsPurse: { name: 'Purse of Gems', description: "A few calls, or a couple of hires.", sprite: 'gems_purse' },
+  GemsChest: { name: 'Chest of Gems', description: "A crew's worth, with change.", sprite: 'gems_chest' },
+  GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
+  GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
+  GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
+};
+
+export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
+  (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
+    const b = (balance.store as Record<string, { priceUsd: number; gems: number }>)[id];
+    if (!b) throw new Error(`balance.json is missing the store SKU "${id}"`);
+    return [id, { id, ...skuContent[id], priceUsd: b.priceUsd, gems: b.gems }];
+  }),
+) as Record<StoreSkuId, StoreSkuDef>;
+
+/** Workbook row order — the order the store shows them in. */
+export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
+
+/** Monthly simulated budgets by payer profile, in dollars
+ *  (Docs/features/14-monetization.md §3). */
+export const PAYER = balance.payer;
+
 /** The daily chest ladder — Docs/features/12-quests.md §4.2. Three parallel
  *  lists, one per reward kind; their length IS the length of the ladder. */
 export const DAILY = balance.daily;
@@ -2353,4 +2395,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 27;
+export const SAVE_VERSION = 28;

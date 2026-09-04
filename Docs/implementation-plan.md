@@ -395,10 +395,14 @@ makes a retention read-out possible at all. **No event pipeline exists today,
 which means there is currently no way to produce a D30.**
 
 - **Design:** [`14-monetization.md`](features/14-monetization.md) — complete.
+- **Built 2026-09-04:** the store's first cut — the payer profile and its monthly
+  budget (§3), Gem packs for simulated dollars, builders for Gems, and the hero
+  banner as a doorway (§2.1). Purchases and refusals are kept in the save until
+  the pipeline exists.
 - **Blocked on: OQ-25** (how a pass is bought), **OQ-26** (does cosmetic content
-  exist), **OQ-28** (the credit budget), **OQ-29** (disclosure — settle this
-  before a playtester sees a price). **OQ-27**, **OQ-30** and **OQ-31** are prices
-  to watch rather than gates.
+  exist), **OQ-29** (disclosure — settle this before a playtester sees a price).
+  **OQ-27**, **OQ-30** and **OQ-31** are prices to watch rather than gates.
+  OQ-28 closed with the monthly profiles.
 - **Gate:** a one-page ranking of surfaces by intent from at least two weeks of
   playtester sessions, with the caveat attached — and **if the ranking is not
   stable between week one and week two, the sample is the finding.**

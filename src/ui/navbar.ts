@@ -24,7 +24,14 @@ import { iconEl, type IconName } from './kit';
 // the building that trains them — exactly as villagers are trained at the
 // Townhall. The tab it vacated goes to the thing the player now visits every
 // session: their relics.
+//
+// The store sits leftmost (Docs/features/14-monetization.md §2.1): the genre
+// puts its shop at one end of the bar, and the Gems plaque in the header stays
+// as the second door. It borrows the Gems icon rather than waiting on a
+// storefront sprite — the atlas has no shop cell yet, and tests/icons.test.ts
+// refuses an emoji stand-in.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
+  { name: 'store', label: 'Store', icon: 'Gems' },
   { name: 'build', label: 'Build', icon: 'build' },
   { name: 'reliquary', label: 'Relics', icon: 'Mana' },
   { name: 'research', label: 'Research', icon: 'research' },

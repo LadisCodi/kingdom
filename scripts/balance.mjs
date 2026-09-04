@@ -90,6 +90,11 @@ const TECH_IDS = [
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
 const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
+// The SIMULATED store's real-money SKUs (Docs/features/14-monetization.md §2).
+// Row order is the order the store shows them in.
+const STORE_IDS = [
+  'GemsPouch', 'GemsPurse', 'GemsChest', 'GemsVault', 'GemsHoard', 'GemsTreasury',
+];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
   // absolute — goal_target validated against the named id list (null = none)
@@ -163,6 +168,15 @@ const SETTINGS = [
   // party and attunement slots: round(base x growth^purchased).
   ['kingdom.builder_gem_cost_base', 'kingdom.builderGemCostBase'],
   ['kingdom.builder_gem_cost_growth', 'kingdom.builderGemCostGrowth'],
+  // The simulated wallet (14-monetization.md §3): what each payer profile may
+  // spend a MONTH, in dollars. A profile is chosen once per save, and the
+  // budget is what turns a free tap into a preference — with money that is
+  // scarce, buying one thing means not buying another.
+  ['payer.f2p_monthly_usd', 'payer.f2pMonthlyUsd'],
+  ['payer.minnow_monthly_usd', 'payer.minnowMonthlyUsd'],
+  ['payer.dolphin_monthly_usd', 'payer.dolphinMonthlyUsd'],
+  ['payer.whale_monthly_usd', 'payer.whaleMonthlyUsd'],
+  ['payer.super_whale_monthly_usd', 'payer.superWhaleMonthlyUsd'],
   // The daily chest ladder (Docs/features/12-quests.md §4.2). Three parallel
   // seven-long lists, one per reward kind, so a step is a column rather than a
   // sheet — and so the ladder's LENGTH is the length of these lists.
@@ -325,6 +339,11 @@ const SHEETS = {
     'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
   Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
+  // Real-money SKUs of the simulated store. `price_usd` is what the purchase
+  // deducts from the player's monthly budget; `gems` is what it grants. Only
+  // Gem packs live here — builders are priced in Gems (Settings) and the hero
+  // banner in Gems (Settings), so the store shows them without owning them.
+  Store: ['id', 'price_usd', 'gems'],
   Settings: ['key', 'value'],
 };
 
@@ -494,6 +513,7 @@ async function importXlsx() {
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
+    store: {}, payer: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
@@ -740,6 +760,13 @@ async function importXlsx() {
     out.fog.rings.push({ distance, cost: num(r, 'cost') });
   }
 
+  for (const [id, r] of byId(readSheet(workbook, 'Store'), STORE_IDS)) {
+    const priceUsd = num(r, 'price_usd');
+    const gems = num(r, 'gems');
+    if (priceUsd <= 0 || gems <= 0) fail(where(r), 'a Gem pack needs a positive price and a positive grant');
+    out.store[id] = { priceUsd, gems };
+  }
+
   const settings = byId(readSheet(workbook, 'Settings'), SETTINGS.map(([k]) => k), 'key');
   for (const [key, path, kind] of SETTINGS) {
     const row = settings.get(key);
@@ -849,6 +876,11 @@ async function exportXlsx() {
     const h = b.heroes[id];
     return [id, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
       h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
+  }));
+
+  addSheet(workbook, 'Store', STORE_IDS.map((id) => {
+    const s = b.store[id];
+    return [id, s.priceUsd, s.gems];
   }));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {

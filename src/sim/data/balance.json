@@ -3924,6 +3924,39 @@
       "planned": false
     }
   },
+  "store": {
+    "GemsPouch": {
+      "priceUsd": 1.99,
+      "gems": 80
+    },
+    "GemsPurse": {
+      "priceUsd": 4.99,
+      "gems": 220
+    },
+    "GemsChest": {
+      "priceUsd": 9.99,
+      "gems": 500
+    },
+    "GemsVault": {
+      "priceUsd": 19.99,
+      "gems": 1200
+    },
+    "GemsHoard": {
+      "priceUsd": 49.99,
+      "gems": 3200
+    },
+    "GemsTreasury": {
+      "priceUsd": 99.99,
+      "gems": 7000
+    }
+  },
+  "payer": {
+    "f2pMonthlyUsd": 0,
+    "minnowMonthlyUsd": 10,
+    "dolphinMonthlyUsd": 50,
+    "whaleMonthlyUsd": 250,
+    "superWhaleMonthlyUsd": 2000
+  },
   "research": {
     "techSlots": 1,
     "maxSlots": 3,

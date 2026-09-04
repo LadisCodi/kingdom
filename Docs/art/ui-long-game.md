@@ -22,7 +22,7 @@ used.
 
 | System | Where it lives | Why |
 |---|---|---|
-| Mana, relics, heroes, the banner | **Reliquary** — a nav tab | Visited every session: Mana fills on a clock and relics are swapped against it |
+| Mana, relics, heroes (the banner moved to the store, 2026-09-04) | **Reliquary** — a nav tab | Visited every session: Mana fills on a clock and relics are swapped against it |
 | Delves | **The ruin's own card**, then a sheet | You go to a ruin because you are looking at it on the map |
 | A party waiting | **A pill under the quest tracker** | It is a return hook, not a destination |
 | Recruiting units | **The military building's card** | Where villagers are recruited is the Townhall; where soldiers are recruited is the Barracks |

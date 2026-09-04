@@ -177,7 +177,9 @@ content skin, not a parallel system.
 
 - **The Reliquary** carries heroes and relics as **two tabs of one screen**,
   because they share one set of rules.
-- **The banner** is reachable from the Reliquary, not the nav bar.
+- **The banner** lives on the store, first thing on it, and the Reliquary's
+  heroes tab points there ([`14-monetization.md`](14-monetization.md) §2.1).
+  A call for aid is a purchase, and it still has no tab of its own.
 - **There is no standing hero-management destination.** Heroes are configured
   where they are used, in the expedition sheet.
 

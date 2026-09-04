@@ -69,7 +69,7 @@ One file per feature, in the order a player meets them.
 | 11 | [Expeditions](features/11-expeditions.md) | ruins as dungeons, staged delves and checkpoints, combat as a scoring pass, the army and the military halls | built |
 | 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest | built |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built |
-| 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, six ad placements, and a **simulated** store that never charges | partly built |
+| 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, five ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
 | 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the defended landmarks | designed |
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends, and the ~780,000 Gold of one-time sink that is the reason they exist | designed |
 

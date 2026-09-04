@@ -15,9 +15,7 @@ import {
   ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, HEROES, RUINS,
 } from '../sim/data/definitions';
 import { heroIsBusy } from '../sim/expeditions';
-import {
-  heroChanceAt, heroStats, pityCount, pullCost, pullsToGuarantee, rosterView, STANDARD_BANNER,
-} from '../sim/heroes';
+import { heroStats, rosterView } from '../sim/heroes';
 import {
   artifactEntry, attunementSlotGemCost, attunementSlots, isAttuned, isSlotLocked,
   ownsArtifact, passiveValue, slotUnlocksIn,
@@ -384,57 +382,17 @@ function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTML
   return el('div', { class: 'rel-entry' }, body);
 }
 
-/**
- * The banner. Reachable from the reliquary rather than from the nav bar,
- * deliberately: a gacha with its own permanent tab is a different game from
- * the one this is.
- *
- * The pity counter is ALWAYS visible. A hidden pity counter is the same as no
- * pity counter — it is the single thing that makes a gacha read as fair rather
- * than predatory, and it only works if the player can see it working.
- */
-function bannerPanel(game: Game): HTMLElement {
-  const cost = pullCost(game.state, STANDARD_BANNER);
-  const pity = pityCount(game.state, STANDARD_BANNER);
-  const toGuarantee = pullsToGuarantee(game.state, STANDARD_BANNER);
-  const chance = heroChanceAt(pity);
-
-  return el('div', { class: 'rel-banner' },
-    el('div', { class: 'rel-banner-head' },
-      iconEl('Gems', { size: 'lg' }),
-      el('div', {},
-        el('div', { class: 'rel-mana-title' }, 'Call for aid'),
-        el('div', { class: 'rel-mana-hint' },
-          'Every miss still pays fragments. There are no wasted calls.'))),
-    el('div', { class: 'rel-breakdown' },
-      el('div', { class: 'rel-line' },
-        el('span', {}, 'Chance of a hero right now'),
-        el('b', {}, `${Math.round(chance * 100)}%`)),
-      el('div', { class: 'rel-line is-total' },
-        el('span', {}, 'Guaranteed within'),
-        el('b', {}, `${toGuarantee} call${toGuarantee === 1 ? '' : 's'}`))),
-    callAction(game, cost),
-    el('div', { class: 'rel-note' },
-      'Heroes can also be found by delving: fragments come back from every ruin, '
-      + 'and enough of them raise anyone you already have.'),
-  );
-}
-
-/** The summon button, split out so the quest hint can light it — `action()`
- *  builds a whole row, so the class goes on afterwards rather than through a
- *  new option nothing else would use. */
-function callAction(game: Game, cost: number): HTMLElement {
-  const row = action({
-    // A price of zero is not a price. The free first call says so on the
-    // button rather than rendering "0 💎", which reads as a bug.
-    label: cost === 0 ? 'Call — free' : 'Call',
+/** The roster's way to the banner, which lives on the store now
+ *  (Docs/features/14-monetization.md §2.1): a call for aid is a purchase, and
+ *  the store is where purchases are made and measured. */
+function toTheBanner(game: Game): HTMLElement {
+  return action({
+    label: 'Call for aid',
     kind: 'gem',
-    onClick: () => game.doPull(),
-    cost: cost === 0 ? undefined : { Gems: cost },
-    have: (c) => game.walletValue(c),
+    icon: 'star',
+    onClick: () => game.setOverlay('store'),
+    info: 'The banner is in the store. Every miss still pays fragments.',
   });
-  if (game.uiHint() === 'banner') row.classList.add('hinted');
-  return row;
 }
 
 /** Which tab is open. Module-level so it survives the per-tick rebuild — the
@@ -442,10 +400,6 @@ function callAction(game: Game, cost: number): HTMLElement {
 let openTab: 'relics' | 'heroes' = 'relics';
 
 export function renderReliquarySheet(game: Game): HTMLElement {
-  // "Go summon a hero" has to LAND on the banner. The sheet remembers its tab
-  // across rebuilds, so a quest that points here would otherwise open on
-  // whatever the player last looked at — usually the relics.
-  if (game.uiHint() === 'banner') openTab = 'heroes';
   const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
   const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
 
@@ -480,7 +434,7 @@ export function renderReliquarySheet(game: Game): HTMLElement {
       el('span', { class: 'rel-heading-note' },
         `${roster.filter((h) => h.owned).length} of ${roster.length} found`)),
     ...roster.map((view) => heroCard(game, view)),
-    bannerPanel(game));
+    toTheBanner(game));
 
   const purse = stardustPanel(game);
   const body = el('div', { class: 'rel' },
