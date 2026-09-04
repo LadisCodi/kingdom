@@ -6,9 +6,11 @@ import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
+import { goodsCostForLevel } from './goods';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
-  type Coord, type District, type DistrictId, type GameState, type TechId, type Wallet,
+  type Coord, type District, type DistrictId, type GameState, type GoodsStock,
+  type TechId, type Wallet,
 } from './state';
 
 // ------------------------------------------------------------------ counting
@@ -175,6 +177,16 @@ export function upgradeCost(definitionId: DistrictId, n: number, currentLevel: n
   }
   return out;
 }
+
+/**
+ * What the next level costs in refined goods, on top of the currencies.
+ *
+ * A flat price, deliberately: goods are made one at a time by villagers, so
+ * the count multiplier and level curve that keep raw resources honest would
+ * price a second workshop's worth of days into one upgrade.
+ */
+export const upgradeGoodsCost = (definitionId: DistrictId, targetLevel: number): GoodsStock =>
+  goodsCostForLevel(DISTRICTS[definitionId], targetLevel);
 
 /** Build time in seconds (Carpentry: −5%/rank). Rounding: round. */
 export const buildDuration = (

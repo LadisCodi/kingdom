@@ -22,6 +22,7 @@ export function newGame(map: MapData, now: number): GameState {
     city: {
       name: CITY_DEF.name,
       wallet: { ...CITY_DEF.initialCurrencies },
+      goods: {},
       population: CITY_DEF.initialPopulation,
       districts: [],
       queue: [],

@@ -16,6 +16,8 @@ import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
 import { forceConjunction } from './sim/timeline';
 import { grantBuilder } from './sim/commands';
+import { addGood } from './sim/goods';
+import { GOOD_ORDER } from './sim/data/definitions';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -359,6 +361,12 @@ async function boot(): Promise<void> {
       // (Phase 3). See grantBuilder() for why it is unpriced.
       button('👷 +1 builder', () => {
         if (grantBuilder(game.state) === 'AtCeiling') game.toast('Builders are at the ceiling');
+        runTick();
+      }),
+      // Goods, until a workshop can make them (Docs/plans/builder-30-days.md
+      // §3): the prices that name them ship before the producer does.
+      button('📦 +10 goods', () => {
+        for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);
         runTick();
       }),
       button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),

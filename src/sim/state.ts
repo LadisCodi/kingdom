@@ -12,6 +12,14 @@ export type CurrencyId =
   | 'Knowledge' // kingdom-scoped research clock; buys technologies and nothing else
   | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
   | 'Gems'; // player-scoped, premium
+/** Refined goods: what a workshop turns raw resources into, and what an
+ *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
+ *  the city keeps a stockpile, the way the collection keeps ingredients, so
+ *  four coins on the plank stays four (Docs/plans/builder-30-days.md §2). */
+export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
+/** What the city holds of each. Absent = none, exactly like a Wallet. */
+export type GoodsStock = Partial<Record<GoodId, number>>;
+
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Sanctum'
@@ -184,6 +192,9 @@ export const queueProgress = (item: QueueItem, now: number): number =>
 export interface City {
   name: string;
   wallet: Wallet;
+  /** The refined-goods stockpile. Read where it is spent — a workshop's card
+   *  and the price of a building level — never on the plank. */
+  goods: GoodsStock;
   population: number;
   districts: District[];
   queue: QueueItem[];

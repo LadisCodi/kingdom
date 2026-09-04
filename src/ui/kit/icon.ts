@@ -16,7 +16,7 @@
 // need a string.
 
 import { CURRENCIES } from '../../sim/data/definitions';
-import type { CurrencyId, DistrictId, UnitId, Wallet } from '../../sim/state';
+import type { CurrencyId, DistrictId, GoodId, UnitId, Wallet } from '../../sim/state';
 import { el } from '../format';
 import { ATLAS_CELLS } from './atlas.generated';
 
@@ -33,7 +33,7 @@ export type UiIconName =
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
   | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star';
 
-export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
+export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
 /** The fallback glyph for every icon, and — once the atlas lands — the
  *  checklist of cells it must contain. Exhaustive by construction: adding a
@@ -44,6 +44,10 @@ export const ICON_EMOJI: Record<IconName, string> = {
   Knowledge: '📜', Stardust: '🌟', Gems: '💎',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
+  // Refined goods. `Iron` is both a good and one of the retired cell icons
+  // above, and shares the one cell: the ore and the ingot are the same
+  // picture at 16 px.
+  Planks: '🪵', CutStone: '🧱', Runestone: '🔯',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
   Market: '🏪', Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯',

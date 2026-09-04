@@ -20,8 +20,9 @@ import { committedArmyPower, maxArmyPower } from '../sim/army';
 import { districtAdjacency } from '../sim/adjacency';
 import {
   canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
-  requiredTownhallLevel, upgradeCost, upgradeDuration,
+  requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from '../sim/districts';
+import { getGood } from '../sim/goods';
 import {
   districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
@@ -31,7 +32,7 @@ import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import { trainingSection } from './trainingSection';
 import {
-  coordKey, queueProgress, remainingSeconds, townhall, type District,
+  coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
 import { effectiveWorkerStrike, tapWorkSeconds } from '../sim/upgrades';
@@ -340,12 +341,24 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
     }
 
+    // Refined goods sit beside the currencies rather than among them: they
+    // are not wallet rows, and being short of one sends the player to a
+    // workshop queue rather than out to the map.
+    const goodsPrice = upgradeGoodsCost(district.definitionId, next);
+    const goodsTerms = (Object.entries(goodsPrice) as Array<[GoodId, number]>)
+      .map(([id, n]) => ({
+        icon: id,
+        amount: String(n),
+        short: getGood(game.state.city.goods, id) < n,
+      }));
+
     const upgrade = action({
       label: 'Upgrade',
       kind: 'primary',
       onClick: () => game.doUpgrade(district.uniqueId),
       disabledReason: reason,
       cost,
+      costExtra: goodsTerms,
       have: (c) => game.walletValue(c),
       // What is left beside the button is the WAIT, which is a consequence
       // rather than a price and has no business inside the press-target.

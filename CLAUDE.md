@@ -21,7 +21,8 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite; predev runs the balance import
-npm test             # vitest run — 43 suites, keep them all green
+npm test             # vitest run — 46 suites, keep them all green
+npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run balance      # balance.xlsx  → src/sim/data/balance.json
 npm run balance:export   # balance.json → balance.xlsx  (the other direction)
@@ -88,11 +89,12 @@ by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
 | a seasonal hero = one hero row + one banner row; a major technology's place on its tome page (`node_x`/`node_y`), its tome, era and Knowledge price; a minor line's ranks (row order) | a new tome or a new minor line (`TomeId` and `TechLineId` are unions), or a new effect hook for a line (`modifiers.ts`) |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
+| a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`) | a new `GoodId` |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
 
 ## Saves
 
-`SAVE_VERSION` is 28; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 29; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -113,7 +115,8 @@ than the build is rejected rather than downgraded.
   vein is a rich Stone node. `HarvestSpec.id` vs `HarvestSpec.currencyId`.
   Four coins on the plank is the genre's ceiling, not its floor — adding a
   wallet row needs an argument, and the Fragments precedent (a per-collectible
-  counter, not a row) is usually the better answer.
+  counter, not a row) is usually the better answer. **Refined goods follow it**:
+  `state.city.goods` is a counter map, not a `CurrencyId` (`sim/goods.ts`).
 - **A tap is priced in production, not in units.** `tap.workSeconds` (10)
   hands the player that many seconds of what they tapped is producing, floored
   at the authored yield. **Follow this for every new reward** — absolute

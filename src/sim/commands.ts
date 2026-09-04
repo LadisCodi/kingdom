@@ -7,7 +7,7 @@ import { RUSH } from './data/definitions';
 import {
   buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
-  upgradeCost, upgradeDuration,
+  upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
@@ -25,6 +25,7 @@ import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, pay, refund } from './wallet';
+import { canAffordGoods, payGoods } from './goods';
 import {
   addWorker, advanceWorkers, assignableWorkerLimit, relocateCrew, removeWorker,
   type DepositEvent, type StrikeEvent,
@@ -172,7 +173,7 @@ export function moveDistrict(
 
 export type UpgradeResult =
   | 'Started' | 'AtMaxLevel' | 'AlreadyUpgrading' | 'RequirementsNotMet'
-  | 'NoBuilderFree' | 'NotEnoughResources';
+  | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods';
 
 export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
   const district = districtById(state, districtUniqueId);
@@ -189,8 +190,14 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   if (gateTech !== null && !isTechComplete(state, gateTech)) return 'RequirementsNotMet';
   if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
   const cost = upgradeCost(district.definitionId, districtCount(state, district.definitionId), district.level);
+  // Two purses, two refusals. Goods are told apart from raw resources because
+  // the answer to each is a different errand: one is a trip to the map, the
+  // other a queue at a workshop.
+  const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
+  if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
+  payGoods(state.city.goods, goods);
   state.city.queue.push({
     uniqueId: `UpgradeItem_${district.uniqueId}_${district.level + 1}`,
     kind: 'upgrade',

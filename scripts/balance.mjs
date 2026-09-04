@@ -40,6 +40,12 @@ const DISTRICT_IDS = [
   // upgrading them is what raises the army cap.
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
+// Refined goods: what a workshop turns raw resources into, and what an
+// advanced building level is priced in. They are NOT wallet rows — the city
+// keeps a stockpile, the way the collection keeps ingredients
+// (Docs/plans/builder-30-days.md §2).
+const GOOD_IDS = ['Planks', 'CutStone', 'Iron', 'Runestone'];
+
 const TECH_IDS = [
   'CharterI', 'CharterII', 'CharterIII', 'CharterIV',
   'Forestry', 'UrbanPlanning', 'Saws', 'Agriculture',
@@ -291,11 +297,13 @@ const DISTRICT_COLUMNS = [
   'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
   'upgrade_cost_stone',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
+  'upgrade_cost_goods_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
+  'upgrade_cost_goods_per_level',
 ];
 
 const SHEETS = {
@@ -314,6 +322,13 @@ const SHEETS = {
   // same work, so nobody mints matter. stock 0 = bedrock, never runs down.
   Harvest: ['source', 'units_per_strike', 'seconds_per_strike', 'stock', 'recovery_seconds',
     'respawn_seconds', 'required_tech'],
+  // A workshop turns raw resources into one good, one queue item at a time,
+  // and `work_seconds` is the work ONE villager does — a second worker halves
+  // it (Docs/plans/builder-30-days.md §3). `input_good` is the tier-2 recipe:
+  // Runestone is cut stone with Mana poured into it.
+  Goods: ['id', 'name', 'tier',
+    'input_gold', 'input_wood', 'input_food', 'input_stone', 'input_mana',
+    'input_good', 'input_good_amount', 'work_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'gold_value'],
   FogRings: ['distance', 'cost'],
   // Research is paid in Gold and nothing else — one column, not a
@@ -491,6 +506,34 @@ function wallet(row, prefix) {
   return out;
 }
 
+/**
+ * A per-level goods price: levels separated by `|`, the goods of one level by
+ * `,`, each written `Good:amount`. Entry 0 is what it costs to reach level 2,
+ * the same indexing every other per-level district column uses.
+ *
+ *   `|Planks:2|Planks:4,CutStone:2`  →  [{}, {Planks:2}, {Planks:4,CutStone:2}]
+ */
+function goodsList(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) return [];
+  return String(raw).split('|').map((level) => {
+    const out = {};
+    for (const part of level.split(',')) {
+      const entry = part.trim();
+      if (entry === '' || entry === '-') continue;
+      const [id, amount] = entry.split(':').map((x) => x.trim());
+      if (!GOOD_IDS.includes(id)) fail(where(row), `"${col}" has an unknown good ("${id}")`);
+      const n = Number(amount);
+      if (!Number.isFinite(n) || n <= 0) {
+        fail(where(row), `"${col}" has a bad amount for ${id} ("${amount}")`);
+      }
+      if (out[id] !== undefined) fail(where(row), `"${col}" names ${id} twice in one level`);
+      out[id] = n;
+    }
+    return out;
+  });
+}
+
 function byId(rows, expectedIds, idColumn = 'id') {
   const seen = new Map();
   for (const row of rows) {
@@ -517,7 +560,7 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
+    districts: {}, goods: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
     store: {}, payer: {},
     research: {}, rush: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
@@ -559,6 +602,24 @@ async function importXlsx() {
       upgradeCostLevelGrowth: num(r, 'upgrade_cost_level_growth'),
       upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
       upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
+      upgradeCostGoodsPerLevel: goodsList(r, 'upgrade_cost_goods_per_level'),
+    };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Goods'), GOOD_IDS)) {
+    const inputGood = (r.input_good === '' || r.input_good === undefined) ? null : r.input_good;
+    if (inputGood !== null && !GOOD_IDS.includes(inputGood)) {
+      fail(where(r), `"input_good" is not a good ("${inputGood}")`);
+    }
+    if (inputGood === id) fail(where(r), 'a good cannot be made of itself');
+    out.goods[id] = {
+      name: String(r.name),
+      tier: num(r, 'tier'),
+      input: wallet(r, 'input'),
+      inputMana: num(r, 'input_mana', { blankAs: 0 }),
+      inputGood,
+      inputGoodAmount: inputGood === null ? 0 : num(r, 'input_good_amount'),
+      workSeconds: num(r, 'work_seconds'),
     };
   }
 
@@ -789,6 +850,10 @@ async function importXlsx() {
 // ------------------------------------------------------------------- export
 
 const listCell = (arr) => arr.join(',');
+
+const goodsCell = (levels) => levels
+  .map((m) => Object.entries(m).map(([id, n]) => `${id}:${n}`).join(','))
+  .join('|');
 const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] && w[c] !== 0 ? w[c] : ''));
 
 /** isTextCell(colName, rowValues) marks list cells: they get Excel's Text
@@ -827,6 +892,7 @@ async function exportXlsx() {
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
       ...costCells(d.upgradeCost),
       d.upgradeCostLevelGrowth, d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
+      goodsCell(d.upgradeCostGoodsPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
 
@@ -844,6 +910,13 @@ async function exportXlsx() {
     const h = b.harvest[id];
     return [id, h.unitsPerStrike, h.secondsPerStrike, h.stock, h.recoverySeconds,
       h.respawnSeconds || '', h.requiredTech ?? ''];
+  }));
+
+  addSheet(workbook, 'Goods', GOOD_IDS.map((id) => {
+    const g = b.goods[id];
+    return [id, g.name, g.tier,
+      ...costCells(g.input), g.inputMana || '',
+      g.inputGood ?? '', g.inputGoodAmount || '', g.workSeconds];
   }));
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {

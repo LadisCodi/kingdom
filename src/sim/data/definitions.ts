@@ -12,7 +12,8 @@ import balance from './balance.json';
 import regionMap from './region-map.json';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
-  ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, HarvestSourceId, HeroId,
+  ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
+  HarvestSourceId, HeroId,
   LandmarkKind, RuinId, StoreSkuId, TechId, TechLineId, TerrainId, TomeId, TrainableId, UnitId,
   Wallet,
 } from '../state';
@@ -44,6 +45,37 @@ const currency = (scope: CurrencyDef['scope'], b: CurrencyBalance): CurrencyDef 
   primary: b.primary ?? false,
   goldValue: b.goldValue ?? null,
 });
+
+/**
+ * A refined good: what one workshop turns raw resources into.
+ *
+ * `workSeconds` is the work ONE villager does on a queued item. The crew
+ * shares itself over the items in progress, so two workers on one item finish
+ * it in half the time (Docs/plans/builder-30-days.md §3).
+ */
+export interface GoodDef {
+  id: GoodId;
+  name: string;
+  tier: number;
+  /** Raw currencies one item consumes, paid when it is queued. */
+  input: Wallet;
+  /** Mana one item consumes. Its own field because Mana is capped and city
+   *  scoped, and is spent through `payMana`, never through the wallet. */
+  inputMana: number;
+  /** The tier-2 recipe: a good made partly of another good. */
+  inputGood: GoodId | null;
+  inputGoodAmount: number;
+  workSeconds: number;
+}
+
+export const GOODS: Record<GoodId, GoodDef> = {
+  Planks: { id: 'Planks', ...balance.goods.Planks } as GoodDef,
+  CutStone: { id: 'CutStone', ...balance.goods.CutStone } as GoodDef,
+  Iron: { id: 'Iron', ...balance.goods.Iron } as GoodDef,
+  Runestone: { id: 'Runestone', ...balance.goods.Runestone } as GoodDef,
+};
+
+export const GOOD_ORDER: readonly GoodId[] = Object.keys(GOODS) as GoodId[];
 
 // Object order = header widget order AND the Market's sell order.
 export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
@@ -262,6 +294,10 @@ export interface DistrictDef {
   buildDurationDistrictGrowth: number;
   buildDurationDistanceGrowth: number;
   upgradeCost: Wallet;
+  /** Refined goods an upgrade costs on top of the currencies; index 0 = the
+   *  price of reaching level 2, the same indexing as every other per-level
+   *  column. Empty = this building is priced in raw resources alone. */
+  upgradeCostGoodsPerLevel: readonly GoodsStock[];
   upgradeCostLevelGrowth: number;
   upgradeDurationSeconds: number;
   upgradeDurationLevelGrowth: number;
@@ -2398,4 +2434,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 28;
+export const SAVE_VERSION = 29;

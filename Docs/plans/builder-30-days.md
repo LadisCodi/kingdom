@@ -8,8 +8,7 @@
 > designs will live in `features/` as each step closes, and open decisions in
 > [`../open-questions.md`](../open-questions.md).
 >
-> **Status: step 1 done** (the harness, and the sim bug it found). Save
-> version at the time of writing: 28.
+> **Status: steps 1–2 done.** Save version 29.
 
 ## 0. How the steps are cut
 
@@ -117,31 +116,43 @@ those two lookups, updated in O(1) per step. Behaviour is provably unchanged:
 one-call and stepped replay both fingerprint identically to the pre-fix run,
 and the harness prints the same table. The 30-day run is now 43 s.
 
-## 2. Step 2 · Goods
+## 2. Step 2 · Goods — **DONE**
 
 The stockpile before the producer, so prices can name a good and the dev bar
 can grant one.
 
-- **Data:** a new `Goods` sheet: `id, name, tier, input_currency, input_amount,
-  input_good, work_seconds`. Four rows: Planks, CutStone, Iron, Runestone.
-  Importer: a `Goods` entry in `SHEETS` (`scripts/balance.mjs:301`), export
-  side beside `:816`. `Districts` gains `upgrade_cost_goods_per_level`
-  (list column, `Planks:2|CutStone:1` syntax) — empty for every row today.
-- **Sim:** `GoodId` union in `state.ts`; `state.city.goods: Partial<Record<GoodId, number>>`
-  — a counter map, the Fragments precedent (`state.ts:402`), city-scoped,
-  **not** a `CurrencyId`. `DistrictDef.upgradeCostGoodsPerLevel`. `upgradeCost`
-  (`districts.ts:167`) returns goods beside currencies; `canAfford`/`pay` in
-  `wallet.ts` learn a goods part. `upgradeDistrict` (`commands.ts:181`) refuses
-  with `'MissingGoods'`.
-- **UI:** cost chips (`src/ui/kit`, used at `buildMenu.ts:68`,
-  `placementPanel.ts:68`, `districtCard.ts:325-371`) render a good with its
-  icon and `have/need`. No plank row. A dev-bar grant.
-- **Save:** additive (`kingdom.city.Goods`), bump to 29.
-- **Tests:** `goods.test.ts` — an upgrade priced in goods refuses, pays,
-  refunds on cancel from the formula (the builders precedent). `icons.test.ts`
-  gets the four goods icons.
-- **Done when:** a hand-edited row with a goods price gates an upgrade in the
-  real card and the dev bar can pay it.
+- **Data:** a `Goods` sheet — `id, name, tier, input_gold/wood/food/stone,
+  input_mana, input_good, input_good_amount, work_seconds`. Four rows:
+
+  | Good | One item is made of | Work (one villager) |
+  |---|---|---|
+  | **Planks** | 10 Wood | 20 min |
+  | **Cut Stone** | 10 Stone | 30 min |
+  | **Iron** | 20 Stone + 200 Gold | 60 min |
+  | **Runestone** | 2 Cut Stone + 20 Mana | 3 h |
+
+  `Districts` gained `upgrade_cost_goods_per_level`, a text column written
+  `|Planks:2|Planks:4,CutStone:2` — levels separated by `|`, goods by `,`,
+  entry 0 the price of reaching level 2, like every other per-level column.
+  **Every row is blank**: goods are charged from step 4.
+- **Sim:** `GoodId` and `state.city.goods`, a counter map and deliberately not
+  a `CurrencyId` — the Fragments precedent, so the plank stays at five.
+  `src/sim/goods.ts` holds the stockpile maths and `goodsCostForLevel`;
+  `upgradeGoodsCost` prices a level; `upgradeDistrict` now has **two
+  refusals**, `NotEnoughResources` and `NotEnoughGoods`, because the answer to
+  each is a different errand — a trip to the map, or a queue at a workshop.
+- **UI:** the upgrade button carries the goods beside the currencies through
+  `costExtra`, the slot that already existed for priced things that are not
+  wallet rows. `?dev` grants ten of each.
+- **Art:** `Iron` shares the retired ore cell, already drawn; `Planks`,
+  `CutStone` and `Runestone` are named in `tests/icons.test.ts`'s
+  `AWAITING_ART` until their sheet is cut.
+- **Save:** additive (`Cities[0].Goods`), version **29**, no migrator — a save
+  written before goods existed reads an empty stockpile, which is what a city
+  with no workshop holds anyway.
+- **Tests:** `tests/goods.test.ts` — the stockpile, the recipes, the per-level
+  indexing, both refusals in order, and the save round trip including the
+  pre-29 shape.
 
 ## 3. Step 3 · The workshops
 

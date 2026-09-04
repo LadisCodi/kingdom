@@ -32,6 +32,9 @@ const AWAITING_ART: readonly string[] = [
   // Stardust — the renamed collection currency (2026-09-03). Knowledge kept
   // its scroll; the dust that levels a relic needs its own cell.
   'Stardust',
+  // The refined goods (Docs/plans/builder-30-days.md §2). `Iron` shares the
+  // retired ore cell, which is already drawn; these three need their own.
+  'Planks', 'CutStone', 'Runestone',
 ];
 
 const pending = new Set(AWAITING_ART);

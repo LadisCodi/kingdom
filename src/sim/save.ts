@@ -26,7 +26,7 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ArtifactId, type TechId, type Wallet, type Worker,
+  type ArtifactId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId, type TechLineId, type TomeId,
 } from './state';
 
@@ -272,6 +272,7 @@ export function serialize(state: GameState, now: number): SaveFile {
             Name: state.city.name,
             Population: state.city.population,
             Currencies: state.city.wallet,
+            Goods: state.city.goods,
             Districts: state.city.districts.map(
               (d): DistrictDto => ({
                 UniqueID: d.uniqueId,
@@ -505,6 +506,10 @@ export function deserialize(
   if (cityDto) {
     state.city.population = cityDto.Population ?? state.city.population;
     state.city.wallet = { ...(cityDto.Currencies as Wallet) };
+    // Additive since save 29: a save written before goods existed simply has
+    // an empty stockpile, which is what a city that never built a workshop
+    // holds anyway.
+    state.city.goods = { ...((cityDto.Goods ?? {}) as GoodsStock) };
     state.city.districts = (cityDto.Districts as DistrictDto[]).map(
       (d): District => ({
         uniqueId: d.UniqueID,

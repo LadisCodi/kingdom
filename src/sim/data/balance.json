@@ -32,7 +32,8 @@
       },
       "upgradeCostLevelGrowth": 3.9,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 4
+      "upgradeDurationLevelGrowth": 4,
+      "upgradeCostGoodsPerLevel": []
     },
     "Housing": {
       "size": {
@@ -76,7 +77,8 @@
       },
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 20,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "Farm": {
       "size": {
@@ -122,7 +124,8 @@
       },
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "FarmLands": {
       "size": {
@@ -156,7 +159,8 @@
       "upgradeCost": {},
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "Sawmill": {
       "size": {
@@ -208,7 +212,8 @@
       },
       "upgradeCostLevelGrowth": 2.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "Market": {
       "size": {
@@ -239,7 +244,8 @@
       "upgradeCost": {},
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "Quarry": {
       "size": {
@@ -288,7 +294,8 @@
       },
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "Docks": {
       "size": {
@@ -332,7 +339,8 @@
       },
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostGoodsPerLevel": []
     },
     "Sanctum": {
       "size": {
@@ -377,7 +385,8 @@
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": []
     },
     "Barracks": {
       "size": {
@@ -428,7 +437,8 @@
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 90,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": []
     },
     "SpearHall": {
       "size": {
@@ -479,7 +489,8 @@
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": []
     },
     "ShootingGrounds": {
       "size": {
@@ -530,7 +541,8 @@
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": []
     },
     "Stables": {
       "size": {
@@ -581,7 +593,53 @@
       },
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 180,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": []
+    }
+  },
+  "goods": {
+    "Planks": {
+      "name": "Planks",
+      "tier": 1,
+      "input": {
+        "Wood": 10
+      },
+      "inputMana": 0,
+      "inputGood": null,
+      "inputGoodAmount": 0,
+      "workSeconds": 1200
+    },
+    "CutStone": {
+      "name": "Cut Stone",
+      "tier": 1,
+      "input": {
+        "Stone": 10
+      },
+      "inputMana": 0,
+      "inputGood": null,
+      "inputGoodAmount": 0,
+      "workSeconds": 1800
+    },
+    "Iron": {
+      "name": "Iron",
+      "tier": 1,
+      "input": {
+        "Gold": 200,
+        "Stone": 20
+      },
+      "inputMana": 0,
+      "inputGood": null,
+      "inputGoodAmount": 0,
+      "workSeconds": 3600
+    },
+    "Runestone": {
+      "name": "Runestone",
+      "tier": 2,
+      "input": {},
+      "inputMana": 20,
+      "inputGood": "CutStone",
+      "inputGoodAmount": 2,
+      "workSeconds": 10800
     }
   },
   "terrain": {
