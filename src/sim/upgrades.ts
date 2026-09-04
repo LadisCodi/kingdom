@@ -1,65 +1,55 @@
-// Upgrades: instant, gold-only, leveled boosts to existing mechanics.
+// Minor ranks: what used to be instant, gold-only, LEVELLED upgrades.
+//
+// Every node in the tree is a technology now (Docs/features/tech-tree.md §1
+// rule 2), so a level became a rank: `Sawpits I -> II -> III`, each requiring
+// the one before, each costing Gold AND time like anything else in the tree.
+// `effect()` is the whole difference — it counts completed ranks where it used
+// to read a stored level.
 //
 // The effective-value helpers below are the ONE place effects are applied, and
-// each is now a three-stage pipeline: base -> upgrade levels -> the modifier
+// each is now a three-stage pipeline: base -> completed ranks -> the modifier
 // stack (artifact passives, hero traits, seasons; see sim/modifiers.ts). An
 // empty stack is the bit-exact identity, so nothing changes until something
 // grants a modifier.
 //
-// Integer stats (tapYield, workerYield) round ONCE, here at the boundary,
-// because they feed addToWallet directly and a fractional wallet would leak
-// into quest counters, the Market and every displayed number. Math.round
-// rather than floor: flooring makes a small multiplier useless at base-1
-// yields.
+// Integer stats (workerYield) round ONCE, here at the boundary, because they
+// feed addToWallet directly and a fractional wallet would leak into quest
+// counters, the Market and every displayed number. Math.round rather than
+// floor: flooring makes a small multiplier useless at base-1 yields. The tap
+// is the exception — it owes a FRACTION on purpose, and `tapCarry` keeps the
+// remainder (see `tapDraw`).
 
 import {
-  DISTRICTS, HARVEST, TAP, TAXES, UPGRADES, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TECH_LINES, WORKER, levelIndexed,
   type HarvestSpec,
 } from './data/definitions';
-import type { CurrencyId, GameState, UpgradeId } from './state';
+import type { CurrencyId, GameState, TechLineId } from './state';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
-import { canAfford, pay } from './wallet';
 
-export const upgradeLevel = (state: GameState, id: UpgradeId): number =>
-  state.upgrades[id] ?? 0;
+/** How many ranks of a line the kingdom has researched. */
+export const lineRank = (state: GameState, line: TechLineId): number => {
+  let n = 0;
+  for (const id of TECH_LINES[line]) {
+    if (!isTechComplete(state, id)) break; // ranks complete in order
+    n += 1;
+  }
+  return n;
+};
 
-/** Gold for the NEXT level (level is 0-based: first purchase costs costBase). */
-export const upgradeCost = (id: UpgradeId, level: number): number =>
-  Math.round(UPGRADES[id].costBase * UPGRADES[id].costGrowth ** level);
-
-export type BuyUpgradeResult = 'Purchased' | 'AtMax' | 'TechRequired' | 'NotEnoughResources';
-
-/** Could the player buy this upgrade this second? Mirrors every gate
- *  `buyUpgrade` checks, so the node dot and the button never disagree. */
-export function canBuyUpgrade(state: GameState, id: UpgradeId): boolean {
-  const def = UPGRADES[id];
-  const level = upgradeLevel(state, id);
-  if (level >= def.maxLevel) return false;
-  if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return false;
-  return canAfford(state.city.wallet, { Gold: upgradeCost(id, level) });
-}
-
-/** Anything on the upgrade side worth a trip to the Research screen. */
-export const anyUpgradeActionable = (state: GameState): boolean =>
-  (Object.keys(UPGRADES) as UpgradeId[]).some((id) => canBuyUpgrade(state, id));
-
-export function buyUpgrade(state: GameState, id: UpgradeId): BuyUpgradeResult {
-  const def = UPGRADES[id];
-  const level = upgradeLevel(state, id);
-  if (level >= def.maxLevel) return 'AtMax';
-  if (def.requiredTech !== null && !isTechComplete(state, def.requiredTech)) return 'TechRequired';
-  const cost = { Gold: upgradeCost(id, level) };
-  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
-  pay(state.city.wallet, cost);
-  state.upgrades[id] = level + 1;
-  return 'Purchased';
-}
+/** The highest rank a line goes to. */
+export const lineMaxRank = (line: TechLineId): number => TECH_LINES[line].length;
 
 // -------------------------------------------------- effective values
 
-export const effect = (state: GameState, id: UpgradeId): number =>
-  upgradeLevel(state, id) * UPGRADES[id].effectPerLevel;
+/**
+ * What a line is currently worth: completed ranks x the per-rank effect.
+ *
+ * The per-rank value is read off the FIRST rank because every rank of a line
+ * carries the same number — one column in the workbook, not a ladder of them.
+ */
+export const effect = (state: GameState, line: TechLineId): number =>
+  lineRank(state, line) * TECHNOLOGIES[TECH_LINES[line][0]].effectPerRank;
 
 /**
  * What the city gathers of one resource per second, from its own numbers.
@@ -87,7 +77,7 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
     const spec = HARVEST[source];
     const radius = def.influenceRadiusPerLevel.length === 0
       ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
-    const cycleSeconds = (2 * radius) / WORKER.moveSpeedTilesPerSecond + spec.secondsPerStrike;
+    const cycleSeconds = (2 * radius) / effectiveWorkerSpeed(state) + spec.secondsPerStrike;
     if (cycleSeconds <= 0) continue;
     // A building that goes after more than one thing splits its crew between
     // them. For every district with a single source it divides by one, so no
@@ -98,16 +88,16 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
   return total;
 }
 
-/** CELL-scoped ABUNDANCE upgrades (each +1 unit a strike). They lift the tap
- *  and the worker ALIKE, because both draw from the same depot — which is the
- *  change that unifies the two feelings: nobody creates matter, everyone pulls
- *  from the same place at a different speed.
+/** CELL-scoped ABUNDANCE lines (each +1 unit a strike a rank). They lift the
+ *  tap and the worker ALIKE, because both draw from the same depot — which is
+ *  the change that unifies the two feelings: nobody creates matter, everyone
+ *  pulls from the same place at a different speed.
  *
  *  Keyed on the cell, not the currency: game and crop plots both pay Food, but
  *  Butchery is about butchering and Irrigation is about fields. Crops carry two
  *  and they simply stack. Table at the call site rather than a general scoping
- *  mechanism, because that is what the handful of scoped upgrades needs. */
-const ABUNDANCE_UPGRADES: Partial<Record<HarvestSpec['id'], readonly UpgradeId[]>> = {
+ *  mechanism, because that is what the handful of scoped lines needs. */
+const ABUNDANCE_LINES: Partial<Record<HarvestSpec['id'], readonly TechLineId[]>> = {
   Forest: ['Sawpits'],
   Crops: ['Irrigation', 'Scythes'],
   Meat: ['Butchery'],
@@ -117,10 +107,10 @@ const ABUNDANCE_UPGRADES: Partial<Record<HarvestSpec['id'], readonly UpgradeId[]
 };
 
 /** Units one extraction takes out of this kind of cell — the chunk, after the
- *  ground's own abundance upgrades. Shared by the thumb and the crew. */
+ *  ground's own abundance lines. Shared by the thumb and the crew. */
 export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
   let units = spec.unitsPerStrike;
-  for (const id of ABUNDANCE_UPGRADES[spec.id] ?? []) units += effect(state, id);
+  for (const line of ABUNDANCE_LINES[spec.id] ?? []) units += effect(state, line);
   return Math.max(0, units);
 }
 
@@ -129,9 +119,9 @@ export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): nu
  *
  * > **One tap is `tap.workSeconds` of work on the thing you tapped.**
  *
- * `TapPower` buys this DURATION, +20% a level over ten levels, so it is a
- * relative ladder that never goes stale (README working rule 2) and, priced in
- * Gold, the permanent sink the economy loses when the tech tree runs out.
+ * `TapPower` buys this DURATION, +20% a rank, so it is a relative ladder that
+ * never goes stale (README working rule 2) and, priced in Gold and time, the
+ * permanent sink the economy loses when the tech tree runs out.
  *
  * It is also the number behind what a rewarded ad is worth: the thumb is worth
  * `tapWorkSeconds / collectCooldown` workers, and **that has to stay ahead of
@@ -160,7 +150,8 @@ export function effectiveWorkerStrike(state: GameState, spec: HarvestSpec): numb
 /** Milliseconds between one worker's strikes on this kind of cell. A property
  *  of the CELL, not of the worker: a farm plot is fast and thirsty where an
  *  iron mountain is a heavy swing. No modifier scales it yet — a worker-speed
- *  stat would be a new `ModifierStat`, which is code, and nothing has asked. */
+ *  stat would be a new `ModifierStat`, which is code, and nothing has asked.
+ *  (`workerSpeed` below is how fast they WALK, which is a different thing.) */
 export const workerStrikeMs = (state: GameState, spec: HarvestSpec): number => {
   void state;
   return Math.max(100, Math.round(spec.secondsPerStrike * 1000));
@@ -175,9 +166,9 @@ export const workerStrikeMs = (state: GameState, spec: HarvestSpec): number => {
  *  ever consulted on a deliberate tap — see `collectTap`.
  *
  *  It follows that QuickHands only ever speeds HOLDING up. That makes it a
- *  convenience upgrade rather than a raw-throughput one, which is the right
+ *  convenience line rather than a raw-throughput one, which is the right
  *  shape: it narrows the gap toward manual tapping without closing it (0.5s
- *  down to 0.25s at level 5, still slower than a determined tapper).
+ *  down to 0.25s at rank 5, still slower than a determined tapper).
  *
  *  It is also half of what the thumb is worth: `tapWorkSeconds` over this is
  *  how many workers a held finger is equal to, and that number has to stay
@@ -187,11 +178,30 @@ export const effectiveAutoTapCooldownMs = (state: GameState): number =>
     state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,
   ));
 
-/** Multiplier on Market sale prices (MarketStall: +5%/level). */
+/** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
+ *  FSM when a leg STARTS, so a rank landing mid-walk shortens the next leg
+ *  rather than teleporting the one in progress — which is also what keeps a
+ *  one-call replay and stepped ticking on the same StateUntil. */
+export const effectiveWorkerSpeed = (state: GameState): number =>
+  Math.max(0.1, resolve(state, 'workerSpeed',
+    WORKER.moveSpeedTilesPerSecond
+      * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
+      * (1 + effect(state, 'Cartage'))));
+
+/** Multiplier on build and upgrade time (Carpentry: −5%/rank), floor 0.25. */
+export const effectiveBuildTimeMultiplier = (state: GameState): number =>
+  Math.max(0.25, resolve(state, 'buildTime', 1 - effect(state, 'Carpentry')));
+
+/** Multiplier on research time (Scriveners: −5%/rank), floor 0.25. Applied
+ *  ONCE, when a research starts, and persisted on it — see research.ts. */
+export const effectiveResearchTimeMultiplier = (state: GameState): number =>
+  Math.max(0.25, resolve(state, 'researchTime', 1 - effect(state, 'Scriveners')));
+
+/** Multiplier on Market sale prices (MarketStall: +5%/rank). */
 export const effectiveSalePriceMultiplier = (state: GameState): number =>
   Math.max(0, resolve(state, 'salePrice', 1 + effect(state, 'MarketStall')));
 
-/** Tax gold per housed villager per minute (TradeRoutes: +10%/level). */
+/** Tax gold per housed villager per minute (TradeRoutes: +10%/rank). */
 export const effectiveTaxRate = (state: GameState): number =>
   Math.max(0, resolve(
     state, 'taxRate', TAXES.goldPerPopulationPerMinute * (1 + effect(state, 'TradeRoutes')),

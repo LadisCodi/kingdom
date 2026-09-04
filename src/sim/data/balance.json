@@ -6,7 +6,7 @@
         "x": 2,
         "y": 2
       },
-      "maxLevel": 3,
+      "maxLevel": 4,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -16,8 +16,10 @@
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [
         null,
-        "Architecture"
+        "CharterII",
+        "CharterIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {},
       "buildCostMultiplier": 2,
@@ -37,10 +39,11 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 3,
       "populationCapacityPerLevel": [
         2,
-        4
+        4,
+        6
       ],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -48,13 +51,16 @@
       "maxCountPerTownhallLevel": [
         2,
         4,
-        6
+        6,
+        9
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [
-        "UrbanPlanning"
+        "UrbanPlanning",
+        "Aqueducts"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 10
@@ -88,7 +94,8 @@
       "maxCountPerTownhallLevel": [
         1,
         1,
-        2
+        2,
+        3
       ],
       "influenceRadiusPerLevel": [
         1,
@@ -100,6 +107,7 @@
       "requiredTechPerLevel": [
         "Farming"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 30
@@ -129,11 +137,13 @@
       "maxCountPerTownhallLevel": [
         6,
         6,
-        12
+        12,
+        16
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 10
@@ -153,7 +163,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 4,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -165,7 +175,8 @@
       "maxCountPerTownhallLevel": [
         1,
         2,
-        3
+        3,
+        4
       ],
       "influenceRadiusPerLevel": [
         2,
@@ -174,12 +185,15 @@
       ],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
+        2,
+        3
       ],
       "requiredTechPerLevel": [
         null,
-        "Engineering"
+        "Engineering",
+        "Architecture"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 20
@@ -212,6 +226,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "requiredTechPerLevel": [],
+      "extraCountTech": "Guildhalls",
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 40
@@ -231,7 +246,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 3,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -242,7 +257,8 @@
       "maxCountPerTownhallLevel": [
         1,
         2,
-        3
+        3,
+        4
       ],
       "influenceRadiusPerLevel": [
         2,
@@ -250,11 +266,14 @@
         4
       ],
       "requiredTownhallLevelPerLevel": [
-        2
+        2,
+        3
       ],
       "requiredTechPerLevel": [
-        "Engineering"
+        "Engineering",
+        "Architecture"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 30
@@ -287,7 +306,8 @@
       "maxCountPerTownhallLevel": [
         1,
         2,
-        3
+        3,
+        4
       ],
       "influenceRadiusPerLevel": [
         4,
@@ -297,6 +317,7 @@
       "requiredTechPerLevel": [
         "Shipbuilding"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [],
       "buildCost": {
         "Wood": 25
@@ -318,7 +339,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 5,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -329,12 +350,17 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         2,
-        3
+        3,
+        3,
+        4
       ],
       "requiredTechPerLevel": [
         null,
-        null
+        null,
+        "AttunementII",
+        "AttunementIII"
       ],
+      "extraCountTech": "SecondSanctum",
       "armyCapPerLevel": [],
       "buildCost": {
         "Gold": 300,
@@ -358,7 +384,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 5,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
@@ -369,16 +395,23 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
+        2,
+        3,
+        3
       ],
       "requiredTechPerLevel": [
         null,
-        null
+        null,
+        "WarbandII",
+        "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
-        15
+        15,
+        21,
+        28
       ],
       "buildCost": {
         "Wood": 60,
@@ -402,7 +435,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 5,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
@@ -413,16 +446,23 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
+        2,
+        3,
+        3
       ],
       "requiredTechPerLevel": [
         null,
-        null
+        null,
+        "WarbandII",
+        "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
-        15
+        15,
+        21,
+        28
       ],
       "buildCost": {
         "Wood": 80,
@@ -446,7 +486,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 5,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
@@ -457,16 +497,23 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
+        2,
+        3,
+        3
       ],
       "requiredTechPerLevel": [
         null,
-        null
+        null,
+        "WarbandII",
+        "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
-        15
+        15,
+        21,
+        28
       ],
       "buildCost": {
         "Wood": 80,
@@ -490,7 +537,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 5,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
@@ -501,16 +548,23 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
+        2,
+        3,
+        3
       ],
       "requiredTechPerLevel": [
         null,
-        null
+        null,
+        "WarbandII",
+        "WarbandIII"
       ],
+      "extraCountTech": null,
       "armyCapPerLevel": [
         6,
         10,
-        15
+        15,
+        21,
+        28
       ],
       "buildCost": {
         "Wood": 120,
@@ -601,7 +655,7 @@
       "stock": 5,
       "recoverySeconds": 120,
       "respawnSeconds": 0,
-      "requiredTech": "ScalingTools"
+      "requiredTech": null
     },
     "Fish": {
       "unitsPerStrike": 2,
@@ -665,6 +719,12 @@
       "primary": false,
       "goldValue": null
     },
+    "Stardust": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "goldValue": null
+    },
     "Gems": {
       "cap": null,
       "start": 10,
@@ -722,12 +782,109 @@
     }
   },
   "technologies": {
+    "CharterI": {
+      "cost": {
+        "Gold": 0
+      },
+      "durationSeconds": 0,
+      "requires": [],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": 0,
+        "y": 0
+      },
+      "planned": false
+    },
+    "CharterII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 40
+      },
+      "durationSeconds": 900,
+      "requires": [
+        "Forestry",
+        "UrbanPlanning",
+        "Saws",
+        "Agriculture",
+        "Masonry",
+        "Market"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 2,
+      "node": {
+        "x": 0,
+        "y": 2
+      },
+      "planned": false
+    },
+    "CharterIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 500
+      },
+      "durationSeconds": 3600,
+      "requires": [
+        "Communities",
+        "Hunting",
+        "Farming",
+        "Mining"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 0,
+        "y": 4
+      },
+      "planned": false
+    },
+    "CharterIV": {
+      "cost": {
+        "Gold": 30000,
+        "Knowledge": 3000
+      },
+      "durationSeconds": 21600,
+      "requires": [
+        "Architecture",
+        "Engineering",
+        "DeepMining",
+        "Aqueducts",
+        "Guildhalls",
+        "Roadworks"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 4,
+      "node": {
+        "x": 0,
+        "y": 6
+      },
+      "planned": false
+    },
     "Forestry": {
       "cost": {
         "Gold": 25
       },
       "durationSeconds": 3,
-      "requires": []
+      "requires": [
+        "CharterI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": -3,
+        "y": 1
+      },
+      "planned": false
     },
     "UrbanPlanning": {
       "cost": {
@@ -735,26 +892,17 @@
       },
       "durationSeconds": 60,
       "requires": [
-        "Forestry"
-      ]
-    },
-    "Communities": {
-      "cost": {
-        "Gold": 450
+        "CharterI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": -2,
+        "y": 1
       },
-      "durationSeconds": 90,
-      "requires": [
-        "UrbanPlanning"
-      ]
-    },
-    "Architecture": {
-      "cost": {
-        "Gold": 600
-      },
-      "durationSeconds": 120,
-      "requires": [
-        "Communities"
-      ]
+      "planned": false
     },
     "Saws": {
       "cost": {
@@ -762,17 +910,17 @@
       },
       "durationSeconds": 20,
       "requires": [
-        "Forestry"
-      ]
-    },
-    "Hunting": {
-      "cost": {
-        "Gold": 150
+        "CharterI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": -1,
+        "y": 1
       },
-      "durationSeconds": 30,
-      "requires": [
-        "Forestry"
-      ]
+      "planned": false
     },
     "Agriculture": {
       "cost": {
@@ -780,26 +928,17 @@
       },
       "durationSeconds": 45,
       "requires": [
-        "Forestry"
-      ]
-    },
-    "Farming": {
-      "cost": {
-        "Gold": 250
+        "CharterI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": 1,
+        "y": 1
       },
-      "durationSeconds": 60,
-      "requires": [
-        "Agriculture"
-      ]
-    },
-    "Market": {
-      "cost": {
-        "Gold": 150
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Agriculture"
-      ]
+      "planned": false
     },
     "Masonry": {
       "cost": {
@@ -807,80 +946,245 @@
       },
       "durationSeconds": 45,
       "requires": [
-        "ScalingTools"
-      ]
-    },
-    "Mining": {
-      "cost": {
-        "Gold": 250
+        "CharterI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": 2,
+        "y": 1
       },
-      "durationSeconds": 60,
-      "requires": [
-        "Masonry"
-      ]
+      "planned": false
     },
-    "Engineering": {
+    "Communities": {
       "cost": {
-        "Gold": 500
+        "Gold": 1000,
+        "Knowledge": 80
       },
-      "durationSeconds": 90,
+      "durationSeconds": 900,
       "requires": [
-        "Masonry"
-      ]
+        "CharterII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 2,
+      "node": {
+        "x": -2,
+        "y": 3
+      },
+      "planned": false
     },
-    "DeepMining": {
+    "Hunting": {
       "cost": {
-        "Gold": 800
+        "Gold": 1500,
+        "Knowledge": 120
       },
-      "durationSeconds": 120,
+      "durationSeconds": 1200,
       "requires": [
-        "Mining"
-      ]
+        "CharterII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 2,
+      "node": {
+        "x": -1,
+        "y": 3
+      },
+      "planned": false
     },
-    "Cartography": {
+    "Farming": {
       "cost": {
-        "Gold": 200
+        "Gold": 2000,
+        "Knowledge": 160
       },
-      "durationSeconds": 45,
+      "durationSeconds": 1500,
       "requires": [
-        "Forestry"
-      ]
+        "CharterII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 2,
+      "node": {
+        "x": 1,
+        "y": 3
+      },
+      "planned": false
     },
-    "Sailing": {
+    "Market": {
       "cost": {
         "Gold": 150
       },
       "durationSeconds": 45,
       "requires": [
-        "Cartography"
-      ]
-    },
-    "Fishing": {
-      "cost": {
-        "Gold": 100
+        "CharterI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 1,
+      "node": {
+        "x": 3,
+        "y": 1
       },
-      "durationSeconds": 45,
-      "requires": [
-        "Sailing"
-      ]
+      "planned": false
     },
-    "Shipbuilding": {
+    "Mining": {
       "cost": {
-        "Gold": 400
+        "Gold": 2500,
+        "Knowledge": 200
       },
-      "durationSeconds": 90,
+      "durationSeconds": 1800,
       "requires": [
-        "Fishing"
-      ]
+        "CharterII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 2,
+      "node": {
+        "x": 2,
+        "y": 3
+      },
+      "planned": false
     },
-    "ScalingTools": {
+    "Architecture": {
       "cost": {
-        "Gold": 200
+        "Gold": 6000,
+        "Knowledge": 600
       },
-      "durationSeconds": 60,
+      "durationSeconds": 3600,
       "requires": [
-        "Forestry"
-      ]
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": -4,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Engineering": {
+      "cost": {
+        "Gold": 7285,
+        "Knowledge": 730
+      },
+      "durationSeconds": 4620,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": -3,
+        "y": 5
+      },
+      "planned": false
+    },
+    "DeepMining": {
+      "cost": {
+        "Gold": 8570,
+        "Knowledge": 855
+      },
+      "durationSeconds": 5640,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": -2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "WarbandI": {
+      "cost": {
+        "Gold": 0
+      },
+      "durationSeconds": 0,
+      "requires": [],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 1,
+      "node": {
+        "x": 0,
+        "y": 0
+      },
+      "planned": false
+    },
+    "WarbandII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 40
+      },
+      "durationSeconds": 900,
+      "requires": [
+        "Warrior",
+        "Spears"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": 0,
+        "y": 2
+      },
+      "planned": false
+    },
+    "WarbandIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 500
+      },
+      "durationSeconds": 3600,
+      "requires": [
+        "Archery",
+        "Tactics"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": 0,
+        "y": 4
+      },
+      "planned": false
+    },
+    "WarbandIV": {
+      "cost": {
+        "Gold": 30000,
+        "Knowledge": 3000
+      },
+      "durationSeconds": 21600,
+      "requires": [
+        "Cavalry",
+        "Salvage",
+        "Conquest"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 4,
+      "node": {
+        "x": 0,
+        "y": 6
+      },
+      "planned": false
     },
     "Warrior": {
       "cost": {
@@ -888,8 +1192,17 @@
       },
       "durationSeconds": 30,
       "requires": [
-        "Forestry"
-      ]
+        "WarbandI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 1,
+      "node": {
+        "x": -2,
+        "y": 1
+      },
+      "planned": false
     },
     "Spears": {
       "cost": {
@@ -897,151 +1210,2718 @@
       },
       "durationSeconds": 45,
       "requires": [
-        "Warrior"
-      ]
+        "WarbandI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 1,
+      "node": {
+        "x": -1,
+        "y": 1
+      },
+      "planned": false
     },
     "Archery": {
       "cost": {
-        "Gold": 150
+        "Gold": 1000,
+        "Knowledge": 80
       },
-      "durationSeconds": 60,
+      "durationSeconds": 900,
       "requires": [
-        "Warrior"
-      ]
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": -3,
+        "y": 3
+      },
+      "planned": false
     },
     "Cavalry": {
       "cost": {
-        "Gold": 400
+        "Gold": 6000,
+        "Knowledge": 600
       },
-      "durationSeconds": 90,
+      "durationSeconds": 3600,
       "requires": [
-        "Warrior"
-      ]
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": -3,
+        "y": 5
+      },
+      "planned": false
     },
-    "Attunement": {
+    "AttunementI": {
+      "cost": {
+        "Gold": 0
+      },
+      "durationSeconds": 0,
+      "requires": [],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 0,
+        "y": 0
+      },
+      "planned": false
+    },
+    "AttunementII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 40
+      },
+      "durationSeconds": 900,
+      "requires": [
+        "Cartography",
+        "Consecration",
+        "Meditation"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 0,
+        "y": 2
+      },
+      "planned": false
+    },
+    "AttunementIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 500
+      },
+      "durationSeconds": 3600,
+      "requires": [
+        "Sailing",
+        "ScalingTools"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 0,
+        "y": 4
+      },
+      "planned": false
+    },
+    "AttunementIV": {
+      "cost": {
+        "Gold": 30000,
+        "Knowledge": 3000
+      },
+      "durationSeconds": 21600,
+      "requires": [
+        "Fishing",
+        "Shipbuilding",
+        "SanctifiedRuins",
+        "SecondSanctum"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 4,
+      "node": {
+        "x": 0,
+        "y": 6
+      },
+      "planned": false
+    },
+    "Cartography": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 45,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": -3,
+        "y": 1
+      },
+      "planned": false
+    },
+    "Consecration": {
       "cost": {
         "Gold": 400
       },
       "durationSeconds": 120,
       "requires": [
-        "Forestry"
-      ]
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": -2,
+        "y": 1
+      },
+      "planned": false
     },
-    "Warband": {
+    "Sailing": {
       "cost": {
-        "Gold": 600
+        "Gold": 1000,
+        "Knowledge": 80
+      },
+      "durationSeconds": 900,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": -3,
+        "y": 3
+      },
+      "planned": false
+    },
+    "ScalingTools": {
+      "cost": {
+        "Gold": 1300,
+        "Knowledge": 105
+      },
+      "durationSeconds": 1080,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": -2,
+        "y": 3
+      },
+      "planned": false
+    },
+    "Fishing": {
+      "cost": {
+        "Gold": 6000,
+        "Knowledge": 600
+      },
+      "durationSeconds": 3600,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": -3,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Shipbuilding": {
+      "cost": {
+        "Gold": 7800,
+        "Knowledge": 780
+      },
+      "durationSeconds": 5040,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": -2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "TapPowerI": {
+      "cost": {
+        "Gold": 50
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 0.2,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "TapPowerII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "TapPowerI",
+        "CharterII"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 0.2,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "TapPowerIII": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "TapPowerII",
+        "CharterIII"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 0.2,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "TapPowerIV": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "TapPowerIII",
+        "CharterIII"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 0.2,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "TapPowerV": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "TapPowerIV",
+        "CharterIII"
+      ],
+      "line": "TapPower",
+      "effectPerRank": 0.2,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "QuickHandsI": {
+      "cost": {
+        "Gold": 75
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "QuickHandsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "QuickHandsI",
+        "CharterII"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "QuickHandsIII": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "QuickHandsII",
+        "CharterIII"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "QuickHandsIV": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "QuickHandsIII",
+        "CharterIII"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "QuickHandsV": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "QuickHandsIV",
+        "CharterIII"
+      ],
+      "line": "QuickHands",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "WorkerLoadI": {
+      "cost": {
+        "Gold": 200
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Forestry"
+      ],
+      "line": "WorkerLoad",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "WorkerLoadII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "WorkerLoadI",
+        "CharterII"
+      ],
+      "line": "WorkerLoad",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "WorkerLoadIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "WorkerLoadII",
+        "CharterIII"
+      ],
+      "line": "WorkerLoad",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "SawpitsI": {
+      "cost": {
+        "Gold": 120
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Saws"
+      ],
+      "line": "Sawpits",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "SawpitsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "SawpitsI",
+        "CharterII"
+      ],
+      "line": "Sawpits",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "SawpitsIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "SawpitsII",
+        "CharterIII"
+      ],
+      "line": "Sawpits",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ButcheryI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
       },
       "durationSeconds": 180,
       "requires": [
-        "Archery"
-      ]
-    }
-  },
-  "upgrades": {
-    "TapPower": {
-      "costBase": 50,
-      "costGrowth": 1.9,
-      "maxLevel": 10,
-      "effectPerLevel": 0.2,
-      "requiredTech": "Forestry"
+        "Hunting",
+        "CharterII"
+      ],
+      "line": "Butchery",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "QuickHands": {
-      "costBase": 75,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Forestry"
+    "ButcheryII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "ButcheryI",
+        "CharterII"
+      ],
+      "line": "Butchery",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "WorkerLoad": {
-      "costBase": 200,
-      "costGrowth": 2.5,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Forestry"
+    "ButcheryIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ButcheryII",
+        "CharterIII"
+      ],
+      "line": "Butchery",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
     },
-    "Sawpits": {
-      "costBase": 120,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Saws"
+    "IrrigationI": {
+      "cost": {
+        "Gold": 120
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Agriculture"
+      ],
+      "line": "Irrigation",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
     },
-    "Butchery": {
-      "costBase": 80,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Hunting"
+    "IrrigationII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "IrrigationI",
+        "CharterII"
+      ],
+      "line": "Irrigation",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "Irrigation": {
-      "costBase": 120,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Agriculture"
+    "IrrigationIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "IrrigationII",
+        "CharterIII"
+      ],
+      "line": "Irrigation",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
     },
-    "Scythes": {
-      "costBase": 90,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Farming"
+    "ScythesI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Farming",
+        "CharterII"
+      ],
+      "line": "Scythes",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "Surveying": {
-      "costBase": 150,
-      "costGrowth": 3,
-      "maxLevel": 2,
-      "effectPerLevel": 1,
-      "requiredTech": "Cartography"
+    "ScythesII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "ScythesI",
+        "CharterII"
+      ],
+      "line": "Scythes",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "Pitons": {
-      "costBase": 200,
-      "costGrowth": 2.5,
-      "maxLevel": 2,
-      "effectPerLevel": 0.1,
-      "requiredTech": "Cartography"
+    "ScythesIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ScythesII",
+        "CharterIII"
+      ],
+      "line": "Scythes",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
     },
-    "MarketStall": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 4,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Market"
+    "SurveyingI": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Cartography"
+      ],
+      "line": "Surveying",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 1,
+      "node": null,
+      "planned": false
     },
-    "TradeRoutes": {
-      "costBase": 150,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.1,
-      "requiredTech": "Market"
+    "SurveyingII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "SurveyingI",
+        "AttunementII"
+      ],
+      "line": "Surveying",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "Stonecutting": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Masonry"
+    "PitonsI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "ScalingTools",
+        "AttunementII"
+      ],
+      "line": "Pitons",
+      "effectPerRank": 0.1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "BigNets": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Fishing"
+    "PitonsII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "PitonsI",
+        "AttunementII"
+      ],
+      "line": "Pitons",
+      "effectPerRank": 0.1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
     },
-    "IronPicks": {
-      "costBase": 150,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Mining"
+    "MarketStallI": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Market"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
     },
-    "Resonance": {
-      "costBase": 250,
-      "costGrowth": 2.5,
-      "maxLevel": 2,
-      "effectPerLevel": 0.2,
-      "requiredTech": "Attunement"
+    "MarketStallII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "MarketStallI",
+        "CharterII"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "MarketStallIII": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "MarketStallII",
+        "CharterIII"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "MarketStallIV": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "MarketStallIII",
+        "CharterIII"
+      ],
+      "line": "MarketStall",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "TradeRoutesI": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Market"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "TradeRoutesII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "TradeRoutesI",
+        "CharterII"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "TradeRoutesIII": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "TradeRoutesII",
+        "CharterIII"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "TradeRoutesIV": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "TradeRoutesIII",
+        "CharterIII"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "TradeRoutesV": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "TradeRoutesIV",
+        "CharterIII"
+      ],
+      "line": "TradeRoutes",
+      "effectPerRank": 0.1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "StonecuttingI": {
+      "cost": {
+        "Gold": 100
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Masonry"
+      ],
+      "line": "Stonecutting",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "StonecuttingII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "StonecuttingI",
+        "CharterII"
+      ],
+      "line": "Stonecutting",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "StonecuttingIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "StonecuttingII",
+        "CharterIII"
+      ],
+      "line": "Stonecutting",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BigNetsI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Fishing",
+        "AttunementIII"
+      ],
+      "line": "BigNets",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BigNetsII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "BigNetsI",
+        "AttunementIII"
+      ],
+      "line": "BigNets",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BigNetsIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "BigNetsII",
+        "AttunementIII"
+      ],
+      "line": "BigNets",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "IronPicksI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Mining",
+        "CharterII"
+      ],
+      "line": "IronPicks",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "IronPicksII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "IronPicksI",
+        "CharterII"
+      ],
+      "line": "IronPicks",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "IronPicksIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "IronPicksII",
+        "CharterIII"
+      ],
+      "line": "IronPicks",
+      "effectPerRank": 1,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ResonanceI": {
+      "cost": {
+        "Gold": 250
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Consecration"
+      ],
+      "line": "Resonance",
+      "effectPerRank": 0.2,
+      "tome": "Magic",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "ResonanceII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "ResonanceI",
+        "AttunementII"
+      ],
+      "line": "Resonance",
+      "effectPerRank": 0.2,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "CarpentryI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "UrbanPlanning"
+      ],
+      "line": "Carpentry",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "CarpentryII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "CarpentryI",
+        "CharterII"
+      ],
+      "line": "Carpentry",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "CarpentryIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "CarpentryII",
+        "CharterIII"
+      ],
+      "line": "Carpentry",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ScrivenersI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Architecture",
+        "CharterIII"
+      ],
+      "line": "Scriveners",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ScrivenersII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ScrivenersI",
+        "CharterIII"
+      ],
+      "line": "Scriveners",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ScrivenersIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ScrivenersII",
+        "CharterIII"
+      ],
+      "line": "Scriveners",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "CartageI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Roadworks",
+        "CharterIII"
+      ],
+      "line": "Cartage",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "CartageII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "CartageI",
+        "CharterIII"
+      ],
+      "line": "Cartage",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "CartageIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "CartageII",
+        "CharterIII"
+      ],
+      "line": "Cartage",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "DeepWellsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Consecration"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "DeepWellsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "DeepWellsI",
+        "AttunementII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "DeepWellsIII": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "DeepWellsII",
+        "AttunementIII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "DeepWellsIV": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "DeepWellsIII",
+        "AttunementIII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "DeepWellsV": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "DeepWellsIV",
+        "AttunementIII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "LeyTapsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Cartography"
+      ],
+      "line": "LeyTaps",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "LeyTapsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "LeyTapsI",
+        "AttunementII"
+      ],
+      "line": "LeyTaps",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "LeyTapsIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "LeyTapsII",
+        "AttunementIII"
+      ],
+      "line": "LeyTaps",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "WaypostsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Cartography"
+      ],
+      "line": "Wayposts",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "WaypostsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "WaypostsI",
+        "AttunementII"
+      ],
+      "line": "Wayposts",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "WaypostsIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "WaypostsII",
+        "AttunementIII"
+      ],
+      "line": "Wayposts",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ScriptoriumI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Consecration"
+      ],
+      "line": "Scriptorium",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "ScriptoriumII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "ScriptoriumI",
+        "AttunementII"
+      ],
+      "line": "Scriptorium",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "ScriptoriumIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ScriptoriumII",
+        "AttunementIII"
+      ],
+      "line": "Scriptorium",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "VigilsI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "ScalingTools",
+        "AttunementII"
+      ],
+      "line": "Vigils",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "VigilsII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "VigilsI",
+        "AttunementII"
+      ],
+      "line": "Vigils",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "VigilsIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "VigilsII",
+        "AttunementIII"
+      ],
+      "line": "Vigils",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "PilgrimageI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Sailing",
+        "AttunementII"
+      ],
+      "line": "Pilgrimage",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "PilgrimageII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "PilgrimageI",
+        "AttunementII"
+      ],
+      "line": "Pilgrimage",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "PilgrimageIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "PilgrimageII",
+        "AttunementIII"
+      ],
+      "line": "Pilgrimage",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ProspectingI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Shipbuilding",
+        "AttunementIII"
+      ],
+      "line": "Prospecting",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ProspectingII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ProspectingI",
+        "AttunementIII"
+      ],
+      "line": "Prospecting",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ProspectingIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ProspectingII",
+        "AttunementIII"
+      ],
+      "line": "Prospecting",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ColoursI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Warrior"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "ColoursII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "ColoursI",
+        "WarbandII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "ColoursIII": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "ColoursII",
+        "WarbandIII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ColoursIV": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ColoursIII",
+        "WarbandIII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ColoursV": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ColoursIV",
+        "WarbandIII"
+      ],
+      "line": "Colours",
+      "effectPerRank": 2,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "MusterDrillI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Warrior"
+      ],
+      "line": "MusterDrill",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "MusterDrillII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "MusterDrillI",
+        "WarbandII"
+      ],
+      "line": "MusterDrill",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "MusterDrillIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "MusterDrillII",
+        "WarbandIII"
+      ],
+      "line": "MusterDrill",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "RationsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Spears"
+      ],
+      "line": "Rations",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "RationsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "RationsI",
+        "WarbandII"
+      ],
+      "line": "Rations",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "RationsIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "RationsII",
+        "WarbandIII"
+      ],
+      "line": "Rations",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "DrillmasterI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Archery",
+        "WarbandII"
+      ],
+      "line": "Drillmaster",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "DrillmasterII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "DrillmasterI",
+        "WarbandII"
+      ],
+      "line": "Drillmaster",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "DrillmasterIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "DrillmasterII",
+        "WarbandIII"
+      ],
+      "line": "Drillmaster",
+      "effectPerRank": 0.05,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BearersI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Archery",
+        "WarbandII"
+      ],
+      "line": "Bearers",
+      "effectPerRank": 0.03,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "BearersII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "BearersI",
+        "WarbandII"
+      ],
+      "line": "Bearers",
+      "effectPerRank": 0.03,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "BearersIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "BearersII",
+        "WarbandIII"
+      ],
+      "line": "Bearers",
+      "effectPerRank": 0.03,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "PathfindersI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Cavalry",
+        "WarbandIII"
+      ],
+      "line": "Pathfinders",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "PathfindersII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "PathfindersI",
+        "WarbandIII"
+      ],
+      "line": "Pathfinders",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "PathfindersIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "PathfindersII",
+        "WarbandIII"
+      ],
+      "line": "Pathfinders",
+      "effectPerRank": 0.1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ShieldWallI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Warrior"
+      ],
+      "line": "ShieldWall",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "ShieldWallII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "ShieldWallI",
+        "WarbandII"
+      ],
+      "line": "ShieldWall",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "ShieldWallIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ShieldWallII",
+        "WarbandIII"
+      ],
+      "line": "ShieldWall",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "FletchingI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Archery",
+        "WarbandII"
+      ],
+      "line": "Fletching",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "FletchingII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "FletchingI",
+        "WarbandII"
+      ],
+      "line": "Fletching",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "FletchingIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "FletchingII",
+        "WarbandIII"
+      ],
+      "line": "Fletching",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BardingI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Cavalry",
+        "WarbandIII"
+      ],
+      "line": "Barding",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BardingII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "BardingI",
+        "WarbandIII"
+      ],
+      "line": "Barding",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "BardingIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "BardingII",
+        "WarbandIII"
+      ],
+      "line": "Barding",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "WarhornsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Spears"
+      ],
+      "line": "Warhorns",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 1,
+      "node": null,
+      "planned": false
+    },
+    "WarhornsII": {
+      "cost": {
+        "Gold": 525,
+        "Knowledge": 40
+      },
+      "durationSeconds": 330,
+      "requires": [
+        "WarhornsI",
+        "WarbandII"
+      ],
+      "line": "Warhorns",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "WarhornsIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "WarhornsII",
+        "WarbandIII"
+      ],
+      "line": "Warhorns",
+      "effectPerRank": 1,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ManoeuvreI": {
+      "cost": {
+        "Gold": 1500,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Cavalry",
+        "WarbandIII"
+      ],
+      "line": "Manoeuvre",
+      "effectPerRank": 0.02,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ManoeuvreII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "ManoeuvreI",
+        "WarbandIII"
+      ],
+      "line": "Manoeuvre",
+      "effectPerRank": 0.02,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "ManoeuvreIII": {
+      "cost": {
+        "Gold": 5000,
+        "Knowledge": 400
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ManoeuvreII",
+        "WarbandIII"
+      ],
+      "line": "Manoeuvre",
+      "effectPerRank": 0.02,
+      "tome": "Warfare",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "FarsightI": {
+      "cost": {
+        "Gold": 250,
+        "Knowledge": 20
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "ScalingTools",
+        "AttunementII"
+      ],
+      "line": "Farsight",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "FarsightII": {
+      "cost": {
+        "Gold": 800,
+        "Knowledge": 60
+      },
+      "durationSeconds": 480,
+      "requires": [
+        "FarsightI",
+        "AttunementII"
+      ],
+      "line": "Farsight",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null,
+      "planned": false
+    },
+    "FarsightIII": {
+      "cost": {
+        "Gold": 3250,
+        "Knowledge": 275
+      },
+      "durationSeconds": 1950,
+      "requires": [
+        "FarsightII",
+        "AttunementIII"
+      ],
+      "line": "Farsight",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null,
+      "planned": false
+    },
+    "Aqueducts": {
+      "cost": {
+        "Gold": 9855,
+        "Knowledge": 985
+      },
+      "durationSeconds": 6660,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": -1,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Guildhalls": {
+      "cost": {
+        "Gold": 11145,
+        "Knowledge": 1115
+      },
+      "durationSeconds": 7740,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 1,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Roadworks": {
+      "cost": {
+        "Gold": 12430,
+        "Knowledge": 1245
+      },
+      "durationSeconds": 8760,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "LandSurvey": {
+      "cost": {
+        "Gold": 13715,
+        "Knowledge": 1370
+      },
+      "durationSeconds": 9780,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 3,
+        "y": 5
+      },
+      "planned": true
+    },
+    "Apprenticeships": {
+      "cost": {
+        "Gold": 15000,
+        "Knowledge": 1500
+      },
+      "durationSeconds": 10800,
+      "requires": [
+        "CharterIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Civics",
+      "era": 3,
+      "node": {
+        "x": 4,
+        "y": 5
+      },
+      "planned": true
+    },
+    "FieldMedicine": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "WarbandI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 1,
+      "node": {
+        "x": 1,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Veterancy": {
+      "cost": {
+        "Gold": 1375,
+        "Knowledge": 110
+      },
+      "durationSeconds": 1140,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": -2,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Siegecraft": {
+      "cost": {
+        "Gold": 1750,
+        "Knowledge": 140
+      },
+      "durationSeconds": 1320,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": -1,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Tactics": {
+      "cost": {
+        "Gold": 2125,
+        "Knowledge": 170
+      },
+      "durationSeconds": 1560,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": 1,
+        "y": 3
+      },
+      "planned": false
+    },
+    "Scouting": {
+      "cost": {
+        "Gold": 2500,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "WarbandII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 2,
+      "node": {
+        "x": 2,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Salvage": {
+      "cost": {
+        "Gold": 8250,
+        "Knowledge": 825
+      },
+      "durationSeconds": 5400,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": -2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Vanguard": {
+      "cost": {
+        "Gold": 10500,
+        "Knowledge": 1050
+      },
+      "durationSeconds": 7200,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": -1,
+        "y": 5
+      },
+      "planned": true
+    },
+    "Standards": {
+      "cost": {
+        "Gold": 12750,
+        "Knowledge": 1275
+      },
+      "durationSeconds": 9000,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": 1,
+        "y": 5
+      },
+      "planned": true
+    },
+    "Conquest": {
+      "cost": {
+        "Gold": 15000,
+        "Knowledge": 1500
+      },
+      "durationSeconds": 10800,
+      "requires": [
+        "WarbandIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Warfare",
+      "era": 3,
+      "node": {
+        "x": 2,
+        "y": 5
+      },
+      "planned": false
+    },
+    "Meditation": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": -1,
+        "y": 1
+      },
+      "planned": false
+    },
+    "LeyReading": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 1,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Scrying": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 2,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Invocation": {
+      "cost": {
+        "Gold": 150
+      },
+      "durationSeconds": 120,
+      "requires": [
+        "AttunementI"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 1,
+      "node": {
+        "x": 3,
+        "y": 1
+      },
+      "planned": true
+    },
+    "Lorekeeping": {
+      "cost": {
+        "Gold": 1600,
+        "Knowledge": 130
+      },
+      "durationSeconds": 1260,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": -1,
+        "y": 3
+      },
+      "planned": true
+    },
+    "Wayshrines": {
+      "cost": {
+        "Gold": 1900,
+        "Knowledge": 150
+      },
+      "durationSeconds": 1440,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 1,
+        "y": 3
+      },
+      "planned": true
+    },
+    "LeyLines": {
+      "cost": {
+        "Gold": 2200,
+        "Knowledge": 175
+      },
+      "durationSeconds": 1620,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 2,
+        "y": 3
+      },
+      "planned": true
+    },
+    "FrugalRites": {
+      "cost": {
+        "Gold": 2500,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "AttunementII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 2,
+      "node": {
+        "x": 3,
+        "y": 3
+      },
+      "planned": true
+    },
+    "SanctifiedRuins": {
+      "cost": {
+        "Gold": 9600,
+        "Knowledge": 960
+      },
+      "durationSeconds": 6480,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": -1,
+        "y": 5
+      },
+      "planned": false
+    },
+    "RitualCasting": {
+      "cost": {
+        "Gold": 11400,
+        "Knowledge": 1140
+      },
+      "durationSeconds": 7920,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 1,
+        "y": 5
+      },
+      "planned": true
+    },
+    "LeyStorm": {
+      "cost": {
+        "Gold": 13200,
+        "Knowledge": 1320
+      },
+      "durationSeconds": 9360,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 2,
+        "y": 5
+      },
+      "planned": true
+    },
+    "SecondSanctum": {
+      "cost": {
+        "Gold": 15000,
+        "Knowledge": 1500
+      },
+      "durationSeconds": 10800,
+      "requires": [
+        "AttunementIII"
+      ],
+      "line": null,
+      "effectPerRank": 0,
+      "tome": "Magic",
+      "era": 3,
+      "node": {
+        "x": 3,
+        "y": 5
+      },
+      "planned": false
     }
   },
   "research": {
@@ -1072,22 +3952,24 @@
     }
   ],
   "mana": {
-    "productionPerTownhallLevel": [
-      10,
-      13,
-      16
-    ],
-    "baseCapPerTownhallLevel": [
-      100,
-      130,
-      160
-    ],
+    "baseCap": 50,
+    "basePerHour": 6,
     "sanctumCapPerLevel": [
       24,
       48,
-      72
+      72,
+      100,
+      132
+    ],
+    "sanctumPerHourPerLevel": [
+      3,
+      6,
+      9,
+      12,
+      16
     ],
     "landmarkCap": 10,
+    "meditationCap": 30,
     "gemRefillFraction": 0.34
   },
   "attunement": {
@@ -1107,7 +3989,10 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
-    "dripPerClearedRuinPerHour": 2
+    "dripPerClearedRuinPerHour": 2,
+    "perClaimedLandmarkPerHour": 2,
+    "landmarkClaimLump": 50,
+    "conquestPerClearedRuinPerHour": 3
   },
   "army": {
     "typeAdvantage": 1.5,
@@ -1149,11 +4034,12 @@
   "delve": {
     "goldPerDepthPerTier": 25,
     "materialPerDepthPerTier": 4,
-    "knowledgePerDepthPerTier": 6,
+    "stardustPerDepthPerTier": 6,
     "fragmentsPerDepth": 1,
     "failHaulLoss": 0.5,
     "firstClearGems": 10,
-    "firstClearKnowledge": 150
+    "firstClearKnowledge": 150,
+    "firstClearStardust": 150
   },
   "party": {
     "baseSlots": 2,
@@ -1168,7 +4054,7 @@
     "hardPityAt": 60,
     "duplicateFragments": 20,
     "fragmentsPerMiss": 3,
-    "pullKnowledge": 50
+    "pullStardust": 50
   },
   "heroes": {
     "Warden": {
@@ -1313,6 +4199,7 @@
         "Gold": 10
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1327,6 +4214,7 @@
         "Gold": 15
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1341,6 +4229,7 @@
         "Gold": 35
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1355,6 +4244,7 @@
         "Gold": 40
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1369,6 +4259,7 @@
         "Gold": 35
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1383,6 +4274,7 @@
         "Gold": 55
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1397,6 +4289,7 @@
         "Gold": 50
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1411,6 +4304,7 @@
         "Gold": 80
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1425,6 +4319,7 @@
         "Gold": 60
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1439,6 +4334,7 @@
         "Gold": 55
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1453,6 +4349,7 @@
         "Gold": 70
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1467,6 +4364,7 @@
         "Gold": 70
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1481,6 +4379,7 @@
         "Gold": 85
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1495,6 +4394,7 @@
         "Gold": 85
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1509,6 +4409,7 @@
         "Gold": 100
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1523,6 +4424,7 @@
         "Gold": 110
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1537,6 +4439,7 @@
         "Gold": 120
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1551,6 +4454,7 @@
         "Gold": 110
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1565,6 +4469,7 @@
         "Gold": 90
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1579,6 +4484,7 @@
         "Gold": 180
       },
       "rewardGems": 3,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1593,6 +4499,7 @@
         "Gold": 110
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1607,6 +4514,7 @@
         "Gold": 140
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1621,6 +4529,7 @@
         "Gold": 140
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1635,6 +4544,7 @@
         "Gold": 200
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1649,7 +4559,23 @@
         "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
+    },
+    {
+      "id": "Attuned",
+      "name": "Attunement",
+      "description": "Consecrate a Sanctum. The stones you claimed hum with something the city can hold.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Consecration",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 450
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "Mapmakers",
@@ -1663,21 +4589,23 @@
         "Gold": 200
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "Surveyors",
       "name": "Surveyors",
-      "description": "Buy Surveying twice. Each tap on the fog will count for three.",
-      "goalType": "BuyUpgrade",
-      "goalTarget": "Surveying",
-      "goalAmount": 2,
+      "description": "Research Surveying twice. Each tap on the fog will count for three.",
+      "goalType": "CompleteTech",
+      "goalTarget": "SurveyingII",
+      "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 250
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 60
     },
     {
       "id": "Highlands",
@@ -1691,7 +4619,8 @@
         "Gold": 220
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 80
     },
     {
       "id": "PutToSea",
@@ -1705,7 +4634,8 @@
         "Gold": 270
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "ArmedMen",
@@ -1719,6 +4649,7 @@
         "Gold": 220
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1733,6 +4664,7 @@
         "Gold": 350
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1747,6 +4679,7 @@
         "Gold": 350
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1761,7 +4694,8 @@
         "Gold": 150
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardStardust": 20,
+      "rewardKnowledge": 0
     },
     {
       "id": "IntoTheDark",
@@ -1775,7 +4709,8 @@
         "Gold": 200
       },
       "rewardGems": 3,
-      "rewardKnowledge": 25
+      "rewardStardust": 25,
+      "rewardKnowledge": 0
     },
     {
       "id": "Stoneworks",
@@ -1789,6 +4724,7 @@
         "Gold": 290
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1803,6 +4739,7 @@
         "Gold": 240
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1818,7 +4755,8 @@
         "Stone": 20
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "FullHouse",
@@ -1833,6 +4771,7 @@
         "Food": 40
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1847,7 +4786,23 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 80
+    },
+    {
+      "id": "Architect",
+      "name": "The architect",
+      "description": "Seal the second Charter. With it the Townhall may stand a level higher.",
+      "goalType": "CompleteTech",
+      "goalTarget": "CharterII",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 450
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 80
     },
     {
       "id": "DeepSeams",
@@ -1861,20 +4816,7 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Architect",
-      "name": "The architect",
-      "description": "Research Architecture — the capital can go higher.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Architecture",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 450
-      },
-      "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1889,20 +4831,7 @@
         "Gold": 600
       },
       "rewardGems": 5,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Attuned",
-      "name": "Attunement",
-      "description": "Research Attunement and learn to wear a relic.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Attunement",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 450
-      },
-      "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1918,6 +4847,7 @@
         "Stone": 40
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1933,6 +4863,7 @@
         "Food": 60
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1947,7 +4878,8 @@
         "Gold": 400
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardStardust": 20,
+      "rewardKnowledge": 0
     },
     {
       "id": "WornWell",
@@ -1961,7 +4893,8 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 18
+      "rewardStardust": 18,
+      "rewardKnowledge": 0
     },
     {
       "id": "Leylines",
@@ -1976,6 +4909,7 @@
         "Stone": 60
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
       "rewardKnowledge": 0
     },
     {
@@ -1991,7 +4925,8 @@
         "Stone": 90
       },
       "rewardGems": 0,
-      "rewardKnowledge": 30
+      "rewardStardust": 30,
+      "rewardKnowledge": 0
     },
     {
       "id": "TheReliquary",
@@ -2005,7 +4940,8 @@
         "Gold": 900
       },
       "rewardGems": 4,
-      "rewardKnowledge": 45
+      "rewardStardust": 45,
+      "rewardKnowledge": 0
     }
   ],
   "fog": {

@@ -9,9 +9,9 @@
 // empties releases the claim and walks to another, and that is both where the
 // distance cost lives and the visible signal that you are over-extracting.
 
-import { DISTRICTS, HARVEST, WORKER, levelIndexed } from './data/definitions';
+import { DISTRICTS, HARVEST, levelIndexed } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
-import { effectiveWorkerStrike, workerStrikeMs } from './upgrades';
+import { effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs } from './upgrades';
 import { drawFromCell, harvestSourceAt, isExhausted, recoversAt } from './harvest';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
@@ -83,8 +83,11 @@ function findClaimableCell(
 
 // --------------------------------------------------------------------------- FSM
 
-const moveMs = (from: Coord, to: Coord): number =>
-  (euclideanTiles(from, to) / WORKER.moveSpeedTilesPerSecond) * 1000;
+/** A leg's duration, at the speed the kingdom walks at when the leg STARTS
+ *  (Cartage). Fixed for the leg, like every other StateUntil, so replay and
+ *  stepped ticking agree on when the worker arrives. */
+const moveMs = (state: GameState, from: Coord, to: Coord): number =>
+  (euclideanTiles(from, to) / effectiveWorkerSpeed(state)) * 1000;
 
 /** A stable angle per worker id, so an idle worker keeps its spot by the door
  *  instead of jittering. Integer arithmetic, like every other hash here. */
@@ -110,7 +113,7 @@ function tryDispatch(state: GameState, map: MapData, w: Worker, building: Distri
   const cell = findClaimableCell(state, map, building, at, w);
   if (cell) {
     w.claimedCell = cell;
-    setState(w, 'MovingToCell', at, at + moveMs(building.location, cell));
+    setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell));
   } else {
     w.claimedCell = null;
     setState(w, 'Idle', at, null);
@@ -178,7 +181,7 @@ function step(
         // standing over a stump. It costs the trip, which is the honest price
         // of the player having got there first.
         w.claimedCell = null;
-        setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
+        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
       } else {
         setState(w, 'Working', t, t + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!]));
       }
@@ -189,7 +192,7 @@ function step(
       const source = harvestSourceAt(state, cell);
       if (source === null || !worksHere(sources, state, cell)) {
         w.claimedCell = null;
-        setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
+        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
         break;
       }
       const spec = HARVEST[source];
@@ -200,7 +203,7 @@ function step(
       w.carrying = drawFromCell(state, map, cell, spec, effectiveWorkerStrike(state, spec), t);
       w.carriedSource = w.carrying > 0 ? source : null;
       if (w.carrying > 0) strikes.push({ cell, source });
-      setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
+      setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
       break;
     }
     case 'MovingHome': {
@@ -223,7 +226,7 @@ function step(
       // Keep the claim while the cell still holds something; otherwise migrate.
       if (w.claimedCell !== null && !isExhausted(state, map, w.claimedCell, t)
         && worksHere(sources, state, w.claimedCell)) {
-        setState(w, 'MovingToCell', t, t + moveMs(building.location, w.claimedCell));
+        setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell));
       } else {
         w.claimedCell = null;
         tryDispatch(state, map, w, building, t);
@@ -310,7 +313,7 @@ export function relocateCrew(
       : w.activity === 'Working' ? (w.claimedCell ?? from)
         : (workerPosition(state, w, now) ?? from);
     if (w.carrying > 0) {
-      setState(w, 'MovingHome', now, now + moveMs(at, district.location));
+      setState(w, 'MovingHome', now, now + moveMs(state, at, district.location));
     } else {
       w.claimedCell = null;
       setState(w, 'Idle', now, null);

@@ -6,7 +6,7 @@ import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } fr
 import { resolve } from './modifiers';
 import { effect } from './upgrades';
 import { recordQuestEvent } from './quests';
-import { isTechComplete } from './research';
+import { isTechComplete, openTome } from './research';
 import {
   addToWallet, coordKey, districtCells, getWallet,
   type Coord, type District, type GameState, type TechId,
@@ -128,6 +128,11 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     delete state.fog.progress[key];
     delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
+    // Pushing the fog back IS the magic, so the first cell bought opens the
+    // Magic tome. It is guaranteed inside two minutes and needs no landmark
+    // to have spawned nearby, which is what keeps Cartography reachable when
+    // the `Mapmakers` quest asks for it.
+    openTome(state, 'Magic');
     // Clearing fog pays no currency. What a reveal buys is MAP — resource
     // cells, buildable ground, ruins and landmarks — against a Gold price
     // that doubles from ring 4. Knowledge comes out of dungeons instead
@@ -160,7 +165,11 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
     if (fogState(state, map, l.location) !== 'Undiscovered') recordSiteDiscovery(state, l.id);
   }
   for (const r of Object.values(RUINS)) {
-    if (fogState(state, map, r.location) !== 'Undiscovered') recordSiteDiscovery(state, r.id);
+    if (fogState(state, map, r.location) === 'Undiscovered') continue;
+    recordSiteDiscovery(state, r.id);
+    // A ruin in sight is the first moment an army is FOR anything, so it is
+    // what opens the Warfare tome (tomes-and-research.md §5).
+    openTome(state, 'Warfare');
   }
 }
 
@@ -175,11 +184,18 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
   for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogRevealRadius)) {
     state.fog.revealed[coordKey(cell)] = true;
   }
-  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogDiscoverRadius)) {
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size,
+    effectiveDiscoverRadius(state, def.fogDiscoverRadius))) {
     if (!state.fog.revealed[coordKey(cell)]) state.fog.discovered[coordKey(cell)] = true;
   }
   recordVisibleSites(state, map);
 }
+
+/** How far a building marks the fog Discovered (Farsight: +1/rank). Reveal
+ *  radius is untouched: seeing farther is not the same as owning farther, and
+ *  the paid reveal stays the economy's main sink. */
+export const effectiveDiscoverRadius = (state: GameState, base: number): number =>
+  Math.max(0, Math.round(resolve(state, 'discoverRadius', base + effect(state, 'Farsight'))));
 
 /** New-game seed: every district applies its fog radii. */
 export function seedFog(state: GameState, map: MapData): void {

@@ -41,7 +41,7 @@ export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
 export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
   Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-  Knowledge: '📜', Gems: '💎',
+  Knowledge: '📜', Stardust: '🌟', Gems: '💎',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
   // districts

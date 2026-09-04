@@ -77,29 +77,29 @@ per biome ([`03-economy.md`](03-economy.md) §2).
 | **Crops** (a built FarmLands) | Food | 1 | 10 | 60 s | — |
 | **Berries** | Food | 1 | 10 | finite, respawns in 120 s | Forestry |
 | **Wild animals** | Food | **3** | 10 | finite, respawns | Hunting |
-| **Mountain** | Stone | 1 | 5 | 120 s | **Scaling Tools** |
-| **Iron mountain** | Stone | **5** | 5 | **300 s** | **Scaling Tools** |
-| **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Scaling Tools** |
+| **Mountain** | Stone | 1 | 5 | 120 s | — |
+| **Iron mountain** | Stone | **5** | 5 | **300 s** | **Mining** |
+| **Gold mountain** | **Gold** | **3** | 5 | **300 s** | **Deep Mining** |
 | **Fish shoal** (on Water) | Food | 2 | 5 | finite, respawns on water | — |
 
 Wild game pays three times a berry bush, which is what makes hunting worth a
 technology of its own.
 
-**Three mountains, one landform.** They share a silhouette and the research
-that opens one to a pick, and differ in what the rock holds and how long it
-takes to come back:
+**Three mountains, one landform.** They share a silhouette, and differ in
+what the rock holds, what research opens it and how long it takes to come
+back:
 
 | | Pays | Opened by | Role |
 |---|---|---|---|
-| **Mountain** | Stone, 1 | **Scaling Tools** | the everyday building material |
+| **Mountain** | Stone, 1 | — | the everyday building material |
 | **Iron mountain** | Stone, **5** | **Mining** | the same material, five times over — worth the walk to the far fog |
 | **Gold mountain** | **Gold**, 3 | **Deep Mining** | the only thing on the map outside a lived-in house that pays the city's money |
 
 **One building works all three, and the ladder is in the research.** The Quarry
 goes after every peak in its area of influence; what separates ordinary stone
-from metal is a technology, not a different shed. Scaling Tools gets a
-quarryman onto a mountain at all, Mining gets the iron out of it, Deep Mining
-reaches the gold.
+from metal is a technology, not a different shed. A bare peak answers a pick
+from the first second, Mining gets the iron out of it, Deep Mining reaches the
+gold.
 
 That last row is the notable one. **Gold has come out of housing taxes and
 nothing else since Silver was folded into it.** A gold mountain is a second
@@ -147,17 +147,21 @@ Three things fall out, and all three are simplifications:
 
 - **The unbuildable rule disappears.** A feature already blocks a footprint, so
   "nothing builds on a mountain" stopped needing to be said twice.
-- **Scaling Tools moves from reaching a mountain to working one** — the exact
-  shape Forestry has on the forest. The mountain is visible and refusing from
-  the first second, which is what makes the research something the player
-  *wants* rather than a chore, and **a refused tap costs no Mana**.
+- **Scaling Tools stops gating anything on the map.** It was going to move
+  from *reaching* a mountain to *working* one, the exact shape Forestry has on
+  the forest — but the tome tree ([`07-research.md`](07-research.md)) parks it
+  in Magic era 2, far too late to hold era-1 Stone, so the bare peak is free to
+  tap and the gate that remains is on the **metal**: Mining for iron, Deep
+  Mining for gold. An iron mountain is visible and refusing from the first
+  second, which is what makes the research something the player *wants* rather
+  than a chore, and **a refused tap costs no Mana**.
 - **Water becomes the only reveal gate**, so §5's tech gating has one rule
   instead of two.
 
-The cost, stated plainly: **stone is now gated behind a technology where it used
-to be free to tap.** The chain absorbs it — Scaling Tools is quest 28 and the
-first thing priced in Stone is the Barracks at quest 31 — but that ordering is
-now load-bearing and a test derives it from the map rather than trusting it.
+Stone stays free to tap, as it always was. What the chain has to absorb is the
+**iron**: `DeepSeams` asks for Mining only after the second Charter is sealed
+and the Knowledge for it has been paid in ([`12-quests.md`](12-quests.md)), and
+a test walks the chain with zero drip to prove a follower is never short.
 
 **A finite feature respawns rather than dying.** `respawnTerrain` decides where:
 shoals wander across water exactly as berries wander on grass. Placement is a
@@ -305,8 +309,10 @@ and retuned but not added. Landmarks have no code-side identity beyond their
 
 ## 9. Deliberately not in this design
 
-Per-cell fog on a shared map (see [`02-map-scopes.md`](02-map-scopes.md) §4) ·
-pathfinding · a procedural region generator — the province is authored and
+Server-authoritative fog on the shared world map — that scope's fog is
+per-player, client-side and at hex granularity, because it gates nothing
+([`02-map-scopes.md`](02-map-scopes.md) §4) · pathfinding · a procedural region
+generator — the province is authored and
 identical for every player, on purpose ([`02-map-scopes.md`](02-map-scopes.md) §3.1).
 
 **Open questions:** OQ-1, OQ-48, OQ-49, OQ-50 in

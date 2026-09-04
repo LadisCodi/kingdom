@@ -265,11 +265,11 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
-      // One landform, three depths of skill. Scaling Tools gets you onto a
-      // peak at all; Mining gets the iron out of it; Deep Mining reaches the
-      // gold. One building works all three — the ladder is in the research,
-      // not in the buildings.
-      Stone: 'ScalingTools',
+      // One landform, two depths of skill. A bare peak answers a pick from
+      // the first second — Scaling Tools sits in the Magic tome now, far too
+      // late to hold era-1 Stone — Mining gets the iron out of it and Deep
+      // Mining reaches the gold. One building works all three: the ladder is
+      // in the research, not in the buildings.
       MountainIron: 'Mining',
       MountainGold: 'DeepMining',
     });
@@ -338,23 +338,26 @@ describe('tapping a crop plot', () => {
 });
 
 // Mountains used to be a TERRAIN gated by Scaling Tools at REVEAL time. They
-// are a feature now, and the gate moved to working one — the same shape
+// are a feature now, and the gate moved to WORKING one — the same shape
 // Forestry has on the forest, and for the same reason: the mountain is visible
 // and refusing from the first second, so the research is something the player
-// wants rather than a chore. Docs/features/01-map-and-fog.md §3.
-describe('a mountain does not answer a pick until Scaling Tools', () => {
+// wants rather than a chore. Docs/features/01-map-and-fog.md §3. The bare
+// peak itself is free to tap since the tome tree (Scaling Tools sits in Magic
+// era 2, far too late to hold era-1 Stone); the gate that remains is on the
+// METAL.
+describe('an iron mountain does not answer a pick until Mining', () => {
   /** Found rather than pinned: the region is repainted often, and a moved
    *  mountain is not a broken gate. */
-  const someMountain = (): Coord | null => {
+  const someMountain = (kind: 'Mountain' | 'MountainIron' = 'Mountain'): Coord | null => {
     for (const [key, feature] of [...map.initialFeatures].sort()) {
-      if (feature === 'Mountain') return parseCoordKey(key);
+      if (feature === kind) return parseCoordKey(key);
     }
     return null;
   };
 
   it('refuses the tap, charges no Mana, then works once researched', () => {
-    const peak = someMountain();
-    expect(peak, 'the map holds no Mountain feature to test the gate with').not.toBeNull();
+    const peak = someMountain('MountainIron');
+    expect(peak, 'the map holds no MountainIron feature to test the gate with').not.toBeNull();
     const state = freshGame();
     reveal(state, [peak!]);
 
@@ -364,7 +367,7 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     expect(mana(state)).toBe(before);
     expect(getWallet(state.city.wallet, 'Stone')).toBe(0);
 
-    completeTech(state, 'ScalingTools');
+    completeTech(state, 'Mining');
     expect(collectTap(state, map, peak!, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Stone')).toBe(tapYieldAt(state, map, peak!, T0));
     expect(mana(state)).toBe(before - TAP.manaCost);
@@ -375,7 +378,6 @@ describe('a mountain does not answer a pick until Scaling Tools', () => {
     expect(peak).not.toBeNull();
     const state = freshGame();
     reveal(state, [peak!]);
-    completeTech(state, 'ScalingTools');
 
     const spec = HARVEST.Stone;
     for (let i = 0; i < spec.stock; i++) {

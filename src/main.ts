@@ -327,7 +327,7 @@ async function boot(): Promise<void> {
     const allRelics = () => {
       for (const id of ARTIFACT_ORDER) grantArtifact(game.state, id);
       normaliseSlots(game.state);
-      game.state.kingdom.wallet.Knowledge = 5000;
+      game.state.kingdom.wallet.Stardust = 5000;
       addMana(game.state, manaCap(game.state));
       runTick();
     };

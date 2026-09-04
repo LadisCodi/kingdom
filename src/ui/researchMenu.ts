@@ -2,31 +2,40 @@
 //  - Technologies: square icon nodes on a hand-authored grid, dotted
 //    orthogonal connectors; researching takes time in a concurrent slot
 //    (extra slots bought with Gems at an escalating price).
-//  - Upgrades: small CIRCLE nodes fanned below their parent technology —
-//    instant gold purchases, leveled. The fan appears when the parent
-//    completes: the visible reward of the research.
+//  - Minor RANKS: smaller square nodes fanned below the technology their
+//    line hangs under. They are technologies like any other — Gold and time,
+//    in a slot — and the fan appears when the parent completes, which is the
+//    visible reward of the research. (The fan is a stopgap layout; see
+//    research/layout.ts FAN_DY.)
 //  - Tree fog: researched/available techs render normally; techs one step
 //    beyond a RESEARCHED or RESEARCHING tech show as anonymous "?"
 //    silhouettes; anything deeper is hidden.
 
 import type { Game } from '../game';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS, UPGRADES, UPGRADE_ORDER,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
+  TOMES, TOME_ORDER, UNITS, lineParent,
 } from '../sim/data/definitions';
-import { canAfford } from '../sim/commands';
 import {
-  canStartTech, isTechActive, isTechComplete, requirementsMet, slotGemCost,
+  canStartTech, isTechActive, isTechComplete, isTomeOpen, knowledgeShortfallMs, requirementsMet,
+  slotGemCost,
   techCompletesAt, techSlots, techUnlocks,
 } from '../sim/research';
-import { canBuyUpgrade, upgradeCost, upgradeLevel } from '../sim/upgrades';
-import { type GameState, type TechId, type UpgradeId } from '../sim/state';
+import { knowledgePerHour } from '../sim/mana';
+import { resourceDiscoveryKey } from '../sim/discovery';
+import { lineMaxRank, lineRank } from '../sim/upgrades';
+import { type GameState, type TechId, type TechLineId, type TomeId } from '../sim/state';
 import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
 import { spriteUrl } from '../render/sprites';
 import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
+/** Which book is open on the lectern. Module-level so it survives the
+ *  per-tick re-render, like the selection below. */
+let activeTome: TomeId = 'Civics';
+
 // Module-level so selection/pan survive the per-tick re-render.
-type Selected = { kind: 'tech'; id: TechId } | { kind: 'upgrade'; id: UpgradeId } | null;
+type Selected = { kind: 'tech'; id: TechId } | null;
 let selected: Selected = null;
 
 // Geometry (GRID, NODE, UNODE, FAN_*) and the connector route come from
@@ -96,19 +105,61 @@ function visibility(state: GameState, id: TechId): Visibility {
   return 'hidden';
 }
 
-const upgradesOf = (id: TechId): UpgradeId[] =>
-  UPGRADE_ORDER.filter((u) => UPGRADES[u].requiredTech === id);
+/** The LINES fanned under a major — one bead each, not one per rank.
+ *
+ *  Fanning every rank was tried and is unusable: Forestry alone carries three
+ *  lines worth 13 ranks, which spilled across two neighbouring branches and
+ *  drew five identical nodes of which exactly one was ever pressable. A line
+ *  is one thing to the player — a ladder they are part-way up — so it gets
+ *  one node showing how far up it they are. */
+const linesUnder = (id: TechId): TechLineId[] =>
+  TECH_LINE_ORDER.filter((line) => lineParent(line) === id);
+
+/** The rank a line's bead currently stands for: the next one to research, or
+ *  the last one if the ladder is finished. */
+const beadRank = (state: GameState, line: TechLineId): TechId => {
+  const ranks = TECH_LINES[line];
+  return ranks[Math.min(lineRank(state, line), ranks.length - 1)];
+};
+
+/** A major technology has an authored grid position; a rank does not. */
+const isMajor = (id: TechId): boolean => TECHNOLOGIES[id].node !== null;
+
+/** The shelf: one tab per tome the player has actually opened. A book they
+ *  have not earned is not shown at all — an empty tab is the same lie as a
+ *  lit nav button that leads nowhere. */
+function shelf(game: Game): HTMLElement | null {
+  const open = TOME_ORDER.filter((t) => isTomeOpen(game.state, t));
+  if (open.length < 2) return null; // one book is not a shelf
+  const row = el('div', { class: 'res-shelf' });
+  for (const id of open) {
+    const def = TOMES[id];
+    const tab = el('button', {
+      class: `btn res-tome${id === activeTome ? ' active' : ''}`,
+    }, iconEl('research', { size: 'sm' }), el('span', {}, def.name));
+    tab.addEventListener('click', () => {
+      if (activeTome === id) return;
+      activeTome = id;
+      selected = null; // a selection on another page is not on this one
+      game.notify();
+    });
+    row.append(tab);
+  }
+  return row;
+}
 
 export function renderResearchMenu(game: Game): HTMLElement {
   const state = game.state;
   const root = el('div', { class: 'research-screen' });
 
-  // Drop a selection the fog no longer shows (e.g. after a fresh load).
-  if (selected?.kind === 'tech' && visibility(state, selected.id) !== 'normal') selected = null;
-  if (selected?.kind === 'upgrade') {
-    const parent = UPGRADES[selected.id].requiredTech;
-    if (parent !== null && !isTechComplete(state, parent)) selected = null;
-  }
+  // A tome can close behind the player only by a save being loaded that never
+  // opened it, so fall back to the one book that is always open.
+  if (!isTomeOpen(state, activeTome)) { activeTome = 'Civics'; selected = null; }
+  // Drop a selection the fog no longer shows (e.g. after a fresh load), or one
+  // that belongs to a page the player has since turned away from.
+  if (selected?.kind === 'tech'
+    && (visibility(state, selected.id) !== 'normal'
+      || TECHNOLOGIES[selected.id].tome !== activeTome)) selected = null;
 
   const busy = state.research.active.length;
   const slots = techSlots(state);
@@ -140,27 +191,45 @@ export function renderResearchMenu(game: Game): HTMLElement {
   }
   const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
   close.setAttribute('data-own-close', '');
+  // The clock, where it is spent. Knowledge has no coin on the plank — it is
+  // paid in exactly one screen, so it reads in that screen's header, with its
+  // RATE beside the balance because a drip you cannot see the speed of is a
+  // drip you cannot plan against. Hidden until the player has met it: a zero
+  // row would advertise a currency the tutorial has not yet introduced.
+  const held = game.walletValue('Knowledge');
+  const rate = knowledgePerHour(state);
+  if (held > 0 || rate > 0 || state.discoveries[resourceDiscoveryKey('Knowledge')] === true) {
+    bar.append(el('span', { class: 'res-clock' },
+      iconEl('Knowledge', { size: 'sm' }),
+      el('b', {}, String(held)),
+      el('span', { class: 'res-clock-rate' }, rate > 0 ? `+${rate}/h` : 'no drip')));
+  }
+  const tabs = shelf(game);
   root.append(el('div', { class: 'research-topbar' },
-    el('h2', {}, 'Research'), bar, close));
+    el('h2', {}, TOMES[activeTome].name), bar, close));
+  if (tabs) root.append(tabs);
+  root.append(el('p', { class: 'res-blurb' }, TOMES[activeTome].blurb));
 
   // ---- the tree canvas (sized to what the fog currently shows) ----
-  const shown = TECH_ORDER.filter((id) => visibility(state, id) !== 'hidden');
-  const fanned = shown.filter((id) => isTechComplete(state, id) && upgradesOf(id).length > 0);
-  const xs = shown.map((id) => TECHNOLOGIES[id].node.x);
-  const ys = shown.map((id) => TECHNOLOGIES[id].node.y);
+  const shown = TECH_ORDER.filter(
+    (id) => isMajor(id) && TECHNOLOGIES[id].tome === activeTome
+      && visibility(state, id) !== 'hidden');
+  const fanned = shown.filter((id) => isTechComplete(state, id) && linesUnder(id).length > 0);
+  const xs = shown.map((id) => TECHNOLOGIES[id].node!.x);
+  const ys = shown.map((id) => TECHNOLOGIES[id].node!.y);
   const [x0, y0] = [Math.min(...xs), Math.min(...ys)];
   const yMax = Math.max(...ys);
   const pad = 40;
   const width = (Math.max(...xs) - x0 + 1) * GRID + pad * 2;
   let height = (yMax - y0 + 1) * GRID + pad * 2;
   // A fan below a bottom-row tech pokes past the grid — give it room.
-  if (fanned.some((id) => TECHNOLOGIES[id].node.y === yMax)) {
+  if (fanned.some((id) => TECHNOLOGIES[id].node!.y === yMax)) {
     height += FAN_DY + UNODE / 2 - GRID / 2 + 6;
   }
   const px = (gx: number) => pad + (gx - x0) * GRID + GRID / 2;
   const py = (gy: number) => pad + (gy - y0) * GRID + GRID / 2;
-  const cx = (id: TechId) => px(TECHNOLOGIES[id].node.x);
-  const cy = (id: TechId) => py(TECHNOLOGIES[id].node.y);
+  const cx = (id: TechId) => px(TECHNOLOGIES[id].node!.x);
+  const cy = (id: TechId) => py(TECHNOLOGIES[id].node!.y);
   const fanX = (id: TechId, i: number, n: number) => cx(id) + (i - (n - 1) / 2) * FAN_DX;
   const fanY = (id: TechId) => cy(id) + FAN_DY;
 
@@ -174,8 +243,11 @@ export function renderResearchMenu(game: Game): HTMLElement {
   svg.classList.add('tech-edges');
   for (const id of shown) {
     for (const req of TECHNOLOGIES[id].requires) {
+      // A rank's requirement is its previous rank, which lives in the fan and
+      // has no grid position — the fan draws its own spokes below.
+      if (!isMajor(req)) continue;
       const path = document.createElementNS(ns, 'path');
-      const route = edgePath(TECHNOLOGIES[req].node, TECHNOLOGIES[id].node)
+      const route = edgePath(TECHNOLOGIES[req].node!, TECHNOLOGIES[id].node!)
         .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x)} ${py(p.y)}`)
         .join(' ');
       path.setAttribute('d', route);
@@ -185,10 +257,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
       svg.append(path);
     }
   }
-  // Straight spokes from a completed tech to its upgrade circles.
+  // Straight spokes from a completed tech to the lines fanned under it.
   for (const id of fanned) {
-    const ups = upgradesOf(id);
-    ups.forEach((_, i) => {
+    const ups = linesUnder(id);
+    ups.forEach((_: TechLineId, i: number) => {
       const path = document.createElementNS(ns, 'path');
       path.setAttribute('d', `M ${cx(id)} ${cy(id)} L ${fanX(id, i, ups.length)} ${fanY(id)}`);
       path.setAttribute('class', 'tech-edge open');
@@ -212,7 +284,8 @@ export function renderResearchMenu(game: Game): HTMLElement {
     const isSel = selected?.kind === 'tech' && selected.id === id;
     const hinted = game.uiHint() === `tech:${id}`;
     const node = el('button', {
-      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`
+        + (TECHNOLOGIES[id].planned ? ' planned' : ''),
       style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
     }, TECHNOLOGIES[id].glyph);
     // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
@@ -235,26 +308,28 @@ export function renderResearchMenu(game: Game): HTMLElement {
     canvas.append(node);
   }
 
-  // Upgrade nodes (circles), fanned below their completed parent.
+  // One bead per LINE, fanned below its completed parent. The bead stands for
+  // the next rank to research, so clicking it selects a real technology and
+  // the info panel is the ordinary one.
   for (const id of fanned) {
-    const ups = upgradesOf(id);
-    ups.forEach((u, i) => {
-      const def = UPGRADES[u];
-      const level = upgradeLevel(state, u);
-      const maxed = level >= def.maxLevel;
-      const affordable = canAfford(state.city.wallet, { Gold: upgradeCost(u, level) });
-      const cls = maxed ? 'done' : affordable ? 'available' : 'locked';
-      const isSel = selected?.kind === 'upgrade' && selected.id === u;
-      const hinted = game.uiHint() === `upgrade:${u}`;
+    const ups = linesUnder(id);
+    ups.forEach((line: TechLineId, i: number) => {
+      const u = beadRank(state, line);
+      const rank = lineRank(state, line);
+      const maxed = rank >= lineMaxRank(line);
+      const cls = maxed ? 'done' : isTechActive(state, u) ? 'active'
+        : canStartTech(state, u) ? 'available' : 'locked';
+      const isSel = selected?.kind === 'tech' && selected.id === u;
+      const hinted = TECH_LINES[line].some((r) => game.uiHint() === `tech:${r}`);
       const node = el('button', {
-        class: `btn tech-node upgrade ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
+        class: `btn tech-node rank ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
         style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
-      }, def.glyph);
-      if (canBuyUpgrade(state, u)) node.append(el('span', { class: 'node-dot' }));
-      if (level > 0) node.append(el('span', { class: 'lvl' }, String(level)));
+      }, TECHNOLOGIES[u].glyph);
+      if (canStartTech(state, u)) node.append(el('span', { class: 'node-dot' }));
+      node.append(el('span', { class: 'lvl' }, `${rank}/${lineMaxRank(line)}`));
       node.addEventListener('click', () => {
         if (consumeSuppressedClick()) return;
-        selected = { kind: 'upgrade', id: u };
+        selected = { kind: 'tech', id: u };
         game.notify();
       });
       canvas.append(node);
@@ -294,13 +369,13 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // its rAF restore. Only the hint still needs to move the view, and it must
   // run after the host has put the old position back.
   const hint = game.uiHint();
-  // An upgrade circle hangs below its parent tech, so scrolling to the PARENT
-  // brings the hinted upgrade on screen with it — one code path for both.
-  const hintedTech = hint?.startsWith('tech:')
-    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null)
-    : hint?.startsWith('upgrade:')
-      ? (UPGRADES[hint.slice('upgrade:'.length) as UpgradeId]?.requiredTech ?? null)
-      : null;
+  // A rank hangs in the fan below the major its line sits under, which has
+  // no grid position of its own — so a hint at a rank scrolls to that PARENT
+  // and brings the rank on screen with it. One code path for both.
+  const hinted = hint?.startsWith('tech:')
+    ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
+  const hintedTech = hinted === null ? null
+    : isMajor(hinted) ? hinted : lineParent(TECHNOLOGIES[hinted].line!);
   // Where the eye should land. A hint wins outright — it is the game asking
   // for attention at a specific node. Otherwise: the WORK, meaning whatever
   // is running or startable right now, and failing that the last thing
@@ -323,8 +398,6 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // ---- floating bottom info panel, only while something is selected ----
   if (selected?.kind === 'tech') {
     root.append(techInfoPanel(game, selected.id, busy, slots));
-  } else if (selected?.kind === 'upgrade') {
-    root.append(upgradeInfoPanel(game, selected.id));
   }
   return root;
 }
@@ -335,6 +408,12 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
   const panel = el('div', { class: 'tech-info' });
   panel.append(el('h3', {}, `${def.glyph} ${def.name}`));
   panel.append(el('div', { class: 'muted' }, def.description));
+  if (def.planned) {
+    // Said in the game, not only in a doc: a playtester who researches this
+    // must know before they pay that it does nothing yet.
+    panel.append(el('div', { class: 'res-planned' },
+      iconEl('hourglass', { size: 'sm' }), 'Not yet in the prototype'));
+  }
   if (def.requires.length > 0) {
     panel.append(el('div', { class: 'rows' }, ...def.requires.map((req) =>
       el('div', { class: isTechComplete(state, req) ? 'muted' : 'blocked' },
@@ -360,9 +439,6 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       } else if (u.kind === 'unit') {
         row.append(el('span', { class: 'res-unlock' },
           iconEl(u.id, { size: 'sm' }), UNITS[u.id].name));
-      } else {
-        row.append(el('span', { class: 'res-unlock' },
-          iconEl('sparkle', { size: 'sm' }), UPGRADES[u.id].name));
       }
     }
     panel.append(row);
@@ -395,37 +471,18 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       info: el('span', { class: 'res-time' },
         iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
+    // A trickle currency without a time-to-afford line is one the player
+    // cannot plan against (tomes-and-research.md §8). Only when Knowledge is
+    // the thing short: Gold has its own answer, which is to go and earn it.
+    const wait = knowledgeShortfallMs(state, id, knowledgePerHour(state));
+    if (wait > 0) {
+      panel.append(el('div', { class: 'muted res-wait' },
+        iconEl('Knowledge', { size: 'sm' }),
+        Number.isFinite(wait)
+          ? `Enough Knowledge in about ${formatDuration(wait / 1000)}`
+          : 'Claim a landmark or clear a ruin — nothing is dripping yet'));
+    }
   }
   return panel;
 }
 
-function upgradeInfoPanel(game: Game, id: UpgradeId): HTMLElement {
-  const state = game.state;
-  const def = UPGRADES[id];
-  const level = upgradeLevel(state, id);
-  const maxed = level >= def.maxLevel;
-  const panel = el('div', { class: 'tech-info' });
-  panel.append(el('h3', {}, `${def.glyph} ${def.name} — Lv ${level}/${def.maxLevel}`));
-  panel.append(el('div', { class: 'muted' }, def.description));
-
-  const pips = el('div', { class: 'pips' });
-  for (let i = 0; i < def.maxLevel; i++) {
-    pips.append(el('span', { class: `pip${i < level ? ' on' : ''}` }));
-  }
-  panel.append(pips);
-
-  if (maxed) {
-    panel.append(el('div', { class: 'delta' }, 'Maxed'));
-  } else {
-    const cost = upgradeCost(id, level);
-    panel.append(action({
-      label: 'Upgrade',
-      kind: 'primary',
-      onClick: () => game.doBuyUpgrade(id),
-      cost: { Gold: cost },
-      have: (c) => game.walletValue(c),
-      info: el('span', { class: 'res-time' }, 'instant'),
-    }));
-  }
-  return panel;
-}

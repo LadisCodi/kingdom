@@ -5,9 +5,9 @@
 // plus a save-mode badge — wrapping onto two rows on a phone, so none of
 // them read. The currency pass since cut the wallet from eleven rows to
 // seven: berries, game and shoals pay Food and veins pay Stone, so the coins
-// the plank can ever hold are Gold, Food, Wood and Stone. Knowledge left too
-// — it buys heroes and relics and nothing else, so it reads in the Reliquary
-// next to what it pays for. Now:
+// the plank can ever hold are Gold, Food, Wood and Stone. Stardust and
+// Knowledge are off it too — each is spent in exactly one screen, so each
+// reads in that screen's header instead. Now:
 //
 //   * three coins that gate the early game, with Stone appearing only once
 //     it means something;

@@ -1,7 +1,7 @@
 // Initial game state: Oakville with its Townhall at (0,0), starting wallets,
 // fog seed, authored map features.
 
-import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
+import { CITY_DEF, CURRENCIES, KINGDOM_DEF, tomeCoverPage } from './data/definitions';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -43,7 +43,13 @@ export function newGame(map: MapData, now: number): GameState {
     harvest: {},
     workers: [],
     army: [],
-    research: { completed: [], active: [], slotsPurchased: 0 },
+    // Civics opens with the kingdom: its cover page is granted, not bought,
+    // because Civics IS the game. Magic and Warfare are opened by events in
+    // the world — the first paid reveal and the first ruin in sight — see
+    // sim/research.ts `openTome`.
+    research: {
+      completed: [tomeCoverPage('Civics')], active: [], slotsPurchased: 0,
+    },
     schedule: [],
     delves: [],
     // One hero free at the start — the gacha sells breadth and speed, never
@@ -63,7 +69,6 @@ export function newGame(map: MapData, now: number): GameState {
       owned: [], levels: {}, tiers: {}, fragments: {},
       attuned: [null], slotsPurchased: 0, lockedUntil: [0],
     },
-    upgrades: {},
     modifiers: [],
     quests: { index: 0, progress: 0 },
     discoveries: {},

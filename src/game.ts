@@ -14,7 +14,7 @@ import {
 } from './sim/data/definitions';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
-  maxCountForTownhallLevel, nextBuildCost, placementBlock, validPlacementCells,
+  maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
 } from './sim/districts';
 import {
   explorationGate, fogState, revealCostForCell, revealTap,
@@ -55,14 +55,14 @@ import {
   anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
 import {
-  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs,
+  effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
   type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
   type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
-  type UpgradeId, type Wallet,
+  type Wallet,
 } from './sim/state';
 import {
   chestAvailable, chestReward, claimDailyChest, ladderLength, nextStep,
@@ -275,8 +275,8 @@ export class Game {
         desc: tech.description, tone: 'sky', sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
-      // Upgrades are deliberately not announced — they appear as the fan of
-      // circles under the tech, which is the reward being made visible.
+      // A minor RANK unlocks nothing and announces nothing: its reward is the
+      // number in its own description, and a banner per rank would be noise.
       for (const unlock of techUnlocks(id)) {
         if (unlock.kind === 'district') {
           const def = DISTRICTS[unlock.id];
@@ -774,7 +774,7 @@ export class Game {
   doLevelArtifact(id: ArtifactId): void {
     const result = levelUpArtifact(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
     this.notify();
   }
@@ -1037,13 +1037,6 @@ export class Game {
     this.notify();
   }
 
-  doBuyUpgrade(id: UpgradeId): void {
-    const result = buyUpgrade(this.state, id);
-    if (result === 'Purchased') playSfx('upgradeBought');
-    if (result === 'NotEnoughResources') this.shake(['Gold']);
-    this.notify();
-  }
-
   /** Renderers ask: is this UI key currently hinted? */
   uiHint(): string | null {
     if (this.hint?.kind !== 'ui' || this.hint.until < this.now()) return null;
@@ -1118,10 +1111,6 @@ export class Game {
         overlay('research');
         break;
       case 'CompleteTechs':
-        overlay('research');
-        break;
-      case 'BuyUpgrade':
-        this.setUiHint(`upgrade:${quest.goalTarget}`);
         overlay('research');
         break;
       case 'OwnHeroes':
@@ -1479,7 +1468,7 @@ export class Game {
       this.expeditionRuin = null;
       this.setOverlay(null);
     } else if (result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(supplyCost(this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
+      this.shake(Object.keys(supplyCost(this.state, this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
     } else {
       this.toast(LAUNCH_BLOCK_TEXT[result]);
     }
@@ -1575,7 +1564,7 @@ export class Game {
   doLevelHero(id: HeroId): void {
     const result = levelUpHero(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
     this.notify();
   }
@@ -1656,7 +1645,7 @@ export class Game {
     return BUILDABLE_DISTRICTS.some((id) => {
       const def = DISTRICTS[id];
       const capped =
-        districtCount(this.state, id) >= maxCountForTownhallLevel(def, townhall(this.state).level);
+        districtCount(this.state, id) >= maxDistrictCount(this.state, def);
       if (capped) return false;
       const cells = validPlacementCells(this.state, this.map, id);
       if (cells.length === 0) return false;
@@ -1664,11 +1653,14 @@ export class Game {
     });
   }
 
-  /** Per-second Research CTA: some tech can be started, or some upgrade
-   *  bought. The same shape as `buildCtaLit` — the tab only lights when the
-   *  screen behind it has something the player can actually press. */
+  /** Per-second Research CTA: some technology can be started. The same shape
+   *  as `buildCtaLit` — the tab only lights when the screen behind it has
+   *  something the player can actually press.
+   *
+   *  It used to be two questions, because an upgrade was a different kind of
+   *  purchase. Every node is a technology now, so it is one. */
   researchCtaLit(): boolean {
-    return anyResearchActionable(this.state) || anyUpgradeActionable(this.state);
+    return anyResearchActionable(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */
@@ -2014,12 +2006,16 @@ export class Game {
     this.tapChain.dispatch(cell);
   }
 
-  /** The one accessor that knows about the three purses: Gems are the
-   *  player's, Knowledge is the kingdom's, everything else is the city's. */
+  /** The one accessor that knows about the three purses. It reads the scope
+   *  off `CURRENCIES` rather than naming currencies here, so a currency that
+   *  changes purse — as Knowledge and Stardust did on 2026-09-03 — cannot
+   *  desync the presenter from the sim. */
   walletValue(c: CurrencyId): number {
-    if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
-    return getWallet(this.state.city.wallet, c);
+    switch (CURRENCIES[c].scope) {
+      case 'player': return getWallet(this.state.player.wallet, c);
+      case 'kingdom': return getWallet(this.state.kingdom.wallet, c);
+      default: return getWallet(this.state.city.wallet, c);
+    }
   }
 
   // ------------------------------------------------------------------ the HUD
@@ -2047,9 +2043,11 @@ export class Game {
    * The tech clause is what makes it STICKY: keyed on the balance alone, a
    * counter would vanish the moment the player spent back to zero.
    *
-   * Knowledge is NOT here. It buys heroes and relics and nothing else, so it
-   * lives in the Reliquary next to what it pays for — like Fragments, and for
-   * the same reason. A coin on the plank is a coin you spend from anywhere.
+   * Stardust and Knowledge are NOT here. Each is spent in exactly one screen
+   * — Stardust in the Reliquary next to the levels it buys, Knowledge in the
+   * Research screen next to the tomes — so each reads there, like Fragments
+   * and for the same reason. A coin on the plank is a coin you spend from
+   * anywhere; neither of those is one.
    */
   visibleCurrencies(): CurrencyId[] {
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
@@ -2266,7 +2264,7 @@ export const formatAdjacency = (goldPerMinute: number): string =>
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-    Knowledge: '📜', Gems: '💎',
+    Knowledge: '📜', Stardust: '🌟', Gems: '💎',
   };
   return icons[c];
 }

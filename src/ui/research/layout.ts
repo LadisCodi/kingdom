@@ -20,12 +20,16 @@ export interface GridPoint {
 export const GRID = 120;
 /** Tech node square. */
 export const NODE = 56;
-/** Upgrade circle. */
+/**
+ * Minor-rank node. Smaller than a major, and that is now the ONLY thing the
+ * shape says: a rank is a technology like any other (tech-tree.md §1 rule 3),
+ * so it is a square too, not the circle an upgrade used to be.
+ */
 export const UNODE = 40;
 /**
- * How far below its parent an upgrade fan hangs.
+ * How far below its parent a rank fan hangs.
  *
- * 0.5, not 0.7. The window is narrow and both ends of it are hard: a circle
+ * 0.5, not 0.7. The window is narrow and both ends of it are hard: a rank
  * must clear its PARENT square (28 + 20 = 48px of half-heights) and it must
  * clear the tech one row BELOW it (another 48, out of the 120 the row is
  * worth). So FAN_DY has to sit between 48 and 72, and 0.7 x 120 = 84 was
@@ -33,19 +37,34 @@ export const UNODE = 40;
  * `tests/research.test.ts` never saw because its invariant is about
  * connector elbows crossing nodes, not about nodes crossing each other.
  * 0.5 x 120 = 60 centres the fan in the gap with 12px clear on each side.
+ *
+ * The fan is a STOPGAP: it is what keeps ~49 rank nodes on screen without
+ * authoring 49 positions. Docs/features/tomes-and-research.md §5 replaces the
+ * whole layout with one bounded page per tome, at which point this goes.
  */
 export const FAN_DY = 0.5 * GRID;
-/** Spacing between fanned upgrade circles. */
+/** Spacing between fanned rank nodes. */
 export const FAN_DX = 56;
 
 /**
- * The corner points of the connector from `from` to `to`: horizontal first,
- * then vertical. Two points when they share a row or column, three when the
- * route needs an elbow — and the elbow is at (to.x, from.y).
+ * The corner points of the connector from `from` to `to`.
+ *
+ * THE HORIZONTAL LEG ALWAYS RUNS ALONG AN EVEN ROW, and that is the whole
+ * rule. A tome page is a spine of keystones at (0, even) with each era's
+ * content spread across the odd row below it, so the even rows are empty
+ * except for the spine itself and the odd rows are full. Route along an odd
+ * row and the connector ploughs through whichever majors sit between the
+ * endpoint and the trunk — which is exactly what it did: `Forestry →
+ * Charter II` ran straight through `Urban Planning`.
+ *
+ * So the elbow is at (to.x, from.y) when `from` is on the even row, and at
+ * (from.x, to.y) when it is not. Two points when they already share a row or
+ * a column.
  */
 export function edgePath(from: GridPoint, to: GridPoint): GridPoint[] {
   if (from.x === to.x || from.y === to.y) return [from, to];
-  return [from, { x: to.x, y: from.y }, to];
+  const elbow = from.y % 2 === 0 ? { x: to.x, y: from.y } : { x: from.x, y: to.y };
+  return [from, elbow, to];
 }
 
 /** Every grid cell the connector passes through, endpoints excluded. */

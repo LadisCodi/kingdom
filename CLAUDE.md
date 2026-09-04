@@ -84,12 +84,12 @@ by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 | the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
-| a seasonal hero = one hero row + one banner row | tech-tree node positions (`node:{x,y}` in `definitions.ts` — the layout is content, though the tome rework replaces it with a derived row and an authored column: `Docs/features/07-research.md` §6.6) |
+| a seasonal hero = one hero row + one banner row; a major technology's place on its tome page (`node_x`/`node_y`), its tome, era and Knowledge price; a minor line's ranks (row order) | a new tome or a new minor line (`TomeId` and `TechLineId` are unions), or a new effect hook for a line (`modifiers.ts`) |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 
 ## Saves
 
-`SAVE_VERSION` is 24; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 27; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),

@@ -20,6 +20,8 @@
 // moment units are expedition capital rather than a quest gate, because it
 // removes the only pacing on party size.
 
+import { resolve } from './modifiers';
+import { effect } from './upgrades';
 import { DISTRICTS, TRAINING, UNITS, levelIndexed } from './data/definitions';
 import { isTechComplete } from './research';
 import {
@@ -55,7 +57,10 @@ export function maxArmyPower(state: GameState): number {
     if (d.state !== 'Built') continue;
     cap += levelIndexed(DISTRICTS[d.definitionId].armyCapPerLevel, d.level);
   }
-  return cap;
+  // Colours adds to the cap the HALLS provide, so a kingdom with no hall still
+  // fields nothing: the line is a bigger banner, not a barracks of its own.
+  if (cap === 0) return 0;
+  return Math.max(0, Math.round(resolve(state, 'armyCap', cap + effect(state, 'Colours'))));
 }
 
 /** The built building that trains `trainee`, if the player has one. A building
@@ -83,7 +88,15 @@ export const trainSeconds = (trainee: TrainableId): number =>
  *  including the ones already queued, so a queue is never a way to buy at
  *  yesterday's price. */
 export function trainCost(state: GameState, trainee: TrainableId): Record<string, number> {
-  if (trainee !== 'Villager') return UNITS[trainee].recruitCost;
+  if (trainee !== 'Villager') {
+    // Muster Drill: −10%/rank on every coin of the recruit price, floor 1.
+    const mult = Math.max(0, resolve(state, 'recruitCost', 1 - effect(state, 'MusterDrill')));
+    const out: Record<string, number> = {};
+    for (const [c, n] of Object.entries(UNITS[trainee].recruitCost)) {
+      out[c] = Math.max(1, Math.round((n as number) * mult));
+    }
+    return out;
+  }
   const pending = state.city.trainingQueue.filter((i) => i.trainee === 'Villager').length;
   return { Food: populationCost(state.city.population + pending) };
 }

@@ -11,7 +11,10 @@
 // time beyond the cap pauses workers/townhall (queue timers and cell recovery
 // keep running in real time).
 
-import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
+import {
+  GAME_VERSION, OFFLINE_CAP_HOURS, RUINS, SAVE_VERSION, TECHNOLOGIES, TECH_LINES,
+  tomeCoverPage,
+} from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
@@ -22,7 +25,8 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ArtifactId, type TechId, type UpgradeId, type Wallet, type Worker,
+  type ArtifactId, type TechId, type Wallet, type Worker,
+  type TechLineId, type TomeId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -107,7 +111,93 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v23 — the Mine is gone as a building. The Quarry works every mountain
+    // v23 — Knowledge and Stardust swapped jobs
+    // (Docs/features/tomes-and-research.md §2.1). Knowledge became the
+    // research clock; the collection currency it used to be is now Stardust.
+    // Both stay kingdom-scoped: each outlives the city that earned it.
+    //
+    // Every Knowledge a live save holds was earned as COLLECTION currency —
+    // out of a delve haul, a first clear, a pull or a quest — so it must keep
+    // buying what it was earned for. The same rule the currency-simplification
+    // migrator followed: balances convert at the rates they were earned.
+    //
+    // A bare key rename would have been the bug: it hands the whole research
+    // tree to anyone holding a collection balance. Knowledge is deliberately
+    // NOT re-seeded after the move — a returning player starts the research
+    // clock at zero and earns it back from the ground they hold.
+    to: 23,
+    migrate: (modules) => {
+      const w = (modules['kingdom.kingdoms'] as { Currencies?: Record<string, number> })
+        ?.Currencies;
+      if (w === undefined) return;
+      const held = w['Knowledge'];
+      if (typeof held === 'number' && held !== 0) {
+        w['Stardust'] = (w['Stardust'] ?? 0) + held;
+      }
+      delete w['Knowledge'];
+    },
+  },
+  {
+    // v24 — upgrades stopped being a separate kind of thing. Every level of
+    // a levelled upgrade is now its own TECHNOLOGY in a rank ladder
+    // (Docs/features/tech-tree.md §1 rule 2, §8).
+    //
+    // `Upgrades: { TapPower: 3 }` becomes three completed techs,
+    // `TapPowerI/II/III`. Ranks complete in order, so level N maps to the
+    // first N ids of the line and `lineRank` reads back exactly what the
+    // player had bought. A player mid-flight keeps every level they paid
+    // for, and pays no research time for them a second time.
+    to: 24,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; UpgradeLevels?: Record<string, number> } | undefined;
+      if (research === undefined) return;
+      const levels = research.UpgradeLevels;
+      if (levels !== undefined) {
+        const completed = research.Completed ?? (research.Completed = []);
+        for (const [line, level] of Object.entries(levels)) {
+          const ranks = TECH_LINES[line as TechLineId];
+          if (ranks === undefined) continue; // a line this build no longer has
+          for (const id of ranks.slice(0, level)) {
+            if (!completed.includes(id)) completed.push(id);
+          }
+        }
+        delete research.UpgradeLevels;
+      }
+    },
+  },
+  {
+    // v25 — tomes have COVER PAGES, granted by events in the world rather than
+    // researched (tomes-and-research.md §5). A save written before they
+    // existed has none, so every era-1 technology sits behind a requirement
+    // nothing will ever complete and the Civics page shows one lonely scroll.
+    //
+    // Civics is always open — it is the game. Magic and Warfare are granted
+    // when the save shows the event that would have opened them already
+    // happened: a Magic technology done or a landmark claimed for Magic, a
+    // Warfare technology done or a ruin sighted for Warfare. Anyone short of
+    // those events opens them the ordinary way, on the next reveal or ruin.
+    to: 25,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as { Completed?: string[] } | undefined;
+      if (research === undefined) return;
+      const completed = research.Completed ?? (research.Completed = []);
+      const grant = (id: string): void => { if (!completed.includes(id)) completed.push(id); };
+      const inTome = (tome: TomeId): boolean =>
+        completed.some((id) => TECHNOLOGIES[id as TechId]?.tome === tome);
+      const claimed = (modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined)
+        ?.Claimed ?? [];
+      const keys = (modules['kingdom.discoveries'] as { Keys?: string[] } | undefined)?.Keys ?? [];
+      const ruinSeen = keys.some((k) => k.startsWith('site:')
+        && (Object.keys(RUINS) as string[]).includes(k.slice('site:'.length)));
+
+      grant(tomeCoverPage('Civics'));
+      if (inTome('Magic') || claimed.length > 0) grant(tomeCoverPage('Magic'));
+      if (inTome('Warfare') || ruinSeen) grant(tomeCoverPage('Warfare'));
+    },
+  },
+  {
+    // v26 — the Mine is gone as a building. The Quarry works every mountain
     // now, bare rock and metal alike, so a Mine that a player already paid
     // for BECOMES a Quarry rather than vanishing: the two had the same
     // footprint, the same crew and the same radius, and the first promise is
@@ -117,7 +207,12 @@ const MIGRATIONS: readonly Migration[] = [
     // deliberate — the cap gates BUILDING one, and taking a standing building
     // away to enforce it retroactively would be the very thing the promise
     // forbids.
-    to: 23,
+    //
+    // Numbered AFTER the tome migrators (v23–v25) because those shipped on
+    // develop first; a save written by the harvest branch at its own v23/v24
+    // therefore skips the Knowledge→Stardust and UpgradeLevels conversions.
+    // Those saves only ever existed on a developer machine.
+    to: 26,
     migrate: (modules) => {
       const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })
         ?.Cities?.[0];
@@ -129,7 +224,7 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v24 — a resource cell stopped counting TAPS and started holding UNITS
+    // v27 — a resource cell stopped counting TAPS and started holding UNITS
     // (`Docs/features/04-harvest.md` §3). The old counter cannot be converted
     // honestly: one old tap was one unit on a forest and three on a herd, and
     // what a tap PAID scaled with the whole city's payroll, so the wear a save
@@ -144,7 +239,7 @@ const MIGRATIONS: readonly Migration[] = [
     // A house's `LastTapAt` goes the same way — written, persisted and never
     // read — and its replacement `PulledUntil` defaults to a full advance
     // budget, which is also the generous direction.
-    to: 24,
+    to: 27,
     migrate: (modules) => {
       delete modules['kingdom.cellHarvest'];
     },
@@ -276,9 +371,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         Active: state.research.active.map((a) => ({
           ID: a.id,
           StartedAtUtc: iso(a.startedAt),
+          DurationMs: a.durationMs ?? null, // additive; older saves have none
         })),
         SlotsPurchased: state.research.slotsPurchased,
-        UpgradeLevels: state.upgrades,
       },
       'kingdom.schedule': {
         Entries: state.schedule.map((e) => ({
@@ -543,11 +638,14 @@ export function deserialize(
   if (researchDto) {
     state.research = {
       completed: [...((researchDto.Completed ?? []) as TechId[])],
-      active: ((researchDto.Active ?? []) as Array<{ ID: TechId; StartedAtUtc: string }>).map(
-        (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
+      active: ((researchDto.Active ?? []) as
+        Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
+        (a) => ({
+          id: a.ID, startedAt: ms(a.StartedAtUtc),
+          ...(typeof a.DurationMs === 'number' ? { durationMs: a.DurationMs } : {}),
+        })),
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
-    state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
   }
 
   const discoveriesDto = modules['kingdom.discoveries'];

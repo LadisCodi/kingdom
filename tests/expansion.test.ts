@@ -6,6 +6,7 @@
 // What they stopped being is currencies: a shoal pays Food and a vein pays
 // Stone, at the rates the old wallet rows were worth.
 import { describe, expect, it } from 'vitest';
+import { TECHNOLOGIES } from '../src/sim/data/definitions';
 import { trainUnit } from '../src/sim/army';
 import { changeWorkers, enqueueBuild, finishWithGems } from '../src/sim/commands';
 import { placementBlock } from '../src/sim/districts';
@@ -40,10 +41,9 @@ describe('stone line (Masonry → Quarry)', () => {
     expect(placementBlock(state, map, 'Quarry', QUARRY_CELL)).toBe('NeedsResearch');
     completeTech(state, 'Masonry');
     expect(placementBlock(state, map, 'Quarry', COVE_WATER)).toBe('NeedsLand'); // no sea quarries
-    // Masonry opens the SHED; Scaling Tools is what lets a hand onto the peak
-    // at all, and the two are separate rungs on purpose.
-    expect(tapCell(state, map, NEAR_ROCKS, T0)).toBe('TechLocked');
-    completeTech(state, 'ScalingTools');
+    // Masonry opens the SHED; the bare peak answered a pick already — the
+    // tome tree parks Scaling Tools in Magic era 2, far too late to gate
+    // era-1 Stone — and the METAL is what the later rungs open.
     // Read the yield BEFORE the tap: it is capped by what the cell still
     // holds, so asking afterwards asks about a smaller depot.
     const perTap = tapYieldAt(state, map, NEAR_ROCKS, T0);
@@ -60,14 +60,21 @@ describe('stone line (Masonry → Quarry)', () => {
 });
 
 describe('fish line (Sailing → Fishing → coastal Docks)', () => {
-  it('the exploration branch: Fishing sits behind Sailing, not Agriculture', () => {
+  // Exploration lives in the MAGIC tome now (tech-tree.md §2): the fog is the
+  // surface Kingdom's magic presents to the player, so Sailing and Fishing
+  // sit beside Mana and the ruins rather than beside the farms.
+  it('the exploration branch is in the Magic tome, behind its own eras', () => {
     const state = freshGame();
-    fund(state, { Gold: 2000 });
+    fund(state, { Gold: 20_000, Knowledge: 5_000 });
+    expect(TECHNOLOGIES.Fishing.tome).toBe('Magic');
+    expect(TECHNOLOGIES.Sailing.tome).toBe('Magic');
+    // Nothing in the tome is reachable until the tome is open.
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
-    completeTech(state, 'Forestry');
-    expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement'); // needs Sailing
-    completeTech(state, 'Sailing');
-    expect(startTech(state, 'Fishing', T0)).toBe('Started'); // no Agriculture needed
+    completeTech(state, 'Forestry'); // a Civics era-1 tech opens nothing here
+    expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
+    // Fishing is Magic era 3, so it waits on the keystone above it.
+    completeTech(state, 'AttunementIII');
+    expect(startTech(state, 'Fishing', T0)).toBe('Started');
   });
 
   it('the Docks must touch Water; its boats net Fish from shoals', () => {
@@ -133,7 +140,9 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     // Deliberately rich in Stone and broke in Gold: research does not touch
     // the city's materials, so a full quarry buys nothing.
     fund(state, { Gold: 0, Stone: 50, Knowledge: 99_999 });
-    completeTech(state, 'Masonry');
+    // Mining is Civics era 2: the keystone above it is the gate, and Masonry
+    // is one of the era-1 majors that keystone requires.
+    completeTech(state, 'CharterII');
     expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
     fund(state, { Gold: techCost('Mining') });
     expect(startTech(state, 'Mining', T0)).toBe('Started');
@@ -150,8 +159,7 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
   it('an iron mountain is a RICH stone node — in the ground, not in the tap', () => {
     const state = freshGame();
     reveal(state, [IRON_MOUNTAIN]);
-    completeTech(state, 'ScalingTools'); // onto the peak…
-    completeTech(state, 'Mining');       // …and the iron out of it
+    completeTech(state, 'Mining'); // the iron out of the peak
     expect(harvestSourceAt(state, IRON_MOUNTAIN)).toBe('MountainIron');
     expect(tapCell(state, map, IRON_MOUNTAIN, T0)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Stone'))

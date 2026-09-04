@@ -17,7 +17,6 @@
 import { ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, RUINS } from './data/definitions';
 import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
 import { addModifier, resolve, type Modifier } from './modifiers';
-import { isTechComplete } from './research';
 import {
   addToWallet, getWallet, type ArtifactId, type GameState, type RuinId,
 } from './state';
@@ -56,18 +55,19 @@ export function addArtifactFragments(state: GameState, id: ArtifactId, amount: n
   state.artifacts.fragments[id] = (state.artifacts.fragments[id] ?? 0) + amount;
 }
 
-export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughKnowledge';
+export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
 
-/** Spend Knowledge for one level. Knowledge is KINGDOM-scoped deliberately: it
+/** Spend Stardust for one level. Stardust is KINGDOM-scoped deliberately: it
  *  survives a region reset, so it still works when regions become the content
- *  treadmill. */
+ *  treadmill. Knowledge used to do this job and now buys technologies out of
+ *  the CITY purse instead — see Docs/features/tomes-and-research.md §2. */
 export function levelUpArtifact(state: GameState, id: ArtifactId): LevelUpResult {
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const entry = artifactEntry(state, id);
-  const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
-  const block = levelBlock(entry, knowledge);
+  const stardust = getWallet(state.kingdom.wallet, 'Stardust');
+  const block = levelBlock(entry, stardust);
   if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Knowledge', -levelCost(entry.level));
+  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
   state.artifacts.levels[id] = entry.level + 1;
   syncArtifactModifiers(state); // the passive scales with level
   return 'Levelled';
@@ -87,11 +87,13 @@ export function raiseArtifactTier(state: GameState, id: ArtifactId): RaiseTierRe
 
 // ------------------------------------------------------------------- slots
 
-/** One at start, one from research, the rest with Gems — earned breadth first,
- *  so the paid gate is never the only thing between a player and the system. */
+/** One at start, the rest with Gems. No technology grants a socket: slots are
+ *  bought with Gems everywhere and by nothing else
+ *  (Docs/features/tomes-and-research.md §8). Promise 3 survives because Gems
+ *  are earnable — the chain pays 75 and a first clear pays 10 — so the earning
+ *  moved off the tree rather than disappearing. */
 export function attunementSlots(state: GameState): number {
-  const fromResearch = isTechComplete(state, 'Attunement') ? 1 : 0;
-  const base = ATTUNEMENT.baseSlots + fromResearch + state.artifacts.slotsPurchased;
+  const base = ATTUNEMENT.baseSlots + state.artifacts.slotsPurchased;
   // A season can LEND a socket for its window. It goes through the modifier
   // layer like everything else, so it retires itself when the window closes.
   return Math.max(1, Math.min(Math.round(resolve(state, 'attunementSlots', base)), ATTUNEMENT.maxSlots));

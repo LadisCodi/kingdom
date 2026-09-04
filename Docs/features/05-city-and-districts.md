@@ -43,7 +43,7 @@ play, TH3 at ~2–3 h cumulative.
 | **FarmLands** (crop plot) | 1×1 | 1 | 6 / 6 / 12 | 10 W | 10 s | Agriculture |
 | **Farm** | 1×1 | 2 | 1 / 1 / 2 | 30 W | 20 s | Agriculture · Farming for L2 |
 | **Sawmill** | 1×1 | 3 | 1 / 2 / 3 | 20 W | 20 s | Saws · Engineering for L3 |
-| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry (← Scaling Tools) · Engineering for L2 |
+| **Quarry** | 1×1 | 2 | 1 / 2 / 3 | 30 W | 20 s | Masonry · Engineering for L2 |
 | **Docks** | 2×1 pier | 2 | 1 / 2 / 3 | 25 W | 20 s | Fishing · Shipbuilding for L2 |
 | **Mine** | 1×1 | 2 | 1 / 2 / 3 | 40 W + 20 S | 30 s | Mining · Deep Mining for L2 — works iron **and** gold mountains |
 | **Market** | 1×1 | 1 | 1 | 40 W | 30 s | Market |

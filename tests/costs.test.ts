@@ -1,5 +1,6 @@
 // Every worked example from Docs/features/05-city-and-districts.md becomes an assertion.
 import { describe, expect, it } from 'vitest';
+import { freshGame } from './helpers';
 import { buildCost, buildDuration, upgradeCost, upgradeDuration } from '../src/sim/districts';
 import { gemRushCost } from '../src/sim/commands';
 
@@ -30,21 +31,23 @@ describe('build cost by instance (Docs/04 table)', () => {
 });
 
 describe('build time (Docs/04 examples)', () => {
-  it('1st Housing 2 tiles out = 26 s', () => expect(buildDuration('Housing', 0, 2)).toBe(26));
-  it('2nd Housing 3 tiles out = 37 s', () => expect(buildDuration('Housing', 1, 3)).toBe(37));
-  it('1st FarmLands 2 tiles out = 13 s', () => expect(buildDuration('FarmLands', 0, 2)).toBe(13));
+  const base = freshGame(); // no Carpentry: the authored numbers, unmodified
+  it('1st Housing 2 tiles out = 26 s', () => expect(buildDuration(base, 'Housing', 0, 2)).toBe(26));
+  it('2nd Housing 3 tiles out = 37 s', () => expect(buildDuration(base, 'Housing', 1, 3)).toBe(37));
+  it('1st FarmLands 2 tiles out = 13 s', () => expect(buildDuration(base, 'FarmLands', 0, 2)).toBe(13));
 });
 
 describe('upgrade cost & time (Docs/04 examples)', () => {
+  const base = freshGame();
   it('single Farm L1→L2 = 50 Wood, 30 s', () => {
     expect(upgradeCost('Farm', 1, 1)).toEqual({ Wood: 50 });
-    expect(upgradeDuration('Farm', 1)).toBe(30);
+    expect(upgradeDuration(base, 'Farm', 1)).toBe(30);
   });
   it('Sawmill upgrades: 60 then 150 Wood, 30 s then 45 s', () => {
     expect(upgradeCost('Sawmill', 1, 1)).toEqual({ Wood: 60 });
-    expect(upgradeDuration('Sawmill', 1)).toBe(30);
+    expect(upgradeDuration(base, 'Sawmill', 1)).toBe(30);
     expect(upgradeCost('Sawmill', 1, 2)).toEqual({ Wood: 150 });
-    expect(upgradeDuration('Sawmill', 2)).toBe(45);
+    expect(upgradeDuration(base, 'Sawmill', 2)).toBe(45);
   });
   // Wood ONLY, deliberately: the onboarding chain reaches Townhall 2 before
   // it reaches the Quarry (Docs/features/12-quests.md §2 (quest 35)), and
@@ -52,13 +55,13 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
   // not a goal.
   it('Townhall L1→L2 = 60 Wood in 30 s; L2→L3 = 234 Wood in 120 s', () => {
     expect(upgradeCost('Townhall', 1, 1)).toEqual({ Wood: 60 });
-    expect(upgradeDuration('Townhall', 1)).toBe(30);
+    expect(upgradeDuration(base, 'Townhall', 1)).toBe(30);
     expect(upgradeCost('Townhall', 1, 2)).toEqual({ Wood: 234 });
-    expect(upgradeDuration('Townhall', 2)).toBe(120);
+    expect(upgradeDuration(base, 'Townhall', 2)).toBe(120);
   });
   it('Housing L1→L2 = 30 Wood + 10 Stone in 20 s', () => {
     expect(upgradeCost('Housing', 1, 1)).toEqual({ Wood: 30, Stone: 10 });
-    expect(upgradeDuration('Housing', 1)).toBe(20);
+    expect(upgradeDuration(base, 'Housing', 1)).toBe(20);
   });
 });
 

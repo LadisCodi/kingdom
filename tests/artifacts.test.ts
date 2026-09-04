@@ -52,11 +52,11 @@ describe('owning relics', () => {
 });
 
 describe('the collection substrate', () => {
-  it('Knowledge buys levels; Fragments raise the ceiling they run into', () => {
+  it('Stardust buys levels; Fragments raise the ceiling they run into', () => {
     const state = withRelic('DowsingRod');
-    state.kingdom.wallet.Knowledge = 100_000;
+    state.kingdom.wallet.Stardust = 100_000;
 
-    // Tier 1 allows two levels, then Knowledge has nowhere to go.
+    // Tier 1 allows two levels, then Stardust has nowhere to go.
     expect(levelUpArtifact(state, 'DowsingRod')).toBe('Levelled');
     expect(artifactEntry(state, 'DowsingRod').level).toBe(2);
     expect(levelCapForTier(1)).toBe(COLLECTION.levelsPerTier);
@@ -71,33 +71,38 @@ describe('the collection substrate', () => {
 
   it('charges the authored curve, and the runway is the documented one', () => {
     const state = withRelic('DowsingRod');
-    state.kingdom.wallet.Knowledge = 1000;
+    state.kingdom.wallet.Stardust = 1000;
     levelUpArtifact(state, 'DowsingRod');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(1000 - levelCost(1));
-    // ~3,630 Knowledge to max one collectible (Docs/features/10-heroes.md §3).
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000 - levelCost(1));
+    // ~3,630 Stardust to max one collectible (Docs/features/10-heroes.md §3).
     expect(totalLevelCost()).toBeGreaterThan(3400);
     expect(totalLevelCost()).toBeLessThan(3900);
   });
 
   it('refuses to level a relic that has not been found', () => {
     const state = freshGame();
-    state.kingdom.wallet.Knowledge = 10_000;
+    state.kingdom.wallet.Stardust = 10_000;
     expect(levelUpArtifact(state, 'DowsingRod')).toBe('NotOwned');
   });
 });
 
 describe('attunement', () => {
-  it('starts at one socket, research adds one, Gems add the rest', () => {
+  it('starts at one socket and every further one costs Gems', () => {
     const state = freshGame();
     expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots);
-    completeTech(state, 'Attunement');
-    expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots + 1);
+    // No technology grants a socket: slots are Gems everywhere and nothing
+    // else (Docs/features/tomes-and-research.md §8). Promise 3 survives
+    // because Gems are earnable — the chain pays 75 — so the earning moved
+    // off the tree rather than disappearing.
+    completeTech(state, 'Consecration');
+    expect(attunementSlots(state), 'research must not grant a socket')
+      .toBe(ATTUNEMENT.baseSlots);
 
     state.player.wallet.Gems = 10_000;
     const cost = attunementSlotGemCost(state);
     expect(buyAttunementSlot(state)).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(10_000 - cost);
-    expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots + 2);
+    expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots + 1);
     // Escalating, so breadth stays a real purchase rather than a formality.
     expect(attunementSlotGemCost(state)).toBeGreaterThan(cost);
   });
@@ -127,7 +132,7 @@ describe('attunement', () => {
 
   it('will not wear the same relic in two sockets', () => {
     const state = withRelic();
-    completeTech(state, 'Attunement');
+    state.artifacts.slotsPurchased = 1; // Gems, not research
     normaliseSlots(state);
     expect(attune(state, 0, 'GildedLedger', T0)).toBe('Attuned');
     expect(attune(state, 1, 'GildedLedger', T0)).toBe('AlreadyAttuned');
@@ -141,7 +146,7 @@ describe('attunement', () => {
 
   it('the passive scales with level, and levelling re-applies it live', () => {
     const state = withRelic('ForemansSigil'); // worker yield +1, +0.2/level
-    state.kingdom.wallet.Knowledge = 100_000;
+    state.kingdom.wallet.Stardust = 100_000;
     attune(state, 0, 'ForemansSigil', T0);
     const atLevel1 = effectiveWorkerStrike(state, HARVEST.Forest);
     expect(passiveValue(state, 'ForemansSigil')).toBe(ARTIFACTS.ForemansSigil.passive.base);
@@ -257,7 +262,7 @@ describe('the actives', () => {
 describe('persistence', () => {
   it('round-trips the whole collection, and re-derives the passives', () => {
     const state = withRelic('GildedLedger');
-    completeTech(state, 'Attunement');
+    completeTech(state, 'Consecration');
     normaliseSlots(state);
     state.artifacts.levels.GildedLedger = 3;
     state.artifacts.tiers.GildedLedger = 2;
@@ -272,13 +277,12 @@ describe('persistence', () => {
     expect(isSlotLocked(restored, 0, T0)).toBe(true);
   });
 
-  it('a save written before a socket was earned loads with the socket', () => {
+  it('a save written before a socket was bought loads with the socket', () => {
     const state = withRelic();
     const save = serialize(state, T0);
-    // The research lands between the save being written and it being read.
-    state.research.completed.push('Attunement');
+    // The purchase lands between the save being written and it being read.
     const restored = deserialize(save, map, T0)!;
-    restored.research.completed.push('Attunement');
+    restored.artifacts.slotsPurchased = 1;
     normaliseSlots(restored);
     expect(restored.artifacts.attuned).toHaveLength(2);
     expect(restored.artifacts.lockedUntil).toHaveLength(2);

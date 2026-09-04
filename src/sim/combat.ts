@@ -25,6 +25,7 @@
 // is INFORMATION, not dice — you do not know the next depth's threat type
 // until you commit to it.
 
+import type { UnitTag } from './data/definitions';
 import { ARMY, ARTIFACTS, HEROES, RUINS, UNITS } from './data/definitions';
 import type { ArtifactId, HeroId, RuinId, UnitId } from './state';
 
@@ -38,10 +39,14 @@ export const BEATS: Record<UnitId, UnitId> = {
 
 /** What `attacker` scores against a depth whose threat is `threat`.
  *  'Any' is neutral — the Star Observatory answers to nothing in particular. */
-export function typeMultiplier(attacker: UnitId, threat: UnitId | 'Any'): number {
+export function typeMultiplier(
+  attacker: UnitId, threat: UnitId | 'Any', disadvantageOffset = 0,
+): number {
   if (threat === 'Any') return 1;
   if (BEATS[attacker] === threat) return ARMY.typeAdvantage;
-  if (BEATS[threat] === attacker) return ARMY.typeDisadvantage;
+  // Manoeuvre softens the penalty, never past neutral: a bad matchup stays a
+  // bad matchup, it just stops being a wasted trip.
+  if (BEATS[threat] === attacker) return Math.min(1, ARMY.typeDisadvantage + disadvantageOffset);
   return 1;
 }
 
@@ -62,11 +67,35 @@ export interface CarriedArtifact {
   level: number;
 }
 
+/**
+ * What the kingdom's research adds to the soldiers it sends — the Warfare
+ * lines Shield Wall, Fletching, Barding, Warhorns and Manoeuvre, resolved OUT
+ * HERE by expeditions.ts and carried in on the Party, exactly the way the
+ * hero's level and the carried relic travel. Combat stays pure: no GameState
+ * ever reaches this module, so a fight can be replayed from its inputs alone.
+ */
+export interface Drill {
+  /** Flat ATK per unit, by tag; `all` applies to every unit. */
+  atk: Partial<Record<UnitTag, number>> & { all?: number };
+  /** Flat DEF per unit, by tag; `all` applies to every unit. */
+  def: Partial<Record<UnitTag, number>> & { all?: number };
+  /** Added to the type-disadvantage multiplier (0.75 + 0.06 at Manoeuvre III). */
+  disadvantageOffset: number;
+}
+
+export const NO_DRILL: Drill = { atk: {}, def: {}, disadvantageOffset: 0 };
+
+/** The flat bonus a unit of these tags gets from a Drill's atk or def table. */
+const drillFor = (table: Drill['atk'], tags: readonly UnitTag[]): number =>
+  (table.all ?? 0) + tags.reduce((n, t) => n + (table[t] ?? 0), 0);
+
 export interface Party {
   heroId: HeroId | null;
   slots: readonly PartySlot[];
   /** Carried into the delve, and therefore NOT attuned to the kingdom. */
   artifact?: CarriedArtifact | null;
+  /** The kingdom's drill, resolved by the caller. Absent = none. */
+  drill?: Drill;
 }
 
 /** A carried relic's contribution at its level. */
@@ -100,10 +129,11 @@ export function partyStats(party: Party, heroLevel = 1): PartyStats {
   let atk = 0;
   let def = 0;
   let hp = 0;
+  const drill = party.drill ?? NO_DRILL;
   for (const slot of party.slots) {
     const u = UNITS[slot.unitId];
-    atk += u.atk * slot.count;
-    def += u.def * slot.count;
+    atk += (u.atk + drillFor(drill.atk, u.tags)) * slot.count;
+    def += (u.def + drillFor(drill.def, u.tags)) * slot.count;
     hp += u.hp * slot.count;
   }
   if (party.heroId !== null) {
@@ -128,13 +158,17 @@ export function partyStats(party: Party, heroLevel = 1): PartyStats {
 /** ATK after the matchup — the number that actually clears a depth. A hero
  *  carries a unit type of its own, so the hero choice feeds the same chart. */
 export function effectiveAttack(party: Party, threat: UnitId | 'Any', heroLevel = 1): number {
+  const drill = party.drill ?? NO_DRILL;
   let atk = 0;
   for (const slot of party.slots) {
-    atk += UNITS[slot.unitId].atk * slot.count * typeMultiplier(slot.unitId, threat);
+    const u = UNITS[slot.unitId];
+    atk += (u.atk + drillFor(drill.atk, u.tags)) * slot.count
+      * typeMultiplier(slot.unitId, threat, drill.disadvantageOffset);
   }
   if (party.heroId !== null) {
     const h = HEROES[party.heroId];
-    atk += (h.atk + h.atkPerLevel * (heroLevel - 1)) * typeMultiplier(h.unitType, threat);
+    atk += (h.atk + h.atkPerLevel * (heroLevel - 1))
+      * typeMultiplier(h.unitType, threat, drill.disadvantageOffset);
   }
   // A relic has no unit type, so its ATK is TYPE-NEUTRAL: it lands whole
   // whatever is down there. That is deliberate, and it is what a relic is FOR

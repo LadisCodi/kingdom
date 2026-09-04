@@ -77,8 +77,8 @@ drift apart.
 | **33** | `FirstSummon` | **Summon at the banner. The first call is free.** |
 | **34** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow. |
 
-**Quests 35–50 are the long game**, re-ordered but not re-tuned: the Quarry, the
-Mine, Urban Planning and Townhall 3, then Attunement, the Sanctum, a warband,
+**Quests 35–50 are the long game**, re-ordered but not re-tuned: the Quarry,
+Urban Planning, Townhall 3 and Mining, then Attunement, the Sanctum, a warband,
 the first full ruin clear, attuning a relic, four landmarks, depth five, and
 three relics held at once.
 

@@ -11,9 +11,8 @@ import { recordResourceDiscovery } from './discovery';
 import { refund } from './wallet';
 import {
   addToWallet, getWallet,
-  type CurrencyId, type FeatureId, type GameState, type UpgradeId,
+  type CurrencyId, type FeatureId, type GameState,
 } from './state';
-import { upgradeLevel } from './upgrades';
 
 export const activeQuest = (state: GameState): QuestDef | null =>
   QUESTS[state.quests.index] ?? null;
@@ -91,8 +90,6 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.artifacts.owned.length;
     case 'OwnHeroes':
       return state.heroes.owned.length;
-    case 'BuyUpgrade':
-      return upgradeLevel(state, quest.goalTarget as UpgradeId);
     default:
       return 0;
   }
@@ -117,8 +114,15 @@ export function claimQuest(state: GameState): ClaimResult {
     addToWallet(state.player.wallet, 'Gems', quest.rewardGems);
     recordResourceDiscovery(state, 'Gems');
   }
-  // Into the KINGDOM purse — Knowledge outlives the city that earned it, and
-  // it is what the research tree is bought with.
+  // Into the KINGDOM purse — Stardust outlives the city that earned it, which
+  // is what the collection arc needs when regions become the treadmill.
+  if (quest.rewardStardust > 0) {
+    addToWallet(state.kingdom.wallet, 'Stardust', quest.rewardStardust);
+    recordResourceDiscovery(state, 'Stardust');
+  }
+  // Knowledge too. The clock runs on territory and a player early in the
+  // chain holds none, so the chain seeds enough for every technology it asks
+  // for — tests/quests.test.ts walks it and holds that promise.
   if (quest.rewardKnowledge > 0) {
     addToWallet(state.kingdom.wallet, 'Knowledge', quest.rewardKnowledge);
     recordResourceDiscovery(state, 'Knowledge');

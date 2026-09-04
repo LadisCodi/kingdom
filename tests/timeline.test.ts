@@ -216,8 +216,8 @@ describe('the gacha', () => {
     const seen = new Set<string>();
     for (let i = 1; i <= GACHA.hardPityAt + 10; i++) {
       const result = pull(state);
-      expect(result.knowledge).toBe(GACHA.pullKnowledge);
-      expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(i * GACHA.pullKnowledge);
+      expect(result.stardust).toBe(GACHA.pullStardust);
+      expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(i * GACHA.pullStardust);
       seen.add(result.heroId === null ? 'miss' : result.duplicate ? 'dupe' : 'hero');
     }
     // …and it really did pay across more than one kind of outcome.

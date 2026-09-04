@@ -57,12 +57,12 @@ One file per feature, in the order a player meets them.
 | # | Feature | Covers | State |
 |---|---|---|---|
 | 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
-| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map, and how much PvP the promises allow | designed |
+| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map as a **hex lattice** with two zoom registers and per-player fog, travel time as its pacing dial, and how much PvP the promises allow | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, the Market, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
 | 5 | [The city](features/05-city-and-districts.md) | all thirteen districts, the Townhall as era gate, cost curves, placement, moving a building | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
-| 7 | [Research](features/07-research.md) | the technology tree and instant upgrades today; **three tomes — Civics, Warfare, Magic — tiers-as-eras, and Knowledge as a capped clock you pour by hand** — designed and closed 2026-09-03 | built / designed |
+| 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — eras as keystones, minor ranks in place of upgrades, and Knowledge as the research clock**; the system is [`tomes-and-research.md`](features/tomes-and-research.md) and the node list [`tech-tree.md`](features/tech-tree.md) | built |
 | 8 | [Magic](features/08-magic.md) | Mana, why it is capped, the Sanctum, landmarks, and the rewarded ad tuned as one loop | built |
 | 9 | [Relics](features/09-relics.md) | the five relics as **passives only** — the actives left for the tomes 2026-09-03 — attune-or-arm, and the **nine-piece ingredient set** that replaces Fragments | built / designed |
 | 10 | [Heroes and the gacha](features/10-heroes.md) | the shared collection substrate, five heroes, pity, no dead pulls | built |
@@ -84,6 +84,7 @@ Not features — how content and art are made.
 | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the parchment-and-carved-wood UI system, its palette and its shapes |
 | [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass |
 | [`art/sprite-prompts.md`](art/sprite-prompts.md) | how the world and UI art was generated, and the prompts that did it |
+| [`art/world-map-mockup-prompts.md`](art/world-map-mockup-prompts.md) | the world-map mockups: what two rounds of renders settled, and the three prompts |
 
 ## House rules for these docs
 

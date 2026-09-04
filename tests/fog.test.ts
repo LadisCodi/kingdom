@@ -12,7 +12,7 @@ import { siteDiscoveryKey } from '../src/sim/discovery';
 import { claimLandmark, landmarkClaimCost } from '../src/sim/landmarks';
 import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
-import { addBuilt, reveal, T0 } from './helpers';
+import { addBuilt, reveal, T0, completeRanks } from './helpers';
 import { coordKey, getWallet, parseCoordKey, type Coord } from '../src/sim/state';
 
 const map = buildMapData();
@@ -194,12 +194,24 @@ describe('exploring pays in ground, not in currency', () => {
   it('the tech tree is priced against what the CITY earns, in Gold', () => {
     // Supply against demand, asserted on the AUTHORED numbers so a balance
     // edit that puts the tree out of reach fails here rather than in
-    // playtest. The quest chain carries 12,075 Gold on its own.
+    // playtest.
+    //
+    // 550,165, up from 6,600. The 15 levelled upgrades became 49 ranked
+    // technologies and brought their Gold with them, and the three tomes
+    // added nine keystones on top — each priced at ~40% of the era it closes,
+    // so a gate reads as a real gate without dwarfing what it gates.
+    // tomes-and-research.md §0 calls a tree the quest chain funds twice over
+    // "not a sink, a formality"; this is the other side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(6600);
-    // Every tech is Gold and only Gold — no second purse, no materials.
+    expect(tree).toBe(550_165);
+    // Every tech is Gold plus, from era 2 on, Knowledge — the research clock
+    // (tomes-and-research.md §1). Never materials: a full quarry buys no
+    // research, which is what keeps the tree in the same contest as fog and
+    // buildings.
     for (const id of TECH_ORDER) {
-      expect(Object.keys(TECHNOLOGIES[id].cost)).toEqual(['Gold']);
+      const keys = Object.keys(TECHNOLOGIES[id].cost);
+      expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
+      if (TECHNOLOGIES[id].era === 1) expect(keys, `${id} is era 1`).not.toContain('Knowledge');
     }
   });
 });
@@ -225,9 +237,9 @@ describe('Surveying makes a tap on the fog go further', () => {
     state.research.completed.push('Cartography');
     expect(revealPerTap(state)).toBe(2);
     // ...and Surveying stacks on top of it: x2 -> x3 -> x4.
-    state.upgrades.Surveying = 1;
+    completeRanks(state, 'Surveying', 1);
     expect(revealPerTap(state)).toBe(3);
-    state.upgrades.Surveying = 2;
+    completeRanks(state, 'Surveying', 2);
     expect(revealPerTap(state)).toBe(4);
   });
 
@@ -244,7 +256,7 @@ describe('Surveying makes a tap on the fog go further', () => {
     const surveyed = newGame(map, NOW);
     surveyed.city.wallet.Gold = 500;
     reveal(surveyed, [{ x: 0, y: 3 }]);
-    surveyed.upgrades.Surveying = 2; // one tap does the work of three
+    completeRanks(surveyed, 'Surveying', 2); // one tap does the work of three
     expect(revealPerTap(surveyed)).toBe(3); // Cartography not researched here
     const before2 = getWallet(surveyed.city.wallet, 'Gold');
     const fastTaps = payFor(surveyed, cell);
@@ -257,7 +269,7 @@ describe('Surveying makes a tap on the fog go further', () => {
   it('never overpays the last tap of a cell', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 500;
-    state.upgrades.Surveying = 2;
+    completeRanks(state, 'Surveying', 2);
     reveal(state, [{ x: 0, y: 3 }]);
     const cell = { x: 0, y: 4 }; // 5 Gold, which 3 does not divide
     const before = getWallet(state.city.wallet, 'Gold');
@@ -345,7 +357,7 @@ describe('a site announces itself when it comes into view', () => {
     const state = newGame(map, T0);
     const claimed = LANDMARKS[0];
     reveal(state, [claimed.location]);
-    state.city.wallet.Gold = landmarkClaimCost(claimed) + 10;
+    state.city.wallet.Gold = landmarkClaimCost(state, claimed) + 10;
     state.pendingDiscoveries = [];
 
     expect(claimLandmark(state, map, claimed.location)).toBe('Claimed');

@@ -316,15 +316,16 @@ describe('the HUD', () => {
     expect(game.visibleCurrencies()).toContain('Stone');
   });
 
-  // Knowledge buys heroes and relics and nothing else, so it reads in the
+  // Stardust buys heroes and relics and nothing else, so it reads in the
   // Reliquary next to what it pays for. A coin on the plank is a coin you
-  // spend from anywhere; this is not one.
-  it('never puts Knowledge on the plank, however much the kingdom holds', () => {
+  // spend from anywhere; this is not one — and neither is Knowledge, which
+  // reads in the Research screen (Docs/features/tomes-and-research.md §8).
+  it('never puts Stardust on the plank, however much the kingdom holds', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    fund(state, { Knowledge: 5000 });
+    fund(state, { Stardust: 5000 });
 
-    expect(game.visibleCurrencies()).not.toContain('Knowledge');
+    expect(game.visibleCurrencies()).not.toContain('Stardust');
     expect(game.visibleCurrencies()).toEqual(['Gold', 'Food', 'Wood']);
   });
 
@@ -408,12 +409,12 @@ describe('shortfall', () => {
   it('reads each purse where it lives — city, kingdom, player', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    fund(state, { Food: 7, Knowledge: 4, Gems: 2 });
+    fund(state, { Food: 7, Stardust: 4, Gems: 2 });
 
     expect(game.shortfall({ Food: 7 })).toEqual({});
     expect(game.shortfall({ Food: 10 })).toEqual({ Food: 3 });
-    expect(game.shortfall({ Knowledge: 4, Gems: 2 })).toEqual({});
-    expect(game.shortfall({ Knowledge: 9 })).toEqual({ Knowledge: 5 });
+    expect(game.shortfall({ Stardust: 4, Gems: 2 })).toEqual({});
+    expect(game.shortfall({ Stardust: 9 })).toEqual({ Stardust: 5 });
   });
 });
 

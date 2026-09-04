@@ -4,8 +4,8 @@
 // and the only place the game ever explained that berries, meat and fish ARE
 // food. It no longer has to explain that: bushes, game and shoals pay Food
 // directly now, so a purse row is a purse row. What the sheet is still for is
-// letting the HUD show three coins without hiding anything, and giving
-// Knowledge somewhere to be read outside the Reliquary.
+// letting the HUD show three coins without hiding anything, and giving the
+// off-plank currencies somewhere to be read outside their own screens.
 
 import type { Game } from '../game';
 import { CURRENCIES } from '../sim/data/definitions';
@@ -13,7 +13,7 @@ import { type CurrencyId } from '../sim/state';
 import { el } from './format';
 import { currencyIcon, sheet } from './kit';
 
-/** Currencies worth a row: the city's goods, the kingdom's Knowledge, the
+/** Currencies worth a row: the city's goods, the kingdom's Stardust, the
  *  player's Gems.
  *
  *  Mana is excluded deliberately. It is the one capped currency, so a bare
@@ -27,7 +27,7 @@ export function renderPurseSheet(game: Game): HTMLElement {
 
   for (const c of PURSE_ORDER) {
     const held = game.walletValue(c);
-    // A currency nobody has yet is noise. Knowledge in particular: it does
+    // A currency nobody has yet is noise. Stardust in particular: it does
     // not exist until the first dungeon is cleared, and a zero row would
     // advertise a system the player has not met.
     if (held === 0) continue;

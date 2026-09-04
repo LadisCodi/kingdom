@@ -50,16 +50,47 @@
 import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
+import { isTechComplete } from './research';
+import { effect } from './upgrades';
 import {
-  addToWallet, getWallet, townhall, type GameState, type RuinId,
+  addToWallet, getWallet, type GameState, type RuinId,
 } from './state';
 
-/** Mana per hour. The Townhall alone — sanctuaries buy CAPACITY now, not
- *  rate, so the two dials stay genuinely different things. */
+/**
+ * Mana per hour: a flat floor, plus the Sanctum.
+ *
+ * The Townhall used to be the whole of it. It produces nothing now — it gates
+ * and nothing else (Docs/features/tech-tree.md §12) — so the Sanctum is the
+ * engine as well as the reservoir, and the whole Mana curve lives in the
+ * Magic tome where the fog, the landmarks and the ruins already are.
+ *
+ * The floor is what a kingdom regenerates before it has built anything, which
+ * has to be non-zero or the opening session has no Mana to tap with.
+ * Sanctuaries still buy CAPACITY rather than rate, so the two dials stay
+ * genuinely different things.
+ */
 export function manaProduction(state: GameState): number {
-  const base = levelIndexed(MANA.productionPerTownhallLevel, townhall(state).level);
+  let base = MANA.basePerHour;
+  for (const d of state.city.districts) {
+    if (d.definitionId === 'Sanctum' && d.state === 'Built') {
+      base += levelIndexed(MANA.sanctumPerHourPerLevel, d.level);
+    }
+  }
+  // Ley Taps: the one thing that lets a landmark touch the RATE, and it is a
+  // line the player researched rather than a property of the claim, so the
+  // "capacity not production" rule for sanctuaries still holds by default.
+  base += effect(state, 'LeyTaps') * claimedLandmarks(state);
   return Math.max(0, resolve(state, 'manaRegen', base));
 }
+
+const claimedLandmarks = (state: GameState): number =>
+  Object.keys(state.landmarks.claimed).filter((id) => state.landmarks.claimed[id] === true).length;
+
+const clearedRuins = (state: GameState): number => {
+  let n = 0;
+  for (const id of Object.keys(RUINS) as RuinId[]) if (state.ruinsCleared[id] === true) n += 1;
+  return n;
+};
 
 /** What actually accrues, per hour. Nothing draws against it, so this is
  *  simply production — kept as its own name because every caller means "the
@@ -68,8 +99,12 @@ export function manaProduction(state: GameState): number {
 export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduction(state));
 
 /**
- * The ceiling: the Townhall's own pool, the Sanctum's, and every sanctuary
- * claimed out in the fog.
+ * The ceiling: a flat floor, the Sanctum's levels, and every sanctuary
+ * claimed out in the fog. The Townhall is not in it — see `manaProduction`.
+ *
+ * The floor is 50, which is what `00-design-intent.md` has always said a new
+ * kingdom starts with. The old `base_cap_per_townhall_level` opened at 100
+ * and quietly contradicted it; Phase 0 was meant to catch that and did not.
  *
  * Sanctuaries raise CAPACITY rather than rate, which is what makes exploring
  * compound. An ad pays a whole pool, so every shrine claimed makes every
@@ -78,14 +113,15 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = levelIndexed(MANA.baseCapPerTownhallLevel, townhall(state).level);
+  let cap = MANA.baseCap + effect(state, 'DeepWells')
+    + (isTechComplete(state, 'Meditation') ? MANA.meditationCap : 0);
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {
       cap += levelIndexed(MANA.sanctumCapPerLevel, d.level);
     }
   }
-  return cap;
+  return Math.max(0, Math.round(resolve(state, 'manaCap', cap)));
 }
 
 export const mana = (state: GameState): number => getWallet(state.city.wallet, 'Mana');
@@ -182,29 +218,48 @@ export function refillManaWithGems(state: GameState): RefillResult {
 // ------------------------------------------------------------- the Knowledge drip
 
 /**
- * Knowledge accrues from every ruin the player has CLEARED — not from every
- * ruin they have found. Discovery pays nothing; taking a dungeon to its bottom
- * turns it into a permanent faucet.
+ * Knowledge is the research clock, and its rate is the ground you have taken:
+ * every ruin CLEARED, and (next step) every landmark claimed. Discovery pays
+ * nothing; taking a dungeon to its bottom turns it into a permanent faucet.
  *
- * That is what keeps the currency honest now that it buys nothing but heroes
- * and relics: the levelling arc is fed by the system it feeds. It still gives
- * the arc a floor that survives between expeditions — five cleared ruins drip
- * ~240 a day whether or not a party is out — but the floor has to be earned
- * one dungeon at a time.
+ * There is deliberately NO base rate. A player who claims nothing generates
+ * nothing — Knowledge is not a wage for existing, it is what the land teaches
+ * you once you have taken some of it. The safety valve is that era 1 of the
+ * tree costs no Knowledge at all, so the opening hours run on Gold and time.
+ * See Docs/features/tomes-and-research.md §3.
  *
- * Kingdom-scoped, like the currency itself, and modified by knowledgeYield (the
- * Wanderer's Compass). Same whole-units-against-an-anchor shape as taxes and
- * Mana, so all three replay identically.
+ * KINGDOM-scoped: a technology is something the kingdom knows, so the tree
+ * survives a province reset — and the contested landmarks that will pay it
+ * lumps live on the world map, not in any one city. Modified by
+ * knowledgeYield (the Wanderer's Compass). Same whole-units-against-an-anchor
+ * shape as taxes and Mana, so all three replay identically.
+ *
+ * The rate CHANGES in play — a ruin cleared, a landmark claimed — and that is
+ * safe without any settling step, because `advance` runs the continuous sims
+ * up to a boundary BEFORE applying the discrete work at it. The anchor is
+ * always `T0 + k × msPer` at the instant the rate moves, in a one-call replay
+ * and in stepped ticking alike. That ordering is held by `taxes.test.ts` and
+ * `workers.test.ts`; `expeditions.test.ts` holds the drip's own behaviour
+ * across a rate change. An earlier draft added a `settleKnowledge` that
+ * snapped the anchor at every rate change — it was unnecessary for the reason
+ * above, and it silently discarded up to one unit each time it fired.
  */
 export function knowledgePerHour(state: GameState): number {
-  let cleared = 0;
-  for (const id of Object.keys(RUINS) as RuinId[]) {
-    if (state.ruinsCleared[id] === true) cleared += 1;
-  }
-  if (cleared === 0) return 0;
-  return Math.max(
-    0, resolve(state, 'knowledgeYield', cleared * KNOWLEDGE.dripPerClearedRuinPerHour),
-  );
+  const cleared = clearedRuins(state);
+  const claimed = claimedLandmarks(state);
+  // Each source has its own line: Vigils per ruin, Wayposts per landmark —
+  // and Scriptorium is a percentage on the whole, applied where the modifier
+  // stack applies, so a relic and a rank read the same number the same way.
+  // Per ruin: the drip, doubled by Sanctified Ruins, plus Vigils and — for
+  // ground held to its deepest depth, which is what a clear IS — Conquest.
+  const perRuin = KNOWLEDGE.dripPerClearedRuinPerHour
+    * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1)
+    + effect(state, 'Vigils')
+    + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestPerClearedRuinPerHour : 0);
+  const raw = cleared * perRuin
+    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour + effect(state, 'Wayposts'));
+  if (raw === 0) return 0;
+  return Math.max(0, resolve(state, 'knowledgeYield', raw * (1 + effect(state, 'Scriptorium'))));
 }
 
 export function accrueKnowledge(state: GameState, toTime: number): number {

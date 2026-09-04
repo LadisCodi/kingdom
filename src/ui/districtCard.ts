@@ -118,19 +118,18 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   }
   // Mana is a per-level number too, on exactly two buildings — and neither
   // had anything to show before, so both upgrades read as blank.
+  // The Sanctum owns BOTH Mana numbers now — it is the engine as well as the
+  // reservoir, since the Townhall stopped producing (tech-tree.md §12).
   if (district.definitionId === 'Sanctum') {
     delta('Mana held',
       levelIndexed(MANA.sanctumCapPerLevel, district.level),
       levelIndexed(MANA.sanctumCapPerLevel, next));
+    delta('Mana/h',
+      levelIndexed(MANA.sanctumPerHourPerLevel, district.level),
+      levelIndexed(MANA.sanctumPerHourPerLevel, next));
   }
   if (district.definitionId === 'Townhall') {
-    delta('Mana pool',
-      levelIndexed(MANA.baseCapPerTownhallLevel, district.level),
-      levelIndexed(MANA.baseCapPerTownhallLevel, next));
-    delta('Mana/h',
-      levelIndexed(MANA.productionPerTownhallLevel, district.level),
-      levelIndexed(MANA.productionPerTownhallLevel, next));
-    // The Townhall's real job: it is the gate on how much city there can be.
+    // The Townhall's ONLY job: it is the gate on how much city there can be.
     const room = (level: number) => Object.values(DISTRICTS)
       .filter((d) => d.buildable && d.maxCountPerTownhallLevel.length > 0)
       .reduce((n, d) => n + maxCountForTownhallLevel(d, level), 0);
@@ -352,7 +351,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       // rather than a price and has no business inside the press-target.
       info: el('span', { class: 'dc-uptime' },
         iconEl('hourglass', { size: 'sm' }),
-        formatDuration(upgradeDuration(district.definitionId, district.level))),
+        formatDuration(upgradeDuration(game.state, district.definitionId, district.level))),
     });
     if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
 

@@ -11,7 +11,7 @@ import { fogState } from '../src/sim/fog';
 import { townhallDistance } from '../src/sim/grid';
 import { addModifier, type Modifier } from '../src/sim/modifiers';
 import {
-  FOG, MANA, OFFLINE_CAP_HOURS, RUINS, type LandmarkDef,
+  DISTRICTS, FOG, MANA, OFFLINE_CAP_HOURS, RUINS, type LandmarkDef,
 } from '../src/sim/data/definitions';
 import {
   claimLandmark, landmarkClaimCost, visibleLandmarks,
@@ -45,33 +45,49 @@ const sanctum = (state: GameState, level: number): void => {
 };
 
 describe('the two dials', () => {
-  it('production comes from the Townhall and the landmarks it does not', () => {
+  // THE TOWNHALL IS IN NEITHER DIAL ANY MORE (2026-09-04). It gates and
+  // nothing else, so the whole Mana curve is a flat floor plus the Sanctum
+  // plus the sanctuaries — all of it inside the Magic tome, where the fog and
+  // the landmarks and the ruins already live (tech-tree.md §12).
+  it('production is the floor plus the Sanctum, and the landmarks it is not', () => {
     const state = freshGame();
-    expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[0]);
+    expect(manaProduction(state)).toBe(MANA.basePerHour);
     townhall(state).level = 2;
-    expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[1]);
-    // Sanctuaries buy CAPACITY, not rate — production is the Townhall alone.
+    expect(manaProduction(state), 'the Townhall must not touch the rate')
+      .toBe(MANA.basePerHour);
+
+    sanctum(state, 1);
+    expect(manaProduction(state)).toBe(MANA.basePerHour + MANA.sanctumPerHourPerLevel[0]);
+    state.city.districts.find((d) => d.definitionId === 'Sanctum')!.level = 3;
+    expect(manaProduction(state)).toBe(MANA.basePerHour + MANA.sanctumPerHourPerLevel[2]);
+
+    // Sanctuaries buy CAPACITY, not rate — that is what makes a claim worth
+    // more the longer you play instead of less.
+    const before = manaProduction(state);
     state.landmarks.claimed[first.id] = true;
-    expect(manaProduction(state)).toBe(MANA.productionPerTownhallLevel[1]);
+    expect(manaProduction(state)).toBe(before);
   });
 
-  it('capacity comes from the Townhall, the Sanctum AND every sanctuary', () => {
+  it('capacity is the floor, the Sanctum AND every sanctuary', () => {
     const state = freshGame();
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
+    expect(manaCap(state)).toBe(MANA.baseCap);
+    townhall(state).level = 2;
+    expect(manaCap(state), 'the Townhall must not touch the ceiling').toBe(MANA.baseCap);
     state.landmarks.claimed[first.id] = true;
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.landmarkCap);
+    expect(manaCap(state)).toBe(MANA.baseCap + MANA.landmarkCap);
     delete state.landmarks.claimed[first.id];
     sanctum(state, 1);
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.sanctumCapPerLevel[0]);
+    expect(manaCap(state)).toBe(MANA.baseCap + MANA.sanctumCapPerLevel[0]);
     state.city.districts.find((d) => d.definitionId === 'Sanctum')!.level = 3;
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0] + MANA.sanctumCapPerLevel[2]);
+    expect(manaCap(state)).toBe(MANA.baseCap + MANA.sanctumCapPerLevel[2]);
   });
 
-  it('an unfinished Sanctum holds nothing', () => {
+  it('an unfinished Sanctum holds nothing, and makes nothing', () => {
     const state = freshGame();
     addBuilt(state, 'Sanctum', { x: 3, y: 1 });
     state.city.districts.find((d) => d.definitionId === 'Sanctum')!.state = 'UnderConstruction';
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
+    expect(manaCap(state)).toBe(MANA.baseCap);
+    expect(manaProduction(state)).toBe(MANA.basePerHour);
   });
 
   // THE TUNING LAW IS DELIBERATELY SUSPENDED (2026-09-02).
@@ -90,10 +106,15 @@ describe('the two dials', () => {
   // someone re-tunes regen they have to come here and say which budget they
   // are tuning for. Restoring the old law at cap 50 means regen 7/h at TH1.
   it('is a SPEND budget now: the pool no longer refills inside an absence', () => {
-    for (let level = 1; level <= 3; level++) {
+    // Walked up the SANCTUM now, not the Townhall — that is where both dials
+    // live. Every level has to stay on the spend side of the law.
+    const bare = freshGame();
+    expect(manaFillHours(bare)).toBeGreaterThan(OFFLINE_CAP_HOURS);
+    for (let level = 1; level <= DISTRICTS.Sanctum.maxLevel; level++) {
       const state = freshGame();
-      townhall(state).level = level;
-      expect(manaFillHours(state)).toBeGreaterThan(OFFLINE_CAP_HOURS);
+      sanctum(state, level);
+      expect(manaFillHours(state), `Sanctum ${level} refills inside an absence`)
+        .toBeGreaterThan(OFFLINE_CAP_HOURS);
       expect(Number.isFinite(manaFillHours(state))).toBe(true);
     }
   });
@@ -101,7 +122,10 @@ describe('the two dials', () => {
   it('starts a new kingdom full, because every tap is paid from it', () => {
     const state = freshGame();
     expect(mana(state)).toBe(manaCap(state));
-    expect(manaCap(state)).toBe(MANA.baseCapPerTownhallLevel[0]);
+    // 50, which is what the design has always said — the old
+    // base_cap_per_townhall_level opened at 100 and quietly contradicted it.
+    expect(manaCap(state)).toBe(MANA.baseCap);
+    expect(MANA.baseCap).toBe(50);
   });
 });
 
@@ -218,8 +242,8 @@ describe('the pool', () => {
     // Unlike a timer. The rule: the cap limits what the CITY PRODUCES while
     // you are away; it never limits what a timer does.
     const state = freshGame();
-    sanctum(state, 3); // a pool big enough that 8h does not fill it
-    townhall(state).level = 3;
+    sanctum(state, 3); // a pool big enough that 8h of production cannot fill it
+    state.city.wallet.Mana = 0; // …and empty, so the 8h is what is measured
     const restored = deserialize(serialize(state, T0), map, T0 + 40 * HOUR)!;
     expect(mana(restored)).toBeLessThan(manaCap(restored));
   });
@@ -262,7 +286,7 @@ describe('landmarks', () => {
   it('cost Gold on the fog’s own distance curve, and pay capacity forever', () => {
     const state = freshGame();
     reveal(state, [first.location]);
-    const cost = landmarkClaimCost(first);
+    const cost = landmarkClaimCost(state, first);
     expect(cost).toBeGreaterThan(0);
 
     expect(claimLandmark(state, map, first.location)).toBe('NotEnoughGold');
@@ -295,7 +319,8 @@ describe('landmarks', () => {
   });
 
   it('get farther and dearer, so exploration compounds instead of paying flat', () => {
-    const costs = LANDMARKS.map((l) => landmarkClaimCost(l));
+    const state = freshGame();
+    const costs = LANDMARKS.map((l) => landmarkClaimCost(state, l));
     expect(Math.max(...costs)).toBeGreaterThan(Math.min(...costs) * 4);
   });
 
@@ -324,24 +349,25 @@ describe('landmarks', () => {
     const byDistance = [...LANDMARKS]
       .sort((a, b) => townhallDistance(map, a.location) - townhallDistance(map, b.location));
     const [nearest, ...rest] = byDistance;
-    const cheapest = Math.min(...LANDMARKS.map(landmarkClaimCost));
-    expect(landmarkClaimCost(nearest)).toBe(cheapest);
+    const cheapest = Math.min(...LANDMARKS.map((l) => landmarkClaimCost(state, l)));
+    expect(landmarkClaimCost(state, nearest)).toBe(cheapest);
 
     // ...and nothing else shares its price, so "the near one" is unambiguous.
     for (const l of rest) {
-      expect(landmarkClaimCost(l), `${l.id} is no dearer than the nearest`)
-        .toBeGreaterThan(landmarkClaimCost(nearest));
+      expect(landmarkClaimCost(state, l), `${l.id} is no dearer than the nearest`)
+        .toBeGreaterThan(landmarkClaimCost(state, nearest));
     }
 
     // Many times what a new kingdom is handed: a save, not a pickup.
-    expect(landmarkClaimCost(nearest))
+    expect(landmarkClaimCost(state, nearest))
       .toBeGreaterThan(5 * getWallet(state.city.wallet, 'Gold'));
   });
 
   it('reserves the dearest tier for the ones an army has to clear', () => {
-    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(l)));
+    const state = freshGame();
+    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(state, l)));
     for (const l of LANDMARKS) {
-      if (landmarkClaimCost(l) === dearest) expect(l.defended).toBe(true);
+      if (landmarkClaimCost(state, l) === dearest) expect(l.defended).toBe(true);
     }
   });
 
@@ -369,7 +395,7 @@ describe('claiming a sanctuary lifts the fog around it', () => {
     const state = freshGame();
     const def = LANDMARKS[0];
     reveal(state, [def.location]);
-    state.city.wallet.Gold = landmarkClaimCost(def) + 10;
+    state.city.wallet.Gold = landmarkClaimCost(state, def) + 10;
     return { state, def };
   };
 

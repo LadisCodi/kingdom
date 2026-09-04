@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, SAVE_VERSION } from '../src/sim/data/definitions';
+import { HARVEST, SAVE_VERSION, TECHNOLOGIES } from '../src/sim/data/definitions';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
 import { getWallet, parseCoordKey } from '../src/sim/state';
 import { effectiveStock } from '../src/sim/harvest';
+import { isTechComplete, isTomeOpen } from '../src/sim/research';
+import { effect, lineRank } from '../src/sim/upgrades';
 import {
   addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
@@ -178,5 +180,88 @@ describe('save versions', () => {
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(getWallet(restored.city.wallet, 'Food')).toBe(5);
     expect(getWallet(restored.city.wallet, 'Stone')).toBe(3);
+  });
+
+  // v23: Knowledge and Stardust swapped jobs. Every Knowledge a live save
+  // holds was earned as COLLECTION currency, so it must keep buying relics
+  // and heroes — it becomes Stardust. This is the whole point of the migrator
+  // and the one thing a bare key rename would have got catastrophically
+  // wrong: it would hand the entire research tree to anybody with a balance.
+  it('converts a banked Knowledge balance into Stardust, not into research', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const kingdom = (save.Modules['kingdom.kingdoms'] as any);
+    kingdom.Currencies = { ...kingdom.Currencies, Knowledge: 4200 };
+    save.SaveVersion = 22;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    // It buys what it was earned for.
+    expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(4200);
+    // And it buys no research at all: the clock starts at zero and is earned
+    // back from the ground the player holds. Same purse, different job.
+    expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(restored.kingdom.wallet).not.toHaveProperty('Knowledge');
+  });
+
+  // v24: upgrades stopped being a separate kind of thing. A player mid-flight
+  // holds `UpgradeLevels: { TapPower: 3 }` and must come back holding three
+  // COMPLETED technologies — every level they paid for, and no research time
+  // charged for them a second time.
+  it('turns banked upgrade levels into completed ranks', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const research = (save.Modules['kingdom.research'] as any);
+    research.UpgradeLevels = { TapPower: 3, Resonance: 1 };
+    save.SaveVersion = 23;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    expect(lineRank(restored, 'TapPower')).toBe(3);
+    expect(lineRank(restored, 'Resonance')).toBe(1);
+    // Exactly the ranks paid for, and not one more.
+    expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
+    expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
+    // And the effect the player had actually bought still reaches the sim
+    // (TapPower buys tap DURATION, +20% a rank, so three ranks are +60%).
+    expect(effect(restored, 'TapPower')).toBeCloseTo(3 * TECHNOLOGIES.TapPowerI.effectPerRank, 6);
+  });
+
+  // v25: tomes have cover pages, granted rather than researched. A save from
+  // before they existed has none, so every era-1 technology hides behind a
+  // requirement nothing will ever complete — the Civics page showed one
+  // lonely scroll. Found by loading a real save in the browser.
+  it('grants the cover pages a pre-tome save never had', () => {
+    const state = freshGame();
+    state.research.completed = []; // as a v24 save would be: no CharterI
+    const save = serialize(state, T0);
+    save.SaveVersion = 24;
+    const restored = deserialize(save, map, T0)!;
+    expect(isTomeOpen(restored, 'Civics')).toBe(true);
+    // No event that opens the other two has happened, so they stay shut and
+    // open the ordinary way — on the next reveal, or the next ruin in sight.
+    expect(isTomeOpen(restored, 'Magic')).toBe(false);
+    expect(isTomeOpen(restored, 'Warfare')).toBe(false);
+  });
+
+  it('opens Magic and Warfare for a save that had already earned them', () => {
+    const state = freshGame();
+    state.research.completed = ['Cartography', 'Warrior']; // no cover pages, as v24
+    const save = serialize(state, T0);
+    save.SaveVersion = 24;
+    const restored = deserialize(save, map, T0)!;
+    expect(isTomeOpen(restored, 'Magic')).toBe(true);
+    expect(isTomeOpen(restored, 'Warfare')).toBe(true);
+    // And it does not double-grant.
+    expect(restored.research.completed.filter((t) => t === 'AttunementI')).toHaveLength(1);
+  });
+
+  it('leaves a v23 save alone — the swap runs once, not on every load', () => {
+    const state = freshGame();
+    state.kingdom.wallet.Stardust = 900;
+    state.kingdom.wallet.Knowledge = 40;
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(900);
+    expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(40);
   });
 });

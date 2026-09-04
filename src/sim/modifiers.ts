@@ -32,7 +32,30 @@ export type ModifierStat =
   | 'knowledgeYield'
   | 'activeCost'      // Mana an artifact ability costs to cast
   | 'delveSpeed'      // how fast a depth resolves
-  | 'attunementSlots'; // sockets, for a season that lends you one
+  | 'attunementSlots' // sockets, for a season that lends you one
+  // The era-2/3 hooks (Docs/features/tech-tree.md §9). Each is reached by a
+  // minor line through `effect()` AND by this stack, in the helper that owns
+  // the number — three stages, one place, like everything above.
+  | 'buildTime'       // seconds to raise or upgrade a building
+  | 'researchTime'    // seconds to complete a research, fixed at start
+  | 'workerSpeed'     // tiles per second a worker walks
+  | 'manaCap'         // the ceiling of the pool
+  | 'claimCost'       // Gold to claim a landmark
+  | 'stardustYield'   // Stardust a depth pays
+  // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
+  // adding a twin of it.
+  | 'armyCap'         // power the halls can field
+  | 'supplyCost'      // what an expedition costs to provision
+  | 'haulLoss'        // the fraction a failed depth loses
+  | 'heroXp'          // XP a delve pays a hero
+  | 'recruitCost'     // what a unit costs to recruit
+  // Combat. combat.ts stays PURE — these are resolved in expeditions.ts into a
+  // `Drill` carried on the Party, the way the hero's level and the carried
+  // relic already travel in.
+  | 'unitAtk'         // flat ATK on every unit
+  | 'unitDef'         // flat DEF on every unit
+  | 'typeDisadvantage' // the multiplier a bad matchup applies
+  | 'discoverRadius';  // how far a building sees into the fog
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 

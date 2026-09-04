@@ -41,19 +41,51 @@ const DISTRICT_IDS = [
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
 ];
 const TECH_IDS = [
-  'Forestry',
-  'UrbanPlanning', 'Communities', 'Architecture', // civics
-  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market', // economics: farm side
-  'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
-  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
-  'Warrior', 'Spears', 'Archery', 'Cavalry', // military
-  'Attunement', 'Warband', // the magic and expedition leaves
-];
-const UPGRADE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad',
-  'Sawpits', 'Butchery', 'Irrigation', 'Scythes',
-  'Surveying', 'Pitons', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks', 'Resonance',
+  'CharterI', 'CharterII', 'CharterIII', 'CharterIV',
+  'Forestry', 'UrbanPlanning', 'Saws', 'Agriculture',
+  'Masonry', 'Communities', 'Hunting', 'Farming',
+  'Market', 'Mining', 'Architecture', 'Engineering',
+  'DeepMining', 'WarbandI', 'WarbandII', 'WarbandIII',
+  'WarbandIV', 'Warrior', 'Spears', 'Archery',
+  'Cavalry', 'AttunementI', 'AttunementII', 'AttunementIII',
+  'AttunementIV', 'Cartography', 'Consecration', 'Sailing',
+  'ScalingTools', 'Fishing', 'Shipbuilding', 'TapPowerI',
+  'TapPowerII', 'TapPowerIII', 'TapPowerIV', 'TapPowerV',
+  'QuickHandsI', 'QuickHandsII', 'QuickHandsIII', 'QuickHandsIV',
+  'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII', 'WorkerLoadIII',
+  'SawpitsI', 'SawpitsII', 'SawpitsIII', 'ButcheryI',
+  'ButcheryII', 'ButcheryIII', 'IrrigationI', 'IrrigationII',
+  'IrrigationIII', 'ScythesI', 'ScythesII', 'ScythesIII',
+  'SurveyingI', 'SurveyingII', 'PitonsI', 'PitonsII',
+  'MarketStallI', 'MarketStallII', 'MarketStallIII', 'MarketStallIV',
+  'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII', 'TradeRoutesIV',
+  'TradeRoutesV', 'StonecuttingI', 'StonecuttingII', 'StonecuttingIII',
+  'BigNetsI', 'BigNetsII', 'BigNetsIII', 'IronPicksI',
+  'IronPicksII', 'IronPicksIII', 'ResonanceI', 'ResonanceII',
+  'CarpentryI', 'CarpentryII', 'CarpentryIII', 'ScrivenersI',
+  'ScrivenersII', 'ScrivenersIII', 'CartageI', 'CartageII',
+  'CartageIII', 'DeepWellsI', 'DeepWellsII', 'DeepWellsIII',
+  'DeepWellsIV', 'DeepWellsV', 'LeyTapsI', 'LeyTapsII',
+  'LeyTapsIII', 'WaypostsI', 'WaypostsII', 'WaypostsIII',
+  'ScriptoriumI', 'ScriptoriumII', 'ScriptoriumIII', 'VigilsI',
+  'VigilsII', 'VigilsIII', 'PilgrimageI', 'PilgrimageII',
+  'PilgrimageIII', 'ProspectingI', 'ProspectingII', 'ProspectingIII',
+  'ColoursI', 'ColoursII', 'ColoursIII', 'ColoursIV',
+  'ColoursV', 'MusterDrillI', 'MusterDrillII', 'MusterDrillIII',
+  'RationsI', 'RationsII', 'RationsIII', 'DrillmasterI',
+  'DrillmasterII', 'DrillmasterIII', 'BearersI', 'BearersII',
+  'BearersIII', 'PathfindersI', 'PathfindersII', 'PathfindersIII',
+  'ShieldWallI', 'ShieldWallII', 'ShieldWallIII', 'FletchingI',
+  'FletchingII', 'FletchingIII', 'BardingI', 'BardingII',
+  'BardingIII', 'WarhornsI', 'WarhornsII', 'WarhornsIII',
+  'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII', 'FarsightI',
+  'FarsightII', 'FarsightIII', 'Aqueducts', 'Guildhalls',
+  'Roadworks', 'LandSurvey', 'Apprenticeships', 'FieldMedicine',
+  'Veterancy', 'Siegecraft', 'Tactics', 'Scouting',
+  'Salvage', 'Vanguard', 'Standards', 'Conquest',
+  'Meditation', 'LeyReading', 'Scrying', 'Invocation',
+  'Lorekeeping', 'Wayshrines', 'LeyLines', 'FrugalRites',
+  'SanctifiedRuins', 'RitualCasting', 'LeyStorm', 'SecondSanctum',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
@@ -66,7 +98,7 @@ const QUEST_GOAL_TYPES = {
   AssignWorkers: null, TrainArmy: null,
   // The long game: magic and expeditions.
   ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
-  OwnHeroes: null, BuyUpgrade: 'upgrade',
+  OwnHeroes: null,
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
   // "clear two cells with forest on them" — a DiscoverCells that cares WHAT
@@ -75,7 +107,10 @@ const QUEST_GOAL_TYPES = {
   DiscoverFeature: 'feature',
 };
 
-const FEATURE_IDS = ['Trees', 'BerryBush', 'WildAnimals', 'Rocks', 'FishShoal', 'IronVein'];
+// Quest `DiscoverFeature` targets. Mirrors `FEATURES` in definitions.ts.
+const FEATURE_IDS = [
+  'Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal',
+];
 const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
 const HERO_TRAITS = [
   'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
@@ -84,8 +119,9 @@ const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
 ];
 
+const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
-  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Gems',
+  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'Gems',
 ];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone'];
 
@@ -141,10 +177,15 @@ const SETTINGS = [
   // Mana. The ceiling is DYNAMIC (Townhall level + Sanctum levels), so the
   // Currencies sheet's static `cap` column stays blank for Mana and these are
   // the numbers that actually decide it — see src/sim/mana.ts.
-  ['mana.production_per_townhall_level', 'mana.productionPerTownhallLevel', 'list'],
-  ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
+  // The Townhall produces no Mana and sets no ceiling — it gates and nothing
+  // else (Docs/features/tech-tree.md §12). A flat floor, then the Sanctum,
+  // then the sanctuaries: the whole curve lives in the Magic tome now.
+  ['mana.base_cap', 'mana.baseCap'],
+  ['mana.base_per_hour', 'mana.basePerHour'],
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
+  ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
+  ['mana.meditation_cap', 'mana.meditationCap'],
   // A fraction of the CAP, not an absolute: one Gem buys what a daily chest
   // step pays (0.34 of a pool), so it never goes stale as the pool grows.
   ['mana.gem_refill_fraction', 'mana.gemRefillFraction'],
@@ -165,6 +206,14 @@ const SETTINGS = [
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   ['knowledge.drip_per_cleared_ruin_per_hour', 'knowledge.dripPerClearedRuinPerHour'],
+  // The research clock's rate is the ground you have taken, and nothing else:
+  // there is deliberately NO base term, so a player who claims nothing
+  // generates nothing. Era 1 of the tree costs no Knowledge, which is what
+  // keeps that from being a wall (Docs/features/tomes-and-research.md §3).
+  ['knowledge.per_claimed_landmark_per_hour', 'knowledge.perClaimedLandmarkPerHour'],
+  // Taking ground is an EVENT, not just a rate change a nobody is looking at.
+  ['knowledge.landmark_claim_lump', 'knowledge.landmarkClaimLump'],
+  ['knowledge.conquest_per_cleared_ruin_per_hour', 'knowledge.conquestPerClearedRuinPerHour'],
   // Combat is a SCORING PASS, not a simulation — these six numbers are the
   // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
   // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
@@ -178,13 +227,14 @@ const SETTINGS = [
   // bites but starts to feel like the loss aversion the positioning rules out.
   ['delve.gold_per_depth_per_tier', 'delve.goldPerDepthPerTier'],
   ['delve.material_per_depth_per_tier', 'delve.materialPerDepthPerTier'],
-  ['delve.knowledge_per_depth_per_tier', 'delve.knowledgePerDepthPerTier'],
+  ['delve.stardust_per_depth_per_tier', 'delve.stardustPerDepthPerTier'],
   ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
   ['delve.fail_haul_loss', 'delve.failHaulLoss'],
   ['delve.first_clear_gems', 'delve.firstClearGems'],
   // The lump a first clear pays. Together with the drip above and the gacha,
   // this is where ALL Knowledge comes from — clearing fog pays none.
   ['delve.first_clear_knowledge', 'delve.firstClearKnowledge'],
+  ['delve.first_clear_stardust', 'delve.firstClearStardust'],
   ['party.base_slots', 'party.baseSlots'],
   ['party.max_slots', 'party.maxSlots'],
   ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
@@ -199,7 +249,7 @@ const SETTINGS = [
   ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
   // Every pull pays this, hero or not — Fragments only ever point at one
   // hero, but Knowledge levels whoever the player already has.
-  ['gacha.pull_knowledge', 'gacha.pullKnowledge'],
+  ['gacha.pull_stardust', 'gacha.pullStardust'],
   // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
   // the player can plan around; `eligible_below_fraction` is what keeps it an
   // answer to being short rather than an interruption.
@@ -214,7 +264,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level',
+  'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -226,7 +276,7 @@ const DISTRICT_COLUMNS = [
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level',
+  'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
 ];
 
 const SHEETS = {
@@ -249,12 +299,26 @@ const SHEETS = {
   FogRings: ['distance', 'cost'],
   // Research is paid in Gold and nothing else — one column, not a
   // four-currency wallet. See the tech importer for why.
-  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires'],
-  Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
+  // `line` and `effect_per_rank` are what is left of the Upgrades sheet.
+  // A minor technology carries a line id and a per-rank effect; a major one
+  // leaves both blank. Ranks of a line are ordered by ROW ORDER, the same
+  // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
+  // `tome` and `era` are the shelf (Docs/features/tomes-and-research.md §5):
+  // three books, each paced by eras whose keystone requires everything above
+  // it. `node_x`/`node_y` are per-PAGE positions and are blank for a minor
+  // rank, which is drawn in its line's bead under the parent instead.
+  // `cost_knowledge` is the clock's price (tomes-and-research.md §1): blank
+  // in era 1, where the clock has not started; the era-1 keystone is the
+  // first node that charges it.
+  // `planned` = 1 marks a node that is on the tree for its SHAPE and does
+  // nothing yet. It is badged in the game, its description says so, and no
+  // keystone requires it (tech-tree.md §13).
+  Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds', 'requires',
+    'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y', 'planned'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_knowledge'],
+    'reward_gems', 'reward_stardust', 'reward_knowledge'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -334,6 +398,16 @@ function num(row, col, { blankAs = null } = {}) {
   }
   const n = typeof raw === 'number' ? raw : Number(raw);
   if (!Number.isFinite(n) || n < 0) fail(where(row), `"${col}" is not a non-negative number (got "${raw}")`);
+  return n;
+}
+
+/** A tree-page coordinate: any integer, including negative ones (a page is
+ *  centred on its spine, so x is negative left of the trunk). */
+function coord(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isInteger(n)) fail(where(row), `"${col}" is not an integer (got "${raw}")`);
   return n;
 }
 
@@ -419,7 +493,7 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
+    districts: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
     research: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
@@ -444,6 +518,11 @@ async function importXlsx() {
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
       requiredTechPerLevel: techList(r, 'required_tech_per_level'),
+      // One more of this district may stand once the named technology is
+      // done — how Guildhalls buys a second Market and Second Sanctum a
+      // second Sanctum, without a per-count gate mechanism nobody else needs.
+      extraCountTech: (r.extra_count_tech === '' || r.extra_count_tech === undefined)
+        ? null : r.extra_count_tech,
       armyCapPerLevel: list(r, 'army_cap_per_level'),
       buildCost: wallet(r, 'build_cost'),
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
@@ -523,32 +602,45 @@ async function importXlsx() {
     }
     // Gold, alone. Research is paid out of the CITY purse, so the tree
     // competes with clearing fog and raising a building for one budget —
-    // which is the decision the economy is built around. Instant upgrades
-    // are Gold too; what separates them is that an upgrade is permanent and
-    // stacking while a technology is a one-time unlock.
-    const gold = num(r, 'cost_gold');
-    if (gold < 1) fail(where(r), 'cost_gold must be at least 1');
+    // which is the decision the economy is built around. Minor ranks are
+    // Gold too; what separates them from a major is cost and time, not kind
+    // (Docs/features/tech-tree.md §1 rule 3).
+    // 0 is legal, and only for a spine's rank I: the cover page is GRANTED
+    // when its tome opens rather than researched, so it has no price.
+    const gold = num(r, 'cost_gold', { blankAs: 0 });
+    if (gold < 0) fail(where(r), 'cost_gold cannot be negative');
+    if (gold === 0 && !/^(Charter|Warband|Attunement)I$/.test(id)) {
+      fail(where(r), 'only a tome cover page may cost nothing');
+    }
+    const line = (r.line === '' || r.line === undefined) ? null : String(r.line);
+    if (!TOME_IDS.includes(r.tome)) fail(where(r), `unknown tome "${r.tome}"`);
+    const era = num(r, 'era');
+    if (era < 1 || era > 4) fail(where(r), 'era must be 1-4');
+    const hasX = r.node_x !== '' && r.node_x !== undefined;
+    if (hasX !== (line === null)) {
+      fail(where(r), 'a major needs a node position and a minor rank must not have one');
+    }
+    const knowledge = num(r, 'cost_knowledge', { blankAs: 0 });
+    if (knowledge > 0 && era === 1 && !/^(Charter|Warband|Attunement)II$/.test(id)) {
+      // Era 1 runs on Gold and time alone: the research clock has not started,
+      // and charging for it there would strangle the opening (§3).
+      fail(where(r), 'an era-1 technology must not cost Knowledge');
+    }
     out.technologies[id] = {
-      cost: { Gold: gold },
-      durationSeconds: num(r, 'duration_seconds'),
+      cost: knowledge > 0 ? { Gold: gold, Knowledge: knowledge } : { Gold: gold },
+      durationSeconds: num(r, 'duration_seconds', { blankAs: 0 }),
       requires,
+      line,
+      effectPerRank: num(r, 'effect_per_rank', { blankAs: 0 }),
+      tome: r.tome,
+      era,
+      // coord(), not num(): a page is centred on its spine, so x is negative
+      // on the left of the trunk.
+      node: hasX ? { x: coord(r, 'node_x'), y: coord(r, 'node_y') } : null,
+      planned: num(r, 'planned', { blankAs: 0 }) === 1,
     };
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Upgrades'), UPGRADE_IDS)) {
-    const requiredTech = (r.required_tech === '' || r.required_tech === undefined)
-      ? null : r.required_tech;
-    if (requiredTech !== null && !TECH_IDS.includes(requiredTech)) {
-      fail(where(r), `unknown required_tech "${requiredTech}"`);
-    }
-    out.upgrades[id] = {
-      costBase: num(r, 'cost_base'),
-      costGrowth: num(r, 'cost_growth'),
-      maxLevel: num(r, 'max_level'),
-      effectPerLevel: num(r, 'effect_per_level'),
-      requiredTech,
-    };
-  }
 
   const adjacencySeen = new Set();
   for (const r of readSheet(workbook, 'Adjacency')) {
@@ -573,7 +665,7 @@ async function importXlsx() {
     const targetKind = QUEST_GOAL_TYPES[r.goal_type];
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
     const lists = {
-      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
+      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS,
       feature: FEATURE_IDS,
     };
     if (targetKind === null && target !== null) {
@@ -598,6 +690,7 @@ async function importXlsx() {
       goalLevel: level,
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
+      rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
       rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
     });
   }
@@ -696,7 +789,7 @@ async function exportXlsx() {
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
-      listCell(d.armyCapPerLevel),
+      listCell(d.armyCapPerLevel), d.extraCountTech ?? '',
       ...costCells(d.buildCost),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
@@ -730,20 +823,18 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, t.cost.Gold, t.durationSeconds, t.requires.join(',')];
+    return [id, t.cost.Gold || '', t.cost.Knowledge || '', t.durationSeconds || '',
+      t.requires.join(','), t.line ?? '', t.effectPerRank || '', t.tome, t.era,
+      t.node ? t.node.x : '', t.node ? t.node.y : '', t.planned ? 1 : ''];
   }), (col) => col === 'requires');
-
-  addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
-    const u = b.upgrades[id];
-    return [id, u.costBase, u.costGrowth, u.maxLevel, u.effectPerLevel, u.requiredTech ?? ''];
-  }));
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
     [a.district, a.neighbor, a.goldPerMinute]));
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
-    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardKnowledge || '',
+    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
+    q.rewardKnowledge || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

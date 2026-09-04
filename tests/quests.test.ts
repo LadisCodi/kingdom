@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, QUESTS, TECH_ORDER, type QuestDef,
+  DISTRICTS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -12,15 +12,13 @@ import { tapCell } from '../src/sim/harvest';
 import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
-import { techCost } from '../src/sim/research';
+import { techCost, techKnowledgeCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
-  type FeatureId, type GameState,
-} from '../src/sim/state';
+  type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt,
-} from './helpers';
+  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt, completeRanks, completeTech } from './helpers';
 
 
 describe('the quest chain', () => {
@@ -93,7 +91,7 @@ describe('the quest chain', () => {
     const state = freshGame();
     const surveyors = QUESTS.find((q) => q.id === 'Surveyors')!;
     expect(questValue(state, surveyors)).toBe(0);
-    state.upgrades.Surveying = 2;
+    completeRanks(state, 'Surveying', 2);
     expect(isQuestComplete(state, surveyors)).toBe(true);
 
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
@@ -241,27 +239,73 @@ describe('first-time discoveries', () => {
 
 // Docs/features/10-heroes.md §4 — the steady half of the research budget.
 //
-// CLAIM: quests pay Knowledge into the KINGDOM purse, and the chain pays out
-// more than the whole tech tree costs. Exploring is the half that scales;
+// CLAIM: quests pay Stardust into the KINGDOM purse, and the chain pays out
+// more Gold than the whole tech tree costs. Exploring is the half that scales;
 // this is the half that arrives on rails, so a player who follows the chain
 // is never hard-stuck behind a technology they cannot afford.
 describe('quests fund the research tree', () => {
-  it('pays its Knowledge into the kingdom purse, not the city', () => {
+  it('pays its Stardust into the kingdom purse, not the city', () => {
     const state = freshGame();
     const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
     state.quests.index = explorer;
     state.quests.progress = QUESTS[explorer].goalAmount;
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(QUESTS[explorer].rewardKnowledge);
-    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Stardust'))
+      .toBe(QUESTS[explorer].rewardStardust);
+    expect(getWallet(state.city.wallet, 'Stardust')).toBe(0);
   });
 
-  // The chain carries MOST of the tree in Gold and deliberately not all of
-  // it: a player who follows the guided path still has to have run a city to
-  // finish researching. The gap is a nudge rather than a wall — housing taxes
-  // and the Market close it.
-  it('the chain covers most of the tech tree, but never all of it', () => {
+  // THE CHAIN SEEDS THE CLOCK. Knowledge drips from territory, and a player
+  // early in the chain holds none — so every technology the chain asks for,
+  // prerequisites included, has to be affordable out of what the chain itself
+  // has paid, with NO drip at all. Zero drip is the worst case: the player
+  // who does the whole opening in one sitting. The one thing this may lean
+  // on is the lump a claim pays, because `OldStones` IS a claim.
+  it('pays enough Knowledge that a chain-follower is never stuck, with zero drip', () => {
+    const done = new Set<TechId>(['CharterI']);
+    const need = (id: TechId): number => {
+      if (done.has(id)) return 0;
+      done.add(id);
+      return techKnowledgeCost(id) + TECHNOLOGIES[id].requires.reduce((n, r) => n + need(r), 0);
+    };
+    let held = 0;
+    let worstSlack = Infinity;
+    for (const q of QUESTS) {
+      if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
+      if (q.goalType === 'CompleteTech') {
+        const demand = need(q.goalTarget as TechId);
+        expect(held, `${q.id} asks for ${q.goalTarget} (${demand} Knowledge) with ${held} in hand`)
+          .toBeGreaterThanOrEqual(demand);
+        if (demand > 0) worstSlack = Math.min(worstSlack, held - demand);
+        held -= demand;
+      }
+      held += q.rewardKnowledge;
+    }
+    // Enough margin that a re-priced rank or a moved quest does not silently
+    // put the tutorial one Knowledge short.
+    expect(worstSlack).toBeGreaterThanOrEqual(30);
+  });
+
+  it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
+    const state = freshGame();
+    // A CompleteTech quest, so the goal can be met by completing its tech.
+    const i = QUESTS.findIndex((q) => q.rewardKnowledge > 0 && q.goalType === 'CompleteTech');
+    state.quests.index = i;
+    completeTech(state, QUESTS[i].goalTarget as TechId);
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(QUESTS[i].rewardKnowledge);
+  });
+
+  // THE RATIO INVERTED ON 2026-09-04, on purpose.
+  //
+  // The chain used to pay 1.8x the whole tree, which
+  // Docs/features/tomes-and-research.md §0 names as the problem: "the tree is
+  // not a sink, it is a formality". Collapsing the upgrades into 49 ranked
+  // technologies took the tree from 6,600 to 26,625, so the chain now covers
+  // a little under half of it and the rest has to be earned by running a
+  // city. That is the point — but it is also the number most likely to make
+  // the early game feel poor, so it is asserted rather than assumed.
+  it('the chain no longer covers the tree — the tree is a real sink now', () => {
     const chain = QUESTS.reduce((sum, q) => sum + (q.reward.Gold ?? 0), 0);
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
     // 11,865: the two Market beats moved into the opening and were re-priced
@@ -269,8 +313,16 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(chain).toBeGreaterThan(tree * 0.75);
-    expect(chain).toBeLessThan(tree * 2);
+    expect(tree).toBe(550_165);
+    // Still enough to carry the player through the OPENING — every era-1
+    // major, which is the whole of the tree as it stood before the eras. The
+    // majors of eras 2 and 3 are the depth the city has to earn for itself.
+    const opening = TECH_ORDER
+      .filter((id) => TECHNOLOGIES[id].line === null && TECHNOLOGIES[id].era === 1)
+      .reduce((sum, id) => sum + techCost(id), 0);
+    expect(opening).toBe(2350);
+    expect(chain).toBeGreaterThan(opening);
+    expect(chain).toBeLessThan(tree);
   });
 
   // CLAIM: Knowledge appears with the Reliquary, not before it. Every quest
@@ -280,9 +332,9 @@ describe('quests fund the research tree', () => {
   it('only the long-game quests pay Knowledge at all', () => {
     const LONG_GAME = ['ClearRuins', 'ReachDepth', 'OwnArtifacts', 'OwnHeroes'];
     for (const q of QUESTS) {
-      if (q.rewardKnowledge > 0) expect(LONG_GAME).toContain(q.goalType);
+      if (q.rewardStardust > 0) expect(LONG_GAME).toContain(q.goalType);
     }
-    expect(QUESTS.filter((q) => q.rewardKnowledge > 0).length).toBeGreaterThan(0);
+    expect(QUESTS.filter((q) => q.rewardStardust > 0).length).toBeGreaterThan(0);
   });
 
   /**
@@ -339,7 +391,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test', description: '',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardKnowledge: 0,
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -411,7 +463,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test', description: '',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardKnowledge: 0,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0
     });
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null });

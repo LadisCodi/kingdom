@@ -4,9 +4,12 @@
 > conversion into **three tomes with tiers** — Civics, Warfare, Magic — paced by
 > **Knowledge as a clock**.
 >
-> **Status: the tree is built and Gold-priced. The tome rework is designed —
-> §3–§6 were settled on 2026-09-03 — and unstarted.** §1–§2 describe what ships
-> and why it has to change; §3 onward describe what it becomes.
+> **Status: the tome rework is BUILT.** It landed on `develop` and was merged
+> into the harvest branch on 2026-09-04. The **system** is
+> [`tomes-and-research.md`](tomes-and-research.md) and the **node list** is
+> [`tech-tree.md`](tech-tree.md) — read those for what ships. §1–§2 below
+> describe the pre-tome tree they replaced, and §3 onward the design as it was
+> settled on 2026-09-03; where the two disagree, the companion docs win.
 >
 > **Five decisions were taken on 2026-09-03** and everything downstream depends
 > on them: **a tome is a page of technologies**, not the thing you pour into
@@ -60,7 +63,7 @@ and carries the three global upgrades. Five branches leave it.
 | **Civics** | Urban Planning (Housing L2) → Communities (+1 bed everywhere) → Architecture (Townhall L3) |
 | **Economics — wood** | Saws (the Sawmill) · Hunting (the wild-game tap) |
 | **Economics — farm** | Agriculture (FarmLands **and** the Farm) → Farming (Farm L2) · Agriculture → Market |
-| **Economics — stone** | **Scaling Tools** (mountains answer a pick) → Masonry (Quarry) → Mining (Mine) → Deep Mining (Mine L2) · Masonry → Engineering (Quarry L2, Sawmill L3) |
+| **Economics — stone** | Masonry (Quarry) → Mining (iron mountains) → Deep Mining (gold mountains) · Masonry → Engineering (Quarry L2, Sawmill L3) |
 | **Exploration** | Cartography (**every fog tap counts double**) → Sailing (water) → Fishing (Docks) → Shipbuilding (Docks L2) |
 | **Military** | Warrior (Barracks) → Spears (Spear Hall) · Archery (Shooting Grounds) → Warband · Cavalry (Stables) |
 | **Arcana** | Attunement (the Sanctum, the second attunement slot, Resonance) |
@@ -69,10 +72,11 @@ Two shapes here are deliberate and easy to undo by accident:
 
 - **Chopping by hand and automating it are two separate decisions**, ten
   onboarding beats apart. That is why **Saws** hangs off Forestry separately
-  rather than Forestry unlocking the Sawmill. **Stone repeats the pattern
-  exactly**: Scaling Tools opens a mountain to the pick, Masonry unlocks the
-  Quarry that automates it. Masonry cannot come first, or researching it would
-  hand the player a Quarry with nothing to quarry — the same lie as a node that
+  rather than Forestry unlocking the Sawmill. **Stone does not repeat it**:
+  the bare peak answers a pick from the first second and Masonry unlocks the
+  Quarry that automates it. It was going to — Scaling Tools was to open the
+  mountain — but the tome tree parks Scaling Tools in Magic era 2, and a
+  Quarry that stood idle until then would be the same lie as a node that
   unlocks nothing.
 - **Scaling Tools left the exploration branch**, because it no longer gates
   reaching anything: mountains became a feature, so it gates *working* one
