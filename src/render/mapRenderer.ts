@@ -359,10 +359,20 @@ export function drawMap(
     punched(coordKey(district.location), x, y, fw, fh, () => {
       drewExhaustedPlot =
         exhaustedPlot && flip(() => drawSprite(ctx, `${def.sprite}_exhausted`, x, y, fw, fh));
-      // Leveled art (`sprite_l2`…) when present, base sprite otherwise.
+      // Levelled art comes in TIERS, not one piece per level: a building
+      // draws the highest `_l<n>` it owns at or below its level, so `_l1`,
+      // `_l4` and `_l8` dress all ten levels with three drawings. Walking
+      // down is also what stops a level with no art of its own from falling
+      // past the base sprite to the emoji.
+      const tiered = (): boolean => {
+        for (let l = district.level; l >= 1; l--) {
+          if (flip(() => drawSprite(ctx, `${def.sprite}_l${l}`, x, y, fw, fh))) return true;
+        }
+        return false;
+      };
       if (
         !drewExhaustedPlot &&
-        !flip(() => drawSprite(ctx, `${def.sprite}_l${district.level}`, x, y, fw, fh)) &&
+        !tiered() &&
         !flip(() => drawSprite(ctx, def.sprite, x, y, fw, fh))
       ) {
         drawGlyph(ctx, def.glyph, x, y, fw, size * 0.52 * Math.min(def.size.x, def.size.y), fh);
