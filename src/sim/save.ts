@@ -26,7 +26,7 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ArtifactId, type GoodsStock, type TechId, type Wallet, type Worker,
+  type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId, type TechLineId, type TomeId,
 } from './state';
 
@@ -75,6 +75,12 @@ interface WorkerDto {
 /** Below this, a save is from a game shape that no longer exists and is
  *  discarded rather than migrated. v15 and earlier predate the reshaped tech
  *  tree; v1 predates the harvest loop entirely. */
+interface WorkshopDto {
+  DistrictUniqueID: string;
+  Anchor: string;
+  Items?: Array<{ Good: string; WorkMs?: number }>;
+}
+
 export const MIN_MIGRATABLE_VERSION = 16;
 
 interface Migration {
@@ -273,6 +279,11 @@ export function serialize(state: GameState, now: number): SaveFile {
             Population: state.city.population,
             Currencies: state.city.wallet,
             Goods: state.city.goods,
+            Workshops: Object.entries(state.city.workshops).map(([id, line]) => ({
+              DistrictUniqueID: id,
+              Anchor: iso(line.anchor),
+              Items: line.items.map((i) => ({ Good: i.good, WorkMs: i.workMs })),
+            })),
             Districts: state.city.districts.map(
               (d): DistrictDto => ({
                 UniqueID: d.uniqueId,
@@ -510,6 +521,13 @@ export function deserialize(
     // an empty stockpile, which is what a city that never built a workshop
     // holds anyway.
     state.city.goods = { ...((cityDto.Goods ?? {}) as GoodsStock) };
+    state.city.workshops = {};
+    for (const w of (cityDto.Workshops ?? []) as WorkshopDto[]) {
+      state.city.workshops[w.DistrictUniqueID] = {
+        anchor: ms(w.Anchor),
+        items: (w.Items ?? []).map((i) => ({ good: i.Good as GoodId, workMs: i.WorkMs ?? 0 })),
+      };
+    }
     state.city.districts = (cityDto.Districts as DistrictDto[]).map(
       (d): District => ({
         uniqueId: d.UniqueID,
@@ -849,6 +867,8 @@ export function deserialize(
     for (const item of state.city.trainingQueue) {
       if (item.startedAt !== null) item.startedAt += gap;
     }
+    // A workshop crew is production: it stops at the cap with the workers.
+    for (const line of Object.values(state.city.workshops)) line.anchor += gap;
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
     state.kingdom.lastKnowledgeAt += gap; // the ruin drip is production too

@@ -5,6 +5,7 @@
 
 import { DISTRICTS } from './data/definitions';
 import type { Modifier } from './modifiers';
+import type { WorkshopLine } from './workshops';
 
 export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
@@ -23,7 +24,8 @@ export type GoodsStock = Partial<Record<GoodId, number>>;
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Sanctum'
-  | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables'; // military
+  | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' // military
+  | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver'; // workshops
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous
@@ -202,6 +204,9 @@ export interface City {
    *  and soldiers at the military halls, in ONE list. Each building draws its
    *  own line out of it by `buildingId`. */
   trainingQueue: TrainingItem[];
+  /** Every workshop's queue, by district uniqueId. Absent = never used as
+   *  one (sim/workshops.ts). */
+  workshops: Record<string, WorkshopLine>;
   /** Epoch ms anchor for passive tax gold (whole units only). */
   lastTaxAt: number;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same

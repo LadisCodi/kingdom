@@ -21,7 +21,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite; predev runs the balance import
-npm test             # vitest run — 46 suites, keep them all green
+npm test             # vitest run — 47 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run balance      # balance.xlsx  → src/sim/data/balance.json
@@ -89,7 +89,7 @@ by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
 | a seasonal hero = one hero row + one banner row; a major technology's place on its tome page (`node_x`/`node_y`), its tome, era and Knowledge price; a minor line's ranks (row order) | a new tome or a new minor line (`TomeId` and `TechLineId` are unions), or a new effect hook for a line (`modifiers.ts`) |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
-| a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`) | a new `GoodId` |
+| a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
 
 ## Saves

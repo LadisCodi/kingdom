@@ -363,3 +363,81 @@
 /* The Train button spans both columns, so it is the full width of the panel
  * and unmistakably the thing that spends. */
 .tr-info > .k-action { grid-column: 1 / -1; }
+
+/* ------------------------------------------------------- workshops (§3)
+ * A workshop card is the training block in different materials: what it
+ * makes, who is making it, the line of what is coming, and one button. The
+ * crew line is the load-bearing one — an empty crew means an empty
+ * stockpile, and that has to read as a warning rather than as a zero. */
+.dc-workshop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--parchment-shade);
+  font-family: var(--font-body);
+}
+.dc-ws-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dc-ws-title { flex: 1; min-width: 0; }
+/* The body face, not the display one: this is a label on a block, not a
+ * title — and BoldPixels is only crisp at title size. */
+.dc-ws-name {
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.dc-ws-recipe {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+.dc-ws-held { margin-left: auto; }
+.dc-ws-crew {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+.dc-ws-crew .is-warning { color: var(--clay); }
+
+/* The line of what is coming. Empty slots are drawn, not omitted: the length
+ * of the queue is what the next level buys, so it should be visible before
+ * it is bought. */
+.dc-ws-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dc-ws-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 3px 5px;
+  border-radius: 8px;
+  background: var(--parchment-shade);
+  box-shadow: inset 0 1px 0 #fff6;
+}
+.dc-ws-slot.is-empty { opacity: 0.45; }
+.dc-ws-slot.is-working { background: var(--parchment); box-shadow: 0 1px 0 #a79470; }
+.dc-ws-slot .k-trough { width: 42px; }
+.dc-ws-slot .k-knob { width: 20px; height: 20px; }
+.dc-ws-eta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+.dc-ws-eta .k-action { margin-left: auto; }

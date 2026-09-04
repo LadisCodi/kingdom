@@ -363,6 +363,13 @@ async function boot(): Promise<void> {
         if (grantBuilder(game.state) === 'AtCeiling') game.toast('Builders are at the ceiling');
         runTick();
       }),
+      // The Townhall ladder is step 7; until it lands, the buildings gated
+      // behind TH5+ — the workshops first — are only reachable from here.
+      button('🏛 +1 Townhall', () => {
+        const th = game.state.city.districts.find((d) => d.definitionId === 'Townhall');
+        if (th && th.level < 10) th.level += 1;
+        runTick();
+      }),
       // Goods, until a workshop can make them (Docs/plans/builder-30-days.md
       // §3): the prices that name them ship before the producer does.
       button('📦 +10 goods', () => {

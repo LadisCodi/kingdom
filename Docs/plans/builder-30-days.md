@@ -8,7 +8,7 @@
 > designs will live in `features/` as each step closes, and open decisions in
 > [`../open-questions.md`](../open-questions.md).
 >
-> **Status: steps 1–2 done.** Save version 29.
+> **Status: steps 1–3 done.** Save version 29.
 
 ## 0. How the steps are cut
 
@@ -154,69 +154,49 @@ can grant one.
   indexing, both refusals in order, and the save round trip including the
   pre-29 shape.
 
-## 3. Step 3 · The workshops
+## 3. Step 3 · The workshops — **DONE**
 
-The largest single step; it lands in three commits.
+Four districts — Carpenter, Mason's Yard, Smelter, Rune Carver — each making
+one good, and the first producer in the game that is a crew from the start.
 
-**3a — the district and the queue (no crew).**
-
-- **Data:** four `Districts` rows — Carpenter, MasonsYard, Smelter, RuneCarver
-  — with `max_level` 10, `max_workers_per_level` `1,2,2,3,3,4,4,5,5,6`,
-  `required_tech_per_level` empty, count caps `0,0,0,0,1,1,1,2,2,2` (TH5, TH8;
-  the cap array grows with Townhall 10 in step 7 — until then TH4 = 0 and the
-  dev bar unlocks). New columns: `produces` (a `GoodId`) and
-  `queue_length_per_level` (`3,4,5,6,7,8,9,10,11,12`).
-- **Sim:** `state.city.workshops: Record<districtInstanceId, { queue: GoodId[], progress: number[] }>`
-  — `progress` is **work done in worker-seconds** per item, never a
-  timestamp. `queueGood` / `dequeueGood` commands pay inputs on queue
-  (`wallet.pay` + goods), refund on dequeue. Nothing advances yet.
-- **UI:** the workshop card: the queue as a row of chips, an *Add* button per
-  good with its input cost, the stockpile. `districtCard.ts` gains a
-  `workshopSection`, as `trainingSection.ts` is to a hall.
-- **Save:** additive, bump to 30.
-
-**3b — the crew, and sharing.**
-
-- **Sim:** villagers are assigned through the existing `changeWorkers`
-  (`commands.ts:272-294`) — a workshop is a district with `maxWorkersPerLevel`,
-  so `assignableWorkerLimit` (`workers.ts:57`) already caps it; the crew does
-  **not** enter the worker FSM (no cells, no travel). `advanceWorkshops(state,
-  toTime)` in a new `src/sim/workshops.ts`: crew `n`, items in progress
-  `k = min(n, queue.length)`, each of the first `k` items advances at rate
-  `n / k` worker-seconds per second. The rate is piecewise constant: it changes
-  only when an item completes or the crew changes, so **the next completion is
-  a boundary** — `nextWorkshopCompletion` is one `consider()` in
-  `nextBoundary`, one branch in `applyDueAt` that delivers the good to the
-  stockpile and re-derives the rates. Between boundaries `advanceWorkshops`
-  runs in `runContinuous`.
-- **Offline:** production. `save.ts:838-842` shifts `progress` anchors by the
-  gap exactly as it shifts the worker FSM — the workshop is listed with them,
-  not with the timers.
-- **Tests:** `workshops.test.ts` — the three worked examples from the proposal
-  (2 workers / 1 item → 30 min; 2 / 2 → 60 min; 3 / 2 → 40 min); a crew change
-  mid-item; one-call-equals-stepped across two completions and a crew change
-  (the `advance.test.ts` pattern); the 8 h cap on a 12 h absence
-  (`catchUp.test.ts` pattern); a workshop with no crew does not move.
-- **Save:** additive (`progress`), no bump needed if 3a's shape carried it.
-
-**3c — the rush.**
-
-- **Sim:** `finishWorkshopItemWithGems`: the item in progress only, priced on
-  remaining worker-seconds ÷ current rate × `rush.seconds_per_gem`
-  (`army.ts:270-275` is the shape). Records into the store ledger like every
-  Gem sink.
-- **UI:** the rush button on the in-progress chip.
-- **Tests:** price is pro rata; the queue behind is untouched; refusal when
-  nothing is in progress.
-- **Then:** the unlock techs. `Carpenter`/`MasonsYard` `requiredTech`
-  `Engineering`, `Smelter` `Mining`, `RuneCarver` `AttunementII` — set in
-  `definitions.ts` beside `requiredTech: 'Saws'` (`:355`). `Runestone`'s
-  Mana input is paid through `payMana`, and is the first non-tap Mana sink:
-  say so in `08-magic.md` §3 when the step closes.
-
-- **Art:** four buildings, four goods icons. `npm run art:check`.
-- **Done when:** the harness shows a player queuing goods in week 2 and the
-  stockpile grows only while villagers are assigned.
+- **Data:** four `Districts` rows, 1×1, `max_level` 10, crew
+  `1,2,3,3,4,4,5,5,6,6` and queue `3…12` by level, count caps
+  `0,0,0,0,1,1,1,2,2,2` (one at TH5, two at TH8). Two new columns, `produces`
+  and `queue_length_per_level`, and the importer refuses a row that has one
+  without the other. Unlock technologies: `Engineering` for the Carpenter and
+  the Mason's Yard, `Mining` for the Smelter, `Attunement II` for the Rune
+  Carver.
+- **The rule:** nothing happens without a worker. A workshop with no villager
+  assigned does not advance — no hand production, no collect tap.
+- **The sharing:** with `n` villagers and `k = min(n, queued)` items in
+  progress, each item gains `n / k` worker-seconds a second. Two on one item
+  halve it; two on two items finish both in the same time; three on two
+  finish both in two thirds. Throughput is always `n` item-seconds a second,
+  so one more villager is always faster.
+- **Exactness:** progress is worker-MILLISECONDS, never a deadline, and the
+  anchor advances in whole `k`-ms chunks — the tax-anchor trick — so replay
+  and stepped ticking agree to the millisecond. A completion is one
+  `consider()` in `nextBoundary` and one branch in `applyDueAt`; the crews run
+  in `runContinuous`, and `save.ts` pauses their anchor at the 8-hour cap with
+  the workers.
+- **Cost:** inputs are paid when an item is QUEUED, and refunded in full on
+  cancel. Runestone takes Mana, the first non-tap Mana sink.
+- **Gems** finish the item in progress, priced on the time left at the current
+  crew (`rush.seconds_per_gem`, as a build). Only that item: the queue behind
+  it is not for sale, and neither is a worker slot.
+- **UI:** `src/ui/workshopSection.ts` on the district card — what it makes and
+  out of what, the crew line (which says in words when there is nobody there),
+  the queue as slots with the front ones running, and one button.
+- **Art:** the world sprites are drawn (`carpenter_l1/_l4/_l8` and friends);
+  the 16 px menu icons are named in `AWAITING_ART`. Two crews are cast from
+  the character pack (stonemasons, forge hands); the Carpenter and Rune Carver
+  have no work loop in it yet and are named in `tests/characters.test.ts`.
+- **Reachability:** the count cap starts at TH5, and the Townhall ladder is
+  step 7 — so until then a workshop is only reachable through `?dev`, which
+  gained a Townhall button for exactly this.
+- **Tests:** `tests/workshops.test.ts` — the no-crew rule, the four sharing
+  cases and the throughput identity, queue length and payment, the Mana
+  recipe, replay-equals-ticking, the offline cap, the save, and the rush.
 
 ## 4. Step 4 · Levels 6–7, gated by goods
 

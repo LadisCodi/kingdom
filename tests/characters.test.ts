@@ -80,13 +80,30 @@ describe('the cast', () => {
     }
   });
 
+  /**
+   * Buildings that have a crew and no cast yet, stated rather than assumed.
+   *
+   * The same bargain `tests/icons.test.ts` strikes with `AWAITING_ART`: the
+   * gate stays live for everything else while the outstanding ask is
+   * reviewable in one place. The pack has no work loop for a carpenter or a
+   * rune carver, so their villagers fall back to the legacy worker sprite —
+   * deliberately, and only until those two loops are drawn.
+   */
+  const AWAITING_CAST: readonly DistrictId[] = ['Carpenter', 'RuneCarver'];
+
   it('casts every working building except the Docks', () => {
     for (const [id, def] of Object.entries(DISTRICTS)) {
       if (def.maxWorkersPerLevel.length === 0) continue;
+      if (AWAITING_CAST.includes(id as DistrictId)) continue;
       const cast = castFor(id as DistrictId, 0);
       if (def.harvestSources.includes('Fish')) expect(cast, id).toBeNull();
       else expect(cast, id).not.toBeNull();
     }
+  });
+
+  it('drops a building from the pending-cast list as soon as it is cast', () => {
+    // What stops the list above from rotting.
+    for (const id of AWAITING_CAST) expect(castFor(id, 0), id).toBeNull();
   });
 
   it('casts by seed, stably, over the whole crew', () => {

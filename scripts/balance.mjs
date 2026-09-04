@@ -39,6 +39,8 @@ const DISTRICT_IDS = [
   // Military: each unit type is trained by its own building, and building and
   // upgrading them is what raises the army cap.
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+  // Workshops: each turns raw resources into ONE refined good.
+  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
 ];
 // Refined goods: what a workshop turns raw resources into, and what an
 // advanced building level is priced in. They are NOT wallet rows — the city
@@ -298,12 +300,13 @@ const DISTRICT_COLUMNS = [
   'upgrade_cost_stone',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
   'upgrade_cost_goods_per_level',
+  'produces', 'queue_length_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
-  'upgrade_cost_goods_per_level',
+  'upgrade_cost_goods_per_level', 'queue_length_per_level',
 ];
 
 const SHEETS = {
@@ -603,7 +606,18 @@ async function importXlsx() {
       upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
       upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
       upgradeCostGoodsPerLevel: goodsList(r, 'upgrade_cost_goods_per_level'),
+      // A workshop makes ONE good. Which one is its identity, the way a
+      // Sawmill's identity is the forest.
+      produces: (r.produces === '' || r.produces === undefined) ? null : r.produces,
+      queueLengthPerLevel: list(r, 'queue_length_per_level'),
     };
+    const made = out.districts[id].produces;
+    if (made !== null && !GOOD_IDS.includes(made)) {
+      fail(where(r), `"produces" is not a good ("${made}")`);
+    }
+    if ((made === null) !== (out.districts[id].queueLengthPerLevel.length === 0)) {
+      fail(where(r), 'a workshop needs both "produces" and "queue_length_per_level"');
+    }
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Goods'), GOOD_IDS)) {
@@ -893,6 +907,7 @@ async function exportXlsx() {
       ...costCells(d.upgradeCost),
       d.upgradeCostLevelGrowth, d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
       goodsCell(d.upgradeCostGoodsPerLevel),
+      d.produces ?? '', listCell(d.queueLengthPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
 

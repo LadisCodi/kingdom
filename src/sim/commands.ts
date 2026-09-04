@@ -27,6 +27,10 @@ import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modi
 import { canAfford, pay, refund } from './wallet';
 import { canAffordGoods, payGoods } from './goods';
 import {
+  advanceWorkshops, completeWorkshopItems, isWorkshop, nextWorkshopCompletion, reanchor,
+  type GoodMade,
+} from './workshops';
+import {
   addWorker, advanceWorkers, assignableWorkerLimit, relocateCrew, removeWorker,
   type DepositEvent, type StrikeEvent,
 } from './workers';
@@ -287,6 +291,10 @@ export function changeWorkers(
   if (!district || DISTRICTS[district.definitionId].maxWorkersPerLevel.length === 0) {
     return 'NotAWorkerDistrict';
   }
+  // A workshop's rate is its crew, so the work done so far has to be banked
+  // BEFORE the crew changes — otherwise the last hour would be recomputed at
+  // the new rate, forwards or backwards.
+  if (isWorkshop(district)) reanchor(state, district, now);
   if (delta === 1) {
     const assigned = state.city.districts.reduce((s, d) => s + d.assignedWorkers, 0);
     if (state.city.population - assigned < 1) return 'NoFreeWorkers';
@@ -349,6 +357,8 @@ export interface AdvanceResult {
   knowledgeEarned: number;
   /** Units that finished training in this window. */
   trainedUnits: UnitId[];
+  /** Goods a workshop crew finished in this window. */
+  goodsMade: GoodMade[];
   /** Depths resolved, checkpoints reached, runs ended. */
   delveEvents: DelveEvent[];
   /** Windows that opened or closed — including ones that did BOTH while the
@@ -359,7 +369,7 @@ export interface AdvanceResult {
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], delveEvents: [], scheduleEvents: [],
+  trainedUnits: [], delveEvents: [], scheduleEvents: [], goodsMade: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -402,6 +412,10 @@ function applyDueAt(
     // boundary at all — it waits, indefinitely, until the player answers.
     out.delveEvents.push(...advanceDelves(state, t));
     out.scheduleEvents.push(...advanceSchedule(state, t));
+    // A finished good lands in the stockpile here rather than in
+    // `runContinuous`, because it changes another subsystem's inputs: the
+    // next building level may become affordable on it.
+    out.goodsMade.push(...completeWorkshopItems(state, t));
   });
 }
 
@@ -411,6 +425,9 @@ function runContinuous(state: GameState, map: MapData, t: number, out: AdvanceRe
   const crew = advanceWorkers(state, map, t);
   out.strikes.push(...crew.strikes);
   out.deposits.push(...crew.deposits);
+  // A workshop crew is production like any other: the 8-hour offline cap
+  // applies to it exactly as it does to a Sawmill's.
+  advanceWorkshops(state, t);
   out.goldEarned += advanceCityLife(state, t).gold;
   // Mana regen is city idle PRODUCTION, so it belongs here with the workers
   // and the taxes — and the 8h offline cap applies to it, unlike a timer.
@@ -433,6 +450,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextTrainingCompletion(state, after));
   consider(nextDelveBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
+  consider(nextWorkshopCompletion(state, after));
   return t;
 }
 

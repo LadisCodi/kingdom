@@ -35,6 +35,9 @@ const AWAITING_ART: readonly string[] = [
   // The refined goods (Docs/plans/builder-30-days.md §2). `Iron` shares the
   // retired ore cell, which is already drawn; these three need their own.
   'Planks', 'CutStone', 'Runestone',
+  // The workshops' menu icons. Their WORLD art is drawn — `carpenter_l1` and
+  // friends are on disk — but the 16px menu cell is a different sheet.
+  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
 ];
 
 const pending = new Set(AWAITING_ART);

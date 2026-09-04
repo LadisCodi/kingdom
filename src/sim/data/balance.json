@@ -33,7 +33,9 @@
       "upgradeCostLevelGrowth": 3.9,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 4,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Housing": {
       "size": {
@@ -78,7 +80,9 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 20,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Farm": {
       "size": {
@@ -125,7 +129,9 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "FarmLands": {
       "size": {
@@ -160,7 +166,9 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Sawmill": {
       "size": {
@@ -213,7 +221,9 @@
       "upgradeCostLevelGrowth": 2.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Market": {
       "size": {
@@ -245,7 +255,9 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Quarry": {
       "size": {
@@ -295,7 +307,9 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Docks": {
       "size": {
@@ -340,7 +354,9 @@
       "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Sanctum": {
       "size": {
@@ -386,7 +402,9 @@
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Barracks": {
       "size": {
@@ -438,7 +456,9 @@
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 90,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "SpearHall": {
       "size": {
@@ -490,7 +510,9 @@
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "ShootingGrounds": {
       "size": {
@@ -542,7 +564,9 @@
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
     },
     "Stables": {
       "size": {
@@ -594,7 +618,283 @@
       "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 180,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostGoodsPerLevel": []
+      "upgradeCostGoodsPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": []
+    },
+    "Carpenter": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [],
+      "extraCountTech": null,
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Wood": 120
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 200
+      },
+      "upgradeCostLevelGrowth": 1.6,
+      "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": [],
+      "produces": "Planks",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    "MasonsYard": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [],
+      "extraCountTech": null,
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Wood": 100,
+        "Stone": 60
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 90,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 160,
+        "Stone": 100
+      },
+      "upgradeCostLevelGrowth": 1.6,
+      "upgradeDurationSeconds": 180,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": [],
+      "produces": "CutStone",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    "Smelter": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [],
+      "extraCountTech": null,
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Gold": 400,
+        "Stone": 120
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 120,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Gold": 600,
+        "Stone": 200
+      },
+      "upgradeCostLevelGrowth": 1.6,
+      "upgradeDurationSeconds": 240,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": [],
+      "produces": "Iron",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    "RuneCarver": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "requiredTechPerLevel": [],
+      "extraCountTech": null,
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Gold": 800,
+        "Stone": 200
+      },
+      "buildCostMultiplier": 2,
+      "buildCostExponentialGrowth": 1.2,
+      "buildDurationSeconds": 180,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Gold": 1200,
+        "Stone": 300
+      },
+      "upgradeCostLevelGrowth": 1.6,
+      "upgradeDurationSeconds": 360,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostGoodsPerLevel": [],
+      "produces": "Runestone",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ]
     }
   },
   "goods": {

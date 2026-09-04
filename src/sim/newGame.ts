@@ -27,6 +27,7 @@ export function newGame(map: MapData, now: number): GameState {
       districts: [],
       queue: [],
       trainingQueue: [],
+      workshops: {},
       lastTaxAt: now,
       lastManaAt: now,
     },

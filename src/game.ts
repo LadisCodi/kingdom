@@ -35,6 +35,7 @@ import {
   adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
+import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
   buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, launchBlock, launchDelve,
@@ -1686,6 +1687,28 @@ export class Game {
     if (result === 'ArmyAtCapacity') {
       this.toast(`Army at capacity (${committedArmyPower(this.state)}/${maxArmyPower(this.state)}) — build or upgrade a military building`);
     }
+    this.notify();
+  }
+
+  /** Queue one of this workshop's good. The crew does the rest. */
+  doQueueGood(districtUniqueId: string): void {
+    const result = queueGood(this.state, districtUniqueId, this.now());
+    if (result === 'Queued') playSfx('click');
+    if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Stone']);
+    if (result === 'NotEnoughMana') this.shake(['Mana']);
+    if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
+    if (result === 'QueueFull') this.toast('The queue is full — upgrade the workshop for a longer one');
+    this.notify();
+  }
+
+  doCancelWorkshopItem(districtUniqueId: string, index: number): void {
+    cancelWorkshopItem(this.state, districtUniqueId, index, this.now());
+    this.notify();
+  }
+
+  doRushWorkshopItem(districtUniqueId: string): void {
+    const result = finishItemWithGems(this.state, districtUniqueId, this.now());
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 

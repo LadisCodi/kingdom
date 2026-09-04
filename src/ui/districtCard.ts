@@ -31,6 +31,7 @@ import { harvestSourceAt } from '../sim/harvest';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
 import { trainingSection } from './trainingSection';
+import { workshopSection } from './workshopSection';
 import {
   coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
 } from '../sim/state';
@@ -156,6 +157,10 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // they are one piece of UI. See trainingSection.ts.
     const training = trainingSection(game, district);
     if (training) body.append(training);
+
+    // A workshop turns things out too, so it gets the same kind of block.
+    const workshop = workshopSection(game, district);
+    if (workshop) body.append(workshop);
 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {

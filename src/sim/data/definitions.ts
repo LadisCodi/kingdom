@@ -315,6 +315,13 @@ export interface DistrictDef {
    *  city-building decision now, so wanting Cavalry means finding room for
    *  Stables — which is the strongest link between the two halves of the game. */
   trains: readonly TrainableId[];
+  /** The one refined good this building makes; null = it is not a workshop.
+   *  One good per workshop, the way one forest is a Sawmill's. */
+  produces: GoodId | null;
+  /** How many items may be queued at once, by level. Empty = not a workshop.
+   *  A longer queue is a longer absence covered, never more goods per hour —
+   *  that is the crew (Docs/plans/builder-30-days.md §2.2). */
+  queueLengthPerLevel: readonly number[];
 }
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
@@ -324,14 +331,26 @@ const rules = {
   trains: [],
 } as const;
 
-/** The per-level tech gates arrive from JSON as plain strings — the importer
- *  already validated them against the tech id list. */
+/** A workshop: identity and art here, everything numeric from the sheet. */
+const workshop = (
+  id: DistrictId, name: string, description: string, glyph: string, sprite: string,
+  requiredTech: TechId,
+) => ({
+  ...rules, id, name, description, glyph, sprite, requiredTech,
+});
+
+/** The per-level tech gates and the good a workshop makes arrive from JSON as
+ *  plain strings — the importer already validated them against the id lists. */
 const districtBalance = <B extends {
   requiredTechPerLevel: readonly (string | null)[]; extraCountTech: string | null;
+  produces: string | null;
 }>(
   b: B,
-): Omit<B, 'requiredTechPerLevel' | 'extraCountTech'>
-  & { requiredTechPerLevel: readonly (TechId | null)[]; extraCountTech: TechId | null } =>
+): Omit<B, 'requiredTechPerLevel' | 'extraCountTech' | 'produces'>
+  & {
+    requiredTechPerLevel: readonly (TechId | null)[]; extraCountTech: TechId | null;
+    produces: GoodId | null;
+  } =>
   b as never;
 
 export const DISTRICTS: Record<DistrictId, DistrictDef> = {
@@ -481,13 +500,37 @@ export const DISTRICTS: Record<DistrictId, DistrictDef> = {
     trains: ['Cavalry'],
     ...districtBalance(balance.districts.Stables),
   },
+  Carpenter: {
+    ...workshop('Carpenter', 'Carpenter', 'Villagers here work Wood into Planks.',
+      '🔨', 'carpenter', 'Engineering'),
+    ...districtBalance(balance.districts.Carpenter),
+  },
+  MasonsYard: {
+    ...workshop('MasonsYard', "Mason's Yard", 'Villagers here dress Stone into blocks.',
+      '🧱', 'masons_yard', 'Engineering'),
+    ...districtBalance(balance.districts.MasonsYard),
+  },
+  Smelter: {
+    ...workshop('Smelter', 'Smelter', 'Villagers here smelt ore and gold into Iron.',
+      '🔥', 'smelter', 'Mining'),
+    ...districtBalance(balance.districts.Smelter),
+  },
+  RuneCarver: {
+    ...workshop('RuneCarver', 'Rune Carver', 'Villagers here pour Mana into cut stone.',
+      '🔯', 'rune_carver', 'AttunementII'),
+    ...districtBalance(balance.districts.RuneCarver),
+  },
 };
 
 export const BUILDABLE_DISTRICTS: DistrictId[] = [
   'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Market',
   'Sanctum',
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
 ];
+
+/** Every workshop, in build-menu order. */
+export const WORKSHOPS: DistrictId[] = ['Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver'];
 
 // ------------------------------------------------------------------ features
 
