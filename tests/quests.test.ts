@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
+  DISTRICTS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -12,14 +12,13 @@ import { tapCell } from '../src/sim/harvest';
 import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
-import { techCost } from '../src/sim/research';
+import { techCost, techKnowledgeCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
-  type FeatureId, type GameState,
-} from '../src/sim/state';
+  type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt, completeRanks } from './helpers';
+  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt, completeRanks, completeTech } from './helpers';
 
 
 describe('the quest chain', () => {
@@ -232,6 +231,47 @@ describe('quests fund the research tree', () => {
     expect(getWallet(state.city.wallet, 'Stardust')).toBe(0);
   });
 
+  // THE CHAIN SEEDS THE CLOCK. Knowledge drips from territory, and a player
+  // early in the chain holds none — so every technology the chain asks for,
+  // prerequisites included, has to be affordable out of what the chain itself
+  // has paid, with NO drip at all. Zero drip is the worst case: the player
+  // who does the whole opening in one sitting. The one thing this may lean
+  // on is the lump a claim pays, because `OldStones` IS a claim.
+  it('pays enough Knowledge that a chain-follower is never stuck, with zero drip', () => {
+    const done = new Set<TechId>(['CharterI']);
+    const need = (id: TechId): number => {
+      if (done.has(id)) return 0;
+      done.add(id);
+      return techKnowledgeCost(id) + TECHNOLOGIES[id].requires.reduce((n, r) => n + need(r), 0);
+    };
+    let held = 0;
+    let worstSlack = Infinity;
+    for (const q of QUESTS) {
+      if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
+      if (q.goalType === 'CompleteTech') {
+        const demand = need(q.goalTarget as TechId);
+        expect(held, `${q.id} asks for ${q.goalTarget} (${demand} Knowledge) with ${held} in hand`)
+          .toBeGreaterThanOrEqual(demand);
+        if (demand > 0) worstSlack = Math.min(worstSlack, held - demand);
+        held -= demand;
+      }
+      held += q.rewardKnowledge;
+    }
+    // Enough margin that a re-priced rank or a moved quest does not silently
+    // put the tutorial one Knowledge short.
+    expect(worstSlack).toBeGreaterThanOrEqual(30);
+  });
+
+  it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
+    const state = freshGame();
+    // A CompleteTech quest, so the goal can be met by completing its tech.
+    const i = QUESTS.findIndex((q) => q.rewardKnowledge > 0 && q.goalType === 'CompleteTech');
+    state.quests.index = i;
+    completeTech(state, QUESTS[i].goalTarget as TechId);
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(QUESTS[i].rewardKnowledge);
+  });
+
   // THE RATIO INVERTED ON 2026-09-04, on purpose.
   //
   // The chain used to pay 1.8x the whole tree, which
@@ -326,7 +366,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test', description: '',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardStardust: 0,
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -398,7 +438,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test', description: '',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0
     });
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null });

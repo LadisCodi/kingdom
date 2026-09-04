@@ -54,7 +54,7 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
   // sit beside Mana and the ruins rather than beside the farms.
   it('the exploration branch is in the Magic tome, behind its own eras', () => {
     const state = freshGame();
-    fund(state, { Gold: 20_000 });
+    fund(state, { Gold: 20_000, Knowledge: 5_000 });
     expect(TECHNOLOGIES.Fishing.tome).toBe('Magic');
     expect(TECHNOLOGIES.Sailing.tome).toBe('Magic');
     // Nothing in the tome is reachable until the tome is open.

@@ -168,6 +168,9 @@ export interface QuestDef {
    *  city's. Quests are the steady half of the research budget; exploring
    *  is the half that scales. */
   rewardStardust: number;
+  /** The research clock, seeded by the chain before the first landmark drips
+   *  (tomes-and-research.md §3). */
+  rewardKnowledge: number;
 }
 
 /** The chain, in sheet order — one quest active at a time. */

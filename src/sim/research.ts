@@ -51,20 +51,46 @@ export function techUnlocks(id: TechId): Unlock[] {
 }
 
 /**
- * What a technology costs: Gold, and only Gold.
+ * What a technology costs: Gold AND Knowledge, out of two purses.
  *
- * Research is paid out of `city.wallet` like everything else the city does,
- * so the tree competes for the same purse as clearing fog and raising a
- * building. Three calls on one budget is the decision the economy is built
- * around; a second purse just removed the tree from that contest.
+ * Gold is paid from `city.wallet` like everything else the city does, so the
+ * tree keeps competing with clearing fog and raising a building for one
+ * budget — the decision the economy is built around. Knowledge is paid from
+ * `kingdom.wallet`: it is the research CLOCK (tomes-and-research.md §1), a
+ * currency that drips from the ground you hold and buys nothing else, so a
+ * rich city cannot skip an era. Neither alone works at this size — Gold can
+ * size a tree but cannot pace it.
  *
- * Minor ranks cost Gold too. What separates a minor from a major is cost and
- * time, and nothing else — the tree says "small" with money and a clock,
- * which is what a tree is already made of (tech-tree.md §1 rule 3).
+ * Era 1 costs no Knowledge: the clock has not started yet, and the opening
+ * runs on Gold and time exactly as it did before the clock existed.
+ *
+ * Minor ranks cost both too. What separates a minor from a major is how much,
+ * and nothing else — the tree says "small" with money and a clock, which is
+ * what a tree is already made of (tech-tree.md §1 rule 3).
  */
 export const techCost = (id: TechId): number => getWallet(TECHNOLOGIES[id].cost, 'Gold');
+export const techKnowledgeCost = (id: TechId): number =>
+  getWallet(TECHNOLOGIES[id].cost, 'Knowledge');
 
 const gold = (state: GameState): number => getWallet(state.city.wallet, 'Gold');
+const knowledge = (state: GameState): number => getWallet(state.kingdom.wallet, 'Knowledge');
+
+/** Could the player pay for this technology this second — both purses? */
+export const canAffordTech = (state: GameState, id: TechId): boolean =>
+  gold(state) >= techCost(id) && knowledge(state) >= techKnowledgeCost(id);
+
+/**
+ * How long until the kingdom can afford a technology's Knowledge, in ms —
+ * 0 when it already can, Infinity when nothing is dripping. A trickle
+ * currency without a time-to-afford line is a currency the player cannot plan
+ * against (tomes-and-research.md §8), and this is that line's source.
+ */
+export function knowledgeShortfallMs(state: GameState, id: TechId, ratePerHour: number): number {
+  const short = techKnowledgeCost(id) - knowledge(state);
+  if (short <= 0) return 0;
+  if (ratePerHour <= 0) return Infinity;
+  return (short / ratePerHour) * 3_600_000;
+}
 
 export const isTechComplete = (state: GameState, id: TechId): boolean =>
   state.research.completed.includes(id);
@@ -109,7 +135,7 @@ export const canStartTech = (state: GameState, id: TechId): boolean =>
   && !isTechActive(state, id)
   && requirementsMet(state, id)
   && state.research.active.length < techSlots(state)
-  && gold(state) >= techCost(id);
+  && canAffordTech(state, id);
 
 /** Anything at all worth a trip to the Research screen. */
 export const anyResearchActionable = (state: GameState): boolean =>
@@ -123,9 +149,9 @@ export function startTech(state: GameState, id: TechId, now: number): StartTechR
   if (isTechActive(state, id)) return 'AlreadyActive';
   if (!requirementsMet(state, id)) return 'MissingRequirement';
   if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
-  const cost = techCost(id);
-  if (gold(state) < cost) return 'NotEnoughResources';
-  addToWallet(state.city.wallet, 'Gold', -cost);
+  if (!canAffordTech(state, id)) return 'NotEnoughResources';
+  addToWallet(state.city.wallet, 'Gold', -techCost(id));
+  addToWallet(state.kingdom.wallet, 'Knowledge', -techKnowledgeCost(id));
   state.research.active.push({ id, startedAt: now });
   return 'Started';
 }

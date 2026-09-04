@@ -120,6 +120,13 @@ export function claimQuest(state: GameState): ClaimResult {
     addToWallet(state.kingdom.wallet, 'Stardust', quest.rewardStardust);
     recordResourceDiscovery(state, 'Stardust');
   }
+  // Knowledge too. The clock runs on territory and a player early in the
+  // chain holds none, so the chain seeds enough for every technology it asks
+  // for — tests/quests.test.ts walks it and holds that promise.
+  if (quest.rewardKnowledge > 0) {
+    addToWallet(state.kingdom.wallet, 'Knowledge', quest.rewardKnowledge);
+    recordResourceDiscovery(state, 'Knowledge');
+  }
   state.quests.index += 1;
   state.quests.progress = 0;
   return 'Claimed';

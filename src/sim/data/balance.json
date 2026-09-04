@@ -794,7 +794,8 @@
     },
     "CharterII": {
       "cost": {
-        "Gold": 550
+        "Gold": 550,
+        "Knowledge": 40
       },
       "durationSeconds": 900,
       "requires": [
@@ -816,7 +817,8 @@
     },
     "CharterIII": {
       "cost": {
-        "Gold": 1700
+        "Gold": 1700,
+        "Knowledge": 500
       },
       "durationSeconds": 3600,
       "requires": [
@@ -836,7 +838,8 @@
     },
     "CharterIV": {
       "cost": {
-        "Gold": 6100
+        "Gold": 6100,
+        "Knowledge": 3000
       },
       "durationSeconds": 21600,
       "requires": [
@@ -940,7 +943,8 @@
     },
     "Communities": {
       "cost": {
-        "Gold": 450
+        "Gold": 450,
+        "Knowledge": 100
       },
       "durationSeconds": 90,
       "requires": [
@@ -957,7 +961,8 @@
     },
     "Hunting": {
       "cost": {
-        "Gold": 150
+        "Gold": 150,
+        "Knowledge": 100
       },
       "durationSeconds": 30,
       "requires": [
@@ -974,7 +979,8 @@
     },
     "Farming": {
       "cost": {
-        "Gold": 250
+        "Gold": 250,
+        "Knowledge": 100
       },
       "durationSeconds": 60,
       "requires": [
@@ -1008,7 +1014,8 @@
     },
     "Mining": {
       "cost": {
-        "Gold": 250
+        "Gold": 250,
+        "Knowledge": 100
       },
       "durationSeconds": 60,
       "requires": [
@@ -1025,7 +1032,8 @@
     },
     "Architecture": {
       "cost": {
-        "Gold": 600
+        "Gold": 600,
+        "Knowledge": 800
       },
       "durationSeconds": 120,
       "requires": [
@@ -1042,7 +1050,8 @@
     },
     "Engineering": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 800
       },
       "durationSeconds": 90,
       "requires": [
@@ -1059,7 +1068,8 @@
     },
     "DeepMining": {
       "cost": {
-        "Gold": 800
+        "Gold": 800,
+        "Knowledge": 800
       },
       "durationSeconds": 120,
       "requires": [
@@ -1091,7 +1101,8 @@
     },
     "WarbandII": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 40
       },
       "durationSeconds": 900,
       "requires": [
@@ -1109,7 +1120,8 @@
     },
     "WarbandIII": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 500
       },
       "durationSeconds": 3600,
       "requires": [
@@ -1126,7 +1138,8 @@
     },
     "WarbandIV": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 3000
       },
       "durationSeconds": 21600,
       "requires": [
@@ -1177,7 +1190,8 @@
     },
     "Archery": {
       "cost": {
-        "Gold": 150
+        "Gold": 150,
+        "Knowledge": 100
       },
       "durationSeconds": 60,
       "requires": [
@@ -1194,7 +1208,8 @@
     },
     "Cavalry": {
       "cost": {
-        "Gold": 400
+        "Gold": 400,
+        "Knowledge": 800
       },
       "durationSeconds": 90,
       "requires": [
@@ -1226,7 +1241,8 @@
     },
     "AttunementII": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 40
       },
       "durationSeconds": 900,
       "requires": [
@@ -1244,7 +1260,8 @@
     },
     "AttunementIII": {
       "cost": {
-        "Gold": 850
+        "Gold": 850,
+        "Knowledge": 500
       },
       "durationSeconds": 3600,
       "requires": [
@@ -1262,7 +1279,8 @@
     },
     "AttunementIV": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 3000
       },
       "durationSeconds": 21600,
       "requires": [
@@ -1314,7 +1332,8 @@
     },
     "Sailing": {
       "cost": {
-        "Gold": 150
+        "Gold": 150,
+        "Knowledge": 100
       },
       "durationSeconds": 45,
       "requires": [
@@ -1331,7 +1350,8 @@
     },
     "ScalingTools": {
       "cost": {
-        "Gold": 200
+        "Gold": 200,
+        "Knowledge": 100
       },
       "durationSeconds": 60,
       "requires": [
@@ -1348,7 +1368,8 @@
     },
     "Fishing": {
       "cost": {
-        "Gold": 100
+        "Gold": 100,
+        "Knowledge": 800
       },
       "durationSeconds": 45,
       "requires": [
@@ -1365,7 +1386,8 @@
     },
     "Shipbuilding": {
       "cost": {
-        "Gold": 400
+        "Gold": 400,
+        "Knowledge": 800
       },
       "durationSeconds": 90,
       "requires": [
@@ -1396,11 +1418,13 @@
     },
     "TapPowerII": {
       "cost": {
-        "Gold": 110
+        "Gold": 110,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "TapPowerI"
+        "TapPowerI",
+        "CharterII"
       ],
       "line": "TapPower",
       "effectPerRank": 1,
@@ -1410,11 +1434,13 @@
     },
     "TapPowerIII": {
       "cost": {
-        "Gold": 242
+        "Gold": 242,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "TapPowerII"
+        "TapPowerII",
+        "CharterIII"
       ],
       "line": "TapPower",
       "effectPerRank": 1,
@@ -1424,11 +1450,13 @@
     },
     "TapPowerIV": {
       "cost": {
-        "Gold": 532
+        "Gold": 532,
+        "Knowledge": 200
       },
       "durationSeconds": 70,
       "requires": [
-        "TapPowerIII"
+        "TapPowerIII",
+        "CharterIII"
       ],
       "line": "TapPower",
       "effectPerRank": 1,
@@ -1438,11 +1466,13 @@
     },
     "TapPowerV": {
       "cost": {
-        "Gold": 1171
+        "Gold": 1171,
+        "Knowledge": 200
       },
       "durationSeconds": 105,
       "requires": [
-        "TapPowerIV"
+        "TapPowerIV",
+        "CharterIII"
       ],
       "line": "TapPower",
       "effectPerRank": 1,
@@ -1466,11 +1496,13 @@
     },
     "QuickHandsII": {
       "cost": {
-        "Gold": 150
+        "Gold": 150,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "QuickHandsI"
+        "QuickHandsI",
+        "CharterII"
       ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
@@ -1480,11 +1512,13 @@
     },
     "QuickHandsIII": {
       "cost": {
-        "Gold": 300
+        "Gold": 300,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "QuickHandsII"
+        "QuickHandsII",
+        "CharterIII"
       ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
@@ -1494,11 +1528,13 @@
     },
     "QuickHandsIV": {
       "cost": {
-        "Gold": 600
+        "Gold": 600,
+        "Knowledge": 200
       },
       "durationSeconds": 70,
       "requires": [
-        "QuickHandsIII"
+        "QuickHandsIII",
+        "CharterIII"
       ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
@@ -1508,11 +1544,13 @@
     },
     "QuickHandsV": {
       "cost": {
-        "Gold": 1200
+        "Gold": 1200,
+        "Knowledge": 200
       },
       "durationSeconds": 105,
       "requires": [
-        "QuickHandsIV"
+        "QuickHandsIV",
+        "CharterIII"
       ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
@@ -1536,11 +1574,13 @@
     },
     "WorkerLoadII": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "WorkerLoadI"
+        "WorkerLoadI",
+        "CharterII"
       ],
       "line": "WorkerLoad",
       "effectPerRank": 1,
@@ -1550,11 +1590,13 @@
     },
     "WorkerLoadIII": {
       "cost": {
-        "Gold": 1250
+        "Gold": 1250,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "WorkerLoadII"
+        "WorkerLoadII",
+        "CharterIII"
       ],
       "line": "WorkerLoad",
       "effectPerRank": 1,
@@ -1578,11 +1620,13 @@
     },
     "SawpitsII": {
       "cost": {
-        "Gold": 240
+        "Gold": 240,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "SawpitsI"
+        "SawpitsI",
+        "CharterII"
       ],
       "line": "Sawpits",
       "effectPerRank": 1,
@@ -1592,11 +1636,13 @@
     },
     "SawpitsIII": {
       "cost": {
-        "Gold": 480
+        "Gold": 480,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "SawpitsII"
+        "SawpitsII",
+        "CharterIII"
       ],
       "line": "Sawpits",
       "effectPerRank": 1,
@@ -1606,11 +1652,13 @@
     },
     "ButcheryI": {
       "cost": {
-        "Gold": 80
+        "Gold": 80,
+        "Knowledge": 30
       },
       "durationSeconds": 20,
       "requires": [
-        "Hunting"
+        "Hunting",
+        "CharterII"
       ],
       "line": "Butchery",
       "effectPerRank": 1,
@@ -1620,11 +1668,13 @@
     },
     "ButcheryII": {
       "cost": {
-        "Gold": 160
+        "Gold": 160,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "ButcheryI"
+        "ButcheryI",
+        "CharterII"
       ],
       "line": "Butchery",
       "effectPerRank": 1,
@@ -1634,11 +1684,13 @@
     },
     "ButcheryIII": {
       "cost": {
-        "Gold": 320
+        "Gold": 320,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "ButcheryII"
+        "ButcheryII",
+        "CharterIII"
       ],
       "line": "Butchery",
       "effectPerRank": 1,
@@ -1662,11 +1714,13 @@
     },
     "IrrigationII": {
       "cost": {
-        "Gold": 240
+        "Gold": 240,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "IrrigationI"
+        "IrrigationI",
+        "CharterII"
       ],
       "line": "Irrigation",
       "effectPerRank": 1,
@@ -1676,11 +1730,13 @@
     },
     "IrrigationIII": {
       "cost": {
-        "Gold": 480
+        "Gold": 480,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "IrrigationII"
+        "IrrigationII",
+        "CharterIII"
       ],
       "line": "Irrigation",
       "effectPerRank": 1,
@@ -1690,11 +1746,13 @@
     },
     "ScythesI": {
       "cost": {
-        "Gold": 90
+        "Gold": 90,
+        "Knowledge": 30
       },
       "durationSeconds": 20,
       "requires": [
-        "Farming"
+        "Farming",
+        "CharterII"
       ],
       "line": "Scythes",
       "effectPerRank": 1,
@@ -1704,11 +1762,13 @@
     },
     "ScythesII": {
       "cost": {
-        "Gold": 180
+        "Gold": 180,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "ScythesI"
+        "ScythesI",
+        "CharterII"
       ],
       "line": "Scythes",
       "effectPerRank": 1,
@@ -1718,11 +1778,13 @@
     },
     "ScythesIII": {
       "cost": {
-        "Gold": 360
+        "Gold": 360,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "ScythesII"
+        "ScythesII",
+        "CharterIII"
       ],
       "line": "Scythes",
       "effectPerRank": 1,
@@ -1746,11 +1808,13 @@
     },
     "SurveyingII": {
       "cost": {
-        "Gold": 450
+        "Gold": 450,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "SurveyingI"
+        "SurveyingI",
+        "AttunementII"
       ],
       "line": "Surveying",
       "effectPerRank": 1,
@@ -1760,11 +1824,13 @@
     },
     "PitonsI": {
       "cost": {
-        "Gold": 200
+        "Gold": 200,
+        "Knowledge": 30
       },
       "durationSeconds": 20,
       "requires": [
-        "ScalingTools"
+        "ScalingTools",
+        "AttunementII"
       ],
       "line": "Pitons",
       "effectPerRank": 0.1,
@@ -1774,11 +1840,13 @@
     },
     "PitonsII": {
       "cost": {
-        "Gold": 500
+        "Gold": 500,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "PitonsI"
+        "PitonsI",
+        "AttunementII"
       ],
       "line": "Pitons",
       "effectPerRank": 0.1,
@@ -1797,16 +1865,18 @@
       "line": "MarketStall",
       "effectPerRank": 0.05,
       "tome": "Civics",
-      "era": 2,
+      "era": 1,
       "node": null
     },
     "MarketStallII": {
       "cost": {
-        "Gold": 200
+        "Gold": 200,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "MarketStallI"
+        "MarketStallI",
+        "CharterII"
       ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
@@ -1816,11 +1886,13 @@
     },
     "MarketStallIII": {
       "cost": {
-        "Gold": 400
+        "Gold": 400,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "MarketStallII"
+        "MarketStallII",
+        "CharterIII"
       ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
@@ -1830,11 +1902,13 @@
     },
     "MarketStallIV": {
       "cost": {
-        "Gold": 800
+        "Gold": 800,
+        "Knowledge": 200
       },
       "durationSeconds": 70,
       "requires": [
-        "MarketStallIII"
+        "MarketStallIII",
+        "CharterIII"
       ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
@@ -1853,16 +1927,18 @@
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
       "tome": "Civics",
-      "era": 2,
+      "era": 1,
       "node": null
     },
     "TradeRoutesII": {
       "cost": {
-        "Gold": 300
+        "Gold": 300,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "TradeRoutesI"
+        "TradeRoutesI",
+        "CharterII"
       ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
@@ -1872,11 +1948,13 @@
     },
     "TradeRoutesIII": {
       "cost": {
-        "Gold": 600
+        "Gold": 600,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "TradeRoutesII"
+        "TradeRoutesII",
+        "CharterIII"
       ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
@@ -1886,11 +1964,13 @@
     },
     "TradeRoutesIV": {
       "cost": {
-        "Gold": 1200
+        "Gold": 1200,
+        "Knowledge": 200
       },
       "durationSeconds": 70,
       "requires": [
-        "TradeRoutesIII"
+        "TradeRoutesIII",
+        "CharterIII"
       ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
@@ -1900,11 +1980,13 @@
     },
     "TradeRoutesV": {
       "cost": {
-        "Gold": 2400
+        "Gold": 2400,
+        "Knowledge": 200
       },
       "durationSeconds": 105,
       "requires": [
-        "TradeRoutesIV"
+        "TradeRoutesIV",
+        "CharterIII"
       ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
@@ -1928,11 +2010,13 @@
     },
     "StonecuttingII": {
       "cost": {
-        "Gold": 200
+        "Gold": 200,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "StonecuttingI"
+        "StonecuttingI",
+        "CharterII"
       ],
       "line": "Stonecutting",
       "effectPerRank": 1,
@@ -1942,11 +2026,13 @@
     },
     "StonecuttingIII": {
       "cost": {
-        "Gold": 400
+        "Gold": 400,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "StonecuttingII"
+        "StonecuttingII",
+        "CharterIII"
       ],
       "line": "Stonecutting",
       "effectPerRank": 1,
@@ -1956,11 +2042,13 @@
     },
     "BigNetsI": {
       "cost": {
-        "Gold": 100
+        "Gold": 100,
+        "Knowledge": 200
       },
       "durationSeconds": 20,
       "requires": [
-        "Fishing"
+        "Fishing",
+        "AttunementIII"
       ],
       "line": "BigNets",
       "effectPerRank": 1,
@@ -1970,11 +2058,13 @@
     },
     "BigNetsII": {
       "cost": {
-        "Gold": 200
+        "Gold": 200,
+        "Knowledge": 200
       },
       "durationSeconds": 30,
       "requires": [
-        "BigNetsI"
+        "BigNetsI",
+        "AttunementIII"
       ],
       "line": "BigNets",
       "effectPerRank": 1,
@@ -1984,11 +2074,13 @@
     },
     "BigNetsIII": {
       "cost": {
-        "Gold": 400
+        "Gold": 400,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "BigNetsII"
+        "BigNetsII",
+        "AttunementIII"
       ],
       "line": "BigNets",
       "effectPerRank": 1,
@@ -1998,11 +2090,13 @@
     },
     "IronPicksI": {
       "cost": {
-        "Gold": 150
+        "Gold": 150,
+        "Knowledge": 30
       },
       "durationSeconds": 20,
       "requires": [
-        "Mining"
+        "Mining",
+        "CharterII"
       ],
       "line": "IronPicks",
       "effectPerRank": 1,
@@ -2012,11 +2106,13 @@
     },
     "IronPicksII": {
       "cost": {
-        "Gold": 300
+        "Gold": 300,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "IronPicksI"
+        "IronPicksI",
+        "CharterII"
       ],
       "line": "IronPicks",
       "effectPerRank": 1,
@@ -2026,11 +2122,13 @@
     },
     "IronPicksIII": {
       "cost": {
-        "Gold": 600
+        "Gold": 600,
+        "Knowledge": 200
       },
       "durationSeconds": 45,
       "requires": [
-        "IronPicksII"
+        "IronPicksII",
+        "CharterIII"
       ],
       "line": "IronPicks",
       "effectPerRank": 1,
@@ -2054,11 +2152,13 @@
     },
     "ResonanceII": {
       "cost": {
-        "Gold": 625
+        "Gold": 625,
+        "Knowledge": 30
       },
       "durationSeconds": 30,
       "requires": [
-        "ResonanceI"
+        "ResonanceI",
+        "AttunementII"
       ],
       "line": "Resonance",
       "effectPerRank": 0.2,
@@ -2505,7 +2605,8 @@
         "Gold": 10
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Woodcraft",
@@ -2519,7 +2620,8 @@
         "Gold": 15
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Timber",
@@ -2533,7 +2635,8 @@
         "Gold": 35
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "ARoof",
@@ -2547,7 +2650,8 @@
         "Gold": 40
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Rations",
@@ -2561,7 +2665,8 @@
         "Gold": 35
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstVillager",
@@ -2575,7 +2680,8 @@
         "Gold": 55
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "TaxDay",
@@ -2589,7 +2695,8 @@
         "Gold": 50
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Explorer",
@@ -2603,7 +2710,8 @@
         "Gold": 80
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Fields",
@@ -2617,7 +2725,8 @@
         "Gold": 60
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstPlot",
@@ -2631,7 +2740,8 @@
         "Gold": 55
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "ByHand",
@@ -2645,7 +2755,8 @@
         "Gold": 70
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Lumber",
@@ -2659,7 +2770,8 @@
         "Gold": 70
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Farmhand",
@@ -2673,7 +2785,8 @@
         "Gold": 85
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "ToWork",
@@ -2687,7 +2800,8 @@
         "Gold": 85
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Trade",
@@ -2701,7 +2815,8 @@
         "Gold": 100
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "ToMarket",
@@ -2715,7 +2830,8 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Merchant",
@@ -2729,7 +2845,8 @@
         "Gold": 120
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "GrowingTown",
@@ -2743,7 +2860,8 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Neighbors",
@@ -2757,7 +2875,8 @@
         "Gold": 90
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "ProperCapital",
@@ -2771,7 +2890,8 @@
         "Gold": 180
       },
       "rewardGems": 3,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "SawTeeth",
@@ -2785,7 +2905,8 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "TheSawmill",
@@ -2799,7 +2920,8 @@
         "Gold": 140
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Crewed",
@@ -2813,7 +2935,8 @@
         "Gold": 140
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "FurtherAfield",
@@ -2827,7 +2950,8 @@
         "Gold": 200
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "OldStones",
@@ -2841,7 +2965,23 @@
         "Gold": 250
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
+    },
+    {
+      "id": "Attuned",
+      "name": "Attunement",
+      "description": "Consecrate a Sanctum. The stones you claimed hum with something the city can hold.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Consecration",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 450
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "Mapmakers",
@@ -2855,7 +2995,8 @@
         "Gold": 200
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "Surveyors",
@@ -2869,7 +3010,8 @@
         "Gold": 250
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 60
     },
     {
       "id": "Highlands",
@@ -2883,7 +3025,8 @@
         "Gold": 220
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 80
     },
     {
       "id": "PutToSea",
@@ -2897,7 +3040,8 @@
         "Gold": 270
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "ArmedMen",
@@ -2911,7 +3055,8 @@
         "Gold": 220
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Mustered",
@@ -2925,7 +3070,8 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstSoldier",
@@ -2939,7 +3085,8 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "FirstSummon",
@@ -2953,7 +3100,8 @@
         "Gold": 150
       },
       "rewardGems": 0,
-      "rewardStardust": 20
+      "rewardStardust": 20,
+      "rewardKnowledge": 0
     },
     {
       "id": "IntoTheDark",
@@ -2967,7 +3115,8 @@
         "Gold": 200
       },
       "rewardGems": 3,
-      "rewardStardust": 25
+      "rewardStardust": 25,
+      "rewardKnowledge": 0
     },
     {
       "id": "Stoneworks",
@@ -2981,7 +3130,8 @@
         "Gold": 290
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "MoreRoom",
@@ -2995,7 +3145,8 @@
         "Gold": 240
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "SecondStory",
@@ -3010,7 +3161,8 @@
         "Stone": 20
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 40
     },
     {
       "id": "FullHouse",
@@ -3025,7 +3177,8 @@
         "Food": 40
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "IronRoad",
@@ -3039,7 +3192,8 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "TheMine",
@@ -3053,21 +3207,23 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "Architect",
       "name": "The architect",
-      "description": "Research Architecture — the capital can go higher.",
+      "description": "Seal the second Charter. With it the Townhall may stand a level higher.",
       "goalType": "CompleteTech",
-      "goalTarget": "Architecture",
+      "goalTarget": "CharterII",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 450
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "GrandCapital",
@@ -3081,21 +3237,8 @@
         "Gold": 600
       },
       "rewardGems": 5,
-      "rewardStardust": 0
-    },
-    {
-      "id": "Attuned",
-      "name": "Attunement",
-      "description": "Research Attunement and learn to wear a relic.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Consecration",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 450
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "TheSanctum",
@@ -3110,7 +3253,8 @@
         "Stone": 40
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "AWarband",
@@ -3125,7 +3269,8 @@
         "Food": 60
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "TheBarrowsPrize",
@@ -3139,7 +3284,8 @@
         "Gold": 400
       },
       "rewardGems": 0,
-      "rewardStardust": 20
+      "rewardStardust": 20,
+      "rewardKnowledge": 0
     },
     {
       "id": "WornWell",
@@ -3153,7 +3299,8 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardStardust": 18
+      "rewardStardust": 18,
+      "rewardKnowledge": 0
     },
     {
       "id": "Leylines",
@@ -3168,7 +3315,8 @@
         "Stone": 60
       },
       "rewardGems": 0,
-      "rewardStardust": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
     },
     {
       "id": "DeeperStill",
@@ -3183,7 +3331,8 @@
         "Stone": 90
       },
       "rewardGems": 0,
-      "rewardStardust": 30
+      "rewardStardust": 30,
+      "rewardKnowledge": 0
     },
     {
       "id": "TheReliquary",
@@ -3197,7 +3346,8 @@
         "Gold": 900
       },
       "rewardGems": 4,
-      "rewardStardust": 45
+      "rewardStardust": 45,
+      "rewardKnowledge": 0
     }
   ],
   "fog": {

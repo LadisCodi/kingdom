@@ -292,3 +292,26 @@
   font-family: var(--font-body);
   font-size: var(--text-helper);
 }
+
+/* ------------------------------------------------------- the clock --- */
+
+/* Knowledge, in the one screen it is spent. Balance in bold, rate beside it. */
+.res-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(60, 36, 18, 0.25);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}
+.res-clock-rate { opacity: 0.8; }
+.res-wait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}

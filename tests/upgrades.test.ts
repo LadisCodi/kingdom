@@ -65,7 +65,9 @@ describe('researching a rank', () => {
     state.city.wallet.Gold = 0; // the opening grant would cover the first rank
     completeTech(state, 'Forestry');
     expect(startTech(state, 'TapPowerI', T0)).toBe('NotEnoughResources');
-    fund(state, { Gold: 1_000_000 });
+    // Ranks II+ sit in later eras and wait on those keystones too.
+    completeTech(state, 'CharterIII');
+    fund(state, { Gold: 1_000_000, Knowledge: 1_000_000 });
     for (const id of TECH_LINES.TapPower) expect(research(state, id)).toBe('Started');
     expect(lineRank(state, 'TapPower')).toBe(lineMaxRank('TapPower'));
     // There is no "AtMax": the ladder simply has no further rung.
@@ -253,8 +255,13 @@ describe('every line reaches the number it claims to', () => {
       const ranks = TECH_LINES[line];
       ranks.forEach((id, i) => {
         const requires = TECHNOLOGIES[id].requires;
-        expect(requires.length, `${id} should require exactly one thing`).toBe(1);
+        // The FIRST requirement is the ladder: the parent major for rank I,
+        // the rank before for every rank after. A rank in era 2+ carries its
+        // era's keystone as a second requirement, which is the era gate.
         if (i > 0) expect(requires[0], `${id} should follow ${ranks[i - 1]}`).toBe(ranks[i - 1]);
+        const extra = requires.slice(1);
+        expect(extra.length, `${id} has more than an era gate`).toBeLessThanOrEqual(1);
+        for (const k of extra) expect(k, `${id}'s second requirement is not a keystone`).toMatch(/^(Charter|Warband|Attunement)(II|III|IV)$/);
       });
     }
   });

@@ -180,9 +180,14 @@ describe('exploring pays in ground, not in currency', () => {
     // "not a sink, a formality"; this is the other side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
     expect(tree).toBe(37_725);
-    // Every tech is Gold and only Gold — no second purse, no materials.
+    // Every tech is Gold plus, from era 2 on, Knowledge — the research clock
+    // (tomes-and-research.md §1). Never materials: a full quarry buys no
+    // research, which is what keeps the tree in the same contest as fog and
+    // buildings.
     for (const id of TECH_ORDER) {
-      expect(Object.keys(TECHNOLOGIES[id].cost)).toEqual(['Gold']);
+      const keys = Object.keys(TECHNOLOGIES[id].cost);
+      expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
+      if (TECHNOLOGIES[id].era === 1) expect(keys, `${id} is era 1`).not.toContain('Knowledge');
     }
   });
 });

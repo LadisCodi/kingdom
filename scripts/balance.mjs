@@ -286,12 +286,15 @@ const SHEETS = {
   // three books, each paced by eras whose keystone requires everything above
   // it. `node_x`/`node_y` are per-PAGE positions and are blank for a minor
   // rank, which is drawn in its line's bead under the parent instead.
-  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires',
+  // `cost_knowledge` is the clock's price (tomes-and-research.md §1): blank
+  // in era 1, where the clock has not started; the era-1 keystone is the
+  // first node that charges it.
+  Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds', 'requires',
     'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y'],
   Adjacency: ['district', 'neighbor', 'gold_per_minute'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_stardust'],
+    'reward_gems', 'reward_stardust', 'reward_knowledge'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -715,8 +718,14 @@ async function importXlsx() {
     if (hasX !== (line === null)) {
       fail(where(r), 'a major needs a node position and a minor rank must not have one');
     }
+    const knowledge = num(r, 'cost_knowledge', { blankAs: 0 });
+    if (knowledge > 0 && era === 1 && !/^(Charter|Warband|Attunement)II$/.test(id)) {
+      // Era 1 runs on Gold and time alone: the research clock has not started,
+      // and charging for it there would strangle the opening (§3).
+      fail(where(r), 'an era-1 technology must not cost Knowledge');
+    }
     out.technologies[id] = {
-      cost: { Gold: gold },
+      cost: knowledge > 0 ? { Gold: gold, Knowledge: knowledge } : { Gold: gold },
       durationSeconds: num(r, 'duration_seconds', { blankAs: 0 }),
       requires,
       line,
@@ -779,6 +788,7 @@ async function importXlsx() {
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
       rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
+      rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
     });
   }
 
@@ -961,8 +971,8 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
-    return [id, t.cost.Gold || '', t.durationSeconds || '', t.requires.join(','),
-      t.line ?? '', t.effectPerRank || '', t.tome, t.era,
+    return [id, t.cost.Gold || '', t.cost.Knowledge || '', t.durationSeconds || '',
+      t.requires.join(','), t.line ?? '', t.effectPerRank || '', t.tome, t.era,
       t.node ? t.node.x : '', t.node ? t.node.y : ''];
   }), (col) => col === 'requires');
 
@@ -972,6 +982,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
+    q.rewardKnowledge || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

@@ -191,6 +191,15 @@ it is that **era 1 costs no Knowledge at all** ([`tech-tree.md`](tech-tree.md)
 §6), so the opening hours run on Gold and time exactly as they do today, and
 the clock starts with the first landmark.
 
+**And the chain seeds it.** The quest chain asks for era-2 technologies
+(Surveying II, Scaling Tools, Sailing) before a chain-follower has claimed more
+than one landmark, so the chain pays Knowledge itself — 340 across seven
+quests, all on the Magic-tome beats where the fog is teaching the player what
+the land holds. The rule the tests hold: **walking the chain with zero drip,
+every technology it asks for is affordable when asked.** Zero drip is the
+player who does the whole opening in one sitting, and they must never be told
+to go and wait.
+
 **The lumps are why claiming reads as an event.** A rate change alone is a
 number moving on a screen the player is not looking at. Fifty Knowledge in the
 hand is the fog paying out, which is what the fog is selling.
@@ -411,6 +420,18 @@ reversals, so that nobody reading the diff has to guess which is current:
    shelf of tabs, per-page positions, and the cover pages granted by events in
    the world — Civics at the seed, Magic on the first paid reveal, Warfare on
    the first ruin in sight.
+5a. ~~Techs reprice from Gold to Gold + Knowledge + time.~~ **DONE 2026-09-04.**
+   Every technology from the era-1 keystone on carries a Knowledge price beside
+   its Gold one; era 1 charges none. **The chain seeds the clock**: a player
+   early in the chain holds no territory, so seven quests — the Magic-tome
+   beats from `OldStones` to `PutToSea`, plus `SecondStory` ahead of the
+   Charter — pay 340 Knowledge between them, and `tests/quests.test.ts` walks
+   the whole chain with ZERO drip and holds that every technology it asks for
+   is affordable when asked, with at least 30 to spare. Two chain fixes fell
+   out of the era structure: `Attuned` moved from quest 42 to right after the
+   first claim (its keystone gates the exploration beats at 26–28), and
+   `Architect` now asks for `Charter II`, which is the thing that actually
+   raises the Townhall.
 5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
    assigned a tome and an era, the nine keystones exist and each unlocks a
    real dial (Townhall level, hall levels, Sanctum levels), and the Townhall
