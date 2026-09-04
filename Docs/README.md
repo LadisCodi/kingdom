@@ -74,6 +74,7 @@ Not features — how content and art are made.
 
 | File | What it covers |
 |---|---|
+| [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
 | [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
 | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the parchment-and-carved-wood UI system, its palette and its shapes |
