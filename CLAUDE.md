@@ -148,6 +148,11 @@ When a doc and the code disagree, **the code is usually right and the doc is
 stale.** Fix the doc in the same commit, and prefer a test over a paragraph for
 any number that has now been argued twice.
 
+Rules for writting design documents:
+- Only write the specification of HOW something works, no the design process for WHY it works that way
+- Only write the current design of the feature, not how it has changed or why it has changed
+- Describe feature as simple as possible, preferring using bullet points lists when possible. Less is more.
+
 ## Don't
 
 - Don't hand-edit `src/sim/data/balance.json`. Hand-editing
