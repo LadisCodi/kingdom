@@ -431,6 +431,41 @@ About seventeen, and most are already on `../road-to-mvp.md` §4's planned
 `ModifierStat` widening list — so this pass and Phase 2 want the same seam
 opened once.
 
+**Landed 2026-09-04, first batch (Civics and Magic):** `buildTime`
+(Carpentry), `researchTime` (Scriveners), `workerSpeed` (Cartage), `manaCap`
+(Deep Wells), `claimCost` (Pilgrimage), `stardustYield` (Prospecting), plus
+Ley Taps, Wayposts and Vigils as per-source terms and Scriptorium on the
+existing `knowledgeYield`. Ten lines, 32 ranks, every one asserted where the
+player meets the number.
+
+Two things the batch settled:
+
+- **Scriveners is fixed when a research starts and persisted on it** — the one
+  hook that touches a boundary. A rank landing mid-research must not move that
+  research's completion into the past, which one-call replay and stepped
+  ticking would then land on differently. The scholar works at the pace they
+  started at; the *next* research is quicker.
+- **Stopgap parents.** The majors these lines are meant to hang off
+  (Meditation, Ley Reading, Lorekeeping, Sanctified Ruins, Roadworks) do not
+  exist yet, so each line hangs off the nearest existing major and moves when
+  its own arrives: Deep Wells and Scriptorium under Consecration, Ley Taps and
+  Wayposts under Cartography, Vigils under Scaling Tools, Pilgrimage under
+  Sailing, Prospecting under Shipbuilding, Cartage under Engineering,
+  Scriveners under Architecture. Three lines per major is the fan's limit
+  (`tests/research.test.ts` holds it); Cartography and Consecration are at it.
+
+**Not yet:** the unit-stat lines (Shield Wall, Fletching, Barding, Warhorns)
+and Manoeuvre, because `combat.ts` is deliberately pure and they need bonuses
+passed in the way `heroLevel` and the carried relic already are; Farsight,
+because a radius change should re-discover around every standing building and
+that wants the map at completion time; and the Warfare batch (Colours,
+Rations, Bearers, Drillmaster, Muster Drill, Pathfinders), which is next.
+
+**Pricing:** the new ranks sit on the *legacy* Gold scale the existing ranks
+use, not on §6's bands — a rank priced to the bands beside a 275-Gold era-3
+major is incoherent, and repricing the majors is a single deliberate pass
+(open decision below), not a side effect of adding lines.
+
 Build time · research time · unit ATK/DEF by tag · Mana capacity · Mana regen ·
 discover radius · influence radius · worker move speed · Knowledge drip rate ·
 ingredient yield · Stardust yield · landmark claim cost · expedition supply
@@ -516,6 +551,13 @@ what a spend costs. This edits [`magic.md`](magic.md), which
 
 ## Open decisions
 
+0. **When does the tree get repriced to §6's bands?** Every major still costs
+   what it did as a 24-node tree (an era-3 major is 275–450 Gold), while the
+   bands say 6,000–15,000. New ranks are deliberately priced to the legacy
+   scale so the tree stays coherent with itself. Repricing is one pass over the
+   `Technologies` sheet — but it changes the quest chain's Gold guarantee and
+   the onboarding's feel, so it is a decision to make once, not a side effect
+   of adding content.
 1. **All-of, or N-of-M?** A keystone requiring all 26 nodes of Civics era 3 is
    a wall, and a player who does not care about fishing meets it. `25 of 26`
    keeps the pacing and removes the wall. This is the biggest risk in the

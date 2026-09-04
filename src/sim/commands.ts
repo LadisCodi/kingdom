@@ -195,7 +195,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
     kind: 'upgrade',
     districtUniqueId: district.uniqueId,
     targetLevel: district.level + 1,
-    durationSeconds: upgradeDuration(district.definitionId, district.level),
+    durationSeconds: upgradeDuration(state, district.definitionId, district.level),
     startedAt: null,
   });
   return 'Started';

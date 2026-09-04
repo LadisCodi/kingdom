@@ -62,7 +62,15 @@ export type TechId =
   | 'TradeRoutesIV' | 'TradeRoutesV' | 'StonecuttingI' | 'StonecuttingII'
   | 'StonecuttingIII' | 'BigNetsI' | 'BigNetsII' | 'BigNetsIII'
   | 'IronPicksI' | 'IronPicksII' | 'IronPicksIII' | 'ResonanceI'
-  | 'ResonanceII';
+  | 'ResonanceII' | 'CarpentryI' | 'CarpentryII' | 'CarpentryIII'
+  | 'ScrivenersI' | 'ScrivenersII' | 'ScrivenersIII' | 'CartageI'
+  | 'CartageII' | 'CartageIII' | 'DeepWellsI' | 'DeepWellsII'
+  | 'DeepWellsIII' | 'DeepWellsIV' | 'DeepWellsV' | 'LeyTapsI'
+  | 'LeyTapsII' | 'LeyTapsIII' | 'WaypostsI' | 'WaypostsII'
+  | 'WaypostsIII' | 'ScriptoriumI' | 'ScriptoriumII' | 'ScriptoriumIII'
+  | 'VigilsI' | 'VigilsII' | 'VigilsIII' | 'PilgrimageI'
+  | 'PilgrimageII' | 'PilgrimageIII' | 'ProspectingI' | 'ProspectingII'
+  | 'ProspectingIII';
 
 /** A ladder of ranks that used to be one levelled upgrade. `effect()` in
  *  sim/upgrades.ts counts how many of a line's ranks are complete. */
@@ -70,7 +78,10 @@ export type TechLineId =
   | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Sawpits'
   | 'Butchery' | 'Irrigation' | 'Scythes' | 'Surveying'
   | 'Pitons' | 'MarketStall' | 'TradeRoutes' | 'Stonecutting'
-  | 'BigNets' | 'IronPicks' | 'Resonance';
+  | 'BigNets' | 'IronPicks' | 'Resonance' | 'Carpentry'
+  | 'Scriveners' | 'Cartage' | 'DeepWells' | 'LeyTaps'
+  | 'Wayposts' | 'Scriptorium' | 'Vigils' | 'Pilgrimage'
+  | 'Prospecting';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -292,7 +303,12 @@ export interface GameState {
   research: {
     completed: TechId[];
     /** Technologies in progress — length is capped by techSlots(). */
-    active: Array<{ id: TechId; startedAt: number }>;
+    /** `durationMs` is fixed when the research STARTS (Scriveners applies then,
+     *  not retroactively): a rank landing mid-research must not move a
+     *  boundary into the past, which one-call replay and stepped ticking
+     *  would then land on differently. Absent on older saves → the authored
+     *  duration, which is what they were started at. */
+    active: Array<{ id: TechId; startedAt: number; durationMs?: number }>;
     /** Extra concurrent slots bought with Gems (escalating price). */
     slotsPurchased: number;
   };

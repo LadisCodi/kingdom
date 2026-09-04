@@ -335,7 +335,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       // rather than a price and has no business inside the press-target.
       info: el('span', { class: 'dc-uptime' },
         iconEl('hourglass', { size: 'sm' }),
-        formatDuration(upgradeDuration(district.definitionId, district.level))),
+        formatDuration(upgradeDuration(game.state, district.definitionId, district.level))),
     });
     if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
 

@@ -432,6 +432,9 @@ reversals, so that nobody reading the diff has to guess which is current:
    first claim (its keystone gates the exploration beats at 26–28), and
    `Architect` now asks for `Charter II`, which is the thing that actually
    raises the Townhall.
+5b. **Era-2/3 content, first batch — DONE 2026-09-04.** The Civics and Magic
+   `ModifierStat` hooks and their ten minor lines ([`tech-tree.md`](tech-tree.md)
+   §9). The tree is 116 technologies.
 5. **Eras 2 and 3 STRUCTURED, not yet filled.** All 84 technologies are
    assigned a tome and an era, the nine keystones exist and each unlocks a
    real dial (Townhall level, hall levels, Sanctum levels), and the Townhall

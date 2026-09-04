@@ -50,6 +50,7 @@
 import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
+import { effect } from './upgrades';
 import {
   addToWallet, getWallet, type GameState, type RuinId,
 } from './state';
@@ -74,8 +75,21 @@ export function manaProduction(state: GameState): number {
       base += levelIndexed(MANA.sanctumPerHourPerLevel, d.level);
     }
   }
+  // Ley Taps: the one thing that lets a landmark touch the RATE, and it is a
+  // line the player researched rather than a property of the claim, so the
+  // "capacity not production" rule for sanctuaries still holds by default.
+  base += effect(state, 'LeyTaps') * claimedLandmarks(state);
   return Math.max(0, resolve(state, 'manaRegen', base));
 }
+
+const claimedLandmarks = (state: GameState): number =>
+  Object.keys(state.landmarks.claimed).filter((id) => state.landmarks.claimed[id] === true).length;
+
+const clearedRuins = (state: GameState): number => {
+  let n = 0;
+  for (const id of Object.keys(RUINS) as RuinId[]) if (state.ruinsCleared[id] === true) n += 1;
+  return n;
+};
 
 /** What actually accrues, per hour. Nothing draws against it, so this is
  *  simply production — kept as its own name because every caller means "the
@@ -98,14 +112,14 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = MANA.baseCap;
+  let cap = MANA.baseCap + effect(state, 'DeepWells');
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
     if (d.definitionId === 'Sanctum' && d.state === 'Built') {
       cap += levelIndexed(MANA.sanctumCapPerLevel, d.level);
     }
   }
-  return cap;
+  return Math.max(0, Math.round(resolve(state, 'manaCap', cap)));
 }
 
 export const mana = (state: GameState): number => getWallet(state.city.wallet, 'Mana');
@@ -221,18 +235,15 @@ export function refillManaWithGems(state: GameState): RefillResult {
  * above, and it silently discarded up to one unit each time it fired.
  */
 export function knowledgePerHour(state: GameState): number {
-  let cleared = 0;
-  for (const id of Object.keys(RUINS) as RuinId[]) {
-    if (state.ruinsCleared[id] === true) cleared += 1;
-  }
-  let claimed = 0;
-  for (const id of Object.keys(state.landmarks.claimed)) {
-    if (state.landmarks.claimed[id] === true) claimed += 1;
-  }
-  const raw = cleared * KNOWLEDGE.dripPerClearedRuinPerHour
-    + claimed * KNOWLEDGE.perClaimedLandmarkPerHour;
+  const cleared = clearedRuins(state);
+  const claimed = claimedLandmarks(state);
+  // Each source has its own line: Vigils per ruin, Wayposts per landmark —
+  // and Scriptorium is a percentage on the whole, applied where the modifier
+  // stack applies, so a relic and a rank read the same number the same way.
+  const raw = cleared * (KNOWLEDGE.dripPerClearedRuinPerHour + effect(state, 'Vigils'))
+    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour + effect(state, 'Wayposts'));
   if (raw === 0) return 0;
-  return Math.max(0, resolve(state, 'knowledgeYield', raw));
+  return Math.max(0, resolve(state, 'knowledgeYield', raw * (1 + effect(state, 'Scriptorium'))));
 }
 
 export function accrueKnowledge(state: GameState, toTime: number): number {

@@ -323,6 +323,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Active: state.research.active.map((a) => ({
           ID: a.id,
           StartedAtUtc: iso(a.startedAt),
+          DurationMs: a.durationMs ?? null, // additive; older saves have none
         })),
         SlotsPurchased: state.research.slotsPurchased,
       },
@@ -585,8 +586,12 @@ export function deserialize(
   if (researchDto) {
     state.research = {
       completed: [...((researchDto.Completed ?? []) as TechId[])],
-      active: ((researchDto.Active ?? []) as Array<{ ID: TechId; StartedAtUtc: string }>).map(
-        (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
+      active: ((researchDto.Active ?? []) as
+        Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
+        (a) => ({
+          id: a.ID, startedAt: ms(a.StartedAtUtc),
+          ...(typeof a.DurationMs === 'number' ? { durationMs: a.DurationMs } : {}),
+        })),
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
   }

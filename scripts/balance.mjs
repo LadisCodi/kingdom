@@ -77,6 +77,14 @@ const TECH_IDS = [
   'TradeRoutesV', 'StonecuttingI', 'StonecuttingII', 'StonecuttingIII',
   'BigNetsI', 'BigNetsII', 'BigNetsIII', 'IronPicksI',
   'IronPicksII', 'IronPicksIII', 'ResonanceI', 'ResonanceII',
+  'CarpentryI', 'CarpentryII', 'CarpentryIII', 'ScrivenersI',
+  'ScrivenersII', 'ScrivenersIII', 'CartageI', 'CartageII',
+  'CartageIII', 'DeepWellsI', 'DeepWellsII', 'DeepWellsIII',
+  'DeepWellsIV', 'DeepWellsV', 'LeyTapsI', 'LeyTapsII',
+  'LeyTapsIII', 'WaypostsI', 'WaypostsII', 'WaypostsIII',
+  'ScriptoriumI', 'ScriptoriumII', 'ScriptoriumIII', 'VigilsI',
+  'VigilsII', 'VigilsIII', 'PilgrimageI', 'PilgrimageII',
+  'PilgrimageIII', 'ProspectingI', 'ProspectingII', 'ProspectingIII',
 ];
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];

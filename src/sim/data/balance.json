@@ -2165,6 +2165,508 @@
       "tome": "Magic",
       "era": 2,
       "node": null
+    },
+    "CarpentryI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "UrbanPlanning"
+      ],
+      "line": "Carpentry",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 1,
+      "node": null
+    },
+    "CarpentryII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "CarpentryI",
+        "CharterII"
+      ],
+      "line": "Carpentry",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 2,
+      "node": null
+    },
+    "CarpentryIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "CarpentryII",
+        "CharterIII"
+      ],
+      "line": "Carpentry",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "ScrivenersI": {
+      "cost": {
+        "Gold": 300,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Architecture",
+        "CharterIII"
+      ],
+      "line": "Scriveners",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "ScrivenersII": {
+      "cost": {
+        "Gold": 540,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "ScrivenersI",
+        "CharterIII"
+      ],
+      "line": "Scriveners",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "ScrivenersIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ScrivenersII",
+        "CharterIII"
+      ],
+      "line": "Scriveners",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "CartageI": {
+      "cost": {
+        "Gold": 300,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Engineering",
+        "CharterIII"
+      ],
+      "line": "Cartage",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "CartageII": {
+      "cost": {
+        "Gold": 540,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "CartageI",
+        "CharterIII"
+      ],
+      "line": "Cartage",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "CartageIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "CartageII",
+        "CharterIII"
+      ],
+      "line": "Cartage",
+      "effectPerRank": 0.05,
+      "tome": "Civics",
+      "era": 3,
+      "node": null
+    },
+    "DeepWellsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Consecration"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 1,
+      "node": null
+    },
+    "DeepWellsII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "DeepWellsI",
+        "AttunementII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "DeepWellsIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "DeepWellsII",
+        "AttunementIII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "DeepWellsIV": {
+      "cost": {
+        "Gold": 1750,
+        "Knowledge": 200
+      },
+      "durationSeconds": 3600,
+      "requires": [
+        "DeepWellsIII",
+        "AttunementIII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "DeepWellsV": {
+      "cost": {
+        "Gold": 3150,
+        "Knowledge": 200
+      },
+      "durationSeconds": 4500,
+      "requires": [
+        "DeepWellsIV",
+        "AttunementIII"
+      ],
+      "line": "DeepWells",
+      "effectPerRank": 10,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "LeyTapsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Cartography"
+      ],
+      "line": "LeyTaps",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 1,
+      "node": null
+    },
+    "LeyTapsII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "LeyTapsI",
+        "AttunementII"
+      ],
+      "line": "LeyTaps",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "LeyTapsIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "LeyTapsII",
+        "AttunementIII"
+      ],
+      "line": "LeyTaps",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "WaypostsI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Cartography"
+      ],
+      "line": "Wayposts",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 1,
+      "node": null
+    },
+    "WaypostsII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "WaypostsI",
+        "AttunementII"
+      ],
+      "line": "Wayposts",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "WaypostsIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "WaypostsII",
+        "AttunementIII"
+      ],
+      "line": "Wayposts",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "ScriptoriumI": {
+      "cost": {
+        "Gold": 60
+      },
+      "durationSeconds": 20,
+      "requires": [
+        "Consecration"
+      ],
+      "line": "Scriptorium",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 1,
+      "node": null
+    },
+    "ScriptoriumII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "ScriptoriumI",
+        "AttunementII"
+      ],
+      "line": "Scriptorium",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "ScriptoriumIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ScriptoriumII",
+        "AttunementIII"
+      ],
+      "line": "Scriptorium",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "VigilsI": {
+      "cost": {
+        "Gold": 150,
+        "Knowledge": 30
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "ScalingTools",
+        "AttunementII"
+      ],
+      "line": "Vigils",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "VigilsII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "VigilsI",
+        "AttunementII"
+      ],
+      "line": "Vigils",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "VigilsIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "VigilsII",
+        "AttunementIII"
+      ],
+      "line": "Vigils",
+      "effectPerRank": 1,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "PilgrimageI": {
+      "cost": {
+        "Gold": 150,
+        "Knowledge": 30
+      },
+      "durationSeconds": 180,
+      "requires": [
+        "Sailing",
+        "AttunementII"
+      ],
+      "line": "Pilgrimage",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "PilgrimageII": {
+      "cost": {
+        "Gold": 270,
+        "Knowledge": 30
+      },
+      "durationSeconds": 300,
+      "requires": [
+        "PilgrimageI",
+        "AttunementII"
+      ],
+      "line": "Pilgrimage",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 2,
+      "node": null
+    },
+    "PilgrimageIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "PilgrimageII",
+        "AttunementIII"
+      ],
+      "line": "Pilgrimage",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "ProspectingI": {
+      "cost": {
+        "Gold": 300,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1200,
+      "requires": [
+        "Shipbuilding",
+        "AttunementIII"
+      ],
+      "line": "Prospecting",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "ProspectingII": {
+      "cost": {
+        "Gold": 540,
+        "Knowledge": 200
+      },
+      "durationSeconds": 1800,
+      "requires": [
+        "ProspectingI",
+        "AttunementIII"
+      ],
+      "line": "Prospecting",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
+    },
+    "ProspectingIII": {
+      "cost": {
+        "Gold": 970,
+        "Knowledge": 200
+      },
+      "durationSeconds": 2700,
+      "requires": [
+        "ProspectingII",
+        "AttunementIII"
+      ],
+      "line": "Prospecting",
+      "effectPerRank": 0.05,
+      "tome": "Magic",
+      "era": 3,
+      "node": null
     }
   },
   "research": {

@@ -4,7 +4,7 @@
 
 import { DISTRICTS, HARVEST, WORKER, levelIndexed } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
-import { effectiveWorkerYield } from './upgrades';
+import { effectiveWorkerYield , effectiveWorkerSpeed } from './upgrades';
 import { harvestSourceAt, isExhausted, recoversAt, registerTap } from './harvest';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
@@ -66,8 +66,11 @@ function findClaimableCell(
 
 // --------------------------------------------------------------------------- FSM
 
-const moveMs = (from: Coord, to: Coord): number =>
-  (euclideanTiles(from, to) / WORKER.moveSpeedTilesPerSecond) * 1000;
+/** A leg's duration, at the speed the kingdom walks at when the leg STARTS
+ *  (Cartage). Fixed for the leg, like every other StateUntil, so replay and
+ *  stepped ticking agree on when the worker arrives. */
+const moveMs = (state: GameState, from: Coord, to: Coord): number =>
+  (euclideanTiles(from, to) / effectiveWorkerSpeed(state)) * 1000;
 
 const setState = (
   w: Worker,
@@ -85,7 +88,7 @@ function tryDispatch(state: GameState, map: MapData, w: Worker, building: Distri
   const cell = findClaimableCell(state, map, building, at, w);
   if (cell) {
     w.claimedCell = cell;
-    setState(w, 'MovingToCell', at, at + moveMs(building.location, cell));
+    setState(w, 'MovingToCell', at, at + moveMs(state, building.location, cell));
   } else {
     w.claimedCell = null;
     setState(w, 'Idle', at, null);
@@ -126,7 +129,7 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
         // Exhausted (or vanished) en route: turn back empty-handed.
         w.claimedCell = null;
         w.carrying = false;
-        setState(w, 'MovingHome', t, t + moveMs(cell, building.location));
+        setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
       } else {
         setState(w, 'Working', t, t + WORKER.workSeconds * 1000);
       }
@@ -135,7 +138,7 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
     case 'Working': {
       // Race rule: the unit is secured even if the cell exhausted mid-work.
       w.carrying = true;
-      setState(w, 'MovingHome', t, t + moveMs(w.claimedCell!, building.location));
+      setState(w, 'MovingHome', t, t + moveMs(state, w.claimedCell!, building.location));
       break;
     }
     case 'MovingHome': {
@@ -155,7 +158,7 @@ function step(state: GameState, map: MapData, w: Worker, building: District, t: 
       // Keep the claim if the cell is still workable; otherwise pick another.
       if (w.claimedCell && !isExhausted(state, w.claimedCell, t) &&
           harvestSourceAt(state, w.claimedCell) === DISTRICTS[building.definitionId].harvestSource) {
-        setState(w, 'MovingToCell', t, t + moveMs(building.location, w.claimedCell));
+        setState(w, 'MovingToCell', t, t + moveMs(state, building.location, w.claimedCell));
       } else {
         w.claimedCell = null;
         tryDispatch(state, map, w, building, t);
@@ -235,7 +238,7 @@ export function relocateCrew(
       : w.activity === 'Working' ? (w.claimedCell ?? from)
         : (workerPosition(state, w, now) ?? from);
     if (w.carrying) {
-      setState(w, 'MovingHome', now, now + moveMs(at, district.location));
+      setState(w, 'MovingHome', now, now + moveMs(state, at, district.location));
     } else {
       w.claimedCell = null;
       setState(w, 'Idle', now, null);

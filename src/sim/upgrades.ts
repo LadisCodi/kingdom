@@ -71,7 +71,7 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
     if (source === null || HARVEST[source].currencyId !== currencyId) continue;
     const radius = def.influenceRadiusPerLevel.length === 0
       ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
-    const cycleSeconds = (2 * radius) / WORKER.moveSpeedTilesPerSecond + WORKER.workSeconds;
+    const cycleSeconds = (2 * radius) / effectiveWorkerSpeed(state) + WORKER.workSeconds;
     if (cycleSeconds <= 0) continue;
     total += (d.assignedWorkers * effectiveWorkerYield(state, HARVEST[source])) / cycleSeconds;
   }
@@ -155,6 +155,23 @@ export function effectiveWorkerYield(state: GameState, spec: HarvestSpec): numbe
     (specific ? effect(state, specific) : 0);
   return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
 }
+
+/** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
+ *  FSM when a leg STARTS, so a rank landing mid-walk shortens the next leg
+ *  rather than teleporting the one in progress — which is also what keeps a
+ *  one-call replay and stepped ticking on the same StateUntil. */
+export const effectiveWorkerSpeed = (state: GameState): number =>
+  Math.max(0.1, resolve(state, 'workerSpeed',
+    WORKER.moveSpeedTilesPerSecond * (1 + effect(state, 'Cartage'))));
+
+/** Multiplier on build and upgrade time (Carpentry: −5%/rank), floor 0.25. */
+export const effectiveBuildTimeMultiplier = (state: GameState): number =>
+  Math.max(0.25, resolve(state, 'buildTime', 1 - effect(state, 'Carpentry')));
+
+/** Multiplier on research time (Scriveners: −5%/rank), floor 0.25. Applied
+ *  ONCE, when a research starts, and persisted on it — see research.ts. */
+export const effectiveResearchTimeMultiplier = (state: GameState): number =>
+  Math.max(0.25, resolve(state, 'researchTime', 1 - effect(state, 'Scriveners')));
 
 /** Multiplier on Market sale prices (MarketStall: +5%/level). */
 export const effectiveSalePriceMultiplier = (state: GameState): number =>

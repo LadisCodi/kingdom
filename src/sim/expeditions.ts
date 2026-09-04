@@ -48,6 +48,7 @@ import { availableRoster, maxArmyPower } from './army';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
+import { effect } from './upgrades';
 import { pick } from './rng';
 import {
   addToWallet, getWallet, newId,
@@ -232,7 +233,7 @@ export interface DelveEvent {
 
 /** The haul one depth pays, before the hero's traits. Scales with depth AND
  *  tier, so pushing deeper is worth more than delving a shallow ruin twice. */
-function depthHaul(ruinId: RuinId, depth: number, heroId: HeroId): {
+function depthHaul(state: GameState, ruinId: RuinId, depth: number, heroId: HeroId): {
   wallet: Wallet; fragments: number;
 } {
   const ruin = RUINS[ruinId];
@@ -241,7 +242,9 @@ function depthHaul(ruinId: RuinId, depth: number, heroId: HeroId): {
   const fragmentBonus = hero.trait === 'FragmentBonus' ? 1 + hero.traitValue : 1;
   const wallet: Wallet = {
     Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
-    Stardust: Math.round(DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus),
+    Stardust: Math.round(resolve(state, 'stardustYield',
+      DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus
+        * (1 + effect(state, 'Prospecting')))),
   };
   // The deeper tiers pay materials the city cannot easily reach otherwise —
   // three times the haul, the rate a vein pays over a plain rock.
@@ -301,7 +304,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       delve.partyHp -= outcome.damage;
       delve.depth = depth;
       state.deepestDepth = Math.max(state.deepestDepth, depth);
-      const paid = depthHaul(delve.ruinId, depth, delve.heroId);
+      const paid = depthHaul(state, delve.ruinId, depth, delve.heroId);
       addHaul(delve, paid.wallet, paid.fragments);
 
       if (depth >= ruin.maxDepth) {

@@ -70,7 +70,7 @@ export function renderBuildMenu(game: Game): HTMLElement {
       el('div', { class: 'bld-cost' }, costChips(cost, (c) => game.walletValue(c))),
       el('div', { class: 'bld-meta' },
         iconEl('hourglass', { size: 'sm' }),
-        el('span', {}, formatDuration(buildDuration(id, count, 0))),
+        el('span', {}, formatDuration(buildDuration(game.state, id, count, 0))),
         // Owned as filled pips: "2 of 4" without making the player parse a
         // fraction. An unbounded count falls back to the number.
         Number.isFinite(maxCount)

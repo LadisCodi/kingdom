@@ -29,6 +29,8 @@
 import { FOG, KNOWLEDGE, LANDMARKS, type LandmarkDef } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { fogState, recordVisibleSites } from './fog';
+import { resolve } from './modifiers';
+import { effect } from './upgrades';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
 import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
@@ -55,7 +57,10 @@ export const isLandmarkClear = (state: GameState, def: LandmarkDef): boolean =>
  * and 100,000. A curve cannot land on those numbers, and a claim the player
  * has been staring at for a week should cost what the designer said.
  */
-export const landmarkClaimCost = (def: LandmarkDef): number => def.claimCost;
+export const landmarkClaimCost = (state: GameState, def: LandmarkDef): number =>
+  Math.max(1, Math.round(resolve(
+    state, 'claimCost', def.claimCost * Math.max(0, 1 - effect(state, 'Pilgrimage')),
+  )));
 
 export type ClaimResult =
   | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'Defended' | 'NotEnoughGold' | 'NoLandmark';
@@ -66,7 +71,7 @@ export function claimLandmark(state: GameState, map: MapData, cell: Coord): Clai
   if (isLandmarkClaimed(state, def.id)) return 'AlreadyClaimed';
   if (fogState(state, map, def.location) !== 'Revealed') return 'NotRevealed';
   if (!isLandmarkClear(state, def)) return 'Defended';
-  const cost = landmarkClaimCost(def);
+  const cost = landmarkClaimCost(state, def);
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
   state.landmarks.claimed[def.id] = true;

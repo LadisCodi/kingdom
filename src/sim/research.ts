@@ -11,6 +11,7 @@ import {
   addToWallet, getWallet,
   type DistrictId, type GameState, type TechId, type TomeId, type UnitId,
 } from './state';
+import { effectiveResearchTimeMultiplier } from './upgrades';
 
 /** Something a technology puts in the player's hands. */
 export type Unlock =
@@ -152,7 +153,11 @@ export function startTech(state: GameState, id: TechId, now: number): StartTechR
   if (!canAffordTech(state, id)) return 'NotEnoughResources';
   addToWallet(state.city.wallet, 'Gold', -techCost(id));
   addToWallet(state.kingdom.wallet, 'Knowledge', -techKnowledgeCost(id));
-  state.research.active.push({ id, startedAt: now });
+  // Scriveners applies HERE, once. A rank completing mid-research does not
+  // shorten what is already on the desk — see the field's note in state.ts.
+  const durationMs = Math.round(
+    TECHNOLOGIES[id].durationSeconds * 1000 * effectiveResearchTimeMultiplier(state));
+  state.research.active.push({ id, startedAt: now, durationMs });
   return 'Started';
 }
 
@@ -160,7 +165,7 @@ export const techCompletesAt = (state: GameState, id: TechId): number | null => 
   const active = state.research.active.find((a) => a.id === id);
   return active === undefined
     ? null
-    : active.startedAt + TECHNOLOGIES[id].durationSeconds * 1000;
+    : active.startedAt + (active.durationMs ?? TECHNOLOGIES[id].durationSeconds * 1000);
 };
 
 /** Complete every active technology whose time is up (in completion order). */

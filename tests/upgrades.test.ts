@@ -3,7 +3,8 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  FOG, HARVEST, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER, lineParent,
+  FOG, HARVEST, LANDMARKS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER, WORKER,
+  lineParent,
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
@@ -12,11 +13,15 @@ import { collectTap } from '../src/sim/harvest';
 import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
 import { advance } from '../src/sim/commands';
-import { canStartTech, startTech } from '../src/sim/research';
+import { canStartTech, startTech, techCompletesAt } from '../src/sim/research';
 import {
-  effectiveAutoTapCooldownMs, effectiveSalePriceMultiplier, effectiveTapYield,
-  effectiveTaxRate, effectiveWorkerYield, lineMaxRank, lineRank,
+  effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier, effectiveSalePriceMultiplier,
+  effectiveTapYield, effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerYield,
+  lineMaxRank, lineRank,
 } from '../src/sim/upgrades';
+import { buildDuration, upgradeDuration } from '../src/sim/districts';
+import { landmarkClaimCost } from '../src/sim/landmarks';
+import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
 import {
   addBuilt, canGather, completeTech, FOREST, freshGame, fund, map, T0, tickAt, completeRanks } from './helpers';
 
@@ -276,5 +281,133 @@ describe('every line reaches the number it claims to', () => {
       const first = TECH_LINES[line][0];
       expect(canStartTech(state, first), `${line} I starts with no research`).toBe(false);
     }
+  });
+});
+
+// The era-2/3 hooks (Docs/features/tech-tree.md §9), first batch: Civics and
+// Magic. Same discipline as above — a line is asserted where the PLAYER meets
+// the number, never on the effect table.
+describe('the era-2/3 lines reach their numbers', () => {
+  it('Carpentry shortens a build and an upgrade, and the floor holds', () => {
+    const state = freshGame();
+    const build = buildDuration(state, 'Housing', 0, 2);
+    const up = upgradeDuration(state, 'Farm', 1);
+    completeRanks(state, 'Carpentry', 2); // −10%
+    // The multiplier is applied to the raw product BEFORE the single rounding,
+    // so compare against a window rather than re-rounding a rounded number.
+    const within = (got: number, want: number) => {
+      expect(got).toBeGreaterThanOrEqual(Math.floor(want));
+      expect(got).toBeLessThanOrEqual(Math.ceil(want));
+    };
+    within(buildDuration(state, 'Housing', 0, 2), build * 0.9);
+    within(upgradeDuration(state, 'Farm', 1), up * 0.9);
+    expect(effectiveBuildTimeMultiplier(state)).toBeCloseTo(0.9);
+  });
+
+  it('Cartage speeds the walk, and the nominal gather rate with it', () => {
+    const state = freshGame();
+    expect(effectiveWorkerSpeed(state)).toBe(WORKER.moveSpeedTilesPerSecond);
+    completeRanks(state, 'Cartage', 3); // +15%
+    expect(effectiveWorkerSpeed(state)).toBeCloseTo(WORKER.moveSpeedTilesPerSecond * 1.15);
+  });
+
+  it('Deep Wells raises the Mana ceiling, and only the ceiling', () => {
+    const state = freshGame();
+    const cap = manaCap(state);
+    const rate = manaProduction(state);
+    completeRanks(state, 'DeepWells', 3); // +30
+    expect(manaCap(state)).toBe(cap + 30);
+    expect(manaProduction(state)).toBe(rate);
+  });
+
+  it('Ley Taps lets a claimed landmark touch the RATE — and only a claimed one', () => {
+    const state = freshGame();
+    const base = manaProduction(state);
+    completeRanks(state, 'LeyTaps', 2); // +2/h per landmark
+    expect(manaProduction(state), 'no landmark, no effect').toBe(base);
+    state.landmarks.claimed[LANDMARKS[0].id] = true;
+    expect(manaProduction(state)).toBe(base + 2);
+  });
+
+  it('Wayposts and Vigils each add to their own source of Knowledge', () => {
+    const state = freshGame();
+    state.landmarks.claimed[LANDMARKS[0].id] = true;
+    state.ruinsCleared.HollowBarrow = true;
+    const base = knowledgePerHour(state);
+    completeRanks(state, 'Wayposts', 1);
+    expect(knowledgePerHour(state)).toBe(base + 1);
+    completeRanks(state, 'Vigils', 2);
+    expect(knowledgePerHour(state)).toBe(base + 1 + 2);
+  });
+
+  it('Scriptorium is a percentage on the whole drip', () => {
+    const state = freshGame();
+    state.landmarks.claimed[LANDMARKS[0].id] = true;
+    state.ruinsCleared.HollowBarrow = true;
+    const base = knowledgePerHour(state);
+    completeRanks(state, 'Scriptorium', 2); // +10%
+    expect(knowledgePerHour(state)).toBeCloseTo(base * 1.1);
+  });
+
+  it('Pilgrimage discounts a claim, and never makes one free', () => {
+    const state = freshGame();
+    const def = LANDMARKS[0];
+    const full = landmarkClaimCost(state, def);
+    completeRanks(state, 'Pilgrimage', 3); // −15%
+    expect(landmarkClaimCost(state, def)).toBe(Math.round(full * 0.85));
+    expect(landmarkClaimCost(state, def)).toBeGreaterThan(0);
+  });
+
+  // Scriveners is the one hook that touches a BOUNDARY, so it is fixed when a
+  // research starts and never applied retroactively: a rank landing while a
+  // tech is on the desk must not move that tech's completion into the past,
+  // which one-call replay and stepped ticking would then land on differently.
+  it('Scriveners shortens a research that starts AFTER it, not one already running', () => {
+    const state = freshGame();
+    fund(state, { Gold: 99_999 });
+    completeTech(state, 'Forestry');
+    const full = TECHNOLOGIES.Saws.durationSeconds * 1000;
+    expect(startTech(state, 'Saws', T0)).toBe('Started');
+    expect(techCompletesAt(state, 'Saws')).toBe(T0 + full);
+
+    completeRanks(state, 'Scriveners', 2); // −10%, lands mid-research
+    expect(techCompletesAt(state, 'Saws'), 'must not shorten what is on the desk').toBe(T0 + full);
+
+    // The next research is quicker.
+    state.research.slotsPurchased = 1;
+    expect(startTech(state, 'Agriculture', T0)).toBe('Started');
+    expect(techCompletesAt(state, 'Agriculture'))
+      .toBe(T0 + Math.round(TECHNOLOGIES.Agriculture.durationSeconds * 1000 * 0.9));
+  });
+
+  it('one-call replay equals stepped ticking with Scriveners landing mid-window', () => {
+    // Scriveners I is started alongside a long research and completes first.
+    // Both paths must agree on when the long one lands.
+    const setup = () => {
+      const s = freshGame();
+      fund(s, { Gold: 99_999, Knowledge: 99_999 });
+      // Charter IV is the six-hour keystone; Scriveners I is twenty minutes.
+      // Architecture brings Charter III and every era-2 major with it.
+      for (const id of ['Architecture', 'Engineering', 'DeepMining'] as const) completeTech(s, id);
+      s.research.slotsPurchased = 2;
+      expect(startTech(s, 'CharterIV', T0)).toBe('Started');   // long
+      expect(startTech(s, 'ScrivenersI', T0)).toBe('Started'); // short
+      return s;
+    };
+    const oneCall = setup();
+    const stepped = setup();
+    const END = T0 + 60 * 60_000;
+    advance(oneCall, map, END);
+    for (let t = 1000; t <= 60 * 60_000; t += 1000) advance(stepped, map, T0 + t);
+    // The rank really did land inside the window…
+    expect(oneCall.research.completed).toContain('ScrivenersI');
+    expect(stepped.research.completed).toContain('ScrivenersI');
+    // …and the keystone still on the desk lands at the pace it STARTED at, in
+    // both paths alike — not five percent sooner because a rank arrived.
+    const authored = T0 + TECHNOLOGIES.CharterIV.durationSeconds * 1000;
+    expect(techCompletesAt(oneCall, 'CharterIV')).toBe(authored);
+    expect(techCompletesAt(stepped, 'CharterIV')).toBe(authored);
+    expect(stepped.research.completed).toEqual(oneCall.research.completed);
+    expect(stepped.research.active).toEqual(oneCall.research.active);
   });
 });
