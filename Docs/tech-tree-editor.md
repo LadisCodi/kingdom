@@ -59,7 +59,7 @@ place.
 | `requires` | one to three technologies — none on a cover page, and none needed by anything on the page's first row |
 | `gold` · `knowledge` · `seconds` | what it costs and how long it takes; `knowledge` omitted when 0 |
 | `unlocks` | `kind: unlock` only (§3) |
-| `line` · `effectPerRank` | `kind: bonus` only (§3) |
+| `effects` | `kind: bonus` only — one line each, so a rebalance diffs as the values that changed (§3) |
 | `planned` | on the tree for its shape, does nothing yet |
 
 - `tome`, `era`, `row` and `col` are **absent together** on a technology taken
@@ -67,7 +67,7 @@ place.
   an error, so the repo never holds one.
 - `definitions.ts` builds `TECHNOLOGIES` by walking this file, and `TECH_ORDER`
   is its key order — which the editor writes in reading order, so it is also
-  rank order inside a minor line.
+  rank order inside a rank ladder.
 - It is written a few lines per technology, in reading order, so a change shows
   up in `git diff` as the technologies that changed.
 
@@ -88,33 +88,45 @@ the game is derived from that (`GATES`, `definitions.ts`):
 One technology per gate: two claiming the same door is an error, because the
 derivation would otherwise answer with whichever it read last.
 
-**`bonus` — it moves one number.** A rank on a minor line: pick the `line` and
-set `effectPerRank`. Every rank of a line is worth the same, because `effect()`
-multiplies the completed rank count by the FIRST rank's number, and the step is
-fractional — `0.1` is +10% tax income, `0.05` is −0.05s between auto-taps.
-Rank N belongs in era N, and rank N requires rank N−1, which is the ladder
-`lineRank` counts off.
+**`bonus` — it moves numbers, and names them.** Each effect is four fields:
 
-**Which HOOK a line reaches is code**, and that is the one half of a bonus the
-editor cannot author:
+| Field | Picked from |
+|---|---|
+| `stat` | the registry — every number the game can be told to move |
+| `op` | `percent` or `flat`, narrowed to the ops that stat accepts |
+| `value` | **signed**, in whole points for a percent. `-22` is −22%, `-0.05` is 0.05 s off the auto-tap |
+| `target` | narrowed to the target kinds that stat accepts: a district, a unit, a unit tag, a harvest source, a tome — or `global` for every subject |
+
+The three selects narrow each other, so the row can only produce an effect the
+rules accept: `unitAtk` offers `flat` and no `percent`, and only `global` or a
+unit tag. A technology may carry several effects; most carry one. Rank N
+belongs in era N and requires rank N−1, which is what makes a ladder a chain
+down the page.
+
+**Aim is exact.** An effect with no target reaches every query of its stat; an
+aimed one reaches only its own target. That is what lets Irrigation and Scythes
+both sit on `Crops` and sum, without either touching the forest.
+
+**Which numbers EXIST is code**, and that is the one half of a bonus the editor
+cannot author:
 
 | To… | Change |
 |---|---|
-| add a rank to a line that exists | nothing — the editor |
-| add a **new line** | `TECH_LINE_IDS` in `src/sim/data/techTreeRules.ts` (`TechLineId` is derived from it), then `+ effect(state, 'YourLine')` at the call site that owns the number (`src/sim/upgrades.ts` holds most of them) |
+| add a rank to a ladder, or a bonus of a kind nothing has yet — "+5% gold at Housing" | nothing — the editor |
+| move a **number nothing reads yet** | an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`), then `techValue(state, 'yourStat', base, target?)` at the call site that owns it |
 | let events or relics move the same number | a `ModifierStat` in `modifiers.ts` and a `resolve()` at that call site |
 
-The `line` dropdown offers every line `TECH_LINE_IDS` declares, whether or not
-a technology carries one yet — so a line added in code is pickable
-immediately. `tests/techTree.test.ts` closes the loop both ways: every
-declared line must be read by something in `src/sim`, and the file may only
-name a line the code declares.
+The `stat` dropdown offers every stat the registry declares, whether or not a
+technology moves it yet — so a stat added in code is pickable immediately.
+`tests/techTree.test.ts` closes the loop both ways: every declared stat must be
+read by something in `src/sim`, and the file may only name a stat the registry
+declares.
 
 **`mechanic` — the code reads it by id.** A cover page opening its book,
 `Conquest` bending the Knowledge rate, `SanctifiedRuins` doubling the per-ruin
-drip. The editor can label these; it cannot write them. **A brand-new effect
-is always a code change** — what the editor buys you is that everything
-*around* it is not.
+drip. The editor can label these; it cannot write them. What is left in this
+kind is what genuinely is code: a cover page, a `planned` node, and the few
+mechanics whose arithmetic does not fit `(base + Σflat) × (1 + Σpct)`.
 
 ## 4. The rules, in one module
 
@@ -139,12 +151,15 @@ enforced in all three or in none.
 - a negative or fractional price; anything free that is not a cover page;
   Knowledge charged in era 1, where the clock has not started
 - a kind that disagrees with what the technology carries — an `unlock` that
-  unlocks nothing (unless `planned`), a `bonus` with no line or worth 0, a
-  `mechanic` that carries either
+  unlocks nothing (unless `planned`), a `bonus` that moves no number, an
+  `unlock` or `mechanic` that carries effects
 - an unlock naming a district, level, unit, harvest source or terrain that
   does not exist; two technologies unlocking one thing
-- a minor rank that does not require the rank before it, or is worth a
-  different amount from the rest of its line
+- an effect naming a stat the registry does not have, an op that stat does not
+  accept, a target of a kind it does not accept, or a target id that does not
+  exist
+- a rank that does not require the rank before it, or a ladder whose numerals
+  skip one
 
 **Warnings** (a save goes through): a requirement on a `planned` technology,
 which does nothing yet.
@@ -190,10 +205,11 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
   are NOT on neighbouring rows: select one, press it, click the other.
   `take the slot's default` puts the drop's guess back.
 - **Everything in the inspector is editable** — name, glyph, prose, Gold,
-  Knowledge, seconds, kind, line, per-rank effect, `planned`. Switching the
+  Knowledge, seconds, kind, what it unlocks or moves, `planned`. Switching the
   kind clears the fields that no longer mean anything.
 - **`+ unlock`** adds one: pick what kind of thing, then which one (and which
-  level, for a building level). Click a chip to cut it.
+  level, for a building level). **`+ effect`** is the same gesture for a bonus:
+  stat, op, value, then what it aims at. Click a chip to cut either.
 - **`+` and `−`** in the left channel open a gap above a row and close an empty
   one. Everything below renumbers; nothing else moves.
 - The last row of each band is an empty **spare row**. Dropping into it pushes
@@ -238,11 +254,12 @@ and writes `src/sim/data/tech-tree.json`. The endpoint cannot exist in a build.
 
 ## 8. What was deliberately not built
 
-- **A new effect.** A `bonus` reaches an existing hook and a `mechanic` is read
-  by id; both are code. The editor authors everything around an effect, never
-  the effect.
-- **A new minor line.** `TechLineId` is a union and a line's hook is a call
-  site, so the editor picks from the lines that exist.
+- **A new STAT.** A `bonus` may move any number the registry declares and aim
+  it at anything that stat accepts, but something has to READ the number. The
+  editor picks from the stats that exist.
+- **A `mul` op.** Three of the hard-coded mechanics multiply an inner term.
+  Giving them an op would make the resolver's one shape two shapes, so they
+  stay `mechanic`.
 - **Editing anything else's numbers.** A district's cost is the workbook's. The
   editor shows what a technology unlocks; it does not price it.
 - **A free canvas.** Three columns and whole rows are what make a page fit a

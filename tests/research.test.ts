@@ -4,8 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
-  UNITS, lineParent,
+  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
@@ -18,10 +17,9 @@ import {
 } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId } from '../src/sim/state';
-import { lineMaxRank, lineRank } from '../src/sim/upgrades';
 import {
-  addAllTrainers, completeRanks, completeTech, freshGame, freshPresenter, fund, map,
-  openEveryEra, T0, tickAt,
+  addAllTrainers, bonusLadders, completeRanks, completeTech, freshGame, freshPresenter, fund,
+  ladderParent, ladders, map, openEveryEra, rankOf, T0, tickAt,
 } from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
@@ -239,7 +237,7 @@ describe('save round-trip', () => {
     expect(isTechComplete(restored, 'Agriculture')).toBe(true);
     expect(isTechComplete(restored, 'UrbanPlanning')).toBe(true);
     expect(restored.research.slotsPurchased).toBe(1);
-    expect(lineRank(restored, 'TapPower')).toBe(1);
+    expect(rankOf(restored, 'TapPower')).toBe(1);
   });
 });
 
@@ -412,21 +410,21 @@ describe('what the player can actually act on', () => {
     completeTech(state, 'Forestry');
     expect(canStartTech(state, 'TapPowerI')).toBe(true);
     // …and rank II is not reachable until rank I is done, which is what makes
-    // the line a ladder rather than five independent purchases.
+    // the ladder a ladder rather than five independent purchases.
     expect(canStartTech(state, 'TapPowerII')).toBe(false);
     expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
     advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
-    expect(lineRank(state, 'TapPower')).toBe(1);
+    expect(rankOf(state, 'TapPower')).toBe(1);
     // Rank II sits in the next band, so it waits on the era bar as well.
     expect(canStartTech(state, 'TapPowerII')).toBe(false);
     openEveryEra(state);
     fund(state, { Knowledge: 5_000 });
     expect(canStartTech(state, 'TapPowerII')).toBe(true);
 
-    // A finished line is not actionable, however rich you are.
-    completeRanks(state, 'TapPower', lineMaxRank('TapPower'));
-    expect(lineRank(state, 'TapPower')).toBe(lineMaxRank('TapPower'));
-    for (const id of TECH_LINES.TapPower) expect(canStartTech(state, id)).toBe(false);
+    // A finished ladder is not actionable, however rich you are.
+    completeRanks(state, 'TapPower', ladders.TapPower.length);
+    expect(rankOf(state, 'TapPower')).toBe(ladders.TapPower.length);
+    for (const id of ladders.TapPower) expect(canStartTech(state, id)).toBe(false);
   });
 
   it('lights the presenter CTA only when something is pressable', () => {
@@ -467,10 +465,10 @@ describe('planned technologies', () => {
     for (const id of PLANNED) expect(techUnlocks(id)).toEqual([]);
   });
 
-  it("are never a minor line's parent, so no working line hangs off a no-op", () => {
-    for (const line of TECH_LINE_ORDER) {
-      const parent = lineParent(line)!;
-      expect(TECHNOLOGIES[parent].planned, `${line} hangs off planned ${parent}`).toBe(false);
+  it("are never a rank ladder's parent, so no working ladder hangs off a no-op", () => {
+    for (const ladder of bonusLadders) {
+      const parent = ladderParent(ladder)!;
+      expect(TECHNOLOGIES[parent].planned, `${ladder} hangs off planned ${parent}`).toBe(false);
     }
   });
 });

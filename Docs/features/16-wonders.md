@@ -202,10 +202,10 @@ and the effective helpers that own each stat.
   existing guarantees the helper exists.
 - This bounds the set: a fourth Wonder is a row and a line; a tenth is ten
   lines across the sim. Ten Wonders is not ten rows of data (OQ-6, OQ-57).
-- Resolution order: base → upgrade levels → modifier stack. **A Wonder level is
-  an upgrade level, not a modifier.** The Wonder term goes beside the
-  `effect(state, …)` term in each helper, inside the value handed to
-  `resolve()` — never as a synthetic entry on the modifier stack.
+- Resolution order: base → the completed technologies → modifier stack. **A
+  Wonder level belongs to the base stage, not the modifier stack.** The Wonder
+  term goes inside the `techValue(state, …)` the helper already hands to
+  `resolve()` — never as a synthetic entry on the stack.
 
 ## 8. The ground
 

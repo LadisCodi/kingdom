@@ -13,11 +13,12 @@
 // questions and calls these, and never reaches into the document.
 
 import {
-  MAX_ERA, MAX_REQUIRES, TECH_KINDS, TECH_LINE_IDS, isCoverPage, isPlaced, isTechId, techIds,
+  MAX_ERA, MAX_REQUIRES, TECH_KINDS, isCoverPage, isPlaced, isTechId, techIds,
   validateTechTree,
   type PlacedTech, type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
+import { TECH_STAT_IDS, type TechEffect } from '../../sim/data/techEffectRules';
 import { authoredRows, COLS, type PageRow } from '../../ui/research/layout';
 import type { TomeId } from '../../sim/state';
 
@@ -71,16 +72,17 @@ export class TreeDoc {
   }
 
   /**
-   * Every minor line the GAME has — not just the ones already in use.
+   * Every number the GAME can be told to move — not just the ones already
+   * moved by something.
    *
-   * A line's HOOK is a call site (`effect(state, 'X')`), so the editor may
-   * only put a rank on a line that exists in the code; `TECH_LINE_IDS` is that
-   * list. Reading the file instead would have made a line added to the code
-   * unpickable until something already carried it, which is the wrong way
-   * round for the one gesture that needs both halves.
+   * A stat is the one half of a bonus that stays code: something has to READ
+   * the number. So this is the registry's list, not the file's — reading the
+   * file would leave a stat added in code unpickable until something already
+   * carried it, which is the wrong way round for the one gesture that needs
+   * both halves.
    */
-  get lines(): string[] {
-    return [...TECH_LINE_IDS].sort();
+  get stats(): string[] {
+    return [...TECH_STAT_IDS].sort();
   }
 
   get validation(): TechTreeValidation {
@@ -252,10 +254,11 @@ export class TreeDoc {
       // the ones that no longer do — a bonus that used to be an unlock must
       // not keep a stale district on it.
       if (node.kind !== 'unlock') delete node.unlocks;
-      if (node.kind !== 'bonus') { delete node.line; delete node.effectPerRank; }
+      if (node.kind !== 'bonus') delete node.effects;
       if (node.knowledge === 0) delete node.knowledge;
       if (node.planned !== true) delete node.planned;
       if (node.unlocks?.length === 0) delete node.unlocks;
+      if (node.effects?.length === 0) delete node.effects;
     });
   }
 
@@ -274,6 +277,20 @@ export class TreeDoc {
     const node = this.doc.technologies[id];
     if (node === undefined) return;
     this.update(id, { unlocks: (node.unlocks ?? []).filter((_, i) => i !== index) });
+  }
+
+  /** Give a technology a number to move. Makes it a `bonus`, the way
+   *  `addUnlock` makes one an `unlock` — the kind follows what it carries. */
+  addEffect(id: string, effect: TechEffect): void {
+    const node = this.doc.technologies[id];
+    if (node === undefined) return;
+    this.update(id, { kind: 'bonus', effects: [...(node.effects ?? []), effect] });
+  }
+
+  removeEffect(id: string, index: number): void {
+    const node = this.doc.technologies[id];
+    if (node === undefined) return;
+    this.update(id, { effects: (node.effects ?? []).filter((_, i) => i !== index) });
   }
 
   /**

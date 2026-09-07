@@ -341,7 +341,7 @@ describe('quests fund the research tree', () => {
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
-      .filter((id) => TECHNOLOGIES[id].line === null && TECHNOLOGIES[id].era === 1)
+      .filter((id) => TECHNOLOGIES[id].kind !== 'bonus' && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
     expect(opening).toBe(2350);
     expect(chain).toBeGreaterThan(opening);

@@ -1,16 +1,19 @@
-// Minor ranks: what used to be instant, gold-only, LEVELLED upgrades.
+// The city's effective numbers: what a tap owes, what a worker hauls, how
+// long a build takes, what a house pays.
 //
-// Every node in the tree is a technology now (Docs/features/tech-tree.md §1
-// rule 2), so a level became a rank: `Sawpits I -> II -> III`, each requiring
-// the one before, each costing Gold AND time like anything else in the tree.
-// `effect()` is the whole difference — it counts completed ranks where it used
-// to read a stored level.
+// Every node in the tree is a technology (Docs/features/tech-tree.md §1
+// rule 2), so what used to be a levelled upgrade is a rank: `Sawpits I -> II
+// -> III`, each requiring the one before, each costing Gold AND time like
+// anything else in the tree.
 //
 // The effective-value helpers below are the ONE place effects are applied, and
-// each is now a three-stage pipeline: base -> completed ranks -> the modifier
-// stack (artifact passives, hero traits, seasons; see sim/modifiers.ts). An
-// empty stack is the bit-exact identity, so nothing changes until something
-// grants a modifier.
+// each is a three-stage pipeline: base -> the completed technologies -> the
+// modifier stack (artifact passives, hero traits, seasons; see
+// sim/modifiers.ts). The middle stage is `techValue` and its siblings
+// (sim/techEffects.ts), which sum whatever the tree AIMS at that number —
+// there is no hook per bonus, and a new one is data. Both the tech stage and
+// an empty modifier stack are the bit-exact identity, so nothing changes until
+// something is researched or granted.
 //
 // Integer stats (workerYield) round ONCE, here at the boundary, because they
 // feed addToWallet directly and a fractional wallet would leak into quest
@@ -20,37 +23,13 @@
 // remainder (see `tapDraw`).
 
 import {
-  DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TECH_LINES, WORKER, levelIndexed,
+  DISTRICTS, HARVEST, TAP, TAXES, WORKER, levelIndexed,
   type DistrictDef, type HarvestSpec,
 } from './data/definitions';
-import type { CurrencyId, District, DistrictId, GameState, TechLineId } from './state';
+import type { CurrencyId, District, DistrictId, GameState } from './state';
 import { techMultiplier, techValue } from './techEffects';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
-
-/** How many ranks of a line the kingdom has researched. */
-export const lineRank = (state: GameState, line: TechLineId): number => {
-  let n = 0;
-  for (const id of TECH_LINES[line]) {
-    if (!isTechComplete(state, id)) break; // ranks complete in order
-    n += 1;
-  }
-  return n;
-};
-
-/** The highest rank a line goes to. */
-export const lineMaxRank = (line: TechLineId): number => TECH_LINES[line].length;
-
-// -------------------------------------------------- effective values
-
-/**
- * What a line is currently worth: completed ranks x the per-rank effect.
- *
- * The per-rank value is read off the FIRST rank because every rank of a line
- * carries the same number — one column in the workbook, not a ladder of them.
- */
-export const effect = (state: GameState, line: TechLineId): number =>
-  lineRank(state, line) * TECHNOLOGIES[TECH_LINES[line][0]].effectPerRank;
 
 /**
  * What the city gathers of one resource per second, from its own numbers.

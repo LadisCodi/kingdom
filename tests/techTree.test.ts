@@ -63,8 +63,7 @@ describe('the shipped tech tree', () => {
       expect(def.cost.Gold).toBe(entry.gold);
       expect(def.cost.Knowledge ?? 0).toBe(entry.knowledge ?? 0);
       expect(def.durationSeconds).toBe(entry.seconds);
-      expect(def.line).toBe(entry.line ?? null);
-      expect(def.effectPerRank).toBe(entry.effectPerRank ?? 0);
+      expect(def.effects).toEqual(entry.effects ?? []);
       expect(def.planned).toBe(entry.planned === true);
     }
   });
@@ -310,18 +309,28 @@ describe('what the rules refuse', () => {
     expect(messages(unlocksNothing).some((m) => m.includes('unlocks nothing'))).toBe(true);
 
     const bonus = clone();
-    bonus.technologies.SawpitsI.line = null;
-    expect(messages(bonus).some((m) => m.includes('bonus with no line'))).toBe(true);
+    bonus.technologies.SawpitsI.effects = [];
+    expect(messages(bonus).some((m) => m.includes('moves no number'))).toBe(true);
 
     const mechanic = clone();
     mechanic.technologies.CharterI.unlocks = [{ unit: 'Warrior' }];
     expect(messages(mechanic).some((m) => m.includes('is a mechanic and also unlocks'))).toBe(true);
   });
 
-  it('a rank worth a different amount from the rest of its line', () => {
+  // A ladder is a naming convention now, so the two things that used to be
+  // guaranteed by the `line` field are rules instead: a rank requires the one
+  // above it, and the numerals run without a gap.
+  it('a rank that does not hang off the rank before it', () => {
     const d = clone();
-    d.technologies.SawpitsII.effectPerRank = 99;
-    expect(messages(d).some((m) => m.includes('all the same size'))).toBe(true);
+    d.technologies.SawpitsII.requires = ['Saws'];
+    expect(messages(d).some((m) => m.includes('does not require SawpitsI'))).toBe(true);
+  });
+
+  it('a ladder with a hole in its numerals', () => {
+    const d = clone();
+    delete (d.technologies as Record<string, unknown>).SawpitsII;
+    d.technologies.SawpitsIII.requires = ['SawpitsI'];
+    expect(messages(d).some((m) => m.includes('no rank 2'))).toBe(true);
   });
 
   // OFF THE PAGE is a real state of the document — `?dev=tree` takes a

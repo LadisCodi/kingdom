@@ -6,10 +6,11 @@ import { newGame } from '../src/sim/newGame';
 import { choosePayerProfile } from '../src/sim/store';
 import { Camera } from '../src/render/camera';
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_LINES, TOME_ORDER, type DistrictDef,
+  DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, type DistrictDef,
 } from '../src/sim/data/definitions';
+import { ladderRank } from '../src/sim/data/techTreeRules';
 import {
-  coordKey, getWallet, type Coord, type DistrictId, type GameState, type TechId, type TechLineId,
+  coordKey, getWallet, type Coord, type DistrictId, type GameState, type TechId,
   type UnitId,
 } from '../src/sim/state';
 
@@ -179,17 +180,79 @@ export const completeTech = (state: GameState, id: TechId): void => {
 };
 
 /**
- * Research the first `rank` steps of a minor line — the replacement for the
+ * Every RANK LADDER in the shipped tree, keyed by its shared name, in rank
+ * order — `{ Sawpits: ['SawpitsI', 'SawpitsII', 'SawpitsIII'], … }`.
+ *
+ * A ladder used to be a `line` field, and the field was deleted when a
+ * technology started carrying its own `effects`. What is left is the naming
+ * convention the tree has always followed and `tests/techTree.test.ts`
+ * enforces: **a ladder is a stem plus a roman numeral**. So this reads the
+ * ids, which means a test asking for "two ranks of Sawpits" keeps working
+ * without a field in the data whose only reader was the tests.
+ *
+ * Decoding a numeral is the rules module's job (`ladderRank`), so there is
+ * one of it: the editor's validation and the tests read a ladder the same way
+ * or they disagree about what a ladder is.
+ */
+export const ladders = (() => {
+  const ranked: Array<[string, number, TechId]> = [];
+  for (const id of TECH_ORDER) {
+    const r = ladderRank(id);
+    if (r !== null) ranked.push([r.stem, r.rank, id]);
+  }
+  ranked.sort((a, b) => a[1] - b[1]);
+  const out: Record<string, TechId[]> = {};
+  for (const [stem, , id] of ranked) (out[stem] ??= []).push(id);
+  return out;
+})();
+
+/** Which ladder a technology is a rank of, if any. `TapPowerIII` → `TapPower`;
+ *  `Cartography` → undefined, because it is a major and not a rank. */
+export const ladderOf: Partial<Record<TechId, string>> = (() => {
+  const out: Partial<Record<TechId, string>> = {};
+  for (const [stem, ranks] of Object.entries(ladders)) for (const id of ranks) out[id] = stem;
+  return out;
+})();
+
+/** How many ranks of a ladder the player has finished — what `lineRank` used
+ *  to count, now that a rank is a technology like any other. */
+export const rankOf = (state: GameState, ladder: string): number =>
+  ladders[ladder].filter((id) => state.research.completed.includes(id)).length;
+
+/** The technology a ladder hangs off: rank I's first requirement. `null` for a
+ *  ladder rooted at nothing, which is a bug the tests are there to catch. */
+export const ladderParent = (ladder: string): TechId | null =>
+  TECHNOLOGIES[ladders[ladder][0]].requires[0] ?? null;
+
+/** The ladders whose ranks carry a BONUS — the 37 the old `line` field named,
+ *  as opposed to the three tome ladders (`Charter`, `Warband`, `Attunement`),
+ *  whose ranks are cover pages and keystones. */
+export const bonusLadders = Object.keys(ladders)
+  .filter((stem) => ladders[stem].every((id) => TECHNOLOGIES[id].kind === 'bonus'))
+  .sort();
+
+/**
+ * Research the first `rank` steps of a ladder — the replacement for the
  * `state.upgrades[line] = n` a levelled upgrade used to allow.
  *
  * Deliberately does NOT pull in the prerequisite chain the way `completeTech`
- * does. `effect()` counts a line's own completed ranks and asks nothing about
- * its parent, so pushing the ids alone is what ISOLATES the line under test:
- * recursing would hand every other era-1 line to the test for free and a
- * "Butchery adds +1" assertion would be measuring Tap Power as well.
+ * does. A ladder's effects are summed over its own completed ranks and ask
+ * nothing about its parent, so pushing the ids alone is what ISOLATES the
+ * ladder under test: recursing would hand every other era-1 ladder to the test
+ * for free and a "Butchery adds +1" assertion would be measuring Tap Power as
+ * well.
+ *
+ * It THROWS on a name it cannot find, because the alternative is the failure
+ * this whole helper exists to prevent: a renamed technology turning fifty-odd
+ * setup calls into no-ops and every assertion downstream into a tautology.
  */
-export const completeRanks = (state: GameState, line: TechLineId, rank: number): void => {
-  for (const id of TECH_LINES[line].slice(0, rank)) {
+export const completeRanks = (state: GameState, ladder: string, rank: number): void => {
+  const ranks = ladders[ladder];
+  if (ranks === undefined) {
+    throw new Error(`no rank ladder called "${ladder}" — the tree has `
+      + `${Object.keys(ladders).length}: ${Object.keys(ladders).sort().join(', ')}`);
+  }
+  for (const id of ranks.slice(0, rank)) {
     if (!state.research.completed.includes(id)) state.research.completed.push(id);
   }
 };

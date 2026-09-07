@@ -19,7 +19,7 @@ import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
   HarvestSourceId, HeroId,
-  LandmarkKind, RuinId, StoreSkuId, TechId, TechLineId, TerrainId, TomeId, TrainableId, UnitId,
+  LandmarkKind, RuinId, StoreSkuId, TechId, TerrainId, TomeId, TrainableId, UnitId,
   Wallet,
 } from '../state';
 
@@ -58,11 +58,6 @@ export interface TechnologyDef {
   cost: Wallet; // city currencies
   durationSeconds: number;
   requires: TechId[]; // tree edges — all must be completed first
-  /** Set on a MINOR rank; null on a major. Ranks of one line share it.
-   *  BEING RETIRED in favour of `effects`. */
-  line: TechLineId | null;
-  /** What one completed rank of this line adds. 0 on a major. */
-  effectPerRank: number;
   /** What this technology moves, and what it aims at — the declarative half
    *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
    *  Empty on anything that moves no number. */
@@ -88,9 +83,9 @@ export interface TechnologyDef {
 const DOC = (treeDoc as unknown as TechTreeDoc).technologies;
 
 /** File order, which the editor writes in reading order: book by book, then
- *  down the page and across it. That makes it RANK order inside a line too —
+ *  down the page and across it. That makes it RANK order inside a ladder too —
  *  a rank requires the one before it, and a requirement always sits higher up
- *  the page — so `TECH_LINES` can be derived from it rather than restated. */
+ *  the page. */
 export const TECH_ORDER: TechId[] = techIds(treeDoc as unknown as TechTreeDoc) as TechId[];
 
 /**
@@ -124,8 +119,6 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
       durationSeconds: node.seconds,
-      line: (node.line ?? null) as TechLineId | null,
-      effectPerRank: node.effectPerRank ?? 0,
       effects: node.effects ?? [],
       planned: node.planned === true,
     }];
@@ -916,35 +909,6 @@ export const ERA_UNLOCK_CELLS: Record<TomeId, number[]> = (() => {
   }
   return out;
 })();
-
-// ------------------------------------------------------------- tech lines
-
-/**
- * The ranks of each minor line, in order, DERIVED from `TECH_ORDER` rather
- * than restated.
- *
- * The list it replaces (`UPGRADE_ORDER`) was hand-written once and silently
- * went stale — Surveying was added, never listed, and so never drew in the
- * tree at all while a quest pointed the player straight at it. A second list
- * of the same names can only ever be a chance to forget one.
- */
-export const TECH_LINES: Record<TechLineId, TechId[]> = (() => {
-  const out = {} as Record<TechLineId, TechId[]>;
-  for (const id of TECH_ORDER) {
-    const line = TECHNOLOGIES[id].line;
-    if (line === null) continue;
-    (out[line] ??= []).push(id);
-  }
-  return out;
-})();
-
-/** Every line id, in the order the workbook authors them. */
-export const TECH_LINE_ORDER = Object.keys(TECH_LINES) as TechLineId[];
-
-/** The major technology a line hangs under — the first rank's requirement.
- *  Derived, so moving a line in the workbook moves its fan in the tree. */
-export const lineParent = (line: TechLineId): TechId | null =>
-  TECHNOLOGIES[TECH_LINES[line][0]].requires[0] ?? null;
 
 // -------------------------------------------------------------------- units
 

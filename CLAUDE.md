@@ -105,13 +105,13 @@ three ways (`tests/techTree.test.ts`).
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
-| a seasonal hero = one hero row + one banner row; what an era bar asks for in revealed cells (`Eras`) | a new tome (`TomeId` is a union), a new minor LINE, or a new effect hook for a line (`modifiers.ts`, `upgrades.ts`) |
-| **a whole new technology** — id, name, prose, glyph, kind, unlocks, price, clock, slot, requirements — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| a seasonal hero = one hero row + one banner row; what an era bar asks for in revealed cells (`Eras`) | a new tome (`TomeId` is a union) |
+| **a whole new technology** — id, name, prose, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
-| a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 | a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 
 ## Saves
@@ -159,11 +159,6 @@ than the build is rejected rather than downgraded.
   tap on the map.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a
   throttled background tab resolves correctly on return.
-- **An adjacency on a TIMER is priced when the timer starts and stored on the
-  thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`, and research
-  already did it): a neighbour that moves must never reprice a wait already
-  running. An adjacency on a RATE is computed on read. Neither is a modifier —
-  a positional fact belongs at the base stage.
 - **An adjacency on a TIMER is priced when the timer starts and stored on the
   thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`, and research
   already did it): a neighbour that moves must never reprice a wait already

@@ -47,13 +47,21 @@ export function availableWorkers(state: GameState): number {
 export const housedPopulation = (state: GameState): number =>
   Math.min(state.city.population, maxPopulation(state));
 
-/** Gold per minute ONE house pays: residents × the (TradeRoutes-boosted)
- *  rate, plus flat adjacency bonuses/penalties from its built neighbors.
- *  Empty (or fully crowded-out) houses pay nothing — clamped at 0. */
+/**
+ * Gold per minute ONE house pays: residents × the rate the tree has left it,
+ * plus flat adjacency bonuses and penalties from its built neighbours. Empty
+ * (or fully crowded-out) houses pay nothing — clamped at 0.
+ *
+ * The house is passed to the RATE as well as to the adjacency, which is what
+ * makes "+5% gold income at Housing" a thing a technology can say: an aimed
+ * effect reaches only the kind of building it names, and an unaimed one every
+ * roof. This is the one reader that knows which house is paying.
+ */
 export function houseGoldPerMinute(state: GameState, district: District): number {
   const residents = residentsOf(state, district);
   if (residents === 0) return 0;
-  return Math.max(0, residents * effectiveTaxRate(state) + districtAdjacency(state, district));
+  return Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
+    + districtAdjacency(state, district));
 }
 
 /** City-wide tax income, gold per minute, over every built house. */

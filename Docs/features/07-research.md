@@ -3,11 +3,11 @@
 > **Scope.** The research **system**: technologies, the three tomes and their
 > eras, the Knowledge currency that paces them, the Knowledge ↔ Stardust split,
 > the research screen, and spells as technologies. The **content** — every
-> node, the minor lines and the price bands — is
+> node, the rank ladders and the price bands — is
 > [`tech-tree.md`](tech-tree.md).
 >
 > **Status.** The tomes, the one-page-per-book flow chart with its era bars,
-> the minor rank lines, the Knowledge drip and the Stardust split are
+> the rank ladders, the Knowledge drip and the Stardust split are
 > **built**, and the shape is authored in `?dev=tree`
 > ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Designed, not built:
 > the centred node sheet (§5.4), the Gem finish on a running research (§1),
@@ -20,15 +20,15 @@
   district level, a unit, a terrain, a mechanic, or one numeric step.
 - **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
   `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name,
-  prose and glyph, its KIND and what it unlocks, its Gold, Knowledge and
-  seconds, its slot on its tome page and what it requires. There is no
-  `Technologies` sheet.
+  prose and glyph, its KIND, what it unlocks or what it moves, its Gold,
+  Knowledge and seconds, its slot on its tome page and what it requires. There
+  is no `Technologies` sheet.
 - **Every technology is one of three kinds**, and it says which:
 
 | Kind | What it does | Authored |
 |---|---|---|
 | **`unlock`** | opens content, and names it | fully — a dropdown per thing it opens |
-| **`bonus`** | a rank on a minor line: one number, `effectPerRank` | the line and the step; the HOOK is code |
+| **`bonus`** | moves numbers, and names them (`effects`) | fully — a picker per number it moves |
 | **`mechanic`** | what the sim reads by id — a cover page opening its book, `Conquest` bending the Knowledge rate | labelled only; the code does it |
 
 - **The technology says what it opens, and every gate is derived from that**
@@ -67,21 +67,39 @@
 | **Major** | unlocks content | expensive, long |
 | **Minor** | one numeric step; carries a roman numeral (`Sawpits I → II → III`) | cheap, short |
 
-- A minor **line** is a chain of ranks; each rank requires the one before.
-- **A line's rank N sits in era N.** Era N holds its own new majors, rank N of
-  every earlier line, and rank I of the lines it introduces.
-- A line's value = completed ranks × `effectPerRank` (`effect(state, line)`,
-  `src/sim/upgrades.ts`). Every rank of a line carries the same per-rank number.
-- Effects apply in one place, as a three-stage pipeline: base → completed
-  ranks → the modifier stack.
-- Scoped tap and worker yields (`TAP_YIELD_UPGRADES`, `WORKER_YIELD_UPGRADES`)
-  are lookup tables at the call site, keyed on tech ids.
+- A **rank ladder** is a chain of ranks; each rank requires the one before.
+  A ladder is a naming convention — a stem plus a roman numeral — not a field.
+- **A ladder's rank N sits in era N.** Era N holds its own new majors, rank N
+  of every earlier ladder, and rank I of the ladders it introduces.
+- A ladder may **ramp**: each rank carries its own value, so +1, +2, +3 is as
+  legal as +1, +1, +1.
 - A rank costs Gold, Knowledge and time like any other node. There are no
   instant purchases in the tree.
-- `TechLineId` is a union; a new line is code. The lines per tome are listed
-  in [`tech-tree.md`](tech-tree.md) §2–§4.
+- The ladders per tome are listed in [`tech-tree.md`](tech-tree.md) §2–§4.
 
-### 1.2 Planned nodes
+### 1.2 What a bonus moves
+
+A `bonus` names its effects, and each is four fields:
+
+| Field | What it says |
+|---|---|
+| `stat` | which number, from the registry (`src/sim/data/techEffectRules.ts`) |
+| `op` | `percent` or `flat` |
+| `value` | **signed**, in whole points for a percent — `-22` is −22% |
+| `target` | what it aims at: a district, a unit, a unit tag, a harvest source, a tome. Absent = every subject of that stat |
+
+- A total is the **sum over completed technologies** whose effects match
+  `(stat, target)`. An unaimed effect reaches every query of its stat; an aimed
+  one only its own target.
+- Effects apply in one place, as a three-stage pipeline: base → **the completed
+  technologies** (`src/sim/techEffects.ts`) → the modifier stack. Both the
+  middle stage and an empty stack are the exact identity.
+- A technology may carry several effects; most carry one.
+- **A new kind of bonus is data.** "+5% gold income at Housing" and "+8% at
+  Market" are one stat with two targets — no new code. A new *number* is code:
+  one registry entry plus the call site that owns it.
+
+### 1.3 Planned nodes
 
 - A row may carry `planned: true`: it is on the tree, researchable, and does
   nothing yet.
@@ -208,8 +226,8 @@
 | each **cleared ruin** | +2/h | +150 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
 | the **`Conquest`** technology | +3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
 | `SanctifiedRuins` | ×2 on the per-ruin drip | — | a `mechanic` |
-| `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` lines |
-| `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` line |
+| `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
+| `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
 | the **Conjunction** boon | — | +60 | `CONJUNCTION_BOONS[*].knowledge` (**OQ-12**) |
 | the **quest chain** | — | 500 across nine quests | `rewardKnowledge` (Quests sheet) |
@@ -322,7 +340,7 @@ Tap Power        +40%  →  +60%
 > A relic is what you wear. A spell is what you know.
 
 - A **spell node** is a Magic technology whose unlock grants a castable spell.
-- A spell's **power, radius and duration** are minor lines under its node.
+- A spell's **power, radius and duration** are rank ladders under its node.
 - A spell is discovered once and never gated again: no slot, no equip, no
   charges, no cooldown. Mana is the only thing between a known spell and a
   cast ([`08-magic.md`](08-magic.md) §1).
@@ -346,7 +364,7 @@ Tap Power        +40%  →  +60%
 |---|---|
 | `CastBlock` = `NotOwned` \| `NoActive` \| `NotAttuned` \| `NotEnoughMana` \| `InvalidTarget` | `NotDiscovered` \| `NotEnoughMana` \| `InvalidTarget` |
 | `castBlock` reads `ownsArtifact` and `isAttuned` | reads whether the discovering technology is complete |
-| scaling reads the relic's level | scaling reads `effect(state, <the spell's line>)` |
+| scaling reads the relic's level | scaling reads the spell ladder's own `effects` |
 | `ArtifactDef.active: ArtifactActive \| null` | deleted — `ArtifactActive` becomes a spell definition keyed by its technology |
 | — | a `Spells` sheet holds each spell's Mana cost |
 
@@ -385,11 +403,11 @@ Tap Power        +40%  →  +60%
 | Conquest drip | 3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
 | Conjunction Knowledge lump | 60 | `CONJUNCTION_BOONS[*].knowledge` |
 | Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
-| **A whole technology** — name, prose, glyph, kind, unlocks, Gold, Knowledge, seconds, tome, band, slot, requirements | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **A whole technology** — name, prose, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | What opens a band | 0 · 30 · 100 · 220 cells revealed | `Eras` sheet (`unlock_cells`) |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 | Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
-| `Scriveners` per rank | −5% research time | `tech-tree.json` (`effectPerRank`) |
+| `Scriveners` per rank | −5% research time | `tech-tree.json` (its own `effects`) |
 | A spell's Mana cost | per spell | `Spells` sheet *(designed)* |
 | Gems to finish a running research | undecided | *(designed)* |
 
@@ -419,8 +437,9 @@ Tap Power        +40%  →  +60%
   hand-written id lists that came with it (§1).
 - A district, unit or harvest source naming its own `required_tech`: the
   technology says what it opens, once (§1).
-- An editor that can author a new EFFECT. A `bonus` reaches a hook that
-  exists and a `mechanic` is read by id; both are code
+- An editor that can author a new STAT. A `bonus` may move any number the
+  registry declares, and aim it at anything that stat accepts, but the number
+  itself has to be read by code
   ([`../tech-tree-editor.md`](../tech-tree-editor.md) §8).
 - Exclusive branch picks.
 - A prerequisite that crosses tomes (§2).
@@ -432,7 +451,12 @@ Tap Power        +40%  →  +60%
 - Tomes found in ruins; a tome gated behind a ruin (§7).
 - A contested landmark that raises the Knowledge rate (§7).
 - A floating info card instead of a sheet (§5.4).
-- A general upgrade-scoping mechanism (§1.1).
+- A `mul` op beside `percent` and `flat`. Three of the hard-coded mechanics
+  multiply an inner term, and giving them an op would make the resolver's one
+  shape — `(base + Σflat) × (1 + Σpct)` — two shapes (§1.2).
+- A per-ladder HOOK in code — one union member and one call site per kind of
+  bonus. Replaced by the stat registry, which is what makes a new bonus data
+  (§1.2).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
 **OQ-59**, **OQ-69**. (**OQ-68** is retired: a band is not held by a keystone

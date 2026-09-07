@@ -1,8 +1,8 @@
 # The tech tree — every node, era by era
 
 > **Scope.** The **content** of the three tomes: every node, what each unlocks,
-> the minor lines, the price bands that pace them, and the effect hooks the
-> lines drive. The **system** — technologies, tomes, eras and the bars that
+> the rank ladders, the price bands that pace them, and the numbers those
+> ladders move. The **system** — technologies, tomes, eras and the bars that
 > open them, Knowledge, slots, the screen — is
 > [`07-research.md`](07-research.md); where a card SITS and what it requires is
 > [`../tech-tree-editor.md`](../tech-tree-editor.md).
@@ -10,9 +10,9 @@
 >
 > **Status.** Built: **180 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)),
-> priced to §5's bands, with every §6 effect hook in. **17 era-2/3 majors are on the
+> priced to §5's bands, with every §6 number wired. **17 era-2/3 majors are on the
 > tree flagged `planned`** — drawn, researchable, no effect yet (§7). **Nine
-> minor lines are designed, not built**, and are marked so in the tables.
+> ladders are designed, not built**, and are marked so in the tables.
 
 ## 1. Reading the tables
 
@@ -74,9 +74,9 @@
 | **Land Survey** *(planned)* | +1 influence radius on every district |
 | **Apprenticeships** *(planned)* | the Townhall trains two villagers at once |
 
-### 2.4 Civics minor lines
+### 2.4 Civics rank ladders
 
-| Line | Effect per rank | Ranks by era |
+| Ladder | Effect per rank | Ranks by era |
 |---|---|---|
 | **Tap Power I–V** | +1 per collect tap | I·II / III·IV / V |
 | **Trade Routes I–V** | +10% tax income | — / I·II / III·IV·V |
@@ -141,9 +141,9 @@
 | **Standards** *(planned)* | army power cap rises with military hall level |
 | **Conquest** | +3 Knowledge/h per cleared ruin, on top of the cleared rate ([`07-research.md`](07-research.md) §3) |
 
-### 3.4 Warfare minor lines
+### 3.4 Warfare rank ladders
 
-| Line | Effect per rank | Ranks by era |
+| Ladder | Effect per rank | Ranks by era |
 |---|---|---|
 | **Colours I–V** | +2 army power cap | I / II·III / IV·V |
 | **Shield Wall I–III** | +1 DEF to Melee units | I / II / III |
@@ -210,9 +210,9 @@
 | **Ley Storm** *(planned)* | once a day, cast a kingdom-wide +25% production window |
 | **Second Sanctum** | a second Sanctum may be built (`extra_count_tech` on the district) |
 
-### 4.4 Magic minor lines
+### 4.4 Magic rank ladders
 
-| Line | Effect per rank | Ranks by era |
+| Ladder | Effect per rank | Ranks by era |
 |---|---|---|
 | **Deep Wells I–V** | +10 max Mana | I·II / III·IV / V |
 | **Surveying I–II** | +1 Gold of reveal progress per tap on the fog | I / II |
@@ -261,43 +261,59 @@
   city's to earn; the onboarding test's Gold guarantee is scoped to the
   opening.
 
-## 6. Effects and hooks
+## 6. Effects
 
-### 6.1 Where a line hangs
+### 6.1 Where a ladder hangs
 
-- **Stopgap parents.** A line whose intended major is planned hangs off the
+- **Stopgap parents.** A ladder whose intended major is planned hangs off the
   nearest built major and moves when its own arrives: Deep Wells and
   Scriptorium under Consecration, Ley Taps and Wayposts under Cartography,
   Vigils under Scaling Tools, Pilgrimage under Sailing, Prospecting under
   Shipbuilding, Scriveners under Architecture, Cartage under Roadworks.
 - Every rank has a slot of its own on the page, so nothing limits how many
-  lines hang off one major any more; what a line still needs is a MAJOR at its
-  root, not another line's rank (`tests/upgrades.test.ts`).
+  ladders hang off one major any more; what a ladder still needs is a MAJOR at
+  its root, not another ladder's rank (`tests/upgrades.test.ts`).
 - Quest targets: `Surveyors` → `SurveyingII` (goal type `CompleteTech`; a rank
   implies the ones below it), `Attuned` → `Consecration`, `ArmedMen` →
   `Warrior`, `Mapmakers` → `Cartography`, `Architect` → `Architecture`
   ([`12-quests.md`](12-quests.md)).
 
-### 6.2 `ModifierStat` hooks
+### 6.2 The stats a ladder moves
 
-| Hook | Line(s) | Note |
+A `bonus` names a **stat** from the registry
+([`../../src/sim/data/techEffectRules.ts`](../../src/sim/data/techEffectRules.ts)),
+an `op`, a signed `value` and an optional `target`
+([`07-research.md`](07-research.md) §1.2). The registry is the list; each entry
+names the one call site that owns its number, and
+`tests/techTree.test.ts` refuses a stat nothing reads.
+
+| Stat | Ladder(s) | Note |
 |---|---|---|
+| `tapWorkSeconds` · `autoTapCooldown` | Tap Power, Quick Hands | |
+| `harvestUnitsPerStrike` | Sawpits, Irrigation, Scythes, Butchery, Stonecutting, Big Nets, Iron Picks | **aimed at a harvest source**, so two ladders on `Crops` simply sum. The tap and the crew both read it |
+| `workerStrikeUnits` | Worker Load | the crew only — deliberately not the tap |
+| `workerSpeed` | Cartage | |
 | `buildTime` | Carpentry | |
 | `researchTime` | Scriveners | fixed at research start ([`07-research.md`](07-research.md) §1) |
-| `workerSpeed` | Cartage | |
+| `salePrice` | Market Stall | **multiplier POINTS**, not a percentage of the level multiplier |
+| `taxRate` | Trade Routes | aimable at a kind of house; the shipped ladder is unaimed |
 | `manaCap` | Deep Wells | |
-| `claimCost` | Pilgrimage | |
-| `stardustYield` | Prospecting | |
+| `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
 | `knowledgeYield` | Scriptorium | |
-| per-source Knowledge / Mana terms | Ley Taps, Wayposts, Vigils | |
+| `activeCost` | Resonance | |
+| `revealCost` · `fogRevealPerTap` · `discoverRadius` | Pitons, Surveying, Farsight | `discoverRadius` is every building's fog-**discover** radius, never its reveal radius. A rank landing re-applies every standing building's radii inside `advance()` |
+| `claimCost` | Pilgrimage | |
 | `armyCap` | Colours | adds to the cap the halls provide; nothing to a kingdom with no hall |
 | `recruitCost` | Muster Drill | |
-| `supplyCost` | Rations | |
-| `haulLoss` | Bearers | floors at one fifth |
-| `heroXp` | Drillmaster | |
-| `delveSpeed` | Pathfinders | |
-| unit ATK/DEF by tag, disadvantage penalty | Shield Wall, Fletching, Barding, Warhorns, Manoeuvre, Tactics | `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party`. Manoeuvre never softens past neutral |
-| `discoverRadius` | Farsight | every building's fog-**discover** radius, never its reveal radius. A rank landing re-applies every standing building's radii inside `advance()` |
+| `unitAtk` · `unitDef` | Warhorns, Fletching, Shield Wall, Barding | **aimed at a unit tag**, so a Cavalry reads its two tags plus the unaimed term once. `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party` |
+| `typeDisadvantage` | Manoeuvre, Tactics | never softens past neutral |
+| `supplyCost` · `delveSpeed` · `haulLoss` | Rations, Pathfinders, Bearers | `haulLoss` floors at one fifth |
+| `heroXp` · `stardustYield` | Drillmaster, Prospecting | |
+| `populationCapacity` | — | aimable at a district; nothing in the tree moves it yet |
+
+Every one of these is ALSO a `ModifierStat` where a modifier can reach it
+(`src/sim/modifiers.ts`), resolved in the same helper — three stages, one
+place.
 
 Stats the tree moves: build time · research time · unit ATK/DEF by tag · Mana
 capacity · Mana regen · discover radius · influence radius · worker move speed
@@ -325,7 +341,7 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
 - **Nothing a band depends on requires a planned node**, and the editor warns
   when anything requires one at all: a card waiting on a no-op is waiting on
   nothing.
-- **No minor line hangs off one.** Lines keep their stopgap parents (§6.1)
+- **No rank ladder hangs off one.** Ladders keep their stopgap parents (§6.1)
   until their own major works.
 - `tests/research.test.ts` pins the exact set and all four rules.
 
@@ -344,8 +360,8 @@ Salvage, Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 | a technology's `gold` / `knowledge` / `seconds` | `?dev=tree` | one node |
 | `requires` | `?dev=tree` — drag, or click a connector to cut it | the shape |
 | `kind` and `unlocks` | `?dev=tree` | what the technology IS, and every gate derived from it |
-| a minor line's rank count | `?dev=tree` — add a rank | how many eras a line spans |
-| `effectPerRank` | `?dev=tree` | a line's step; `Scriveners` is the only Gold lever on the tree's pace |
+| a ladder's rank count | `?dev=tree` — add a rank | how many eras a ladder spans |
+| a rank's `effects` | `?dev=tree` | what it moves and by how much; `Scriveners` is the only Gold lever on the tree's pace |
 | `planned` | `?dev=tree` | whether a major is live |
 
 ## 9. Deliberately not in this design
@@ -353,7 +369,9 @@ Salvage, Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 - A fourth era as a redesign (rank IV of each spine is drawn sealed; era 4 is
   rows).
 - Exclusive picks — no node forecloses another.
-- A line longer than five ranks.
-- A minor line hanging off a planned major (§7).
+- A ladder longer than five ranks.
+- A rank ladder hanging off a planned major (§7).
+- A ladder whose ranks must all be worth the same step: each rank carries its
+  own value, so a ladder may ramp (§6.2).
 
 **Open questions:** **OQ-13**, **OQ-68**.

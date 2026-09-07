@@ -44,15 +44,17 @@ because they constrain what a *design* may ask for.
    consumer would shift every later roll for every existing player. Integer
    arithmetic, so it is bit-identical across engines and portable to a server.
 5. **The workbook is the source of truth for every NUMBER; the map editor is the
-   source of truth for the MAP.** Editing the generated balance JSON by hand is
-   silently overwritten.
+   source of truth for the MAP; `?dev=tree` for the TECH TREE.** Editing the
+   generated balance JSON by hand is silently overwritten.
 
 Two more that are design-visible:
 
-- **Effects resolve base → upgrade levels → modifier stack.** All adds summed,
-  then all muls multiplied; an empty stack is the bit-exact identity. **Upgrade
-  levels are not re-expressed as modifiers** — they are persisted as levels,
-  purchasable and priced on a curve, and converting them would buy nothing.
+- **Effects resolve base → the completed technologies → modifier stack.** The
+  tree's own stage sums what it aims at that number and is the exact identity
+  when it aims at nothing; then all adds summed, all muls multiplied, an empty
+  stack the bit-exact identity. **Neither a building level nor a researched
+  technology is re-expressed as a modifier** — a modifier is something that
+  happened to you and expires; both of those are facts about your kingdom.
 - **An additive save change needs no migrator.** Every module read is already
   defensive, so a new module key or a new optional field is a version bump.
   **Migrators exist only for renames, reshapes and semantic changes** — and a
@@ -335,14 +337,21 @@ was never saying anything.**
 **Where it lands.** **The whole technology came out of the workbook**
 (2026-09-07). The `Technologies` sheet is gone and so are the three id lists
 that shadowed it: a technology is one object in `tech-tree.json` — name, prose,
-glyph, kind, unlocks, Gold, Knowledge, seconds, tome, band, slot,
-requirements — authored in `?dev=tree`
+glyph, kind, unlocks, **what numbers it moves**, Gold, Knowledge, seconds,
+tome, band, slot, requirements — authored in `?dev=tree`
 ([`tech-tree-editor.md`](tech-tree-editor.md)), which can also CREATE one.
 `TechId` is that file's keys, so the type follows the data. A technology now
 says what it opens, so `Districts`, `Units` and `Harvest` lost their
-`required_tech` columns and every gate is derived. What the workbook still owns
-is every other number, including the `Eras` sheet — how many revealed cells
-each era bar asks for.
+`required_tech` columns and every gate is derived.
+
+A bonus followed (2026-09-07): the 37 minor `line`s and their per-line hooks
+are gone, and a technology carries `effects` — a `stat` from a registry, an
+`op`, a signed `value` and what it aims at. A kind of bonus nothing has yet is
+now a target rather than a call site; a new NUMBER is still code, one registry
+entry plus the reader that owns it.
+
+What the workbook still owns is every other number, including the `Eras`
+sheet — how many revealed cells each era bar asks for.
 
 **What is still undecided and does not block starting:** the band sizes
 (**OQ-62** — the three tomes will not want the same shape), the join thresholds

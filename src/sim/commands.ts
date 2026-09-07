@@ -391,11 +391,18 @@ function applyDueAt(
     }
     const finished = advanceResearch(state, t);
     out.completedResearch.push(...finished);
-    // Farsight widens what every STANDING building can see, not only the next
-    // one built — so a rank landing re-applies each district's fog radii. It
-    // happens here, inside the walk, because this is where the map is; and it
-    // is deterministic, so replay and stepped ticking discover the same cells.
-    if (finished.some((id) => TECHNOLOGIES[id].line === 'Farsight')) {
+    // A technology that widens sight widens what every STANDING building can
+    // see, not only the next one built — so one landing re-applies each
+    // district's fog radii. It happens here, inside the walk, because this is
+    // where the map is; and it is deterministic, so replay and stepped ticking
+    // discover the same cells.
+    //
+    // Keyed on the STAT rather than on Farsight by name: a second technology
+    // that moves `discoverRadius` — a different tome's, a later era's — needs
+    // this same sweep, and asking "does it move the radius?" is a question the
+    // data answers.
+    if (finished.some((id) => TECHNOLOGIES[id].effects.some(
+      (e) => e.stat === 'discoverRadius'))) {
       for (const d of state.city.districts) {
         if (d.state === 'Built') revealAroundDistrict(state, map, d);
       }

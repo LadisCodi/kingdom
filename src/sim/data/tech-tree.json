@@ -62,7 +62,6 @@
       "tome": "Civics", "era": 1, "row": 3, "col": 0,
       "requires": ["Forestry"],
       "gold": 75, "seconds": 20,
-      "line": "QuickHands", "effectPerRank": 0.05,
       "effects": [
         {"stat":"autoTapCooldown","op":"flat","value":-0.05}
       ]
@@ -73,7 +72,6 @@
       "tome": "Civics", "era": 1, "row": 3, "col": 1,
       "requires": ["Agriculture"],
       "gold": 120, "seconds": 20,
-      "line": "Irrigation", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
       ]
@@ -84,7 +82,6 @@
       "tome": "Civics", "era": 1, "row": 3, "col": 2,
       "requires": ["Market"],
       "gold": 100, "seconds": 20,
-      "line": "MarketStall", "effectPerRank": 0.05,
       "effects": [
         {"stat":"salePrice","op":"flat","value":0.05}
       ]
@@ -95,7 +92,6 @@
       "tome": "Civics", "era": 1, "row": 4, "col": 0,
       "requires": ["Forestry"],
       "gold": 50, "seconds": 20,
-      "line": "TapPower", "effectPerRank": 0.2,
       "effects": [
         {"stat":"tapWorkSeconds","op":"percent","value":20}
       ]
@@ -106,7 +102,6 @@
       "tome": "Civics", "era": 1, "row": 4, "col": 1,
       "requires": ["Forestry"],
       "gold": 200, "seconds": 20,
-      "line": "WorkerLoad", "effectPerRank": 1,
       "effects": [
         {"stat":"workerStrikeUnits","op":"flat","value":1}
       ]
@@ -117,7 +112,6 @@
       "tome": "Civics", "era": 1, "row": 4, "col": 2,
       "requires": ["Market"],
       "gold": 150, "seconds": 20,
-      "line": "TradeRoutes", "effectPerRank": 0.1,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
@@ -128,7 +122,6 @@
       "tome": "Civics", "era": 1, "row": 5, "col": 0,
       "requires": ["Saws"],
       "gold": 120, "seconds": 20,
-      "line": "Sawpits", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
       ]
@@ -139,7 +132,6 @@
       "tome": "Civics", "era": 1, "row": 5, "col": 1,
       "requires": ["Masonry"],
       "gold": 100, "seconds": 20,
-      "line": "Stonecutting", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
       ]
@@ -150,7 +142,6 @@
       "tome": "Civics", "era": 1, "row": 5, "col": 2,
       "requires": ["UrbanPlanning"],
       "gold": 60, "seconds": 20,
-      "line": "Carpentry", "effectPerRank": 0.05,
       "effects": [
         {"stat":"buildTime","op":"percent","value":-5}
       ]
@@ -161,7 +152,6 @@
       "tome": "Civics", "era": 2, "row": 6, "col": 0,
       "requires": ["CarpentryI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Carpentry", "effectPerRank": 0.05,
       "effects": [
         {"stat":"buildTime","op":"percent","value":-5}
       ]
@@ -180,7 +170,6 @@
       "tome": "Civics", "era": 2, "row": 6, "col": 2,
       "requires": ["IrrigationI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Irrigation", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
       ]
@@ -191,7 +180,6 @@
       "tome": "Civics", "era": 2, "row": 7, "col": 0,
       "requires": ["QuickHandsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "QuickHands", "effectPerRank": 0.05,
       "effects": [
         {"stat":"autoTapCooldown","op":"flat","value":-0.05}
       ]
@@ -202,7 +190,6 @@
       "tome": "Civics", "era": 2, "row": 7, "col": 1,
       "requires": ["MarketStallI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "MarketStall", "effectPerRank": 0.05,
       "effects": [
         {"stat":"salePrice","op":"flat","value":0.05}
       ]
@@ -213,7 +200,6 @@
       "tome": "Civics", "era": 2, "row": 7, "col": 2,
       "requires": ["SawpitsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Sawpits", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
       ]
@@ -224,7 +210,6 @@
       "tome": "Civics", "era": 2, "row": 8, "col": 0,
       "requires": ["TapPowerI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "TapPower", "effectPerRank": 0.2,
       "effects": [
         {"stat":"tapWorkSeconds","op":"percent","value":20}
       ]
@@ -235,7 +220,6 @@
       "tome": "Civics", "era": 2, "row": 8, "col": 1,
       "requires": ["StonecuttingI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Stonecutting", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
       ]
@@ -246,7 +230,6 @@
       "tome": "Civics", "era": 2, "row": 8, "col": 2,
       "requires": ["TradeRoutesI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "TradeRoutes", "effectPerRank": 0.1,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
@@ -264,7 +247,6 @@
       "tome": "Civics", "era": 2, "row": 9, "col": 1,
       "requires": ["WorkerLoadI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "WorkerLoad", "effectPerRank": 1,
       "effects": [
         {"stat":"workerStrikeUnits","op":"flat","value":1}
       ]
@@ -299,7 +281,6 @@
       "tome": "Civics", "era": 2, "row": 10, "col": 2,
       "requires": ["Farming"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Scythes", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
       ]
@@ -310,7 +291,6 @@
       "tome": "Civics", "era": 2, "row": 11, "col": 0,
       "requires": ["Mining"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "IronPicks", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}
       ]
@@ -321,7 +301,6 @@
       "tome": "Civics", "era": 2, "row": 11, "col": 1,
       "requires": ["Hunting"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Butchery", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
       ]
@@ -332,7 +311,6 @@
       "tome": "Civics", "era": 2, "row": 11, "col": 2,
       "requires": ["ScythesI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Scythes", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
       ]
@@ -343,7 +321,6 @@
       "tome": "Civics", "era": 2, "row": 12, "col": 0,
       "requires": ["IronPicksI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "IronPicks", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}
       ]
@@ -354,7 +331,6 @@
       "tome": "Civics", "era": 2, "row": 12, "col": 2,
       "requires": ["ButcheryI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Butchery", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
       ]
@@ -365,7 +341,6 @@
       "tome": "Civics", "era": 3, "row": 13, "col": 0,
       "requires": ["ButcheryII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Butchery", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
       ]
@@ -384,7 +359,6 @@
       "tome": "Civics", "era": 3, "row": 13, "col": 2,
       "requires": ["CarpentryII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Carpentry", "effectPerRank": 0.05,
       "effects": [
         {"stat":"buildTime","op":"percent","value":-5}
       ]
@@ -395,7 +369,6 @@
       "tome": "Civics", "era": 3, "row": 14, "col": 0,
       "requires": ["IrrigationII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Irrigation", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
       ]
@@ -406,7 +379,6 @@
       "tome": "Civics", "era": 3, "row": 14, "col": 1,
       "requires": ["IronPicksII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "IronPicks", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}
       ]
@@ -417,7 +389,6 @@
       "tome": "Civics", "era": 3, "row": 14, "col": 2,
       "requires": ["MarketStallII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "MarketStall", "effectPerRank": 0.05,
       "effects": [
         {"stat":"salePrice","op":"flat","value":0.05}
       ]
@@ -428,7 +399,6 @@
       "tome": "Civics", "era": 3, "row": 15, "col": 0,
       "requires": ["SawpitsII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Sawpits", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
       ]
@@ -439,7 +409,6 @@
       "tome": "Civics", "era": 3, "row": 15, "col": 1,
       "requires": ["QuickHandsII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "QuickHands", "effectPerRank": 0.05,
       "effects": [
         {"stat":"autoTapCooldown","op":"flat","value":-0.05}
       ]
@@ -450,7 +419,6 @@
       "tome": "Civics", "era": 3, "row": 15, "col": 2,
       "requires": ["ScythesII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Scythes", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
       ]
@@ -461,7 +429,6 @@
       "tome": "Civics", "era": 3, "row": 16, "col": 0,
       "requires": ["TapPowerII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "TapPower", "effectPerRank": 0.2,
       "effects": [
         {"stat":"tapWorkSeconds","op":"percent","value":20}
       ]
@@ -472,7 +439,6 @@
       "tome": "Civics", "era": 3, "row": 16, "col": 1,
       "requires": ["StonecuttingII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Stonecutting", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
       ]
@@ -483,7 +449,6 @@
       "tome": "Civics", "era": 3, "row": 16, "col": 2,
       "requires": ["TradeRoutesII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "TradeRoutes", "effectPerRank": 0.1,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
@@ -502,7 +467,6 @@
       "tome": "Civics", "era": 3, "row": 17, "col": 1,
       "requires": ["WorkerLoadII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "WorkerLoad", "effectPerRank": 1,
       "effects": [
         {"stat":"workerStrikeUnits","op":"flat","value":1}
       ]
@@ -568,7 +532,6 @@
       "tome": "Civics", "era": 3, "row": 20, "col": 0,
       "requires": ["TapPowerIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "TapPower", "effectPerRank": 0.2,
       "effects": [
         {"stat":"tapWorkSeconds","op":"percent","value":20}
       ]
@@ -579,7 +542,6 @@
       "tome": "Civics", "era": 3, "row": 20, "col": 1,
       "requires": ["QuickHandsIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "QuickHands", "effectPerRank": 0.05,
       "effects": [
         {"stat":"autoTapCooldown","op":"flat","value":-0.05}
       ]
@@ -590,7 +552,6 @@
       "tome": "Civics", "era": 3, "row": 20, "col": 2,
       "requires": ["MarketStallIII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "MarketStall", "effectPerRank": 0.05,
       "effects": [
         {"stat":"salePrice","op":"flat","value":0.05}
       ]
@@ -601,7 +562,6 @@
       "tome": "Civics", "era": 3, "row": 21, "col": 0,
       "requires": ["Roadworks"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Cartage", "effectPerRank": 0.05,
       "effects": [
         {"stat":"workerSpeed","op":"percent","value":5}
       ]
@@ -612,7 +572,6 @@
       "tome": "Civics", "era": 3, "row": 21, "col": 1,
       "requires": ["Architecture"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Scriveners", "effectPerRank": 0.05,
       "effects": [
         {"stat":"researchTime","op":"percent","value":-5}
       ]
@@ -623,7 +582,6 @@
       "tome": "Civics", "era": 3, "row": 21, "col": 2,
       "requires": ["TradeRoutesIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "TradeRoutes", "effectPerRank": 0.1,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
@@ -634,7 +592,6 @@
       "tome": "Civics", "era": 3, "row": 22, "col": 0,
       "requires": ["TapPowerIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "TapPower", "effectPerRank": 0.2,
       "effects": [
         {"stat":"tapWorkSeconds","op":"percent","value":20}
       ]
@@ -645,7 +602,6 @@
       "tome": "Civics", "era": 3, "row": 22, "col": 1,
       "requires": ["QuickHandsIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "QuickHands", "effectPerRank": 0.05,
       "effects": [
         {"stat":"autoTapCooldown","op":"flat","value":-0.05}
       ]
@@ -656,7 +612,6 @@
       "tome": "Civics", "era": 3, "row": 22, "col": 2,
       "requires": ["CartageI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Cartage", "effectPerRank": 0.05,
       "effects": [
         {"stat":"workerSpeed","op":"percent","value":5}
       ]
@@ -667,7 +622,6 @@
       "tome": "Civics", "era": 3, "row": 23, "col": 0,
       "requires": ["CartageII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Cartage", "effectPerRank": 0.05,
       "effects": [
         {"stat":"workerSpeed","op":"percent","value":5}
       ]
@@ -678,7 +632,6 @@
       "tome": "Civics", "era": 3, "row": 23, "col": 1,
       "requires": ["ScrivenersI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Scriveners", "effectPerRank": 0.05,
       "effects": [
         {"stat":"researchTime","op":"percent","value":-5}
       ]
@@ -689,7 +642,6 @@
       "tome": "Civics", "era": 3, "row": 23, "col": 2,
       "requires": ["TradeRoutesIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "TradeRoutes", "effectPerRank": 0.1,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
       ]
@@ -700,7 +652,6 @@
       "tome": "Civics", "era": 3, "row": 24, "col": 1,
       "requires": ["ScrivenersII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Scriveners", "effectPerRank": 0.05,
       "effects": [
         {"stat":"researchTime","op":"percent","value":-5}
       ]
@@ -749,7 +700,6 @@
       "tome": "Warfare", "era": 1, "row": 2, "col": 0,
       "requires": ["Spears"],
       "gold": 60, "seconds": 20,
-      "line": "Rations", "effectPerRank": 0.05,
       "effects": [
         {"stat":"supplyCost","op":"percent","value":-5}
       ]
@@ -760,7 +710,6 @@
       "tome": "Warfare", "era": 1, "row": 2, "col": 1,
       "requires": ["Warrior"],
       "gold": 60, "seconds": 20,
-      "line": "MusterDrill", "effectPerRank": 0.1,
       "effects": [
         {"stat":"recruitCost","op":"percent","value":-10}
       ]
@@ -771,7 +720,6 @@
       "tome": "Warfare", "era": 1, "row": 2, "col": 2,
       "requires": ["Warrior"],
       "gold": 60, "seconds": 20,
-      "line": "Colours", "effectPerRank": 2,
       "effects": [
         {"stat":"armyCap","op":"flat","value":2}
       ]
@@ -782,7 +730,6 @@
       "tome": "Warfare", "era": 1, "row": 3, "col": 0,
       "requires": ["Spears"],
       "gold": 60, "seconds": 20,
-      "line": "Warhorns", "effectPerRank": 1,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1}
       ]
@@ -793,7 +740,6 @@
       "tome": "Warfare", "era": 1, "row": 3, "col": 2,
       "requires": ["Warrior"],
       "gold": 60, "seconds": 20,
-      "line": "ShieldWall", "effectPerRank": 1,
       "effects": [
         {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Melee"}}
       ]
@@ -804,7 +750,6 @@
       "tome": "Warfare", "era": 2, "row": 4, "col": 0,
       "requires": ["ColoursI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Colours", "effectPerRank": 2,
       "effects": [
         {"stat":"armyCap","op":"flat","value":2}
       ]
@@ -823,7 +768,6 @@
       "tome": "Warfare", "era": 2, "row": 4, "col": 2,
       "requires": ["MusterDrillI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "MusterDrill", "effectPerRank": 0.1,
       "effects": [
         {"stat":"recruitCost","op":"percent","value":-10}
       ]
@@ -834,7 +778,6 @@
       "tome": "Warfare", "era": 2, "row": 5, "col": 0,
       "requires": ["ShieldWallI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "ShieldWall", "effectPerRank": 1,
       "effects": [
         {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Melee"}}
       ]
@@ -845,7 +788,6 @@
       "tome": "Warfare", "era": 2, "row": 5, "col": 1,
       "requires": ["RationsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Rations", "effectPerRank": 0.05,
       "effects": [
         {"stat":"supplyCost","op":"percent","value":-5}
       ]
@@ -856,7 +798,6 @@
       "tome": "Warfare", "era": 2, "row": 5, "col": 2,
       "requires": ["WarhornsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Warhorns", "effectPerRank": 1,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1}
       ]
@@ -906,7 +847,6 @@
       "tome": "Warfare", "era": 2, "row": 7, "col": 2,
       "requires": ["Archery"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Bearers", "effectPerRank": 0.03,
       "effects": [
         {"stat":"haulLoss","op":"flat","value":-0.03}
       ]
@@ -917,7 +857,6 @@
       "tome": "Warfare", "era": 2, "row": 8, "col": 0,
       "requires": ["Archery"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Fletching", "effectPerRank": 1,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
       ]
@@ -928,7 +867,6 @@
       "tome": "Warfare", "era": 2, "row": 8, "col": 1,
       "requires": ["Archery"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Drillmaster", "effectPerRank": 0.05,
       "effects": [
         {"stat":"heroXp","op":"percent","value":5}
       ]
@@ -939,7 +877,6 @@
       "tome": "Warfare", "era": 2, "row": 8, "col": 2,
       "requires": ["BearersI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Bearers", "effectPerRank": 0.03,
       "effects": [
         {"stat":"haulLoss","op":"flat","value":-0.03}
       ]
@@ -950,7 +887,6 @@
       "tome": "Warfare", "era": 2, "row": 9, "col": 0,
       "requires": ["FletchingI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Fletching", "effectPerRank": 1,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
       ]
@@ -961,7 +897,6 @@
       "tome": "Warfare", "era": 2, "row": 9, "col": 2,
       "requires": ["DrillmasterI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Drillmaster", "effectPerRank": 0.05,
       "effects": [
         {"stat":"heroXp","op":"percent","value":5}
       ]
@@ -972,7 +907,6 @@
       "tome": "Warfare", "era": 3, "row": 10, "col": 0,
       "requires": ["BearersII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Bearers", "effectPerRank": 0.03,
       "effects": [
         {"stat":"haulLoss","op":"flat","value":-0.03}
       ]
@@ -991,7 +925,6 @@
       "tome": "Warfare", "era": 3, "row": 10, "col": 2,
       "requires": ["ColoursII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Colours", "effectPerRank": 2,
       "effects": [
         {"stat":"armyCap","op":"flat","value":2}
       ]
@@ -1002,7 +935,6 @@
       "tome": "Warfare", "era": 3, "row": 11, "col": 0,
       "requires": ["FletchingII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Fletching", "effectPerRank": 1,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
       ]
@@ -1013,7 +945,6 @@
       "tome": "Warfare", "era": 3, "row": 11, "col": 1,
       "requires": ["DrillmasterII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Drillmaster", "effectPerRank": 0.05,
       "effects": [
         {"stat":"heroXp","op":"percent","value":5}
       ]
@@ -1024,7 +955,6 @@
       "tome": "Warfare", "era": 3, "row": 11, "col": 2,
       "requires": ["MusterDrillII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "MusterDrill", "effectPerRank": 0.1,
       "effects": [
         {"stat":"recruitCost","op":"percent","value":-10}
       ]
@@ -1035,7 +965,6 @@
       "tome": "Warfare", "era": 3, "row": 12, "col": 0,
       "requires": ["ShieldWallII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "ShieldWall", "effectPerRank": 1,
       "effects": [
         {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Melee"}}
       ]
@@ -1046,7 +975,6 @@
       "tome": "Warfare", "era": 3, "row": 12, "col": 1,
       "requires": ["RationsII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Rations", "effectPerRank": 0.05,
       "effects": [
         {"stat":"supplyCost","op":"percent","value":-5}
       ]
@@ -1057,7 +985,6 @@
       "tome": "Warfare", "era": 3, "row": 12, "col": 2,
       "requires": ["WarhornsII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Warhorns", "effectPerRank": 1,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1}
       ]
@@ -1106,7 +1033,6 @@
       "tome": "Warfare", "era": 3, "row": 14, "col": 2,
       "requires": ["ColoursIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Colours", "effectPerRank": 2,
       "effects": [
         {"stat":"armyCap","op":"flat","value":2}
       ]
@@ -1117,7 +1043,6 @@
       "tome": "Warfare", "era": 3, "row": 15, "col": 0,
       "requires": ["Cavalry"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Manoeuvre", "effectPerRank": 0.02,
       "effects": [
         {"stat":"typeDisadvantage","op":"flat","value":0.02}
       ]
@@ -1128,7 +1053,6 @@
       "tome": "Warfare", "era": 3, "row": 15, "col": 1,
       "requires": ["Cavalry"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Barding", "effectPerRank": 1,
       "effects": [
         {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Mounted"}}
       ]
@@ -1139,7 +1063,6 @@
       "tome": "Warfare", "era": 3, "row": 15, "col": 2,
       "requires": ["Cavalry"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Pathfinders", "effectPerRank": 0.1,
       "effects": [
         {"stat":"delveSpeed","op":"percent","value":-10}
       ]
@@ -1150,7 +1073,6 @@
       "tome": "Warfare", "era": 3, "row": 16, "col": 0,
       "requires": ["ManoeuvreI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Manoeuvre", "effectPerRank": 0.02,
       "effects": [
         {"stat":"typeDisadvantage","op":"flat","value":0.02}
       ]
@@ -1161,7 +1083,6 @@
       "tome": "Warfare", "era": 3, "row": 16, "col": 1,
       "requires": ["BardingI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Barding", "effectPerRank": 1,
       "effects": [
         {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Mounted"}}
       ]
@@ -1172,7 +1093,6 @@
       "tome": "Warfare", "era": 3, "row": 16, "col": 2,
       "requires": ["ColoursIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Colours", "effectPerRank": 2,
       "effects": [
         {"stat":"armyCap","op":"flat","value":2}
       ]
@@ -1183,7 +1103,6 @@
       "tome": "Warfare", "era": 3, "row": 17, "col": 0,
       "requires": ["ManoeuvreII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Manoeuvre", "effectPerRank": 0.02,
       "effects": [
         {"stat":"typeDisadvantage","op":"flat","value":0.02}
       ]
@@ -1194,7 +1113,6 @@
       "tome": "Warfare", "era": 3, "row": 17, "col": 1,
       "requires": ["BardingII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Barding", "effectPerRank": 1,
       "effects": [
         {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Mounted"}}
       ]
@@ -1205,7 +1123,6 @@
       "tome": "Warfare", "era": 3, "row": 17, "col": 2,
       "requires": ["PathfindersI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Pathfinders", "effectPerRank": 0.1,
       "effects": [
         {"stat":"delveSpeed","op":"percent","value":-10}
       ]
@@ -1216,7 +1133,6 @@
       "tome": "Warfare", "era": 3, "row": 18, "col": 1,
       "requires": ["PathfindersII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Pathfinders", "effectPerRank": 0.1,
       "effects": [
         {"stat":"delveSpeed","op":"percent","value":-10}
       ]
@@ -1287,7 +1203,6 @@
       "tome": "Magic", "era": 1, "row": 3, "col": 0,
       "requires": ["Consecration"],
       "gold": 60, "seconds": 20,
-      "line": "DeepWells", "effectPerRank": 10,
       "effects": [
         {"stat":"manaCap","op":"flat","value":10}
       ]
@@ -1298,7 +1213,6 @@
       "tome": "Magic", "era": 1, "row": 3, "col": 1,
       "requires": ["Cartography"],
       "gold": 60, "seconds": 20,
-      "line": "LeyTaps", "effectPerRank": 1,
       "effects": [
         {"stat":"manaPerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1309,7 +1223,6 @@
       "tome": "Magic", "era": 1, "row": 3, "col": 2,
       "requires": ["Consecration"],
       "gold": 250, "seconds": 20,
-      "line": "Resonance", "effectPerRank": 0.2,
       "effects": [
         {"stat":"activeCost","op":"percent","value":-20}
       ]
@@ -1320,7 +1233,6 @@
       "tome": "Magic", "era": 1, "row": 4, "col": 0,
       "requires": ["Consecration"],
       "gold": 60, "seconds": 20,
-      "line": "Scriptorium", "effectPerRank": 0.05,
       "effects": [
         {"stat":"knowledgeYield","op":"percent","value":5}
       ]
@@ -1331,7 +1243,6 @@
       "tome": "Magic", "era": 1, "row": 4, "col": 1,
       "requires": ["Cartography"],
       "gold": 150, "seconds": 20,
-      "line": "Surveying", "effectPerRank": 1,
       "effects": [
         {"stat":"fogRevealPerTap","op":"percent","value":100}
       ]
@@ -1342,7 +1253,6 @@
       "tome": "Magic", "era": 1, "row": 4, "col": 2,
       "requires": ["Cartography"],
       "gold": 60, "seconds": 20,
-      "line": "Wayposts", "effectPerRank": 1,
       "effects": [
         {"stat":"knowledgePerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1353,7 +1263,6 @@
       "tome": "Magic", "era": 2, "row": 5, "col": 0,
       "requires": ["DeepWellsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "DeepWells", "effectPerRank": 10,
       "effects": [
         {"stat":"manaCap","op":"flat","value":10}
       ]
@@ -1372,7 +1281,6 @@
       "tome": "Magic", "era": 2, "row": 5, "col": 2,
       "requires": ["LeyTapsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "LeyTaps", "effectPerRank": 1,
       "effects": [
         {"stat":"manaPerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1383,7 +1291,6 @@
       "tome": "Magic", "era": 2, "row": 6, "col": 0,
       "requires": ["ScriptoriumI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Scriptorium", "effectPerRank": 0.05,
       "effects": [
         {"stat":"knowledgeYield","op":"percent","value":5}
       ]
@@ -1394,7 +1301,6 @@
       "tome": "Magic", "era": 2, "row": 6, "col": 1,
       "requires": ["ResonanceI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Resonance", "effectPerRank": 0.2,
       "effects": [
         {"stat":"activeCost","op":"percent","value":-20}
       ]
@@ -1405,7 +1311,6 @@
       "tome": "Magic", "era": 2, "row": 6, "col": 2,
       "requires": ["SurveyingI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Surveying", "effectPerRank": 1,
       "effects": [
         {"stat":"fogRevealPerTap","op":"percent","value":100}
       ]
@@ -1424,7 +1329,6 @@
       "tome": "Magic", "era": 2, "row": 7, "col": 1,
       "requires": ["WaypostsI"],
       "gold": 525, "knowledge": 40, "seconds": 330,
-      "line": "Wayposts", "effectPerRank": 1,
       "effects": [
         {"stat":"knowledgePerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1466,7 +1370,6 @@
       "tome": "Magic", "era": 2, "row": 9, "col": 0,
       "requires": ["Sailing"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Pilgrimage", "effectPerRank": 0.05,
       "effects": [
         {"stat":"claimCost","op":"percent","value":-5}
       ]
@@ -1485,7 +1388,6 @@
       "tome": "Magic", "era": 2, "row": 9, "col": 2,
       "requires": ["ScalingTools"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Farsight", "effectPerRank": 1,
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
@@ -1496,7 +1398,6 @@
       "tome": "Magic", "era": 2, "row": 10, "col": 0,
       "requires": ["FarsightI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Farsight", "effectPerRank": 1,
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
@@ -1507,7 +1408,6 @@
       "tome": "Magic", "era": 2, "row": 10, "col": 1,
       "requires": ["ScalingTools"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Vigils", "effectPerRank": 1,
       "effects": [
         {"stat":"knowledgePerClearedRuin","op":"flat","value":1}
       ]
@@ -1518,7 +1418,6 @@
       "tome": "Magic", "era": 2, "row": 10, "col": 2,
       "requires": ["ScalingTools"],
       "gold": 250, "knowledge": 20, "seconds": 180,
-      "line": "Pitons", "effectPerRank": 0.1,
       "effects": [
         {"stat":"revealCost","op":"percent","value":-10}
       ]
@@ -1529,7 +1428,6 @@
       "tome": "Magic", "era": 2, "row": 11, "col": 0,
       "requires": ["PilgrimageI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Pilgrimage", "effectPerRank": 0.05,
       "effects": [
         {"stat":"claimCost","op":"percent","value":-5}
       ]
@@ -1540,7 +1438,6 @@
       "tome": "Magic", "era": 2, "row": 11, "col": 1,
       "requires": ["VigilsI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Vigils", "effectPerRank": 1,
       "effects": [
         {"stat":"knowledgePerClearedRuin","op":"flat","value":1}
       ]
@@ -1551,7 +1448,6 @@
       "tome": "Magic", "era": 2, "row": 11, "col": 2,
       "requires": ["PitonsI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
-      "line": "Pitons", "effectPerRank": 0.1,
       "effects": [
         {"stat":"revealCost","op":"percent","value":-10}
       ]
@@ -1562,7 +1458,6 @@
       "tome": "Magic", "era": 3, "row": 12, "col": 0,
       "requires": ["DeepWellsII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "DeepWells", "effectPerRank": 10,
       "effects": [
         {"stat":"manaCap","op":"flat","value":10}
       ]
@@ -1581,7 +1476,6 @@
       "tome": "Magic", "era": 3, "row": 12, "col": 2,
       "requires": ["FarsightII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Farsight", "effectPerRank": 1,
       "effects": [
         {"stat":"discoverRadius","op":"flat","value":1}
       ]
@@ -1592,7 +1486,6 @@
       "tome": "Magic", "era": 3, "row": 13, "col": 0,
       "requires": ["PilgrimageII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Pilgrimage", "effectPerRank": 0.05,
       "effects": [
         {"stat":"claimCost","op":"percent","value":-5}
       ]
@@ -1603,7 +1496,6 @@
       "tome": "Magic", "era": 3, "row": 13, "col": 1,
       "requires": ["LeyTapsII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "LeyTaps", "effectPerRank": 1,
       "effects": [
         {"stat":"manaPerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1614,7 +1506,6 @@
       "tome": "Magic", "era": 3, "row": 13, "col": 2,
       "requires": ["ScriptoriumII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Scriptorium", "effectPerRank": 0.05,
       "effects": [
         {"stat":"knowledgeYield","op":"percent","value":5}
       ]
@@ -1625,7 +1516,6 @@
       "tome": "Magic", "era": 3, "row": 14, "col": 0,
       "requires": ["WaypostsII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Wayposts", "effectPerRank": 1,
       "effects": [
         {"stat":"knowledgePerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1636,7 +1526,6 @@
       "tome": "Magic", "era": 3, "row": 14, "col": 1,
       "requires": ["VigilsII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Vigils", "effectPerRank": 1,
       "effects": [
         {"stat":"knowledgePerClearedRuin","op":"flat","value":1}
       ]
@@ -1678,7 +1567,6 @@
       "tome": "Magic", "era": 3, "row": 16, "col": 0,
       "requires": ["DeepWellsIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "DeepWells", "effectPerRank": 10,
       "effects": [
         {"stat":"manaCap","op":"flat","value":10}
       ]
@@ -1705,7 +1593,6 @@
       "tome": "Magic", "era": 3, "row": 17, "col": 0,
       "requires": ["DeepWellsIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "DeepWells", "effectPerRank": 10,
       "effects": [
         {"stat":"manaCap","op":"flat","value":10}
       ]
@@ -1716,7 +1603,6 @@
       "tome": "Magic", "era": 3, "row": 17, "col": 1,
       "requires": ["Shipbuilding"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "Prospecting", "effectPerRank": 0.05,
       "effects": [
         {"stat":"stardustYield","op":"percent","value":5}
       ]
@@ -1727,7 +1613,6 @@
       "tome": "Magic", "era": 3, "row": 17, "col": 2,
       "requires": ["Fishing"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
-      "line": "BigNets", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Fish"}}
       ]
@@ -1738,7 +1623,6 @@
       "tome": "Magic", "era": 3, "row": 18, "col": 0,
       "requires": ["ProspectingI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "Prospecting", "effectPerRank": 0.05,
       "effects": [
         {"stat":"stardustYield","op":"percent","value":5}
       ]
@@ -1749,7 +1633,6 @@
       "tome": "Magic", "era": 3, "row": 18, "col": 2,
       "requires": ["BigNetsI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
-      "line": "BigNets", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Fish"}}
       ]
@@ -1760,7 +1643,6 @@
       "tome": "Magic", "era": 3, "row": 19, "col": 0,
       "requires": ["ProspectingII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "Prospecting", "effectPerRank": 0.05,
       "effects": [
         {"stat":"stardustYield","op":"percent","value":5}
       ]
@@ -1771,7 +1653,6 @@
       "tome": "Magic", "era": 3, "row": 19, "col": 2,
       "requires": ["BigNetsII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
-      "line": "BigNets", "effectPerRank": 1,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Fish"}}
       ]

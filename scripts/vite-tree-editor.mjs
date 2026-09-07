@@ -69,9 +69,6 @@ const nodeBlock = (id, n) => {
   if ((n.unlocks ?? []).length > 0) {
     lines.push(`      "unlocks": [${n.unlocks.map((u) => json(u)).join(', ')}]`);
   }
-  if (n.line) {
-    lines.push(`      "line": ${json(n.line)}, "effectPerRank": ${n.effectPerRank ?? 0}`);
-  }
   // What the technology MOVES. One effect per line, because a diff of a
   // rebalanced ladder should read as the values that changed.
   if ((n.effects ?? []).length > 0) {

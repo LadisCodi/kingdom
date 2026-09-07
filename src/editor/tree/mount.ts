@@ -23,6 +23,10 @@ import {
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
 import {
+  TARGET_IDS, TECH_EFFECT_OPS, TECH_STATS, effectLabel,
+  type TargetKind, type TechEffectOp, type TechStat, type TechTarget,
+} from '../../sim/data/techEffectRules';
+import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, rowTops, ROW_GAP,
 } from '../../ui/research/layout';
 import type { TomeId } from '../../sim/state';
@@ -41,6 +45,10 @@ const el = <K extends keyof HTMLElementTagNameMap>(
 const DRAG_MIME = 'application/x-kingdom-tech';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV'];
+
+/** Every kind of target, in the registry's own order — the pickable half of
+ *  an effect's aim. */
+const TARGET_KINDS = Object.keys(TARGET_IDS) as TargetKind[];
 
 /** The kinds of thing an unlock can name, and where each list comes from. */
 const UNLOCK_TARGETS: Record<string, { ids: string[]; level?: true }> = {
@@ -518,7 +526,7 @@ export function mountEditor(): void {
     const node = doc.node(id) as PlacedTech;
     const bad = doc.validation.errors.some((e) => e.tech === id);
     const says = node.kind === 'bonus'
-      ? `+${node.effectPerRank ?? 0} ${node.line ?? '—'}`
+      ? (node.effects ?? []).map(effectLabel).join(', ') || '—'
       : node.kind === 'unlock'
         ? (node.unlocks ?? []).map(unlockLabel).join(', ') || '—'
         : 'read by the sim';
@@ -623,16 +631,7 @@ export function mountEditor(): void {
     });
     card.append(field('kind', kind));
     if (node.kind === 'unlock') card.append(unlockEditor(id, node));
-    if (node.kind === 'bonus') {
-      const line = select(doc.lines, node.line ?? doc.lines[0] ?? '');
-      line.addEventListener('change', () => { doc.update(id, { line: line.value }); refresh(); });
-      card.append(field('line', line));
-      card.append(field('per rank',
-        fraction(node.effectPerRank ?? 0, (v) => doc.update(id, { effectPerRank: v }))));
-      card.append(el('p', { class: 'ed-note' },
-        'A line’s HOOK is code (src/sim/upgrades.ts), so only a line that already '
-        + 'exists can be picked — and every rank of one is worth the same.'));
-    }
+    if (node.kind === 'bonus') card.append(effectEditor(id, node));
     if (node.kind === 'mechanic') {
       card.append(el('p', { class: 'ed-note' },
         'A mechanic is read by id in the sim — a cover page opening its book, '
@@ -724,6 +723,80 @@ export function mountEditor(): void {
     return box;
   }
 
+  /**
+   * What a technology MOVES: chips to cut, and one row to add another.
+   *
+   * The twin of `unlockEditor`, and the same shape for the same reason — a
+   * bonus is now authored the way an unlock always was, by naming a thing the
+   * game already has. The three selects narrow each other, so the row can only
+   * ever produce an effect the rules accept: the stat decides which ops make
+   * sense and what it can be aimed at, and the target kind decides what may be
+   * named. A stat with `targets: ['global']` hides the target row entirely.
+   */
+  function effectEditor(id: string, node: TechNodeDoc): HTMLElement {
+    const box = el('div', {});
+    const chips = el('div', { class: 'ed-chips' });
+    (node.effects ?? []).forEach((effect, i) => {
+      const chip = el('button', { class: 'ed-chip tre-cut is-unlock' }, effectLabel(effect), ' ✕');
+      chip.addEventListener('click', () => { doc.removeEffect(id, i); refresh(); });
+      chips.append(chip);
+    });
+    if ((node.effects ?? []).length === 0) {
+      chips.append(el('span', { class: 'ed-note' }, 'nothing — say what it moves'));
+    }
+
+    const stat = select(doc.stats, doc.stats[0]);
+    const op = select([...TECH_EFFECT_OPS], 'percent');
+    const value = el('input', {
+      class: 'tre-search tre-level', type: 'number', step: '0.01', value: '5',
+    });
+    const unit = el('span', { class: 'ed-note' });
+    const what = select([...TARGET_KINDS], 'global');
+    const target = select([], '');
+    const blurb = el('p', { class: 'ed-note' });
+
+    const syncTarget = (): void => {
+      const ids = TARGET_IDS[what.value as TargetKind];
+      target.replaceChildren(...ids.map((v) => el('option', { value: v }, v)));
+      target.hidden = ids.length === 0;
+    };
+    const syncStat = (): void => {
+      const def = TECH_STATS[stat.value as TechStat];
+      op.replaceChildren(...def.ops.map((v) => el('option', { value: v }, v)));
+      what.replaceChildren(...def.targets.map((v) => el('option', { value: v }, v)));
+      // A value carries its SIGN, so the label says so rather than the field
+      // pretending a reduction is a separate kind of thing.
+      unit.textContent = op.value === 'percent' ? 'points, signed' : `${def.unit}, signed`;
+      blurb.textContent = `${def.what} — read by ${def.reads}`;
+      syncTarget();
+    };
+    stat.addEventListener('change', syncStat);
+    op.addEventListener('change', syncStat);
+    what.addEventListener('change', syncTarget);
+    syncStat();
+
+    const add = el('button', { class: 'ed-btn' }, '+ effect');
+    add.addEventListener('click', () => {
+      const v = Number(value.value);
+      const kind = what.value as TargetKind;
+      doc.addEffect(id, {
+        stat: stat.value as TechStat,
+        op: op.value as TechEffectOp,
+        value: Number.isFinite(v) ? v : 0,
+        ...(kind === 'global'
+          ? {}
+          : { target: { [kind]: target.value } as unknown as TechTarget }),
+      });
+      refresh();
+    });
+
+    box.append(el('p', { class: 'ed-hint' }, 'Moves (click to cut)'), chips,
+      el('div', { class: 'tre-unlock-add' }, stat, op, value, unit),
+      el('div', { class: 'tre-unlock-add' }, what, target, add),
+      blurb);
+    return box;
+  }
+
   function problems(): HTMLElement {
     const { errors, warnings } = doc.validation;
     const box = el('div', { class: 'ed-card' },
@@ -806,28 +879,12 @@ export function mountEditor(): void {
   /**
    * A whole number: Gold, Knowledge, seconds, a building level. Rounded,
    * because none of those has a fraction and a stray `.5` in a price is a
-   * price nobody meant.
+   * price nobody meant. An effect's VALUE is not one of these — `−0.05`
+   * seconds off the auto-tap is a real bonus, so that field steps by 0.01.
    */
   function number(value: number, commit: (v: number) => void): HTMLInputElement {
     const node = el('input', { class: 'tre-search', type: 'number', value: String(value) });
     node.addEventListener('change', () => { commit(Math.round(Number(node.value))); refresh(); });
-    return node;
-  }
-
-  /**
-   * A line's step, which is NOT whole: +0.1 is +10% tax income and +0.05 is
-   * −0.05 seconds between auto-taps. Rounding this was quietly turning every
-   * fractional bonus into nothing at all.
-   */
-  function fraction(value: number, commit: (v: number) => void): HTMLInputElement {
-    const node = el('input', {
-      class: 'tre-search', type: 'number', step: '0.01', value: String(value),
-    });
-    node.addEventListener('change', () => {
-      const v = Number(node.value);
-      commit(Number.isFinite(v) ? v : 0);
-      refresh();
-    });
     return node;
   }
 

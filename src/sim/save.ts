@@ -12,7 +12,7 @@
 // keep running in real time).
 
 import {
-  GAME_VERSION, OFFLINE_CAP_HOURS, RUINS, SAVE_VERSION, TECHNOLOGIES, TECH_LINES,
+  GAME_VERSION, OFFLINE_CAP_HOURS, RUINS, SAVE_VERSION, TECHNOLOGIES,
   tomeCoverPage,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
@@ -27,7 +27,7 @@ import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
   type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
-  type PayerProfile, type StoreSkuId, type TechLineId, type TomeId,
+  type PayerProfile, type StoreSkuId, type TomeId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -88,6 +88,33 @@ interface Migration {
   to: number;
   migrate: (modules: Record<string, any>) => void;
 }
+
+/**
+ * The levelled UPGRADE lines a save at version 23 could contain, and how many
+ * ranks each had when v24 turned them into technologies.
+ *
+ * **Frozen on purpose.** It describes a save written in the past, not the tree
+ * of today: it used to read the live `TECH_LINES`, so cutting a ladder in
+ * `?dev=tree` silently changed what an old save restored, and deleting the
+ * `line` field would have deleted the migrator's only map. A migrator is
+ * history — the shape of the world it reads stopped moving the day it shipped.
+ *
+ * No `SAVE_VERSION` bump: the saved shape (`Completed: string[]`) is unchanged.
+ */
+const LEGACY_UPGRADE_LINES: Record<string, number> = {
+  Barding: 3, Bearers: 3, BigNets: 3, Butchery: 3, Carpentry: 3, Cartage: 3,
+  Colours: 5, DeepWells: 5, Drillmaster: 3, Farsight: 3, Fletching: 3,
+  IronPicks: 3, Irrigation: 3, LeyTaps: 3, Manoeuvre: 3, MarketStall: 4,
+  MusterDrill: 3, Pathfinders: 3, Pilgrimage: 3, Pitons: 2, Prospecting: 3,
+  QuickHands: 5, Rations: 3, Resonance: 2, Sawpits: 3, Scriptorium: 3,
+  Scriveners: 3, Scythes: 3, ShieldWall: 3, Stonecutting: 3, Surveying: 2,
+  TapPower: 5, TradeRoutes: 5, Vigils: 3, Warhorns: 3, Wayposts: 3,
+  WorkerLoad: 3,
+};
+
+/** Rank ids are the stem plus a roman numeral, and five is the longest ladder
+ *  any of the lines above ever had. */
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
 /** Ordered, gap-free, append-only. A version bump with no reshape needs NO
  *  entry here — the defensive readers below already default the new field. */
@@ -151,7 +178,7 @@ const MIGRATIONS: readonly Migration[] = [
     //
     // `Upgrades: { TapPower: 3 }` becomes three completed techs,
     // `TapPowerI/II/III`. Ranks complete in order, so level N maps to the
-    // first N ids of the line and `lineRank` reads back exactly what the
+    // first N ids of the ladder and the tree reads back exactly what the
     // player had bought. A player mid-flight keeps every level they paid
     // for, and pays no research time for them a second time.
     to: 24,
@@ -163,10 +190,17 @@ const MIGRATIONS: readonly Migration[] = [
       if (levels !== undefined) {
         const completed = research.Completed ?? (research.Completed = []);
         for (const [line, level] of Object.entries(levels)) {
-          const ranks = TECH_LINES[line as TechLineId];
-          if (ranks === undefined) continue; // a line this build no longer has
-          for (const id of ranks.slice(0, level)) {
-            if (!completed.includes(id)) completed.push(id);
+          const ranks = LEGACY_UPGRADE_LINES[line];
+          if (ranks === undefined) continue; // a line that save's build had and this one does not
+          for (let i = 0; i < Math.min(level, ranks); i++) {
+            const id = `${line}${ROMAN[i]}`;
+            // Filtered against TODAY's tree, because a technology may have
+            // been renamed or cut in `?dev=tree` since. An id nothing has is
+            // dropped rather than carried: `load` filters it anyway, and a
+            // migrator that writes junk makes every later one harder to read.
+            if (TECHNOLOGIES[id as TechId] !== undefined && !completed.includes(id)) {
+              completed.push(id);
+            }
           }
         }
         delete research.UpgradeLevels;
@@ -690,7 +724,7 @@ export function deserialize(
     state.research = {
       // Filtered against the build: a technology the tree no longer has (one
       // deleted in `?dev=tree`) would otherwise sit in `completed` for ever,
-      // counted by `lineRank` and indexed by anything that trusts the list.
+      // summed into every total and indexed by anything that trusts the list.
       completed: ((researchDto.Completed ?? []) as TechId[])
         .filter((id) => TECHNOLOGIES[id] !== undefined),
       active: ((researchDto.Active ?? []) as

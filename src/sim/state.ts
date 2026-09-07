@@ -6,7 +6,6 @@
 import { DISTRICTS } from './data/definitions';
 // Imported for its KEYS, which are the technology ids (see TechId below).
 import techTree from './data/tech-tree.json';
-import { TECH_LINE_IDS } from './data/techTreeRules';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
 
@@ -101,15 +100,6 @@ export interface PayerState {
  */
 export type TechId = keyof typeof techTree.technologies;
 
-/**
- * Every minor line, DERIVED from the one list of them.
- *
- * It used to be a second copy of that list, hand-written here — the same
- * mistake the `TechId` union was: a line added to the code and not to the
- * union does not compile, and a line in the union that nothing reads is a
- * rank that quietly pays nothing.
- */
-export type TechLineId = typeof TECH_LINE_IDS[number];
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;

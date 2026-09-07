@@ -40,8 +40,8 @@ export type TechUnlock =
 /**
  * What a technology IS, in one word.
  *
- * `unlock` opens content and says which (`unlocks`). `bonus` is a rank on a
- * minor line and moves one number (`line`, `effectPerRank`). `mechanic` is
+ * `unlock` opens content and says which (`unlocks`). `bonus` moves numbers and
+ * says which (`effects`). `mechanic` is
  * everything the CODE reads by id — a cover page opening its book, `Conquest`
  * bending the Knowledge rate — which is the one kind whose effect the editor
  * cannot author, only label.
@@ -77,16 +77,6 @@ export interface TechNodeDoc {
   seconds: number;
   /** `kind: 'unlock'` only. */
   unlocks?: TechUnlock[];
-  /** `kind: 'bonus'` only. The line is a `TechLineId`: which HOOK the number
-   *  reaches is code (`src/sim/upgrades.ts`), so a new line is a code change
-   *  and this may only name one that already exists.
-   *
-   *  BEING RETIRED in favour of `effects` — while both are present the file
-   *  says the same thing twice on purpose, so the two can be proved equal
-   *  before the sim changes which one it reads
-   *  (`tests/techEffects.test.ts`). */
-  line?: string | null;
-  effectPerRank?: number;
   /** `kind: 'bonus'` only: what this technology moves, and what it aims at
    *  (`techEffectRules.ts`). A stat, an op, a signed value and a target. */
   effects?: TechEffect[];
@@ -118,28 +108,34 @@ export interface TechTreeValidation {
 export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic'];
 
 /**
- * Every minor LINE the game has, as values rather than a type.
+ * A RANK LADDER is a naming convention, not a field: a stem plus a roman
+ * numeral — `SawpitsI`, `SawpitsII`, `SawpitsIII`.
  *
- * `TechLineId` is derived from this list (`src/sim/state.ts`), so there is one
- * of it — and the editor can offer a line the moment the code knows about it,
- * rather than only once some technology already carries one. A line's HOOK is
- * still a call site (`effect(state, 'X')` in `src/sim/`), which is why adding
- * one is a code change and this array is where that change starts.
+ * It used to be a `line` field naming a hook in code, which is why adding a
+ * kind of bonus was a code change. A technology now says what it moves in its
+ * own `effects`, so a ladder is only the thing the PAGE needs it to be: a
+ * chain of cards, each requiring the one above. This reads that chain off the
+ * ids, and nothing else in the file records it.
+ *
+ * The numeral is DECODED rather than matched against a list of suffixes,
+ * because `IV` ends with `V` and suffix matching would read the fourth rank as
+ * the fifth.
  */
-export const TECH_LINE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad', 'Sawpits',
-  'Butchery', 'Irrigation', 'Scythes', 'Surveying',
-  'Pitons', 'MarketStall', 'TradeRoutes', 'Stonecutting',
-  'BigNets', 'IronPicks', 'Resonance', 'Carpentry',
-  'Scriveners', 'Cartage', 'DeepWells', 'LeyTaps',
-  'Wayposts', 'Scriptorium', 'Vigils', 'Pilgrimage',
-  'Prospecting', 'Colours', 'MusterDrill', 'Rations',
-  'Drillmaster', 'Bearers', 'Pathfinders', 'ShieldWall',
-  'Fletching', 'Barding', 'Warhorns', 'Manoeuvre',
-  'Farsight',
-] as const;
+const ROMAN = /^(.+?)([IVX]+)$/;
+const ROMAN_DIGIT: Record<string, number> = { I: 1, V: 5, X: 10 };
 
-/** Bands per book. Era 4 is the sealed one. */
+/** `SawpitsIII` → `{ stem: 'Sawpits', rank: 3 }`; `Cartography` → `null`. */
+export function ladderRank(id: string): { stem: string; rank: number } | null {
+  const m = ROMAN.exec(id);
+  if (m === null) return null;
+  let rank = 0;
+  for (let i = 0; i < m[2].length; i++) {
+    const here = ROMAN_DIGIT[m[2][i]];
+    rank += here < (ROMAN_DIGIT[m[2][i + 1]] ?? 0) ? -here : here;
+  }
+  return { stem: m[1], rank };
+}
+
 export const MAX_ERA = 4;
 
 /** One to three requirements — past three the flow stops reading as a flow,
@@ -481,7 +477,6 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   for (const id of all) {
     const node = nodes[id];
     const unlocks = node.unlocks ?? [];
-    const line = node.line ?? null;
     if (!TECH_KINDS.includes(node.kind)) {
       errors.push({
         message: `${id} is a "${node.kind}" — a technology is one of ${TECH_KINDS.join(', ')}`,
@@ -496,23 +491,12 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
           tech: id,
         });
       }
-      if (line !== null) {
-        errors.push({ message: `${id} unlocks content AND carries the line ${line}`, tech: id });
-      }
     } else if (node.kind === 'bonus') {
-      if (line === null || line === '') {
-        errors.push({ message: `${id} is a bonus with no line`, tech: id });
-      } else if (!(TECH_LINE_IDS as readonly string[]).includes(line)) {
-        // A line nothing reads is a rank the player pays for and nothing
-        // collects. Adding one is a code change (`TECH_LINE_IDS`, and the
-        // call site that owns the number).
-        errors.push({
-          message: `${id} is on the line "${line}", which the game does not have`,
-          tech: id,
-        });
-      }
-      if ((node.effectPerRank ?? 0) === 0) {
-        errors.push({ message: `${id} is a bonus worth nothing a rank`, tech: id });
+      // A bonus that moves nothing is a card the player pays for and nothing
+      // collects — the failure the `line` field used to make impossible by
+      // being mandatory, and `effects` inherits the duty.
+      if ((node.effects ?? []).length === 0) {
+        errors.push({ message: `${id} is a bonus that moves no number`, tech: id });
       }
       if (unlocks.length > 0) {
         errors.push({ message: `${id} is a bonus and also unlocks content`, tech: id });
@@ -522,9 +506,6 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         errors.push({
           message: `${id} is a mechanic and also unlocks ${unlockLabel(unlocks[0])}`, tech: id,
         });
-      }
-      if (line !== null) {
-        errors.push({ message: `${id} is a mechanic and also carries the line ${line}`, tech: id });
       }
     }
     for (const unlock of unlocks) {
@@ -550,9 +531,9 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
 
   // ---- what a technology moves ------------------------------------------
   //
-  // Checked wherever `effects` is present, whatever the kind, so the field
-  // cannot rot while it coexists with `line`. Once the lines are gone, a
-  // `bonus` will be required to carry at least one.
+  // Checked wherever `effects` is present, whatever the kind, so a stray one
+  // on an `unlock` or a `mechanic` is caught too rather than silently summed.
+  // A `bonus` is required to carry at least one, above.
   for (const id of all) {
     const node = nodes[id];
     for (const effect of node.effects ?? []) {
@@ -567,29 +548,43 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
   }
 
-  // ---- a line climbs in order, and by the same step each time ------------
+  // ---- a bonus ladder climbs in order, without a gap ----------------------
+  //
+  // Rank II must REQUIRE rank I, or the ladder is not a chain down the page:
+  // two cards sharing a name with no edge between them, each buyable on its
+  // own. And the numerals must run `I…n`, because `SawpitsI` then
+  // `SawpitsIII` reads as a three-rank ladder missing its middle everywhere a
+  // stem gets grouped.
+  //
+  // Scoped to BONUSES, which is the scope the `line` field had. The three
+  // tome ladders — `CharterI…IV` and its siblings — share the naming and are
+  // deliberately not chains: a keystone gates its era and hangs off that
+  // era's own requirements, not off the keystone before it.
+  //
+  // What is NOT a rule any more: that every rank be worth the same step. A
+  // ladder may ramp (+1, +2, +3), because each rank carries its own value
+  // instead of the whole line being priced off rank I's.
+  const bonusRanks = new Map<string, Map<number, string>>();
   for (const id of all) {
-    const line = nodes[id].line ?? null;
-    if (line === null) continue;
-    const ranks = all.filter((t) => (nodes[t].line ?? null) === line);
-    const i = ranks.indexOf(id);
-    // The order is the file's, which is reading order, and `lineRank` counts
-    // completed ranks off it — so a rank taken out of turn would credit the
-    // wrong number of steps.
-    if (i > 0 && !(nodes[id].requires ?? []).includes(ranks[i - 1])) {
-      errors.push({
-        message: `${id} does not require ${ranks[i - 1]}, the rank before it`,
-        tech: id,
-      });
-    }
-    // `effect()` multiplies the completed rank count by the FIRST rank's
-    // number, so a rank worth something different would be quietly ignored.
-    if (i > 0 && (nodes[id].effectPerRank ?? 0) !== (nodes[ranks[0]].effectPerRank ?? 0)) {
-      errors.push({
-        message: `${id} is worth ${nodes[id].effectPerRank} a rank but ${ranks[0]} is worth `
-          + `${nodes[ranks[0]].effectPerRank} — a line's ranks are all the same size`,
-        tech: id,
-      });
+    if (nodes[id].kind !== 'bonus') continue;
+    const r = ladderRank(id);
+    if (r === null) continue;
+    const stem = bonusRanks.get(r.stem) ?? new Map<number, string>();
+    stem.set(r.rank, id);
+    bonusRanks.set(r.stem, stem);
+  }
+  for (const [stem, ranks] of bonusRanks) {
+    const top = Math.max(...ranks.keys());
+    for (let n = 1; n <= top; n++) {
+      const id = ranks.get(n);
+      if (id === undefined) {
+        errors.push({ message: `the ${stem} ladder reaches ${top} but has no rank ${n}` });
+        continue;
+      }
+      const above = ranks.get(n - 1);
+      if (above !== undefined && !(nodes[id].requires ?? []).includes(above)) {
+        errors.push({ message: `${id} does not require ${above}, the rank before it`, tech: id });
+      }
     }
   }
 

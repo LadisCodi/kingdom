@@ -1,11 +1,14 @@
 // EVERY NUMBER A LADDER MOVES, FROZEN — the safety net for retiring the 37
 // minor lines in favour of declarative effects.
 //
-// A technology's bonus is about to stop being `line` + `effectPerRank` read by
-// one hard-coded call site and become `{ stat, op, value, target }` summed by
-// one resolver. That is a rewrite of ~30 arithmetic expressions, and the whole
-// risk is a number quietly moving: a mis-targeted effect, a percent divided in
-// the wrong place, an expression re-associated while it was being edited.
+// A technology's bonus stopped being `line` + `effectPerRank` read by one
+// hard-coded call site and became `{ stat, op, value, target }` summed by one
+// resolver. That was a rewrite of ~30 arithmetic expressions, and the whole
+// risk was a number quietly moving: a mis-targeted effect, a percent divided
+// in the wrong place, an expression re-associated while it was being edited.
+//
+// Written once against the tree as it shipped, and every assertion since has
+// run against those frozen values.
 //
 // So this walks every ladder, rank by rank, and records **the numbers a player
 // can actually see** — what a tap owes, what a house pays, how long a build
@@ -27,7 +30,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  DELVE, HARVEST, LANDMARKS, RUINS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
+  DELVE, HARVEST, LANDMARKS, RUINS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
 import { maxArmyPower, trainCost } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
@@ -46,9 +49,11 @@ import {
 } from '../src/sim/upgrades';
 import { addHeroXp } from '../src/sim/heroes';
 import { grantArtifact, normaliseSlots } from '../src/sim/artifacts';
-import type { GameState, HarvestSourceId, TechLineId } from '../src/sim/state';
+import type { GameState, HarvestSourceId } from '../src/sim/state';
 import { advance } from '../src/sim/commands';
-import { addBuilt, completeRanks, freshGame, fund, map, reveal, T0 } from './helpers';
+import {
+  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, reveal, T0,
+} from './helpers';
 
 const FIXTURE = new URL('./goldenEffects.json', import.meta.url);
 const WRITING = process.env.KINGDOM_GOLDEN === 'write';
@@ -196,10 +201,10 @@ function probe(state: GameState): Record<string, number> {
 
 /** What one ladder moves, rank by rank: only the probes that differ from its
  *  own rank-0 baseline. */
-function ladderDiffs(line: TechLineId): Record<string, Record<string, number>> {
+function ladderDiffs(line: string): Record<string, Record<string, number>> {
   const baseline = probe(probeState());
   const out: Record<string, Record<string, number>> = {};
-  for (let rank = 1; rank <= TECH_LINES[line].length; rank++) {
+  for (let rank = 1; rank <= ladders[line].length; rank++) {
     const state = probeState();
     completeRanks(state, line, rank);
     const after = probe(state);
@@ -214,7 +219,7 @@ function ladderDiffs(line: TechLineId): Record<string, Record<string, number>> {
 
 const golden = (): Record<string, Record<string, Record<string, number>>> => {
   const out: Record<string, Record<string, Record<string, number>>> = {};
-  for (const line of TECH_LINE_ORDER) out[line] = ladderDiffs(line);
+  for (const line of bonusLadders) out[line] = ladderDiffs(line);
   return out;
 };
 
@@ -240,17 +245,27 @@ describe('every number a ladder moves', () => {
   // have anywhere.
   it('has every ladder move at least one number', () => {
     const now = golden();
-    const inert = TECH_LINE_ORDER.filter((line) => {
-      const top = String(TECH_LINES[line].length);
+    const inert = bonusLadders.filter((line) => {
+      const top = String(ladders[line].length);
       return Object.keys(now[line][top] ?? {}).length === 0;
     });
     expect(inert, 'these ladders move nothing at full rank').toEqual([]);
   });
 
-  it('names a technology for every ladder it froze', () => {
-    for (const line of TECH_LINE_ORDER) {
-      for (const id of TECH_LINES[line]) {
-        expect(TECHNOLOGIES[id].line, `${id} left the ${line} ladder`).toBe(line);
+  // The fixture is keyed by LADDER, and a ladder is now a naming convention
+  // rather than a field, so this is what keeps the keys meaning what they
+  // meant when they were frozen: the same stems, each with the same ranks
+  // under it. A renamed or re-lengthened ladder fails here, by name, instead
+  // of silently freezing a different set of numbers under an old key.
+  it('still has every ladder it froze, at the length it froze it', () => {
+    const was = JSON.parse(readFileSync(FIXTURE, 'utf8')) as
+      Record<string, Record<string, unknown>>;
+    for (const [line, ranks] of Object.entries(was)) {
+      expect(ladders[line], `the ${line} ladder is gone`).toBeDefined();
+      expect(ladders[line], `the ${line} ladder changed length`)
+        .toHaveLength(Object.keys(ranks).length);
+      for (const id of ladders[line]) {
+        expect(TECHNOLOGIES[id].kind, `${id} is no longer a bonus`).toBe('bonus');
       }
     }
   });

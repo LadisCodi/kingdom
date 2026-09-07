@@ -26,6 +26,7 @@ import {
 import { knowledgePerHour } from '../sim/mana';
 import { resourceDiscoveryKey } from '../sim/discovery';
 import { unlockLabel } from '../sim/data/techTreeRules';
+import { effectLabel } from '../sim/data/techEffectRules';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
@@ -70,14 +71,23 @@ function visibility(state: GameState, id: TechId): Visibility {
  * An `unlock` says it itself — `unlocks` is authored on the technology
  * (`?dev=tree`), so this reads it rather than deriving it back out of the
  * gates, and it covers the things a gate list cannot: a harvest source, a
- * terrain, one more of a building. Anything else falls back to its own prose,
- * which is what a minor rank and a mechanic have. The card clamps it to three
- * lines in CSS rather than cutting words here.
+ * terrain, one more of a building.
+ *
+ * A `bonus` uses its PROSE, not its `effects`, even though the effects are
+ * right there and machine-readable. The registry's blurbs are written in the
+ * units a value is authored in — "seconds of work one tap is worth" — so
+ * generating from them gives "+20% seconds of work one tap is worth" where a
+ * designer wrote "Every tap is worth a fifth more work". The generated line is
+ * the FALLBACK, for a card whose prose has not been written yet: better than
+ * an empty card, and visibly not the finished copy.
  */
 function effectLine(id: TechId): string {
   const def = TECHNOLOGIES[id];
   if (def.kind === 'unlock' && def.unlocks.length > 0) {
     return `Unlocks ${def.unlocks.map(unlockLabel).join(', ')}`;
+  }
+  if (def.description.trim() === '' && def.effects.length > 0) {
+    return def.effects.map(effectLabel).join(', ');
   }
   return def.description;
 }

@@ -32,8 +32,8 @@ export type Unlock =
  * gates interleaved, as authored) then units, matching the sequence players
  * already see.
  *
- * A MINOR RANK unlocks nothing here, and that is correct: what it gives is its
- * own numeric effect, which the info panel reads off `effectPerRank`.
+ * A BONUS unlocks nothing here, and that is correct: what it gives is the
+ * numbers it moves, which the card reads off its own `effects`.
  */
 export function techUnlocks(id: TechId): Unlock[] {
   const unlocks: Unlock[] = [];

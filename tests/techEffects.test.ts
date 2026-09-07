@@ -1,35 +1,29 @@
-// The declarative resolver, proved against the thing it replaces.
+// The declarative resolver: the registry's rules, the arithmetic, and the aim.
 //
-// While `line`/`effectPerRank` and `effects` both exist, the file says what a
-// bonus does twice — on purpose. This is the moment to prove the two agree,
-// because it is the only moment both are readable: after the readers swap over
-// there is nothing left to compare against.
-//
-// So the parity block below writes each reader's expression BOTH ways and
-// asserts `toBe` — bit equality, not `toBeCloseTo`. A percentage is authored
-// in whole points and divided per effect for exactly this reason: `5/100`
-// three times is bit-identical to `3 * 0.05`, while `15/100` is a different
-// double.
+// The one thing here that is a CHOICE and not an implementation detail is that
+// a percentage is authored in whole points and divided PER EFFECT, before the
+// sum — `5/100` three times is bit-identical to `3 * 0.05`, while `15/100` is
+// a different double. That is what let the shipped numbers stay exactly where
+// they were while a designer authors `-22`, so it is asserted with `toBe`
+// rather than `toBeCloseTo` below, and it must stay that way.
 
 import { describe, expect, it } from 'vitest';
-import {
-  DELVE, FOG, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
-} from '../src/sim/data/definitions';
+import { TECHNOLOGIES } from '../src/sim/data/definitions';
 import {
   TECH_STATS, TECH_STAT_IDS, effectLabel, effectProblems, effectKey,
 } from '../src/sim/data/techEffectRules';
 import {
   techFlat, techFlatAimed, techMultiplier, techTotals, techValue,
 } from '../src/sim/techEffects';
-import { effect } from '../src/sim/upgrades';
-import type { GameState } from '../src/sim/state';
-import { completeRanks, freshGame } from './helpers';
+import { effectiveTaxRate } from '../src/sim/upgrades';
+import type { GameState, TechId } from '../src/sim/state';
+import { bonusLadders, completeRanks, freshGame, ladders } from './helpers';
 
 /** A kingdom holding every rank of every ladder — the state that makes a
- *  disagreement between the two vocabularies as loud as it can be. */
+ *  mis-aimed or double-counted effect as loud as it can be. */
 function maxed(): GameState {
   const state = freshGame();
-  for (const line of TECH_LINE_ORDER) completeRanks(state, line, TECH_LINES[line].length);
+  for (const ladder of bonusLadders) completeRanks(state, ladder, ladders[ladder].length);
   return state;
 }
 
@@ -145,90 +139,59 @@ describe('the resolver', () => {
   });
 });
 
-// THE PARITY BLOCK. Each case is one reader's expression, written both ways.
-// When a reader is swapped over in the next stage, its `after` half here is
-// the line that goes in — so a wrong stat or a wrong target fails before any
-// call site moves.
-describe('the two vocabularies agree, number for number', () => {
-  const at = (ranks: number) => {
-    const state = freshGame();
-    for (const line of TECH_LINE_ORDER) {
-      completeRanks(state, line, Math.min(ranks, TECH_LINES[line].length));
-    }
-    return state;
-  };
-
-  for (const ranks of [0, 1, 2, 3, 4, 5]) {
-    it(`at ${ranks} rank(s) of every ladder`, () => {
-      const s = at(ranks);
-      // the thumb and the crew
-      expect(techValue(s, 'tapWorkSeconds', TAP.workSeconds))
-        .toBe(TAP.workSeconds * (1 + effect(s, 'TapPower')));
-      expect(techValue(s, 'autoTapCooldown', TAP.collectCooldownSeconds))
-        .toBe(TAP.collectCooldownSeconds - effect(s, 'QuickHands'));
-      for (const [source, line] of [
-        ['Forest', 'Sawpits'], ['Meat', 'Butchery'], ['Stone', 'Stonecutting'],
-        ['Fish', 'BigNets'], ['MountainIron', 'IronPicks'],
-      ] as const) {
-        const spec = HARVEST[source];
-        expect(techValue(s, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: source }))
-          .toBe(spec.unitsPerStrike + effect(s, line));
-      }
-      // Crops is the one cell two ladders reach.
-      expect(techValue(s, 'harvestUnitsPerStrike', HARVEST.Crops.unitsPerStrike,
-        { harvest: 'Crops' }))
-        .toBe(HARVEST.Crops.unitsPerStrike + effect(s, 'Irrigation') + effect(s, 'Scythes'));
-      expect(techFlat(s, 'workerStrikeUnits')).toBe(effect(s, 'WorkerLoad'));
-      expect(techMultiplier(s, 'workerSpeed')).toBe(1 + effect(s, 'Cartage'));
-
-      // the city
-      expect(techValue(s, 'buildTime', 1)).toBe(1 - effect(s, 'Carpentry'));
-      expect(techValue(s, 'researchTime', 1)).toBe(1 - effect(s, 'Scriveners'));
-      expect(techValue(s, 'salePrice', 1.5)).toBe(1.5 + effect(s, 'MarketStall'));
-      expect(techValue(s, 'taxRate', TAXES.goldPerPopulationPerMinute))
-        .toBe(TAXES.goldPerPopulationPerMinute * (1 + effect(s, 'TradeRoutes')));
-
-      // magic and the clock
-      expect(techValue(s, 'manaCap', MANA.baseCap)).toBe(MANA.baseCap + effect(s, 'DeepWells'));
-      expect(techFlat(s, 'manaPerClaimedLandmark')).toBe(effect(s, 'LeyTaps'));
-      expect(techFlat(s, 'knowledgePerClaimedLandmark')).toBe(effect(s, 'Wayposts'));
-      expect(techFlat(s, 'knowledgePerClearedRuin')).toBe(effect(s, 'Vigils'));
-      expect(techMultiplier(s, 'knowledgeYield')).toBe(1 + effect(s, 'Scriptorium'));
-      expect(techValue(s, 'activeCost', 10)).toBe(10 * (1 - effect(s, 'Resonance')));
-
-      // the fog
-      expect(techValue(s, 'revealCost', 320)).toBe(320 * (1 - effect(s, 'Pitons')));
-      expect(techValue(s, 'fogRevealPerTap', FOG.goldPerTap))
-        .toBe(FOG.goldPerTap * (1 + effect(s, 'Surveying')));
-      expect(techValue(s, 'discoverRadius', 2)).toBe(2 + effect(s, 'Farsight'));
-      expect(techValue(s, 'claimCost', 500)).toBe(500 * (1 - effect(s, 'Pilgrimage')));
-
-      // the army
-      expect(techValue(s, 'armyCap', 12)).toBe(12 + effect(s, 'Colours'));
-      expect(techValue(s, 'recruitCost', 1)).toBe(1 - effect(s, 'MusterDrill'));
-      expect(techFlat(s, 'unitAtk')).toBe(effect(s, 'Warhorns'));
-      expect(techFlatAimed(s, 'unitAtk', { unitTag: 'Distance' })).toBe(effect(s, 'Fletching'));
-      expect(techFlatAimed(s, 'unitDef', { unitTag: 'Melee' })).toBe(effect(s, 'ShieldWall'));
-      expect(techFlatAimed(s, 'unitDef', { unitTag: 'Mounted' })).toBe(effect(s, 'Barding'));
-      expect(techFlat(s, 'typeDisadvantage')).toBe(effect(s, 'Manoeuvre'));
-
-      // the delve
-      expect(techValue(s, 'supplyCost', 1)).toBe(1 - effect(s, 'Rations'));
-      expect(techValue(s, 'delveSpeed', 60_000)).toBe(60_000 * (1 - effect(s, 'Pathfinders')));
-      expect(techValue(s, 'haulLoss', DELVE.failHaulLoss))
-        .toBe(DELVE.failHaulLoss - effect(s, 'Bearers'));
-      expect(techValue(s, 'heroXp', 100)).toBe(100 * (1 + effect(s, 'Drillmaster')));
-      expect(techMultiplier(s, 'stardustYield')).toBe(1 + effect(s, 'Prospecting'));
-    });
-  }
-
-  it('gives every ladder in the file an effect that says the same thing', () => {
-    for (const line of TECH_LINE_ORDER) {
-      for (const id of TECH_LINES[line]) {
+// The parity block that lived here proved, expression by expression, that
+// each reader's new form equalled its `effect(state, 'Line')` form at 0 to 5
+// ranks of every ladder. Both halves were needed to write it, so it went when
+// `effect()` did — its job was the crossing, and the crossing is done. The
+// golden fixture in `tests/goldenEffects.test.ts` is the surviving proof that
+// no number moved.
+describe('every rank in the shipped tree carries a legal effect', () => {
+  it('gives every rank of every ladder exactly one effect the rules accept', () => {
+    for (const ladder of bonusLadders) {
+      for (const id of ladders[ladder]) {
         const effects = TECHNOLOGIES[id].effects;
-        expect(effects, `${id} carries a line but moves nothing`).toHaveLength(1);
+        expect(effects, `${id} is a bonus but moves nothing`).toHaveLength(1);
         expect(effectProblems(effects[0]), effectLabel(effects[0])).toEqual([]);
       }
+    }
+  });
+});
+
+// THE GESTURE THE WHOLE SYSTEM EXISTS FOR: a bonus nobody wrote code for.
+//
+// "+5% gold income from houses" was the example that started this — a kind of
+// bonus the tree could not express, because a line's hook was a call site and
+// nothing read a per-building tax rate. Nothing in the shipped tree aims at a
+// district yet, so this authors one the way `?dev=tree` would, on a
+// technology that already exists, and asks the SIM what a house now pays.
+//
+// It mutates `TECHNOLOGIES` and puts it back, which is the price of testing a
+// technology that is not in the file. Worth paying once: without it the
+// district half of `effectiveTaxRate` is only exercised by a call site passing
+// a target no effect ever names, which proves the plumbing and not the water.
+describe('a bonus the code has never heard of', () => {
+  it('taxes one kind of roof and leaves the rest alone', () => {
+    const host = 'TradeRoutesV' satisfies TechId;
+    const was = TECHNOLOGIES[host].effects;
+    try {
+      TECHNOLOGIES[host].effects = [
+        { stat: 'taxRate', op: 'percent', value: 5, target: { district: 'Housing' } },
+      ];
+      const state = freshGame();
+      const before = effectiveTaxRate(state, 'Housing');
+      // Pushed, not `completeTech`ed: that recurses the requirements, and
+      // four of `TradeRoutes`' own earlier ranks lift the rate for every roof
+      // — which would drown the one thing under test.
+      state.research.completed.push(host);
+
+      // The house it names pays more…
+      expect(effectiveTaxRate(state, 'Housing')).toBeCloseTo(before * 1.05, 9);
+      // …and nothing else does: not another building, and not the unaimed
+      // rate the daily reward and the city-wide estimate read.
+      expect(effectiveTaxRate(state, 'Townhall')).toBe(before);
+      expect(effectiveTaxRate(state)).toBe(before);
+    } finally {
+      TECHNOLOGIES[host].effects = was;
     }
   });
 });

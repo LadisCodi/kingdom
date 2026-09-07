@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, SAVE_VERSION, TECHNOLOGIES } from '../src/sim/data/definitions';
+import { HARVEST, SAVE_VERSION, TAP } from '../src/sim/data/definitions';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
 import { getWallet, parseCoordKey } from '../src/sim/state';
 import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
-import { effect, lineRank } from '../src/sim/upgrades';
+import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
+  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, reveal, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -217,14 +217,16 @@ describe('save versions', () => {
 
     const restored = deserialize(save, map, T0)!;
     expect(restored).not.toBeNull();
-    expect(lineRank(restored, 'TapPower')).toBe(3);
-    expect(lineRank(restored, 'Resonance')).toBe(1);
+    expect(rankOf(restored, 'TapPower')).toBe(3);
+    expect(rankOf(restored, 'Resonance')).toBe(1);
     // Exactly the ranks paid for, and not one more.
     expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
     expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
-    // And the effect the player had actually bought still reaches the sim
-    // (TapPower buys tap DURATION, +20% a rank, so three ranks are +60%).
-    expect(effect(restored, 'TapPower')).toBeCloseTo(3 * TECHNOLOGIES.TapPowerI.effectPerRank, 6);
+    // And the effect the player had actually bought still reaches the SIM —
+    // asserted on the number, not on the tree, because that is the whole
+    // point of restoring the ranks. TapPower buys tap DURATION at +20% a
+    // rank, so three ranks turn 10 seconds into 16.
+    expect(tapWorkSeconds(restored)).toBeCloseTo(TAP.workSeconds * 1.6, 6);
   });
 
   // v25: tomes have cover pages, granted rather than researched. A save from
