@@ -93,7 +93,7 @@ each has an answer, or has one waiting in a doc.
 | **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. Give it a job or delete the field. | [`10`](features/10-heroes.md) §9 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §9 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
-| **H5** | **Adjacency is one rule** against thirteen districts. Pure data, and downstream of a bounded plot. | needs **OQ-1**, then **OQ-48** |
+| **H5** | **Adjacency is one rule** against eighteen districts, and now the ONLY thing that guides a layout (OQ-1 closed: build anywhere revealed). Pure data. | needs **OQ-48** |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
 | **H7** | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
@@ -216,10 +216,9 @@ TABLE** — Gold cost on a growth curve, effect linear in the level, and no
   `upgradeDistrict`-shaped. Plus **one call site per Wonder** — `harvest.ts:88`,
   `mana.ts:61`, `upgrades.ts:157` — which is the honest bound on the set size
   (§7.1).
-- **It raises the price of leaving OQ-1 open.** An endless ladder on a *placed*
-  building with a deliberately oversized footprint is only a decision while
-  ground is scarce — so this is the third thing waiting on a bounded plot, after
-  adjacency v2 (OQ-48) and expansions.
+- **What its oversized footprint costs, now the plot is unbounded** (OQ-1
+  closed 2026-09-07): the fog that revealed the ground, and the adjacency the
+  footprint displaces (OQ-48). Not the ground itself.
 - **Size:** days, whenever it is scheduled.
 
 ### Step 1 · The tome rework — **the shape is closed; the authoring is not**
@@ -353,7 +352,7 @@ question** rather than a content question, which is why it comes early despite
 belonging to a post-prototype structure.
 
 - **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §6.
-- **Blocked on: OQ-1.** And once it lands, **OQ-48** (adjacency v2) becomes worth
+- **OQ-1 closed 2026-09-07 — the plot is not bounded.** **OQ-48** (adjacency v2) is worth
   doing and is the best design-depth-per-hour in the repository.
 - **Also do:** let the save record which *scope* a thing is in. **Cheap now,
   impossible later** — the save is the only artefact that cannot be changed
@@ -476,7 +475,7 @@ their systems.
   ([`features/buildings.md`](features/buildings.md) §4.11); next is step 5,
   adjacency v2.
 - **Blocked on:** nothing for steps 1–4 (harness, goods, workshops, levels
-  6–7); **OQ-48** for adjacency v2; **OQ-1** and **OQ-71** for Harmony; the
+  6–7); **OQ-48** for adjacency v2; the
   banner's home (`14-monetization.md` §2.1) for the Tavern.
 - **Size:** weeks; steps 2–4 alone are about two.
 

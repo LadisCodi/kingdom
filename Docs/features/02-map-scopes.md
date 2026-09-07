@@ -12,7 +12,7 @@
 
 | Layer | What it is | Authority | Verb | Lifetime |
 |---|---|---|---|---|
-| **Your province** | authored, **identical for every player**, bounded plot, square grid | client | build, tap, harvest | permanent, inviolable |
+| **Your province** | authored, **identical for every player**, square grid, buildable wherever it is revealed | client | build, tap, harvest | permanent, inviolable |
 | **Temporary provinces** | event maps, PvE, compressed scale, square grid | client | the same verbs, inside a window | disposable |
 | **The world map** | shared **hex lattice**, outposts not cities | **server** for claims, **client** for fog | send, claim, contest | permanent, contestable |
 
@@ -22,9 +22,8 @@
   procedural province generator.
 - 1,470 cells; the whole fog costs **28,517,245 Gold** across the 1,466 that
   are priced.
-- The buildable plot is **bounded** (§6). Adjacency rules depend on it (OQ-48).
-- Plot growth comes in **authored increments** — an expansion block, not a
-  tile — priced in Gold and earned outside the province (§5).
+- The buildable plot is **the revealed province** (§6): no bound, no expansion
+  block. Room is bought by paying the fog.
 - Square grid with its three distance metrics
   ([`01-map-and-fog.md`](01-map-and-fog.md) §1).
 
@@ -172,7 +171,6 @@ The outer scope feeds the inner one.
 | The world map pays | Which lands in |
 |---|---|
 | **3★ relic ingredients** — its exclusive output | the collection arc, whose passives improve the province economy |
-| **Plot expansions** | a bigger province |
 | **Knowledge cap** — contested landmarks raise it | research, per [`07-research.md`](07-research.md) §7 |
 | Resources the province cannot produce | province sinks |
 
@@ -185,13 +183,18 @@ The outer scope feeds the inner one.
   rather than in the authored province. Same rarity logic as the 3★
   ingredients.
 
-## 6. Plot bound and save shape
+## 6. The plot, and the save shape
 
-- **The buildable area is bounded in data** — a `city.maxBuildDistance` or a
-  buildable flag on the plot. A balance number, not a refactor (OQ-1).
-- The province fog stays as it is; the far ring pays **content access**, not
-  more buildable tiles. Ruins and landmarks sit at distance 3–12; the far cells
-  are mostly mountain and water, which are not buildable.
+- **The buildable plot is the revealed province.** There is no bound on it, no
+  ring and no expansion to buy: a building goes on any cell the player has
+  paid the fog for ([`05-city-and-districts.md`](05-city-and-districts.md) §4).
+- **What guides a layout is adjacency, not permission** — a neighbour pays or
+  charges ([`03-economy.md`](03-economy.md) §3.1). A placement can be better
+  or worse; none is illegal.
+- So the fog is the only thing that gates ground, which keeps one price on one
+  thing: **paying the fog is what buys room.**
+- Ruins and landmarks sit at distance 3–12, and the far cells are mostly
+  mountain and water, which are not buildable anyway.
 - **The save says which scope a thing is in.**
 - The guild siege lives on the world map ([`15-social.md`](15-social.md) §6).
 - This is larger than the `regions: Record<RegionId, RegionState>` reshape and
@@ -224,5 +227,5 @@ Each is playable without the ones after it.
 - Reusing `grid.ts` for the lattice (§1.3).
 - Anything multi-region beyond the existing `regionId` discriminator.
 
-**Open questions:** OQ-1, OQ-2, OQ-3, OQ-4, OQ-5, OQ-38, OQ-65, OQ-66, OQ-67 in
+**Open questions:** OQ-2, OQ-3, OQ-4, OQ-5, OQ-38, OQ-65, OQ-66, OQ-67 in
 [`../open-questions.md`](../open-questions.md).

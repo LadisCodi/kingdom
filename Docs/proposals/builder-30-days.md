@@ -316,8 +316,10 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 - Everything above is a row on the `Adjacency` sheet if the sheet grows two
   columns: `stat` and `magnitude`, alongside today's Gold/min. OQ-48 is this
   decision.
-- The plot is bounded, so adjacency competes with Harmony for ground. That is
-  intended: the city is a puzzle again at TH8.
+- **Superseded 2026-09-07 (OQ-1):** the plot is NOT bounded — a building goes
+  anywhere revealed — so adjacency does not compete with Harmony for ground.
+  It guides a layout by paying and charging, and nothing refuses. What §4
+  costs has to be re-read in that light before step 6 starts.
 
 ## 9. What each block costs
 

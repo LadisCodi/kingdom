@@ -78,15 +78,16 @@ describe('where it may go', () => {
     expect(placementBlock(state, map, 'Housing', NEIGHBOUR_CELL, house.uniqueId)).toBe(null);
   });
 
-  it('a house cannot anchor its own move on itself', () => {
+  // Housing used to need a Townhall or another house edge-to-edge, which made
+  // a lone house unable to shift one cell sideways. That rule is gone: a
+  // building goes anywhere revealed, and adjacency pays or charges for its
+  // neighbours rather than deciding who may stand where.
+  it('a lone house may move wherever it likes', () => {
     const state = freshGame();
-    // A lone house far from the Townhall, with no other building near it.
     reveal(state, [FAR_CELL, { x: 4, y: 5 }]);
     const lonely = houseAt(state, FAR_CELL);
-    // Standing next to where you already are is not neighbourliness: shifting
-    // one cell sideways leaves it with nothing to be adjacent to.
-    expect(placementBlock(state, map, 'Housing', { x: 4, y: 5 }, lonely.uniqueId))
-      .toBe('NeedsHousingAdjacency');
+    expect(placementBlock(state, map, 'Housing', { x: 4, y: 5 }, lonely.uniqueId)).toBe(null);
+    expect(moveDistrict(state, map, lonely.uniqueId, { x: 4, y: 5 }, T0)).toBe('Moved');
   });
 
   it('every other placement rule still applies', () => {

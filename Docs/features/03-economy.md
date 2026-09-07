@@ -85,7 +85,10 @@
 - A house clamps at 0, never negative.
 - While placing, every affected neighbour and the ghost itself show a compact
   label.
-- The canvas grows by buying tiles ([`02-map-scopes.md`](02-map-scopes.md) §1.1).
+- **Adjacency is the only thing that guides a layout.** Placement itself is
+  free — anywhere revealed, no plot bound, no building required next to
+  another ([`05-city-and-districts.md`](05-city-and-districts.md) §4) — so a
+  bonus or a penalty is a nudge and never a refusal.
 - More rules and non-Gold effects: OQ-48.
 
 ## 4. Villager training

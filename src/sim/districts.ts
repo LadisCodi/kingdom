@@ -2,7 +2,7 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
+import { cellExists, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
@@ -38,7 +38,7 @@ export function maxDistrictCount(state: GameState, def: DistrictDef): number {
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsShoreline'
+  | 'NeedsResearch' | 'NeedsShoreline'
   | 'NeedsLand'
   | 'HasSite';
 
@@ -46,13 +46,24 @@ export type PlacementBlock =
  * All placement conditions ANDed over the full footprint (cell = anchor,
  * top-left); null = buildable here.
  *
+ * **A building goes anywhere the player has revealed.** Every condition below
+ * is about the GROUND — it exists, it is empty, it is dry, it is not somebody
+ * else's — plus the count cap and the unlock technology. There is no rule
+ * about where a building sits RELATIVE to another one, and the Docks' need
+ * for a shoreline is the single exception, which is terrain rather than
+ * layout.
+ *
+ * Layout is guided instead of policed: adjacency pays or charges for a
+ * neighbour ([`03-economy.md`](../../Docs/features/03-economy.md) §3.1), so a
+ * placement can be better or worse and none is illegal.
+ *
  * `movingId` is the district being RELOCATED, if any. It changes exactly two
  * rules and nothing else: the building may overlap the ground it is standing
  * on (or it could never move one cell sideways), and the count limit does not
  * apply (a move adds nothing to the count it would be measured against).
- * Every other rule — terrain, features, sites, fog, tech, adjacency — is the
- * same question it is at build time, which is the point: a spot you may not
- * build on is a spot you may not move to.
+ * Every other rule — terrain, features, sites, fog, tech — is the same
+ * question it is at build time, which is the point: a spot you may not build
+ * on is a spot you may not move to.
  */
 export function placementBlock(
   state: GameState,
@@ -86,46 +97,22 @@ export function placementBlock(
     return 'CountLimit';
   }
   if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
-  // Per-type rules: terrain must hold on every footprint cell; adjacency /
-  // influence must hold for at least one.
-  switch (definitionId) {
-    case 'Housing': {
-      // Adjacent to a Townhall or another Housing (under-construction Housing counts).
-      // A house cannot anchor its own move: standing next to where you
-      // already are is not neighbourliness.
-      const ok = footprint.some((fc) =>
-        neighbors(map, fc).some((n) => {
-          const d = districtAt(state, n);
-          return d !== undefined && d.uniqueId !== movingId
-            && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
-        }),
-      );
-      if (!ok) return 'NeedsHousingAdjacency';
-      break;
-    }
-    case 'Docks': {
-      // A pier spanning the shoreline: its 2×1 footprint needs exactly ONE
-      // cell on Water and one on land. Horizontal only — no rotation; the
-      // coast decides which half is wet (the sprite flips to match).
-      const waters = footprint.filter(
-        (c) => map.terrain.get(coordKey(c)) === 'Water').length;
-      if (waters !== 1) return 'NeedsShoreline';
-      break;
-    }
-    case 'Sawmill': // no placement restriction — the influence range guides placement
-    case 'Quarry':
-    case 'Market':
-    case 'Townhall':
-      break;
+  // The one per-type rule left, and it is about terrain rather than layout:
+  // a pier spanning the shoreline needs exactly ONE of its 2×1 cells on
+  // Water. Horizontal only — no rotation; the coast decides which half is wet
+  // and the sprite flips to match.
+  if (definitionId === 'Docks') {
+    const waters = footprint.filter((c) => map.terrain.get(coordKey(c)) === 'Water').length;
+    if (waters !== 1) return 'NeedsShoreline';
   }
   return null;
 }
 
-/** True if the type has placement rules beyond the universal ones — only then
- *  is highlighting valid cells informative (an unrestricted building like the
- *  Sawmill would just outline most of the map). */
+/** True if the type has a placement rule beyond the universal ones — only then
+ *  is highlighting valid cells informative, since anything else may go
+ *  anywhere revealed and would just outline the map. The **Docks** is the only
+ *  one left: its pier needs a shoreline. */
 export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
-  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands' ||
   definitionId === 'Docks';
 
 export const validPlacementCells = (

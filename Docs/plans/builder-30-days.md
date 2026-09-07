@@ -281,6 +281,12 @@ than a building.
 
 Decorations (step 6) need a non-Gold rule, so the resolver grows first.
 
+**The decision this step opens with (2026-09-07):** placement itself is
+**free** — anywhere revealed, no plot bound, and no building required beside
+another. The Housing rule that wanted a Townhall or another house edge-to-edge
+is gone too. **Adjacency is therefore the only thing that guides a layout, and
+it does it by paying or charging, never by refusing.**
+
 - **Data:** `Adjacency` sheet gains `stat` and `magnitude`; `gold_per_minute`
   stays for the Housing row. Rows for the proposal's §8 table whose buildings
   exist after step 3: Carpenter/MasonsYard/Smelter–Quarry/Sawmill `workTime
@@ -302,8 +308,10 @@ Decorations (step 6) need a non-Gold rule, so the resolver grows first.
 - **Save:** none.
 - **Tests:** `adjacency.test.ts` — a stat rule resolves, clamps, follows a
   move; a penalty never drops below base; the Gold rule is unchanged.
-- **Blocked on: OQ-48** (this *is* OQ-48) and **OQ-1** (the bounded plot —
-  adjacency is a puzzle only on a bounded plot; the rules ship either way).
+- **Blocked on: OQ-48** (this *is* OQ-48). **OQ-1 closed the other way** — the
+  plot is not bounded — so adjacency is not competing for scarce ground: it is
+  the whole of what guides a layout, and it guides by paying rather than
+  refusing.
 - **Done when:** a Carpenter beside a Sawmill measurably finishes Planks
   faster in the harness.
 
@@ -333,13 +341,16 @@ Decorations (step 6) need a non-Gold rule, so the resolver grows first.
   refused at `supply < demand + cost`; a built building never blocks on a
   later deficit; the surplus tier moves taxes; a decoration moved keeps its
   supply. `move.test.ts`: decorations are movable.
-- **Blocked on: OQ-1** (the plot has to be bounded for Harmony to cost
-  ground) and **OQ-71** (plot expansions — the pressure valve; can ship after,
-  not before the playtest).
+- **What OQ-1 changed here.** The plot is not bounded, so a decoration's
+  footprint is not the scarce thing the proposal (§4.2) assumed: Harmony
+  becomes a **price in ground already revealed and in the build cost of the
+  piece**, not a competition for tiles. Worth re-reading §4 of the proposal
+  before this step starts, and re-deciding whether the surplus bonus carries
+  enough on its own.
 - **Art:** six pieces. Store decorations are *not* in this step
   (`14-monetization.md` decides them, OQ-26).
-- **Done when:** the harness at week 3 spends plot on decorations to reach the
-  next level.
+- **Done when:** the harness at week 3 builds decorations to reach the next
+  level.
 
 ## 7. Step 7 · Harmony on the late levels, and Townhall 5–10
 
@@ -511,7 +522,7 @@ The one new mechanic; last, and in three commits.
 | 3 | Runestone takes Mana as an input — the first non-tap Mana sink | OQ-44, `08-magic.md` §3 |
 | 4 | Producers' L6+ buy haul and speed, not crew — as ADDED units, since a chunk is 1-5 units and a percentage of it rounds away | proposal §1.1 |
 | 5 | The `Adjacency` sheet gains `stat` and `magnitude` | **OQ-48** |
-| 6 | Harmony surplus bonus lands on taxes | proposal §4.1; **OQ-1** for the plot |
+| 6 | Harmony surplus bonus lands on taxes; and what Harmony costs now the plot is unbounded | proposal §4.1 |
 | 7 | Townhall 5–10 gated by goods and Harmony, not keystones. **Level 4 keeps `Charter III`**: the late city stays behind the delve loop, which is what welds the two halves together (settled 2026-09-04) | proposal §1.2; `07-research.md` §3 |
 | 8 | Runestone and the Reliquary L9 recipe as the province route past relic L3 | **OQ-7**, **OQ-9** |
 | 9 | The banner moves from the store to the Tavern | proposal §11; `14-monetization.md` §2.1 |

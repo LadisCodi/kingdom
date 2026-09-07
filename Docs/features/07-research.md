@@ -340,4 +340,4 @@ Tap Power        +40%  →  +60%
 - A general upgrade-scoping mechanism (§1.1).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
-**OQ-59**, **OQ-68**, **OQ-69**, **OQ-71**.
+**OQ-59**, **OQ-68**, **OQ-69**.

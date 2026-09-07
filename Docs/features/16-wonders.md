@@ -207,12 +207,13 @@ and the effective helpers that own each stat.
   `effect(state, …)` term in each helper, inside the value handed to
   `resolve()` — never as a synthetic entry on the modifier stack.
 
-## 8. The plot
+## 8. The ground
 
-- An endless ladder on a placed building is a decision only while ground is
-  scarce.
-- This feature depends on **OQ-1** and raises the price of leaving it open, as
-  **OQ-48** (adjacency v2) does.
+- A Wonder stands on the province with a footprint deliberately larger than it
+  needs (§5.1), and the ground is the half of its price that is not Gold.
+- The plot is not bounded (OQ-1 closed 2026-09-07), so that ground is not
+  scarce in itself: what a big footprint costs is **the fog that revealed it**
+  and the **adjacency** it displaces (**OQ-48**).
 
 ## 9. What the player sees
 
@@ -274,4 +275,4 @@ differs in three ways:
 - Generated orders as the repeating Gold sink ([`12-quests.md`](12-quests.md)
   §6).
 
-**Open questions:** **OQ-57**, **OQ-58**, **OQ-59**, **OQ-1** (§8).
+**Open questions:** **OQ-57**, **OQ-58**, **OQ-59**.

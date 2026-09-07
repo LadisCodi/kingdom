@@ -80,12 +80,20 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 
 ## 4. Placement, and moving
 
+- **A building goes anywhere the player has revealed.** There is no plot bound
+  and no rule about where a building sits relative to another one.
 - One legality check serves building and moving: a cell you may not build on
   is a cell you may not move to.
-- Gates: features and sites already on the cell, fog, the technology, the
-  shoreline rule for the Docks, the count cap, and housing adjacency.
+- Gates, all of them about the **ground**: it exists, it is revealed, it is
+  empty of features, sites and other buildings, and it is dry — plus the count
+  cap and the unlock technology.
 - Terrain gates only Water ([`01-map-and-fog.md`](01-map-and-fog.md) §2). A
   farm on sand is legal.
+- The **one exception** is the Docks, whose pier needs a shoreline — terrain,
+  not layout.
+- **Layout is guided, never policed.** Adjacency pays or charges for a
+  neighbour ([`03-economy.md`](03-economy.md) §3.1), so a placement can be
+  better or worse and none is illegal.
 
 ### 4.1 The placement ghost
 
@@ -103,7 +111,9 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
   it — not what one delivery fetches.
 - The label is toned against the authored stock: good above, bad below,
   untouched at the baseline (a plain tree is 10).
-- It reuses the pill drawn by the housing adjacency preview.
+- It reuses the pill drawn by the adjacency preview.
+- Valid cells are outlined only for the **Docks**, the one building with a rule
+  of its own; for anything else the outline would be the revealed map.
 
 ### 4.2 Moving
 
@@ -174,4 +184,4 @@ What follows the building:
 - A distance term in build **cost**.
 - `Desert`, a declared terrain with zero cells.
 
-**Open questions:** OQ-1, OQ-46, OQ-48.
+**Open questions:** OQ-46, OQ-48.
