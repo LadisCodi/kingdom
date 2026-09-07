@@ -51,7 +51,7 @@ import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
-import { effect } from './upgrades';
+import { techFlat, techValue } from './techEffects';
 import {
   addToWallet, getWallet, type GameState, type RuinId,
 } from './state';
@@ -79,7 +79,7 @@ export function manaProduction(state: GameState): number {
   // Ley Taps: the one thing that lets a landmark touch the RATE, and it is a
   // line the player researched rather than a property of the claim, so the
   // "capacity not production" rule for sanctuaries still holds by default.
-  base += effect(state, 'LeyTaps') * claimedLandmarks(state);
+  base += techFlat(state, 'manaPerClaimedLandmark') * claimedLandmarks(state);
   return Math.max(0, resolve(state, 'manaRegen', base));
 }
 
@@ -113,7 +113,7 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = MANA.baseCap + effect(state, 'DeepWells')
+  let cap = techValue(state, 'manaCap', MANA.baseCap)
     + (isTechComplete(state, 'Meditation') ? MANA.meditationCap : 0);
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
@@ -255,12 +255,13 @@ export function knowledgePerHour(state: GameState): number {
   // ground held to its deepest depth, which is what a clear IS — Conquest.
   const perRuin = KNOWLEDGE.dripPerClearedRuinPerHour
     * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1)
-    + effect(state, 'Vigils')
+    + techFlat(state, 'knowledgePerClearedRuin')
     + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestPerClearedRuinPerHour : 0);
   const raw = cleared * perRuin
-    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour + effect(state, 'Wayposts'));
+    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour
+      + techFlat(state, 'knowledgePerClaimedLandmark'));
   if (raw === 0) return 0;
-  return Math.max(0, resolve(state, 'knowledgeYield', raw * (1 + effect(state, 'Scriptorium'))));
+  return Math.max(0, resolve(state, 'knowledgeYield', techValue(state, 'knowledgeYield', raw)));
 }
 
 export function accrueKnowledge(state: GameState, toTime: number): number {

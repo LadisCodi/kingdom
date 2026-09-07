@@ -4,7 +4,7 @@ import { DISTRICTS, FOG, LANDMARKS, RUINS, terrainGate } from './data/definition
 import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techMultiplier, techValue } from './techEffects';
 import { recordQuestEvent } from './quests';
 import { isTechComplete, openTome } from './research';
 import {
@@ -54,7 +54,7 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
       'revealCost',
       // Pitons discount the GOLD; Surveying buys back the taps. Two different
       // costs, so the two upgrades stack without either making the other moot.
-      revealCost(townhallDistance(map, cell)) * Math.max(0, 1 - effect(state, 'Pitons')),
+      revealCost(townhallDistance(map, cell)) * Math.max(0, techValue(state, 'revealCost', 1)),
     )),
   );
 
@@ -106,7 +106,8 @@ export function explorationGate(map: MapData, cell: Coord): TechId | null {
  */
 export const revealPerTap = (state: GameState): number =>
   FOG.goldPerTap
-  * (1 + (isTechComplete(state, 'Cartography') ? 1 : 0) + effect(state, 'Surveying'));
+  * ((isTechComplete(state, 'Cartography') ? 1 : 0)
+    + techMultiplier(state, 'fogRevealPerTap'));
 
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';
@@ -198,7 +199,8 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
  *  radius is untouched: seeing farther is not the same as owning farther, and
  *  the paid reveal stays the economy's main sink. */
 export const effectiveDiscoverRadius = (state: GameState, base: number): number =>
-  Math.max(0, Math.round(resolve(state, 'discoverRadius', base + effect(state, 'Farsight'))));
+  Math.max(0, Math.round(resolve(state, 'discoverRadius',
+    techValue(state, 'discoverRadius', base))));
 
 /** New-game seed: every district applies its fog radii. */
 export function seedFog(state: GameState, map: MapData): void {

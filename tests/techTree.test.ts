@@ -10,10 +10,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import treeDoc from '../src/sim/data/tech-tree.json';
 import {
-  TECH_LINE_IDS, isDrawnEdge, unlockKey, validateTechTree, type TechTreeDoc,
+  isDrawnEdge, unlockKey, validateTechTree, type TechTreeDoc,
 } from '../src/sim/data/techTreeRules';
+import { TECH_STAT_IDS } from '../src/sim/data/techEffectRules';
 import {
-  DISTRICTS, HARVEST, TECHNOLOGIES, TECH_LINE_ORDER, TECH_ORDER, UNITS, terrainGate,
+  DISTRICTS, HARVEST, TECHNOLOGIES, TECH_ORDER, UNITS, terrainGate,
 } from '../src/sim/data/definitions';
 import { COLS, pageRows } from '../src/ui/research/layout';
 
@@ -109,34 +110,6 @@ describe('the shipped tech tree', () => {
     }
   });
 
-  // A BONUS IS ONLY WORTH SOMETHING IF CODE READS ITS LINE. The line lives in
-  // the file now, so a typo would leave a rank the player pays for and
-  // nothing collects — silently, since `effect()` would be asked for a line
-  // no call site mentions. The hooks are `effect(state, 'X')` call sites, so
-  // this reads them.
-  it('puts every bonus on a line the sim actually reads', () => {
-    const dir = new URL('../src/sim/', import.meta.url);
-    const sources = readdirSync(dir)
-      .filter((f) => f.endsWith('.ts'))
-      .map((f) => readFileSync(new URL(f, dir), 'utf8'))
-      .join('\n');
-    // Two shapes reach `effect()`: a literal call site, and a table of line
-    // ids (`ABUNDANCE_LINES`, `TAP_YIELD_UPGRADES`) the helper walks.
-    const wired = new Set([...sources.matchAll(/effect\(state, '([A-Za-z]+)'\)/g)]
-      .map((m) => m[1]));
-    for (const m of sources.matchAll(/'([A-Za-z]+)'(?=\s*(?:,|\]))/g)) {
-      if (TECH_LINE_ORDER.includes(m[1] as 'TapPower')) wired.add(m[1]);
-    }
-    for (const line of TECH_LINE_IDS) {
-      expect(wired, `nothing in src/sim reads the ${line} line`).toContain(line);
-    }
-    // …and the file may only name a line the code declares.
-    for (const line of TECH_LINE_ORDER) {
-      expect(TECH_LINE_IDS as readonly string[],
-        `the tree uses a line "${line}" the game does not have`).toContain(line);
-    }
-  });
-
   // The pacing promise of the shape: a band is a run of rows, and the era bar
   // between two of them is a line of its own.
   it('lays every tome out as bands of rows, in era order', () => {
@@ -155,6 +128,38 @@ describe('the shipped tech tree', () => {
         expect(row.row).toBeGreaterThan(seenRow);
         seenRow = row.row;
         expect(row.slots.filter((s) => s !== null).length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  // A BONUS IS ONLY WORTH SOMETHING IF CODE READS ITS STAT. The stat lives in
+  // the file now, so a typo would leave a rank the player pays for and nothing
+  // collects — silently, since the resolver would be asked for a stat no call
+  // site mentions. The readers are `techValue`/`techFlat`/`techFlatAimed`/
+  // `techMultiplier` call sites, so this reads them.
+  //
+  // It replaces the same guard over the 37 lines, and it is STRONGER: the old
+  // one had to allow a bare quoted id in a list position, because
+  // `ABUNDANCE_LINES` routed seven lines through a table. Targets retired the
+  // table, so every stat is now named at the call site that owns it.
+  it('puts every stat the registry declares somewhere the sim reads it', () => {
+    const dir = new URL('../src/sim/', import.meta.url);
+    const sources = readdirSync(dir)
+      .filter((f) => f.endsWith('.ts'))
+      .map((f) => readFileSync(new URL(f, dir), 'utf8'))
+      .join('\n');
+    const read = new Set([
+      ...sources.matchAll(/tech(?:Value|Flat|FlatAimed|Multiplier|Totals)\(\s*state,\s*'([A-Za-z]+)'/g),
+    ].map((m) => m[1]));
+    for (const stat of TECH_STAT_IDS) {
+      expect(read, `nothing in src/sim reads the ${stat} stat`).toContain(stat);
+    }
+    // …and every stat a technology names is one the registry declares, which
+    // `validateTechTree` also refuses — belt and braces, because this one
+    // fails with the stat's name in it.
+    for (const id of TECH_ORDER) {
+      for (const effect of TECHNOLOGIES[id].effects) {
+        expect(TECH_STAT_IDS, `${id} moves "${effect.stat}"`).toContain(effect.stat);
       }
     }
   });

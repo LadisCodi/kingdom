@@ -49,7 +49,7 @@ import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
-import { effect } from './upgrades';
+import { techFlat, techFlatAimed, techValue } from './techEffects';
 import { pick } from './rng';
 import {
   addToWallet, getWallet, newId,
@@ -65,7 +65,7 @@ import { canAfford, pay } from './wallet';
  *  push, or to the timer and not to the estimate on the sheet. */
 export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
   Math.max(1000, Math.round(resolve(state, 'delveSpeed',
-    depthDurationMs(ruinId, depth) * Math.max(0.25, 1 - effect(state, 'Pathfinders')))));
+    depthDurationMs(ruinId, depth) * Math.max(0.25, techValue(state, 'delveSpeed', 1)))));
 
 /** Two at the start (hero + one unit type), the rest with Gems — the same
  *  Gems-only shape as attunement sockets, for the same reason. */
@@ -106,7 +106,7 @@ export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | nu
   // stack everywhere else: the trait is a discount, the line is a discount,
   // and the modifier stack rides on the product.
   const mult = Math.max(0, resolve(state, 'supplyCost',
-    (1 - discount) * (1 - effect(state, 'Rations'))));
+    (1 - discount) * techValue(state, 'supplyCost', 1)));
   const out: Wallet = {};
   for (const [c, n] of Object.entries(base)) {
     out[c as keyof Wallet] = Math.max(1, Math.round(n * mult));
@@ -123,16 +123,16 @@ export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | nu
 export function drillOf(state: GameState): Drill {
   return {
     atk: {
-      all: Math.round(resolve(state, 'unitAtk', effect(state, 'Warhorns'))),
-      Distance: effect(state, 'Fletching'),
+      all: Math.round(resolve(state, 'unitAtk', techFlat(state, 'unitAtk'))),
+      Distance: techFlatAimed(state, 'unitAtk', { unitTag: 'Distance' }),
     },
     def: {
       all: Math.round(resolve(state, 'unitDef', 0)),
-      Melee: effect(state, 'ShieldWall'),
-      Mounted: effect(state, 'Barding'),
+      Melee: techFlatAimed(state, 'unitDef', { unitTag: 'Melee' }),
+      Mounted: techFlatAimed(state, 'unitDef', { unitTag: 'Mounted' }),
     },
     disadvantageOffset: Math.max(0, resolve(state, 'typeDisadvantage', 0)
-      + effect(state, 'Manoeuvre')
+      + techFlat(state, 'typeDisadvantage')
       + (isTechComplete(state, 'Tactics') ? 0.10 : 0)), // reading the ground
   };
 }
@@ -151,7 +151,7 @@ export const effectiveHaulLoss = (state: GameState): number =>
   Math.min(1, Math.max(0.2, resolve(state, 'haulLoss',
     DELVE.failHaulLoss
       - (isTechComplete(state, 'Salvage') ? 0.15 : 0) // half becomes 35%
-      - effect(state, 'Bearers'))));
+      + techFlat(state, 'haulLoss'))));
 
 // ------------------------------------------------------------------- heroes
 
@@ -288,9 +288,8 @@ function depthHaul(state: GameState, ruinId: RuinId, depth: number, heroId: Hero
   const fragmentBonus = hero.trait === 'FragmentBonus' ? 1 + hero.traitValue : 1;
   const wallet: Wallet = {
     Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
-    Stardust: Math.round(resolve(state, 'stardustYield',
-      DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus
-        * (1 + effect(state, 'Prospecting')))),
+    Stardust: Math.round(resolve(state, 'stardustYield', techValue(state, 'stardustYield',
+      DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus))),
   };
   // The deeper tiers pay materials the city cannot easily reach otherwise —
   // three times the haul, the rate a vein pays over a plain rock.

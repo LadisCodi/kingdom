@@ -23,7 +23,8 @@ import {
   DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TECH_LINES, WORKER, levelIndexed,
   type DistrictDef, type HarvestSpec,
 } from './data/definitions';
-import type { CurrencyId, District, GameState, TechLineId } from './state';
+import type { CurrencyId, District, DistrictId, GameState, TechLineId } from './state';
+import { techMultiplier, techValue } from './techEffects';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
 
@@ -91,30 +92,20 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
   return total;
 }
 
-/** CELL-scoped ABUNDANCE lines (each +1 unit a strike a rank). They lift the
- *  tap and the worker ALIKE, because both draw from the same depot — which is
- *  the change that unifies the two feelings: nobody creates matter, everyone
- *  pulls from the same place at a different speed.
+/**
+ * Units one extraction takes out of this kind of cell — the chunk, after
+ * whatever the tree aims at that ground. Shared by the thumb and the crew,
+ * because both draw from the same depot: nobody creates matter, everyone pulls
+ * from the same place at a different speed.
  *
- *  Keyed on the cell, not the currency: game and crop plots both pay Food, but
- *  Butchery is about butchering and Irrigation is about fields. Crops carry two
- *  and they simply stack. Table at the call site rather than a general scoping
- *  mechanism, because that is what the handful of scoped lines needs. */
-const ABUNDANCE_LINES: Partial<Record<HarvestSpec['id'], readonly TechLineId[]>> = {
-  Forest: ['Sawpits'],
-  Crops: ['Irrigation', 'Scythes'],
-  Meat: ['Butchery'],
-  Stone: ['Stonecutting'],
-  Fish: ['BigNets'],
-  MountainIron: ['IronPicks'],
-};
-
-/** Units one extraction takes out of this kind of cell — the chunk, after the
- *  ground's own abundance lines. Shared by the thumb and the crew. */
+ * Aimed at the CELL, not the currency: game and crop plots both pay Food, but
+ * Butchery is about butchering and Irrigation is about fields. Two effects on
+ * one cell simply stack, which is what the `Crops` row of the old
+ * `ABUNDANCE_LINES` table said with a list.
+ */
 export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): number {
-  let units = spec.unitsPerStrike;
-  for (const line of ABUNDANCE_LINES[spec.id] ?? []) units += effect(state, line);
-  return Math.max(0, units);
+  return Math.max(0, techValue(
+    state, 'harvestUnitsPerStrike', spec.unitsPerStrike, { harvest: spec.id }));
 }
 
 /**
@@ -131,7 +122,7 @@ export function effectiveUnitsPerStrike(state: GameState, spec: HarvestSpec): nu
  * the crew** or the hand stops beating the machine (`04-harvest.md` §3.3).
  */
 export const tapWorkSeconds = (state: GameState): number =>
-  Math.max(0, resolve(state, 'tapYield', TAP.workSeconds * (1 + effect(state, 'TapPower'))));
+  Math.max(0, resolve(state, 'tapYield', techValue(state, 'tapWorkSeconds', TAP.workSeconds)));
 
 /** Units a tap owes on this kind of cell — a FRACTION on most ground, which is
  *  why `tapCarry` exists. `carry` is the remainder the last tap could not pay.
@@ -164,8 +155,9 @@ const levelTerm = (
 export function effectiveWorkerStrike(
   state: GameState, spec: HarvestSpec, building: District | null = null,
 ): number {
-  const base = effectiveUnitsPerStrike(state, spec) + effect(state, 'WorkerLoad')
-    + levelTerm(building, (d) => d.extraUnitsPerDeliveryPerLevel, 0);
+  const base = techValue(state, 'workerStrikeUnits',
+    effectiveUnitsPerStrike(state, spec)
+    + levelTerm(building, (d) => d.extraUnitsPerDeliveryPerLevel, 0));
   return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
 }
 
@@ -201,7 +193,7 @@ export const workerStrikeMs = (
  *  ahead of the crew (`04-harvest.md` §3.3). */
 export const effectiveAutoTapCooldownMs = (state: GameState): number =>
   Math.max(100, resolve(
-    state, 'autoTapCooldown', (TAP.collectCooldownSeconds - effect(state, 'QuickHands')) * 1000,
+    state, 'autoTapCooldown', techValue(state, 'autoTapCooldown', TAP.collectCooldownSeconds) * 1000,
   ));
 
 /** Tiles per second a worker walks (Cartage: +5%/rank). Read by the worker
@@ -212,16 +204,16 @@ export const effectiveWorkerSpeed = (state: GameState): number =>
   Math.max(0.1, resolve(state, 'workerSpeed',
     WORKER.moveSpeedTilesPerSecond
       * (isTechComplete(state, 'Roadworks') ? 1.25 : 1) // paved ways: a quarter faster
-      * (1 + effect(state, 'Cartage'))));
+      * techMultiplier(state, 'workerSpeed')));
 
 /** Multiplier on build and upgrade time (Carpentry: −5%/rank), floor 0.25. */
 export const effectiveBuildTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'buildTime', 1 - effect(state, 'Carpentry')));
+  Math.max(0.25, resolve(state, 'buildTime', techValue(state, 'buildTime', 1)));
 
 /** Multiplier on research time (Scriveners: −5%/rank), floor 0.25. Applied
  *  ONCE, when a research starts, and persisted on it — see research.ts. */
 export const effectiveResearchTimeMultiplier = (state: GameState): number =>
-  Math.max(0.25, resolve(state, 'researchTime', 1 - effect(state, 'Scriveners')));
+  Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)));
 
 /**
  * Multiplier on Market sale prices: the BUILDING's level, then MarketStall's
@@ -244,10 +236,19 @@ export const marketSaleLevelMultiplier = (state: GameState): number => {
 
 export const effectiveSalePriceMultiplier = (state: GameState): number =>
   Math.max(0, resolve(state, 'salePrice',
-    marketSaleLevelMultiplier(state) + effect(state, 'MarketStall')));
+    techValue(state, 'salePrice', marketSaleLevelMultiplier(state))));
 
-/** Tax gold per housed villager per minute (TradeRoutes: +10%/rank). */
-export const effectiveTaxRate = (state: GameState): number =>
+/**
+ * Tax gold per housed villager per minute.
+ *
+ * `district` is the house being taxed, so the tree can aim a rate at one kind
+ * of building — "+5% gold income at Housing" — rather than only at every roof
+ * at once. Absent is every roof, which is what the ladders in the tree today
+ * do.
+ */
+export const effectiveTaxRate = (state: GameState, district?: DistrictId): number =>
   Math.max(0, resolve(
-    state, 'taxRate', TAXES.goldPerPopulationPerMinute * (1 + effect(state, 'TradeRoutes')),
+    state, 'taxRate',
+    techValue(state, 'taxRate', TAXES.goldPerPopulationPerMinute,
+      district === undefined ? undefined : { district }),
   ));

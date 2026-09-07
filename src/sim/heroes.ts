@@ -28,7 +28,7 @@
 //    and this design makes that a lift-and-shift rather than a rewrite.
 
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 import { COLLECTION, GACHA, HERO_ORDER, HEROES } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
@@ -101,7 +101,7 @@ export function heroStats(state: GameState, id: HeroId): { atk: number; def: num
  *  taught the party something. XP is a soft second track: it never gates. */
 export function addHeroXp(state: GameState, id: HeroId, amount: number): void {
   // Drillmaster: +5%/rank, rounded once here so XP stays a whole number.
-  const paid = Math.round(resolve(state, 'heroXp', amount * (1 + effect(state, 'Drillmaster'))));
+  const paid = Math.round(resolve(state, 'heroXp', techValue(state, 'heroXp', amount)));
   state.heroes.xp[id] = (state.heroes.xp[id] ?? 0) + paid;
 }
 

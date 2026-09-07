@@ -21,7 +21,7 @@
 // removes the only pacing on party size.
 
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 import { DISTRICTS, RUSH, TRAINING, UNITS, levelIndexed } from './data/definitions';
 import { isTechComplete } from './research';
 import {
@@ -61,7 +61,7 @@ export function maxArmyPower(state: GameState): number {
   // Colours adds to the cap the HALLS provide, so a kingdom with no hall still
   // fields nothing: the line is a bigger banner, not a barracks of its own.
   if (cap === 0) return 0;
-  return Math.max(0, Math.round(resolve(state, 'armyCap', cap + effect(state, 'Colours'))));
+  return Math.max(0, Math.round(resolve(state, 'armyCap', techValue(state, 'armyCap', cap))));
 }
 
 /** The built building that trains `trainee`, if the player has one. A building
@@ -117,7 +117,8 @@ export const itemTrainSeconds = (item: TrainingItem): number =>
 export function trainCost(state: GameState, trainee: TrainableId): Record<string, number> {
   if (trainee !== 'Villager') {
     // Muster Drill: −10%/rank on every coin of the recruit price, floor 1.
-    const mult = Math.max(0, resolve(state, 'recruitCost', 1 - effect(state, 'MusterDrill')));
+    const mult = Math.max(0, resolve(state, 'recruitCost',
+      techValue(state, 'recruitCost', 1)));
     const out: Record<string, number> = {};
     for (const [c, n] of Object.entries(UNITS[trainee].recruitCost)) {
       out[c] = Math.max(1, Math.round((n as number) * mult));

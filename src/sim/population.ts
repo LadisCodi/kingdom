@@ -6,6 +6,7 @@ import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
+import { techValue } from './techEffects';
 import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
@@ -14,8 +15,13 @@ import { addToWallet, type District, type GameState } from './state';
  *  The Communities tech adds +1 to every district that houses anyone. */
 export function districtCapacity(state: GameState, district: District): number {
   const list = DISTRICTS[district.definitionId].populationCapacityPerLevel;
+  // A district that houses nobody is not a house, and no bed the tree grants
+  // turns it into one — which is exactly what `Communities` already meant by
+  // "every district that houses anyone".
   if (list.length === 0) return 0;
-  return levelIndexed(list, district.level) + (isTechComplete(state, 'Communities') ? 1 : 0);
+  return techValue(state, 'populationCapacity', levelIndexed(list, district.level),
+    { district: district.definitionId })
+    + (isTechComplete(state, 'Communities') ? 1 : 0);
 }
 
 /** Max population = Σ capacity over active (Built) districts. */
