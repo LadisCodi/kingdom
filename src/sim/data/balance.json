@@ -6179,18 +6179,6 @@
       1000
     ],
     "populationCostGrowth": 1.45,
-    "buildDistancePerTownhallLevel": [
-      3,
-      4,
-      6,
-      7,
-      7,
-      8,
-      8,
-      9,
-      9,
-      10
-    ],
     "lateUpgradeFromLevel": 6
   },
   "kingdom": {

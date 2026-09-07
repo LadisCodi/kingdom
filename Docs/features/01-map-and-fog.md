@@ -225,5 +225,5 @@ Costs are **authored per sanctuary**, not derived from distance.
 - A Mine district.
 - A `base × growth^distance` curve for landmark costs.
 
-**Open questions:** OQ-48, OQ-49, OQ-50 in
+**Open questions:** OQ-1, OQ-48, OQ-49, OQ-50 in
 [`../open-questions.md`](../open-questions.md).

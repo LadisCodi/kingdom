@@ -170,12 +170,6 @@ const SETTINGS = [
   // made to say 5, 20, 100 without deforming everything past it.
   ['city.population_cost_first', 'city.populationCostFirst', 'list'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
-  // The buildable PLOT: Chebyshev rings around the Townhall's footprint, by
-  // Townhall level (OQ-1). The Townhall already gates every count cap, so it
-  // gates the ground too and the ratio of buildings to plot stays roughly
-  // constant — which is what keeps adjacency and Harmony a puzzle rather than
-  // a phase. Bought expansions (OQ-71) will add to this, not replace it.
-  ['city.build_distance_per_townhall_level', 'city.buildDistancePerTownhallLevel', 'list'],
   // Where the LATE city starts. Below it a level is priced and timed by the
   // row's own curve, tuned for the opening; from it the late columns take
   // over (`upgrade_cost_late_level_growth`, `upgrade_duration_late_*`), so

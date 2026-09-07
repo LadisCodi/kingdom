@@ -13,7 +13,7 @@ import {
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed,
 } from './sim/data/definitions';
 import {
-  buildDurationForCell, canMoveDistrict, districtCount,
+  buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
 } from './sim/districts';
 import {
@@ -1808,14 +1808,14 @@ export class Game {
     };
     if (this.mode.kind === 'placing') {
       const def = DISTRICTS[this.mode.definitionId];
-      // Outline every legal spot, for every building. It used to be restricted
-      // types only, because an unrestricted one outlined most of the map —
-      // that stopped being true when the plot became a ring around the
-      // Townhall (OQ-1): what it outlines now IS the plot, which is the one
-      // thing a player placing a building needs to see.
-      layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
-        (cell) => ({ cell, label: '' }),
-      );
+      // Outline valid spots only for restricted buildings (Housing/Farm/
+      // FarmLands); an unrestricted one would just outline most of the map.
+      // The RANGE and per-cell yields are shown for the selected placement.
+      if (hasPlacementRestriction(this.mode.definitionId)) {
+        layer.validCells = validPlacementCells(this.state, this.map, this.mode.definitionId).map(
+          (cell) => ({ cell, label: '' }),
+        );
+      }
       layer.selected = this.mode.selected;
       layer.selectedSize = def.size;
       layer.previewCell = this.mode.selected;
@@ -1866,9 +1866,11 @@ export class Game {
       // The one difference is what counts as legal: the footprint it is
       // standing on is its own, so it stays available to it.
       const def = DISTRICTS[this.mode.definitionId];
-      layer.validCells = validPlacementCells(
-        this.state, this.map, this.mode.definitionId, this.mode.districtUniqueId,
-      ).map((cell) => ({ cell, label: '' }));
+      if (hasPlacementRestriction(this.mode.definitionId)) {
+        layer.validCells = validPlacementCells(
+          this.state, this.map, this.mode.definitionId, this.mode.districtUniqueId,
+        ).map((cell) => ({ cell, label: '' }));
+      }
       layer.selected = this.mode.selected;
       layer.selectedSize = def.size;
       layer.previewCell = this.mode.selected;

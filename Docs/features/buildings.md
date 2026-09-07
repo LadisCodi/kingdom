@@ -343,4 +343,4 @@ levels a building is bought with a Townhall level and goods (§4.11).
 - A building with more than one job.
 - Decorations.
 
-**Open questions:** OQ-46, OQ-57, OQ-58.
+**Open questions:** OQ-1, OQ-46, OQ-57, OQ-58.

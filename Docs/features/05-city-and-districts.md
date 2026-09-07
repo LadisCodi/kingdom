@@ -78,30 +78,17 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
   refuses a row that reaches 6 without them.
 - What each late level buys: [`buildings.md`](buildings.md) §4.11.
 
-### 3.2 The plot
-
-- A building may only be placed inside the **plot**: a Chebyshev ring around
-  the Townhall's footprint, sized by the Townhall's level
-  ([`02-map-scopes.md`](02-map-scopes.md) §6).
-- The whole footprint must fit inside it, and a **move** must land inside it.
-- Nothing already built outside it is ever taken.
-- The plot does not bound harvesting: a crew works cells outside it, and a tap
-  reaches anywhere revealed.
-
 ## 4. Placement, and moving
 
 - One legality check serves building and moving: a cell you may not build on
   is a cell you may not move to.
-- Gates: **the plot** (§3.2), features and sites already on the cell, fog, the
-  technology, the shoreline rule for the Docks, the count cap, and housing
-  adjacency. The plot answers first — paying to reveal a cell outside it would
-  buy nothing a builder can use.
+- Gates: features and sites already on the cell, fog, the technology, the
+  shoreline rule for the Docks, the count cap, and housing adjacency.
 - Terrain gates only Water ([`01-map-and-fog.md`](01-map-and-fog.md) §2). A
   farm on sand is legal.
 
 ### 4.1 The placement ghost
 
-- **Outlines every legal cell, for every building** — which is the plot, drawn.
 - Draws the area of influence for the hovered cell and highlights the resource
   cells it would capture, with a count.
 - Labels cells with their depot; the ground multiplies a cell's depot
@@ -168,7 +155,6 @@ What follows the building:
 | Dial | Where |
 |---|---|
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
-| How far the buildable plot reaches, per Townhall level | `city.build_distance_per_townhall_level` — §3.2 |
 | Build and upgrade costs, and their curves | `Districts.build_cost_*`, `upgrade_cost_*` |
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
@@ -188,4 +174,4 @@ What follows the building:
 - A distance term in build **cost**.
 - `Desert`, a declared terrain with zero cells.
 
-**Open questions:** OQ-46, OQ-48.
+**Open questions:** OQ-1, OQ-46, OQ-48.
