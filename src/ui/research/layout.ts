@@ -70,13 +70,19 @@ export type PageRow =
   }
   | { kind: 'gate'; era: number };
 
-/** What `pageRows` needs to know about a technology — the shape file's entry,
- *  or the game's definition; both satisfy it. */
+/**
+ * What `pageRows` needs to know about a technology — the shape file's entry,
+ * or the game's definition; both satisfy it.
+ *
+ * Optional, because a technology can be OFF THE PAGE in the editor: with no
+ * tome it matches no page and simply is not laid out. The rules call that an
+ * error, so the game never sees one.
+ */
 export interface Placed {
-  tome: string;
-  era: number;
-  row: number;
-  col: number;
+  tome?: string;
+  era?: number;
+  row?: number;
+  col?: number;
 }
 
 /**
@@ -98,9 +104,10 @@ export function pageRows(
   const byRow = new Map<number, { era: number; slots: Array<string | null> }>();
   const eras = new Set<number>();
   for (const [id, node] of Object.entries(placed)) {
-    if (node.tome !== tome) continue;
+    if (node.tome !== tome || node.era === undefined) continue;
     eras.add(node.era);
     if (!keep(id)) continue;
+    if (node.row === undefined || node.col === undefined) continue;
     if (node.col < 0 || node.col >= COLS) continue;
     const row = byRow.get(node.row)
       ?? { era: node.era, slots: Array.from({ length: COLS }, () => null) };
@@ -143,7 +150,8 @@ export function authoredRows(
   const held = new Map<string, string>(); // `row,col` → id
   const bounds = new Map<number, { lo: number; hi: number }>();
   for (const [id, node] of Object.entries(placed)) {
-    if (node.tome !== tome) continue;
+    if (node.tome !== tome || node.era === undefined) continue;
+    if (node.row === undefined || node.col === undefined) continue;
     held.set(`${node.row},${node.col}`, id);
     const seen = bounds.get(node.era);
     bounds.set(node.era, seen === undefined

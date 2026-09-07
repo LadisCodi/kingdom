@@ -18,8 +18,9 @@ import '../editor.css';
 import treeJson from '../../sim/data/tech-tree.json';
 import {
   DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS,
-  isDrawnEdge, unlockLabel,
-  type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc, type TechUnlock,
+  isDrawnEdge, isPlaced, unlockLabel,
+  type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
+  type TechUnlock,
 } from '../../sim/data/techTreeRules';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, rowTops, ROW_GAP,
@@ -162,8 +163,14 @@ export function mountEditor(): void {
       selected = null;
       refresh();
     } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected !== null && !typing) {
+      // The SOFT one on the key, because it is the frequent one and it keeps
+      // the technology. Ending a technology is a button you have to mean.
       e.preventDefault();
-      askDelete(selected);
+      if (doc.placed(selected)) {
+        doc.unplace(selected);
+        toast(`${selected} is off the page — drag it into a slot`);
+        refresh();
+      }
     }
   });
 
@@ -202,12 +209,19 @@ export function mountEditor(): void {
     // can drag onto what you are looking at and a row you cannot are two
     // different things, and the list should not make you read the label to
     // tell them apart.
-    const here = shown.filter((id) => doc.node(id)!.tome === tome);
-    const elsewhere = shown.filter((id) => doc.node(id)!.tome !== tome);
+    const adrift = shown.filter((id) => !doc.placed(id));
+    const here = shown.filter((id) => doc.placed(id) && doc.node(id)!.tome === tome);
+    const elsewhere = shown.filter((id) => doc.placed(id) && doc.node(id)!.tome !== tome);
 
     const list = el('div', { class: 'tre-list' });
     const group = (label: string, n: number) =>
       el('div', { class: 'tre-group' }, `${label} · ${n}`);
+    // Anything off the page goes to the top: it is the work in progress, and
+    // the tree cannot be saved while it is there.
+    if (adrift.length > 0) {
+      list.append(group('off the page', adrift.length));
+      for (const id of adrift) list.append(paletteItem(id, troubled));
+    }
     if (here.length > 0) {
       list.append(group(tome, here.length));
       for (const id of here) list.append(paletteItem(id, troubled));
@@ -233,11 +247,12 @@ export function mountEditor(): void {
         : `${id} — ${doc.validation.errors.find((e) => e.tech === id)?.message ?? ''}`,
     },
     el('b', {}, `${node.glyph} ${node.name}`),
-    el('span', { class: 'tre-item-where' },
+    el('span', { class: 'tre-item-where' }, isPlaced(node)
       // The book is named only when it is NOT the one on screen: under the
       // heading of the open page it would be on every row and say nothing.
-      `${node.kind} · ${node.tome === tome ? '' : `${node.tome} `}`
-      + `${ROMAN[node.era] ?? node.era} · r${node.row}c${node.col}`));
+      ? `${node.kind} · ${node.tome === tome ? '' : `${node.tome} `}`
+        + `${ROMAN[node.era] ?? node.era} · r${node.row}c${node.col}`
+      : `${node.kind} · off the page`));
     item.addEventListener('dragstart', (e) => {
       dragging = id;
       e.dataTransfer?.setData(DRAG_MIME, id);
@@ -246,7 +261,7 @@ export function mountEditor(): void {
     item.addEventListener('dragend', () => { dragging = null; });
     item.addEventListener('click', () => {
       selected = id;
-      tome = node.tome; // jump to the page it lives on
+      if (isPlaced(node)) tome = node.tome; // jump to the page it lives on
       refresh();
     });
     return item;
@@ -498,7 +513,9 @@ export function mountEditor(): void {
     ports: Array<{ side: 'in' | 'out'; state: string }>,
     onPort: (id: string, side: 'in' | 'out') => void,
   ): HTMLElement {
-    const node = doc.node(id)!;
+    // Only a placed technology is ever on the page, which is what puts its
+    // slot beyond doubt for the rest of this function.
+    const node = doc.node(id) as PlacedTech;
     const bad = doc.validation.errors.some((e) => e.tech === id);
     const says = node.kind === 'bonus'
       ? `+${node.effectPerRank ?? 0} ${node.line ?? '—'}`
@@ -557,7 +574,8 @@ export function mountEditor(): void {
         // Whichever way round the pair was clicked, the requirement points UP
         // the page — so the lower card is the one that gains it.
         const other = doc.node(selected)!;
-        const [from, to] = other.row < node.row ? [selected, id] : [id, selected];
+        const [from, to] = isPlaced(other) && other.row < node.row
+          ? [selected, id] : [id, selected];
         if (doc.reachable(to, from)) doc.toggleRequirement(to, from);
         else toast(`${from} does not sit above ${to} on this page`, true);
         refresh();
@@ -610,7 +628,7 @@ export function mountEditor(): void {
       line.addEventListener('change', () => { doc.update(id, { line: line.value }); refresh(); });
       card.append(field('line', line));
       card.append(field('per rank',
-        number(node.effectPerRank ?? 0, (v) => doc.update(id, { effectPerRank: v }))));
+        fraction(node.effectPerRank ?? 0, (v) => doc.update(id, { effectPerRank: v }))));
       card.append(el('p', { class: 'ed-note' },
         'A line’s HOOK is code (src/sim/upgrades.ts), so only a line that already '
         + 'exists can be picked — and every rank of one is worth the same.'));
@@ -631,7 +649,9 @@ export function mountEditor(): void {
     // ---- where it sits, and what it needs
     card.append(el('div', { class: 'ed-field' },
       el('span', {}, 'slot'),
-      el('code', {}, `${node.tome} · era ${node.era} · row ${node.row} · col ${node.col}`)));
+      el('code', {}, isPlaced(node)
+        ? `${node.tome} · era ${node.era} · row ${node.row} · col ${node.col}`
+        : 'off the page')));
     const reqs = el('div', { class: 'ed-chips' });
     for (const req of node.requires) {
       const chip = el('button', { class: 'ed-chip tre-cut' }, req, ' ✕');
@@ -642,14 +662,28 @@ export function mountEditor(): void {
       reqs.append(el('span', { class: 'ed-note' }, 'nothing — the rules refuse this'));
     }
     card.append(el('p', { class: 'ed-hint' }, 'Requires (click to cut)'), reqs);
-    const relink = el('button', { class: 'ed-btn' }, 'take the slot’s default');
-    relink.addEventListener('click', () => {
-      doc.setRequires(id, doc.defaultRequires(node.tome, node.row, node.col));
+    if (isPlaced(node)) {
+      const relink = el('button', { class: 'ed-btn' }, 'take the slot’s default');
+      relink.addEventListener('click', () => {
+        doc.setRequires(id, doc.defaultRequires(node.tome, node.row, node.col));
+        refresh();
+      });
+      card.append(relink);
+    }
+    // TWO different things, and the wording is the whole difference: one lets
+    // go of a slot, the other ends the technology.
+    const off = el('button', { class: 'ed-btn' }, isPlaced(node)
+      ? '⤴ take off the page'
+      : 'off the page — drag it into a slot');
+    off.disabled = !isPlaced(node);
+    off.addEventListener('click', () => {
+      doc.unplace(id);
+      toast(`${id} is off the page — drag it into a slot`);
       refresh();
     });
-    const gone = el('button', { class: 'ed-danger' }, 'delete this technology');
+    const gone = el('button', { class: 'ed-danger' }, '🗑 delete for good');
     gone.addEventListener('click', () => askDelete(id));
-    card.append(relink, gone);
+    card.append(off, gone);
     return card;
   }
 
@@ -707,7 +741,8 @@ export function mountEditor(): void {
       else {
         row.addEventListener('click', () => {
           selected = problem.tech!;
-          tome = doc.node(problem.tech!)!.tome;
+          const node = doc.node(problem.tech!)!;
+          if (isPlaced(node)) tome = node.tome;
           refresh();
         });
       }
@@ -768,9 +803,31 @@ export function mountEditor(): void {
     return node;
   }
 
+  /**
+   * A whole number: Gold, Knowledge, seconds, a building level. Rounded,
+   * because none of those has a fraction and a stray `.5` in a price is a
+   * price nobody meant.
+   */
   function number(value: number, commit: (v: number) => void): HTMLInputElement {
     const node = el('input', { class: 'tre-search', type: 'number', value: String(value) });
     node.addEventListener('change', () => { commit(Math.round(Number(node.value))); refresh(); });
+    return node;
+  }
+
+  /**
+   * A line's step, which is NOT whole: +0.1 is +10% tax income and +0.05 is
+   * −0.05 seconds between auto-taps. Rounding this was quietly turning every
+   * fractional bonus into nothing at all.
+   */
+  function fraction(value: number, commit: (v: number) => void): HTMLInputElement {
+    const node = el('input', {
+      class: 'tre-search', type: 'number', step: '0.01', value: String(value),
+    });
+    node.addEventListener('change', () => {
+      const v = Number(node.value);
+      commit(Number.isFinite(v) ? v : 0);
+      refresh();
+    });
     return node;
   }
 

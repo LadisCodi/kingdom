@@ -56,12 +56,15 @@ place.
 | `kind` | `unlock`, `bonus` or `mechanic` (§3) |
 | `tome` · `era` | which book, which band |
 | `row` · `col` | its slot on that book's three-column page; a requirement always sits on a smaller row |
-| `requires` | one to three technologies, and exactly none on a cover page |
+| `requires` | one to three technologies — none on a cover page, and none needed by anything on the page's first row |
 | `gold` · `knowledge` · `seconds` | what it costs and how long it takes; `knowledge` omitted when 0 |
 | `unlocks` | `kind: unlock` only (§3) |
 | `line` · `effectPerRank` | `kind: bonus` only (§3) |
 | `planned` | on the tree for its shape, does nothing yet |
 
+- `tome`, `era`, `row` and `col` are **absent together** on a technology taken
+  OFF THE PAGE (§5). It still exists and is still editable; the rules call it
+  an error, so the repo never holds one.
 - `definitions.ts` builds `TECHNOLOGIES` by walking this file, and `TECH_ORDER`
   is its key order — which the editor writes in reading order, so it is also
   rank order inside a minor line.
@@ -85,12 +88,27 @@ the game is derived from that (`GATES`, `definitions.ts`):
 One technology per gate: two claiming the same door is an error, because the
 derivation would otherwise answer with whichever it read last.
 
-**`bonus` — it moves one number.** A rank on a minor line: `line` plus
-`effectPerRank`, and every rank of a line is worth the same (`effect()`
-multiplies the completed count by the first rank's number). **Which HOOK a
-line reaches is code** — an `effect(state, 'X')` call site in `src/sim/` — so
-the editor offers only lines that already exist, and `tests/techTree.test.ts`
-refuses a line nothing in `src/sim` reads.
+**`bonus` — it moves one number.** A rank on a minor line: pick the `line` and
+set `effectPerRank`. Every rank of a line is worth the same, because `effect()`
+multiplies the completed rank count by the FIRST rank's number, and the step is
+fractional — `0.1` is +10% tax income, `0.05` is −0.05s between auto-taps.
+Rank N belongs in era N, and rank N requires rank N−1, which is the ladder
+`lineRank` counts off.
+
+**Which HOOK a line reaches is code**, and that is the one half of a bonus the
+editor cannot author:
+
+| To… | Change |
+|---|---|
+| add a rank to a line that exists | nothing — the editor |
+| add a **new line** | `TECH_LINE_IDS` in `src/sim/data/techTreeRules.ts` (`TechLineId` is derived from it), then `+ effect(state, 'YourLine')` at the call site that owns the number (`src/sim/upgrades.ts` holds most of them) |
+| let events or relics move the same number | a `ModifierStat` in `modifiers.ts` and a `resolve()` at that call site |
+
+The `line` dropdown offers every line `TECH_LINE_IDS` declares, whether or not
+a technology carries one yet — so a line added in code is pickable
+immediately. `tests/techTree.test.ts` closes the loop both ways: every
+declared line must be read by something in `src/sim`, and the file may only
+name a line the code declares.
 
 **`mechanic` — the code reads it by id.** A cover page opening its book,
 `Conquest` bending the Knowledge rate, `SanctifiedRuins` doubling the per-ruin
@@ -108,10 +126,14 @@ enforced in all three or in none.
 **Errors** (a save is refused):
 
 - an illegal id, or no name, glyph or description
+- a technology **off the page** — one error for it, not four, and one on
+  anything still waiting for it
 - two cards in one slot of one page (the same slot on another page is fine)
 - a tome that is not a tome, a band outside 1–4, a column outside 0–2
 - one row shared by two eras — an era bar takes a whole line
-- no requirements, or more than three; a cover page with any
+- more than three requirements; a cover page with any; **no requirements on a
+  card that is not on its page's first row** — the first row is where a root
+  belongs, because there is nothing above it to require
 - a requirement in another tome, at or below the card, or naming itself
 - a band that starts at or above the one before it
 - a negative or fractional price; anything free that is not a cover page;
@@ -176,8 +198,15 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
   one. Everything below renumbers; nothing else moves.
 - The last row of each band is an empty **spare row**. Dropping into it pushes
   the bands below down a line.
-- `Delete` removes the selected technology, and every requirement pointing at
-  it. `⌘Z`/`⌘S` undo and save.
+- **Off the page is not deleted.** `⤴ take off the page` (or `Delete`) lets go
+  of the slot and keeps the technology — its prose, price, kind and unlocks all
+  survive; only where it sat, and what it required, do not. It waits in the
+  **off the page** group at the top of the palette, and the tree cannot be
+  saved while anything is there, which is what keeps the holding pen inside one
+  session. Drag it into a slot and the slot hands it new requirements.
+  `🗑 delete for good` is the other verb: it ends the technology, and every
+  requirement pointing at it.
+- `⌘Z`/`⌘S` undo and save. Undo covers both verbs.
 - A technology the rules object to is red in **both** panes — outlined on the
   page, and on its palette row — and every problem in the list is a button
   that flies to it.
@@ -222,6 +251,9 @@ and writes `src/sim/data/tech-tree.json`. The endpoint cannot exist in a build.
   the old graph; there is no button for it, because a designer arranging a page
   is the point of the tool.
 - **Undo across a save.** Undo is the session's; the file's history is git's.
+- **Shipping a technology that is off the page.** The state exists for the
+  minutes a book is being rearranged, and the rules refuse to save it — a
+  technology the game cannot draw is not a state the repo can hold.
 - **Renaming a technology's id.** A save holds completed ids, so a rename is a
   delete and a create — which the save reader survives (it drops ids the build
   no longer has), and which loses that technology's progress.

@@ -10,7 +10,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import treeDoc from '../src/sim/data/tech-tree.json';
 import {
-  isDrawnEdge, unlockKey, validateTechTree, type TechTreeDoc,
+  TECH_LINE_IDS, isDrawnEdge, unlockKey, validateTechTree, type TechTreeDoc,
 } from '../src/sim/data/techTreeRules';
 import {
   DISTRICTS, HARVEST, TECHNOLOGIES, TECH_LINE_ORDER, TECH_ORDER, UNITS, terrainGate,
@@ -27,6 +27,14 @@ describe('the shipped tech tree', () => {
 
   it('has no warnings', () => {
     expect(validateTechTree(doc).warnings.map((w) => w.message)).toEqual([]);
+  });
+
+  it('has every technology ON a page — nothing set aside and forgotten', () => {
+    for (const id of TECH_ORDER) {
+      const entry = doc.technologies[id];
+      expect(entry.tome, `${id} is off the page`).toBeDefined();
+      expect(entry.era).toBeDefined();
+    }
   });
 
   it('gives every technology a slot — ranks included, the fan is gone', () => {
@@ -119,8 +127,13 @@ describe('the shipped tech tree', () => {
     for (const m of sources.matchAll(/'([A-Za-z]+)'(?=\s*(?:,|\]))/g)) {
       if (TECH_LINE_ORDER.includes(m[1] as 'TapPower')) wired.add(m[1]);
     }
-    for (const line of TECH_LINE_ORDER) {
+    for (const line of TECH_LINE_IDS) {
       expect(wired, `nothing in src/sim reads the ${line} line`).toContain(line);
+    }
+    // …and the file may only name a line the code declares.
+    for (const line of TECH_LINE_ORDER) {
+      expect(TECH_LINE_IDS as readonly string[],
+        `the tree uses a line "${line}" the game does not have`).toContain(line);
     }
   });
 
@@ -194,7 +207,7 @@ describe('what the rules refuse', () => {
     expect(messages(d).some((m) => m.includes('requirements'))).toBe(true);
   });
 
-  it('a card with no requirement at all, and a cover page with one', () => {
+  it('a card mid-page with no requirement at all, and a cover page with one', () => {
     const d = clone();
     d.technologies.Masonry.requires = [];
     expect(messages(d).some((m) => m.includes('available from the first minute'))).toBe(true);
@@ -202,6 +215,23 @@ describe('what the rules refuse', () => {
     const cover = clone();
     cover.technologies.CharterI.requires = ['Forestry'];
     expect(messages(cover).some((m) => m.includes('may require nothing'))).toBe(true);
+  });
+
+  // …but the FIRST ROW of a book is where a root belongs: there is nothing
+  // above it to require, and a designer opening a tome with something other
+  // than a cover page was being told their own first row was an error.
+  it('accepts a root on the page’s first row, whatever it is called', () => {
+    const d = clone();
+    const top = d.technologies.CharterI.row;
+    // Forestry moves up beside the cover page and lets go of its requirement.
+    d.technologies.Forestry = { ...d.technologies.Forestry, row: top, col: 0, requires: [] };
+    expect(messages(d)).toEqual([]);
+
+    // And one row down it is an error again, because now there IS something
+    // above it.
+    const below = clone();
+    below.technologies.Forestry = { ...below.technologies.Forestry, requires: [] };
+    expect(messages(below).some((m) => m.includes('available from the first minute'))).toBe(true);
   });
 
   it('a rank that does not require the rank before it', () => {
@@ -287,6 +317,28 @@ describe('what the rules refuse', () => {
     const d = clone();
     d.technologies.SawpitsII.effectPerRank = 99;
     expect(messages(d).some((m) => m.includes('all the same size'))).toBe(true);
+  });
+
+  // OFF THE PAGE is a real state of the document — `?dev=tree` takes a
+  // technology out of its slot without deleting it — and it is an error,
+  // because the game has nowhere to draw one. That is what stops it reaching
+  // the repo: the save endpoint and CI refuse it, so the holding pen only
+  // exists inside a session.
+  it('a technology with no slot, and anything still waiting on it', () => {
+    const d = clone();
+    const masonry = d.technologies.Masonry;
+    delete masonry.tome;
+    delete masonry.era;
+    delete masonry.row;
+    delete masonry.col;
+    masonry.requires = [];
+    const said = messages(d);
+    expect(said.some((m) => m.includes('Masonry is off the page'))).toBe(true);
+    // ONE error about it, not four: no tome, no era, no row, no column is one
+    // fact, and the three that cascade would bury the one to act on.
+    expect(said.filter((m) => m.startsWith('Masonry ')).length).toBe(1);
+    // …and whatever was waiting on it says so in its own words.
+    expect(said.some((m) => m.includes('requires Masonry, which is off the page'))).toBe(true);
   });
 
   it('a column the page does not have', () => {

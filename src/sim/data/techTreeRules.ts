@@ -55,14 +55,19 @@ export interface TechNodeDoc {
   glyph: string;
   description: string;
   kind: TechKind;
-  /** Which book. The tab it is on — a drag, not a spreadsheet edit. */
-  tome: TomeId;
-  /** Which band of that book, 1–4. The era bar above it is the gate. */
-  era: number;
-  /** The page reads downward: a requirement always sits on a smaller row. */
-  row: number;
-  /** 0, 1 or 2 — left, middle, right. */
-  col: number;
+  /**
+   * Its slot, or nothing at all.
+   *
+   * All four are absent together on a technology that has been taken OFF THE
+   * PAGE — which exists, is editable, and is an ERROR until it is put back
+   * (the game has nowhere to draw it). That is a different state from deleted,
+   * and the difference is the point: a technology can be set aside while its
+   * page is rearranged without losing its prose, its price or its unlocks.
+   */
+  tome?: TomeId;
+  era?: number;
+  row?: number;
+  col?: number;
   /** One to three, and exactly none on a tome's cover page. */
   requires: string[];
   /** City Gold, kingdom Knowledge, and seconds on a scholar's desk. */
@@ -103,6 +108,28 @@ export interface TechTreeValidation {
  *  even though a missing tome is not. */
 export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic'];
 
+/**
+ * Every minor LINE the game has, as values rather than a type.
+ *
+ * `TechLineId` is derived from this list (`src/sim/state.ts`), so there is one
+ * of it — and the editor can offer a line the moment the code knows about it,
+ * rather than only once some technology already carries one. A line's HOOK is
+ * still a call site (`effect(state, 'X')` in `src/sim/`), which is why adding
+ * one is a code change and this array is where that change starts.
+ */
+export const TECH_LINE_IDS = [
+  'TapPower', 'QuickHands', 'WorkerLoad', 'Sawpits',
+  'Butchery', 'Irrigation', 'Scythes', 'Surveying',
+  'Pitons', 'MarketStall', 'TradeRoutes', 'Stonecutting',
+  'BigNets', 'IronPicks', 'Resonance', 'Carpentry',
+  'Scriveners', 'Cartage', 'DeepWells', 'LeyTaps',
+  'Wayposts', 'Scriptorium', 'Vigils', 'Pilgrimage',
+  'Prospecting', 'Colours', 'MusterDrill', 'Rations',
+  'Drillmaster', 'Bearers', 'Pathfinders', 'ShieldWall',
+  'Fletching', 'Barding', 'Warhorns', 'Manoeuvre',
+  'Farsight',
+] as const;
+
 /** Bands per book. Era 4 is the sealed one. */
 export const MAX_ERA = 4;
 
@@ -120,6 +147,15 @@ const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxL
 /** A cover page is granted when its tome opens, so it needs nothing — and is
  *  the one technology allowed to cost nothing. */
 export const isCoverPage = (id: string): boolean => /^(Charter|Warband|Attunement)I$/.test(id);
+
+/** A technology that HAS a slot — the same object, with the four fields known
+ *  to be there, so one check narrows all of them. */
+export type PlacedTech = TechNodeDoc & Required<Pick<TechNodeDoc, 'tome' | 'era' | 'row' | 'col'>>;
+
+/** Is this technology on a page at all? All four slot fields, or none. */
+export const isPlaced = (node: TechNodeDoc): node is PlacedTech =>
+  node.tome !== undefined && node.era !== undefined
+  && node.row !== undefined && node.col !== undefined;
 
 /** A legal technology id: an identifier, because it is a key everywhere. */
 export const isTechId = (id: string): boolean => /^[A-Z][A-Za-z0-9]*$/.test(id);
@@ -232,9 +268,21 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
 
   // ---- slots ------------------------------------------------------------
   const byCell = new Map<string, string>();
-  const placed: string[] = [];
+  /** The ones with a slot, narrowed once here so nothing below re-asserts it. */
+  const onPage = new Map<string, PlacedTech>();
   for (const id of all) {
     const node = nodes[id];
+    // OFF THE PAGE. One error, and none of the checks below — a technology
+    // with no slot has no column to be out of range and no row to be above
+    // its requirements, and reporting four things about one fact would bury
+    // the one that can be acted on.
+    if (!isPlaced(node)) {
+      errors.push({
+        message: `${id} is off the page — drag it into a slot`,
+        tech: id,
+      });
+      continue;
+    }
     if (!TOME_IDS.includes(node.tome)) {
       errors.push({ message: `${id} sits in "${node.tome}", which is not a tome`, tech: id });
       continue;
@@ -265,14 +313,13 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       });
     } else {
       byCell.set(key, id);
-      placed.push(id);
+      onPage.set(id, node);
     }
   }
 
   // ---- one row never straddles two eras ---------------------------------
   const eraOfRow = new Map<string, { era: number; tech: string }>();
-  for (const id of placed) {
-    const node = nodes[id];
+  for (const [id, node] of onPage) {
     const key = `${node.tome}:${node.row}`;
     const seen = eraOfRow.get(key);
     if (seen === undefined) eraOfRow.set(key, { era: node.era, tech: id });
@@ -286,9 +333,22 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   }
 
   // ---- requirements -----------------------------------------------------
-  for (const id of placed) {
-    const node = nodes[id];
+  //
+  // A ROOT is a card with nothing above it on its page, and a root requires
+  // nothing because there is nothing it could require — which is what the
+  // FIRST ROW of a book means. The rule used to name the three cover pages
+  // instead, so a designer opening a tome with anything else was told their
+  // own first row was an error while `defaultRequires` handed it exactly that.
+  // Positional, and the two agree now.
+  const firstRow = new Map<string, number>();
+  for (const node of onPage.values()) {
+    const seen = firstRow.get(node.tome);
+    if (seen === undefined || node.row < seen) firstRow.set(node.tome, node.row);
+  }
+
+  for (const [id, node] of onPage) {
     const requires = node.requires ?? [];
+    const isRoot = node.row <= (firstRow.get(node.tome) ?? node.row);
     if (isCoverPage(id)) {
       if (requires.length > 0) {
         errors.push({
@@ -296,9 +356,10 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
           tech: id,
         });
       }
-    } else if (requires.length === 0) {
+    } else if (requires.length === 0 && !isRoot) {
       errors.push({
-        message: `${id} requires nothing, so it would be available from the first minute`,
+        message: `${id} requires nothing, so it would be available from the first minute — `
+          + 'put it on the page\'s first row, or say what it needs',
         tech: id,
       });
     } else if (requires.length > MAX_REQUIRES) {
@@ -312,13 +373,19 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       errors.push({ message: `${id} names the same requirement twice`, tech: id });
     }
     for (const req of requires) {
-      const from = nodes[req];
-      if (from === undefined) {
+      if (nodes[req] === undefined) {
         errors.push({ message: `${id} requires "${req}", which is not a technology`, tech: id });
         continue;
       }
       if (req === id) {
         errors.push({ message: `${id} requires itself`, tech: id });
+        continue;
+      }
+      const from = onPage.get(req);
+      if (from === undefined) {
+        errors.push({
+          message: `${id} requires ${req}, which is off the page`, tech: id,
+        });
         continue;
       }
       // A page cannot draw an edge that leaves it, so a requirement across
@@ -346,8 +413,7 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   // ---- the page reads downward: an era never sits above the one before --
   const lowestOf = new Map<string, number>();
   const highestOf = new Map<string, number>();
-  for (const id of placed) {
-    const node = nodes[id];
+  for (const node of onPage.values()) {
     const key = `${node.tome}:${node.era}`;
     lowestOf.set(key, Math.min(lowestOf.get(key) ?? node.row, node.row));
     highestOf.set(key, Math.max(highestOf.get(key) ?? node.row, node.row));
@@ -427,6 +493,14 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     } else if (node.kind === 'bonus') {
       if (line === null || line === '') {
         errors.push({ message: `${id} is a bonus with no line`, tech: id });
+      } else if (!(TECH_LINE_IDS as readonly string[]).includes(line)) {
+        // A line nothing reads is a rank the player pays for and nothing
+        // collects. Adding one is a code change (`TECH_LINE_IDS`, and the
+        // call site that owns the number).
+        errors.push({
+          message: `${id} is on the line "${line}", which the game does not have`,
+          tech: id,
+        });
       }
       if ((node.effectPerRank ?? 0) === 0) {
         errors.push({ message: `${id} is a bonus worth nothing a rank`, tech: id });

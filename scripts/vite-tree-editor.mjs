@@ -28,11 +28,15 @@ const NOTE = 'Every technology in the game: its name and prose, what KIND it '
   + 'districts, units and harvest sources no longer name their own gate. '
   + 'Ordered by tome, then down the page, then left to right.';
 
-/** Reading order: book by book, then down the page and across it. */
-const inReadingOrder = (nodes, tomes) => Object.keys(nodes).sort((a, b) =>
-  tomes.indexOf(nodes[a].tome) - tomes.indexOf(nodes[b].tome)
-  || nodes[a].row - nodes[b].row
-  || nodes[a].col - nodes[b].col);
+/** Reading order: book by book, then down the page and across it — with
+ *  anything OFF THE PAGE last, since it belongs to no book yet. */
+const inReadingOrder = (nodes, tomes) => Object.keys(nodes).sort((a, b) => {
+  const place = (n) => (n.tome === undefined ? tomes.length : tomes.indexOf(n.tome));
+  return place(nodes[a]) - place(nodes[b])
+    || (nodes[a].row ?? 0) - (nodes[b].row ?? 0)
+    || (nodes[a].col ?? 0) - (nodes[b].col ?? 0)
+    || a.localeCompare(b);
+});
 
 const json = (v) => JSON.stringify(v);
 
@@ -48,12 +52,20 @@ const nodeBlock = (id, n) => {
   const lines = [
     `      "name": ${json(n.name)}, "glyph": ${json(n.glyph)}, "kind": ${json(n.kind)}`,
     `      "description": ${json(n.description)}`,
-    `      "tome": ${json(n.tome)}, "era": ${n.era}, "row": ${n.row}, "col": ${n.col}`,
+  ];
+  // All four slot fields, or none: a technology taken off the page keeps
+  // everything else and simply says nothing about where it sits.
+  if (n.tome !== undefined) {
+    lines.push(
+      `      "tome": ${json(n.tome)}, "era": ${n.era}, "row": ${n.row}, "col": ${n.col}`,
+    );
+  }
+  lines.push(
     `      "requires": [${(n.requires ?? []).map(json).join(', ')}]`,
     `      "gold": ${n.gold ?? 0}`
       + (n.knowledge ? `, "knowledge": ${n.knowledge}` : '')
       + `, "seconds": ${n.seconds ?? 0}`,
-  ];
+  );
   if ((n.unlocks ?? []).length > 0) {
     lines.push(`      "unlocks": [${n.unlocks.map((u) => json(u)).join(', ')}]`);
   }

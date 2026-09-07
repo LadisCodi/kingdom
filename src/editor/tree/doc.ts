@@ -13,8 +13,10 @@
 // questions and calls these, and never reaches into the document.
 
 import {
-  MAX_ERA, MAX_REQUIRES, TECH_KINDS, isCoverPage, isTechId, techIds, validateTechTree,
-  type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation, type TechUnlock,
+  MAX_ERA, MAX_REQUIRES, TECH_KINDS, TECH_LINE_IDS, isCoverPage, isPlaced, isTechId, techIds,
+  validateTechTree,
+  type PlacedTech, type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation,
+  type TechUnlock,
 } from '../../sim/data/techTreeRules';
 import { authoredRows, COLS, type PageRow } from '../../ui/research/layout';
 import type { TomeId } from '../../sim/state';
@@ -56,15 +58,29 @@ export class TreeDoc {
 
   node(id: string): TechNodeDoc | null { return this.doc.technologies[id] ?? null; }
 
-  /** Every minor line in use. A line's HOOK is code (`src/sim/upgrades.ts`),
-   *  so the editor may only put a rank on one that already exists. */
+  /** Every technology with no slot — taken off the page, or newly arrived and
+   *  not put anywhere yet. The rules make each of them an error, so this is
+   *  also the list blocking the save. */
+  get offPage(): string[] {
+    return this.ids.filter((id) => !isPlaced(this.doc.technologies[id]));
+  }
+
+  placed(id: string): boolean {
+    const node = this.doc.technologies[id];
+    return node !== undefined && isPlaced(node);
+  }
+
+  /**
+   * Every minor line the GAME has — not just the ones already in use.
+   *
+   * A line's HOOK is a call site (`effect(state, 'X')`), so the editor may
+   * only put a rank on a line that exists in the code; `TECH_LINE_IDS` is that
+   * list. Reading the file instead would have made a line added to the code
+   * unpickable until something already carried it, which is the wrong way
+   * round for the one gesture that needs both halves.
+   */
   get lines(): string[] {
-    const out = new Set<string>();
-    for (const id of this.ids) {
-      const line = this.doc.technologies[id].line ?? null;
-      if (line !== null && line !== '') out.add(line);
-    }
-    return [...out].sort();
+    return [...TECH_LINE_IDS].sort();
   }
 
   get validation(): TechTreeValidation {
@@ -172,10 +188,42 @@ export class TreeDoc {
       };
       const node = this.doc.technologies[id];
       if (node.requires.length === 0 && !isCoverPage(id)) {
-        node.requires = this.defaultRequires(tome, node.row, node.col);
+        node.requires = this.defaultRequires(tome, slot.row, slot.col);
       }
     });
     return null;
+  }
+
+  /**
+   * Take a technology OFF THE PAGE without deleting it.
+   *
+   * It keeps everything that makes it a technology — prose, price, kind,
+   * unlocks — and loses only where it sat. Its requirements go too, because
+   * "above me on the page" is exactly what it no longer has, and so does
+   * every requirement pointing AT it: a card cannot wait on something that is
+   * nowhere. Put it back with a drag and the slot hands it new ones.
+   *
+   * The rules call this an error, so a tree with anything off the page cannot
+   * be saved — which is the difference from deleting: this is a holding pen
+   * inside one session's work, not a state the repo can hold.
+   */
+  unplace(id: string): void {
+    this.edit(() => {
+      const node = this.doc.technologies[id];
+      if (node === undefined) return;
+      delete node.tome;
+      delete node.era;
+      delete node.row;
+      delete node.col;
+      node.requires = [];
+      for (const [other, waiting] of Object.entries(this.doc.technologies)) {
+        if (!waiting.requires.includes(id)) continue;
+        waiting.requires = waiting.requires.filter((req) => req !== id);
+        if (waiting.requires.length === 0 && !isCoverPage(other) && isPlaced(waiting)) {
+          waiting.requires = this.defaultRequires(waiting.tome, waiting.row, waiting.col);
+        }
+      }
+    });
   }
 
   /** Delete a technology outright, and every requirement pointing at it. */
@@ -187,7 +235,7 @@ export class TreeDoc {
         node.requires = node.requires.filter((req) => req !== id);
         // A card the deletion left with nothing takes its slot's default, so
         // one delete never leaves the page in a state the rules refuse.
-        if (node.requires.length === 0 && !isCoverPage(other)) {
+        if (node.requires.length === 0 && !isCoverPage(other) && isPlaced(node)) {
           node.requires = this.defaultRequires(node.tome, node.row, node.col);
         }
       }
@@ -248,15 +296,24 @@ export class TreeDoc {
         .find(([o, n]) => o !== id && n.tome === tome && n.row === row && n.col === col);
       if (occupant !== undefined) {
         // A swap, not a silent overwrite: the card already there goes where
-        // this one came from.
-        Object.assign(occupant[1], from);
+        // this one came from — and when this one came from OFF THE PAGE, that
+        // is where the occupant goes. Trading places with nothing is being
+        // taken off the page.
+        if (isPlaced(before)) Object.assign(occupant[1], from);
+        else {
+          delete occupant[1].tome;
+          delete occupant[1].era;
+          delete occupant[1].row;
+          delete occupant[1].col;
+          occupant[1].requires = [];
+        }
       }
       Object.assign(nodes[id], { tome, era, row, col });
       // Anything that reached DOWN to this card is now illegal; so is any
       // requirement of its own that no longer sits above it.
       for (const [other, node] of Object.entries(nodes)) {
         node.requires = node.requires.filter((req) => this.reachable(other, req));
-        if (node.requires.length === 0 && !isCoverPage(other)) {
+        if (node.requires.length === 0 && !isCoverPage(other) && isPlaced(node)) {
           node.requires = this.defaultRequires(node.tome, node.row, node.col);
         }
       }
@@ -304,7 +361,7 @@ export class TreeDoc {
   insertRow(tome: TomeId, row: number): void {
     this.edit(() => {
       for (const node of Object.values(this.doc.technologies)) {
-        if (node.tome === tome && node.row >= row) node.row += 1;
+        if (node.tome === tome && node.row !== undefined && node.row >= row) node.row += 1;
       }
     });
   }
@@ -315,7 +372,7 @@ export class TreeDoc {
       (n) => n.tome === tome && n.row === row)) return;
     this.edit(() => {
       for (const node of Object.values(this.doc.technologies)) {
-        if (node.tome === tome && node.row > row) node.row -= 1;
+        if (node.tome === tome && node.row !== undefined && node.row > row) node.row -= 1;
       }
     });
   }
@@ -333,10 +390,11 @@ export class TreeDoc {
   private pushDown(tome: TomeId, era: number, row: number, except?: string): void {
     const last = Object.entries(this.doc.technologies)
       .filter(([other, node]) => other !== except && node.tome === tome && node.era === era)
-      .reduce((max, [, node]) => Math.max(max, node.row), -1);
+      .reduce((max, [, node]) => Math.max(max, node.row ?? -1), -1);
     if (row <= last) return;
     for (const [other, node] of Object.entries(this.doc.technologies)) {
       if (other === except || node.tome !== tome) continue;
+      if (node.era === undefined || node.row === undefined) continue;
       if (node.era > era && node.row >= row) node.row += 1;
     }
   }
@@ -350,11 +408,11 @@ export class TreeDoc {
       // An empty band starts below everything above it.
       const above = this.ids
         .map((id) => this.doc.technologies[id])
-        .filter((node) => node.tome === tome && node.era < era)
-        .reduce((max, node) => Math.max(max, node.row), -1);
+        .filter((node) => node.tome === tome && (node.era ?? MAX_ERA) < era)
+        .reduce((max, node) => Math.max(max, node.row ?? -1), -1);
       return { row: above + 1, col: 1 };
     }
-    const last = band.reduce((max, node) => Math.max(max, node.row), 0);
+    const last = band.reduce((max, node) => Math.max(max, node.row ?? 0), 0);
     for (let col = 0; col < COLS; col++) {
       if (this.at(tome, last, col) === null) return { row: last, col };
     }
@@ -366,6 +424,8 @@ export class TreeDoc {
     const to = this.doc.technologies[id];
     const from = this.doc.technologies[req];
     if (to === undefined || from === undefined || id === req) return false;
+    // Off the page is off the graph: there is no "above" either way.
+    if (!isPlaced(to) || !isPlaced(from)) return false;
     return from.tome === to.tome && from.row < to.row;
   }
 
@@ -380,7 +440,7 @@ export class TreeDoc {
    */
   defaultRequires(tome: TomeId, row: number, col: number): string[] {
     const rows = [...new Set(Object.values(this.doc.technologies)
-      .filter((n) => n.tome === tome && n.row < row)
+      .filter((n): n is PlacedTech => isPlaced(n) && n.tome === tome && n.row < row)
       .map((n) => n.row))].sort((a, b) => b - a);
     const above = rows[0];
     if (above === undefined) return [];

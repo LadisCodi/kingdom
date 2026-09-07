@@ -12,7 +12,7 @@ import balance from './balance.json';
 import regionMap from './region-map.json';
 import treeDoc from './tech-tree.json';
 import {
-  techIds, type TechKind, type TechTreeDoc, type TechUnlock,
+  isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
@@ -87,9 +87,22 @@ const DOC = (treeDoc as unknown as TechTreeDoc).technologies;
  *  the page — so `TECH_LINES` can be derived from it rather than restated. */
 export const TECH_ORDER: TechId[] = techIds(treeDoc as unknown as TechTreeDoc) as TechId[];
 
+/**
+ * Where a technology with no slot is drawn: nowhere anyone will look.
+ *
+ * `?dev=tree` can take one OFF THE PAGE while a book is rearranged, and the
+ * rules call that an error, so the save endpoint and CI both refuse a tree
+ * that still has one — the game cannot receive it. This is what a
+ * hand-broken file gets instead of a crash: a card in the corner of Civics
+ * era 1, colliding with whatever is there, which is loud in the editor and
+ * harmless in the sim.
+ */
+const NO_SLOT = { tome: 'Civics' as TomeId, era: 1, row: 0, col: 0 };
+
 export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
   TECH_ORDER.map((id) => {
     const node = DOC[id];
+    const slot = isPlaced(node) ? node : NO_SLOT;
     const knowledge = node.knowledge ?? 0;
     return [id, {
       id,
@@ -98,10 +111,10 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       glyph: node.glyph,
       kind: node.kind,
       unlocks: node.unlocks ?? [],
-      tome: node.tome,
-      era: node.era,
-      row: node.row,
-      col: node.col,
+      tome: slot.tome,
+      era: slot.era,
+      row: slot.row,
+      col: slot.col,
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
       durationSeconds: node.seconds,

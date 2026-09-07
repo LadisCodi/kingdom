@@ -52,7 +52,8 @@
   research; the next one is quicker.
 - Each node lists `requires` (one to three); content gates on `requiredTech`.
   A prerequisite never points into another tome, and never at a card further
-  down its own page.
+  down its own page. A card on a page's **first row** requires nothing —
+  there is nothing above it to require, which is what opening a book means.
 - Gems finish a running research the way they finish a build *(designed, not
   built)*.
 - The tree has 180 rows: **Civics 71 · Magic 57 · Warfare 52**, totalling
