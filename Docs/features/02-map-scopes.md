@@ -22,7 +22,8 @@
   procedural province generator.
 - 1,470 cells; the whole fog costs **28,517,245 Gold** across the 1,466 that
   are priced.
-- The buildable plot is **bounded** (§6). Adjacency rules depend on it (OQ-48).
+- The buildable plot is **bounded** (§6): a Chebyshev ring around the Townhall,
+  by Townhall level. Adjacency rules depend on it (OQ-48).
 - Plot growth comes in **authored increments** — an expansion block, not a
   tile — priced in Gold and earned outside the province (§5).
 - Square grid with its three distance metrics
@@ -185,13 +186,33 @@ The outer scope feeds the inner one.
   rather than in the authored province. Same rarity logic as the 3★
   ingredients.
 
-## 6. Plot bound and save shape
+## 6. The plot bound
 
-- **The buildable area is bounded in data** — a `city.maxBuildDistance` or a
-  buildable flag on the plot. A balance number, not a refactor (OQ-1).
+- **The buildable plot is a ring around the Townhall's footprint**, measured in
+  **Chebyshev** distance — the areas-of-influence metric
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §1).
+- **The Townhall level is the ring**: 3 at level 1, 6 at 3, 10 at 10
+  (`city.build_distance_per_townhall_level`). The Townhall already gates every
+  count cap, so buildings and ground grow together and the plot stays about as
+  tight at ten as at one.
+- **The plot bounds where the city may BUILD, and nothing else.** A crew
+  reaches out of it with its area of influence; a tap reaches anywhere
+  revealed. The far province is thumb country, the near province is payroll
+  country.
+- A building already standing outside the plot keeps working, keeps its crew
+  and can still be upgraded — promise 1. What it may not do is **move** to a
+  cell outside the plot.
+- The whole footprint must fit: an anchor inside the ring is not enough.
+- The ring is the reason the build menu outlines every legal cell while
+  placing: what it outlines is the plot.
+- Bought plot expansions (**OQ-71**) will add to the ring, not replace it.
 - The province fog stays as it is; the far ring pays **content access**, not
   more buildable tiles. Ruins and landmarks sit at distance 3–12; the far cells
   are mostly mountain and water, which are not buildable.
+- What the ring has to reach, read off the map: berries and game at 2, trees at
+  3, the nearest mountain at 5, **the coast at 6** — which is why the Docks and
+  Townhall 3 arrive together — a fish shoal at 8, an iron vein at 9, a gold
+  mountain at 14.
 - **The save says which scope a thing is in.**
 - The guild siege lives on the world map ([`15-social.md`](15-social.md) §6).
 - This is larger than the `regions: Record<RegionId, RegionState>` reshape and
@@ -224,5 +245,5 @@ Each is playable without the ones after it.
 - Reusing `grid.ts` for the lattice (§1.3).
 - Anything multi-region beyond the existing `regionId` discriminator.
 
-**Open questions:** OQ-1, OQ-2, OQ-3, OQ-4, OQ-5, OQ-38, OQ-65, OQ-66, OQ-67 in
+**Open questions:** OQ-2, OQ-3, OQ-4, OQ-5, OQ-38, OQ-65, OQ-66, OQ-67 in
 [`../open-questions.md`](../open-questions.md).

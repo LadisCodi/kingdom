@@ -2,13 +2,13 @@
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
 import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
+import { cellExists, chebyshevToRect, neighbors, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
 import { goodsCostForLevel } from './goods';
 import {
-  cellsOfRect, coordKey, districtAt, townhall,
+  cellsOfRect, coordKey, districtAt, districtSize, townhall,
   type Coord, type District, type DistrictId, type GameState, type GoodsStock,
   type TechId, type Wallet,
 } from './state';
@@ -40,7 +40,30 @@ export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
   | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsShoreline'
   | 'NeedsLand'
+  | 'OutsidePlot'
   | 'HasSite';
+
+/**
+ * How far the buildable plot reaches, in Chebyshev rings around the
+ * Townhall's footprint (OQ-1, [`02-map-scopes.md`](../../Docs/features/02-map-scopes.md) §6).
+ *
+ * **The plot bounds where the city may BUILD, never where it may harvest.** A
+ * crew reaches out of the plot with its area of influence, and a tap reaches
+ * anywhere revealed — so the far province is thumb country and the near
+ * province is payroll country.
+ *
+ * The Townhall level is the schedule, because it already gates every count
+ * cap: buildings and ground grow together, so the plot stays about as tight
+ * at ten as it is at one. Bought expansions (OQ-71) will add to this.
+ */
+export const plotRadius = (state: GameState): number =>
+  levelIndexed(CITY_DEF.buildDistancePerTownhallLevel, townhall(state).level);
+
+/** Is this cell inside the plot the city may build on right now? */
+export const isInsidePlot = (state: GameState, cell: Coord): boolean => {
+  const th = townhall(state);
+  return chebyshevToRect(cell, th.location, districtSize(th)) <= plotRadius(state);
+};
 
 /**
  * All placement conditions ANDed over the full footprint (cell = anchor,
@@ -66,6 +89,9 @@ export function placementBlock(
   // Universal rules — every footprint cell must pass.
   for (const c of footprint) {
     if (!cellExists(map, c)) return 'OffMap';
+    // The plot answers before the fog does: paying to reveal a cell outside
+    // it would buy nothing a builder can use.
+    if (!isInsidePlot(state, c)) return 'OutsidePlot';
     if (state.features[coordKey(c)]) return 'HasFeature';
     // Landmarks and ruins are content, not building ground: paving over a
     // ruin would silently delete a whole dungeon.
@@ -120,13 +146,6 @@ export function placementBlock(
   }
   return null;
 }
-
-/** True if the type has placement rules beyond the universal ones — only then
- *  is highlighting valid cells informative (an unrestricted building like the
- *  Sawmill would just outline most of the map). */
-export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
-  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands' ||
-  definitionId === 'Docks';
 
 export const validPlacementCells = (
   state: GameState,

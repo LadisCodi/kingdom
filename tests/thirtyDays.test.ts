@@ -20,11 +20,12 @@ import {
   advance, changeWorkers, enqueueBuild, upgradeDistrict,
 } from '../src/sim/commands';
 import {
-  LATE_FROM, placementBlock, maxDistrictCount, requiredTownhallLevel, upgradeGoodsCost,
-  validPlacementCells,
+  LATE_FROM, isInsidePlot, placementBlock, maxDistrictCount, requiredTownhallLevel,
+  upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
 import { explorationGate, fogState, isReachable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
+import { cellHasSite } from '../src/sim/sites';
 import { claimLandmark, isLandmarkClaimed, visibleLandmarks } from '../src/sim/landmarks';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
@@ -43,7 +44,8 @@ import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { influenceCells } from '../src/sim/workers';
 import type { UnitId } from '../src/sim/state';
 import {
-  coordKey, getWallet, type Coord, type District, type DistrictId, type GameState,
+  coordKey, districtSize, getWallet,
+  type Coord, type District, type DistrictId, type GameState,
 } from '../src/sim/state';
 import { map, T0, TEST_SEED } from './helpers';
 
@@ -69,7 +71,8 @@ const BUILD_ORDER: DistrictId[] = [
 
 interface WeekRow {
   week: number; townhall: number; population: number; districts: number;
-  maxed: number; levels: number; techs: number; gold: number; knowledge: number;
+  maxed: number; levels: number; plot: string; techs: number; gold: number;
+  knowledge: number;
   army: number; ruins: number; landmarks: number; idleDays: number;
 }
 
@@ -302,6 +305,27 @@ function playVisit(state: GameState, now: number): boolean {
   return acted;
 }
 
+/**
+ * Cells built on, over cells inside the plot that a building could ever
+ * stand on — "23/50 46%".
+ *
+ * The denominator is ground, not permission: inside the ring, on land, no
+ * feature, no site. Deliberately NOT `placementBlock`, whose answer is
+ * per-type — a house needs a neighbour and a pier needs a shore, so asking
+ * about one building would measure that building's rule rather than the plot.
+ * Fog is left out too: it has its own column, and this one is about the plot.
+ */
+function plotOccupancy(state: GameState): string {
+  const used = state.city.districts
+    .reduce((n, d) => n + districtSize(d).x * districtSize(d).y, 0);
+  const room = map.cells.filter((c) =>
+    isInsidePlot(state, c)
+    && map.terrain.get(coordKey(c)) !== 'Water'
+    && !state.features[coordKey(c)]
+    && !cellHasSite(c)).length;
+  return `${used}/${room} ${Math.round((used / room) * 100)}%`;
+}
+
 /** The real offline path: save at `from`, load at `to`. */
 function comeBack(state: GameState, from: number, to: number): GameState {
   const loaded = deserialize(serialize(state, from), map, to);
@@ -343,6 +367,10 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           // `levels` says how much was bought at all, which is the column the
           // builder programme moves (Docs/plans/builder-30-days.md §4).
           levels: state.city.districts.reduce((n, d) => n + d.level, 0),
+          // How full the plot is: the cells the city stands on against the
+          // cells it may stand on. The number that says when the bounded plot
+          // (OQ-1) starts being a decision rather than a fact.
+          plot: plotOccupancy(state),
           techs: state.research.completed.length,
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
           knowledge: Math.round(getWallet(state.kingdom.wallet, 'Knowledge')),
@@ -424,5 +452,18 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     expect(Object.keys(upgradeGoodsCost('Sawmill', LATE_FROM)).length,
       'the goods wall is authored, whether or not anyone reaches it')
       .toBeGreaterThan(0);
+
+    // 6. The bounded plot (OQ-1) does not bite YET, and this is the number
+    //    that says so: the city stands on about a fifth of the ground its
+    //    ring allows. It is the same cause as every finding above — the
+    //    Townhall stalls at 3, so the count caps stay Townhall-1-to-4 sized.
+    //    Step 6 (decorations, ~25% of the plot) and step 7 (the Townhall
+    //    ladder and its count caps) are what turn the ground into a decision;
+    //    re-pin this then.
+    const occupied = Number(end.plot.split(' ')[1].replace('%', ''));
+    expect(occupied, 'share of the plot the city stands on at day 30')
+      .toBeLessThan(50);
+    expect(occupied, 'and it is not empty either — the ring is doing something')
+      .toBeGreaterThan(10);
   }, 120_000);
 });

@@ -80,7 +80,10 @@ describe('where it may go', () => {
 
   it('a house cannot anchor its own move on itself', () => {
     const state = freshGame();
-    // A lone house far from the Townhall, with no other building near it.
+    // A lone house far from the Townhall, with no other building near it —
+    // far enough that the opening plot does not reach it, so the Townhall
+    // level has to come up before the adjacency rule is the one answering.
+    townhall(state).level = 3;
     reveal(state, [FAR_CELL, { x: 4, y: 5 }]);
     const lonely = houseAt(state, FAR_CELL);
     // Standing next to where you already are is not neighbourliness: shifting

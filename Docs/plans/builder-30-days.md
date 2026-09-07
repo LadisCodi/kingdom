@@ -277,7 +277,44 @@ than a building.
 - **Art:** the three-tier sprites already cover levels 6–10 (`_l8` serves
   8–10), landed ahead of this step.
 
-## 5. Step 5 · Adjacency v2
+## 5. Step 5 · The bounded plot, then adjacency v2
+
+### 5.0 The plot — **DONE**
+
+**OQ-1, closed 2026-09-07.** Adjacency and Harmony are both about ground
+competing for itself, and neither means anything on a canvas with 736 free
+cells — so the bound went in first.
+
+- **Data:** `city.build_distance_per_townhall_level` = `3,4,6,7,7,8,8,9,9,10`.
+  A **Chebyshev** ring around the Townhall's footprint (the areas-of-influence
+  metric), sized by the Townhall level — which was already the schedule for
+  every count cap, so buildings and ground grow together.
+- **Sim:** `plotRadius`, `isInsidePlot` and a new `'OutsidePlot'` refusal in
+  `placementBlock`, checked per footprint cell and **before the fog**, since
+  paying to reveal a cell outside the plot buys nothing a builder can use.
+- **The bound is on BUILDING only** — a crew reaches out with its area of
+  influence, a tap reaches anything revealed, and a building already outside
+  the plot keeps its crew and its levels (promise 1). It just may not **move**
+  outside.
+- **UI:** the placement ghost now outlines every legal cell for **every**
+  building, not just the restricted ones — what it outlines is the plot.
+  `hasPlacementRestriction` is gone; the premise it was built on ("an
+  unrestricted building would outline most of the map") stopped being true.
+- **What the ring has to reach**, read off the map: trees at 3, mountain at 5,
+  **coast at 6** — so the Docks and Townhall 3 arrive together — shoal at 8,
+  iron at 9, gold mountain at 14. The far nodes are tap-only until the ring
+  gets there, which is the design, not a gap.
+- **Tests:** `tests/plot.test.ts` — the ring by level, the footprint measure,
+  the refusal order, a crew working outside, a tap outside, a building outside
+  keeping everything, and a move refused outward.
+- **What the harness says:** a new `plot` column measures occupancy, and it
+  reads **21% at day 30** (35 cells of 164). **The bound does not bite yet**,
+  and the cause is the one every other finding has: the Townhall stalls at 3,
+  so the count caps stay sized for levels 1–4. Step 6's decorations and step
+  7's Townhall ladder are what make ground scarce; the schedule gets re-tuned
+  then, against that measurement.
+
+### 5.1 Adjacency v2
 
 Decorations (step 6) need a non-Gold rule, so the resolver grows first.
 

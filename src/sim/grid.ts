@@ -102,6 +102,22 @@ export const townhallDistance = (map: MapData, cell: Coord): number =>
 export const cellsWithinRadius = (map: MapData, center: Coord, radius: number): Coord[] =>
   cellsWithinRadiusOfRect(map, center, { x: 1, y: 1 }, radius);
 
+/**
+ * Chebyshev distance from `cell` to the size.x × size.y rect anchored
+ * (top-left) at `anchor` — 0 for a cell inside it, 1 for one touching it at a
+ * corner or an edge.
+ *
+ * The **areas-of-influence** metric (`CLAUDE.md`: three coexist by design),
+ * shared by what a crew can reach and by how far the plot goes.
+ */
+export function chebyshevToRect(
+  cell: Coord, anchor: Coord, size: { x: number; y: number },
+): number {
+  const dx = Math.max(anchor.x - cell.x, cell.x - (anchor.x + size.x - 1), 0);
+  const dy = Math.max(anchor.y - cell.y, cell.y - (anchor.y + size.y - 1), 0);
+  return Math.max(dx, dy);
+}
+
 /** Like cellsWithinRadius, but around a size.x × size.y footprint anchored
  *  (top-left) at `anchor` — the footprint's own cells are excluded. Same
  *  nearest-first, then reading-order contract. */

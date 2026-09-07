@@ -13,7 +13,7 @@ import { placementBlock } from '../src/sim/districts';
 import { harvestSourceAt, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { startTech, techCost } from '../src/sim/research';
 import { HARVEST } from '../src/sim/data/definitions';
-import { coordKey, getWallet } from '../src/sim/state';
+import { coordKey, getWallet, townhall } from '../src/sim/state';
 import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
 
 // Every coordinate below is READ OFF THE MAP, and every one of them moved
@@ -37,6 +37,10 @@ describe('stone line (Masonry → Quarry)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
+    // The plot reaches ring 4 at Townhall 1 and the rocks sit at 5, so this
+    // test needs the Townhall that Masonry's era implies — otherwise every
+    // refusal below reads `OutsidePlot` and proves nothing about terrain.
+    townhall(state).level = 3;
     reveal(state, [NEAR_ROCKS, QUARRY_CELL, COVE_WATER]);
     expect(placementBlock(state, map, 'Quarry', QUARRY_CELL)).toBe('NeedsResearch');
     completeTech(state, 'Masonry');
@@ -81,6 +85,9 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     const state = freshGame();
     fund(state, { Gold: 1000, Wood: 500 });
     state.city.population = 1;
+    // The coast is at ring 6, which is Townhall 3 — and Fishing is Magic
+    // era 3, so a player who has it has the Townhall for it.
+    townhall(state).level = 3;
     reveal(state, [SHOAL, PIER, PIER_LAND, INLAND, { x: 0, y: 2 }]);
     completeTech(state, 'Fishing');
     expect(placementBlock(state, map, 'Docks', INLAND)).toBe('NeedsShoreline'); // all land
