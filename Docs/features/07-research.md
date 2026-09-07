@@ -115,13 +115,22 @@
 
 ### 2.2 Layout
 
-- A major has an authored position, `node_x` / `node_y`, on its tome's page;
-  each page is one era of one tome.
-- A rank has no position: each line is one bead under its parent major (§5.3).
+- **The shape of the tree — where every node sits and what it requires — is
+  authored in `?dev=tree`** and lives in `src/sim/data/tech-tree.json`
+  ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Every NUMBER stays in
+  the workbook. Neither file can overwrite the other.
+- A major has a position on its tome's page; the page reads downward, an era
+  never sitting above the one before it.
+- A rank may have one too. Until it does it is drawn as one bead under its
+  parent major (§5.3) — the fan is what the editor exists to retire.
 - Connectors route horizontal-then-vertical (`src/ui/research/layout.ts`);
   `FAN_DX` 56 px spaces the beads. Three lines per major is the fan's limit.
-- `tests/research.test.ts` asserts no connector runs through another node
-  (`edgeCells`).
+- **A rank's requirement on its era keystone is not drawn**: the band the node
+  sits in says it, and 119 lines into three keystones would hide every edge
+  that carries information.
+- `src/sim/data/techTreeRules.ts` is the one statement of what a legal tree
+  is, checked by the editor as you drag, by the save endpoint, and by
+  `tests/techTree.test.ts` against the shipped file.
 
 ## 3. Knowledge, the clock
 
@@ -305,8 +314,8 @@ Tap Power        +40%  →  +60%
 | Conjunction Knowledge lump | 60 | `CONJUNCTION_BOONS[*].knowledge` |
 | Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
 | A technology's Gold, Knowledge, duration | per row | `Technologies` sheet |
-| `requires` | the shape; row order is not chain order | `Technologies` sheet |
-| A node's `tome`, `era`, `node_x` / `node_y`, `line`, `effect_per_rank`, `planned` | per row | `Technologies` sheet |
+| A node's `tome`, `era`, `line`, `effect_per_rank`, `planned` | per row | `Technologies` sheet |
+| **Where a node sits, and what it requires** | the shape | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
 | `Scriveners` per rank | −5% research time | `Technologies` sheet |
 | A spell's Mana cost | per spell | `Spells` sheet *(designed)* |

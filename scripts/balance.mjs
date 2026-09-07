@@ -358,16 +358,20 @@ const SHEETS = {
   // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
   // `tome` and `era` are the shelf (Docs/features/07-research.md §2):
   // three books, each paced by eras whose keystone requires everything above
-  // it. `node_x`/`node_y` are per-PAGE positions and are blank for a minor
-  // rank, which is drawn in its line's bead under the parent instead.
+  // it.
+  // NO `requires`, `node_x` or `node_y`. Where a node SITS and what it needs
+  // before it are the tree's SHAPE, authored by coordinate in
+  // src/sim/data/tech-tree.json through `?dev=tree` — the same split the map
+  // made (Docs/tech-tree-editor.md). A spreadsheet expresses a graph badly,
+  // and `npm run balance` would overwrite whatever the editor drew.
   // `cost_knowledge` is the clock's price (07-research.md §3): blank
   // in era 1, where the clock has not started; the era-1 keystone is the
   // first node that charges it.
   // `planned` = 1 marks a node that is on the tree for its SHAPE and does
   // nothing yet. It is badged in the game, its description says so, and no
   // keystone requires it (tech-tree.md §7).
-  Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds', 'requires',
-    'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y', 'planned'],
+  Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds',
+    'line', 'effect_per_rank', 'tome', 'era', 'planned'],
   // A rule is (district, neighbour) → one STAT moved by one MAGNITUDE. The
   // Gold column it replaced could only ever say one thing; this can say ten,
   // which is the whole of OQ-48. `neighbor` takes a district id or a group
@@ -729,12 +733,6 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Technologies'), TECH_IDS)) {
-    const requires = (r.requires === '' || r.requires === undefined)
-      ? [] : String(r.requires).split(/[,;]/).map((part) => part.trim());
-    for (const req of requires) {
-      if (!TECH_IDS.includes(req)) fail(where(r), `unknown required tech "${req}"`);
-      if (req === id) fail(where(r), 'a technology cannot require itself');
-    }
     // Gold, alone. Research is paid out of the CITY purse, so the tree
     // competes with clearing fog and raising a building for one budget —
     // which is the decision the economy is built around. Minor ranks are
@@ -751,10 +749,6 @@ async function importXlsx() {
     if (!TOME_IDS.includes(r.tome)) fail(where(r), `unknown tome "${r.tome}"`);
     const era = num(r, 'era');
     if (era < 1 || era > 4) fail(where(r), 'era must be 1-4');
-    const hasX = r.node_x !== '' && r.node_x !== undefined;
-    if (hasX !== (line === null)) {
-      fail(where(r), 'a major needs a node position and a minor rank must not have one');
-    }
     const knowledge = num(r, 'cost_knowledge', { blankAs: 0 });
     if (knowledge > 0 && era === 1 && !/^(Charter|Warband|Attunement)II$/.test(id)) {
       // Era 1 runs on Gold and time alone: the research clock has not started,
@@ -764,14 +758,10 @@ async function importXlsx() {
     out.technologies[id] = {
       cost: knowledge > 0 ? { Gold: gold, Knowledge: knowledge } : { Gold: gold },
       durationSeconds: num(r, 'duration_seconds', { blankAs: 0 }),
-      requires,
       line,
       effectPerRank: num(r, 'effect_per_rank', { blankAs: 0 }),
       tome: r.tome,
       era,
-      // coord(), not num(): a page is centred on its spine, so x is negative
-      // on the left of the trunk.
-      node: hasX ? { x: coord(r, 'node_x'), y: coord(r, 'node_y') } : null,
       planned: num(r, 'planned', { blankAs: 0 }) === 1,
     };
   }
@@ -1023,9 +1013,8 @@ async function exportXlsx() {
   addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
     const t = b.technologies[id];
     return [id, t.cost.Gold || '', t.cost.Knowledge || '', t.durationSeconds || '',
-      t.requires.join(','), t.line ?? '', t.effectPerRank || '', t.tome, t.era,
-      t.node ? t.node.x : '', t.node ? t.node.y : '', t.planned ? 1 : ''];
-  }), (col) => col === 'requires');
+      t.line ?? '', t.effectPerRank || '', t.tome, t.era, t.planned ? 1 : ''];
+  }));
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
     [a.district, a.neighbor, a.stat, a.magnitude]));

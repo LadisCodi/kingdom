@@ -250,13 +250,17 @@ OQ-12 and OQ-13* is now **blocked only on numbers**:
 **A sixth, taken 2026-09-03 from a reference layout: the page is a vertical
 spine at most three columns wide, with branch and join nodes, and a tier gate is
 a JOIN NODE** ([`07`](features/07-research.md) §2.1, §2.2). **This is the
-piece that makes decision 4 affordable.** §2 names the real bottleneck — *the
-layout is authored content* — and a bounded vertical page deletes it rather than
-testing it: **a node authors its tome, its column (0–2) and its requires, and
-its row is derived** by longest-path layering. `node: {x, y}` goes away, and
-with it the only test in the repository protecting a UI decision (all but the
-same-column-skip case). **Authoring twenty new nodes stops also meaning
-authoring twenty positions that must not collide.**
+piece that makes decision 4 affordable.** §2 named the real bottleneck — *the
+layout is authored content*.
+
+**Answered the other way, 2026-09-07: the layout stays authored, and got a
+tool.** Deriving the row by longest-path layering would have deleted the
+bottleneck and the authoring control with it — a designer who cannot say
+*this branch reads left of that one* is not laying out a tree, they are
+accepting one. `?dev=tree` ([`tech-tree-editor.md`](tech-tree-editor.md)) makes
+authoring 180 positions a drag rather than a spreadsheet column, and
+`techTreeRules.ts` catches the collisions that made hand-authoring risky —
+checked as you drag, on save, and in CI.
 
 **And a fifth, taken the same day, which pulls a second feature into this
 rework: the four relic ACTIVES become tome SPELLS**
@@ -333,8 +337,9 @@ tier and the join threshold are columns on the `Technologies` sheet, and the
 workbook owns them — so **the importer schema in `scripts/balance.mjs` has to
 learn them before any of this can be authored**, following the procedure
 `CLAUDE.md` already documents: edit the JSON *and* the schema, then
-`npm run balance:export`, then `npm run balance`. `node: {x, y}` comes out in
-the same pass.
+`npm run balance:export`, then `npm run balance`. **`requires`, `node_x` and
+`node_y` already came out** (2026-09-07): the tree's shape lives in
+`tech-tree.json` and is authored in `?dev=tree`.
 
 **What is still undecided and does not block starting:** the band sizes
 (**OQ-62** — the three tomes will not want the same shape), the join thresholds
@@ -523,7 +528,7 @@ Data versus code, in one table:
 | **the whole map**, in the editor | a new terrain or feature id, or a sixth ruin |
 | the whole quest chain — **row order is chain order** | a new modifier stat (one line plus one call site) |
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
-| a seasonal hero = one hero row + one banner row | tech-tree node positions — `node_x` / `node_y` are authored content ([`07`](features/07-research.md) §2.2) |
+| a seasonal hero = one hero row + one banner row; **the whole shape of the tech tree**, in `?dev=tree` | a rule about what a legal tech tree is (`techTreeRules.ts`) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
 
 ## 7. Testing conventions worth keeping

@@ -5,7 +5,7 @@ import { trainUnit } from '../src/sim/army';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import {
   DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
-  TOME_ORDER, UNITS, lineParent,
+  UNITS, lineParent,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
@@ -15,7 +15,7 @@ import {
 } from '../src/sim/research';
 import { edgeCells, FAN_DX, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type TechId, type TomeId } from '../src/sim/state';
+import { getWallet, type TechId } from '../src/sim/state';
 import { lineMaxRank, lineRank } from '../src/sim/upgrades';
 import {
   addAllTrainers, completeRanks, completeTech, freshGame, freshPresenter, fund, map,
@@ -231,36 +231,12 @@ describe('save round-trip', () => {
   });
 });
 
+// The GEOMETRY the renderer draws with. What the document itself may say —
+// collisions, connectors through nodes, loops, eras out of order — is
+// `tests/techTree.test.ts` against `techTreeRules.ts`, the module the editor
+// and the save endpoint check too. This block is what is left: the constants,
+// and the fan that has no authored position to check.
 describe('tree layout (layout is content)', () => {
-  // Majors only, and PER TOME. A minor rank is drawn as a bead under its
-  // line's parent, so it has no position to protect; and a position is now a
-  // coordinate on one bounded page, so two tomes sharing (0,0) is not a
-  // collision — each of them is its own spine's cover page.
-  const MAJORS = TECH_ORDER.filter((id) => TECHNOLOGIES[id].node !== null);
-  const inTome = (tome: TomeId) =>
-    MAJORS.filter((id) => TECHNOLOGIES[id].tome === tome)
-      .map((id) => ({ id, ...TECHNOLOGIES[id].node! }));
-
-  it('no two technologies share a cell on the same page', () => {
-    for (const tome of TOME_ORDER) {
-      const nodes = inTome(tome);
-      expect(new Set(nodes.map((n) => `${n.x},${n.y}`)).size, `${tome} has a collision`)
-        .toBe(nodes.length);
-    }
-  });
-
-  // The spine runs down x=0 and every era row leaves that column EMPTY, so a
-  // keystone's connector to the row above can elbow through it without
-  // crossing a node. It is the same trunk rule the old single canvas had, now
-  // per page.
-  it('leaves the spine column clear on every era row', () => {
-    for (const tome of TOME_ORDER) {
-      for (const n of inTome(tome)) {
-        if (n.y % 2 === 1) expect(n.x, `${n.id} sits on the spine trunk`).not.toBe(0);
-      }
-    }
-  });
-
   // THE FAN HAS TO FIT BETWEEN TWO ROWS, and it did not: an upgrade circle
   // hung 0.7 x GRID below its parent, which put it 12px INSIDE the technology
   // on the row underneath. Nothing noticed, because the invariant below is
@@ -323,23 +299,6 @@ describe('tree layout (layout is content)', () => {
     expect(edgeCells({ x: 0, y: 0 }, { x: 1, y: 0 })).toEqual([]);
   });
 
-  it('no connector passes through an unrelated node', () => {
-    for (const tome of TOME_ORDER) {
-      const nodes = inTome(tome);
-      const at = (x: number, y: number) => nodes.find((n) => n.x === x && n.y === y);
-      for (const { id } of nodes) {
-        const to = TECHNOLOGIES[id].node!;
-        for (const req of TECHNOLOGIES[id].requires) {
-          const from = TECHNOLOGIES[req].node;
-          if (from === null) continue; // a rank's parent edge lives in the bead
-          for (const cell of edgeCells(from, to)) {
-            const blocker = at(cell.x, cell.y);
-            expect(blocker?.id, `${req} → ${id} runs through ${blocker?.id}`).toBeUndefined();
-          }
-        }
-      }
-    }
-  });
 });
 
 // What a technology gives you. The completion banners have always derived

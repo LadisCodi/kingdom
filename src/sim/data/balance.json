@@ -1914,15 +1914,10 @@
         "Gold": 0
       },
       "durationSeconds": 0,
-      "requires": [],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": 0,
-        "y": 0
-      },
       "planned": false
     },
     "CharterII": {
@@ -1931,22 +1926,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 900,
-      "requires": [
-        "Forestry",
-        "UrbanPlanning",
-        "Saws",
-        "Agriculture",
-        "Masonry",
-        "Market"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 2,
-      "node": {
-        "x": 0,
-        "y": 2
-      },
       "planned": false
     },
     "CharterIII": {
@@ -1955,20 +1938,10 @@
         "Knowledge": 500
       },
       "durationSeconds": 3600,
-      "requires": [
-        "Communities",
-        "Hunting",
-        "Farming",
-        "Mining"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": 0,
-        "y": 4
-      },
       "planned": false
     },
     "CharterIV": {
@@ -1977,22 +1950,10 @@
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
-      "requires": [
-        "Architecture",
-        "Engineering",
-        "DeepMining",
-        "Aqueducts",
-        "Guildhalls",
-        "Roadworks"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 4,
-      "node": {
-        "x": 0,
-        "y": 6
-      },
       "planned": false
     },
     "Forestry": {
@@ -2000,17 +1961,10 @@
         "Gold": 25
       },
       "durationSeconds": 3,
-      "requires": [
-        "CharterI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": -3,
-        "y": 1
-      },
       "planned": false
     },
     "UrbanPlanning": {
@@ -2018,17 +1972,10 @@
         "Gold": 200
       },
       "durationSeconds": 60,
-      "requires": [
-        "CharterI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": -2,
-        "y": 1
-      },
       "planned": false
     },
     "Saws": {
@@ -2036,17 +1983,10 @@
         "Gold": 175
       },
       "durationSeconds": 20,
-      "requires": [
-        "CharterI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": -1,
-        "y": 1
-      },
       "planned": false
     },
     "Agriculture": {
@@ -2054,17 +1994,10 @@
         "Gold": 100
       },
       "durationSeconds": 45,
-      "requires": [
-        "CharterI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": 1,
-        "y": 1
-      },
       "planned": false
     },
     "Masonry": {
@@ -2072,17 +2005,10 @@
         "Gold": 100
       },
       "durationSeconds": 45,
-      "requires": [
-        "CharterI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": 2,
-        "y": 1
-      },
       "planned": false
     },
     "Communities": {
@@ -2091,17 +2017,10 @@
         "Knowledge": 80
       },
       "durationSeconds": 900,
-      "requires": [
-        "CharterII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 2,
-      "node": {
-        "x": -2,
-        "y": 3
-      },
       "planned": false
     },
     "Hunting": {
@@ -2110,17 +2029,10 @@
         "Knowledge": 120
       },
       "durationSeconds": 1200,
-      "requires": [
-        "CharterII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 2,
-      "node": {
-        "x": -1,
-        "y": 3
-      },
       "planned": false
     },
     "Farming": {
@@ -2129,17 +2041,10 @@
         "Knowledge": 160
       },
       "durationSeconds": 1500,
-      "requires": [
-        "CharterII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 2,
-      "node": {
-        "x": 1,
-        "y": 3
-      },
       "planned": false
     },
     "Market": {
@@ -2147,17 +2052,10 @@
         "Gold": 150
       },
       "durationSeconds": 45,
-      "requires": [
-        "CharterI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 1,
-      "node": {
-        "x": 3,
-        "y": 1
-      },
       "planned": false
     },
     "Mining": {
@@ -2166,17 +2064,10 @@
         "Knowledge": 200
       },
       "durationSeconds": 1800,
-      "requires": [
-        "CharterII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 2,
-      "node": {
-        "x": 2,
-        "y": 3
-      },
       "planned": false
     },
     "Architecture": {
@@ -2185,17 +2076,10 @@
         "Knowledge": 600
       },
       "durationSeconds": 3600,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": -4,
-        "y": 5
-      },
       "planned": false
     },
     "Engineering": {
@@ -2204,17 +2088,10 @@
         "Knowledge": 730
       },
       "durationSeconds": 4620,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": -3,
-        "y": 5
-      },
       "planned": false
     },
     "DeepMining": {
@@ -2223,17 +2100,10 @@
         "Knowledge": 855
       },
       "durationSeconds": 5640,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": -2,
-        "y": 5
-      },
       "planned": false
     },
     "WarbandI": {
@@ -2241,15 +2111,10 @@
         "Gold": 0
       },
       "durationSeconds": 0,
-      "requires": [],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 1,
-      "node": {
-        "x": 0,
-        "y": 0
-      },
       "planned": false
     },
     "WarbandII": {
@@ -2258,18 +2123,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 900,
-      "requires": [
-        "Warrior",
-        "Spears"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 2,
-      "node": {
-        "x": 0,
-        "y": 2
-      },
       "planned": false
     },
     "WarbandIII": {
@@ -2278,18 +2135,10 @@
         "Knowledge": 500
       },
       "durationSeconds": 3600,
-      "requires": [
-        "Archery",
-        "Tactics"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 3,
-      "node": {
-        "x": 0,
-        "y": 4
-      },
       "planned": false
     },
     "WarbandIV": {
@@ -2298,19 +2147,10 @@
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
-      "requires": [
-        "Cavalry",
-        "Salvage",
-        "Conquest"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 4,
-      "node": {
-        "x": 0,
-        "y": 6
-      },
       "planned": false
     },
     "Warrior": {
@@ -2318,17 +2158,10 @@
         "Gold": 100
       },
       "durationSeconds": 30,
-      "requires": [
-        "WarbandI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 1,
-      "node": {
-        "x": -2,
-        "y": 1
-      },
       "planned": false
     },
     "Spears": {
@@ -2336,17 +2169,10 @@
         "Gold": 150
       },
       "durationSeconds": 45,
-      "requires": [
-        "WarbandI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 1,
-      "node": {
-        "x": -1,
-        "y": 1
-      },
       "planned": false
     },
     "Archery": {
@@ -2355,17 +2181,10 @@
         "Knowledge": 80
       },
       "durationSeconds": 900,
-      "requires": [
-        "WarbandII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 2,
-      "node": {
-        "x": -3,
-        "y": 3
-      },
       "planned": false
     },
     "Cavalry": {
@@ -2374,17 +2193,10 @@
         "Knowledge": 600
       },
       "durationSeconds": 3600,
-      "requires": [
-        "WarbandIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 3,
-      "node": {
-        "x": -3,
-        "y": 5
-      },
       "planned": false
     },
     "AttunementI": {
@@ -2392,15 +2204,10 @@
         "Gold": 0
       },
       "durationSeconds": 0,
-      "requires": [],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": 0,
-        "y": 0
-      },
       "planned": false
     },
     "AttunementII": {
@@ -2409,19 +2216,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 900,
-      "requires": [
-        "Cartography",
-        "Consecration",
-        "Meditation"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": 0,
-        "y": 2
-      },
       "planned": false
     },
     "AttunementIII": {
@@ -2430,18 +2228,10 @@
         "Knowledge": 500
       },
       "durationSeconds": 3600,
-      "requires": [
-        "Sailing",
-        "ScalingTools"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": 0,
-        "y": 4
-      },
       "planned": false
     },
     "AttunementIV": {
@@ -2450,20 +2240,10 @@
         "Knowledge": 3000
       },
       "durationSeconds": 21600,
-      "requires": [
-        "Fishing",
-        "Shipbuilding",
-        "SanctifiedRuins",
-        "SecondSanctum"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 4,
-      "node": {
-        "x": 0,
-        "y": 6
-      },
       "planned": false
     },
     "Cartography": {
@@ -2471,17 +2251,10 @@
         "Gold": 200
       },
       "durationSeconds": 45,
-      "requires": [
-        "AttunementI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": -3,
-        "y": 1
-      },
       "planned": false
     },
     "Consecration": {
@@ -2489,17 +2262,10 @@
         "Gold": 400
       },
       "durationSeconds": 120,
-      "requires": [
-        "AttunementI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": -2,
-        "y": 1
-      },
       "planned": false
     },
     "Sailing": {
@@ -2508,17 +2274,10 @@
         "Knowledge": 80
       },
       "durationSeconds": 900,
-      "requires": [
-        "AttunementII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": -3,
-        "y": 3
-      },
       "planned": false
     },
     "ScalingTools": {
@@ -2527,17 +2286,10 @@
         "Knowledge": 105
       },
       "durationSeconds": 1080,
-      "requires": [
-        "AttunementII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": -2,
-        "y": 3
-      },
       "planned": false
     },
     "Fishing": {
@@ -2546,17 +2298,10 @@
         "Knowledge": 600
       },
       "durationSeconds": 3600,
-      "requires": [
-        "AttunementIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": -3,
-        "y": 5
-      },
       "planned": false
     },
     "Shipbuilding": {
@@ -2565,17 +2310,10 @@
         "Knowledge": 780
       },
       "durationSeconds": 5040,
-      "requires": [
-        "AttunementIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": -2,
-        "y": 5
-      },
       "planned": false
     },
     "TapPowerI": {
@@ -2583,14 +2321,10 @@
         "Gold": 50
       },
       "durationSeconds": 20,
-      "requires": [
-        "Forestry"
-      ],
       "line": "TapPower",
       "effectPerRank": 0.2,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "TapPowerII": {
@@ -2599,15 +2333,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "TapPowerI",
-        "CharterII"
-      ],
       "line": "TapPower",
       "effectPerRank": 0.2,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "TapPowerIII": {
@@ -2616,15 +2345,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "TapPowerII",
-        "CharterIII"
-      ],
       "line": "TapPower",
       "effectPerRank": 0.2,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "TapPowerIV": {
@@ -2633,15 +2357,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "TapPowerIII",
-        "CharterIII"
-      ],
       "line": "TapPower",
       "effectPerRank": 0.2,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "TapPowerV": {
@@ -2650,15 +2369,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "TapPowerIV",
-        "CharterIII"
-      ],
       "line": "TapPower",
       "effectPerRank": 0.2,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "QuickHandsI": {
@@ -2666,14 +2380,10 @@
         "Gold": 75
       },
       "durationSeconds": 20,
-      "requires": [
-        "Forestry"
-      ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "QuickHandsII": {
@@ -2682,15 +2392,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "QuickHandsI",
-        "CharterII"
-      ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "QuickHandsIII": {
@@ -2699,15 +2404,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "QuickHandsII",
-        "CharterIII"
-      ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "QuickHandsIV": {
@@ -2716,15 +2416,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "QuickHandsIII",
-        "CharterIII"
-      ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "QuickHandsV": {
@@ -2733,15 +2428,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "QuickHandsIV",
-        "CharterIII"
-      ],
       "line": "QuickHands",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "WorkerLoadI": {
@@ -2749,14 +2439,10 @@
         "Gold": 200
       },
       "durationSeconds": 20,
-      "requires": [
-        "Forestry"
-      ],
       "line": "WorkerLoad",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "WorkerLoadII": {
@@ -2765,15 +2451,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "WorkerLoadI",
-        "CharterII"
-      ],
       "line": "WorkerLoad",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "WorkerLoadIII": {
@@ -2782,15 +2463,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "WorkerLoadII",
-        "CharterIII"
-      ],
       "line": "WorkerLoad",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "SawpitsI": {
@@ -2798,14 +2474,10 @@
         "Gold": 120
       },
       "durationSeconds": 20,
-      "requires": [
-        "Saws"
-      ],
       "line": "Sawpits",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "SawpitsII": {
@@ -2814,15 +2486,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "SawpitsI",
-        "CharterII"
-      ],
       "line": "Sawpits",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "SawpitsIII": {
@@ -2831,15 +2498,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "SawpitsII",
-        "CharterIII"
-      ],
       "line": "Sawpits",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ButcheryI": {
@@ -2848,15 +2510,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Hunting",
-        "CharterII"
-      ],
       "line": "Butchery",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ButcheryII": {
@@ -2865,15 +2522,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "ButcheryI",
-        "CharterII"
-      ],
       "line": "Butchery",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ButcheryIII": {
@@ -2882,15 +2534,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ButcheryII",
-        "CharterIII"
-      ],
       "line": "Butchery",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "IrrigationI": {
@@ -2898,14 +2545,10 @@
         "Gold": 120
       },
       "durationSeconds": 20,
-      "requires": [
-        "Agriculture"
-      ],
       "line": "Irrigation",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "IrrigationII": {
@@ -2914,15 +2557,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "IrrigationI",
-        "CharterII"
-      ],
       "line": "Irrigation",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "IrrigationIII": {
@@ -2931,15 +2569,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "IrrigationII",
-        "CharterIII"
-      ],
       "line": "Irrigation",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ScythesI": {
@@ -2948,15 +2581,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Farming",
-        "CharterII"
-      ],
       "line": "Scythes",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ScythesII": {
@@ -2965,15 +2593,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "ScythesI",
-        "CharterII"
-      ],
       "line": "Scythes",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ScythesIII": {
@@ -2982,15 +2605,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ScythesII",
-        "CharterIII"
-      ],
       "line": "Scythes",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "SurveyingI": {
@@ -2998,14 +2616,10 @@
         "Gold": 150
       },
       "durationSeconds": 20,
-      "requires": [
-        "Cartography"
-      ],
       "line": "Surveying",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "SurveyingII": {
@@ -3014,15 +2628,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "SurveyingI",
-        "AttunementII"
-      ],
       "line": "Surveying",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "PitonsI": {
@@ -3031,15 +2640,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "ScalingTools",
-        "AttunementII"
-      ],
       "line": "Pitons",
       "effectPerRank": 0.1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "PitonsII": {
@@ -3048,15 +2652,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "PitonsI",
-        "AttunementII"
-      ],
       "line": "Pitons",
       "effectPerRank": 0.1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "MarketStallI": {
@@ -3064,14 +2663,10 @@
         "Gold": 100
       },
       "durationSeconds": 20,
-      "requires": [
-        "Market"
-      ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "MarketStallII": {
@@ -3080,15 +2675,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "MarketStallI",
-        "CharterII"
-      ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "MarketStallIII": {
@@ -3097,15 +2687,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "MarketStallII",
-        "CharterIII"
-      ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "MarketStallIV": {
@@ -3114,15 +2699,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "MarketStallIII",
-        "CharterIII"
-      ],
       "line": "MarketStall",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "TradeRoutesI": {
@@ -3130,14 +2710,10 @@
         "Gold": 150
       },
       "durationSeconds": 20,
-      "requires": [
-        "Market"
-      ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "TradeRoutesII": {
@@ -3146,15 +2722,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "TradeRoutesI",
-        "CharterII"
-      ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "TradeRoutesIII": {
@@ -3163,15 +2734,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "TradeRoutesII",
-        "CharterIII"
-      ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "TradeRoutesIV": {
@@ -3180,15 +2746,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "TradeRoutesIII",
-        "CharterIII"
-      ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "TradeRoutesV": {
@@ -3197,15 +2758,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "TradeRoutesIV",
-        "CharterIII"
-      ],
       "line": "TradeRoutes",
       "effectPerRank": 0.1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "StonecuttingI": {
@@ -3213,14 +2769,10 @@
         "Gold": 100
       },
       "durationSeconds": 20,
-      "requires": [
-        "Masonry"
-      ],
       "line": "Stonecutting",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "StonecuttingII": {
@@ -3229,15 +2781,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "StonecuttingI",
-        "CharterII"
-      ],
       "line": "Stonecutting",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "StonecuttingIII": {
@@ -3246,15 +2793,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "StonecuttingII",
-        "CharterIII"
-      ],
       "line": "Stonecutting",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BigNetsI": {
@@ -3263,15 +2805,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Fishing",
-        "AttunementIII"
-      ],
       "line": "BigNets",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BigNetsII": {
@@ -3280,15 +2817,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "BigNetsI",
-        "AttunementIII"
-      ],
       "line": "BigNets",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BigNetsIII": {
@@ -3297,15 +2829,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "BigNetsII",
-        "AttunementIII"
-      ],
       "line": "BigNets",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "IronPicksI": {
@@ -3314,15 +2841,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Mining",
-        "CharterII"
-      ],
       "line": "IronPicks",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "IronPicksII": {
@@ -3331,15 +2853,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "IronPicksI",
-        "CharterII"
-      ],
       "line": "IronPicks",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "IronPicksIII": {
@@ -3348,15 +2865,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "IronPicksII",
-        "CharterIII"
-      ],
       "line": "IronPicks",
       "effectPerRank": 1,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ResonanceI": {
@@ -3364,14 +2876,10 @@
         "Gold": 250
       },
       "durationSeconds": 20,
-      "requires": [
-        "Consecration"
-      ],
       "line": "Resonance",
       "effectPerRank": 0.2,
       "tome": "Magic",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "ResonanceII": {
@@ -3380,15 +2888,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "ResonanceI",
-        "AttunementII"
-      ],
       "line": "Resonance",
       "effectPerRank": 0.2,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "CarpentryI": {
@@ -3396,14 +2899,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "UrbanPlanning"
-      ],
       "line": "Carpentry",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "CarpentryII": {
@@ -3412,15 +2911,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "CarpentryI",
-        "CharterII"
-      ],
       "line": "Carpentry",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "CarpentryIII": {
@@ -3429,15 +2923,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "CarpentryII",
-        "CharterIII"
-      ],
       "line": "Carpentry",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ScrivenersI": {
@@ -3446,15 +2935,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Architecture",
-        "CharterIII"
-      ],
       "line": "Scriveners",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ScrivenersII": {
@@ -3463,15 +2947,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ScrivenersI",
-        "CharterIII"
-      ],
       "line": "Scriveners",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ScrivenersIII": {
@@ -3480,15 +2959,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "ScrivenersII",
-        "CharterIII"
-      ],
       "line": "Scriveners",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "CartageI": {
@@ -3497,15 +2971,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Roadworks",
-        "CharterIII"
-      ],
       "line": "Cartage",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "CartageII": {
@@ -3514,15 +2983,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "CartageI",
-        "CharterIII"
-      ],
       "line": "Cartage",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "CartageIII": {
@@ -3531,15 +2995,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "CartageII",
-        "CharterIII"
-      ],
       "line": "Cartage",
       "effectPerRank": 0.05,
       "tome": "Civics",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "DeepWellsI": {
@@ -3547,14 +3006,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Consecration"
-      ],
       "line": "DeepWells",
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "DeepWellsII": {
@@ -3563,15 +3018,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "DeepWellsI",
-        "AttunementII"
-      ],
       "line": "DeepWells",
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "DeepWellsIII": {
@@ -3580,15 +3030,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "DeepWellsII",
-        "AttunementIII"
-      ],
       "line": "DeepWells",
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "DeepWellsIV": {
@@ -3597,15 +3042,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "DeepWellsIII",
-        "AttunementIII"
-      ],
       "line": "DeepWells",
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "DeepWellsV": {
@@ -3614,15 +3054,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "DeepWellsIV",
-        "AttunementIII"
-      ],
       "line": "DeepWells",
       "effectPerRank": 10,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "LeyTapsI": {
@@ -3630,14 +3065,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Cartography"
-      ],
       "line": "LeyTaps",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "LeyTapsII": {
@@ -3646,15 +3077,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "LeyTapsI",
-        "AttunementII"
-      ],
       "line": "LeyTaps",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "LeyTapsIII": {
@@ -3663,15 +3089,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "LeyTapsII",
-        "AttunementIII"
-      ],
       "line": "LeyTaps",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "WaypostsI": {
@@ -3679,14 +3100,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Cartography"
-      ],
       "line": "Wayposts",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "WaypostsII": {
@@ -3695,15 +3112,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "WaypostsI",
-        "AttunementII"
-      ],
       "line": "Wayposts",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "WaypostsIII": {
@@ -3712,15 +3124,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "WaypostsII",
-        "AttunementIII"
-      ],
       "line": "Wayposts",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ScriptoriumI": {
@@ -3728,14 +3135,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Consecration"
-      ],
       "line": "Scriptorium",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "ScriptoriumII": {
@@ -3744,15 +3147,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "ScriptoriumI",
-        "AttunementII"
-      ],
       "line": "Scriptorium",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ScriptoriumIII": {
@@ -3761,15 +3159,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ScriptoriumII",
-        "AttunementIII"
-      ],
       "line": "Scriptorium",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "VigilsI": {
@@ -3778,15 +3171,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "ScalingTools",
-        "AttunementII"
-      ],
       "line": "Vigils",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "VigilsII": {
@@ -3795,15 +3183,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "VigilsI",
-        "AttunementII"
-      ],
       "line": "Vigils",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "VigilsIII": {
@@ -3812,15 +3195,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "VigilsII",
-        "AttunementIII"
-      ],
       "line": "Vigils",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "PilgrimageI": {
@@ -3829,15 +3207,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Sailing",
-        "AttunementII"
-      ],
       "line": "Pilgrimage",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "PilgrimageII": {
@@ -3846,15 +3219,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "PilgrimageI",
-        "AttunementII"
-      ],
       "line": "Pilgrimage",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "PilgrimageIII": {
@@ -3863,15 +3231,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "PilgrimageII",
-        "AttunementIII"
-      ],
       "line": "Pilgrimage",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ProspectingI": {
@@ -3880,15 +3243,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Shipbuilding",
-        "AttunementIII"
-      ],
       "line": "Prospecting",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ProspectingII": {
@@ -3897,15 +3255,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ProspectingI",
-        "AttunementIII"
-      ],
       "line": "Prospecting",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ProspectingIII": {
@@ -3914,15 +3267,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "ProspectingII",
-        "AttunementIII"
-      ],
       "line": "Prospecting",
       "effectPerRank": 0.05,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ColoursI": {
@@ -3930,14 +3278,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Warrior"
-      ],
       "line": "Colours",
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "ColoursII": {
@@ -3946,15 +3290,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "ColoursI",
-        "WarbandII"
-      ],
       "line": "Colours",
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ColoursIII": {
@@ -3963,15 +3302,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "ColoursII",
-        "WarbandIII"
-      ],
       "line": "Colours",
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ColoursIV": {
@@ -3980,15 +3314,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ColoursIII",
-        "WarbandIII"
-      ],
       "line": "Colours",
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ColoursV": {
@@ -3997,15 +3326,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "ColoursIV",
-        "WarbandIII"
-      ],
       "line": "Colours",
       "effectPerRank": 2,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "MusterDrillI": {
@@ -4013,14 +3337,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Warrior"
-      ],
       "line": "MusterDrill",
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "MusterDrillII": {
@@ -4029,15 +3349,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "MusterDrillI",
-        "WarbandII"
-      ],
       "line": "MusterDrill",
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "MusterDrillIII": {
@@ -4046,15 +3361,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "MusterDrillII",
-        "WarbandIII"
-      ],
       "line": "MusterDrill",
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "RationsI": {
@@ -4062,14 +3372,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Spears"
-      ],
       "line": "Rations",
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "RationsII": {
@@ -4078,15 +3384,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "RationsI",
-        "WarbandII"
-      ],
       "line": "Rations",
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "RationsIII": {
@@ -4095,15 +3396,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "RationsII",
-        "WarbandIII"
-      ],
       "line": "Rations",
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "DrillmasterI": {
@@ -4112,15 +3408,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Archery",
-        "WarbandII"
-      ],
       "line": "Drillmaster",
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "DrillmasterII": {
@@ -4129,15 +3420,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "DrillmasterI",
-        "WarbandII"
-      ],
       "line": "Drillmaster",
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "DrillmasterIII": {
@@ -4146,15 +3432,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "DrillmasterII",
-        "WarbandIII"
-      ],
       "line": "Drillmaster",
       "effectPerRank": 0.05,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BearersI": {
@@ -4163,15 +3444,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Archery",
-        "WarbandII"
-      ],
       "line": "Bearers",
       "effectPerRank": 0.03,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "BearersII": {
@@ -4180,15 +3456,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "BearersI",
-        "WarbandII"
-      ],
       "line": "Bearers",
       "effectPerRank": 0.03,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "BearersIII": {
@@ -4197,15 +3468,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "BearersII",
-        "WarbandIII"
-      ],
       "line": "Bearers",
       "effectPerRank": 0.03,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "PathfindersI": {
@@ -4214,15 +3480,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Cavalry",
-        "WarbandIII"
-      ],
       "line": "Pathfinders",
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "PathfindersII": {
@@ -4231,15 +3492,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "PathfindersI",
-        "WarbandIII"
-      ],
       "line": "Pathfinders",
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "PathfindersIII": {
@@ -4248,15 +3504,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "PathfindersII",
-        "WarbandIII"
-      ],
       "line": "Pathfinders",
       "effectPerRank": 0.1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ShieldWallI": {
@@ -4264,14 +3515,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Warrior"
-      ],
       "line": "ShieldWall",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "ShieldWallII": {
@@ -4280,15 +3527,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "ShieldWallI",
-        "WarbandII"
-      ],
       "line": "ShieldWall",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "ShieldWallIII": {
@@ -4297,15 +3539,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ShieldWallII",
-        "WarbandIII"
-      ],
       "line": "ShieldWall",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "FletchingI": {
@@ -4314,15 +3551,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "Archery",
-        "WarbandII"
-      ],
       "line": "Fletching",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "FletchingII": {
@@ -4331,15 +3563,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "FletchingI",
-        "WarbandII"
-      ],
       "line": "Fletching",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "FletchingIII": {
@@ -4348,15 +3575,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "FletchingII",
-        "WarbandIII"
-      ],
       "line": "Fletching",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BardingI": {
@@ -4365,15 +3587,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Cavalry",
-        "WarbandIII"
-      ],
       "line": "Barding",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BardingII": {
@@ -4382,15 +3599,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "BardingI",
-        "WarbandIII"
-      ],
       "line": "Barding",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "BardingIII": {
@@ -4399,15 +3611,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "BardingII",
-        "WarbandIII"
-      ],
       "line": "Barding",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "WarhornsI": {
@@ -4415,14 +3622,10 @@
         "Gold": 60
       },
       "durationSeconds": 20,
-      "requires": [
-        "Spears"
-      ],
       "line": "Warhorns",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 1,
-      "node": null,
       "planned": false
     },
     "WarhornsII": {
@@ -4431,15 +3634,10 @@
         "Knowledge": 40
       },
       "durationSeconds": 330,
-      "requires": [
-        "WarhornsI",
-        "WarbandII"
-      ],
       "line": "Warhorns",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "WarhornsIII": {
@@ -4448,15 +3646,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "WarhornsII",
-        "WarbandIII"
-      ],
       "line": "Warhorns",
       "effectPerRank": 1,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ManoeuvreI": {
@@ -4465,15 +3658,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1200,
-      "requires": [
-        "Cavalry",
-        "WarbandIII"
-      ],
       "line": "Manoeuvre",
       "effectPerRank": 0.02,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ManoeuvreII": {
@@ -4482,15 +3670,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "ManoeuvreI",
-        "WarbandIII"
-      ],
       "line": "Manoeuvre",
       "effectPerRank": 0.02,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "ManoeuvreIII": {
@@ -4499,15 +3682,10 @@
         "Knowledge": 400
       },
       "durationSeconds": 2700,
-      "requires": [
-        "ManoeuvreII",
-        "WarbandIII"
-      ],
       "line": "Manoeuvre",
       "effectPerRank": 0.02,
       "tome": "Warfare",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "FarsightI": {
@@ -4516,15 +3694,10 @@
         "Knowledge": 20
       },
       "durationSeconds": 180,
-      "requires": [
-        "ScalingTools",
-        "AttunementII"
-      ],
       "line": "Farsight",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "FarsightII": {
@@ -4533,15 +3706,10 @@
         "Knowledge": 60
       },
       "durationSeconds": 480,
-      "requires": [
-        "FarsightI",
-        "AttunementII"
-      ],
       "line": "Farsight",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 2,
-      "node": null,
       "planned": false
     },
     "FarsightIII": {
@@ -4550,15 +3718,10 @@
         "Knowledge": 275
       },
       "durationSeconds": 1950,
-      "requires": [
-        "FarsightII",
-        "AttunementIII"
-      ],
       "line": "Farsight",
       "effectPerRank": 1,
       "tome": "Magic",
       "era": 3,
-      "node": null,
       "planned": false
     },
     "Aqueducts": {
@@ -4567,17 +3730,10 @@
         "Knowledge": 985
       },
       "durationSeconds": 6660,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": -1,
-        "y": 5
-      },
       "planned": false
     },
     "Guildhalls": {
@@ -4586,17 +3742,10 @@
         "Knowledge": 1115
       },
       "durationSeconds": 7740,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": 1,
-        "y": 5
-      },
       "planned": false
     },
     "Roadworks": {
@@ -4605,17 +3754,10 @@
         "Knowledge": 1245
       },
       "durationSeconds": 8760,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": 2,
-        "y": 5
-      },
       "planned": false
     },
     "LandSurvey": {
@@ -4624,17 +3766,10 @@
         "Knowledge": 1370
       },
       "durationSeconds": 9780,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": 3,
-        "y": 5
-      },
       "planned": true
     },
     "Apprenticeships": {
@@ -4643,17 +3778,10 @@
         "Knowledge": 1500
       },
       "durationSeconds": 10800,
-      "requires": [
-        "CharterIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Civics",
       "era": 3,
-      "node": {
-        "x": 4,
-        "y": 5
-      },
       "planned": true
     },
     "FieldMedicine": {
@@ -4661,17 +3789,10 @@
         "Gold": 150
       },
       "durationSeconds": 120,
-      "requires": [
-        "WarbandI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 1,
-      "node": {
-        "x": 1,
-        "y": 1
-      },
       "planned": true
     },
     "Veterancy": {
@@ -4680,17 +3801,10 @@
         "Knowledge": 110
       },
       "durationSeconds": 1140,
-      "requires": [
-        "WarbandII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 2,
-      "node": {
-        "x": -2,
-        "y": 3
-      },
       "planned": true
     },
     "Siegecraft": {
@@ -4699,17 +3813,10 @@
         "Knowledge": 140
       },
       "durationSeconds": 1320,
-      "requires": [
-        "WarbandII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 2,
-      "node": {
-        "x": -1,
-        "y": 3
-      },
       "planned": true
     },
     "Tactics": {
@@ -4718,17 +3825,10 @@
         "Knowledge": 170
       },
       "durationSeconds": 1560,
-      "requires": [
-        "WarbandII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 2,
-      "node": {
-        "x": 1,
-        "y": 3
-      },
       "planned": false
     },
     "Scouting": {
@@ -4737,17 +3837,10 @@
         "Knowledge": 200
       },
       "durationSeconds": 1800,
-      "requires": [
-        "WarbandII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 2,
-      "node": {
-        "x": 2,
-        "y": 3
-      },
       "planned": true
     },
     "Salvage": {
@@ -4756,17 +3849,10 @@
         "Knowledge": 825
       },
       "durationSeconds": 5400,
-      "requires": [
-        "WarbandIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 3,
-      "node": {
-        "x": -2,
-        "y": 5
-      },
       "planned": false
     },
     "Vanguard": {
@@ -4775,17 +3861,10 @@
         "Knowledge": 1050
       },
       "durationSeconds": 7200,
-      "requires": [
-        "WarbandIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 3,
-      "node": {
-        "x": -1,
-        "y": 5
-      },
       "planned": true
     },
     "Standards": {
@@ -4794,17 +3873,10 @@
         "Knowledge": 1275
       },
       "durationSeconds": 9000,
-      "requires": [
-        "WarbandIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 3,
-      "node": {
-        "x": 1,
-        "y": 5
-      },
       "planned": true
     },
     "Conquest": {
@@ -4813,17 +3885,10 @@
         "Knowledge": 1500
       },
       "durationSeconds": 10800,
-      "requires": [
-        "WarbandIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Warfare",
       "era": 3,
-      "node": {
-        "x": 2,
-        "y": 5
-      },
       "planned": false
     },
     "Meditation": {
@@ -4831,17 +3896,10 @@
         "Gold": 150
       },
       "durationSeconds": 120,
-      "requires": [
-        "AttunementI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": -1,
-        "y": 1
-      },
       "planned": false
     },
     "LeyReading": {
@@ -4849,17 +3907,10 @@
         "Gold": 150
       },
       "durationSeconds": 120,
-      "requires": [
-        "AttunementI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": 1,
-        "y": 1
-      },
       "planned": true
     },
     "Scrying": {
@@ -4867,17 +3918,10 @@
         "Gold": 150
       },
       "durationSeconds": 120,
-      "requires": [
-        "AttunementI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": 2,
-        "y": 1
-      },
       "planned": true
     },
     "Invocation": {
@@ -4885,17 +3929,10 @@
         "Gold": 150
       },
       "durationSeconds": 120,
-      "requires": [
-        "AttunementI"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 1,
-      "node": {
-        "x": 3,
-        "y": 1
-      },
       "planned": true
     },
     "Lorekeeping": {
@@ -4904,17 +3941,10 @@
         "Knowledge": 130
       },
       "durationSeconds": 1260,
-      "requires": [
-        "AttunementII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": -1,
-        "y": 3
-      },
       "planned": true
     },
     "Wayshrines": {
@@ -4923,17 +3953,10 @@
         "Knowledge": 150
       },
       "durationSeconds": 1440,
-      "requires": [
-        "AttunementII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": 1,
-        "y": 3
-      },
       "planned": true
     },
     "LeyLines": {
@@ -4942,17 +3965,10 @@
         "Knowledge": 175
       },
       "durationSeconds": 1620,
-      "requires": [
-        "AttunementII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": 2,
-        "y": 3
-      },
       "planned": true
     },
     "FrugalRites": {
@@ -4961,17 +3977,10 @@
         "Knowledge": 200
       },
       "durationSeconds": 1800,
-      "requires": [
-        "AttunementII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 2,
-      "node": {
-        "x": 3,
-        "y": 3
-      },
       "planned": true
     },
     "SanctifiedRuins": {
@@ -4980,17 +3989,10 @@
         "Knowledge": 960
       },
       "durationSeconds": 6480,
-      "requires": [
-        "AttunementIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": -1,
-        "y": 5
-      },
       "planned": false
     },
     "RitualCasting": {
@@ -4999,17 +4001,10 @@
         "Knowledge": 1140
       },
       "durationSeconds": 7920,
-      "requires": [
-        "AttunementIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": 1,
-        "y": 5
-      },
       "planned": true
     },
     "LeyStorm": {
@@ -5018,17 +4013,10 @@
         "Knowledge": 1320
       },
       "durationSeconds": 9360,
-      "requires": [
-        "AttunementIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": 2,
-        "y": 5
-      },
       "planned": true
     },
     "SecondSanctum": {
@@ -5037,17 +4025,10 @@
         "Knowledge": 1500
       },
       "durationSeconds": 10800,
-      "requires": [
-        "AttunementIII"
-      ],
       "line": null,
       "effectPerRank": 0,
       "tome": "Magic",
       "era": 3,
-      "node": {
-        "x": 3,
-        "y": 5
-      },
       "planned": false
     }
   },

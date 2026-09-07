@@ -10,6 +10,8 @@
 
 import balance from './balance.json';
 import regionMap from './region-map.json';
+import treeDoc from './tech-tree.json';
+import type { TechNodeDoc } from './techTreeRules';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
@@ -686,9 +688,13 @@ export interface TechnologyDef {
    *  (Docs/features/07-research.md §2). */
   tome: TomeId;
   era: number;
-  /** Hand-authored position ON ITS TOME'S PAGE (the layout is content). NULL
-   *  for a minor rank: it is drawn as a bead under its line's parent, so
-   *  there is no position to author. */
+  /** Where this node sits ON ITS TOME'S PAGE — authored in `?dev=tree` and
+   *  read from `tech-tree.json`, not from the workbook: a position is SHAPE,
+   *  and a spreadsheet expresses a graph badly
+   *  ([`Docs/tech-tree-editor.md`](../../../Docs/tech-tree-editor.md)).
+   *
+   *  NULL for a minor rank that has not been placed yet: it is drawn as a
+   *  bead fanned under its line's parent until it is. */
   node: { x: number; y: number } | null;
   cost: Wallet; // city currencies
   durationSeconds: number;
@@ -702,19 +708,34 @@ export interface TechnologyDef {
   planned: boolean;
 }
 
+/**
+ * One technology, from its two homes.
+ *
+ * Identity and prose are authored here; every NUMBER comes from the workbook;
+ * the SHAPE — where the node sits and what it needs before it — comes from
+ * `tech-tree.json`, which `?dev=tree` writes. Neither file can overwrite the
+ * other, which is the whole reason the split exists.
+ */
+const SHAPE = (treeDoc as { technologies: Record<string, TechNodeDoc> }).technologies;
+
 const tech = (
   content: Pick<TechnologyDef, 'id' | 'name' | 'description' | 'glyph'>,
   b: {
-    cost: Wallet; durationSeconds: number; requires: unknown;
+    cost: Wallet; durationSeconds: number;
     line: string | null; effectPerRank: number;
-    tome: string; era: number; node: { x: number; y: number } | null; planned: boolean;
+    tome: string; era: number; planned: boolean;
   },
-): TechnologyDef => ({
-  ...content, cost: b.cost, durationSeconds: b.durationSeconds,
-  requires: b.requires as TechId[],
-  line: b.line as TechLineId | null, effectPerRank: b.effectPerRank,
-  tome: b.tome as TomeId, era: b.era, node: b.node, planned: b.planned,
-});
+): TechnologyDef => {
+  const shape: TechNodeDoc = SHAPE[content.id] ?? { requires: [] };
+  return {
+    ...content, cost: b.cost, durationSeconds: b.durationSeconds,
+    requires: (shape.requires ?? []) as TechId[],
+    line: b.line as TechLineId | null, effectPerRank: b.effectPerRank,
+    tome: b.tome as TomeId, era: b.era, planned: b.planned,
+    node: shape.x === undefined || shape.y === undefined
+      ? null : { x: shape.x, y: shape.y },
+  };
+};
 
 // Four branches out of Forestry (Docs/features/07-research.md §2.2): CIVICS up,
 // ECONOMICS left (farm row 0, stone row −1), EXPLORATION right, MILITARY down.
