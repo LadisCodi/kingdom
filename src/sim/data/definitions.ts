@@ -14,6 +14,7 @@ import treeDoc from './tech-tree.json';
 import {
   isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
+import type { TechEffect } from './techEffectRules';
 import type { ModifierScope, ModifierStat } from '../modifiers';
 import type {
   ArtifactId, Coord, CurrencyId, DistrictId, FeatureId, GoodId, GoodsStock,
@@ -57,10 +58,15 @@ export interface TechnologyDef {
   cost: Wallet; // city currencies
   durationSeconds: number;
   requires: TechId[]; // tree edges — all must be completed first
-  /** Set on a MINOR rank; null on a major. Ranks of one line share it. */
+  /** Set on a MINOR rank; null on a major. Ranks of one line share it.
+   *  BEING RETIRED in favour of `effects`. */
   line: TechLineId | null;
   /** What one completed rank of this line adds. 0 on a major. */
   effectPerRank: number;
+  /** What this technology moves, and what it aims at — the declarative half
+   *  of a bonus (`data/techEffectRules.ts`, resolved by `sim/techEffects.ts`).
+   *  Empty on anything that moves no number. */
+  effects: TechEffect[];
   /** On the tree for its shape; does nothing yet. Badged in the game, and the
    *  tree editor warns when anything requires one (tech-tree.md §7). */
   planned: boolean;
@@ -120,6 +126,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       durationSeconds: node.seconds,
       line: (node.line ?? null) as TechLineId | null,
       effectPerRank: node.effectPerRank ?? 0,
+      effects: node.effects ?? [],
       planned: node.planned === true,
     }];
   }),

@@ -24,6 +24,7 @@
 
 import balance from './balance.json';
 import { COLS } from '../../ui/research/layout';
+import { effectProblems, type TechEffect } from './techEffectRules';
 import type { TomeId } from '../state';
 
 /** What a technology puts in the player's hands. One entry per thing it
@@ -78,9 +79,17 @@ export interface TechNodeDoc {
   unlocks?: TechUnlock[];
   /** `kind: 'bonus'` only. The line is a `TechLineId`: which HOOK the number
    *  reaches is code (`src/sim/upgrades.ts`), so a new line is a code change
-   *  and this may only name one that already exists. */
+   *  and this may only name one that already exists.
+   *
+   *  BEING RETIRED in favour of `effects` — while both are present the file
+   *  says the same thing twice on purpose, so the two can be proved equal
+   *  before the sim changes which one it reads
+   *  (`tests/techEffects.test.ts`). */
   line?: string | null;
   effectPerRank?: number;
+  /** `kind: 'bonus'` only: what this technology moves, and what it aims at
+   *  (`techEffectRules.ts`). A stat, an op, a signed value and a target. */
+  effects?: TechEffect[];
   /** On the tree for its shape; does nothing yet. */
   planned?: boolean;
 }
@@ -536,6 +545,25 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       } else {
         claimed.set(key, id);
       }
+    }
+  }
+
+  // ---- what a technology moves ------------------------------------------
+  //
+  // Checked wherever `effects` is present, whatever the kind, so the field
+  // cannot rot while it coexists with `line`. Once the lines are gone, a
+  // `bonus` will be required to carry at least one.
+  for (const id of all) {
+    const node = nodes[id];
+    for (const effect of node.effects ?? []) {
+      for (const problem of effectProblems(effect)) {
+        errors.push({ message: `${id} ${problem}`, tech: id });
+      }
+    }
+    if ((node.effects ?? []).length > 0 && node.kind !== 'bonus') {
+      errors.push({
+        message: `${id} is a ${node.kind} and also moves a number`, tech: id,
+      });
     }
   }
 
