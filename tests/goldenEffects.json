@@ -1,0 +1,561 @@
+{
+ "QuickHands": {
+  "1": {
+   "autoTapCooldownMs": 450
+  },
+  "2": {
+   "autoTapCooldownMs": 400
+  },
+  "3": {
+   "autoTapCooldownMs": 350
+  },
+  "4": {
+   "autoTapCooldownMs": 300
+  },
+  "5": {
+   "autoTapCooldownMs": 250
+  }
+ },
+ "Irrigation": {
+  "1": {
+   "unitsPerStrike.Crops": 2,
+   "workerStrike.Crops": 2,
+   "tapDraw.Crops": 2.5
+  },
+  "2": {
+   "unitsPerStrike.Crops": 3,
+   "workerStrike.Crops": 3,
+   "tapDraw.Crops": 3.75
+  },
+  "3": {
+   "unitsPerStrike.Crops": 4,
+   "workerStrike.Crops": 4,
+   "tapDraw.Crops": 5
+  }
+ },
+ "MarketStall": {
+  "1": {
+   "salePriceMultiplier": 1.05
+  },
+  "2": {
+   "salePriceMultiplier": 1.1
+  },
+  "3": {
+   "salePriceMultiplier": 1.15
+  },
+  "4": {
+   "salePriceMultiplier": 1.2
+  }
+ },
+ "TapPower": {
+  "1": {
+   "tapWorkSeconds": 12,
+   "tapDraw.Forest": 1.2,
+   "tapDraw.Crops": 1.5,
+   "tapDraw.Berries": 1.2,
+   "tapDraw.Meat": 1.8,
+   "tapDraw.Stone": 0.46153846153846156,
+   "tapDraw.Fish": 1.2,
+   "tapDraw.MountainIron": 1,
+   "tapDraw.MountainGold": 0.6
+  },
+  "2": {
+   "tapWorkSeconds": 14,
+   "tapDraw.Forest": 1.4,
+   "tapDraw.Crops": 1.75,
+   "tapDraw.Berries": 1.4,
+   "tapDraw.Meat": 2.1,
+   "tapDraw.Stone": 0.5384615384615384,
+   "tapDraw.Fish": 1.4,
+   "tapDraw.MountainIron": 1.1666666666666667,
+   "tapDraw.MountainGold": 0.7
+  },
+  "3": {
+   "tapWorkSeconds": 16,
+   "tapDraw.Forest": 1.6,
+   "tapDraw.Crops": 2,
+   "tapDraw.Berries": 1.6,
+   "tapDraw.Meat": 2.4,
+   "tapDraw.Stone": 0.6153846153846154,
+   "tapDraw.Fish": 1.6,
+   "tapDraw.MountainIron": 1.3333333333333333,
+   "tapDraw.MountainGold": 0.8
+  },
+  "4": {
+   "tapWorkSeconds": 18,
+   "tapDraw.Forest": 1.8,
+   "tapDraw.Crops": 2.25,
+   "tapDraw.Berries": 1.8,
+   "tapDraw.Meat": 2.7,
+   "tapDraw.Stone": 0.6923076923076923,
+   "tapDraw.Fish": 1.8,
+   "tapDraw.MountainIron": 1.5,
+   "tapDraw.MountainGold": 0.9
+  },
+  "5": {
+   "tapWorkSeconds": 20,
+   "tapDraw.Forest": 2,
+   "tapDraw.Crops": 2.5,
+   "tapDraw.Berries": 2,
+   "tapDraw.Meat": 3,
+   "tapDraw.Stone": 0.7692307692307693,
+   "tapDraw.Fish": 2,
+   "tapDraw.MountainIron": 1.6666666666666667,
+   "tapDraw.MountainGold": 1
+  }
+ },
+ "WorkerLoad": {
+  "1": {
+   "workerStrike.Forest": 2,
+   "workerStrike.Crops": 2,
+   "workerStrike.Berries": 2,
+   "workerStrike.Meat": 4,
+   "workerStrike.Stone": 2,
+   "workerStrike.Fish": 3,
+   "workerStrike.MountainIron": 6,
+   "workerStrike.MountainGold": 4,
+   "workerStrike.Forest.sawmill": 2
+  },
+  "2": {
+   "workerStrike.Forest": 3,
+   "workerStrike.Crops": 3,
+   "workerStrike.Berries": 3,
+   "workerStrike.Meat": 5,
+   "workerStrike.Stone": 3,
+   "workerStrike.Fish": 4,
+   "workerStrike.MountainIron": 7,
+   "workerStrike.MountainGold": 5,
+   "workerStrike.Forest.sawmill": 3
+  },
+  "3": {
+   "workerStrike.Forest": 4,
+   "workerStrike.Crops": 4,
+   "workerStrike.Berries": 4,
+   "workerStrike.Meat": 6,
+   "workerStrike.Stone": 4,
+   "workerStrike.Fish": 5,
+   "workerStrike.MountainIron": 8,
+   "workerStrike.MountainGold": 6,
+   "workerStrike.Forest.sawmill": 4
+  }
+ },
+ "TradeRoutes": {
+  "1": {
+   "taxRate": 33,
+   "cityGoldPerMinute": 132
+  },
+  "2": {
+   "taxRate": 36,
+   "cityGoldPerMinute": 144
+  },
+  "3": {
+   "taxRate": 39,
+   "cityGoldPerMinute": 156
+  },
+  "4": {
+   "taxRate": 42,
+   "cityGoldPerMinute": 168
+  },
+  "5": {
+   "taxRate": 45,
+   "cityGoldPerMinute": 180
+  }
+ },
+ "Sawpits": {
+  "1": {
+   "unitsPerStrike.Forest": 2,
+   "workerStrike.Forest": 2,
+   "tapDraw.Forest": 2,
+   "workerStrike.Forest.sawmill": 2
+  },
+  "2": {
+   "unitsPerStrike.Forest": 3,
+   "workerStrike.Forest": 3,
+   "tapDraw.Forest": 3,
+   "workerStrike.Forest.sawmill": 3
+  },
+  "3": {
+   "unitsPerStrike.Forest": 4,
+   "workerStrike.Forest": 4,
+   "tapDraw.Forest": 4,
+   "workerStrike.Forest.sawmill": 4
+  }
+ },
+ "Stonecutting": {
+  "1": {
+   "unitsPerStrike.Stone": 2,
+   "workerStrike.Stone": 2,
+   "tapDraw.Stone": 0.7692307692307693
+  },
+  "2": {
+   "unitsPerStrike.Stone": 3,
+   "workerStrike.Stone": 3,
+   "tapDraw.Stone": 1.1538461538461537
+  },
+  "3": {
+   "unitsPerStrike.Stone": 4,
+   "workerStrike.Stone": 4,
+   "tapDraw.Stone": 1.5384615384615385
+  }
+ },
+ "Carpentry": {
+  "1": {
+   "buildTimeMultiplier": 0.95
+  },
+  "2": {
+   "buildTimeMultiplier": 0.9
+  },
+  "3": {
+   "buildTimeMultiplier": 0.85
+  }
+ },
+ "Scythes": {
+  "1": {
+   "unitsPerStrike.Crops": 2,
+   "workerStrike.Crops": 2,
+   "tapDraw.Crops": 2.5
+  },
+  "2": {
+   "unitsPerStrike.Crops": 3,
+   "workerStrike.Crops": 3,
+   "tapDraw.Crops": 3.75
+  },
+  "3": {
+   "unitsPerStrike.Crops": 4,
+   "workerStrike.Crops": 4,
+   "tapDraw.Crops": 5
+  }
+ },
+ "IronPicks": {
+  "1": {
+   "unitsPerStrike.MountainIron": 6,
+   "workerStrike.MountainIron": 6,
+   "tapDraw.MountainIron": 1
+  },
+  "2": {
+   "unitsPerStrike.MountainIron": 7,
+   "workerStrike.MountainIron": 7,
+   "tapDraw.MountainIron": 1.1666666666666667
+  },
+  "3": {
+   "unitsPerStrike.MountainIron": 8,
+   "workerStrike.MountainIron": 8,
+   "tapDraw.MountainIron": 1.3333333333333333
+  }
+ },
+ "Butchery": {
+  "1": {
+   "unitsPerStrike.Meat": 4,
+   "workerStrike.Meat": 4,
+   "tapDraw.Meat": 2
+  },
+  "2": {
+   "unitsPerStrike.Meat": 5,
+   "workerStrike.Meat": 5,
+   "tapDraw.Meat": 2.5
+  },
+  "3": {
+   "unitsPerStrike.Meat": 6,
+   "workerStrike.Meat": 6,
+   "tapDraw.Meat": 3
+  }
+ },
+ "Cartage": {
+  "1": {
+   "workerSpeed": 1.05
+  },
+  "2": {
+   "workerSpeed": 1.1
+  },
+  "3": {
+   "workerSpeed": 1.15
+  }
+ },
+ "Scriveners": {
+  "1": {
+   "researchTimeMultiplier": 0.95
+  },
+  "2": {
+   "researchTimeMultiplier": 0.9
+  },
+  "3": {
+   "researchTimeMultiplier": 0.85
+  }
+ },
+ "Rations": {
+  "1": {
+   "supplyCost.Food": 19,
+   "supplyCost.Gold": 48
+  },
+  "2": {
+   "supplyCost.Food": 18,
+   "supplyCost.Gold": 45
+  },
+  "3": {
+   "supplyCost.Food": 17,
+   "supplyCost.Gold": 43
+  }
+ },
+ "MusterDrill": {
+  "1": {
+   "trainCost.Warrior.Gold": 45,
+   "trainCost.Warrior.Wood": 9,
+   "trainCost.Warrior.Food": 18
+  },
+  "2": {
+   "trainCost.Warrior.Gold": 40,
+   "trainCost.Warrior.Wood": 8,
+   "trainCost.Warrior.Food": 16
+  },
+  "3": {
+   "trainCost.Warrior.Gold": 35,
+   "trainCost.Warrior.Wood": 7,
+   "trainCost.Warrior.Food": 14
+  }
+ },
+ "Colours": {
+  "1": {
+   "maxArmyPower": 8
+  },
+  "2": {
+   "maxArmyPower": 10
+  },
+  "3": {
+   "maxArmyPower": 12
+  },
+  "4": {
+   "maxArmyPower": 14
+  },
+  "5": {
+   "maxArmyPower": 16
+  }
+ },
+ "Warhorns": {
+  "1": {
+   "drill.atk.all": 1
+  },
+  "2": {
+   "drill.atk.all": 2
+  },
+  "3": {
+   "drill.atk.all": 3
+  }
+ },
+ "ShieldWall": {
+  "1": {
+   "drill.def.Melee": 1
+  },
+  "2": {
+   "drill.def.Melee": 2
+  },
+  "3": {
+   "drill.def.Melee": 3
+  }
+ },
+ "Bearers": {
+  "1": {
+   "haulLoss": 0.47
+  },
+  "2": {
+   "haulLoss": 0.44
+  },
+  "3": {
+   "haulLoss": 0.41000000000000003
+  }
+ },
+ "Fletching": {
+  "1": {
+   "drill.atk.Distance": 1
+  },
+  "2": {
+   "drill.atk.Distance": 2
+  },
+  "3": {
+   "drill.atk.Distance": 3
+  }
+ },
+ "Drillmaster": {
+  "1": {
+   "heroXp.per100": 105
+  },
+  "2": {
+   "heroXp.per100": 110
+  },
+  "3": {
+   "heroXp.per100": 115
+  }
+ },
+ "Manoeuvre": {
+  "1": {
+   "drill.disadvantageOffset": 0.02
+  },
+  "2": {
+   "drill.disadvantageOffset": 0.04
+  },
+  "3": {
+   "drill.disadvantageOffset": 0.06
+  }
+ },
+ "Barding": {
+  "1": {
+   "drill.def.Mounted": 1
+  },
+  "2": {
+   "drill.def.Mounted": 2
+  },
+  "3": {
+   "drill.def.Mounted": 3
+  }
+ },
+ "Pathfinders": {
+  "1": {
+   "depthMs.1": 162000,
+   "depthMs.3": 214200
+  },
+  "2": {
+   "depthMs.1": 144000,
+   "depthMs.3": 190400
+  },
+  "3": {
+   "depthMs.1": 126000,
+   "depthMs.3": 166600
+  }
+ },
+ "DeepWells": {
+  "1": {
+   "manaCap": 104
+  },
+  "2": {
+   "manaCap": 114
+  },
+  "3": {
+   "manaCap": 124
+  },
+  "4": {
+   "manaCap": 134
+  },
+  "5": {
+   "manaCap": 144
+  }
+ },
+ "LeyTaps": {
+  "1": {
+   "manaProduction": 11
+  },
+  "2": {
+   "manaProduction": 13
+  },
+  "3": {
+   "manaProduction": 15
+  }
+ },
+ "Resonance": {
+  "1": {
+   "castCost.VerdantSeal": 5
+  },
+  "2": {
+   "castCost.VerdantSeal": 4
+  }
+ },
+ "Scriptorium": {
+  "1": {
+   "knowledgePerHour": 6.300000000000001
+  },
+  "2": {
+   "knowledgePerHour": 6.6000000000000005
+  },
+  "3": {
+   "knowledgePerHour": 6.8999999999999995
+  }
+ },
+ "Surveying": {
+  "1": {
+   "revealPerTap": 2
+  },
+  "2": {
+   "revealPerTap": 3
+  }
+ },
+ "Wayposts": {
+  "1": {
+   "knowledgePerHour": 8
+  },
+  "2": {
+   "knowledgePerHour": 10
+  },
+  "3": {
+   "knowledgePerHour": 12
+  }
+ },
+ "Pilgrimage": {
+  "1": {
+   "claimCost": 1900
+  },
+  "2": {
+   "claimCost": 1800
+  },
+  "3": {
+   "claimCost": 1700
+  }
+ },
+ "Farsight": {
+  "1": {
+   "discoverRadius.1": 2,
+   "discoverRadius.3": 4
+  },
+  "2": {
+   "discoverRadius.1": 3,
+   "discoverRadius.3": 5
+  },
+  "3": {
+   "discoverRadius.1": 4,
+   "discoverRadius.3": 6
+  }
+ },
+ "Vigils": {
+  "1": {
+   "knowledgePerHour": 7
+  },
+  "2": {
+   "knowledgePerHour": 8
+  },
+  "3": {
+   "knowledgePerHour": 9
+  }
+ },
+ "Pitons": {
+  "1": {
+   "revealCost.far": 1125
+  },
+  "2": {
+   "revealCost.near": 4,
+   "revealCost.far": 1000
+  }
+ },
+ "Prospecting": {
+  "1": {},
+  "2": {
+   "stardust.oneDepth": 7
+  },
+  "3": {
+   "stardust.oneDepth": 7
+  }
+ },
+ "BigNets": {
+  "1": {
+   "unitsPerStrike.Fish": 3,
+   "workerStrike.Fish": 3,
+   "tapDraw.Fish": 1.5
+  },
+  "2": {
+   "unitsPerStrike.Fish": 4,
+   "workerStrike.Fish": 4,
+   "tapDraw.Fish": 2
+  },
+  "3": {
+   "unitsPerStrike.Fish": 5,
+   "workerStrike.Fish": 5,
+   "tapDraw.Fish": 2.5
+  }
+ }
+}
