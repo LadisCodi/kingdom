@@ -18,7 +18,7 @@ four files: the `TechId` union in `state.ts`, a second id list in
 `scripts/balance.mjs`, a row on the `Technologies` sheet, and five lines of
 identity in `definitions.ts`. Three of those are the same list.
 
-- **The sheet showed ids, not the page.** `requires = CharterII, Roadworks` is
+- **The sheet showed ids, not the page.** `requires = Magistracy, Roadworks` is
   not a flow chart. Whether a page reads downward, whether a card has an
   incoming line at all, whether a band is three rows or twelve — none of it
   was visible in the cells that decided it.
@@ -43,7 +43,7 @@ place.
   "name": "Saws", "glyph": "🪚", "kind": "unlock",
   "description": "Unlocks the Sawmill — its workers chop nearby forests for you.",
   "tome": "Civics", "era": 1, "row": 2, "col": 0,
-  "requires": ["CharterI"],
+  "requires": ["Forestry"],
   "gold": 175, "seconds": 20,
   "unlocks": [{ "district": "Sawmill" }]
 }
@@ -54,13 +54,19 @@ place.
 | the key | the `TechId`. `TechId` **is** `keyof` this file, so a new one is a type the moment it is saved |
 | `name` · `glyph` · `description` | what the player reads |
 | `kind` | `unlock`, `bonus` or `mechanic` (§3) |
-| `tome` · `era` | which book, which band |
+| `tome` · `era` | which book, which band — the book says how many it has (`eras`) |
 | `row` · `col` | its slot on that book's three-column page; a requirement always sits on a smaller row |
-| `requires` | one to three technologies — none on a cover page, and none needed by anything on the page's first row |
+| `requires` | one to three technologies — none needed by anything on the page's first row |
 | `gold` · `knowledge` · `seconds` | what it costs and how long it takes; `knowledge` omitted when 0 |
 | `unlocks` | `kind: unlock` only (§3) |
 | `effects` | `kind: bonus` only — one line each, so a rebalance diffs as the values that changed (§3) |
 | `planned` | on the tree for its shape, does nothing yet |
+
+Beside `technologies`, the file's other half is **`eras`**: one list per book,
+`[cells to open era 1, era 2, …]`, so its LENGTH is how many bands the book
+has. Two facts in one number on purpose — a band and its gate are the same
+thing, and keeping the count in one file and the thresholds in another meant
+dropping a middle band silently re-pointed the numbers left behind.
 
 - `tome`, `era`, `row` and `col` are **absent together** on a technology taken
   OFF THE PAGE (§5). It still exists and is still editable; the rules count it
@@ -88,6 +94,10 @@ the game is derived from that (`GATES`, `definitions.ts`):
 
 One technology per gate: two claiming the same door is an error, because the
 derivation would otherwise answer with whichever it read last.
+
+Nothing opens a BOOK — every book is open — and nothing but the era bar opens
+a band. A card that raises the Townhall's level is an ordinary `unlock` sitting
+wherever it is placed.
 
 **`bonus` — it moves numbers, and names them.** Each effect is four fields:
 
@@ -123,11 +133,11 @@ technology moves it yet — so a stat added in code is pickable immediately.
 read by something in `src/sim`, and the file may only name a stat the registry
 declares.
 
-**`mechanic` — the code reads it by id.** A cover page opening its book,
-`Conquest` bending the Knowledge rate, `SanctifiedRuins` doubling the per-ruin
-drip. The editor can label these; it cannot write them. What is left in this
-kind is what genuinely is code: a cover page, a `planned` node, and the few
-mechanics whose arithmetic does not fit `(base + Σflat) × (1 + Σpct)`.
+**`mechanic` — the code reads it by id.** `Conquest` bending the Knowledge
+rate, `SanctifiedRuins` doubling the per-ruin drip. The editor can label these;
+it cannot write them. What is left in this kind is what genuinely is code: a
+`planned` node, and the few mechanics whose arithmetic does not fit
+`(base + Σflat) × (1 + Σpct)`.
 
 ## 4. The rules, in one module
 
@@ -151,13 +161,15 @@ error, in its own words.
 - two cards in one slot of one page (the same slot on another page is fine)
 - a tome that is not a tome, a band outside 1–4, a column outside 0–2
 - one row shared by two eras — an era bar takes a whole line
-- more than three requirements; a cover page with any; **no requirements on a
-  card that is not on its page's first row** — the first row is where a root
-  belongs, because there is nothing above it to require
+- more than three requirements; **no requirements on a card that is not on its
+  page's first row** — the first row is where a root belongs, because there is
+  nothing above it to require
 - a requirement in another tome, at or below the card, or naming itself
 - a band that starts at or above the one before it
-- a negative or fractional price; anything free that is not a cover page;
-  Knowledge charged in era 1, where the clock has not started
+- a negative or fractional price; anything free at all, since nothing is
+  granted any more; Knowledge charged in era 1, where the clock has not started
+- a book with no bands, or more than eight; a band asking for fewer cells than
+  the one above it; era 1 asking for anything at all
 - a kind that disagrees with what the technology carries — an `unlock` that
   unlocks nothing (unless `planned`), a `bonus` that moves no number, an
   `unlock` or `mechanic` that carries effects
@@ -220,6 +232,19 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
   stat, op, value, then what it aims at. Click a chip to cut either.
 - **`+` and `−`** in the left channel open a gap above a row and close an empty
   one. Everything below renumbers; nothing else moves.
+- **Every band has a header** — the era bar, which in the game only exists
+  BETWEEN bands. Here it is the band's handle: what the band asks for in
+  revealed cells (era 1 has no gate; it is the top of the page), and the 🗑
+  that drops it.
+- **`+ era`** at the foot of the page adds a band at the END, which is the only
+  place one can go: the ladder of thresholds only climbs, and a band inserted
+  in the middle would have to renumber every card below it. It opens at
+  whatever the band above asks for, which is the only default legal on arrival.
+- **🗑 in a band's header** drops it: every card in it goes to the palette, and
+  every band below shifts up one — cards and thresholds together, so era 4's
+  "220 cells" follows era 4 when it becomes era 3. Rows are not renumbered;
+  they only have to ascend from band to band. Asks first, and it is one undo.
+  A book is at least one band, so the last one cannot go.
 - The last row of each band is an empty **spare row**. Dropping into it pushes
   the bands below down a line.
 - **Off the page is not deleted.** `⤴ take off the page` (or `Delete`) lets go

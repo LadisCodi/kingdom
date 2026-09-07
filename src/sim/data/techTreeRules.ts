@@ -86,6 +86,21 @@ export interface TechNodeDoc {
 
 /** The authored shape of src/sim/data/tech-tree.json. */
 export interface TechTreeDoc {
+  /**
+   * Each book's BANDS: `eras.Civics[i]` is how much of the region has to be
+   * revealed before era `i + 1` opens, so the array's LENGTH is how many
+   * bands the book has.
+   *
+   * Two things live in one number on purpose. A band and its gate are the
+   * same fact — the bar across the page IS the requirement — and keeping the
+   * count in one file and the thresholds in another meant deleting a middle
+   * band silently re-pointed the numbers left behind: drop era 3 of 4 and the
+   * one that asked for 220 would suddenly ask for 100. Now the number leaves
+   * with its band.
+   *
+   * `[0]` is always 0: a book's first band opens with the book.
+   */
+  eras: Record<string, number[]>;
   technologies: Record<string, TechNodeDoc>;
 }
 
@@ -151,7 +166,22 @@ export function ladderRank(id: string): { stem: string; rank: number } | null {
   return { stem: m[1], rank };
 }
 
-export const MAX_ERA = 4;
+/**
+ * The most bands one book may have — a sanity rail, not the shipped number.
+ *
+ * How many a book HAS is `eraCount(doc, tome)`, authored in `?dev=tree`: the
+ * three books ship four each, and a designer may add or drop one without a
+ * code change. This only stops a hand-edited file claiming forty.
+ */
+export const ERA_CEILING = 8;
+
+/** How many bands this book has. */
+export const eraCount = (doc: TechTreeDoc, tome: string): number =>
+  doc.eras?.[tome]?.length ?? 0;
+
+/** Cells to reveal before this band opens. Era 1 is always 0. */
+export const eraCells = (doc: TechTreeDoc, tome: string, era: number): number =>
+  doc.eras?.[tome]?.[era - 1] ?? 0;
 
 /** One to three requirements — past three the flow stops reading as a flow,
  *  and the row above only has three slots to point from. */
@@ -163,10 +193,6 @@ export const UNIT_IDS = Object.keys(balance.units);
 export const HARVEST_IDS = Object.keys(balance.harvest);
 export const TERRAIN_IDS = Object.keys(balance.terrain);
 const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxLevel: number }>;
-
-/** A cover page is granted when its tome opens, so it needs nothing — and is
- *  the one technology allowed to cost nothing. */
-export const isCoverPage = (id: string): boolean => /^(Charter|Warband|Attunement)I$/.test(id);
 
 /** A technology that HAS a slot — the same object, with the four fields known
  *  to be there, so one check narrows all of them. */
@@ -187,20 +213,21 @@ export const techIds = (doc: TechTreeDoc): string[] =>
 /**
  * Is this edge DRAWN on the page?
  *
- * Every requirement is real, but not every one is worth a line. A requirement
- * that reaches back over an ERA BAR is said by the bar: the band a card sits
- * in is a statement about everything above it, and a minor line's numeral
- * says the rest. Drawing all 119 of those would put a line across every gate
- * in the book and hide the edges that carry information.
+ * Every requirement on a page is drawn, INCLUDING one that reaches back over
+ * an era bar — that edge is how two bands connect, and a band whose cards
+ * appear to grow from nothing reads as a page that starts over rather than
+ * one that continues. The line passes under the bar, which is the honest
+ * picture: the gate is a thing you cross, not a thing that severs the tree.
  *
- * So a cross-band requirement is implied, and everything inside a band is
- * drawn.
+ * What is NOT drawn is an edge with an end that is nowhere: off the page, or
+ * in another book. The rules refuse the second and the first is a card mid-
+ * rearrangement, so in a shipped tree this is true of every requirement.
  */
 export function isDrawnEdge(doc: TechTreeDoc, from: string, to: string): boolean {
   const a = doc.technologies?.[from];
   const b = doc.technologies?.[to];
   if (a === undefined || b === undefined) return false;
-  return a.tome === b.tome && a.era === b.era;
+  return a.tome === b.tome && isPlaced(a) && isPlaced(b);
 }
 
 /** One unlock as a key, so "two technologies claiming one gate" is a lookup. */
@@ -274,6 +301,51 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   const nodes = doc.technologies ?? {};
   const all = techIds(doc);
 
+  // ---- the bands, before anything that sits in one ------------------------
+  //
+  // These were the `Eras` sheet's rules in `scripts/balance.mjs`, and they
+  // come here with the numbers. A book needs at least one band to be a book,
+  // and a ladder that steps backwards would put a later band behind a gate
+  // the player has already passed.
+  for (const tome of TOME_IDS) {
+    const ladder = doc.eras?.[tome];
+    if (ladder === undefined || !Array.isArray(ladder)) {
+      errors.push({ message: `${tome} does not say what bands it has` });
+      continue;
+    }
+    if (ladder.length < 1) {
+      errors.push({ message: `${tome} has no bands — a book is at least one` });
+    }
+    if (ladder.length > ERA_CEILING) {
+      errors.push({
+        message: `${tome} has ${ladder.length} bands — ${ERA_CEILING} is the most a page holds`,
+      });
+    }
+    ladder.forEach((cells, i) => {
+      if (!Number.isInteger(cells) || cells < 0) {
+        errors.push({ message: `${tome} era ${i + 1} asks for ${cells} cells` });
+        return;
+      }
+      // Era 1 is where the page starts: the bar is what the player crosses to
+      // get FURTHER down a page they can already read, and there is nothing
+      // above the first band to have crossed.
+      if (i === 0 && cells !== 0) {
+        errors.push({ message: `${tome} era 1 is the top of the page, so it asks for nothing` });
+      }
+      if (i > 0 && cells < (ladder[i - 1] ?? 0)) {
+        errors.push({
+          message: `${tome} era ${i + 1} opens at ${cells} cells, before era ${i} at `
+            + `${ladder[i - 1]}`,
+        });
+      }
+    });
+  }
+  for (const tome of Object.keys(doc.eras ?? {})) {
+    if (!TOME_IDS.includes(tome as TomeId)) {
+      errors.push({ message: `the bands name "${tome}", which is not a tome` });
+    }
+  }
+
   // ---- identity ---------------------------------------------------------
   for (const id of all) {
     const node = nodes[id];
@@ -305,9 +377,10 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       errors.push({ message: `${id} sits in "${node.tome}", which is not a tome`, tech: id });
       continue;
     }
-    if (!Number.isInteger(node.era) || node.era < 1 || node.era > MAX_ERA) {
+    const bands = eraCount(doc, node.tome);
+    if (!Number.isInteger(node.era) || node.era < 1 || node.era > bands) {
       errors.push({
-        message: `${id} is in era ${node.era} — the bands are 1 to ${MAX_ERA}`, tech: id,
+        message: `${id} is in era ${node.era} — ${node.tome} has ${bands} band(s)`, tech: id,
       });
       continue;
     }
@@ -366,15 +439,11 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
 
   for (const [id, node] of onPage) {
     const requires = node.requires ?? [];
+    // A ROOT is a card on the page's FIRST ROW, wherever that row happens to
+    // be numbered. It is the one place a card may require nothing, because it
+    // is the one place with nothing above it to require.
     const isRoot = node.row <= (firstRow.get(node.tome) ?? node.row);
-    if (isCoverPage(id)) {
-      if (requires.length > 0) {
-        errors.push({
-          message: `${id} is a cover page, granted when its tome opens — it may require nothing`,
-          tech: id,
-        });
-      }
-    } else if (requires.length === 0 && !isRoot) {
+    if (requires.length === 0 && !isRoot) {
       errors.push({
         message: `${id} requires nothing, so it would be available from the first minute — `
           + 'put it on the page\'s first row, or say what it needs',
@@ -437,7 +506,7 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     highestOf.set(key, Math.max(highestOf.get(key) ?? node.row, node.row));
   }
   for (const tome of TOME_IDS) {
-    for (let era = 2; era <= MAX_ERA; era++) {
+    for (let era = 2; era <= eraCount(doc, tome); era++) {
       const top = lowestOf.get(`${tome}:${era}`);
       const above = highestOf.get(`${tome}:${era - 1}`);
       if (top === undefined || above === undefined) continue;
@@ -464,12 +533,13 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         errors.push({ message: `${id} has ${what} of ${value}`, tech: id });
       }
     }
-    // A cover page is GRANTED when its book opens, so it is the only
-    // technology that may be free — anything else free would be startable for
-    // nothing, which is what `isGranted` recognises by exactly that.
-    if (gold === 0 && seconds === 0 && !isCoverPage(id)) {
+    // NOTHING is free. A technology that cost no Gold and took no time would
+    // be startable and finishable in the same frame, for nothing — which is
+    // what the granted cover pages used to be, and they are gone: every book
+    // is simply open now.
+    if (gold === 0 && seconds === 0) {
       errors.push({
-        message: `${id} costs nothing and takes no time — only a cover page may`,
+        message: `${id} costs nothing and takes no time`,
         tech: id,
       });
     }
@@ -570,7 +640,7 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   // stem gets grouped.
   //
   // Scoped to BONUSES, which is the scope the `line` field had. The three
-  // tome ladders — `CharterI…IV` and its siblings — share the naming and are
+  // tome ladders — `WarbandII…IV` and `AttunementII…IV` — share the naming and are
   // deliberately not chains: a keystone gates its era and hangs off that
   // era's own requirements, not off the keystone before it.
   //

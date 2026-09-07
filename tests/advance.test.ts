@@ -27,8 +27,10 @@ function onTheEdgeOfCommunities(): GameState {
   state.city.population = 6;
   // Communities sits in Civics era 2, so its requirements come with it —
   // `completeTech` pulls the whole chain, which is what "the player has
-  // researched this" means now.
-  completeTech(state, 'CharterII');
+  // researched this" means now. Asked for by REQUIREMENT rather than by id,
+  // so rearranging the page in `?dev=tree` cannot quietly make this setup a
+  // no-op and the assertions below tautologies.
+  for (const req of TECHNOLOGIES.Communities.requires) completeTech(state, req);
   // Communities is a band down, and a band past the first opens on the world
   // rather than on a keystone (07-research.md §2.1).
   openEveryEra(state);

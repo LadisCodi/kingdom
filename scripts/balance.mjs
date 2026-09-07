@@ -314,31 +314,6 @@ const SHEETS = {
     'input_good', 'input_good_amount', 'work_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  // Research is paid in Gold and nothing else — one column, not a
-  // four-currency wallet. See the tech importer for why.
-  // `line` and `effect_per_rank` are what is left of the Upgrades sheet.
-  // A minor technology carries a line id and a per-rank effect; a major one
-  // leaves both blank. Ranks of a line are ordered by ROW ORDER, the same
-  // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
-  // NO `tome`, `era`, `requires`, `node_x` or `node_y`. Which book a node is
-  // in, which band of it, where on the page and what it needs before it are
-  // all the tree's SHAPE, authored in src/sim/data/tech-tree.json through
-  // `?dev=tree` — the same split the map made (Docs/tech-tree-editor.md). A
-  // spreadsheet expresses a graph badly, and `npm run balance` would
-  // overwrite whatever the editor drew.
-  // `cost_knowledge` is the clock's price (07-research.md §3): blank in era 1,
-  // where the clock has not started — which the tree's rules check, since the
-  // era is no longer a column here (techTreeRules.ts).
-  // `planned` = 1 marks a node that is on the tree for its SHAPE and does
-  // nothing yet. It is badged in the game, its description says so, and no
-  // keystone requires it (tech-tree.md §7).
-  Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds',
-    'line', 'effect_per_rank', 'planned'],
-  // What opens a band of a book. Era 1 is open with the book; the bands after
-  // it are gates in the world, not researches — `unlock_cells` is how much of
-  // the region has to be revealed before the page continues
-  // (Docs/features/07-research.md §2.1).
-  Eras: ['tome', 'era', 'unlock_cells'],
   // A rule is (district, neighbour) → one STAT moved by one MAGNITUDE. The
   // Gold column it replaced could only ever say one thing; this can say ten,
   // which is the whole of OQ-48. `neighbor` takes a district id or a group
@@ -535,7 +510,6 @@ async function importXlsx() {
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
     districts: {}, goods: {}, terrain: {}, harvest: {}, currencies: {}, units: {},
-    eras: [],
     store: {}, payer: {},
     research: {}, rush: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
@@ -668,37 +642,6 @@ async function importXlsx() {
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
   }
-
-  // Era gates: one row per band of one book, era 1 included so the sheet
-  // shows the whole ladder even though the first band is open with the book.
-  const eraSeen = new Set();
-  for (const r of readSheet(workbook, 'Eras')) {
-    if (!TOME_IDS.includes(r.tome)) fail(where(r), `unknown tome "${r.tome}"`);
-    const era = num(r, 'era');
-    if (era < 1 || era > 4) fail(where(r), 'era must be 1-4');
-    const key = `${r.tome}:${era}`;
-    if (eraSeen.has(key)) fail(where(r), `duplicate era row ${key}`);
-    eraSeen.add(key);
-    const cells = num(r, 'unlock_cells', { blankAs: 0 });
-    if (cells < 0) fail(where(r), 'unlock_cells cannot be negative');
-    if (era === 1 && cells !== 0) fail(where(r), 'era 1 opens with its book, so it costs nothing');
-    out.eras.push({ tome: r.tome, era, unlockCells: cells });
-  }
-  for (const tome of TOME_IDS) {
-    for (let era = 1; era <= 4; era++) {
-      if (!eraSeen.has(`${tome}:${era}`)) fail('Eras', `no row for ${tome} era ${era}`);
-    }
-  }
-  // A later band never opens sooner than the one before it.
-  for (const tome of TOME_IDS) {
-    const ladder = out.eras.filter((e) => e.tome === tome).sort((a, b) => a.era - b.era);
-    for (let i = 1; i < ladder.length; i++) {
-      if (ladder[i].unlockCells < ladder[i - 1].unlockCells) {
-        fail('Eras', `${tome} era ${ladder[i].era} opens before era ${ladder[i - 1].era}`);
-      }
-    }
-  }
-
 
   const adjacencySeen = new Set();
   for (const r of readSheet(workbook, 'Adjacency')) {
@@ -941,8 +884,6 @@ async function exportXlsx() {
   }));
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
-
-  addSheet(workbook, 'Eras', (b.eras ?? []).map((e) => [e.tome, e.era, e.unlockCells || '']));
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
     [a.district, a.neighbor, a.stat, a.magnitude]));

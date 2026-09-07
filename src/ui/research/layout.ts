@@ -161,7 +161,11 @@ export function authoredRows(
   const out: PageRow[] = [];
   let next = 0; // where an empty band's spare row goes
   for (const era of eras) {
-    if (era > 1) out.push({ kind: 'gate', era });
+    // EVERY band gets a header here, era 1 included — unlike the game, where
+    // the first band has no bar because it opens with the book. In the editor
+    // the bar is the band's HANDLE: what it asks for, and the button that
+    // drops it. A band with no header would be a band you cannot edit.
+    out.push({ kind: 'gate', era });
     const span = bounds.get(era);
     const lo = span?.lo ?? next;
     const hi = span?.hi ?? next - 1;

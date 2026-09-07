@@ -225,7 +225,7 @@ export const ladderParent = (ladder: string): TechId | null =>
   TECHNOLOGIES[ladders[ladder][0]].requires[0] ?? null;
 
 /** The ladders whose ranks carry a BONUS — the 37 the old `line` field named,
- *  as opposed to the three tome ladders (`Charter`, `Warband`, `Attunement`),
+ *  as opposed to the tome ladders (`Warband`, `Attunement`),
  *  whose ranks are cover pages and keystones. */
 export const bonusLadders = Object.keys(ladders)
   .filter((stem) => ladders[stem].every((id) => TECHNOLOGIES[id].kind === 'bonus'))

@@ -1762,68 +1762,6 @@
       "trainDurationSeconds": 60
     }
   },
-  "eras": [
-    {
-      "tome": "Civics",
-      "era": 1,
-      "unlockCells": 0
-    },
-    {
-      "tome": "Civics",
-      "era": 2,
-      "unlockCells": 30
-    },
-    {
-      "tome": "Civics",
-      "era": 3,
-      "unlockCells": 100
-    },
-    {
-      "tome": "Civics",
-      "era": 4,
-      "unlockCells": 220
-    },
-    {
-      "tome": "Warfare",
-      "era": 1,
-      "unlockCells": 0
-    },
-    {
-      "tome": "Warfare",
-      "era": 2,
-      "unlockCells": 30
-    },
-    {
-      "tome": "Warfare",
-      "era": 3,
-      "unlockCells": 100
-    },
-    {
-      "tome": "Warfare",
-      "era": 4,
-      "unlockCells": 220
-    },
-    {
-      "tome": "Magic",
-      "era": 1,
-      "unlockCells": 0
-    },
-    {
-      "tome": "Magic",
-      "era": 2,
-      "unlockCells": 30
-    },
-    {
-      "tome": "Magic",
-      "era": 3,
-      "unlockCells": 100
-    },
-    {
-      "tome": "Magic",
-      "era": 4,
-      "unlockCells": 220
-    }
-  ],
   "store": {
     "GemsPouch": {
       "priceUsd": 0.99,
@@ -2769,9 +2707,9 @@
     {
       "id": "Architect",
       "name": "The architect",
-      "description": "Seal the second Charter. With it the Townhall may stand a level higher.",
+      "description": "Set the city's clerks to work. With them the Townhall may stand a level higher.",
       "goalType": "CompleteTech",
-      "goalTarget": "CharterII",
+      "goalTarget": "Bureaucracy",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {

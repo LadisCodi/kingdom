@@ -19,7 +19,7 @@
 | Housing cap | 2 | 4 | 6 | 9 |
 | Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
-| Gate to the next level | 60 Wood | `Charter II` | `Charter III` | `Charter IV` (sealed) |
+| Gate to the next level | 60 Wood | `Bureaucracy` | `Magistracy` | — |
 
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 

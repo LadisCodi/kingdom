@@ -12,7 +12,7 @@ import balance from './balance.json';
 import regionMap from './region-map.json';
 import treeDoc from './tech-tree.json';
 import {
-  isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
+  eraCells, eraCount, isPlaced, techIds, type TechKind, type TechTreeDoc, type TechUnlock,
 } from './techTreeRules';
 import type { TechEffect } from './techEffectRules';
 import type { ModifierScope, ModifierStat } from '../modifiers';
@@ -850,48 +850,53 @@ export interface TomeDef {
    *  one, it is carrying two subjects and should be two tomes. */
   blurb: string;
   glyph: string;
-  /** The spine whose ranks pace it. Rank I is the cover page, granted when
-   *  the tome opens. The ranks after it are ordinary technologies that each
-   *  raise a real dial; what opens a BAND is the era gate below (§2.1). */
-  spine: string;
 }
 
 /**
  * The shelf, in reading order.
  *
- * Civics is open from the start because it is the game. Magic opens on the
- * first PAID REVEAL — the fog is the magic, it is guaranteed inside two
- * minutes, and it needs no landmark to have spawned nearby, which is what
- * makes Cartography reachable when the `Mapmakers` quest asks for it. Warfare
- * opens on the first discovered ruin, because that is the first moment an
- * army is for anything.
+ * All three are open from the first minute. A book used to be opened by a
+ * granted cover page — Civics with the kingdom, Magic on the first paid
+ * reveal, Warfare on the first ruin in sight — and the card existed only to
+ * be the marker. What paces a book is its era bars, which ask for revealed
+ * cells, so the marker was doing nothing the bars were not.
  */
 export const TOMES: Record<TomeId, TomeDef> = {
   Civics: {
-    id: 'Civics', name: 'Civics', glyph: '🏛️', spine: 'Charter',
+    id: 'Civics', name: 'Civics', glyph: '🏛️',
     blurb: 'The city and its purse.',
   },
   Magic: {
-    id: 'Magic', name: 'Magic', glyph: '🔯', spine: 'Attunement',
+    id: 'Magic', name: 'Magic', glyph: '🔯',
     blurb: 'The land’s magic, and what you can see of it.',
   },
   Warfare: {
-    id: 'Warfare', name: 'Warfare', glyph: '🚩', spine: 'Warband',
+    id: 'Warfare', name: 'Warfare', glyph: '🚩',
     blurb: 'The army, and what it goes into the ground for.',
   },
 };
 
 export const TOME_ORDER = Object.keys(TOMES) as TomeId[];
 
-/** A tome's cover page — the rank I granted when the book opens. */
-export const tomeCoverPage = (tome: TomeId): TechId => `${TOMES[tome].spine}I` as TechId;
-
 /** Every technology in one tome, in workbook order. */
 export const techsInTome = (tome: TomeId): TechId[] =>
   TECH_ORDER.filter((id) => TECHNOLOGIES[id].tome === tome);
 
-/** How many bands a book has. Era 4 is the sealed one. */
-export const MAX_ERA = 4;
+/**
+ * How many bands each book has — authored in `?dev=tree`, not a constant.
+ *
+ * Per book, because a book is where a band belongs: Civics may run to five
+ * while Warfare stays at four. The LAST band of a book is its sealed one.
+ */
+export const ERA_COUNT: Record<TomeId, number> = (() => {
+  const out = {} as Record<TomeId, number>;
+  for (const tome of TOME_ORDER) out[tome] = eraCount(treeDoc as unknown as TechTreeDoc, tome);
+  return out;
+})();
+
+/** The deepest band any book reaches — for anything that has to size an array
+ *  across all three. How deep a given book goes is `ERA_COUNT[tome]`. */
+export const MAX_ERA = Math.max(...TOME_ORDER.map((tome) => ERA_COUNT[tome]));
 
 /**
  * What opens a band: how much of the region has to have been revealed before
@@ -900,12 +905,18 @@ export const MAX_ERA = 4;
  * Era 1 is 0 — a book's first band opens with the book. The bar is a gate in
  * the WORLD, not a research: the tree paces on exploring, so a player cannot
  * buy their way down a page while standing still.
+ *
+ * Indexed by era, so `[0]` is unused and `[1]` is the first band — the shape
+ * every reader already asks for. The authored file is a plain ladder from era
+ * 1, and this is the one place the two meet.
  */
 export const ERA_UNLOCK_CELLS: Record<TomeId, number[]> = (() => {
   const out = {} as Record<TomeId, number[]>;
-  for (const tome of TOME_ORDER) out[tome] = Array.from({ length: MAX_ERA + 1 }, () => 0);
-  for (const row of balance.eras as Array<{ tome: string; era: number; unlockCells: number }>) {
-    out[row.tome as TomeId][row.era] = row.unlockCells;
+  for (const tome of TOME_ORDER) {
+    out[tome] = [0, ...Array.from(
+      { length: ERA_COUNT[tome] },
+      (_, i) => eraCells(treeDoc as unknown as TechTreeDoc, tome, i + 1),
+    )];
   }
   return out;
 })();

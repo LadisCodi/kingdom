@@ -414,3 +414,38 @@ select.tre-search { padding: 2px 4px; }
 /* Off the page: pending, not wrong. Amber rather than the error red, because
    a cleared band is work in progress and the save is what waits for it. */
 .tre-pending { color: var(--accent); }
+
+/* ---------- a band's header ----------
+   In the game the era bar only exists BETWEEN bands. Here every band has one,
+   because it is also the band's handle: the threshold is the one number a band
+   carries, and this is the only place to type it. */
+
+.tre-era { gap: 8px; }
+.tre-era-cells {
+  width: 68px;
+  padding: 1px 4px;
+  text-align: right;
+  background: #191325;
+  border-color: #4a3a5e;
+  color: #e8dcff;
+}
+.tre-era .ed-note { color: #9a86bd; }
+.tre-era-drop {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  flex: none;
+  border: 1px solid #4a3a5e;
+  border-radius: 4px;
+  background: #1d1729;
+  color: #c9b6e8;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+.tre-era-drop:hover:not(:disabled) { background: #55212a; border-color: #7d2f3c; color: #ffd9dd; }
+.tre-era-drop:disabled { opacity: .35; cursor: default; }
+
+/* The foot of the page. A band is added at the END — the only place one can
+   go, since the ladder of thresholds only climbs. */
+.tre-era-add { display: block; margin: 10px auto 0; }

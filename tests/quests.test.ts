@@ -286,7 +286,9 @@ describe('quests fund the research tree', () => {
   // who does the whole opening in one sitting. The one thing this may lean
   // on is the lump a claim pays, because `OldStones` IS a claim.
   it('pays enough Knowledge that a chain-follower is never stuck, with zero drip', () => {
-    const done = new Set<TechId>(['CharterI']);
+    // Nothing starts researched: every book is open from the first minute and
+    // no cover page is granted, so the chain-follower pays for all of it.
+    const done = new Set<TechId>();
     const need = (id: TechId): number => {
       if (done.has(id)) return 0;
       done.add(id);
@@ -337,7 +339,7 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(tree).toBe(550_165);
+    expect(tree).toBe(520_165);
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.

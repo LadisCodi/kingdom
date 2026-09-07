@@ -12,8 +12,7 @@
 // keep running in real time).
 
 import {
-  GAME_VERSION, OFFLINE_CAP_HOURS, RUINS, SAVE_VERSION, TECHNOLOGIES,
-  tomeCoverPage,
+  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -27,7 +26,7 @@ import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
   type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
-  type PayerProfile, type StoreSkuId, type TomeId,
+  type PayerProfile, type StoreSkuId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -208,34 +207,17 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v25 — tomes have COVER PAGES, granted by events in the world rather than
-    // researched (07-research.md §2). A save written before they
-    // existed has none, so every era-1 technology sits behind a requirement
-    // nothing will ever complete and the Civics page shows one lonely scroll.
+    // v25 — tomes had COVER PAGES, granted by events in the world rather than
+    // researched, and a save written before they existed had none.
     //
-    // Civics is always open — it is the game. Magic and Warfare are granted
-    // when the save shows the event that would have opened them already
-    // happened: a Magic technology done or a landmark claimed for Magic, a
-    // Warfare technology done or a ruin sighted for Warfare. Anyone short of
-    // those events opens them the ordinary way, on the next reveal or ruin.
+    // A NO-OP now, and kept because `MIGRATIONS` is append-only and gapless.
+    // Tome openness stopped being a technology: every book is simply open, so
+    // there is nothing to grant and nothing that can be shut. The ids this
+    // used to write no longer exist, and `load` filters ids the build does not
+    // have — so leaving the body in would put dead names in a save for one
+    // read and then drop them.
     to: 25,
-    migrate: (modules) => {
-      const research = modules['kingdom.research'] as { Completed?: string[] } | undefined;
-      if (research === undefined) return;
-      const completed = research.Completed ?? (research.Completed = []);
-      const grant = (id: string): void => { if (!completed.includes(id)) completed.push(id); };
-      const inTome = (tome: TomeId): boolean =>
-        completed.some((id) => TECHNOLOGIES[id as TechId]?.tome === tome);
-      const claimed = (modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined)
-        ?.Claimed ?? [];
-      const keys = (modules['kingdom.discoveries'] as { Keys?: string[] } | undefined)?.Keys ?? [];
-      const ruinSeen = keys.some((k) => k.startsWith('site:')
-        && (Object.keys(RUINS) as string[]).includes(k.slice('site:'.length)));
-
-      grant(tomeCoverPage('Civics'));
-      if (inTome('Magic') || claimed.length > 0) grant(tomeCoverPage('Magic'));
-      if (inTome('Warfare') || ruinSeen) grant(tomeCoverPage('Warfare'));
-    },
+    migrate: () => {},
   },
   {
     // v26 — the Mine is gone as a building. The Quarry works every mountain

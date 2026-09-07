@@ -203,7 +203,7 @@ describe('exploring pays in ground, not in currency', () => {
     // 07-research.md calls a tree the quest chain funds twice over
     // "not a sink, a formality"; this is the other side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(550_165);
+    expect(tree).toBe(520_165);
     // Every tech is Gold plus, from era 2 on, Knowledge — the research clock
     // (07-research.md §3). Never materials: a full quarry buys no
     // research, which is what keeps the tree in the same contest as fog and

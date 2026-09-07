@@ -4,12 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, UNITS,
+  DISTRICTS, ERA_COUNT, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
   anyResearchActionable, buySlot, canStartTech, eraShortfall, isTechComplete, isTomeOpen,
-  knowledgeShortfallMs, openTome, slotGemCost, startTech, techCost, techKnowledgeCost,
+  knowledgeShortfallMs, openTomes, slotGemCost, startTech, techCost, techKnowledgeCost,
   techSlots, techUnlocks,
 } from '../src/sim/research';
 import {
@@ -38,9 +38,11 @@ describe('technology basics', () => {
     // Farming is a band down in Civics, so it waits on what it requires.
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement');
 
-    // Agriculture is era 1, and the Civics cover page is granted with the
-    // kingdom — so it is startable from the very first second.
-    expect(isTechComplete(state, 'CharterI')).toBe(true);
+    // Agriculture is on the first row of Civics, so it requires nothing and
+    // is startable from the very first second. Nothing at all is researched
+    // on a fresh kingdom: a book needs no card to open it.
+    expect(state.research.completed).toEqual([]);
+    expect(TECHNOLOGIES.Agriculture.requires).toEqual([]);
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
     expect(startTech(state, 'Agriculture', T0)).toBe('AlreadyActive');
     const durationMs = TECHNOLOGIES.Agriculture.durationSeconds * 1000;
@@ -104,19 +106,18 @@ describe('technology basics', () => {
     expect(techKnowledgeCost('Forestry')).toBe(0);
     expect(canStartTech(state, 'Forestry')).toBe(true);
 
-    // Charter II is the first node with a Knowledge price, one band down.
-    completeTech(state, 'CharterII'); // its requirements, not itself
-    state.research.completed = state.research.completed.filter((id) => id !== 'CharterII');
+    // Communities is a band down, where the clock HAS started.
+    for (const req of TECHNOLOGIES.Communities.requires) completeTech(state, req);
     openEveryEra(state);
-    const k = techKnowledgeCost('CharterII');
+    const k = techKnowledgeCost('Communities');
     expect(k).toBeGreaterThan(0);
-    expect(canStartTech(state, 'CharterII'), 'rich in Gold, no Knowledge').toBe(false);
-    expect(startTech(state, 'CharterII', T0)).toBe('NotEnoughResources');
+    expect(canStartTech(state, 'Communities'), 'rich in Gold, no Knowledge').toBe(false);
+    expect(startTech(state, 'Communities', T0)).toBe('NotEnoughResources');
 
     fund(state, { Knowledge: k });
     const gold = getWallet(state.city.wallet, 'Gold');
-    expect(startTech(state, 'CharterII', T0)).toBe('Started');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - techCost('CharterII'));
+    expect(startTech(state, 'Communities', T0)).toBe('Started');
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - techCost('Communities'));
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
   });
 
@@ -131,18 +132,16 @@ describe('technology basics', () => {
     expect(knowledgeShortfallMs(state, 'ScalingTools', 0)).toBe(0);
   });
 
-  // The cover page is granted by an event in the world, never bought.
-  it('opens a tome on the event that earns it, and not before', () => {
+  // EVERY BOOK IS OPEN, from the first minute. Opening one used to be a free,
+  // instant cover page granted by an event in the world — the first paid
+  // reveal for Magic, the first ruin in sight for Warfare — and the card
+  // existed only to be the marker. What paces a book is its era bars, which
+  // ask for revealed cells, so the marker was saying nothing they were not.
+  it('has every book open from the first minute, with nothing granted', () => {
     const state = freshGame();
-    expect(isTomeOpen(state, 'Civics')).toBe(true);   // granted with the kingdom
-    expect(isTomeOpen(state, 'Magic')).toBe(false);
-    expect(isTomeOpen(state, 'Warfare')).toBe(false);
-
-    expect(openTome(state, 'Magic')).toBe(true);
-    expect(isTomeOpen(state, 'Magic')).toBe(true);
-    // Idempotent: it is called from every reveal, and must cost nothing after
-    // the first.
-    expect(openTome(state, 'Magic')).toBe(false);
+    expect(state.research.completed).toEqual([]);
+    for (const tome of TOME_ORDER) expect(isTomeOpen(state, tome), tome).toBe(true);
+    expect(openTomes(state)).toEqual(TOME_ORDER);
   });
 
   // CLAIM: research is bought with Gold out of the CITY purse, up front, and
@@ -178,17 +177,16 @@ describe('research slots', () => {
     state.player.wallet.Gems = 2500; // exactly the second slot
     fund(state, { Gold: 5000 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
-    completeTech(state, 'Forestry');
-    expect(startTech(state, 'Agriculture', T0)).toBe('Started');
-    // Masonry, not Hunting: Hunting is an era-2 major, so it would fail on its
-    // REQUIREMENT and never reach the slot check this test is about.
-    expect(startTech(state, 'Masonry', T0)).toBe('NoFreeSlot');
+    // Two cards on the page's FIRST ROW, so neither waits on the other and
+    // both reach the slot check this test is about.
+    expect(startTech(state, 'Forestry', T0)).toBe('Started');
+    expect(startTech(state, 'Agriculture', T0)).toBe('NoFreeSlot');
 
     expect(slotGemCost(state)).toBe(2500);
     expect(buySlot(state)).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
     expect(techSlots(state)).toBe(2);
-    expect(startTech(state, 'Masonry', T0)).toBe('Started');
+    expect(startTech(state, 'Agriculture', T0)).toBe('Started');
 
     // Escalating price for the next one — and 0 gems left.
     expect(slotGemCost(state)).toBe(5000);
@@ -208,7 +206,7 @@ describe('research slots', () => {
     const state = freshGame();
     state.player.wallet.Gems = 2500;
     fund(state, { Gold: 5000 });
-    completeTech(state, 'Forestry');
+    completeTech(state, 'Market');
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0); // 60s
     startTech(state, 'Agriculture', T0 + 5_000); // 45s → done at 50s
@@ -226,8 +224,8 @@ describe('save round-trip', () => {
     const state = freshGame();
     state.player.wallet.Gems = 2500;
     fund(state, { Gold: 10_000, Wood: 500, Food: 500, Knowledge: 500 });
-    completeTech(state, 'Forestry');
     completeTech(state, 'Agriculture');
+    for (const req of TECHNOLOGIES.UrbanPlanning.requires) completeTech(state, req);
     buySlot(state);
     startTech(state, 'UrbanPlanning', T0);
     completeRanks(state, 'TapPower', 1);
@@ -314,8 +312,11 @@ describe('tome page geometry (layout is content)', () => {
     for (const row of rows) {
       if (row.kind === 'techs') expect(row.slots.some((slot) => slot !== null)).toBe(true);
     }
-    // Bands 2, 3 and 4 hold nothing the filter kept, and still say they exist.
-    expect(rows.filter((r) => r.kind === 'gate').map((r) => r.era)).toEqual([2, 3, 4]);
+    // Civics runs to THREE bands — a book carries its own count now — and the
+    // two it has past the first hold nothing the filter kept, yet still say
+    // they exist.
+    expect(ERA_COUNT.Civics).toBe(3);
+    expect(rows.filter((r) => r.kind === 'gate').map((r) => r.era)).toEqual([2, 3]);
   });
 });
 
@@ -454,7 +455,7 @@ describe('planned technologies', () => {
 
   it('are never required by a keystone, so no era is walled behind a no-op', () => {
     for (const id of TECH_ORDER) {
-      if (!/^(Charter|Warband|Attunement)(II|III|IV)$/.test(id)) continue;
+      if (!/^(Warband|Attunement)(II|III|IV)$/.test(id)) continue;
       for (const req of TECHNOLOGIES[id].requires) {
         expect(TECHNOLOGIES[req].planned, `${id} requires planned ${req}`).toBe(false);
       }

@@ -271,11 +271,21 @@ describe('a player can actually play the onboarding', () => {
     // the player can ever be standing at, which is 2 (the Townhall's own
     // radius already covers ring 1).
     const DEAREST_CELL = FOG.rings[1].cost;
+    // THE OPENING, as the chain funds it: every era-1 target, plus the few in
+    // the band below that the chain still pays for outright. Past these the
+    // city's own economy is what buys the tree, and chain-only accounting
+    // stops saying anything.
+    //
+    // A hand-kept list, and it has to be: it used to be the three keystones
+    // (`CharterII` and its siblings) matched by name, and the spine that made
+    // that a rule is gone — a book is not opened by a technology any more.
+    // Rearranging the chain in the workbook means revisiting this.
+    const FIRST_DOWN: string[] = ['Bureaucracy', 'WarbandII', 'AttunementII'];
     let purse = CITY_DEF.initialCurrencies.Gold ?? 0;
     for (const quest of QUESTS) {
       if (quest.goalType === 'CompleteTech') {
         const id = quest.goalTarget as TechId;
-        const opening = TECHNOLOGIES[id].era === 1 || /^(Charter|Warband|Attunement)II$/.test(id);
+        const opening = TECHNOLOGIES[id].era === 1 || FIRST_DOWN.includes(id);
         if (opening) {
           expect(purse, `the chain asks for ${id} before it can afford it`)
             .toBeGreaterThanOrEqual(techCost(id));

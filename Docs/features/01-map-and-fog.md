@@ -97,7 +97,7 @@ Mountains:
 - Gold from a gold mountain is a second faucet beside housing taxes: a level-1
   Quarry with three men on gold is about 45 Gold a minute against roughly 120
   from a Townhall-1 city's rent ([`03-economy.md`](03-economy.md) §3).
-- `DeepSeams` asks for Mining only after the second Charter is sealed and the
+- `DeepSeams` asks for Mining only after `Bureaucracy` is done and the
   Knowledge for it has been paid in ([`12-quests.md`](12-quests.md)). A test
   walks the chain with zero drip to prove a follower is never short.
 

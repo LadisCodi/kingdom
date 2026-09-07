@@ -69,9 +69,8 @@
 |---|---|---|---|
 | 1 | — | placed at game start | — |
 | 2 | — | 60 Wood | 30 s |
-| 3 | `Charter II` | ×3.9 per level | ×4 per level |
-| 4 | `Charter III` | | |
-| 5 *(designed)* | `Charter IV` (sealed) | | |
+| 3 | `Bureaucracy` (Civics era 2) | ×3.9 per level | ×4 per level |
+| 4 | `Magistracy` (Civics era 3) | | |
 
 ## 4. The districts
 
@@ -307,14 +306,14 @@ levels a building is bought with a Townhall level and goods (§4.11).
 
 | Building | Last tech-gated level |
 |---|---|
-| Townhall 4 | `Charter III` (the Civics era-3 spine rank) |
+| Townhall 4 | `Magistracy` (Civics era 3) |
 | Housing 3 | `Aqueducts` (Civics era 3) |
 | Sawmill 4 | TH3 · `Architecture` |
 | Quarry 3 | TH3 · `Architecture` |
 | Farm 2 | TH2 · `Farming` |
 | Docks 2 | `Shipbuilding` (Magic era 3) |
-| Sanctum 5 | TH4 · `Attunement III` (the Magic era-3 spine rank) |
-| the four halls 5 | TH3 · `Warband III` (the Warfare era-3 spine rank) |
+| Sanctum 5 | TH4 · `Attunement III` (Magic era 3) |
+| the four halls 5 | TH3 · `Warband III` (Warfare era 3) |
 | the four workshops · the Market | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them

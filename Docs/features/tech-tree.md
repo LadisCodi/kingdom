@@ -17,10 +17,9 @@
 ## 1. Reading the tables
 
 - **Major** unlocks content; **minor** is one numeric step with a roman
-  numeral; the **spine** is the tome's `Charter`/`Warband`/`Attunement` line,
-  which raises the tome's own dial and no longer gates its band
-  ([`07-research.md`](07-research.md) §1.1, §2.1).
-- Node counts per era include that era's spine rank and every rank row.
+  numeral. There is no spine: nothing gates a band but the era bar, which asks
+  for revealed cells ([`07-research.md`](07-research.md) §1.1, §2.1).
+- Node counts per era include every rank row.
 - **Ranks by era** reads era 1 / era 2 / era 3: `I·II / III·IV / V` means
   ranks I and II land in era 1, III and IV in era 2, V in era 3; `—` is no
   rank that era.
@@ -28,18 +27,20 @@
   in the workbook.
 - A technology never requires a technology in another tome.
 
-## 2. Tome I — Civics — 71 nodes
+## 2. Tome I — Civics — 69 nodes
 
-> *The city and its purse.* Open from the start.
+> *The city and its purse.* Open, like every book.
 
-**Spine.**
+**What raises the Townhall.** Two ordinary cards, gates derived from their
+`unlocks` like any other — placed where the designer puts them, not holding a
+door.
 
-| Rank | Cost | Grants |
+| Card | Band | Unlocks |
 |---|---|---|
-| `Charter I` | free, granted at game start | — |
-| `Charter II` | era 2 | Townhall 3 |
-| `Charter III` | era 3 | Townhall 4 |
-| `Charter IV` | sealed | Townhall 5 |
+| `Bureaucracy` | era 2 | Townhall 3 |
+| `Magistracy` | era 3 | Townhall 4 |
+
+Civics runs to **three bands**; Warfare and Magic run to four.
 
 ### 2.1 Era 1 · Settlement — 16 nodes
 
@@ -110,7 +111,7 @@
 | `Warband III` | era 3 | halls L5; **champion** units |
 | `Warband IV` | sealed | — |
 
-- A unit tier is a spine grant, never an era leaf: it arrives with the army
+- A unit tier arrives with the army
   cap that fields it.
 
 ### 3.1 Era 1 · The Levy — 9 nodes
@@ -172,9 +173,9 @@
 | `Attunement III` | era 3 | Sanctum L5 and another step |
 | `Attunement IV` | sealed | — |
 
-- The Sanctum itself is unlocked by **Consecration** in era 1; the spine only
+- The Sanctum itself is unlocked by **Consecration** in era 1; the ladder only
   raises what already exists.
-- `Attunement` is a spine name, not a technology; the quest `Attuned` targets
+- `Attunement` names the Magic ladder; the quest `Attuned` targets
   `Consecration`.
 
 ### 4.1 Era 1 · The Awakening — 13 nodes
@@ -245,7 +246,7 @@
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
 - Whole tree: **550,165 Gold and 50,495 Knowledge**, of which the three sealed
-  era-4 spine ranks are 90,000 Gold and 9,000 Knowledge.
+  era-4 keystones are 90,000 Gold and 9,000 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
@@ -255,7 +256,7 @@
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
   are about **eight weeks** at 30/h and **five and a half** at 45/h.
-- The quest chain funds the **opening** — every era-1 technology and the spine
+- The quest chain funds the **opening** — every era-1 technology and the first
   rank that follows. It also asks for enough exploring to open era 2 before it
   points at anything in it (`tests/quests.test.ts`). Era-2 majors are the
   city's to earn; the onboarding test's Gold guarantee is scoped to the
@@ -366,7 +367,7 @@ Salvage, Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 
 ## 9. Deliberately not in this design
 
-- A fourth era as a redesign (rank IV of each spine is drawn sealed; era 4 is
+- A fourth era as a redesign (a book's last band is drawn sealed; era 4 is
   rows).
 - Exclusive picks — no node forecloses another.
 - A ladder longer than five ranks.

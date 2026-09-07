@@ -176,8 +176,8 @@ describe('what the rules refuse', () => {
 
   it('the same slot on ANOTHER page, which is not a collision', () => {
     const d = clone();
-    // Every tome's cover page is at (row 0, column 1) on its own page
-    // already, which is the case that would break a global coordinate space.
+    // Every book's first row uses the same coordinates on its own page, which
+    // is the case that would break a global coordinate space.
     expect(messages(d)).toEqual([]);
   });
 
@@ -193,7 +193,7 @@ describe('what the rules refuse', () => {
 
   it('a requirement that leaves the tome, because the page cannot draw it', () => {
     const d = clone();
-    d.technologies.Forestry.requires = ['WarbandI'];
+    d.technologies.Forestry.requires = ['WarbandII'];
     expect(messages(d).some((m) => m.includes('another tome'))).toBe(true);
   });
 
@@ -201,40 +201,33 @@ describe('what the rules refuse', () => {
   // impossible, which is why there is no cycle finder any more.
   it('a requirement lower down the page than the card that needs it', () => {
     const d = clone();
-    d.technologies.CharterI.requires = ['Forestry'];
+    d.technologies.Forestry.requires = ['Saws']; // Saws is a row BELOW Forestry
     expect(messages(d).some((m) => m.includes('always sits higher up the page'))).toBe(true);
   });
 
   it('a fourth requirement', () => {
     const d = clone();
-    d.technologies.Masonry.requires = ['CharterI', 'Forestry', 'Agriculture', 'Market'];
+    d.technologies.Masonry.requires = ['Forestry', 'Agriculture', 'Market', 'Saws'];
     expect(messages(d).some((m) => m.includes('requirements'))).toBe(true);
   });
 
-  it('a card mid-page with no requirement at all, and a cover page with one', () => {
+  it('a card mid-page with no requirement at all', () => {
     const d = clone();
     d.technologies.Masonry.requires = [];
     expect(messages(d).some((m) => m.includes('available from the first minute'))).toBe(true);
-
-    const cover = clone();
-    cover.technologies.CharterI.requires = ['Forestry'];
-    expect(messages(cover).some((m) => m.includes('may require nothing'))).toBe(true);
   });
 
   // …but the FIRST ROW of a book is where a root belongs: there is nothing
-  // above it to require, and a designer opening a tome with something other
-  // than a cover page was being told their own first row was an error.
+  // above it to require. It is POSITIONAL, not a name — the cover pages that
+  // used to hold row 0 are gone, and Civics now opens on three ordinary
+  // technologies that require nothing.
   it('accepts a root on the page’s first row, whatever it is called', () => {
-    const d = clone();
-    const top = d.technologies.CharterI.row;
-    // Forestry moves up beside the cover page and lets go of its requirement.
-    d.technologies.Forestry = { ...d.technologies.Forestry, row: top, col: 0, requires: [] };
-    expect(messages(d)).toEqual([]);
+    expect(messages(clone())).toEqual([]);
+    expect(TECHNOLOGIES.Forestry.requires).toEqual([]);
 
-    // And one row down it is an error again, because now there IS something
-    // above it.
+    // And one row down it is an error, because now there IS something above.
     const below = clone();
-    below.technologies.Forestry = { ...below.technologies.Forestry, requires: [] };
+    below.technologies.Saws.requires = [];
     expect(messages(below).some((m) => m.includes('available from the first minute'))).toBe(true);
   });
 
@@ -246,7 +239,7 @@ describe('what the rules refuse', () => {
 
   it('an era that climbs back above the one before it', () => {
     const d = clone();
-    d.technologies.CharterII = { ...d.technologies.CharterII, era: 2, row: 0, col: 0 };
+    d.technologies.Bureaucracy = { ...d.technologies.Bureaucracy, era: 2, row: 0, col: 0 };
     expect(messages(d).some((m) => m.includes('at or above era 1'))).toBe(true);
   });
 
@@ -262,8 +255,8 @@ describe('what the rules refuse', () => {
   // no longer see which band a technology is in.
   it('Knowledge charged in era 1, where the clock has not started', () => {
     const d = clone();
-    // Row 0 holds only the cover page, so this lands in era 1 without
-    // colliding with anything — which is the case worth testing.
+    // Row 0 is empty now that the cover pages are gone, so this lands in era
+    // 1 without colliding with anything — the case worth testing.
     d.technologies.SawpitsII = { ...d.technologies.SawpitsII, era: 1, row: 0, col: 0 };
     expect(messages(d).some((m) => m.includes('the clock has not started'))).toBe(true);
   });
@@ -277,11 +270,13 @@ describe('what the rules refuse', () => {
     expect(messages(glyph).some((m) => m.includes('has no glyph'))).toBe(true);
   });
 
-  it('a free technology that is not a cover page', () => {
+  // NOTHING is free. The granted cover pages were the one exemption and they
+  // are gone: every book is open, so there is nothing left to grant.
+  it('a technology that costs nothing and takes no time', () => {
     const d = clone();
     d.technologies.Saws.gold = 0;
     d.technologies.Saws.seconds = 0;
-    expect(messages(d).some((m) => m.includes('only a cover page may'))).toBe(true);
+    expect(messages(d).some((m) => m.includes('costs nothing and takes no time'))).toBe(true);
   });
 
   it('an unlock that names something the game does not have', () => {
@@ -313,7 +308,7 @@ describe('what the rules refuse', () => {
     expect(messages(bonus).some((m) => m.includes('moves no number'))).toBe(true);
 
     const mechanic = clone();
-    mechanic.technologies.CharterI.unlocks = [{ unit: 'Warrior' }];
+    mechanic.technologies.Roadworks.unlocks = [{ unit: 'Warrior' }];
     expect(messages(mechanic).some((m) => m.includes('is a mechanic and also unlocks'))).toBe(true);
   });
 
@@ -370,16 +365,26 @@ describe('what the rules refuse', () => {
 
 describe('which edges the page draws', () => {
   it('draws an edge inside a band', () => {
-    expect(isDrawnEdge(doc, 'CharterI', 'Forestry')).toBe(true);
+    expect(isDrawnEdge(doc, 'Forestry', 'Saws')).toBe(true);
   });
 
-  // 119 ranks each reaching back over an era bar would put a line across
-  // every gate in the book and hide the edges that say something. The band a
-  // card sits in says it instead.
-  it('leaves a requirement that reaches over an era bar implied', () => {
+  // ACROSS the bar too: that edge is how two bands connect, and a band whose
+  // cards appear to grow from nothing reads as a page starting over rather
+  // than one continuing. The line passes under the bar.
+  it('draws a requirement that reaches back over an era bar', () => {
     expect(TECHNOLOGIES.SawpitsII.requires).toContain('SawpitsI');
     expect(TECHNOLOGIES.SawpitsII.era).toBe(2);
     expect(TECHNOLOGIES.SawpitsI.era).toBe(1);
-    expect(isDrawnEdge(doc, 'SawpitsI', 'SawpitsII')).toBe(false);
+    expect(isDrawnEdge(doc, 'SawpitsI', 'SawpitsII')).toBe(true);
+  });
+
+  // What is NOT drawn is an edge with an end that is nowhere.
+  it('draws nothing to a card that is off the page', () => {
+    const d = clone();
+    delete d.technologies.SawpitsI.tome;
+    delete d.technologies.SawpitsI.era;
+    delete d.technologies.SawpitsI.row;
+    delete d.technologies.SawpitsI.col;
+    expect(isDrawnEdge(d, 'SawpitsI', 'SawpitsII')).toBe(false);
   });
 });

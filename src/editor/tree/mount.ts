@@ -18,10 +18,11 @@ import '../editor.css';
 import treeJson from '../../sim/data/tech-tree.json';
 import {
   DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS,
-  isCoverPage, isDrawnEdge, isPlaced, unlockLabel,
+  isDrawnEdge, isPlaced, unlockLabel,
   type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
+import { ERA_CEILING } from '../../sim/data/techTreeRules';
 import {
   TARGET_IDS, TECH_EFFECT_OPS, TECH_STATS, effectLabel,
   type TargetKind, type TechEffectOp, type TechStat, type TechTarget,
@@ -30,7 +31,7 @@ import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, rowTops, ROW_GAP,
 } from '../../ui/research/layout';
 import type { TomeId } from '../../sim/state';
-import { ERAS, TreeDoc } from './doc';
+import { TreeDoc } from './doc';
 
 const el = <K extends keyof HTMLElementTagNameMap>(
   tag: K, attrs: Record<string, string> = {}, ...kids: Array<Node | string>
@@ -44,7 +45,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(
 /** What the palette drag carries, and what a drop reads back. */
 const DRAG_MIME = 'application/x-kingdom-tech';
 
-const ROMAN = ['', 'I', 'II', 'III', 'IV'];
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 /** Every kind of target, in the registry's own order — the pickable half of
  *  an effect's aim. */
@@ -188,19 +189,17 @@ export function mountEditor(): void {
    * a sentence anyone can check, and "19 technologies" is.
    */
   const askClearEra = (): void => {
-    const era = select(ERAS.map(String), '1');
+    const era = select(doc.eraList(tome).map(String), '1');
     const summary = el('p', { class: 'ed-note' });
     const go = el('button', { class: 'ed-danger tre-modal-go' }, '');
     const sync = (): void => {
       const band = doc.band(tome, Number(era.value));
       const n = band.length;
-      const cover = band.filter(isCoverPage);
       summary.textContent = n === 0
         ? 'That band is already empty.'
         : (n === 1
           ? '1 technology goes to the palette.'
-          : `${n} technologies go to the palette.`)
-          + (cover.length > 0 ? ` One of them is ${cover[0]}, the book’s cover page.` : '');
+          : `${n} technologies go to the palette.`);
       go.textContent = `⤴ clear era ${era.value}`;
       go.disabled = n === 0;
     };
@@ -226,6 +225,41 @@ export function mountEditor(): void {
       close();
       selected = null;
       toast(`Cleared era ${n} of ${tome} — ${moved.length} off the page`);
+      refresh();
+    });
+  };
+
+  /**
+   * Drop a band. Asks first, because it moves a dozen cards AND renumbers
+   * every band below — and what it asks with is both of those, counted.
+   */
+  const askDropEra = (era: number): void => {
+    const cards = doc.band(tome, era);
+    const below = doc.eraList(tome).filter((n) => n > era);
+    const cancel = el('button', { class: 'ed-btn' }, 'Cancel');
+    const go = el('button', { class: 'ed-danger tre-modal-go' }, `🗑 drop era ${era}`);
+    const close = modal(
+      el('h2', {}, `Drop era ${era} of ${tome}?`),
+      el('p', { class: 'ed-note' }, cards.length === 0
+        ? 'The band is empty.'
+        : (cards.length === 1
+          ? '1 technology goes to the palette — off the page, not deleted.'
+          : `${cards.length} technologies go to the palette — off the page, not deleted.`)),
+      el('p', { class: 'ed-note' }, below.length === 0
+        ? 'It is the last band, so nothing renumbers.'
+        : `Era ${below.join(', ')} shift up one, each keeping what it asks for `
+          + 'in revealed cells.'),
+      el('p', { class: 'ed-note' }, 'One undo puts the band, its cards and the '
+        + 'numbering back.'),
+      el('div', { class: 'tre-modal-row' }, cancel, go),
+    );
+    cancel.addEventListener('click', close);
+    go.addEventListener('click', () => {
+      const moved = doc.removeEra(tome, era);
+      close();
+      selected = null;
+      toast(`Dropped era ${era} of ${tome}`
+        + (moved.length > 0 ? ` — ${moved.length} off the page` : ''));
       refresh();
     });
   };
@@ -382,7 +416,7 @@ export function mountEditor(): void {
     const glyph = el('input', { class: 'tre-search', placeholder: 'Glyph', value: '📜' });
     const description = el('textarea', { class: 'tre-search', placeholder: 'What it does' });
     const kind = select([...TECH_KINDS], 'unlock');
-    const era = select(ERAS.map(String), '1');
+    const era = select(doc.eraList(tome).map(String), '1');
     const gold = el('input', { class: 'tre-search', type: 'number', value: '100' });
     const seconds = el('input', { class: 'tre-search', type: 'number', value: '60' });
     const make = el('button', { class: 'ed-btn primary' }, `create in ${tome}`);
@@ -558,10 +592,7 @@ export function mountEditor(): void {
 
     rows.forEach((row, i) => {
       if (row.kind === 'gate') {
-        flow.append(el('div', {
-          class: 'tre-era',
-          style: `top:${tops[i] + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
-        }, el('span', {}, `Tome of ${tome} — era ${row.era} bar`)));
+        flow.append(eraBar(row.era, tops[i] + ROW_GAP / 2));
         return;
       }
       for (const [col, id] of row.slots.entries()) {
@@ -592,6 +623,23 @@ export function mountEditor(): void {
       }
     });
     page.append(flow);
+
+    // The foot of the page: a band is added at the END, which is the only
+    // place one can go — the ladder of thresholds only climbs, and a band
+    // inserted in the middle would have to renumber every card below it to
+    // mean anything. Drop one and add one is the way to reorder.
+    const grow = el('button', { class: 'ed-btn tre-era-add' }, '+ era');
+    grow.disabled = doc.eraList(tome).length >= ERA_CEILING;
+    grow.title = grow.disabled
+      ? `${ERA_CEILING} bands is the most a page holds`
+      : `add a band to the end of ${tome}`;
+    grow.addEventListener('click', () => {
+      const era = doc.addEra(tome);
+      if (era === null) return;
+      toast(`${tome} now has ${era} bands — era ${era} is empty`);
+      refresh();
+    });
+    page.append(grow);
     stage.append(page);
   }
 
@@ -612,6 +660,48 @@ export function mountEditor(): void {
       dropInto(row, col, era);
     });
     return slot;
+  }
+
+  /**
+   * A band's header: what the band is, what it asks for, and the way to drop
+   * it.
+   *
+   * In the game this is the era BAR and it only exists between bands, because
+   * the first opens with the book. Here every band has one, because it is
+   * also the band's handle — the threshold is the one number a band carries
+   * and this is the only place to type it.
+   */
+  function eraBar(era: number, top: number): HTMLElement {
+    const bar = el('div', {
+      class: 'tre-era',
+      style: `top:${top}px;height:${GATE_BAR_H}px`,
+    }, el('span', {}, `Era ${ROMAN[era] ?? era}`));
+
+    if (era === 1) {
+      // Era 1 has no threshold to type: it is where the page starts, there is
+      // nothing above it to have crossed, and the rules refuse anything else.
+      bar.append(el('span', { class: 'ed-note' }, 'no gate — the page starts here'));
+    } else {
+      const cells = el('input', {
+        class: 'tre-search tre-era-cells', type: 'number', min: '0', step: '10',
+        value: String(doc.eras(tome)[era - 1] ?? 0),
+        title: 'cells the player must have revealed before this band opens',
+      });
+      cells.addEventListener('change', () => {
+        doc.setEraCells(tome, era, Number(cells.value));
+        refresh();
+      });
+      bar.append(cells, el('span', { class: 'ed-note' }, 'cells revealed'));
+    }
+
+    const drop = el('button', {
+      class: 'tre-era-drop', title: `drop era ${era} from ${tome}`,
+    }, '🗑');
+    // A book is at least one band, so the last one cannot go.
+    drop.disabled = doc.eraList(tome).length <= 1;
+    drop.addEventListener('click', () => askDropEra(era));
+    bar.append(el('span', { class: 'tre-spacer' }), drop);
+    return bar;
   }
 
   /** One technology on the page: what it is, what it opens, what it costs,

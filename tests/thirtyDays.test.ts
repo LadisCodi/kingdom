@@ -380,9 +380,9 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const prev = weeks[weeks.length - 2];
 
     // 1. The Townhall stalls one level short of its own sheet, and does so in
-    //    week 2. Level 4 is Charter III, an era-3 keystone priced in
-    //    Knowledge, and Knowledge is territorial — so the late city is behind
-    //    the delve half of the game by design (07-research.md §3).
+    //    week 2. Level 4 is `Magistracy`, an era-3 card priced in Knowledge,
+    //    and Knowledge is territorial — so the late city is behind the delve
+    //    half of the game by design (07-research.md §3).
     expect(weeks[0].townhall, 'Townhall at the end of week 1').toBe(2);
     expect(end.townhall, 'Townhall at day 30').toBe(3);
     expect(end.townhall, 'a level still on the sheet, unreached in thirty days')

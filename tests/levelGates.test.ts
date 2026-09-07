@@ -27,9 +27,15 @@ describe('tech-gated upgrades', () => {
     expect(upgradeDistrict(state, house.uniqueId)).toBe('Started');
   });
 
-  it('Townhall L3 needs Charter II; L2 needs no tech', () => {
+  // The Townhall's levels are still gated by TECHNOLOGY, and by an ordinary
+  // one: `Bureaucracy` is a card in Civics era 2 like any other, priced and
+  // placed. It is not what opens the book — nothing opens a book any more —
+  // and nothing about it is special to the code, which reads the gate off its
+  // `unlocks` the way it reads every other.
+  it('Townhall L3 needs Bureaucracy; L2 needs no tech', () => {
     expect(requiredTechForLevel('Townhall', 2)).toBe(null);
-    expect(requiredTechForLevel('Townhall', 3)).toBe('CharterII');
+    expect(requiredTechForLevel('Townhall', 3)).toBe('Bureaucracy');
+    expect(requiredTechForLevel('Townhall', 4)).toBe('Magistracy');
     const state = freshGame();
     fund(state, { Wood: 1000, Stone: 1000 });
     const th = townhall(state);
@@ -38,7 +44,7 @@ describe('tech-gated upgrades', () => {
     tickAt(state, T0 + 31_000); // 30s upgrade
     expect(townhall(state).level).toBe(2);
     expect(upgradeDistrict(state, th.uniqueId)).toBe('RequirementsNotMet');
-    completeTech(state, 'Architecture');
+    completeTech(state, 'Bureaucracy');
     expect(upgradeDistrict(state, th.uniqueId)).toBe('Started');
     tickAt(state, T0 + 31_000);
     tickAt(state, T0 + 152_000); // 120s upgrade

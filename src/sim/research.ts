@@ -5,7 +5,6 @@
 
 import {
   DISTRICTS, ERA_UNLOCK_CELLS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
-  tomeCoverPage,
 } from './data/definitions';
 import {
   addToWallet, getWallet,
@@ -229,20 +228,22 @@ export function advanceResearch(state: GameState, toTime: number): TechId[] {
  * before its cover page, so this is the one gate that decides whether a book
  * exists for the player at all.
  */
-export const isTomeOpen = (state: GameState, tome: TomeId): boolean =>
-  isTechComplete(state, tomeCoverPage(tome));
+/**
+ * Every book is open, always.
+ *
+ * Opening one used to be a TECHNOLOGY — a free, instant cover page granted by
+ * an event in the world (the first paid reveal for Magic, the first ruin in
+ * sight for Warfare) and by `newGame` for Civics. The card existed only to be
+ * the marker, so the three of them were free clicks that did nothing, and the
+ * era bars already pace a book by what the player has revealed. So the marker
+ * is gone and the shelf shows three tabs from the first minute.
+ *
+ * Kept as a function rather than deleted at the call sites: a book that is
+ * shut is a real thing to want back (a fourth tome bought with Gems, a
+ * seasonal book), and this is the one place it would go.
+ */
+export const isTomeOpen = (_state: GameState, _tome: TomeId): boolean => true;
 
-/** Open a tome, if it is not open already. Idempotent: it is called from
- *  events that fire many times (every reveal, every fog recalculation) and
- *  must cost nothing after the first. */
-export function openTome(state: GameState, tome: TomeId): boolean {
-  const cover = tomeCoverPage(tome);
-  if (isTechComplete(state, cover)) return false;
-  state.research.completed.push(cover);
-  return true;
-}
-
-/** The tomes the player can currently read. */
 export const openTomes = (state: GameState): TomeId[] =>
   (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));
 

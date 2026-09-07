@@ -6,7 +6,7 @@ import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } fr
 import { resolve } from './modifiers';
 import { techMultiplier, techValue } from './techEffects';
 import { recordQuestEvent } from './quests';
-import { isTechComplete, openTome } from './research';
+import { isTechComplete } from './research';
 import {
   addToWallet, coordKey, districtCells, getWallet,
   type Coord, type District, type GameState, type TechId,
@@ -131,11 +131,6 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     delete state.fog.progress[key];
     delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
-    // Pushing the fog back IS the magic, so the first cell bought opens the
-    // Magic tome. It is guaranteed inside two minutes and needs no landmark
-    // to have spawned nearby, which is what keeps Cartography reachable when
-    // the `Mapmakers` quest asks for it.
-    openTome(state, 'Magic');
     // Clearing fog pays no currency. What a reveal buys is MAP — resource
     // cells, buildable ground, ruins and landmarks — against a Gold price
     // that doubles from ring 4. Knowledge comes out of dungeons instead
@@ -170,9 +165,6 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
   for (const r of Object.values(RUINS)) {
     if (fogState(state, map, r.location) === 'Undiscovered') continue;
     recordSiteDiscovery(state, r.id);
-    // A ruin in sight is the first moment an army is FOR anything, so it is
-    // what opens the Warfare tome (07-research.md §2).
-    openTome(state, 'Warfare');
   }
 }
 

@@ -13,7 +13,7 @@
 // questions and calls these, and never reaches into the document.
 
 import {
-  MAX_ERA, MAX_REQUIRES, TECH_KINDS, isCoverPage, isPlaced, isTechId, techIds,
+  ERA_CEILING, MAX_REQUIRES, TECH_KINDS, eraCount, isPlaced, isTechId, techIds,
   validateTechTree,
   type PlacedTech, type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation,
   type TechUnlock,
@@ -24,7 +24,9 @@ import type { TomeId } from '../../sim/state';
 
 const MAX_UNDO = 200;
 
-export const ERAS: number[] = Array.from({ length: MAX_ERA }, (_, i) => i + 1);
+/** The most bands the rules allow, as pickable numbers. How many a book HAS
+ *  is `doc.eras(tome)` — authored, not a constant. */
+export const ERA_NUMBERS: number[] = Array.from({ length: ERA_CEILING }, (_, i) => i + 1);
 
 /** What a band of one book costs, for the pass the spreadsheet used to do. */
 export interface BandTotals {
@@ -46,7 +48,10 @@ export class TreeDoc {
   private savedText: string;
 
   constructor(initial: TechTreeDoc) {
-    this.doc = { technologies: structuredClone(initial.technologies) };
+    this.doc = {
+      eras: structuredClone(initial.eras),
+      technologies: structuredClone(initial.technologies),
+    };
     this.savedText = this.serialise();
   }
 
@@ -96,8 +101,16 @@ export class TreeDoc {
   /** The page as the editor draws it: every authored row of every band, plus
    *  a spare row at the end of each band to drop into. */
   rows(tome: TomeId): PageRow[] {
-    return authoredRows(this.doc.technologies, tome, ERAS);
+    return authoredRows(this.doc.technologies, tome, this.eraList(tome));
   }
+
+  /** The bands this book has, as `[1, 2, …]`. */
+  eraList(tome: TomeId): number[] {
+    return Array.from({ length: eraCount(this.doc, tome) }, (_, i) => i + 1);
+  }
+
+  /** What each band of this book asks for in revealed cells, era 1 first. */
+  eras(tome: TomeId): number[] { return [...(this.doc.eras[tome] ?? [])]; }
 
   /** What sits in a slot, or null. */
   at(tome: TomeId, row: number, col: number): string | null {
@@ -123,7 +136,7 @@ export class TreeDoc {
    * else to happen. It happens here.
    */
   totals(tome: TomeId): BandTotals[] {
-    return ERAS.map((era) => {
+    return this.eraList(tome).map((era) => {
       const band = this.band(tome, era);
       return {
         era,
@@ -139,7 +152,10 @@ export class TreeDoc {
   get canUndo(): boolean { return this.past.length > 0; }
   get canRedo(): boolean { return this.future.length > 0; }
 
-  serialise(): string { return JSON.stringify(this.doc.technologies); }
+  /** The WHOLE document, not just the technologies: a snapshot that left the
+   *  bands out could not undo creating or deleting one, and `dirty` would say
+   *  "saved" after a band's threshold was retyped. */
+  serialise(): string { return JSON.stringify(this.doc); }
 
   markSaved(): void { this.savedText = this.serialise(); }
 
@@ -160,7 +176,7 @@ export class TreeDoc {
     const text = from.pop();
     if (text === undefined) return;
     to.push(this.serialise());
-    this.doc = { technologies: JSON.parse(text) as Record<string, TechNodeDoc> };
+    this.doc = JSON.parse(text) as TechTreeDoc;
     this.revision += 1;
   }
 
@@ -194,7 +210,7 @@ export class TreeDoc {
         ...(fields.knowledge ? { knowledge: fields.knowledge } : {}),
       };
       const node = this.doc.technologies[id];
-      if (node.requires.length === 0 && !isCoverPage(id)) {
+      if (node.requires.length === 0) {
         node.requires = this.defaultRequires(tome, slot.row, slot.col);
       }
     });
@@ -275,7 +291,7 @@ export class TreeDoc {
     for (const id of ids) {
       const node = this.doc.technologies[id];
       if (node === undefined || node.requires.length > 0) continue;
-      if (isCoverPage(id) || !isPlaced(node)) continue;
+      if (!isPlaced(node)) continue;
       node.requires = this.defaultRequires(node.tome, node.row, node.col);
     }
   }
@@ -380,7 +396,7 @@ export class TreeDoc {
       // requirement of its own that no longer sits above it.
       for (const [other, node] of Object.entries(nodes)) {
         node.requires = node.requires.filter((req) => this.reachable(other, req));
-        if (node.requires.length === 0 && !isCoverPage(other) && isPlaced(node)) {
+        if (node.requires.length === 0 && isPlaced(node)) {
           node.requires = this.defaultRequires(node.tome, node.row, node.col);
         }
       }
@@ -475,7 +491,7 @@ export class TreeDoc {
       // An empty band starts below everything above it.
       const above = this.ids
         .map((id) => this.doc.technologies[id])
-        .filter((node) => node.tome === tome && (node.era ?? MAX_ERA) < era)
+        .filter((node) => node.tome === tome && (node.era ?? ERA_CEILING) < era)
         .reduce((max, node) => Math.max(max, node.row ?? -1), -1);
       return { row: above + 1, col: 1 };
     }
@@ -484,6 +500,66 @@ export class TreeDoc {
       if (this.at(tome, last, col) === null) return { row: last, col };
     }
     return { row: last + 1, col: 1 };
+  }
+
+  /** What a band asks for in revealed cells. The one number a band carries. */
+  setEraCells(tome: TomeId, era: number, cells: number): void {
+    this.edit(() => {
+      const ladder = this.doc.eras[tome];
+      if (ladder === undefined || era < 1 || era > ladder.length) return;
+      ladder[era - 1] = Math.max(0, Math.round(cells));
+    });
+  }
+
+  /**
+   * Add a band at the END of a book.
+   *
+   * It opens at whatever the band above it asks for, which is the only
+   * default that is legal on arrival: the ladder may not step backwards, and
+   * a new band asking for LESS than the one above would be an error the
+   * designer did not make. Equal is legal and means "as soon as that one".
+   */
+  addEra(tome: TomeId): number | null {
+    const ladder = this.doc.eras[tome] ?? [];
+    if (ladder.length >= ERA_CEILING) return null;
+    this.edit(() => {
+      const cells = ladder.length === 0 ? 0 : ladder[ladder.length - 1];
+      (this.doc.eras[tome] ??= []).push(cells);
+    });
+    return this.doc.eras[tome].length;
+  }
+
+  /**
+   * Drop a band, and RENUMBER the ones below it.
+   *
+   * Every card still in the band goes off the page first — the same holding
+   * pen `clearBand` uses, so nothing is deleted — and then every band below
+   * shifts up one, cards and thresholds together. That last part is why the
+   * threshold lives in this file: era 4's "220 cells" follows era 4 when it
+   * becomes era 3, instead of era 3 quietly inheriting a number meant for a
+   * band that no longer exists.
+   *
+   * Rows are NOT renumbered. They only have to ascend from band to band, and
+   * removing a band leaves a gap that nothing reads.
+   *
+   * One `edit()`, so the whole thing is one undo. Returns what went off the
+   * page.
+   */
+  removeEra(tome: TomeId, era: number): string[] {
+    const ladder = this.doc.eras[tome] ?? [];
+    if (ladder.length <= 1 || era < 1 || era > ladder.length) return [];
+    const orphans = this.band(tome, era);
+    this.edit(() => {
+      const waiting = new Set<string>();
+      for (const id of orphans) for (const other of this.detach(id)) waiting.add(other);
+      this.reroot(waiting);
+      ladder.splice(era - 1, 1);
+      for (const node of Object.values(this.doc.technologies)) {
+        if (node.tome !== tome || node.era === undefined) continue;
+        if (node.era > era) node.era -= 1;
+      }
+    });
+    return orphans;
   }
 
   /** Could `req` be a requirement of `id` — same page, further up it? */
@@ -509,15 +585,26 @@ export class TreeDoc {
     const rows = [...new Set(Object.values(this.doc.technologies)
       .filter((n): n is PlacedTech => isPlaced(n) && n.tome === tome && n.row < row)
       .map((n) => n.row))].sort((a, b) => b - a);
-    const above = rows[0];
-    if (above === undefined) return [];
-    const straight = this.at(tome, above, col);
-    if (straight !== null) return [straight];
-    const whole: string[] = [];
-    for (let c = 0; c < COLS; c++) {
-      const id = this.at(tome, above, c);
-      if (id !== null) whole.push(id);
+    // A PLANNED card is on the tree for its shape and does nothing yet, so a
+    // requirement on one is a card waiting on a no-op — which the rules warn
+    // about. Skipped rather than warned about later: the default should not
+    // author the problem in the first place.
+    const real = (r: number, c: number): string | null => {
+      const id = this.at(tome, r, c);
+      return id === null || this.doc.technologies[id].planned === true ? null : id;
+    };
+    // Nearest row upward that has anything real on it — walked, because a
+    // whole row of planned cards is a real shape (Warfare era 2's row 6).
+    for (const above of rows) {
+      const straight = real(above, col);
+      if (straight !== null) return [straight];
+      const whole: string[] = [];
+      for (let c = 0; c < COLS; c++) {
+        const id = real(above, c);
+        if (id !== null) whole.push(id);
+      }
+      if (whole.length > 0) return whole.slice(0, MAX_REQUIRES);
     }
-    return whole.slice(0, MAX_REQUIRES);
+    return [];
   }
 }

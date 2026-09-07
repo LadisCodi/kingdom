@@ -22,11 +22,12 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TREE_PATH = join(ROOT, 'src/sim/data/tech-tree.json');
 
 const NOTE = 'Every technology in the game: its name and prose, what KIND it '
-  + 'is and what it unlocks, its price and clock, and its slot on its tome '
-  + 'page with what it needs before it. Authored in ?dev=tree '
-  + '(Docs/tech-tree-editor.md) — the Technologies sheet is gone, and the '
-  + 'districts, units and harvest sources no longer name their own gate. '
-  + 'Ordered by tome, then down the page, then left to right.';
+  + 'is and what it unlocks or moves, its price and clock, and its slot on its '
+  + 'tome page with what it needs before it — plus each book\'s BANDS and what '
+  + 'each one asks for in revealed cells. Authored in ?dev=tree '
+  + '(Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, '
+  + 'and the districts, units and harvest sources no longer name their own '
+  + 'gate. Ordered by tome, then down the page, then left to right.';
 
 /** Reading order: book by book, then down the page and across it — with
  *  anything OFF THE PAGE last, since it belongs to no book yet. */
@@ -82,8 +83,15 @@ const nodeBlock = (id, n) => {
 
 export function serialiseTechTree(doc, tomes) {
   const nodes = doc.technologies;
+  // The BANDS: one line per book, `[cells to open era 1, era 2, …]`, so the
+  // length is how many bands the book has and the numbers read as the ladder
+  // they are.
+  const eras = tomes
+    .map((tome) => `    ${json(tome)}: [${(doc.eras?.[tome] ?? [0]).join(', ')}]`)
+    .join(',\n');
   const text = '{\n'
     + `  ${json('_note')}: ${json(NOTE)},\n`
+    + `  "eras": {\n${eras}\n  },\n`
     + '  "technologies": {\n'
     + inReadingOrder(nodes, tomes).map((id) => nodeBlock(id, nodes[id])).join(',\n')
     + '\n  }\n}\n';

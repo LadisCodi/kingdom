@@ -146,8 +146,8 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     // the city's materials, so a full quarry buys nothing.
     fund(state, { Gold: 0, Stone: 50, Knowledge: 99_999 });
     // Mining is a band down in Civics, so the era bar above it is a gate too,
-    // and Masonry is on the way to it.
-    completeTech(state, 'CharterII');
+    // and everything it needs is on the way to it.
+    for (const req of TECHNOLOGIES.Mining.requires) completeTech(state, req);
     openEveryEra(state);
     expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
     fund(state, { Gold: techCost('Mining') });

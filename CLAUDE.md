@@ -69,7 +69,7 @@ than in live ticking, and a new consumer would shift every later roll. Integer
 arithmetic (`Math.imul`, `>>> 0`) so it is bit-identical across engines.
 
 **5. The workbook is the source of truth for every NUMBER; the map editor for
-the MAP; `?dev=tree` for the TECHNOLOGIES.** `balance/balance.xlsx` →
+the MAP; `?dev=tree` for the TECHNOLOGIES and the BANDS.** `balance/balance.xlsx` →
 `npm run balance` → `src/sim/data/balance.json`. **Editing `balance.json` by
 hand is silently overwritten** on the next dev/build. To add a column: edit the
 JSON *and* the importer schema in `scripts/balance.mjs`, then
@@ -82,8 +82,11 @@ coordinate, which a spreadsheet expresses badly, so it lives in
 `src/sim/data/tech-tree.json`, edited in `?dev=tree`
 (`Docs/tech-tree-editor.md`): its name, prose and glyph, what KIND it is
 (`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold, Knowledge and
-seconds, its slot on its tome's three-column page, and what it requires. There
-is **no `Technologies` sheet** — a tree is a graph a designer arranges by
+seconds, its slot on its tome's three-column page, and what it requires. The
+same file says what BANDS each book has and what each one asks for in revealed
+cells (`eras`), because a band and its gate are one fact and the count has to
+travel with the number. There is **no `Technologies` sheet and no `Eras`
+sheet** — a tree is a graph a designer arranges by
 dragging, and half of it in a spreadsheet was the thing that made creating one
 a four-file job. **A technology says what it opens**, so `Districts`,
 `Units` and `Harvest` have no `required_tech` columns either: every gate
@@ -100,12 +103,12 @@ three ways (`tests/techTree.test.ts`).
 
 | Data — no code change | Code |
 |---|---|
-| every balance number (`Districts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Eras`, `Settings`) | new quest **goal types** |
+| every balance number (`Districts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
 | the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
-| a seasonal hero = one hero row + one banner row; what an era bar asks for in revealed cells (`Eras`) | a new tome (`TomeId` is a union) |
+| a seasonal hero = one hero row + one banner row; **how many bands a book has and what each asks for** — `?dev=tree` creates and drops them per book | a new tome (`TomeId` is a union) |
 | **a whole new technology** — id, name, prose, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |

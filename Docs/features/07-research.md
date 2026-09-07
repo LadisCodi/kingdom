@@ -29,7 +29,7 @@
 |---|---|---|
 | **`unlock`** | opens content, and names it | fully — a dropdown per thing it opens |
 | **`bonus`** | moves numbers, and names them (`effects`) | fully — a picker per number it moves |
-| **`mechanic`** | what the sim reads by id — a cover page opening its book, `Conquest` bending the Knowledge rate | labelled only; the code does it |
+| **`mechanic`** | what the sim reads by id — `Conquest` bending the Knowledge rate, `SanctifiedRuins` doubling a drip | labelled only; the code does it |
 
 - **The technology says what it opens, and every gate is derived from that**
   (`GATES`, `src/sim/data/definitions.ts`): a district's `requiredTech`, a
@@ -109,22 +109,21 @@ A `bonus` names its effects, and each is four fields:
 
 ## 2. The shelf — three tomes
 
-| Tome | Remit | Opens | Spine |
-|---|---|---|---|
-| **Civics** | the city and its purse | at game start | `Charter` — Townhall +1 level per rank |
-| **Magic** | the land's magic and what you can see of it: fog, Mana, relics, ruins, the water | the **first paid reveal** | `Attunement` — Sanctum +1 level and a step in the Mana ceiling |
-| **Warfare** | the army, and what it goes into the ground for | the **first discovered ruin** | `Warband` — the four halls +1 level and the next tier of soldier |
+| Tome | Remit |
+|---|---|
+| **Civics** | the city and its purse |
+| **Magic** | the land's magic and what you can see of it: fog, Mana, relics, ruins, the water |
+| **Warfare** | the army, and what it goes into the ground for |
 
 - `TomeId` = `Civics | Warfare | Magic`. A new tome is code.
 - **A tome is one page**, read top to bottom behind a shelf of tabs: three
   columns of cards with an era bar across the width wherever the next band
   begins (§2.2). Not a canvas, and not a tab per band.
-- A tome is **open** once its cover page is complete (`isTomeOpen`,
-  `openTome`, `src/sim/research.ts`). Opening is idempotent. All three open in
-  the first session.
-- **Cover page** = rank I of the spine (`CharterI`, `AttunementI`,
-  `WarbandI`). It costs 0 Gold and 0 seconds and is granted, never bought
-  (`isGranted` recognises it by exactly that).
+- **Every book is open, from the first minute** (`isTomeOpen`). No technology
+  opens one, and none can be shut. What paces a book is its era bars, which
+  ask for revealed cells (§2.1).
+- **Nothing is granted and nothing is free.** A fresh kingdom has an empty
+  `completed`, and every technology costs Gold and takes time.
 - **No edge crosses tomes.** Townhall level gates the Sanctum (L2 needs TH2)
   and the four military halls independently of the tree, so Civics paces the
   other two without an edge.
@@ -132,11 +131,9 @@ A `bonus` names its effects, and each is four fields:
   `?dev=tree`, not a column in the workbook
   ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
 - Exploration — Cartography, Sailing, Scaling Tools, Fishing, Shipbuilding,
-  the Docks — lives in Magic. Magic opens on the first paid reveal, so
-  Cartography is reachable when the quest `Mapmakers` asks for it. Scaling
-  Tools gates *working* a mountain, not reaching it
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
-- Ruins do not grant tomes; a ruin pays the tree in Knowledge (§7).
+  the Docks — lives in Magic. Scaling Tools gates *working* a mountain, not
+  reaching it ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
+- A ruin pays the tree in Knowledge (§7).
 - **Two tomes may aim at the same outcome; they may never move the same
   stat.** More per strike (`workerYield`, Civics) and faster regrowth
   (`cellRecovery`, Magic) are two stats reaching one outcome. The same rule
@@ -144,21 +141,22 @@ A `bonus` names its effects, and each is four fields:
 
 ### 2.1 Eras and the bars between them
 
-- Each tome has eras 1–3 and a sealed era 4. Eras are per tome, not a global
-  ladder. A band is a run of rows on the page; the **era bar** spanning the
-  page is the door between two of them.
-- **A band opens on the world, not on a research.** Era 1 opens with its book;
-  every band after it needs a slice of the region revealed
-  (`ERA_UNLOCK_CELLS`, the `Eras` sheet). Nothing in a locked band is
-  startable — `startTech` answers `EraLocked` — and the bar says how many
-  cells are left.
+- **A book carries its own bands**, authored in `?dev=tree`: how many it has
+  and what each asks for are one list per book, so Civics may run to three
+  while Warfare runs to four. A band is a run of rows on the page; the **era
+  bar** spanning the page is the door between two of them, and the book's
+  LAST band is drawn sealed.
+- **A band opens on the world, not on a research.** Era 1 is the top of the
+  page and asks for nothing; every band after it needs a slice of the region
+  revealed. Nothing in a locked band is startable — `startTech` answers
+  `EraLocked` — and the bar says how many cells are left.
 
-| Band | Cells revealed |
-|---|---|
-| era 1 | 0 — open with the book |
-| era 2 | 30 |
-| era 3 | 100 |
-| era 4 | 220 |
+| Band | Cells revealed | Civics | Warfare | Magic |
+|---|---|---|---|---|
+| era 1 | 0 — the top of the page | ✓ | ✓ | ✓ |
+| era 2 | 30 | ✓ | ✓ | ✓ |
+| era 3 | 100 | ✓ (sealed) | ✓ | ✓ |
+| era 4 | 220 | — | ✓ (sealed) | ✓ (sealed) |
 
 - A fresh kingdom opens with 16 cells revealed, so era 2 is about fifteen
   paid reveals away, and the quest chain asks for more than that before it
@@ -169,13 +167,12 @@ A `bonus` names its effects, and each is four fields:
 - The gate is a state condition, not a timer: no boundary source, nothing to
   settle, and it cannot be bought with Gems or Gold directly — only by
   clearing fog, which Gold pays for.
-- **The spines are ordinary technologies.** `Charter`, `Warband` and
-  `Attunement` II and up each raise a real dial — Townhall level, hall levels
-  and the next unit tier, Sanctum levels and the Mana ceiling — and are bought
-  like anything else. They no longer hold a door, and no longer require every
-  built major of the band above.
-- Era 4 is one keystone per tome (`CharterIV`, `WarbandIV`, `AttunementIV`),
-  drawn behind a dashed **Sealed** bar. Filling era 4 is data rows.
+- **Nothing holds a door but the bar.** There is no spine and no keystone: a
+  technology that raises the Townhall's level (`Bureaucracy`, `Magistracy`) is
+  an ordinary card, placed wherever the designer puts it, and the gate is
+  derived from its `unlocks` like every other.
+- A book's last band is drawn behind a dashed **Sealed** bar. Filling it is
+  data.
 - A player may research ahead in one tome; content still gates on Townhall
   level.
 
@@ -191,7 +188,8 @@ A `bonus` names its effects, and each is four fields:
   flow past three.
 - **A row is depth.** Every requirement sits on a smaller row than the card
   that needs it, which is what makes a loop impossible and the page readable
-  downward. One to three requirements per card; a cover page has none.
+  downward. One to three requirements per card; a card on the page's FIRST
+  ROW may have none, because there is nothing above it to require.
 - **Every technology has a slot, ranks included.** `Sawpits II` is a card in
   band 2, not a bead hanging off its parent — the fan the old canvas needed is
   gone, and so are `FAN_DX`/`FAN_DY`.
@@ -203,10 +201,11 @@ A `bonus` names its effects, and each is four fields:
   rows; where the column is occupied it steps out into a side CHANNEL, down
   the outside of the page, and back in above its target. So there is no rule
   about connectors and nodes to get wrong.
-- **A requirement that reaches back over an era bar is not drawn.** The band a
-  card sits in says it, and 119 rank-to-rank lines across three bars would
-  hide every edge that carries information (`isDrawnEdge`). The card gets a
-  stub in the gutter above it instead, and its sheet lists the requirement.
+- **A requirement that reaches back over an era bar IS drawn**, passing under
+  the bar (`isDrawnEdge`): that edge is how two bands connect, and a band
+  whose cards appear to grow from nothing reads as a page starting over rather
+  than one continuing. The gate is a thing you cross, not a thing that severs
+  the tree.
 - `src/sim/data/techTreeRules.ts` is the one statement of what a legal tree
   is, checked by the editor as you drag, by the save endpoint, and by
   `tests/techTree.test.ts` against the shipped file.
@@ -376,7 +375,7 @@ Tap Power        +40%  →  +60%
 ## 7. Ruins and landmarks
 
 - A **cleared ruin** pays 150 Knowledge on first clear and +2/h after (§3).
-- **No tome is gated behind a ruin.** Warfare opens on a ruin being
+- **No tome is gated behind anything.** Every book is open, so a ruin being
   *discovered*, not cleared.
 - A **province landmark** pays +50 on claiming and +2/h while held.
 - A **contested world-map landmark** ([`02-map-scopes.md`](02-map-scopes.md)
@@ -404,7 +403,7 @@ Tap Power        +40%  →  +60%
 | Conjunction Knowledge lump | 60 | `CONJUNCTION_BOONS[*].knowledge` |
 | Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
 | **A whole technology** — name, prose, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
-| What opens a band | 0 · 30 · 100 · 220 cells revealed | `Eras` sheet (`unlock_cells`) |
+| How many bands a book has, and what each asks for | 3 · 4 · 4 bands; 0 · 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 | Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
 | `Scriveners` per rank | −5% research time | `tech-tree.json` (its own `effects`) |
@@ -428,6 +427,9 @@ Tap Power        +40%  →  +60%
 - A global age ladder instead of per-tome eras.
 - A keystone that holds a band shut, or that requires every built major of the
   band above it (§2.1).
+- **A technology that opens a book.** The three granted cover pages were free,
+  instant and did nothing but mark a book open; the era bars already pace a
+  book on what the player has revealed, so every book is simply open (§2).
 - Gems or Gold spent to open a band directly (§2.1).
 - A minor rank drawn as a bead fanned under its parent instead of a card in a
   slot of its own (§2.2).

@@ -303,7 +303,7 @@ describe('every ladder reaches the number it claims to', () => {
         if (i > 0) expect(requires[0], `${id} should follow ${ranks[i - 1]}`).toBe(ranks[i - 1]);
         const extra = requires.slice(1);
         expect(extra.length, `${id} has more than an era gate`).toBeLessThanOrEqual(1);
-        for (const k of extra) expect(k, `${id}'s second requirement is not a keystone`).toMatch(/^(Charter|Warband|Attunement)(II|III|IV)$/);
+        for (const k of extra) expect(k, `${id}'s second requirement is not a keystone`).toMatch(/^(Warband|Attunement)(II|III|IV)$/);
       });
     }
   });
@@ -423,12 +423,13 @@ describe('the era-2/3 lines reach their numbers', () => {
     const setup = () => {
       const s = freshGame();
       fund(s, { Gold: 99_999, Knowledge: 99_999 });
-      // Charter IV is the six-hour keystone; Scriveners I is twenty minutes.
-      // Architecture brings Charter III and every era-2 major with it.
-      for (const id of TECHNOLOGIES.CharterIV.requires) completeTech(s, id);
+      // Warband IV is the six-hour keystone; Scriveners I is twenty minutes.
+      // They sit in different books, so each needs its own chain brought in.
+      for (const id of TECHNOLOGIES.WarbandIV.requires) completeTech(s, id);
+      for (const id of TECHNOLOGIES.ScrivenersI.requires) completeTech(s, id);
       openEveryEra(s); // both keystones sit behind era bars
       s.research.slotsPurchased = 2;
-      expect(startTech(s, 'CharterIV', T0)).toBe('Started');   // long
+      expect(startTech(s, 'WarbandIV', T0)).toBe('Started');   // long
       expect(startTech(s, 'ScrivenersI', T0)).toBe('Started'); // short
       return s;
     };
@@ -442,9 +443,9 @@ describe('the era-2/3 lines reach their numbers', () => {
     expect(stepped.research.completed).toContain('ScrivenersI');
     // …and the keystone still on the desk lands at the pace it STARTED at, in
     // both paths alike — not five percent sooner because a rank arrived.
-    const authored = T0 + TECHNOLOGIES.CharterIV.durationSeconds * 1000;
-    expect(techCompletesAt(oneCall, 'CharterIV')).toBe(authored);
-    expect(techCompletesAt(stepped, 'CharterIV')).toBe(authored);
+    const authored = T0 + TECHNOLOGIES.WarbandIV.durationSeconds * 1000;
+    expect(techCompletesAt(oneCall, 'WarbandIV')).toBe(authored);
+    expect(techCompletesAt(stepped, 'WarbandIV')).toBe(authored);
     expect(stepped.research.completed).toEqual(oneCall.research.completed);
     expect(stepped.research.active).toEqual(oneCall.research.active);
   });

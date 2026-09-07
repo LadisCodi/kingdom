@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { HARVEST, SAVE_VERSION, TAP } from '../src/sim/data/definitions';
+import { HARVEST, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
@@ -233,29 +233,19 @@ describe('save versions', () => {
   // before they existed has none, so every era-1 technology hides behind a
   // requirement nothing will ever complete — the Civics page showed one
   // lonely scroll. Found by loading a real save in the browser.
-  it('grants the cover pages a pre-tome save never had', () => {
+  // The v25 migrator GRANTED cover pages a pre-tome save never had, so its
+  // books would not sit shut behind a card it had no way to hold. It is inert
+  // now: tome openness stopped being a technology, so an old save's books are
+  // open for the same reason a new one's are — there is nothing to open.
+  it('leaves a pre-tome save with every book open and nothing granted', () => {
     const state = freshGame();
-    state.research.completed = []; // as a v24 save would be: no CharterI
+    state.research.completed = ['Cartography', 'Warrior'];
     const save = serialize(state, T0);
     save.SaveVersion = 24;
     const restored = deserialize(save, map, T0)!;
-    expect(isTomeOpen(restored, 'Civics')).toBe(true);
-    // No event that opens the other two has happened, so they stay shut and
-    // open the ordinary way — on the next reveal, or the next ruin in sight.
-    expect(isTomeOpen(restored, 'Magic')).toBe(false);
-    expect(isTomeOpen(restored, 'Warfare')).toBe(false);
-  });
-
-  it('opens Magic and Warfare for a save that had already earned them', () => {
-    const state = freshGame();
-    state.research.completed = ['Cartography', 'Warrior']; // no cover pages, as v24
-    const save = serialize(state, T0);
-    save.SaveVersion = 24;
-    const restored = deserialize(save, map, T0)!;
-    expect(isTomeOpen(restored, 'Magic')).toBe(true);
-    expect(isTomeOpen(restored, 'Warfare')).toBe(true);
-    // And it does not double-grant.
-    expect(restored.research.completed.filter((t) => t === 'AttunementI')).toHaveLength(1);
+    for (const tome of TOME_ORDER) expect(isTomeOpen(restored, tome), tome).toBe(true);
+    // Exactly what the save held, and not one id more.
+    expect(restored.research.completed).toEqual(['Cartography', 'Warrior']);
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {

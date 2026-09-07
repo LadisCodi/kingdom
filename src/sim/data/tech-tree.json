@@ -1,18 +1,16 @@
 {
-  "_note": "Every technology in the game: its name and prose, what KIND it is and what it unlocks, its price and clock, and its slot on its tome page with what it needs before it. Authored in ?dev=tree (Docs/tech-tree-editor.md) — the Technologies sheet is gone, and the districts, units and harvest sources no longer name their own gate. Ordered by tome, then down the page, then left to right.",
+  "_note": "Every technology in the game: its name and prose, what KIND it is and what it unlocks or moves, its price and clock, and its slot on its tome page with what it needs before it — plus each book's BANDS and what each one asks for in revealed cells. Authored in ?dev=tree (Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, and the districts, units and harvest sources no longer name their own gate. Ordered by tome, then down the page, then left to right.",
+  "eras": {
+    "Civics": [0, 30, 100],
+    "Warfare": [0, 30, 100, 220],
+    "Magic": [0, 30, 100, 220]
+  },
   "technologies": {
-    "CharterI": {
-      "name": "Charter I", "glyph": "📜", "kind": "mechanic",
-      "description": "The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.",
-      "tome": "Civics", "era": 1, "row": 0, "col": 1,
-      "requires": [],
-      "gold": 0, "seconds": 0
-    },
     "Forestry": {
       "name": "Forestry", "glyph": "🪓", "kind": "unlock",
       "description": "Axes and foraging — you can work the woods and berry bushes around you.",
       "tome": "Civics", "era": 1, "row": 1, "col": 0,
-      "requires": ["CharterI"],
+      "requires": [],
       "gold": 25, "seconds": 3,
       "unlocks": [{"harvest":"Forest"}, {"harvest":"Berries"}]
     },
@@ -20,7 +18,7 @@
       "name": "Agriculture", "glyph": "🌱", "kind": "unlock",
       "description": "Unlocks crop plots and the Farm that works them.",
       "tome": "Civics", "era": 1, "row": 1, "col": 1,
-      "requires": ["CharterI"],
+      "requires": [],
       "gold": 100, "seconds": 45,
       "unlocks": [{"district":"Farm"}, {"district":"FarmLands"}]
     },
@@ -28,7 +26,7 @@
       "name": "Market", "glyph": "🤝", "kind": "unlock",
       "description": "Organized trade — unlocks the Market building.",
       "tome": "Civics", "era": 1, "row": 1, "col": 2,
-      "requires": ["CharterI"],
+      "requires": [],
       "gold": 150, "seconds": 45,
       "unlocks": [{"district":"Market"}]
     },
@@ -36,7 +34,7 @@
       "name": "Saws", "glyph": "🪚", "kind": "unlock",
       "description": "Unlocks the Sawmill — its workers chop nearby forests for you.",
       "tome": "Civics", "era": 1, "row": 2, "col": 0,
-      "requires": ["CharterI"],
+      "requires": ["Forestry"],
       "gold": 175, "seconds": 20,
       "unlocks": [{"district":"Sawmill"}]
     },
@@ -44,7 +42,7 @@
       "name": "Masonry", "glyph": "🧱", "kind": "unlock",
       "description": "Unlocks the Quarry — its workers cut Stone from the mountains, bare rock and metal alike.",
       "tome": "Civics", "era": 1, "row": 2, "col": 1,
-      "requires": ["CharterI"],
+      "requires": ["Agriculture"],
       "gold": 100, "seconds": 45,
       "unlocks": [{"district":"Quarry"}]
     },
@@ -52,7 +50,7 @@
       "name": "Urban Planning", "glyph": "🏘️", "kind": "unlock",
       "description": "Ordered streets — Housing reaches level 2.",
       "tome": "Civics", "era": 1, "row": 2, "col": 2,
-      "requires": ["CharterI"],
+      "requires": ["Market"],
       "gold": 200, "seconds": 60,
       "unlocks": [{"districtLevel":{"id":"Housing","level":2}}]
     },
@@ -156,11 +154,11 @@
         {"stat":"buildTime","op":"percent","value":-5}
       ]
     },
-    "CharterII": {
-      "name": "Charter II", "glyph": "📜", "kind": "unlock",
-      "description": "The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.",
+    "Bureaucracy": {
+      "name": "Bureaucracy", "glyph": "🗂️", "kind": "unlock",
+      "description": "Clerks, ledgers and a seal of office — enough order for the Townhall to stand a level higher.",
       "tome": "Civics", "era": 2, "row": 6, "col": 1,
-      "requires": ["Forestry", "UrbanPlanning", "Saws"],
+      "requires": ["StonecuttingI"],
       "gold": 800, "knowledge": 40, "seconds": 900,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":3}}]
     },
@@ -238,7 +236,7 @@
       "name": "Communities", "glyph": "👥", "kind": "bonus",
       "description": "Tighter neighborhoods — every Housing holds +1 resident.",
       "tome": "Civics", "era": 2, "row": 9, "col": 0,
-      "requires": ["CharterII"],
+      "requires": ["Bureaucracy"],
       "gold": 1000, "knowledge": 80, "seconds": 900,
       "effects": [
         {"stat":"populationCapacity","op":"flat","value":1}
@@ -258,7 +256,7 @@
       "name": "Farming", "glyph": "🚜", "kind": "unlock",
       "description": "Deeper furrows — the Farm reaches level 2.",
       "tome": "Civics", "era": 2, "row": 9, "col": 2,
-      "requires": ["CharterII"],
+      "requires": ["Bureaucracy"],
       "gold": 2000, "knowledge": 160, "seconds": 1500,
       "unlocks": [{"districtLevel":{"id":"Farm","level":2}}]
     },
@@ -266,7 +264,7 @@
       "name": "Mining", "glyph": "⛏️", "kind": "unlock",
       "description": "Picks and braces — the iron mountains give up their metal, the army's Stone.",
       "tome": "Civics", "era": 2, "row": 10, "col": 0,
-      "requires": ["CharterII"],
+      "requires": ["Bureaucracy"],
       "gold": 2500, "knowledge": 200, "seconds": 1800,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}]
     },
@@ -274,7 +272,7 @@
       "name": "Hunting", "glyph": "🏹", "kind": "unlock",
       "description": "Snares and spears — you can take the wild game on the plains.",
       "tome": "Civics", "era": 2, "row": 10, "col": 1,
-      "requires": ["CharterII"],
+      "requires": ["Bureaucracy"],
       "gold": 1500, "knowledge": 120, "seconds": 1200,
       "unlocks": [{"harvest":"Meat"}]
     },
@@ -348,11 +346,11 @@
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
       ]
     },
-    "CharterIII": {
-      "name": "Charter III", "glyph": "📜", "kind": "unlock",
-      "description": "The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.",
+    "Magistracy": {
+      "name": "Magistracy", "glyph": "⚖️", "kind": "unlock",
+      "description": "A bench, a gavel and a town that answers to them. The Townhall may stand a level higher again.",
       "tome": "Civics", "era": 3, "row": 13, "col": 1,
-      "requires": ["Communities", "Hunting", "Farming"],
+      "requires": ["IronPicksII", "ButcheryII"],
       "gold": 5000, "knowledge": 500, "seconds": 3600,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":4}}]
     },
@@ -460,7 +458,7 @@
       "name": "Apprenticeships", "glyph": "👥", "kind": "mechanic",
       "description": "Masters and their apprentices — the Townhall trains two villagers at once.",
       "tome": "Civics", "era": 3, "row": 17, "col": 0,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 15000, "knowledge": 1500, "seconds": 10800,
       "planned": true
     },
@@ -478,7 +476,7 @@
       "name": "Aqueducts", "glyph": "🚰", "kind": "unlock",
       "description": "Channelled water — Housing reaches level 3.",
       "tome": "Civics", "era": 3, "row": 17, "col": 2,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 9855, "knowledge": 985, "seconds": 6660,
       "unlocks": [{"districtLevel":{"id":"Housing","level":3}}]
     },
@@ -486,7 +484,7 @@
       "name": "Deep Mining", "glyph": "🕯️", "kind": "unlock",
       "description": "Braced shafts — the gold mountains can be worked.",
       "tome": "Civics", "era": 3, "row": 18, "col": 0,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 8570, "knowledge": 855, "seconds": 5640,
       "unlocks": [{"harvest":"MountainGold"}]
     },
@@ -494,7 +492,7 @@
       "name": "Architecture", "glyph": "📐", "kind": "unlock",
       "description": "Iron-braced monuments — the Townhall reaches level 3.",
       "tome": "Civics", "era": 3, "row": 18, "col": 1,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 6000, "knowledge": 600, "seconds": 3600,
       "unlocks": [{"districtLevel":{"id":"Sawmill","level":4}}, {"districtLevel":{"id":"Quarry","level":3}}]
     },
@@ -502,7 +500,7 @@
       "name": "Engineering", "glyph": "⚙️", "kind": "unlock",
       "description": "Cranes and gears — Quarry level 2 and Sawmill level 3.",
       "tome": "Civics", "era": 3, "row": 18, "col": 2,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 7285, "knowledge": 730, "seconds": 4620,
       "unlocks": [{"districtLevel":{"id":"Sawmill","level":3}}, {"districtLevel":{"id":"Quarry","level":2}}, {"district":"Carpenter"}, {"district":"MasonsYard"}]
     },
@@ -510,7 +508,7 @@
       "name": "Land Survey", "glyph": "📏", "kind": "mechanic",
       "description": "Chains and stakes — every building works one cell farther out.",
       "tome": "Civics", "era": 3, "row": 19, "col": 0,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 13715, "knowledge": 1370, "seconds": 9780,
       "planned": true
     },
@@ -518,7 +516,7 @@
       "name": "Guildhalls", "glyph": "🏪", "kind": "unlock",
       "description": "Chartered trades — a second Market may be built.",
       "tome": "Civics", "era": 3, "row": 19, "col": 1,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 11145, "knowledge": 1115, "seconds": 7740,
       "unlocks": [{"districtCount":"Market"}]
     },
@@ -526,7 +524,7 @@
       "name": "Roadworks", "glyph": "🛤️", "kind": "mechanic",
       "description": "Paved ways — every worker walks a quarter faster.",
       "tome": "Civics", "era": 3, "row": 19, "col": 2,
-      "requires": ["CharterIII"],
+      "requires": ["Magistracy"],
       "gold": 12430, "knowledge": 1245, "seconds": 8760
     },
     "TapPowerIV": {
@@ -659,25 +657,11 @@
         {"stat":"researchTime","op":"percent","value":-5}
       ]
     },
-    "CharterIV": {
-      "name": "Charter IV", "glyph": "📜", "kind": "mechanic",
-      "description": "The city charter. Each seal on it lets the Townhall stand a level higher — and the Townhall is what every other building asks permission from.",
-      "tome": "Civics", "era": 4, "row": 25, "col": 1,
-      "requires": ["Architecture", "Engineering", "DeepMining"],
-      "gold": 30000, "knowledge": 3000, "seconds": 21600
-    },
-    "WarbandI": {
-      "name": "Warband I", "glyph": "🚩", "kind": "mechanic",
-      "description": "Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.",
-      "tome": "Warfare", "era": 1, "row": 0, "col": 1,
-      "requires": [],
-      "gold": 0, "seconds": 0
-    },
     "Spears": {
       "name": "Spears", "glyph": "🔱", "kind": "unlock",
       "description": "Unlocks the Lancer — long reach that keeps the line safe.",
       "tome": "Warfare", "era": 1, "row": 1, "col": 0,
-      "requires": ["WarbandI"],
+      "requires": [],
       "gold": 150, "seconds": 45,
       "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
     },
@@ -685,7 +669,7 @@
       "name": "Field Medicine", "glyph": "🩹", "kind": "mechanic",
       "description": "Bandages and splints — the party recovers some HP between depths.",
       "tome": "Warfare", "era": 1, "row": 1, "col": 1,
-      "requires": ["WarbandI"],
+      "requires": [],
       "gold": 150, "seconds": 120,
       "planned": true
     },
@@ -693,7 +677,7 @@
       "name": "Warrior", "glyph": "🗡️", "kind": "unlock",
       "description": "Unlocks the Warrior — a sturdy front line for your army.",
       "tome": "Warfare", "era": 1, "row": 1, "col": 2,
-      "requires": ["WarbandI"],
+      "requires": [],
       "gold": 100, "seconds": 30,
       "unlocks": [{"district":"Barracks"}, {"unit":"Warrior"}]
     },
@@ -1147,18 +1131,11 @@
       "requires": ["Cavalry", "Salvage", "Conquest"],
       "gold": 30000, "knowledge": 3000, "seconds": 21600
     },
-    "AttunementI": {
-      "name": "Attunement I", "glyph": "🔯", "kind": "mechanic",
-      "description": "Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.",
-      "tome": "Magic", "era": 1, "row": 0, "col": 1,
-      "requires": [],
-      "gold": 0, "seconds": 0
-    },
     "Consecration": {
       "name": "Consecration", "glyph": "🔯", "kind": "unlock",
       "description": "Unlocks the Sanctum — the well the kingdom draws its Mana from.",
       "tome": "Magic", "era": 1, "row": 1, "col": 0,
-      "requires": ["AttunementI"],
+      "requires": [],
       "gold": 400, "seconds": 120,
       "unlocks": [{"district":"Sanctum"}]
     },
@@ -1166,7 +1143,7 @@
       "name": "Cartography", "glyph": "🗺️", "kind": "bonus",
       "description": "Survey and chart — every tap on the fog counts double.",
       "tome": "Magic", "era": 1, "row": 1, "col": 1,
-      "requires": ["AttunementI"],
+      "requires": [],
       "gold": 200, "seconds": 45,
       "effects": [
         {"stat":"fogRevealPerTap","op":"percent","value":100}
@@ -1176,7 +1153,7 @@
       "name": "Invocation", "glyph": "✨", "kind": "mechanic",
       "description": "Spoken twice — a relic's active gains a second charge.",
       "tome": "Magic", "era": 1, "row": 1, "col": 2,
-      "requires": ["AttunementI"],
+      "requires": [],
       "gold": 150, "seconds": 120,
       "planned": true
     },
@@ -1184,14 +1161,14 @@
       "name": "Meditation", "glyph": "🧘", "kind": "mechanic",
       "description": "Stillness — the kingdom holds 30 more Mana.",
       "tome": "Magic", "era": 1, "row": 2, "col": 0,
-      "requires": ["AttunementI"],
+      "requires": ["Consecration"],
       "gold": 150, "seconds": 120
     },
     "LeyReading": {
       "name": "Ley Reading", "glyph": "🔮", "kind": "mechanic",
       "description": "Reading the lines — a landmark shows what it grants before you pay.",
       "tome": "Magic", "era": 1, "row": 2, "col": 1,
-      "requires": ["AttunementI"],
+      "requires": ["Cartography"],
       "gold": 150, "seconds": 120,
       "planned": true
     },
@@ -1199,7 +1176,7 @@
       "name": "Scrying", "glyph": "🪞", "kind": "mechanic",
       "description": "Seeing into stone — a ruin shows its tier before you commit a party.",
       "tome": "Magic", "era": 1, "row": 2, "col": 2,
-      "requires": ["AttunementI"],
+      "requires": ["Consecration", "Cartography"],
       "gold": 150, "seconds": 120,
       "planned": true
     },

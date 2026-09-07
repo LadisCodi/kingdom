@@ -16,7 +16,7 @@
 
 import type { Game } from '../game';
 import {
-  DISTRICTS, MAX_ERA, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER, UNITS,
+  DISTRICTS, ERA_COUNT, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER, UNITS,
 } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechActive, isTechComplete, isTomeOpen,
@@ -49,7 +49,7 @@ let selected: Selected = null;
 let pageEl: HTMLElement | null = null;
 const isFreshMount = (): boolean => pageEl === null || !pageEl.isConnected;
 
-const ROMAN = ['', 'I', 'II', 'III', 'IV'];
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 // Tree fog. normal = researched / researching / requirements met;
 // silhouette = one step beyond what's actually researched or researching
@@ -222,19 +222,20 @@ export function renderResearchMenu(game: Game): HTMLElement {
     let drew = false;
     for (const req of def.requires) {
       const from = at.get(req);
-      // A requirement in an EARLIER BAND is implied by the bar between them
-      // (techTreeRules.isDrawnEdge): 119 lines across three gates would hide
-      // every edge that says something.
-      if (from === undefined || TECHNOLOGIES[req].era !== def.era) continue;
+      // Every requirement on this page, band or no band: an edge that reaches
+      // back over an era bar is how the two bands connect
+      // (techTreeRules.isDrawnEdge). It passes under the bar, which is the
+      // honest picture of a gate you cross.
+      if (from === undefined) continue;
       drew = true;
       stroke(edgeD(edgePath(from, to, columnClear(from, to))),
         visibility(state, id as TechId) === 'silhouette' ? 'tech-edge dim'
           : isTechComplete(state, req) ? 'tech-edge open' : 'tech-edge');
     }
-    // Nothing drawn, but something above the bar is required: a stub in the
-    // gutter above the card, so none looks like it grows from nowhere. Half a
-    // gutter long, and pointing at the card — not a path from anywhere, which
-    // is the honest drawing of a requirement the page does not show.
+    // A requirement with no end on this page — off the page mid-rearrangement,
+    // which the rules refuse to ship. A stub in the gutter above the card, so
+    // it does not look like it grows from nowhere: half a gutter long and
+    // pointing at the card, not a path from anywhere.
     if (!drew && def.requires.length > 0) {
       const x = colLeft(to.col) + NODE_W / 2;
       stroke(`M ${x} ${to.top - ROW_GAP / 2} L ${x} ${to.top}`,
@@ -303,7 +304,9 @@ export function renderResearchMenu(game: Game): HTMLElement {
 function eraBar(state: GameState, tome: TomeId, era: number, top: number): HTMLElement {
   const open = eraUnlocked(state, tome, era);
   const short = eraShortfall(state, tome, era);
-  const sealed = era >= MAX_ERA;
+  // The book's LAST band is the sealed one, and a book carries its own count
+  // now — Civics may run deeper than Warfare without either being wrong.
+  const sealed = era >= ERA_COUNT[tome];
   const bar = el('div', {
     class: `res-era${open ? ' is-open' : ''}${sealed ? ' is-sealed' : ''}`,
     style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
