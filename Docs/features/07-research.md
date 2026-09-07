@@ -451,9 +451,11 @@ Tap Power        +40%  →  +60%
 - Tomes found in ruins; a tome gated behind a ruin (§7).
 - A contested landmark that raises the Knowledge rate (§7).
 - A floating info card instead of a sheet (§5.4).
-- A `mul` op beside `percent` and `flat`. Three of the hard-coded mechanics
+- A `mul` op beside `percent` and `flat`. `SanctifiedRuins` and `Roadworks`
   multiply an inner term, and giving them an op would make the resolver's one
-  shape — `(base + Σflat) × (1 + Σpct)` — two shapes (§1.2).
+  shape — `(base + Σflat) × (1 + Σpct)` — two shapes (§1.2). `Salvage` and
+  `Tactics` are additive but sit where folding them would RE-ASSOCIATE the sum,
+  and float addition is not associative. All four stay `mechanic`.
 - A per-ladder HOOK in code — one union member and one call site per kind of
   bonus. Replaced by the stat registry, which is what makes a new bonus data
   (§1.2).

@@ -235,11 +235,14 @@
       ]
     },
     "Communities": {
-      "name": "Communities", "glyph": "👥", "kind": "mechanic",
+      "name": "Communities", "glyph": "👥", "kind": "bonus",
       "description": "Tighter neighborhoods — every Housing holds +1 resident.",
       "tome": "Civics", "era": 2, "row": 9, "col": 0,
       "requires": ["CharterII"],
-      "gold": 1000, "knowledge": 80, "seconds": 900
+      "gold": 1000, "knowledge": 80, "seconds": 900,
+      "effects": [
+        {"stat":"populationCapacity","op":"flat","value":1}
+      ]
     },
     "WorkerLoadII": {
       "name": "Worker Load II", "glyph": "🎒", "kind": "bonus",
@@ -1160,11 +1163,14 @@
       "unlocks": [{"district":"Sanctum"}]
     },
     "Cartography": {
-      "name": "Cartography", "glyph": "🗺️", "kind": "mechanic",
-      "description": "Survey and chart — every tap on the fog counts double. Opens the water.",
+      "name": "Cartography", "glyph": "🗺️", "kind": "bonus",
+      "description": "Survey and chart — every tap on the fog counts double.",
       "tome": "Magic", "era": 1, "row": 1, "col": 1,
       "requires": ["AttunementI"],
-      "gold": 200, "seconds": 45
+      "gold": 200, "seconds": 45,
+      "effects": [
+        {"stat":"fogRevealPerTap","op":"percent","value":100}
+      ]
     },
     "Invocation": {
       "name": "Invocation", "glyph": "✨", "kind": "mechanic",

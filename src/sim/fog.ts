@@ -99,15 +99,14 @@ export function explorationGate(map: MapData, cell: Coord): TechId | null {
  * once the far rings cost 320 and 640 Gold and a single cell wants hundreds
  * of taps.
  *
- * Two sources, and they stack: **Cartography** doubles a tap on its own (a
- * tech with an effect rather than a gate, the same shape as Communities
- * adding +1 to every bed), and **Surveying** adds one more per level. So the
- * ladder a player climbs is ×1 → ×2 on the research → ×3 → ×4.
+ * Two sources, and they stack: **Cartography** doubles a tap on its own and
+ * **Surveying** adds one more per rank, so the ladder a player climbs is
+ * ×1 → ×2 on the research → ×3 → ×4. Both are +100% on this stat and neither
+ * is named here — they are two rows of data now, and a third would need no
+ * change at all.
  */
 export const revealPerTap = (state: GameState): number =>
-  FOG.goldPerTap
-  * ((isTechComplete(state, 'Cartography') ? 1 : 0)
-    + techMultiplier(state, 'fogRevealPerTap'));
+  FOG.goldPerTap * techMultiplier(state, 'fogRevealPerTap');
 
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';

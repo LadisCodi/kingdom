@@ -115,10 +115,25 @@ export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | nu
 }
 
 /**
- * The kingdom's drill: what the Warfare lines add to every soldier sent, in
- * the shape combat.ts takes it. Resolved HERE, once per launch or preview, so
- * combat stays pure and a fight replays from its inputs. The `all` terms go
- * through the modifier stack; the per-tag ones are lines and nothing else.
+ * The kingdom's drill: what the Warfare technologies add to every soldier
+ * sent, in the shape combat.ts takes it. Resolved HERE, once per launch or
+ * preview, so combat stays pure and a fight replays from its inputs. The `all`
+ * terms go through the modifier stack; the per-tag ones are the tree's and
+ * nothing else.
+ *
+ * The per-tag terms use `techFlatAimed`, which excludes the unaimed effects,
+ * because `combat.ts` sums `all` plus every tag a unit carries — and Cavalry
+ * carries two, so an aimed query that included the global term would pay
+ * Warhorns twice on an Archer and three times on a Cavalry.
+ *
+ * `Tactics` stays a hardcoded ternary, unlike `Cartography` and `Communities`
+ * which became data. As an effect it would fold into `techFlat` and turn
+ * `(base + manoeuvre) + 0.10` into `base + (manoeuvre + 0.10)`, and float
+ * addition is not associative: at `base = 0.33` those are different doubles at
+ * one and two Manoeuvre ranks. `base` is 0 today, so it would be exact today —
+ * which is the kind of exactness that stops being true the first time a
+ * modifier reaches `typeDisadvantage`, and `modifiers.ts` declares it so one
+ * can.
  */
 export function drillOf(state: GameState): Drill {
   return {

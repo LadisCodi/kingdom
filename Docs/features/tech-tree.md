@@ -301,15 +301,15 @@ names the one call site that owns its number, and
 | `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
 | `knowledgeYield` | Scriptorium | |
 | `activeCost` | Resonance | |
-| `revealCost` · `fogRevealPerTap` · `discoverRadius` | Pitons, Surveying, Farsight | `discoverRadius` is every building's fog-**discover** radius, never its reveal radius. A rank landing re-applies every standing building's radii inside `advance()` |
+| `revealCost` · `fogRevealPerTap` · `discoverRadius` | Pitons, Surveying, Farsight, **Cartography** | Cartography is +100% on `fogRevealPerTap` like a Surveying rank, so the ×1 → ×2 → ×3 → ×4 ladder is four rows of data and nothing names it in code. `discoverRadius` is every building's fog-**discover** radius, never its reveal radius; a rank landing re-applies every standing building's radii inside `advance()` |
 | `claimCost` | Pilgrimage | |
 | `armyCap` | Colours | adds to the cap the halls provide; nothing to a kingdom with no hall |
 | `recruitCost` | Muster Drill | |
 | `unitAtk` · `unitDef` | Warhorns, Fletching, Shield Wall, Barding | **aimed at a unit tag**, so a Cavalry reads its two tags plus the unaimed term once. `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party` |
-| `typeDisadvantage` | Manoeuvre, Tactics | never softens past neutral |
+| `typeDisadvantage` | Manoeuvre | never softens past neutral. `Tactics` moves the same number and stays a `mechanic`: as an effect it would re-associate the sum, and float addition is not associative |
 | `supplyCost` · `delveSpeed` · `haulLoss` | Rations, Pathfinders, Bearers | `haulLoss` floors at one fifth |
 | `heroXp` · `stardustYield` | Drillmaster, Prospecting | |
-| `populationCapacity` | — | aimable at a district; nothing in the tree moves it yet |
+| `populationCapacity` | **Communities** | +1 bed globally, which is what "every district that houses anyone" means: a district with no capacity table is not a house. Aimable at one kind of house |
 
 Every one of these is ALSO a `ModifierStat` where a modifier can reach it
 (`src/sim/modifiers.ts`), resolved in the same helper — three stages, one

@@ -5,23 +5,23 @@ import { CITY_DEF, DISTRICTS, TAP, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
-import { isTechComplete } from './research';
 import { techValue } from './techEffects';
 import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
 
-/** Capacity of ONE district at its CURRENT level (0 = houses nobody).
- *  The Communities tech adds +1 to every district that houses anyone. */
+/**
+ * Capacity of ONE district at its CURRENT level (0 = houses nobody).
+ *
+ * The guard is what makes a bed the tree grants mean what `Communities`
+ * always said — *every district that houses anyone*. A district with no
+ * capacity table is not a house, and no bonus turns it into one.
+ */
 export function districtCapacity(state: GameState, district: District): number {
   const list = DISTRICTS[district.definitionId].populationCapacityPerLevel;
-  // A district that houses nobody is not a house, and no bed the tree grants
-  // turns it into one — which is exactly what `Communities` already meant by
-  // "every district that houses anyone".
   if (list.length === 0) return 0;
   return techValue(state, 'populationCapacity', levelIndexed(list, district.level),
-    { district: district.definitionId })
-    + (isTechComplete(state, 'Communities') ? 1 : 0);
+    { district: district.definitionId });
 }
 
 /** Max population = Σ capacity over active (Built) districts. */
