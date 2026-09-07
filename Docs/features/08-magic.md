@@ -55,6 +55,7 @@ cap     = 50 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landmar
 |---|---|
 | Every player tap — a house, a tree, a rock | **1 Mana** |
 | Casting a **spell**, either map ([`07-research.md`](07-research.md) §6) | its authored Mana cost, −20%/level of Resonance |
+| Queueing a **Runestone** at the Rune Carver ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §2) | **20 Mana** an item — the only sink that is not a tap or a spell |
 | Paying fog | **nothing** — a reveal costs Gold |
 
 ## 4. The Sanctum

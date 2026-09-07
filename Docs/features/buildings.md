@@ -8,13 +8,16 @@
 > [`06-construction.md`](06-construction.md); what workers do is
 > [`04-harvest.md`](04-harvest.md).
 >
-> **Status.** Built: the fourteen districts below are `Districts` rows in the
-> workbook. Designed, not built: Townhall 5, and the three Wonders (§5,
+> **Status.** Built: the eighteen districts below are `Districts` rows in the
+> workbook — the fourteen of the province economy, and the four workshops
+> (§4.10), which the count cap opens at Townhall 5. Designed, not built:
+> Townhall 5, and the three Wonders (§5,
 > [`16-wonders.md`](16-wonders.md)).
 
 ## 1. Reading the tables
 
-- **Count cap** is by Townhall level, TH1 / TH2 / TH3 / TH4.
+- **Count cap** is by Townhall level, TH1 / TH2 / TH3 / TH4 — the workshops,
+  which reach level 10, are authored as far as TH10.
 - **Gate** on a level is what must be true to *start* that upgrade: a Townhall
   level, a technology, or both. Level 1 is the build; its gate is the unlock
   technology.
@@ -41,6 +44,10 @@
 | **Spear Hall** | 1×1 | Spears | 1 | **5** | army cap; trains Lancer |
 | **Shooting Grounds** | 1×1 | Archery | 1 | **5** | army cap; trains Archer |
 | **Stables** | 1×1 | Cavalry | 1 | **5** | army cap; trains Cavalry |
+| **Carpenter** | 1×1 | Engineering | 1 at TH5, 2 at TH8 | **10** | crew works Wood into Planks |
+| **Mason's Yard** | 1×1 | Engineering | 1 at TH5, 2 at TH8 | **10** | crew dresses Stone into blocks |
+| **Smelter** | 1×1 | Mining | 1 at TH5, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
+| **Rune Carver** | 1×1 | Attunement II | 1 at TH5, 2 at TH8 | **10** | crew pours Mana into cut stone |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall
@@ -183,6 +190,25 @@ same for all four:
 | 4 | 21 | TH3 · `Warband II` — veteran units |
 | 5 | 28 | TH3 · `Warband III` — champion units |
 
+### 4.10 The four workshops
+
+- Each makes one refined good from a queue its crew works; nothing is made
+  without a villager assigned. Full design:
+  [`17-workshops-and-goods.md`](17-workshops-and-goods.md).
+- A level buys **crew and queue length** — 1 → 6 villagers, 3 → 12 slots —
+  and never shortens an item's work.
+- Their only gate is the count cap by Townhall level: no workshop level asks
+  for a technology or a Townhall level of its own.
+
+| Workshop | Makes | Unlock | Build | Upgrade base |
+|---|---|---|---|---|
+| **Carpenter** | Planks | `Engineering` | 120 W, 60 s | 200 W, 120 s |
+| **Mason's Yard** | Cut Stone | `Engineering` | 100 W + 60 S, 90 s | 160 W + 100 S, 180 s |
+| **Smelter** | Iron | `Mining` | 400 G + 120 S, 120 s | 600 G + 200 S, 240 s |
+| **Rune Carver** | Runestone | `Attunement II` | 800 G + 200 S, 180 s | 1200 G + 300 S, 360 s |
+
+Upgrades grow ×1.6 in cost and ×1.6 in time per level.
+
 ## 5. Wonders — designed, not built
 
 Full design: [`16-wonders.md`](16-wonders.md).
@@ -222,6 +248,8 @@ Full design: [`16-wonders.md`](16-wonders.md).
 | Per-level gates | `Districts.required_townhall_level_per_level`, `required_tech_per_level` |
 | The unlock technology | `requiredTech` on the district (`src/sim/data/definitions.ts`) |
 | Residents, workers, radius, army cap per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level` |
+| Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
+| What a level costs in refined goods | `Districts.upgrade_cost_goods_per_level` |
 | Sanctum capacity and regen per level | `mana.sanctum_cap_per_level`, `mana.sanctum_per_hour_per_level` |
 | A second Market or Sanctum | `Districts.extra_count_tech` |
 | Costs and times | `Districts.build_*`, `upgrade_*` — [`05-city-and-districts.md`](05-city-and-districts.md) §3 |

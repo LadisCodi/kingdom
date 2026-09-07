@@ -439,8 +439,9 @@ The one new mechanic; last, and in three commits.
   a good = a `Goods` row; a decoration = a `Districts` row with
   `harmony_supply`; an egg or creature = a row. Code: a new `GoodId`,
   `AdjacencyStat` or creature kind.
-- **Docs, in the same commit as the code:** step 2–4 close into a new
-  `features/17-workshops-and-goods.md` and an update to
+- **Docs, in the same commit as the code:**
+  [`../features/17-workshops-and-goods.md`](../features/17-workshops-and-goods.md)
+  holds steps 2 and 3, and step 4 extends it and
   [`../features/buildings.md`](../features/buildings.md); step 5 into
   `03-economy.md` §3.1; step 6 into a new `features/18-harmony.md`; steps 8–10
   into `09-relics.md`, `10-heroes.md`, `02-map-scopes.md` and

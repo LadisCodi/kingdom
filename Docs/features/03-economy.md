@@ -31,6 +31,9 @@
 - Adding a wallet row needs an argument. The usual alternatives: a
   per-collectible counter (the Fragments precedent) or event points as a
   counter ([`13-events.md`](13-events.md) §2.1).
+- **Refined goods follow that rule**: Planks, Cut Stone, Iron and Runestone
+  are a stockpile counter, not a wallet row
+  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §1).
 
 ### 1.1 Knowledge and Stardust (designed, not built)
 

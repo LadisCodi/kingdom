@@ -10,7 +10,7 @@ game in five minutes. Then:
 | Where | What it holds |
 |---|---|
 | [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
-| `Docs/features/01`–`15` | **the live source of truth, one file per feature** |
+| `Docs/features/01`–`17` | **the live source of truth, one file per feature** |
 | [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`) |
 | [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
 

@@ -470,6 +470,9 @@ their systems.
 - **Plan:** [`plans/builder-30-days.md`](plans/builder-30-days.md) — eleven
   steps, data before logic before UI, each closing with its own tests and a
   row in a thirty-day pacing harness.
+- **Built:** steps 1–3 — the thirty-day harness, the goods stockpile, and the
+  four workshops ([`features/17-workshops-and-goods.md`](features/17-workshops-and-goods.md));
+  next is step 4, levels 6–7 priced in goods.
 - **Blocked on:** nothing for steps 1–4 (harness, goods, workshops, levels
   6–7); **OQ-48** for adjacency v2; **OQ-1** and **OQ-71** for Harmony; the
   banner's home (`14-monetization.md` §2.1) for the Tavern.
