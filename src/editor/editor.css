@@ -379,3 +379,38 @@ select.tre-search { padding: 2px 4px; }
 /* One row: what kind of thing, which one, and (for a level) which level. */
 .tre-unlock-add { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 3px; }
 .tre-level { width: 42px; }
+
+/* ---------- the confirm dialog ----------
+   One gesture in this editor moves a dozen cards on a click (clear a band),
+   so it asks first. Deliberately a blocking overlay and not a toast with an
+   undo: the answer is cheap to give and the question is the whole point. */
+
+.ed-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: #05070ac9;
+}
+.ed-modal-card {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #141a24;
+  box-shadow: 0 18px 40px #0009;
+}
+.ed-modal-card h2 { margin: 0 0 10px; font-size: 14px; color: var(--accent); }
+.ed-modal-card .ed-note { margin: 8px 0 0; }
+
+.tre-modal-row { display: flex; gap: 8px; margin-top: 14px; }
+.tre-modal-row .ed-btn { flex: 1; }
+/* The danger button is full-width in the inspector, where it is the last
+   thing on a long card. Here it is one of two, so it shares the row. */
+.tre-modal-go { margin-top: 0; flex: 1; }
+
+/* Off the page: pending, not wrong. Amber rather than the error red, because
+   a cleared band is work in progress and the save is what waits for it. */
+.tre-pending { color: var(--accent); }

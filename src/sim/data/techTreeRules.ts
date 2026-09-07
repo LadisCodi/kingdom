@@ -98,6 +98,21 @@ export interface TechIssue {
 export interface TechTreeValidation {
   errors: TechIssue[];
   warnings: TechIssue[];
+  /**
+   * Technologies with no slot, which is neither an error nor a warning.
+   *
+   * It is a PENDING state and the third answer this function can give. A
+   * card off the page is not a mistake in the tree — it is work the designer
+   * has not finished, and `?dev=tree` produces a dozen of them on purpose
+   * every time a band is cleared to be rearranged. Listing those among the
+   * errors buries the ones that are actually wrong, which is the whole job of
+   * an error list.
+   *
+   * It still stops the save: `ok` is false while any of them exist, so the
+   * holding pen lives inside one session and never reaches the repo, where
+   * the game would have nowhere to draw them.
+   */
+  offPage: string[];
   ok: boolean;
 }
 
@@ -255,6 +270,7 @@ function unlockProblem(unlock: TechUnlock): string | null {
 export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   const errors: TechIssue[] = [];
   const warnings: TechIssue[] = [];
+  const offPage: string[] = [];
   const nodes = doc.technologies ?? {};
   const all = techIds(doc);
 
@@ -277,15 +293,12 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   const onPage = new Map<string, PlacedTech>();
   for (const id of all) {
     const node = nodes[id];
-    // OFF THE PAGE. One error, and none of the checks below — a technology
-    // with no slot has no column to be out of range and no row to be above
-    // its requirements, and reporting four things about one fact would bury
-    // the one that can be acted on.
+    // OFF THE PAGE. Recorded on its own and none of the checks below run — a
+    // technology with no slot has no column to be out of range and no row to
+    // be above its requirements, and reporting four things about one fact
+    // would bury the one that can be acted on.
     if (!isPlaced(node)) {
-      errors.push({
-        message: `${id} is off the page — drag it into a slot`,
-        tech: id,
-      });
+      offPage.push(id);
       continue;
     }
     if (!TOME_IDS.includes(node.tome)) {
@@ -578,11 +591,20 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     for (let n = 1; n <= top; n++) {
       const id = ranks.get(n);
       if (id === undefined) {
+        // A hole in the NAMING, which placement has nothing to do with: the
+        // cards all still exist wherever they sit.
         errors.push({ message: `the ${stem} ladder reaches ${top} but has no rank ${n}` });
         continue;
       }
       const above = ranks.get(n - 1);
-      if (above !== undefined && !(nodes[id].requires ?? []).includes(above)) {
+      if (above === undefined) continue;
+      // Both ends have to be ON THE PAGE. A card off the page has no
+      // requirements by construction — `unplace` empties them, because
+      // "above me on the page" is exactly what it no longer has — so asking
+      // it to require anything would report the holding pen as a mistake,
+      // once per rank. The link is checked again the moment it is placed.
+      if (!isPlaced(nodes[id]) || !isPlaced(nodes[above])) continue;
+      if (!(nodes[id].requires ?? []).includes(above)) {
         errors.push({ message: `${id} does not require ${above}, the rank before it`, tech: id });
       }
     }
@@ -609,5 +631,8 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
   }
 
-  return { errors, warnings, ok: errors.length === 0 };
+  return {
+    errors, warnings, offPage,
+    ok: errors.length === 0 && offPage.length === 0,
+  };
 }

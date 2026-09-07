@@ -63,8 +63,9 @@ place.
 | `planned` | on the tree for its shape, does nothing yet |
 
 - `tome`, `era`, `row` and `col` are **absent together** on a technology taken
-  OFF THE PAGE (§5). It still exists and is still editable; the rules call it
-  an error, so the repo never holds one.
+  OFF THE PAGE (§5). It still exists and is still editable; the rules count it
+  as PENDING rather than wrong, and refuse the save while any exist, so the
+  repo never holds one.
 - `definitions.ts` builds `TECHNOLOGIES` by walking this file, and `TECH_ORDER`
   is its key order — which the editor writes in reading order, so it is also
   rank order inside a rank ladder.
@@ -135,11 +136,18 @@ read by the editor as you drag, by the save endpoint before it writes, and by
 `tests/techTree.test.ts` against the shipped file. A rule added there is
 enforced in all three or in none.
 
+The rules give three answers, not two. **Pending** is the third: a technology
+**off the page** has no slot yet, which is unfinished work and not a mistake —
+clearing a band (§6) makes a dozen at once. It is counted, never listed
+card-by-card among the errors, and it still refuses the save. A rule that
+depends on where a card sits is not applied to one that sits nowhere, so a
+cleared band raises no errors at all; the links are checked again when the
+cards are placed. A card still on the page that requires one off it **is** an
+error, in its own words.
+
 **Errors** (a save is refused):
 
 - an illegal id, or no name, glyph or description
-- a technology **off the page** — one error for it, not four, and one on
-  anything still waiting for it
 - two cards in one slot of one page (the same slot on another page is fine)
 - a tome that is not a tome, a band outside 1–4, a column outside 0–2
 - one row shared by two eras — an era bar takes a whole line
@@ -222,6 +230,10 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
   session. Drag it into a slot and the slot hands it new requirements.
   `🗑 delete for good` is the other verb: it ends the technology, and every
   requirement pointing at it.
+- **`⤴ clear era…`** is the same gesture for a whole band: pick the era, and
+  every technology in it goes to the palette. It asks first, with the COUNT —
+  "clear era 2" is not a sentence anyone can check and "20 technologies" is —
+  and it is **one undo**, not twenty.
 - `⌘Z`/`⌘S` undo and save. Undo covers both verbs.
 - A technology the rules object to is red in **both** panes — outlined on the
   page, and on its palette row — and every problem in the list is a button

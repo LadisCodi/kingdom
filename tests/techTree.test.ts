@@ -334,11 +334,13 @@ describe('what the rules refuse', () => {
   });
 
   // OFF THE PAGE is a real state of the document — `?dev=tree` takes a
-  // technology out of its slot without deleting it — and it is an error,
-  // because the game has nowhere to draw one. That is what stops it reaching
-  // the repo: the save endpoint and CI refuse it, so the holding pen only
-  // exists inside a session.
-  it('a technology with no slot, and anything still waiting on it', () => {
+  // technology out of its slot without deleting it — and it is the THIRD
+  // answer the rules give: not an error, because it is unfinished work rather
+  // than a mistake, and clearing a band makes twenty of them at once. It
+  // still fails the verdict, which is what stops it reaching the repo: the
+  // save endpoint and CI refuse it, so the holding pen only exists inside a
+  // session.
+  it('a technology with no slot — as pending, not as an error', () => {
     const d = clone();
     const masonry = d.technologies.Masonry;
     delete masonry.tome;
@@ -346,13 +348,17 @@ describe('what the rules refuse', () => {
     delete masonry.row;
     delete masonry.col;
     masonry.requires = [];
-    const said = messages(d);
-    expect(said.some((m) => m.includes('Masonry is off the page'))).toBe(true);
-    // ONE error about it, not four: no tome, no era, no row, no column is one
-    // fact, and the three that cascade would bury the one to act on.
-    expect(said.filter((m) => m.startsWith('Masonry ')).length).toBe(1);
-    // …and whatever was waiting on it says so in its own words.
-    expect(said.some((m) => m.includes('requires Masonry, which is off the page'))).toBe(true);
+    const said = validateTechTree(d);
+    expect(said.offPage).toEqual(['Masonry']);
+    expect(said.ok, 'the tree cannot be saved while a card has no slot').toBe(false);
+    // NOTHING in the error list about it, and not four things either: no tome,
+    // no era, no row, no column is one fact, and the three that cascade would
+    // bury whatever is genuinely wrong.
+    expect(said.errors.map((e) => e.message).filter((m) => m.startsWith('Masonry '))).toEqual([]);
+    // …and whatever was waiting on it DOES say so in its own words, because a
+    // placed card waiting on nowhere is a real problem with the page.
+    expect(messages(d).some((m) => m.includes('requires Masonry, which is off the page')))
+      .toBe(true);
   });
 
   it('a column the page does not have', () => {

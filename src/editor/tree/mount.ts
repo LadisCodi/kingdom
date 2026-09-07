@@ -18,7 +18,7 @@ import '../editor.css';
 import treeJson from '../../sim/data/tech-tree.json';
 import {
   DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS,
-  isDrawnEdge, isPlaced, unlockLabel,
+  isCoverPage, isDrawnEdge, isPlaced, unlockLabel,
   type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
@@ -101,9 +101,14 @@ export function mountEditor(): void {
   let saving = false;
   const save = async (): Promise<void> => {
     if (saving) return;
-    const { errors } = doc.validation;
+    const { errors, offPage } = doc.validation;
     if (errors.length > 0) {
       toast(`${errors.length} problem${errors.length === 1 ? '' : 's'} — fix them first`, true);
+      return;
+    }
+    if (offPage.length > 0) {
+      toast(`${offPage.length} technolog${offPage.length === 1 ? 'y is' : 'ies are'} `
+        + 'off the page — every card needs a slot before this can be saved', true);
       return;
     }
     saving = true;
@@ -144,6 +149,87 @@ export function mountEditor(): void {
     refresh();
   };
 
+  /**
+   * A question that blocks the page until it is answered.
+   *
+   * Escape and a click on the backdrop both cancel, and while one is up the
+   * document's own keys are off — otherwise Delete would unplace the card
+   * still selected behind it, which is the opposite of asking first.
+   */
+  let asking = false;
+  const modal = (...kids: Array<Node | string>): () => void => {
+    const card = el('div', { class: 'ed-modal-card' }, ...kids);
+    const back = el('div', { class: 'ed-modal' }, card);
+    const close = (): void => {
+      asking = false;
+      back.remove();
+      document.removeEventListener('keydown', onKey, true);
+    };
+    // Capture, so this runs before the document's own handler, and
+    // `stopPropagation` keeps Escape from also clearing the selection.
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      close();
+    };
+    document.addEventListener('keydown', onKey, true);
+    back.addEventListener('click', (e) => { if (e.target === back) close(); });
+    asking = true;
+    root.append(back);
+    return close;
+  };
+
+  /**
+   * Empty one band of the open tome — the gesture a tome gets rearranged
+   * with.
+   *
+   * It asks first, because it is the one gesture here that moves a dozen
+   * cards on one click. What it asks with is the COUNT: "clear era 2" is not
+   * a sentence anyone can check, and "19 technologies" is.
+   */
+  const askClearEra = (): void => {
+    const era = select(ERAS.map(String), '1');
+    const summary = el('p', { class: 'ed-note' });
+    const go = el('button', { class: 'ed-danger tre-modal-go' }, '');
+    const sync = (): void => {
+      const band = doc.band(tome, Number(era.value));
+      const n = band.length;
+      const cover = band.filter(isCoverPage);
+      summary.textContent = n === 0
+        ? 'That band is already empty.'
+        : (n === 1
+          ? '1 technology goes to the palette.'
+          : `${n} technologies go to the palette.`)
+          + (cover.length > 0 ? ` One of them is ${cover[0]}, the book’s cover page.` : '');
+      go.textContent = `⤴ clear era ${era.value}`;
+      go.disabled = n === 0;
+    };
+    era.addEventListener('change', sync);
+    sync();
+
+    const cancel = el('button', { class: 'ed-btn' }, 'Cancel');
+    const close = modal(
+      el('h2', {}, `Clear a band of ${tome}`),
+      field('era', era),
+      summary,
+      el('p', { class: 'ed-note' },
+        'They are taken OFF THE PAGE, not deleted: each keeps its name, prose, '
+        + 'price and what it unlocks, and loses only its slot and its '
+        + 'requirements. Drag one back and the slot hands it new ones. '
+        + 'One undo puts the whole band back.'),
+      el('div', { class: 'tre-modal-row' }, cancel, go),
+    );
+    cancel.addEventListener('click', close);
+    go.addEventListener('click', () => {
+      const n = Number(era.value);
+      const moved = doc.clearBand(tome, n);
+      close();
+      selected = null;
+      toast(`Cleared era ${n} of ${tome} — ${moved.length} off the page`);
+      refresh();
+    });
+  };
+
   const askDelete = (id: string): void => {
     const orphaned = doc.ids.filter((other) => doc.node(other)?.requires.includes(id));
     doc.remove(id);
@@ -155,6 +241,7 @@ export function mountEditor(): void {
   };
 
   document.addEventListener('keydown', (e) => {
+    if (asking) return; // a dialog is up; it owns the keyboard
     // A form field owns its own keys: Delete in a name box deletes a letter.
     const typing = (e.target as HTMLElement)?.matches?.('input, textarea, select') === true;
     if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
@@ -210,7 +297,12 @@ export function mountEditor(): void {
     // this actually marks is the difference between one that is wired into
     // its page — a legal slot, one to three requirements, a kind that matches
     // what it carries — and one the problem list is still asking about.
-    const troubled = new Set(doc.validation.errors.map((e) => e.tech));
+    // Off the page counts as unsettled even though it is not an error: green
+    // means "in a slot the rules are happy with", and it is in no slot.
+    const troubled = new Set<string | undefined>([
+      ...doc.validation.errors.map((e) => e.tech),
+      ...doc.validation.offPage,
+    ]);
 
     // THIS BOOK FIRST, then everything else under its own heading. The
     // palette is 180 rows long and the page beside it is one book: a row you
@@ -252,7 +344,8 @@ export function mountEditor(): void {
       draggable: 'true',
       title: settled
         ? `${id} — ${node.description}`
-        : `${id} — ${doc.validation.errors.find((e) => e.tech === id)?.message ?? ''}`,
+        : `${id} — ${doc.validation.errors.find((e) => e.tech === id)?.message
+          ?? 'off the page — drag it into a slot'}`,
     },
     el('b', {}, `${node.glyph} ${node.name}`),
     el('span', { class: 'tre-item-where' }, isPlaced(node)
@@ -341,7 +434,14 @@ export function mountEditor(): void {
       linking ? 'linking — click a card' : '⇢ link');
     link.disabled = selected === null;
     link.addEventListener('click', () => { linking = !linking; refresh(); });
-    tabs.append(el('span', { class: 'tre-spacer' }), link, undo, redo, saveBtn);
+    // `⤴`, the same arrow as the inspector's `⤴ take off the page`, because
+    // it is the same gesture at band scale — and the arrow is what says this
+    // is not the bin.
+    const clear = el('button', {
+      class: 'ed-btn', title: 'take a whole band off the page',
+    }, '⤴ clear era…');
+    clear.addEventListener('click', askClearEra);
+    tabs.append(el('span', { class: 'tre-spacer' }), clear, link, undo, redo, saveBtn);
     stage.append(tabs);
 
     const rows = doc.rows(tome);
@@ -798,11 +898,23 @@ export function mountEditor(): void {
   }
 
   function problems(): HTMLElement {
-    const { errors, warnings } = doc.validation;
+    const { errors, warnings, offPage } = doc.validation;
     const box = el('div', { class: 'ed-card' },
       el('h2', {}, `Problems — ${errors.length} error(s), ${warnings.length} warning(s)`));
-    if (errors.length === 0 && warnings.length === 0) {
+    // Only when there is nothing pending either: "the tree validates" beside
+    // a Save button that refuses is the list contradicting itself.
+    if (errors.length === 0 && warnings.length === 0 && offPage.length === 0) {
       box.append(el('p', { class: 'ed-ok' }, 'The tree validates.'));
+    }
+    // NOT one row per card. A cleared band puts twenty technologies off the
+    // page at once, and twenty rows saying so would bury whatever is actually
+    // wrong — which is the only reason this list exists. They are already
+    // named at the top of the palette; here they are a count and a reason the
+    // Save button is waiting.
+    if (offPage.length > 0) {
+      box.append(el('p', { class: 'ed-note tre-pending' },
+        `${offPage.length} technolog${offPage.length === 1 ? 'y is' : 'ies are'} off the page`
+        + ' — drag them into slots. The save waits for them; nothing else does.'));
     }
     const issues = [
       ...errors.map((e) => [e, 'err'] as const),
@@ -825,7 +937,7 @@ export function mountEditor(): void {
   }
 
   function drawStatus(): void {
-    const { errors, warnings } = doc.validation;
+    const { errors, warnings, offPage } = doc.validation;
     // The per-band totals the `Technologies` sheet used to add up with a
     // formula. This is where the price-band pass happens now
     // (Docs/features/tech-tree.md §5).
@@ -838,6 +950,8 @@ export function mountEditor(): void {
       backButton(),
       el('span', {}, `${doc.ids.length} technologies`),
       el('span', {}, `· ${errors.length} errors · ${warnings.length} warnings`),
+      el('span', { class: 'tre-pending' },
+        offPage.length > 0 ? `· ${offPage.length} off the page` : ''),
       el('span', {}, doc.dirty ? '· unsaved' : '· saved'),
       el('span', { class: 'tre-spacer' }),
       el('span', { class: 'ed-note' }, `${tome} — ${bands.join('   ')}`));

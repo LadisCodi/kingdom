@@ -107,6 +107,14 @@ export class TreeDoc {
     return null;
   }
 
+  /** Every technology placed in one band of one book, in reading order. */
+  band(tome: TomeId, era: number): string[] {
+    return this.ids.filter((id) => {
+      const node = this.doc.technologies[id];
+      return node.tome === tome && node.era === era;
+    });
+  }
+
   /**
    * What each band of one book costs.
    *
@@ -116,10 +124,7 @@ export class TreeDoc {
    */
   totals(tome: TomeId): BandTotals[] {
     return ERAS.map((era) => {
-      const band = this.ids.filter((id) => {
-        const node = this.doc.technologies[id];
-        return node.tome === tome && node.era === era;
-      });
+      const band = this.band(tome, era);
       return {
         era,
         count: band.length,
@@ -210,37 +215,82 @@ export class TreeDoc {
    * inside one session's work, not a state the repo can hold.
    */
   unplace(id: string): void {
+    this.edit(() => { this.reroot(this.detach(id)); });
+  }
+
+  /**
+   * Take a whole BAND off the page: every technology in one era of one book.
+   *
+   * The gesture a tome gets rearranged with — empty era 2, then drag it back
+   * in the shape you actually wanted. Returns what it moved, so the caller
+   * can say so.
+   *
+   * One `edit()`, so the whole band is ONE undo. A loop over `unplace` would
+   * be twelve, which is not an undo of this gesture but an unpicking of it.
+   *
+   * The two passes are the point: every card comes off first, and only then
+   * are the cards left waiting on nothing handed their slot's default. The
+   * other order hands a survivor a requirement that the same gesture is about
+   * to take away again.
+   */
+  clearBand(tome: TomeId, era: number): string[] {
+    const ids = this.band(tome, era);
+    if (ids.length === 0) return [];
     this.edit(() => {
-      const node = this.doc.technologies[id];
-      if (node === undefined) return;
-      delete node.tome;
-      delete node.era;
-      delete node.row;
-      delete node.col;
-      node.requires = [];
-      for (const [other, waiting] of Object.entries(this.doc.technologies)) {
-        if (!waiting.requires.includes(id)) continue;
-        waiting.requires = waiting.requires.filter((req) => req !== id);
-        if (waiting.requires.length === 0 && !isCoverPage(other) && isPlaced(waiting)) {
-          waiting.requires = this.defaultRequires(waiting.tome, waiting.row, waiting.col);
-        }
-      }
+      const waiting = new Set<string>();
+      for (const id of ids) for (const other of this.detach(id)) waiting.add(other);
+      this.reroot(waiting);
     });
+    return ids;
+  }
+
+  /** Strip one technology's slot and its edges, both ways. Returns the cards
+   *  that lost a requirement, for `reroot` to look at afterwards. */
+  private detach(id: string): string[] {
+    const node = this.doc.technologies[id];
+    if (node === undefined) return [];
+    delete node.tome;
+    delete node.era;
+    delete node.row;
+    delete node.col;
+    node.requires = [];
+    const waiting: string[] = [];
+    for (const [other, card] of Object.entries(this.doc.technologies)) {
+      if (!card.requires.includes(id)) continue;
+      card.requires = card.requires.filter((req) => req !== id);
+      waiting.push(other);
+    }
+    return waiting;
+  }
+
+  /**
+   * Hand a card left with no requirements the default for the slot it is in,
+   * so no single gesture leaves the page in a state the rules refuse.
+   *
+   * A card taken off the page is skipped by the `isPlaced` guard rather than
+   * by being filtered out: off the page it has no slot to take a default
+   * from, and having none is the state the caller just put it in.
+   */
+  private reroot(ids: Iterable<string>): void {
+    for (const id of ids) {
+      const node = this.doc.technologies[id];
+      if (node === undefined || node.requires.length > 0) continue;
+      if (isCoverPage(id) || !isPlaced(node)) continue;
+      node.requires = this.defaultRequires(node.tome, node.row, node.col);
+    }
   }
 
   /** Delete a technology outright, and every requirement pointing at it. */
   remove(id: string): void {
     this.edit(() => {
-      delete this.doc.technologies[id];
+      const waiting: string[] = [];
       for (const [other, node] of Object.entries(this.doc.technologies)) {
         if (!node.requires.includes(id)) continue;
         node.requires = node.requires.filter((req) => req !== id);
-        // A card the deletion left with nothing takes its slot's default, so
-        // one delete never leaves the page in a state the rules refuse.
-        if (node.requires.length === 0 && !isCoverPage(other) && isPlaced(node)) {
-          node.requires = this.defaultRequires(node.tome, node.row, node.col);
-        }
+        waiting.push(other);
       }
+      delete this.doc.technologies[id];
+      this.reroot(waiting);
     });
   }
 

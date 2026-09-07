@@ -115,9 +115,20 @@ export function treeEditorPlugin() {
           const doc = JSON.parse(await readBody(req));
           // The editor's own rules, not a second copy of them.
           const rules = await server.ssrLoadModule('/src/sim/data/techTreeRules.ts');
-          const { errors, warnings } = rules.validateTechTree(doc);
+          const { errors, warnings, offPage } = rules.validateTechTree(doc);
           if (errors.length > 0) {
             return send(422, { error: 'the tree does not validate', errors });
+          }
+          // Off the page is a holding pen inside one editing session, not a
+          // state the repo can hold: the game has nowhere to draw a card with
+          // no slot. It is not an error in the tree, so it is refused in its
+          // own words.
+          if (offPage.length > 0) {
+            return send(422, {
+              error: `${offPage.length} technolog${offPage.length === 1 ? 'y is' : 'ies are'} `
+                + `off the page: ${offPage.join(', ')}`,
+              errors: [],
+            });
           }
           writeFileSync(TREE_PATH, serialiseTechTree(doc, rules.TOME_IDS));
           const count = Object.keys(doc.technologies).length;
