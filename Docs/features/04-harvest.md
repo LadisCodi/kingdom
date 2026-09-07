@@ -215,6 +215,11 @@ A rewarded ad pays a whole pool:
 - Unassigning a loaded worker loses the load.
 - The walk is the distance cost: 4.7 Wood/min from a tree next door against
   3.3 from one at radius 4. There is no per-distance penalty on the strike rate.
+- **A late building strikes harder and faster.** From level 6 a producer adds
+  **+1 unit to every delivery** and swings **10% faster** per level, to +5 and
+  ×1.5 at level 10 ([`buildings.md`](buildings.md) §4.11). Both are read off
+  the crew's own building, and neither touches the tap: the thumb is not a
+  crew.
 - A strike is a simulation boundary. The renderer receives the strike event the
   sim emitted — the struck cell and its ground. Nothing about the feedback feeds
   back into the sim; offline replay produces the same strikes with no feedback.
@@ -237,7 +242,8 @@ Quests:
 `cityGatherPerSecond`:
 
 - A **nominal** city-wide rate with a travel term that takes the influence
-  radius as the distance.
+  radius as the distance, and with each building's own level in its haul and
+  its cadence.
 - The tap does not read it. It has no caller in `src/` (orders,
   [`12-quests.md`](12-quests.md) §6, do not exist); it is kept as a dead export
   with a comment saying so.
@@ -279,13 +285,13 @@ Quests:
 |---|---|---|---|
 | **The ground** | abundance (`stock`), recovery, richness (`unitsPerStrike`) | what the map can give | "everything is a stump" · "they never stop walking" |
 | **The thumb** | `TapPower` | seconds per tap | "I want it now" |
-| **The payroll** | `WorkerLoad`, plazas per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
+| **The payroll** | `WorkerLoad`, **the building's own level** (§4), plazas per level, **where the shed sits** | units a trip, and how long the trip is | "I am collecting too slowly" |
 
 - The seven cell-scoped upgrades — Sawpits, Irrigation, Stonecutting, Big Nets,
   Iron Picks, Butchery, Scythes — raise the ground's abundance, so they lift the
   tap and the worker alike.
-- `WorkerLoad` is the one payroll-only dial: more units per strike empties
-  cells faster.
+- `WorkerLoad` and a producer's late level are the payroll-only dials: more
+  units per strike empties cells faster, and neither reaches the tap.
 - Doubling `stock` and halving `recoverySeconds` both pay +29% rate. More stock
   means longer stays and less walking; faster recovery means a greener map and
   more migration.
@@ -311,6 +317,7 @@ Quests:
 | Respawn, finite features | 120 s Berries · 180 s Meat · 90 s Fish | `Harvest.respawn_seconds` |
 | Worker move speed | 1 tile/s | `worker.move_speed_tiles_per_second` |
 | Influence radius, plazas per level | §5 | `Districts` |
+| What a late level adds to a delivery, and to the swing | +1 and +10% a level from 6 | `Districts.extra_units_per_delivery_per_level`, `.strike_speed_per_level` |
 | Mana per tap | 1 | `tap.mana_cost` |
 | Auto-tap cooldown (and so the thumb's worth, §1.1) | 0.5 s | `tap.collect_cooldown_seconds` |
 | Strike punch, against the player's 1 | 0.55 | `STRIKE_PUNCH`, code |

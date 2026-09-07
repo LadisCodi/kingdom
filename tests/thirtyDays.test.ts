@@ -19,7 +19,10 @@ import {
 import {
   advance, changeWorkers, enqueueBuild, upgradeDistrict,
 } from '../src/sim/commands';
-import { placementBlock, maxDistrictCount, validPlacementCells } from '../src/sim/districts';
+import {
+  LATE_FROM, placementBlock, maxDistrictCount, requiredTownhallLevel, upgradeGoodsCost,
+  validPlacementCells,
+} from '../src/sim/districts';
 import { explorationGate, fogState, isReachable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
 import { claimLandmark, isLandmarkClaimed, visibleLandmarks } from '../src/sim/landmarks';
@@ -66,7 +69,7 @@ const BUILD_ORDER: DistrictId[] = [
 
 interface WeekRow {
   week: number; townhall: number; population: number; districts: number;
-  maxed: number; techs: number; gold: number; knowledge: number;
+  maxed: number; levels: number; techs: number; gold: number; knowledge: number;
   army: number; ruins: number; landmarks: number; idleDays: number;
 }
 
@@ -336,6 +339,10 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           population: state.city.population,
           districts: state.city.districts.length,
           maxed: state.city.districts.filter((d) => d.level >= DISTRICTS[d.definitionId].maxLevel).length,
+          // `maxed` says how much of the city has nothing left to buy;
+          // `levels` says how much was bought at all, which is the column the
+          // builder programme moves (Docs/plans/builder-30-days.md §4).
+          levels: state.city.districts.reduce((n, d) => n + d.level, 0),
           techs: state.research.completed.length,
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
           knowledge: Math.round(getWallet(state.kingdom.wallet, 'Knowledge')),
@@ -399,5 +406,23 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     expect(end.ruins, 'ruins cleared by day 30').toBeLessThan(3);
     expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThan(5);
     expect(end.knowledge, 'Knowledge in hand at day 30').toBeLessThan(10_000);
+
+    // 5. What step 4 moved, and what it did not
+    //    (Docs/plans/builder-30-days.md §4). Every producer reaches ten on the
+    //    sheet now, so the last two weeks buy LEVELS where they used to buy
+    //    nothing at all.
+    expect(end.levels, 'levels bought in the last week').toBeGreaterThan(prev.levels);
+
+    // But the ladder stops at FOUR, one level below the goods wall, and it is
+    // the Townhall that stops it: level 5 asks for Townhall 4 and this player
+    // ends on 3. So the goods prices of levels 6-10 are authored and
+    // unreachable — step 7's Townhall ladder is what opens both.
+    const deepest = Math.max(...state.city.districts.map((d) => d.level));
+    expect(deepest, 'the highest level any building reached').toBe(4);
+    expect(requiredTownhallLevel('Sawmill', 5), 'what the fifth level asks for')
+      .toBeGreaterThan(end.townhall);
+    expect(Object.keys(upgradeGoodsCost('Sawmill', LATE_FROM)).length,
+      'the goods wall is authored, whether or not anyone reaches it')
+      .toBeGreaterThan(0);
   }, 120_000);
 });

@@ -1,7 +1,7 @@
 // Placement conditions and build/upgrade cost & time formulas. Cost/time
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
-import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
+import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
 import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
@@ -165,12 +165,35 @@ export function buildCost(definitionId: DistrictId, n: number): Wallet {
   return out;
 }
 
+/**
+ * Where the late city starts. Below this target level a level is priced and
+ * timed by the row's own curve, tuned for the opening; from it the late
+ * columns take over.
+ *
+ * One pivot for every building, deliberately: a per-row pivot would let two
+ * buildings disagree about where the late game is, and the Townhall ladder is
+ * what says when it begins.
+ */
+export const LATE_FROM = CITY_DEF.lateUpgradeFromLevel;
+
+/**
+ * The level term of an upgrade price.
+ *
+ * Continuous at the pivot: reaching level `LATE_FROM` costs the early curve's
+ * last step times the late growth, so the two halves meet rather than jump.
+ */
+const levelCostMultiplier = (def: DistrictDef, targetLevel: number): number => {
+  const early = def.upgradeCostLevelGrowth ** (Math.min(targetLevel, LATE_FROM - 1) - 2);
+  if (targetLevel < LATE_FROM || def.upgradeCostLateLevelGrowth <= 0) return early;
+  return early * def.upgradeCostLateLevelGrowth ** (targetLevel - LATE_FROM + 1);
+};
+
 /** Upgrade cost from currentLevel; uses the EXISTING count n, no distance term. */
 export function upgradeCost(definitionId: DistrictId, n: number, currentLevel: number): Wallet {
   const def = DISTRICTS[definitionId];
   const expGrowth = n ** def.buildCostExponentialGrowth;
   const countMult = Math.max(def.buildCostMultiplier * (n - 1) * expGrowth, 1);
-  const levelMult = def.upgradeCostLevelGrowth ** (currentLevel - 1);
+  const levelMult = levelCostMultiplier(def, currentLevel + 1);
   const out: Wallet = {};
   for (const [c, base] of Object.entries(def.upgradeCost)) {
     out[c as keyof Wallet] = Math.floor(base * countMult * levelMult);
@@ -201,14 +224,29 @@ export const buildDuration = (
   );
 };
 
+/**
+ * Seconds the wait for `targetLevel` is authored at, before Carpentry.
+ *
+ * The late half is NOT the early curve continued: minutes-long steps cannot
+ * be compounded into the multi-hour ladder the late city needs without making
+ * the opening's steps wrong, so the pivot level carries its own base
+ * (`upgradeDurationLateSeconds`) and the late growth compounds from there.
+ */
+const authoredUpgradeSeconds = (def: DistrictDef, targetLevel: number): number => {
+  if (targetLevel < LATE_FROM || def.upgradeDurationLateSeconds <= 0) {
+    return def.upgradeDurationSeconds * def.upgradeDurationLevelGrowth ** (targetLevel - 2);
+  }
+  return def.upgradeDurationLateSeconds
+    * def.upgradeDurationLateLevelGrowth ** (targetLevel - LATE_FROM);
+};
+
 /** Upgrade time in seconds (Carpentry: −5%/rank). Rounding: round. */
 export const upgradeDuration = (
   state: GameState, definitionId: DistrictId, currentLevel: number,
 ): number => {
   const def = DISTRICTS[definitionId];
   return Math.round(
-    effectiveBuildTimeMultiplier(state) *
-    def.upgradeDurationSeconds * def.upgradeDurationLevelGrowth ** (currentLevel - 1),
+    effectiveBuildTimeMultiplier(state) * authoredUpgradeSeconds(def, currentLevel + 1),
   );
 };
 

@@ -301,6 +301,16 @@ export interface DistrictDef {
   upgradeCostLevelGrowth: number;
   upgradeDurationSeconds: number;
   upgradeDurationLevelGrowth: number;
+  /** The LATE curve, from `city.lateUpgradeFromLevel`. The columns above are
+   *  tuned for the opening — minutes and tens of Wood — and continuing them
+   *  to level 10 gives a day-20 upgrade that costs a morning's tapping and
+   *  finishes in eight minutes. 0 = this building has no late levels, and
+   *  every level is priced and timed by the curve above. */
+  upgradeCostLateLevelGrowth: number;
+  /** Seconds to reach the pivot level itself; the growth compounds from
+   *  there. 0 = the early curve simply continues. */
+  upgradeDurationLateSeconds: number;
+  upgradeDurationLateLevelGrowth: number;
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
   /** Technology gating each upgrade; index 0 = requirement to REACH level 2. */
   requiredTechPerLevel: readonly (TechId | null)[];
@@ -318,6 +328,21 @@ export interface DistrictDef {
   /** The one refined good this building makes; null = it is not a workshop.
    *  One good per workshop, the way one forest is a Sawmill's. */
   produces: GoodId | null;
+  /** What a producer's late level buys instead of crew: the plot has more
+   *  cells than a crew can ever work, so levels 6-10 grow the HAUL and the
+   *  swing rather than adding villagers.
+   *
+   *  Units ADDED to a delivery, not a multiplier on it — a chunk is 1 to 5
+   *  units, and a percentage of that rounds away to nothing. The shape
+   *  `WorkerLoad` already uses. Empty = 0 at every level.
+   *
+   *  `strikeSpeedPerLevel` IS a multiplier: it divides a cadence measured in
+   *  whole seconds, where a tenth is visible. Empty = 1.0 everywhere.
+   *
+   *  Both are base-stage terms of the pipeline in `upgrades.ts`, read off the
+   *  building's own level and never re-expressed as a modifier. */
+  extraUnitsPerDeliveryPerLevel: readonly number[];
+  strikeSpeedPerLevel: readonly number[];
   /** How many items may be queued at once, by level. Empty = not a workshop.
    *  A longer queue is a longer absence covered, never more goods per hour —
    *  that is the crew (Docs/plans/builder-30-days.md §2.2). */

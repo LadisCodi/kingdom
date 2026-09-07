@@ -21,9 +21,9 @@
 
 import {
   DISTRICTS, HARVEST, TAP, TAXES, TECHNOLOGIES, TECH_LINES, WORKER, levelIndexed,
-  type HarvestSpec,
+  type DistrictDef, type HarvestSpec,
 } from './data/definitions';
-import type { CurrencyId, GameState, TechLineId } from './state';
+import type { CurrencyId, District, GameState, TechLineId } from './state';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
 
@@ -77,13 +77,16 @@ export function cityGatherPerSecond(state: GameState, currencyId: CurrencyId): n
     const spec = HARVEST[source];
     const radius = def.influenceRadiusPerLevel.length === 0
       ? 0 : levelIndexed(def.influenceRadiusPerLevel, d.level);
-    const cycleSeconds = (2 * radius) / effectiveWorkerSpeed(state) + spec.secondsPerStrike;
+    // The building's own level is in the rate too: a late Sawmill swings
+    // faster and carries more, so a reward priced in production has to see it.
+    const cycleSeconds = (2 * radius) / effectiveWorkerSpeed(state)
+      + workerStrikeMs(state, spec, d) / 1000;
     if (cycleSeconds <= 0) continue;
     // A building that goes after more than one thing splits its crew between
     // them. For every district with a single source it divides by one, so no
     // existing number moves.
     const crew = d.assignedWorkers / def.harvestSources.length;
-    total += (crew * effectiveWorkerStrike(state, spec)) / cycleSeconds;
+    total += (crew * effectiveWorkerStrike(state, spec, d)) / cycleSeconds;
   }
   return total;
 }
@@ -139,22 +142,45 @@ export const tapDraw = (state: GameState, spec: HarvestSpec, carry: number): num
     : (tapWorkSeconds(state) * effectiveUnitsPerStrike(state, spec)) / spec.secondsPerStrike)
   + carry;
 
+/**
+ * A per-level term off the crew's own building.
+ *
+ * `null` is the player's own arm: a tap is not a crew and no building's level
+ * speaks for it, so the tap path — and every caller with no building in hand
+ * — gets `blank`.
+ */
+const levelTerm = (
+  building: District | null, list: (d: DistrictDef) => readonly number[], blank: number,
+): number => {
+  if (building === null) return blank;
+  return levelIndexed(list(DISTRICTS[building.definitionId]), building.level) ?? blank;
+};
+
 /** Units one worker strike deposits: the ground's abundance plus the global
  *  WorkerLoad, which is the one payroll-only dial and therefore the pressure
- *  generator — more units a strike empties a cell faster. */
-export function effectiveWorkerStrike(state: GameState, spec: HarvestSpec): number {
-  const base = effectiveUnitsPerStrike(state, spec) + effect(state, 'WorkerLoad');
+ *  generator — more units a strike empties a cell faster. `building` is the
+ *  crew's own, and its late levels ADD units to the haul (a chunk is 1 to 5
+ *  units, so a percentage of it would round away). */
+export function effectiveWorkerStrike(
+  state: GameState, spec: HarvestSpec, building: District | null = null,
+): number {
+  const base = effectiveUnitsPerStrike(state, spec) + effect(state, 'WorkerLoad')
+    + levelTerm(building, (d) => d.extraUnitsPerDeliveryPerLevel, 0);
   return Math.max(0, Math.round(resolve(state, 'workerYield', base, spec.currencyId)));
 }
 
 /** Milliseconds between one worker's strikes on this kind of cell. A property
- *  of the CELL, not of the worker: a farm plot is fast and thirsty where an
- *  iron mountain is a heavy swing. No modifier scales it yet — a worker-speed
- *  stat would be a new `ModifierStat`, which is code, and nothing has asked.
+ *  of the CELL and of the BUILDING that sent the worker: a farm plot is fast
+ *  and thirsty where an iron mountain is a heavy swing, and a level-10 Sawmill
+ *  swings faster at both. No modifier scales it — a worker-speed stat would be
+ *  a new `ModifierStat`, which is code, and nothing has asked.
  *  (`workerSpeed` below is how fast they WALK, which is a different thing.) */
-export const workerStrikeMs = (state: GameState, spec: HarvestSpec): number => {
+export const workerStrikeMs = (
+  state: GameState, spec: HarvestSpec, building: District | null = null,
+): number => {
   void state;
-  return Math.max(100, Math.round(spec.secondsPerStrike * 1000));
+  const speed = levelTerm(building, (d) => d.strikeSpeedPerLevel, 1);
+  return Math.max(100, Math.round((spec.secondsPerStrike * 1000) / speed));
 };
 
 /** Cooldown between AUTO-taps — the repeats a held pointer generates, ms

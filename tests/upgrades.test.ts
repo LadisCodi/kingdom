@@ -601,8 +601,11 @@ describe('Farsight reaches the fog', () => {
 // The era-2/3 MAJORS that work against dials the game already had.
 describe('the era-2/3 majors that are live', () => {
   it('Aqueducts lets Housing reach level 3 with a third tier of beds', () => {
-    expect(DISTRICTS.Housing.maxLevel).toBe(3);
+    // Housing reaches 10 now; Aqueducts still owns the third tier, and it is
+    // the last technology on the ladder — every level above it is bought with
+    // goods and a Townhall level instead (Docs/plans/builder-30-days.md §4).
     expect(requiredTechForLevel('Housing', 3)).toBe('Aqueducts');
+    expect(requiredTechForLevel('Housing', 4)).toBe(null);
     expect(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 3))
       .toBeGreaterThan(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 2));
   });

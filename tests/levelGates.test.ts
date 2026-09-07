@@ -3,10 +3,14 @@
 // (+1 everywhere once Communities is researched).
 import { describe, expect, it } from 'vitest';
 import { upgradeDistrict } from '../src/sim/commands';
-import { requiredTechForLevel } from '../src/sim/districts';
+import {
+  LATE_FROM, requiredTechForLevel, requiredTownhallLevel, upgradeGoodsCost,
+} from '../src/sim/districts';
+import { addGood, getGood } from '../src/sim/goods';
+import { effectiveWorkerStrike, tapDraw, workerStrikeMs } from '../src/sim/upgrades';
 import { districtCapacity, maxPopulation } from '../src/sim/population';
-import { DISTRICTS, MANA, levelIndexed } from '../src/sim/data/definitions';
-import { districtById, townhall, type DistrictId } from '../src/sim/state';
+import { DISTRICTS, HARVEST, MANA, levelIndexed } from '../src/sim/data/definitions';
+import { districtById, townhall, type DistrictId, type GoodId } from '../src/sim/state';
 import { addBuilt, completeTech, freshGame, fund, tickAt, T0 } from './helpers';
 
 const HOUSE = { x: 2, y: 0 }; // touches the Townhall
@@ -98,6 +102,10 @@ describe('every upgradable building has something to show for the level', () => 
   const PER_LEVEL = [
     'influenceRadiusPerLevel', 'maxWorkersPerLevel',
     'armyCapPerLevel', 'populationCapacityPerLevel',
+    // What a producer's LATE level buys, since crew and reach stop growing at
+    // five (Docs/plans/builder-30-days.md §4).
+    'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',
+    'queueLengthPerLevel',
   ] as const;
 
   // The Sanctum carries its per-level numbers in the Mana table rather than
@@ -132,5 +140,117 @@ describe('every upgradable building has something to show for the level', () => 
       expect(levelIndexed(MANA.sanctumPerHourPerLevel, level + 1))
         .toBeGreaterThan(levelIndexed(MANA.sanctumPerHourPerLevel, level));
     }
+  });
+});
+
+// ---------------------------------------------------------- the late city
+
+describe('the late levels are gated by goods and the Townhall, not by research', () => {
+  it('asks no technology anywhere above the ladder the tomes already own', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      const def = DISTRICTS[id];
+      for (let level = LATE_FROM; level <= def.maxLevel; level++) {
+        expect(requiredTechForLevel(id, level), `${id} level ${level}`).toBe(null);
+      }
+    }
+  });
+
+  it('asks a Townhall level for every late level, one per level', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      const def = DISTRICTS[id];
+      if (def.maxLevel < LATE_FROM || id === 'Townhall') continue;
+      for (let level = LATE_FROM; level <= def.maxLevel; level++) {
+        expect(requiredTownhallLevel(id, level), `${id} level ${level}`).toBe(level);
+      }
+    }
+  });
+
+  it('refuses level 6 for want of a Townhall, then for want of goods', () => {
+    const state = freshGame();
+    fund(state, { Wood: 10_000_000, Stone: 10_000_000, Gold: 10_000_000 });
+    addBuilt(state, 'Sawmill', { x: 4, y: 2 });
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    sawmill.level = 5;
+    completeTech(state, 'Engineering');
+    completeTech(state, 'Architecture');
+
+    // The Townhall answers first: a trip to the workshop is pointless while
+    // the city itself is too small for the level.
+    expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('RequirementsNotMet');
+    townhall(state).level = 6;
+    expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('NotEnoughGoods');
+
+    // And the goods are the only thing left between the player and the level.
+    for (const [good, n] of Object.entries(upgradeGoodsCost('Sawmill', 6))) {
+      addGood(state.city.goods, good as GoodId, n);
+    }
+    expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('Started');
+  });
+
+  it('spends the goods it asked for, and nothing else', () => {
+    const state = freshGame();
+    fund(state, { Wood: 10_000_000, Stone: 10_000_000, Gold: 10_000_000 });
+    addBuilt(state, 'Sawmill', { x: 4, y: 2 });
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    sawmill.level = 5;
+    townhall(state).level = 6;
+    completeTech(state, 'Engineering');
+    completeTech(state, 'Architecture');
+    addGood(state.city.goods, 'Planks', 10);
+    addGood(state.city.goods, 'CutStone', 4);
+    expect(upgradeDistrict(state, sawmill.uniqueId)).toBe('Started');
+    expect(getGood(state.city.goods, 'Planks')).toBe(10 - upgradeGoodsCost('Sawmill', 6).Planks!);
+    expect(getGood(state.city.goods, 'CutStone')).toBe(4);
+  });
+});
+
+describe('a late producer hauls more and swings faster', () => {
+  const sawmillAt = (level: number) => {
+    const state = freshGame();
+    addBuilt(state, 'Sawmill', { x: 4, y: 2 });
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    sawmill.level = level;
+    return { state, sawmill };
+  };
+
+  it('carries a bigger load per delivery at 6 than at 5', () => {
+    const low = sawmillAt(5);
+    const high = sawmillAt(6);
+    expect(effectiveWorkerStrike(high.state, HARVEST.Forest, high.sawmill))
+      .toBeGreaterThan(effectiveWorkerStrike(low.state, HARVEST.Forest, low.sawmill));
+  });
+
+  it('waits less between strikes at 6 than at 5', () => {
+    const low = sawmillAt(5);
+    const high = sawmillAt(6);
+    expect(workerStrikeMs(high.state, HARVEST.Forest, high.sawmill))
+      .toBeLessThan(workerStrikeMs(low.state, HARVEST.Forest, low.sawmill));
+  });
+
+  it('grows both, level by level, all the way to ten', () => {
+    for (let level = LATE_FROM; level < DISTRICTS.Sawmill.maxLevel; level++) {
+      const here = sawmillAt(level);
+      const next = sawmillAt(level + 1);
+      expect(effectiveWorkerStrike(next.state, HARVEST.Forest, next.sawmill), `level ${level}`)
+        .toBeGreaterThan(effectiveWorkerStrike(here.state, HARVEST.Forest, here.sawmill));
+      expect(workerStrikeMs(next.state, HARVEST.Forest, next.sawmill), `level ${level}`)
+        .toBeLessThan(workerStrikeMs(here.state, HARVEST.Forest, here.sawmill));
+    }
+  });
+
+  it('leaves the TAP alone — the thumb is not a crew', () => {
+    const low = sawmillAt(5);
+    const high = sawmillAt(10);
+    expect(tapDraw(high.state, HARVEST.Forest, 0)).toBe(tapDraw(low.state, HARVEST.Forest, 0));
+  });
+
+  it('does not touch a building with no late columns', () => {
+    const state = freshGame();
+    addBuilt(state, 'Farm', { x: 6, y: 6 });
+    const farm = state.city.districts.find((d) => d.definitionId === 'Farm')!;
+    const one = effectiveWorkerStrike(state, HARVEST.Crops, farm);
+    farm.level = 5;
+    // Levels 1-5 buy crew and reach; the haul is the ground's until level 6.
+    expect(effectiveWorkerStrike(state, HARVEST.Crops, farm)).toBe(one);
   });
 });

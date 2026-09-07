@@ -36,13 +36,25 @@ import {
   coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
-import { effectiveWorkerStrike, tapWorkSeconds } from '../sim/upgrades';
+import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
 import { action, btn, iconEl, knob, pips, progress, stat } from './kit';
 
-/** Level as stars rather than "lvl 2/3" — a count you read, not parse. */
+/** The most stars worth counting at a glance. A ten-level building gets a
+ *  numeral instead: ten pips is a bar chart, not a count. */
+const MAX_STARS = 5;
+
+/** Level as stars rather than "lvl 2/3" — a count you read, not parse. Past
+ *  `MAX_STARS` levels that stops being true, so the ladder becomes one star
+ *  and the two numbers. */
 function levelStars(level: number, max: number): HTMLElement {
+  if (max > MAX_STARS) {
+    return el('span', { class: 'dc-stars is-numeral' },
+      iconEl('star', { size: 'sm' }),
+      el('b', {}, `${level}`),
+      el('span', {}, `/ ${max}`));
+  }
   const row = el('span', { class: 'dc-stars' });
   for (let i = 0; i < max; i++) {
     const star = iconEl('star', { size: 'sm' });
@@ -107,6 +119,21 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   // A hall's level IS its army cap, and until now the only place that number
   // appeared was a note further up the card — nowhere near the button that
   // spends on it, which is the whole reason to upgrade a Barracks.
+  // Levels 6-10 of a producer buy neither crew nor reach — the plot runs out
+  // of cells long before that — so the card has to name what they DO buy or
+  // the button looks like it does nothing.
+  const term = (list: readonly number[], level: number, blank: number) =>
+    (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
+  if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
+    const from = term(def.extraUnitsPerDeliveryPerLevel, district.level, 0);
+    const to = term(def.extraUnitsPerDeliveryPerLevel, next, 0);
+    if (to !== from) delta('per delivery', `+${from}`, `+${to}`);
+  }
+  if (def.strikeSpeedPerLevel.length > 0) {
+    const from = term(def.strikeSpeedPerLevel, district.level, 1);
+    const to = term(def.strikeSpeedPerLevel, next, 1);
+    if (to !== from) delta('swing', `×${from}`, `×${to}`);
+  }
   if (def.armyCapPerLevel.length > 0) {
     delta('army cap',
       levelIndexed(def.armyCapPerLevel, district.level),
@@ -249,7 +276,8 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('b', {}, `×${n}`),
           el('span', {}, `${s} in reach`),
           el('span', { class: 'dc-area-rate' },
-            ` +${effectiveWorkerStrike(game.state, spec)} every ${spec.secondsPerStrike}s`));
+            ` +${effectiveWorkerStrike(game.state, spec, district)} every `
+            + `${Math.round(workerStrikeMs(game.state, spec, district) / 100) / 10}s`));
       });
 
       body.append(el('div', { class: 'dc-area' },

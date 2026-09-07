@@ -1,7 +1,11 @@
 // Every worked example from Docs/features/05-city-and-districts.md becomes an assertion.
 import { describe, expect, it } from 'vitest';
 import { freshGame } from './helpers';
-import { buildCost, buildDuration, upgradeCost, upgradeDuration } from '../src/sim/districts';
+import {
+  LATE_FROM, buildCost, buildDuration, upgradeCost, upgradeDuration,
+} from '../src/sim/districts';
+import { DISTRICTS } from '../src/sim/data/definitions';
+import type { DistrictId } from '../src/sim/state';
 import { gemRushCost } from '../src/sim/commands';
 
 describe('build cost by instance (Docs/04 table)', () => {
@@ -62,6 +66,58 @@ describe('upgrade cost & time (Docs/04 examples)', () => {
   it('Housing L1→L2 = 30 Wood + 10 Stone in 20 s', () => {
     expect(upgradeCost('Housing', 1, 1)).toEqual({ Wood: 30, Stone: 10 });
     expect(upgradeDuration(base, 'Housing', 1)).toBe(20);
+  });
+});
+
+// The late half of the ladder (Docs/plans/builder-30-days.md §4). The early
+// examples above are the proof it did not move: they are the same numbers
+// they were before the pivot existed.
+describe('the late curve, from level 6', () => {
+  const base = freshGame();
+  const LATE: readonly DistrictId[] = (Object.keys(DISTRICTS) as DistrictId[])
+    .filter((id) => DISTRICTS[id].maxLevel >= LATE_FROM);
+
+  it('reaches the late city on fourteen buildings, and stops on the rest', () => {
+    // Ten producers and halls plus the four workshops. The three exceptions
+    // each have a reason: the Townhall's own ladder is step 7, and the Market
+    // and the crop plot are single-level buildings.
+    expect(LATE.length).toBe(14);
+    expect(DISTRICTS.Townhall.maxLevel).toBe(4);
+    expect(DISTRICTS.Market.maxLevel).toBe(1);
+    expect(DISTRICTS.FarmLands.maxLevel).toBe(1);
+  });
+
+  it('grows every late level by ×1.7, the pivot included', () => {
+    for (const id of LATE) {
+      const wood = (level: number) => {
+        const cost = upgradeCost(id, 1, level);
+        return Object.values(cost).reduce((a, b) => a + b, 0);
+      };
+      for (let level = LATE_FROM - 1; level < DISTRICTS[id].maxLevel; level++) {
+        // Floors, so compare the ratio rather than the exact integer.
+        expect(wood(level) / wood(level - 1), `${id} level ${level + 1}`)
+          .toBeCloseTo(1.7, 1);
+      }
+    }
+  });
+
+  it('waits two hours for level 6 and about seventeen for level 10', () => {
+    for (const id of LATE) {
+      expect(upgradeDuration(base, id, LATE_FROM - 1), `${id} level 6`).toBe(7200);
+      expect(upgradeDuration(base, id, 9) / 3600, `${id} level 10`).toBeCloseTo(16.7, 1);
+    }
+  });
+
+  it('is the only thing the pivot changes: every level below it is the old curve', () => {
+    // The early columns alone, computed here rather than read from the sim.
+    for (const id of LATE) {
+      const def = DISTRICTS[id];
+      for (let level = 1; level < LATE_FROM - 1; level++) {
+        expect(upgradeDuration(base, id, level), `${id} level ${level + 1}`).toBe(
+          Math.round(def.upgradeDurationSeconds * def.upgradeDurationLevelGrowth ** (level - 1)),
+        );
+      }
+    }
   });
 });
 

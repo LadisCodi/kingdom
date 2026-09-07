@@ -8,7 +8,7 @@
 > designs will live in `features/` as each step closes, and open decisions in
 > [`../open-questions.md`](../open-questions.md).
 >
-> **Status: steps 1–3 done.** Save version 29.
+> **Status: steps 1–4 done.** Save version 29.
 
 ## 0. How the steps are cut
 
@@ -37,10 +37,10 @@
 | 1 | the thirty-day harness | measuring every later step | 1–2 days |
 | 2 | goods: the `Goods` sheet, the stockpile, goods in a price | 3, 4 | 1–2 days |
 | 3 | the four workshops: queue, crew, sharing, rush | 4 | 4–6 days |
-| 4 | levels 6–7 of every building, gated by goods | 6, 8, 9 | 2–3 days |
+| 4 | levels 5–10 of every building, gated by goods | 6, 8, 9 | 2–3 days |
 | 5 | adjacency v2: stat-typed rules | 6 | 2–3 days |
 | 6 | Harmony and the decorations | 7 | 4–5 days |
-| 7 | levels 8–10 and Townhall 5–10, gated by Harmony | 8, 9, 10, 11 | 2–3 days |
+| 7 | Townhall 5–10, and Harmony on the levels from 8 | 8, 9, 10, 11 | 2–3 days |
 | 8 | the Reliquary as a building | — | 2 days |
 | 9 | the Tavern as a building | — | 2–3 days |
 | 10 | the Watchtower (the building and the flag) | the world map, later | 1–2 days |
@@ -205,34 +205,68 @@ one good, and the first producer in the game that is a crew from the start.
   cases and the throughput identity, queue length and payment, the Mana
   recipe, replay-equals-ticking, the offline cap, the save, and the rush.
 
-## 4. Step 4 · Levels 6–7, gated by goods
+## 4. Step 4 · Levels 6–10, gated by goods — **DONE**
 
-- **Data:** every producer row's `max_level` → 10 and its per-level arrays
-  extended to 10 (`Districts`): Housing residents `2,4,6,8,10,12,14,16,18,20`;
-  Sawmill/Quarry/Farm/Docks workers and radius **frozen at their L5 value**
-  from L6; halls `army_cap_per_level` +8 a level; Sanctum cap/regen
-  continuing the curve (also in `mana.sanctum_cap_per_level`,
-  `mana.sanctum_per_hour_per_level`, `Settings`). `upgrade_cost_goods_per_level`
-  filled from level 6. `required_townhall_level_per_level` set for 6–7 (TH6,
-  TH7 — those Townhall levels arrive in step 7; until then the card says
-  *Your Townhall must reach level 6*, which is true).
-- **Two new per-level district stats:** `yield_per_delivery_per_level` and
-  `strike_speed_per_level` (list columns, empty = 1.0). `DistrictDef` gains
-  both; `workerYield` (`upgrades.ts:147`) and the strike cadence in
-  `harvest.ts` read the crew's district level as a **base-stage** term of the
-  pipeline (base → ranks → modifiers), never as a modifier — the rule in
-  `CLAUDE.md` ("don't re-express upgrade levels as modifiers").
-- **Sim:** `upgradeDeltas` (`districtCard.ts:93-140`) learns yield and speed
-  so the card shows what L6 buys.
+Fourteen buildings reach level 10: Housing, the four producers, the Sanctum,
+the four halls and the four workshops. The Townhall, the Market and the crop
+plot are the three exceptions, each for its own reason (the Townhall's ladder
+is step 7; the other two are single-level buildings).
+
+- **The step landed levels 5 to 10, not 6 to 7.** The plan assumed level 5
+  existed everywhere and it did not — Housing stopped at 3, the Farm and the
+  Docks at 2, the Quarry at 3. So levels 3–5 are authored too: workers
+  `3,5,7,9,11` and one more ring of reach on every producer, Housing to 10
+  residents. Level 5 asks for TH4, which makes it the first thing the live
+  game gained.
+- **Data:** `max_level` → 10 with per-level arrays authored to 10; halls
+  `army_cap_per_level` +8 a level to 68; `mana.sanctum_cap_per_level` and
+  `…_per_hour_per_level` continued to 352 and 42; producers' workers and reach
+  **frozen at their L5 value** from L6. `upgrade_cost_goods_per_level` filled
+  for 6–10 on every one of the fourteen (§7 in
+  [`../features/buildings.md`](../features/buildings.md) §4.11 is the table).
+  `required_townhall_level_per_level` is the level itself from 6 (TH6 → TH10),
+  and `required_tech_per_level` is padded with nothing: **no late level asks
+  for a technology.**
+- **A piecewise curve, which the plan did not have.** The old single
+  `upgrade_cost_level_growth` per row cannot say "1.5 to level 5 and 1.7 after
+  it", and continuing a 20-second duration curve to level 10 gives an
+  eight-minute upgrade on day 20. So three new columns —
+  `upgrade_cost_late_level_growth`, `upgrade_duration_late_seconds`,
+  `upgrade_duration_late_level_growth` — pivot at `city.late_upgrade_from_level`
+  (6). Cost is continuous at the pivot; the wait restarts at its own base, 2 h,
+  and grows ×1.7 to about 17 h at level 10. The importer refuses a row that
+  reaches the pivot without them. Design:
+  [`../features/05-city-and-districts.md`](../features/05-city-and-districts.md)
+  §3.1.
+- **The haul is ADDED units, not a multiplier.** `extra_units_per_delivery_per_level`
+  (+1 a level from 6) rather than the planned `yield_per_delivery_per_level`:
+  a chunk is 1 to 5 units and `Math.round(1 × 1.2)` is 1, so a percentage
+  rounds away to nothing. It is the shape `WorkerLoad` already uses.
+  `strike_speed_per_level` stays a multiplier (+10% a level) because it
+  divides a cadence measured in whole seconds. Both are read in
+  `effectiveWorkerStrike` and `workerStrikeMs` off the crew's own building as
+  **base-stage** terms, never as modifiers, and neither reaches the tap.
+  `cityGatherPerSecond` reads both, so a reward priced in production sees the
+  late city.
+- **UI:** `upgradeDeltas` shows `per delivery` and `swing`; the card's area
+  block shows the real cadence; `levelStars` becomes a numeral past five
+  levels, which also fixes the workshops' ten-star row.
 - **Save:** none (levels are data).
-- **Tests:** `levelGates.test.ts` extended: L6 needs goods and TH6; a producer
-  at L6 delivers more per trip and strikes faster; `costs.test.ts` checks the
-  ×1.7 curve above 5 against the sheet; the harness moves to TH5 in week 1
-  and holds there (TH6 does not exist yet).
-- **Art:** level sprites 6–10 can be one "advanced" frame per building for
-  now; the check only insists no emoji fallback.
-- **Done when:** every building except FarmLands has ten rows of data and the
-  Townhall ladder is the only thing stopping L6.
+- **Tests:** `levelGates.test.ts` — no late level asks a technology, every one
+  asks its own Townhall level, and a Sawmill at 5 is refused first for the
+  Townhall and then for goods; a late producer hauls more and swings faster at
+  every level, and the tap is untouched. `costs.test.ts` — the ×1.7 late
+  curve on all fourteen, 2 h at 6 and ~17 h at 10, and every level below the
+  pivot is bit-identical to the old curve. `goods.test.ts` — nothing is
+  charged below the pivot and every late level charges something.
+- **What the harness says.** The city now buys levels in weeks 4 and 5, where
+  before it bought nothing (a `levels` column was added to measure it: 50 →
+  55 → 58). But **the ladder stops at level 4**: level 5 asks for TH4 and this
+  player ends on TH3, so the goods wall at level 6 is authored and unreached.
+  Step 7's Townhall ladder is what opens both — the finding is now an
+  assertion.
+- **Art:** the three-tier sprites already cover levels 6–10 (`_l8` serves
+  8–10), landed ahead of this step.
 
 ## 5. Step 5 · Adjacency v2
 
@@ -298,26 +332,32 @@ Decorations (step 6) need a non-Gold rule, so the resolver grows first.
 - **Done when:** the harness at week 3 spends plot on decorations to reach the
   next level.
 
-## 7. Step 7 · Levels 8–10, and Townhall 5–10
+## 7. Step 7 · Harmony on the late levels, and Townhall 5–10
+
+Levels 8–10 landed with step 4; what is left here is **the Townhall ladder**,
+which is the only thing standing between the player and everything step 4
+authored, and the **Harmony cost** on the levels from 8.
 
 - **Data:** Townhall `max_level` 10, `required_tech_per_level`
   `,CharterII,CharterIII,,,,,,` (nothing past 4), `upgrade_cost_goods_per_level`
-  from 5, `harmony_cost_per_level` from 8, `upgrade_duration_seconds` growth
-  retuned so L6 ≈ 4 h, L8 ≈ 12 h, L10 ≈ 36 h. Every `max_count_per_townhall_level`
-  array extended to 10 entries (Housing `2,4,6,9,11,13,15,17,19,21`; producers
-  to 5–6; workshops `0,0,0,0,1,1,1,2,2,2`). Every row's `harmony_cost_per_level`
-  filled for 8–10 and for the §5–§7 buildings. `required_townhall_level_per_level`
-  for 8–10.
-- **Sim:** nothing new — the gates from steps 2, 4 and 6 compose. Check
-  `levelIndexed` callers assume nothing about array length 5.
-- **UI:** `levelStars` (`districtCard.ts:43`) at ten levels — a numeral, not
-  ten stars. The Townhall card lists what the next level unlocks (count caps)
-  as today (`:133-136`).
+  from 5, the late-curve columns (§3.1 of
+  [`../features/05-city-and-districts.md`](../features/05-city-and-districts.md))
+  set so L6 ≈ 4 h, L8 ≈ 12 h, L10 ≈ 36 h — twice a district's, since the
+  Townhall is the clock every other ladder hangs from. Every
+  `max_count_per_townhall_level` array extended to 10 entries (Housing
+  `2,4,6,9,11,13,15,17,19,21`; producers to 5–6; workshops
+  `0,0,0,0,1,1,1,2,2,2`). Every row's `harmony_cost_per_level` filled for 8–10
+  and for the §5–§7 buildings.
+- **Sim:** nothing new — the gates from steps 2, 4 and 6 compose.
+- **UI:** the Townhall card lists what the next level unlocks (count caps) as
+  today (`districtCard.ts:133-136`). `levelStars` already became a numeral in
+  step 4.
 - **Save:** none.
 - **Tests:** `levelGates.test.ts`: TH5 needs goods, TH8 needs Harmony, no
   Townhall level past 4 needs a technology; `costs.test.ts` the durations;
   the harness: TH5 week 1, TH7 week 2, TH8 week 3, TH9 week 4 — **this is the
-  step where the pacing table becomes an assertion.**
+  step where the pacing table becomes an assertion**, and where step 4's
+  goods wall is reached for the first time.
 - **Done when:** the harness passes the whole pacing table with steps 2–7 in.
 
 ## 8. Step 8 · The Reliquary
@@ -441,8 +481,10 @@ The one new mechanic; last, and in three commits.
   `AdjacencyStat` or creature kind.
 - **Docs, in the same commit as the code:**
   [`../features/17-workshops-and-goods.md`](../features/17-workshops-and-goods.md)
-  holds steps 2 and 3, and step 4 extends it and
-  [`../features/buildings.md`](../features/buildings.md); step 5 into
+  holds steps 2 and 3; step 4 closed into
+  [`../features/buildings.md`](../features/buildings.md) §4.11 (the late
+  ladder), `05-city-and-districts.md` §3.1 (the piecewise curve) and
+  `04-harvest.md` §4 (the haul and the swing); step 5 into
   `03-economy.md` §3.1; step 6 into a new `features/18-harmony.md`; steps 8–10
   into `09-relics.md`, `10-heroes.md`, `02-map-scopes.md` and
   `buildings.md`; step 11 into `11-expeditions.md` and `buildings.md`. The
@@ -458,7 +500,7 @@ The one new mechanic; last, and in three commits.
 |---|---|---|
 | 2 | Goods are city-scoped counters, not wallet rows | proposal §2.1; `03-economy.md` wallet rule |
 | 3 | Runestone takes Mana as an input — the first non-tap Mana sink | OQ-44, `08-magic.md` §3 |
-| 4 | Producers' L6+ buy yield and speed, not crew | proposal §1.1 |
+| 4 | Producers' L6+ buy haul and speed, not crew — as ADDED units, since a chunk is 1-5 units and a percentage of it rounds away | proposal §1.1 |
 | 5 | The `Adjacency` sheet gains `stat` and `magnitude` | **OQ-48** |
 | 6 | Harmony surplus bonus lands on taxes | proposal §4.1; **OQ-1** for the plot |
 | 7 | Townhall 5–10 gated by goods and Harmony, not keystones. **Level 4 keeps `Charter III`**: the late city stays behind the delve loop, which is what welds the two halves together (settled 2026-09-04) | proposal §1.2; `07-research.md` §3 |

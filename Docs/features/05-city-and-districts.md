@@ -50,12 +50,33 @@ Three arcs run past TH3:
 buildCost(n)     = floor(base × max(mult × n × (n+1)^exp, 1))       n = existing count
 upgradeCost(L)   = floor(base × countMult × levelGrowth^(L−1))
 buildDuration    = round(seconds × districtGrowth^n × distanceGrowth^d)
+upgradeDuration  = round(seconds × durationGrowth^(L−1))
 ```
 
 - Distance is priced in build **time**, never in cost.
 - Worker buildings use multiplier 2.5 and exponent 1.15: the second Sawmill
   costs ×5.5 the first (20 → 110 → 353).
 - The Farm's base cost is 30 Wood.
+
+### 3.1 The late half of both curves
+
+The curves above are tuned for the opening — tens of Wood, tens of seconds.
+Levels 6 to 10 are a different clock, so they are a **piecewise** continuation
+that pivots at `city.late_upgrade_from_level` (6):
+
+```
+upgradeCost(L≥6)     = the level-5 term × lateCostGrowth^(L−5)
+upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
+```
+
+- The **cost** is continuous: reaching level 6 is the early curve's last step
+  times the late growth (1.7 everywhere today), so nothing jumps.
+- The **wait** is not, deliberately: it restarts at its own base — 2 h for
+  every district — because a minute-long step cannot be compounded into a
+  multi-day ladder without deforming the opening.
+- A row that stops at 5 leaves the late columns blank, and the importer
+  refuses a row that reaches 6 without them.
+- What each late level buys: [`buildings.md`](buildings.md) §4.11.
 
 ## 4. Placement, and moving
 
@@ -140,7 +161,8 @@ What follows the building:
 | Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
-| Army cap per level | 6 / 10 / 15 / 21 / 28, on the four military halls ([`buildings.md`](buildings.md) §4.9) |
+| Army cap per level | 6 / 10 / 15 / 21 / 28 then +8 a level to 68, on the four military halls ([`buildings.md`](buildings.md) §4.9, §4.11) |
+| The late half of the curves | `Districts.upgrade_*_late_*`, `city.late_upgrade_from_level` — §3.1 |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 
 ## 6. Deliberately not in this design

@@ -13,7 +13,9 @@
 - The city keeps a **counter per good**, like the collection's ingredients.
   No coin on the plank, no cap, no Market price.
 - A good is read where it is spent: a workshop's queue, and the price of a
-  building level.
+  building level — **every** level from 6 upward, on every building that has
+  one ([`buildings.md`](buildings.md) §4.11), so no city reaches level 10
+  without a workshop.
 - Goods are city-scoped, and no part of the wallet.
 
 ## 2. The four goods
@@ -115,7 +117,7 @@
 | Queue length by level | 3 → 12 | `Districts.queue_length_per_level` |
 | Crew by level | 1 → 6 | `Districts.max_workers_per_level` |
 | How many the city may own | 1 at TH5, 2 at TH8 | `Districts.max_count_per_townhall_level` |
-| What a building level costs in goods | [`buildings.md`](buildings.md) | `Districts.upgrade_cost_goods_per_level` |
+| What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | `Districts.upgrade_cost_goods_per_level` |
 | Gem price of the item in progress | 5 s a Gem | `rush.seconds_per_gem` |
 | Offline cap | 8 h | `offlineCapHours` |
 

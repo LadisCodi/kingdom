@@ -170,6 +170,11 @@ const SETTINGS = [
   // made to say 5, 20, 100 without deforming everything past it.
   ['city.population_cost_first', 'city.populationCostFirst', 'list'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
+  // Where the LATE city starts. Below it a level is priced and timed by the
+  // row's own curve, tuned for the opening; from it the late columns take
+  // over (`upgrade_cost_late_level_growth`, `upgrade_duration_late_*`), so
+  // levels 6-10 can be a multi-hour ladder without deforming levels 2-5.
+  ['city.late_upgrade_from_level', 'city.lateUpgradeFromLevel'],
   // NO `city.build_queue_capacity`. There is no waiting line: a build either
   // starts because a builder is free or it does not start at all, so the
   // queue's length IS the builder count and a second dial for it could only
@@ -299,7 +304,10 @@ const DISTRICT_COLUMNS = [
   'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
   'upgrade_cost_stone',
   'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
+  'upgrade_cost_late_level_growth',
+  'upgrade_duration_late_seconds', 'upgrade_duration_late_level_growth',
   'upgrade_cost_goods_per_level',
+  'extra_units_per_delivery_per_level', 'strike_speed_per_level',
   'produces', 'queue_length_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
@@ -307,6 +315,7 @@ const DISTRICT_LIST_COLUMNS = [
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
+  'extra_units_per_delivery_per_level', 'strike_speed_per_level',
 ];
 
 const SHEETS = {
@@ -605,7 +614,19 @@ async function importXlsx() {
       upgradeCostLevelGrowth: num(r, 'upgrade_cost_level_growth'),
       upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
       upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
+      // The late curve. 0 = "this row has no late levels", and every level is
+      // priced and timed by the columns above it.
+      upgradeCostLateLevelGrowth: num(r, 'upgrade_cost_late_level_growth', { blankAs: 0 }),
+      upgradeDurationLateSeconds: num(r, 'upgrade_duration_late_seconds', { blankAs: 0 }),
+      upgradeDurationLateLevelGrowth:
+        num(r, 'upgrade_duration_late_level_growth', { blankAs: 0 }),
       upgradeCostGoodsPerLevel: goodsList(r, 'upgrade_cost_goods_per_level'),
+      // What a producer's late level buys instead of crew: units ADDED to a
+      // delivery (the shape WorkerLoad already uses, because a chunk is 1-5
+      // units and a percentage of that rounds away), and a multiplier on the
+      // swing. Blank = 0 added, 1.0 speed.
+      extraUnitsPerDeliveryPerLevel: list(r, 'extra_units_per_delivery_per_level'),
+      strikeSpeedPerLevel: list(r, 'strike_speed_per_level'),
       // A workshop makes ONE good. Which one is its identity, the way a
       // Sawmill's identity is the forest.
       produces: (r.produces === '' || r.produces === undefined) ? null : r.produces,
@@ -857,6 +878,26 @@ async function importXlsx() {
     target[parts[0]] = value;
   }
 
+  // The late curve is checked here rather than in the Districts loop, because
+  // where the late city starts is a Setting and the settings are read last.
+  // A building that reaches past the pivot without the late columns would be
+  // priced and timed for levels 6-10 by a curve tuned for the opening, which
+  // is silently wrong rather than loudly wrong.
+  const pivot = out.city.lateUpgradeFromLevel;
+  for (const [id, d] of Object.entries(out.districts)) {
+    const late = d.maxLevel >= pivot;
+    const authored = d.upgradeCostLateLevelGrowth > 0
+      || d.upgradeDurationLateSeconds > 0 || d.upgradeDurationLateLevelGrowth > 0;
+    if (!late && authored) {
+      fail(`Districts/${id}`, `has late-curve columns but stops at level ${d.maxLevel}`);
+    }
+    if (late && !authored && Object.keys(d.upgradeCost).length > 0) {
+      fail(`Districts/${id}`,
+        `reaches level ${d.maxLevel} but authors no late curve — set ` +
+        'upgrade_cost_late_level_growth and upgrade_duration_late_*');
+    }
+  }
+
   writeFileSync(JSON_PATH, JSON.stringify(out, null, 2) + '\n');
   console.log(`balance: wrote ${JSON_PATH}`);
 }
@@ -906,7 +947,10 @@ async function exportXlsx() {
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
       ...costCells(d.upgradeCost),
       d.upgradeCostLevelGrowth, d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
+      d.upgradeCostLateLevelGrowth || '',
+      d.upgradeDurationLateSeconds || '', d.upgradeDurationLateLevelGrowth || '',
       goodsCell(d.upgradeCostGoodsPerLevel),
+      listCell(d.extraUnitsPerDeliveryPerLevel), listCell(d.strikeSpeedPerLevel),
       d.produces ?? '', listCell(d.queueLengthPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
