@@ -32,11 +32,6 @@ const AWAITING_ART: readonly string[] = [
   // Stardust — the renamed collection currency (2026-09-03). Knowledge kept
   // its scroll; the dust that levels a relic needs its own cell.
   'Stardust',
-  // The workshops' menu icons. Their WORLD art is drawn — `carpenter_l1` and
-  // friends are on disk — and so is their menu art, in `ui-h-goods.png`; the
-  // manifest holds those four cells at `null` until the districts exist,
-  // because a name the kit cannot resolve fails the first gate above.
-  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
 ];
 
 const pending = new Set(AWAITING_ART);

@@ -124,13 +124,13 @@
         "Planks",
         "CutStone",
         "Runestone",
-        null,
-        null,
-        null,
-        null,
+        "Carpenter",
+        "MasonsYard",
+        "Smelter",
+        "RuneCarver",
         null
       ],
-      "note": "The refined goods of the builder programme. Cells 4-7 are drawn (a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel) and wait for Carpenter, MasonsYard, Smelter and RuneCarver to become DistrictId \u2014 a name here that the kit cannot resolve fails the atlas's first gate, so they stay null until those rows land. Iron is NOT here: the ore icon from ui-a doubles as the ingot, which at 16px is the same picture."
+      "note": "The refined goods of the builder programme, and the four workshops that make them: a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel. The eighth cell was never drawn. Iron is NOT here: the ore icon from ui-a doubles as the ingot, which at 16px is the same picture."
     },
     {
       "file": "sheets/currencies-16.png",

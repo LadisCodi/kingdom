@@ -250,11 +250,11 @@ fixed until it passed. That distinction is the whole value of having it.
 - **Contents** (reading order): sawn planks, a dressed stone block, a rune
   stone, a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel,
   and one deliberately empty cell.
-- **Named in the manifest:** `Planks`, `CutStone`, `Runestone` only. The four
-  workshop cells are drawn but held at `null` until Carpenter, MasonsYard,
-  Smelter and RuneCarver are `DistrictId` — the atlas's first gate ("ships no
-  cell the kit cannot name") fails on a name the kit cannot resolve, which is a
-  different gate from `AWAITING_ART`.
+- **Named in the manifest:** all seven drawn cells — `Planks`, `CutStone`,
+  `Runestone`, `Carpenter`, `MasonsYard`, `Smelter`, `RuneCarver`. The four
+  workshop cells waited one commit for those rows to become `DistrictId`s: the
+  atlas's first gate ("ships no cell the kit cannot name") fails on a name the
+  kit cannot resolve, which is a different gate from `AWAITING_ART`.
 
 ### The one thing this sheet taught
 
