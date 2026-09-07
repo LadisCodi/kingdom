@@ -11,10 +11,6 @@
 declare module 'node:fs' {
   export function readFileSync(path: string | URL, encoding: 'utf8' | 'latin1'): string;
   export function readdirSync(path: string | URL): string[];
-  // Written by exactly one test, and only under an env knob: the golden
-  // fixture for the effect migration regenerates itself once and is then
-  // frozen (`tests/goldenEffects.test.ts`).
-  export function writeFileSync(path: string | URL, data: string): void;
 }
 
 // And the one global: a slow harness reads an env knob to shorten a run while

@@ -1,33 +1,25 @@
-// EVERY NUMBER A LADDER MOVES, FROZEN — the safety net for retiring the 37
-// minor lines in favour of declarative effects.
+// EVERY LADDER MOVES SOMETHING — the successor to the source grep, and the
+// only coverage **Stonecutting, Big Nets, Iron Picks and Prospecting** have
+// anywhere.
 //
-// A technology's bonus stopped being `line` + `effectPerRank` read by one
-// hard-coded call site and became `{ stat, op, value, target }` summed by one
-// resolver. That was a rewrite of ~30 arithmetic expressions, and the whole
-// risk was a number quietly moving: a mis-targeted effect, a percent divided
-// in the wrong place, an expression re-associated while it was being edited.
+// A ladder that changes no number a player can see is a ladder the player pays
+// for and nothing collects. That can happen without a typo: a stat spelled
+// right but aimed at the wrong harvest source, an effect on a card whose
+// reader was deleted, a value of 0 saved from the editor. So this walks every
+// ladder, rank by rank, and reads **the numbers a player actually meets** —
+// what a tap owes, what a house pays, how long a build takes, what a depth
+// hauls out — then asserts that a fully-researched ladder has moved at least
+// one of them away from its own rank-0 baseline.
 //
-// Written once against the tree as it shipped, and every assertion since has
-// run against those frozen values.
-//
-// So this walks every ladder, rank by rank, and records **the numbers a player
-// can actually see** — what a tap owes, what a house pays, how long a build
-// takes, what a depth hauls out. It stores only the probes that DIFFER from
-// that ladder's rank-0 baseline, which makes the fixture small and turns it
-// into a statement worth reading: *this ladder moves exactly these numbers, by
-// exactly this much.*
-//
-// It also asserts each ladder moves SOMETHING. That is the successor to the
-// grep in `techTree.test.ts` — a ladder that changes no number is a ladder the
-// player pays for and nothing collects — and it is the only coverage
-// **Stonecutting, Big Nets, Iron Picks and Prospecting** have at all.
-//
-// Written once against the tree as it stands, with `KINGDOM_GOLDEN=write`, and
-// **never regenerated**: a fixture that is regenerated when it fails is not a
-// guard. It is deleted when the conversion is finished, because from then on
-// its numbers are the balance rather than a promise about it.
+// It does NOT assert the amounts. It used to: a frozen fixture of every
+// number every ladder moved was the safety net while the 37 minor `line`s
+// became declarative `effects`, and it is what proved that rewrite of ~30
+// arithmetic expressions moved nothing. The crossing is done, so the fixture
+// is gone — from here on those numbers are the BALANCE rather than a promise
+// about it, and a fixture regenerated on every rebalance is not a guard.
+// `tests/upgrades.test.ts` still pins the amounts that were argued for, one
+// readable assertion at a time.
 
-import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   DELVE, HARVEST, LANDMARKS, RUINS, TECHNOLOGIES,
@@ -55,8 +47,6 @@ import {
   addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, reveal, T0,
 } from './helpers';
 
-const FIXTURE = new URL('./goldenEffects.json', import.meta.url);
-const WRITING = process.env.KINGDOM_GOLDEN === 'write';
 
 /** The cells the probes draw from — one per harvest source that a ladder can
  *  reach, so a mis-targeted abundance effect shows up as the wrong cell
@@ -217,55 +207,35 @@ function ladderDiffs(line: string): Record<string, Record<string, number>> {
   return out;
 }
 
-const golden = (): Record<string, Record<string, Record<string, number>>> => {
+/** Every ladder's movements, keyed `ladder → rank → probe → value`. */
+const movements = (): Record<string, Record<string, Record<string, number>>> => {
   const out: Record<string, Record<string, Record<string, number>>> = {};
-  for (const line of bonusLadders) out[line] = ladderDiffs(line);
+  for (const ladder of bonusLadders) out[ladder] = ladderDiffs(ladder);
   return out;
 };
 
-describe('every number a ladder moves', () => {
-  it('matches the frozen fixture', () => {
-    const now = golden();
-    if (WRITING) {
-      writeFileSync(FIXTURE, `${JSON.stringify(now, null, 1)}\n`);
-      return;
-    }
-    const was = JSON.parse(readFileSync(FIXTURE, 'utf8')) as typeof now;
-    // Per ladder rather than in one lump: a failure should name the ladder
-    // that moved, not hand over a 40 KB diff.
-    for (const line of Object.keys(was)) {
-      expect(now[line], `${line} moves different numbers now`).toEqual(was[line]);
-    }
-    expect(Object.keys(now).sort()).toEqual(Object.keys(was).sort());
-  });
-
-  // A ladder that changes nothing is a ladder the player pays for and nothing
-  // collects. This is the successor to the source grep in techTree.test.ts,
-  // and the only coverage Stonecutting, BigNets, IronPicks and Prospecting
-  // have anywhere.
-  it('has every ladder move at least one number', () => {
-    const now = golden();
-    const inert = bonusLadders.filter((line) => {
-      const top = String(ladders[line].length);
-      return Object.keys(now[line][top] ?? {}).length === 0;
+describe('every rank ladder in the tree', () => {
+  it('moves at least one number a player can see', () => {
+    const moved = movements();
+    const inert = bonusLadders.filter((ladder) => {
+      const top = String(ladders[ladder].length);
+      return Object.keys(moved[ladder][top] ?? {}).length === 0;
     });
     expect(inert, 'these ladders move nothing at full rank').toEqual([]);
   });
 
-  // The fixture is keyed by LADDER, and a ladder is now a naming convention
-  // rather than a field, so this is what keeps the keys meaning what they
-  // meant when they were frozen: the same stems, each with the same ranks
-  // under it. A renamed or re-lengthened ladder fails here, by name, instead
-  // of silently freezing a different set of numbers under an old key.
-  it('still has every ladder it froze, at the length it froze it', () => {
-    const was = JSON.parse(readFileSync(FIXTURE, 'utf8')) as
-      Record<string, Record<string, unknown>>;
-    for (const [line, ranks] of Object.entries(was)) {
-      expect(ladders[line], `the ${line} ladder is gone`).toBeDefined();
-      expect(ladders[line], `the ${line} ladder changed length`)
-        .toHaveLength(Object.keys(ranks).length);
-      for (const id of ladders[line]) {
-        expect(TECHNOLOGIES[id].kind, `${id} is no longer a bonus`).toBe('bonus');
+  // Asserted at FULL rank, not at every rank. `ProspectingI` moves nothing
+  // this probe can see: +5% Stardust on a single depth rounds back to the
+  // same integer, and the probe reads one depth because that is what a
+  // deterministic delve gives it. Per-rank would need an exception list for
+  // rounding, and a guard with an exception list for the interesting cases is
+  // not a guard.
+
+  it('is a chain of bonuses, so the stems above mean what they say', () => {
+    for (const ladder of bonusLadders) {
+      for (const id of ladders[ladder]) {
+        expect(TECHNOLOGIES[id].kind, `${id} is not a bonus`).toBe('bonus');
+        expect(TECHNOLOGIES[id].effects, `${id} moves nothing`).not.toHaveLength(0);
       }
     }
   });

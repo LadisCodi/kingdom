@@ -142,9 +142,10 @@ describe('the resolver', () => {
 // The parity block that lived here proved, expression by expression, that
 // each reader's new form equalled its `effect(state, 'Line')` form at 0 to 5
 // ranks of every ladder. Both halves were needed to write it, so it went when
-// `effect()` did — its job was the crossing, and the crossing is done. The
-// golden fixture in `tests/goldenEffects.test.ts` is the surviving proof that
-// no number moved.
+// `effect()` did — its job was the crossing, and the crossing is done. So did
+// the frozen fixture that proved no number moved; what survives of it is
+// `tests/ladderEffects.test.ts`, which asserts every ladder still moves
+// something.
 describe('every rank in the shipped tree carries a legal effect', () => {
   it('gives every rank of every ladder exactly one effect the rules accept', () => {
     for (const ladder of bonusLadders) {
