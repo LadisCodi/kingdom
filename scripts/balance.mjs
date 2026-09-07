@@ -308,6 +308,7 @@ const DISTRICT_COLUMNS = [
   'upgrade_duration_late_seconds', 'upgrade_duration_late_level_growth',
   'upgrade_cost_goods_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level',
+  'sale_price_per_level',
   'produces', 'queue_length_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
@@ -315,7 +316,7 @@ const DISTRICT_LIST_COLUMNS = [
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
-  'extra_units_per_delivery_per_level', 'strike_speed_per_level',
+  'extra_units_per_delivery_per_level', 'strike_speed_per_level', 'sale_price_per_level',
 ];
 
 const SHEETS = {
@@ -627,6 +628,9 @@ async function importXlsx() {
       // swing. Blank = 0 added, 1.0 speed.
       extraUnitsPerDeliveryPerLevel: list(r, 'extra_units_per_delivery_per_level'),
       strikeSpeedPerLevel: list(r, 'strike_speed_per_level'),
+      // The Market's own ladder: what its level pays for a sold unit. Blank =
+      // 1.0, which is every other building.
+      salePricePerLevel: list(r, 'sale_price_per_level'),
       // A workshop makes ONE good. Which one is its identity, the way a
       // Sawmill's identity is the forest.
       produces: (r.produces === '' || r.produces === undefined) ? null : r.produces,
@@ -951,6 +955,7 @@ async function exportXlsx() {
       d.upgradeDurationLateSeconds || '', d.upgradeDurationLateLevelGrowth || '',
       goodsCell(d.upgradeCostGoodsPerLevel),
       listCell(d.extraUnitsPerDeliveryPerLevel), listCell(d.strikeSpeedPerLevel),
+      listCell(d.salePricePerLevel),
       d.produces ?? '', listCell(d.queueLengthPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));

@@ -39,6 +39,7 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -135,6 +136,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -263,6 +265,7 @@
         1.4,
         1.5
       ],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -305,6 +308,7 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -433,6 +437,7 @@
         1.4,
         1.5
       ],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -441,7 +446,7 @@
         "x": 1,
         "y": 1
       },
-      "maxLevel": 1,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -450,7 +455,17 @@
         1
       ],
       "influenceRadiusPerLevel": [],
-      "requiredTownhallLevelPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        0,
+        0,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
       "requiredTechPerLevel": [],
       "extraCountTech": "Guildhalls",
       "armyCapPerLevel": [],
@@ -462,16 +477,51 @@
       "buildDurationSeconds": 30,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
-      "upgradeDurationSeconds": 0,
-      "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
-      "upgradeDurationLateSeconds": 0,
-      "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
+      "upgradeCost": {
+        "Gold": 200,
+        "Wood": 60
+      },
+      "upgradeCostLevelGrowth": 1.6,
+      "upgradeDurationSeconds": 60,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostLateLevelGrowth": 1.7,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "upgradeCostGoodsPerLevel": [
+        {},
+        {},
+        {},
+        {},
+        {
+          "Planks": 2
+        },
+        {
+          "Planks": 3
+        },
+        {
+          "Planks": 4
+        },
+        {
+          "Planks": 5
+        },
+        {
+          "Planks": 6
+        }
+      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [
+        1,
+        1.03,
+        1.06,
+        1.09,
+        1.12,
+        1.15,
+        1.18,
+        1.21,
+        1.24,
+        1.27
+      ],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -600,6 +650,7 @@
         1.4,
         1.5
       ],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -728,6 +779,7 @@
         1.4,
         1.5
       ],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -811,6 +863,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -905,6 +958,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -999,6 +1053,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -1093,6 +1148,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -1187,6 +1243,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": []
     },
@@ -1278,6 +1335,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": "Planks",
       "queueLengthPerLevel": [
         3,
@@ -1382,6 +1440,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": "CutStone",
       "queueLengthPerLevel": [
         3,
@@ -1486,6 +1545,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": "Iron",
       "queueLengthPerLevel": [
         3,
@@ -1590,6 +1650,7 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
       "produces": "Runestone",
       "queueLengthPerLevel": [
         3,

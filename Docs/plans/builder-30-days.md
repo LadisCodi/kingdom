@@ -207,10 +207,10 @@ one good, and the first producer in the game that is a crew from the start.
 
 ## 4. Step 4 · Levels 6–10, gated by goods — **DONE**
 
-Fourteen buildings reach level 10: Housing, the four producers, the Sanctum,
-the four halls and the four workshops. The Townhall, the Market and the crop
-plot are the three exceptions, each for its own reason (the Townhall's ladder
-is step 7; the other two are single-level buildings).
+Fifteen buildings reach level 10: Housing, the four producers, the Sanctum,
+the four halls, the four workshops and the Market. The two exceptions are the
+Townhall, whose ladder is step 7, and the crop plot, which is a cell rather
+than a building.
 
 - **The step landed levels 5 to 10, not 6 to 7.** The plan assumed level 5
   existed everywhere and it did not — Housing stopped at 3, the Farm and the
@@ -260,11 +260,20 @@ is step 7; the other two are single-level buildings).
   pivot is bit-identical to the old curve. `goods.test.ts` — nothing is
   charged below the pivot and every late level charges something.
 - **What the harness says.** The city now buys levels in weeks 4 and 5, where
-  before it bought nothing (a `levels` column was added to measure it: 50 →
-  55 → 58). But **the ladder stops at level 4**: level 5 asks for TH4 and this
-  player ends on TH3, so the goods wall at level 6 is authored and unreached.
-  Step 7's Townhall ladder is what opens both — the finding is now an
-  assertion.
+  before it bought nothing (a `levels` column was added to measure it: 51 →
+  58 → 61). It also buys them EARLIER: the scripted player upgrades where it
+  used to build, so weeks 1–2 end on 11 and 21 buildings instead of 12 and 23.
+  But **the ladder stops at level 4**: level 5 asks for TH4 and this player
+  ends on TH3, so the goods wall at level 6 is authored and unreached. Step
+  7's Townhall ladder is what opens both — the finding is now an assertion.
+- **The Market joined the ladder too** (proposal §1.1), with one new column,
+  `sale_price_per_level`: ten levels whose only purchase is the price it pays
+  for a unit, +3% a level to +27%. Two Markets do not stack — the better one
+  sets the price. **Its goods tab is deliberately NOT in**: a Market that
+  bought refined goods for Gold would trade the scarce thing for the abundant
+  one, and this player ends the month on 16.8 M unspent Gold
+  ([`../features/17-workshops-and-goods.md`](../features/17-workshops-and-goods.md)
+  §10).
 - **Art:** the three-tier sprites already cover levels 6–10 (`_l8` serves
   8–10), landed ahead of this step.
 

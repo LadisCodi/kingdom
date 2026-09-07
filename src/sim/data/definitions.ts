@@ -343,6 +343,9 @@ export interface DistrictDef {
    *  building's own level and never re-expressed as a modifier. */
   extraUnitsPerDeliveryPerLevel: readonly number[];
   strikeSpeedPerLevel: readonly number[];
+  /** What a sold unit pays, by the level of the best Market in the city. A
+   *  multiplier, empty = 1.0 — the Market is the only building with one. */
+  salePricePerLevel: readonly number[];
   /** How many items may be queued at once, by level. Empty = not a workshop.
    *  A longer queue is a longer absence covered, never more goods per hour —
    *  that is the crew (Docs/plans/builder-30-days.md §2.2). */

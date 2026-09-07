@@ -77,13 +77,12 @@ describe('the late curve, from level 6', () => {
   const LATE: readonly DistrictId[] = (Object.keys(DISTRICTS) as DistrictId[])
     .filter((id) => DISTRICTS[id].maxLevel >= LATE_FROM);
 
-  it('reaches the late city on fourteen buildings, and stops on the rest', () => {
-    // Ten producers and halls plus the four workshops. The three exceptions
-    // each have a reason: the Townhall's own ladder is step 7, and the Market
-    // and the crop plot are single-level buildings.
-    expect(LATE.length).toBe(14);
+  it('reaches the late city on fifteen buildings, and stops on the rest', () => {
+    // Ten producers and halls, the four workshops, and the Market. The two
+    // exceptions each have a reason: the Townhall's own ladder is step 7, and
+    // the crop plot IS a cell rather than a building.
+    expect(LATE.length).toBe(15);
     expect(DISTRICTS.Townhall.maxLevel).toBe(4);
-    expect(DISTRICTS.Market.maxLevel).toBe(1);
     expect(DISTRICTS.FarmLands.maxLevel).toBe(1);
   });
 

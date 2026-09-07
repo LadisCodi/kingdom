@@ -40,7 +40,7 @@
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
 | **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
-| **Market** | 1×1 | Market | 1 (+1 with `Guildhalls`) | **1** | sells surplus for Gold |
+| **Market** | 1×1 | Market | 1 (+1 with `Guildhalls`) | **10** | sells surplus for Gold |
 | **Sanctum** | 1×1 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
 | **Barracks** | 1×1 | Warrior | 1 | **10** | army cap; trains Warrior, Lancer, Archer |
 | **Spear Hall** | 1×1 | Spears | 1 | **10** | army cap; trains Lancer |
@@ -159,8 +159,22 @@
 ### 4.7 Market
 
 - Sells surplus resources for Gold ([`03-economy.md`](03-economy.md) §6).
-- One level. Build 40 Wood, 30 s. One per city; `Guildhalls` (Civics era 3)
-  allows a second.
+- Build 40 Wood, 30 s. Upgrade 200 Gold + 60 Wood, 60 s, ×1.6 per level.
+- One per city; `Guildhalls` (Civics era 3) allows a second. **The better
+  Market sets the price** — a second one is another doorway, not a bigger
+  bonus.
+- **A level buys the price and nothing else**: +3% a sold unit, to +27% at ten.
+  It stacks with `MarketStall`'s +5% a rank.
+
+| Level | Sale price | Gate |
+|---|---|---|
+| 1 | — | — |
+| 2 | +3% | — |
+| 3 | +6% | TH3 |
+| 4 | +9% | TH3 |
+| 5 | +12% | TH4 |
+
+Levels 6–10 continue at +3% a level, to +27% (§4.11).
 
 ### 4.8 Sanctum
 
@@ -244,7 +258,7 @@ written once. The Townhall's own ladder past 4 is not built yet.
 
 | Building | Levels 6 → 10 pay |
 |---|---|
-| Housing · Farm · Mason's Yard | 2 → 6 **Planks** |
+| Housing · Farm · Mason's Yard · Market | 2 → 6 **Planks** |
 | Sawmill · Docks | 3 → 7 **Planks** |
 | Carpenter | 2 → 6 **Cut Stone** |
 | Quarry · Smelter | 3 → 7 **Cut Stone** |
@@ -264,6 +278,7 @@ written once. The Townhall's own ladder past 4 is not built yet.
 | Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a 10% faster swing a level** — crew and reach stop growing at 5, because the plot has more cells than a crew can work |
 | the four military halls | +8 army cap a level, to 68 |
 | Sanctum | the Mana curve, to 352 held and 42 an hour |
+| Market | +3% on a sold unit a level, to +27% |
 | the four workshops | crew and queue as §4.10 |
 
 ## 5. Wonders — designed, not built
@@ -298,7 +313,7 @@ levels a building is bought with a Townhall level and goods (§4.11).
 | Docks 2 | `Shipbuilding` (Magic era 3) |
 | Sanctum 5 | TH4 · `Attunement III` (Magic era 3 keystone) |
 | the four halls 5 | TH3 · `Warband III` (Warfare era 3 keystone) |
-| the four workshops | none — their unlock technology is the only one |
+| the four workshops · the Market | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them
 
@@ -310,6 +325,7 @@ levels a building is bought with a Townhall level and goods (§4.11).
 | The unlock technology | `requiredTech` on the district (`src/sim/data/definitions.ts`) |
 | Residents, workers, radius, army cap per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level` |
 | Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
+| What a Market level pays for a sold unit | `Districts.sale_price_per_level` |
 | What a level costs in refined goods | `Districts.upgrade_cost_goods_per_level` |
 | Sanctum capacity and regen per level | `mana.sanctum_cap_per_level`, `mana.sanctum_per_hour_per_level` |
 | A second Market or Sanctum | `Districts.extra_count_tech` |

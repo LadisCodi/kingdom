@@ -130,10 +130,15 @@ A full pool buys about the same slice of progress at every stage:
 - Arrives at onboarding steps 13–15.
 - Selling is instant: an amount selector (×1 / ×10 / ×100 / ×1000 / All), one
   Sell per sellable currency, Gold on the spot.
-- Price: `floor(units × goldValue × (1 + 5% per MarketStall level))`.
+- Price: `floor(units × goldValue × (marketLevelBonus + 5% per MarketStall
+  level))`, where the Market's own level pays +3% a level to +27% at ten
+  ([`buildings.md`](buildings.md) §4.7). Two Markets do not stack: the better
+  one sets the price.
 - Three crates: **Food 1, Stone 2, Wood 3** Gold a unit.
 - The Market is not a sink: it converts a surplus into Gold. Gold buys
   **Wonder levels**, which have no last one ([`16-wonders.md`](16-wonders.md)).
+- **Refined goods are not sellable here**, at any level
+  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §10).
 
 ## 7. Where Gold goes
 
