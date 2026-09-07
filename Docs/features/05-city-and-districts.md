@@ -184,4 +184,4 @@ What follows the building:
 - A distance term in build **cost**.
 - `Desert`, a declared terrain with zero cells.
 
-**Open questions:** OQ-46, OQ-48.
+**Open questions:** OQ-46.

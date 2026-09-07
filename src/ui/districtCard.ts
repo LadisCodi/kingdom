@@ -11,13 +11,13 @@
 // shape — a mark, what you are buying, the button that spends — so training
 // a unit and buying a level read the same way.
 
-import { formatAdjacency, type Game } from '../game';
+import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed,
+  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower } from '../sim/army';
-import { districtAdjacency } from '../sim/adjacency';
+import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
   canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
   requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
@@ -40,6 +40,15 @@ import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/up
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
 import { action, btn, iconEl, knob, pips, progress, stat } from './kit';
+
+/** What each adjacency stat is called on a card. The number beside it is
+ *  signed and the tone is already right, so the words only have to say WHAT
+ *  the neighbours are moving. */
+const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
+  goldPerMinute: 'Neighbours',
+  workTime: 'Good neighbours — work time',
+  trainTime: 'A military quarter — training time',
+};
 
 /** The most stars worth counting at a glance. A ten-level building gets a
  *  numeral instead: ten pips is a bar chart, not a count. */
@@ -331,6 +340,15 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         body.append(el('div', { class: 'dc-tapline' },
           iconEl('showme', { size: 'sm' }), 'Nobody works here yet — add a villager'));
       }
+    }
+
+    // Every OTHER thing the neighbours are doing to this building. Gold is
+    // already said in the house's own words above, so it is not repeated.
+    for (const e of adjacencyInEffect(game.state, district)) {
+      if (e.stat === 'goldPerMinute') continue;
+      const { label, tone } = adjacencyReadout(e.stat, e.total);
+      body.append(el('div', { class: `dc-badge is-${tone}` },
+        `${ADJACENCY_WORDS[e.stat]} ${label}`));
     }
   }
 

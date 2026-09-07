@@ -78,18 +78,44 @@
 
 ### 3.1 Adjacency
 
-- A directed `(district, neighbour)` rule paying Gold/min, positive or
-  negative, computed from locations on read.
-- Footprints must share an **edge**; diagonal corner contact does not count.
-- One rule: Housing next to Housing, −1 Gold/min per neighbour.
-- A house clamps at 0, never negative.
+**Adjacency is the only thing that guides a layout.** Placement itself is free
+— anywhere revealed, no plot bound, no building required next to another
+([`05-city-and-districts.md`](05-city-and-districts.md) §4) — so every rule
+here pays or charges, and none refuses.
+
+- A rule is `(district, neighbour, stat, magnitude)`, computed from locations
+  on read. Footprints must share an **edge**; diagonal corner contact does not
+  count.
+- **Either side may name a kind instead of a building**: `AnyHall`,
+  `AnyWorkshop`, `AnyProducer`. Membership is what a district already is, so a
+  new hall needs no new row.
+- Units are the stat's: `goldPerMinute` is flat Gold a minute, everything else
+  is a **fraction** of the base. For a duration a negative magnitude is the
+  good one.
+- **No stat moves more than ±25%**, whatever piles up next door. That is what
+  keeps a layout better-or-worse instead of right-or-wrong.
+- A house's rent clamps at 0, never negative.
 - While placing, every affected neighbour and the ghost itself show a compact
-  label.
-- **Adjacency is the only thing that guides a layout.** Placement itself is
-  free — anywhere revealed, no plot bound, no building required next to
-  another ([`05-city-and-districts.md`](05-city-and-districts.md) §4) — so a
-  bonus or a penalty is a nudge and never a refusal.
-- More rules and non-Gold effects: OQ-48.
+  signed label; a built card lists what its neighbours are doing to it.
+
+| District | Next to | Moves | By |
+|---|---|---|---|
+| **Housing** | Housing | Gold a minute | **−1** each |
+| **a hall** | another hall | training time | **−10%** each |
+| **Carpenter** | Sawmill | work time | −10% |
+| **Mason's Yard** | Quarry | work time | −10% |
+| **Smelter** | Quarry | work time | −10% |
+| **Rune Carver** | Sanctum | work time | −10% |
+
+**When a rule is priced.** A rate read on demand — Gold a minute — is computed
+every time it is read, so moving a house changes its rent at once. A **timer**
+is priced when it STARTS and stored on the thing waiting: a trainee's seconds
+and a workshop item's work are stamped when they are queued, so a neighbour
+that arrives, moves or is replaced later never repriced a wait already
+running. Research already worked this way.
+
+- More rules arrive as rows; a new **stat** is one line in `AdjacencyStat`
+  plus one call site.
 
 ## 4. Villager training
 
@@ -173,7 +199,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.45 | `training.*`, `city.population_cost_*` |
 | Collect cooldown | 0.5 s | `tap.collect_cooldown_seconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `Currencies.gold_value` |
-| Adjacency | Housing↔Housing −1 | `Adjacency` sheet |
+| Adjacency rules | §3.1 | `Adjacency` sheet — `district`, `neighbor`, `stat`, `magnitude` |
 
 ## 9. Deliberately not in this design
 
@@ -188,4 +214,4 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 - A drip-sell queue, sale timers or a Gem rush at the Market.
 - A Townhall tap that hurries villager training.
 
-**Open questions:** OQ-46, OQ-48 in [`../open-questions.md`](../open-questions.md).
+**Open questions:** OQ-46 in [`../open-questions.md`](../open-questions.md).

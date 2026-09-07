@@ -91,10 +91,12 @@ by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
+| a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
+| a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 
 ## Saves
 
-`SAVE_VERSION` is 29; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 30; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -137,6 +139,16 @@ than the build is rejected rather than downgraded.
   tap on the map.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a
   throttled background tab resolves correctly on return.
+- **An adjacency on a TIMER is priced when the timer starts and stored on the
+  thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`, and research
+  already did it): a neighbour that moves must never reprice a wait already
+  running. An adjacency on a RATE is computed on read. Neither is a modifier —
+  a positional fact belongs at the base stage.
+- **An adjacency on a TIMER is priced when the timer starts and stored on the
+  thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`, and research
+  already did it): a neighbour that moves must never reprice a wait already
+  running. An adjacency on a RATE is computed on read. Neither is a modifier —
+  positional facts belong at the base stage.
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

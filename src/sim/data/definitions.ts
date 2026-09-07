@@ -205,12 +205,52 @@ export const TAXES = balance.taxes;
 
 // Adjacency rules (Adjacency sheet): flat gold a district gains — or loses —
 // per adjacent neighbor of a given type. Directional: (district, neighbor).
+/**
+ * What an adjacency rule moves. One line here plus one call site is the whole
+ * cost of a new one — which is the point of the sheet having a `stat` column
+ * rather than a Gold column (OQ-48).
+ *
+ * Units are the STAT's, not the column's, and there are only two kinds:
+ * `goldPerMinute` is flat Gold a minute, everything else is a **fraction** of
+ * the base (−0.10 = a tenth faster, or cheaper, or more).
+ */
+export type AdjacencyStat = 'goldPerMinute' | 'workTime' | 'trainTime';
+
+/**
+ * Who a rule's `neighbour` may name: one district, or a GROUP of them.
+ *
+ * Groups exist because the rules are written by kind — "a hall beside another
+ * hall", "the Market beside a workshop" — and spelling those as directed pairs
+ * costs twelve rows for the halls alone, plus a rewrite of the block every
+ * time a building joins the kind. Membership is DERIVED from what a district
+ * already is, so nothing is authored twice.
+ */
+export type AdjacencyGroup = 'AnyHall' | 'AnyWorkshop' | 'AnyProducer';
+export type AdjacencyTarget = DistrictId | AdjacencyGroup;
+
+export const ADJACENCY_GROUPS: Record<AdjacencyGroup, (d: DistrictDef) => boolean> = {
+  AnyHall: (d) => d.armyCapPerLevel.length > 0,
+  AnyWorkshop: (d) => d.produces !== null,
+  AnyProducer: (d) => d.harvestSources.length > 0,
+};
+
+export const isAdjacencyGroup = (t: string): t is AdjacencyGroup => t in ADJACENCY_GROUPS;
+
 export interface AdjacencyRule {
-  district: DistrictId;
-  neighbor: DistrictId;
-  goldPerMinute: number;
+  /** Who RECEIVES the effect. A district id or a group token, like
+   *  `neighbor` — so "a hall beside another hall" is one row. */
+  district: AdjacencyTarget;
+  neighbor: AdjacencyTarget;
+  stat: AdjacencyStat;
+  /** Signed: a penalty is negative, and for `workTime` and `trainTime` a
+   *  NEGATIVE magnitude is the good one (less time). */
+  magnitude: number;
 }
 export const ADJACENCY = balance.adjacency as unknown as AdjacencyRule[];
+
+/** No single stat may be moved more than this by neighbours, either way, so
+ *  no layout is ever wrong — only better. */
+export const ADJACENCY_CLAMP = 0.25;
 
 export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 
@@ -2505,4 +2545,4 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 29;
+export const SAVE_VERSION = 30;

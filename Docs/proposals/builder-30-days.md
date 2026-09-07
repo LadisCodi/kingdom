@@ -313,9 +313,11 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 | Tavern | Housing | Harmony +1 per neighbouring house |
 | Market | a workshop | that good sells +10% |
 
-- Everything above is a row on the `Adjacency` sheet if the sheet grows two
-  columns: `stat` and `magnitude`, alongside today's Gold/min. OQ-48 is this
-  decision.
+- **Built 2026-09-07** (OQ-48 closed): the sheet is
+  `(district, neighbour, stat, magnitude)` and either side may name a KIND, so
+  the hall rule is one row. Six of the rows above are in — the ones whose
+  buildings exist. The Sanctum's and the Tavern's wait for decorations and the
+  Tavern; the Market's waits for goods to be sellable.
 - **Superseded 2026-09-07 (OQ-1):** the plot is NOT bounded — a building goes
   anywhere revealed — so adjacency does not compete with Harmony for ground.
   It guides a layout by paying and charging, and nothing refuses. What §4
@@ -360,5 +362,5 @@ Not in this proposal, deliberately:
 - Harmony surplus bonus on taxes, on all production, or none (§4.1).
 - Whether the banner leaves the store for the Tavern (§7) —
   [`../features/14-monetization.md`](../features/14-monetization.md).
-- The `Adjacency` sheet growing a `stat` column (§8, OQ-48).
+- ~~The `Adjacency` sheet growing a `stat` column~~ — **done 2026-09-07** (§8, OQ-48 closed).
 - Plot expansions as the price of Harmony (§4.2, OQ-71).

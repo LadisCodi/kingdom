@@ -291,6 +291,12 @@ const SETTINGS = [
   ['ads.watch_seconds', 'ads.watchSeconds'],
 ];
 
+/** Kept in step with `AdjacencyStat` and `ADJACENCY_GROUPS` in
+ *  src/sim/data/definitions.ts, and with the ±clamp the resolver applies. */
+const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'];
+const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer'];
+const ADJACENCY_CLAMP = 0.25;
+
 const DISTRICT_COLUMNS = [
   'id', 'size_x', 'size_y', 'max_level', 'population_capacity',
   'fog_reveal_radius', 'fog_discover_radius',
@@ -362,7 +368,11 @@ const SHEETS = {
   // keystone requires it (tech-tree.md §7).
   Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds', 'requires',
     'line', 'effect_per_rank', 'tome', 'era', 'node_x', 'node_y', 'planned'],
-  Adjacency: ['district', 'neighbor', 'gold_per_minute'],
+  // A rule is (district, neighbour) → one STAT moved by one MAGNITUDE. The
+  // Gold column it replaced could only ever say one thing; this can say ten,
+  // which is the whole of OQ-48. `neighbor` takes a district id or a group
+  // token (AnyHall, AnyWorkshop, AnyProducer).
+  Adjacency: ['district', 'neighbor', 'stat', 'magnitude'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
     'reward_gems', 'reward_stardust', 'reward_knowledge'],
@@ -769,16 +779,36 @@ async function importXlsx() {
 
   const adjacencySeen = new Set();
   for (const r of readSheet(workbook, 'Adjacency')) {
+    // EITHER column may be a district or one of the group tokens, which are
+    // derived sets in definitions.ts rather than rows anywhere — so the four
+    // halls sharing a rule is one line, not twelve.
     for (const col of ['district', 'neighbor']) {
-      if (!DISTRICT_IDS.includes(r[col])) fail(where(r), `unknown ${col} "${r[col]}"`);
+      if (!DISTRICT_IDS.includes(r[col]) && !ADJACENCY_GROUPS.includes(r[col])) {
+        fail(where(r), `unknown ${col} "${r[col]}" — a district id or ` +
+          ADJACENCY_GROUPS.join('/'));
+      }
     }
-    const pair = `${r.district}+${r.neighbor}`;
-    if (adjacencySeen.has(pair)) fail(where(r), `duplicate adjacency rule ${pair}`);
-    adjacencySeen.add(pair);
+    if (!ADJACENCY_STATS.includes(r.stat)) {
+      fail(where(r), `unknown stat "${r.stat}" — one of ${ADJACENCY_STATS.join(', ')}`);
+    }
+    // One rule per (district, neighbour, stat): two rows moving the same stat
+    // for the same pair would just be one row with their sum, and reading
+    // both is how a designer double-counts by accident.
+    const key = `${r.district}+${r.neighbor}+${r.stat}`;
+    if (adjacencySeen.has(key)) fail(where(r), `duplicate adjacency rule ${key}`);
+    adjacencySeen.add(key);
+    const magnitude = signedNum(r, 'magnitude');
+    if (magnitude === 0) fail(where(r), 'a rule with magnitude 0 does nothing — delete the row');
+    // A fraction is a fraction: anything past the clamp is authored noise,
+    // because the resolver would refuse to pay it anyway.
+    if (r.stat !== 'goldPerMinute' && Math.abs(magnitude) > ADJACENCY_CLAMP) {
+      fail(where(r), `"${r.stat}" magnitude ${magnitude} is past the ±${ADJACENCY_CLAMP} clamp`);
+    }
     out.adjacency.push({
       district: r.district,
       neighbor: r.neighbor,
-      goldPerMinute: signedNum(r, 'gold_per_minute'),
+      stat: r.stat,
+      magnitude,
     });
   }
 
@@ -998,7 +1028,7 @@ async function exportXlsx() {
   }), (col) => col === 'requires');
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
-    [a.district, a.neighbor, a.goldPerMinute]));
+    [a.district, a.neighbor, a.stat, a.magnitude]));
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,

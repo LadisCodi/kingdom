@@ -131,7 +131,11 @@ export const addTrainer = (state: GameState, unitId: UnitId, location: Coord): v
  *  adding one per unit would stack three Barracks on the city and treble the
  *  army cap. */
 export const addAllTrainers = (state: GameState): void => {
-  const cells: Coord[] = [{ x: 4, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 4 }, { x: 7, y: 4 }];
+  // Two cells apart, deliberately: halls that TOUCH train each other faster
+  // (the AnyHall↔AnyHall rule, sim/adjacency.ts), and a test about a training
+  // line should measure the authored duration rather than a layout. The
+  // adjacency itself is tested in adjacency.test.ts.
+  const cells: Coord[] = [{ x: 4, y: 4 }, { x: 6, y: 4 }, { x: 8, y: 4 }, { x: 10, y: 4 }];
   const halls = Object.values(DISTRICTS)
     .filter((d) => d.armyCapPerLevel.length > 0)
     .map((d) => d.id);

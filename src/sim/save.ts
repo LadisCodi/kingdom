@@ -78,7 +78,7 @@ interface WorkerDto {
 interface WorkshopDto {
   DistrictUniqueID: string;
   Anchor: string;
-  Items?: Array<{ Good: string; WorkMs?: number }>;
+  Items?: Array<{ Good: string; WorkMs?: number; NeedMs?: number }>;
 }
 
 export const MIN_MIGRATABLE_VERSION = 16;
@@ -282,7 +282,9 @@ export function serialize(state: GameState, now: number): SaveFile {
             Workshops: Object.entries(state.city.workshops).map(([id, line]) => ({
               DistrictUniqueID: id,
               Anchor: iso(line.anchor),
-              Items: line.items.map((i) => ({ Good: i.good, WorkMs: i.workMs })),
+              Items: line.items.map((i) => ({
+                Good: i.good, WorkMs: i.workMs, NeedMs: i.needMs,
+              })),
             })),
             Districts: state.city.districts.map(
               (d): DistrictDto => ({
@@ -309,6 +311,9 @@ export function serialize(state: GameState, now: number): SaveFile {
               Trainee: i.trainee,
               BuildingID: i.buildingId,
               StartedAtUtc: isoOrNull(i.startedAt),
+              // Stamped with the clock, so a save reads back the wait the
+              // player was promised rather than today's neighbours.
+              Seconds: i.seconds,
             })),
             LastManaAt: iso(state.city.lastManaAt),
           },
@@ -525,7 +530,12 @@ export function deserialize(
     for (const w of (cityDto.Workshops ?? []) as WorkshopDto[]) {
       state.city.workshops[w.DistrictUniqueID] = {
         anchor: ms(w.Anchor),
-        items: (w.Items ?? []).map((i) => ({ good: i.Good as GoodId, workMs: i.WorkMs ?? 0 })),
+        items: (w.Items ?? []).map((i) => ({
+          good: i.Good as GoodId,
+          workMs: i.WorkMs ?? 0,
+          // Pre-30: no stamp, so the authored work is what it owes.
+          needMs: i.NeedMs,
+        })),
       };
     }
     state.city.districts = (cityDto.Districts as DistrictDto[]).map(
@@ -557,6 +567,9 @@ export function deserialize(
       trainee: i.Trainee,
       buildingId: i.BuildingID,
       startedAt: msOrNull(i.StartedAtUtc),
+      // A pre-30 save has no stamp: the authored duration is what it was
+      // running on anyway (`itemTrainSeconds`).
+      seconds: i.Seconds ?? null,
     }));
     // ---- migrating a save written before the two queues became one ----
     // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
@@ -569,6 +582,7 @@ export function deserialize(
         trainee: i.UnitID,
         buildingId: i.BuildingID,
         startedAt: msOrNull(i.StartedAtUtc),
+        seconds: null,
       });
     }
     if (cityDto.TrainingStartedAt) {
@@ -582,6 +596,7 @@ export function deserialize(
           trainee: 'Villager',
           buildingId: hall?.uniqueId ?? '',
           startedAt: n === 0 ? startedAt : null,
+          seconds: null,
         });
       }
     }

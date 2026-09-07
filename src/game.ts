@@ -10,8 +10,9 @@ import {
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, RUINS,
-  TECHNOLOGIES, TRAINING, UNITS, levelIndexed,
+  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat,
 } from './sim/data/definitions';
+import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
@@ -1829,18 +1830,11 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatSigned(g.goldPerMinute),
-            icon: 'Gold',
-            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+            ...adjacencyReadout(g.stat, g.magnitude),
           });
         }
-        if (adj.received !== 0) {
-          layer.yieldCells.push({
-            cell: this.mode.selected,
-            label: formatSigned(adj.received),
-            icon: 'Gold',
-            tone: adj.received < 0 ? 'bad' : 'good',
-          });
+        for (const r of adj.received) {
+          layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
       }
       // A crop plot IS the resource, so what it would hold goes on the ghost.
@@ -1883,18 +1877,11 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatSigned(g.goldPerMinute),
-            icon: 'Gold',
-            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+            ...adjacencyReadout(g.stat, g.magnitude),
           });
         }
-        if (adj.received !== 0) {
-          layer.yieldCells.push({
-            cell: this.mode.selected,
-            label: formatSigned(adj.received),
-            icon: 'Gold',
-            tone: adj.received < 0 ? 'bad' : 'good',
-          });
+        for (const r of adj.received) {
+          layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
         const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
@@ -2362,6 +2349,24 @@ export function formatSigned(goldPerMinute: number): string {
 /** "+2 🪙" / "−1 🪙" — for the DOM, which sets its own icon beside the text. */
 export const formatAdjacency = (goldPerMinute: number): string =>
   `${formatSigned(goldPerMinute)} 🪙`;
+
+/**
+ * How one adjacency effect reads: its text, the icon beside it, and whether
+ * it is good news.
+ *
+ * The tone is NOT the sign. `workTime` and `trainTime` are durations, so a
+ * negative magnitude is the happy one — a rule that says −10% is a tenth
+ * faster, and painting that red would be exactly backwards.
+ */
+export const adjacencyReadout = (
+  stat: AdjacencyStat, total: number,
+): { label: string; icon: IconName; tone: 'good' | 'bad' } => {
+  if (stat === 'goldPerMinute') {
+    return { label: formatSigned(total), icon: 'Gold', tone: total < 0 ? 'bad' : 'good' };
+  }
+  const pct = `${formatSigned(Math.round(total * 100))}%`;
+  return { label: pct, icon: 'hourglass', tone: total > 0 ? 'bad' : 'good' };
+};
 
 /**
  * A currency's emoji, as a STRING.

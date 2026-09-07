@@ -213,7 +213,7 @@ and the effective helpers that own each stat.
   needs (§5.1), and the ground is the half of its price that is not Gold.
 - The plot is not bounded (OQ-1 closed 2026-09-07), so that ground is not
   scarce in itself: what a big footprint costs is **the fog that revealed it**
-  and the **adjacency** it displaces (**OQ-48**).
+  and the **adjacency** it displaces ([`03-economy.md`](03-economy.md) §3.1).
 
 ## 9. What the player sees
 

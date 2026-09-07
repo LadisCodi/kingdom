@@ -284,6 +284,11 @@ export interface TrainingItem {
   trainee: TrainableId;
   buildingId: string;
   startedAt: number | null;
+  /** Seconds this one will take, stamped with `startedAt` — because the
+   *  building's neighbours are priced when the clock starts, not on read
+   *  (sim/adjacency.ts). Null until it starts; absent in a pre-30 save, where
+   *  it falls back to the authored duration. */
+  seconds: number | null;
 }
 
 /** A committed stack. A party SLOT holds a unit TYPE and every unit of it you

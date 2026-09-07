@@ -277,43 +277,57 @@ than a building.
 - **Art:** the three-tier sprites already cover levels 6–10 (`_l8` serves
   8–10), landed ahead of this step.
 
-## 5. Step 5 · Adjacency v2
+## 5. Step 5 · Adjacency v2 — **DONE**
 
-Decorations (step 6) need a non-Gold rule, so the resolver grows first.
-
-**The decision this step opens with (2026-09-07):** placement itself is
+**The decision this step opened with (2026-09-07):** placement itself is
 **free** — anywhere revealed, no plot bound, and no building required beside
 another. The Housing rule that wanted a Townhall or another house edge-to-edge
-is gone too. **Adjacency is therefore the only thing that guides a layout, and
-it does it by paying or charging, never by refusing.**
+is gone too (OQ-1 closed as *no*, and a plot ring was built and reverted).
+**Adjacency is therefore the only thing that guides a layout, and it does it by
+paying or charging, never by refusing.**
 
-- **Data:** `Adjacency` sheet gains `stat` and `magnitude`; `gold_per_minute`
-  stays for the Housing row. Rows for the proposal's §8 table whose buildings
-  exist after step 3: Carpenter/MasonsYard/Smelter–Quarry/Sawmill `workTime
-  −0.10`, RuneCarver–Sanctum `workTime −0.10`, hall–hall `trainTime −0.10`,
-  Market–workshop `salePrice +0.10` (per good, so the rule carries the good).
-  Importer validation at `scripts/balance.mjs:671-682` extends to the new
-  columns.
-- **Sim:** `AdjacencyRule` (`definitions.ts:176-181`) gains
-  `stat: AdjacencyStat | null` and `magnitude`; `adjacencyEffect`
-  (`adjacency.ts:40-51`) returns a per-stat sum; `districtAdjacency` stays the
-  Gold view for taxes (`population.ts:50`). A `adjacencyBonus(state, district,
-  stat)` helper, clamped to `[0, +0.25]` for bonuses and to base for penalties,
-  is read at the call site that owns each stat: workshop rate (step 3),
-  `trainSeconds` (`army.ts:79`), `salePrice` (`upgrades.ts:202`). **Not** a
-  modifier: it is positional and computed on read.
-- **UI:** the ghost labels (`game.ts:1804-1822`, `:1857-1876`) already push
-  `yieldCells` with an icon and tone; they learn a stat icon beside Gold. The
-  card badge (`districtCard.ts:180-198`) lists every rule in effect.
-- **Save:** none.
-- **Tests:** `adjacency.test.ts` — a stat rule resolves, clamps, follows a
-  move; a penalty never drops below base; the Gold rule is unchanged.
-- **Blocked on: OQ-48** (this *is* OQ-48). **OQ-1 closed the other way** — the
-  plot is not bounded — so adjacency is not competing for scarce ground: it is
-  the whole of what guides a layout, and it guides by paying rather than
-  refusing.
-- **Done when:** a Carpenter beside a Sawmill measurably finishes Planks
-  faster in the harness.
+- **Data:** the `Adjacency` sheet is `district, neighbour, stat, magnitude`.
+  `gold_per_minute` is **gone rather than kept beside them** — one mechanism,
+  not two: the Housing row is now `goldPerMinute −1`. Either side may name a
+  **group** — `AnyHall`, `AnyWorkshop`, `AnyProducer` — whose membership is
+  derived from what a district already is, so the four halls sharing a rule is
+  one row instead of twelve, and a fifth hall would need none. Six rows today:
+  Housing↔Housing Gold −1, AnyHall↔AnyHall `trainTime −0.10`,
+  Carpenter–Sawmill, MasonsYard–Quarry, Smelter–Quarry and RuneCarver–Sanctum
+  `workTime −0.10`. The importer refuses an unknown stat or token, a magnitude
+  of 0, a duplicate `(district, neighbour, stat)`, and a fraction past the
+  clamp.
+- **Sim:** `AdjacencyStat` and `AdjacencyGroup` in `definitions.ts`, with
+  `ADJACENCY_GROUPS` as derived predicates and `ADJACENCY_CLAMP` at 0.25.
+  `adjacencyEffect(state, id, loc, stat, excludeId)` sums the matching rules
+  and clamps every fractional stat to ±25%, so no layout is ever wrong — only
+  better. `adjacencyMultiplier` is the `1 + x` view a call site wants, and
+  `adjacencyInEffect` the list a card lists. **Not** a modifier: an adjacency
+  is positional and belongs at the base stage of the number it moves.
+- **When a rule is priced — the rule this step establishes.** A **rate** read
+  on demand (Gold a minute) is computed on read, so moving a house changes its
+  rent at once. A **timer** is priced when it STARTS and stamped on the thing
+  waiting: `TrainingItem.seconds` and `WorkshopItem.needMs`. A neighbour that
+  arrives, moves or is demolished later must never reprice a wait already
+  running — the rule research's time multiplier already followed.
+- **UI:** `adjacencyReadout(stat, total)` in `game.ts` gives the label, the
+  icon and the tone for one effect, and **the tone is not the sign** — a
+  duration's −10% is good news. The placement ghost pushes one label per stat
+  in both directions; the district card carries one badge per stat in effect,
+  with the house keeping its own words for Gold. The workshop card and the
+  training card both show the time the player is actually committing to.
+- **Save:** version **30**, additive, no migrator — a pre-30 item has no stamp
+  and falls back to the authored duration, which is what it was running on.
+- **Tests:** `adjacency.test.ts` — the sheet's shape, group resolution from
+  either column, the clamp under four neighbours, one stat not leaking into
+  another, a military quarter training faster, a stamped wait surviving a
+  neighbour's demolition and a save round trip, and a workshop item priced at
+  the moment it is queued. `helpers.ts` now spaces the test halls two cells
+  apart, so a test about a training LINE measures the authored duration
+  instead of a layout.
+- **What the harness says:** nothing changed at the week level — the scripted
+  player does not lay out its city deliberately, which is exactly the point of
+  a guidance mechanism. The place adjacency shows up is a player who chooses.
 
 ## 6. Step 6 · Harmony and the decorations
 
