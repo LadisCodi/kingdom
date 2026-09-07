@@ -54,7 +54,7 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
+  anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
 import {
   effectiveAutoTapCooldownMs,
@@ -1114,6 +1114,9 @@ export class Game {
       this.toast('All research slots are busy');
     } else if (result === 'MissingRequirement') {
       this.toast('Requires another technology first');
+    } else if (result === 'EraLocked') {
+      const def = TECHNOLOGIES[id];
+      this.toast(`Reveal ${eraShortfall(this.state, def.tome, def.era)} more cells to read on`);
     }
     this.notify();
   }

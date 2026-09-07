@@ -688,7 +688,11 @@ export function deserialize(
   const researchDto = modules['kingdom.research'];
   if (researchDto) {
     state.research = {
-      completed: [...((researchDto.Completed ?? []) as TechId[])],
+      // Filtered against the build: a technology the tree no longer has (one
+      // deleted in `?dev=tree`) would otherwise sit in `completed` for ever,
+      // counted by `lineRank` and indexed by anything that trusts the list.
+      completed: ((researchDto.Completed ?? []) as TechId[])
+        .filter((id) => TECHNOLOGIES[id] !== undefined),
       active: ((researchDto.Active ?? []) as
         Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
         (a) => ({

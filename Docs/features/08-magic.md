@@ -64,7 +64,7 @@ cap     = 50 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landmar
   [`tech-tree.md`](tech-tree.md) §4.1).
 - Five levels: capacity **+24 / 48 / 72 / 100 / 132**, production
   **+3 / 6 / 9 / 12 / 16** per hour. L2 needs Townhall 2; L4 and L5 are
-  granted by the `Attunement II` / `III` keystones.
+  granted by the `Attunement II` / `III` spine ranks.
 - One per city; `Second Sanctum` (Magic era 3) allows a second.
 - Uses the district system as-is: count caps, distance-scaled build time,
   level gates.
@@ -144,7 +144,7 @@ tap 50      →   50        offer returns
 | Sanctum production | +3 / 6 / 9 / 12 / 16 per hour | `mana.sanctum_per_hour_per_level` |
 | Landmark capacity | **+10 each** | `mana.landmark_cap` |
 | `Meditation` | +30 capacity | `mana.meditation_cap` |
-| `Deep Wells I–V` · `Ley Taps I–III` | +10 capacity per rank · +1/h per landmark per rank | `Technologies` ([`tech-tree.md`](tech-tree.md) §4.4) |
+| `Deep Wells I–V` · `Ley Taps I–III` | +10 capacity per rank · +1/h per landmark per rank | `?dev=tree` ([`tech-tree.md`](tech-tree.md) §4.4) |
 | Gem refill | **500 Gems a full pool**, pro rata on what is missing | `mana.gem_refill_full_pool` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Ad reward | the whole cap | — |

@@ -4,6 +4,8 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import { DISTRICTS } from './data/definitions';
+// Imported for its KEYS, which are the technology ids (see TechId below).
+import techTree from './data/tech-tree.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
 
@@ -87,58 +89,17 @@ export interface PayerState {
   refusals: number;
 }
 
-export type TechId =
-  // ---- majors: spine keystones, and the content each era hangs off them
-  | 'CharterI' | 'CharterII' | 'CharterIII' | 'CharterIV'
-  | 'Forestry' | 'UrbanPlanning' | 'Saws' | 'Agriculture'
-  | 'Masonry' | 'Communities' | 'Hunting' | 'Farming'
-  | 'Market' | 'Mining' | 'Architecture' | 'Engineering'
-  | 'DeepMining' | 'WarbandI' | 'WarbandII' | 'WarbandIII'
-  | 'WarbandIV' | 'Warrior' | 'Spears' | 'Archery'
-  | 'Cavalry' | 'AttunementI' | 'AttunementII' | 'AttunementIII'
-  | 'AttunementIV' | 'Cartography' | 'Consecration' | 'Sailing'
-  | 'ScalingTools' | 'Fishing' | 'Shipbuilding' | 'Aqueducts'
-  | 'Guildhalls' | 'Roadworks' | 'LandSurvey' | 'Apprenticeships'
-  | 'FieldMedicine' | 'Veterancy' | 'Siegecraft' | 'Tactics'
-  | 'Scouting' | 'Salvage' | 'Vanguard' | 'Standards'
-  | 'Conquest' | 'Meditation' | 'LeyReading' | 'Scrying'
-  | 'Invocation' | 'Lorekeeping' | 'Wayshrines' | 'LeyLines'
-  | 'FrugalRites' | 'SanctifiedRuins' | 'RitualCasting' | 'LeyStorm'
-  | 'SecondSanctum'
-  // ---- minor ranks. A roman numeral is what tells you it is a small one.
-  | 'TapPowerI' | 'TapPowerII' | 'TapPowerIII' | 'TapPowerIV'
-  | 'TapPowerV' | 'QuickHandsI' | 'QuickHandsII' | 'QuickHandsIII'
-  | 'QuickHandsIV' | 'QuickHandsV' | 'WorkerLoadI' | 'WorkerLoadII'
-  | 'WorkerLoadIII' | 'SawpitsI' | 'SawpitsII' | 'SawpitsIII'
-  | 'ButcheryI' | 'ButcheryII' | 'ButcheryIII' | 'IrrigationI'
-  | 'IrrigationII' | 'IrrigationIII' | 'ScythesI' | 'ScythesII'
-  | 'ScythesIII' | 'SurveyingI' | 'SurveyingII' | 'PitonsI'
-  | 'PitonsII' | 'MarketStallI' | 'MarketStallII' | 'MarketStallIII'
-  | 'MarketStallIV' | 'TradeRoutesI' | 'TradeRoutesII' | 'TradeRoutesIII'
-  | 'TradeRoutesIV' | 'TradeRoutesV' | 'StonecuttingI' | 'StonecuttingII'
-  | 'StonecuttingIII' | 'BigNetsI' | 'BigNetsII' | 'BigNetsIII'
-  | 'IronPicksI' | 'IronPicksII' | 'IronPicksIII' | 'ResonanceI'
-  | 'ResonanceII' | 'CarpentryI' | 'CarpentryII' | 'CarpentryIII'
-  | 'ScrivenersI' | 'ScrivenersII' | 'ScrivenersIII' | 'CartageI'
-  | 'CartageII' | 'CartageIII' | 'DeepWellsI' | 'DeepWellsII'
-  | 'DeepWellsIII' | 'DeepWellsIV' | 'DeepWellsV' | 'LeyTapsI'
-  | 'LeyTapsII' | 'LeyTapsIII' | 'WaypostsI' | 'WaypostsII'
-  | 'WaypostsIII' | 'ScriptoriumI' | 'ScriptoriumII' | 'ScriptoriumIII'
-  | 'VigilsI' | 'VigilsII' | 'VigilsIII' | 'PilgrimageI'
-  | 'PilgrimageII' | 'PilgrimageIII' | 'ProspectingI' | 'ProspectingII'
-  | 'ProspectingIII' | 'ColoursI' | 'ColoursII' | 'ColoursIII'
-  | 'ColoursIV' | 'ColoursV' | 'MusterDrillI' | 'MusterDrillII'
-  | 'MusterDrillIII' | 'RationsI' | 'RationsII' | 'RationsIII'
-  | 'DrillmasterI' | 'DrillmasterII' | 'DrillmasterIII' | 'BearersI'
-  | 'BearersII' | 'BearersIII' | 'PathfindersI' | 'PathfindersII'
-  | 'PathfindersIII' | 'ShieldWallI' | 'ShieldWallII' | 'ShieldWallIII'
-  | 'FletchingI' | 'FletchingII' | 'FletchingIII' | 'BardingI'
-  | 'BardingII' | 'BardingIII' | 'WarhornsI' | 'WarhornsII'
-  | 'WarhornsIII' | 'ManoeuvreI' | 'ManoeuvreII' | 'ManoeuvreIII'
-  | 'FarsightI' | 'FarsightII' | 'FarsightIII';
+/**
+ * Every technology in the game, as a type — the KEYS of `tech-tree.json`.
+ *
+ * It used to be 180 hand-written string literals, which is the third copy of
+ * the same list (the importer had one too) and the reason creating a
+ * technology was a four-file job. TypeScript reads a JSON import's keys as
+ * literals, so this union now IS the file: `?dev=tree` adds a technology and
+ * the type follows, while a typo anywhere still fails to compile.
+ */
+export type TechId = keyof typeof techTree.technologies;
 
-/** A ladder of ranks that used to be one levelled upgrade. `effect()` in
- *  sim/upgrades.ts counts how many of a line's ranks are complete. */
 export type TechLineId =
   | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Sawpits'
   | 'Butchery' | 'Irrigation' | 'Scythes' | 'Surveying'

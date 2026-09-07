@@ -4,7 +4,7 @@
 // in real time through the unified advance (like the build queue).
 
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
+  DISTRICTS, ERA_UNLOCK_CELLS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
   tomeCoverPage,
 } from './data/definitions';
 import {
@@ -103,13 +103,47 @@ export const isTechActive = (state: GameState, id: TechId): boolean =>
 export const requirementsMet = (state: GameState, id: TechId): boolean =>
   TECHNOLOGIES[id].requires.every((req) => isTechComplete(state, req));
 
+// --------------------------------------------------------------- era gates
+
+/**
+ * How much of the region the player has actually uncovered.
+ *
+ * Paid reveals only — the cells a building merely *discovered* are ones the
+ * player has seen, not ones they have opened, and the era bar is priced in
+ * the second thing. It is the same count the `DiscoverCells` quest goal
+ * follows, so the two never disagree about what exploring means.
+ */
+export const revealedCellCount = (state: GameState): number =>
+  Object.keys(state.fog.revealed).length;
+
+/**
+ * Is a band of a book open?
+ *
+ * Era 1 opens with the book. Every band after it is a gate in the WORLD, not
+ * a research (Docs/features/07-research.md §2.1): the page continues once
+ * enough of the region has been opened up, so the tree paces on exploring
+ * rather than on a keystone the player can buy while standing still. The
+ * keystones are still there — they are ordinary technologies that each raise
+ * a real dial — they just no longer hold the door.
+ */
+export const eraUnlocked = (state: GameState, tome: TomeId, era: number): boolean =>
+  era <= 1 || revealedCellCount(state) >= ERA_UNLOCK_CELLS[tome][era];
+
+/** Cells still to reveal before a band opens; 0 once it is open. */
+export const eraShortfall = (state: GameState, tome: TomeId, era: number): number =>
+  Math.max(0, (era <= 1 ? 0 : ERA_UNLOCK_CELLS[tome][era]) - revealedCellCount(state));
+
+/** Is the band this technology sits in open? */
+export const techEraUnlocked = (state: GameState, id: TechId): boolean =>
+  eraUnlocked(state, TECHNOLOGIES[id].tome, TECHNOLOGIES[id].era);
+
 /** Concurrent research slots: Settings base + gem-bought extras. */
 export const techSlots = (state: GameState): number =>
   Math.min(RESEARCH_SETTINGS.techSlots + state.research.slotsPurchased, RESEARCH_SETTINGS.maxSlots);
 
 export type StartTechResult =
   | 'Started' | 'AlreadyDone' | 'AlreadyActive' | 'MissingRequirement'
-  | 'NoFreeSlot' | 'NotEnoughResources';
+  | 'EraLocked' | 'NoFreeSlot' | 'NotEnoughResources';
 
 /**
  * Could the player start this tech this second? Every gate `startTech` checks,
@@ -135,6 +169,7 @@ export const canStartTech = (state: GameState, id: TechId): boolean =>
   && !isTechComplete(state, id)
   && !isTechActive(state, id)
   && requirementsMet(state, id)
+  && techEraUnlocked(state, id)
   && state.research.active.length < techSlots(state)
   && canAffordTech(state, id);
 
@@ -149,6 +184,7 @@ export function startTech(state: GameState, id: TechId, now: number): StartTechR
   if (isTechComplete(state, id)) return 'AlreadyDone';
   if (isTechActive(state, id)) return 'AlreadyActive';
   if (!requirementsMet(state, id)) return 'MissingRequirement';
+  if (!techEraUnlocked(state, id)) return 'EraLocked';
   if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
   if (!canAffordTech(state, id)) return 'NotEnoughResources';
   addToWallet(state.city.wallet, 'Gold', -techCost(id));

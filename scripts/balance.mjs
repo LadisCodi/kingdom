@@ -48,53 +48,15 @@ const DISTRICT_IDS = [
 // (Docs/plans/builder-30-days.md §2).
 const GOOD_IDS = ['Planks', 'CutStone', 'Iron', 'Runestone'];
 
-const TECH_IDS = [
-  'CharterI', 'CharterII', 'CharterIII', 'CharterIV',
-  'Forestry', 'UrbanPlanning', 'Saws', 'Agriculture',
-  'Masonry', 'Communities', 'Hunting', 'Farming',
-  'Market', 'Mining', 'Architecture', 'Engineering',
-  'DeepMining', 'WarbandI', 'WarbandII', 'WarbandIII',
-  'WarbandIV', 'Warrior', 'Spears', 'Archery',
-  'Cavalry', 'AttunementI', 'AttunementII', 'AttunementIII',
-  'AttunementIV', 'Cartography', 'Consecration', 'Sailing',
-  'ScalingTools', 'Fishing', 'Shipbuilding', 'TapPowerI',
-  'TapPowerII', 'TapPowerIII', 'TapPowerIV', 'TapPowerV',
-  'QuickHandsI', 'QuickHandsII', 'QuickHandsIII', 'QuickHandsIV',
-  'QuickHandsV', 'WorkerLoadI', 'WorkerLoadII', 'WorkerLoadIII',
-  'SawpitsI', 'SawpitsII', 'SawpitsIII', 'ButcheryI',
-  'ButcheryII', 'ButcheryIII', 'IrrigationI', 'IrrigationII',
-  'IrrigationIII', 'ScythesI', 'ScythesII', 'ScythesIII',
-  'SurveyingI', 'SurveyingII', 'PitonsI', 'PitonsII',
-  'MarketStallI', 'MarketStallII', 'MarketStallIII', 'MarketStallIV',
-  'TradeRoutesI', 'TradeRoutesII', 'TradeRoutesIII', 'TradeRoutesIV',
-  'TradeRoutesV', 'StonecuttingI', 'StonecuttingII', 'StonecuttingIII',
-  'BigNetsI', 'BigNetsII', 'BigNetsIII', 'IronPicksI',
-  'IronPicksII', 'IronPicksIII', 'ResonanceI', 'ResonanceII',
-  'CarpentryI', 'CarpentryII', 'CarpentryIII', 'ScrivenersI',
-  'ScrivenersII', 'ScrivenersIII', 'CartageI', 'CartageII',
-  'CartageIII', 'DeepWellsI', 'DeepWellsII', 'DeepWellsIII',
-  'DeepWellsIV', 'DeepWellsV', 'LeyTapsI', 'LeyTapsII',
-  'LeyTapsIII', 'WaypostsI', 'WaypostsII', 'WaypostsIII',
-  'ScriptoriumI', 'ScriptoriumII', 'ScriptoriumIII', 'VigilsI',
-  'VigilsII', 'VigilsIII', 'PilgrimageI', 'PilgrimageII',
-  'PilgrimageIII', 'ProspectingI', 'ProspectingII', 'ProspectingIII',
-  'ColoursI', 'ColoursII', 'ColoursIII', 'ColoursIV',
-  'ColoursV', 'MusterDrillI', 'MusterDrillII', 'MusterDrillIII',
-  'RationsI', 'RationsII', 'RationsIII', 'DrillmasterI',
-  'DrillmasterII', 'DrillmasterIII', 'BearersI', 'BearersII',
-  'BearersIII', 'PathfindersI', 'PathfindersII', 'PathfindersIII',
-  'ShieldWallI', 'ShieldWallII', 'ShieldWallIII', 'FletchingI',
-  'FletchingII', 'FletchingIII', 'BardingI', 'BardingII',
-  'BardingIII', 'WarhornsI', 'WarhornsII', 'WarhornsIII',
-  'ManoeuvreI', 'ManoeuvreII', 'ManoeuvreIII', 'FarsightI',
-  'FarsightII', 'FarsightIII', 'Aqueducts', 'Guildhalls',
-  'Roadworks', 'LandSurvey', 'Apprenticeships', 'FieldMedicine',
-  'Veterancy', 'Siegecraft', 'Tactics', 'Scouting',
-  'Salvage', 'Vanguard', 'Standards', 'Conquest',
-  'Meditation', 'LeyReading', 'Scrying', 'Invocation',
-  'Lorekeeping', 'Wayshrines', 'LeyLines', 'FrugalRites',
-  'SanctifiedRuins', 'RitualCasting', 'LeyStorm', 'SecondSanctum',
-];
+// The technologies are not the workbook's any more: a technology is one
+// object in src/sim/data/tech-tree.json — identity, kind, unlocks, price,
+// clock and slot — authored in `?dev=tree` (Docs/tech-tree-editor.md). This
+// reads that file for the ONE thing the importer still needs from it: the id
+// list, so a quest that names a technology can be checked.
+const TECH_IDS = Object.keys(JSON.parse(
+  readFileSync(join(ROOT, 'src/sim/data/tech-tree.json'), 'utf8'),
+).technologies);
+
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
 const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
@@ -302,7 +264,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
+  'army_cap_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -320,7 +282,7 @@ const DISTRICT_COLUMNS = [
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level', 'extra_count_tech',
+  'army_cap_per_level',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level', 'sale_price_per_level',
 ];
@@ -339,8 +301,10 @@ const SHEETS = {
   // A cell is a DEPOT: `stock` units, drawn `units_per_strike` at a time,
   // one strike every `seconds_per_strike`. A tap is priced in SECONDS of that
   // same work, so nobody mints matter. stock 0 = bedrock, never runs down.
+  // NO `required_tech`: which technology opens a cell is the TECHNOLOGY's to
+  // say (`unlocks: [{ harvest: 'Forest' }]`), like every other gate.
   Harvest: ['source', 'units_per_strike', 'seconds_per_strike', 'stock', 'recovery_seconds',
-    'respawn_seconds', 'required_tech'],
+    'respawn_seconds'],
   // A workshop turns raw resources into one good, one queue item at a time,
   // and `work_seconds` is the work ONE villager does — a second worker halves
   // it (Docs/plans/builder-30-days.md §3). `input_good` is the tier-2 recipe:
@@ -356,22 +320,25 @@ const SHEETS = {
   // A minor technology carries a line id and a per-rank effect; a major one
   // leaves both blank. Ranks of a line are ordered by ROW ORDER, the same
   // way the quest chain is (Docs/features/tech-tree.md §1 rule 2).
-  // `tome` and `era` are the shelf (Docs/features/07-research.md §2):
-  // three books, each paced by eras whose keystone requires everything above
-  // it.
-  // NO `requires`, `node_x` or `node_y`. Where a node SITS and what it needs
-  // before it are the tree's SHAPE, authored by coordinate in
-  // src/sim/data/tech-tree.json through `?dev=tree` — the same split the map
-  // made (Docs/tech-tree-editor.md). A spreadsheet expresses a graph badly,
-  // and `npm run balance` would overwrite whatever the editor drew.
-  // `cost_knowledge` is the clock's price (07-research.md §3): blank
-  // in era 1, where the clock has not started; the era-1 keystone is the
-  // first node that charges it.
+  // NO `tome`, `era`, `requires`, `node_x` or `node_y`. Which book a node is
+  // in, which band of it, where on the page and what it needs before it are
+  // all the tree's SHAPE, authored in src/sim/data/tech-tree.json through
+  // `?dev=tree` — the same split the map made (Docs/tech-tree-editor.md). A
+  // spreadsheet expresses a graph badly, and `npm run balance` would
+  // overwrite whatever the editor drew.
+  // `cost_knowledge` is the clock's price (07-research.md §3): blank in era 1,
+  // where the clock has not started — which the tree's rules check, since the
+  // era is no longer a column here (techTreeRules.ts).
   // `planned` = 1 marks a node that is on the tree for its SHAPE and does
   // nothing yet. It is badged in the game, its description says so, and no
   // keystone requires it (tech-tree.md §7).
   Technologies: ['id', 'cost_gold', 'cost_knowledge', 'duration_seconds',
-    'line', 'effect_per_rank', 'tome', 'era', 'planned'],
+    'line', 'effect_per_rank', 'planned'],
+  // What opens a band of a book. Era 1 is open with the book; the bands after
+  // it are gates in the world, not researches — `unlock_cells` is how much of
+  // the region has to be revealed before the page continues
+  // (Docs/features/07-research.md §2.1).
+  Eras: ['tome', 'era', 'unlock_cells'],
   // A rule is (district, neighbour) → one STAT moved by one MAGNITUDE. The
   // Gold column it replaced could only ever say one thing; this can say ten,
   // which is the whole of OQ-48. `neighbor` takes a district id or a group
@@ -504,26 +471,6 @@ function list(row, col) {
   });
 }
 
-/** Per-level tech list: comma-separated tech ids, "-" (or blank entry) = no
- *  requirement at that level. Blank cell = no requirements at all. */
-function techList(row, col) {
-  const raw = row[col];
-  if (raw === '' || raw === undefined) return [];
-  return String(raw).split(/[,|;]/).map((part) => {
-    const id = part.trim();
-    if (id === '' || id === '-') return null;
-    if (!TECH_IDS.includes(id)) fail(where(row), `"${col}" has an unknown tech ("${id}")`);
-    return id;
-  });
-}
-
-function techOrBlank(row, column) {
-  const v = row[column];
-  if (v === '' || v === undefined) return null;
-  if (!TECH_IDS.includes(String(v))) fail(where(row), `unknown technology "${v}"`);
-  return String(v);
-}
-
 function wallet(row, prefix) {
   const out = {};
   for (const c of COST_CURRENCIES) {
@@ -587,7 +534,8 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, goods: {}, terrain: {}, harvest: {}, currencies: {}, units: {}, technologies: {},
+    districts: {}, goods: {}, terrain: {}, harvest: {}, currencies: {}, units: {},
+    eras: [],
     store: {}, payer: {},
     research: {}, rush: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
@@ -612,12 +560,6 @@ async function importXlsx() {
       maxCountPerTownhallLevel: list(r, 'max_count_per_townhall_level'),
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
-      requiredTechPerLevel: techList(r, 'required_tech_per_level'),
-      // One more of this district may stand once the named technology is
-      // done — how Guildhalls buys a second Market and Second Sanctum a
-      // second Sanctum, without a per-count gate mechanism nobody else needs.
-      extraCountTech: (r.extra_count_tech === '' || r.extra_count_tech === undefined)
-        ? null : r.extra_count_tech,
       armyCapPerLevel: list(r, 'army_cap_per_level'),
       buildCost: wallet(r, 'build_cost'),
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
@@ -691,11 +633,6 @@ async function importXlsx() {
       stock: num(r, 'stock'),
       recoverySeconds: num(r, 'recovery_seconds'),
       respawnSeconds: num(r, 'respawn_seconds', { blankAs: 0 }),
-      // Blank = anyone can tap it. A gate here is a TUTORIAL beat: the trees
-      // around the Townhall are visible from the first second and refuse the
-      // tap until Forestry is in, which is what makes the first research
-      // something the player wants rather than something they are told to do.
-      requiredTech: techOrBlank(r, 'required_tech'),
     };
   }
 
@@ -732,38 +669,34 @@ async function importXlsx() {
     };
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Technologies'), TECH_IDS)) {
-    // Gold, alone. Research is paid out of the CITY purse, so the tree
-    // competes with clearing fog and raising a building for one budget —
-    // which is the decision the economy is built around. Minor ranks are
-    // Gold too; what separates them from a major is cost and time, not kind
-    // (Docs/features/tech-tree.md §1 rule 3).
-    // 0 is legal, and only for a spine's rank I: the cover page is GRANTED
-    // when its tome opens rather than researched, so it has no price.
-    const gold = num(r, 'cost_gold', { blankAs: 0 });
-    if (gold < 0) fail(where(r), 'cost_gold cannot be negative');
-    if (gold === 0 && !/^(Charter|Warband|Attunement)I$/.test(id)) {
-      fail(where(r), 'only a tome cover page may cost nothing');
-    }
-    const line = (r.line === '' || r.line === undefined) ? null : String(r.line);
+  // Era gates: one row per band of one book, era 1 included so the sheet
+  // shows the whole ladder even though the first band is open with the book.
+  const eraSeen = new Set();
+  for (const r of readSheet(workbook, 'Eras')) {
     if (!TOME_IDS.includes(r.tome)) fail(where(r), `unknown tome "${r.tome}"`);
     const era = num(r, 'era');
     if (era < 1 || era > 4) fail(where(r), 'era must be 1-4');
-    const knowledge = num(r, 'cost_knowledge', { blankAs: 0 });
-    if (knowledge > 0 && era === 1 && !/^(Charter|Warband|Attunement)II$/.test(id)) {
-      // Era 1 runs on Gold and time alone: the research clock has not started,
-      // and charging for it there would strangle the opening (§3).
-      fail(where(r), 'an era-1 technology must not cost Knowledge');
+    const key = `${r.tome}:${era}`;
+    if (eraSeen.has(key)) fail(where(r), `duplicate era row ${key}`);
+    eraSeen.add(key);
+    const cells = num(r, 'unlock_cells', { blankAs: 0 });
+    if (cells < 0) fail(where(r), 'unlock_cells cannot be negative');
+    if (era === 1 && cells !== 0) fail(where(r), 'era 1 opens with its book, so it costs nothing');
+    out.eras.push({ tome: r.tome, era, unlockCells: cells });
+  }
+  for (const tome of TOME_IDS) {
+    for (let era = 1; era <= 4; era++) {
+      if (!eraSeen.has(`${tome}:${era}`)) fail('Eras', `no row for ${tome} era ${era}`);
     }
-    out.technologies[id] = {
-      cost: knowledge > 0 ? { Gold: gold, Knowledge: knowledge } : { Gold: gold },
-      durationSeconds: num(r, 'duration_seconds', { blankAs: 0 }),
-      line,
-      effectPerRank: num(r, 'effect_per_rank', { blankAs: 0 }),
-      tome: r.tome,
-      era,
-      planned: num(r, 'planned', { blankAs: 0 }) === 1,
-    };
+  }
+  // A later band never opens sooner than the one before it.
+  for (const tome of TOME_IDS) {
+    const ladder = out.eras.filter((e) => e.tome === tome).sort((a, b) => a.era - b.era);
+    for (let i = 1; i < ladder.length; i++) {
+      if (ladder[i].unlockCells < ladder[i - 1].unlockCells) {
+        fail('Eras', `${tome} era ${ladder[i].era} opens before era ${ladder[i - 1].era}`);
+      }
+    }
   }
 
 
@@ -964,8 +897,7 @@ async function exportXlsx() {
       d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
-      listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
-      listCell(d.armyCapPerLevel), d.extraCountTech ?? '',
+      listCell(d.armyCapPerLevel),
       ...costCells(d.buildCost),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
@@ -993,7 +925,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];
     return [id, h.unitsPerStrike, h.secondsPerStrike, h.stock, h.recoverySeconds,
-      h.respawnSeconds || '', h.requiredTech ?? ''];
+      h.respawnSeconds || ''];
   }));
 
   addSheet(workbook, 'Goods', GOOD_IDS.map((id) => {
@@ -1010,11 +942,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
 
-  addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
-    const t = b.technologies[id];
-    return [id, t.cost.Gold || '', t.cost.Knowledge || '', t.durationSeconds || '',
-      t.line ?? '', t.effectPerRank || '', t.tome, t.era, t.planned ? 1 : ''];
-  }));
+  addSheet(workbook, 'Eras', (b.eras ?? []).map((e) => [e.tome, e.era, e.unlockCells || '']));
 
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
     [a.district, a.neighbor, a.stat, a.magnitude]));

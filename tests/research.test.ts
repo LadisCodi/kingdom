@@ -9,17 +9,19 @@ import {
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
-  anyResearchActionable, buySlot, canStartTech, isTechComplete, isTomeOpen,
+  anyResearchActionable, buySlot, canStartTech, eraShortfall, isTechComplete, isTomeOpen,
   knowledgeShortfallMs, openTome, slotGemCost, startTech, techCost, techKnowledgeCost,
   techSlots, techUnlocks,
 } from '../src/sim/research';
-import { edgeCells, FAN_DX, FAN_DY, GRID, NODE, UNODE } from '../src/ui/research/layout';
+import {
+  CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
+} from '../src/ui/research/layout';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId } from '../src/sim/state';
 import { lineMaxRank, lineRank } from '../src/sim/upgrades';
 import {
   addAllTrainers, completeRanks, completeTech, freshGame, freshPresenter, fund, map,
-  T0, tickAt,
+  openEveryEra, T0, tickAt,
 } from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
@@ -35,7 +37,7 @@ describe('technology basics', () => {
     fund(state, { Gold: 5000, Wood: 500, Food: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
-    // Farming is era 2 of Civics, so it waits on the era-1 keystone.
+    // Farming is a band down in Civics, so it waits on what it requires.
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement');
 
     // Agriculture is era 1, and the Civics cover page is granted with the
@@ -71,17 +73,26 @@ describe('technology basics', () => {
     expect(trainUnit(state, 'Archer', T0)).toBe('Queued');
   });
 
-  // The era gate replaced the pairwise one: Cavalry sits in Warfare era 2, so
-  // what blocks it is the keystone, and the keystone requires every
-  // technology in era 1 (Docs/features/tech-tree.md §1 rule 5).
-  it('the era gate: Cavalry waits on the keystone above it', () => {
+  // THE ERA BAR IS A GATE IN THE WORLD, not a keystone
+  // (Docs/features/07-research.md §2.1). Cavalry sits in a band past the
+  // first, so its own requirements are not enough: the region has to have
+  // been opened up too, which is what stops a rich city reading a book it has
+  // not explored for.
+  it('the era bar: a band past the first waits on the region', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000, Knowledge: 5_000 });
+    const era = TECHNOLOGIES.Cavalry.era;
+    expect(era).toBeGreaterThan(1);
     // The tome is not even open yet — no ruin has been seen.
     expect(startTech(state, 'Cavalry', T0)).toBe('MissingRequirement');
-    expect(startTech(state, 'WarbandII', T0)).toBe('MissingRequirement');
 
-    completeTech(state, 'WarbandIII');
+    for (const req of TECHNOLOGIES.Cavalry.requires) completeTech(state, req);
+    expect(eraShortfall(state, 'Warfare', era)).toBeGreaterThan(0);
+    expect(startTech(state, 'Cavalry', T0)).toBe('EraLocked');
+    expect(canStartTech(state, 'Cavalry')).toBe(false);
+
+    openEveryEra(state);
+    expect(eraShortfall(state, 'Warfare', era)).toBe(0);
     expect(startTech(state, 'Cavalry', T0)).toBe('Started');
   });
 
@@ -95,10 +106,10 @@ describe('technology basics', () => {
     expect(techKnowledgeCost('Forestry')).toBe(0);
     expect(canStartTech(state, 'Forestry')).toBe(true);
 
-    // The era-1 keystone is the first node with a Knowledge price.
-    completeTech(state, 'Forestry'); completeTech(state, 'Saws');
-    completeTech(state, 'Agriculture'); completeTech(state, 'Masonry');
-    completeTech(state, 'UrbanPlanning'); completeTech(state, 'Market');
+    // Charter II is the first node with a Knowledge price, one band down.
+    completeTech(state, 'CharterII'); // its requirements, not itself
+    state.research.completed = state.research.completed.filter((id) => id !== 'CharterII');
+    openEveryEra(state);
     const k = techKnowledgeCost('CharterII');
     expect(k).toBeGreaterThan(0);
     expect(canStartTech(state, 'CharterII'), 'rich in Gold, no Knowledge').toBe(false);
@@ -145,6 +156,7 @@ describe('technology basics', () => {
     fund(state, { Gold: 50_000, Wood: 500, Stardust: 5000, Knowledge: 5_000 });
     // Sailing sits in Magic era 2, so it wants the era-1 keystone above it.
     completeTech(state, 'AttunementII');
+    openEveryEra(state); // Sailing is a band down, and a band is a gate in the world
     const purse = getWallet(state.city.wallet, 'Gold');
     expect(startTech(state, 'Sailing', T0)).toBe('Started');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(purse - techCost('Sailing'));
@@ -232,73 +244,81 @@ describe('save round-trip', () => {
 });
 
 // The GEOMETRY the renderer draws with. What the document itself may say —
-// collisions, connectors through nodes, loops, eras out of order — is
-// `tests/techTree.test.ts` against `techTreeRules.ts`, the module the editor
-// and the save endpoint check too. This block is what is left: the constants,
-// and the fan that has no authored position to check.
-describe('tree layout (layout is content)', () => {
-  // THE FAN HAS TO FIT BETWEEN TWO ROWS, and it did not: an upgrade circle
-  // hung 0.7 x GRID below its parent, which put it 12px INSIDE the technology
-  // on the row underneath. Nothing noticed, because the invariant below is
-  // about connectors crossing nodes and this is nodes crossing nodes.
-  //
-  // Both ends are hard. A circle must clear its parent square, and it must
-  // clear whatever sits one row down — and the second constraint is the one
-  // that is easy to forget, because it involves a node the fan has nothing to
-  // do with.
-  it('hangs a rank fan clear of its parent AND of the row below it', () => {
-    const halfSquare = NODE / 2;
-    const halfCircle = UNODE / 2;
-    expect(FAN_DY, 'the fan overlaps its own parent').toBeGreaterThan(halfSquare + halfCircle);
-    expect(FAN_DY, 'the fan overlaps the technology one row below')
-      .toBeLessThan(GRID - halfSquare - halfCircle);
+// collisions, a requirement pointing back up the page, a rank out of turn —
+// is `tests/techTree.test.ts` against `techTreeRules.ts`, the module the
+// editor and the save endpoint check too. This block is the pixels.
+describe('tome page geometry (layout is content)', () => {
+  // THE PAGE HAS TO FIT THE PHONE. Three columns and two side channels is
+  // the whole width budget, and the old canvas was 1,160px wide behind a
+  // drag-pan precisely because nothing held it to this.
+  it('fits the target device without a horizontal scroll', () => {
+    expect(PAGE_W).toBeLessThanOrEqual(402); // iPhone 17, the device this is played on
+    expect(colLeft(0)).toBeGreaterThanOrEqual(CHANNEL_W);
+    expect(colLeft(COLS - 1) + NODE_W).toBeLessThanOrEqual(PAGE_W - CHANNEL_W);
   });
 
-  // A FAN MUST NOT REACH INTO THE NEXT COLUMN.
-  //
-  // Fanning one bead per line keeps the fan narrow, but "narrow" is a
-  // function of how many lines hang off one major and nothing stops a
-  // sixteenth being added to Forestry. Forestry already carries three, which
-  // is 152px of fan in a 120px column — it clears its neighbour's node by
-  // 16px and a fourth line would not.
-  //
-  // This is the headless half of the bug the browser found: there, every RANK
-  // was a bead and Forestry's fan was thirteen wide, straddling two branches.
-  it('keeps every fan clear of the node in the next column', () => {
-    const linesUnder = new Map<TechId, number>();
-    for (const line of TECH_LINE_ORDER) {
-      const parent = lineParent(line)!;
-      linesUnder.set(parent, (linesUnder.get(parent) ?? 0) + 1);
-    }
-    for (const [parent, n] of linesUnder) {
-      const halfFan = ((n - 1) * FAN_DX + UNODE) / 2;
-      expect(halfFan, `${parent}'s fan of ${n} reaches into the next column`)
-        .toBeLessThan(GRID - NODE / 2);
+  // A card is the thing a thumb presses, and it is now the biggest target in
+  // the game rather than the smallest.
+  it('keeps a card a thumb-sized target', () => {
+    expect(NODE_W).toBeGreaterThanOrEqual(40);
+    expect(NODE_H).toBeGreaterThanOrEqual(40);
+  });
+
+  // A CONNECTOR MAY NEVER CROSS A CARD, and the routing is what guarantees
+  // it rather than a rule about where cards may sit: between neighbouring
+  // rows the horizontal leg runs in the GUTTER, and anything longer goes out
+  // into the side CHANNEL, down the outside of the page and back in.
+  it('routes a step between neighbouring rows through the gutter', () => {
+    const from = { top: 0, col: 0 };
+    const to = { top: NODE_H + ROW_GAP, col: 2 };
+    const path = edgePath(from, to);
+    const horizontal = path.filter((p, i) => i > 0 && p.y === path[i - 1].y);
+    expect(horizontal.length).toBe(1);
+    for (const p of path) {
+      expect(p.y).toBeGreaterThanOrEqual(NODE_H); // out of the bottom edge, never inside
+      expect(p.y).toBeLessThanOrEqual(to.top);
     }
   });
 
-  // A tap target below ~40px is one a thumb misses, and the rank bead is the
-  // smallest thing in the game a player is asked to press.
-  it('keeps the rank bead a thumb-sized target', () => {
-    expect(UNODE).toBeGreaterThanOrEqual(40);
-    expect(UNODE).toBeLessThan(NODE); // …and still unmistakably the smaller shape
+  it('routes a blocked column out into the side channel, clear of every card', () => {
+    const from = { top: 0, col: 1 };
+    const to = { top: 4 * (NODE_H + ROW_GAP), col: 1 };
+    // `clear: false` is the renderer saying "there are cards in the way" —
+    // it is the only thing that knows, and the geometry does as it is told.
+    const path = edgePath(from, to, false);
+    // The long vertical leg — the one that would have run through three rows
+    // of cards — is outside the columns entirely.
+    const long = path.filter((p, i) => i > 0 && p.x === path[i - 1].x
+      && Math.abs(p.y - path[i - 1].y) > NODE_H);
+    expect(long.length).toBeGreaterThan(0);
+    for (const p of long) {
+      const insideColumns = p.x > colLeft(0) && p.x < colLeft(COLS - 1) + NODE_W;
+      expect(insideColumns, `x=${p.x} runs down the cards`).toBe(false);
+    }
   });
 
-  // Reads the SAME route the renderer draws (src/ui/research/layout.ts)
-  // rather than a hand-copied description of it, so a change to the routing
-  // updates both at once instead of leaving this quietly asserting fiction.
-  it('edgeCells walks the route it claims to', () => {
-    // Same row: everything strictly between the endpoints.
-    expect(edgeCells({ x: 0, y: 0 }, { x: 3, y: 0 }))
-      .toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }]);
-    // Elbowed: horizontal first, so the corner is at (to.x, from.y) and IS
-    // reported — a node sitting there is exactly the failure to catch.
-    expect(edgeCells({ x: 0, y: 0 }, { x: 2, y: 2 }))
-      .toEqual([{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 2, y: 1 }]);
-    // Adjacent nodes have nothing in between.
-    expect(edgeCells({ x: 0, y: 0 }, { x: 1, y: 0 })).toEqual([]);
+  // …and when the column IS clear it stays in it, because a straight line
+  // down two rows of empty slots reads better than a trip round the outside.
+  it('runs straight down a clear column instead', () => {
+    const from = { top: 0, col: 1 };
+    const to = { top: 2 * (NODE_H + ROW_GAP), col: 1 };
+    expect(edgePath(from, to, true)).toEqual([
+      { x: colLeft(1) + NODE_W / 2, y: NODE_H },
+      { x: colLeft(1) + NODE_W / 2, y: to.top },
+    ]);
   });
 
+  // The page is as long as what the player can SEE: a row the fog has emptied
+  // is not a blank line in the middle of the flow.
+  it('collapses a row the fog has emptied, and keeps the era bars', () => {
+    const rows = pageRows(TECHNOLOGIES, 'Civics', (id) => TECHNOLOGIES[id as TechId].era === 1);
+    expect(rows.some((r) => r.kind === 'techs' && r.era !== 1)).toBe(false);
+    for (const row of rows) {
+      if (row.kind === 'techs') expect(row.slots.some((slot) => slot !== null)).toBe(true);
+    }
+    // Bands 2, 3 and 4 hold nothing the filter kept, and still say they exist.
+    expect(rows.filter((r) => r.kind === 'gate').map((r) => r.era)).toEqual([2, 3, 4]);
+  });
 });
 
 // What a technology gives you. The completion banners have always derived
@@ -397,9 +417,9 @@ describe('what the player can actually act on', () => {
     expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
     advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
     expect(lineRank(state, 'TapPower')).toBe(1);
-    // Rank II sits in era 2, so it waits on the era-1 keystone as well.
+    // Rank II sits in the next band, so it waits on the era bar as well.
     expect(canStartTech(state, 'TapPowerII')).toBe(false);
-    completeTech(state, 'CharterII');
+    openEveryEra(state);
     fund(state, { Knowledge: 5_000 });
     expect(canStartTech(state, 'TapPowerII')).toBe(true);
 

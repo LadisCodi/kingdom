@@ -2,19 +2,23 @@
 
 > **Scope.** The **content** of the three tomes: every node, what each unlocks,
 > the minor lines, the price bands that pace them, and the effect hooks the
-> lines drive. The **system** — technologies, tomes, eras, keystones,
-> Knowledge, slots, the screen — is [`07-research.md`](07-research.md).
+> lines drive. The **system** — technologies, tomes, eras and the bars that
+> open them, Knowledge, slots, the screen — is
+> [`07-research.md`](07-research.md); where a card SITS and what it requires is
+> [`../tech-tree-editor.md`](../tech-tree-editor.md).
 > `src/sim/data/definitions.ts` points at this file.
 >
-> **Status.** Built: **180 technologies** in the `Technologies` sheet, priced
-> to §5's bands, with every §6 effect hook in. **17 era-2/3 majors are on the
+> **Status.** Built: **180 technologies** in `src/sim/data/tech-tree.json`,
+> authored in `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)),
+> priced to §5's bands, with every §6 effect hook in. **17 era-2/3 majors are on the
 > tree flagged `planned`** — drawn, researchable, no effect yet (§7). **Nine
 > minor lines are designed, not built**, and are marked so in the tables.
 
 ## 1. Reading the tables
 
 - **Major** unlocks content; **minor** is one numeric step with a roman
-  numeral; the **spine** is the tome's keystone line
+  numeral; the **spine** is the tome's `Charter`/`Warband`/`Attunement` line,
+  which raises the tome's own dial and no longer gates its band
   ([`07-research.md`](07-research.md) §1.1, §2.1).
 - Node counts per era include that era's spine rank and every rank row.
 - **Ranks by era** reads era 1 / era 2 / era 3: `I·II / III·IV / V` means
@@ -33,8 +37,8 @@
 | Rank | Cost | Grants |
 |---|---|---|
 | `Charter I` | free, granted at game start | — |
-| `Charter II` | keystone | Townhall 3 |
-| `Charter III` | keystone | Townhall 4 |
+| `Charter II` | era 2 | Townhall 3 |
+| `Charter III` | era 3 | Townhall 4 |
 | `Charter IV` | sealed | Townhall 5 |
 
 ### 2.1 Era 1 · Settlement — 16 nodes
@@ -102,8 +106,8 @@
 | Rank | Cost | Grants |
 |---|---|---|
 | `Warband I` | free, granted when the tome opens | — |
-| `Warband II` | keystone | the four halls reach L4; **veteran** units can be recruited |
-| `Warband III` | keystone | halls L5; **champion** units |
+| `Warband II` | era 2 | the four halls reach L4; **veteran** units can be recruited |
+| `Warband III` | era 3 | halls L5; **champion** units |
 | `Warband IV` | sealed | — |
 
 - A unit tier is a spine grant, never an era leaf: it arrives with the army
@@ -164,8 +168,8 @@
 | Rank | Cost | Grants |
 |---|---|---|
 | `Attunement I` | free, granted when the tome opens | — |
-| `Attunement II` | keystone | Sanctum L4 and a step in the Mana ceiling |
-| `Attunement III` | keystone | Sanctum L5 and another step |
+| `Attunement II` | era 2 | Sanctum L4 and a step in the Mana ceiling |
+| `Attunement III` | era 3 | Sanctum L5 and another step |
 | `Attunement IV` | sealed | — |
 
 - The Sanctum itself is unlocked by **Consecration** in era 1; the spine only
@@ -238,12 +242,10 @@
 
 - The bands are the design; the exact rows are the workbook's.
 - **Era 1 costs no Knowledge.**
-- Majors climb across their band left to right along the era row; a line's
-  ranks climb across theirs by position within the era.
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
 - Whole tree: **550,165 Gold and 50,495 Knowledge**, of which the three sealed
-  era-4 keystones are 90,000 Gold and 9,000 Knowledge.
+  era-4 spine ranks are 90,000 Gold and 9,000 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
@@ -253,9 +255,10 @@
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
   are about **eight weeks** at 30/h and **five and a half** at 45/h.
-- The quest chain funds the **opening** — every era-1 technology and the
-  keystone that closes it. Era-2 majors (Sailing, Scaling Tools, Surveying II)
-  are the city's to earn; the onboarding test's Gold guarantee is scoped to the
+- The quest chain funds the **opening** — every era-1 technology and the spine
+  rank that follows. It also asks for enough exploring to open era 2 before it
+  points at anything in it (`tests/quests.test.ts`). Era-2 majors are the
+  city's to earn; the onboarding test's Gold guarantee is scoped to the
   opening.
 
 ## 6. Effects and hooks
@@ -267,7 +270,9 @@
   Scriptorium under Consecration, Ley Taps and Wayposts under Cartography,
   Vigils under Scaling Tools, Pilgrimage under Sailing, Prospecting under
   Shipbuilding, Scriveners under Architecture, Cartage under Roadworks.
-- **Three lines per major** is the fan's limit (`tests/research.test.ts`).
+- Every rank has a slot of its own on the page, so nothing limits how many
+  lines hang off one major any more; what a line still needs is a MAJOR at its
+  root, not another line's rank (`tests/upgrades.test.ts`).
 - Quest targets: `Surveyors` → `SurveyingII` (goal type `CompleteTech`; a rank
   implies the ones below it), `Attuned` → `Consecration`, `ArmedMen` →
   `Warrior`, `Mapmakers` → `Cartography`, `Architect` → `Architecture`
@@ -317,8 +322,9 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
 - **`planned: 1` in the workbook.** The node is drawn dashed and hatched, like
   the fog's `?`.
 - **The panel says it**, above the Start button: *Not yet in the prototype.*
-- **No keystone requires a planned node.** Keystones require the era's *built*
-  majors.
+- **Nothing a band depends on requires a planned node**, and the editor warns
+  when anything requires one at all: a card waiting on a no-op is waiting on
+  nothing.
 - **No minor line hangs off one.** Lines keep their stopgap parents (§6.1)
   until their own major works.
 - `tests/research.test.ts` pins the exact set and all four rules.
@@ -334,12 +340,13 @@ Salvage, Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 
 | Dial | Where | What it moves |
 |---|---|---|
-| the era price bands (§5) | `Technologies` sheet | how long the whole tree lasts — the first thing to touch |
-| a technology's `cost_gold` / `cost_knowledge` / `duration_seconds` | `Technologies` | one node |
-| `requires` | `Technologies` | the shape. **Row order is not chain order here** — the edges are |
-| a minor line's rank count | `Technologies` | how many eras a line spans |
-| `effect_per_rank` | `Technologies` | a line's step; `Scriveners` is the only Gold lever on the tree's pace |
-| `planned` | `Technologies` | whether a major is live |
+| the era price bands (§5) | `?dev=tree`, whose status bar totals each band | how long the whole tree lasts — the first thing to touch |
+| a technology's `gold` / `knowledge` / `seconds` | `?dev=tree` | one node |
+| `requires` | `?dev=tree` — drag, or click a connector to cut it | the shape |
+| `kind` and `unlocks` | `?dev=tree` | what the technology IS, and every gate derived from it |
+| a minor line's rank count | `?dev=tree` — add a rank | how many eras a line spans |
+| `effectPerRank` | `?dev=tree` | a line's step; `Scriveners` is the only Gold lever on the tree's pace |
+| `planned` | `?dev=tree` | whether a major is live |
 
 ## 9. Deliberately not in this design
 

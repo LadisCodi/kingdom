@@ -6,15 +6,36 @@
 > node, the minor lines and the price bands — is
 > [`tech-tree.md`](tech-tree.md).
 >
-> **Status.** The tomes, eras, keystones, minor rank lines, the Knowledge drip
-> and the Stardust split are **built**. Designed, not built: the centred node
-> sheet (§5.4), the Gem finish on a running research (§1), spells as Magic
-> nodes (§6), contested-landmark lumps (§7), guild investment (§8).
+> **Status.** The tomes, the one-page-per-book flow chart with its era bars,
+> the minor rank lines, the Knowledge drip and the Stardust split are
+> **built**, and the shape is authored in `?dev=tree`
+> ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Designed, not built:
+> the centred node sheet (§5.4), the Gem finish on a running research (§1),
+> spells as Magic nodes (§6), contested-landmark lumps (§7), guild investment
+> (§8).
 
 ## 1. Technologies
 
 - A technology is a one-time research that unlocks content: a building, a
   district level, a unit, a terrain, a mechanic, or one numeric step.
+- **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
+  `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name,
+  prose and glyph, its KIND and what it unlocks, its Gold, Knowledge and
+  seconds, its slot on its tome page and what it requires. There is no
+  `Technologies` sheet.
+- **Every technology is one of three kinds**, and it says which:
+
+| Kind | What it does | Authored |
+|---|---|---|
+| **`unlock`** | opens content, and names it | fully — a dropdown per thing it opens |
+| **`bonus`** | a rank on a minor line: one number, `effectPerRank` | the line and the step; the HOOK is code |
+| **`mechanic`** | what the sim reads by id — a cover page opening its book, `Conquest` bending the Knowledge rate | labelled only; the code does it |
+
+- **The technology says what it opens, and every gate is derived from that**
+  (`GATES`, `src/sim/data/definitions.ts`): a district's `requiredTech`, a
+  level's, one more of a district, a unit's, a harvest source's, a terrain's.
+  No district, unit or harvest row names its own technology any more, and two
+  technologies claiming one gate is an error.
 - **Cost: Gold + Knowledge + time.** Gold is paid from the **city** purse, so
   the tree competes with fog, buildings and Wonders for one budget
   ([`16-wonders.md`](16-wonders.md) §1). Knowledge is paid from the **kingdom**
@@ -29,8 +50,9 @@
 - `Scriveners I–III`: −5% research time per rank, fixed when the research
   starts and persisted on it. A rank landing mid-research does not move that
   research; the next one is quicker.
-- Each node lists `requires`; content gates on `requiredTech`. A prerequisite
-  never points into another tome.
+- Each node lists `requires` (one to three); content gates on `requiredTech`.
+  A prerequisite never points into another tome, and never at a card further
+  down its own page.
 - Gems finish a running research the way they finish a build *(designed, not
   built)*.
 - The tree has 180 rows: **Civics 71 · Magic 57 · Warfare 52**, totalling
@@ -70,13 +92,14 @@
 
 | Tome | Remit | Opens | Spine |
 |---|---|---|---|
-| **Civics** | the city and its purse | at game start | `Charter` — Townhall +1 level per keystone |
+| **Civics** | the city and its purse | at game start | `Charter` — Townhall +1 level per rank |
 | **Magic** | the land's magic and what you can see of it: fog, Mana, relics, ruins, the water | the **first paid reveal** | `Attunement` — Sanctum +1 level and a step in the Mana ceiling |
 | **Warfare** | the army, and what it goes into the ground for | the **first discovered ruin** | `Warband` — the four halls +1 level and the next tier of soldier |
 
 - `TomeId` = `Civics | Warfare | Magic`. A new tome is code.
-- **A tome is a screen**: three bounded pages behind a shelf of tabs, not one
-  canvas.
+- **A tome is one page**, read top to bottom behind a shelf of tabs: three
+  columns of cards with an era bar across the width wherever the next band
+  begins (§2.2). Not a canvas, and not a tab per band.
 - A tome is **open** once its cover page is complete (`isTomeOpen`,
   `openTome`, `src/sim/research.ts`). Opening is idempotent. All three open in
   the first session.
@@ -86,6 +109,9 @@
 - **No edge crosses tomes.** Townhall level gates the Sanctum (L2 needs TH2)
   and the four military halls independently of the tree, so Civics paces the
   other two without an edge.
+- Which tome a technology is in is **shape, not a number**: it is a drag in
+  `?dev=tree`, not a column in the workbook
+  ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
 - Exploration — Cartography, Sailing, Scaling Tools, Fishing, Shipbuilding,
   the Docks — lives in Magic. Magic opens on the first paid reveal, so
   Cartography is reachable when the quest `Mapmakers` asks for it. Scaling
@@ -97,37 +123,71 @@
   (`cellRecovery`, Magic) are two stats reaching one outcome. The same rule
   holds between relics and ranks ([`09-relics.md`](09-relics.md) §9).
 
-### 2.1 Eras and keystones
+### 2.1 Eras and the bars between them
 
 - Each tome has eras 1–3 and a sealed era 4. Eras are per tome, not a global
-  ladder.
-- **A keystone** is a spine rank II or higher. It requires **every *built*
-  major of the era above it** — not the ranks, not the planned nodes.
-  Completing it opens the next era of that tome.
-- Nine keystones; each also unlocks a real dial: Townhall level (`Charter`),
-  hall levels and the next unit tier (`Warband`), Sanctum levels and Mana
-  ceiling (`Attunement`).
+  ladder. A band is a run of rows on the page; the **era bar** spanning the
+  page is the door between two of them.
+- **A band opens on the world, not on a research.** Era 1 opens with its book;
+  every band after it needs a slice of the region revealed
+  (`ERA_UNLOCK_CELLS`, the `Eras` sheet). Nothing in a locked band is
+  startable — `startTech` answers `EraLocked` — and the bar says how many
+  cells are left.
+
+| Band | Cells revealed |
+|---|---|
+| era 1 | 0 — open with the book |
+| era 2 | 30 |
+| era 3 | 100 |
+| era 4 | 220 |
+
+- A fresh kingdom opens with 16 cells revealed, so era 2 is about fifteen
+  paid reveals away, and the quest chain asks for more than that before it
+  points at an era-2 technology (`tests/quests.test.ts`).
+- The count is **paid reveals only** (`revealedCellCount`): a cell a building
+  merely *discovered* has been seen, not opened, and the same count is what
+  the `DiscoverCells` quest goal follows.
+- The gate is a state condition, not a timer: no boundary source, nothing to
+  settle, and it cannot be bought with Gems or Gold directly — only by
+  clearing fog, which Gold pays for.
+- **The spines are ordinary technologies.** `Charter`, `Warband` and
+  `Attunement` II and up each raise a real dial — Townhall level, hall levels
+  and the next unit tier, Sanctum levels and the Mana ceiling — and are bought
+  like anything else. They no longer hold a door, and no longer require every
+  built major of the band above.
 - Era 4 is one keystone per tome (`CharterIV`, `WarbandIV`, `AttunementIV`),
-  drawn with the `?` silhouette and not researchable. Adding era 4 is data
-  rows.
+  drawn behind a dashed **Sealed** bar. Filling era 4 is data rows.
 - A player may research ahead in one tome; content still gates on Townhall
   level.
 
-### 2.2 Layout
+### 2.2 The page
 
-- **The shape of the tree — where every node sits and what it requires — is
-  authored in `?dev=tree`** and lives in `src/sim/data/tech-tree.json`
+- **The shape of the tree — which tome and band each card is in, where on the
+  page, and what it requires — is authored in `?dev=tree`** and lives in
+  `src/sim/data/tech-tree.json`
   ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Every NUMBER stays in
   the workbook. Neither file can overwrite the other.
-- A major has a position on its tome's page; the page reads downward, an era
-  never sitting above the one before it.
-- A rank may have one too. Until it does it is drawn as one bead under its
-  parent major (§5.3) — the fan is what the editor exists to retire.
-- Connectors route horizontal-then-vertical (`src/ui/research/layout.ts`);
-  `FAN_DX` 56 px spaces the beads. Three lines per major is the fan's limit.
-- **A rank's requirement on its era keystone is not drawn**: the band the node
-  sits in says it, and 119 lines into three keystones would hide every edge
-  that carries information.
+- A page is **three columns** wide and as many rows tall as the book needs.
+  Three, because a fourth does not fit a phone and the flow stops reading as a
+  flow past three.
+- **A row is depth.** Every requirement sits on a smaller row than the card
+  that needs it, which is what makes a loop impossible and the page readable
+  downward. One to three requirements per card; a cover page has none.
+- **Every technology has a slot, ranks included.** `Sawpits II` is a card in
+  band 2, not a bead hanging off its parent — the fan the old canvas needed is
+  gone, and so are `FAN_DX`/`FAN_DY`.
+- A card is 120 × 96 px: its name on one line and three lines of what it does.
+  Both at 18px, the only size the body face has, which is what fixes the
+  numbers ([`../../src/ui/research/layout.ts`](../../src/ui/research/layout.ts)).
+- **A connector never crosses a card, by construction.** It runs down its own
+  column while that column is empty and crosses in the GUTTER between two
+  rows; where the column is occupied it steps out into a side CHANNEL, down
+  the outside of the page, and back in above its target. So there is no rule
+  about connectors and nodes to get wrong.
+- **A requirement that reaches back over an era bar is not drawn.** The band a
+  card sits in says it, and 119 rank-to-rank lines across three bars would
+  hide every edge that carries information (`isDrawnEdge`). The card gets a
+  stub in the gutter above it instead, and its sheet lists the requirement.
 - `src/sim/data/techTreeRules.ts` is the one statement of what a legal tree
   is, checked by the editor as you drag, by the save endpoint, and by
   `tests/techTree.test.ts` against the shipped file.
@@ -146,9 +206,9 @@
 | each **claimed landmark** | +2/h | +50 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
 | each **cleared ruin** | +2/h | +150 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
 | the **`Conquest`** technology | +3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
-| `SanctifiedRuins` | ×2 on the per-ruin drip | — | `Technologies` |
-| `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `Technologies` |
-| `Scriptorium` | +% on the whole rate, per rank | — | `Technologies` |
+| `SanctifiedRuins` | ×2 on the per-ruin drip | — | a `mechanic` |
+| `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` lines |
+| `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` line |
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
 | the **Conjunction** boon | — | +60 | `CONJUNCTION_BOONS[*].knowledge` (**OQ-12**) |
 | the **quest chain** | — | 500 across nine quests | `rewardKnowledge` (Quests sheet) |
@@ -207,26 +267,34 @@
 | State | Drawn as |
 |---|---|
 | **Normal** | researched, researching, or every prerequisite started |
-| **`?` silhouette** | one step ahead — every prerequisite is normal. A dim dashed square with a `?`: no name, no cost, not tappable |
+| **`?` silhouette** | one step ahead — every prerequisite is normal. A dim dashed card with a `?`: no name, no cost, not tappable |
 | **Hidden** | anything deeper is not rendered |
 
-- The canvas is sized to what is visible.
+- The page is as long as what the fog shows: a row the fog has emptied
+  collapses, so there are no blank lines in the middle of the flow.
+- **Era bars never collapse.** A band the player cannot read yet still shows
+  its bar, because the bar is the statement that there is more book.
+- The page scrolls vertically and nothing else — it is exactly the phone's
+  width by construction. On a fresh open it lands on the WORK: whatever is
+  running or startable, and failing that the last thing finished.
 
-### 5.3 Nodes
+### 5.3 Cards
 
-- A **major** is a rounded square. A dot marks anything startable now; an
-  active research shows a progress bar.
-- A **line** is one bead below its completed parent, labelled `rank/max`. The
-  bead stands for the next rank to research; tapping it selects that rank.
+- A card carries its **name** and one line of what it is for — what it
+  unlocks, or its own effect for a minor rank. A dot marks anything startable
+  now; an active research shows a progress bar.
+- Colour is the state: researched, available, running.
+- A card in a **locked band** is drained of colour and not startable; the bar
+  above it says how many cells are left.
 - A planned node is drawn dashed and hatched, like the fog's `?`, and carries
   a `planned` badge.
-- Requirements read as ✓ / ✗.
+- Requirements read as ✓ / ✗ in the panel.
 
 ### 5.4 The info panel
 
 Built as a side panel; the design is a **centred sheet** *(not built)*.
 
-- One tap on a node, one sheet over the tree, with its own close knob
+- One tap on a card, one sheet over the page, with its own close knob
   (`kit/surface.ts`). Header and nav stay above it, so the purse is readable
   while the player reads prices.
 - Title: name, with the rank numeral for a minor (*Sawpits II*).
@@ -239,8 +307,11 @@ Rank               2  →  3
 Tap Power        +40%  →  +60%
 ```
 
-- Requirements: prerequisite medallions, ✓ / ✗, tappable to scroll there.
-- Cost: Gold, Knowledge, time; time-to-afford when Knowledge is short.
+- Requirements: prerequisite medallions, ✓ / ✗, tappable to scroll there —
+  including the one that reaches back over an era bar, which the page does not
+  draw (§2.2).
+- Cost: Gold, Knowledge, time; time-to-afford when Knowledge is short. Behind
+  a locked bar the action reads "Reveal N more cells to read on".
 - Action: **Research**, or **Finish with Gems** on a running one *(not built)*.
 - Slots: the bar shows in-flight research and a **Hire** button at
   `slotGemCost`.
@@ -307,17 +378,17 @@ Tap Power        +40%  →  +60%
 
 | Dial | Value | Key |
 |---|---|---|
-| Era price bands | [`tech-tree.md`](tech-tree.md) §5 — **OQ-13** | `Technologies` sheet |
+| Era price bands | [`tech-tree.md`](tech-tree.md) §5 — **OQ-13** | `tech-tree.json`, with per-band totals in **`?dev=tree`** |
 | Landmark drip · claim lump | 2/h · 50 | `knowledge.perClaimedLandmarkPerHour` · `knowledge.landmarkClaimLump` |
 | Ruin drip · first-clear lump | 2/h · 150 | `knowledge.dripPerClearedRuinPerHour` · `delve.firstClearKnowledge` |
 | Conquest drip | 3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
 | Conjunction Knowledge lump | 60 | `CONJUNCTION_BOONS[*].knowledge` |
 | Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
-| A technology's Gold, Knowledge, duration | per row | `Technologies` sheet |
-| A node's `tome`, `era`, `line`, `effect_per_rank`, `planned` | per row | `Technologies` sheet |
-| **Where a node sits, and what it requires** | the shape | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **A whole technology** — name, prose, glyph, kind, unlocks, Gold, Knowledge, seconds, tome, band, slot, requirements | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| What opens a band | 0 · 30 · 100 · 220 cells revealed | `Eras` sheet (`unlock_cells`) |
+| Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 | Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
-| `Scriveners` per rank | −5% research time | `Technologies` sheet |
+| `Scriveners` per rank | −5% research time | `tech-tree.json` (`effectPerRank`) |
 | A spell's Mana cost | per spell | `Spells` sheet *(designed)* |
 | Gems to finish a running research | undecided | *(designed)* |
 
@@ -334,8 +405,22 @@ Tap Power        +40%  →  +60%
 - Mana paying for research.
 - Trickle-and-commit: pouring Knowledge into a technology across visits.
 - A Knowledge or Stardust row on the plank (§4).
-- Five tomes; one radial canvas for the whole tree.
+- Five tomes; one radial canvas for the whole tree; a tab per band.
 - A global age ladder instead of per-tome eras.
+- A keystone that holds a band shut, or that requires every built major of the
+  band above it (§2.1).
+- Gems or Gold spent to open a band directly (§2.1).
+- A minor rank drawn as a bead fanned under its parent instead of a card in a
+  slot of its own (§2.2).
+- A rule about connectors crossing cards: the routing makes it impossible
+  (§2.2).
+- A technology in a spreadsheet: the `Technologies` sheet, and the three
+  hand-written id lists that came with it (§1).
+- A district, unit or harvest source naming its own `required_tech`: the
+  technology says what it opens, once (§1).
+- An editor that can author a new EFFECT. A `bonus` reaches a hook that
+  exists and a `mechanic` is read by id; both are code
+  ([`../tech-tree-editor.md`](../tech-tree-editor.md) §8).
 - Exclusive branch picks.
 - A prerequisite that crosses tomes (§2).
 - A spell that requires a node in another tome (§6).
@@ -349,4 +434,5 @@ Tap Power        +40%  →  +60%
 - A general upgrade-scoping mechanism (§1.1).
 
 **Open questions:** **OQ-12**, **OQ-13**, **OQ-14**, **OQ-15**, **OQ-41**,
-**OQ-59**, **OQ-68**, **OQ-69**.
+**OQ-59**, **OQ-69**. (**OQ-68** is retired: a band is not held by a keystone
+any more, and what each bar asks for is a number, so it is OQ-13.)

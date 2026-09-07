@@ -6,7 +6,7 @@ import { newGame } from '../src/sim/newGame';
 import { choosePayerProfile } from '../src/sim/store';
 import { Camera } from '../src/render/camera';
 import {
-  DISTRICTS, TECHNOLOGIES, TECH_LINES, type DistrictDef,
+  DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_LINES, TOME_ORDER, type DistrictDef,
 } from '../src/sim/data/definitions';
 import {
   coordKey, getWallet, type Coord, type DistrictId, type GameState, type TechId, type TechLineId,
@@ -88,6 +88,27 @@ export const canGather = (state: GameState): GameState => {
 
 export const reveal = (state: GameState, cells: Coord[]): void => {
   for (const c of cells) state.fog.revealed[coordKey(c)] = true;
+};
+
+/**
+ * Reveal enough of the region to open every era bar in every book
+ * (Docs/features/07-research.md §2.1) — what a test means by "the player has
+ * been playing a while".
+ *
+ * A band past the first is a gate in the WORLD now, not a keystone, so a test
+ * that starts an era-2 technology has to have explored for it. It takes real
+ * map cells rather than invented keys so the count means the same thing the
+ * game's does.
+ */
+export const openEveryEra = (state: GameState): void => {
+  const most = Math.max(...TOME_ORDER.flatMap((t) => ERA_UNLOCK_CELLS[t]));
+  // The FARTHEST cells, not the first ones the map happens to list. A test
+  // about a building's discover radius is a test about the fog next to the
+  // Townhall, and revealing that is not what "has explored a lot" should
+  // mean here.
+  const byDistance = [...map.terrain.keys()].sort((a, b) =>
+    (map.distanceFromTownhall.get(b) ?? 0) - (map.distanceFromTownhall.get(a) ?? 0));
+  for (const key of byDistance.slice(0, most)) state.fog.revealed[key] = true;
 };
 
 /** Test setup: drop an already-Built district onto the map (no cost, no

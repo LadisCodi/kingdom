@@ -332,14 +332,17 @@ Warrior` and `Forestry → Attunement` are the only two cross-tome prerequisites
 left, and both have to go (§6.2). **Forestry gating the Barracks and the Sanctum
 was never saying anything.**
 
-**Where it lands, and the one code step that has to come first.** Tome, column,
-tier and the join threshold are columns on the `Technologies` sheet, and the
-workbook owns them — so **the importer schema in `scripts/balance.mjs` has to
-learn them before any of this can be authored**, following the procedure
-`CLAUDE.md` already documents: edit the JSON *and* the schema, then
-`npm run balance:export`, then `npm run balance`. **`requires`, `node_x` and
-`node_y` already came out** (2026-09-07): the tree's shape lives in
-`tech-tree.json` and is authored in `?dev=tree`.
+**Where it lands.** **The whole technology came out of the workbook**
+(2026-09-07). The `Technologies` sheet is gone and so are the three id lists
+that shadowed it: a technology is one object in `tech-tree.json` — name, prose,
+glyph, kind, unlocks, Gold, Knowledge, seconds, tome, band, slot,
+requirements — authored in `?dev=tree`
+([`tech-tree-editor.md`](tech-tree-editor.md)), which can also CREATE one.
+`TechId` is that file's keys, so the type follows the data. A technology now
+says what it opens, so `Districts`, `Units` and `Harvest` lost their
+`required_tech` columns and every gate is derived. What the workbook still owns
+is every other number, including the `Eras` sheet — how many revealed cells
+each era bar asks for.
 
 **What is still undecided and does not block starting:** the band sizes
 (**OQ-62** — the three tomes will not want the same shape), the join thresholds

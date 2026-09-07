@@ -58,9 +58,19 @@ const AUTOSAVE_TICKS = 30;
 async function boot(): Promise<void> {
   // ?dev=map — the map editor, INSTEAD of the game. Checked before anything
   // else boots: it needs no save, no tick and no supabase, and the game's
-  // 9:16 phone frame is the wrong shape for looking at a region.
+  // 9:16 phone frame is the wrong shape for looking at a region. `?dev=tree`
+  // below is the same deal for the tech tree.
   if (new URLSearchParams(location.search).get('dev') === 'map') {
     const { mountEditor } = await import('./editor/mount');
+    mountEditor();
+    return;
+  }
+
+  // ?dev=tree — the tech tree editor, on the same terms as the map's
+  // (Docs/tech-tree-editor.md): no save, no tick, no supabase, and a shape
+  // that wants a desk rather than a phone frame.
+  if (new URLSearchParams(location.search).get('dev') === 'tree') {
+    const { mountEditor } = await import('./editor/tree/mount');
     mountEditor();
     return;
   }
@@ -384,6 +394,11 @@ async function boot(): Promise<void> {
         game.state.city.wallet.Mana = 1;
         runTick();
       }),
+      // The two authoring tools, from the bar rather than from the URL. Both
+      // mount INSTEAD of the game (see the top of boot), so this is a real
+      // navigation — and the `pagehide` handler above saves on the way out.
+      button('🗺 map editor', () => { location.search = '?dev=map'; }),
+      button('🌳 tree editor', () => { location.search = '?dev=tree'; }),
       button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }

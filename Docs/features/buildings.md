@@ -303,16 +303,18 @@ Full design: [`16-wonders.md`](16-wonders.md).
 Research owns the early half of every ladder and nothing above it: past these
 levels a building is bought with a Townhall level and goods (§4.11).
 
+**Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
+
 | Building | Last tech-gated level |
 |---|---|
-| Townhall 4 | `Charter III` (Civics era 3 keystone) |
+| Townhall 4 | `Charter III` (the Civics era-3 spine rank) |
 | Housing 3 | `Aqueducts` (Civics era 3) |
 | Sawmill 4 | TH3 · `Architecture` |
 | Quarry 3 | TH3 · `Architecture` |
 | Farm 2 | TH2 · `Farming` |
 | Docks 2 | `Shipbuilding` (Magic era 3) |
-| Sanctum 5 | TH4 · `Attunement III` (Magic era 3 keystone) |
-| the four halls 5 | TH3 · `Warband III` (Warfare era 3 keystone) |
+| Sanctum 5 | TH4 · `Attunement III` (the Magic era-3 spine rank) |
+| the four halls 5 | TH3 · `Warband III` (the Warfare era-3 spine rank) |
 | the four workshops · the Market | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them

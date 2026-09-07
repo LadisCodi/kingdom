@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
+  DISTRICTS, ERA_UNLOCK_CELLS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -84,6 +84,29 @@ describe('the quest chain', () => {
     inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
       { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
+  });
+
+  // THE CHAIN MAY NOT ASK FOR A TECHNOLOGY BEHIND A BAR IT HAS NOT ASKED THE
+  // PLAYER TO OPEN.
+  //
+  // A band past the first is a gate in the world now
+  // (Docs/features/07-research.md §2.1), so a `CompleteTech` quest pointing
+  // at one is only answerable once the region is open enough — and the chain
+  // is what teaches exploring. `DiscoverCells` goals count reveals FROM THE
+  // START OF THAT QUEST, so their amounts add up to a lower bound on how
+  // much the player has actually revealed by the time the chain gets here.
+  it('never points at a technology behind an era bar it has not opened', () => {
+    // The opening fog is already lifted around the Townhall, and that counts:
+    // it is what the first bands are priced against.
+    let revealed = Object.keys(freshGame().fog.revealed).length;
+    for (const quest of QUESTS) {
+      if (quest.goalType === 'DiscoverCells') revealed += quest.goalAmount;
+      if (quest.goalType !== 'CompleteTech') continue;
+      const def = TECHNOLOGIES[quest.goalTarget as TechId];
+      const gate = ERA_UNLOCK_CELLS[def.tome][def.era];
+      expect(gate, `${quest.id} asks for ${def.id}, behind ${gate} revealed cells`)
+        .toBeLessThanOrEqual(revealed);
+    }
   });
 
   // The two goal kinds the onboarding rewrite needed and the sim did not have.

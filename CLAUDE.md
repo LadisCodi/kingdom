@@ -35,7 +35,10 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 reset). `?dev=kit` opens the UI primitive gallery. `?dev=map` opens the map
 editor (`Docs/map-editor.md`) — paint terrain and features, place
 landmarks and ruins; it saves straight into `src/sim/data/region-map.json`
-through a dev-only Vite middleware.
+through a dev-only Vite middleware. `?dev=tree` opens the tech tree editor
+(`Docs/tech-tree-editor.md`) — drag technologies into the slots of a tome
+page, which sets their requirements; it saves into
+`src/sim/data/tech-tree.json` the same way.
 
 ## Five invariants. Breaking one is a bug even if the tests pass.
 
@@ -66,20 +69,28 @@ than in live ticking, and a new consumer would shift every later roll. Integer
 arithmetic (`Math.imul`, `>>> 0`) so it is bit-identical across engines.
 
 **5. The workbook is the source of truth for every NUMBER; the map editor for
-the MAP; `?dev=tree` for the TECH TREE'S SHAPE.** `balance/balance.xlsx` → `npm run balance` →
-`src/sim/data/balance.json`. **Editing `balance.json` by hand is silently
-overwritten** on the next dev/build. To add a column: edit the JSON *and* the
-importer schema in `scripts/balance.mjs`, then `npm run balance:export`, then
-`npm run balance`.
-Map *content* — terrain, features, landmarks and ruins — is authored by
+the MAP; `?dev=tree` for the TECHNOLOGIES.** `balance/balance.xlsx` →
+`npm run balance` → `src/sim/data/balance.json`. **Editing `balance.json` by
+hand is silently overwritten** on the next dev/build. To add a column: edit the
+JSON *and* the importer schema in `scripts/balance.mjs`, then
+`npm run balance:export`, then `npm run balance`.
+Two kinds of content are **not numbers** and live outside the workbook.
+Map content — terrain, features, landmarks and ruins — is authored by
 coordinate, which a spreadsheet expresses badly, so it lives in
 `src/sim/data/region-map.json` and is edited in `?dev=map`
-(`Docs/map-editor.md`). The **tech tree's shape** — every node's position on
-its tome page and every `requires` edge — is a graph, which a spreadsheet
-expresses just as badly, so it lives in `src/sim/data/tech-tree.json` and is
-edited in `?dev=tree` (`Docs/tech-tree-editor.md`). `npm run balance` does not
-touch either file, and the `Technologies` sheet no longer has `requires`,
-`node_x` or `node_y`.
+(`Docs/map-editor.md`). A **technology is whole** in
+`src/sim/data/tech-tree.json`, edited in `?dev=tree`
+(`Docs/tech-tree-editor.md`): its name, prose and glyph, what KIND it is
+(`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold, Knowledge and
+seconds, its slot on its tome's three-column page, and what it requires. There
+is **no `Technologies` sheet** — a tree is a graph a designer arranges by
+dragging, and half of it in a spreadsheet was the thing that made creating one
+a four-file job. **A technology says what it opens**, so `Districts`,
+`Units` and `Harvest` have no `required_tech` columns either: every gate
+(`DISTRICTS[x].requiredTech`, `requiredTechPerLevel`, `extraCountTech`,
+`UNITS[x].requiredTech`, `HARVEST[x].requiredTech`, `terrainGate`) is derived
+from the technologies in `definitions.ts`. `npm run balance` does not touch
+`tech-tree.json`, and `?dev=tree` does not touch the workbook.
 What a legal map is lives in **one** place, `src/sim/data/mapRules.ts`, checked
 by the editor, by the save endpoint and by `tests/regionMap.test.ts`; what a
 legal tech tree is lives in `src/sim/data/techTreeRules.ts`, checked the same
@@ -89,13 +100,14 @@ three ways (`tests/techTree.test.ts`).
 
 | Data — no code change | Code |
 |---|---|
-| every balance number (`Districts`, `Harvest`, `Technologies`, `Upgrades`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
+| every balance number (`Districts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Eras`, `Settings`) | new quest **goal types** |
 | the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
-| a seasonal hero = one hero row + one banner row; a technology's tome, era and Knowledge price; a minor line's ranks (row order) | a new tome or a new minor line (`TomeId` and `TechLineId` are unions), or a new effect hook for a line (`modifiers.ts`) |
-| the whole **shape of the tech tree** — every node's place on its page and every `requires` edge — in `?dev=tree` (`Docs/tech-tree-editor.md`) | a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| a seasonal hero = one hero row + one banner row; what an era bar asks for in revealed cells (`Eras`) | a new tome (`TomeId` is a union), a new minor LINE, or a new effect hook for a line (`modifiers.ts`, `upgrades.ts`) |
+| **a whole new technology** — id, name, prose, glyph, kind, unlocks, price, clock, slot, requirements — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |

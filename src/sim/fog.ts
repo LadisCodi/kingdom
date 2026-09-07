@@ -1,6 +1,6 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, RUINS } from './data/definitions';
+import { DISTRICTS, FOG, LANDMARKS, RUINS, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
@@ -84,8 +84,11 @@ export const isReachable = (state: GameState, map: MapData, cell: Coord): boolea
  *  See Docs/features/01-map-and-fog.md §3. */
 export function explorationGate(map: MapData, cell: Coord): TechId | null {
   const terrain = map.terrain.get(coordKey(cell));
-  if (terrain === 'Water') return 'Sailing';
-  return null;
+  // Which technology crosses which ground is the TECHNOLOGY's to say —
+  // Sailing carries `unlocks: [{ terrain: 'Water' }]` — so this is a lookup
+  // rather than the hardcoded `if (terrain === 'Water') return 'Sailing'` it
+  // used to be (Docs/tech-tree-editor.md §2).
+  return terrain === undefined ? null : terrainGate(terrain);
 }
 
 /**

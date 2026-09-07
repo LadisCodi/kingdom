@@ -14,7 +14,7 @@ import { TECHNOLOGIES } from '../src/sim/data/definitions';
 import { cityGoldPerMinute } from '../src/sim/population';
 import { startTech } from '../src/sim/research';
 import { getWallet, type GameState } from '../src/sim/state';
-import { addBuilt, completeTech, freshGame, fund, map, T0 } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map, openEveryEra, T0 } from './helpers';
 
 /** Two L1 Housing and five villagers: one is homeless until Communities
  *  lands, at which point capacity goes 4 → 5 and the tax rate jumps. */
@@ -25,10 +25,13 @@ function onTheEdgeOfCommunities(): GameState {
   // Two L1 houses (2 each) + the Townhall's own bed = 5. The SIXTH villager
   // is the one waiting on Communities for a roof.
   state.city.population = 6;
-  // Communities sits in Civics era 2, so the era-1 keystone comes with it —
+  // Communities sits in Civics era 2, so its requirements come with it —
   // `completeTech` pulls the whole chain, which is what "the player has
   // researched this" means now.
   completeTech(state, 'CharterII');
+  // Communities is a band down, and a band past the first opens on the world
+  // rather than on a keystone (07-research.md §2.1).
+  openEveryEra(state);
   fund(state, { Gold: 10_000, Wood: 1000, Knowledge: 1000 });
   // Research is paid in Knowledge out of the KINGDOM purse, so the tech cost
   // and the tax income no longer share a wallet — nothing to isolate.

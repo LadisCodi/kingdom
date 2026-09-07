@@ -28,7 +28,8 @@ import { addHeroXp } from '../src/sim/heroes';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
 import {
-  addBuilt, canGather, completeTech, FOREST, freshGame, fund, map, T0, tickAt, completeRanks } from './helpers';
+  addBuilt, canGather, completeTech, FOREST, freshGame, fund, map, openEveryEra, T0, tickAt,
+  completeRanks } from './helpers';
 
 
 /** Research one rank end to end, through the real command and the real clock
@@ -77,8 +78,8 @@ describe('researching a rank', () => {
     state.city.wallet.Gold = 0; // the opening grant would cover the first rank
     completeTech(state, 'Forestry');
     expect(startTech(state, 'TapPowerI', T0)).toBe('NotEnoughResources');
-    // Ranks II+ sit in later eras and wait on those keystones too.
-    completeTech(state, 'CharterIII');
+    // Ranks II+ sit in later bands, which are gates in the world.
+    openEveryEra(state);
     fund(state, { Gold: 1_000_000, Knowledge: 1_000_000 });
     for (const id of TECH_LINES.TapPower) expect(research(state, id)).toBe('Started');
     expect(lineRank(state, 'TapPower')).toBe(lineMaxRank('TapPower'));
@@ -277,17 +278,18 @@ describe('every line reaches the number it claims to', () => {
     expect(castCost(state, 'VerdantSeal')).toBe(Math.round(full * 0.6));
   });
 
-  // The renderer fans a line under `lineParent(line)`, and only MAJORS have a
-  // grid position to fan from. A line whose parent is itself a rank would
-  // therefore be drawn nowhere at all — invisible in the game while still
-  // being researchable by id. That is precisely the Surveying bug the repo
-  // already shipped once, in a new costume.
-  it('hangs every line under a major, so the fan has somewhere to draw it', () => {
+  // Every rank has a slot of its own now, so a line is a chain of cards down
+  // the page rather than a fan under one node. What still has to hold is
+  // where the chain STARTS: rank I hangs off a MAJOR, not off another line's
+  // rank, or the ladder would have no root the page can show. That is
+  // precisely the Surveying bug the repo already shipped once, in a new
+  // costume.
+  it('hangs every line off a major, so a ladder has a root on the page', () => {
     for (const line of TECH_LINE_ORDER) {
       const parent = lineParent(line);
       expect(parent, `${line} hangs off nothing`).not.toBeNull();
-      expect(TECHNOLOGIES[parent!].node, `${line} hangs off ${parent}, which is itself a rank`)
-        .not.toBeNull();
+      expect(TECHNOLOGIES[parent!].line, `${line} hangs off ${parent}, which is itself a rank`)
+        .toBeNull();
     }
   });
 
@@ -427,6 +429,7 @@ describe('the era-2/3 lines reach their numbers', () => {
       // Charter IV is the six-hour keystone; Scriveners I is twenty minutes.
       // Architecture brings Charter III and every era-2 major with it.
       for (const id of TECHNOLOGIES.CharterIV.requires) completeTech(s, id);
+      openEveryEra(s); // both keystones sit behind era bars
       s.research.slotsPurchased = 2;
       expect(startTech(s, 'CharterIV', T0)).toBe('Started');   // long
       expect(startTech(s, 'ScrivenersI', T0)).toBe('Started'); // short
@@ -573,6 +576,7 @@ describe('Farsight reaches the fog', () => {
     // Research the rank through the real clock, so the re-discover fires
     // where it lives — inside the boundary walk.
     completeTech(state, 'ScalingTools');
+    openEveryEra(state);
     expect(startTech(state, 'FarsightI', T0)).toBe('Started');
     advance(state, map, T0 + TECHNOLOGIES.FarsightI.durationSeconds * 1000);
 
@@ -586,6 +590,7 @@ describe('Farsight reaches the fog', () => {
       const s = freshGame();
       fund(s, { Gold: 99_999, Knowledge: 99_999 });
       completeTech(s, 'ScalingTools');
+      openEveryEra(s);
       expect(startTech(s, 'FarsightI', T0)).toBe('Started');
       return s;
     };

@@ -1,31 +1,35 @@
-// Research overlay: ONE unified tree.
-//  - Technologies: square icon nodes on a hand-authored grid, dotted
-//    orthogonal connectors; researching takes time in a concurrent slot
-//    (extra slots bought with Gems at an escalating price).
-//  - Minor RANKS: smaller square nodes fanned below the technology their
-//    line hangs under. They are technologies like any other — Gold and time,
-//    in a slot — and the fan appears when the parent completes, which is the
-//    visible reward of the research. (The fan is a stopgap layout; see
-//    research/layout.ts FAN_DY.)
-//  - Tree fog: researched/available techs render normally; techs one step
-//    beyond a RESEARCHED or RESEARCHING tech show as anonymous "?"
-//    silhouettes; anything deeper is hidden.
+// Research overlay: ONE PAGE PER TOME, read top to bottom.
+//  - A tab per open book; inside it, the whole book as a flow chart of cards
+//    three columns wide, with an ERA BAR spanning the page wherever the next
+//    band begins (Docs/features/07-research.md §2.2).
+//  - Every technology has a slot, minor ranks included: rank II is a card in
+//    band 2, not a bead hanging off its parent.
+//  - Connectors run in the gutter between two rows, or out into the side
+//    channel when they reach further — so a line never crosses a card
+//    (research/layout.ts).
+//  - Tree fog: researched/available cards render normally; one step beyond
+//    what is researched or running shows as an anonymous "?"; anything deeper
+//    is not drawn, and the rows it would have filled collapse.
+//  - An era bar the player has not earned says what is left to reveal. The
+//    band below it draws, dimmed: the page is legible, and nothing in it is
+//    startable until the region is.
 
 import type { Game } from '../game';
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER, TECH_ORDER,
-  TOMES, TOME_ORDER, UNITS, lineParent,
+  DISTRICTS, MAX_ERA, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER, UNITS,
 } from '../sim/data/definitions';
 import {
-  canStartTech, isTechActive, isTechComplete, isTomeOpen, knowledgeShortfallMs, requirementsMet,
-  slotGemCost,
-  techCompletesAt, techSlots, techUnlocks,
+  canStartTech, eraShortfall, eraUnlocked, isTechActive, isTechComplete, isTomeOpen,
+  knowledgeShortfallMs, requirementsMet, slotGemCost, techCompletesAt, techEraUnlocked,
+  techSlots, techUnlocks,
 } from '../sim/research';
 import { knowledgePerHour } from '../sim/mana';
 import { resourceDiscoveryKey } from '../sim/discovery';
-import { lineMaxRank, lineRank } from '../sim/upgrades';
-import { type GameState, type TechId, type TechLineId, type TomeId } from '../sim/state';
-import { edgePath, FAN_DX, FAN_DY, GRID, NODE, UNODE } from './research/layout';
+import { unlockLabel } from '../sim/data/techTreeRules';
+import { type GameState, type TechId, type TomeId } from '../sim/state';
+import {
+  colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
+} from './research/layout';
 import { spriteUrl } from '../render/sprites';
 import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
@@ -34,62 +38,17 @@ import { el, formatDuration } from './format';
  *  per-tick re-render, like the selection below. */
 let activeTome: TomeId = 'Civics';
 
-// Module-level so selection/pan survive the per-tick re-render.
+// Module-level so the selection survives the per-tick re-render.
 type Selected = { kind: 'tech'; id: TechId } | null;
 let selected: Selected = null;
 
-// Geometry (GRID, NODE, UNODE, FAN_*) and the connector route come from
-// ./research/layout.ts, so the test reads the same route this draws.
+/** The page element of the last render, used only to tell a fresh mount from
+ *  a per-tick refresh: on a refresh the old subtree is still in the document
+ *  (the host replaces it afterwards), on a fresh mount it is already gone. */
+let pageEl: HTMLElement | null = null;
+const isFreshMount = (): boolean => pageEl === null || !pageEl.isConnected;
 
-// ---- drag panning ----------------------------------------------------------
-// Pointer listeners live on window and act on the CURRENT tree element, so an
-// in-flight drag survives the per-tick re-render that replaces the DOM.
-let treeEl: HTMLElement | null = null;
-let drag: {
-  id: number; x: number; y: number; startX: number; startY: number; moved: boolean;
-} | null = null;
-let suppressClick = false; // a pan gesture must not select/deselect on release
-let panWired = false;
-
-// ---- first-open framing ----------------------------------------------------
-// The canvas is 1160x1040 inside a ~400x520 window, so where it starts
-// matters, and it started at (0, 0) — the top-left CORNER of the authored
-// grid, which is empty parchment. The screen opened on nothing, every time,
-// and the player had to drag to find their own tree.
-//
-// Only on a FRESH MOUNT: the per-second rebuild must never yank the view back
-// while a finger is on it, and the host already restores the pan across those
-// (data-keep-scroll). The two are told apart by whether the PREVIOUS tree
-// element is still in the document when this render runs — on a refresh the
-// old subtree is still mounted and is replaced afterwards; on a fresh mount
-// the slot has already torn it down.
-const isFreshMount = (): boolean => treeEl === null || !treeEl.isConnected;
-
-const consumeSuppressedClick = (): boolean => {
-  const s = suppressClick;
-  suppressClick = false;
-  return s;
-};
-
-function wirePanOnce(): void {
-  if (panWired) return;
-  panWired = true;
-  window.addEventListener('pointermove', (e) => {
-    if (!drag || e.pointerId !== drag.id || !treeEl) return;
-    drag.moved = drag.moved
-      || Math.abs(e.clientX - drag.startX) + Math.abs(e.clientY - drag.startY) > 6;
-    treeEl.scrollLeft -= e.clientX - drag.x;
-    treeEl.scrollTop -= e.clientY - drag.y;
-    drag.x = e.clientX;
-    drag.y = e.clientY;
-  });
-  const end = () => {
-    if (drag?.moved) suppressClick = true;
-    drag = null;
-  };
-  window.addEventListener('pointerup', end);
-  window.addEventListener('pointercancel', end);
-}
+const ROMAN = ['', 'I', 'II', 'III', 'IV'];
 
 // Tree fog. normal = researched / researching / requirements met;
 // silhouette = one step beyond what's actually researched or researching
@@ -105,25 +64,23 @@ function visibility(state: GameState, id: TechId): Visibility {
   return 'hidden';
 }
 
-/** The LINES fanned under a major — one bead each, not one per rank.
+/**
+ * The one line under a card's name: what the technology is FOR.
  *
- *  Fanning every rank was tried and is unusable: Forestry alone carries three
- *  lines worth 13 ranks, which spilled across two neighbouring branches and
- *  drew five identical nodes of which exactly one was ever pressable. A line
- *  is one thing to the player — a ladder they are part-way up — so it gets
- *  one node showing how far up it they are. */
-const linesUnder = (id: TechId): TechLineId[] =>
-  TECH_LINE_ORDER.filter((line) => lineParent(line) === id);
-
-/** The rank a line's bead currently stands for: the next one to research, or
- *  the last one if the ladder is finished. */
-const beadRank = (state: GameState, line: TechLineId): TechId => {
-  const ranks = TECH_LINES[line];
-  return ranks[Math.min(lineRank(state, line), ranks.length - 1)];
-};
-
-/** A major technology has an authored grid position; a rank does not. */
-const isMajor = (id: TechId): boolean => TECHNOLOGIES[id].node !== null;
+ * An `unlock` says it itself — `unlocks` is authored on the technology
+ * (`?dev=tree`), so this reads it rather than deriving it back out of the
+ * gates, and it covers the things a gate list cannot: a harvest source, a
+ * terrain, one more of a building. Anything else falls back to its own prose,
+ * which is what a minor rank and a mechanic have. The card clamps it to three
+ * lines in CSS rather than cutting words here.
+ */
+function effectLine(id: TechId): string {
+  const def = TECHNOLOGIES[id];
+  if (def.kind === 'unlock' && def.unlocks.length > 0) {
+    return `Unlocks ${def.unlocks.map(unlockLabel).join(', ')}`;
+  }
+  return def.description;
+}
 
 /** The shelf: one tab per tome the player has actually opened. A book they
  *  have not earned is not shown at all — an empty tab is the same lie as a
@@ -178,7 +135,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       : `${busy} of ${slots} at work`));
   if (slots < RESEARCH_SETTINGS.maxSlots) {
     const cost = slotGemCost(state);
-    const hire = btn({
+    bar.append(btn({
       label: 'Hire',
       kind: 'gem',
       onClick: () => game.doBuySlot(),
@@ -186,8 +143,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       // the verb rather than as something you pay.
       cost: { Gems: cost },
       have: (c) => game.walletValue(c),
-    });
-    bar.append(hire);
+    }));
   }
   const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
   close.setAttribute('data-own-close', '');
@@ -210,196 +166,186 @@ export function renderResearchMenu(game: Game): HTMLElement {
   if (tabs) root.append(tabs);
   root.append(el('p', { class: 'res-blurb' }, TOMES[activeTome].blurb));
 
-  // ---- the tree canvas (sized to what the fog currently shows) ----
-  const shown = TECH_ORDER.filter(
-    (id) => isMajor(id) && TECHNOLOGIES[id].tome === activeTome
-      && visibility(state, id) !== 'hidden');
-  const fanned = shown.filter((id) => isTechComplete(state, id) && linesUnder(id).length > 0);
-  const xs = shown.map((id) => TECHNOLOGIES[id].node!.x);
-  const ys = shown.map((id) => TECHNOLOGIES[id].node!.y);
-  const [x0, y0] = [Math.min(...xs), Math.min(...ys)];
-  const yMax = Math.max(...ys);
-  const pad = 40;
-  const width = (Math.max(...xs) - x0 + 1) * GRID + pad * 2;
-  let height = (yMax - y0 + 1) * GRID + pad * 2;
-  // A fan below a bottom-row tech pokes past the grid — give it room.
-  if (fanned.some((id) => TECHNOLOGIES[id].node!.y === yMax)) {
-    height += FAN_DY + UNODE / 2 - GRID / 2 + 6;
-  }
-  const px = (gx: number) => pad + (gx - x0) * GRID + GRID / 2;
-  const py = (gy: number) => pad + (gy - y0) * GRID + GRID / 2;
-  const cx = (id: TechId) => px(TECHNOLOGIES[id].node!.x);
-  const cy = (id: TechId) => py(TECHNOLOGIES[id].node!.y);
-  const fanX = (id: TechId, i: number, n: number) => cx(id) + (i - (n - 1) / 2) * FAN_DX;
-  const fanY = (id: TechId) => cy(id) + FAN_DY;
+  // ---- the page (as long as what the fog currently shows) ----
+  const rows = pageRows(TECHNOLOGIES, activeTome,
+    (id) => visibility(state, id as TechId) !== 'hidden');
+  const { tops, height } = rowTops(rows);
+  /** Where a technology's card sits, or null when this page does not show it. */
+  const at = new Map<string, { top: number; col: number; index: number }>();
+  rows.forEach((row, i) => {
+    if (row.kind !== 'techs') return;
+    row.slots.forEach((id, col) => {
+      if (id !== null) at.set(id, { top: tops[i], col, index: i });
+    });
+  });
+  /** Is the source's column empty on every row between the two? That is what
+   *  decides whether a connector may run straight down it (layout.edgePath). */
+  const columnClear = (
+    from: { col: number; index: number }, to: { index: number },
+  ): boolean => {
+    for (let i = from.index + 1; i < to.index; i++) {
+      const row = rows[i];
+      if (row.kind === 'techs' && row.slots[from.col] !== null) return false;
+    }
+    return true;
+  };
 
-  const canvas = el('div', { class: 'tech-canvas', style: `width:${width}px;height:${height}px` });
+  const flow = el('div', {
+    class: 'tech-flow',
+    style: `width:${PAGE_W}px;height:${height}px`,
+  });
 
-  // Dotted connectors (H then V), under the nodes.
+  // Connectors, under the cards.
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('width', String(width));
+  svg.setAttribute('width', String(PAGE_W));
   svg.setAttribute('height', String(height));
   svg.classList.add('tech-edges');
-  for (const id of shown) {
-    for (const req of TECHNOLOGIES[id].requires) {
-      // A rank's requirement is its previous rank, which lives in the fan and
-      // has no grid position — the fan draws its own spokes below.
-      if (!isMajor(req)) continue;
-      const path = document.createElementNS(ns, 'path');
-      const route = edgePath(TECHNOLOGIES[req].node!, TECHNOLOGIES[id].node!)
-        .map((p, i) => `${i === 0 ? 'M' : 'L'} ${px(p.x)} ${py(p.y)}`)
-        .join(' ');
-      path.setAttribute('d', route);
-      path.setAttribute('class',
-        visibility(state, id) === 'silhouette' ? 'tech-edge dim'
+  const stroke = (d: string, cls: string) => {
+    const path = document.createElementNS(ns, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', cls);
+    svg.append(path);
+  };
+  for (const [id, to] of at) {
+    const def = TECHNOLOGIES[id as TechId];
+    let drew = false;
+    for (const req of def.requires) {
+      const from = at.get(req);
+      // A requirement in an EARLIER BAND is implied by the bar between them
+      // (techTreeRules.isDrawnEdge): 119 lines across three gates would hide
+      // every edge that says something.
+      if (from === undefined || TECHNOLOGIES[req].era !== def.era) continue;
+      drew = true;
+      stroke(edgeD(edgePath(from, to, columnClear(from, to))),
+        visibility(state, id as TechId) === 'silhouette' ? 'tech-edge dim'
           : isTechComplete(state, req) ? 'tech-edge open' : 'tech-edge');
-      svg.append(path);
+    }
+    // Nothing drawn, but something above the bar is required: a stub in the
+    // gutter above the card, so none looks like it grows from nowhere. Half a
+    // gutter long, and pointing at the card — not a path from anywhere, which
+    // is the honest drawing of a requirement the page does not show.
+    if (!drew && def.requires.length > 0) {
+      const x = colLeft(to.col) + NODE_W / 2;
+      stroke(`M ${x} ${to.top - ROW_GAP / 2} L ${x} ${to.top}`,
+        def.requires.every((r) => isTechComplete(state, r)) ? 'tech-edge open' : 'tech-edge');
     }
   }
-  // Straight spokes from a completed tech to the lines fanned under it.
-  for (const id of fanned) {
-    const ups = linesUnder(id);
-    ups.forEach((_: TechLineId, i: number) => {
-      const path = document.createElementNS(ns, 'path');
-      path.setAttribute('d', `M ${cx(id)} ${cy(id)} L ${fanX(id, i, ups.length)} ${fanY(id)}`);
-      path.setAttribute('class', 'tech-edge open');
-      svg.append(path);
-    });
-  }
-  canvas.append(svg);
+  flow.append(svg);
 
-  // Tech nodes (squares) — silhouettes are inert "?" placeholders.
-  for (const id of shown) {
-    if (visibility(state, id) === 'silhouette') {
-      canvas.append(el('div', {
-        class: 'tech-node silhouette',
-        style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
-      }, '?'));
-      continue;
+  // Era bars and cards.
+  rows.forEach((row, i) => {
+    if (row.kind === 'gate') { flow.append(eraBar(state, activeTome, row.era, tops[i])); return; }
+    for (const [col, id] of row.slots.entries()) {
+      if (id === null) continue;
+      flow.append(card(game, id as TechId, tops[i], col));
     }
-    const done = isTechComplete(state, id);
-    const active = isTechActive(state, id);
-    const cls = done ? 'done' : active ? 'active' : 'available';
-    const isSel = selected?.kind === 'tech' && selected.id === id;
-    const hinted = game.uiHint() === `tech:${id}`;
-    const node = el('button', {
-      class: `btn tech-node ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`
-        + (TECHNOLOGIES[id].planned ? ' planned' : ''),
-      style: `left:${cx(id) - NODE / 2}px;top:${cy(id) - NODE / 2}px`,
-    }, TECHNOLOGIES[id].glyph);
-    // A dot on everything startable RIGHT NOW. The tree shows a lot of nodes
-    // the player cannot act on yet — done, running, unaffordable, missing a
-    // prerequisite — and "available" styling only means the prerequisites are
-    // met, not that you can press it. The dot is the difference.
-    if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
-    if (active) {
-      const completesAt = techCompletesAt(state, id)!;
-      const total = TECHNOLOGIES[id].durationSeconds * 1000;
-      const fill = el('div', { class: 'fill' });
-      fill.style.width = `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
-      node.append(el('div', { class: 'node-bar' }, fill));
-    }
-    node.addEventListener('click', () => {
-      if (consumeSuppressedClick()) return;
-      selected = { kind: 'tech', id };
-      game.notify();
-    });
-    canvas.append(node);
-  }
+  });
 
-  // One bead per LINE, fanned below its completed parent. The bead stands for
-  // the next rank to research, so clicking it selects a real technology and
-  // the info panel is the ordinary one.
-  for (const id of fanned) {
-    const ups = linesUnder(id);
-    ups.forEach((line: TechLineId, i: number) => {
-      const u = beadRank(state, line);
-      const rank = lineRank(state, line);
-      const maxed = rank >= lineMaxRank(line);
-      const cls = maxed ? 'done' : isTechActive(state, u) ? 'active'
-        : canStartTech(state, u) ? 'available' : 'locked';
-      const isSel = selected?.kind === 'tech' && selected.id === u;
-      const hinted = TECH_LINES[line].some((r) => game.uiHint() === `tech:${r}`);
-      const node = el('button', {
-        class: `btn tech-node rank ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`,
-        style: `left:${fanX(id, i, ups.length) - UNODE / 2}px;top:${fanY(id) - UNODE / 2}px`,
-      }, TECHNOLOGIES[u].glyph);
-      if (canStartTech(state, u)) node.append(el('span', { class: 'node-dot' }));
-      node.append(el('span', { class: 'lvl' }, `${rank}/${lineMaxRank(line)}`));
-      node.addEventListener('click', () => {
-        if (consumeSuppressedClick()) return;
-        selected = { kind: 'tech', id: u };
-        game.notify();
-      });
-      canvas.append(node);
-    });
-  }
-
-  // Captured BEFORE treeEl is reassigned below — the old element is the
-  // evidence, and overwriting it first would make every render look fresh.
+  // Captured BEFORE pageEl is reassigned — the old element is the evidence,
+  // and overwriting it first would make every render look fresh.
   const fresh = isFreshMount();
-  const tree = el('div', { class: 'tech-tree', 'data-keep-scroll': '' }, canvas);
-  treeEl = tree;
-  wirePanOnce();
-  tree.addEventListener('pointerdown', (e) => {
-    suppressClick = false; // a stale suppression must not eat this tap
-    drag = {
-      id: e.pointerId, x: e.clientX, y: e.clientY,
-      startX: e.clientX, startY: e.clientY, moved: false,
-    };
-    // Touch implicitly captures the pointer to its target; release it so the
-    // gesture keeps hit-testing (and reaching window) after the per-tick
-    // re-render swaps the element out from under the finger.
-    try {
-      (e.target as Element).releasePointerCapture?.(e.pointerId);
-    } catch { /* no active capture — nothing to release */ }
+  const page = el('div', { class: 'tech-page', 'data-keep-scroll': '' }, flow);
+  pageEl = page;
+  // Tapping the page beside a card deselects (the info panel hides).
+  page.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('.tech-card')) return;
+    if (selected !== null) { selected = null; game.notify(); }
   });
-  // Tapping empty tree space deselects (the info panel hides).
-  tree.addEventListener('click', (e) => {
-    if (consumeSuppressedClick()) return;
-    if ((e.target as HTMLElement).closest('.tech-node')) return;
-    if (selected !== null) {
-      selected = null;
-      game.notify();
-    }
-  });
-  // The pan across the per-tick re-render is the host's job now
-  // (data-keep-scroll above), which retires the module-level treeScroll and
-  // its rAF restore. Only the hint still needs to move the view, and it must
-  // run after the host has put the old position back.
+
+  // Where the eye should land. A hint wins outright — it is the game asking
+  // for attention at a specific node. Otherwise, on a FRESH mount only: the
+  // WORK, meaning whatever is running or startable right now, and failing
+  // that the last thing finished, which is where the next branch grows from.
+  // The scroll across a per-tick re-render is the host's job
+  // (data-keep-scroll), and must never be yanked while a finger is on it.
   const hint = game.uiHint();
-  // A rank hangs in the fan below the major its line sits under, which has
-  // no grid position of its own — so a hint at a rank scrolls to that PARENT
-  // and brings the rank on screen with it. One code path for both.
   const hinted = hint?.startsWith('tech:')
     ? (TECH_ORDER.find((id) => `tech:${id}` === hint) ?? null) : null;
-  const hintedTech = hinted === null ? null
-    : isMajor(hinted) ? hinted : lineParent(TECHNOLOGIES[hinted].line!);
-  // Where the eye should land. A hint wins outright — it is the game asking
-  // for attention at a specific node. Otherwise: the WORK, meaning whatever
-  // is running or startable right now, and failing that the last thing
-  // finished, which is where the next branch grows from.
+  const shown = [...at.keys()] as TechId[];
   const frontier = shown.find((id) => isTechActive(state, id))
-    ?? shown.find((id) => !isTechComplete(state, id) && requirementsMet(state, id))
+    ?? shown.find((id) => canStartTech(state, id))
     ?? [...shown].reverse().find((id) => isTechComplete(state, id))
     ?? null;
-  const focus = hintedTech && visibility(state, hintedTech) !== 'hidden' ? hintedTech
-    : fresh ? frontier
-      : null;
-  if (focus !== null) {
+  const focus = hinted !== null && at.has(hinted) ? hinted : fresh ? frontier : null;
+  const focusAt = focus === null ? undefined : at.get(focus);
+  if (focusAt !== undefined) {
     requestAnimationFrame(() => {
-      tree.scrollLeft = Math.max(0, cx(focus) - tree.clientWidth / 2);
-      tree.scrollTop = Math.max(0, cy(focus) - tree.clientHeight / 2);
+      page.scrollTop = Math.max(0, focusAt.top - page.clientHeight / 2 + NODE_H / 2);
     });
   }
-  root.append(tree);
+  root.append(page);
 
   // ---- floating bottom info panel, only while something is selected ----
   if (selected?.kind === 'tech') {
     root.append(techInfoPanel(game, selected.id, busy, slots));
   }
   return root;
+}
+
+/**
+ * The bar between two bands: what the book calls the next part of itself, and
+ * what the world still owes before it opens.
+ *
+ * It spans the page because it is not a node — nothing requires it and it
+ * cannot be researched. It is a door, and the price is written on it.
+ */
+function eraBar(state: GameState, tome: TomeId, era: number, top: number): HTMLElement {
+  const open = eraUnlocked(state, tome, era);
+  const short = eraShortfall(state, tome, era);
+  const sealed = era >= MAX_ERA;
+  const bar = el('div', {
+    class: `res-era${open ? ' is-open' : ''}${sealed ? ' is-sealed' : ''}`,
+    style: `top:${top + ROW_GAP / 2}px;height:${GATE_BAR_H}px`,
+  },
+  el('span', { class: 'res-era-name' }, `Tome of ${TOMES[tome].name} ${ROMAN[era] ?? era}`));
+  bar.append(el('span', { class: 'res-era-gate' },
+    sealed ? 'Sealed'
+      : open ? 'Opened'
+        : `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'}`));
+  return bar;
+}
+
+/** One technology, as a card in its slot. */
+function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
+  const state = game.state;
+  const def = TECHNOLOGIES[id];
+  const place = `left:${colLeft(col)}px;top:${top}px;`
+    + `width:${NODE_W}px;height:${NODE_H}px`;
+  if (visibility(state, id) === 'silhouette') {
+    return el('div', { class: 'tech-card silhouette', style: place }, '?');
+  }
+  const done = isTechComplete(state, id);
+  const active = isTechActive(state, id);
+  const cls = done ? 'done' : active ? 'active' : 'available';
+  const isSel = selected?.kind === 'tech' && selected.id === id;
+  const hinted = game.uiHint() === `tech:${id}`;
+  const node = el('button', {
+    class: `btn tech-card ${cls}${isSel ? ' selected' : ''}${hinted ? ' hinted' : ''}`
+      + (def.planned ? ' planned' : '')
+      + (techEraUnlocked(state, id) ? '' : ' era-locked'),
+    style: place,
+  },
+  el('span', { class: 'tech-card-name' }, def.name),
+  el('span', { class: 'tech-card-effect' }, effectLine(id)));
+  // A dot on everything startable RIGHT NOW. The page shows a lot of cards
+  // the player cannot act on yet — done, running, unaffordable, missing a
+  // prerequisite, behind a bar — and `available` styling only means the
+  // prerequisites are met. The dot is the difference.
+  if (canStartTech(state, id)) node.append(el('span', { class: 'node-dot' }));
+  if (active) {
+    const completesAt = techCompletesAt(state, id)!;
+    const total = def.durationSeconds * 1000;
+    const fill = el('div', { class: 'fill' });
+    fill.style.width =
+      `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
+    node.append(el('div', { class: 'node-bar' }, fill));
+  }
+  node.addEventListener('click', () => {
+    selected = { kind: 'tech', id };
+    game.notify();
+  });
+  return node;
 }
 
 function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTMLElement {
@@ -457,6 +403,7 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
     panel.append(bar);
   } else {
+    const short = eraShortfall(state, def.tome, def.era);
     panel.append(action({
       label: 'Start',
       kind: 'primary',
@@ -465,9 +412,11 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
       have: (c) => game.walletValue(c),
       disabledReason: !requirementsMet(state, id)
         ? 'Research what it needs first'
-        : busy >= slots
-          ? 'Every scholar is busy'
-          : undefined,
+        : short > 0
+          ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
+          : busy >= slots
+            ? 'Every scholar is busy'
+            : undefined,
       info: el('span', { class: 'res-time' },
         iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
@@ -485,4 +434,3 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
   }
   return panel;
 }
-

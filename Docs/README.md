@@ -57,7 +57,7 @@ One file per feature, in the order a player meets them.
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
 | 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, cost curves, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
-| 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — eras as keystones, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
+| 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
 | 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |
 | 9 | [Relics](features/09-relics.md) | the five relics as **passives only**, attune-or-arm, and the **nine-piece ingredient set** | built / designed |
 | 10 | [Heroes and the gacha](features/10-heroes.md) | the shared collection substrate, five heroes, pity, no dead pulls | built |
@@ -78,6 +78,7 @@ Not features — how content and art are made.
 | [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
 | [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
 | [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
+| [`tech-tree-editor.md`](tech-tree-editor.md) | the `?dev=tree` tool technologies are created and arranged in, and the one module that says what a legal tree is |
 | [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
 | [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the parchment-and-carved-wood UI system, its palette and its shapes |
 | [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass |
