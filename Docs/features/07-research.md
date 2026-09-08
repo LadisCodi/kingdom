@@ -405,8 +405,15 @@ Tap Power        +40%  →  +60%
   draw (§2.2).
 - Cost: Gold, Knowledge, time; time-to-afford when Knowledge is short. Behind
   a locked bar the action reads "Reveal N more cells to read on".
-- Actions: **Start research**, **Instant** in Gems on an idle one (§1), or
-  **Finish now** in Gems on a running one.
+- Actions: **Start** and **Instant** side by side on an idle one — two ways to
+  have the same thing, and choosing between them is comparing two prices, so
+  neither sits under the other. **Finish now** in Gems on a running one.
+- **The wait rides inside Start**, which is the fact that tells the pair
+  apart; `Instant` carries no line under it saying what the word already says.
+- **One reason for the pair**, above it. Both are stopped by the same three
+  things — a requirement, a shut band, a full strip — and saying it twice
+  between two buttons is a wall of the same sentence. Affordability is never
+  in it: the red number inside each button has already said that.
 
 ### 5.5 The slots
 

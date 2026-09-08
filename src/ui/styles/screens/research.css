@@ -293,6 +293,21 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-info .rows { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
 .tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .tech-info .action-row .info { flex: 1; }
+
+/* The two ways to have the same thing, side by side: choosing between them is
+   comparing two prices, and a price under a price is a list. Equal widths so
+   neither reads as the afterthought. */
+.tech-info-actions { display: flex; gap: 8px; margin-top: 8px; }
+.tech-info-actions > .k-btn { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+/* One reason for the pair, above it — saying it twice between two buttons is
+   a wall of the same sentence. */
+.tech-info-blocked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--clay);
+}
 .tech-info .progress { position: relative; height: 16px; margin: 8px 0; border-radius: 8px;
   overflow: hidden; background: var(--parchment-shade); border: 2px solid var(--wood-dark); }
 .tech-info .progress .fill { position: absolute; inset: 0; background: var(--sky); }

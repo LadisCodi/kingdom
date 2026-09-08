@@ -29,7 +29,7 @@ import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
 } from './research/layout';
-import { action, iconEl, knob } from './kit';
+import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
 /** Which book is open on the lectern. Module-level so it survives the
@@ -414,39 +414,52 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
     }
   } else {
     const short = eraShortfall(state, def.tome, def.era);
-    panel.append(action({
+    // ONE reason for the pair. Both buttons are stopped by the same three
+    // things — a requirement, a shut band, a full strip — so saying it twice
+    // between two buttons would be a wall of the same sentence. Affordability
+    // is not in here: the red number inside each button has already said it
+    // (§6.3, §6.4).
+    const blocked = !requirementsMet(state, id)
+      ? 'Research what it needs first'
+      : short > 0
+        ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
+        : busy >= slots
+          ? 'Every scholar is busy'
+          : undefined;
+    if (blocked !== undefined) {
+      panel.append(el('div', { class: 'tech-info-blocked' },
+        iconEl('padlock', { size: 'sm' }), blocked));
+    }
+
+    // Side by side: two ways to have the same thing, and a player choosing
+    // between them is comparing two prices. The wait rides INSIDE Start,
+    // which is the fact that tells the two apart — `Instant` needs no line
+    // under it saying what the word already says.
+    const row = el('div', { class: 'tech-info-actions' });
+    row.append(btn({
       label: 'Start',
       kind: 'primary',
       onClick: () => game.doStartTech(id),
+      note: formatDuration(def.durationSeconds),
       cost: def.cost,
       have: (c) => game.walletValue(c),
-      disabledReason: !requirementsMet(state, id)
-        ? 'Research what it needs first'
-        : short > 0
-          ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
-          : busy >= slots
-            ? 'Every scholar is busy'
-            : undefined,
-      info: el('span', { class: 'res-time' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
+      disabledReason: blocked,
     }));
     // INSTANT: the whole wait, bought. Both halves of it are time — the
     // Knowledge the drip still owes, and the research itself — so both are
-    // priced per second like every other rush. Under Start, because starting
-    // it is the ordinary answer and this is the one that costs money.
+    // priced per second like every other rush.
     const instant = game.techInstantGems(id);
     if (instant !== null) {
-      panel.append(action({
+      row.append(btn({
         label: 'Instant',
         kind: 'gem',
         onClick: () => game.doBuyTechInstant(id),
         cost: { Gems: instant },
         have: (c) => game.walletValue(c),
-        disabledReason: busy >= slots ? 'Every scholar is busy' : undefined,
-        info: el('span', { class: 'res-time' },
-          iconEl('tick', { size: 'sm' }), 'Researched at once'),
+        disabledReason: blocked,
       }));
     }
+    panel.append(row);
     // A trickle currency without a time-to-afford line is one the player
     // cannot plan against (07-research.md §4). Only when Knowledge is
     // the thing short: Gold has its own answer, which is to go and earn it.
