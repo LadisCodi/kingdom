@@ -188,7 +188,8 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 - Placed at BFS distance ~3 to ~12, so the tier ladder and the fog curve are the
   same ladder.
-- Full delve design: [`11-expeditions.md`](11-expeditions.md).
+- Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
+  [`combat.md`](combat.md).
 
 ## 7. Where the map is authored
 

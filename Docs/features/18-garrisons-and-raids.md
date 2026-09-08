@@ -7,7 +7,16 @@
 > and [`11-expeditions.md`](11-expeditions.md); the co-op siege on the world
 > map is [`15-social.md`](15-social.md) §6.
 >
-> **Status: designed, not built.** Nothing writes a cleared flag today.
+> **Status: designed, not built** — and the combat model it assumes is
+> **superseded.** Every rule here that resolves a fight as *the delve's scoring
+> pass* against one strength (§1.7), or parks a party at a checkpoint, was
+> written against the staged delve that the 2026-09-08 rewrite deleted. Fights
+> now resolve through [`combat.md`](combat.md), a deterministic tick
+> auto-battler on a slot board, and a ruin is depths of rooms
+> ([`11-expeditions.md`](11-expeditions.md)). **The garrison, the counter, the
+> raid and the home defence stand; how an assault is resolved does not.** Do
+> not build from this document until it is reworked onto the resolver.
+> Nothing writes a cleared flag today.
 
 ## 1. The rules, up front
 

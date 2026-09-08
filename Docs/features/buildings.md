@@ -230,8 +230,8 @@ regeneration +20, +25, +30, +36, +42 an hour.
 ### 4.9 The four military halls
 
 - Each hall raises the **army cap** and trains its units, queued at that hall
-  ([`11-expeditions.md`](11-expeditions.md) §6). The cap is the sum over the
-  four; all four at level 5 field 112.
+  ([`combat.md`](combat.md) §14). The cap is the sum over the four; all four at
+  level 5 field 3,400 troops.
 - Every unit is behind its own technology; the Barracks trains every foot
   soldier, the Spear Hall and Shooting Grounds are parallel lines for theirs.
 

@@ -73,7 +73,7 @@ Two more that are design-visible:
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
 | Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **built** — two holes, §3 |
-| Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks |
+| Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks. **Superseded by the 2026-09-08 rewrite**: ruins become depths of rooms ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)) and combat becomes a tick auto-battler ([`combat.md`](features/combat.md)) — designed, unbuilt |
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03 |
 | The timeline, the weekly event, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |

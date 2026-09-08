@@ -179,14 +179,14 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
 | Boss chest and fragment pool | `Bosses` sheet |
 | Supplies per room attempt | `ruins.supply_*` |
 | Permanent generation coefficients | `ruins.trickle_*` |
-| Offline cap (2 h / 8 h) | `economy.offline_cap` |
+| Offline cap (2 h / 8 h) | `offlineCapHours` |
 
 ## 11. Adding content
 
 Append a depth to a ruin (row + two tables + one authored boss), or add a ruin
 in a new region. Nothing is authored per room.
 
-**Unresolved:** OQ-42 daily attempt cap · OQ-43 outlet when fully walled ·
-OQ-44 deeper strata · OQ-45 Stardust vs. relic curve · OQ-46 XP vs. hero level
-curve · OQ-47 boss fragment rate · OQ-48 ruins navigation. Inherited: OQ-40,
-OQ-41. Landmarks: OQ-35, in [`combat.md`](combat.md).
+**Unresolved:** OQ-75 daily attempt cap · OQ-76 outlet when fully walled ·
+OQ-77 deeper strata · OQ-78 Stardust vs. relic curve · OQ-79 XP vs. hero level
+curve · OQ-80 boss fragment rate · OQ-81 ruins navigation. Inherited: OQ-41.
+Landmarks: [`combat.md`](combat.md) §15.

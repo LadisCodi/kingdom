@@ -3,7 +3,8 @@
 > **Scope.** The thirty-two heroes, the one set of collection rules heroes and
 > relics share, and the two-banner gacha. Relics are
 > [`09-relics.md`](09-relics.md); where heroes are *used* is
-> [`11-expeditions.md`](11-expeditions.md).
+> [`11-expeditions.md`](11-expeditions.md), and how they fight is
+> [`combat.md`](combat.md) §9.
 >
 > **Status: built**, except the ingredient conversion (§3) and one hole — hero
 > XP is written and never read (§9). **Designed, not built:** the **Tavern**,

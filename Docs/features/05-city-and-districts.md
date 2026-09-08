@@ -25,9 +25,10 @@
 
 Three arcs run past TH3:
 
-- **Military buildings** gate army size and therefore delve depth. Tiers IV
-  and V need a cap of 36 and 50, reached only by building and upgrading all
-  four halls ([`11-expeditions.md`](11-expeditions.md) §6).
+- **Military buildings** raise the army cap — how many troops the city may
+  own — and therefore how deep a ruin can be pushed. The cap is the sum over
+  the four halls ([`combat.md`](combat.md) §14); what *opens* a depth is the
+  Adventurers' Guild ([`11-expeditions.md`](11-expeditions.md) §3).
 - **The Mana economy** — capacity from the Sanctum and from landmarks — gates
   session length ([`08-magic.md`](08-magic.md)).
 - **Ingredients and Stardust** gate relic and hero levels, on a curve measured

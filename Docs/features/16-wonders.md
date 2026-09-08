@@ -103,7 +103,7 @@ Not in the set:
 - A Gold Wonder (§3.1).
 - A fog-discount Wonder — relics already do that (**OQ-23**).
 - A combat Wonder — the army cap is a city-building decision
-  ([`11`](11-expeditions.md)).
+  ([`combat.md`](combat.md) §14).
 - A build-speed Wonder — waits for `buildSpeed` to land as a modifier stat with
   the event archetype ([`implementation-plan.md`](../implementation-plan.md)
   Step 2); one row after that, a code change before it.

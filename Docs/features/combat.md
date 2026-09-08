@@ -1,8 +1,8 @@
 # Combat — the resolver
 
-> **Spec.** Callers: [`11-ruins.md`](11-ruins.md) (rooms and bosses), map
-> landmarks ([`01-map-and-fog.md`](01-map-and-fog.md) §6), the future PvP
-> conquest map. Hero fields, levels and ascension:
+> **Spec.** Callers: [`11-expeditions.md`](11-expeditions.md) (rooms and
+> bosses), map landmarks ([`01-map-and-fog.md`](01-map-and-fog.md) §6), the
+> future PvP conquest map. Hero fields, levels and ascension:
 > [`10-heroes.md`](10-heroes.md). Relics: [`09-relics.md`](09-relics.md).
 > Building levels and costs: [`buildings.md`](buildings.md).
 
@@ -36,7 +36,8 @@ Per side:
   and never joins a squad.
 - Position determines targeting order only (§8).
 
-Slot availability comes from party slots ([`11-ruins.md`](11-ruins.md) §3).
+Slot availability comes from party slots
+([`11-expeditions.md`](11-expeditions.md) §3).
 
 ## 4. Squads
 
@@ -128,8 +129,8 @@ Ties break by lowest slot index.
 rule in this section applies to both sides. The only difference is where the
 stats come from: a hero's are derived from level and ascension
 ([`10-heroes.md`](10-heroes.md)); a villain's are authored per room
-([`Villains`](villains.md) sheet). The resolver has one code path and reads a
-resolved stat block either way.
+(the `Villains` sheet). The resolver has one code path and reads a resolved
+stat block either way.
 
 A hero or villain occupies a hero slot and does two things.
 
@@ -175,7 +176,8 @@ A hero or villain occupies a hero slot and does two things.
 ## 11. Enemy generation
 
 Rooms carry a `power_req` budget and a `threat_mix`
-([`11-ruins.md`](11-ruins.md) §2). The generator converts them:
+([`11-expeditions.md`](11-expeditions.md) §2). The generator converts
+them:
 
 1. Seed from `(ruin_id, depth_index, room_index)`. Same room, same enemies.
 2. Pick a slot count of 2–5, scaled by budget.
@@ -247,8 +249,8 @@ The cap limits **total troops owned**, not party size.
 ## 15. Landmarks
 
 A contested landmark resolves as an army battle with one authored formation.
-Clearing it is a one-off; no garrison remains. Sieges scaling from one player to
-ten: [`15-social.md`](15-social.md) §6 — **OQ-35**.
+Clearing it is a one-off; no garrison remains. The co-op siege on the world map
+is [`15-social.md`](15-social.md) §6.
 
 ## 16. Determinism
 
@@ -272,7 +274,7 @@ ten: [`15-social.md`](15-social.md) §6 — **OQ-35**.
 | Tick length, timeout | `combat.tick_ms`, `combat.timeout_ticks` |
 | Energy gain, ultimate threshold | `combat.energy_*` |
 | Enemy slot count band, hero budget threshold, row assignment | `combat.gen_*` |
-| Army cap per building level | `buildings.army_cap_per_level` |
+| Army cap per building level | `Districts.army_cap_per_level` |
 
 ## 18. Not in this version
 
@@ -288,8 +290,8 @@ ten: [`15-social.md`](15-social.md) §6 — **OQ-35**.
 - RNG in resolution
 - Draws
 
-**Pending:** villain hero-slot count per room, and whether it is capped like the
-player's (**OQ-54**) · third hero slot unlock (**OQ-50**) · ultimate targeting when the
-intended row is empty (**OQ-51**) · tier conversion cost, if any (**OQ-52**) ·
-`power_start` re-authoring against the full T1–T5 power range (**OQ-53**) ·
-OQ-35 landmarks.
+**Pending:** villain hero-slot count per room, and whether it is capped like
+the player's (**OQ-82**) · third hero slot unlock (**OQ-83**) · ultimate
+targeting when the intended row is empty (**OQ-84**) · tier conversion cost, if
+any (**OQ-85**) · `power_start` re-authoring against the full T1–T5 power range
+(**OQ-86**).
