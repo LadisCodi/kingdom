@@ -7,13 +7,13 @@
 // willing to go without — and a roster of thirty-two portraits under it made
 // that decision the smaller half of the page.
 //
-// The screen has one job the HUD deliberately refuses to do: explain the Mana
-// arithmetic. The header shows a pool and ONE net rate, because
-// "+6/h base −4/h upkeep = +2/h" in a status bar is exactly the spreadsheet
-// chrome the redesign exists to kill. Here, where the player has asked, the
-// breakdown is the point.
+// The Mana arithmetic left on 2026-09-08 too, for the Mana sheet
+// (src/ui/manaSheet.ts), which the header gauge and the offer tab both open.
+// This screen neither spends the pool nor fills it, and the sheet that sells
+// a refill is where a player asking "how fast does it come back?" is actually
+// standing.
 //
-// The other job is to make the SLOT feel like the constraint. Sockets come
+// Its job now is to make the SLOT feel like the constraint. Sockets come
 // first, before the collection, and an empty one reads as an opportunity
 // rather than an absence — because the decision the whole magic design turns
 // on is which passive you are willing to go without.
@@ -27,13 +27,12 @@ import {
 } from '../sim/artifacts';
 import { castBlock } from '../sim/casting';
 import { levelCapForTier, levelCost, tierCost } from '../sim/collection';
-import { manaRefillGemCost } from '../sim/mana';
 import { resourceDiscoveryKey } from '../sim/discovery';
 import { spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
-import { action, btn, card, iconEl, pips, progress, sheet } from './kit';
+import { el } from './format';
+import { action, btn, card, iconEl, pips, sheet } from './kit';
 
 /** Relic art at card size — sprite if it exists, glyph if not. */
 function relicArt(id: ArtifactId, locked: boolean): HTMLElement {
@@ -54,47 +53,6 @@ function passiveLabel(game: Game, id: ArtifactId): string {
   }
   const n = Math.round(value * 10) / 10;
   return `${def.passiveText} (+${n})`;
-}
-
-// ------------------------------------------------------------------ the pool
-
-function manaPanel(game: Game): HTMLElement {
-  const m = game.manaInfo();
-  const bar = progress('sky');
-  bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${m.value} / ${m.cap}`);
-
-  const refillCost = manaRefillGemCost(game.state);
-  // One line, not three. The breakdown existed to reconcile production against
-  // relic upkeep; nothing draws against the pool any more, so a subtraction
-  // that always reads "−0/h" is exactly the spreadsheet chrome this screen was
-  // built to remove.
-  const rows = el('div', { class: 'rel-breakdown' },
-    el('div', { class: 'rel-line is-total' },
-      el('span', {}, 'Drawn from the land'),
-      el('b', {}, `+${m.production}/h`)),
-  );
-
-  return el('div', { class: 'rel-mana' },
-    el('div', { class: 'rel-mana-head' },
-      iconEl('Mana', { size: 'lg' }),
-      el('div', { class: 'rel-mana-title' }, 'Mana'),
-      el('div', { class: 'rel-mana-hint' }, m.over
-        ? `Overcharged — ${m.value - m.cap} past the ceiling`
-        : m.value >= m.cap
-          ? 'Full — anything more is spilling'
-          : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
-    bar.root,
-    rows,
-    refillCost > 0
-      ? action({
-        label: 'Refill',
-        kind: 'gem',
-        onClick: () => game.doRefillMana(),
-        cost: { Gems: refillCost },
-        have: (c) => game.walletValue(c),
-      })
-      : el('div', { class: 'rel-note' }, 'The pool is full.'),
-  );
 }
 
 // -------------------------------------------------------------- the Stardust
@@ -330,7 +288,6 @@ export function renderReliquarySheet(game: Game): HTMLElement {
 
   const purse = stardustPanel(game);
   const body = el('div', { class: 'rel' },
-    manaPanel(game),
     ...(purse === null ? [] : [purse]),
     slots(game),
     relics,

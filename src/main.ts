@@ -26,7 +26,7 @@ import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
 import { mountGachaScreen } from './ui/gachaScreen';
-import { renderAdOfferSheet } from './ui/adOfferSheet';
+import { renderManaSheet } from './ui/manaSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderDailySheet } from './ui/dailySheet';
 import { mountDailyPill } from './ui/dailyPill';
@@ -163,7 +163,7 @@ async function boot(): Promise<void> {
     heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
     checkpoint: renderCheckpointSheet,
-    adOffer: renderAdOfferSheet,
+    mana: renderManaSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
@@ -226,7 +226,7 @@ async function boot(): Promise<void> {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
         'purse', 'reliquary', 'heroes', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
+        'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(

@@ -2,6 +2,7 @@
 // fog seed, authored map features.
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
+import { dayIndex } from './daily';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -60,7 +61,12 @@ export function newGame(map: MapData, now: number): GameState {
     gacha: { pullCounts: {}, pityCounters: {}, legendaryPity: {}, freePulls: {} },
     // Ready from the first minute: a new kingdom starts with a full pool, so
     // the offer simply waits for the player to spend down to half.
-    ads: { readyAt: now, claims: 0, pending: false },
+    ads: {
+      readyAt: now,
+      claims: 0,
+      pending: false,
+      refills: { day: dayIndex(now), watched: 0, bought: 0 },
+    },
     deepestDepth: 0,
     ruinsCleared: {},
     landmarks: { claimed: {}, cleared: {} },

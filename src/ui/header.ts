@@ -55,7 +55,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const manaValue = el('b', {}, '');
   const manaRate = el('span', { class: 'hud-mana-rate' }, '');
   manaGauge.append(manaFill, currencyIcon('Mana', { size: 'sm' }), manaValue, manaRate);
-  manaGauge.addEventListener('click', () => game.setOverlay('reliquary'));
+  manaGauge.addEventListener('click', () => game.openMana());
   plank.append(coins, manaGauge, el('span', { class: 'hud-divider' }), gems);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 

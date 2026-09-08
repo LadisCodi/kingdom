@@ -25,7 +25,7 @@ export function mountAdOfferPill(game: Game, root: HTMLElement): void {
     amount,
     el('span', { class: 'ad-tab-play' }, '▶'),
   );
-  tab.addEventListener('click', () => game.openAdOffer());
+  tab.addEventListener('click', () => game.openMana());
   root.replaceChildren(tab);
 
   let wasShowing = false;

@@ -433,6 +433,18 @@ export interface GameState {
     claims: number;
     /** Latched: set when the offer becomes visible, cleared by claiming. */
     pending: boolean;
+    /**
+     * The refills taken TODAY, one counter per route (sim/manaRefill.ts).
+     *
+     * Both routes to a refill live here because they are one surface — the
+     * Mana sheet — and they roll on the same day, but the counters are
+     * separate: a video allowance spent does not close the Gem ladder, and
+     * buying five does not cost the player a video.
+     *
+     * `day` is a `dayIndex`, rolled LAZILY by every reader, so nothing has to
+     * happen at midnight and a stale day can never leak.
+     */
+    refills: { day: number; watched: number; bought: number };
   };
   /** The deepest depth any party has ever cleared. Persisted rather than
    *  derived, because a delve that ended is gone — and "how deep have you

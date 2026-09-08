@@ -93,7 +93,7 @@ function ruinCard(game: Game, def: RuinDef): HTMLElement {
         el('div', { class: 'site-kind' }, `Tier ${def.tier} ruin`))),
     el('div', { class: 'site-desc' }, def.description),
     el('div', { class: 'site-stats' },
-      stat('unknown', String(def.maxDepth), 'depths'),
+      stat('dungeon', String(def.maxDepth), 'depths'),
       stat('hourglass', formatDuration(fullTime), 'to the bottom'),
       stat(def.affinity === 'Any' ? 'army' : def.affinity, def.affinity === 'Any'
         ? 'anything' : `${def.affinity}s`, 'answer best')),

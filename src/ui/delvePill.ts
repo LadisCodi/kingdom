@@ -42,7 +42,7 @@ export function mountDelvePill(game: Game, root: HTMLElement): void {
         class: `dv-pill${failed ? ' is-failed' : ''}${atBottom ? ' is-bottom' : ''}`,
         type: 'button',
       },
-        iconEl(failed ? 'unknown' : atBottom ? 'star' : 'quest', { size: 'sm' }),
+        iconEl(failed ? 'unknown' : atBottom ? 'star' : 'dungeon', { size: 'sm' }),
         el('div', { class: 'dv-body' },
           el('div', { class: 'dv-name' }, failed
             ? `Driven out of ${ruin.name}`

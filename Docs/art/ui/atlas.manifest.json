@@ -246,18 +246,99 @@
       "names": [
         "hp"
       ]
+    },
+    {
+      "file": "icon_gems.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "Hand-authored 16px. LISTED AFTER currencies-16, which is what makes it win: slices are written by name, so the last sheet to name a cell owns it.",
+      "names": [
+        "Gems"
+      ]
+    },
+    {
+      "file": "icon_quests.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "Supersedes the scroll in ui-c-symbols, by the same last-one-wins rule.",
+      "names": [
+        "quest"
+      ]
+    },
+    {
+      "file": "icon_settings.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "Supersedes the cog in ui-d-ui.",
+      "names": [
+        "settings"
+      ]
+    },
+    {
+      "file": "icon_relics.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "The Relics tab. It used to borrow the Mana orb, which now belongs to the pool alone — the gauge opens a Mana sheet of its own (08-magic.md §6).",
+      "names": [
+        "relics"
+      ]
+    },
+    {
+      "file": "icon_dungeon.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "A ruin mouth: the delve pill and anything that points underground. Was the quest scroll, which said \"an errand\" rather than \"a dungeon\".",
+      "names": [
+        "dungeon"
+      ]
+    },
+    {
+      "file": "icon_chest.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "The daily chest itself — the pill was borrowing the quest scroll.",
+      "names": [
+        "chest"
+      ]
+    },
+    {
+      "file": "icon_daily_rewards.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "A calendar page: one rung of the daily ladder. The chest is the PRIZE and this is the DAY, which is why they are two cells.",
+      "names": [
+        "daily"
+      ]
     }
   ],
   "locked": {
     "except": [
       "atk",
+      "chest",
       "close",
+      "daily",
       "def",
+      "dungeon",
       "fragment",
       "hp",
       "minus",
       "padlock",
       "plus",
+      "relics",
       "showme",
       "sparkle",
       "star",

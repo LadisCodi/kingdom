@@ -1790,4 +1790,8 @@ export const GAME_VERSION = '0.1.0';
 // and read defensively, so there is no migrator; the bump exists so that a
 // build without the keys refuses a save that holds them rather than dropping
 // what the player paid Gems for.
-export const SAVE_VERSION = 33;
+// v33 predates the daily refill allowances. `kingdom.adOffers.Refills` is
+// additive and its reader defaults to a fresh day, so there is no migrator;
+// the bump exists so a build without the counters refuses a save that holds
+// them rather than handing the player unlimited refills.
+export const SAVE_VERSION = 34;

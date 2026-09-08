@@ -2518,7 +2518,13 @@
     ],
     "landmarkCap": 10,
     "meditationCap": 30,
-    "gemRefillFullPool": 500
+    "gemRefillCosts": [
+      400,
+      600,
+      800,
+      1000,
+      2000
+    ]
   },
   "attunement": {
     "baseSlots": 1,
@@ -2992,7 +2998,8 @@
     "cooldownMinSeconds": 30,
     "cooldownMaxSeconds": 90,
     "eligibleBelowFraction": 0.5,
-    "watchSeconds": 5
+    "watchSeconds": 5,
+    "manaRefillsPerDay": 5
   },
   "artifacts": {
     "DowsingRod": {

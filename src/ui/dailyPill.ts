@@ -19,7 +19,7 @@ export function mountDailyPill(game: Game, root: HTMLElement): void {
   const pill = el('button', {
     class: 'dly-pill', type: 'button', 'aria-label': 'Your daily chest is ready',
   },
-    iconEl('quest', { size: 'lg' }),
+    iconEl('chest', { size: 'lg' }),
     el('span', { class: 'dly-pill-body' },
       el('span', { class: 'dly-pill-title' }, 'Daily chest'),
       day),

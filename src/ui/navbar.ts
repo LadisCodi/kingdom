@@ -42,7 +42,7 @@ import { iconEl, type IconName } from './kit';
 // reaches without moving, for the tab the player presses most.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
   { name: 'store', label: 'Store', icon: 'Gems' },
-  { name: 'reliquary', label: 'Relics', icon: 'Mana' },
+  { name: 'reliquary', label: 'Relics', icon: 'relics' },
   { name: 'heroes', label: 'Heroes', icon: 'army' },
   { name: 'research', label: 'Research', icon: 'research' },
   { name: 'build', label: 'Build', icon: 'build' },

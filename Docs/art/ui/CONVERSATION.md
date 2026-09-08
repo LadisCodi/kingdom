@@ -306,3 +306,47 @@ now, with the mean kept only for files that really are mostly gutter.
 **Stardust was 13 px** and the dense path refuses a size that does not divide
 the 32 px cell. It was padded to 16, not rescaled: a resample would have
 softened every pixel of it.
+
+## Seven more singles — three overrides and four new cells, 2026-09-09
+
+Same shape as the collection's: one 16 px file per icon, one
+`dense: { size: 16, cols: 1 }` entry each, appended to the manifest.
+
+| Cell | File | Replaces |
+|---|---|---|
+| `Gems` | `icon_gems.png` | the gem in `currencies-16` |
+| `quest` | `icon_quests.png` | the scroll in `ui-c-symbols` |
+| `settings` | `icon_settings.png` | the cog in `ui-d-ui` |
+| `relics` | `icon_relics.png` | `Mana` — the tab wore the pool's orb |
+| `dungeon` | `icon_dungeon.png` | `quest` on the delve pill, `unknown` on a ruin's depth stat |
+| `chest` | `icon_chest.png` | `quest` on the daily pill |
+| `daily` | `icon_daily_rewards.png` | the word "Day" on every rung of the ladder |
+
+### The order of the sheets is the override
+
+Nothing new was needed to replace a cell: **slices are written by name, so the
+last sheet to name one owns it.** `currencies-16` already relied on that to
+beat `ui-a-resources`; these singles are appended after it and beat both. The
+build says so out loud — `overrides Gems` — which is the line that tells a
+reviewer a replacement was intended rather than a name collided.
+
+### A borrowed icon is a claim about what the screen is
+
+`Mana` on the Relics tab was true while the Reliquary explained the pool. The
+pool moved to a sheet of its own the same day (`08-magic.md` §6), so the orb
+became a picture of somewhere else — and the tab had no picture of a relic.
+Same for the delve pill's quest scroll: an errand and a dungeon are not the
+same promise.
+
+### `chest` and `daily` are two cells because they say two things
+
+The chest is the PRIZE and heads the pill that offers it. The calendar page is
+the DAY and rides on each rung as the number's unit, the way a coin rides
+beside an amount — which is also what let the ladder keep the word "Day" out of
+a 50 px column.
+
+### Four cells that never grey out
+
+`relics`, `dungeon`, `chest` and `daily` join `locked.except`. A derived
+`-locked` cell for a nav mark or a pill head is atlas space nothing can ask
+for.

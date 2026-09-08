@@ -489,6 +489,13 @@ export function serialize(state: GameState, now: number): SaveFile {
         ReadyAtUtc: iso(state.ads.readyAt),
         Claims: state.ads.claims,
         Pending: state.ads.pending,
+        // The day's two refill counters. `Day` is a day INDEX, so a save
+        // reloaded tomorrow rolls itself the first time anything reads it.
+        Refills: {
+          Day: state.ads.refills.day,
+          Watched: state.ads.refills.watched,
+          Bought: state.ads.refills.bought,
+        },
       },
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
@@ -816,10 +823,20 @@ export function deserialize(
 
   const adsDto = modules['kingdom.adOffers'];
   if (adsDto) {
+    const refills = (adsDto.Refills ?? {}) as {
+      Day?: number; Watched?: number; Bought?: number;
+    };
     state.ads = {
       readyAt: adsDto.ReadyAtUtc ? ms(adsDto.ReadyAtUtc) : lastSaved,
       claims: adsDto.Claims ?? 0,
       pending: adsDto.Pending === true,
+      // A save written before the allowances existed reads as a fresh day,
+      // which is the generous default and the only safe one.
+      refills: {
+        day: refills.Day ?? state.ads.refills.day,
+        watched: refills.Watched ?? 0,
+        bought: refills.Bought ?? 0,
+      },
     };
   }
 

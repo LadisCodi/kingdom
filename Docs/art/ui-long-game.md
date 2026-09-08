@@ -55,9 +55,9 @@ One line was added and it is deliberately the smallest possible one:
 ```
 
 **A pool and ONE net rate.** Never `+6/h base −4/h upkeep = +2/h`. That
-breakdown is genuinely interesting, and it belongs in the Reliquary, on tap,
-where the player asked for it — in a status bar it is exactly the spreadsheet
-chrome the redesign exists to kill.
+breakdown is genuinely interesting, and it belongs in the Mana sheet the gauge
+opens, on tap, where the player asked for it — in a status bar it is exactly
+the spreadsheet chrome the redesign exists to kill.
 
 Two details carry the mechanic:
 
@@ -77,10 +77,12 @@ true, the same rule Stone and Iron use in the coin row.
 
 Three stacked sections, in the order of how often they change:
 
-1. **The pool**, with the breakdown the header refuses to show:
-   *Drawn from the land +6/h · Sustaining your relics −4/h · Filling at +2/h*.
-   A Gem refill sits under it, priced on what is missing so a full pool costs
-   nothing.
+1. **The pool**, with the breakdown the header refuses to show, and a refill
+   under it. *(Superseded 2026-09-08: the pool and both refills are the Mana
+   sheet, which the header gauge and the ad tab open —
+   [`../features/08-magic.md`](../features/08-magic.md) §6. The Reliquary
+   neither spends the pool nor fills it, so it keeps the socket and lets the
+   arithmetic stand where the refill is sold.)*
 2. **The sockets**, large and first, because **the slot is the constraint the
    whole magic design turns on.** An empty socket has to read as an
    opportunity, not a gap — so it is a big dashed frame with a gem outline,

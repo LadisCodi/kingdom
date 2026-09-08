@@ -21,7 +21,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite; predev runs the balance import
-npm test             # vitest run — 47 suites, keep them all green
+npm test             # vitest run — 55 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run balance      # balance.xlsx  → src/sim/data/balance.json
@@ -123,7 +123,7 @@ three ways (`tests/techTree.test.ts`).
 
 ## Saves
 
-`SAVE_VERSION` is 32; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 34; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),

@@ -9,7 +9,7 @@ import {
 } from './sim/commands';
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST,
-  LANDMARK_ART, LANDMARKS, RUINS,
+  LANDMARK_ART, LANDMARKS, MANA, RUINS,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
 import type { IconName } from './ui/kit/icon';
@@ -34,7 +34,7 @@ import {
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
-  adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
+  adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
@@ -49,8 +49,12 @@ import {
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems, knowledgePerHour,
+  mana, manaCap, manaNetRegen, manaProduction, knowledgePerHour,
 } from './sim/mana';
+import {
+  boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
+  watchedRefillsLeft,
+} from './sim/manaRefill';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
@@ -111,8 +115,13 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'heroes' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder'
+  | 'reliquary' | 'heroes' | 'expedition' | 'checkpoint' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
+
+/** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
+ *  each one into a sentence — nothing is greyed out without a reason. */
+export type RefillBlock =
+  | 'Ready' | 'PoolFull' | 'AboveHalf' | 'Cooling' | 'NoneLeftToday';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -884,11 +893,63 @@ export class Game {
     this.notify();
   }
 
+  /** Buy a whole pool at today's rung. The Mana sheet's other button. */
   doRefillMana(): void {
-    const result = refillManaWithGems(this.state);
-    if (result === 'Refilled') playSfx('gemSpend');
+    const result = refillManaWithGems(this.state, this.now());
+    if (result === 'Refilled') {
+      playSfx('gemSpend');
+      this.floaters.add(townhall(this.state).location, `+${manaCap(this.state)}`, 'Mana');
+    }
     if (result === 'NotEnoughGems') this.shake(['Gems']);
+    if (result === 'NoneLeft') this.toast('No more Gem refills today');
     this.notify();
+  }
+
+  /**
+   * Everything the Mana sheet draws besides the pool: the two allowances, the
+   * rung the next purchase stands on, and whether a video is on offer.
+   *
+   * Both counters are the SIM's — the sheet asks, it does not decide — so a
+   * refill refused by the day is refused the same way whether the player
+   * reached it from the tab or from the header gauge.
+   */
+  manaRefills(): {
+    reward: number;
+    full: boolean;
+    video: RefillBlock;
+    watchedLeft: number;
+    watchedPerDay: number;
+    gems: RefillBlock;
+    gemCost: number | null;
+    rung: number;
+    boughtLeft: number;
+    boughtPerDay: number;
+  } {
+    const now = this.now();
+    const full = mana(this.state) >= manaCap(this.state);
+    const watchedLeft = watchedRefillsLeft(this.state, now);
+    const boughtLeft = boughtRefillsLeft(this.state, now);
+    return {
+      reward: manaCap(this.state),
+      full,
+      // The video's THREE conditions, told apart: the day's allowance, the
+      // cooldown, and the shortage the offer answers. One "not available"
+      // covering all three would leave the player guessing which one.
+      video: watchedLeft <= 0 ? 'NoneLeftToday'
+        : this.adOffer() !== null ? 'Ready'
+          : full ? 'PoolFull'
+            : !adOfferEligible(this.state) ? 'AboveHalf'
+              : 'Cooling',
+      watchedLeft,
+      watchedPerDay: AD.manaRefillsPerDay,
+      // Gems answer no shortage, so they have no cooldown and no half-pool
+      // gate: the ladder and a pool with room in it are the whole of it.
+      gems: boughtLeft <= 0 ? 'NoneLeftToday' : full ? 'PoolFull' : 'Ready',
+      gemCost: manaRefillGemCost(this.state, now),
+      rung: nextRefillRung(this.state, now),
+      boughtLeft,
+      boughtPerDay: MANA.gemRefillCosts.length,
+    };
   }
 
   /** Everything the header's Mana gauge shows: a pool and ONE net rate.
@@ -960,15 +1021,17 @@ export class Game {
     return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
   }
 
-  openAdOffer(): void {
-    if (this.adOffer() === null) return;
-    this.setOverlay('adOffer');
-  }
-
-  /** "No thanks" and the X do the same thing: close the popup and leave the
-   *  offer standing. Only claiming consumes it. */
-  declineAdOffer(): void {
-    this.setOverlay(null);
+  /**
+   * The Mana sheet — the pool, what fills it, and the two ways to refill it.
+   *
+   * Always openable, from the header gauge as well as from the offer tab:
+   * the Gem ladder is not an ad, so a player who has spent the day's videos
+   * (or never watches one) still has somewhere to read the arithmetic and
+   * somewhere to buy a pool. Closing it leaves any standing offer standing —
+   * only claiming consumes one.
+   */
+  openMana(): void {
+    this.setOverlay('mana');
   }
 
   startAdWatch(): void {

@@ -198,10 +198,12 @@ const SETTINGS = [
   ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
   ['mana.meditation_cap', 'mana.meditationCap'],
-  // Gems for a FULL pool. Priced against the cap rather than per Mana, so a
-  // refill is the same offer at every stage of the game — one $0.99 pouch
-  // (14-monetization.md §2.2) — and half a pool is half that.
-  ['mana.gem_refill_full_pool', 'mana.gemRefillFullPool'],
+  // The Gem price of a refill, as a LADDER indexed by how many refills have
+  // already been bought TODAY — one entry per rung, so the list's length is
+  // also the daily cap (src/sim/manaRefill.ts). A refill is always a whole
+  // pool, so the price is never per Mana: what rises is the rung, not the
+  // pool.
+  ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
   ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
@@ -290,6 +292,9 @@ const SETTINGS = [
   ['ads.cooldown_max_seconds', 'ads.cooldownMaxSeconds'],
   ['ads.eligible_below_fraction', 'ads.eligibleBelowFraction'],
   ['ads.watch_seconds', 'ads.watchSeconds'],
+  // How many refills a day a video may pay for. Its own counter, independent
+  // of the Gem ladder's, and both roll at UTC midnight.
+  ['ads.mana_refills_per_day', 'ads.manaRefillsPerDay'],
   // Harmony's surplus bonus: `supply / demand` thresholds and what each pays
   // on the tax rate. A THRESHOLD AND ITS BONUS ARE ONE FACT, so they travel
   // in one cell rather than two parallel lists. There is deliberately no

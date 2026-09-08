@@ -1,0 +1,80 @@
+/* The Mana sheet (Docs/features/08-magic.md §6): the pool, the rate, and the
+ * two refills. Opened by the header gauge and by the ad tab, so it has to read
+ * as a page about MANA that happens to sell a refill — not as an ad popup that
+ * happens to show a gauge. Hence the pool's blue carries the whole sheet, and
+ * the offer sits inside it as a band rather than leading with a film strip. */
+
+.mana-sheet { display: flex; flex-direction: column; gap: 10px; }
+
+.mana-head { display: flex; align-items: center; gap: 8px; }
+.mana-title { font-family: var(--font-display); font-size: var(--text-title); flex: 1; }
+.mana-hint { font-size: var(--text-helper); color: var(--ink-muted); text-align: right; }
+
+/* The breakdown the HUD refuses to show. Here it IS the point — one line, so
+ * it stays a fact rather than a spreadsheet. */
+.mana-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
+}
+.mana-line b { font-family: var(--font-body); }
+.mana-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.3; }
+
+/* -------------------------------------------------------- the two tills --- */
+
+/* One prize, two prices: the band states the reward once and the buttons
+ * under it carry only what each costs and what each has left today. */
+.mana-refills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, rgba(96, 128, 208, 0.2), rgba(96, 128, 208, 0.06));
+  border: 2px solid rgba(72, 96, 168, 0.4);
+}
+.mana-prize { display: flex; align-items: center; gap: 10px; }
+.mana-prize-copy { flex: 1; min-width: 0; font-size: var(--text-helper); line-height: 1.3; }
+.mana-prize-amount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 4px 8px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-title);
+  font-variant-numeric: tabular-nums;
+  background: rgba(96, 128, 208, 0.22);
+  border: 2px solid rgba(96, 128, 208, 0.5);
+  border-radius: 8px;
+}
+
+/* Side by side, equal widths, Gems first: two prices for one pool, and a
+   player choosing between them is comparing them. A price under a price would
+   be a list. */
+.mana-tills { display: flex; gap: 8px; }
+.mana-till { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mana-till > .k-btn { width: 100%; margin-bottom: 0; }
+
+/* The day's count, over the button it counts for — and when it reads 0 it IS
+   the reason that button is dead, so it turns clay and nothing repeats it
+   underneath. */
+.mana-till-count {
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.mana-till-count.is-spent { color: var(--clay); }
+
+/* One reason for the pair when they share one, two when they do not. */
+.mana-blocked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  line-height: 1.3;
+  color: var(--clay);
+}

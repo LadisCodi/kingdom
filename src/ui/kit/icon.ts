@@ -42,7 +42,13 @@ export type UiIconName =
   // The three a hero fights with. They were borrowing `army`, `padlock` and
   // `population` — a shield for attack, a padlock for defence and a crowd for
   // health — which is three wrong pictures in one row.
-  | 'atk' | 'def' | 'hp';
+  | 'atk' | 'def' | 'hp'
+  // Four destinations that were borrowing a picture of something else. `relics`
+  // is the tab, which wore the Mana orb until the pool got a sheet of its own;
+  // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
+  // `chest` and `daily` are two halves of one screen and stay two cells: the
+  // chest is the PRIZE and the calendar page is the DAY.
+  | 'relics' | 'dungeon' | 'chest' | 'daily';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -78,6 +84,8 @@ export const ICON_EMOJI: Record<IconName, string> = {
   video: '▶', // a rewarded video — the mark on any button an ad pays for
   // the collection
   ascension: '★', fragment: '🧩',
+  // destinations that are not nav tabs
+  relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅',
   // a hero's three numbers
   atk: '🗡️', def: '🛡️', hp: '❤️',
 };

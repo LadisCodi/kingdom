@@ -6,6 +6,12 @@
 // refill, past the 8 h offline cap — so that a refill has something to sell.
 // This is the refill: a full pool's worth of Mana for watching a video.
 //
+// FIVE A DAY, AND THE GEMS ARE THE OTHER TILL. The videos pay at most
+// `ads.mana_refills_per_day` refills a day; the Gem ladder beside them has its
+// own counter and its own cap. Both live in `manaRefill.ts`, which is also
+// where the offer's copy comes from — this file owns the OFFER (when the tab
+// appears, what it pays), not the allowance.
+//
 // THE REWARD LANDS ON TOP OF THE CAP. It is the one grant in the game that
 // may overcharge the pool (`grantMana`), because a reward clamped to a
 // ceiling the player is already near would pay nothing and read as broken.
@@ -28,6 +34,7 @@
 
 import { AD } from './data/definitions';
 import { grantMana, mana, manaCap } from './mana';
+import { recordWatchedRefill, watchedRefillsLeft } from './manaRefill';
 import { rand } from './rng';
 import type { GameState } from './state';
 
@@ -56,6 +63,10 @@ export const adOfferEligible = (state: GameState): boolean =>
 /** Is there an offer on screen right now? */
 export const adOfferPending = (state: GameState): boolean => state.ads.pending;
 
+/** How many refills the videos will still pay for today (`manaRefill.ts`).
+ *  Re-exported here because the offer is the surface that spends it. */
+export { watchedRefillsLeft } from './manaRefill';
+
 /**
  * The latch. Called from the live tick, never from `advance()`.
  *
@@ -65,12 +76,17 @@ export const adOfferPending = (state: GameState): boolean => state.ads.pending;
  */
 export function refreshAdOffer(state: GameState, now: number): void {
   if (state.ads.pending) return;
+  // The day's allowance. Five refills a day is a CAP rather than a shortage
+  // condition (14-monetization.md §6), so it belongs here beside the other
+  // two gates: with it spent, the tab simply does not come back until
+  // midnight, and the Mana sheet says so where the player can read it.
+  if (watchedRefillsLeft(state, now) <= 0) return;
   if (now < state.ads.readyAt) return;
   if (!adOfferEligible(state)) return;
   state.ads.pending = true;
 }
 
-export type ClaimAdResult = 'Claimed' | 'NoOffer';
+export type ClaimAdResult = 'Claimed' | 'NoOffer' | 'NoneLeftToday';
 
 /**
  * Take the reward and start the next cooldown.
@@ -81,9 +97,13 @@ export type ClaimAdResult = 'Claimed' | 'NoOffer';
  */
 export function claimAdOffer(state: GameState, now: number): ClaimAdResult {
   if (!state.ads.pending) return 'NoOffer';
+  if (watchedRefillsLeft(state, now) <= 0) return 'NoneLeftToday';
   grantMana(state, adOfferReward(state));
   state.ads.pending = false;
   state.ads.claims += 1;
+  // `claims` is the rng key and counts FOREVER; the day's allowance is its own
+  // counter, so the two never have to agree.
+  recordWatchedRefill(state, now);
   state.ads.readyAt = now + adCooldownMs(state);
   return 'Claimed';
 }
