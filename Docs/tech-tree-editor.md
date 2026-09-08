@@ -110,7 +110,14 @@ wherever it is placed.
 
 The three selects narrow each other, so the row can only produce an effect the
 rules accept: `unitAtk` offers `flat` and no `percent`, and only `global` or a
-unit tag. A technology may carry several effects; most carry one. Rank N
+unit tag. A stat may also narrow the IDS of a kind, where only some of them
+have the number — `harvestRecovery` reaches the sources that grow back in
+place and not the berry bush, which is consumed and reappears elsewhere. That
+narrowing is **enforced by the rules rather than by the select**: the dropdown
+still lists every id of the kind (`TARGET_IDS`), and `effectProblems` refuses
+the ones the stat cannot reach, so a mis-aimed effect is caught on save with a
+sentence rather than being unpickable. Narrowing the select too is one line at
+`mount.ts:949`. A technology may carry several effects; most carry one. Rank N
 belongs in era N and requires rank N−1, which is what makes a ladder a chain
 down the page.
 

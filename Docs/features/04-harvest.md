@@ -47,6 +47,18 @@ Every resource cell carries:
 - Recovery is binary: the cell comes back **full** after `recoverySeconds`.
   There is no continuous regrowth and no reserve floor (§5).
 - Recovery is timestamp-based: it works offline and costs exactly one boundary.
+- **The wait is priced once, at the moment the cell runs dry.** The tech tree
+  can shorten it — `harvestRecovery`, aimed at a source, so "trees grow back
+  20% faster" leaves the crops alone — and so can a relic (`cellRecovery`).
+  Neither wakes a cell already sleeping: the stamp is a fact about the cell,
+  not a live query, and a bonus that repriced a stretch already elapsed would
+  hand the player a windfall for finishing a research at the right moment. It
+  never falls below one second.
+- **Only a source that grows back IN PLACE has that clock**: Forest, Crops,
+  Stone and the two mountains. A berry bush, a herd and a shoal are consumed
+  and reappear on another tile instead (`respawnSeconds`, §3), which is a
+  different number the tree cannot move — so aiming a recovery bonus at one
+  is refused rather than sold.
 - The chunk and the rhythm are per cell: iron is a heavy swing, crops a light
   tick, and two cells can pay the same per minute and feel different.
 

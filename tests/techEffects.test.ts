@@ -8,9 +8,10 @@
 // rather than `toBeCloseTo` below, and it must stay that way.
 
 import { describe, expect, it } from 'vitest';
-import { TECHNOLOGIES } from '../src/sim/data/definitions';
+import { HARVEST, TECHNOLOGIES } from '../src/sim/data/definitions';
 import {
   TECH_STATS, TECH_STAT_IDS, effectLabel, effectProblems, effectKey,
+  type StatDef, type TechStat,
 } from '../src/sim/data/techEffectRules';
 import {
   techFlat, techFlatAimed, techMultiplier, techTotals, techValue,
@@ -46,6 +47,15 @@ describe('the effect registry', () => {
       { stat: 'taxRate' as const, op: 'percent' as const, value: 2.5 },
       { stat: 'manaCap' as const, op: 'flat' as const, value: 1, target: { harvest: 'Forest' as const } },
       { stat: 'harvestUnitsPerStrike' as const, op: 'flat' as const, value: 1, target: { harvest: 'Coal' as never } },
+      // A regrowth bonus on something that does not grow back. A berry bush
+      // is CONSUMED and reappears on another tile, so its clock is
+      // `respawnSeconds` in another call site — aiming recovery at it would
+      // be a rank the player pays for and nothing collects.
+      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -20, target: { harvest: 'Berries' as const } },
+      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -20, target: { harvest: 'Fish' as const } },
+      // Seconds of waiting take a percentage, not a flat second: the same
+      // second off a 60 s regrowth and a 300 s one are different mechanics.
+      { stat: 'harvestRecovery' as const, op: 'flat' as const, value: -10, target: { harvest: 'Forest' as const } },
     ];
     for (const effect of bad) {
       expect(effectProblems(effect), effectLabel(effect)).not.toEqual([]);
@@ -55,9 +65,31 @@ describe('the effect registry', () => {
       { stat: 'buildTime' as const, op: 'percent' as const, value: -5 },
       { stat: 'harvestUnitsPerStrike' as const, op: 'flat' as const, value: 1, target: { harvest: 'Crops' as const } },
       { stat: 'unitDef' as const, op: 'flat' as const, value: 1, target: { unitTag: 'Melee' as const } },
+      // "Trees grow back 20% faster" — a NEGATIVE percent, because the number
+      // is seconds of waiting and less of it is the good news.
+      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -20, target: { harvest: 'Forest' as const } },
+      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -10, target: { harvest: 'Crops' as const } },
+      { stat: 'harvestRecovery' as const, op: 'percent' as const, value: -5 },
     ]) {
       expect(effectProblems(good), effectLabel(good)).toEqual([]);
     }
+  });
+
+  it('narrows an aim to the subjects that HAVE the number', () => {
+    // `targetIds` is the twin of `ops`: both refuse an authoring that would
+    // read as a bonus and collect nothing. Derived from the workbook, so a
+    // designer who gives the berries a regrowth time makes them aimable by
+    // doing that and nothing else.
+    // Read through StatDef: the registry is a narrow literal, so an entry
+    // that authors no `targetIds` has no such property to compare.
+    const def = (stat: TechStat): StatDef => TECH_STATS[stat] as StatDef;
+    const recovers = def('harvestRecovery').targetIds!;
+    for (const [id, spec] of Object.entries(HARVEST)) {
+      expect(recovers.includes(id), `${id} recovers in place: ${spec.recoverySeconds}s`)
+        .toBe(spec.recoverySeconds > 0);
+    }
+    // Every other stat aims at every id of the kinds it accepts.
+    expect(def('harvestUnitsPerStrike').targetIds).toBeUndefined();
   });
 
   it('keys a target by its KIND, so a coin and a mountain are not one scope', () => {

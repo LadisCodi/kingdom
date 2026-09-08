@@ -74,6 +74,13 @@ export interface StatDef {
   ops: readonly TechEffectOp[];
   /** Which kinds of target this stat accepts. `global` only = unaimed. */
   targets: readonly TargetKind[];
+  /** Which IDS of that kind it accepts, when only some of them read the
+   *  number. Absent = every id of every accepted kind. Narrower than
+   *  `targets` and for the same reason the `ops` list exists: a bonus aimed
+   *  where nothing reads it is a rank the player pays for and nobody
+   *  collects. Derive it from the workbook, never hand-list it — the sheet
+   *  stays the authority on which subjects have the number at all. */
+  targetIds?: readonly string[];
   /** What a flat value is measured in, for the editor's field label. */
   unit: string;
   /** The one call site that owns this number — documentation, and what
@@ -93,6 +100,20 @@ export interface StatDef {
  * (`salePrice`) and out of the ground (`harvestUnitsPerStrike`), and those are
  * three numbers in three functions. One stat is one number in one place.
  */
+/**
+ * Harvest sources that grow back IN PLACE, and so have a recovery clock at
+ * all. A berry bush, a herd and a shoal do not: they are CONSUMED and reappear
+ * on another tile, which is `respawnSeconds` — a different number in a
+ * different call site (`harvest.ts#drawFromCell`), and a second stat if the
+ * tree is ever to move it.
+ *
+ * Derived from the sheet, so a designer who gives the berries a regrowth time
+ * makes them aimable by doing that and nothing else.
+ */
+const RECOVERING_SOURCES: readonly string[] = Object.entries(balance.harvest)
+  .filter(([, h]) => (h as { recoverySeconds: number }).recoverySeconds > 0)
+  .map(([id]) => id);
+
 export const TECH_STATS = {
   // ---- the thumb and the crew
   tapWorkSeconds: {
@@ -109,6 +130,12 @@ export const TECH_STATS = {
     what: 'units one extraction takes out of a KIND OF CELL — the tap and the crew alike',
     ops: ['flat', 'percent'], targets: ['global', 'harvest'], unit: 'units',
     reads: 'upgrades.ts#effectiveUnitsPerStrike',
+  },
+  harvestRecovery: {
+    what: 'the seconds a drained cell stays a stump before it grows back',
+    ops: ['percent'], targets: ['global', 'harvest'], unit: 's',
+    targetIds: RECOVERING_SOURCES,
+    reads: 'harvest.ts#effectiveRecoveryMs',
   },
   workerStrikeUnits: {
     what: 'units one WORKER delivery carries, on top of the cell’s own',
@@ -348,6 +375,9 @@ export function effectProblems(effect: TechEffect): string[] {
     const id = targetId(effect.target);
     if (id === null || !TARGET_IDS[kind].includes(id)) {
       out.push(`aims at the ${kind} "${id}", which does not exist`);
+    } else if (def.targetIds !== undefined && !def.targetIds.includes(id)) {
+      out.push(`aims ${effect.stat} at "${id}", which has no such number — `
+        + `it reaches ${def.targetIds.join(', ')}`);
     }
   }
   return out;
