@@ -52,7 +52,14 @@ const occurrenceId = (templateId: string, n: number): string => `${templateId}#$
  * every load — which is exactly what makes a content drop reach an existing
  * save.
  */
-export function reconcileSchedule(state: GameState, now: number): void {
+export function reconcileSchedule(
+  state: GameState,
+  now: number,
+  /** A kingdom that did not exist a moment ago. A window ALREADY IN PROGRESS
+   *  opened before it, so it never happened TO this player and must not pay
+   *  its opening lump — see `entryFor`. */
+  opts: { fresh?: boolean } = {},
+): void {
   const known = new Set(state.schedule.map((e) => e.id));
   for (const template of EVENTS) {
     const period = template.periodMs;
@@ -61,8 +68,8 @@ export function reconcileSchedule(state: GameState, now: number): void {
       // old save still learns it happened.
       const id = occurrenceId(template.id, 0);
       if (!known.has(id)) {
-        state.schedule.push(
-          entryFor(template.id, id, template.startsAt, template.durationMs, 0, now));
+        state.schedule.push(entryFor(
+          template.id, id, template.startsAt, template.durationMs, 0, now, opts.fresh === true));
       }
       continue;
     }
@@ -71,9 +78,10 @@ export function reconcileSchedule(state: GameState, now: number): void {
     for (let n = Math.max(0, first); n <= last; n++) {
       const id = occurrenceId(template.id, n);
       if (known.has(id)) continue;
-      state.schedule.push(
-        entryFor(template.id, id, template.startsAt + n * period, template.durationMs, n, now),
-      );
+      state.schedule.push(entryFor(
+        template.id, id, template.startsAt + n * period, template.durationMs, n, now,
+        opts.fresh === true,
+      ));
     }
   }
   // Occurrences that have been done for longer than the horizon are dead
@@ -91,6 +99,7 @@ function entryFor(
   durationMs: number,
   occurrence: number,
   reference: number,
+  fresh: boolean,
 ): ScheduledEntry {
   const endsAt = durationMs > 0 ? startsAt + durationMs : null;
   return {
@@ -99,13 +108,23 @@ function entryFor(
     startsAt,
     endsAt,
     payload: { kind: templateId === 'conjunction' ? 'conjunction' : 'banner', occurrence },
-    // A window that had ALREADY CLOSED when this timeline began never happened
-    // for this player, and must not pay out retroactively. `reference` is the
-    // moment the player's timeline starts or resumes — the new game's clock, or
-    // the save's LastSaved — so a window that opened and closed during a real
-    // absence is still pending here and still fires during the replay. That
-    // distinction is the whole of point 2 in the header.
-    phase: endsAt !== null && endsAt <= reference ? 'done' : 'pending',
+    // WHAT COUNTS AS ALREADY OVER depends on whether this timeline is
+    // resuming or beginning.
+    //
+    // A RESUMED save missed the window while the player was away, so a window
+    // that opened before `reference` is still pending and fires during the
+    // replay — that is the absence being paid out, and it is point 2 of the
+    // header. Only a window that had already CLOSED never happened.
+    //
+    // A NEW kingdom missed nothing, because it did not exist. A window in
+    // progress opened before there was anyone to open it for, so it starts
+    // done: an event is something that happens to you while you play, and a
+    // Conjunction firing on turn zero hands a brand-new game 6 Knowledge and
+    // a week-long boon it never played through — which is a starting grant
+    // wearing an event's clothes.
+    phase: (fresh ? startsAt <= reference : endsAt !== null && endsAt <= reference)
+      ? 'done'
+      : 'pending',
   };
 }
 

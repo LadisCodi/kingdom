@@ -4,7 +4,7 @@
 import { serialize, type SaveFile } from '../sim/save';
 import type { GameState } from '../sim/state';
 import { cloudClear, cloudInit, cloudLoad, cloudSave } from './cloud';
-import { clearLocal, loadLocal, saveLocal } from './local';
+import { clearLocal, lastResetAt, loadLocal, markReset, saveLocal } from './local';
 
 const CLOUD_DEBOUNCE_MS = 3000;
 
@@ -20,10 +20,28 @@ export class SaveManager {
     this.cloudActive = await cloudInit();
   }
 
-  /** Newer-of(local, cloud) by LastSaved. */
+  /**
+   * Newer-of(local, cloud) by LastSaved — minus anything a reset already
+   * killed.
+   *
+   * `cloudClear()` is best-effort and swallows its failures, and the cloud
+   * wins a tie-break against a local save that no longer exists. So a reset
+   * that could not reach the network used to LOOK like it worked and then
+   * silently restore the old kingdom on the reload — the one bug a reset
+   * button must not have, because the player's next move is to report that
+   * the game starts with things in it.
+   *
+   * The reset stamps the device. A cloud save older than that stamp is the
+   * one the player asked to destroy, whatever the network said at the time.
+   * A save from ANOTHER device, written after the reset, still loads.
+   */
   async load(): Promise<SaveFile | null> {
     const local = loadLocal();
-    const cloud = this.cloudActive ? await cloudLoad() : null;
+    const resetAt = lastResetAt();
+    const fromCloud = this.cloudActive ? await cloudLoad() : null;
+    const cloud = fromCloud !== null && Date.parse(fromCloud.LastSaved) < resetAt
+      ? null
+      : fromCloud;
     if (local && cloud) {
       return Date.parse(cloud.LastSaved) > Date.parse(local.LastSaved) ? cloud : local;
     }
@@ -39,6 +57,9 @@ export class SaveManager {
     }
     this.pendingCloud = null;
     clearLocal();
+    // Stamped BEFORE the network call, so a clear that never lands is still
+    // refused by the loader.
+    markReset(Date.now());
     if (this.cloudActive) await cloudClear();
   }
 

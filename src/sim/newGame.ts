@@ -102,7 +102,9 @@ export function newGame(map: MapData, now: number): GameState {
   // is read from it.
   state.city.wallet.Mana = manaCap(state);
 
-  reconcileSchedule(state, now);
+  // `fresh`: a kingdom created this instant did not live through a window
+  // that is already open, so it is not paid for one.
+  reconcileSchedule(state, now, { fresh: true });
   seedFog(state, map);
 
   if (!state.fog.revealed[coordKey(TOWNHALL_ORIGIN)]) {

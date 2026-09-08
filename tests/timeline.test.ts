@@ -15,6 +15,7 @@ import {
   pityCount, pull, pullMany, pullPrice, pullsToGuarantee, pullsToLegendary,
   STANDARD_BANNER,
 } from '../src/sim/heroes';
+import { newGame } from '../src/sim/newGame';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   activeConjunction, conjunctionBoon, nextConjunction, reconcileSchedule,
@@ -556,5 +557,45 @@ describe('the gacha', () => {
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(restored.gacha.pullCounts).toEqual(state.gacha.pullCounts);
     expect(restored.gacha.pityCounters).toEqual(state.gacha.pityCounters);
+  });
+});
+
+// THE STARTING GRANT THAT CAME BACK THROUGH ANOTHER DOOR.
+//
+// The Conjunction pays 6 Knowledge on opening and hangs a week-long boon —
+// one of them triples `knowledgeYield`. The schedule runs on absolute
+// calendar time, so a kingdom created mid-window used to catch that opening on
+// its very first advance: a brand-new game reported 6 Knowledge and
+// +2.4/h, which is exactly the grant that had just been removed on purpose.
+//
+// A resumed save must still be paid for the window it slept through. Only a
+// kingdom that did not exist when the window opened is not.
+describe('a new kingdom is not paid for a window it never lived through', () => {
+  it('starts with no Knowledge and fires nothing, mid-window', () => {
+    // Mid-Conjunction by construction: start from a fresh game, find the
+    // window, and create a kingdom inside it.
+    const probe = freshGame();
+    const conj = probe.schedule.find((e) => e.payload.kind === 'conjunction');
+    expect(conj).toBeDefined();
+    const inside = conj!.startsAt + 1000;
+
+    const state = newGame(map, inside);
+    const events = advance(state, map, inside + 1000).scheduleEvents;
+
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(events.filter((e) => e.transition === 'opened')).toEqual([]);
+  });
+
+  it('still pays a RESUMED save for the window it slept through', () => {
+    const probe = freshGame();
+    const conj = probe.schedule.find((e) => e.payload.kind === 'conjunction')!;
+    // A kingdom that existed BEFORE the window, saved, and came back inside
+    // it: that absence is real and the opening is owed.
+    const before = conj.startsAt - 86_400_000;
+    const state = newGame(map, before);
+    const file = serialize(state, before);
+    const back = deserialize(file, map, conj.startsAt + 1000)!;
+
+    expect(getWallet(back.kingdom.wallet, 'Knowledge')).toBeGreaterThan(0);
   });
 });
