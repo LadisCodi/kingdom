@@ -279,6 +279,9 @@ Each of these is data, not code:
   cannot act on.
 - A tile carries the portrait, its **unit type** top-left, its **level** and
   its **ascension stars** along the foot.
+- **The type is a pill with the word in it, no icon** — on the tile and on the
+  card alike. The four unit marks are four similar silhouettes at 16px, and
+  the card was saying it twice, icon and name side by side.
 - **An unfound hero shows its fragment count** against the ten that recruit
   them, not a padlock — a silhouette with progress on it is something to want.
 - **A green mark** on any tile that can take a level or an ascension right
@@ -297,11 +300,12 @@ Each of these is data, not code:
 - Opened by tapping a tile. **The card has no header**: the portrait and the
   name below it are the title, and a plank repeating the name above them would
   spend a band of the screen saying it twice.
-- Portrait on its rarity, with the **rarity** at the foot and the **unit type**
-  in the corner, an arrow each side that steps to the next hero — comparing
-  two of them is most of what the card is for — and **the way back riding on
-  the portrait**, not in a row of its own. Every pixel above the fold belongs
-  to the art.
+- Portrait on its rarity, with the **rarity** at the foot, the **type pill**
+  top-left and **a close in the top-right corner**, where every sheet in the
+  game puts one. An arrow each side steps to the next hero, which is most of
+  what the card is for.
+- **All of that chrome rides on the portrait**, never in a row of its own.
+  Every pixel above the fold belongs to the art.
 - **Each ladder sits with the thing it moves.** The **ascension stars** ride
   on the portrait's lower edge, overlapping it, at the size the chase
   deserves; **Ascend** is a button in the frame's bottom-right corner, showing

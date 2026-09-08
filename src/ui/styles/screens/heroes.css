@@ -99,17 +99,26 @@
   line-height: 1;
 }
 
-/* Top-left: what it fights as — the one fact that decides whether this hero
-   belongs in the party being sent. */
-.hero-tile-type {
+/* WHAT IT FIGHTS AS, as a word rather than a mark. One pill, one rule, both
+   screens: the four unit icons are four similar silhouettes at 16px, and the
+   card was saying it twice — icon and name side by side. */
+.hero-type {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(59, 36, 18, 0.6);
+  color: var(--ink-inverse);
+  font-size: var(--text-helper);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.hero-type.is-tile {
   position: absolute;
   top: 3px;
   left: 3px;
-  display: grid;
-  place-items: center;
-  padding: 2px;
-  border-radius: 5px;
-  background: rgba(59, 36, 18, 0.55);
+  padding: 0 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: rgba(59, 36, 18, 0.62);
 }
 
 .hero-tile-foot {
@@ -223,11 +232,18 @@
 .hero-stage .k-knob { flex: 0 0 auto; z-index: 1; }
 
 /* On the portrait, not above it — a row of its own cost a band of the screen
-   to say one word. */
-.hero-back {
+   to say one word. The cross sits right, where every sheet in the game puts
+   one; the type pill takes the corner it left. */
+.hero-close {
   position: absolute;
   top: 8px;
-  left: 8px;
+  right: 8px;
+  z-index: 2;
+}
+.hero-stage > .hero-type {
+  position: absolute;
+  top: 8px;
+  left: 10px;
   z-index: 2;
 }
 
@@ -244,20 +260,6 @@
   font-size: var(--text-helper);
   letter-spacing: 0.04em;
 }
-.hero-stage-type {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  background: rgba(59, 36, 18, 0.6);
-  color: var(--ink-inverse);
-  font-size: var(--text-helper);
-}
-
 /* No plank above it, so the name is the card's title and carries the weight. */
 .hero-title { text-align: center; }
 .hero-name { font-family: var(--font-display); font-size: var(--text-title); }

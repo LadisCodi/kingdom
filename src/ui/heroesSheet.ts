@@ -89,8 +89,9 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
 
   // Top-left: what it fights as. The type is the one fact that decides
   // whether this hero belongs in the party you are about to send, so it is
-  // on the tile rather than one tap deeper.
-  t.append(el('span', { class: 'hero-tile-type' }, iconEl(def.unitType, { size: 'sm' })));
+  // on the tile rather than one tap deeper — and it is the WORD, matching the
+  // card, because four unit icons at 16px are four similar silhouettes.
+  t.append(el('span', { class: 'hero-type is-tile' }, def.unitType));
   t.append(heroArt(def, !view.owned));
 
   if (view.owned) {
@@ -167,13 +168,14 @@ function detail(game: Game, id: HeroId): HTMLElement {
   const s = heroStats(game.state, id);
   const owned = view.owned;
 
-  // The way back rides ON the portrait rather than above it. A row of its own
-  // cost a band of the screen to say one word, and the card is a screen the
-  // player scrolls — every pixel above the fold is the portrait's.
-  // '←', not '‹': the step arrows are '‹' and '›', and two left-pointing
-  // chevrons on the same edge meaning different things is a coin toss.
-  const back = knob('←', () => { game.openHeroId = null; game.notify(); }, { label: 'All heroes' });
-  back.classList.add('hero-back');
+  // A CLOSE, top-right, not a back arrow top-left. The card is a modal over
+  // the roster now, and what closes a modal is a cross in the corner every
+  // other sheet in the game puts one in — an arrow pointing left beside two
+  // arrows that step the roster was one glyph too many on that edge.
+  const close = knob('✕', () => { game.openHeroId = null; game.notify(); }, {
+    label: 'Close',
+  });
+  close.classList.add('hero-close');
 
   const arrow = (by: 1 | -1) => knob(by === 1 ? '›' : '‹', () => {
     game.openHeroId = step(id, by);
@@ -210,11 +212,12 @@ function detail(game: Game, id: HeroId): HTMLElement {
   }
 
   const stage = el('div', { class: `hero-stage ${RARITY_CLASS[def.rarity]}` },
-    back,
+    // Top-left, the corner the back arrow gave up. A PILL WITH THE NAME and
+    // no icon: the icon was a second way of saying the same word, at a size
+    // where the four unit marks are hard to tell apart anyway.
+    el('span', { class: 'hero-type' }, def.unitType),
+    close,
     el('span', { class: 'hero-rarity' }, RARITY_LABEL[def.rarity]),
-    el('span', { class: 'hero-stage-type' },
-      iconEl(def.unitType, { size: 'md' }),
-      el('span', {}, def.unitType)),
     arrow(-1),
     heroArt(def, !owned),
     arrow(1),
