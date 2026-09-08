@@ -23,7 +23,7 @@
 import type { Game } from '../game';
 import { DISTRICTS, UNITS, type UnitDef } from '../sim/data/definitions';
 import {
-  lineFor, lineRushCost, trainCost, trainSeconds, trainingCompletesAt, trainingProgress,
+  lineFor, lineRushCost, trainCost, trainSecondsAt, trainingCompletesAt, trainingProgress,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
@@ -80,7 +80,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
     const head = line[0];
     const bar = progress('gold');
     const left = head.startedAt === null
-      ? trainSeconds(head.trainee)
+      ? trainSecondsAt(game.state, district.uniqueId, head.trainee)
       : Math.max(0, (trainingCompletesAt(head) - now) / 1000);
     bar.set(trainingProgress(game.state, district.uniqueId, now), formatDuration(Math.ceil(left)));
 
@@ -136,7 +136,9 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
 
 function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
   const cost = trainCost(game.state, trainee);
-  const seconds = trainSeconds(trainee);
+  // What it will take HERE, neighbours included — the number the player is
+  // about to commit to, not the one on the sheet.
+  const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
   const info = el('div', { class: 'tr-info' });
 
   if (trainee === 'Villager') {

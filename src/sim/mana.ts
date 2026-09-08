@@ -51,7 +51,7 @@ import { KNOWLEDGE, MANA, RUINS, levelIndexed } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
-import { effect } from './upgrades';
+import { techFlat, techValue } from './techEffects';
 import {
   addToWallet, getWallet, type GameState, type RuinId,
 } from './state';
@@ -79,7 +79,7 @@ export function manaProduction(state: GameState): number {
   // Ley Taps: the one thing that lets a landmark touch the RATE, and it is a
   // line the player researched rather than a property of the claim, so the
   // "capacity not production" rule for sanctuaries still holds by default.
-  base += effect(state, 'LeyTaps') * claimedLandmarks(state);
+  base += techFlat(state, 'manaPerClaimedLandmark') * claimedLandmarks(state);
   return Math.max(0, resolve(state, 'manaRegen', base));
 }
 
@@ -102,9 +102,11 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * The ceiling: a flat floor, the Sanctum's levels, and every sanctuary
  * claimed out in the fog. The Townhall is not in it — see `manaProduction`.
  *
- * The floor is 50, which is what `00-design-intent.md` has always said a new
- * kingdom starts with. The old `base_cap_per_townhall_level` opened at 100
- * and quietly contradicted it; Phase 0 was meant to catch that and did not.
+ * The floor is 100 (`mana.base_cap`), and a new kingdom starts on exactly
+ * that — the pool begins full, because every tap is paid from it. It moves
+ * with `mana.base_per_hour`, never alone: the two are tuned together to keep
+ * the pool filling a little SLOWER than an eight-hour absence
+ * (`08-magic.md` §2), so it can run out but never by much.
  *
  * Sanctuaries raise CAPACITY rather than rate, which is what makes exploring
  * compound. An ad pays a whole pool, so every shrine claimed makes every
@@ -113,7 +115,7 @@ export const manaNetRegen = (state: GameState): number => Math.max(0, manaProduc
  * every day after.
  */
 export function manaCap(state: GameState): number {
-  let cap = MANA.baseCap + effect(state, 'DeepWells')
+  let cap = techValue(state, 'manaCap', MANA.baseCap)
     + (isTechComplete(state, 'Meditation') ? MANA.meditationCap : 0);
   cap += Object.keys(state.landmarks.claimed).length * MANA.landmarkCap;
   for (const d of state.city.districts) {
@@ -255,12 +257,17 @@ export function knowledgePerHour(state: GameState): number {
   // ground held to its deepest depth, which is what a clear IS — Conquest.
   const perRuin = KNOWLEDGE.dripPerClearedRuinPerHour
     * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1)
-    + effect(state, 'Vigils')
+    + techFlat(state, 'knowledgePerClearedRuin')
     + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestPerClearedRuinPerHour : 0);
-  const raw = cleared * perRuin
-    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour + effect(state, 'Wayposts'));
+  // The base is the floor under the clock — what a kingdom holding no ground
+  // still learns an hour — and territory adds to it rather than replacing it,
+  // so the tree opens on the calendar and the province makes it open faster.
+  const raw = KNOWLEDGE.basePerHour
+    + cleared * perRuin
+    + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour
+      + techFlat(state, 'knowledgePerClaimedLandmark'));
   if (raw === 0) return 0;
-  return Math.max(0, resolve(state, 'knowledgeYield', raw * (1 + effect(state, 'Scriptorium'))));
+  return Math.max(0, resolve(state, 'knowledgeYield', techValue(state, 'knowledgeYield', raw)));
 }
 
 export function accrueKnowledge(state: GameState, toTime: number): number {
@@ -269,7 +276,15 @@ export function accrueKnowledge(state: GameState, toTime: number): number {
     state.kingdom.lastKnowledgeAt = Math.max(state.kingdom.lastKnowledgeAt, toTime);
     return 0;
   }
-  const msPer = 3_600_000 / rate;
+  // A WHOLE-millisecond period, rounded from the rate. The anchor then only
+  // ever moves by integer multiples of it, so one-call replay and stepped
+  // ticking agree to the bit (invariant 1) — with a fractional period,
+  // `units * msPer` in one call and the sum of `u * msPer` over three hundred
+  // steps differ in the last place, and the anchor drifts. The rate is
+  // authored as a FRACTION of one an hour, so this matters: 1.4 an hour is
+  // 2,571,428.57 ms a unit. The cost is a rounding of parts per million,
+  // which nobody can observe.
+  const msPer = Math.max(1, Math.round(3_600_000 / rate));
   const units = Math.floor((toTime - state.kingdom.lastKnowledgeAt) / msPer);
   if (units <= 0) return 0;
   state.kingdom.lastKnowledgeAt += units * msPer;

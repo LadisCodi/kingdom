@@ -19,6 +19,7 @@
 // whole `k`-millisecond chunks — the same trick as the tax and Mana anchors —
 // so one-call replay and stepped ticking agree exactly (invariant 1).
 
+import { adjacencyMultiplier } from './adjacency';
 import { DISTRICTS, GOODS, RUSH, levelIndexed } from './data/definitions';
 import { addGood, canAffordGoods, payGoods, refundGoods } from './goods';
 import { canPayMana, grantMana, payMana } from './mana';
@@ -35,6 +36,15 @@ export interface WorkshopItem {
   /** Worker-milliseconds of work done. `GoodDef.workSeconds` is what ONE
    *  villager owes it. */
   workMs: number;
+  /** Worker-milliseconds this item NEEDS — the authored work times what the
+   *  workshop's neighbours do to `workTime` (a Carpenter beside the Sawmill
+   *  works faster, `03-economy.md` §3.1).
+   *
+   *  Priced when the item is QUEUED and stored here, like the inputs it paid:
+   *  a Sawmill that arrives or moves later must not reprice work already
+   *  under way. Absent in a pre-30 save, where the authored work is what it
+   *  was running on. */
+  needMs?: number;
 }
 
 export interface WorkshopLine {
@@ -67,7 +77,20 @@ export function lineOf(state: GameState, d: District, now: number): WorkshopLine
 const inProgress = (d: District, line: WorkshopLine): number =>
   Math.min(d.assignedWorkers, line.items.length);
 
-const needMs = (item: WorkshopItem): number => GOODS[item.good].workSeconds * 1000;
+/** What this item still owes in total, as stamped when it was queued. */
+const needMs = (item: WorkshopItem): number =>
+  item.needMs ?? GOODS[item.good].workSeconds * 1000;
+
+/**
+ * What one item of `good` will take at THIS workshop, in worker-ms: the
+ * authored work times its neighbours' effect on `workTime`.
+ *
+ * Read once, when the item is queued — the same moment its inputs are paid.
+ */
+export const queuedWorkMs = (state: GameState, d: District, good: GoodId): number =>
+  Math.max(1000, Math.round(
+    GOODS[good].workSeconds * 1000 * adjacencyMultiplier(state, d, 'workTime'),
+  ));
 
 /**
  * Fold elapsed time into the work done, up to `t`.
@@ -186,7 +209,7 @@ export function queueGood(
   if (recipe.inputMana > 0) payMana(state, recipe.inputMana);
 
   reanchor(state, d, now);
-  line.items.push({ good: recipe.id, workMs: 0 });
+  line.items.push({ good: recipe.id, workMs: 0, needMs: queuedWorkMs(state, d, recipe.id) });
   return 'Queued';
 }
 

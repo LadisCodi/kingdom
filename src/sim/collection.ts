@@ -10,8 +10,8 @@
 //   FRAGMENTS raise a tier cap.   KNOWLEDGE buys levels within it.
 //
 // Fragments come from repeat delves AND from gacha duplicates, which is what
-// makes "every gacha drop has a play-based route" true: the wallet buys speed
-// and breadth, never access.
+// makes "every gacha drop has a play-based route" true: the wallet buys the
+// same collectible sooner, never alone.
 
 import { COLLECTION } from './data/definitions';
 

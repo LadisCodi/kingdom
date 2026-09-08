@@ -32,11 +32,17 @@ const AWAITING_ART: readonly string[] = [
   // Stardust — the renamed collection currency (2026-09-03). Knowledge kept
   // its scroll; the dust that levels a relic needs its own cell.
   'Stardust',
-  // The workshops' menu icons. Their WORLD art is drawn — `carpenter_l1` and
-  // friends are on disk — and so is their menu art, in `ui-h-goods.png`; the
-  // manifest holds those four cells at `null` until the districts exist,
-  // because a name the kit cannot resolve fails the first gate above.
-  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
+  // The six decorations (2026-09-08). All six WORLD sprites are drawn — what
+  // is missing is one 16 px sheet, which is a generated sheet rather than a
+  // crop of an existing one (Docs/art/ui/CONVERSATION.md). Until it is cut
+  // they fall back to a glyph; the build menu shows their world art anyway.
+  'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
+  // …and the city stat they supply, which the build sheet and the card both
+  // put a mark beside.
+  'harmony',
+  // The rewarded-video mark (2026-09-08). It rides INSIDE a button at 16 px,
+  // so it needs the small cell too.
+  'video',
 ];
 
 const pending = new Set(AWAITING_ART);

@@ -32,7 +32,8 @@ the player can see.
 
 - Nothing owned is ever taken (no decay, no destruction, Harmony is a gate
   not a drain).
-- Wallets buy comfort and breadth: every building and every good is earnable.
+- Wallets buy power, but never exclusivity: every building and every good is
+  earnable.
 - Played in visits: every new timer is hours to days, never minutes to babysit.
 - Rewards priced in production, not units.
 - **No new wallet row.** Goods are a stockpile counter; Harmony is a city
@@ -83,7 +84,7 @@ Three gate layers, so the ladder is paced by three different clocks:
 | Week | Townhall | Player is doing |
 |---|---|---|
 | 1 | TH1 → TH5 | today's game: fog, tree, first ruins |
-| 2 | TH6 → TH7 | first workshops, first goods, Watchtower, Reliquary |
+| 2 | TH6 → TH7 | first workshops, first goods, Watchtower |
 | 3 | TH8 | Harmony arrives: decorations, plot expansions, Tavern |
 | 4 | TH9 | Dragon's Nest, second workshop tier, halls to 8 |
 | 5+ | TH10 | Wonders take over as the endless ladder |
@@ -223,10 +224,12 @@ Recommendation: **one tier of three goods, and one late good**.
 - Decorations have no level, no crew, no tap. They are movable.
 - **Store decorations** (Gems): same Harmony per tile as an earned piece of
   the same footprint, better art. Cosmetic breadth, promise 3.
-- Harmony per tile is the real dial: it decides how much of the **plot** goes
-  to decoration, which is what makes **plot expansions** (OQ-71) worth
-  buying. Elvenar's whole late game is this tension. First pass: at TH10 a
-  city needs ~25% of its plot in decoration.
+- ~~Harmony per tile is the real dial~~ — **superseded 2026-09-08.** With
+  **OQ-1** closed the other way the plot is not the scarce thing, so what
+  prices Harmony is **a count cap per piece and a good in every piece past the
+  Garden**: reaching a Townhall's demand needs several KINDS, and each kind is
+  a queue at a workshop
+  ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §6).
 
 ## 5. Watchtower — the world map
 
@@ -248,6 +251,12 @@ Recommendation: **one tier of three goods, and one late good**.
   that in one place instead of spread over three.
 
 ## 6. Reliquary — the relic system as a building
+
+> **CUT, 2026-09-08.** There is no Reliquary building. A relic is found at the
+> bottom of a ruin, and the mechanic unlocks on owning one — asking the player
+> to go and build something before they may look at the first relic they were
+> handed is a gate in the wrong place. What the building carried and nobody
+> now does is in the plan's §8, **OQ-7 included**.
 
 - Today the Reliquary is a **screen**; relics arrive from the first ruin
   cleared. Proposal: a 1×1 district, one per city, unlocked at TH3 by
@@ -274,7 +283,8 @@ Recommendation: **one tier of three goods, and one late good**.
 - A 2×1 district, one per city, unlocked at TH4 by a Civics technology
   (`Hospitality`, new, era 2). **L1 unlocks heroes and the banner**
   ([`../features/10-heroes.md`](../features/10-heroes.md)); the banner moves out
-  of the store and into the Tavern, where Kingshot keeps it.
+  of the store and into the Tavern, where Kingshot keeps it — **decided
+  2026-09-08**, and tapping the building is how a hero is called.
 - Levels 1–10:
 
 | Level | Grants |
@@ -313,11 +323,15 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 | Tavern | Housing | Harmony +1 per neighbouring house |
 | Market | a workshop | that good sells +10% |
 
-- Everything above is a row on the `Adjacency` sheet if the sheet grows two
-  columns: `stat` and `magnitude`, alongside today's Gold/min. OQ-48 is this
-  decision.
-- The plot is bounded, so adjacency competes with Harmony for ground. That is
-  intended: the city is a puzzle again at TH8.
+- **Built 2026-09-07** (OQ-48 closed): the sheet is
+  `(district, neighbour, stat, magnitude)` and either side may name a KIND, so
+  the hall rule is one row. Six of the rows above are in — the ones whose
+  buildings exist. The Sanctum's and the Tavern's wait for decorations and the
+  Tavern; the Market's waits for goods to be sellable.
+- **Superseded 2026-09-07 (OQ-1):** the plot is NOT bounded — a building goes
+  anywhere revealed — so adjacency does not compete with Harmony for ground.
+  It guides a layout by paying and charging, and nothing refuses. What §4
+  costs has to be re-read in that light before step 6 starts.
 
 ## 9. What each block costs
 
@@ -328,7 +342,7 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 | §3 Dragon's Nest | 1 district, eggs, 1 unit type | incubation, feeding, party slot | nest, 3 eggs, 1–3 creatures | **incubation** | timer |
 | §4 Harmony | 6 decorations, `harmony_cost` column | supply/demand stat, gate, surplus bonus | 6 pieces + seasonal | none | — |
 | §5 Watchtower | 1 district | world-map dials read from a building level | 1 building | none | — |
-| §6 Reliquary | 1 district | relic cap and drop hooks on a level | 1 building | none | — |
+| ~~§6 Reliquary~~ | **cut** — relics unlock on the first relic owned | a hidden nav tab | none (3 sprites go unused) | none | — |
 | §7 Tavern | 1 district, `Hospitality` | hero cap, rumours, banner relocation | 1 building | none | — |
 | §8 Adjacency | sheet columns | stat-typed rules in the resolver | none | none | — |
 
@@ -355,8 +369,9 @@ Not in this proposal, deliberately:
 - One good tier plus Runestone, or Elvenar's three tiers (§2.1).
 - Does Runestone touch relic levels, and how does that sit with OQ-7 and
   OQ-9 (§2.1, §6).
-- Harmony surplus bonus on taxes, on all production, or none (§4.1).
-- Whether the banner leaves the store for the Tavern (§7) —
-  [`../features/14-monetization.md`](../features/14-monetization.md).
-- The `Adjacency` sheet growing a `stat` column (§8, OQ-48).
-- Plot expansions as the price of Harmony (§4.2, OQ-71).
+- ~~Harmony surplus bonus on taxes, on all production, or none~~ — **taxes, decided 2026-09-08** (§4.1), and no bonus at all while demand is 0.
+- ~~Whether the banner leaves the store for the Tavern (§7)~~ — **it does,
+  decided 2026-09-08**; tapping the Tavern is the hero destination
+  ([`../features/14-monetization.md`](../features/14-monetization.md) §2.1).
+- ~~The `Adjacency` sheet growing a `stat` column~~ — **done 2026-09-07** (§8, OQ-48 closed).
+- ~~Plot expansions as the price of Harmony~~ — **moot** (OQ-71: there is nothing to expand).

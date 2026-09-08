@@ -3,15 +3,16 @@
 
 import {
   advance, builderGemCost, buyBuilder, canAfford, cancelQueueItem, changeWorkers, collectTap,
-  enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
+  buyKeys, enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, RUINS,
-  TECHNOLOGIES, TRAINING, UNITS, levelIndexed,
+  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
+import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
@@ -22,6 +23,7 @@ import {
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
+import { harmonyBlock } from './sim/harmony';
 import {
   committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
   trainingCompletesAt,
@@ -42,7 +44,10 @@ import {
   previewExpedition, pushDeeper, supplyCost, unitSlots,
   type ExpeditionPreview, type LaunchBlock,
 } from './sim/expeditions';
-import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
+import {
+  claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft, levelUpHero,
+  pull, pullMany, raiseHeroTier, STANDARD_BANNER, type PullResult,
+} from './sim/heroes';
 import {
   mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
 } from './sim/mana';
@@ -53,8 +58,9 @@ import {
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
+  anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
+import { describeTech } from './sim/techProse';
 import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
@@ -62,7 +68,7 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents,
 } from './sim/store';
-import { pullCost } from './sim/heroes';
+import { pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
@@ -155,6 +161,10 @@ export class Game {
   /** When the fake ad started playing. A UI moment, not sim state — a reload
    *  mid-ad simply drops back to the offer, which is still standing. */
   adWatchStartedAt: number | null = null;
+  /** WHAT the ad being watched pays for. The Mana refill was the only
+   *  placement until the banners got their free call (2026-09-08), and the
+   *  screen is the same screen — only the payout differs. */
+  adWatchPurpose: 'mana' | BannerId = 'mana';
   /** The map SITE whose card is open — a landmark or a ruin. Sites are not
    *  districts (they are authored content on a cell, not something the player
    *  built), so they get their own slot rather than being squeezed into
@@ -287,7 +297,7 @@ export class Game {
       const tech = TECHNOLOGIES[id];
       this.queueBanner({
         title: 'Research complete!', icon: tech.glyph, name: tech.name,
-        desc: tech.description, tone: 'sky', sfx: 'researchComplete',
+        desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
       // A minor RANK unlocks nothing and announces nothing: its reward is the
@@ -897,6 +907,7 @@ export class Game {
 
   startAdWatch(): void {
     if (this.adOffer() === null) return;
+    this.adWatchPurpose = 'mana';
     this.adWatchStartedAt = this.now();
     this.setOverlay(null); // the ad is its own surface, above everything
     this.notify();
@@ -912,9 +923,40 @@ export class Game {
     return { secondsLeft: left, ready: left === 0 };
   }
 
+  /** Watch an ad for a banner's free call. The allowance is the sim's — this
+   *  only refuses early so the screen is never opened on a pull that would
+   *  then be turned down. */
+  startFreePullWatch(banner: BannerId): void {
+    if (!freePullAvailable(this.state, banner, this.now())) return;
+    this.adWatchPurpose = banner;
+    this.adWatchStartedAt = this.now();
+    this.setOverlay(null); // the ad is its own surface, above everything
+    this.notify();
+  }
+
+  /** What a banner's free call is waiting on, for its button. */
+  freePull(banner: BannerId): { left: number; readyAt: number; ready: boolean } {
+    return {
+      left: freePullsLeft(this.state, banner, this.now()),
+      readyAt: freePullReadyAt(this.state, banner),
+      ready: freePullAvailable(this.state, banner, this.now()),
+    };
+  }
+
   doClaimAdReward(): void {
     const watch = this.adWatch();
     if (watch === null || !watch.ready) return;
+    if (this.adWatchPurpose !== 'mana') {
+      const banner = this.adWatchPurpose;
+      const claimed = claimFreePull(this.state, banner, this.now());
+      if (claimed.result === 'Pulled') {
+        playSfx('gemSpend');
+        this.announcePull(banner, claimed.pull);
+      }
+      this.adWatchStartedAt = null;
+      this.setOverlay(null);
+      return;
+    }
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
@@ -937,7 +979,43 @@ export class Game {
     } else if (result === 'NoBuilderFree') {
       this.offerBuilder();
     } else {
-      this.toast(result);
+      this.toast(this.refusalWords(result, definitionId, 1));
+    }
+    this.notify();
+  }
+
+  /**
+   * A refusal in plain words, and — where there is one — the errand that
+   * answers it. Three of them are a different trip each: the map, a workshop
+   * queue, a decoration. A bare enum name told the player none of that.
+   */
+  private refusalWords(
+    result: string, definitionId: DistrictId, targetLevel: number, district?: District,
+  ): string {
+    if (result === 'NotEnoughGoods') {
+      return 'Not enough refined goods — queue some at a workshop';
+    }
+    if (result === 'NeedsHarmony') {
+      const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
+      return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+    }
+    return result;
+  }
+
+  /** What a key costs, and what the player holds — the store card's whole
+   *  content. One card per banner, because the two keys are two prices. */
+  keyOffer(banner: BannerId): { cost: number; held: number; key: CurrencyId } {
+    const def = BANNERS[banner];
+    return { cost: def.keyGemCost, held: this.walletValue(def.key), key: def.key };
+  }
+
+  doBuyKeys(banner: BannerId, count = 1): void {
+    if (buyKeys(this.state, banner, count) === 'Purchased') {
+      playSfx('gemSpend');
+      const kind = BANNERS[banner].key === 'GoldKey' ? 'gold' : 'silver';
+      this.toast(`+${count} ${kind} key${count === 1 ? '' : 's'}`);
+    } else {
+      this.shake(['Gems']);
     }
     this.notify();
   }
@@ -1008,8 +1086,10 @@ export class Game {
     return canAffordSku(this.state, id, this.now());
   }
 
-  pullCost(): number {
-    return pullCost(this.state);
+  /** What the next call on a banner costs: one key of its own kind, or
+   *  nothing at all for the free first call on the basic one. */
+  pullPrice(banner: BannerId = STANDARD_BANNER): { currency: CurrencyId; amount: number } {
+    return pullPrice(this.state, banner);
   }
 
   /** Choosing a profile is the one command that runs with no profile chosen.
@@ -1085,10 +1165,57 @@ export class Game {
       // same wall and deserves the same offer rather than a bare refusal.
       this.offerBuilder();
     } else if (result !== 'Started') {
-      this.toast(result);
+      const d = districtById(this.state, districtId);
+      this.toast(d === undefined
+        ? result
+        : this.refusalWords(result, d.definitionId, d.level + 1, d));
     }
     this.notify();
     return result;
+  }
+
+  /** A new hero gets the pennant; anything else gets a line. Shared by the
+   *  paid call and the one an ad pays for, because a hero found for free is
+   *  still a hero found. */
+  private announcePull(banner: BannerId, result: PullResult, before?: number): void {
+    const owned = before ?? this.state.heroes.owned.length - 1;
+    if (result.heroId !== null && this.state.heroes.owned.length > owned) {
+      const hero = HEROES[result.heroId];
+      this.queueBanner({
+        title: result.rarity === 'Legendary' ? 'A legend answers!' : 'A new hero answers!',
+        icon: hero.glyph,
+        name: hero.name,
+        desc: hero.traitText,
+        sprite: hero.sprite,
+        tone: 'gold',
+        sfx: 'chainFinished',
+      });
+    } else if (result.fragmentsOf !== null) {
+      this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
+    }
+    void banner;
+  }
+
+  /** Ten calls at once. The banner card shows the ten results; the presenter
+   *  only announces the heroes among them, because ten toasts is not a
+   *  reward, it is a queue. */
+  doPullMany(banner: BannerId = STANDARD_BANNER, count = 10): void {
+    const before = this.state.heroes.owned.length;
+    const batch = pullMany(this.state, banner, count);
+    if (batch.result === 'NotEnoughKeys') {
+      this.shake([BANNERS[banner].key]);
+      this.notify();
+      return;
+    }
+    if (batch.result === 'Pulled') {
+      playSfx('gemSpend');
+      const gained = this.state.heroes.owned.length - before;
+      const fragments = batch.pulls.reduce((n, p) => n + p.fragments, 0);
+      this.toast(gained > 0
+        ? `${gained} new hero${gained === 1 ? '' : 'es'} · +${fragments} fragments`
+        : `No new heroes · +${fragments} fragments`);
+    }
+    this.notify();
   }
 
   doRush(itemId: string): void {
@@ -1113,6 +1240,9 @@ export class Game {
       this.toast('All research slots are busy');
     } else if (result === 'MissingRequirement') {
       this.toast('Requires another technology first');
+    } else if (result === 'EraLocked') {
+      const def = TECHNOLOGIES[id];
+      this.toast(`Reveal ${eraShortfall(this.state, def.tome, def.era)} more cells to read on`);
     }
     this.notify();
   }
@@ -1616,27 +1746,14 @@ export class Game {
 
   // --------------------------------------------------------------- heroes
 
-  doPull(): void {
+  doPull(banner: BannerId = STANDARD_BANNER): void {
     const before = this.state.heroes.owned.length;
-    const result = pull(this.state);
-    if (result.result === 'NotEnoughGems') {
-      this.shake(['Gems']);
+    const result = pull(this.state, banner);
+    if (result.result === 'NotEnoughKeys') {
+      this.shake([BANNERS[banner].key]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
-      if (result.heroId !== null && this.state.heroes.owned.length > before) {
-        const hero = HEROES[result.heroId];
-        this.queueBanner({
-          title: 'A new hero answers!',
-          icon: hero.glyph,
-          name: hero.name,
-          desc: hero.traitText,
-          sprite: hero.sprite,
-          tone: 'gold',
-          sfx: 'chainFinished',
-        });
-      } else if (result.fragmentsOf !== null) {
-        this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
-      }
+      this.announcePull(banner, result, before);
     }
     this.notify();
   }
@@ -1829,18 +1946,11 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatSigned(g.goldPerMinute),
-            icon: 'Gold',
-            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+            ...adjacencyReadout(g.stat, g.magnitude),
           });
         }
-        if (adj.received !== 0) {
-          layer.yieldCells.push({
-            cell: this.mode.selected,
-            label: formatSigned(adj.received),
-            icon: 'Gold',
-            tone: adj.received < 0 ? 'bad' : 'good',
-          });
+        for (const r of adj.received) {
+          layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
       }
       // A crop plot IS the resource, so what it would hold goes on the ghost.
@@ -1883,18 +1993,11 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatSigned(g.goldPerMinute),
-            icon: 'Gold',
-            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+            ...adjacencyReadout(g.stat, g.magnitude),
           });
         }
-        if (adj.received !== 0) {
-          layer.yieldCells.push({
-            cell: this.mode.selected,
-            label: formatSigned(adj.received),
-            icon: 'Gold',
-            tone: adj.received < 0 ? 'bad' : 'good',
-          });
+        for (const r of adj.received) {
+          layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
         const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
         if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
@@ -2364,6 +2467,24 @@ export const formatAdjacency = (goldPerMinute: number): string =>
   `${formatSigned(goldPerMinute)} 🪙`;
 
 /**
+ * How one adjacency effect reads: its text, the icon beside it, and whether
+ * it is good news.
+ *
+ * The tone is NOT the sign. `workTime` and `trainTime` are durations, so a
+ * negative magnitude is the happy one — a rule that says −10% is a tenth
+ * faster, and painting that red would be exactly backwards.
+ */
+export const adjacencyReadout = (
+  stat: AdjacencyStat, total: number,
+): { label: string; icon: IconName; tone: 'good' | 'bad' } => {
+  if (stat === 'goldPerMinute') {
+    return { label: formatSigned(total), icon: 'Gold', tone: total < 0 ? 'bad' : 'good' };
+  }
+  const pct = `${formatSigned(Math.round(total * 100))}%`;
+  return { label: pct, icon: 'hourglass', tone: total > 0 ? 'bad' : 'good' };
+};
+
+/**
  * A currency's emoji, as a STRING.
  *
  * The last legitimate callers are DOM banners that have not moved to `iconEl`
@@ -2375,6 +2496,7 @@ export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
     Knowledge: '📜', Stardust: '🌟', Gems: '💎',
+    SilverKey: '🔑', GoldKey: '🗝️',
   };
   return icons[c];
 }

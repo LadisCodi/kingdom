@@ -381,10 +381,11 @@ output were the same picture. Specify the silhouette, not the subject.
 
 Drawn, in reading order: sawn planks, a dressed stone block, a rune stone, a
 saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel, one empty
-cell. **Named in the manifest:** `Planks`, `CutStone`, `Runestone`. The four
-workshop cells are drawn and held at `null` until those districts exist,
-because the atlas's first gate refuses a cell the kit cannot name — a
-different gate from `AWAITING_ART`, which only tracks names with no art.
+cell. **All seven are named in the manifest:** the three goods, and
+`Carpenter`, `MasonsYard`, `Smelter`, `RuneCarver`. The four workshop cells
+waited one commit for those districts to exist, because the atlas's first gate
+refuses a cell the kit cannot name — a different gate from `AWAITING_ART`,
+which only tracks names with no art.
 
 `Iron` is deliberately absent: the ore cell from UI-A doubles as the ingot,
 which at 16 px is the same picture.
@@ -406,7 +407,7 @@ Priority is the plan's step order: the workshops gate step 3, the spine.
 | 1 | SPR-E | the four workshops, `_l1` | 3 | ☑ |
 | 2 | SPR-F | the four workshops, `_l4` | 4 | ☑ |
 | 3 | SPR-G | the four workshops, `_l8` | 7 | ☑ |
-| 4 | UI-H | `Planks` `CutStone` `Runestone` + 4 workshop cells held at `null` | 2 | ☑ |
+| 4 | UI-H | `Planks` `CutStone` `Runestone` + the four workshop cells | 2, 3 | ☑ |
 | 5 | SPR-H | `garden_l1` `well_l1` `statue_l1` `orchard_l1` | 6 | ☑ |
 | 6 | SPR-I | `plaza_l1` `shrine_l1` `reliquary_l1` `tavern_l1` | 6, 8, 9 | ☑ |
 | 7 | SPR-J | `reliquary_l4` `_l8`, `tavern_l4` `_l8` | 8, 9 | ☑ |

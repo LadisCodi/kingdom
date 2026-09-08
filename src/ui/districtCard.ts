@@ -11,18 +11,21 @@
 // shape — a mark, what you are buying, the button that spends — so training
 // a unit and buying a level read the same way.
 
-import { formatAdjacency, type Game } from '../game';
+import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed,
+  DISTRICTS, HARMONY, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower } from '../sim/army';
-import { districtAdjacency } from '../sim/adjacency';
+import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
   canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
   requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
+import {
+  harmonyBlock, harmonyCost, harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
+} from '../sim/harmony';
 import {
   districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
@@ -36,13 +39,34 @@ import {
   coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
 } from '../sim/state';
 import { recoversAt, stockAt, tapYieldAt } from '../sim/harvest';
-import { effectiveWorkerStrike, tapWorkSeconds } from '../sim/upgrades';
+import { effectiveWorkerStrike, tapWorkSeconds, workerStrikeMs } from '../sim/upgrades';
 import { assignableWorkerLimit, influenceRadius } from '../sim/workers';
 import { el, formatDuration } from './format';
 import { action, btn, iconEl, knob, pips, progress, stat } from './kit';
 
-/** Level as stars rather than "lvl 2/3" — a count you read, not parse. */
+/** What each adjacency stat is called on a card. The number beside it is
+ *  signed and the tone is already right, so the words only have to say WHAT
+ *  the neighbours are moving. */
+const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
+  goldPerMinute: 'Neighbours',
+  workTime: 'Good neighbours — work time',
+  trainTime: 'A military quarter — training time',
+};
+
+/** The most stars worth counting at a glance. A ten-level building gets a
+ *  numeral instead: ten pips is a bar chart, not a count. */
+const MAX_STARS = 5;
+
+/** Level as stars rather than "lvl 2/3" — a count you read, not parse. Past
+ *  `MAX_STARS` levels that stops being true, so the ladder becomes one star
+ *  and the two numbers. */
 function levelStars(level: number, max: number): HTMLElement {
+  if (max > MAX_STARS) {
+    return el('span', { class: 'dc-stars is-numeral' },
+      iconEl('star', { size: 'sm' }),
+      el('b', {}, `${level}`),
+      el('span', {}, `/ ${max}`));
+  }
   const row = el('span', { class: 'dc-stars' });
   for (let i = 0; i < max; i++) {
     const star = iconEl('star', { size: 'sm' });
@@ -107,6 +131,28 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   // A hall's level IS its army cap, and until now the only place that number
   // appeared was a note further up the card — nowhere near the button that
   // spends on it, which is the whole reason to upgrade a Barracks.
+  // Levels 6-10 of a producer buy neither crew nor reach — the plot runs out
+  // of cells long before that — so the card has to name what they DO buy or
+  // the button looks like it does nothing.
+  const term = (list: readonly number[], level: number, blank: number) =>
+    (list.length === 0 ? blank : levelIndexed(list, level) ?? blank);
+  if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
+    const from = term(def.extraUnitsPerDeliveryPerLevel, district.level, 0);
+    const to = term(def.extraUnitsPerDeliveryPerLevel, next, 0);
+    if (to !== from) delta('per delivery', `+${from}`, `+${to}`);
+  }
+  if (def.strikeSpeedPerLevel.length > 0) {
+    const from = term(def.strikeSpeedPerLevel, district.level, 1);
+    const to = term(def.strikeSpeedPerLevel, next, 1);
+    if (to !== from) delta('swing', `×${from}`, `×${to}`);
+  }
+  // The Market's whole ladder is the price it pays for a unit.
+  if (def.salePricePerLevel.length > 0) {
+    const pct = (n: number) => `+${Math.round((n - 1) * 100)}%`;
+    const from = term(def.salePricePerLevel, district.level, 1);
+    const to = term(def.salePricePerLevel, next, 1);
+    if (to !== from) delta('sale price', pct(from), pct(to));
+  }
   if (def.armyCapPerLevel.length > 0) {
     delta('army cap',
       levelIndexed(def.armyCapPerLevel, district.level),
@@ -161,6 +207,39 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // A workshop turns things out too, so it gets the same kind of block.
     const workshop = workshopSection(game, district);
     if (workshop) body.append(workshop);
+
+    // A decoration is ONE number, and this is it. It has no crew, no queue
+    // and no tap, so without this line its card would be empty.
+    if (isDecoration(def)) {
+      body.append(el('div', { class: 'dc-harmony' },
+        iconEl('harmony', { size: 'sm' }),
+        el('span', {}, `Supplies ${def.harmonySupply} Harmony`),
+        el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
+    }
+
+    // The city's beauty, read where it is SPENT: the Townhall is where the
+    // taxes the surplus moves are collected. Silent on a city that has
+    // neither supplied nor been asked for any — there is nothing to explain
+    // on day one.
+    if (district.definitionId === 'Townhall') {
+      const supply = harmonySupply(game.state);
+      const demand = harmonyDemand(game.state);
+      if (supply > 0 || demand > 0) {
+        const tier = harmonySurplusTier(game.state);
+        const nextTier = HARMONY.surplusTiers.find(
+          (t) => tier === null || t.at > tier.at);
+        const note = tier !== null
+          ? `+${Math.round(tier.bonus * 100)}% taxes`
+          : nextTier !== undefined && demand > 0
+            ? `${Math.round(nextTier.at * 100)}% of demand pays +${
+              Math.round(nextTier.bonus * 100)}% taxes`
+            : 'nothing demands it yet';
+        body.append(el('div', { class: 'dc-harmony' },
+          iconEl('harmony', { size: 'sm' }),
+          el('span', {}, `Harmony ${supply} supplied, ${demand} demanded`),
+          el('span', { class: 'dc-army-note' }, note)));
+      }
+    }
 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
@@ -249,7 +328,8 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           el('b', {}, `×${n}`),
           el('span', {}, `${s} in reach`),
           el('span', { class: 'dc-area-rate' },
-            ` +${effectiveWorkerStrike(game.state, spec)} every ${spec.secondsPerStrike}s`));
+            ` +${effectiveWorkerStrike(game.state, spec, district)} every `
+            + `${Math.round(workerStrikeMs(game.state, spec, district) / 100) / 10}s`));
       });
 
       body.append(el('div', { class: 'dc-area' },
@@ -296,6 +376,15 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         body.append(el('div', { class: 'dc-tapline' },
           iconEl('showme', { size: 'sm' }), 'Nobody works here yet — add a villager'));
       }
+    }
+
+    // Every OTHER thing the neighbours are doing to this building. Gold is
+    // already said in the house's own words above, so it is not repeated.
+    for (const e of adjacencyInEffect(game.state, district)) {
+      if (e.stat === 'goldPerMinute') continue;
+      const { label, tone } = adjacencyReadout(e.stat, e.total);
+      body.append(el('div', { class: `dc-badge is-${tone}` },
+        `${ADJACENCY_WORDS[e.stat]} ${label}`));
     }
   }
 
@@ -344,6 +433,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       reason = `Your Townhall must reach level ${requiredTh}`;
     } else if (gateTech !== null && !isTechComplete(game.state, gateTech)) {
       reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
+    } else {
+      // The third errand, and the only one whose answer is a building the
+      // player has not thought of yet — so it says the number and the verb.
+      const short = harmonyBlock(game.state, def, next, district);
+      if (short !== null) reason = `Needs ${short.shortBy} more Harmony — build a decoration`;
     }
 
     // Refined goods sit beside the currencies rather than among them: they
@@ -357,13 +451,26 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         short: getGood(game.state.city.goods, id) < n,
       }));
 
+    // Harmony rides with the goods rather than with the currencies: it is not
+    // spent and never leaves the city, so it is a REQUIREMENT quoted at the
+    // price — which is what a chip beside the button says and a sentence
+    // above it does not.
+    const harmonyPrice = harmonyCost(def, next);
+    const harmonyTerm = harmonyPrice > harmonyCost(def, district.level)
+      ? [{
+        icon: 'harmony' as const,
+        amount: String(harmonyPrice),
+        short: harmonyBlock(game.state, def, next, district) !== null,
+      }]
+      : [];
+
     const upgrade = action({
       label: 'Upgrade',
       kind: 'primary',
       onClick: () => game.doUpgrade(district.uniqueId),
       disabledReason: reason,
       cost,
-      costExtra: goodsTerms,
+      costExtra: [...goodsTerms, ...harmonyTerm],
       have: (c) => game.walletValue(c),
       // What is left beside the button is the WAIT, which is a consequence
       // rather than a price and has no business inside the press-target.

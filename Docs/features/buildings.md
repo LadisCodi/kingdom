@@ -8,16 +8,21 @@
 > [`06-construction.md`](06-construction.md); what workers do is
 > [`04-harvest.md`](04-harvest.md).
 >
-> **Status.** Built: the fourteen districts below are `Districts` rows in the
-> workbook. Designed, not built: Townhall 5, and the three Wonders (§5,
+> **Status.** Built: the eighteen districts below are `Districts` rows in the
+> workbook — the fourteen of the province economy, and the four workshops
+> (§4.10), which the count cap opens at Townhall 5. Designed, not built:
+> Townhall 5, and the three Wonders (§5,
 > [`16-wonders.md`](16-wonders.md)).
 
 ## 1. Reading the tables
 
-- **Count cap** is by Townhall level, TH1 / TH2 / TH3 / TH4.
+- **Count cap** is by Townhall level, TH1 / TH2 / TH3 / TH4 — the workshops,
+  which reach level 10, are authored as far as TH10.
 - **Gate** on a level is what must be true to *start* that upgrade: a Townhall
-  level, a technology, or both. Level 1 is the build; its gate is the unlock
-  technology.
+  level, a technology, or both — and from level 6 a price in refined goods
+  (§4.11). Level 1 is the build; its gate is the unlock technology.
+- **The tables below stop at level 5.** Every building that goes on to 10 has
+  the same late ladder, and it is written once, in §4.11.
 - Costs are the base of the curve; the curves are
   [`05-city-and-districts.md`](05-city-and-districts.md) §3.
 - Every building has a fog ring: reveal 1, discover 2 (the four halls discover
@@ -28,19 +33,29 @@
 
 | Building | Footprint | Unlock | Count cap | Max level | Job |
 |---|---|---|---|---|---|
-| **Townhall** | 2×2 | — | 1 | **4** (5 designed) | the era gate; trains villagers; the map's origin |
-| **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **3** | houses residents, who pay Gold |
+| **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; the map's origin |
+| **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold |
 | **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
-| **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **2** | crew works crop plots in reach |
-| **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **4** | crew works forests in reach |
-| **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **3** | crew works mountains in reach — rock and metal |
-| **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **2** | boats work shoals in reach |
-| **Market** | 1×1 | Market | 1 (+1 with `Guildhalls`) | **1** | sells surplus for Gold |
-| **Sanctum** | 1×1 | Consecration | 1 (+1 with `Second Sanctum`) | **5** | Mana capacity and regeneration |
-| **Barracks** | 1×1 | Warrior | 1 | **5** | army cap; trains Warrior, Lancer, Archer |
-| **Spear Hall** | 1×1 | Spears | 1 | **5** | army cap; trains Lancer |
-| **Shooting Grounds** | 1×1 | Archery | 1 | **5** | army cap; trains Archer |
-| **Stables** | 1×1 | Cavalry | 1 | **5** | army cap; trains Cavalry |
+| **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
+| **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
+| **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
+| **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
+| **Market** | 1×1 | Market | 1 (+1 with `Guildhalls`) | **10** | sells surplus for Gold |
+| **Sanctum** | 1×1 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
+| **Barracks** | 1×1 | Warrior | 1 | **10** | army cap; trains Warrior, Lancer, Archer |
+| **Spear Hall** | 1×1 | Spears | 1 | **10** | army cap; trains Lancer |
+| **Shooting Grounds** | 1×1 | Archery | 1 | **10** | army cap; trains Archer |
+| **Stables** | 1×1 | Cavalry | 1 | **10** | army cap; trains Cavalry |
+| **Carpenter** | 1×1 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
+| **Mason's Yard** | 1×1 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
+| **Smelter** | 1×1 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
+| **Rune Carver** | 1×1 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
+| **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
+| **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
+| **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
+| **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
+| **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
+| **Shrine** | 2×2 | Sacred Grounds | 1 at TH9 → 2 | **1** | supplies 40 Harmony |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall
@@ -60,9 +75,35 @@
 |---|---|---|---|
 | 1 | — | placed at game start | — |
 | 2 | — | 60 Wood | 30 s |
-| 3 | `Charter II` | ×3.9 per level | ×4 per level |
-| 4 | `Charter III` | | |
-| 5 *(designed)* | `Charter IV` (sealed) | | |
+| 3 | `Bureaucracy` (Civics era 2) | ×3.9 per level | ×4 per level |
+| 4 | `Magistracy` (Civics era 3) | | |
+
+### 3.1 The ladder to 10
+
+- **Levels 2–4 are gated by the tree**: 3 by `Bureaucracy` (Civics era 2), 4
+  by `Magistracy` (Civics era 3). **No level past 4 asks for a technology.**
+- **Levels 5–10 are priced in refined goods**, from one level before every
+  other building is (the workshops open at Townhall 4 so a good exists first):
+
+| Reaching | Planks | Cut Stone | Iron | Runestone |
+|---|---|---|---|---|
+| 5 | 2 | 2 | | |
+| 6 | 4 | 4 | | |
+| 7 | 6 | 6 | 2 | |
+| 8 | 10 | 10 | 6 | |
+| 9 | 14 | 14 | 10 | 2 |
+| 10 | 20 | 20 | 14 | 4 |
+
+- **Levels 8, 9 and 10 demand Harmony** — 10, 20, 30 in total
+  ([`18-harmony.md`](18-harmony.md)).
+- **The wait doubles a level from 6**: 6 h · 12 h · 24 h · 48 h · 96 h, twice
+  and more a district's, since the Townhall is the clock every other ladder
+  hangs from. Currencies grow ×1.7 a level from 6, continuous with the early
+  curve.
+- **Pacing** (the design's target, days orientative — the thirty-day harness
+  asserts it with slack): 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 · day 7 —
+  6 · day 10 — 7 · day 14 — 8 · day 20 — 9 · day 24 — 10 · day 30. Measured
+  2026-09-08: 2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 · 25.
 
 ## 4. The districts
 
@@ -74,12 +115,15 @@
 - Housing next to Housing: −1 Gold/min per neighbour.
 - `Communities` (Civics era 2) adds +1 resident to every Housing.
 - Build 10 Wood, 20 s. Upgrade 30 Wood + 10 Stone, 20 s, ×1.5 per level.
+- Levels 6–10 add two residents each, to 20 (§4.11).
 
 | Level | Residents | Gate |
 |---|---|---|
 | 1 | 2 | — |
 | 2 | 4 | `Urban Planning` |
 | 3 | 6 | `Aqueducts` |
+| 4 | 8 | TH3 |
+| 5 | 10 | TH4 |
 
 ### 4.2 FarmLands — the crop plot
 
@@ -97,6 +141,9 @@
 |---|---|---|---|
 | 1 | 3 | 1 | — |
 | 2 | 5 | 2 | TH2 · `Farming` |
+| 3 | 7 | 2 | TH3 |
+| 4 | 9 | 3 | TH3 |
+| 5 | 11 | 3 | TH4 |
 
 ### 4.4 Sawmill
 
@@ -108,7 +155,8 @@
 | 1 | 3 | 2 | — |
 | 2 | 5 | 3 | TH1 |
 | 3 | 7 | 4 | TH2 · `Engineering` |
-| 4 | 7 | 4 | TH3 · `Architecture` |
+| 4 | 9 | 4 | TH3 · `Architecture` |
+| 5 | 11 | 5 | TH4 |
 
 ### 4.5 Quarry
 
@@ -122,7 +170,9 @@
 |---|---|---|---|
 | 1 | 3 | 2 | — |
 | 2 | 5 | 3 | TH2 · `Engineering` |
-| 3 | 5 | 4 | TH3 · `Architecture` |
+| 3 | 7 | 4 | TH3 · `Architecture` |
+| 4 | 9 | 4 | TH3 |
+| 5 | 11 | 5 | TH4 |
 
 ### 4.6 Docks
 
@@ -134,12 +184,29 @@
 |---|---|---|---|
 | 1 | 3 | 4 | — |
 | 2 | 5 | 6 | `Shipbuilding` |
+| 3 | 7 | 6 | TH3 |
+| 4 | 9 | 7 | TH3 |
+| 5 | 11 | 7 | TH4 |
 
 ### 4.7 Market
 
 - Sells surplus resources for Gold ([`03-economy.md`](03-economy.md) §6).
-- One level. Build 40 Wood, 30 s. One per city; `Guildhalls` (Civics era 3)
-  allows a second.
+- Build 40 Wood, 30 s. Upgrade 200 Gold + 60 Wood, 60 s, ×1.6 per level.
+- One per city; `Guildhalls` (Civics era 3) allows a second. **The better
+  Market sets the price** — a second one is another doorway, not a bigger
+  bonus.
+- **A level buys the price and nothing else**: +3% a sold unit, to +27% at ten.
+  It stacks with `MarketStall`'s +5% a rank.
+
+| Level | Sale price | Gate |
+|---|---|---|
+| 1 | — | — |
+| 2 | +3% | — |
+| 3 | +6% | TH3 |
+| 4 | +9% | TH3 |
+| 5 | +12% | TH4 |
+
+Levels 6–10 continue at +3% a level, to +27% (§4.11).
 
 ### 4.8 Sanctum
 
@@ -157,11 +224,14 @@
 | 4 | +100 | +12 | TH3 · `Attunement II` |
 | 5 | +132 | +16 | TH4 · `Attunement III` |
 
+Levels 6–10 continue the curve: capacity +168, +208, +252, +300, +352 and
+regeneration +20, +25, +30, +36, +42 an hour.
+
 ### 4.9 The four military halls
 
 - Each hall raises the **army cap** and trains its units, queued at that hall
-  ([`11-expeditions.md`](11-expeditions.md) §6). The cap is the sum over the
-  four; all four at level 5 field 112.
+  ([`combat.md`](combat.md) §14). The cap is the sum over the four; all four at
+  level 5 field 3,400 troops.
 - Every unit is behind its own technology; the Barracks trains every foot
   soldier, the Spear Hall and Shooting Grounds are parallel lines for theirs.
 
@@ -183,6 +253,77 @@ same for all four:
 | 4 | 21 | TH3 · `Warband II` — veteran units |
 | 5 | 28 | TH3 · `Warband III` — champion units |
 
+Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten field
+272.
+
+### 4.10 The four workshops
+
+- Each makes one refined good from a queue its crew works; nothing is made
+  without a villager assigned. Full design:
+  [`17-workshops-and-goods.md`](17-workshops-and-goods.md).
+- A level buys **crew and queue length** — 1 → 6 villagers, 3 → 12 slots —
+  and never shortens an item's work.
+- Their only gate is the count cap by Townhall level: no workshop level asks
+  for a technology or a Townhall level of its own.
+
+| Workshop | Makes | Unlock | Build | Upgrade base |
+|---|---|---|---|---|
+| **Carpenter** | Planks | `Engineering` | 120 W, 60 s | 200 W, 120 s |
+| **Mason's Yard** | Cut Stone | `Engineering` | 100 W + 60 S, 90 s | 160 W + 100 S, 180 s |
+| **Smelter** | Iron | `Mining` | 400 G + 120 S, 120 s | 600 G + 200 S, 240 s |
+| **Rune Carver** | Runestone | `Attunement II` | 800 G + 200 S, 180 s | 1200 G + 300 S, 360 s |
+
+Upgrades grow ×1.6 in cost and ×1.6 in time per level.
+
+### 4.11 The late ladder — levels 6 to 10
+
+Every building above that reaches level 10 climbs the same way, so it is
+written once. The Townhall's own ladder is §3.
+
+- **The gate is the Townhall, and only the Townhall**: level 6 needs TH6,
+  level 7 TH7, and so on to TH10. **No technology gates any late level** — the
+  tomes keep eras 1–3 and the sealed era 4 as the research endgame, and the
+  ladder is decoupled from them past the levels above.
+- **Every late level is also priced in refined goods**
+  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md)), so no building
+  reaches 10 without a workshop:
+
+| Building | Levels 6 → 10 pay |
+|---|---|
+| Housing · Farm · Mason's Yard · Market | 2 → 6 **Planks** |
+| Sawmill · Docks | 3 → 7 **Planks** |
+| Carpenter | 2 → 6 **Cut Stone** |
+| Quarry · Smelter | 3 → 7 **Cut Stone** |
+| the four halls · Rune Carver | 2 → 6 **Iron** |
+| Sanctum | 2, 3 **Cut Stone**, then 2, 3, 4 **Runestone** |
+
+- **Currencies grow ×1.7 a level** from level 6, on top of what the row's own
+  curve reached at 5 ([`05-city-and-districts.md`](05-city-and-districts.md)
+  §3).
+- **The wait is 2 h at level 6 and ×1.7 a level after it** — about 17 h at
+  level 10. It is a timer, so it resolves in the uncapped tail of an absence.
+- **What the level buys**, by building:
+
+| Building | Levels 6–10 add |
+|---|---|
+| Housing | +2 residents a level, to 20 |
+| Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a 10% faster swing a level** — crew and reach stop growing at 5, because the plot has more cells than a crew can work |
+| the four military halls | +8 army cap a level, to 68 |
+| Sanctum | the Mana curve, to 352 held and 42 an hour |
+| Market | +3% on a sold unit a level, to +27% |
+| the four workshops | crew and queue as §4.10 |
+
+- **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
+  the decorations supply ([`18-harmony.md`](18-harmony.md)).
+
+### 4.12 The six decorations
+
+One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
+does nothing else, and every piece past the Garden is priced in a refined
+good, paid when the build is queued. The count cap per piece is its Townhall
+gate and its ceiling in one; the piece is discovered by a Civics era-3 card.
+The table is [`18-harmony.md`](18-harmony.md) §2.
+
 ## 5. Wonders — designed, not built
 
 Full design: [`16-wonders.md`](16-wonders.md).
@@ -200,18 +341,24 @@ Full design: [`16-wonders.md`](16-wonders.md).
 | **The Astral Spire** | `manaRegen` — more Mana per hour |
 | **The Bell of Toil** | `workerYield` — the crew strikes harder |
 
-## 6. What gates the last level
+## 6. The last technology on each ladder
 
-| Building | Final level needs |
+Research owns the early half of every ladder and nothing above it: past these
+levels a building is bought with a Townhall level and goods (§4.11).
+
+**Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
+
+| Building | Last tech-gated level |
 |---|---|
-| Townhall 4 | `Charter III` (Civics era 3 keystone) |
+| Townhall 4 | `Magistracy` (Civics era 3) |
 | Housing 3 | `Aqueducts` (Civics era 3) |
 | Sawmill 4 | TH3 · `Architecture` |
 | Quarry 3 | TH3 · `Architecture` |
 | Farm 2 | TH2 · `Farming` |
 | Docks 2 | `Shipbuilding` (Magic era 3) |
-| Sanctum 5 | TH4 · `Attunement III` (Magic era 3 keystone) |
-| the four halls 5 | TH3 · `Warband III` (Warfare era 3 keystone) |
+| Sanctum 5 | TH4 · `Attunement III` (Magic era 3) |
+| the four halls 5 | TH3 · `Warband III` (Warfare era 3) |
+| the four workshops · the Market | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them
 
@@ -219,12 +366,19 @@ Full design: [`16-wonders.md`](16-wonders.md).
 |---|---|
 | A building's max level | `Districts.max_level` |
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
-| Per-level gates | `Districts.required_townhall_level_per_level`, `required_tech_per_level` |
-| The unlock technology | `requiredTech` on the district (`src/sim/data/definitions.ts`) |
+| Per-level gates | `Districts.required_townhall_level_per_level`; a technology that gates a level says so in `?dev=tree` |
+| The unlock technology | the card's `unlocks` in `?dev=tree` — derived onto `requiredTech` |
+| What a piece supplies, and what a level demands | `Districts.harmony_supply`, `harmony_cost_per_level` — [`18-harmony.md`](18-harmony.md) |
+| What a build costs in refined goods | `Districts.build_cost_goods` |
 | Residents, workers, radius, army cap per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level` |
+| Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
+| What a Market level pays for a sold unit | `Districts.sale_price_per_level` |
+| What a level costs in refined goods | `Districts.upgrade_cost_goods_per_level` |
 | Sanctum capacity and regen per level | `mana.sanctum_cap_per_level`, `mana.sanctum_per_hour_per_level` |
 | A second Market or Sanctum | `Districts.extra_count_tech` |
 | Costs and times | `Districts.build_*`, `upgrade_*` — [`05-city-and-districts.md`](05-city-and-districts.md) §3 |
+| The late half of both curves | `Districts.upgrade_cost_late_level_growth`, `upgrade_duration_late_seconds`, `upgrade_duration_late_level_growth`, and `city.late_upgrade_from_level` for where it starts |
+| What a late level adds to a haul, and to the swing | `Districts.extra_units_per_delivery_per_level`, `strike_speed_per_level` |
 
 ## 8. Deliberately not in this design
 
@@ -233,7 +387,7 @@ Full design: [`16-wonders.md`](16-wonders.md).
 - A library, scholar or other Knowledge building
   ([`07-research.md`](07-research.md) §10).
 - Mana production or army cap from the Townhall level.
-- A building with more than one job.
-- Decorations.
+- A building with more than one job. A decoration has exactly one — the
+  Harmony it supplies ([`18-harmony.md`](18-harmony.md)) — and no level.
 
-**Open questions:** OQ-1, OQ-46, OQ-57, OQ-58.
+**Open questions:** OQ-46, OQ-57, OQ-58.

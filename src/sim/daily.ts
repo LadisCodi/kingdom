@@ -82,6 +82,11 @@ export function chestReward(state: GameState, step: number): Wallet {
     // Housed villagers pay the taxes, so this is the city's real rate — and
     // the floor is what stops step 4 paying nothing to a city that has not
     // housed anyone yet.
+    //
+    // Deliberately the UNAIMED rate: a daily reward is a nominal estimate
+    // over the whole population, not a walk of the houses, so a technology
+    // aimed at one kind of roof does not move it. `cityGoldPerMinute` is the
+    // real income and does walk them.
     const perSecond = (effectiveTaxRate(state) * housedVillagers(state)) / 60;
     reward.Gold = Math.max(DAILY.goldFloor, Math.round(perSecond * goldSeconds));
   }

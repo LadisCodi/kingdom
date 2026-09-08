@@ -12,7 +12,7 @@
 
 | Layer | What it is | Authority | Verb | Lifetime |
 |---|---|---|---|---|
-| **Your province** | authored, **identical for every player**, bounded plot, square grid | client | build, tap, harvest | permanent, inviolable |
+| **Your province** | authored, **identical for every player**, square grid, buildable wherever it is revealed | client | build, tap, harvest | permanent, inviolable |
 | **Temporary provinces** | event maps, PvE, compressed scale, square grid | client | the same verbs, inside a window | disposable |
 | **The world map** | shared **hex lattice**, outposts not cities | **server** for claims, **client** for fog | send, claim, contest | permanent, contestable |
 
@@ -22,9 +22,8 @@
   procedural province generator.
 - 1,470 cells; the whole fog costs **28,517,245 Gold** across the 1,466 that
   are priced.
-- The buildable plot is **bounded** (§6). Adjacency rules depend on it (OQ-48).
-- Plot growth comes in **authored increments** — an expansion block, not a
-  tile — priced in Gold and earned outside the province (§5).
+- The buildable plot is **the revealed province** (§6): no bound, no expansion
+  block. Room is bought by paying the fog.
 - Square grid with its three distance metrics
   ([`01-map-and-fog.md`](01-map-and-fog.md) §1).
 
@@ -147,18 +146,20 @@
 
 ## 4. Contest and PvP
 
-Promise 1: *nothing you own is ever taken from you. **No raids**, no decay, no
-starvation, no failure state. Pressure comes from opportunity that expires.*
+Promise 1: *no other player can ever touch your city. The only thing that ever
+takes from you is a garrison you have seen and left standing — bounded, and
+handed back when you clear it. No decay, no starvation, no failure state.*
 
 | Degree | What is contested | Breaks promise 1? |
 |---|---|---|
 | Leagues and rankings | status | No |
 | **Contested claim** — first to a hex keeps it | **the opportunity** | **No** — "opportunity that expires", with another player as the clock |
 | **Territory that changes hands** — hold a hex, it produces for you, it can be taken | **the hex, never your property** | **No** — what is lost is future rent from something never in your city |
+| **A garrison raiding your city** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) | banked materials — bounded, and returned when the garrison is cleared | **Yes, by design** — the one exception, and it is never another player |
 | Raiding another player's city | **their property** | **Yes, head-on** |
 
-> **Your village can never be attacked. Everything outside it can be
-> contested.**
+> **Your village can never be attacked by another player. Everything outside it
+> can be contested.**
 
 - Design rule, technical boundary and marketing line at once: province private
   and client-authoritative, world map shared and server-authoritative.
@@ -172,7 +173,6 @@ The outer scope feeds the inner one.
 | The world map pays | Which lands in |
 |---|---|
 | **3★ relic ingredients** — its exclusive output | the collection arc, whose passives improve the province economy |
-| **Plot expansions** | a bigger province |
 | **Knowledge cap** — contested landmarks raise it | research, per [`07-research.md`](07-research.md) §7 |
 | Resources the province cannot produce | province sinks |
 
@@ -185,13 +185,18 @@ The outer scope feeds the inner one.
   rather than in the authored province. Same rarity logic as the 3★
   ingredients.
 
-## 6. Plot bound and save shape
+## 6. The plot, and the save shape
 
-- **The buildable area is bounded in data** — a `city.maxBuildDistance` or a
-  buildable flag on the plot. A balance number, not a refactor (OQ-1).
-- The province fog stays as it is; the far ring pays **content access**, not
-  more buildable tiles. Ruins and landmarks sit at distance 3–12; the far cells
-  are mostly mountain and water, which are not buildable.
+- **The buildable plot is the revealed province.** There is no bound on it, no
+  ring and no expansion to buy: a building goes on any cell the player has
+  paid the fog for ([`05-city-and-districts.md`](05-city-and-districts.md) §4).
+- **What guides a layout is adjacency, not permission** — a neighbour pays or
+  charges ([`03-economy.md`](03-economy.md) §3.1). A placement can be better
+  or worse; none is illegal.
+- So the fog is the only thing that gates ground, which keeps one price on one
+  thing: **paying the fog is what buys room.**
+- Ruins and landmarks sit at distance 3–12, and the far cells are mostly
+  mountain and water, which are not buildable anyway.
 - **The save says which scope a thing is in.**
 - The guild siege lives on the world map ([`15-social.md`](15-social.md) §6).
 - This is larger than the `regions: Record<RegionId, RegionState>` reshape and
@@ -224,5 +229,5 @@ Each is playable without the ones after it.
 - Reusing `grid.ts` for the lattice (§1.3).
 - Anything multi-region beyond the existing `regionId` discriminator.
 
-**Open questions:** OQ-1, OQ-2, OQ-3, OQ-4, OQ-5, OQ-38, OQ-65, OQ-66, OQ-67 in
+**Open questions:** OQ-2, OQ-3, OQ-4, OQ-5, OQ-38, OQ-65, OQ-66, OQ-67 in
 [`../open-questions.md`](../open-questions.md).

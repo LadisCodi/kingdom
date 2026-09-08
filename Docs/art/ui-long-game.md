@@ -124,7 +124,7 @@ a forest, with a small corner badge saying what it still wants:
 | Badge | Means |
 |---|---|
 | ✦ | Unclaimed landmark — pay Gold and it is yours |
-| ! | Defended landmark — an enemy warband holds it |
+| ! | A garrison holds it — its camp and countdown open the raid sheet ([`../features/18-garrisons-and-raids.md`](../features/18-garrisons-and-raids.md) §9) |
 | `3` | A ruin, and its tier |
 
 Tapping opens a **site card** in the bottom panel, in the same slot a district

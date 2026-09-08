@@ -19,7 +19,7 @@ import { canAffordGoods } from '../sim/goods';
 import { canAfford } from '../sim/wallet';
 import { mana } from '../sim/mana';
 import {
-  isWorkshop, itemRemainingSeconds, itemRushCost, queueCapacity, recipeOf,
+  isWorkshop, itemRemainingSeconds, itemRushCost, queueCapacity, queuedWorkMs, recipeOf,
 } from '../sim/workshops';
 import type { District, GoodId } from '../sim/state';
 import { el, formatDuration } from './format';
@@ -57,7 +57,8 @@ export function workshopSection(game: Game, district: District): HTMLElement | n
     iconEl('workers', { size: 'sm' }),
     crew === 0
       ? el('span', { class: 'is-warning' }, 'No villagers here — nothing is being made')
-      : el('span', {}, `${crew} working · ${formatDuration(recipe.workSeconds / crew)} each`)));
+      : el('span', {}, `${crew} working · `
+        + `${formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew)} each`)));
 
   // ---- the queue ----------------------------------------------------------
   const strip = el('div', { class: 'dc-ws-queue' });

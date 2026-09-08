@@ -5,17 +5,23 @@ import { CITY_DEF, DISTRICTS, TAP, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
-import { isTechComplete } from './research';
+import { techValue } from './techEffects';
 import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
 
-/** Capacity of ONE district at its CURRENT level (0 = houses nobody).
- *  The Communities tech adds +1 to every district that houses anyone. */
+/**
+ * Capacity of ONE district at its CURRENT level (0 = houses nobody).
+ *
+ * The guard is what makes a bed the tree grants mean what `Communities`
+ * always said — *every district that houses anyone*. A district with no
+ * capacity table is not a house, and no bonus turns it into one.
+ */
 export function districtCapacity(state: GameState, district: District): number {
   const list = DISTRICTS[district.definitionId].populationCapacityPerLevel;
   if (list.length === 0) return 0;
-  return levelIndexed(list, district.level) + (isTechComplete(state, 'Communities') ? 1 : 0);
+  return techValue(state, 'populationCapacity', levelIndexed(list, district.level),
+    { district: district.definitionId });
 }
 
 /** Max population = Σ capacity over active (Built) districts. */
@@ -41,13 +47,21 @@ export function availableWorkers(state: GameState): number {
 export const housedPopulation = (state: GameState): number =>
   Math.min(state.city.population, maxPopulation(state));
 
-/** Gold per minute ONE house pays: residents × the (TradeRoutes-boosted)
- *  rate, plus flat adjacency bonuses/penalties from its built neighbors.
- *  Empty (or fully crowded-out) houses pay nothing — clamped at 0. */
+/**
+ * Gold per minute ONE house pays: residents × the rate the tree has left it,
+ * plus flat adjacency bonuses and penalties from its built neighbours. Empty
+ * (or fully crowded-out) houses pay nothing — clamped at 0.
+ *
+ * The house is passed to the RATE as well as to the adjacency, which is what
+ * makes "+5% gold income at Housing" a thing a technology can say: an aimed
+ * effect reaches only the kind of building it names, and an unaimed one every
+ * roof. This is the one reader that knows which house is paying.
+ */
 export function houseGoldPerMinute(state: GameState, district: District): number {
   const residents = residentsOf(state, district);
   if (residents === 0) return 0;
-  return Math.max(0, residents * effectiveTaxRate(state) + districtAdjacency(state, district));
+  return Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
+    + districtAdjacency(state, district));
 }
 
 /** City-wide tax income, gold per minute, over every built house. */

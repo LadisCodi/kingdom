@@ -21,14 +21,15 @@
 // removes the only pacing on party size.
 
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 import { DISTRICTS, RUSH, TRAINING, UNITS, levelIndexed } from './data/definitions';
 import { isTechComplete } from './research';
 import {
   cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
 } from './population';
+import { adjacencyMultiplier } from './adjacency';
 import {
-  addToWallet, getWallet, newId,
+  addToWallet, districtById, getWallet, newId,
   type District, type GameState, type TrainableId, type TrainingItem, type UnitId,
 } from './state';
 import { canAfford, pay } from './wallet';
@@ -60,7 +61,7 @@ export function maxArmyPower(state: GameState): number {
   // Colours adds to the cap the HALLS provide, so a kingdom with no hall still
   // fields nothing: the line is a bigger banner, not a barracks of its own.
   if (cap === 0) return 0;
-  return Math.max(0, Math.round(resolve(state, 'armyCap', cap + effect(state, 'Colours'))));
+  return Math.max(0, Math.round(resolve(state, 'armyCap', techValue(state, 'armyCap', cap))));
 }
 
 /** The built building that trains `trainee`, if the player has one. A building
@@ -74,10 +75,36 @@ export const trainerFor = (state: GameState, trainee: TrainableId): District | u
 export const trainableAt = (district: District): readonly TrainableId[] =>
   DISTRICTS[district.definitionId].trains;
 
-/** Seconds on the clock for one trainee. Villagers are authored once in
- *  Settings; soldiers carry their own duration. */
+/** Seconds on the clock for one trainee, as authored. Villagers are authored
+ *  once in Settings; soldiers carry their own duration. */
 export const trainSeconds = (trainee: TrainableId): number =>
   trainee === 'Villager' ? TRAINING.seconds : UNITS[trainee].trainDurationSeconds;
+
+/**
+ * Seconds this trainee will take at THIS building — the authored duration,
+ * times what the building's neighbours do to `trainTime` (a military quarter
+ * trains faster, `03-economy.md` §3.1).
+ *
+ * Read once, when the clock starts, and stored on the item. A neighbour that
+ * arrives or moves later must not reprice a wait already running, which is the
+ * same rule research follows for its own time multiplier.
+ */
+export function trainSecondsAt(state: GameState, buildingId: string, trainee: TrainableId): number {
+  const building = districtById(state, buildingId);
+  const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
+  return Math.max(1, Math.round(trainSeconds(trainee) * mult));
+}
+
+/** Start one trainee's clock: the moment, and the duration that goes with it. */
+function startTrainee(state: GameState, item: TrainingItem, at: number): void {
+  item.startedAt = at;
+  item.seconds = trainSecondsAt(state, item.buildingId, item.trainee);
+}
+
+/** What is on this item's clock: what it was stamped with, or the authored
+ *  duration for a pre-30 save that has none. */
+export const itemTrainSeconds = (item: TrainingItem): number =>
+  item.seconds ?? trainSeconds(item.trainee);
 
 // There is no tap that hurries a trainee along. A queue is a FIXED duration
 // and a tap is a scaling one (`tap.workSeconds` x TapPower), so a maxed thumb
@@ -90,7 +117,8 @@ export const trainSeconds = (trainee: TrainableId): number =>
 export function trainCost(state: GameState, trainee: TrainableId): Record<string, number> {
   if (trainee !== 'Villager') {
     // Muster Drill: −10%/rank on every coin of the recruit price, floor 1.
-    const mult = Math.max(0, resolve(state, 'recruitCost', 1 - effect(state, 'MusterDrill')));
+    const mult = Math.max(0, resolve(state, 'recruitCost',
+      techValue(state, 'recruitCost', 1)));
     const out: Record<string, number> = {};
     for (const [c, n] of Object.entries(UNITS[trainee].recruitCost)) {
       out[c] = Math.max(1, Math.round((n as number) * mult));
@@ -146,12 +174,15 @@ export function trainUnit(
   // started is refused, so the player would meet a Townhall that says
   // "nothing training" the instant after they queued something.
   const idle = lineFor(state, building.uniqueId).length === 0;
-  state.city.trainingQueue.push({
+  const item: TrainingItem = {
     uniqueId: newId(state, `training_${trainee}`),
     trainee,
     buildingId: building.uniqueId,
-    startedAt: idle ? now : null,
-  });
+    startedAt: null,
+    seconds: null,
+  };
+  state.city.trainingQueue.push(item);
+  if (idle) startTrainee(state, item, now);
   return 'Queued';
 }
 
@@ -179,7 +210,7 @@ export const lineFor = (state: GameState, buildingId: string): TrainingItem[] =>
   state.city.trainingQueue.filter((i) => i.buildingId === buildingId);
 
 export const trainingCompletesAt = (item: TrainingItem): number =>
-  item.startedAt === null ? Infinity : item.startedAt + trainSeconds(item.trainee) * 1000;
+  item.startedAt === null ? Infinity : item.startedAt + itemTrainSeconds(item) * 1000;
 
 /** What is on the bench at this building, if anything. */
 export const unitInTraining = (state: GameState, buildingId: string): TrainingItem | undefined =>
@@ -188,7 +219,7 @@ export const unitInTraining = (state: GameState, buildingId: string): TrainingIt
 export function trainingProgress(state: GameState, buildingId: string, now: number): number {
   const item = unitInTraining(state, buildingId);
   if (!item || item.startedAt === null) return 0;
-  const total = trainSeconds(item.trainee) * 1000;
+  const total = itemTrainSeconds(item) * 1000;
   return total <= 0 ? 1 : Math.min(1, Math.max(0, (now - item.startedAt) / total));
 }
 
@@ -207,7 +238,7 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
     for (const d of state.city.districts) {
       if (d.state !== 'Built' || trainableAt(d).length === 0) continue;
       const head = lineFor(state, d.uniqueId)[0];
-      if (head && head.startedAt === null) head.startedAt = toTime;
+      if (head && head.startedAt === null) startTrainee(state, head, toTime);
     }
     let earliest: TrainingItem | null = null;
     for (const item of state.city.trainingQueue) {
@@ -224,7 +255,7 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
     delivered.push(earliest.trainee);
     // The next in THAT line starts when the slot freed, not at `toTime`.
     const next = lineFor(state, earliest.buildingId)[0];
-    if (next && next.startedAt === null) next.startedAt = at;
+    if (next && next.startedAt === null) startTrainee(state, next, at);
   }
 }
 
@@ -258,7 +289,9 @@ export function lineRemainingSeconds(
     if (i === 0 && item.startedAt !== null) {
       total += Math.max(0, (trainingCompletesAt(item) - now) / 1000);
     } else {
-      total += trainSeconds(item.trainee);
+      // Not started, so not stamped: it will be priced by the neighbours
+      // standing there when its turn comes.
+      total += trainSecondsAt(state, buildingId, item.trainee);
     }
   });
   return total;

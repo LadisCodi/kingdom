@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
+  DISTRICTS, ERA_UNLOCK_CELLS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -18,7 +18,8 @@ import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
   type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt, completeRanks, completeTech } from './helpers';
+  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf,
+  map, T0, tickAt } from './helpers';
 
 
 describe('the quest chain', () => {
@@ -56,34 +57,61 @@ describe('the quest chain', () => {
       'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
                                                   //   a roof is what permits one
       'TaxDay', 'Explorer',                       // 7    rent pays for more fog
-      'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
-      'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
-      'Trade', 'ToMarket', 'Merchant',            // 13-15 the FIRST beat at which
-                                                  //   the city makes more than it
-                                                  //   eats — so the first at which
-                                                  //   "somewhere for surplus to go"
-                                                  //   means anything. Moved up from
-                                                  //   27+ to give generated orders a
-                                                  //   home inside the opening
-                                                  //   (Docs/features/12-quests.md §3).
-                                                  //   Research, THEN build — the
-                                                  //   same two-beat shape as
-                                                  //   Saws -> TheSawmill.
+      'Fields', 'FirstPlot', 'ByHand',            // 9-11 farming, by hand
+      'Lumber', 'Tillage', 'Farmhand', 'ToWork',  // 12-15 and then not by hand —
+                                                  //   the Farm is one research
+                                                  //   under the plots, and the
+                                                  //   chain asks for it
       'GrowingTown', 'Neighbors', 'ProperCapital',// 16-18 a House FIRST, then the
                                                   //   citizen it makes room for
                                                   //   (+ the Townhall, woven in)
       'SawTeeth', 'TheSawmill', 'Crewed',         // 19-21 automate the wood
-      'FurtherAfield', 'OldStones',               // 22-23 explore, claim the shrine
-      'Mapmakers', 'Surveyors',                   // 24    exploration becomes a system
-      'Highlands', 'PutToSea',                    // 25-26 the terrain gates
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 27-28 something worth killing
-      'FirstSummon', 'IntoTheDark',               // 29-30 a hero, and the first depth
+      'Levies', 'Sawpits', 'Regrowth',            // 22-24 the three cards the book
+                                                  //   puts between Saws and the
+                                                  //   Market — a requirement is
+                                                  //   the row above (2026-09-08),
+                                                  //   so the chain walks the rows
+                                                  //   rather than leaving the
+                                                  //   player to find them
+      'Trade', 'ToMarket', 'Merchant',            // 25-27 somewhere for the surplus
+                                                  //   to go, once the Sawmill has
+                                                  //   made there be one. Research,
+                                                  //   THEN build — the same shape
+                                                  //   as Saws -> TheSawmill.
+      'FurtherAfield', 'OldStones', 'Attuned',    // 28-30 explore, claim the shrine
+      'Mapmakers', 'Surveyors',                   // 31-32 exploration becomes a system
+      'Highlands', 'PutToSea',                    // 33-34 the terrain gates
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 35-37 something worth killing
+      'FirstSummon', 'IntoTheDark',               // 38-39 a hero, and the first depth
     );
 
-    // 31+: the rest of the city economy the tutorial defers, then the long game.
+    // 40+: the rest of the city economy the tutorial defers, then the long game.
     inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
       { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
+  });
+
+  // THE CHAIN MAY NOT ASK FOR A TECHNOLOGY BEHIND A BAR IT HAS NOT ASKED THE
+  // PLAYER TO OPEN.
+  //
+  // A band past the first is a gate in the world now
+  // (Docs/features/07-research.md §2.1), so a `CompleteTech` quest pointing
+  // at one is only answerable once the region is open enough — and the chain
+  // is what teaches exploring. `DiscoverCells` goals count reveals FROM THE
+  // START OF THAT QUEST, so their amounts add up to a lower bound on how
+  // much the player has actually revealed by the time the chain gets here.
+  it('never points at a technology behind an era bar it has not opened', () => {
+    // The opening fog is already lifted around the Townhall, and that counts:
+    // it is what the first bands are priced against.
+    let revealed = Object.keys(freshGame().fog.revealed).length;
+    for (const quest of QUESTS) {
+      if (quest.goalType === 'DiscoverCells') revealed += quest.goalAmount;
+      if (quest.goalType !== 'CompleteTech') continue;
+      const def = TECHNOLOGIES[quest.goalTarget as TechId];
+      const gate = ERA_UNLOCK_CELLS[def.tome][def.era];
+      expect(gate, `${quest.id} asks for ${def.id}, behind ${gate} revealed cells`)
+        .toBeLessThanOrEqual(revealed);
+    }
   });
 
   // The two goal kinds the onboarding rewrite needed and the sim did not have.
@@ -262,13 +290,17 @@ describe('quests fund the research tree', () => {
   // who does the whole opening in one sitting. The one thing this may lean
   // on is the lump a claim pays, because `OldStones` IS a claim.
   it('pays enough Knowledge that a chain-follower is never stuck, with zero drip', () => {
-    const done = new Set<TechId>(['CharterI']);
+    // Nothing starts researched: every book is open from the first minute and
+    // no cover page is granted, so the chain-follower pays for all of it.
+    const done = new Set<TechId>();
     const need = (id: TechId): number => {
       if (done.has(id)) return 0;
       done.add(id);
       return techKnowledgeCost(id) + TECHNOLOGIES[id].requires.reduce((n, r) => n + need(r), 0);
     };
-    let held = 0;
+    // The opening's grant is the game's, so the chain-follower holds it; the
+    // base drip is not counted — zero drip stays the worst case.
+    let held = CURRENCIES.Knowledge.start;
     let worstSlack = Infinity;
     for (const q of QUESTS) {
       if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
@@ -282,8 +314,10 @@ describe('quests fund the research tree', () => {
       held += q.rewardKnowledge;
     }
     // Enough margin that a re-priced rank or a moved quest does not silently
-    // put the tutorial one Knowledge short.
-    expect(worstSlack).toBeGreaterThanOrEqual(30);
+    // put the tutorial one Knowledge short. Five, not thirty: Knowledge was
+    // rescaled by ten on 2026-09-08, and the whole opening chain now asks for
+    // 64 of it against a grant of 25 and the chain's own 50.
+    expect(worstSlack).toBeGreaterThanOrEqual(5);
   });
 
   it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
@@ -293,7 +327,8 @@ describe('quests fund the research tree', () => {
     state.quests.index = i;
     completeTech(state, QUESTS[i].goalTarget as TechId);
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(QUESTS[i].rewardKnowledge);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(CURRENCIES.Knowledge.start + QUESTS[i].rewardKnowledge);
   });
 
   // THE RATIO INVERTED ON 2026-09-04, on purpose.
@@ -313,14 +348,17 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(tree).toBe(550_165);
+    expect(tree).toBe(519_830); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
-      .filter((id) => TECHNOLOGIES[id].line === null && TECHNOLOGIES[id].era === 1)
+      .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    expect(opening).toBe(2350);
+    // 2,530 across 19 era-1 majors, since Civics became a whole book
+    // (2026-09-08) and its opening fans out — Masonry and the Market split
+    // it, Bureaucracy gathers it.
+    expect(opening).toBe(2530);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

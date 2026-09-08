@@ -14,7 +14,9 @@ import { harvestSourceAt, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { startTech, techCost } from '../src/sim/research';
 import { HARVEST } from '../src/sim/data/definitions';
 import { coordKey, getWallet } from '../src/sim/state';
-import { addAllTrainers, completeTech, freshGame, fund, map, reveal, T0, tickAt } from './helpers';
+import {
+  addAllTrainers, completeTech, freshGame, fund, map, openEveryEra, reveal, T0, tickAt,
+} from './helpers';
 
 // Every coordinate below is READ OFF THE MAP, and every one of them moved
 // when the province was redrawn — the western cove became grassland, the
@@ -72,8 +74,11 @@ describe('fish line (Sailing → Fishing → coastal Docks)', () => {
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
     completeTech(state, 'Forestry'); // a Civics era-1 tech opens nothing here
     expect(startTech(state, 'Fishing', T0)).toBe('MissingRequirement');
-    // Fishing is Magic era 3, so it waits on the keystone above it.
-    completeTech(state, 'AttunementIII');
+    // Fishing is two bands down, so it waits on what it requires AND on the
+    // era bars above it, which are gates in the world (07-research.md §2.1).
+    for (const req of TECHNOLOGIES.Fishing.requires) completeTech(state, req);
+    expect(startTech(state, 'Fishing', T0)).toBe('EraLocked');
+    openEveryEra(state);
     expect(startTech(state, 'Fishing', T0)).toBe('Started');
   });
 
@@ -140,9 +145,10 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     // Deliberately rich in Stone and broke in Gold: research does not touch
     // the city's materials, so a full quarry buys nothing.
     fund(state, { Gold: 0, Stone: 50, Knowledge: 99_999 });
-    // Mining is Civics era 2: the keystone above it is the gate, and Masonry
-    // is one of the era-1 majors that keystone requires.
-    completeTech(state, 'CharterII');
+    // Mining is a band down in Civics, so the era bar above it is a gate too,
+    // and everything it needs is on the way to it.
+    for (const req of TECHNOLOGIES.Mining.requires) completeTech(state, req);
+    openEveryEra(state);
     expect(startTech(state, 'Mining', T0)).toBe('NotEnoughResources');
     fund(state, { Gold: techCost('Mining') });
     expect(startTech(state, 'Mining', T0)).toBe('Started');

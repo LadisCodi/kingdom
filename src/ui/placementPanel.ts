@@ -12,6 +12,10 @@
 // each captured cell will yield.
 
 import { DISTRICTS, HARVEST } from '../sim/data/definitions';
+import { buildGoodsCost } from '../sim/districts';
+import { getGood } from '../sim/goods';
+import { isDecoration } from '../sim/harmony';
+import type { GoodId } from '../sim/state';
 import { spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
@@ -35,6 +39,14 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   } else if (moving && info.unmoved) {
     // The honest state before the first drag: it is where it has always been.
     verdict = el('span', { class: 'plc-verdict' }, 'Drag it, or tap where it should go');
+  } else if (isDecoration(def)) {
+    // A decoration captures nothing, so its verdict is the one number it
+    // adds. Where it STANDS is paid for by adjacency, and those labels are
+    // already on the map beside the houses it would enrich.
+    verdict = el('span', { class: 'plc-verdict is-good' },
+      iconEl('harmony', { size: 'sm' }),
+      el('b', {}, `+${def.harmonySupply}`),
+      el('span', {}, 'Harmony for the city'));
   } else if (def.harvestSources.length > 0) {
     // The verdict speaks for the building as a whole, so it leads with the
     // first thing it goes after; the per-cell labels on the map already say
@@ -59,6 +71,14 @@ export function renderPlacementPanel(game: Game): HTMLElement {
   const blockedBy = info.cell === null
     ? (moving ? 'Nowhere legal to put it' : 'Nowhere legal to build it')
     : undefined;
+  // Refined goods ride beside the currencies, as they do everywhere a price
+  // is quoted: a move pays nothing, so only a build carries them.
+  const goodsTerms = moving ? [] : (Object.entries(buildGoodsCost(info.definitionId)) as
+    Array<[GoodId, number]>).map(([id, n]) => ({
+    icon: id,
+    amount: String(n),
+    short: getGood(game.state.city.goods, id) < n,
+  }));
   const build = btn({
     // "Move here" rather than "Move": the button confirms a destination, and
     // the player already pressed something called Move to get to this bar.
@@ -66,6 +86,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
     kind: 'primary',
     onClick: () => (moving ? game.confirmMove() : game.confirmBuild()),
     cost: info.cost,
+    costExtra: goodsTerms,
     have: (c) => game.walletValue(c),
     disabledReason: blockedBy,
   });

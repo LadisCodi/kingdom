@@ -1,7 +1,7 @@
 # 15 · The social layer
 
 > **Scope.** Identity, daily help, a persistent guild, a weekly collective bar,
-> and the siege that clears the four defended landmarks. Ingredient trading is
+> and the co-op siege that clears the world map's landmarks. Ingredient trading is
 > [`09-relics.md`](09-relics.md) §6; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
@@ -124,10 +124,13 @@ Submitted as they happen:
 
 ## 6. The siege
 
-- Four of the ten landmarks are **defended**: claiming is gated on a cleared
-  flag. The siege writes that flag. The 100,000-Gold far ring sits behind them.
-- A player **commits units** to a defended landmark. Committed units are
-  unavailable for delves.
+- The siege is the **world map's** encounter
+  ([`02-map-scopes.md`](02-map-scopes.md) §7): a contested landmark held by an
+  authored threat, cleared by a guild. The province's garrisons are cleared
+  solo, by a hero and a party
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+- A player **commits units** to a besieged landmark. Committed units are
+  unavailable for delves and assaults, and are not home defenders.
 - At the week's deadline the **sum of committed power** is scored against the
   landmark's authored threat with the delve scoring pass: same type chart,
   same safe-depth-style preview. A well-prepared siege never fails.
@@ -138,8 +141,7 @@ Submitted as they happen:
 - One command; contributor count 1 to 10. A solo player clears a landmark
   alone over several weeks; a guild clears it in one.
 - No synchronous play, no battle screen.
-- A route into the content chain that does not require a hero.
-- **OQ-35.**
+- The one route into combat that does not require a hero.
 
 ## 7. Ingredient trading
 
@@ -164,9 +166,9 @@ Submitted as they happen:
 - Chat
 - Avatars and friend requests
 - A leaderboard at prototype population
-- Raiding or looting of any kind ([`02-map-scopes.md`](02-map-scopes.md) §4)
+- Raiding or looting by another player ([`02-map-scopes.md`](02-map-scopes.md) §4)
 - Writing into another player's save
 - A live-presence requirement
 - The sim on the server
 
-**Open questions:** OQ-10, OQ-33, OQ-34, OQ-35, OQ-36, OQ-37, OQ-38, OQ-39.
+**Open questions:** OQ-10, OQ-33, OQ-34, OQ-36, OQ-37, OQ-38, OQ-39.

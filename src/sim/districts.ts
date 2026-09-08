@@ -1,12 +1,13 @@
 // Placement conditions and build/upgrade cost & time formulas. Cost/time
 // formulas are unchanged from Docs/04; placement updated for the harvest loop.
 
-import { DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
-import { cellExists, neighbors, townhallDistance, type MapData } from './grid';
+import { CITY_DEF, DISTRICTS, levelIndexed, type DistrictDef } from './data/definitions';
+import { cellExists, townhallDistance, type MapData } from './grid';
 import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
 import { goodsCostForLevel } from './goods';
+import { harmonyBlock } from './harmony';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
   type Coord, type District, type DistrictId, type GameState, type GoodsStock,
@@ -38,21 +39,33 @@ export function maxDistrictCount(state: GameState, def: DistrictDef): number {
 
 export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
-  | 'NeedsResearch' | 'NeedsHousingAdjacency' | 'NeedsShoreline'
+  | 'NeedsResearch' | 'NeedsShoreline'
   | 'NeedsLand'
+  | 'NeedsHarmony'
   | 'HasSite';
 
 /**
  * All placement conditions ANDed over the full footprint (cell = anchor,
  * top-left); null = buildable here.
  *
+ * **A building goes anywhere the player has revealed.** Every condition below
+ * is about the GROUND — it exists, it is empty, it is dry, it is not somebody
+ * else's — plus the three that are about the BUILDING: the count cap, the
+ * unlock technology and the Harmony it demands. There is no rule about where
+ * a building sits RELATIVE to another one, and the Docks' need for a
+ * shoreline is the single exception, which is terrain rather than layout.
+ *
+ * Layout is guided instead of policed: adjacency pays or charges for a
+ * neighbour ([`03-economy.md`](../../Docs/features/03-economy.md) §3.1), so a
+ * placement can be better or worse and none is illegal.
+ *
  * `movingId` is the district being RELOCATED, if any. It changes exactly two
  * rules and nothing else: the building may overlap the ground it is standing
  * on (or it could never move one cell sideways), and the count limit does not
  * apply (a move adds nothing to the count it would be measured against).
- * Every other rule — terrain, features, sites, fog, tech, adjacency — is the
- * same question it is at build time, which is the point: a spot you may not
- * build on is a spot you may not move to.
+ * Every other rule — terrain, features, sites, fog, tech — is the same
+ * question it is at build time, which is the point: a spot you may not build
+ * on is a spot you may not move to.
  */
 export function placementBlock(
   state: GameState,
@@ -86,46 +99,27 @@ export function placementBlock(
     return 'CountLimit';
   }
   if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
-  // Per-type rules: terrain must hold on every footprint cell; adjacency /
-  // influence must hold for at least one.
-  switch (definitionId) {
-    case 'Housing': {
-      // Adjacent to a Townhall or another Housing (under-construction Housing counts).
-      // A house cannot anchor its own move: standing next to where you
-      // already are is not neighbourliness.
-      const ok = footprint.some((fc) =>
-        neighbors(map, fc).some((n) => {
-          const d = districtAt(state, n);
-          return d !== undefined && d.uniqueId !== movingId
-            && (d.definitionId === 'Townhall' || d.definitionId === 'Housing');
-        }),
-      );
-      if (!ok) return 'NeedsHousingAdjacency';
-      break;
-    }
-    case 'Docks': {
-      // A pier spanning the shoreline: its 2×1 footprint needs exactly ONE
-      // cell on Water and one on land. Horizontal only — no rotation; the
-      // coast decides which half is wet (the sprite flips to match).
-      const waters = footprint.filter(
-        (c) => map.terrain.get(coordKey(c)) === 'Water').length;
-      if (waters !== 1) return 'NeedsShoreline';
-      break;
-    }
-    case 'Sawmill': // no placement restriction — the influence range guides placement
-    case 'Quarry':
-    case 'Market':
-    case 'Townhall':
-      break;
+  // Harmony, like the count cap above it, is about the BUILDING rather than
+  // the cell — every cell on the map answers the same way, which is why the
+  // build menu refuses the card before the player ever enters placement
+  // (Docs/plans/builder-30-days.md §6.7).
+  if (movingId === undefined && harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
+  // The one per-type rule left, and it is about terrain rather than layout:
+  // a pier spanning the shoreline needs exactly ONE of its 2×1 cells on
+  // Water. Horizontal only — no rotation; the coast decides which half is wet
+  // and the sprite flips to match.
+  if (definitionId === 'Docks') {
+    const waters = footprint.filter((c) => map.terrain.get(coordKey(c)) === 'Water').length;
+    if (waters !== 1) return 'NeedsShoreline';
   }
   return null;
 }
 
-/** True if the type has placement rules beyond the universal ones — only then
- *  is highlighting valid cells informative (an unrestricted building like the
- *  Sawmill would just outline most of the map). */
+/** True if the type has a placement rule beyond the universal ones — only then
+ *  is highlighting valid cells informative, since anything else may go
+ *  anywhere revealed and would just outline the map. The **Docks** is the only
+ *  one left: its pier needs a shoreline. */
 export const hasPlacementRestriction = (definitionId: DistrictId): boolean =>
-  definitionId === 'Housing' || definitionId === 'Farm' || definitionId === 'FarmLands' ||
   definitionId === 'Docks';
 
 export const validPlacementCells = (
@@ -165,12 +159,35 @@ export function buildCost(definitionId: DistrictId, n: number): Wallet {
   return out;
 }
 
+/**
+ * Where the late city starts. Below this target level a level is priced and
+ * timed by the row's own curve, tuned for the opening; from it the late
+ * columns take over.
+ *
+ * One pivot for every building, deliberately: a per-row pivot would let two
+ * buildings disagree about where the late game is, and the Townhall ladder is
+ * what says when it begins.
+ */
+export const LATE_FROM = CITY_DEF.lateUpgradeFromLevel;
+
+/**
+ * The level term of an upgrade price.
+ *
+ * Continuous at the pivot: reaching level `LATE_FROM` costs the early curve's
+ * last step times the late growth, so the two halves meet rather than jump.
+ */
+const levelCostMultiplier = (def: DistrictDef, targetLevel: number): number => {
+  const early = def.upgradeCostLevelGrowth ** (Math.min(targetLevel, LATE_FROM - 1) - 2);
+  if (targetLevel < LATE_FROM || def.upgradeCostLateLevelGrowth <= 0) return early;
+  return early * def.upgradeCostLateLevelGrowth ** (targetLevel - LATE_FROM + 1);
+};
+
 /** Upgrade cost from currentLevel; uses the EXISTING count n, no distance term. */
 export function upgradeCost(definitionId: DistrictId, n: number, currentLevel: number): Wallet {
   const def = DISTRICTS[definitionId];
   const expGrowth = n ** def.buildCostExponentialGrowth;
   const countMult = Math.max(def.buildCostMultiplier * (n - 1) * expGrowth, 1);
-  const levelMult = def.upgradeCostLevelGrowth ** (currentLevel - 1);
+  const levelMult = levelCostMultiplier(def, currentLevel + 1);
   const out: Wallet = {};
   for (const [c, base] of Object.entries(def.upgradeCost)) {
     out[c as keyof Wallet] = Math.floor(base * countMult * levelMult);
@@ -188,6 +205,12 @@ export function upgradeCost(definitionId: DistrictId, n: number, currentLevel: n
 export const upgradeGoodsCost = (definitionId: DistrictId, targetLevel: number): GoodsStock =>
   goodsCostForLevel(DISTRICTS[definitionId], targetLevel);
 
+/** What a BUILD costs in refined goods. Flat — unlike the currencies, which
+ *  the count multiplier makes dearer with every one already standing, since a
+ *  recipe does not care how many of the thing you own. */
+export const buildGoodsCost = (definitionId: DistrictId): GoodsStock =>
+  DISTRICTS[definitionId].buildCostGoods;
+
 /** Build time in seconds (Carpentry: −5%/rank). Rounding: round. */
 export const buildDuration = (
   state: GameState, definitionId: DistrictId, n: number, d: number,
@@ -201,14 +224,29 @@ export const buildDuration = (
   );
 };
 
+/**
+ * Seconds the wait for `targetLevel` is authored at, before Carpentry.
+ *
+ * The late half is NOT the early curve continued: minutes-long steps cannot
+ * be compounded into the multi-hour ladder the late city needs without making
+ * the opening's steps wrong, so the pivot level carries its own base
+ * (`upgradeDurationLateSeconds`) and the late growth compounds from there.
+ */
+const authoredUpgradeSeconds = (def: DistrictDef, targetLevel: number): number => {
+  if (targetLevel < LATE_FROM || def.upgradeDurationLateSeconds <= 0) {
+    return def.upgradeDurationSeconds * def.upgradeDurationLevelGrowth ** (targetLevel - 2);
+  }
+  return def.upgradeDurationLateSeconds
+    * def.upgradeDurationLateLevelGrowth ** (targetLevel - LATE_FROM);
+};
+
 /** Upgrade time in seconds (Carpentry: −5%/rank). Rounding: round. */
 export const upgradeDuration = (
   state: GameState, definitionId: DistrictId, currentLevel: number,
 ): number => {
   const def = DISTRICTS[definitionId];
   return Math.round(
-    effectiveBuildTimeMultiplier(state) *
-    def.upgradeDurationSeconds * def.upgradeDurationLevelGrowth ** (currentLevel - 1),
+    effectiveBuildTimeMultiplier(state) * authoredUpgradeSeconds(def, currentLevel + 1),
   );
 };
 

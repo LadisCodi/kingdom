@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { DISTRICTS, FEATURES, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
+import { addModifier } from '../src/sim/modifiers';
 import {
   collectTap, effectiveStock, harvestSourceAt, isExhausted, stockFraction, tapCell,
   tapYieldAt,
@@ -23,6 +24,55 @@ import {
   reveal, screenAt, T0,
 } from './helpers';
 
+
+describe('how long a cell stays a stump', () => {
+  /** Drain a Forest cell dry at `at`, and say when it is due back. */
+  const drain = (state: ReturnType<typeof freshGame>, at: number): void => {
+    reveal(state, [FOREST]);
+    while (!isExhausted(state, map, FOREST, at)) {
+      expect(tapCell(state, map, FOREST, at)).toBe('Harvested');
+    }
+  };
+
+  const shorten = (state: ReturnType<typeof freshGame>, by: number): void => {
+    addModifier(state, {
+      id: 'quicker', source: 'artifact', stat: 'cellRecovery', scope: null,
+      op: 'mul', value: by, expiresAt: null,
+    });
+  };
+
+  it('prices the wait ONCE, at the moment the cell runs dry', () => {
+    // The rule the whole timer rests on, and what makes a technology aimed at
+    // `harvestRecovery` safe to read here: one-call replay and stepped
+    // ticking both stamp at the same instant, so both read the same tree. A
+    // bonus that arrived later would have to reprice a stretch already
+    // elapsed — the hazard `repriceTaxAnchor` exists to close elsewhere.
+    const state = canGather(freshGame());
+    drain(state, T0);
+    const due = T0 + HARVEST.Forest.recoverySeconds * 1000;
+
+    shorten(state, 0.5); // a relic attuned, or a technology finished, AFTER
+    expect(isExhausted(state, map, FOREST, due - 1)).toBe(true);
+    expect(isExhausted(state, map, FOREST, due)).toBe(false);
+  });
+
+  it('gives the shorter wait to a cell drained after the bonus lands', () => {
+    const state = canGather(freshGame());
+    shorten(state, 0.5);
+    drain(state, T0);
+    const half = T0 + (HARVEST.Forest.recoverySeconds / 2) * 1000;
+    expect(isExhausted(state, map, FOREST, half - 1)).toBe(true);
+    expect(isExhausted(state, map, FOREST, half)).toBe(false);
+  });
+
+  it('never lets a bonus take the wait below a second', () => {
+    const state = canGather(freshGame());
+    shorten(state, 0); // everything at once
+    drain(state, T0);
+    expect(isExhausted(state, map, FOREST, T0 + 999)).toBe(true);
+    expect(isExhausted(state, map, FOREST, T0 + 1000)).toBe(false);
+  });
+});
 
 describe('harvest sources', () => {
   it('Trees cells are Forest; built FarmLands are Crops; districts block', () => {

@@ -4,6 +4,8 @@
 // (The DISTRICTS import is safe: definitions.ts only imports types from here.)
 
 import { DISTRICTS } from './data/definitions';
+// Imported for its KEYS, which are the technology ids (see TechId below).
+import techTree from './data/tech-tree.json';
 import type { Modifier } from './modifiers';
 import type { WorkshopLine } from './workshops';
 
@@ -12,7 +14,11 @@ export type CurrencyId =
   | 'Mana' // the only capped currency — see sim/mana.ts
   | 'Knowledge' // kingdom-scoped research clock; buys technologies and nothing else
   | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
-  | 'Gems'; // player-scoped, premium
+  | 'Gems' // player-scoped, premium
+  // The two gacha keys: one banner each, bought with Gems, spent on a pull.
+  // Player-scoped like Gems, and NOT on the plank — the purse is where they
+  // are read (Docs/features/10-heroes.md §5).
+  | 'SilverKey' | 'GoldKey';
 /** Refined goods: what a workshop turns raw resources into, and what an
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
@@ -25,7 +31,8 @@ export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Sanctum'
   | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' // military
-  | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver'; // workshops
+  | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver' // workshops
+  | 'Garden' | 'Well' | 'Orchard' | 'Statue' | 'Plaza' | 'Shrine'; // decorations
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous
@@ -53,7 +60,13 @@ export type RuinId =
   | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
-export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout';
+export type HeroId =
+  'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout' | 'Adventurer' |
+  'Bard' | 'BeastkinHunter' | 'Cleric' | 'Cook' | 'Gardener' | 'Joker' | 'Merchant' |
+  'Priest' | 'Rogue' | 'ThreeMice' | 'Sellsword' | 'DarkKnight' | 'Paladin' | 'Wizard' |
+  'Witch' | 'Druid' | 'IceLancer' | 'HolyWarrior' | 'SavageWarrior' | 'Spymaster' |
+  'ElectricArcher' | 'GoldenDragon' | 'VampireLord' | 'Necromancer' | 'Pharao' |
+  'ElvenPrincess';
 /** The three tomes. The shelf is the layout: one bounded page per book,
  *  each paced by eras (Docs/features/07-research.md §2). */
 export type TomeId = 'Civics' | 'Warfare' | 'Magic';
@@ -87,69 +100,17 @@ export interface PayerState {
   refusals: number;
 }
 
-export type TechId =
-  // ---- majors: spine keystones, and the content each era hangs off them
-  | 'CharterI' | 'CharterII' | 'CharterIII' | 'CharterIV'
-  | 'Forestry' | 'UrbanPlanning' | 'Saws' | 'Agriculture'
-  | 'Masonry' | 'Communities' | 'Hunting' | 'Farming'
-  | 'Market' | 'Mining' | 'Architecture' | 'Engineering'
-  | 'DeepMining' | 'WarbandI' | 'WarbandII' | 'WarbandIII'
-  | 'WarbandIV' | 'Warrior' | 'Spears' | 'Archery'
-  | 'Cavalry' | 'AttunementI' | 'AttunementII' | 'AttunementIII'
-  | 'AttunementIV' | 'Cartography' | 'Consecration' | 'Sailing'
-  | 'ScalingTools' | 'Fishing' | 'Shipbuilding' | 'Aqueducts'
-  | 'Guildhalls' | 'Roadworks' | 'LandSurvey' | 'Apprenticeships'
-  | 'FieldMedicine' | 'Veterancy' | 'Siegecraft' | 'Tactics'
-  | 'Scouting' | 'Salvage' | 'Vanguard' | 'Standards'
-  | 'Conquest' | 'Meditation' | 'LeyReading' | 'Scrying'
-  | 'Invocation' | 'Lorekeeping' | 'Wayshrines' | 'LeyLines'
-  | 'FrugalRites' | 'SanctifiedRuins' | 'RitualCasting' | 'LeyStorm'
-  | 'SecondSanctum'
-  // ---- minor ranks. A roman numeral is what tells you it is a small one.
-  | 'TapPowerI' | 'TapPowerII' | 'TapPowerIII' | 'TapPowerIV'
-  | 'TapPowerV' | 'QuickHandsI' | 'QuickHandsII' | 'QuickHandsIII'
-  | 'QuickHandsIV' | 'QuickHandsV' | 'WorkerLoadI' | 'WorkerLoadII'
-  | 'WorkerLoadIII' | 'SawpitsI' | 'SawpitsII' | 'SawpitsIII'
-  | 'ButcheryI' | 'ButcheryII' | 'ButcheryIII' | 'IrrigationI'
-  | 'IrrigationII' | 'IrrigationIII' | 'ScythesI' | 'ScythesII'
-  | 'ScythesIII' | 'SurveyingI' | 'SurveyingII' | 'PitonsI'
-  | 'PitonsII' | 'MarketStallI' | 'MarketStallII' | 'MarketStallIII'
-  | 'MarketStallIV' | 'TradeRoutesI' | 'TradeRoutesII' | 'TradeRoutesIII'
-  | 'TradeRoutesIV' | 'TradeRoutesV' | 'StonecuttingI' | 'StonecuttingII'
-  | 'StonecuttingIII' | 'BigNetsI' | 'BigNetsII' | 'BigNetsIII'
-  | 'IronPicksI' | 'IronPicksII' | 'IronPicksIII' | 'ResonanceI'
-  | 'ResonanceII' | 'CarpentryI' | 'CarpentryII' | 'CarpentryIII'
-  | 'ScrivenersI' | 'ScrivenersII' | 'ScrivenersIII' | 'CartageI'
-  | 'CartageII' | 'CartageIII' | 'DeepWellsI' | 'DeepWellsII'
-  | 'DeepWellsIII' | 'DeepWellsIV' | 'DeepWellsV' | 'LeyTapsI'
-  | 'LeyTapsII' | 'LeyTapsIII' | 'WaypostsI' | 'WaypostsII'
-  | 'WaypostsIII' | 'ScriptoriumI' | 'ScriptoriumII' | 'ScriptoriumIII'
-  | 'VigilsI' | 'VigilsII' | 'VigilsIII' | 'PilgrimageI'
-  | 'PilgrimageII' | 'PilgrimageIII' | 'ProspectingI' | 'ProspectingII'
-  | 'ProspectingIII' | 'ColoursI' | 'ColoursII' | 'ColoursIII'
-  | 'ColoursIV' | 'ColoursV' | 'MusterDrillI' | 'MusterDrillII'
-  | 'MusterDrillIII' | 'RationsI' | 'RationsII' | 'RationsIII'
-  | 'DrillmasterI' | 'DrillmasterII' | 'DrillmasterIII' | 'BearersI'
-  | 'BearersII' | 'BearersIII' | 'PathfindersI' | 'PathfindersII'
-  | 'PathfindersIII' | 'ShieldWallI' | 'ShieldWallII' | 'ShieldWallIII'
-  | 'FletchingI' | 'FletchingII' | 'FletchingIII' | 'BardingI'
-  | 'BardingII' | 'BardingIII' | 'WarhornsI' | 'WarhornsII'
-  | 'WarhornsIII' | 'ManoeuvreI' | 'ManoeuvreII' | 'ManoeuvreIII'
-  | 'FarsightI' | 'FarsightII' | 'FarsightIII';
+/**
+ * Every technology in the game, as a type — the KEYS of `tech-tree.json`.
+ *
+ * It used to be 180 hand-written string literals, which is the third copy of
+ * the same list (the importer had one too) and the reason creating a
+ * technology was a four-file job. TypeScript reads a JSON import's keys as
+ * literals, so this union now IS the file: `?dev=tree` adds a technology and
+ * the type follows, while a typo anywhere still fails to compile.
+ */
+export type TechId = keyof typeof techTree.technologies;
 
-/** A ladder of ranks that used to be one levelled upgrade. `effect()` in
- *  sim/upgrades.ts counts how many of a line's ranks are complete. */
-export type TechLineId =
-  | 'TapPower' | 'QuickHands' | 'WorkerLoad' | 'Sawpits'
-  | 'Butchery' | 'Irrigation' | 'Scythes' | 'Surveying'
-  | 'Pitons' | 'MarketStall' | 'TradeRoutes' | 'Stonecutting'
-  | 'BigNets' | 'IronPicks' | 'Resonance' | 'Carpentry'
-  | 'Scriveners' | 'Cartage' | 'DeepWells' | 'LeyTaps'
-  | 'Wayposts' | 'Scriptorium' | 'Vigils' | 'Pilgrimage'
-  | 'Prospecting' | 'Colours' | 'MusterDrill' | 'Rations'
-  | 'Drillmaster' | 'Bearers' | 'Pathfinders' | 'ShieldWall'
-  | 'Fletching' | 'Barding' | 'Warhorns' | 'Manoeuvre'
-  | 'Farsight';
 
 export interface Coord { x: number; y: number }
 export const coordKey = (c: Coord): string => `${c.x},${c.y}`;
@@ -284,6 +245,11 @@ export interface TrainingItem {
   trainee: TrainableId;
   buildingId: string;
   startedAt: number | null;
+  /** Seconds this one will take, stamped with `startedAt` — because the
+   *  building's neighbours are priced when the clock starts, not on read
+   *  (sim/adjacency.ts). Null until it starts; absent in a pre-30 save, where
+   *  it falls back to the authored duration. */
+  seconds: number | null;
 }
 
 /** A committed stack. A party SLOT holds a unit TYPE and every unit of it you
@@ -426,6 +392,24 @@ export interface GameState {
   gacha: {
     pullCounts: Record<string, number>;
     pityCounters: Record<string, number>;
+    /**
+     * The free-pull allowance a rewarded ad spends, per banner: which day the
+     * count belongs to, how many of that day's are gone, and when the next
+     * one is offered.
+     *
+     * A STAMP plus a counter, the shape `store.ts` uses for the monthly
+     * budget — the stamp is rolled lazily by every writer, so a stale day
+     * never leaks and nothing has to run at midnight. Deliberately NOT a
+     * boundary source (`adOffers.ts` makes the argument): a five-minute timer
+     * registered in `advance()` would propose ~8,600 boundaries across a
+     * thirty-day absence against a seatbelt of 10,000.
+     */
+    freePulls: Record<string, { day: number; used: number; readyAt: number }>;
+    /** Pulls since the last Legendary, per banner. A second counter rather
+     *  than a second meaning for the first: the short pity guarantees A hero,
+     *  this one guarantees the rarity, and a player has to be able to read
+     *  both (Docs/features/10-heroes.md §5). */
+    legendaryPity: Record<string, number>;
   };
   /**
    * The rewarded-ad offer (sim/adOffers.ts).

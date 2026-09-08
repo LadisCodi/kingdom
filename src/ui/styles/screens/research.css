@@ -1,9 +1,10 @@
-/* Research (§5.9) — an illuminated manuscript, not a node graph on a grid.
+/* Research (§5.9) — an illuminated manuscript, one page per book.
  *
- * The TOPOLOGY is unchanged: same authored grid, same horizontal-then-
- * vertical connectors, so the layout invariant in tests/research.test.ts
- * still holds. Only the materials change — which is the whole point, and why
- * the doc's "most expensive item" turned out to be mostly CSS. */
+ * The page is a FLOW read top to bottom: three columns of cards, an era bar
+ * across the width wherever the next band begins, connectors running in the
+ * gutter between rows or out into the side channel. Every size that has to
+ * agree with the geometry is set inline from src/ui/research/layout.ts — this
+ * file is materials only, so the two cannot drift. */
 
 /* Reserves the two bars itself rather than leaning on #overlay's padding: an
    absolutely positioned child resolves `inset` against the containing block's
@@ -70,90 +71,106 @@
 .res-desk-label { flex: 1; font-size: var(--text-helper); color: var(--parchment); }
 .research-topbar .k-btn { min-height: 40px; padding: 8px 14px; margin-bottom: 0; }
 
-/* Aged parchment ground, faintly stained. */
-.tech-tree {
+/* Aged parchment ground, faintly stained. Vertical scroll only: the page is
+   sized to the phone's width by construction, so there is nothing to pan to
+   sideways and a horizontal drag would only ever lose the reader. */
+.tech-page {
   flex: 1;
-  overflow: auto;
-  display: grid;
-  touch-action: none;
-  cursor: grab;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   scrollbar-width: none;
   background:
     radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
     radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
     var(--parchment);
 }
-.tech-tree::-webkit-scrollbar { display: none; }
-.tech-canvas { position: relative; margin: auto; }
-.tech-edges { position: absolute; inset: 0; }
+.tech-page::-webkit-scrollbar { display: none; }
+.tech-flow { position: relative; margin: 10px auto 28px; }
+.tech-edges { position: absolute; inset: 0; pointer-events: none; }
 
 /* Inked trails; a finished one is gold-inked. */
 .tech-edge { fill: none; stroke: #a98a5c; stroke-width: 3; stroke-dasharray: 4 6; stroke-linecap: round; }
 .tech-edge.open { stroke: var(--gold-dark); stroke-dasharray: none; stroke-width: 4; }
 .tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
 
-/* Wax-seal medallions. */
-/* SIZE carries the kind now, and only size. Every node is a technology
- * (Docs/features/tech-tree.md §1 rule 2), so the circle that used to mean
- * "an upgrade — a thing you buy again and again" would be a lie: a rank is
- * researched once, in a slot, like everything else. A minor rank is the same
- * rounded square, smaller, hanging under the major its line belongs to. The
- * tree still reads as trunks with beads on them. */
-.tech-node {
+/* ---------------------------------------------------------- the cards --- */
+
+/* A card, not a medallion: it carries the NAME, which is what lets a player
+   find a technology someone told them about and read the page as a flow. What
+   it DOES is a sentence, and a sentence belongs in the panel a tap opens.
+   Width and height come from layout.ts, inline. */
+.tech-card {
   position: absolute;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  font-size: 24px;
-  padding: 0;
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 5px;
+  padding: 6px 7px;
+  margin: 0;
+  text-align: center;
+  border-radius: 10px;
   background: var(--parchment-shade);
   border: 3px solid var(--wood-dark);
   box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
+  color: var(--ink);
+  font-family: var(--font-body);
   cursor: pointer;
+  overflow: hidden;
 }
-.tech-node.done { background: var(--leaf); border-color: var(--leaf-dark); }
-.tech-node.available { background: var(--gold); border-color: var(--gold-dark); }
-.tech-node.active { background: var(--sky); border-color: #2f7d9c; }
-.tech-node.selected { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
+/* A GLYPH AND A NAME, and nothing else. What a technology does is a sentence,
+   and a sentence on a 120px card is three clipped lines that have to be tapped
+   to be read anyway — so the card is an emblem and the panel does the talking.
+   The name gets two lines because the card no longer competes for them. */
+.tech-card-glyph { font-size: 26px; line-height: 1; }
+.tech-card-name {
+  font-size: var(--text-helper);
+  line-height: 1.15;
+  font-weight: 700;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.tech-card.done { background: var(--leaf); border-color: var(--leaf-dark); }
+.tech-card.available { background: var(--gold); border-color: var(--gold-dark); }
+.tech-card.active { background: var(--sky); border-color: #2f7d9c; }
+.tech-card.selected { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
+/* Behind an era bar the player has not earned: legible, and plainly not yet
+   pressable. The bar itself carries the reason.
 
-/* A fold in the parchment: the next tech along, not yet legible. */
-.tech-node.silhouette {
+   Drained of colour, NOT made transparent: `opacity` would let the connectors
+   under the card show through it, which reads as a line drawn across the
+   card's face. */
+.tech-card.era-locked {
+  filter: saturate(0.25) brightness(0.94);
+  color: var(--ink-muted);
+  box-shadow: none;
+}
+
+/* A fold in the parchment: the next card along, not yet legible. */
+.tech-card.silhouette {
+  display: grid;
+  place-items: center;
   background: var(--parchment);
   border-style: dashed;
   border-color: rgba(92, 58, 30, 0.5);
   color: rgba(92, 58, 30, 0.5);
   box-shadow: none;
   cursor: default;
-  font-family: var(--font-body);
   font-size: 22px;
 }
 
-/* Minor ranks: small badges pinned below the major their line hangs off. */
-.tech-node.rank {
-  /* 40, not 36: it is still unmistakably the small node beside the 56px
-     square, and 36 was under the smallest target a thumb can reliably hit. */
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  font-size: 16px;
-  border-width: 2px;
-  background: var(--parchment);
-}
-.tech-node.rank.done { background: var(--leaf); }
-.tech-node.rank.available { background: var(--gold); }
-.tech-node.rank.locked { background: var(--locked); opacity: 1; }
-/* "You can press this, now." The tree shows a lot of nodes the player cannot
- * act on — done, running, unaffordable, prerequisite missing — and the
- * `available` styling only means the prerequisites are met. The dot is the
- * difference, and it sits top-right so it never collides with the level badge
- * at bottom-right on a rank node. */
+/* "You can press this, now." The page shows a lot of cards the player cannot
+ * act on — done, running, unaffordable, prerequisite missing, band locked —
+ * and the `available` styling only means the prerequisites are met. The dot
+ * is the difference. */
 .node-dot {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: -4px;
+  right: -4px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -162,39 +179,46 @@
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
   pointer-events: none;
 }
-.tech-node.rank .node-dot { width: 12px; height: 12px; top: -2px; right: -2px; }
-
-/* The ladder's progress, "1/5". It was a single digit — a levelled upgrade's
- * level — and a circle 17px across fitted it exactly. Three characters do not,
- * so this is a PILL: auto width with the height pinned, which keeps the badge
- * the same size for "1/5" and "10/10" alike. */
-.tech-node.rank .lvl {
+.tech-card .node-bar {
   position: absolute;
-  right: -6px;
-  bottom: -6px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 4px;
-  box-sizing: border-box;
-  border-radius: 9px;
-  background: var(--wood-dark);
-  color: var(--parchment);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  line-height: 17px;
-  text-align: center;
-}
-.tech-node .node-bar {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 6px;
+  left: 7px;
+  right: 7px;
+  bottom: 5px;
   height: 4px;
   background: rgba(60, 36, 18, 0.4);
   border-radius: 2px;
   overflow: hidden;
 }
-.tech-node .node-bar .fill { height: 100%; background: var(--parchment); }
+.tech-card .node-bar .fill { height: 100%; background: var(--parchment); }
+
+/* ------------------------------------------------------- the era bars --- */
+
+/* Not a node: it spans the page, nothing requires it, and it cannot be
+   researched. It is the door between two bands, with the price written on
+   it (Docs/features/07-research.md §2.1). */
+.res-era {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 3px solid var(--wood-dark);
+  background: var(--wood);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}
+.res-era-name { font-weight: 700; }
+.res-era-gate { opacity: 0.85; }
+.res-era.is-open { background: var(--leaf-dark); border-color: var(--leaf-dark); }
+/* Era 4 is one keystone and no content: the book says there is more, and
+   does not pretend it is reachable. */
+.res-era.is-sealed { background: rgba(92, 58, 30, 0.35); border-style: dashed; }
 
 /* The floating card, on parchment like everything else. */
 .tech-info {
@@ -231,25 +255,16 @@
   background: var(--parchment-shade); border: 1px solid var(--wood-dark); }
 .tech-info .pip.on { background: var(--gold); border-color: var(--gold-dark); }
 
-/* What this technology is FOR — the line the old screen never had. */
-.res-unlocks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
-.res-unlocks-label {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
-.res-unlock {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px 3px 4px;
+/* WHAT IT DOES, whole. The card is a glyph and a name, so this is where the
+ * generated sentence is read — given its own panel so it reads as the answer
+ * to the tap rather than as a caption. */
+.res-says {
+  margin: 8px 0;
+  padding: 6px 9px;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  border-radius: var(--radius-sm, 8px);
 }
-.res-unlock img { width: 22px; height: 22px; object-fit: contain; image-rendering: pixelated; }
 
 /* --------------------------------------------------------- the shelf --- */
 
@@ -321,8 +336,8 @@
 /* On the tree for its shape; does nothing yet. Dashed like the fog's `?`, so
  * it reads as "not here yet" rather than "locked" — and never as pressable
  * content that quietly turns out to be a no-op. */
-.tech-node.planned { border-style: dashed; opacity: 0.85; }
-.tech-node.planned::after {
+.tech-card.planned { border-style: dashed; opacity: 0.85; }
+.tech-card.planned::after {
   content: '';
   position: absolute;
   inset: 0;

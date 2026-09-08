@@ -1,7 +1,7 @@
 // Initial game state: Oakville with its Townhall at (0,0), starting wallets,
 // fog seed, authored map features.
 
-import { CITY_DEF, CURRENCIES, KINGDOM_DEF, tomeCoverPage } from './data/definitions';
+import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -45,22 +45,19 @@ export function newGame(map: MapData, now: number): GameState {
     harvest: {},
     workers: [],
     army: [],
-    // Civics opens with the kingdom: its cover page is granted, not bought,
-    // because Civics IS the game. Magic and Warfare are opened by events in
-    // the world — the first paid reveal and the first ruin in sight — see
-    // sim/research.ts `openTome`.
-    research: {
-      completed: [tomeCoverPage('Civics')], active: [], slotsPurchased: 0,
-    },
+    // Nothing is researched, and nothing is granted. Every book is open from
+    // the first minute (sim/research.ts `isTomeOpen`); what paces one is the
+    // era bars, which ask for revealed cells.
+    research: { completed: [], active: [], slotsPurchased: 0 },
     schedule: [],
     delves: [],
-    // One hero free at the start — the gacha sells breadth and speed, never
+    // One hero free at the start — a wallet may buy power, but never sole
     // access, so the system has to be reachable without it.
     heroes: {
       owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
       fragments: {}, xp: {}, partySlotsPurchased: 0,
     },
-    gacha: { pullCounts: {}, pityCounters: {} },
+    gacha: { pullCounts: {}, pityCounters: {}, legendaryPity: {}, freePulls: {} },
     // Ready from the first minute: a new kingdom starts with a full pool, so
     // the offer simply waits for the player to spend down to half.
     ads: { readyAt: now, claims: 0, pending: false },

@@ -1,0 +1,1513 @@
+{
+  "_note": "Every technology in the game: its name, what KIND it is and what it unlocks or moves, its price and clock, and its slot on its tome page with what it needs before it — plus each book's BANDS and what each one asks for in revealed cells. What a card SAYS is generated from its unlocks or effects (src/sim/techProse.ts); only a mechanic, whose effect is code, carries a written description. Authored in ?dev=tree (Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, and the districts, units and harvest sources no longer name their own gate. Ordered by tome, then down the page, then left to right.",
+  "eras": {
+    "Civics": [0, 30, 100],
+    "Warfare": [0, 30, 100, 220],
+    "Magic": [0, 30, 100, 220]
+  },
+  "technologies": {
+    "Forestry": {
+      "name": "Forestry", "glyph": "🪓", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 0, "col": 1,
+      "requires": [],
+      "gold": 25, "knowledge": 2, "seconds": 3,
+      "unlocks": [{"harvest":"Forest"}, {"harvest":"Berries"}]
+    },
+    "Agriculture": {
+      "name": "Agriculture", "glyph": "🌱", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 1, "col": 1,
+      "requires": ["Forestry"],
+      "gold": 25, "knowledge": 2, "seconds": 5,
+      "unlocks": [{"district":"FarmLands"}]
+    },
+    "Farming": {
+      "name": "Farming", "glyph": "🚜", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 2, "col": 0,
+      "requires": ["Agriculture"],
+      "gold": 30, "knowledge": 2, "seconds": 10,
+      "unlocks": [{"district":"Farm"}]
+    },
+    "Saws": {
+      "name": "Saws", "glyph": "🪚", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 2, "col": 2,
+      "requires": ["Agriculture"],
+      "gold": 100, "knowledge": 2, "seconds": 10,
+      "unlocks": [{"district":"Sawmill"}]
+    },
+    "Taxes01": {
+      "name": "Taxes I", "glyph": "📜", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 3, "col": 1,
+      "requires": ["Farming", "Saws"],
+      "gold": 100, "knowledge": 2, "seconds": 60,
+      "effects": [
+        {"stat":"taxRate","op":"percent","value":5,"target":{"district":"Housing"}}
+      ]
+    },
+    "IrrigationI": {
+      "name": "Irrigation I", "glyph": "💧", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 4, "col": 0,
+      "requires": ["Taxes01"],
+      "gold": 120, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"harvestRecovery","op":"percent","value":-5,"target":{"harvest":"Crops"}}
+      ]
+    },
+    "SawpitsI": {
+      "name": "Sawpits I", "glyph": "🪵", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 4, "col": 2,
+      "requires": ["Taxes01"],
+      "gold": 120, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
+      ]
+    },
+    "Sickles01": {
+      "name": "Sickles I", "glyph": "📜", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 5, "col": 0,
+      "requires": ["IrrigationI"],
+      "gold": 100, "knowledge": 2, "seconds": 60,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
+      ]
+    },
+    "Reforesting01": {
+      "name": "Reforesting I", "glyph": "📜", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 5, "col": 2,
+      "requires": ["SawpitsI"],
+      "gold": 100, "knowledge": 2, "seconds": 60,
+      "effects": [
+        {"stat":"harvestRecovery","op":"percent","value":-5,"target":{"harvest":"Forest"}}
+      ]
+    },
+    "Masonry": {
+      "name": "Masonry", "glyph": "🧱", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 6, "col": 0,
+      "requires": ["Sickles01"],
+      "gold": 100, "knowledge": 2, "seconds": 45,
+      "unlocks": [{"district":"Quarry"}]
+    },
+    "Market": {
+      "name": "Market", "glyph": "🤝", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 6, "col": 2,
+      "requires": ["Reforesting01"],
+      "gold": 150, "knowledge": 2, "seconds": 45,
+      "unlocks": [{"district":"Market"}]
+    },
+    "StonecuttingI": {
+      "name": "Stonecutting I", "glyph": "🪨", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 7, "col": 0,
+      "requires": ["Masonry"],
+      "gold": 100, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
+      ]
+    },
+    "UrbanPlanning": {
+      "name": "Urban Planning", "glyph": "🏘️", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 7, "col": 1,
+      "requires": ["Masonry", "Market"],
+      "gold": 200, "knowledge": 2, "seconds": 60,
+      "unlocks": [{"districtLevel":{"id":"Housing","level":2}}]
+    },
+    "MarketStallI": {
+      "name": "Market Stall I", "glyph": "🛒", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 7, "col": 2,
+      "requires": ["Market"],
+      "gold": 100, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"salePrice","op":"flat","value":0.05}
+      ]
+    },
+    "CarpentryI": {
+      "name": "Carpentry I", "glyph": "🧰", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 8, "col": 0,
+      "requires": ["StonecuttingI"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"buildTime","op":"percent","value":-5}
+      ]
+    },
+    "WorkerLoadI": {
+      "name": "Worker Load I", "glyph": "🎒", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 8, "col": 1,
+      "requires": ["UrbanPlanning"],
+      "gold": 200, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"workerStrikeUnits","op":"flat","value":1}
+      ]
+    },
+    "TradeRoutesI": {
+      "name": "Trade Routes I", "glyph": "⛵", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 8, "col": 2,
+      "requires": ["MarketStallI"],
+      "gold": 150, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"taxRate","op":"percent","value":10}
+      ]
+    },
+    "TapPowerI": {
+      "name": "Tap Power I", "glyph": "👆", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 9, "col": 0,
+      "requires": ["CarpentryI", "WorkerLoadI"],
+      "gold": 50, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"tapWorkSeconds","op":"percent","value":20}
+      ]
+    },
+    "QuickHandsI": {
+      "name": "Quick Hands I", "glyph": "⚡", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 9, "col": 2,
+      "requires": ["TradeRoutesI", "WorkerLoadI"],
+      "gold": 75, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"autoTapCooldown","op":"flat","value":-0.05}
+      ]
+    },
+    "Bureaucracy": {
+      "name": "Bureaucracy", "glyph": "🗂️", "kind": "unlock",
+      "tome": "Civics", "era": 2, "row": 10, "col": 1,
+      "requires": ["TapPowerI", "QuickHandsI"],
+      "gold": 800, "knowledge": 2, "seconds": 900,
+      "unlocks": [{"districtLevel":{"id":"Townhall","level":3}}]
+    },
+    "Hunting": {
+      "name": "Hunting", "glyph": "🏹", "kind": "unlock",
+      "tome": "Civics", "era": 2, "row": 11, "col": 0,
+      "requires": ["Bureaucracy"],
+      "gold": 1500, "knowledge": 6, "seconds": 1200,
+      "unlocks": [{"harvest":"Meat"}]
+    },
+    "Communities": {
+      "name": "Communities", "glyph": "👥", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 11, "col": 1,
+      "requires": ["Bureaucracy"],
+      "gold": 1000, "knowledge": 4, "seconds": 900,
+      "effects": [
+        {"stat":"populationCapacity","op":"flat","value":1}
+      ]
+    },
+    "Mining": {
+      "name": "Mining", "glyph": "⛏️", "kind": "unlock",
+      "tome": "Civics", "era": 2, "row": 11, "col": 2,
+      "requires": ["Bureaucracy"],
+      "gold": 2500, "knowledge": 8, "seconds": 1800,
+      "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}]
+    },
+    "ButcheryI": {
+      "name": "Butchery I", "glyph": "🍖", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 12, "col": 0,
+      "requires": ["Hunting"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
+      ]
+    },
+    "TapPowerII": {
+      "name": "Tap Power II", "glyph": "👆", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 12, "col": 1,
+      "requires": ["Communities"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"tapWorkSeconds","op":"percent","value":20}
+      ]
+    },
+    "IronPicksI": {
+      "name": "Iron Picks I", "glyph": "⛏️", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 12, "col": 2,
+      "requires": ["Mining"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}
+      ]
+    },
+    "ButcheryII": {
+      "name": "Butchery II", "glyph": "🍖", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 13, "col": 0,
+      "requires": ["ButcheryI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
+      ]
+    },
+    "QuickHandsII": {
+      "name": "Quick Hands II", "glyph": "⚡", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 13, "col": 1,
+      "requires": ["TapPowerII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"autoTapCooldown","op":"flat","value":-0.05}
+      ]
+    },
+    "IronPicksII": {
+      "name": "Iron Picks II", "glyph": "⛏️", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 13, "col": 2,
+      "requires": ["IronPicksI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}
+      ]
+    },
+    "CarpentryII": {
+      "name": "Carpentry II", "glyph": "🧰", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 14, "col": 0,
+      "requires": ["ButcheryII", "QuickHandsII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"buildTime","op":"percent","value":-5}
+      ]
+    },
+    "MarketStallII": {
+      "name": "Market Stall II", "glyph": "🛒", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 14, "col": 2,
+      "requires": ["IronPicksII", "QuickHandsII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"salePrice","op":"flat","value":0.05}
+      ]
+    },
+    "WorkerLoadII": {
+      "name": "Worker Load II", "glyph": "🎒", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 15, "col": 1,
+      "requires": ["CarpentryII", "MarketStallII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"workerStrikeUnits","op":"flat","value":1}
+      ]
+    },
+    "SawpitsII": {
+      "name": "Sawpits II", "glyph": "🪵", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 16, "col": 0,
+      "requires": ["WorkerLoadII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
+      ]
+    },
+    "IrrigationII": {
+      "name": "Irrigation II", "glyph": "💧", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 16, "col": 1,
+      "requires": ["WorkerLoadII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
+      ]
+    },
+    "StonecuttingII": {
+      "name": "Stonecutting II", "glyph": "🪨", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 16, "col": 2,
+      "requires": ["WorkerLoadII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
+      ]
+    },
+    "TradeRoutesII": {
+      "name": "Trade Routes II", "glyph": "⛵", "kind": "bonus",
+      "tome": "Civics", "era": 2, "row": 17, "col": 1,
+      "requires": ["IrrigationII", "SawpitsII", "StonecuttingII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"taxRate","op":"percent","value":10}
+      ]
+    },
+    "Magistracy": {
+      "name": "Magistracy", "glyph": "⚖️", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 18, "col": 1,
+      "requires": ["TradeRoutesII"],
+      "gold": 5000, "knowledge": 25, "seconds": 3600,
+      "unlocks": [{"districtLevel":{"id":"Townhall","level":4}}]
+    },
+    "Engineering": {
+      "name": "Engineering", "glyph": "⚙️", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 19, "col": 0,
+      "requires": ["Magistracy"],
+      "gold": 7285, "knowledge": 36, "seconds": 4620,
+      "unlocks": [{"districtLevel":{"id":"Sawmill","level":3}}, {"districtLevel":{"id":"Quarry","level":2}}, {"district":"Carpenter"}, {"district":"MasonsYard"}]
+    },
+    "Aqueducts": {
+      "name": "Aqueducts", "glyph": "🚰", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 19, "col": 2,
+      "requires": ["Magistracy"],
+      "gold": 9855, "knowledge": 49, "seconds": 6660,
+      "unlocks": [{"districtLevel":{"id":"Housing","level":3}}]
+    },
+    "Gardening": {
+      "name": "Gardening", "glyph": "🌱", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 20, "col": 0,
+      "requires": ["Engineering"],
+      "gold": 6000, "knowledge": 30, "seconds": 3600,
+      "unlocks": [{"district":"Garden"}, {"district":"Orchard"}]
+    },
+    "Architecture": {
+      "name": "Architecture", "glyph": "📐", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 20, "col": 1,
+      "requires": ["Engineering", "Aqueducts"],
+      "gold": 6000, "knowledge": 30, "seconds": 3600,
+      "unlocks": [{"districtLevel":{"id":"Sawmill","level":4}}, {"districtLevel":{"id":"Quarry","level":3}}]
+    },
+    "WorkerLoadIII": {
+      "name": "Worker Load III", "glyph": "🎒", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 21, "col": 1,
+      "requires": ["Architecture"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"workerStrikeUnits","op":"flat","value":1}
+      ]
+    },
+    "Sculpture": {
+      "name": "Sculpture", "glyph": "🗿", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 21, "col": 2,
+      "requires": ["Architecture"],
+      "gold": 7500, "knowledge": 38, "seconds": 4800,
+      "unlocks": [{"district":"Well"}, {"district":"Statue"}]
+    },
+    "StonecuttingIII": {
+      "name": "Stonecutting III", "glyph": "🪨", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 22, "col": 0,
+      "requires": ["WorkerLoadIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
+      ]
+    },
+    "CarpentryIII": {
+      "name": "Carpentry III", "glyph": "🧰", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 22, "col": 2,
+      "requires": ["WorkerLoadIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"buildTime","op":"percent","value":-5}
+      ]
+    },
+    "SawpitsIII": {
+      "name": "Sawpits III", "glyph": "🪵", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 23, "col": 0,
+      "requires": ["StonecuttingIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
+      ]
+    },
+    "IrrigationIII": {
+      "name": "Irrigation III", "glyph": "💧", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 23, "col": 2,
+      "requires": ["CarpentryIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Crops"}}
+      ]
+    },
+    "DeepMining": {
+      "name": "Deep Mining", "glyph": "🕯️", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 24, "col": 0,
+      "requires": ["SawpitsIII"],
+      "gold": 8570, "knowledge": 43, "seconds": 5640,
+      "unlocks": [{"harvest":"MountainGold"}]
+    },
+    "Guildhalls": {
+      "name": "Guildhalls", "glyph": "🏪", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 24, "col": 2,
+      "requires": ["IrrigationIII"],
+      "gold": 11145, "knowledge": 56, "seconds": 7740,
+      "unlocks": [{"districtCount":"Market"}]
+    },
+    "Roadworks": {
+      "name": "Roadworks", "glyph": "🛤️", "kind": "mechanic",
+      "description": "Paved ways — every worker walks a quarter faster.",
+      "tome": "Civics", "era": 3, "row": 25, "col": 1,
+      "requires": ["DeepMining", "Guildhalls"],
+      "gold": 12430, "knowledge": 62, "seconds": 8760
+    },
+    "Paving": {
+      "name": "Paving", "glyph": "⛲", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 25, "col": 2,
+      "requires": ["Guildhalls"],
+      "gold": 9000, "knowledge": 45, "seconds": 6000,
+      "unlocks": [{"district":"Plaza"}]
+    },
+    "ButcheryIII": {
+      "name": "Butchery III", "glyph": "🍖", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 26, "col": 0,
+      "requires": ["Roadworks"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
+      ]
+    },
+    "TapPowerIII": {
+      "name": "Tap Power III", "glyph": "👆", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 26, "col": 1,
+      "requires": ["Roadworks"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"tapWorkSeconds","op":"percent","value":20}
+      ]
+    },
+    "IronPicksIII": {
+      "name": "Iron Picks III", "glyph": "⛏️", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 26, "col": 2,
+      "requires": ["Roadworks"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}
+      ]
+    },
+    "CartageI": {
+      "name": "Cartage I", "glyph": "🐂", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 27, "col": 0,
+      "requires": ["ButcheryIII"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"workerSpeed","op":"percent","value":5}
+      ]
+    },
+    "QuickHandsIII": {
+      "name": "Quick Hands III", "glyph": "⚡", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 27, "col": 1,
+      "requires": ["TapPowerIII"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"autoTapCooldown","op":"flat","value":-0.05}
+      ]
+    },
+    "ScrivenersI": {
+      "name": "Scriveners I", "glyph": "✒️", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 27, "col": 2,
+      "requires": ["IronPicksIII"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"researchTime","op":"percent","value":-5}
+      ]
+    },
+    "CartageII": {
+      "name": "Cartage II", "glyph": "🐂", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 28, "col": 0,
+      "requires": ["CartageI"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"workerSpeed","op":"percent","value":5}
+      ]
+    },
+    "TapPowerIV": {
+      "name": "Tap Power IV", "glyph": "👆", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 28, "col": 1,
+      "requires": ["QuickHandsIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"tapWorkSeconds","op":"percent","value":20}
+      ]
+    },
+    "ScrivenersII": {
+      "name": "Scriveners II", "glyph": "✒️", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 28, "col": 2,
+      "requires": ["ScrivenersI"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"researchTime","op":"percent","value":-5}
+      ]
+    },
+    "QuickHandsIV": {
+      "name": "Quick Hands IV", "glyph": "⚡", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 29, "col": 1,
+      "requires": ["TapPowerIV", "CartageII", "ScrivenersII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"autoTapCooldown","op":"flat","value":-0.05}
+      ]
+    },
+    "SacredGrounds": {
+      "name": "Sacred Grounds", "glyph": "⛩️", "kind": "unlock",
+      "tome": "Civics", "era": 3, "row": 29, "col": 2,
+      "requires": ["ScrivenersII"],
+      "gold": 12000, "knowledge": 60, "seconds": 7200,
+      "unlocks": [{"district":"Shrine"}]
+    },
+    "CartageIII": {
+      "name": "Cartage III", "glyph": "🐂", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 30, "col": 0,
+      "requires": ["QuickHandsIV"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"workerSpeed","op":"percent","value":5}
+      ]
+    },
+    "TapPowerV": {
+      "name": "Tap Power V", "glyph": "👆", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 30, "col": 1,
+      "requires": ["QuickHandsIV"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"tapWorkSeconds","op":"percent","value":20}
+      ]
+    },
+    "ScrivenersIII": {
+      "name": "Scriveners III", "glyph": "✒️", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 30, "col": 2,
+      "requires": ["QuickHandsIV"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"researchTime","op":"percent","value":-5}
+      ]
+    },
+    "MarketStallIII": {
+      "name": "Market Stall III", "glyph": "🛒", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 31, "col": 0,
+      "requires": ["CartageIII"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"salePrice","op":"flat","value":0.05}
+      ]
+    },
+    "TradeRoutesIII": {
+      "name": "Trade Routes III", "glyph": "⛵", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 31, "col": 1,
+      "requires": ["TapPowerV"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"taxRate","op":"percent","value":10}
+      ]
+    },
+    "MarketStallIV": {
+      "name": "Market Stall IV", "glyph": "🛒", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 31, "col": 2,
+      "requires": ["ScrivenersIII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"salePrice","op":"flat","value":0.05}
+      ]
+    },
+    "QuickHandsV": {
+      "name": "Quick Hands V", "glyph": "⚡", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 32, "col": 1,
+      "requires": ["TradeRoutesIII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"autoTapCooldown","op":"flat","value":-0.05}
+      ]
+    },
+    "TradeRoutesIV": {
+      "name": "Trade Routes IV", "glyph": "⛵", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 33, "col": 0,
+      "requires": ["QuickHandsV"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"taxRate","op":"percent","value":10}
+      ]
+    },
+    "TradeRoutesV": {
+      "name": "Trade Routes V", "glyph": "⛵", "kind": "bonus",
+      "tome": "Civics", "era": 3, "row": 33, "col": 2,
+      "requires": ["QuickHandsV"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"taxRate","op":"percent","value":10}
+      ]
+    },
+    "Spears": {
+      "name": "Spears", "glyph": "🔱", "kind": "unlock",
+      "tome": "Warfare", "era": 1, "row": 1, "col": 0,
+      "requires": [],
+      "gold": 150, "knowledge": 2, "seconds": 45,
+      "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
+    },
+    "FieldMedicine": {
+      "name": "Field Medicine", "glyph": "🩹", "kind": "mechanic",
+      "description": "Bandages and splints — the party recovers some HP between depths.",
+      "tome": "Warfare", "era": 1, "row": 1, "col": 1,
+      "requires": [],
+      "gold": 150, "knowledge": 2, "seconds": 120,
+      "planned": true
+    },
+    "Warrior": {
+      "name": "Warrior", "glyph": "🗡️", "kind": "unlock",
+      "tome": "Warfare", "era": 1, "row": 1, "col": 2,
+      "requires": [],
+      "gold": 100, "knowledge": 2, "seconds": 30,
+      "unlocks": [{"district":"Barracks"}, {"unit":"Warrior"}]
+    },
+    "RationsI": {
+      "name": "Rations I", "glyph": "🥖", "kind": "bonus",
+      "tome": "Warfare", "era": 1, "row": 2, "col": 0,
+      "requires": ["Spears"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"supplyCost","op":"percent","value":-5}
+      ]
+    },
+    "MusterDrillI": {
+      "name": "Muster Drill I", "glyph": "📣", "kind": "bonus",
+      "tome": "Warfare", "era": 1, "row": 2, "col": 1,
+      "requires": ["Warrior"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"recruitCost","op":"percent","value":-10}
+      ]
+    },
+    "ColoursI": {
+      "name": "Colours I", "glyph": "🎌", "kind": "bonus",
+      "tome": "Warfare", "era": 1, "row": 2, "col": 2,
+      "requires": ["Warrior"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"armyCap","op":"flat","value":2}
+      ]
+    },
+    "WarhornsI": {
+      "name": "Warhorns I", "glyph": "📯", "kind": "bonus",
+      "tome": "Warfare", "era": 1, "row": 3, "col": 0,
+      "requires": ["RationsI"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"unitAtk","op":"flat","value":1}
+      ]
+    },
+    "ShieldWallI": {
+      "name": "Shield Wall I", "glyph": "🛡️", "kind": "bonus",
+      "tome": "Warfare", "era": 1, "row": 3, "col": 2,
+      "requires": ["ColoursI"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Melee"}}
+      ]
+    },
+    "ColoursII": {
+      "name": "Colours II", "glyph": "🎌", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 4, "col": 0,
+      "requires": ["WarhornsI"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"armyCap","op":"flat","value":2}
+      ]
+    },
+    "WarbandII": {
+      "name": "Warband II", "glyph": "🚩", "kind": "unlock",
+      "tome": "Warfare", "era": 2, "row": 4, "col": 1,
+      "requires": ["WarhornsI", "ShieldWallI"],
+      "gold": 800, "knowledge": 2, "seconds": 900,
+      "unlocks": [{"districtLevel":{"id":"Barracks","level":4}}, {"districtLevel":{"id":"SpearHall","level":4}}, {"districtLevel":{"id":"ShootingGrounds","level":4}}, {"districtLevel":{"id":"Stables","level":4}}]
+    },
+    "MusterDrillII": {
+      "name": "Muster Drill II", "glyph": "📣", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 4, "col": 2,
+      "requires": ["ShieldWallI"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"recruitCost","op":"percent","value":-10}
+      ]
+    },
+    "ShieldWallII": {
+      "name": "Shield Wall II", "glyph": "🛡️", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 5, "col": 0,
+      "requires": ["ColoursII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Melee"}}
+      ]
+    },
+    "RationsII": {
+      "name": "Rations II", "glyph": "🥖", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 5, "col": 1,
+      "requires": ["WarbandII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"supplyCost","op":"percent","value":-5}
+      ]
+    },
+    "WarhornsII": {
+      "name": "Warhorns II", "glyph": "📯", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 5, "col": 2,
+      "requires": ["MusterDrillII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"unitAtk","op":"flat","value":1}
+      ]
+    },
+    "Scouting": {
+      "name": "Scouting", "glyph": "🔍", "kind": "mechanic",
+      "description": "Eyes ahead — a ruin shows its threat before you launch.",
+      "tome": "Warfare", "era": 2, "row": 6, "col": 0,
+      "requires": ["ShieldWallII"],
+      "gold": 2500, "knowledge": 10, "seconds": 1800,
+      "planned": true
+    },
+    "Archery": {
+      "name": "Archery", "glyph": "🏹", "kind": "unlock",
+      "tome": "Warfare", "era": 2, "row": 6, "col": 1,
+      "requires": ["RationsII"],
+      "gold": 1000, "knowledge": 4, "seconds": 900,
+      "unlocks": [{"district":"ShootingGrounds"}, {"unit":"Archer"}]
+    },
+    "Siegecraft": {
+      "name": "Siegecraft", "glyph": "🏰", "kind": "mechanic",
+      "description": "Ladders and rams — a party can clear a defended landmark.",
+      "tome": "Warfare", "era": 2, "row": 6, "col": 2,
+      "requires": ["WarhornsII"],
+      "gold": 1750, "knowledge": 7, "seconds": 1320,
+      "planned": true
+    },
+    "Veterancy": {
+      "name": "Veterancy", "glyph": "🎖️", "kind": "mechanic",
+      "description": "Hard-won experience — heroes gain levels from delving.",
+      "tome": "Warfare", "era": 2, "row": 7, "col": 0,
+      "requires": ["Archery"],
+      "gold": 1375, "knowledge": 6, "seconds": 1140,
+      "planned": true
+    },
+    "Tactics": {
+      "name": "Tactics", "glyph": "♟️", "kind": "mechanic",
+      "description": "Reading the ground — a bad matchup costs a tenth less.",
+      "tome": "Warfare", "era": 2, "row": 7, "col": 1,
+      "requires": ["Archery"],
+      "gold": 2125, "knowledge": 8, "seconds": 1560
+    },
+    "BearersI": {
+      "name": "Bearers I", "glyph": "🎒", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 7, "col": 2,
+      "requires": ["Archery"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"haulLoss","op":"flat","value":-0.03}
+      ]
+    },
+    "FletchingI": {
+      "name": "Fletching I", "glyph": "🪶", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 8, "col": 0,
+      "requires": ["Tactics", "BearersI"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
+      ]
+    },
+    "DrillmasterI": {
+      "name": "Drillmaster I", "glyph": "🎖️", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 8, "col": 1,
+      "requires": ["Tactics"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"heroXp","op":"percent","value":5}
+      ]
+    },
+    "BearersII": {
+      "name": "Bearers II", "glyph": "🎒", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 8, "col": 2,
+      "requires": ["BearersI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"haulLoss","op":"flat","value":-0.03}
+      ]
+    },
+    "FletchingII": {
+      "name": "Fletching II", "glyph": "🪶", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 9, "col": 0,
+      "requires": ["FletchingI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
+      ]
+    },
+    "DrillmasterII": {
+      "name": "Drillmaster II", "glyph": "🎖️", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 9, "col": 2,
+      "requires": ["DrillmasterI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"heroXp","op":"percent","value":5}
+      ]
+    },
+    "BearersIII": {
+      "name": "Bearers III", "glyph": "🎒", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 10, "col": 0,
+      "requires": ["FletchingII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"haulLoss","op":"flat","value":-0.03}
+      ]
+    },
+    "WarbandIII": {
+      "name": "Warband III", "glyph": "🚩", "kind": "unlock",
+      "tome": "Warfare", "era": 3, "row": 10, "col": 1,
+      "requires": ["FletchingII", "DrillmasterII"],
+      "gold": 5000, "knowledge": 25, "seconds": 3600,
+      "unlocks": [{"districtLevel":{"id":"Barracks","level":5}}, {"districtLevel":{"id":"SpearHall","level":5}}, {"districtLevel":{"id":"ShootingGrounds","level":5}}, {"districtLevel":{"id":"Stables","level":5}}]
+    },
+    "ColoursIII": {
+      "name": "Colours III", "glyph": "🎌", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 10, "col": 2,
+      "requires": ["DrillmasterII"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"armyCap","op":"flat","value":2}
+      ]
+    },
+    "FletchingIII": {
+      "name": "Fletching III", "glyph": "🪶", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 11, "col": 0,
+      "requires": ["BearersIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
+      ]
+    },
+    "DrillmasterIII": {
+      "name": "Drillmaster III", "glyph": "🎖️", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 11, "col": 1,
+      "requires": ["WarbandIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"heroXp","op":"percent","value":5}
+      ]
+    },
+    "MusterDrillIII": {
+      "name": "Muster Drill III", "glyph": "📣", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 11, "col": 2,
+      "requires": ["ColoursIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"recruitCost","op":"percent","value":-10}
+      ]
+    },
+    "ShieldWallIII": {
+      "name": "Shield Wall III", "glyph": "🛡️", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 12, "col": 0,
+      "requires": ["FletchingIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Melee"}}
+      ]
+    },
+    "RationsIII": {
+      "name": "Rations III", "glyph": "🥖", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 12, "col": 1,
+      "requires": ["DrillmasterIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"supplyCost","op":"percent","value":-5}
+      ]
+    },
+    "WarhornsIII": {
+      "name": "Warhorns III", "glyph": "📯", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 12, "col": 2,
+      "requires": ["MusterDrillIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"unitAtk","op":"flat","value":1}
+      ]
+    },
+    "Conquest": {
+      "name": "Conquest", "glyph": "👑", "kind": "mechanic",
+      "description": "Held ground — every cleared ruin teaches you more, hour by hour.",
+      "tome": "Warfare", "era": 3, "row": 13, "col": 0,
+      "requires": ["ShieldWallIII"],
+      "gold": 15000, "knowledge": 75, "seconds": 10800
+    },
+    "Cavalry": {
+      "name": "Cavalry", "glyph": "🐎", "kind": "unlock",
+      "tome": "Warfare", "era": 3, "row": 13, "col": 1,
+      "requires": ["RationsIII"],
+      "gold": 6000, "knowledge": 30, "seconds": 3600,
+      "unlocks": [{"district":"Stables"}, {"unit":"Cavalry"}]
+    },
+    "Salvage": {
+      "name": "Salvage", "glyph": "⚒️", "kind": "mechanic",
+      "description": "Pick over the losses — a failed depth costs 35% of the haul, not half.",
+      "tome": "Warfare", "era": 3, "row": 13, "col": 2,
+      "requires": ["WarhornsIII"],
+      "gold": 8250, "knowledge": 41, "seconds": 5400
+    },
+    "Vanguard": {
+      "name": "Vanguard", "glyph": "🏇", "kind": "mechanic",
+      "description": "Known ground — the first depth of a ruin you have cleared resolves at once.",
+      "tome": "Warfare", "era": 3, "row": 14, "col": 0,
+      "requires": ["Conquest"],
+      "gold": 10500, "knowledge": 52, "seconds": 7200,
+      "planned": true
+    },
+    "Standards": {
+      "name": "Standards", "glyph": "🏴", "kind": "mechanic",
+      "description": "Regimental colours — the army cap rises with every hall level.",
+      "tome": "Warfare", "era": 3, "row": 14, "col": 1,
+      "requires": ["Cavalry"],
+      "gold": 12750, "knowledge": 64, "seconds": 9000,
+      "planned": true
+    },
+    "ColoursIV": {
+      "name": "Colours IV", "glyph": "🎌", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 14, "col": 2,
+      "requires": ["Salvage"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"armyCap","op":"flat","value":2}
+      ]
+    },
+    "ManoeuvreI": {
+      "name": "Manoeuvre I", "glyph": "♟️", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 15, "col": 0,
+      "requires": ["ColoursIV"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"typeDisadvantage","op":"flat","value":0.02}
+      ]
+    },
+    "BardingI": {
+      "name": "Barding I", "glyph": "🐴", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 15, "col": 1,
+      "requires": ["ColoursIV"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Mounted"}}
+      ]
+    },
+    "PathfindersI": {
+      "name": "Pathfinders I", "glyph": "🐎", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 15, "col": 2,
+      "requires": ["ColoursIV"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"delveSpeed","op":"percent","value":-10}
+      ]
+    },
+    "ManoeuvreII": {
+      "name": "Manoeuvre II", "glyph": "♟️", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 16, "col": 0,
+      "requires": ["ManoeuvreI"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"typeDisadvantage","op":"flat","value":0.02}
+      ]
+    },
+    "BardingII": {
+      "name": "Barding II", "glyph": "🐴", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 16, "col": 1,
+      "requires": ["BardingI"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Mounted"}}
+      ]
+    },
+    "ColoursV": {
+      "name": "Colours V", "glyph": "🎌", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 16, "col": 2,
+      "requires": ["PathfindersI"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"armyCap","op":"flat","value":2}
+      ]
+    },
+    "ManoeuvreIII": {
+      "name": "Manoeuvre III", "glyph": "♟️", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 17, "col": 0,
+      "requires": ["ManoeuvreII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"typeDisadvantage","op":"flat","value":0.02}
+      ]
+    },
+    "BardingIII": {
+      "name": "Barding III", "glyph": "🐴", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 17, "col": 1,
+      "requires": ["BardingII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"unitDef","op":"flat","value":1,"target":{"unitTag":"Mounted"}}
+      ]
+    },
+    "PathfindersII": {
+      "name": "Pathfinders II", "glyph": "🐎", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 17, "col": 2,
+      "requires": ["ColoursV"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"delveSpeed","op":"percent","value":-10}
+      ]
+    },
+    "PathfindersIII": {
+      "name": "Pathfinders III", "glyph": "🐎", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 18, "col": 1,
+      "requires": ["PathfindersII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"delveSpeed","op":"percent","value":-10}
+      ]
+    },
+    "WarbandIV": {
+      "name": "Warband IV", "glyph": "🚩", "kind": "mechanic",
+      "description": "Marching order. Each banner raised lets the four halls train a rank higher, and a bigger hall is a bigger army.",
+      "tome": "Warfare", "era": 4, "row": 19, "col": 1,
+      "requires": ["PathfindersIII"],
+      "gold": 30000, "knowledge": 150, "seconds": 21600
+    },
+    "Consecration": {
+      "name": "Consecration", "glyph": "🔯", "kind": "unlock",
+      "tome": "Magic", "era": 1, "row": 1, "col": 0,
+      "requires": [],
+      "gold": 400, "knowledge": 2, "seconds": 120,
+      "unlocks": [{"district":"Sanctum"}]
+    },
+    "Cartography": {
+      "name": "Cartography", "glyph": "🗺️", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 1, "col": 1,
+      "requires": [],
+      "gold": 200, "knowledge": 2, "seconds": 45,
+      "effects": [
+        {"stat":"fogRevealPerTap","op":"percent","value":100}
+      ]
+    },
+    "Invocation": {
+      "name": "Invocation", "glyph": "✨", "kind": "mechanic",
+      "description": "Spoken twice — a relic's active gains a second charge.",
+      "tome": "Magic", "era": 1, "row": 1, "col": 2,
+      "requires": [],
+      "gold": 150, "knowledge": 2, "seconds": 120,
+      "planned": true
+    },
+    "Meditation": {
+      "name": "Meditation", "glyph": "🧘", "kind": "mechanic",
+      "description": "Stillness — the kingdom holds 30 more Mana.",
+      "tome": "Magic", "era": 1, "row": 2, "col": 0,
+      "requires": ["Consecration"],
+      "gold": 150, "knowledge": 2, "seconds": 120
+    },
+    "LeyReading": {
+      "name": "Ley Reading", "glyph": "🔮", "kind": "mechanic",
+      "description": "Reading the lines — a landmark shows what it grants before you pay.",
+      "tome": "Magic", "era": 1, "row": 2, "col": 1,
+      "requires": ["Cartography"],
+      "gold": 150, "knowledge": 2, "seconds": 120,
+      "planned": true
+    },
+    "Scrying": {
+      "name": "Scrying", "glyph": "🪞", "kind": "mechanic",
+      "description": "Seeing into stone — a ruin shows its tier before you commit a party.",
+      "tome": "Magic", "era": 1, "row": 2, "col": 2,
+      "requires": ["Consecration", "Cartography"],
+      "gold": 150, "knowledge": 2, "seconds": 120,
+      "planned": true
+    },
+    "DeepWellsI": {
+      "name": "Deep Wells I", "glyph": "⚗️", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 3, "col": 0,
+      "requires": ["Meditation"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"manaCap","op":"flat","value":10}
+      ]
+    },
+    "LeyTapsI": {
+      "name": "Ley Taps I", "glyph": "🔷", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 3, "col": 1,
+      "requires": ["Meditation"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"manaPerClaimedLandmark","op":"flat","value":1}
+      ]
+    },
+    "ResonanceI": {
+      "name": "Resonance I", "glyph": "🔔", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 3, "col": 2,
+      "requires": ["Meditation"],
+      "gold": 250, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"activeCost","op":"percent","value":-20}
+      ]
+    },
+    "ScriptoriumI": {
+      "name": "Scriptorium I", "glyph": "📖", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 4, "col": 0,
+      "requires": ["DeepWellsI"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"knowledgeYield","op":"percent","value":5}
+      ]
+    },
+    "SurveyingI": {
+      "name": "Surveying I", "glyph": "🧭", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 4, "col": 1,
+      "requires": ["LeyTapsI"],
+      "gold": 150, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"fogRevealPerTap","op":"percent","value":100}
+      ]
+    },
+    "WaypostsI": {
+      "name": "Wayposts I", "glyph": "🪧", "kind": "bonus",
+      "tome": "Magic", "era": 1, "row": 4, "col": 2,
+      "requires": ["ResonanceI"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"knowledgePerClaimedLandmark","op":"flat","value":0.1}
+      ]
+    },
+    "DeepWellsII": {
+      "name": "Deep Wells II", "glyph": "⚗️", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 5, "col": 0,
+      "requires": ["ScriptoriumI"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"manaCap","op":"flat","value":10}
+      ]
+    },
+    "AttunementII": {
+      "name": "Attunement II", "glyph": "🔯", "kind": "unlock",
+      "tome": "Magic", "era": 2, "row": 5, "col": 1,
+      "requires": ["SurveyingI"],
+      "gold": 800, "knowledge": 1, "seconds": 900,
+      "unlocks": [{"districtLevel":{"id":"Sanctum","level":4}}, {"district":"RuneCarver"}]
+    },
+    "LeyTapsII": {
+      "name": "Ley Taps II", "glyph": "🔷", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 5, "col": 2,
+      "requires": ["WaypostsI"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"manaPerClaimedLandmark","op":"flat","value":1}
+      ]
+    },
+    "ScriptoriumII": {
+      "name": "Scriptorium II", "glyph": "📖", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 6, "col": 0,
+      "requires": ["DeepWellsII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"knowledgeYield","op":"percent","value":5}
+      ]
+    },
+    "ResonanceII": {
+      "name": "Resonance II", "glyph": "🔔", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 6, "col": 1,
+      "requires": ["AttunementII"],
+      "gold": 525, "knowledge": 1, "seconds": 330,
+      "effects": [
+        {"stat":"activeCost","op":"percent","value":-20}
+      ]
+    },
+    "SurveyingII": {
+      "name": "Surveying II", "glyph": "🧭", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 6, "col": 2,
+      "requires": ["LeyTapsII"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"fogRevealPerTap","op":"percent","value":100}
+      ]
+    },
+    "FrugalRites": {
+      "name": "Frugal Rites", "glyph": "🕯️", "kind": "mechanic",
+      "description": "Economy of gesture — some taps cost no Mana.",
+      "tome": "Magic", "era": 2, "row": 7, "col": 0,
+      "requires": ["ScriptoriumII"],
+      "gold": 2500, "knowledge": 10, "seconds": 1800,
+      "planned": true
+    },
+    "WaypostsII": {
+      "name": "Wayposts II", "glyph": "🪧", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 7, "col": 1,
+      "requires": ["ResonanceII"],
+      "gold": 525, "knowledge": 1, "seconds": 330,
+      "effects": [
+        {"stat":"knowledgePerClaimedLandmark","op":"flat","value":0.1}
+      ]
+    },
+    "LeyLines": {
+      "name": "Ley Lines", "glyph": "🕸️", "kind": "mechanic",
+      "description": "The land's own current — a district beside the Sanctum produces a tenth more.",
+      "tome": "Magic", "era": 2, "row": 7, "col": 2,
+      "requires": ["SurveyingII"],
+      "gold": 2200, "knowledge": 9, "seconds": 1620,
+      "planned": true
+    },
+    "Sailing": {
+      "name": "Sailing", "glyph": "⛵", "kind": "unlock",
+      "tome": "Magic", "era": 2, "row": 8, "col": 0,
+      "requires": ["WaypostsII"],
+      "gold": 1000, "knowledge": 4, "seconds": 900,
+      "unlocks": [{"terrain":"Water"}]
+    },
+    "Lorekeeping": {
+      "name": "Lorekeeping", "glyph": "📚", "kind": "mechanic",
+      "description": "Records of the deep — ruins give up more of what they hold.",
+      "tome": "Magic", "era": 2, "row": 8, "col": 1,
+      "requires": ["WaypostsII"],
+      "gold": 1600, "knowledge": 6, "seconds": 1260,
+      "planned": true
+    },
+    "ScalingTools": {
+      "name": "Scaling Tools", "glyph": "🧗", "kind": "mechanic",
+      "description": "Ropes and pitons — the surveyors reach the high ground. Pitons, Vigils and Farsight build on it.",
+      "tome": "Magic", "era": 2, "row": 8, "col": 2,
+      "requires": ["WaypostsII"],
+      "gold": 1300, "knowledge": 2, "seconds": 1080
+    },
+    "PilgrimageI": {
+      "name": "Pilgrimage I", "glyph": "🚶", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 9, "col": 0,
+      "requires": ["Sailing"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"claimCost","op":"percent","value":-5}
+      ]
+    },
+    "Wayshrines": {
+      "name": "Wayshrines", "glyph": "⛩️", "kind": "mechanic",
+      "description": "Shrines on the road — a cleared defended landmark becomes claimable.",
+      "tome": "Magic", "era": 2, "row": 9, "col": 1,
+      "requires": ["Sailing", "ScalingTools"],
+      "gold": 1900, "knowledge": 8, "seconds": 1440,
+      "planned": true
+    },
+    "FarsightI": {
+      "name": "Farsight I", "glyph": "🔭", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 9, "col": 2,
+      "requires": ["ScalingTools"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"discoverRadius","op":"flat","value":1}
+      ]
+    },
+    "FarsightII": {
+      "name": "Farsight II", "glyph": "🔭", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 10, "col": 0,
+      "requires": ["FarsightI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"discoverRadius","op":"flat","value":1}
+      ]
+    },
+    "VigilsI": {
+      "name": "Vigils I", "glyph": "🔥", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 10, "col": 1,
+      "requires": ["PilgrimageI", "FarsightI"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"knowledgePerClearedRuin","op":"flat","value":0.1}
+      ]
+    },
+    "PitonsI": {
+      "name": "Pitons I", "glyph": "⛏️", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 10, "col": 2,
+      "requires": ["FarsightI"],
+      "gold": 250, "knowledge": 1, "seconds": 180,
+      "effects": [
+        {"stat":"revealCost","op":"percent","value":-10}
+      ]
+    },
+    "PilgrimageII": {
+      "name": "Pilgrimage II", "glyph": "🚶", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 11, "col": 0,
+      "requires": ["FarsightII"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"claimCost","op":"percent","value":-5}
+      ]
+    },
+    "VigilsII": {
+      "name": "Vigils II", "glyph": "🔥", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 11, "col": 1,
+      "requires": ["VigilsI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"knowledgePerClearedRuin","op":"flat","value":0.1}
+      ]
+    },
+    "PitonsII": {
+      "name": "Pitons II", "glyph": "⛏️", "kind": "bonus",
+      "tome": "Magic", "era": 2, "row": 11, "col": 2,
+      "requires": ["PitonsI"],
+      "gold": 800, "knowledge": 3, "seconds": 480,
+      "effects": [
+        {"stat":"revealCost","op":"percent","value":-10}
+      ]
+    },
+    "DeepWellsIII": {
+      "name": "Deep Wells III", "glyph": "⚗️", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 12, "col": 0,
+      "requires": ["PilgrimageII"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"manaCap","op":"flat","value":10}
+      ]
+    },
+    "AttunementIII": {
+      "name": "Attunement III", "glyph": "🔯", "kind": "unlock",
+      "tome": "Magic", "era": 3, "row": 12, "col": 1,
+      "requires": ["VigilsII"],
+      "gold": 5000, "knowledge": 25, "seconds": 3600,
+      "unlocks": [{"districtLevel":{"id":"Sanctum","level":5}}]
+    },
+    "FarsightIII": {
+      "name": "Farsight III", "glyph": "🔭", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 12, "col": 2,
+      "requires": ["PitonsII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"discoverRadius","op":"flat","value":1}
+      ]
+    },
+    "PilgrimageIII": {
+      "name": "Pilgrimage III", "glyph": "🚶", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 13, "col": 0,
+      "requires": ["DeepWellsIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"claimCost","op":"percent","value":-5}
+      ]
+    },
+    "LeyTapsIII": {
+      "name": "Ley Taps III", "glyph": "🔷", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 13, "col": 1,
+      "requires": ["AttunementIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"manaPerClaimedLandmark","op":"flat","value":1}
+      ]
+    },
+    "ScriptoriumIII": {
+      "name": "Scriptorium III", "glyph": "📖", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 13, "col": 2,
+      "requires": ["FarsightIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"knowledgeYield","op":"percent","value":5}
+      ]
+    },
+    "WaypostsIII": {
+      "name": "Wayposts III", "glyph": "🪧", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 14, "col": 0,
+      "requires": ["PilgrimageIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"knowledgePerClaimedLandmark","op":"flat","value":0.1}
+      ]
+    },
+    "VigilsIII": {
+      "name": "Vigils III", "glyph": "🔥", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 14, "col": 1,
+      "requires": ["LeyTapsIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"knowledgePerClearedRuin","op":"flat","value":0.1}
+      ]
+    },
+    "Fishing": {
+      "name": "Fishing", "glyph": "🎣", "kind": "unlock",
+      "tome": "Magic", "era": 3, "row": 14, "col": 2,
+      "requires": ["ScriptoriumIII"],
+      "gold": 6000, "knowledge": 30, "seconds": 3600,
+      "unlocks": [{"district":"Docks"}]
+    },
+    "RitualCasting": {
+      "name": "Ritual Casting", "glyph": "🌀", "kind": "mechanic",
+      "description": "Rites over the roof — a relic's active can target a building.",
+      "tome": "Magic", "era": 3, "row": 15, "col": 0,
+      "requires": ["WaypostsIII"],
+      "gold": 11400, "knowledge": 57, "seconds": 7920,
+      "planned": true
+    },
+    "LeyStorm": {
+      "name": "Ley Storm", "glyph": "🌩️", "kind": "mechanic",
+      "description": "Once a day — a kingdom-wide surge of production for a while.",
+      "tome": "Magic", "era": 3, "row": 15, "col": 1,
+      "requires": ["VigilsIII"],
+      "gold": 13200, "knowledge": 66, "seconds": 9360,
+      "planned": true
+    },
+    "SanctifiedRuins": {
+      "name": "Sanctified Ruins", "glyph": "⛪", "kind": "mechanic",
+      "description": "Consecrated ground — a cleared ruin's Knowledge drip doubles.",
+      "tome": "Magic", "era": 3, "row": 15, "col": 2,
+      "requires": ["Fishing"],
+      "gold": 9600, "knowledge": 48, "seconds": 6480
+    },
+    "DeepWellsIV": {
+      "name": "Deep Wells IV", "glyph": "⚗️", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 16, "col": 0,
+      "requires": ["SanctifiedRuins"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"manaCap","op":"flat","value":10}
+      ]
+    },
+    "SecondSanctum": {
+      "name": "Second Sanctum", "glyph": "🔯", "kind": "unlock",
+      "tome": "Magic", "era": 3, "row": 16, "col": 1,
+      "requires": ["SanctifiedRuins"],
+      "gold": 15000, "knowledge": 75, "seconds": 10800,
+      "unlocks": [{"districtCount":"Sanctum"}]
+    },
+    "Shipbuilding": {
+      "name": "Shipbuilding", "glyph": "🛶", "kind": "unlock",
+      "tome": "Magic", "era": 3, "row": 16, "col": 2,
+      "requires": ["SanctifiedRuins"],
+      "gold": 7800, "knowledge": 39, "seconds": 5040,
+      "unlocks": [{"districtLevel":{"id":"Docks","level":2}}]
+    },
+    "DeepWellsV": {
+      "name": "Deep Wells V", "glyph": "⚗️", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 17, "col": 0,
+      "requires": ["DeepWellsIV"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"manaCap","op":"flat","value":10}
+      ]
+    },
+    "ProspectingI": {
+      "name": "Prospecting I", "glyph": "💫", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 17, "col": 1,
+      "requires": ["Shipbuilding"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"stardustYield","op":"percent","value":5}
+      ]
+    },
+    "BigNetsI": {
+      "name": "Big Nets I", "glyph": "🕸️", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 17, "col": 2,
+      "requires": ["Shipbuilding"],
+      "gold": 1500, "knowledge": 8, "seconds": 1200,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Fish"}}
+      ]
+    },
+    "ProspectingII": {
+      "name": "Prospecting II", "glyph": "💫", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 18, "col": 0,
+      "requires": ["ProspectingI"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"stardustYield","op":"percent","value":5}
+      ]
+    },
+    "BigNetsII": {
+      "name": "Big Nets II", "glyph": "🕸️", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 18, "col": 2,
+      "requires": ["BigNetsI"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Fish"}}
+      ]
+    },
+    "ProspectingIII": {
+      "name": "Prospecting III", "glyph": "💫", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 19, "col": 0,
+      "requires": ["ProspectingII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"stardustYield","op":"percent","value":5}
+      ]
+    },
+    "BigNetsIII": {
+      "name": "Big Nets III", "glyph": "🕸️", "kind": "bonus",
+      "tome": "Magic", "era": 3, "row": 19, "col": 2,
+      "requires": ["BigNetsII"],
+      "gold": 5000, "knowledge": 20, "seconds": 2700,
+      "effects": [
+        {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Fish"}}
+      ]
+    },
+    "AttunementIV": {
+      "name": "Attunement IV", "glyph": "🔯", "kind": "mechanic",
+      "description": "Communion with the land. Each degree of it lets the Sanctum hold a level more, and the Sanctum is where Mana comes from.",
+      "tome": "Magic", "era": 4, "row": 20, "col": 1,
+      "requires": ["ProspectingIII", "BigNetsIII"],
+      "gold": 30000, "knowledge": 150, "seconds": 21600
+    }
+  }
+}

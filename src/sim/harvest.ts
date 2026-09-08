@@ -11,6 +11,7 @@ import { isTechComplete } from './research';
 import { effectiveAutoTapCooldownMs, tapDraw } from './upgrades';
 import { neighbors, type MapData } from './grid';
 import { resolve } from './modifiers';
+import { techValue } from './techEffects';
 import { pick } from './rng';
 import {
   addToWallet, coordKey, districtAt, parseCoordKey,
@@ -80,12 +81,24 @@ const cellState = (
   return s;
 };
 
-/** How long a cell stays exhausted, after the Verdant Seal and anything else
- *  that shortens it. Stamped ONCE at the moment of exhaustion — a relic
- *  attuned afterwards does not retroactively wake sleeping cells, which keeps
- *  the timer a fact about the cell rather than a live query. */
+/**
+ * How long a cell stays exhausted, after the tree, the Verdant Seal and
+ * anything else that shortens it.
+ *
+ * **Stamped ONCE at the moment of exhaustion** — a relic attuned or a
+ * technology finished afterwards does not retroactively wake sleeping cells,
+ * which keeps the timer a fact about the cell rather than a live query, and
+ * keeps one-call replay identical to stepped ticking: both stamp at the same
+ * instant, so both read the same tree.
+ *
+ * `harvestRecovery` is aimed at the SOURCE, so "trees grow back 20% faster"
+ * is one effect on `{ harvest: 'Forest' }` and leaves the crops alone. A
+ * faster regrowth is a NEGATIVE percent: the number here is seconds of
+ * waiting, and less of it is the good news.
+ */
 export const effectiveRecoveryMs = (state: GameState, spec: HarvestSpec): number =>
-  Math.max(1000, Math.round(resolve(state, 'cellRecovery', spec.recoverySeconds * 1000)));
+  Math.max(1000, Math.round(resolve(state, 'cellRecovery',
+    techValue(state, 'harvestRecovery', spec.recoverySeconds * 1000, { harvest: spec.id }))));
 
 /** A depot with no capacity never runs down and never recovers, because it
  *  never went anywhere: `stock` 0 is how the workbook says "this is bedrock".

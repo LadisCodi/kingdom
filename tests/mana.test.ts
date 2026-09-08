@@ -98,12 +98,17 @@ describe('the two dials', () => {
   // Mana is now the energy every tap is paid from, so the pool is a SPEND
   // budget, and the two want opposite things: an absence budget should refill
   // exactly overnight, while a spend budget has to be able to run out or
-  // there is nothing for a refill to sell. The cap went to 50 and regen did
-  // not follow, so a full pool is 12.5h rather than 8h.
+  // there is nothing for a refill to sell.
   //
-  // This test now pins the new intent rather than the old law, so the day
-  // someone re-tunes regen they have to come here and say which budget they
-  // are tuning for. Restoring the old law at cap 50 means regen 7/h at TH1.
+  // What holds is the WEAKER form: the pool refills a little SLOWER than an
+  // absence, so it can run out but never by much. Both base dials are tuned
+  // to it together — the pool doubled to 100 on 2026-09-08 and regen doubled
+  // to 12 with it, which is what keeps the fill at 8.2–8.3 h across the whole
+  // Sanctum ladder instead of sixteen hours at the bottom of it.
+  //
+  // This test pins the intent rather than a number, so the day someone
+  // re-tunes either dial they have to come here and say which budget they are
+  // tuning for.
   it('is a SPEND budget now: the pool no longer refills inside an absence', () => {
     // Walked up the SANCTUM now, not the Townhall — that is where both dials
     // live. Every level has to stay on the spend side of the law.
@@ -124,7 +129,7 @@ describe('the two dials', () => {
     // 50, which is what the design has always said — the old
     // base_cap_per_townhall_level opened at 100 and quietly contradicted it.
     expect(manaCap(state)).toBe(MANA.baseCap);
-    expect(MANA.baseCap).toBe(50);
+    expect(MANA.baseCap).toBe(100);
   });
 });
 

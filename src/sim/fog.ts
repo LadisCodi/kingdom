@@ -1,12 +1,12 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, RUINS } from './data/definitions';
+import { DISTRICTS, FOG, LANDMARKS, RUINS, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techMultiplier, techValue } from './techEffects';
 import { recordQuestEvent } from './quests';
-import { isTechComplete, openTome } from './research';
+import { isTechComplete } from './research';
 import {
   addToWallet, coordKey, districtCells, getWallet,
   type Coord, type District, type GameState, type TechId,
@@ -54,7 +54,7 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
       'revealCost',
       // Pitons discount the GOLD; Surveying buys back the taps. Two different
       // costs, so the two upgrades stack without either making the other moot.
-      revealCost(townhallDistance(map, cell)) * Math.max(0, 1 - effect(state, 'Pitons')),
+      revealCost(townhallDistance(map, cell)) * Math.max(0, techValue(state, 'revealCost', 1)),
     )),
   );
 
@@ -84,8 +84,11 @@ export const isReachable = (state: GameState, map: MapData, cell: Coord): boolea
  *  See Docs/features/01-map-and-fog.md §3. */
 export function explorationGate(map: MapData, cell: Coord): TechId | null {
   const terrain = map.terrain.get(coordKey(cell));
-  if (terrain === 'Water') return 'Sailing';
-  return null;
+  // Which technology crosses which ground is the TECHNOLOGY's to say —
+  // Sailing carries `unlocks: [{ terrain: 'Water' }]` — so this is a lookup
+  // rather than the hardcoded `if (terrain === 'Water') return 'Sailing'` it
+  // used to be (Docs/tech-tree-editor.md §2).
+  return terrain === undefined ? null : terrainGate(terrain);
 }
 
 /**
@@ -96,14 +99,14 @@ export function explorationGate(map: MapData, cell: Coord): TechId | null {
  * once the far rings cost 320 and 640 Gold and a single cell wants hundreds
  * of taps.
  *
- * Two sources, and they stack: **Cartography** doubles a tap on its own (a
- * tech with an effect rather than a gate, the same shape as Communities
- * adding +1 to every bed), and **Surveying** adds one more per level. So the
- * ladder a player climbs is ×1 → ×2 on the research → ×3 → ×4.
+ * Two sources, and they stack: **Cartography** doubles a tap on its own and
+ * **Surveying** adds one more per rank, so the ladder a player climbs is
+ * ×1 → ×2 on the research → ×3 → ×4. Both are +100% on this stat and neither
+ * is named here — they are two rows of data now, and a third would need no
+ * change at all.
  */
 export const revealPerTap = (state: GameState): number =>
-  FOG.goldPerTap
-  * (1 + (isTechComplete(state, 'Cartography') ? 1 : 0) + effect(state, 'Surveying'));
+  FOG.goldPerTap * techMultiplier(state, 'fogRevealPerTap');
 
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';
@@ -128,11 +131,6 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     delete state.fog.progress[key];
     delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
-    // Pushing the fog back IS the magic, so the first cell bought opens the
-    // Magic tome. It is guaranteed inside two minutes and needs no landmark
-    // to have spawned nearby, which is what keeps Cartography reachable when
-    // the `Mapmakers` quest asks for it.
-    openTome(state, 'Magic');
     // Clearing fog pays no currency. What a reveal buys is MAP — resource
     // cells, buildable ground, ruins and landmarks — against a Gold price
     // that doubles from ring 4. Knowledge comes out of dungeons instead
@@ -167,9 +165,6 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
   for (const r of Object.values(RUINS)) {
     if (fogState(state, map, r.location) === 'Undiscovered') continue;
     recordSiteDiscovery(state, r.id);
-    // A ruin in sight is the first moment an army is FOR anything, so it is
-    // what opens the Warfare tome (07-research.md §2).
-    openTome(state, 'Warfare');
   }
 }
 
@@ -195,7 +190,8 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
  *  radius is untouched: seeing farther is not the same as owning farther, and
  *  the paid reveal stays the economy's main sink. */
 export const effectiveDiscoverRadius = (state: GameState, base: number): number =>
-  Math.max(0, Math.round(resolve(state, 'discoverRadius', base + effect(state, 'Farsight'))));
+  Math.max(0, Math.round(resolve(state, 'discoverRadius',
+    techValue(state, 'discoverRadius', base))));
 
 /** New-game seed: every district applies its fog radii. */
 export function seedFog(state: GameState, map: MapData): void {

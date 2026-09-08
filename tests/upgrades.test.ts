@@ -3,8 +3,8 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  ARMY, DELVE, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES, TECH_LINES, TECH_LINE_ORDER,
-  TECH_ORDER, WORKER, levelIndexed, lineParent,
+  ARMY, DELVE, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
+  TECH_ORDER, WORKER, levelIndexed,
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
@@ -16,9 +16,10 @@ import { advance } from '../src/sim/commands';
 import { canStartTech, startTech, techCompletesAt } from '../src/sim/research';
 import {
   effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier, effectiveSalePriceMultiplier,
-  effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerStrike, lineMaxRank, lineRank, tapDraw,
+  effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds,
 } from '../src/sim/upgrades';
+import { techMultiplier } from '../src/sim/techEffects';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
 import { maxArmyPower, trainCost } from '../src/sim/army';
 import { depthMs, drillOf, effectiveHaulLoss, partyOf, supplyCost } from '../src/sim/expeditions';
@@ -28,7 +29,9 @@ import { addHeroXp } from '../src/sim/heroes';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
 import {
-  addBuilt, canGather, completeTech, FOREST, freshGame, fund, map, T0, tickAt, completeRanks } from './helpers';
+  addBuilt, bonusLadders, canGather, completeRanks, completeTech, FOREST, freshGame, fund,
+  completeRequirements, ladders, map, openEveryEra, rankOf, T0, tickAt,
+} from './helpers';
 
 
 /** Research one rank end to end, through the real command and the real clock
@@ -44,7 +47,9 @@ describe('researching a rank', () => {
   it('costs Gold and TIME — the opening rank as authored, the later ones on the bands', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
-    completeTech(state, 'Forestry');
+    // Whatever the row above holds — the designer's to move in `?dev=tree`,
+    // so it is read off the tree rather than named here.
+    completeRequirements(state, 'TapPowerI');
     // Rank I is era 1 and keeps the price the opening was tuned around; rank
     // II is era 2 and sits in tech-tree.md §5's minor band (250–800).
     expect(TECHNOLOGIES.TapPowerI.cost.Gold).toBe(50);
@@ -55,35 +60,44 @@ describe('researching a rank', () => {
 
     expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
     expect(getWallet(state.city.wallet, 'Gold')).toBe(950);
-    expect(lineRank(state, 'TapPower')).toBe(0); // not yet — it is on the clock
+    expect(rankOf(state, 'TapPower')).toBe(0); // not yet — it is on the clock
     advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
-    expect(lineRank(state, 'TapPower')).toBe(1);
+    expect(rankOf(state, 'TapPower')).toBe(1);
   });
 
+  // WHICH major a ladder hangs off is content — a drag in `?dev=tree`. That
+  // it hangs off one, and is refused until that one is researched, is not.
   it('hangs off its parent technology in the tree', () => {
     const state = freshGame();
     fund(state, { Gold: 1000 });
-    expect(startTech(state, 'TapPowerI', T0)).toBe('MissingRequirement'); // Forestry
-    expect(startTech(state, 'MarketStallI', T0)).toBe('MissingRequirement'); // Market
-    completeTech(state, 'Forestry');
+    // Refused on a fresh kingdom, and startable the moment the major it hangs
+    // off is researched — for every ladder the tree has, not one named pair.
+    for (const ladder of bonusLadders) {
+      expect(startTech(state, ladders[ladder][0], T0),
+        `${ladder} I starts with nothing researched`).not.toBe('Started');
+    }
+    completeRequirements(state, 'TapPowerI');
     expect(research(state, 'TapPowerI')).toBe('Started');
-    expect(startTech(state, 'MarketStallI', T0)).toBe('MissingRequirement'); // still
-    completeTech(state, 'Market');
-    expect(research(state, 'MarketStallI')).toBe('Started');
   });
 
   it('rejects when poor, and runs out of ranks at the top of the ladder', () => {
     const state = freshGame();
     state.city.wallet.Gold = 0; // the opening grant would cover the first rank
-    completeTech(state, 'Forestry');
+    completeRequirements(state, 'TapPowerI');
     expect(startTech(state, 'TapPowerI', T0)).toBe('NotEnoughResources');
-    // Ranks II+ sit in later eras and wait on those keystones too.
-    completeTech(state, 'CharterIII');
+    // Ranks II+ sit in later bands, which are gates in the world.
+    openEveryEra(state);
     fund(state, { Gold: 1_000_000, Knowledge: 1_000_000 });
-    for (const id of TECH_LINES.TapPower) expect(research(state, id)).toBe('Started');
-    expect(lineRank(state, 'TapPower')).toBe(lineMaxRank('TapPower'));
+    for (const id of ladders.TapPower) {
+      // Each rank is gated by the row above it, which is NOT the rank before
+      // it — a ladder is a name, not a chain — so its own prerequisites are
+      // what has to be standing.
+      for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
+      expect(research(state, id), id).toBe('Started');
+    }
+    expect(rankOf(state, 'TapPower')).toBe(ladders.TapPower.length);
     // There is no "AtMax": the ladder simply has no further rung.
-    for (const id of TECH_LINES.TapPower) expect(canStartTech(state, id)).toBe(false);
+    for (const id of ladders.TapPower) expect(canStartTech(state, id)).toBe(false);
   });
 });
 
@@ -116,8 +130,8 @@ describe('effects reach the sim', () => {
     completeRanks(state, 'QuickHands', 1); // -0.05s
     expect(effectiveAutoTapCooldownMs(state)).toBe(450);
 
-    completeRanks(state, 'QuickHands', lineMaxRank('QuickHands'));
-    expect(lineRank(state, 'QuickHands')).toBe(lineMaxRank('QuickHands'));
+    completeRanks(state, 'QuickHands', ladders.QuickHands.length);
+    expect(rankOf(state, 'QuickHands')).toBe(ladders.QuickHands.length);
     // 0.5 - 5x0.05 = 0.25s: still slower than a determined tapper.
     expect(effectiveAutoTapCooldownMs(state)).toBe(250);
   });
@@ -126,7 +140,7 @@ describe('effects reach the sim', () => {
     const state = freshGame();
     fund(state, { Gold: 100000 });
     canGather(state);
-    completeRanks(state, 'QuickHands', lineMaxRank('QuickHands'));
+    completeRanks(state, 'QuickHands', ladders.QuickHands.length);
 
     // Manual taps ignore the cooldown entirely, finished ladder or not.
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
@@ -152,14 +166,19 @@ describe('effects reach the sim', () => {
     addBuilt(state, 'Housing', { x: 2, y: 0 });
     state.city.population = 1;
     fund(state, { Gold: 1000 });
-    completeTech(state, 'Market');
-    expect(effectiveTaxRate(state)).toBe(30);
-    completeRanks(state, 'TradeRoutes', 1); // +10% → 33/min
-    expect(effectiveTaxRate(state)).toBeCloseTo(33);
-    tickAt(state, T0 + 301_000); // ~5 min × 33/min → 165 gold (150 unboosted)
+    completeRequirements(state, 'TradeRoutesI');
+    const bare = effectiveTaxRate(state);
+    completeRanks(state, 'TradeRoutes', 1); // +10%
+    expect(effectiveTaxRate(state)).toBeCloseTo(bare * 1.1);
+    tickAt(state, T0 + 301_000); // ~5 minutes of it
+    // Against the rate the HOUSES actually pay, not the unaimed one: an aimed
+    // bonus (Taxes I sits on Housing) reaches the collection and not the bare
+    // query, and which technologies sit above the ladder is the designer's to
+    // move — so the expectation is read off the city rather than written down.
+    const perMinute = effectiveTaxRate(state, 'Housing');
     // The helper grants the rank without charging for it — the point under
     // test is the tax rate, not the price of the research.
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 + 165);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(1000 + Math.floor(perMinute * 301 / 60));
   });
 });
 
@@ -170,24 +189,17 @@ describe('effects reach the sim', () => {
 // failure mode this whole file exists to catch (see `withWardenBonus`, which
 // shipped inert for weeks). So each of these researches a rank and measures
 // the number the player actually experiences, never the effect table.
-describe('every line reaches the number it claims to', () => {
-  // The tech tree groups ranks with `TECH_LINES` keyed by parent, so a
-  // upgrade missing from that list is invisible IN THE GAME while still being
+describe('every ladder reaches the number it claims to', () => {
+  // A rank missing from the tree is invisible IN THE GAME while still being
   // purchasable by id — which is exactly what happened to Surveying, with a
   // quest pointing the player at a node that was never drawn.
   it('shows every authored rank somewhere in the tree', () => {
-    // TECH_LINES is derived from TECH_ORDER, so a rank missing from the order
-    // is invisible in the game — which is exactly what happened to Surveying,
-    // with a quest pointing the player at a node that was never drawn.
-    for (const line of TECH_LINE_ORDER) {
-      const ranks = TECH_LINES[line];
-      expect(ranks.length, `${line} has no ranks`).toBeGreaterThan(0);
+    for (const ladder of bonusLadders) {
+      const ranks = ladders[ladder];
+      expect(ranks.length, `${ladder} has no ranks`).toBeGreaterThan(0);
       for (const id of ranks) {
-        expect(TECH_ORDER, `${line} rank ${id} is not in TECH_ORDER`).toContain(id);
+        expect(TECH_ORDER, `${ladder} rank ${id} is not in TECH_ORDER`).toContain(id);
       }
-      const parent = lineParent(line);
-      expect(parent, `${line} hangs off no technology, so nothing draws it`).not.toBeNull();
-      expect(TECH_ORDER, `${line} hangs off an unknown technology`).toContain(parent);
     }
   });
 
@@ -205,13 +217,16 @@ describe('every line reaches the number it claims to', () => {
     expect(tapDraw(state, HARVEST.Forest, 0)).toBe(woodTap); // scoped
   });
 
-  it('Scythes and Irrigation both enrich crops, and they stack', () => {
+  it('Irrigation enriches crops from its second rank; the first only waters them', () => {
+    // Scythes is gone (2026-09-08) and Irrigation is the one ladder on Crops.
+    // Rank I moves REGROWTH, not the haul — a worker's strike is untouched by
+    // it — and ranks II and III add a unit each.
     const state = freshGame();
     const base = effectiveWorkerStrike(state, HARVEST.Crops);
-    completeRanks(state, 'Scythes', 3);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 3);
     completeRanks(state, 'Irrigation', 1);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 4);
+    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base);
+    completeRanks(state, 'Irrigation', 3);
+    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 2);
   });
 
   it('WorkerLoad is the one payroll-only dial — the crew, never the thumb', () => {
@@ -277,47 +292,22 @@ describe('every line reaches the number it claims to', () => {
     expect(castCost(state, 'VerdantSeal')).toBe(Math.round(full * 0.6));
   });
 
-  // The renderer fans a line under `lineParent(line)`, and only MAJORS have a
-  // grid position to fan from. A line whose parent is itself a rank would
-  // therefore be drawn nowhere at all — invisible in the game while still
-  // being researchable by id. That is precisely the Surveying bug the repo
-  // already shipped once, in a new costume.
-  it('hangs every line under a major, so the fan has somewhere to draw it', () => {
-    for (const line of TECH_LINE_ORDER) {
-      const parent = lineParent(line);
-      expect(parent, `${line} hangs off nothing`).not.toBeNull();
-      expect(TECHNOLOGIES[parent!].node, `${line} hangs off ${parent}, which is itself a rank`)
-        .not.toBeNull();
-    }
-  });
-
-  // And every rank is reachable from exactly one fan: ranks after the first
-  // chain off the rank before, so the whole ladder hangs from one major.
-  it('chains each rank off the one before, so a ladder has a single root', () => {
-    for (const line of TECH_LINE_ORDER) {
-      const ranks = TECH_LINES[line];
-      ranks.forEach((id, i) => {
-        const requires = TECHNOLOGIES[id].requires;
-        // The FIRST requirement is the ladder: the parent major for rank I,
-        // the rank before for every rank after. A rank in era 2+ carries its
-        // era's keystone as a second requirement, which is the era gate.
-        if (i > 0) expect(requires[0], `${id} should follow ${ranks[i - 1]}`).toBe(ranks[i - 1]);
-        const extra = requires.slice(1);
-        expect(extra.length, `${id} has more than an era gate`).toBeLessThanOrEqual(1);
-        for (const k of extra) expect(k, `${id}'s second requirement is not a keystone`).toMatch(/^(Charter|Warband|Attunement)(II|III|IV)$/);
-      });
-    }
-  });
+  // A LADDER IS NOT A SHAPE. There is deliberately nothing here asserting
+  // that rank I hangs off a major or that rank II follows rank I: a numeral
+  // is a promise to the player that the bonus goes further down the book, and
+  // carries no mechanism at all. Every rank is an ordinary card gated by the
+  // row above it, wherever the designer puts it. What a ladder still owes is
+  // its NUMERALS running I…n (`techTreeRules.ts`) and every rank reaching the
+  // sim, which the cases below and `ladderEffects.test.ts` cover.
 
   // Every line hangs off a major technology, and rank I is unreachable before
   // it. A line rooted at nothing would float free of the tree entirely.
-  it('is locked behind the technology its line hangs off', () => {
+  it('is locked behind the technology its ladder hangs off', () => {
     const state = freshGame();
     fund(state, { Gold: 1_000_000 });
-    for (const line of TECH_LINE_ORDER) {
-      expect(lineParent(line), `${line} hangs off nothing`).not.toBeNull();
-      const first = TECH_LINES[line][0];
-      expect(canStartTech(state, first), `${line} I starts with no research`).toBe(false);
+    for (const ladder of bonusLadders) {
+      const first = ladders[ladder][0];
+      expect(canStartTech(state, first), `${ladder} I starts with no research`).toBe(false);
     }
   });
 });
@@ -371,11 +361,15 @@ describe('the era-2/3 lines reach their numbers', () => {
     const state = freshGame();
     state.landmarks.claimed[LANDMARKS[0].id] = true;
     state.ruinsCleared.HollowBarrow = true;
+    // A rank adds a tenth an hour to its own source, which is half again on
+    // top of the sheet's 0.2 — the rate is authored as a fraction of one an
+    // hour (2026-09-08), so the ranks that lift it are fractions too.
+    const step = 0.1;
     const base = knowledgePerHour(state);
     completeRanks(state, 'Wayposts', 1);
-    expect(knowledgePerHour(state)).toBe(base + 1);
+    expect(knowledgePerHour(state)).toBeCloseTo(base + step, 10);
     completeRanks(state, 'Vigils', 2);
-    expect(knowledgePerHour(state)).toBe(base + 1 + 2);
+    expect(knowledgePerHour(state)).toBeCloseTo(base + step + 2 * step, 10);
   });
 
   it('Scriptorium is a percentage on the whole drip', () => {
@@ -403,7 +397,7 @@ describe('the era-2/3 lines reach their numbers', () => {
   it('Scriveners shortens a research that starts AFTER it, not one already running', () => {
     const state = freshGame();
     fund(state, { Gold: 99_999 });
-    completeTech(state, 'Forestry');
+    completeRequirements(state, 'Saws');
     const full = TECHNOLOGIES.Saws.durationSeconds * 1000;
     expect(startTech(state, 'Saws', T0)).toBe('Started');
     expect(techCompletesAt(state, 'Saws')).toBe(T0 + full);
@@ -411,11 +405,14 @@ describe('the era-2/3 lines reach their numbers', () => {
     completeRanks(state, 'Scriveners', 2); // −10%, lands mid-research
     expect(techCompletesAt(state, 'Saws'), 'must not shorten what is on the desk').toBe(T0 + full);
 
-    // The next research is quicker.
+    // The next research is quicker — whichever one the page offers next, since
+    // what sits beside `Saws` is a drag away in `?dev=tree`.
     state.research.slotsPurchased = 1;
-    expect(startTech(state, 'Agriculture', T0)).toBe('Started');
-    expect(techCompletesAt(state, 'Agriculture'))
-      .toBe(T0 + Math.round(TECHNOLOGIES.Agriculture.durationSeconds * 1000 * 0.9));
+    const next = TECH_ORDER.find((id) => canStartTech(state, id));
+    expect(next, 'the fixture needs a second startable technology').toBeDefined();
+    expect(startTech(state, next!, T0)).toBe('Started');
+    expect(techCompletesAt(state, next!))
+      .toBe(T0 + Math.round(TECHNOLOGIES[next!].durationSeconds * 1000 * 0.9));
   });
 
   it('one-call replay equals stepped ticking with Scriveners landing mid-window', () => {
@@ -424,11 +421,13 @@ describe('the era-2/3 lines reach their numbers', () => {
     const setup = () => {
       const s = freshGame();
       fund(s, { Gold: 99_999, Knowledge: 99_999 });
-      // Charter IV is the six-hour keystone; Scriveners I is twenty minutes.
-      // Architecture brings Charter III and every era-2 major with it.
-      for (const id of TECHNOLOGIES.CharterIV.requires) completeTech(s, id);
+      // Warband IV is the six-hour keystone; Scriveners I is twenty minutes.
+      // They sit in different books, so each needs its own chain brought in.
+      for (const id of TECHNOLOGIES.WarbandIV.requires) completeTech(s, id);
+      for (const id of TECHNOLOGIES.ScrivenersI.requires) completeTech(s, id);
+      openEveryEra(s); // both keystones sit behind era bars
       s.research.slotsPurchased = 2;
-      expect(startTech(s, 'CharterIV', T0)).toBe('Started');   // long
+      expect(startTech(s, 'WarbandIV', T0)).toBe('Started');   // long
       expect(startTech(s, 'ScrivenersI', T0)).toBe('Started'); // short
       return s;
     };
@@ -442,9 +441,9 @@ describe('the era-2/3 lines reach their numbers', () => {
     expect(stepped.research.completed).toContain('ScrivenersI');
     // …and the keystone still on the desk lands at the pace it STARTED at, in
     // both paths alike — not five percent sooner because a rank arrived.
-    const authored = T0 + TECHNOLOGIES.CharterIV.durationSeconds * 1000;
-    expect(techCompletesAt(oneCall, 'CharterIV')).toBe(authored);
-    expect(techCompletesAt(stepped, 'CharterIV')).toBe(authored);
+    const authored = T0 + TECHNOLOGIES.WarbandIV.durationSeconds * 1000;
+    expect(techCompletesAt(oneCall, 'WarbandIV')).toBe(authored);
+    expect(techCompletesAt(stepped, 'WarbandIV')).toBe(authored);
     expect(stepped.research.completed).toEqual(oneCall.research.completed);
     expect(stepped.research.active).toEqual(oneCall.research.active);
   });
@@ -573,6 +572,7 @@ describe('Farsight reaches the fog', () => {
     // Research the rank through the real clock, so the re-discover fires
     // where it lives — inside the boundary walk.
     completeTech(state, 'ScalingTools');
+    openEveryEra(state);
     expect(startTech(state, 'FarsightI', T0)).toBe('Started');
     advance(state, map, T0 + TECHNOLOGIES.FarsightI.durationSeconds * 1000);
 
@@ -586,6 +586,7 @@ describe('Farsight reaches the fog', () => {
       const s = freshGame();
       fund(s, { Gold: 99_999, Knowledge: 99_999 });
       completeTech(s, 'ScalingTools');
+      openEveryEra(s);
       expect(startTech(s, 'FarsightI', T0)).toBe('Started');
       return s;
     };
@@ -601,8 +602,11 @@ describe('Farsight reaches the fog', () => {
 // The era-2/3 MAJORS that work against dials the game already had.
 describe('the era-2/3 majors that are live', () => {
   it('Aqueducts lets Housing reach level 3 with a third tier of beds', () => {
-    expect(DISTRICTS.Housing.maxLevel).toBe(3);
+    // Housing reaches 10 now; Aqueducts still owns the third tier, and it is
+    // the last technology on the ladder — every level above it is bought with
+    // goods and a Townhall level instead (Docs/plans/builder-30-days.md §4).
     expect(requiredTechForLevel('Housing', 3)).toBe('Aqueducts');
+    expect(requiredTechForLevel('Housing', 4)).toBe(null);
     expect(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 3))
       .toBeGreaterThan(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 2));
   });
@@ -653,10 +657,18 @@ describe('the era-2/3 majors that are live', () => {
     const state = freshGame();
     state.ruinsCleared.HollowBarrow = true;
     const drip = KNOWLEDGE.dripPerClearedRuinPerHour;
-    expect(knowledgePerHour(state)).toBe(drip);
+    // Against the yield the state actually carries: `completeTech` pulls in
+    // the chain above whatever it is asked for, and which technologies that
+    // is — including any that lift the whole drip — is the designer's to
+    // rearrange.
+    const yielded = (n: number): number => n * techMultiplier(state, 'knowledgeYield');
+    const base = KNOWLEDGE.basePerHour;
+    expect(knowledgePerHour(state)).toBe(base + drip);
     completeTech(state, 'Conquest');
-    expect(knowledgePerHour(state)).toBe(drip + KNOWLEDGE.conquestPerClearedRuinPerHour);
+    expect(knowledgePerHour(state))
+      .toBeCloseTo(yielded(base + drip + KNOWLEDGE.conquestPerClearedRuinPerHour));
     completeTech(state, 'SanctifiedRuins');
-    expect(knowledgePerHour(state)).toBe(drip * 2 + KNOWLEDGE.conquestPerClearedRuinPerHour);
+    expect(knowledgePerHour(state))
+      .toBeCloseTo(yielded(base + drip * 2 + KNOWLEDGE.conquestPerClearedRuinPerHour));
   });
 });

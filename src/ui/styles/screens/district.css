@@ -56,6 +56,10 @@
 /* Level as stars: a count you read rather than a fraction you parse. */
 .dc-stars { display: inline-flex; gap: 2px; margin: 1px 0 3px; }
 .dc-stars .icon.is-empty { filter: grayscale(1) brightness(1.35); opacity: 0.45; }
+/* Ten levels: one star and the count, since ten pips is a bar chart. Sizes
+   are inherited from .dc — the card's own helper size is what this is. */
+.dc-stars.is-numeral { align-items: center; gap: 3px; }
+.dc-stars.is-numeral span { opacity: 0.6; }
 
 .dc-portrait {
   flex: none;
@@ -249,6 +253,14 @@
 }
 .dc-army-note { color: var(--ink-muted); }
 .dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* What a decoration supplies, and — on the Townhall — what the city's whole
+ * beauty is paying for. Same shape as the army line above it: both are facts
+ * about the CITY that happen to be read on one building's card. */
+.dc-harmony {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: var(--text-helper);
+}
 
 /* ------------------------------------------------- the training section ---
  * Shared by every building that turns something out — the Townhall's

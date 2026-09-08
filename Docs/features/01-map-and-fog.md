@@ -97,7 +97,7 @@ Mountains:
 - Gold from a gold mountain is a second faucet beside housing taxes: a level-1
   Quarry with three men on gold is about 45 Gold a minute against roughly 120
   from a Townhall-1 city's rent ([`03-economy.md`](03-economy.md) §3).
-- `DeepSeams` asks for Mining only after the second Charter is sealed and the
+- `DeepSeams` asks for Mining only after `Bureaucracy` is done and the
   Knowledge for it has been paid in ([`12-quests.md`](12-quests.md)). A test
   walks the chain with zero drip to prove a follower is never short.
 
@@ -148,31 +148,33 @@ Authored per ring, doubling from ring 4, with a ×1.25 fallback past ring 10.
 | Found in the fog | Count | Gives | Verb |
 |---|---|---|---|
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
-| **Landmarks** | 10 | **+10 max Mana**, permanently, and a discover ring | claim |
-| **Ruins** | 5 | artifacts, ingredients, Stardust — a repeatable dungeon | delve |
+| **Landmarks** | 10 | **+10 max Mana**, permanently, and a discover ring | clear, then claim |
+| **Ruins** | 5 | artifacts, ingredients, Stardust — a repeatable dungeon | clear, then delve |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
   (including the ad reward, which is a whole pool) is larger.
 - A revealed ruin is a repeatable dungeon node, not a one-time pickup.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
   through the Discovered scrim once discovered.
+- **Every site is held by a garrison.** Discovering it starts a counter; clear
+  it before it raids, and the site is yours to claim or delve
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
 
 ### The landmark tiers
 
 Costs are **authored per sanctuary**, not derived from distance.
 
-| Tier | Cost | Count | Defended |
+| Tier | Cost | Count | Guard |
 |---|---|---|---|
-| The near one | **2,000** | 1 | no |
-| The middle ring | **25,000** | 5 | no |
-| The far ring | **100,000** | 4 | **all four** |
+| The near one | **2,000** | 1 | Orcs, strength 2 — the first fight |
+| The middle ring | **25,000** | 5 | strength 6–8 |
+| The far ring | **100,000** | 4 | a Drake, strength 30–36 |
 
-- The nearest sanctuary is the cheapest.
-- The defended set is the dearest tier: it needs the Gold *and* an army.
-- **Nothing writes `landmarks.cleared`** (clearing is designed, not built), so
-  the four defended landmarks are unreachable. Design:
-  [`15-social.md`](15-social.md) §6; question:
-  [`../open-questions.md`](../open-questions.md) OQ-35.
+- The nearest sanctuary is the cheapest, and its guard is the one the free hero
+  beats alone.
+- The far ring is the dearest tier: it needs the Gold *and* an army.
+- Every guard is authored on the sanctuary in `?dev=map`; clearing one is
+  [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md).
 
 ### The five ruins
 
@@ -186,7 +188,8 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 - Placed at BFS distance ~3 to ~12, so the tier ladder and the fog curve are the
   same ladder.
-- Full delve design: [`11-expeditions.md`](11-expeditions.md).
+- Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
+  [`combat.md`](combat.md).
 
 ## 7. Where the map is authored
 
@@ -202,6 +205,9 @@ Costs are **authored per sanctuary**, not derived from distance.
   moved and retuned but not added.
 - Landmarks have no code-side identity beyond their `kind`; they are fully
   editable.
+- Every landmark and ruin carries a `guard` — threat, strength, and its two
+  counters in minutes ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)
+  §2).
 
 ## 8. Dials, in the order to reach for them
 
@@ -212,6 +218,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Claim discover radius | 5 | `fog.claim_discover_radius` |
 | A building's reveal / discover radius | 1 / 2 | `Districts` sheet |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
+| A site's guard and its counters | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2 | the map editor |
 | Feature yields, taps, recovery | §3 | `Harvest` sheet |
 | The world itself | — | `?dev=map` |
 
@@ -225,5 +232,5 @@ Costs are **authored per sanctuary**, not derived from distance.
 - A Mine district.
 - A `base × growth^distance` curve for landmark costs.
 
-**Open questions:** OQ-1, OQ-48, OQ-49, OQ-50 in
+**Open questions:** OQ-49, OQ-50 in
 [`../open-questions.md`](../open-questions.md).

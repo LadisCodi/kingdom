@@ -30,7 +30,7 @@ import { FOG, KNOWLEDGE, LANDMARKS, type LandmarkDef } from './data/definitions'
 import { recordResourceDiscovery } from './discovery';
 import { fogState, recordVisibleSites } from './fog';
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
 import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
@@ -59,7 +59,7 @@ export const isLandmarkClear = (state: GameState, def: LandmarkDef): boolean =>
  */
 export const landmarkClaimCost = (state: GameState, def: LandmarkDef): number =>
   Math.max(1, Math.round(resolve(
-    state, 'claimCost', def.claimCost * Math.max(0, 1 - effect(state, 'Pilgrimage')),
+    state, 'claimCost', def.claimCost * Math.max(0, techValue(state, 'claimCost', 1)),
   )));
 
 export type ClaimResult =

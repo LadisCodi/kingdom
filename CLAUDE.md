@@ -10,7 +10,7 @@ game in five minutes. Then:
 | Where | What it holds |
 |---|---|
 | [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
-| `Docs/features/01`–`15` | **the live source of truth, one file per feature** |
+| `Docs/features/01`–`18` | **the live source of truth, one file per feature** |
 | [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`) |
 | [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
 
@@ -35,7 +35,10 @@ npm run art:characters   # Docs/art/characters/*.png → src/render/characters/ 
 reset). `?dev=kit` opens the UI primitive gallery. `?dev=map` opens the map
 editor (`Docs/map-editor.md`) — paint terrain and features, place
 landmarks and ruins; it saves straight into `src/sim/data/region-map.json`
-through a dev-only Vite middleware.
+through a dev-only Vite middleware. `?dev=tree` opens the tech tree editor
+(`Docs/tech-tree-editor.md`) — drag technologies into the slots of a tome
+page, which sets their requirements; it saves into
+`src/sim/data/tech-tree.json` the same way.
 
 ## Five invariants. Breaking one is a bug even if the tests pass.
 
@@ -65,36 +68,62 @@ a stream would desync because `advance()` groups work differently in replay
 than in live ticking, and a new consumer would shift every later roll. Integer
 arithmetic (`Math.imul`, `>>> 0`) so it is bit-identical across engines.
 
-**5. The workbook is the source of truth for every NUMBER; the map editor is
-the source of truth for the MAP.** `balance/balance.xlsx` → `npm run balance` →
-`src/sim/data/balance.json`. **Editing `balance.json` by hand is silently
-overwritten** on the next dev/build. To add a column: edit the JSON *and* the
-importer schema in `scripts/balance.mjs`, then `npm run balance:export`, then
-`npm run balance`.
-Map *content* — terrain, features, landmarks and ruins — is authored by
+**5. The workbook is the source of truth for every NUMBER; the map editor for
+the MAP; `?dev=tree` for the TECHNOLOGIES and the BANDS.** `balance/balance.xlsx` →
+`npm run balance` → `src/sim/data/balance.json`. **Editing `balance.json` by
+hand is silently overwritten** on the next dev/build. To add a column: edit the
+JSON *and* the importer schema in `scripts/balance.mjs`, then
+`npm run balance:export`, then `npm run balance`.
+Two kinds of content are **not numbers** and live outside the workbook.
+Map content — terrain, features, landmarks and ruins — is authored by
 coordinate, which a spreadsheet expresses badly, so it lives in
 `src/sim/data/region-map.json` and is edited in `?dev=map`
-(`Docs/map-editor.md`). `npm run balance` does not touch that file.
+(`Docs/map-editor.md`). A **technology is whole** in
+`src/sim/data/tech-tree.json`, edited in `?dev=tree`
+(`Docs/tech-tree-editor.md`): its name and glyph, what KIND it is
+(`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold, Knowledge and
+seconds, its slot on its tome's three-column page, and what it requires. What
+it SAYS is not authored at all — the card is generated from its unlocks or its
+effects (`src/sim/techProse.ts`), and only a `mechanic`, whose effect is code,
+carries written prose. The
+same file says what BANDS each book has and what each one asks for in revealed
+cells (`eras`), because a band and its gate are one fact and the count has to
+travel with the number. There is **no `Technologies` sheet and no `Eras`
+sheet** — a tree is a graph a designer arranges by
+dragging, and half of it in a spreadsheet was the thing that made creating one
+a four-file job. **A technology says what it opens**, so `Districts`,
+`Units` and `Harvest` have no `required_tech` columns either: every gate
+(`DISTRICTS[x].requiredTech`, `requiredTechPerLevel`, `extraCountTech`,
+`UNITS[x].requiredTech`, `HARVEST[x].requiredTech`, `terrainGate`) is derived
+from the technologies in `definitions.ts`. `npm run balance` does not touch
+`tech-tree.json`, and `?dev=tree` does not touch the workbook.
 What a legal map is lives in **one** place, `src/sim/data/mapRules.ts`, checked
-by the editor, by the save endpoint and by `tests/regionMap.test.ts`.
+by the editor, by the save endpoint and by `tests/regionMap.test.ts`; what a
+legal tech tree is lives in `src/sim/data/techTreeRules.ts`, checked the same
+three ways (`tests/techTree.test.ts`).
 
 ## Data or code?
 
 | Data — no code change | Code |
 |---|---|
-| every balance number (`Districts`, `Harvest`, `Technologies`, `Upgrades`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
+| every balance number (`Districts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
 | the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
-| a seasonal hero = one hero row + one banner row; a major technology's place on its tome page (`node_x`/`node_y`), its tome, era and Knowledge price; a minor line's ranks (row order) | a new tome or a new minor line (`TomeId` and `TechLineId` are unions), or a new effect hook for a line (`modifiers.ts`) |
+| a seasonal hero = one hero row + one banner row; **how many bands a book has and what each asks for** — `?dev=tree` creates and drops them per book | a new tome (`TomeId` is a union) |
+| **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements (prose only for a `mechanic`) — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
+| **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
+| **a decoration** = a `Districts` row with `harmony_supply` (one level, no crew), priced in goods through `build_cost_goods`, capped and Townhall-gated by `max_count_per_townhall_level`, discovered by a card in `?dev=tree`; **what a level demands** = `harmony_cost_per_level`, a TOTAL from level 1; the surplus tiers = `harmony.surplus_tiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
+| a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 
 ## Saves
 
-`SAVE_VERSION` is 29; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 32; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -137,6 +166,11 @@ than the build is rejected rather than downgraded.
   tap on the map.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a
   throttled background tab resolves correctly on return.
+- **An adjacency on a TIMER is priced when the timer starts and stored on the
+  thing waiting** (`TrainingItem.seconds`, `WorkshopItem.needMs`, and research
+  already did it): a neighbour that moves must never reprice a wait already
+  running. An adjacency on a RATE is computed on read. Neither is a modifier —
+  positional facts belong at the base stage.
 - **No emoji fallbacks.** `tests/icons.test.ts` refuses to let anything in the
   game quietly fall back to an emoji glyph.
 

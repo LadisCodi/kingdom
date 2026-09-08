@@ -121,6 +121,12 @@
 .rel-art {
   width: 44px;
   height: 44px;
+  /* The roster holds two shapes: the five original portraits are 128x128
+   * squares and the twenty-seven added on 2026-09-08 are 42x74 cards. Contain
+   * rather than fill, so a card letterboxes instead of being squashed to a
+   * square. A card-shaped roster tile would serve the new art better and is a
+   * separate piece of work. */
+  object-fit: contain;
   image-rendering: pixelated;
   border-radius: 8px;
   background: rgba(92, 58, 30, 0.1);

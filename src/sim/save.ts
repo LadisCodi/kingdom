@@ -12,8 +12,7 @@
 // keep running in real time).
 
 import {
-  GAME_VERSION, OFFLINE_CAP_HOURS, RUINS, SAVE_VERSION, TECHNOLOGIES, TECH_LINES,
-  tomeCoverPage,
+  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
 } from './data/definitions';
 import { harvestSpecAt } from './harvest';
 import { PAYER_PROFILES } from './store';
@@ -27,7 +26,7 @@ import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
   type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
-  type PayerProfile, type StoreSkuId, type TechLineId, type TomeId,
+  type PayerProfile, type StoreSkuId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -78,7 +77,7 @@ interface WorkerDto {
 interface WorkshopDto {
   DistrictUniqueID: string;
   Anchor: string;
-  Items?: Array<{ Good: string; WorkMs?: number }>;
+  Items?: Array<{ Good: string; WorkMs?: number; NeedMs?: number }>;
 }
 
 export const MIN_MIGRATABLE_VERSION = 16;
@@ -88,6 +87,33 @@ interface Migration {
   to: number;
   migrate: (modules: Record<string, any>) => void;
 }
+
+/**
+ * The levelled UPGRADE lines a save at version 23 could contain, and how many
+ * ranks each had when v24 turned them into technologies.
+ *
+ * **Frozen on purpose.** It describes a save written in the past, not the tree
+ * of today: it used to read the live `TECH_LINES`, so cutting a ladder in
+ * `?dev=tree` silently changed what an old save restored, and deleting the
+ * `line` field would have deleted the migrator's only map. A migrator is
+ * history — the shape of the world it reads stopped moving the day it shipped.
+ *
+ * No `SAVE_VERSION` bump: the saved shape (`Completed: string[]`) is unchanged.
+ */
+const LEGACY_UPGRADE_LINES: Record<string, number> = {
+  Barding: 3, Bearers: 3, BigNets: 3, Butchery: 3, Carpentry: 3, Cartage: 3,
+  Colours: 5, DeepWells: 5, Drillmaster: 3, Farsight: 3, Fletching: 3,
+  IronPicks: 3, Irrigation: 3, LeyTaps: 3, Manoeuvre: 3, MarketStall: 4,
+  MusterDrill: 3, Pathfinders: 3, Pilgrimage: 3, Pitons: 2, Prospecting: 3,
+  QuickHands: 5, Rations: 3, Resonance: 2, Sawpits: 3, Scriptorium: 3,
+  Scriveners: 3, Scythes: 3, ShieldWall: 3, Stonecutting: 3, Surveying: 2,
+  TapPower: 5, TradeRoutes: 5, Vigils: 3, Warhorns: 3, Wayposts: 3,
+  WorkerLoad: 3,
+};
+
+/** Rank ids are the stem plus a roman numeral, and five is the longest ladder
+ *  any of the lines above ever had. */
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
 /** Ordered, gap-free, append-only. A version bump with no reshape needs NO
  *  entry here — the defensive readers below already default the new field. */
@@ -151,7 +177,7 @@ const MIGRATIONS: readonly Migration[] = [
     //
     // `Upgrades: { TapPower: 3 }` becomes three completed techs,
     // `TapPowerI/II/III`. Ranks complete in order, so level N maps to the
-    // first N ids of the line and `lineRank` reads back exactly what the
+    // first N ids of the ladder and the tree reads back exactly what the
     // player had bought. A player mid-flight keeps every level they paid
     // for, and pays no research time for them a second time.
     to: 24,
@@ -163,10 +189,17 @@ const MIGRATIONS: readonly Migration[] = [
       if (levels !== undefined) {
         const completed = research.Completed ?? (research.Completed = []);
         for (const [line, level] of Object.entries(levels)) {
-          const ranks = TECH_LINES[line as TechLineId];
-          if (ranks === undefined) continue; // a line this build no longer has
-          for (const id of ranks.slice(0, level)) {
-            if (!completed.includes(id)) completed.push(id);
+          const ranks = LEGACY_UPGRADE_LINES[line];
+          if (ranks === undefined) continue; // a line that save's build had and this one does not
+          for (let i = 0; i < Math.min(level, ranks); i++) {
+            const id = `${line}${ROMAN[i]}`;
+            // Filtered against TODAY's tree, because a technology may have
+            // been renamed or cut in `?dev=tree` since. An id nothing has is
+            // dropped rather than carried: `load` filters it anyway, and a
+            // migrator that writes junk makes every later one harder to read.
+            if (TECHNOLOGIES[id as TechId] !== undefined && !completed.includes(id)) {
+              completed.push(id);
+            }
           }
         }
         delete research.UpgradeLevels;
@@ -174,34 +207,17 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    // v25 — tomes have COVER PAGES, granted by events in the world rather than
-    // researched (07-research.md §2). A save written before they
-    // existed has none, so every era-1 technology sits behind a requirement
-    // nothing will ever complete and the Civics page shows one lonely scroll.
+    // v25 — tomes had COVER PAGES, granted by events in the world rather than
+    // researched, and a save written before they existed had none.
     //
-    // Civics is always open — it is the game. Magic and Warfare are granted
-    // when the save shows the event that would have opened them already
-    // happened: a Magic technology done or a landmark claimed for Magic, a
-    // Warfare technology done or a ruin sighted for Warfare. Anyone short of
-    // those events opens them the ordinary way, on the next reveal or ruin.
+    // A NO-OP now, and kept because `MIGRATIONS` is append-only and gapless.
+    // Tome openness stopped being a technology: every book is simply open, so
+    // there is nothing to grant and nothing that can be shut. The ids this
+    // used to write no longer exist, and `load` filters ids the build does not
+    // have — so leaving the body in would put dead names in a save for one
+    // read and then drop them.
     to: 25,
-    migrate: (modules) => {
-      const research = modules['kingdom.research'] as { Completed?: string[] } | undefined;
-      if (research === undefined) return;
-      const completed = research.Completed ?? (research.Completed = []);
-      const grant = (id: string): void => { if (!completed.includes(id)) completed.push(id); };
-      const inTome = (tome: TomeId): boolean =>
-        completed.some((id) => TECHNOLOGIES[id as TechId]?.tome === tome);
-      const claimed = (modules['kingdom.landmarks'] as { Claimed?: string[] } | undefined)
-        ?.Claimed ?? [];
-      const keys = (modules['kingdom.discoveries'] as { Keys?: string[] } | undefined)?.Keys ?? [];
-      const ruinSeen = keys.some((k) => k.startsWith('site:')
-        && (Object.keys(RUINS) as string[]).includes(k.slice('site:'.length)));
-
-      grant(tomeCoverPage('Civics'));
-      if (inTome('Magic') || claimed.length > 0) grant(tomeCoverPage('Magic'));
-      if (inTome('Warfare') || ruinSeen) grant(tomeCoverPage('Warfare'));
-    },
+    migrate: () => {},
   },
   {
     // v26 — the Mine is gone as a building. The Quarry works every mountain
@@ -282,7 +298,9 @@ export function serialize(state: GameState, now: number): SaveFile {
             Workshops: Object.entries(state.city.workshops).map(([id, line]) => ({
               DistrictUniqueID: id,
               Anchor: iso(line.anchor),
-              Items: line.items.map((i) => ({ Good: i.good, WorkMs: i.workMs })),
+              Items: line.items.map((i) => ({
+                Good: i.good, WorkMs: i.workMs, NeedMs: i.needMs,
+              })),
             })),
             Districts: state.city.districts.map(
               (d): DistrictDto => ({
@@ -309,6 +327,9 @@ export function serialize(state: GameState, now: number): SaveFile {
               Trainee: i.trainee,
               BuildingID: i.buildingId,
               StartedAtUtc: isoOrNull(i.startedAt),
+              // Stamped with the clock, so a save reads back the wait the
+              // player was promised rather than today's neighbours.
+              Seconds: i.seconds,
             })),
             LastManaAt: iso(state.city.lastManaAt),
           },
@@ -431,6 +452,8 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.gacha': {
         PullCounts: state.gacha.pullCounts,
         PityCounters: state.gacha.pityCounters,
+        LegendaryPity: state.gacha.legendaryPity,
+        FreePulls: state.gacha.freePulls,
       },
       // The ad offer. `ReadyAt` is a TIMER, so it is not shifted by the
       // offline cap below — the cap limits what the city produces, never what
@@ -525,7 +548,12 @@ export function deserialize(
     for (const w of (cityDto.Workshops ?? []) as WorkshopDto[]) {
       state.city.workshops[w.DistrictUniqueID] = {
         anchor: ms(w.Anchor),
-        items: (w.Items ?? []).map((i) => ({ good: i.Good as GoodId, workMs: i.WorkMs ?? 0 })),
+        items: (w.Items ?? []).map((i) => ({
+          good: i.Good as GoodId,
+          workMs: i.WorkMs ?? 0,
+          // Pre-30: no stamp, so the authored work is what it owes.
+          needMs: i.NeedMs,
+        })),
       };
     }
     state.city.districts = (cityDto.Districts as DistrictDto[]).map(
@@ -557,6 +585,9 @@ export function deserialize(
       trainee: i.Trainee,
       buildingId: i.BuildingID,
       startedAt: msOrNull(i.StartedAtUtc),
+      // A pre-30 save has no stamp: the authored duration is what it was
+      // running on anyway (`itemTrainSeconds`).
+      seconds: i.Seconds ?? null,
     }));
     // ---- migrating a save written before the two queues became one ----
     // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
@@ -569,6 +600,7 @@ export function deserialize(
         trainee: i.UnitID,
         buildingId: i.BuildingID,
         startedAt: msOrNull(i.StartedAtUtc),
+        seconds: null,
       });
     }
     if (cityDto.TrainingStartedAt) {
@@ -582,6 +614,7 @@ export function deserialize(
           trainee: 'Villager',
           buildingId: hall?.uniqueId ?? '',
           startedAt: n === 0 ? startedAt : null,
+          seconds: null,
         });
       }
     }
@@ -673,7 +706,11 @@ export function deserialize(
   const researchDto = modules['kingdom.research'];
   if (researchDto) {
     state.research = {
-      completed: [...((researchDto.Completed ?? []) as TechId[])],
+      // Filtered against the build: a technology the tree no longer has (one
+      // deleted in `?dev=tree`) would otherwise sit in `completed` for ever,
+      // summed into every total and indexed by anything that trusts the list.
+      completed: ((researchDto.Completed ?? []) as TechId[])
+        .filter((id) => TECHNOLOGIES[id] !== undefined),
       active: ((researchDto.Active ?? []) as
         Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
         (a) => ({
@@ -766,6 +803,8 @@ export function deserialize(
     state.gacha = {
       pullCounts: { ...(gachaDto.PullCounts ?? {}) },
       pityCounters: { ...(gachaDto.PityCounters ?? {}) },
+      legendaryPity: { ...(gachaDto.LegendaryPity ?? {}) },
+      freePulls: { ...(gachaDto.FreePulls ?? {}) },
     };
   }
 

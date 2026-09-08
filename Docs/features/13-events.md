@@ -58,6 +58,7 @@ Six parts. Every authored event is a skin on them.
 | Buying a **Wonder level** | [`16-wonders.md`](16-wonders.md) |
 | Extracting from a **delve** | scales with depth |
 | Claiming a **landmark**, clearing a **ruin** depth | |
+| Clearing a **garrison**, repelling a **raid** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
 | **Taps** | low rate |
 | The **daily chest** | one lump a day |
 | A **rewarded video** | capped; the third ad placement |
@@ -104,7 +105,10 @@ threshold   free reward         paid reward
 - Every event has a hard deadline.
 - Points earned are banked; a milestone reached is paid; a collectible won is
   kept. What ends is the chance to earn more.
-- Refused: raids, theft, decay, hunger, and timers that destroy progress.
+- Refused inside an event: theft, decay, hunger, and timers that destroy
+  progress. The one raid in the game is a garrison's
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)), and it is bounded
+  there.
 - **OQ-19.**
 
 ## 3. Session budget

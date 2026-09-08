@@ -58,7 +58,16 @@
   line-height: 1.25;
   min-height: 2.5em; /* keeps the cost row aligned across cards */
 }
-.bld-cost { margin-top: 2px; }
+/* Currencies, refined goods and Harmony all sit in one wrapping row: they
+ * are one price, told apart by their marks rather than by their position. */
+.bld-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
 .bld-cost .k-chips { justify-content: center; }
 .bld-meta {
   display: flex;
@@ -67,6 +76,39 @@
   gap: 6px;
   margin-top: 4px;
   font-family: var(--font-body);
+  color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------- harmony ---
+ * `supply / demand` above the grid, and what a surplus is paying. It reads
+ * as a fact about the city rather than as a warning — until supply falls
+ * behind demand, when the number is the thing standing between the player
+ * and the next level. */
+
+.bld-harmony {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  font-size: var(--text-helper);
+  color: var(--ink);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+}
+.bld-harmony.is-short { border-color: var(--clay); color: var(--clay); }
+.bld-harmony-note { margin-left: auto; color: var(--ink-muted); }
+.bld-harmony.is-short .bld-harmony-note { color: var(--clay); }
+
+/* A category heading between two grids. Decorations buy a different thing
+ * from every building above them, so they are found by the category. */
+.bld-section {
+  margin: 14px 0 8px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink-muted);
 }
 

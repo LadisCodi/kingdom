@@ -1,11 +1,12 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { DISTRICTS, KINGDOM_DEF, TECHNOLOGIES,
+import { BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import { RUSH } from './data/definitions';
 import {
-  buildDurationForCell, buildCost as buildCostFormula, canMoveDistrict, nextBuildCost,
+  buildDurationForCell, buildCost as buildCostFormula, buildGoodsCost, canMoveDistrict,
+  nextBuildCost,
   districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
@@ -25,7 +26,8 @@ import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
 import { canAfford, pay, refund } from './wallet';
-import { canAffordGoods, payGoods } from './goods';
+import { canAffordGoods, payGoods, refundGoods } from './goods';
+import { harmonyBlock } from './harmony';
 import {
   advanceWorkshops, completeWorkshopItems, isWorkshop, nextWorkshopCompletion, reanchor,
   type GoodMade,
@@ -87,11 +89,31 @@ export function buyBuilder(state: GameState): BuyBuilderResult {
   return 'Purchased';
 }
 
+export type BuyKeysResult = 'Purchased' | 'NotEnoughGems';
+
+/**
+ * Buy gacha keys with Gems — the one place Gems reach the banners since a
+ * pull stopped costing them directly (`heroes.ts#pullPrice`).
+ *
+ * Not a store SKU: a SKU is real money and grants Gems, and the importer
+ * refuses a `Store` row that does not. This is the shape the second builder
+ * already uses — a Gem-priced card the store shows without owning.
+ */
+export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysResult {
+  const def = BANNERS[banner];
+  const cost = def.keyGemCost * count;
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  addToWallet(state.player.wallet, def.key, count);
+  return 'Purchased';
+}
+
 /** `NoBuilderFree`, not `QueueFull`: nothing is queued and nothing waits —
  *  every builder is already on a job. It is the moment the Gem offer exists
  *  for (`Docs/features/06-construction.md`). */
 export type EnqueueBuildResult =
-  | 'Started' | 'NoBuilderFree' | 'NotEnoughResources' | 'InvalidCell';
+  | 'Started' | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods'
+  | 'NeedsHarmony' | 'InvalidCell';
 
 export function enqueueBuild(
   state: GameState,
@@ -100,10 +122,21 @@ export function enqueueBuild(
   cell: Coord,
 ): EnqueueBuildResult {
   if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
+  // Harmony and the goods are told apart from the cell before it is, because
+  // the answer to each is a different errand — build a decoration, queue at a
+  // workshop, or pick another spot — and `InvalidCell` would name none of
+  // them.
+  if (harmonyBlock(state, DISTRICTS[definitionId], 1) !== null) return 'NeedsHarmony';
   if (placementBlock(state, map, definitionId, cell) !== null) return 'InvalidCell';
   const cost = nextBuildCost(state, definitionId);
+  // Three purses: the wallet, the stockpile, and the city's own beauty. The
+  // goods are paid when the build is QUEUED and refunded in full on cancel —
+  // the rule a workshop item already follows.
+  const goods = buildGoodsCost(definitionId);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
+  if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
   pay(state.city.wallet, cost);
+  payGoods(state.city.goods, goods);
   const district: District = {
     uniqueId: newId(state, `district_${definitionId}`),
     definitionId,
@@ -177,7 +210,7 @@ export function moveDistrict(
 
 export type UpgradeResult =
   | 'Started' | 'AtMaxLevel' | 'AlreadyUpgrading' | 'RequirementsNotMet'
-  | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods';
+  | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods' | 'NeedsHarmony';
 
 export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
   const district = districtById(state, districtUniqueId);
@@ -200,6 +233,10 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   const goods = upgradeGoodsCost(district.definitionId, district.level + 1);
   if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
   if (!canAffordGoods(state.city.goods, goods)) return 'NotEnoughGoods';
+  // The third errand: the decorations. Asked once, here, and never read
+  // again — the level this buys keeps its demand for good, but nothing ever
+  // takes it back (Docs/plans/builder-30-days.md §6.1).
+  if (harmonyBlock(state, def, district.level + 1, district) !== null) return 'NeedsHarmony';
   pay(state.city.wallet, cost);
   payGoods(state.city.goods, goods);
   state.city.queue.push({
@@ -228,6 +265,7 @@ export function cancelQueueItem(state: GameState, itemId: string): CancelResult 
     // Refund recomputed with the count AFTER removal, matching what was paid.
     const cost = buildCostFormula(district.definitionId, districtCount(state, district.definitionId));
     refund(state.city.wallet, cost);
+    refundGoods(state.city.goods, buildGoodsCost(district.definitionId));
   }
   return 'Cancelled';
 }
@@ -391,11 +429,18 @@ function applyDueAt(
     }
     const finished = advanceResearch(state, t);
     out.completedResearch.push(...finished);
-    // Farsight widens what every STANDING building can see, not only the next
-    // one built — so a rank landing re-applies each district's fog radii. It
-    // happens here, inside the walk, because this is where the map is; and it
-    // is deterministic, so replay and stepped ticking discover the same cells.
-    if (finished.some((id) => TECHNOLOGIES[id].line === 'Farsight')) {
+    // A technology that widens sight widens what every STANDING building can
+    // see, not only the next one built — so one landing re-applies each
+    // district's fog radii. It happens here, inside the walk, because this is
+    // where the map is; and it is deterministic, so replay and stepped ticking
+    // discover the same cells.
+    //
+    // Keyed on the STAT rather than on Farsight by name: a second technology
+    // that moves `discoverRadius` — a different tome's, a later era's — needs
+    // this same sweep, and asking "does it move the radius?" is a question the
+    // data answers.
+    if (finished.some((id) => TECHNOLOGIES[id].effects.some(
+      (e) => e.stat === 'discoverRadius'))) {
       for (const d of state.city.districts) {
         if (d.state === 'Built') revealAroundDistrict(state, map, d);
       }

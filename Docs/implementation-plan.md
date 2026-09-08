@@ -44,15 +44,17 @@ because they constrain what a *design* may ask for.
    consumer would shift every later roll for every existing player. Integer
    arithmetic, so it is bit-identical across engines and portable to a server.
 5. **The workbook is the source of truth for every NUMBER; the map editor is the
-   source of truth for the MAP.** Editing the generated balance JSON by hand is
-   silently overwritten.
+   source of truth for the MAP; `?dev=tree` for the TECH TREE.** Editing the
+   generated balance JSON by hand is silently overwritten.
 
 Two more that are design-visible:
 
-- **Effects resolve base → upgrade levels → modifier stack.** All adds summed,
-  then all muls multiplied; an empty stack is the bit-exact identity. **Upgrade
-  levels are not re-expressed as modifiers** — they are persisted as levels,
-  purchasable and priced on a curve, and converting them would buy nothing.
+- **Effects resolve base → the completed technologies → modifier stack.** The
+  tree's own stage sums what it aims at that number and is the exact identity
+  when it aims at nothing; then all adds summed, all muls multiplied, an empty
+  stack the bit-exact identity. **Neither a building level nor a researched
+  technology is re-expressed as a modifier** — a modifier is something that
+  happened to you and expires; both of those are facts about your kingdom.
 - **An additive save change needs no migrator.** Every module read is already
   defensive, so a new module key or a new optional field is a version bump.
   **Migrators exist only for renames, reshapes and semantic changes** — and a
@@ -63,7 +65,7 @@ Two more that are design-visible:
 | Feature | Doc | State |
 |---|---|---|
 | The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** |
-| Currencies, taxes, the Market, adjacency | [`03`](features/03-economy.md) | **built** — one adjacency rule (OQ-48) |
+| Currencies, taxes, the Market, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, cost curves, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
@@ -71,10 +73,11 @@ Two more that are design-visible:
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
 | Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **built** — two holes, §3 |
-| Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks |
+| Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks. **Superseded by the 2026-09-08 rewrite**: ruins become depths of rooms ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)) and combat becomes a tick auto-battler ([`combat.md`](features/combat.md)) — designed, unbuilt |
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03 |
 | The timeline, the weekly event, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
+| **Garrisons and raids — defend your village** | [`18`](features/18-garrisons-and-raids.md) | **designed 2026-09-08**, unbuilt — Step 7 |
 | **Wonders — the ladder with no top** | [`16`](features/16-wonders.md) | **designed, reviewed and closed 2026-09-03.** Unstarted and deliberately unsequenced — late-game by construction, and the game's only unbounded sink |
 
 **The load-bearing assertion holds at every step** — across a research
@@ -89,11 +92,10 @@ each has an answer, or has one waiting in a doc.
 | # | Hole | Where |
 |---|---|---|
 | ~~**H0**~~ | ~~**The tap mints matter, and the economy has no ceiling.**~~ **FIXED 2026-09-03** — §4 step 0. | [`04`](features/04-harvest.md) |
-| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. A visible dead end, and the only thing that would give combat a job outside dungeons. | design in [`15`](features/15-social.md) §6; needs **OQ-35** |
+| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. A visible dead end, and the only thing that would give combat a job outside dungeons. **Design closed 2026-09-08** — every site gets a garrison and a solo assault writes the flag; built by **Step 7**. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
 | **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. Give it a job or delete the field. | [`10`](features/10-heroes.md) §9 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §9 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
-| **H5** | **Adjacency is one rule** against thirteen districts. Pure data, and downstream of a bounded plot. | needs **OQ-1**, then **OQ-48** |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
 | **H7** | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
@@ -216,10 +218,9 @@ TABLE** — Gold cost on a growth curve, effect linear in the level, and no
   `upgradeDistrict`-shaped. Plus **one call site per Wonder** — `harvest.ts:88`,
   `mana.ts:61`, `upgrades.ts:157` — which is the honest bound on the set size
   (§7.1).
-- **It raises the price of leaving OQ-1 open.** An endless ladder on a *placed*
-  building with a deliberately oversized footprint is only a decision while
-  ground is scarce — so this is the third thing waiting on a bounded plot, after
-  adjacency v2 (OQ-48) and expansions.
+- **What its oversized footprint costs, now the plot is unbounded** (OQ-1
+  closed 2026-09-07): the fog that revealed the ground, and the adjacency the
+  footprint displaces. Not the ground itself.
 - **Size:** days, whenever it is scheduled.
 
 ### Step 1 · The tome rework — **the shape is closed; the authoring is not**
@@ -252,13 +253,17 @@ OQ-12 and OQ-13* is now **blocked only on numbers**:
 **A sixth, taken 2026-09-03 from a reference layout: the page is a vertical
 spine at most three columns wide, with branch and join nodes, and a tier gate is
 a JOIN NODE** ([`07`](features/07-research.md) §2.1, §2.2). **This is the
-piece that makes decision 4 affordable.** §2 names the real bottleneck — *the
-layout is authored content* — and a bounded vertical page deletes it rather than
-testing it: **a node authors its tome, its column (0–2) and its requires, and
-its row is derived** by longest-path layering. `node: {x, y}` goes away, and
-with it the only test in the repository protecting a UI decision (all but the
-same-column-skip case). **Authoring twenty new nodes stops also meaning
-authoring twenty positions that must not collide.**
+piece that makes decision 4 affordable.** §2 named the real bottleneck — *the
+layout is authored content*.
+
+**Answered the other way, 2026-09-07: the layout stays authored, and got a
+tool.** Deriving the row by longest-path layering would have deleted the
+bottleneck and the authoring control with it — a designer who cannot say
+*this branch reads left of that one* is not laying out a tree, they are
+accepting one. `?dev=tree` ([`tech-tree-editor.md`](tech-tree-editor.md)) makes
+authoring 180 positions a drag rather than a spreadsheet column, and
+`techTreeRules.ts` catches the collisions that made hand-authoring risky —
+checked as you drag, on save, and in CI.
 
 **And a fifth, taken the same day, which pulls a second feature into this
 rework: the four relic ACTIVES become tome SPELLS**
@@ -330,13 +335,24 @@ Warrior` and `Forestry → Attunement` are the only two cross-tome prerequisites
 left, and both have to go (§6.2). **Forestry gating the Barracks and the Sanctum
 was never saying anything.**
 
-**Where it lands, and the one code step that has to come first.** Tome, column,
-tier and the join threshold are columns on the `Technologies` sheet, and the
-workbook owns them — so **the importer schema in `scripts/balance.mjs` has to
-learn them before any of this can be authored**, following the procedure
-`CLAUDE.md` already documents: edit the JSON *and* the schema, then
-`npm run balance:export`, then `npm run balance`. `node: {x, y}` comes out in
-the same pass.
+**Where it lands.** **The whole technology came out of the workbook**
+(2026-09-07). The `Technologies` sheet is gone and so are the three id lists
+that shadowed it: a technology is one object in `tech-tree.json` — name, prose,
+glyph, kind, unlocks, **what numbers it moves**, Gold, Knowledge, seconds,
+tome, band, slot, requirements — authored in `?dev=tree`
+([`tech-tree-editor.md`](tech-tree-editor.md)), which can also CREATE one.
+`TechId` is that file's keys, so the type follows the data. A technology now
+says what it opens, so `Districts`, `Units` and `Harvest` lost their
+`required_tech` columns and every gate is derived.
+
+A bonus followed (2026-09-07): the 37 minor `line`s and their per-line hooks
+are gone, and a technology carries `effects` — a `stat` from a registry, an
+`op`, a signed `value` and what it aims at. A kind of bonus nothing has yet is
+now a target rather than a call site; a new NUMBER is still code, one registry
+entry plus the reader that owns it.
+
+What the workbook still owns is every other number, including the `Eras`
+sheet — how many revealed cells each era bar asks for.
 
 **What is still undecided and does not block starting:** the band sizes
 (**OQ-62** — the three tomes will not want the same shape), the join thresholds
@@ -353,7 +369,7 @@ question** rather than a content question, which is why it comes early despite
 belonging to a post-prototype structure.
 
 - **Design:** [`02-map-scopes.md`](features/02-map-scopes.md) §6.
-- **Blocked on: OQ-1.** And once it lands, **OQ-48** (adjacency v2) becomes worth
+- **OQ-1 closed 2026-09-07 — the plot is not bounded.** **OQ-48** (adjacency v2) is worth
   doing and is the best design-depth-per-hour in the repository.
 - **Also do:** let the save record which *scope* a thing is in. **Cheap now,
   impossible later** — the save is the only artefact that cannot be changed
@@ -419,11 +435,11 @@ evaporating.**
 2. Neighbours, daily help with a cap, gifts drained at load.
 3. Guilds and membership.
 4. The guild week: the bar, contributions, threshold chests.
-5. **The siege** — which is what finally writes the cleared flag and closes H1.
+5. **The siege** — the world map's co-op encounter. (The province's
+   garrisons and H1 are Step 7.)
 
 - **Design:** [`15-social.md`](features/15-social.md) — complete.
-- **Blocked on: OQ-35** (how a siege resolves — the design has an answer that
-  scales from one player to ten, and it needs signing off), **OQ-33** (guild
+- **Blocked on: OQ-33** (guild
   ranked or cooperative), **OQ-34** (help touches whose state), **OQ-36**,
   **OQ-38**, **OQ-39**. And **OQ-7** and **OQ-10** if ingredients ship with it.
 - **Depends on:** Step 3's build-speed modifier stat.
@@ -470,10 +486,66 @@ their systems.
 - **Plan:** [`plans/builder-30-days.md`](plans/builder-30-days.md) — eleven
   steps, data before logic before UI, each closing with its own tests and a
   row in a thirty-day pacing harness.
+- **Built:** steps 1–5 — the thirty-day harness, the goods stockpile, the four
+  workshops ([`features/17-workshops-and-goods.md`](features/17-workshops-and-goods.md)),
+  levels 5–10 of every building priced in goods
+  ([`features/buildings.md`](features/buildings.md) §4.11) and adjacency v2
+  ([`features/03-economy.md`](features/03-economy.md) §3.1); next is step 6,
+  Harmony and the decorations.
 - **Blocked on:** nothing for steps 1–4 (harness, goods, workshops, levels
-  6–7); **OQ-48** for adjacency v2; **OQ-1** and **OQ-71** for Harmony; the
+  6–7); the
   banner's home (`14-monetization.md` §2.1) for the Tavern.
 - **Size:** weeks; steps 2–4 alone are about two.
+
+### Step 7 · Garrisons and raids — defend your village
+
+**The army's second job, and the doorway to combat.** Every ruin and landmark
+is held by a garrison; discovering one starts a minute-scale counter; when it
+runs out the garrison raids the city for a bounded, recoverable slice of the
+banked materials; a hero and a party clear it through the expedition sheet.
+**This is the step that reopened promise 1**, on purpose and in writing
+([`overview.md`](overview.md)), and it closes **H1**.
+
+- **Design:** [`18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md) — complete.
+- **Blocked on: nothing.** Every number is **OQ-72** and needs the playtest;
+  **OQ-73** (a defence lever) and **OQ-74** (full or partial restitution) do
+  not change the shape.
+- **What it costs, and where invariant 1 has to hold:**
+  - state: a `garrisons` module — per site `{rousedAt, nextRaidAt, trips,
+    hoard}`, `cleared`, the raid reports — absorbing `landmarks.cleared`;
+    `SAVE_VERSION` 32. A save whose sites are already visible carries
+    `rousedAt: null` and is stamped **inside `advance()`** from
+    `state.lastAdvance` (invariant 3), with its full warning; a landmark
+    already claimed is written cleared.
+  - rousing happens where `recordSiteDiscovery` already sweeps (build
+    completion) **and at military-hall completion**, stamped with that
+    boundary's `t`.
+  - `nextBoundary`: the earliest `nextRaidAt` and the assault's arrival;
+    two `applyDueAt` branches. Minute-scale periods with a three-trip cap stay
+    far under `MAX_BOUNDARY_STEPS`.
+  - `combat.ts`: `resolveGarrison` on the existing `effectiveAttack` /
+    `resolveDepth` maths; `homeDefence(state, threat)` over `availableRoster`
+    **minus assault parties**, plus heroes in neither a delve nor an assault.
+  - the city's rate per material: the crews' gather rate the harvest module
+    already exposes, plus the tax rate the daily chest already prices against
+    for Gold — no third rate.
+  - `expeditions.ts`: assault launch and arrival; the claim and the delve
+    launch read `garrisons.cleared`.
+  - `mapRules.ts` and `?dev=map`: the `guard` field on every site.
+  - the workbook: a `Garrisons` sheet (take seconds, supplies per tier) and
+    `raid.*` / `march.*` settings; the importer schema.
+  - quests: the `ClearGarrisons` goal type, the `DriveThemOut` row, the
+    onboarding reordered ([`12-quests.md`](features/12-quests.md) §2) and its
+    beat test renumbered.
+  - UI: the raid widget in the Mana-refill offer's slot (z 4), the raid sheet
+    in `#overlay`, the site tap routing to it while a garrison stands, the
+    expedition sheet's assault mode, five camp sprites.
+- **Gate:** the replay assertion holds across a raid landing during an
+  absence; a week away with three camps roused is nine raids and never more;
+  the reordered onboarding plays through `DriveThemOut` and `OldStones`
+  unfunded with `Mapmakers` still affordable; no army ⇒ never roused; a party
+  parked at a checkpoint is not a defender.
+- **Size:** about a week — the sim half is small, the UI half is most of it.
 
 ## 5. Deliberately after everything above
 
@@ -508,7 +580,7 @@ exists to remove.**
 | Content | Home | Tool |
 |---|---|---|
 | **Every number** — districts, harvest, technologies, upgrades, quests, currencies, units, relics, heroes, adjacency, settings | `balance/balance.xlsx` → generated JSON | the workbook, then the importer |
-| **The map** — terrain, features, landmarks, ruins | `region-map.json` | **`?dev=map`** ([`map-editor.md`](map-editor.md)) |
+| **The map** — terrain, features, landmarks, ruins, **and the garrison on each site** | `region-map.json` | **`?dev=map`** ([`map-editor.md`](map-editor.md)) |
 | **Event and banner schedules** | a live-ops data file | hand-written — wall-clock dates are not balance numbers |
 
 Data versus code, in one table:
@@ -519,8 +591,9 @@ Data versus code, in one table:
 | **the whole map**, in the editor | a new terrain or feature id, or a sixth ruin |
 | the whole quest chain — **row order is chain order** | a new modifier stat (one line plus one call site) |
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
-| a seasonal hero = one hero row + one banner row | tech-tree node positions — `node_x` / `node_y` are authored content ([`07`](features/07-research.md) §2.2) |
+| a seasonal hero = one hero row + one banner row; **the whole shape of the tech tree**, in `?dev=tree` | a rule about what a legal tech tree is (`techTreeRules.ts`) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
+| a garrison's threat, strength and counters, per site in the editor; take seconds and supplies per tier in the workbook | the `ClearGarrisons` goal type; a lever that moves a raid (OQ-73) |
 
 ## 7. Testing conventions worth keeping
 

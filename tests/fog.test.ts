@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER,
+  DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, recordVisibleSites, revealAroundDistrict,
@@ -183,12 +183,12 @@ describe('exploring pays in ground, not in currency', () => {
 
     const near = { x: 3, y: 1 }; // ring 2
     while (revealTap(state, map, near) === 'Paid') { /* pay it off */ }
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
 
     const far = { x: 4, y: 1 }; // ring 3, reachable now
     expect(townhallDistance(map, far)).toBe(3);
     while (revealTap(state, map, far) === 'Paid') { /* pay it off */ }
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
   });
 
   it('the tech tree is priced against what the CITY earns, in Gold', () => {
@@ -196,22 +196,24 @@ describe('exploring pays in ground, not in currency', () => {
     // edit that puts the tree out of reach fails here rather than in
     // playtest.
     //
-    // 550,165, up from 6,600. The 15 levelled upgrades became 49 ranked
-    // technologies and brought their Gold with them, and the three tomes
-    // added nine keystones on top — each priced at ~40% of the era it closes,
-    // so a gate reads as a real gate without dwarfing what it gates.
-    // 07-research.md calls a tree the quest chain funds twice over
-    // "not a sink, a formality"; this is the other side of that.
+    // 519,830 in Gold. It was 6,600 before the 15 levelled upgrades became
+    // ranked technologies, 520,165 when the three tomes added their
+    // keystones, 485,330 when Civics became a whole book (2026-09-08: 67
+    // cards, two planned ones cut, the ranks re-priced for their rows), and
+    // it went back up by 34,500 when the four decoration technologies joined
+    // Civics' third band the same day. 07-research.md calls a tree the quest
+    // chain funds twice over "not a sink, a formality"; this is the other
+    // side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(550_165);
-    // Every tech is Gold plus, from era 2 on, Knowledge — the research clock
-    // (07-research.md §3). Never materials: a full quarry buys no
-    // research, which is what keeps the tree in the same contest as fog and
-    // buildings.
+    expect(tree).toBe(519_830);
+    // Every tech is Gold AND Knowledge, era 1 included since the clock gained
+    // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
+    // materials: a full quarry buys no research, which is what keeps the tree
+    // in the same contest as fog and buildings.
     for (const id of TECH_ORDER) {
       const keys = Object.keys(TECHNOLOGIES[id].cost);
       expect(keys.every((k) => k === 'Gold' || k === 'Knowledge'), `${id} costs ${keys}`).toBe(true);
-      if (TECHNOLOGIES[id].era === 1) expect(keys, `${id} is era 1`).not.toContain('Knowledge');
+      expect(keys, `${id} is priced in the clock`).toContain('Knowledge');
     }
   });
 });

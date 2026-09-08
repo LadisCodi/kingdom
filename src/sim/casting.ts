@@ -20,7 +20,7 @@ import {
   coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
 } from './state';
 import { isAttuned, ownsArtifact } from './artifacts';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 
 export type CastBlock =
   | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget' | 'NotAttuned';
@@ -46,7 +46,7 @@ export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
 export function castCost(state: GameState, id: ArtifactId): number {
   const active = ARTIFACTS[id].active;
   if (active === null) return 0;
-  const bought = active.manaCost * Math.max(0, 1 - effect(state, 'Resonance'));
+  const bought = active.manaCost * Math.max(0, techValue(state, 'activeCost', 1));
   return Math.max(0, Math.round(resolve(state, 'activeCost', bought)));
 }
 

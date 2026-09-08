@@ -254,7 +254,8 @@ function step(
         w.claimedCell = null;
         setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));
       } else {
-        setState(w, 'Working', t, t + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!]));
+        setState(w, 'Working', t,
+          t + workerStrikeMs(state, HARVEST[harvestSourceAt(state, cell)!], building));
       }
       break;
     }
@@ -271,7 +272,8 @@ function step(
       // — not on arrival home. That is what stops the player and the worker
       // taking the same wood twice: a load in transit is already out of the
       // ground, and the cell shows a stump while it is still being carried.
-      w.carrying = drawFromCell(state, map, cell, spec, effectiveWorkerStrike(state, spec), t);
+      w.carrying = drawFromCell(
+        state, map, cell, spec, effectiveWorkerStrike(state, spec, building), t);
       w.carriedSource = w.carrying > 0 ? source : null;
       if (w.carrying > 0) strikes.push({ cell, source });
       setState(w, 'MovingHome', t, t + moveMs(state, cell, building.location));

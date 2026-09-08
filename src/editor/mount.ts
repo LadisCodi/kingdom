@@ -665,7 +665,13 @@ export function mountEditor(): void {
 
   function buildStatus(): void {
     status.replaceChildren();
-    status.append(el('span', { class: 'ed-readout' }, readout()));
+    // The way back. The tool replaces the game rather than sitting inside it,
+    // so leaving is a navigation — and the `beforeunload` above is what stops
+    // it taking unsaved cells with it.
+    const back = el('button', { class: 'ed-btn', type: 'button', title: 'back to the game' },
+      '← game');
+    back.onclick = () => { location.search = '?dev'; };
+    status.append(back, el('span', { class: 'ed-readout' }, readout()));
 
     const spacer = el('span', { class: 'ed-spacer' });
     const undo = el('button', { class: 'ed-btn', type: 'button', title: 'Ctrl+Z' }, '↶ Undo');

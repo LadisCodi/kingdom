@@ -103,7 +103,7 @@ Not in the set:
 - A Gold Wonder (§3.1).
 - A fog-discount Wonder — relics already do that (**OQ-23**).
 - A combat Wonder — the army cap is a city-building decision
-  ([`11`](11-expeditions.md)).
+  ([`combat.md`](combat.md) §14).
 - A build-speed Wonder — waits for `buildSpeed` to land as a modifier stat with
   the event archetype ([`implementation-plan.md`](../implementation-plan.md)
   Step 2); one row after that, a code change before it.
@@ -202,17 +202,18 @@ and the effective helpers that own each stat.
   existing guarantees the helper exists.
 - This bounds the set: a fourth Wonder is a row and a line; a tenth is ten
   lines across the sim. Ten Wonders is not ten rows of data (OQ-6, OQ-57).
-- Resolution order: base → upgrade levels → modifier stack. **A Wonder level is
-  an upgrade level, not a modifier.** The Wonder term goes beside the
-  `effect(state, …)` term in each helper, inside the value handed to
-  `resolve()` — never as a synthetic entry on the modifier stack.
+- Resolution order: base → the completed technologies → modifier stack. **A
+  Wonder level belongs to the base stage, not the modifier stack.** The Wonder
+  term goes inside the `techValue(state, …)` the helper already hands to
+  `resolve()` — never as a synthetic entry on the stack.
 
-## 8. The plot
+## 8. The ground
 
-- An endless ladder on a placed building is a decision only while ground is
-  scarce.
-- This feature depends on **OQ-1** and raises the price of leaving it open, as
-  **OQ-48** (adjacency v2) does.
+- A Wonder stands on the province with a footprint deliberately larger than it
+  needs (§5.1), and the ground is the half of its price that is not Gold.
+- The plot is not bounded (OQ-1 closed 2026-09-07), so that ground is not
+  scarce in itself: what a big footprint costs is **the fog that revealed it**
+  and the **adjacency** it displaces ([`03-economy.md`](03-economy.md) §3.1).
 
 ## 9. What the player sees
 
@@ -274,4 +275,4 @@ differs in three ways:
 - Generated orders as the repeating Gold sink ([`12-quests.md`](12-quests.md)
   §6).
 
-**Open questions:** **OQ-57**, **OQ-58**, **OQ-59**, **OQ-1** (§8).
+**Open questions:** **OQ-57**, **OQ-58**, **OQ-59**.

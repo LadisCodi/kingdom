@@ -4,8 +4,7 @@
 // in real time through the unified advance (like the build queue).
 
 import {
-  DISTRICTS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
-  tomeCoverPage,
+  DISTRICTS, ERA_UNLOCK_CELLS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
 } from './data/definitions';
 import {
   addToWallet, getWallet,
@@ -32,8 +31,8 @@ export type Unlock =
  * gates interleaved, as authored) then units, matching the sequence players
  * already see.
  *
- * A MINOR RANK unlocks nothing here, and that is correct: what it gives is its
- * own numeric effect, which the info panel reads off `effectPerRank`.
+ * A BONUS unlocks nothing here, and that is correct: what it gives is the
+ * numbers it moves, which the card reads off its own `effects`.
  */
 export function techUnlocks(id: TechId): Unlock[] {
   const unlocks: Unlock[] = [];
@@ -62,8 +61,10 @@ export function techUnlocks(id: TechId): Unlock[] {
  * rich city cannot skip an era. Neither alone works at this size — Gold can
  * size a tree but cannot pace it.
  *
- * Era 1 costs no Knowledge: the clock has not started yet, and the opening
- * runs on Gold and time exactly as it did before the clock existed.
+ * EVERY era costs Knowledge, era 1 included (2026-09-08): the clock runs from
+ * the first minute on a base rate, and a new kingdom is granted enough to pay
+ * for the opening chain's cards (`Currencies.Knowledge.start`). Before that
+ * the clock only started once the player held ground, so era 1 had to be free.
  *
  * Minor ranks cost both too. What separates a minor from a major is how much,
  * and nothing else — the tree says "small" with money and a clock, which is
@@ -103,13 +104,47 @@ export const isTechActive = (state: GameState, id: TechId): boolean =>
 export const requirementsMet = (state: GameState, id: TechId): boolean =>
   TECHNOLOGIES[id].requires.every((req) => isTechComplete(state, req));
 
+// --------------------------------------------------------------- era gates
+
+/**
+ * How much of the region the player has actually uncovered.
+ *
+ * Paid reveals only — the cells a building merely *discovered* are ones the
+ * player has seen, not ones they have opened, and the era bar is priced in
+ * the second thing. It is the same count the `DiscoverCells` quest goal
+ * follows, so the two never disagree about what exploring means.
+ */
+export const revealedCellCount = (state: GameState): number =>
+  Object.keys(state.fog.revealed).length;
+
+/**
+ * Is a band of a book open?
+ *
+ * Era 1 opens with the book. Every band after it is a gate in the WORLD, not
+ * a research (Docs/features/07-research.md §2.1): the page continues once
+ * enough of the region has been opened up, so the tree paces on exploring
+ * rather than on a keystone the player can buy while standing still. The
+ * keystones are still there — they are ordinary technologies that each raise
+ * a real dial — they just no longer hold the door.
+ */
+export const eraUnlocked = (state: GameState, tome: TomeId, era: number): boolean =>
+  era <= 1 || revealedCellCount(state) >= ERA_UNLOCK_CELLS[tome][era];
+
+/** Cells still to reveal before a band opens; 0 once it is open. */
+export const eraShortfall = (state: GameState, tome: TomeId, era: number): number =>
+  Math.max(0, (era <= 1 ? 0 : ERA_UNLOCK_CELLS[tome][era]) - revealedCellCount(state));
+
+/** Is the band this technology sits in open? */
+export const techEraUnlocked = (state: GameState, id: TechId): boolean =>
+  eraUnlocked(state, TECHNOLOGIES[id].tome, TECHNOLOGIES[id].era);
+
 /** Concurrent research slots: Settings base + gem-bought extras. */
 export const techSlots = (state: GameState): number =>
   Math.min(RESEARCH_SETTINGS.techSlots + state.research.slotsPurchased, RESEARCH_SETTINGS.maxSlots);
 
 export type StartTechResult =
   | 'Started' | 'AlreadyDone' | 'AlreadyActive' | 'MissingRequirement'
-  | 'NoFreeSlot' | 'NotEnoughResources';
+  | 'EraLocked' | 'NoFreeSlot' | 'NotEnoughResources';
 
 /**
  * Could the player start this tech this second? Every gate `startTech` checks,
@@ -131,10 +166,14 @@ export const isGranted = (id: TechId): boolean =>
   techCost(id) === 0 && TECHNOLOGIES[id].durationSeconds === 0;
 
 export const canStartTech = (state: GameState, id: TechId): boolean =>
-  !isGranted(id)
+  // A technology in the editor's holding pen is on no page, so there is no
+  // card to press and nothing should light the tab on its behalf.
+  TECHNOLOGIES[id].placed
+  && !isGranted(id)
   && !isTechComplete(state, id)
   && !isTechActive(state, id)
   && requirementsMet(state, id)
+  && techEraUnlocked(state, id)
   && state.research.active.length < techSlots(state)
   && canAffordTech(state, id);
 
@@ -142,13 +181,49 @@ export const canStartTech = (state: GameState, id: TechId): boolean =>
 export const anyResearchActionable = (state: GameState): boolean =>
   TECH_ORDER.some((id) => canStartTech(state, id));
 
+// ------------------------------------------------------------- tree fog
+
+/**
+ * How much of a technology the page shows
+ * ([`Docs/features/07-research.md`](../../Docs/features/07-research.md) §5.2).
+ *
+ * A fact about the TREE rather than about pixels, which is why it lives here
+ * and not in the screen that draws it: the screen turns `silhouette` into a
+ * dashed `?` and `hidden` into nothing, and that is all it decides.
+ */
+export type TechVisibility = 'normal' | 'silhouette' | 'hidden';
+
+/**
+ * **normal** — researched, researching, or buyable right now.
+ * **silhouette** — every prerequisite is NORMAL, so what comes next appears as
+ * soon as the card before it can be read. Waiting until the player had
+ * committed to the step before meant a tree nobody could plan a route through:
+ * the next `?` only ever appeared once you had already paid.
+ * **hidden** — everything else.
+ *
+ * ONE step deep. A silhouette does not reveal its own children, so the far end
+ * of a book stays a promise and the frontier stays a legible edge rather than
+ * the whole page at half opacity.
+ */
+export function techVisibility(state: GameState, id: TechId): TechVisibility {
+  // Not recursive, deliberately: `revealed` IS the `normal` test, and asking
+  // it of the requirements is the one step.
+  const revealed = (t: TechId): boolean =>
+    isTechComplete(state, t) || isTechActive(state, t) || requirementsMet(state, t);
+  if (revealed(id)) return 'normal';
+  if (TECHNOLOGIES[id].requires.every(revealed)) return 'silhouette';
+  return 'hidden';
+}
+
 export function startTech(state: GameState, id: TechId, now: number): StartTechResult {
   // A cover page is granted by an event in the world, so asking to research
-  // one is asking for something that has not happened yet.
-  if (isGranted(id)) return 'MissingRequirement';
+  // one is asking for something that has not happened yet. Same answer for a
+  // technology the tree editor left off the page: it is not in the game.
+  if (isGranted(id) || !TECHNOLOGIES[id].placed) return 'MissingRequirement';
   if (isTechComplete(state, id)) return 'AlreadyDone';
   if (isTechActive(state, id)) return 'AlreadyActive';
   if (!requirementsMet(state, id)) return 'MissingRequirement';
+  if (!techEraUnlocked(state, id)) return 'EraLocked';
   if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
   if (!canAffordTech(state, id)) return 'NotEnoughResources';
   addToWallet(state.city.wallet, 'Gold', -techCost(id));
@@ -193,20 +268,22 @@ export function advanceResearch(state: GameState, toTime: number): TechId[] {
  * before its cover page, so this is the one gate that decides whether a book
  * exists for the player at all.
  */
-export const isTomeOpen = (state: GameState, tome: TomeId): boolean =>
-  isTechComplete(state, tomeCoverPage(tome));
+/**
+ * Every book is open, always.
+ *
+ * Opening one used to be a TECHNOLOGY — a free, instant cover page granted by
+ * an event in the world (the first paid reveal for Magic, the first ruin in
+ * sight for Warfare) and by `newGame` for Civics. The card existed only to be
+ * the marker, so the three of them were free clicks that did nothing, and the
+ * era bars already pace a book by what the player has revealed. So the marker
+ * is gone and the shelf shows three tabs from the first minute.
+ *
+ * Kept as a function rather than deleted at the call sites: a book that is
+ * shut is a real thing to want back (a fourth tome bought with Gems, a
+ * seasonal book), and this is the one place it would go.
+ */
+export const isTomeOpen = (_state: GameState, _tome: TomeId): boolean => true;
 
-/** Open a tome, if it is not open already. Idempotent: it is called from
- *  events that fire many times (every reveal, every fog recalculation) and
- *  must cost nothing after the first. */
-export function openTome(state: GameState, tome: TomeId): boolean {
-  const cover = tomeCoverPage(tome);
-  if (isTechComplete(state, cover)) return false;
-  state.research.completed.push(cover);
-  return true;
-}
-
-/** The tomes the player can currently read. */
 export const openTomes = (state: GameState): TomeId[] =>
   (Object.keys(TOMES) as TomeId[]).filter((t) => isTomeOpen(state, t));
 

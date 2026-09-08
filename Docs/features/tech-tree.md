@@ -1,22 +1,26 @@
 # The tech tree — every node, era by era
 
 > **Scope.** The **content** of the three tomes: every node, what each unlocks,
-> the minor lines, the price bands that pace them, and the effect hooks the
-> lines drive. The **system** — technologies, tomes, eras, keystones,
-> Knowledge, slots, the screen — is [`07-research.md`](07-research.md).
+> the rank ladders, the price bands that pace them, and the numbers those
+> ladders move. The **system** — technologies, tomes, eras and the bars that
+> open them, Knowledge, slots, the screen — is
+> [`07-research.md`](07-research.md); where a card SITS and what it requires is
+> [`../tech-tree-editor.md`](../tech-tree-editor.md).
 > `src/sim/data/definitions.ts` points at this file.
 >
-> **Status.** Built: **180 technologies** in the `Technologies` sheet, priced
-> to §5's bands, with every §6 effect hook in. **17 era-2/3 majors are on the
-> tree flagged `planned`** — drawn, researchable, no effect yet (§7). **Nine
-> minor lines are designed, not built**, and are marked so in the tables.
+> **Status.** Built: **178 technologies** in `src/sim/data/tech-tree.json`,
+> authored in `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)),
+> priced to §5's bands, with every §6 number wired. **15 era-2/3 majors are on the
+> tree flagged `planned`** — drawn, researchable, no effect yet (§7); Civics
+> carries none. **Nine ladders are designed, not built**, and are marked so in
+> the tables.
 
 ## 1. Reading the tables
 
 - **Major** unlocks content; **minor** is one numeric step with a roman
-  numeral; the **spine** is the tome's keystone line
-  ([`07-research.md`](07-research.md) §1.1, §2.1).
-- Node counts per era include that era's spine rank and every rank row.
+  numeral. There is no spine: nothing gates a band but the era bar, which asks
+  for revealed cells ([`07-research.md`](07-research.md) §1.1, §2.1).
+- Node counts per era include every rank row.
 - **Ranks by era** reads era 1 / era 2 / era 3: `I·II / III·IV / V` means
   ranks I and II land in era 1, III and IV in era 2, V in era 3; `—` is no
   rank that era.
@@ -26,72 +30,94 @@
 
 ## 2. Tome I — Civics — 71 nodes
 
-> *The city and its purse.* Open from the start.
+> *The city and its purse.* Open, like every book.
 
-**Spine.**
+**What raises the Townhall.** Two ordinary cards, gates derived from their
+`unlocks` like any other — placed where the designer puts them, not holding a
+door.
 
-| Rank | Cost | Grants |
+| Card | Band | Unlocks |
 |---|---|---|
-| `Charter I` | free, granted at game start | — |
-| `Charter II` | keystone | Townhall 3 |
-| `Charter III` | keystone | Townhall 4 |
-| `Charter IV` | sealed | Townhall 5 |
+| `Bureaucracy` | era 2 | Townhall 3 |
+| `Magistracy` | era 3 | Townhall 4 |
 
-### 2.1 Era 1 · Settlement — 16 nodes
+Civics runs to **three bands**; Warfare and Magic run to four.
+
+### 2.1 Era 1 · Settlement — 19 nodes
 
 | Major | Unlocks |
 |---|---|
 | **Forestry** | the forest and berry taps |
+| **Agriculture** | crop plots |
 | **Saws** | the Sawmill |
-| **Agriculture** | crop plots and the Farm that works them |
+| **Farming** | the Farm that works the plots |
 | **Masonry** | the Quarry |
+| **Market** | the Market |
 | **Urban Planning** | Housing level 2 |
 
-### 2.2 Era 2 · Township — 20 nodes
+The band opens on one root and fans twice: Masonry and the Market split the
+page, and Urban Planning gathers them again before the three thumb ladders
+hang off it.
+
+### 2.2 Era 2 · Township — 17 nodes
 
 | Major | Unlocks |
 |---|---|
+| **Bureaucracy** | Townhall 3 |
 | **Hunting** | the wild game tap |
-| **Farming** | Farm level 2 |
-| **Market** | the Market |
-| **Mining** | the iron vein — the Quarry works it for Stone |
+| **Mining** | the Smelter, and the iron mountain the Quarry works for Stone |
 | **Communities** | +1 resident in every Housing |
 
-### 2.3 Era 3 · Borough — 34 nodes
+### 2.3 Era 3 · Borough — 35 nodes
 
 | Major | Unlocks |
 |---|---|
-| **Engineering** | Quarry L2, Sawmill L3 |
-| **Deep Mining** | the gold mountain — the Quarry works it for Gold |
-| **Architecture** | Quarry L3, Sawmill L4 |
+| **Magistracy** | Townhall 4 — the card the band opens on |
+| **Engineering** | Sawmill L3, Quarry L2, the Carpenter and the Mason's Yard |
 | **Aqueducts** | Housing L3 |
+| **Architecture** | Sawmill L4, Quarry L3 |
+| **Deep Mining** | the gold mountain — the Quarry works it for Gold |
 | **Guildhalls** | a second Market (`extra_count_tech` on the district) |
 | **Roadworks** | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |
-| **Land Survey** *(planned)* | +1 influence radius on every district |
-| **Apprenticeships** *(planned)* | the Townhall trains two villagers at once |
+| **Gardening** | the Garden and the Orchard — the first decorations, under Engineering |
+| **Sculpture** | the Well and the Statue — cut stone for the eye, under Architecture |
+| **Paving** | the Plaza, under Guildhalls |
+| **Sacred Grounds** | the Shrine, under Scriveners II — the last thing the band opens |
 
-### 2.4 Civics minor lines
+The four decoration cards sit where their pieces' Townhall gates fall
+([`18-harmony.md`](18-harmony.md)): a piece is DISCOVERED here and then waits
+on the count cap its row on the `Districts` sheet gives it, so the build sheet
+never shows a decoration the player has not read about.
 
-| Line | Effect per rank | Ranks by era |
+Civics carries **no `planned` card**. With every requirement one row up (§2.4,
+[`07-research.md`](07-research.md) §2), a card that does nothing yet is a toll
+on the way to one that does — `Land Survey` and `Apprenticeships` were cut when
+the book was laid out rather than parked mid-page.
+
+### 2.4 Civics rank ladders
+
+A ladder is a NAME, not a chain. Rank II does not require rank I and need not
+sit near it: the numeral tells the player the bonus goes further down the book,
+and every rank is an ordinary card gated by the row above it like any other.
+
+| Ladder | Effect per rank | Ranks by era |
 |---|---|---|
-| **Tap Power I–V** | +1 per collect tap | I·II / III·IV / V |
-| **Trade Routes I–V** | +10% tax income | — / I·II / III·IV·V |
-| **Quick Hands I–III** | −0.05 s between auto-taps while holding | I / II / III |
-| **Worker Load I–III** | +1 per worker delivery | I / II / III |
-| **Sawpits I–III** | +1 Wood per worker delivery | I / II / III |
-| **Scythes I–III** | +1 Food per tap on a crop plot | I / II / III |
-| **Stonecutting I–III** | +1 Stone per worker delivery | I / II / III |
-| **Carpentry I–III** | −5% district build time | I / II / III |
-| **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | I / II |
-| **Butchery I–III** | +1 Food per tap on game | — / I / II |
-| **Irrigation I–III** | +1 Food per delivery from a farm | — / I / II |
-| **Iron Picks I–III** | +1 Stone per delivery from a vein | — / I / II |
-| **Market Stall I–III** | +5% Market sale prices | — / I / II |
-| **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — / I / II |
-| **Load-Bearing I–III** *(designed, not built)* | +1 Stone per tap on rocks | — / — / I |
-| **Scriveners I–III** | −5% research time | — / — / I |
-| **Cartage I–III** | +5% worker move speed | — / — / I |
-
+| **Tap Power I–V** | +20% of what a tap is worth | I / II / III·IV·V |
+| **Quick Hands I–V** | −0.05 s between auto-taps while holding | I / II / III·IV·V |
+| **Trade Routes I–V** | +10% tax income | I / II / III·IV·V |
+| **Market Stall I–IV** | +5% Market prices | I / II / III·IV |
+| **Worker Load I–III** | +1 on every worker delivery | I / II / III |
+| **Stonecutting I–III** | +1 Stone per tap and delivery on a mountain | I / II / III |
+| **Carpentry I–III** | −5% time to build and upgrade | I / II / III |
+| **Sawpits I–III** | +1 Wood per tap and delivery from a forest | I / II / III |
+| **Irrigation I–III** | +1 Food per tap and delivery from a farm plot | I / II / III |
+| **Butchery I–III** | +1 Food per tap and delivery from wild game | — / I·II / III |
+| **Iron Picks I–III** | +1 Stone per tap and delivery from an iron mountain | — / I·II / III |
+| **Scriveners I–III** | −5% time to finish a research | — / — / I·II·III |
+| **Cartage I–III** | +5% worker walking speed | — / — / I·II·III |
+| **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | — |
+| **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — |
+| **Load-Bearing I–III** *(designed, not built)* | +1 Stone per tap on rocks | — |
 ## 3. Tome II — Warfare — 52 nodes
 
 > *The army, and what it goes into the ground for.* Opens on your first
@@ -102,11 +128,11 @@
 | Rank | Cost | Grants |
 |---|---|---|
 | `Warband I` | free, granted when the tome opens | — |
-| `Warband II` | keystone | the four halls reach L4; **veteran** units can be recruited |
-| `Warband III` | keystone | halls L5; **champion** units |
+| `Warband II` | era 2 | the four halls reach L4; **veteran** units can be recruited |
+| `Warband III` | era 3 | halls L5; **champion** units |
 | `Warband IV` | sealed | — |
 
-- A unit tier is a spine grant, never an era leaf: it arrives with the army
+- A unit tier arrives with the army
   cap that fields it.
 
 ### 3.1 Era 1 · The Levy — 9 nodes
@@ -124,7 +150,6 @@
 | Major | Unlocks |
 |---|---|
 | **Veterancy** *(planned)* | heroes gain levels from delving |
-| **Siegecraft** *(planned)* | a party can clear a **defended landmark** |
 | **Tactics** | the type-disadvantage penalty softens, 0.75 → 0.85 (through the `Drill`) |
 | **Scouting** *(planned)* | a ruin's threat type shows before you launch |
 
@@ -137,9 +162,9 @@
 | **Standards** *(planned)* | army power cap rises with military hall level |
 | **Conquest** | +3 Knowledge/h per cleared ruin, on top of the cleared rate ([`07-research.md`](07-research.md) §3) |
 
-### 3.4 Warfare minor lines
+### 3.4 Warfare rank ladders
 
-| Line | Effect per rank | Ranks by era |
+| Ladder | Effect per rank | Ranks by era |
 |---|---|---|
 | **Colours I–V** | +2 army power cap | I / II·III / IV·V |
 | **Shield Wall I–III** | +1 DEF to Melee units | I / II / III |
@@ -164,13 +189,13 @@
 | Rank | Cost | Grants |
 |---|---|---|
 | `Attunement I` | free, granted when the tome opens | — |
-| `Attunement II` | keystone | Sanctum L4 and a step in the Mana ceiling |
-| `Attunement III` | keystone | Sanctum L5 and another step |
+| `Attunement II` | era 2 | Sanctum L4 and a step in the Mana ceiling |
+| `Attunement III` | era 3 | Sanctum L5 and another step |
 | `Attunement IV` | sealed | — |
 
-- The Sanctum itself is unlocked by **Consecration** in era 1; the spine only
+- The Sanctum itself is unlocked by **Consecration** in era 1; the ladder only
   raises what already exists.
-- `Attunement` is a spine name, not a technology; the quest `Attuned` targets
+- `Attunement` names the Magic ladder; the quest `Attuned` targets
   `Consecration`.
 
 ### 4.1 Era 1 · The Awakening — 13 nodes
@@ -191,7 +216,7 @@
 | **Sailing** | sea cells become explorable |
 | **Scaling Tools** | mountain cells become explorable |
 | **Lorekeeping** *(planned)* | ruins give up more of what they hold |
-| **Wayshrines** *(planned)* | a **cleared** defended landmark becomes claimable, and claim costs drop |
+| **Wayshrines** *(planned)* | landmark claim costs drop |
 | **Ley Lines** *(planned)* | a district adjacent to the Sanctum produces +10% — the first adjacency rule that is not Housing↔Housing; [`02-map-scopes.md`](02-map-scopes.md) §1.1 is the precondition |
 | **Frugal Rites** *(planned)* | some taps cost no Mana |
 
@@ -206,9 +231,9 @@
 | **Ley Storm** *(planned)* | once a day, cast a kingdom-wide +25% production window |
 | **Second Sanctum** | a second Sanctum may be built (`extra_count_tech` on the district) |
 
-### 4.4 Magic minor lines
+### 4.4 Magic rank ladders
 
-| Line | Effect per rank | Ranks by era |
+| Ladder | Effect per rank | Ranks by era |
 |---|---|---|
 | **Deep Wells I–V** | +10 max Mana | I·II / III·IV / V |
 | **Surveying I–II** | +1 Gold of reveal progress per tap on the fog | I / II |
@@ -232,67 +257,93 @@
 
 | | Minor | Major | Keystone |
 |---|---|---|---|
-| **Era 1** | 40–150 G · 20–60 s | 200–500 G · 2–5 min | 800 G · 40 K · 15 min |
-| **Era 2** | 250–800 G · 20–60 K · 3–8 min | 1,000–2,500 G · 80–200 K · 15–30 min | 5,000 G · 500 K · 1 h |
-| **Era 3** | 1,500–5,000 G · 150–400 K · 20–45 min | 6,000–15,000 G · 600–1,500 K · 1–3 h | 30,000 G · 3,000 K · 6 h |
+| **Era 1** | 40–150 G · **1 K** · 20–60 s | 200–500 G · **2 K** · 2–5 min | 800 G · 2 K · 15 min |
+| **Era 2** | 250–800 G · 1–3 K · 3–8 min | 1,000–2,500 G · 4–10 K · 15–30 min | 5,000 G · 25 K · 1 h |
+| **Era 3** | 1,500–5,000 G · 8–25 K · 20–45 min | 6,000–15,000 G · 30–75 K · 1–3 h | 30,000 G · 150 K · 6 h |
+
+- **Knowledge is authored in TENS, and the rate in fractions of one an hour**
+  ([`07-research.md`](07-research.md) §3). Both were divided by twenty on
+  2026-09-08 — halved when the clock gained a base rate so the builder's
+  ladder could run on a calendar, then halved by ten again because a research
+  priced in thousands of a currency that drips in ones is a number nobody can
+  hold in their head. **Era 1 pays it too**, 1 for a rank and 2 for a major,
+  against a starting grant of 25.
 
 - The bands are the design; the exact rows are the workbook's.
-- **Era 1 costs no Knowledge.**
-- Majors climb across their band left to right along the era row; a line's
-  ranks climb across theirs by position within the era.
+- **Era 1 costs Knowledge too** — 1 or 2, out of the opening grant.
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **550,165 Gold and 50,495 Knowledge**, of which the three sealed
-  era-4 keystones are 90,000 Gold and 9,000 Knowledge.
+- Whole tree: **519,830 Gold and 2,442 Knowledge**, of which the two
+  sealed era-4 keystones are 60,000 Gold and 300 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 4,265 | 0 |
-| 2 | 49,650 | 3,820 |
-| 3 | 406,250 | 37,675 |
+| 1 | 4,445 | 58 |
+| 2 | 46,600 | 171 |
+| 3 | 408,785 | 1,913 |
+| 4 | 60,000 | 300 |
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
   are about **eight weeks** at 30/h and **five and a half** at 45/h.
-- The quest chain funds the **opening** — every era-1 technology and the
-  keystone that closes it. Era-2 majors (Sailing, Scaling Tools, Surveying II)
-  are the city's to earn; the onboarding test's Gold guarantee is scoped to the
+- The quest chain funds the **opening** — every era-1 technology and the first
+  rank that follows. It also asks for enough exploring to open era 2 before it
+  points at anything in it (`tests/quests.test.ts`). Era-2 majors are the
+  city's to earn; the onboarding test's Gold guarantee is scoped to the
   opening.
 
-## 6. Effects and hooks
+## 6. Effects
 
-### 6.1 Where a line hangs
+### 6.1 Where a ladder hangs
 
-- **Stopgap parents.** A line whose intended major is planned hangs off the
+- **Stopgap parents.** A ladder whose intended major is planned hangs off the
   nearest built major and moves when its own arrives: Deep Wells and
   Scriptorium under Consecration, Ley Taps and Wayposts under Cartography,
   Vigils under Scaling Tools, Pilgrimage under Sailing, Prospecting under
   Shipbuilding, Scriveners under Architecture, Cartage under Roadworks.
-- **Three lines per major** is the fan's limit (`tests/research.test.ts`).
+- Every rank has a slot of its own on the page, so nothing limits how many
+  ladders hang off one major any more; what a ladder still needs is a MAJOR at
+  its root, not another ladder's rank (`tests/upgrades.test.ts`).
 - Quest targets: `Surveyors` → `SurveyingII` (goal type `CompleteTech`; a rank
   implies the ones below it), `Attuned` → `Consecration`, `ArmedMen` →
   `Warrior`, `Mapmakers` → `Cartography`, `Architect` → `Architecture`
   ([`12-quests.md`](12-quests.md)).
 
-### 6.2 `ModifierStat` hooks
+### 6.2 The stats a ladder moves
 
-| Hook | Line(s) | Note |
+A `bonus` names a **stat** from the registry
+([`../../src/sim/data/techEffectRules.ts`](../../src/sim/data/techEffectRules.ts)),
+an `op`, a signed `value` and an optional `target`
+([`07-research.md`](07-research.md) §1.2). The registry is the list; each entry
+names the one call site that owns its number, and
+`tests/techTree.test.ts` refuses a stat nothing reads.
+
+| Stat | Ladder(s) | Note |
 |---|---|---|
+| `tapWorkSeconds` · `autoTapCooldown` | Tap Power, Quick Hands | |
+| `harvestUnitsPerStrike` | Sawpits, Irrigation, Butchery, Stonecutting, Big Nets, Iron Picks | **aimed at a harvest source**, so two ladders on `Crops` simply sum. The tap and the crew both read it |
+| `workerStrikeUnits` | Worker Load | the crew only — deliberately not the tap |
+| `workerSpeed` | Cartage | |
 | `buildTime` | Carpentry | |
 | `researchTime` | Scriveners | fixed at research start ([`07-research.md`](07-research.md) §1) |
-| `workerSpeed` | Cartage | |
+| `salePrice` | Market Stall | **multiplier POINTS**, not a percentage of the level multiplier |
+| `taxRate` | Trade Routes | aimable at a kind of house; the shipped ladder is unaimed |
 | `manaCap` | Deep Wells | |
-| `claimCost` | Pilgrimage | |
-| `stardustYield` | Prospecting | |
+| `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
 | `knowledgeYield` | Scriptorium | |
-| per-source Knowledge / Mana terms | Ley Taps, Wayposts, Vigils | |
+| `activeCost` | Resonance | |
+| `revealCost` · `fogRevealPerTap` · `discoverRadius` | Pitons, Surveying, Farsight, **Cartography** | Cartography is +100% on `fogRevealPerTap` like a Surveying rank, so the ×1 → ×2 → ×3 → ×4 ladder is four rows of data and nothing names it in code. `discoverRadius` is every building's fog-**discover** radius, never its reveal radius; a rank landing re-applies every standing building's radii inside `advance()` |
+| `claimCost` | Pilgrimage | |
 | `armyCap` | Colours | adds to the cap the halls provide; nothing to a kingdom with no hall |
 | `recruitCost` | Muster Drill | |
-| `supplyCost` | Rations | |
-| `haulLoss` | Bearers | floors at one fifth |
-| `heroXp` | Drillmaster | |
-| `delveSpeed` | Pathfinders | |
-| unit ATK/DEF by tag, disadvantage penalty | Shield Wall, Fletching, Barding, Warhorns, Manoeuvre, Tactics | `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party`. Manoeuvre never softens past neutral |
-| `discoverRadius` | Farsight | every building's fog-**discover** radius, never its reveal radius. A rank landing re-applies every standing building's radii inside `advance()` |
+| `unitAtk` · `unitDef` | Warhorns, Fletching, Shield Wall, Barding | **aimed at a unit tag**, so a Cavalry reads its two tags plus the unaimed term once. `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party` |
+| `typeDisadvantage` | Manoeuvre | never softens past neutral. `Tactics` moves the same number and stays a `mechanic`: as an effect it would re-associate the sum, and float addition is not associative |
+| `supplyCost` · `delveSpeed` · `haulLoss` | Rations, Pathfinders, Bearers | `haulLoss` floors at one fifth |
+| `heroXp` · `stardustYield` | Drillmaster, Prospecting | |
+| `populationCapacity` | **Communities** | +1 bed globally, which is what "every district that houses anyone" means: a district with no capacity table is not a house. Aimable at one kind of house |
+
+Every one of these is ALSO a `ModifierStat` where a modifier can reach it
+(`src/sim/modifiers.ts`), resolved in the same helper — three stages, one
+place.
 
 Stats the tree moves: build time · research time · unit ATK/DEF by tag · Mana
 capacity · Mana regen · discover radius · influence radius · worker move speed
@@ -303,8 +354,7 @@ Sanctum adjacency bonus.
 
 ### 6.3 Mechanics behind planned majors (designed, not built)
 
-**Siegecraft** (clearing a defended landmark, [`15-social.md`](15-social.md)
-§6), **Veterancy** (hero levels), **Field Medicine** (HP between depths),
+**Veterancy** (hero levels), **Field Medicine** (HP between depths),
 **Vanguard** (auto-resolving depth 1), **Invocation** (a second charge),
 **Ritual Casting** (a building as a cast target), **Ley Storm** (a daily
 self-cast window), **Ley Lines** (adjacency v2), **Frugal Rites** (an RNG roll
@@ -317,14 +367,15 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
 - **`planned: 1` in the workbook.** The node is drawn dashed and hatched, like
   the fog's `?`.
 - **The panel says it**, above the Start button: *Not yet in the prototype.*
-- **No keystone requires a planned node.** Keystones require the era's *built*
-  majors.
-- **No minor line hangs off one.** Lines keep their stopgap parents (§6.1)
+- **Nothing a band depends on requires a planned node**, and the editor warns
+  when anything requires one at all: a card waiting on a no-op is waiting on
+  nothing.
+- **No rank ladder hangs off one.** Ladders keep their stopgap parents (§6.1)
   until their own major works.
 - `tests/research.test.ts` pins the exact set and all four rules.
 
-**Planned (17):** Land Survey, Apprenticeships · Field Medicine, Veterancy,
-Siegecraft, Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
+**Planned (14):** Field Medicine, Veterancy,
+Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
 Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
 
 **Live era-2/3 majors (9):** Aqueducts, Guildhalls, Roadworks, Tactics,
@@ -334,19 +385,22 @@ Salvage, Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 
 | Dial | Where | What it moves |
 |---|---|---|
-| the era price bands (§5) | `Technologies` sheet | how long the whole tree lasts — the first thing to touch |
-| a technology's `cost_gold` / `cost_knowledge` / `duration_seconds` | `Technologies` | one node |
-| `requires` | `Technologies` | the shape. **Row order is not chain order here** — the edges are |
-| a minor line's rank count | `Technologies` | how many eras a line spans |
-| `effect_per_rank` | `Technologies` | a line's step; `Scriveners` is the only Gold lever on the tree's pace |
-| `planned` | `Technologies` | whether a major is live |
+| the era price bands (§5) | `?dev=tree`, whose status bar totals each band | how long the whole tree lasts — the first thing to touch |
+| a technology's `gold` / `knowledge` / `seconds` | `?dev=tree` | one node |
+| `requires` | `?dev=tree` — drag, or click a connector to cut it | the shape |
+| `kind` and `unlocks` | `?dev=tree` | what the technology IS, and every gate derived from it |
+| a ladder's rank count | `?dev=tree` — add a rank | how many eras a ladder spans |
+| a rank's `effects` | `?dev=tree` | what it moves and by how much; `Scriveners` is the only Gold lever on the tree's pace |
+| `planned` | `?dev=tree` | whether a major is live |
 
 ## 9. Deliberately not in this design
 
-- A fourth era as a redesign (rank IV of each spine is drawn sealed; era 4 is
+- A fourth era as a redesign (a book's last band is drawn sealed; era 4 is
   rows).
 - Exclusive picks — no node forecloses another.
-- A line longer than five ranks.
-- A minor line hanging off a planned major (§7).
+- A ladder longer than five ranks.
+- A rank ladder hanging off a planned major (§7).
+- A ladder whose ranks must all be worth the same step: each rank carries its
+  own value, so a ladder may ramp (§6.2).
 
 **Open questions:** **OQ-13**, **OQ-68**.

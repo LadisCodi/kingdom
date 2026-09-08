@@ -28,10 +28,10 @@ import { ATLAS_CELLS } from './atlas.generated';
  *  atlas still holds their art — so the names survive as icons. */
 export type UiIconName =
   | 'Berries' | 'Meat' | 'Fish' | 'Iron'
-  | 'population' | 'builders' | 'workers'
+  | 'population' | 'builders' | 'workers' | 'harmony'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
-  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star';
+  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -42,6 +42,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
   Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
   Knowledge: '📜', Stardust: '🌟', Gems: '💎',
+  SilverKey: '🗝️', GoldKey: '🔑',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
   // Refined goods. `Iron` is both a good and one of the retired cell icons
@@ -53,15 +54,17 @@ export const ICON_EMOJI: Record<IconName, string> = {
   Market: '🏪', Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯',
   Barracks: '🛖', SpearHall: '🏚️', ShootingGrounds: '🎯', Stables: '🐴',
   Carpenter: '🔨', MasonsYard: '🧱', Smelter: '🔥', RuneCarver: '🔯',
+  Garden: '🌷', Well: '🪣', Orchard: '🌳', Statue: '🗿', Plaza: '⛲', Shrine: '⛩️',
   // units
   Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',
   // destinations
   build: '🔨', army: '🛡️', research: '🔬', settings: '⚙️',
   // city status + affordances
-  population: '👥', builders: '👷', workers: '🧑‍🌾',
+  population: '👥', builders: '👷', workers: '🧑‍🌾', harmony: '🌸',
   quest: '📜', showme: '👉', padlock: '🔒', hourglass: '⏳', clock: '🕐',
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
   star: '★', // district card level pips (Phase 3)
+  video: '▶', // a rewarded video — the mark on any button an ad pays for
 };
 
 export interface IconOpts {

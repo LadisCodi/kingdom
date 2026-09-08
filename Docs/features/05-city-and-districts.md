@@ -19,15 +19,16 @@
 | Housing cap | 2 | 4 | 6 | 9 |
 | Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
-| Gate to the next level | 60 Wood | `Charter II` | `Charter III` | `Charter IV` (sealed) |
+| Gate to the next level | 60 Wood | `Bureaucracy` | `Magistracy` | — |
 
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 
 Three arcs run past TH3:
 
-- **Military buildings** gate army size and therefore delve depth. Tiers IV
-  and V need a cap of 36 and 50, reached only by building and upgrading all
-  four halls ([`11-expeditions.md`](11-expeditions.md) §6).
+- **Military buildings** raise the army cap — how many troops the city may
+  own — and therefore how deep a ruin can be pushed. The cap is the sum over
+  the four halls ([`combat.md`](combat.md) §14); what *opens* a depth is the
+  Adventurers' Guild ([`11-expeditions.md`](11-expeditions.md) §3).
 - **The Mana economy** — capacity from the Sanctum and from landmarks — gates
   session length ([`08-magic.md`](08-magic.md)).
 - **Ingredients and Stardust** gate relic and hero levels, on a curve measured
@@ -50,6 +51,7 @@ Three arcs run past TH3:
 buildCost(n)     = floor(base × max(mult × n × (n+1)^exp, 1))       n = existing count
 upgradeCost(L)   = floor(base × countMult × levelGrowth^(L−1))
 buildDuration    = round(seconds × districtGrowth^n × distanceGrowth^d)
+upgradeDuration  = round(seconds × durationGrowth^(L−1))
 ```
 
 - Distance is priced in build **time**, never in cost.
@@ -57,14 +59,42 @@ buildDuration    = round(seconds × districtGrowth^n × distanceGrowth^d)
   costs ×5.5 the first (20 → 110 → 353).
 - The Farm's base cost is 30 Wood.
 
+### 3.1 The late half of both curves
+
+The curves above are tuned for the opening — tens of Wood, tens of seconds.
+Levels 6 to 10 are a different clock, so they are a **piecewise** continuation
+that pivots at `city.late_upgrade_from_level` (6):
+
+```
+upgradeCost(L≥6)     = the level-5 term × lateCostGrowth^(L−5)
+upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
+```
+
+- The **cost** is continuous: reaching level 6 is the early curve's last step
+  times the late growth (1.7 everywhere today), so nothing jumps.
+- The **wait** is not, deliberately: it restarts at its own base — 2 h for
+  every district — because a minute-long step cannot be compounded into a
+  multi-day ladder without deforming the opening.
+- A row that stops at 5 leaves the late columns blank, and the importer
+  refuses a row that reaches 6 without them.
+- What each late level buys: [`buildings.md`](buildings.md) §4.11.
+
 ## 4. Placement, and moving
 
+- **A building goes anywhere the player has revealed.** There is no plot bound
+  and no rule about where a building sits relative to another one.
 - One legality check serves building and moving: a cell you may not build on
   is a cell you may not move to.
-- Gates: features and sites already on the cell, fog, the technology, the
-  shoreline rule for the Docks, the count cap, and housing adjacency.
+- Gates, all of them about the **ground**: it exists, it is revealed, it is
+  empty of features, sites and other buildings, and it is dry — plus the count
+  cap and the unlock technology.
 - Terrain gates only Water ([`01-map-and-fog.md`](01-map-and-fog.md) §2). A
   farm on sand is legal.
+- The **one exception** is the Docks, whose pier needs a shoreline — terrain,
+  not layout.
+- **Layout is guided, never policed.** Adjacency pays or charges for a
+  neighbour ([`03-economy.md`](03-economy.md) §3.1), so a placement can be
+  better or worse and none is illegal.
 
 ### 4.1 The placement ghost
 
@@ -82,7 +112,9 @@ buildDuration    = round(seconds × districtGrowth^n × distanceGrowth^d)
   it — not what one delivery fetches.
 - The label is toned against the authored stock: good above, bad below,
   untouched at the baseline (a plain tree is 10).
-- It reuses the pill drawn by the housing adjacency preview.
+- It reuses the pill drawn by the adjacency preview.
+- Valid cells are outlined only for the **Docks**, the one building with a rule
+  of its own; for anything else the outline would be the revealed map.
 
 ### 4.2 Moving
 
@@ -140,7 +172,8 @@ What follows the building:
 | Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
-| Army cap per level | 6 / 10 / 15 / 21 / 28, on the four military halls ([`buildings.md`](buildings.md) §4.9) |
+| Army cap per level | 6 / 10 / 15 / 21 / 28 then +8 a level to 68, on the four military halls ([`buildings.md`](buildings.md) §4.9, §4.11) |
+| The late half of the curves | `Districts.upgrade_*_late_*`, `city.late_upgrade_from_level` — §3.1 |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 
 ## 6. Deliberately not in this design
@@ -152,4 +185,4 @@ What follows the building:
 - A distance term in build **cost**.
 - `Desert`, a declared terrain with zero cells.
 
-**Open questions:** OQ-1, OQ-46, OQ-48.
+**Open questions:** OQ-46.

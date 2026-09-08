@@ -24,6 +24,7 @@ import { KINGDOM_DEF, STORE, STORE_ORDER } from '../sim/data/definitions';
 import { formatUsd } from '../sim/store';
 import { spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
+import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
 import { el } from './format';
 import { btn, card, currencyIcon, iconEl, sheet } from './kit';
 
@@ -48,6 +49,24 @@ export function renderStoreSheet(game: Game): HTMLElement {
         cost: { Gems: offer.cost },
         have: (c) => game.walletValue(c),
       }));
+
+  // ---- keys: one card per banner. A Gem-priced non-SKU, the shape the
+  // second builder already uses — the store shows it without owning it.
+  const keys = BANNER_ORDER.map((banner) => {
+    const offer = game.keyOffer(banner);
+    const def = BANNERS[banner];
+    return card({
+      icon: offer.key,
+      name: offer.key === 'GoldKey' ? 'A gold key' : 'A silver key',
+      desc: `One call on ${def.name.toLowerCase()}. You hold ${offer.held}.`,
+    }, btn({
+      label: 'Buy',
+      kind: 'gem',
+      onClick: () => game.doBuyKeys(banner),
+      cost: { Gems: offer.cost },
+      have: (c) => game.walletValue(c),
+    }));
+  });
 
   // ---- gem packs: upright cards, count over art over price
   const packs = STORE_ORDER.map((id) => {
@@ -77,6 +96,11 @@ export function renderStoreSheet(game: Game): HTMLElement {
   const body = el('div', { class: 'store' },
     el('div', { class: 'store-section' }, el('span', {}, 'Heroes')),
     bannerPanel(game),
+    el('div', { class: 'store-section' },
+      el('span', {}, 'Keys'),
+      el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),
+        String(game.walletValue('Gems')))),
+    ...keys,
     el('div', { class: 'store-section' },
       el('span', {}, 'Builders'),
       el('span', { class: 'store-balance' }, currencyIcon('Gems', { size: 'sm' }),

@@ -25,12 +25,25 @@
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
 | **Stardust** | dungeons | relic and hero levels | kingdom | no — reads in the Reliquary |
 | **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
-| **Gems** | quests, first clears, the daily week marker, the simulated store | comfort and breadth | player | yes |
+| **Gems** | quests, first clears, the daily week marker, the simulated store | power, comfort and breadth | player | yes |
+| **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, or a free call's ad | one call on the golden banner | player | no — a price on a button |
 
-- Eight wallet rows; five on the plank; three of them for the whole first hour.
+- Ten wallet rows; five on the plank; three of them for the whole first hour.
 - Adding a wallet row needs an argument. The usual alternatives: a
   per-collectible counter (the Fragments precedent) or event points as a
   counter ([`13-events.md`](13-events.md) §2.1).
+- **The keys took the row.** A counter would have worked for holding them, but
+  a key is a **price**, and a price is what a wallet row is for: the button
+  that spends one renders its cost and its short state from the wallet, the
+  way every other price in the game does. Two rows rather than one because
+  the two banners must be able to cost differently
+  ([`10-heroes.md`](10-heroes.md) §5.1).
+- A key never reaches the plank and never reaches the Market: it has no gold
+  value, so nothing can trade it.
+- **Refined goods follow that rule**: Planks, Cut Stone, Iron and Runestone
+  are a stockpile counter, not a wallet row
+  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §1).
 
 ### 1.1 Knowledge and Stardust (designed, not built)
 
@@ -75,15 +88,45 @@
 
 ### 3.1 Adjacency
 
-- A directed `(district, neighbour)` rule paying Gold/min, positive or
-  negative, computed from locations on read.
-- Footprints must share an **edge**; diagonal corner contact does not count.
-- One rule: Housing next to Housing, −1 Gold/min per neighbour.
-- A house clamps at 0, never negative.
+**Adjacency is the only thing that guides a layout.** Placement itself is free
+— anywhere revealed, no plot bound, no building required next to another
+([`05-city-and-districts.md`](05-city-and-districts.md) §4) — so every rule
+here pays or charges, and none refuses.
+
+- A rule is `(district, neighbour, stat, magnitude)`, computed from locations
+  on read. Footprints must share an **edge**; diagonal corner contact does not
+  count.
+- **Either side may name a kind instead of a building**: `AnyHall`,
+  `AnyWorkshop`, `AnyProducer`, `AnyDecoration`. Membership is what a district
+  already is, so a new hall needs no new row.
+- Units are the stat's: `goldPerMinute` is flat Gold a minute, everything else
+  is a **fraction** of the base. For a duration a negative magnitude is the
+  good one.
+- **No stat moves more than ±25%**, whatever piles up next door. That is what
+  keeps a layout better-or-worse instead of right-or-wrong.
+- A house's rent clamps at 0, never negative.
 - While placing, every affected neighbour and the ghost itself show a compact
-  label.
-- The canvas grows by buying tiles ([`02-map-scopes.md`](02-map-scopes.md) §1.1).
-- More rules and non-Gold effects: OQ-48.
+  signed label; a built card lists what its neighbours are doing to it.
+
+| District | Next to | Moves | By |
+|---|---|---|---|
+| **Housing** | Housing | Gold a minute | **−1** each |
+| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`18-harmony.md`](18-harmony.md) §6) |
+| **a hall** | another hall | training time | **−10%** each |
+| **Carpenter** | Sawmill | work time | −10% |
+| **Mason's Yard** | Quarry | work time | −10% |
+| **Smelter** | Quarry | work time | −10% |
+| **Rune Carver** | Sanctum | work time | −10% |
+
+**When a rule is priced.** A rate read on demand — Gold a minute — is computed
+every time it is read, so moving a house changes its rent at once. A **timer**
+is priced when it STARTS and stored on the thing waiting: a trainee's seconds
+and a workshop item's work are stamped when they are queued, so a neighbour
+that arrives, moves or is replaced later never repriced a wait already
+running. Research already worked this way.
+
+- More rules arrive as rows; a new **stat** is one line in `AdjacencyStat`
+  plus one call site.
 
 ## 4. Villager training
 
@@ -127,10 +170,15 @@ A full pool buys about the same slice of progress at every stage:
 - Arrives at onboarding steps 13–15.
 - Selling is instant: an amount selector (×1 / ×10 / ×100 / ×1000 / All), one
   Sell per sellable currency, Gold on the spot.
-- Price: `floor(units × goldValue × (1 + 5% per MarketStall level))`.
+- Price: `floor(units × goldValue × (marketLevelBonus + 5% per MarketStall
+  level))`, where the Market's own level pays +3% a level to +27% at ten
+  ([`buildings.md`](buildings.md) §4.7). Two Markets do not stack: the better
+  one sets the price.
 - Three crates: **Food 1, Stone 2, Wood 3** Gold a unit.
 - The Market is not a sink: it converts a surplus into Gold. Gold buys
   **Wonder levels**, which have no last one ([`16-wonders.md`](16-wonders.md)).
+- **Refined goods are not sellable here**, at any level
+  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §10).
 
 ## 7. Where Gold goes
 
@@ -162,7 +210,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 | Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.45 | `training.*`, `city.population_cost_*` |
 | Collect cooldown | 0.5 s | `tap.collect_cooldown_seconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `Currencies.gold_value` |
-| Adjacency | Housing↔Housing −1 | `Adjacency` sheet |
+| Adjacency rules | §3.1 | `Adjacency` sheet — `district`, `neighbor`, `stat`, `magnitude` |
 
 ## 9. Deliberately not in this design
 
@@ -177,4 +225,4 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 - A drip-sell queue, sale timers or a Gem rush at the Market.
 - A Townhall tap that hurries villager training.
 
-**Open questions:** OQ-46, OQ-48 in [`../open-questions.md`](../open-questions.md).
+**Open questions:** OQ-46 in [`../open-questions.md`](../open-questions.md).
