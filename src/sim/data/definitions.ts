@@ -264,6 +264,8 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Stardust: currency('kingdom', balance.currencies.Stardust),
   Gems: currency('player', balance.currencies.Gems),
+  SilverKey: currency('player', balance.currencies.SilverKey),
+  GoldKey: currency('player', balance.currencies.GoldKey),
 };
 
 // -------------------------------------------------------------- harvest loop
@@ -1409,6 +1411,15 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
  * and a second is a prize twice over: another delve at a time, and coverage of
  * another matchup.
  */
+/**
+ * What a hero's rarity is worth: its stats, the magnitude of its trait, and
+ * WHICH banner can roll it. A banner weights each rarity and a weight of 0 is
+ * what keeps a rarity off a banner, so the weights ARE the pool — there is no
+ * pool column and no rate-up table (Docs/features/10-heroes.md §5).
+ */
+export type HeroRarity = 'Common' | 'Rare' | 'Legendary';
+export const HERO_RARITIES: HeroRarity[] = ['Common', 'Rare', 'Legendary'];
+
 export type HeroTrait =
   | 'PartyDefence' | 'SupplyDiscount' | 'KnowledgeBonus' | 'FragmentBonus' | 'RevealNextDepth';
 
@@ -1420,6 +1431,7 @@ export interface HeroDef {
   sprite: string;
   /** Heroes carry a unit type of their own, so the hero choice feeds the same
    *  matchup chart as the troops. */
+  rarity: HeroRarity;
   unitType: UnitId;
   trait: HeroTrait;
   traitValue: number;
@@ -1461,7 +1473,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
 };
 
 const heroBalance = balance.heroes as Record<HeroId, {
-  unitType: string; trait: string; traitValue: number;
+  rarity: string; unitType: string; trait: string; traitValue: number;
   atk: number; def: number; hp: number;
   atkPerLevel: number; defPerLevel: number; hpPerLevel: number;
 }>;
@@ -1472,6 +1484,7 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
     return [id, {
       id,
       ...heroContent[id],
+      rarity: b.rarity as HeroRarity,
       unitType: b.unitType as UnitId,
       trait: b.trait as HeroTrait,
       traitValue: b.traitValue,
@@ -1485,10 +1498,56 @@ export const HERO_ORDER: HeroId[] = [
   'Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout',
 ];
 
+/** Every hero of a rarity, in roster order. The pool a banner rolls from is
+ *  this, narrowed to what the player does not own yet. */
+export const heroesOfRarity = (rarity: HeroRarity): HeroId[] =>
+  HERO_ORDER.filter((id) => HEROES[id].rarity === rarity);
+
+// ------------------------------------------------------------------ banners
+
+export type BannerId = 'basic' | 'advanced';
+
+export interface BannerDef {
+  id: BannerId;
+  name: string;
+  /** The currency one pull costs. One key per banner, and the key is what
+   *  tells the two apart before the player has read a single number. */
+  key: CurrencyId;
+  /** What one key costs in Gems, in the store. */
+  keyGemCost: number;
+  heroChance: number;
+  softPityAt: number;
+  hardPityAt: number;
+  /** Pulls since the last Legendary that force one. 0 = this banner has no
+   *  Legendary to guarantee, which the importer ties to a zero weight. */
+  legendaryPityAt: number;
+  weights: Record<HeroRarity, number>;
+  duplicateFragments: number;
+  fragmentsPerMiss: number;
+  pullStardust: number;
+  /** Free pulls a day for a rewarded ad, and how long between them. */
+  freePerDay: number;
+  freeCooldownSeconds: number;
+}
+
+const bannerContent: Record<BannerId, { name: string }> = {
+  basic: { name: 'The common call' },
+  advanced: { name: 'The golden call' },
+};
+
+export const BANNERS: Record<BannerId, BannerDef> = Object.fromEntries(
+  (Object.keys(bannerContent) as BannerId[]).map((id) => {
+    const b = (balance.banners as Record<string, Omit<BannerDef, 'id' | 'name'>>)[id];
+    if (!b) throw new Error(`balance.json is missing the banner "${id}"`);
+    return [id, { id, ...bannerContent[id], ...b }];
+  }),
+) as Record<BannerId, BannerDef>;
+
+export const BANNER_ORDER = Object.keys(bannerContent) as BannerId[];
+
 /** Delve rewards, the 50% failure bite, and party slots. */
 export const DELVE = balance.delve;
 export const PARTY = balance.party;
-export const GACHA = balance.gacha;
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;

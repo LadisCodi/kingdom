@@ -7,10 +7,12 @@
 // twice.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { CONJUNCTION_BOONS, EVENTS, GACHA, HERO_ORDER, CURRENCIES,
+import {
+  BANNERS, CONJUNCTION_BOONS, EVENTS, HERO_ORDER, HEROES, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
-  heroChanceAt, pityCount, pull, pullCost, pullsToGuarantee, STANDARD_BANNER,
+  heroChanceAt, legendaryPityCount, pityCount, pull, pullMany, pullPrice,
+  pullsToGuarantee, pullsToLegendary, STANDARD_BANNER,
 } from '../src/sim/heroes';
 import { deserialize, serialize } from '../src/sim/save';
 import {
@@ -167,33 +169,49 @@ describe('the Conjunction', () => {
 });
 
 describe('the gacha', () => {
+  /** A purse full of both keys. A pull is priced in keys since 2026-09-08;
+   *  Gems buy the keys, in the store. */
   const rich = (): GameState => {
     const state = freshGame();
-    state.player.wallet.Gems = 100_000;
+    state.player.wallet.SilverKey = 500;
+    state.player.wallet.GoldKey = 500;
     return state;
   };
+  const keys = (state: GameState, banner: 'basic' | 'advanced'): number =>
+    getWallet(state.player.wallet, BANNERS[banner].key);
 
   // Docs/features/12-quests.md §2 (quest 33): the first call on the standard banner is a
   // gift, and every one after it is the authored price. No new save field —
   // the pull counter already persists for pity, and "have you pulled here
   // yet" is exactly what it records.
-  it('gives the first call free, then charges the authored price', () => {
+  it('gives the first call free, then charges one key', () => {
     const state = rich();
-    const before = getWallet(state.player.wallet, 'Gems');
-    expect(pullCost(state)).toBe(0);
+    const before = keys(state, 'basic');
+    expect(pullPrice(state, 'basic').amount).toBe(0);
     expect(pull(state).result).toBe('Pulled');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(before); // nothing taken
+    expect(keys(state, 'basic')).toBe(before); // nothing taken
 
-    expect(pullCost(state)).toBe(GACHA.pullGemCost);
+    expect(pullPrice(state, 'basic')).toEqual({ currency: 'SilverKey', amount: 1 });
     expect(pull(state).result).toBe('Pulled');
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(before - GACHA.pullGemCost);
+    expect(keys(state, 'basic')).toBe(before - 1);
   });
 
-  it('the free call is the STANDARD banner\'s, and only once', () => {
+  it('charges each banner its OWN key, and never the other', () => {
     const state = rich();
+    pull(state, 'basic'); // the free one
+    const silver = keys(state, 'basic');
+    const gold = keys(state, 'advanced');
+    expect(pull(state, 'advanced').result).toBe('Pulled');
+    expect(keys(state, 'advanced')).toBe(gold - 1);
+    expect(keys(state, 'basic')).toBe(silver); // the silver purse is untouched
+  });
+
+  it('the free call is the BASIC banner\'s, and only once', () => {
+    const state = rich();
+    expect(pullPrice(state, 'advanced').amount).toBe(1); // never free
     pull(state);
     const restored = deserialize(serialize(state, T0), map, T0)!;
-    expect(pullCost(restored)).toBe(GACHA.pullGemCost); // survives a reload
+    expect(pullPrice(restored, 'basic').amount).toBe(1); // survives a reload
   });
 
   it('refuses politely, and charges nothing, when the purse is short', () => {
@@ -201,7 +219,7 @@ describe('the gacha', () => {
     state.player.wallet.Gems = 0;
     expect(pull(state).result).toBe('Pulled'); // the free one lands regardless
     state.player.wallet.Gems = 0;
-    expect(pull(state).result).toBe('NotEnoughGems');
+    expect(pull(state).result).toBe('NotEnoughKeys');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
   });
 
@@ -215,10 +233,10 @@ describe('the gacha', () => {
     // Past hard pity, so the run covers a miss AND a hero rather than one
     // long unlucky streak.
     const seen = new Set<string>();
-    for (let i = 1; i <= GACHA.hardPityAt + 10; i++) {
+    for (let i = 1; i <= BANNERS.basic.hardPityAt + 10; i++) {
       const result = pull(state);
-      expect(result.stardust).toBe(GACHA.pullStardust);
-      expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(i * GACHA.pullStardust);
+      expect(result.stardust).toBe(BANNERS.basic.pullStardust);
+      expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(i * BANNERS.basic.pullStardust);
       seen.add(result.heroId === null ? 'miss' : result.duplicate ? 'dupe' : 'hero');
     }
     // …and it really did pay across more than one kind of outcome.
@@ -231,7 +249,7 @@ describe('the gacha', () => {
     state.player.wallet.Gems = 0;
     pull(state); // the free one
     const banked = getWallet(state.kingdom.wallet, 'Knowledge');
-    expect(pull(state).result).toBe('NotEnoughGems');
+    expect(pull(state).result).toBe('NotEnoughKeys');
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(banked);
   });
 
@@ -250,7 +268,7 @@ describe('the gacha', () => {
   it('guarantees a hero within the pity window', () => {
     const state = rich();
     let heroes = 0;
-    for (let i = 0; i < GACHA.hardPityAt; i++) {
+    for (let i = 0; i < BANNERS.basic.hardPityAt; i++) {
       if (pull(state).heroId !== null) heroes += 1;
     }
     expect(heroes).toBeGreaterThan(0);
@@ -259,8 +277,8 @@ describe('the gacha', () => {
   it('the pity counter is always readable, and resets on a hero', () => {
     const state = rich();
     expect(pityCount(state, STANDARD_BANNER)).toBe(0);
-    expect(pullsToGuarantee(state, STANDARD_BANNER)).toBe(GACHA.hardPityAt);
-    for (let i = 0; i < GACHA.hardPityAt + 5; i++) {
+    expect(pullsToGuarantee(state, STANDARD_BANNER)).toBe(BANNERS.basic.hardPityAt);
+    for (let i = 0; i < BANNERS.basic.hardPityAt + 5; i++) {
       const result = pull(state);
       if (result.heroId !== null) {
         expect(pityCount(state, STANDARD_BANNER)).toBe(0);
@@ -271,11 +289,11 @@ describe('the gacha', () => {
   });
 
   it('soft pity ramps before the guarantee rather than staying flat', () => {
-    expect(heroChanceAt(0)).toBe(GACHA.heroChance);
-    expect(heroChanceAt(GACHA.softPityAt)).toBeGreaterThanOrEqual(GACHA.heroChance);
-    expect(heroChanceAt(GACHA.softPityAt + 5))
-      .toBeGreaterThan(heroChanceAt(GACHA.softPityAt));
-    expect(heroChanceAt(GACHA.hardPityAt - 1)).toBe(1);
+    expect(heroChanceAt(0)).toBe(BANNERS.basic.heroChance);
+    expect(heroChanceAt(BANNERS.basic.softPityAt)).toBeGreaterThanOrEqual(BANNERS.basic.heroChance);
+    expect(heroChanceAt(BANNERS.basic.softPityAt + 5))
+      .toBeGreaterThan(heroChanceAt(BANNERS.basic.softPityAt));
+    expect(heroChanceAt(BANNERS.basic.hardPityAt - 1)).toBe(1);
   });
 
   it('duplicates convert to that hero’s Fragments', () => {
@@ -286,7 +304,7 @@ describe('the gacha', () => {
       const result = pull(state);
       if (result.heroId !== null) {
         expect(result.duplicate).toBe(true);
-        expect(result.fragments).toBe(GACHA.duplicateFragments);
+        expect(result.fragments).toBe(BANNERS.basic.duplicateFragments);
         expect(state.heroes.fragments[result.heroId]).toBeGreaterThan(0);
         return;
       }
@@ -312,6 +330,96 @@ describe('the gacha', () => {
     const resultsA = Array.from({ length: 25 }, () => pull(a));
     const resultsB = Array.from({ length: 25 }, () => pull(b));
     expect(resultsB.map((r) => r.heroId)).toEqual(resultsA.map((r) => r.heroId));
+  });
+
+  // ---- rarity, and the two guarantees -----------------------------------
+
+  it('never rolls a rarity its banner weights at zero', () => {
+    // The weights ARE the pool: there is no pool column, and a zero is what
+    // keeps the Legendary off the common call and the Commons off the golden
+    // one (Docs/features/10-heroes.md §5).
+    const state = rich();
+    for (let i = 0; i < 200; i += 1) {
+      const basic = pull(state, 'basic');
+      if (basic.rarity !== null) expect(basic.rarity, 'basic').not.toBe('Legendary');
+      const advanced = pull(state, 'advanced');
+      if (advanced.rarity !== null) expect(advanced.rarity, 'advanced').not.toBe('Common');
+    }
+  });
+
+  it('hands out a hero of the rarity it says it rolled', () => {
+    const state = rich();
+    for (let i = 0; i < 120; i += 1) {
+      const r = pull(state, 'advanced');
+      if (r.heroId !== null) expect(HEROES[r.heroId].rarity).toBe(r.rarity);
+    }
+  });
+
+  it('guarantees a legend on its own counter, and only where there is one', () => {
+    // Two counters, two meanings: the short one guarantees A hero, this one
+    // guarantees the rarity. A player has to be able to read both.
+    const state = rich();
+    expect(pullsToLegendary(state, 'basic')).toBe(null); // nothing to guarantee
+    expect(pullsToLegendary(state, 'advanced')).toBe(BANNERS.advanced.legendaryPityAt);
+
+    let sawLegendary = false;
+    for (let i = 0; i < BANNERS.advanced.legendaryPityAt; i += 1) {
+      if (pull(state, 'advanced').rarity === 'Legendary') { sawLegendary = true; break; }
+    }
+    expect(sawLegendary, 'a legend inside its own pity window').toBe(true);
+    expect(legendaryPityCount(state, 'advanced')).toBe(0); // and it reset
+  });
+
+  it('counts the legendary pity on every pull, and clears it only on a legend', () => {
+    const state = rich();
+    let last = 0;
+    for (let i = 0; i < 20; i += 1) {
+      const r = pull(state, 'advanced');
+      const now = legendaryPityCount(state, 'advanced');
+      if (r.rarity === 'Legendary') expect(now).toBe(0);
+      else expect(now, 'a miss or a lesser hero still counts').toBe(last + 1);
+      last = now;
+    }
+  });
+
+  it('keeps the two banners\' counters apart', () => {
+    const state = rich();
+    for (let i = 0; i < 8; i += 1) pull(state, 'basic');
+    expect(pityCount(state, 'advanced')).toBe(0);
+    expect(legendaryPityCount(state, 'advanced')).toBe(0);
+    expect(pullsToGuarantee(state, 'advanced')).toBe(BANNERS.advanced.hardPityAt);
+  });
+
+  // ---- ten at a time ------------------------------------------------------
+
+  it('spends exactly ten keys on a ten-call, and returns ten results', () => {
+    const state = rich();
+    pull(state, 'basic'); // burn the free one, so the batch is a clean ten
+    const before = keys(state, 'basic');
+    const batch = pullMany(state, 'basic', 10);
+    expect(batch.result).toBe('Pulled');
+    expect(batch.pulls).toHaveLength(10);
+    expect(keys(state, 'basic')).toBe(before - 10); // no discount, on purpose
+  });
+
+  it('refuses a ten-call whole rather than spending nine keys', () => {
+    const state = freshGame();
+    state.player.wallet.SilverKey = 9;
+    pull(state, 'basic'); // the free one, which does not touch the purse
+    const batch = pullMany(state, 'basic', 10);
+    expect(batch.result).toBe('NotEnoughKeys');
+    expect(batch.pulls).toEqual([]);
+    expect(keys(state, 'basic')).toBe(9); // nothing taken
+  });
+
+  it('carries pity across a ten-call exactly as ten presses would', () => {
+    const one = rich();
+    const ten = rich();
+    for (let i = 0; i < 10; i += 1) pull(one, 'advanced');
+    pullMany(ten, 'advanced', 10);
+    expect(ten.gacha.pityCounters).toEqual(one.gacha.pityCounters);
+    expect(ten.gacha.legendaryPity).toEqual(one.gacha.legendaryPity);
+    expect(ten.heroes.owned).toEqual(one.heroes.owned);
   });
 
   it('the counters survive a save round-trip, so pity is not laundered', () => {

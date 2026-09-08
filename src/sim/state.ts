@@ -14,7 +14,11 @@ export type CurrencyId =
   | 'Mana' // the only capped currency — see sim/mana.ts
   | 'Knowledge' // kingdom-scoped research clock; buys technologies and nothing else
   | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
-  | 'Gems'; // player-scoped, premium
+  | 'Gems' // player-scoped, premium
+  // The two gacha keys: one banner each, bought with Gems, spent on a pull.
+  // Player-scoped like Gems, and NOT on the plank — the purse is where they
+  // are read (Docs/features/10-heroes.md §5).
+  | 'SilverKey' | 'GoldKey';
 /** Refined goods: what a workshop turns raw resources into, and what an
  *  advanced building level is priced in. Deliberately NOT a `CurrencyId` —
  *  the city keeps a stockpile, the way the collection keeps ingredients, so
@@ -382,6 +386,11 @@ export interface GameState {
   gacha: {
     pullCounts: Record<string, number>;
     pityCounters: Record<string, number>;
+    /** Pulls since the last Legendary, per banner. A second counter rather
+     *  than a second meaning for the first: the short pity guarantees A hero,
+     *  this one guarantees the rarity, and a player has to be able to read
+     *  both (Docs/features/10-heroes.md §5). */
+    legendaryPity: Record<string, number>;
   };
   /**
    * The rewarded-ad offer (sim/adOffers.ts).

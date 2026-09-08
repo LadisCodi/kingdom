@@ -91,6 +91,12 @@ const FEATURE_IDS = [
   'Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal',
 ];
 const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
+/** What a hero's rarity is worth: its stats, its trait magnitude, and WHICH
+ *  banner can roll it. A banner weights each rarity, and a weight of 0 is what
+ *  keeps a rarity off a banner — so there is no `pool` column, because the
+ *  weights already are the pool (Docs/features/10-heroes.md §5). */
+const HERO_RARITIES = ['Common', 'Rare', 'Legendary'];
+const BANNER_IDS = ['basic', 'advanced'];
 const HERO_TRAITS = [
   'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
 ];
@@ -101,6 +107,10 @@ const ARTIFACT_IDS = [
 const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
   'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'Gems',
+  // The two gacha keys. Player-scoped like Gems, bought with them, and spent
+  // on one banner each — a PRICE on a button, which is the argument for a
+  // wallet row over a counter (Docs/features/03-economy.md §1).
+  'SilverKey', 'GoldKey',
 ];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone'];
 
@@ -243,17 +253,6 @@ const SETTINGS = [
   ['party.max_slots', 'party.maxSlots'],
   ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
   ['party.slot_gem_cost_growth', 'party.slotGemCostGrowth'],
-  // The gacha. Pity is MANDATORY: it is the single thing that makes a gacha
-  // read as fair rather than predatory, and it matters more in a cozy game.
-  ['gacha.pull_gem_cost', 'gacha.pullGemCost'],
-  ['gacha.hero_chance', 'gacha.heroChance'],
-  ['gacha.soft_pity_at', 'gacha.softPityAt'],
-  ['gacha.hard_pity_at', 'gacha.hardPityAt'],
-  ['gacha.duplicate_fragments', 'gacha.duplicateFragments'],
-  ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
-  // Every pull pays this, hero or not — Fragments only ever point at one
-  // hero, but Knowledge levels whoever the player already has.
-  ['gacha.pull_stardust', 'gacha.pullStardust'],
   // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
   // the player can plan around; `eligible_below_fraction` is what keeps it an
   // answer to being short rather than an interruption.
@@ -345,13 +344,20 @@ const SHEETS = {
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
     'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
-  Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
+  Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
   // Real-money SKUs of the simulated store. `price_usd` is what the purchase
   // deducts from the player's monthly budget; `gems` is what it grants. Only
   // Gem packs live here — builders are priced in Gems (Settings) and the hero
   // banner in Gems (Settings), so the store shows them without owning them.
   Store: ['id', 'price_usd', 'gems'],
+  // One row per banner. Odds and prices are numbers a designer tunes, so they
+  // belong here — unlike a banner SCHEDULE, which is a wall-clock live-ops
+  // date and stays out of the workbook (balance/README.md).
+  Banners: ['id', 'key', 'key_gem_cost', 'hero_chance', 'soft_pity_at', 'hard_pity_at',
+    'legendary_pity_at', 'weight_common', 'weight_rare', 'weight_legendary',
+    'duplicate_fragments', 'fragments_per_miss', 'pull_stardust',
+    'free_per_day', 'free_cooldown_seconds'],
   Settings: ['key', 'value'],
 };
 
@@ -564,9 +570,9 @@ async function importXlsx() {
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
-    delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
+    delve: {}, party: {}, heroes: {}, ads: {},
     artifacts: {},
-    quests: [],
+    quests: [], banners: {},
     fog: { rings: [], fallbackGrowth: 0 },
     city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
@@ -834,7 +840,9 @@ async function importXlsx() {
   for (const [id, r] of byId(readSheet(workbook, 'Heroes'), HERO_IDS)) {
     if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
     if (!HERO_TRAITS.includes(r.trait)) fail(where(r), `unknown trait "${r.trait}"`);
+    if (!HERO_RARITIES.includes(r.rarity)) fail(where(r), `unknown rarity "${r.rarity}"`);
     out.heroes[id] = {
+      rarity: r.rarity,
       unitType: r.unit_type,
       trait: r.trait,
       traitValue: num(r, 'trait_value'),
@@ -860,6 +868,45 @@ async function importXlsx() {
     const gems = num(r, 'gems');
     if (priceUsd <= 0 || gems <= 0) fail(where(r), 'a Gem pack needs a positive price and a positive grant');
     out.store[id] = { priceUsd, gems };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Banners'), BANNER_IDS)) {
+    if (!CURRENCY_IDS.includes(r.key)) fail(where(r), `"key" is not a currency ("${r.key}")`);
+    const weights = {
+      Common: num(r, 'weight_common', { blankAs: 0 }),
+      Rare: num(r, 'weight_rare', { blankAs: 0 }),
+      Legendary: num(r, 'weight_legendary', { blankAs: 0 }),
+    };
+    // A banner that weights nothing can roll nothing. Loudly, here, rather
+    // than as a pull that silently returns 'NothingToPull' forever.
+    if (Object.values(weights).every((w) => w <= 0)) {
+      fail(where(r), 'weights every rarity at 0 — the banner can roll nothing');
+    }
+    const chance = num(r, 'hero_chance');
+    if (chance <= 0 || chance > 1) fail(where(r), `"hero_chance" is ${chance}, not a fraction`);
+    const soft = num(r, 'soft_pity_at');
+    const hard = num(r, 'hard_pity_at');
+    if (soft >= hard) fail(where(r), `soft pity (${soft}) must come before hard pity (${hard})`);
+    // 0 = this banner has no legendary guarantee, which is right for one that
+    // weights Legendary at 0 and wrong for one that does not.
+    const legendary = num(r, 'legendary_pity_at', { blankAs: 0 });
+    if ((legendary > 0) !== (weights.Legendary > 0)) {
+      fail(where(r), 'a legendary guarantee and a legendary weight go together');
+    }
+    out.banners[id] = {
+      key: r.key,
+      keyGemCost: num(r, 'key_gem_cost'),
+      heroChance: chance,
+      softPityAt: soft,
+      hardPityAt: hard,
+      legendaryPityAt: legendary,
+      weights,
+      duplicateFragments: num(r, 'duplicate_fragments'),
+      fragmentsPerMiss: num(r, 'fragments_per_miss'),
+      pullStardust: num(r, 'pull_stardust'),
+      freePerDay: num(r, 'free_per_day', { blankAs: 0 }),
+      freeCooldownSeconds: num(r, 'free_cooldown_seconds', { blankAs: 0 }),
+    };
   }
 
   const settings = byId(readSheet(workbook, 'Settings'), SETTINGS.map(([k]) => k), 'key');
@@ -1003,8 +1050,16 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
     const h = b.heroes[id];
-    return [id, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
+    return [id, h.rarity, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
       h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
+  }));
+
+  addSheet(workbook, 'Banners', BANNER_IDS.map((id) => {
+    const n = b.banners[id];
+    return [id, n.key, n.keyGemCost, n.heroChance, n.softPityAt, n.hardPityAt,
+      n.legendaryPityAt || '', n.weights.Common || '', n.weights.Rare || '',
+      n.weights.Legendary || '', n.duplicateFragments, n.fragmentsPerMiss,
+      n.pullStardust, n.freePerDay || '', n.freeCooldownSeconds || ''];
   }));
 
   addSheet(workbook, 'Store', STORE_IDS.map((id) => {

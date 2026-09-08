@@ -42,6 +42,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
   Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
   Knowledge: '📜', Stardust: '🌟', Gems: '💎',
+  SilverKey: '🔑', GoldKey: '🗝️',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
   // Refined goods. `Iron` is both a good and one of the retired cell icons

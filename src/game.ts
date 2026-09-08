@@ -10,7 +10,7 @@ import {
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
   LANDMARK_ART, LANDMARKS, RUINS,
-  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat,
+  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
 import type { IconName } from './ui/kit/icon';
 import {
@@ -44,7 +44,7 @@ import {
   previewExpedition, pushDeeper, supplyCost, unitSlots,
   type ExpeditionPreview, type LaunchBlock,
 } from './sim/expeditions';
-import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
+import { levelUpHero, pull, pullMany, raiseHeroTier, STANDARD_BANNER } from './sim/heroes';
 import {
   mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
 } from './sim/mana';
@@ -65,7 +65,7 @@ import {
   PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
   monthResetsAt, monthlyBudgetCents,
 } from './sim/store';
-import { pullCost } from './sim/heroes';
+import { pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
@@ -1029,8 +1029,10 @@ export class Game {
     return canAffordSku(this.state, id, this.now());
   }
 
-  pullCost(): number {
-    return pullCost(this.state);
+  /** What the next call on a banner costs: one key of its own kind, or
+   *  nothing at all for the free first call on the basic one. */
+  pullPrice(banner: BannerId = STANDARD_BANNER): { currency: CurrencyId; amount: number } {
+    return pullPrice(this.state, banner);
   }
 
   /** Choosing a profile is the one command that runs with no profile chosen.
@@ -1113,6 +1115,28 @@ export class Game {
     }
     this.notify();
     return result;
+  }
+
+  /** Ten calls at once. The banner card shows the ten results; the presenter
+   *  only announces the heroes among them, because ten toasts is not a
+   *  reward, it is a queue. */
+  doPullMany(banner: BannerId = STANDARD_BANNER, count = 10): void {
+    const before = this.state.heroes.owned.length;
+    const batch = pullMany(this.state, banner, count);
+    if (batch.result === 'NotEnoughKeys') {
+      this.shake([BANNERS[banner].key]);
+      this.notify();
+      return;
+    }
+    if (batch.result === 'Pulled') {
+      playSfx('gemSpend');
+      const gained = this.state.heroes.owned.length - before;
+      const fragments = batch.pulls.reduce((n, p) => n + p.fragments, 0);
+      this.toast(gained > 0
+        ? `${gained} new hero${gained === 1 ? '' : 'es'} · +${fragments} fragments`
+        : `No new heroes · +${fragments} fragments`);
+    }
+    this.notify();
   }
 
   doRush(itemId: string): void {
@@ -1643,11 +1667,11 @@ export class Game {
 
   // --------------------------------------------------------------- heroes
 
-  doPull(): void {
+  doPull(banner: BannerId = STANDARD_BANNER): void {
     const before = this.state.heroes.owned.length;
-    const result = pull(this.state);
-    if (result.result === 'NotEnoughGems') {
-      this.shake(['Gems']);
+    const result = pull(this.state, banner);
+    if (result.result === 'NotEnoughKeys') {
+      this.shake([BANNERS[banner].key]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
       if (result.heroId !== null && this.state.heroes.owned.length > before) {
@@ -2406,6 +2430,7 @@ export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
     Knowledge: '📜', Stardust: '🌟', Gems: '💎',
+    SilverKey: '🔑', GoldKey: '🗝️',
   };
   return icons[c];
 }

@@ -40,6 +40,9 @@ const AWAITING_ART: readonly string[] = [
   // …and the city stat they supply, which the build sheet and the card both
   // put a mark beside.
   'harmony',
+  // The two gacha keys (2026-09-08). They render as a PRICE, so they need a
+  // 16 px cell as well as a full one — both wait on the same sheet.
+  'SilverKey', 'GoldKey',
 ];
 
 const pending = new Set(AWAITING_ART);
