@@ -32,7 +32,8 @@ the player can see.
 
 - Nothing owned is ever taken (no decay, no destruction, Harmony is a gate
   not a drain).
-- Wallets buy comfort and breadth: every building and every good is earnable.
+- Wallets buy power, but never exclusivity: every building and every good is
+  earnable.
 - Played in visits: every new timer is hours to days, never minutes to babysit.
 - Rewards priced in production, not units.
 - **No new wallet row.** Goods are a stockpile counter; Harmony is a city

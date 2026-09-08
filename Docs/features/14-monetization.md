@@ -25,22 +25,23 @@
 
 ## 1. What a wallet is allowed to buy
 
-- Wallets buy comfort, breadth and chance; play buys everything else.
-- Nothing is purchase-only that cannot also be earned. The first rung of every
-  ladder is earned by play: research grants the second attunement slot and the
-  third party slot before Gems can buy any; the daily chest pays Gems at the
-  week marker.
-- **Nothing a wallet buys is out of reach by play.** A wallet buys it sooner
-  and in quantity; the free path to the same thing always exists. The daily
-  free golden call is the worked example: a Legendary hero is a wallet's
-  fastest purchase and roughly thirty free calls a month otherwise
-  ([`10-heroes.md`](10-heroes.md) §5.2).
+- **A wallet buys power.** A gold key calls a Legendary hero, and a Legendary
+  hero is stronger than a Common one — better stats and a bigger trait. That
+  is the product, not a concession.
+- **The one line: nothing a wallet buys is out of reach by play.** A wallet
+  buys it sooner, in quantity, and without the wait; the free path to the same
+  thing always exists. The daily free golden call is the worked example — a
+  Legendary is a wallet's fastest purchase and roughly thirty free calls a
+  month otherwise ([`10-heroes.md`](10-heroes.md) §5.2).
+- The first rung of every ladder is earned by play: research grants the second
+  attunement slot and the third party slot before Gems can buy any; the daily
+  chest pays Gems at the week marker.
 
 | Family | Examples | Effect |
 |---|---|---|
+| **Power** | silver and gold keys | stronger heroes, sooner — at published odds |
 | **Comfort** | rush a timer, refill Mana, refresh the shop | buys back the player's time |
-| **Breadth** | attunement slots, party slots, builders | more things at once, never stronger things |
-| **Chance** | silver and gold keys | more calls at the same published odds, never better ones |
+| **Breadth** | attunement slots, party slots, builders | more things at once |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
@@ -283,7 +284,7 @@ One page, refreshed weekly:
 
 - A real charge, ever.
 - A second premium currency.
-- A gacha-exclusive power ceiling.
+- A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.
 - Loot boxes beyond the hero banner.

@@ -26,9 +26,9 @@ Every feature below is shaped by these.
    that overflows, a window that closes, a haul you chose to risk.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
    test of reflexes. There is no battle screen.
-3. **Wallets buy comfort and breadth; play buys everything else.** Nothing is
-   purchase-only that cannot also be earned, and every paid ladder is earned
-   first.
+3. **Wallets buy power, comfort and breadth — but never exclusivity.**
+   Nothing is purchase-only that cannot also be earned, and every paid ladder
+   is earned first.
 
 **The five working rules**
 

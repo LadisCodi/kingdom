@@ -51,7 +51,7 @@ export function newGame(map: MapData, now: number): GameState {
     research: { completed: [], active: [], slotsPurchased: 0 },
     schedule: [],
     delves: [],
-    // One hero free at the start — the gacha sells breadth and speed, never
+    // One hero free at the start — a wallet may buy power, but never sole
     // access, so the system has to be reachable without it.
     heroes: {
       owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },

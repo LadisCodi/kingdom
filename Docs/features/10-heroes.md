@@ -88,7 +88,7 @@
   maxes in about **fifteen days** on the drip alone, the whole set in ~75.
   Meaningful progress inside 30 days, an endgame horizon past it.
 - **Every gacha drop has a play-based route.** Tier gates are earnable as well
-  as pulled; the wallet buys speed and breadth, never access.
+  as pulled; the wallet buys the same collectible sooner, never alone.
 
 ## 4. Where Stardust comes from
 
@@ -181,8 +181,9 @@ Every faucet is a dungeon or a banner.
 - Both pities carry across the ten, and each call rolls with its own pull
   number, so a batch is identical to ten taps.
 
-- **The gacha sells breadth and speed. It never sells a power ceiling that
-  cannot be earned.** A Legendary is reachable by the daily free golden call.
+- **The gacha sells power.** A Legendary is stronger than a Common, and the
+  golden call is how one is reached — by a wallet, or by the daily free call
+  ([`14-monetization.md`](14-monetization.md) §1).
 
 ## 6. Expandability
 
@@ -235,11 +236,10 @@ Each of these is data, not code:
   a free ad path; nothing else mints them.
 - **A discount on the ten-call.** A batch buys pity walked, not a cheaper key.
 - Standalone equipment with random stats or duplicate fusion
-- Gacha-exclusive power ceilings
+- **A hero no amount of play can reach** — every rarity is on a free call
 - Rotating or time-limited banners — both are permanent
 - A rarity that changes how combat resolves
 - A server-authoritative implementation
-- A hero that is strictly stronger than an earnable one
 
 ## 10. Known holes
 

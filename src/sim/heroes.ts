@@ -7,8 +7,8 @@
 //
 // THE LINE THAT KEEPS MONETIZATION HONEST:
 //
-//     The gacha sells breadth and speed. It never sells a power ceiling you
-//     cannot earn.
+//     The gacha sells power. It never sells a power ceiling you cannot also
+//     reach by playing.
 //
 // Every drop has a play-based route: Fragments come from repeat delves as well
 // as from duplicates, and one hero is free at the start so the system is

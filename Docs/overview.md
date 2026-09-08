@@ -30,9 +30,9 @@
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
    test of reflexes. There is no battle screen. A well-prepared expedition
    never fails.
-3. **Wallets buy comfort and breadth; play buys everything else.** Nothing is
-   purchase-only that cannot also be earned. Every paid ladder is earned first
-   — research grants a slot before Gems can buy one.
+3. **Wallets buy power, comfort and breadth — but never exclusivity.**
+   Nothing is purchase-only that cannot also be earned. Every paid ladder is
+   earned first — research grants a slot before Gems can buy one.
 
 ## The core loop
 

@@ -25,7 +25,7 @@
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
 | **Stardust** | dungeons | relic and hero levels | kingdom | no — reads in the Reliquary |
 | **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
-| **Gems** | quests, first clears, the daily week marker, the simulated store | comfort, breadth and chance | player | yes |
+| **Gems** | quests, first clears, the daily week marker, the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
 | **Gold key** | 1,500 Gems, or a free call's ad | one call on the golden banner | player | no — a price on a button |
 
