@@ -10,6 +10,11 @@
 // The pity counters are ALWAYS visible. A hidden pity counter is the same as
 // no pity counter — it is the single thing that makes a gacha read as fair
 // rather than predatory, and it only works if the player can see it working.
+//
+// TWO buttons, side by side: the ×1 slot and the ten. The ×1 slot is ONE
+// button wearing whichever of three faces is true — a call, a free call, or
+// an ad that pays for one — rather than a free row that appears above the
+// pair and shoves it down the card every five minutes.
 
 import { BANNERS, BANNER_ORDER, type BannerId } from '../sim/data/definitions';
 import type { Game } from '../game';
@@ -17,7 +22,7 @@ import {
   heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary,
 } from '../sim/heroes';
 import { el, formatDuration } from './format';
-import { action, iconEl } from './kit';
+import { btn, iconEl } from './kit';
 
 export function bannerPanel(game: Game): HTMLElement {
   return el('div', { class: 'store-banners' },
@@ -26,7 +31,6 @@ export function bannerPanel(game: Game): HTMLElement {
 
 function oneBanner(game: Game, banner: BannerId): HTMLElement {
   const def = BANNERS[banner];
-  const price = game.pullPrice(banner);
   const pity = pityCount(game.state, banner);
   const chance = heroChanceAt(pity, banner);
   const toGuarantee = pullsToGuarantee(game.state, banner);
@@ -56,9 +60,8 @@ function oneBanner(game: Game, banner: BannerId): HTMLElement {
         el('div', { class: 'store-banner-hint' }, hint(banner)))),
     el('div', { class: 'rel-breakdown' }, ...lines),
     el('div', { class: 'store-banner-calls' },
-      callAction(game, banner, price, 1),
-      callAction(game, banner, price, 10)),
-    freeCall(game, banner),
+      callSlot(game, banner),
+      tenCall(game, banner)),
     el('div', { class: 'rel-note' }, keyNote(game, banner)),
   );
 }
@@ -67,59 +70,79 @@ const hint = (banner: BannerId): string => (banner === 'advanced'
   ? 'The only call a legend answers. Every miss still pays fragments.'
   : 'Every miss still pays fragments. There are no wasted calls.');
 
-/** What the player holds, and where more comes from — the one line that ties
- *  the banner back to the store card that sells its key. */
+/** What the player holds, where more comes from, and how much of today's
+ *  free allowance is left — the one line that ties the banner back to the
+ *  store card that sells its key. */
 function keyNote(game: Game, banner: BannerId): string {
   const def = BANNERS[banner];
   const held = game.walletValue(def.key);
   const name = def.key === 'GoldKey' ? 'gold keys' : 'silver keys';
-  return `You hold ${held} ${name}. More are ${def.keyGemCost} Gems each, `
-    + 'or watch for the free call.';
+  const left = def.freePerDay > 0 ? game.freePull(banner).left : 0;
+  const free = left > 0 ? ` ${left} free call${left === 1 ? '' : 's'} left today.` : '';
+  return `You hold ${held} ${name}. More are ${def.keyGemCost} Gems each.${free}`;
 }
 
 /**
- * The free call an ad pays for, and what it is waiting on when it is not
- * offered — a button that is merely absent teaches the player nothing about
- * why. Silent on a banner that has no free call at all.
+ * The ×1 slot — one button that is whichever of three things is true.
+ *
+ * A free call and a paid one are the same press to the player, so they are
+ * the same button rather than a second row that appears and disappears and
+ * shoves the ten around. In order:
+ *
+ *   1. the call costs nothing (the first one on the basic banner) → **Free**
+ *   2. an ad will pay for it                                      → **▶ Free**
+ *   3. neither                                                    → **Call ×1**
+ *
+ * 1 beats 2 deliberately: a call that is already free must never ask for an
+ * ad. When the press is not free, the button says when it next will be —
+ * a button that is merely not free teaches the player nothing about why.
  */
-function freeCall(game: Game, banner: BannerId): HTMLElement | string {
+function callSlot(game: Game, banner: BannerId): HTMLElement {
   const def = BANNERS[banner];
-  if (def.freePerDay <= 0) return '';
-  const free = game.freePull(banner);
-  if (free.ready) {
-    return action({
-      label: 'Free call — watch an ad',
-      kind: 'secondary',
+  const price = game.pullPrice(banner);
+  const free = def.freePerDay > 0 ? game.freePull(banner) : null;
+
+  let b: HTMLElement;
+  if (price.amount === 0) {
+    b = btn({ label: 'Free', kind: 'gem', onClick: () => game.doPull(banner) });
+  } else if (free !== null && free.ready) {
+    b = btn({
+      label: 'Free',
+      icon: 'video',
+      kind: 'gem',
       onClick: () => game.startFreePullWatch(banner),
-      info: el('span', { class: 'muted' },
-        `${free.left} of ${def.freePerDay} left today`),
+    });
+  } else {
+    b = btn({
+      label: 'Call ×1',
+      kind: 'gem',
+      note: free === null ? undefined : free.left > 0
+        // The countdown is the whole point of showing a dead free button:
+        // it is short (five minutes) and the player will wait it out.
+        ? `Free in ${formatDuration(Math.max(0, free.readyAt - game.now()) / 1000)}`
+        // Spent for the day. The hours to midnight are not a countdown
+        // anybody watches, so it says the day instead of the clock.
+        : 'Free tomorrow',
+      onClick: () => game.doPull(banner),
+      cost: { [price.currency]: price.amount },
+      have: (c) => game.walletValue(c),
     });
   }
-  const why = free.left <= 0
-    ? `No free calls left today — ${def.freePerDay} a day`
-    : `Next free call in ${formatDuration(Math.max(0, free.readyAt - game.now()) / 1000)}`;
-  return el('div', { class: 'rel-note' }, why);
+  if (banner === 'basic' && game.uiHint() === 'banner') b.classList.add('hinted');
+  return b;
 }
 
-/** A summon button, split out so the quest hint can light it — `action()`
- *  builds a whole row, so the class goes on afterwards rather than through a
- *  new option nothing else would use. */
-function callAction(
-  game: Game, banner: BannerId, price: { currency: string; amount: number }, times: number,
-): HTMLElement {
-  // The free first call is free ONCE, so a ten-call over it costs nine — the
-  // same arithmetic `pullMany` charges. Showing "free" on the ten would be a
-  // lie the purse then contradicts.
-  const total = price.amount === 0 ? Math.max(0, times - 1) : price.amount * times;
-  const row = action({
-    // A price of zero is not a price. The free first call says so on the
-    // button rather than rendering "0 🔑", which reads as a bug.
-    label: total === 0 ? 'Call — free' : times === 1 ? 'Call' : `Call ×${times}`,
+/** The ten-call. Always a price: the free first call is free ONCE, so a ten
+ *  over it costs nine — the same arithmetic `pullMany` charges. Showing
+ *  "free" on the ten would be a lie the purse then contradicts. */
+function tenCall(game: Game, banner: BannerId): HTMLElement {
+  const price = game.pullPrice(banner);
+  const total = price.amount === 0 ? 9 : price.amount * 10;
+  return btn({
+    label: 'Call ×10',
     kind: 'gem',
-    onClick: () => (times === 1 ? game.doPull(banner) : game.doPullMany(banner, times)),
-    cost: total === 0 ? undefined : { [price.currency]: total },
+    onClick: () => game.doPullMany(banner, 10),
+    cost: { [price.currency]: total },
     have: (c) => game.walletValue(c),
   });
-  if (times === 1 && banner === 'basic' && game.uiHint() === 'banner') row.classList.add('hinted');
-  return row;
 }

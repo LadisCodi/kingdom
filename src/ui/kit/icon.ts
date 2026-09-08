@@ -31,7 +31,7 @@ export type UiIconName =
   | 'population' | 'builders' | 'workers' | 'harmony'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
-  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star';
+  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -42,7 +42,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
   Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
   Knowledge: '📜', Stardust: '🌟', Gems: '💎',
-  SilverKey: '🔑', GoldKey: '🗝️',
+  SilverKey: '🗝️', GoldKey: '🔑',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
   // Refined goods. `Iron` is both a good and one of the retired cell icons
@@ -64,6 +64,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   quest: '📜', showme: '👉', padlock: '🔒', hourglass: '⏳', clock: '🕐',
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
   star: '★', // district card level pips (Phase 3)
+  video: '▶', // a rewarded video — the mark on any button an ad pays for
 };
 
 export interface IconOpts {

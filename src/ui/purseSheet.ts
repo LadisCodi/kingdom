@@ -22,6 +22,13 @@ import { currencyIcon, sheet } from './kit';
  *  Reliquary, which is one tap from the same gauge. */
 const PURSE_ORDER = (Object.keys(CURRENCIES) as CurrencyId[]).filter((c) => c !== 'Mana');
 
+/** The id, made readable. Every currency until the two gacha keys was a
+ *  single word, so the row could print its own id and nobody noticed —
+ *  `SilverKey` is where that stopped being true. Splitting on the camel hump
+ *  needs no table to keep in step with `CurrencyId`. */
+const currencyName = (c: CurrencyId): string =>
+  c.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/ (\w)/g, (_, ch) => ` ${ch.toLowerCase()}`);
+
 export function renderPurseSheet(game: Game): HTMLElement {
   const rows = el('div', { class: 'purse' });
 
@@ -36,7 +43,7 @@ export function renderPurseSheet(game: Game): HTMLElement {
       'div',
       { class: 'purse-row' },
       currencyIcon(c),
-      el('span', { class: 'purse-name' }, c),
+      el('span', { class: 'purse-name' }, currencyName(c)),
       el('span', { class: 'purse-value' }, String(held)),
     ));
   }

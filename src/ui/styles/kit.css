@@ -158,6 +158,16 @@
   gap: 3px;
   padding: 9px 18px;
 }
+/* A fact about the button itself, riding above the label: when this press
+ * turns free. Smaller and dimmer than the label so it reads as a caption on
+ * the slab rather than a second verb competing with the first. */
+.k-btn-note {
+  font-size: var(--text-helper);
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
 .k-btn-cost {
   display: inline-flex;
   align-items: center;

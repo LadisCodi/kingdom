@@ -154,6 +154,27 @@
         null,
         "army"
       ]
+    },
+    {
+      "file": "icon_currency_silver_key.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "One hand-authored 16px key, its own file rather than a cell on a pack: the two keys were drawn separately and a two-cell sheet would only be a container. Dense, so it is point-doubled into the 32px grid untouched.",
+      "names": [
+        "SilverKey"
+      ]
+    },
+    {
+      "file": "icon_currency_golden_key.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "GoldKey"
+      ]
     }
   ],
   "locked": {
@@ -185,7 +206,9 @@
       "padlock",
       "population",
       "builders",
-      "workers"
+      "workers",
+      "SilverKey",
+      "GoldKey"
     ]
   },
   "spriteSize": 128,

@@ -212,9 +212,16 @@ Each of these is data, not code:
 - Until the Tavern is built, the banners keep their place on the store — the
   relocation is one mount, and it lands with the building.
 - Each banner card shows, always: the chance right now, the calls to a
-  guaranteed hero, the calls to a guaranteed Legendary where there is one, the
-  ×1 and ×10 buttons, the free call and what it is waiting on, and how many
-  keys the player holds.
+  guaranteed hero, the calls to a guaranteed Legendary where there is one,
+  **two buttons side by side**, and a line saying how many keys the player
+  holds and how much of today's free allowance is left.
+- **The free call is not its own button.** It is one of three faces the ×1
+  slot wears, in this order: **Free** when the call costs nothing, **▶ Free**
+  when an ad will pay for it, and **Call ×1** with its price otherwise. A call
+  that is already free never asks for an ad.
+- When the ×1 slot is not free it says when it next will be — *Free in 3m 32s*
+  inside the button while the cooldown runs, *Free tomorrow* once the day's
+  allowance is spent. The ×10 is always the ten and always priced.
 - **There is no standing hero-management destination.** Heroes are configured
   in the expedition sheet.
 

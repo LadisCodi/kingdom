@@ -65,6 +65,17 @@
   border: 2px solid rgba(120, 90, 180, 0.45);
 }
 .store-banner-head { display: flex; align-items: center; gap: 8px; }
+/* The two calls sit SIDE BY SIDE — one press is the ×1 slot (a call, a free
+ * call, or an ad that pays for one), the other is always the ten. Equal
+ * columns and a stretch, so the ×1 growing a "Free in" line does not leave
+ * the ten short beside it. */
+.store-banner-calls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+.store-banner-calls > .k-btn { width: 100%; }
 .store-banner-title { font-family: var(--font-display); font-size: var(--text-title); }
 .store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
 
