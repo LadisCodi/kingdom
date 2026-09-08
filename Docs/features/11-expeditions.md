@@ -4,8 +4,8 @@
 > staged delve. What a ruin *pays* is [`10-heroes.md`](10-heroes.md) §4; what it
 > *holds* is [`01-map-and-fog.md`](01-map-and-fog.md) §6.
 >
-> **Status: built**, minus contested landmarks — see
-> [`15-social.md`](15-social.md) §6.
+> **Status: built.** The garrison that has to be cleared before a ruin can be
+> delved is [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md), designed.
 
 ## 1. The rules, up front
 
@@ -168,25 +168,25 @@ The cap curve lines up with the five ruins:
   heroes (one per delve), party slots, and units (committed until the party
   extracts).
 
-## 8. Landmarks, and the four that cannot be claimed
+## 8. Garrisons
 
-- **Undefended** — pay a one-off Gold cost, authored per sanctuary in tiers
-  ([`01-map-and-fog.md`](01-map-and-fog.md) §6).
-- **Defended** — an enemy army holds it. Clear it, then claim. A **one-off
-  encounter, not a permanent commitment**: the army is never locked up holding
-  ground.
-- A contested landmark resolves through the same scoring pass as a delve depth:
-  one threat profile per landmark.
-- **Four of the ten are defended and none can be claimed** (not built: nothing
-  writes the cleared flag). Clearing them is a siege that scales from one
-  player to ten: [`15-social.md`](15-social.md) §6. **OQ-35.**
+- **Every ruin and landmark is held by a garrison**, and neither the delve nor
+  the claim is open until it is cleared
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+- **An assault is a one-depth delve**: the same party, the same sheet in
+  assault mode, the same scoring pass against one authored threat — with the
+  threat's type in view, so the read before launch is exact.
+- A **one-off encounter, not a permanent commitment**: the army is never locked
+  up holding ground.
+- The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 ## 9. The screens
 
 - **Expedition sheet** (from a discovered ruin): hero, party slots, the relic
   slot, supply cost, the **guaranteed-depth** read (*safe to depth 4*), the
   matchup read against the ruin's affinity, standing orders, one big green
-  Launch.
+  Launch. In **assault mode** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)
+  §5) the same sheet reads *wins* or *loses* outright.
 - **Checkpoint**: party HP, haul so far, what is known about the next depth,
   and two choices of **equal visual weight** — *go deeper* and *take the haul*.
   It reads as an offer, never a threat, and makes plain that the haul is not
@@ -221,4 +221,4 @@ The cap curve lines up with the five ruins:
 - PvP
 - An army cap that comes from the Townhall level
 
-**Open questions:** OQ-35, OQ-40, OQ-41.
+**Open questions:** OQ-40, OQ-41.

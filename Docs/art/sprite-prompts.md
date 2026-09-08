@@ -367,7 +367,7 @@ Same treatment as the existing district and feature art.
 | `sanctum_l1..l3` | Mana capacity | standing stone → shrine → domed observatory |
 | `ruin` / `ruin_cleared` | Dungeon entrance | the single most important new sprite — see below |
 | `landmark` / `landmark_claimed` | Mana source | unclaimed reads dormant; claimed glows faintly |
-| `landmark_defended` | Contested landmark | an enemy banner or camp on it |
+| `camp_orcs` · `camp_goblins` · `camp_harpies` · `camp_wolfriders` · `camp_drake` | A garrison's camp beside its site, one per threat type ([`../features/18-garrisons-and-raids.md`](../features/18-garrisons-and-raids.md) §2) | tents and a banner; the creature reads from the silhouette |
 
 **The ruin carries unusual weight.** The positioning audit singles out paid fog
 as the one uncontested mechanic and notes it is *filmable*; a relic pulled out

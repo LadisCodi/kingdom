@@ -141,7 +141,6 @@ and every rank is an ordinary card gated by the row above it like any other.
 | Major | Unlocks |
 |---|---|
 | **Veterancy** *(planned)* | heroes gain levels from delving |
-| **Siegecraft** *(planned)* | a party can clear a **defended landmark** |
 | **Tactics** | the type-disadvantage penalty softens, 0.75 → 0.85 (through the `Drill`) |
 | **Scouting** *(planned)* | a ruin's threat type shows before you launch |
 
@@ -208,7 +207,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Sailing** | sea cells become explorable |
 | **Scaling Tools** | mountain cells become explorable |
 | **Lorekeeping** *(planned)* | ruins give up more of what they hold |
-| **Wayshrines** *(planned)* | a **cleared** defended landmark becomes claimable, and claim costs drop |
+| **Wayshrines** *(planned)* | landmark claim costs drop |
 | **Ley Lines** *(planned)* | a district adjacent to the Sanctum produces +10% — the first adjacency rule that is not Housing↔Housing; [`02-map-scopes.md`](02-map-scopes.md) §1.1 is the precondition |
 | **Frugal Rites** *(planned)* | some taps cost no Mana |
 
@@ -337,8 +336,7 @@ Sanctum adjacency bonus.
 
 ### 6.3 Mechanics behind planned majors (designed, not built)
 
-**Siegecraft** (clearing a defended landmark, [`15-social.md`](15-social.md)
-§6), **Veterancy** (hero levels), **Field Medicine** (HP between depths),
+**Veterancy** (hero levels), **Field Medicine** (HP between depths),
 **Vanguard** (auto-resolving depth 1), **Invocation** (a second charge),
 **Ritual Casting** (a building as a cast target), **Ley Storm** (a daily
 self-cast window), **Ley Lines** (adjacency v2), **Frugal Rites** (an RNG roll
@@ -358,8 +356,8 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
   until their own major works.
 - `tests/research.test.ts` pins the exact set and all four rules.
 
-**Planned (15):** Field Medicine, Veterancy,
-Siegecraft, Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
+**Planned (14):** Field Medicine, Veterancy,
+Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
 Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
 
 **Live era-2/3 majors (9):** Aqueducts, Guildhalls, Roadworks, Tactics,

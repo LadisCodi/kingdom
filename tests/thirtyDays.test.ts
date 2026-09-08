@@ -14,14 +14,14 @@
 // (`KINGDOM_DAYS=7` shortens a run while the policy itself is being written).
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, TAP, TECH_ORDER, type DistrictDef,
+  DISTRICTS, TAP, TECH_ORDER, TECHNOLOGIES, type DistrictDef,
 } from '../src/sim/data/definitions';
 import {
   advance, changeWorkers, enqueueBuild, upgradeDistrict,
 } from '../src/sim/commands';
 import {
-  LATE_FROM, placementBlock, maxDistrictCount, requiredTownhallLevel, upgradeGoodsCost,
-  validPlacementCells,
+  LATE_FROM, placementBlock, maxDistrictCount, requiredTechForLevel, requiredTownhallLevel,
+  upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
 import { explorationGate, fogState, isReachable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
@@ -30,7 +30,7 @@ import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
 import { availableWorkers, houseTap, housedPopulation, maxPopulation } from '../src/sim/population';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
-import { canStartTech, startTech, techCost } from '../src/sim/research';
+import { canStartTech, isTechComplete, startTech, techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { choosePayerProfile } from '../src/sim/store';
 import {
@@ -41,7 +41,7 @@ import {
 } from '../src/sim/expeditions';
 import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { influenceCells } from '../src/sim/workers';
-import type { UnitId } from '../src/sim/state';
+import type { TechId, UnitId } from '../src/sim/state';
 import {
   coordKey, getWallet, type Coord, type District, type DistrictId, type GameState,
 } from '../src/sim/state';
@@ -271,10 +271,25 @@ function playVisit(state: GameState, now: number): boolean {
     } else break;
   }
 
-  // 7. Research the cheapest thing that can start.
+  // 7. Research. FIRST whatever gates the next Townhall level — the card says
+  //    "Research Magistracy first" and a player reads it — walking the rows
+  //    above it, since a requirement is the row above; THEN the cheapest
+  //    thing that can start. Cheapest-first alone never got there: Magistracy
+  //    is the 154th-cheapest card of 174, and this player ended thirty days
+  //    on Townhall 3 with three thousand Knowledge unspent.
+  const gate = requiredTechForLevel('Townhall', townhall(state).level + 1);
+  const wanted = new Set<TechId>();
+  const want = (id: TechId): void => {
+    if (wanted.has(id) || isTechComplete(state, id)) return;
+    wanted.add(id);
+    for (const above of TECHNOLOGIES[id].requires) want(above);
+  };
+  if (gate !== null) want(gate);
   for (let i = 0; i < 6; i++) {
-    const next = TECH_ORDER.filter((id) => canStartTech(state, id))
-      .sort((a, b) => techCost(a) - techCost(b))[0];
+    const byCost = (a: TechId, b: TechId) => techCost(a) - techCost(b);
+    const startable = TECH_ORDER.filter((id) => canStartTech(state, id));
+    const next = startable.filter((id) => wanted.has(id)).sort(byCost)[0]
+      ?? startable.sort(byCost)[0];
     if (!next || startTech(state, next, t) !== 'Started') break;
     acted = true;
   }
@@ -379,14 +394,18 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const end = weeks[weeks.length - 1];
     const prev = weeks[weeks.length - 2];
 
-    // 1. The Townhall stalls one level short of its own sheet, and does so in
-    //    week 2. Level 4 is `Magistracy`, an era-3 card priced in Knowledge,
-    //    and Knowledge is territorial — so the late city is behind the delve
-    //    half of the game by design (07-research.md §3).
+    // 1. The Townhall reaches the END OF ITS SHEET in week 3 and then has
+    //    nowhere to go: level 4 is the last one authored, and the Townhall is
+    //    the clock every other ladder hangs from. Re-pinned 2026-09-08 — it
+    //    used to read "stalls at 3, because Knowledge is territorial", and
+    //    that was the harness, not the game: a cheapest-first policy never
+    //    reached `Magistracy` (the 154th-cheapest card of 174) and ended the
+    //    month on three thousand Knowledge unspent. A player who researches
+    //    what the Townhall's card asks for gets there in week 3.
     expect(weeks[0].townhall, 'Townhall at the end of week 1').toBe(2);
-    expect(end.townhall, 'Townhall at day 30').toBe(3);
-    expect(end.townhall, 'a level still on the sheet, unreached in thirty days')
-      .toBeLessThan(DISTRICTS.Townhall.maxLevel);
+    expect(weeks[2].townhall, 'Townhall at the end of week 3').toBe(4);
+    expect(end.townhall, 'Townhall at day 30 — the sheet\'s ceiling, step 7 is what is missing')
+      .toBe(DISTRICTS.Townhall.maxLevel);
 
     // 2. The builder is finished long before the thirty days are: the last
     //    week adds no building at all.
@@ -413,13 +432,14 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    nothing at all.
     expect(end.levels, 'levels bought in the last week').toBeGreaterThan(prev.levels);
 
-    // But the ladder stops at FOUR, one level below the goods wall, and it is
-    // the Townhall that stops it: level 5 asks for Townhall 4 and this player
-    // ends on 3. So the goods prices of levels 6-10 are authored and
-    // unreachable — step 7's Townhall ladder is what opens both.
+    // But the ladder stops at FIVE, one level below the goods wall, and it is
+    // the Townhall that stops it: level 6 asks for Townhall 6 and this player
+    // ends on 4, the last level its sheet has. So the goods prices of levels
+    // 6-10 are authored and unreachable — step 7's Townhall ladder is what
+    // opens both.
     const deepest = Math.max(...state.city.districts.map((d) => d.level));
-    expect(deepest, 'the highest level any building reached').toBe(4);
-    expect(requiredTownhallLevel('Sawmill', 5), 'what the fifth level asks for')
+    expect(deepest, 'the highest level any building reached').toBe(LATE_FROM - 1);
+    expect(requiredTownhallLevel('Sawmill', LATE_FROM), 'what the sixth level asks for')
       .toBeGreaterThan(end.townhall);
     expect(Object.keys(upgradeGoodsCost('Sawmill', LATE_FROM)).length,
       'the goods wall is authored, whether or not anyone reaches it')

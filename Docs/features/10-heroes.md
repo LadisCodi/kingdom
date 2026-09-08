@@ -28,8 +28,9 @@
 | **The Relic-hunter** | Cavalry | 8 / 3 / 18 | +50% ingredient yield |
 | **The Scout** | Archer | 6 / 3 / 14 | reveals the next depth's threat before you commit |
 
-- **A hero is mandatory** to send a party into a ruin. Heroes gate delve
-  throughput: one hero, one delve at a time.
+- **A hero is mandatory** to send a party into a ruin or against a garrison.
+  Heroes gate throughput: one hero, one job at a time — a delve or an assault
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5).
 - A second hero adds another concurrent delve and another matchup covered.
 - **A party-wide bonus is folded into the party's stats**, not displayed
   beside them. Preview, safe depth, launch HP and each depth's damage all read
@@ -77,8 +78,8 @@ Every faucet is a dungeon or a banner.
   nothing; clearing turns a dungeon into a permanent faucet.
 - **Every pull pays Stardust, hero or not.** A tier gate points at one hero;
   Stardust levels whoever the player already has.
-- The chain is **army → hero → discovered ruin → first clear → Stardust →
-  relic levels.** A player who never delves makes no progress on the
+- The chain is **army → hero → cleared garrison → ruin → first clear →
+  Stardust → relic levels.** A player who never delves makes no progress on the
   weeks-long arc. **OQ-41.**
 
 ## 5. The gacha

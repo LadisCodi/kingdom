@@ -46,7 +46,7 @@
 | Tap a province cell | **1 Mana** |
 | Cast a **spell**, either map ([`07-research.md`](07-research.md) §6) | **Mana** |
 | Reveal a world hex | **Gold + time**, scaling with distance |
-| Send a party, claim, besiege | supplies, army commitment, time |
+| Send a party, assault a garrison, claim, besiege | supplies, army commitment, time |
 
 - A spell aimed at a shared node or a guild siege is *a modifier with an expiry,
   delivered as a pending effect* — the daily-help mechanism of

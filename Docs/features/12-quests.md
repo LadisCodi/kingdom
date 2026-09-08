@@ -24,7 +24,7 @@
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature · SellGoods |
+| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · **ClearGarrisons** *(designed)* · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature · SellGoods |
 
 - **Goal types are code; goals are data.** A new type is a code change; a new
   quest is a row.
@@ -36,7 +36,7 @@
     draining the feature afterwards cannot un-complete the quest.
 - Beats overlap: the 25 Wood quest 3 chops is the Wood quests 4 and 10 spend.
 
-## 2. The onboarding — quests 1–39
+## 2. The onboarding — quests 1–40
 
 - **Quest number is beat number.** The arc is asserted beat by beat in a test.
 
@@ -53,16 +53,20 @@
 | **19–21** | `SawTeeth` · `TheSawmill` · `Crewed` | **Saws → the Sawmill → two workers on it.** |
 | **22–24** | `Levies` · `Sawpits` · `Regrowth` | **Taxes I → Sawpits I → Reforesting I** — the three cards the book puts between Saws and the Market. A requirement is the row above, so the chain walks the rows in order rather than pointing past them. |
 | **25–27** | `Trade` · `ToMarket` · `Merchant` | Research, build and use the Market — once the Sawmill has made there be a surplus to sell. |
-| **28–30** | `FurtherAfield` · `OldStones` · `Attuned` | Fifteen more cells, **claim the near shrine**, consecrate a Sanctum. |
-| **31–32** | `Mapmakers` · `Surveyors` | **Cartography**, then **Surveying ×2**. Each Surveying level makes one tap on the fog do the work of one more; it does not change a cell's price (far rings cost 320 and 640 Gold at one Gold a tap). |
-| **33–34** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. Both hang off Cartography. |
-| **35–37** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 40. |
-| **38** | `FirstSummon` | **Summon at the banner. The first call is free.** |
-| **39** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow. |
+| **28** | `FurtherAfield` | Fifteen more cells — the near shrine comes into view, and the Orcs on it. |
+| **29–31** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 41. **The Barracks rouses the shrine's garrison: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
+| **32** | `FirstSummon` | **Summon at the banner. The first call is free.** |
+| **33** | `DriveThemOut` | **Defend the village: clear the shrine's Orcs.** The free hero wins alone at any matchup; the first fight is on the surface, the enemy in view, the outcome guaranteed. Pays Gold. |
+| **34–35** | `OldStones` · `Attuned` | **Claim the near shrine**, consecrate a Sanctum. |
+| **36–37** | `Mapmakers` · `Surveyors` | **Cartography**, then **Surveying ×2**. Each Surveying level makes one tap on the fog do the work of one more; it does not change a cell's price (far rings cost 320 and 640 Gold at one Gold a tap). |
+| **38–39** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. Both hang off Cartography. |
+| **40** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow. Its Orcs (strength 4) are cleared on the way; the hint says so. |
 
-- **Quests 40–54:** the Quarry, Urban Planning, Townhall 3 and Mining, then
+- **Quests 41–55:** the Quarry, Urban Planning, Townhall 3 and Mining, then
   Attunement, the Sanctum, a warband, the first full ruin clear, attuning a
   relic, four landmarks, depth five, and three relics held at once.
+- `OldStones` moving after the fight moves its Knowledge lump with it; the
+  chain test still has to find `Mapmakers` affordable with zero drip.
 
 ### 2.1 The opening economy
 
@@ -83,19 +87,19 @@
   - a crop plot costs **10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 40).
+  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 41).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 
 ### 2.2 Gems and Stardust
 
-- **Gem rewards sit in four quests** — 18, 39, 47 and 54 —
+- **Gem rewards sit in four quests** — 18, 40, 48 and 55 —
   150 + 150 + 250 + 200 = 750.
 - With the 500 grant and 2,500 from five ruin first-clears: **3,750 by play**,
   which reaches the second builder (2,500) and a pull
   ([`14-monetization.md`](14-monetization.md) §2.2). Later rungs come from the
   daily chest (~one a month) or a wallet.
-- A player who stops at quest 39 holds 800 Gems — a Mana refill.
+- A player who stops at quest 40 holds 800 Gems — a Mana refill.
 - **Stardust appears on exactly four goal types** — `ClearRuins`, `ReachDepth`,
   `OwnArtifacts`, `OwnHeroes`. Every other quest pays Gold.
 
@@ -155,7 +159,8 @@
 - The ladder survives a two-week absence at the step it reached.
 - The opening is played through the real sim with **nothing granted** and
   reaches the end of the authored chain without a dead end.
-- No new goal type was added to the union.
+- `ClearGarrisons` is the one goal type added since the chain was written,
+  and it pays Gold only.
 
 ## 6. Deliberately not in this design
 

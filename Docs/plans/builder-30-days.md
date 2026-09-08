@@ -89,8 +89,15 @@ At day 30: **457 of 1,470 cells uncovered**, 2 of 5 ruins found and 1 cleared,
 
 Four findings, now assertions in the harness:
 
-- **The Townhall stalls at 3 of 4, in week 2.** Level 4 is `Charter III`, and
-  the Knowledge that buys it is territorial.
+- ~~**The Townhall stalls at 3 of 4, in week 2.** Level 4 is `Charter III`, and
+  the Knowledge that buys it is territorial.~~ **Re-pinned 2026-09-08: that
+  was the harness, not the game.** The scripted player researched the cheapest
+  startable card and never reached `Magistracy` (the 154th-cheapest of 174),
+  ending the month on three thousand Knowledge unspent. Told to research what
+  the Townhall's card asks for — the rows above it, in order — it reaches
+  **Townhall 4, the end of its sheet, in week 3**, builds 42 districts instead
+  of 32 and buys 86 levels instead of 64. The late city is behind the
+  Townhall's own ladder now, which is step 7.
 - **The builder is finished by week 4** — the last week adds no building.
 - **It is not the purse that stops it.** This player ends on 16.8 M Gold.
 - **What starves is the ground.** At the designed session length a player

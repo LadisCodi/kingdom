@@ -77,6 +77,7 @@ Two more that are design-visible:
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03 |
 | The timeline, the weekly event, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
+| **Garrisons and raids — defend your village** | [`18`](features/18-garrisons-and-raids.md) | **designed 2026-09-08**, unbuilt — Step 7 |
 | **Wonders — the ladder with no top** | [`16`](features/16-wonders.md) | **designed, reviewed and closed 2026-09-03.** Unstarted and deliberately unsequenced — late-game by construction, and the game's only unbounded sink |
 
 **The load-bearing assertion holds at every step** — across a research
@@ -91,7 +92,7 @@ each has an answer, or has one waiting in a doc.
 | # | Hole | Where |
 |---|---|---|
 | ~~**H0**~~ | ~~**The tap mints matter, and the economy has no ceiling.**~~ **FIXED 2026-09-03** — §4 step 0. | [`04`](features/04-harvest.md) |
-| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. A visible dead end, and the only thing that would give combat a job outside dungeons. | design in [`15`](features/15-social.md) §6; needs **OQ-35** |
+| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. A visible dead end, and the only thing that would give combat a job outside dungeons. **Design closed 2026-09-08** — every site gets a garrison and a solo assault writes the flag; built by **Step 7**. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
 | **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. Give it a job or delete the field. | [`10`](features/10-heroes.md) §9 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §9 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
@@ -496,6 +497,56 @@ their systems.
   banner's home (`14-monetization.md` §2.1) for the Tavern.
 - **Size:** weeks; steps 2–4 alone are about two.
 
+### Step 7 · Garrisons and raids — defend your village
+
+**The army's second job, and the doorway to combat.** Every ruin and landmark
+is held by a garrison; discovering one starts a minute-scale counter; when it
+runs out the garrison raids the city for a bounded, recoverable slice of the
+banked materials; a hero and a party clear it through the expedition sheet.
+**This is the step that reopened promise 1**, on purpose and in writing
+([`overview.md`](overview.md)), and it closes **H1**.
+
+- **Design:** [`18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md) — complete.
+- **Blocked on: nothing.** Every number is **OQ-72** and needs the playtest;
+  **OQ-73** (a defence lever) and **OQ-74** (full or partial restitution) do
+  not change the shape.
+- **What it costs, and where invariant 1 has to hold:**
+  - state: a `garrisons` module — per site `{rousedAt, nextRaidAt, trips,
+    hoard}`, `cleared`, the raid reports — absorbing `landmarks.cleared`;
+    `SAVE_VERSION` 32. A save whose sites are already visible carries
+    `rousedAt: null` and is stamped **inside `advance()`** from
+    `state.lastAdvance` (invariant 3), with its full warning; a landmark
+    already claimed is written cleared.
+  - rousing happens where `recordSiteDiscovery` already sweeps (build
+    completion) **and at military-hall completion**, stamped with that
+    boundary's `t`.
+  - `nextBoundary`: the earliest `nextRaidAt` and the assault's arrival;
+    two `applyDueAt` branches. Minute-scale periods with a three-trip cap stay
+    far under `MAX_BOUNDARY_STEPS`.
+  - `combat.ts`: `resolveGarrison` on the existing `effectiveAttack` /
+    `resolveDepth` maths; `homeDefence(state, threat)` over `availableRoster`
+    **minus assault parties**, plus heroes in neither a delve nor an assault.
+  - the city's rate per material: the crews' gather rate the harvest module
+    already exposes, plus the tax rate the daily chest already prices against
+    for Gold — no third rate.
+  - `expeditions.ts`: assault launch and arrival; the claim and the delve
+    launch read `garrisons.cleared`.
+  - `mapRules.ts` and `?dev=map`: the `guard` field on every site.
+  - the workbook: a `Garrisons` sheet (take seconds, supplies per tier) and
+    `raid.*` / `march.*` settings; the importer schema.
+  - quests: the `ClearGarrisons` goal type, the `DriveThemOut` row, the
+    onboarding reordered ([`12-quests.md`](features/12-quests.md) §2) and its
+    beat test renumbered.
+  - UI: the raid widget in the Mana-refill offer's slot (z 4), the raid sheet
+    in `#overlay`, the site tap routing to it while a garrison stands, the
+    expedition sheet's assault mode, five camp sprites.
+- **Gate:** the replay assertion holds across a raid landing during an
+  absence; a week away with three camps roused is nine raids and never more;
+  the reordered onboarding plays through `DriveThemOut` and `OldStones`
+  unfunded with `Mapmakers` still affordable; no army ⇒ never roused; a party
+  parked at a checkpoint is not a defender.
+- **Size:** about a week — the sim half is small, the UI half is most of it.
+
 ## 5. Deliberately after everything above
 
 Named here so nobody rediscovers them, and so they stay out of scope.
@@ -529,7 +580,7 @@ exists to remove.**
 | Content | Home | Tool |
 |---|---|---|
 | **Every number** — districts, harvest, technologies, upgrades, quests, currencies, units, relics, heroes, adjacency, settings | `balance/balance.xlsx` → generated JSON | the workbook, then the importer |
-| **The map** — terrain, features, landmarks, ruins | `region-map.json` | **`?dev=map`** ([`map-editor.md`](map-editor.md)) |
+| **The map** — terrain, features, landmarks, ruins, **and the garrison on each site** | `region-map.json` | **`?dev=map`** ([`map-editor.md`](map-editor.md)) |
 | **Event and banner schedules** | a live-ops data file | hand-written — wall-clock dates are not balance numbers |
 
 Data versus code, in one table:
@@ -542,6 +593,7 @@ Data versus code, in one table:
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
 | a seasonal hero = one hero row + one banner row; **the whole shape of the tech tree**, in `?dev=tree` | a rule about what a legal tech tree is (`techTreeRules.ts`) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
+| a garrison's threat, strength and counters, per site in the editor; take seconds and supplies per tier in the workbook | the `ClearGarrisons` goal type; a lever that moves a raid (OQ-73) |
 
 ## 7. Testing conventions worth keeping
 

@@ -21,10 +21,12 @@
 
 ## The three promises
 
-1. **Nothing you own is ever taken from you.** No raids, no decay, no
-   starvation, no failure state. Pressure comes from **opportunity that
-   expires** — a Mana pool that overflows, an event window that closes, a haul
-   the player chose to risk — never from loss of property.
+1. **No other player can ever touch your city.** The only thing that ever
+   takes from you is a garrison you have seen and left standing — three raids
+   per camp at most, a tenth of the purse each, and handed back in full when
+   you clear it. No decay, no starvation, no failure state. Every other
+   pressure is **opportunity that expires** — a Mana pool that overflows, an
+   event window that closes, a haul the player chose to risk.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
    test of reflexes. There is no battle screen. A well-prepared expedition
    never fails.
@@ -37,18 +39,20 @@
 1. **Reveal** — spend Gold to peel back the fog. Cost scales steeply with
    distance from the Townhall. **The frontier stays connected**, and a building
    sees further than it can buy.
-2. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**. Cells
+2. **Clear** — every ruin and landmark is held by a garrison, and a discovered
+   garrison starts a counter: send hero and troops before it raids the city.
+3. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**. Cells
    exhaust after a number of taps and recover on a timer.
-3. **Build** — place districts on revealed land. Costs are charged up front;
+4. **Build** — place districts on revealed land. Costs are charged up front;
    construction takes time and runs while the player is away.
-4. **Grow** — train villagers at the Townhall. Housed villagers pay taxes, the
+5. **Grow** — train villagers at the Townhall. Housed villagers pay taxes, the
    idle backbone of the economy.
-5. **Staff** — assign workers. They are units that walk to cells inside their
+6. **Staff** — assign workers. They are units that walk to cells inside their
    building's area of influence, harvest, and carry back.
-6. **Reinvest** — upgrade districts, research technologies, buy upgrades.
-7. **Delve** — send a hero and a party into an uncovered ruin, and decide at
+7. **Reinvest** — upgrade districts, research technologies, buy upgrades.
+8. **Delve** — send a hero and a party into an uncovered ruin, and decide at
    every checkpoint whether to go deeper or bank the haul.
-8. **Empower** — attune the relics they bring back, and spend Mana on magic.
+9. **Empower** — attune the relics they bring back, and spend Mana on magic.
 
 ## The fog
 
@@ -59,6 +63,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
 | **Ruins** | dungeons to delve — relics, ingredients, Stardust |
+| **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |
 
 - Landmarks compound: a bigger Mana pool is a bigger session and a bigger ad
   reward, because the ad reward is a whole pool.
@@ -67,6 +72,11 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 - Ruins are a non-repeating reward at the end of the fog's cost curve, and a
   place the player returns to.
+- Every site is held by a garrison. Discovering one starts a counter measured
+  in minutes; when it runs out the garrison raids the city and takes a bounded
+  slice of the banked materials, at most three times, all of it returned when
+  the garrison is cleared. **Defend your village** is the doorway to combat
+  ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
 
 **Full design:** [`features/01-map-and-fog.md`](features/01-map-and-fog.md).
 
@@ -148,7 +158,7 @@ Three arcs run at different speeds.
 | Arc | Gated by | Measured in |
 |---|---|---|
 | **The city** | the Townhall level — how many of each district, and how high | hours |
-| **The army, and therefore delve depth** | four military buildings the player chooses to build | hours to days |
+| **The army** — garrisons cleared, and therefore delve depth | four military buildings the player chooses to build | hours to days |
 | **The collection** — relics and heroes | ingredients and Stardust | **weeks** |
 
 ## The three scopes of the map
@@ -159,7 +169,8 @@ Three arcs run at different speeds.
 | **Temporary provinces** | event maps inside a window — the event format | tapped |
 | **The world map** | a shared hex lattice, outposts not cities | **sent to** |
 
-> **Your village can never be attacked. Everything outside it can be contested.**
+> **Your village can never be attacked by another player. Everything outside it
+> can be contested.**
 
 **Full design:** [`features/02-map-scopes.md`](features/02-map-scopes.md).
 

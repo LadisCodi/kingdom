@@ -146,18 +146,20 @@
 
 ## 4. Contest and PvP
 
-Promise 1: *nothing you own is ever taken from you. **No raids**, no decay, no
-starvation, no failure state. Pressure comes from opportunity that expires.*
+Promise 1: *no other player can ever touch your city. The only thing that ever
+takes from you is a garrison you have seen and left standing — bounded, and
+handed back when you clear it. No decay, no starvation, no failure state.*
 
 | Degree | What is contested | Breaks promise 1? |
 |---|---|---|
 | Leagues and rankings | status | No |
 | **Contested claim** — first to a hex keeps it | **the opportunity** | **No** — "opportunity that expires", with another player as the clock |
 | **Territory that changes hands** — hold a hex, it produces for you, it can be taken | **the hex, never your property** | **No** — what is lost is future rent from something never in your city |
+| **A garrison raiding your city** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) | banked materials — bounded, and returned when the garrison is cleared | **Yes, by design** — the one exception, and it is never another player |
 | Raiding another player's city | **their property** | **Yes, head-on** |
 
-> **Your village can never be attacked. Everything outside it can be
-> contested.**
+> **Your village can never be attacked by another player. Everything outside it
+> can be contested.**
 
 - Design rule, technical boundary and marketing line at once: province private
   and client-authoritative, world map shared and server-authoritative.

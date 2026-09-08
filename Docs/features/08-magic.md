@@ -12,7 +12,7 @@
 - **Mana is what magic costs, on both maps.**
   - In the province a tap is a small spell that hurries production.
   - On the world map it bends an expedition, reveals what a node holds, or
-    shortens a siege.
+    shortens a march.
 - Mana is the only currency in the game with a cap.
 - Mana is city-scoped.
 - A new kingdom starts with a full pool.

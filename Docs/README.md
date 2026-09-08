@@ -19,9 +19,11 @@ Every feature below is shaped by these.
 
 **The three promises**
 
-1. **Nothing you own is ever taken from you.** Pressure comes from *opportunity
-   that expires* — a pool that overflows, a window that closes, a haul you chose
-   to risk — never from loss of property.
+1. **No other player can ever touch your city.** The only thing that ever
+   takes from you is a garrison you have seen and left standing — three raids
+   per camp at most, a tenth of the purse each, and handed back in full when
+   you clear it. Every other pressure is *opportunity that expires* — a pool
+   that overflows, a window that closes, a haul you chose to risk.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
    test of reflexes. There is no battle screen.
 3. **Wallets buy comfort and breadth; play buys everything else.** Nothing is
@@ -43,7 +45,9 @@ Every feature below is shaped by these.
 
 **The paid fog is the differentiator.** It pays back three ways: resources,
 landmarks that make exploration compound, and ruins that are places you return
-to ([`01`](features/01-map-and-fog.md)).
+to ([`01`](features/01-map-and-fog.md)) — and every landmark and ruin is held
+by a garrison the army has to clear before the fog pays
+([`18`](features/18-garrisons-and-raids.md)).
 
 ## The features
 
@@ -65,9 +69,10 @@ One file per feature, in the order a player meets them.
 | 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest | built |
 | 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built |
 | 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, five ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
-| 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the defended landmarks | designed |
+| 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
+| 18 | [Garrisons and raids](features/18-garrisons-and-raids.md) | **defend your village** — the garrison on every site, the minute-scale counter a discovered one starts, the bounded and recoverable raid, home defence, and the assault that is the doorway to combat | designed |
 
 ## Reference
 
