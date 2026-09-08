@@ -278,8 +278,13 @@ Each of these is data, not code:
 - **A green mark** on any tile that can take a level or an ascension right
   now. It is the roster's whole job: point at the one card worth opening.
 - **Owned first, then the gaps**, both in roster order. No sort control.
-- One line above the grid: Stardust held, and how many of the roster are
-  found. One button below it: **Call for aid**, into the banner.
+- **The two purses this screen spends from ride on the game's own plank while
+  it is open** — Hero XP and Stardust, in place of the city coins, which buy
+  nothing here. A swap rather than an addition: the plank is the tightest row
+  in the game, and this is the same move the plaque under it already makes.
+  It also gives a refused Train something to shake.
+- One line above the grid: how many of the roster are found. One button below
+  it: **Call for aid**, into the banner.
 
 ### 8.2 The card
 

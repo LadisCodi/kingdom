@@ -543,6 +543,32 @@ describe('placement labels read the ground', () => {
 // reads (src/ui/kit/host.ts). A signature that misses an input does not
 // flicker — it goes stale — so these assert the two halves of the contract:
 // a bare second changes nothing, and every hero-facing move changes it.
+// The plank carries what the OPEN SCREEN spends. The roster's two coins are
+// on no plank anywhere, and the city's four buy nothing there — so it is a
+// swap, not an addition, which is also what keeps the row from clipping.
+describe('the plank follows the screen', () => {
+  it('carries the city coins on the map', () => {
+    const game = freshPresenter();
+    expect(game.visibleCurrencies()).toContain('Gold');
+    expect(game.visibleCurrencies()).not.toContain('HeroXp');
+  });
+
+  it('swaps to Hero XP and Stardust while the roster is open', () => {
+    const game = freshPresenter();
+    game.setOverlay('heroes');
+
+    expect(game.visibleCurrencies()).toEqual(['HeroXp', 'Stardust']);
+  });
+
+  it('gives the coins back when the roster closes', () => {
+    const game = freshPresenter();
+    game.setOverlay('heroes');
+    game.setOverlay(null);
+
+    expect(game.visibleCurrencies()).toContain('Gold');
+  });
+});
+
 describe('the heroes screen signature', () => {
   it('does not move on a tick that changed nothing it draws', () => {
     const game = freshPresenter();

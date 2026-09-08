@@ -26,19 +26,7 @@
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
 }
-.hero-purse-coin { display: flex; align-items: center; gap: 5px; }
-.hero-purse-coin b { font-size: var(--text-body); }
-.hero-purse-coin span { font-size: var(--text-helper); color: var(--ink-muted); }
-.hero-purse-found {
-  margin-left: auto;
-  text-align: right;
-  font-size: var(--text-helper);
-  color: var(--ink-muted);
-}
-@container frame (max-width: 380px) {
-  .hero-purse { gap: 10px; }
-  .hero-purse-coin span { display: none; }
-}
+.hero-purse-found { font-size: var(--text-helper); color: var(--ink-muted); }
 
 /* ---------------------------------------------------------------- the grid */
 

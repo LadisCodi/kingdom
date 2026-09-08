@@ -10,7 +10,9 @@
 // reads in that screen's header instead. Now:
 //
 //   * three coins that gate the early game, with Stone appearing only once
-//     it means something;
+//     it means something — and the whole set SWAPS on a screen that spends
+//     something else: the roster shows Hero XP and Stardust instead, because
+//     neither is on any plank and the city's four buy nothing there;
 //   * MANA, then Gems past the rope. Mana is the energy every tap is paid
 //     from, so it is never hidden and never contextual — a player who cannot
 //     see it cannot tell why a tap just refused;

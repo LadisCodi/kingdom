@@ -127,18 +127,10 @@ function grid(game: Game): HTMLElement {
   const found = roster.filter((h) => h.owned).length;
 
   return el('div', { class: 'hero' },
-    // Both purses, because the screen spends both and neither is on the
-    // plank: XP buys a level, Stardust tolls an ascension. A price with no
-    // purse in sight is the same bug as a purse with nothing to spend it on.
+    // The two purses this screen spends from are on the PLANK while it is
+    // open (`Game.visibleCurrencies`), so this row keeps only the one thing
+    // the header cannot say.
     el('div', { class: 'hero-purse' },
-      el('div', { class: 'hero-purse-coin' },
-        iconEl('HeroXp', { size: 'lg' }),
-        el('b', {}, String(game.walletValue('HeroXp'))),
-        el('span', {}, 'XP')),
-      el('div', { class: 'hero-purse-coin' },
-        iconEl('Stardust', { size: 'lg' }),
-        el('b', {}, String(game.walletValue('Stardust'))),
-        el('span', {}, 'Stardust')),
       el('div', { class: 'hero-purse-found' }, `${found} of ${roster.length} found`)),
     el('div', { class: 'hero-grid' }, ...ordered.map((view) => tile(game, view))),
     // The way to another hero. The banner lives in the store

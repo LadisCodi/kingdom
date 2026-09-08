@@ -2364,6 +2364,19 @@ export class Game {
    * anywhere; neither of those is one.
    */
   visibleCurrencies(): CurrencyId[] {
+    // THE PLANK CARRIES WHAT THE OPEN SCREEN SPENDS.
+    //
+    // The roster spends neither Gold nor timber, and it spends two coins that
+    // are on no plank anywhere: Hero XP buys a level, Stardust tolls an
+    // ascension. A price with no purse in sight is the bug this fixes, and
+    // the refusal shake now has a coin to land on.
+    //
+    // A SWAP rather than an addition. The plank is the tightest row in the
+    // game — four coins, Mana and Gems inside 402px — so six coins would
+    // clip two of them away, and the city's four are exactly the ones that
+    // buy nothing here. Same move the plaque under it already makes
+    // (`hudSlot`): show the reading the player can act on, not all of them.
+    if (this.openOverlay === 'heroes') return ['HeroXp', 'Stardust'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
     return [
