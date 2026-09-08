@@ -2305,7 +2305,7 @@
     },
     "Knowledge": {
       "cap": null,
-      "start": 120,
+      "start": 25,
       "primary": false,
       "goldValue": null
     },
@@ -2472,8 +2472,8 @@
     }
   ],
   "mana": {
-    "baseCap": 50,
-    "basePerHour": 6,
+    "baseCap": 100,
+    "basePerHour": 12,
     "sanctumCapPerLevel": [
       24,
       48,
@@ -2519,11 +2519,11 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
-    "basePerHour": 8,
-    "dripPerClearedRuinPerHour": 2,
-    "perClaimedLandmarkPerHour": 2,
-    "landmarkClaimLump": 50,
-    "conquestPerClearedRuinPerHour": 3
+    "basePerHour": 0.8,
+    "dripPerClearedRuinPerHour": 0.2,
+    "perClaimedLandmarkPerHour": 0.2,
+    "landmarkClaimLump": 5,
+    "conquestPerClearedRuinPerHour": 0.3
   },
   "army": {
     "typeAdvantage": 1.5,
@@ -2569,7 +2569,7 @@
     "fragmentsPerDepth": 1,
     "failHaulLoss": 0.5,
     "firstClearGems": 500,
-    "firstClearKnowledge": 150,
+    "firstClearKnowledge": 15,
     "firstClearStardust": 150
   },
   "party": {
@@ -3151,7 +3151,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 40
+      "rewardKnowledge": 4
     },
     {
       "id": "Attuned",
@@ -3166,7 +3166,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 40
+      "rewardKnowledge": 4
     },
     {
       "id": "Mapmakers",
@@ -3181,7 +3181,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 40
+      "rewardKnowledge": 4
     },
     {
       "id": "Surveyors",
@@ -3196,7 +3196,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 60
+      "rewardKnowledge": 6
     },
     {
       "id": "Highlands",
@@ -3211,7 +3211,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 80
+      "rewardKnowledge": 8
     },
     {
       "id": "PutToSea",
@@ -3226,7 +3226,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 40
+      "rewardKnowledge": 4
     },
     {
       "id": "ArmedMen",
@@ -3347,7 +3347,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 40
+      "rewardKnowledge": 4
     },
     {
       "id": "FullHouse",
@@ -3378,7 +3378,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 80
+      "rewardKnowledge": 8
     },
     {
       "id": "Architect",
@@ -3393,7 +3393,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 80
+      "rewardKnowledge": 8
     },
     {
       "id": "DeepSeams",

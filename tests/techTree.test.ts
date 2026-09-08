@@ -279,16 +279,6 @@ describe('what the rules refuse', () => {
     expect(messages(d).some((m) => m.includes('an era bar takes a whole line'))).toBe(true);
   });
 
-  // The rule the importer used to own, moved with the era: `balance.mjs` can
-  // no longer see which band a technology is in.
-  it('Knowledge charged in era 1, where the clock has not started', () => {
-    const d = clone();
-    // Row 0 is empty now that the cover pages are gone, so this lands in era
-    // 1 without colliding with anything — the case worth testing.
-    d.technologies.SawpitsII = { ...d.technologies.SawpitsII, era: 1, row: 0, col: 0 };
-    expect(messages(d).some((m) => m.includes('the clock has not started'))).toBe(true);
-  });
-
   it('a technology with nothing to say about itself', () => {
     const d = clone();
     d.technologies.Saws.name = '';

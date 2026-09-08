@@ -61,8 +61,10 @@ export function techUnlocks(id: TechId): Unlock[] {
  * rich city cannot skip an era. Neither alone works at this size — Gold can
  * size a tree but cannot pace it.
  *
- * Era 1 costs no Knowledge: the clock has not started yet, and the opening
- * runs on Gold and time exactly as it did before the clock existed.
+ * EVERY era costs Knowledge, era 1 included (2026-09-08): the clock runs from
+ * the first minute on a base rate, and a new kingdom is granted enough to pay
+ * for the opening chain's cards (`Currencies.Knowledge.start`). Before that
+ * the clock only started once the player held ground, so era 1 had to be free.
  *
  * Minor ranks cost both too. What separates a minor from a major is how much,
  * and nothing else — the tree says "small" with money and a clock, which is

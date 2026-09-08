@@ -1593,23 +1593,23 @@ export interface ConjunctionBoon {
 export const CONJUNCTION_BOONS: readonly ConjunctionBoon[] = [
   {
     id: 'flood', text: 'The leylines run high — Mana gathers twice as fast.',
-    stat: 'manaRegen', op: 'mul', value: 2, knowledge: 60, gems: 5,
+    stat: 'manaRegen', op: 'mul', value: 2, knowledge: 6, gems: 5,
   },
   {
     id: 'cheapMagic', text: 'Spellwork comes easy — abilities cost half.',
-    stat: 'activeCost', op: 'mul', value: 0.5, knowledge: 60, gems: 5,
+    stat: 'activeCost', op: 'mul', value: 0.5, knowledge: 6, gems: 5,
   },
   {
     id: 'insight', text: 'The old writing makes sense — Knowledge comes three times over.',
-    stat: 'knowledgeYield', op: 'mul', value: 3, knowledge: 60, gems: 5,
+    stat: 'knowledgeYield', op: 'mul', value: 3, knowledge: 6, gems: 5,
   },
   {
     id: 'swiftDelves', text: 'The dark is thin — parties move through ruins twice as fast.',
-    stat: 'delveSpeed', op: 'mul', value: 0.5, knowledge: 60, gems: 5,
+    stat: 'delveSpeed', op: 'mul', value: 0.5, knowledge: 6, gems: 5,
   },
   {
     id: 'lentSocket', text: 'The sky lends you a socket — one extra relic, for now.',
-    stat: 'attunementSlots', op: 'add', value: 1, knowledge: 60, gems: 5,
+    stat: 'attunementSlots', op: 'add', value: 1, knowledge: 6, gems: 5,
   },
 ];
 

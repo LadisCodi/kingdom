@@ -314,8 +314,10 @@ describe('quests fund the research tree', () => {
       held += q.rewardKnowledge;
     }
     // Enough margin that a re-priced rank or a moved quest does not silently
-    // put the tutorial one Knowledge short.
-    expect(worstSlack).toBeGreaterThanOrEqual(30);
+    // put the tutorial one Knowledge short. Five, not thirty: Knowledge was
+    // rescaled by ten on 2026-09-08, and the whole opening chain now asks for
+    // 64 of it against a grant of 25 and the chain's own 50.
+    expect(worstSlack).toBeGreaterThanOrEqual(5);
   });
 
   it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {

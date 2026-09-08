@@ -562,11 +562,16 @@ with a few days of slack, and measured **2 · 3 · 7 · 9 · 9 · 11 · 14 · 21
   prices the ladder could not run on a calendar: Townhall 4 alone was
   `Magistracy` and its column, 1,410 Knowledge, against a scripted month's
   income of ~1,500 — the whole late city sat behind Civics era 3. Three
-  changes, all data: **a base drip of 8 an hour** (`knowledge.base_per_hour`,
-  one line in `knowledgePerHour`), **120 Knowledge at the start**
-  (`Currencies.Knowledge.start`), and **every Knowledge price on the tree
-  halved** (23,775 in all). Territory still adds to the clock; it no longer
-  IS the clock ([`../features/07-research.md`](../features/07-research.md) §3).
+  changes, all data: **a base drip** (`knowledge.base_per_hour`, one line in
+  `knowledgePerHour`), **a starting grant** (`Currencies.Knowledge.start`),
+  and **every Knowledge price on the tree cut**. Territory still adds to the
+  clock; it no longer IS the clock. The magnitudes were then divided by ten
+  again the same day, rate and prices together, so the rate is a fraction of
+  one an hour (0.8) and a research is priced in tens: 2,442 for the whole
+  tree, 25 in the opening grant, and **era 1 pays Knowledge for the first
+  time** ([`../features/07-research.md`](../features/07-research.md) §3). The
+  pacing did not move — both sides scaled, and the harness reaches the same
+  level on the same day.
 - **What the harness had to learn to measure it** — five things a player does
   that a cheapest-first script did not: chain short researches inside a visit
   (with half the purse as the tree's budget); research what the Townhall's

@@ -361,11 +361,15 @@ describe('the era-2/3 lines reach their numbers', () => {
     const state = freshGame();
     state.landmarks.claimed[LANDMARKS[0].id] = true;
     state.ruinsCleared.HollowBarrow = true;
+    // A rank adds a tenth an hour to its own source, which is half again on
+    // top of the sheet's 0.2 — the rate is authored as a fraction of one an
+    // hour (2026-09-08), so the ranks that lift it are fractions too.
+    const step = 0.1;
     const base = knowledgePerHour(state);
     completeRanks(state, 'Wayposts', 1);
-    expect(knowledgePerHour(state)).toBe(base + 1);
+    expect(knowledgePerHour(state)).toBeCloseTo(base + step, 10);
     completeRanks(state, 'Vigils', 2);
-    expect(knowledgePerHour(state)).toBe(base + 1 + 2);
+    expect(knowledgePerHour(state)).toBeCloseTo(base + step + 2 * step, 10);
   });
 
   it('Scriptorium is a percentage on the whole drip', () => {

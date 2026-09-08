@@ -17,8 +17,9 @@ import {
 } from '../src/sim/combat';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
+import { techKnowledgeCost } from '../src/sim/research';
 import {
-  ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
+  ARMY, ARTIFACTS, TECH_ORDER, DELVE, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
   UNITS, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
@@ -26,7 +27,6 @@ import {
   pushDeeper, supplyCost, unitSlots,
 } from '../src/sim/expeditions';
 import { artifactIsCarried } from '../src/sim/artifacts';
-import { levelCost } from '../src/sim/collection';
 import { claimLandmark } from '../src/sim/landmarks';
 import { knowledgePerHour, mana, manaNetRegen, manaProduction } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
@@ -836,12 +836,14 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
   it('a ruin drips nothing until it has been CLEARED', () => {
     const state = readyToDelve();
     // The Barrow is discovered — readyToDelve can launch into it — and adds
-    // nothing yet: only the base rate runs.
+    // nothing yet: only the base rate runs, and it is a rate a DAY.
     const base = KNOWLEDGE.basePerHour;
     expect(knowledgePerHour(state)).toBe(base);
+    // The rate is a FRACTION of one an hour, so a day is the unit that banks
+    // whole Knowledge: 0.8 an hour is one every four and a half hours.
     const before = getWallet(state.kingdom.wallet, 'Knowledge');
-    advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + base);
+    advance(state, map, T0 + 86_400_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + Math.floor(24 * base));
 
     state.ruinsCleared[BARROW] = true;
     expect(knowledgePerHour(state)).toBe(base + KNOWLEDGE.dripPerClearedRuinPerHour);
@@ -875,9 +877,9 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
     const state = freshGame();
     expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
     expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour);
-    advance(state, map, T0 + 24 * 3_600_000);
+    advance(state, map, T0 + 86_400_000);
     expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(CURRENCIES.Knowledge.start + 24 * KNOWLEDGE.basePerHour);
+      .toBe(CURRENCIES.Knowledge.start + Math.floor(24 * KNOWLEDGE.basePerHour));
   });
 
   // THE LOAD-BEARING ASSERTION, for a rate that CHANGES mid-window.
@@ -934,33 +936,35 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
     state.ruinsCleared[BARROW] = true;
     state.ruinsCleared.SunkenChapel = true;
     const rate = KNOWLEDGE.basePerHour + 2 * KNOWLEDGE.dripPerClearedRuinPerHour;
-    expect(knowledgePerHour(state)).toBe(rate);
+    expect(knowledgePerHour(state)).toBeCloseTo(rate, 10);
 
     state.kingdom.lastKnowledgeAt = T0;
     const before = getWallet(state.kingdom.wallet, 'Knowledge');
-    advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + rate);
+    advance(state, map, T0 + 86_400_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + Math.floor(24 * rate));
   });
 
   // The runway that replaces the old "the map holds more Knowledge than the
   // tree costs" assertion in fog.test.ts. Demand is the collection; supply is
   // what five cleared ruins pay while the player is away.
-  it('five cleared ruins carry the levelling arc on a scale of weeks', () => {
+  it('five cleared ruins carry the TREE on a scale of weeks', () => {
     const state = readyToDelve();
     for (const id of Object.keys(RUINS) as Array<keyof typeof RUINS>) {
       state.ruinsCleared[id] = true;
     }
+    for (const l of LANDMARKS) state.landmarks.claimed[l.id] = true;
     const perDay = knowledgePerHour(state) * 24;
-    const oneCollectible = Array.from(
-      { length: COLLECTION.maxLevel - 1 },
-      (_, i) => levelCost(i + 1),
-    ).reduce((a, b) => a + b, 0);
+    const tree = TECH_ORDER.reduce((sum, id) => sum + techKnowledgeCost(id), 0);
 
-    // The floor plus five ruins' drip: (8 + 5 × 2) × 24.
-    expect(perDay).toBe((KNOWLEDGE.basePerHour
-      + Object.keys(RUINS).length * KNOWLEDGE.dripPerClearedRuinPerHour) * 24);
-    // Meaningful progress inside a month, an endgame horizon past it.
-    expect(oneCollectible / perDay).toBeGreaterThan(7);
-    expect(oneCollectible / perDay).toBeLessThan(30);
+    // The floor plus what the whole province holds.
+    expect(perDay).toBeCloseTo((KNOWLEDGE.basePerHour
+      + Object.keys(RUINS).length * KNOWLEDGE.dripPerClearedRuinPerHour
+      + LANDMARKS.length * KNOWLEDGE.perClaimedLandmarkPerHour) * 24, 10);
+    // …and it buys the tree in weeks, not days and not seasons. It used to
+    // read a COLLECTIBLE's arc against this rate, which stopped meaning
+    // anything when the collection moved to Stardust (2026-09-03) — the tree
+    // is what a Knowledge rate actually buys (07-research.md §3).
+    expect(tree / perDay).toBeGreaterThan(14);
+    expect(tree / perDay).toBeLessThan(70);
   });
 });

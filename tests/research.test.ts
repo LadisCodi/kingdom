@@ -107,13 +107,16 @@ describe('technology basics', () => {
 
   // THE CLOCK IS A PRICE. Knowledge is paid from the kingdom purse alongside
   // the Gold from the city's — two purses, one gate — and era 1 charges none,
-  // because the clock has not started yet (07-research.md §3, §3).
-  it('charges Gold from the city AND Knowledge from the kingdom, from era 2 on', () => {
+  it('charges Gold from the city AND Knowledge from the kingdom, in every era', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000 });
     state.kingdom.wallet.Knowledge = 0; // the opening grant, spent — this is about the purse
-    // Era 1 is Gold and time alone — the clock has not started.
-    expect(techKnowledgeCost('Forestry')).toBe(0);
+    // Era 1 is priced in the clock too (2026-09-08), and cheaply: the clock
+    // runs on a base rate from the first minute and a new kingdom is granted
+    // enough for the opening chain.
+    expect(techKnowledgeCost('Forestry')).toBeGreaterThan(0);
+    expect(canStartTech(state, 'Forestry'), 'no Knowledge at all').toBe(false);
+    fund(state, { Knowledge: techKnowledgeCost('Forestry') });
     expect(canStartTech(state, 'Forestry')).toBe(true);
 
     // Communities is a band down, where the clock HAS started.

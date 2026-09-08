@@ -70,7 +70,7 @@
 
 ### 2.1 The opening economy
 
-- A new kingdom starts with **50 Gold**, **500 Gems** and **120 Knowledge**.
+- A new kingdom starts with **50 Gold**, **500 Gems** and **25 Knowledge** — the last is what the chain’s own research costs, at zero drip.
 - Quest 1's four forest cells cost ~16 Gold; Forestry costs 25; quest 1 pays
   10 Gold. 50 + 10 covers both, **asserted at the dearest frontier the player
   could pick**.

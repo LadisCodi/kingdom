@@ -46,7 +46,9 @@
   ([`16-wonders.md`](16-wonders.md) §1). Knowledge is paid from the **kingdom**
   wallet (§3). Both are paid up front, in one go, like a build. No
   part-payment.
-- **Era 1 costs no Knowledge.** Era-1 nodes run 3–120 s and cost Gold only.
+- **Every era costs Knowledge, era 1 included** (2026-09-08): the clock runs
+  from the first minute on a base rate, so the opening pays it too — 1 for a
+  rank, 2 for a major, against a grant of 25. Era-1 nodes run 3–120 s.
 - Research completes through the unified advance, in real time, while the
   player is away. `techCompletesAt` is its boundary source.
 - **Slots:** base 1, max 3. Slot 2 costs 2,500 Gems, slot 3 costs 5,000
@@ -232,28 +234,37 @@ A `bonus` names its effects, and each is four fields:
 - **Buys technologies and nothing else** (plus guild investment, §8, when
   built).
 - **Uncapped.** A lump is a plain addition.
-- **A base rate, and territory on top of it.** The kingdom learns 8 an hour
-  holding nothing, so the tree opens on the calendar; every landmark and ruin
-  adds to that, so the province makes it open faster. A new kingdom starts
-  with **120 Knowledge**, enough for the first cards past era 1
+- **A base rate, and territory on top of it.** The kingdom learns **0.8 an
+  hour** holding nothing, so the tree opens on the calendar; every landmark
+  and ruin adds to that, so the province makes it open faster. A new kingdom
+  starts with **25 Knowledge**, which is what the opening chain's cards cost
   (`Currencies.Knowledge.start`).
+- **The rate is a fraction of one an hour, and the prices are tens.** Both
+  were divided by ten on 2026-09-08: a research had come to cost thousands of
+  a currency that dripped in whole units, which is a number nobody can hold in
+  their head. Nothing about the pacing moved — the harness reaches the same
+  Townhall level on the same day — and the ranks that lift the rate are
+  fractions too (Wayposts, Vigils: +0.1 an hour each).
 
 | Source | Rate | One-off | Key |
 |---|---|---|---|
-| the **base rate** | +8/h | 120 at the start | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
-| each **claimed landmark** | +2/h | +50 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
-| each **cleared ruin** | +2/h | +150 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
-| the **`Conquest`** technology | +3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
+| the **base rate** | +0.8/h | 25 at the start | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
+| each **claimed landmark** | +0.2/h | +5 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
+| each **cleared ruin** | +0.2/h | +15 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
+| the **`Conquest`** technology | +0.3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
 | `SanctifiedRuins` | ×2 on the per-ruin drip | — | a `mechanic` |
 | `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
 | `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
-| the **Conjunction** boon | — | +60 | `CONJUNCTION_BOONS[*].knowledge` (**OQ-12**) |
-| the **quest chain** | — | 500 across nine quests | `rewardKnowledge` (Quests sheet) |
+| the **Conjunction** boon | — | +6 | `CONJUNCTION_BOONS[*].knowledge` (**OQ-12**) |
+| the **quest chain** | — | 50 across nine quests | `rewardKnowledge` (Quests sheet) |
 
-- A kingdom holding nothing drips **8/h** (192 a day); a fully explored
-  province — ten landmarks, five ruins — **38/h** (912 a day) before
-  `Conquest`, **53/h** after.
+- A kingdom holding nothing drips **0.8/h** (19 a day); a fully explored
+  province — ten landmarks, five ruins — **3.8/h** (91 a day) before
+  `Conquest`, **5.3/h** after.
+- The clock banks whole units on a **whole-millisecond period** rounded from
+  the rate, which is what keeps one-call replay identical to stepped ticking
+  when the rate is a fraction (invariant 1).
 - **The chain seeds the clock.** Nine quests pay Knowledge — `OldStones`,
   `Attuned`, `Mapmakers`, `Surveyors`, `Highlands`, `PutToSea`, `SecondStory`,
   `IronRoad`, `Architect` — so every technology the chain asks for is

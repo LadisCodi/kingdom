@@ -257,28 +257,31 @@ and every rank is an ordinary card gated by the row above it like any other.
 
 | | Minor | Major | Keystone |
 |---|---|---|---|
-| **Era 1** | 40–150 G · 20–60 s | 200–500 G · 2–5 min | 800 G · 20 K · 15 min |
-| **Era 2** | 250–800 G · 10–30 K · 3–8 min | 1,000–2,500 G · 40–100 K · 15–30 min | 5,000 G · 250 K · 1 h |
-| **Era 3** | 1,500–5,000 G · 75–200 K · 20–45 min | 6,000–15,000 G · 300–750 K · 1–3 h | 30,000 G · 1,500 K · 6 h |
+| **Era 1** | 40–150 G · **1 K** · 20–60 s | 200–500 G · **2 K** · 2–5 min | 800 G · 2 K · 15 min |
+| **Era 2** | 250–800 G · 1–3 K · 3–8 min | 1,000–2,500 G · 4–10 K · 15–30 min | 5,000 G · 25 K · 1 h |
+| **Era 3** | 1,500–5,000 G · 8–25 K · 20–45 min | 6,000–15,000 G · 30–75 K · 1–3 h | 30,000 G · 150 K · 6 h |
 
-- **Knowledge prices were halved on 2026-09-08**, when the clock gained a base
-  rate ([`07-research.md`](07-research.md) §3): the builder's ladder had to run
-  on the calendar, and at the old prices Townhall 4 alone was 1,410 Knowledge
-  against a month's income of 1,500.
+- **Knowledge is authored in TENS, and the rate in fractions of one an hour**
+  ([`07-research.md`](07-research.md) §3). Both were divided by twenty on
+  2026-09-08 — halved when the clock gained a base rate so the builder's
+  ladder could run on a calendar, then halved by ten again because a research
+  priced in thousands of a currency that drips in ones is a number nobody can
+  hold in their head. **Era 1 pays it too**, 1 for a rank and 2 for a major,
+  against a starting grant of 25.
 
 - The bands are the design; the exact rows are the workbook's.
-- **Era 1 costs no Knowledge.**
+- **Era 1 costs Knowledge too** — 1 or 2, out of the opening grant.
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **519,830 Gold and 23,775 Knowledge**, of which the two sealed
-  era-4 keystones are 60,000 Gold and 3,000 Knowledge.
+- Whole tree: **519,830 Gold and 2,442 Knowledge**, of which the two
+  sealed era-4 keystones are 60,000 Gold and 300 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 4,445 | 0 |
-| 2 | 46,600 | 1,705 |
-| 3 | 408,785 | 19,070 |
-| 4 | 60,000 | 3,000 |
+| 1 | 4,445 | 58 |
+| 2 | 46,600 | 171 |
+| 3 | 408,785 | 1,913 |
+| 4 | 60,000 | 300 |
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
   are about **eight weeks** at 30/h and **five and a half** at 45/h.

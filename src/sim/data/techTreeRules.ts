@@ -600,16 +600,6 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         tech: id,
       });
     }
-    // Era 1 runs on Gold and time alone: the clock has not started in the
-    // first band, and charging Knowledge there would strangle the opening
-    // (Docs/features/07-research.md §3).
-    if (node.era === 1 && knowledge > 0) {
-      errors.push({
-        message: `${id} is in era 1 and costs ${knowledge} Knowledge — `
-          + 'the clock has not started there',
-        tech: id,
-      });
-    }
   }
 
   // ---- what kind of technology it is ------------------------------------

@@ -204,7 +204,10 @@ const SETTINGS = [
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   // The floor under the clock: what a kingdom holding no ground still learns
-  // an hour. Territory adds to it; it never replaces it.
+  // an hour. Territory adds to it; it never replaces it. **Fractions are the
+  // point**: Knowledge is the slowest currency in the game, so a rate per
+  // hour is a fraction of one and a research is priced in tens rather than
+  // thousands (2026-09-08).
   ['knowledge.base_per_hour', 'knowledge.basePerHour'],
   ['knowledge.drip_per_cleared_ruin_per_hour', 'knowledge.dripPerClearedRuinPerHour'],
   // The research clock's rate is the ground you have taken, and nothing else:
