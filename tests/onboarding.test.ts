@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
+import { advance, changeWorkers, enqueueBuild, upgradeDistrict } from '../src/sim/commands';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
@@ -30,8 +30,8 @@ import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { isTechComplete, startTech, techCost } from '../src/sim/research';
 import {
-  coordKey, getWallet, parseCoordKey, type Coord, type CurrencyId, type DistrictId,
-  type TechId,
+  coordKey, getWallet, parseCoordKey, townhall, type Coord, type CurrencyId,
+  type DistrictId, type TechId,
 } from '../src/sim/state';
 import { BERRIES, FOREST, map, T0 } from './helpers';
 
@@ -39,7 +39,7 @@ const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
-  it('runs steps 1-17 on nothing but what the game gives them', () => {
+  it('runs steps 1-27 on nothing but what the game gives them', () => {
     const state = newGame(map, T0);
     let now = T0;
 
@@ -180,6 +180,12 @@ describe('a player can actually play the onboarding', () => {
     chop(Math.max(0, 30 - wood()));
     finish('Lumber');
 
+    // Step 13: the Farm is one research down from the plots (Farming, the
+    // row under Agriculture), and the chain asks for it rather than leaving
+    // the player to find out at the build sheet.
+    research('Farming');
+    finish('Tillage');
+
     build('Farm', { x: -2, y: 0 });
     finish('Farmhand');
 
@@ -187,14 +193,58 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- quests 15-17: somewhere for the surplus to go ----
-    // The Market moved here from quest 32 so that generated orders have a home
-    // inside the opening (Docs/features/12-quests.md §3). This is the beat that has to hold
-    // up: 150 Gold for the technology and 40 Wood for the building, out of
-    // nothing but what the chain has paid so far.
-    //
-    // Research, then build, then use — the same three-beat shape the chain
-    // uses for every other building worth explaining.
+    // ---- steps 16-17: a second House, and the villager it makes room for ----
+    chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
+    build('Housing', { x: 0, y: -1 });
+    finish('GrowingTown');
+
+    // Two L1 houses hold four; the chain asks for three, so the new roof is
+    // what the villager needed.
+    expect(maxPopulation(state)).toBeGreaterThanOrEqual(3);
+    while (state.city.population < 3) {
+      if (trainUnit(state, 'Villager', T0) !== 'Queued') tick(30); // Food comes off the plots
+      tick(30);
+    }
+    finish('Neighbors');
+
+    // ---- step 18: a proper capital ----
+    chop(Math.max(0, DISTRICTS.Townhall.upgradeCost.Wood! - wood()));
+    expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
+    tick(120);
+    expect(townhall(state).level).toBe(2);
+    finish('ProperCapital');
+
+    // ---- steps 19-21: the wood, automated ----
+    research('Saws');
+    finish('SawTeeth');
+    chop(Math.max(0, DISTRICTS.Sawmill.buildCost.Wood! - wood()));
+    const millSpot = [...map.terrain.keys()].map(parseCoordKey)
+      .find((c) => placementBlock(state, map, 'Sawmill', c) === null);
+    expect(millSpot, 'nowhere legal to put the Sawmill').toBeDefined();
+    build('Sawmill', millSpot!);
+    finish('TheSawmill');
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
+    finish('Crewed');
+
+    // ---- steps 22-24: the three cards between Saws and the Market ----
+    // A requirement is the row above (2026-09-08), so the book puts Taxes,
+    // Sawpits and Reforesting on the way to the Market. The chain asks for
+    // them in row order rather than leaving the player to find out at the
+    // research sheet why the Market will not start.
+    research('Taxes01');
+    finish('Levies');
+    research('SawpitsI');
+    finish('Sawpits');
+    research('Reforesting01');
+    finish('Regrowth');
+
+    // ---- steps 25-27: somewhere for the surplus to go ----
+    // This is the beat that has to hold up: 150 Gold for the technology and
+    // 40 Wood for the building, out of nothing but what the chain has paid so
+    // far. Research, then build, then use — the same three-beat shape the
+    // chain uses for every other building worth explaining.
     research('Market');
     finish('Trade');
     chop(Math.max(0, DISTRICTS.Market.buildCost.Wood! - wood()));
@@ -222,22 +272,8 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Merchant');
 
-    // ---- steps 16-17: a second House, and the villager it makes room for ----
-    chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
-    build('Housing', { x: 0, y: -1 });
-    finish('GrowingTown');
-
-    // Two L1 houses hold four; the chain asks for three, so the new roof is
-    // what the villager needed.
-    expect(maxPopulation(state)).toBeGreaterThanOrEqual(3);
-    while (state.city.population < 3) {
-      if (trainUnit(state, 'Villager', T0) !== 'Queued') tick(30); // Food comes off the plots
-      tick(30);
-    }
-    finish('Neighbors');
-
-    // The player is now seventeen beats in and has never been handed anything.
-    expect(activeQuest(state)!.id).toBe('ProperCapital');
+    // The player is now twenty-seven beats in and has never been handed anything.
+    expect(activeQuest(state)!.id).toBe('FurtherAfield');
 
     // And the energy held out. Mana is what every tap is paid from, so an
     // opening that drains the pool is an opening that stops dead in front of

@@ -57,31 +57,35 @@ describe('the quest chain', () => {
       'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
                                                   //   a roof is what permits one
       'TaxDay', 'Explorer',                       // 7    rent pays for more fog
-      'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
-      'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
-      'Trade', 'ToMarket', 'Merchant',            // 13-15 the FIRST beat at which
-                                                  //   the city makes more than it
-                                                  //   eats — so the first at which
-                                                  //   "somewhere for surplus to go"
-                                                  //   means anything. Moved up from
-                                                  //   27+ to give generated orders a
-                                                  //   home inside the opening
-                                                  //   (Docs/features/12-quests.md §3).
-                                                  //   Research, THEN build — the
-                                                  //   same two-beat shape as
-                                                  //   Saws -> TheSawmill.
+      'Fields', 'FirstPlot', 'ByHand',            // 9-11 farming, by hand
+      'Lumber', 'Tillage', 'Farmhand', 'ToWork',  // 12-15 and then not by hand —
+                                                  //   the Farm is one research
+                                                  //   under the plots, and the
+                                                  //   chain asks for it
       'GrowingTown', 'Neighbors', 'ProperCapital',// 16-18 a House FIRST, then the
                                                   //   citizen it makes room for
                                                   //   (+ the Townhall, woven in)
       'SawTeeth', 'TheSawmill', 'Crewed',         // 19-21 automate the wood
-      'FurtherAfield', 'OldStones',               // 22-23 explore, claim the shrine
-      'Mapmakers', 'Surveyors',                   // 24    exploration becomes a system
-      'Highlands', 'PutToSea',                    // 25-26 the terrain gates
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 27-28 something worth killing
-      'FirstSummon', 'IntoTheDark',               // 29-30 a hero, and the first depth
+      'Levies', 'Sawpits', 'Regrowth',            // 22-24 the three cards the book
+                                                  //   puts between Saws and the
+                                                  //   Market — a requirement is
+                                                  //   the row above (2026-09-08),
+                                                  //   so the chain walks the rows
+                                                  //   rather than leaving the
+                                                  //   player to find them
+      'Trade', 'ToMarket', 'Merchant',            // 25-27 somewhere for the surplus
+                                                  //   to go, once the Sawmill has
+                                                  //   made there be one. Research,
+                                                  //   THEN build — the same shape
+                                                  //   as Saws -> TheSawmill.
+      'FurtherAfield', 'OldStones', 'Attuned',    // 28-30 explore, claim the shrine
+      'Mapmakers', 'Surveyors',                   // 31-32 exploration becomes a system
+      'Highlands', 'PutToSea',                    // 33-34 the terrain gates
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 35-37 something worth killing
+      'FirstSummon', 'IntoTheDark',               // 38-39 a hero, and the first depth
     );
 
-    // 31+: the rest of the city economy the tutorial defers, then the long game.
+    // 40+: the rest of the city economy the tutorial defers, then the long game.
     inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
       { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
@@ -339,14 +343,17 @@ describe('quests fund the research tree', () => {
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
     expect(chain).toBe(11_865);
-    expect(tree).toBe(520_165);
+    expect(tree).toBe(485_330); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
       .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    expect(opening).toBe(2350);
+    // 2,530 across 19 era-1 majors, since Civics became a whole book
+    // (2026-09-08) and its opening fans out — Masonry and the Market split
+    // it, Bureaucracy gathers it.
+    expect(opening).toBe(2530);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

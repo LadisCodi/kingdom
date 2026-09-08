@@ -217,13 +217,16 @@ describe('every ladder reaches the number it claims to', () => {
     expect(tapDraw(state, HARVEST.Forest, 0)).toBe(woodTap); // scoped
   });
 
-  it('Scythes and Irrigation both enrich crops, and they stack', () => {
+  it('Irrigation enriches crops from its second rank; the first only waters them', () => {
+    // Scythes is gone (2026-09-08) and Irrigation is the one ladder on Crops.
+    // Rank I moves REGROWTH, not the haul — a worker's strike is untouched by
+    // it — and ranks II and III add a unit each.
     const state = freshGame();
     const base = effectiveWorkerStrike(state, HARVEST.Crops);
-    completeRanks(state, 'Scythes', 3);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 3);
     completeRanks(state, 'Irrigation', 1);
-    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 4);
+    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base);
+    completeRanks(state, 'Irrigation', 3);
+    expect(effectiveWorkerStrike(state, HARVEST.Crops)).toBe(base + 2);
   });
 
   it('WorkerLoad is the one payroll-only dial — the crew, never the thumb', () => {

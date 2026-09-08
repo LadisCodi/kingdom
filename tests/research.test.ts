@@ -26,11 +26,13 @@ const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
 const PLOT_CELL = { x: 2, y: 1 }; // revealed grassland
 
 describe('technology basics', () => {
-  // Docs/features/12-quests.md §2 (quest 9): ONE research opens the plots and the Farm that
-  // works them. Splitting them across two techs put a second research between
-  // "tap this for Food" and "stop tapping this for Food", which is the beat
-  // the tutorial is actually built around. Farming now buys the Farm's level 2.
-  it('the farming chain: Agriculture unlocks crop plots AND the Farm', () => {
+  // Docs/features/12-quests.md §2 (quests 9-15): Agriculture opens the plots,
+  // and Farming — the row under it — opens the Farm that works them. Two
+  // researches, and the chain carries both (`Fields`, then `Tillage`), so the
+  // beat between "tap this for Food" and "stop tapping this for Food" is a
+  // research the tutorial asks for rather than one the player has to find.
+  // Decided 2026-09-08, when Civics became a whole book.
+  it('the farming chain: Agriculture opens the plots, Farming the Farm', () => {
     const state = freshGame();
     fund(state, { Gold: 5000, Wood: 500, Food: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
@@ -38,11 +40,14 @@ describe('technology basics', () => {
     // Farming is a band down in Civics, so it waits on what it requires.
     expect(startTech(state, 'Farming', T0)).toBe('MissingRequirement');
 
-    // Agriculture is on the first row of Civics, so it requires nothing and
-    // is startable from the very first second. Nothing at all is researched
-    // on a fresh kingdom: a book needs no card to open it.
+    // Nothing at all is researched on a fresh kingdom: a book needs no card
+    // to open it. Forestry is Civics' one first-row card, and Agriculture is
+    // the row under it — a requirement is the row above (2026-09-08).
     expect(state.research.completed).toEqual([]);
-    expect(TECHNOLOGIES.Agriculture.requires).toEqual([]);
+    expect(TECHNOLOGIES.Forestry.requires).toEqual([]);
+    expect(TECHNOLOGIES.Agriculture.requires).toEqual(['Forestry']);
+    expect(startTech(state, 'Agriculture', T0)).toBe('MissingRequirement');
+    completeTech(state, 'Forestry');
     expect(startTech(state, 'Agriculture', T0)).toBe('Started');
     expect(startTech(state, 'Agriculture', T0)).toBe('AlreadyActive');
     const durationMs = TECHNOLOGIES.Agriculture.durationSeconds * 1000;
@@ -52,13 +57,17 @@ describe('technology basics', () => {
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
     expect(startTech(state, 'Agriculture', T0 + durationMs)).toBe('AlreadyDone');
 
-    // Both open at once — no second research between tapping a plot and
-    // automating it.
+    // The plot opens; the Farm waits one row down.
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe(null);
+    expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
+    expect(startTech(state, 'Farming', T0 + durationMs)).toBe('Started');
+    tickAt(state, T0 + durationMs + TECHNOLOGIES.Farming.durationSeconds * 1000);
+    expect(isTechComplete(state, 'Farming')).toBe(true);
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe(null);
     expect(enqueueBuild(state, map, 'Farm', FARM_CELL)).toBe('Started');
-    // Farming is what the Farm's second level costs.
-    expect(requiredTechForLevel('Farm', 2)).toBe('Farming');
+    // Farming used to be what the Farm's second level cost; that level asks
+    // for no technology now.
+    expect(requiredTechForLevel('Farm', 2)).toBe(null);
   });
 
   it('gates units: every unit has its technology (Warrior, Archery)', () => {
@@ -178,16 +187,18 @@ describe('research slots', () => {
     state.player.wallet.Gems = 2500; // exactly the second slot
     fund(state, { Gold: 5000 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
-    // Two cards on the page's FIRST ROW, so neither waits on the other and
-    // both reach the slot check this test is about.
+    // The first card of two different BOOKS, so neither waits on the other
+    // and both reach the slot check this test is about. Within one book a
+    // requirement is the row above (2026-09-08), so Civics has one card that
+    // asks for nothing and Agriculture is not it any more.
     expect(startTech(state, 'Forestry', T0)).toBe('Started');
-    expect(startTech(state, 'Agriculture', T0)).toBe('NoFreeSlot');
+    expect(startTech(state, 'Warrior', T0)).toBe('NoFreeSlot');
 
     expect(slotGemCost(state)).toBe(2500);
     expect(buySlot(state)).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
     expect(techSlots(state)).toBe(2);
-    expect(startTech(state, 'Agriculture', T0)).toBe('Started');
+    expect(startTech(state, 'Warrior', T0)).toBe('Started');
 
     // Escalating price for the next one — and 0 gems left.
     expect(slotGemCost(state)).toBe(5000);
@@ -207,12 +218,17 @@ describe('research slots', () => {
     const state = freshGame();
     state.player.wallet.Gems = 2500;
     fund(state, { Gold: 5000 });
+    // Urban Planning asks for the row above it — Masonry AND the Market —
+    // and the Warrior is a first-row card of another book, so the two are
+    // independent. Agriculture would not do: Market's own chain already
+    // completes it.
     completeTech(state, 'Market');
+    completeTech(state, 'Masonry');
     buySlot(state);
-    startTech(state, 'UrbanPlanning', T0); // 60s
-    startTech(state, 'Agriculture', T0 + 5_000); // 45s → done at 50s
+    expect(startTech(state, 'UrbanPlanning', T0)).toBe('Started'); // 60s
+    expect(startTech(state, 'Warrior', T0 + 5_000)).toBe('Started'); // 30s → done at 35s
     tickAt(state, T0 + 50_000);
-    expect(isTechComplete(state, 'Agriculture')).toBe(true);
+    expect(isTechComplete(state, 'Warrior')).toBe(true);
     expect(isTechComplete(state, 'UrbanPlanning')).toBe(false);
     tickAt(state, T0 + 60_000);
     expect(isTechComplete(state, 'UrbanPlanning')).toBe(true);
@@ -457,23 +473,30 @@ describe('what the player can actually act on', () => {
     expect(anyResearchActionable(state)).toBe(false);
   });
 
-  it('gates a minor rank on its line, one rank at a time', () => {
+  it('gates a rank by the row above it — a ladder is a NAME, not a chain', () => {
+    // Two rules changed on 2026-09-08 and this is where they meet. A
+    // requirement sits on the row immediately above, never further; and a
+    // rank ladder carries no mechanism of its own — `Tap Power II` does not
+    // ask for `Tap Power I`, the numeral only tells the player the bonus
+    // goes further down the book. Every rank is an ordinary card gated by
+    // its own row above, which is what let the page be laid out for READING.
     const state = freshGame();
     fund(state, { Gold: 99_999 });
-    // Rank I hangs off Forestry, exactly as the upgrade used to.
-    expect(canStartTech(state, 'TapPowerI')).toBe(false); // parent not done
-    completeTech(state, 'Forestry');
+    expect(canStartTech(state, 'TapPowerI')).toBe(false); // its row above is not done
+    expect(TECHNOLOGIES.TapPowerI.requires).not.toEqual([]);
+    for (const above of TECHNOLOGIES.TapPowerI.requires) completeTech(state, above);
     expect(canStartTech(state, 'TapPowerI')).toBe(true);
-    // …and rank II is not reachable until rank I is done, which is what makes
-    // the ladder a ladder rather than five independent purchases.
-    expect(canStartTech(state, 'TapPowerII')).toBe(false);
+    // Rank II asks for ITS row above and for the band it sits in — never for
+    // rank I. Skipping rank I is legal, and the ladder still counts ranks.
+    expect(TECHNOLOGIES.TapPowerII.requires).not.toContain('TapPowerI');
+    expect(canStartTech(state, 'TapPowerII')).toBe(false); // era 2, band shut
     expect(startTech(state, 'TapPowerI', T0)).toBe('Started');
     advance(state, map, T0 + TECHNOLOGIES.TapPowerI.durationSeconds * 1000);
     expect(rankOf(state, 'TapPower')).toBe(1);
-    // Rank II sits in the next band, so it waits on the era bar as well.
-    expect(canStartTech(state, 'TapPowerII')).toBe(false);
     openEveryEra(state);
     fund(state, { Knowledge: 5_000 });
+    expect(canStartTech(state, 'TapPowerII')).toBe(false); // band open, row above not
+    for (const above of TECHNOLOGIES.TapPowerII.requires) completeTech(state, above);
     expect(canStartTech(state, 'TapPowerII')).toBe(true);
 
     // A finished ladder is not actionable, however rich you are.

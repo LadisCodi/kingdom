@@ -303,7 +303,7 @@ names the one call site that owns its number, and
 | Stat | Ladder(s) | Note |
 |---|---|---|
 | `tapWorkSeconds` · `autoTapCooldown` | Tap Power, Quick Hands | |
-| `harvestUnitsPerStrike` | Sawpits, Irrigation, Scythes, Butchery, Stonecutting, Big Nets, Iron Picks | **aimed at a harvest source**, so two ladders on `Crops` simply sum. The tap and the crew both read it |
+| `harvestUnitsPerStrike` | Sawpits, Irrigation, Butchery, Stonecutting, Big Nets, Iron Picks | **aimed at a harvest source**, so two ladders on `Crops` simply sum. The tap and the crew both read it |
 | `workerStrikeUnits` | Worker Load | the crew only — deliberately not the tap |
 | `workerSpeed` | Cartage | |
 | `buildTime` | Carpentry | |

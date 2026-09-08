@@ -123,12 +123,18 @@ describe('the resolver', () => {
     expect(techFlat(state, 'harvestUnitsPerStrike')).toBe(0); // nothing unaimed
   });
 
-  it('stacks two ladders aimed at one cell', () => {
+  it('stacks every effect aimed at one cell, whatever card it rides on', () => {
+    // Scythes is gone (2026-09-08): Irrigation is the one ladder on Crops now,
+    // and its ranks are not all the same kind of bonus — rank I waters the
+    // plot (regrowth), ranks II and III thicken it (+1 a strike each). The
+    // resolver folds by (stat, target), so the two unit ranks sum and the
+    // recovery rank never leaks into the count.
     const state = freshGame();
+    completeRanks(state, 'Irrigation', 1);
+    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Crops' })).toBe(0);
+    expect(techMultiplier(state, 'harvestRecovery', { harvest: 'Crops' })).toBeLessThan(1);
     completeRanks(state, 'Irrigation', 3);
-    completeRanks(state, 'Scythes', 3);
-    // What `ABUNDANCE_LINES` said with a table of two entries under `Crops`.
-    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Crops' })).toBe(6);
+    expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Crops' })).toBe(2);
     expect(techFlat(state, 'harvestUnitsPerStrike', { harvest: 'Meat' })).toBe(0);
   });
 

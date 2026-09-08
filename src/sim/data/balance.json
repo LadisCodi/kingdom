@@ -2759,7 +2759,7 @@
     {
       "id": "Fields",
       "name": "Fields",
-      "description": "Research Agriculture: crop plots, and the Farm that works them.",
+      "description": "Research Agriculture: crop plots you can tap for Food.",
       "goalType": "CompleteTech",
       "goalTarget": "Agriculture",
       "goalAmount": 1,
@@ -2810,7 +2810,22 @@
       "goalAmount": 30,
       "goalLevel": null,
       "reward": {
-        "Gold": 70
+        "Gold": 40
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Tillage",
+      "name": "Tillage",
+      "description": "Research Farming: a Farm that works the plots for you.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Farming",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
       },
       "rewardGems": 0,
       "rewardStardust": 0,
@@ -2841,51 +2856,6 @@
       "goalLevel": null,
       "reward": {
         "Gold": 85
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Trade",
-      "name": "Trade",
-      "description": "Your plots make more than your people eat. Research the Market — a surplus is only wealth once someone will buy it.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Market",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 100
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "ToMarket",
-      "name": "To market",
-      "description": "Now build the Market. It is where the surplus goes.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Market",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 110
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Merchant",
-      "name": "Merchant",
-      "description": "Sell twenty goods at the Market.",
-      "goalType": "SellGoods",
-      "goalTarget": null,
-      "goalAmount": 20,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 120
       },
       "rewardGems": 0,
       "rewardStardust": 0,
@@ -2982,6 +2952,96 @@
       "rewardKnowledge": 0
     },
     {
+      "id": "Levies",
+      "name": "Levies",
+      "description": "Research Taxes. A settled town pays its hall a little more.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Taxes01",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 80
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Sawpits",
+      "name": "Sawpits",
+      "description": "Research Sawpits. Every swing at a tree brings back a little more.",
+      "goalType": "CompleteTech",
+      "goalTarget": "SawpitsI",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 90
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Regrowth",
+      "name": "Regrowth",
+      "description": "Research Reforesting. The stumps come back sooner.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Reforesting01",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 90
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Trade",
+      "name": "Trade",
+      "description": "Your plots make more than your people eat. Research the Market — a surplus is only wealth once someone will buy it.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 60
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "ToMarket",
+      "name": "To market",
+      "description": "Now build the Market. It is where the surplus goes.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Market",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 70
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
+      "id": "Merchant",
+      "name": "Merchant",
+      "description": "Sell twenty goods at the Market.",
+      "goalType": "SellGoods",
+      "goalTarget": null,
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 70
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0
+    },
+    {
       "id": "FurtherAfield",
       "name": "Further afield",
       "description": "The map is bigger than your fields. Keep clearing it.",
@@ -2990,7 +3050,7 @@
       "goalAmount": 15,
       "goalLevel": null,
       "reward": {
-        "Gold": 200
+        "Gold": 150
       },
       "rewardGems": 0,
       "rewardStardust": 0,
@@ -3005,7 +3065,7 @@
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
-        "Gold": 250
+        "Gold": 170
       },
       "rewardGems": 0,
       "rewardStardust": 0,

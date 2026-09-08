@@ -49,7 +49,7 @@
       "requires": ["Taxes01"],
       "gold": 120, "seconds": 20,
       "effects": [
-        {"stat":"harvestRecovery","op":"percent","value":5,"target":{"harvest":"Crops"}}
+        {"stat":"harvestRecovery","op":"percent","value":-5,"target":{"harvest":"Crops"}}
       ]
     },
     "SawpitsI": {
@@ -76,7 +76,7 @@
       "requires": ["SawpitsI"],
       "gold": 100, "seconds": 60,
       "effects": [
-        {"stat":"harvestRecovery","op":"percent","value":5,"target":{"harvest":"Forest"}}
+        {"stat":"harvestRecovery","op":"percent","value":-5,"target":{"harvest":"Forest"}}
       ]
     },
     "Masonry": {
@@ -190,7 +190,7 @@
       "name": "Mining", "glyph": "⛏️", "kind": "unlock",
       "tome": "Civics", "era": 2, "row": 11, "col": 2,
       "requires": ["Bureaucracy"],
-      "gold": 2500, "knowledge": 200, "seconds": 1800,
+      "gold": 2500, "knowledge": 150, "seconds": 1800,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}]
     },
     "ButcheryI": {
@@ -1122,7 +1122,7 @@
       "name": "Attunement II", "glyph": "🔯", "kind": "unlock",
       "tome": "Magic", "era": 2, "row": 5, "col": 1,
       "requires": ["SurveyingI"],
-      "gold": 800, "knowledge": 40, "seconds": 900,
+      "gold": 800, "knowledge": 25, "seconds": 900,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":4}}, {"district":"RuneCarver"}]
     },
     "LeyTapsII": {
@@ -1147,7 +1147,7 @@
       "name": "Resonance II", "glyph": "🔔", "kind": "bonus",
       "tome": "Magic", "era": 2, "row": 6, "col": 1,
       "requires": ["AttunementII"],
-      "gold": 525, "knowledge": 40, "seconds": 330,
+      "gold": 525, "knowledge": 25, "seconds": 330,
       "effects": [
         {"stat":"activeCost","op":"percent","value":-20}
       ]
@@ -1173,7 +1173,7 @@
       "name": "Wayposts II", "glyph": "🪧", "kind": "bonus",
       "tome": "Magic", "era": 2, "row": 7, "col": 1,
       "requires": ["ResonanceII"],
-      "gold": 525, "knowledge": 40, "seconds": 330,
+      "gold": 525, "knowledge": 25, "seconds": 330,
       "effects": [
         {"stat":"knowledgePerClaimedLandmark","op":"flat","value":1}
       ]
@@ -1206,7 +1206,7 @@
       "description": "Ropes and pitons — the surveyors reach the high ground. Pitons, Vigils and Farsight build on it.",
       "tome": "Magic", "era": 2, "row": 8, "col": 2,
       "requires": ["WaypostsII"],
-      "gold": 1300, "knowledge": 105, "seconds": 1080
+      "gold": 1300, "knowledge": 45, "seconds": 1080
     },
     "PilgrimageI": {
       "name": "Pilgrimage I", "glyph": "🚶", "kind": "bonus",
