@@ -453,6 +453,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         PullCounts: state.gacha.pullCounts,
         PityCounters: state.gacha.pityCounters,
         LegendaryPity: state.gacha.legendaryPity,
+        FreePulls: state.gacha.freePulls,
       },
       // The ad offer. `ReadyAt` is a TIMER, so it is not shifted by the
       // offline cap below — the cap limits what the city produces, never what
@@ -803,6 +804,7 @@ export function deserialize(
       pullCounts: { ...(gachaDto.PullCounts ?? {}) },
       pityCounters: { ...(gachaDto.PityCounters ?? {}) },
       legendaryPity: { ...(gachaDto.LegendaryPity ?? {}) },
+      freePulls: { ...(gachaDto.FreePulls ?? {}) },
     };
   }
 

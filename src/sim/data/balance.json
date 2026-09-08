@@ -3902,7 +3902,7 @@
       "fragmentsPerMiss": 6,
       "pullStardust": 150,
       "freePerDay": 1,
-      "freeCooldownSeconds": 86400
+      "freeCooldownSeconds": 0
     }
   },
   "fog": {

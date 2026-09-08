@@ -35,6 +35,7 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
+import { dayIndex } from './daily';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
 
@@ -236,6 +237,73 @@ export interface PullResult {
   guaranteed: boolean;
   /** Whether the Legendary guarantee delivered this one. */
   guaranteedLegendary: boolean;
+}
+
+// ------------------------------------------------- the free pull, for an ad
+
+/**
+ * The free-pull ledger for a banner, rolled onto today.
+ *
+ * Lazy and idempotent, exactly as `store.ts` rolls the monthly budget: every
+ * writer calls it, so a stale day never leaks and nothing has to happen at
+ * midnight. The day is UTC (`dayIndex`), for the reason `daily.ts` gives — the
+ * sim may not read a clock it was not handed, and a mechanic that never
+ * punishes a miss can afford a rollover at a different local hour per player.
+ */
+function rollFreePulls(
+  state: GameState, banner: BannerId, now: number,
+): { day: number; used: number; readyAt: number } {
+  const today = dayIndex(now);
+  const held = state.gacha.freePulls[banner];
+  if (held === undefined || held.day !== today) {
+    const fresh = { day: today, used: 0, readyAt: held?.readyAt ?? 0 };
+    state.gacha.freePulls[banner] = fresh;
+    return fresh;
+  }
+  return held;
+}
+
+/** How many free pulls this banner has left today, without spending one. */
+export function freePullsLeft(state: GameState, banner: BannerId, now: number): number {
+  const today = dayIndex(now);
+  const held = state.gacha.freePulls[banner];
+  const used = held !== undefined && held.day === today ? held.used : 0;
+  return Math.max(0, BANNERS[banner].freePerDay - used);
+}
+
+/** When the next free pull is offered, or 0 if one is offered now. A TIMER, so
+ *  it is read from a stamp rather than counted down — a throttled tab and a
+ *  night away both resolve correctly on return. */
+export const freePullReadyAt = (state: GameState, banner: BannerId): number =>
+  state.gacha.freePulls[banner]?.readyAt ?? 0;
+
+export const freePullAvailable = (state: GameState, banner: BannerId, now: number): boolean =>
+  BANNERS[banner].freePerDay > 0
+  && freePullsLeft(state, banner, now) > 0
+  && now >= freePullReadyAt(state, banner);
+
+export type FreePullResult =
+  | { result: 'Pulled'; pull: PullResult }
+  | { result: 'NoneLeft' | 'OnCooldown' | 'NoFreePulls' };
+
+/**
+ * Spend the free allowance a rewarded ad pays for.
+ *
+ * The allowance lives here rather than in the presenter because it is state
+ * the save owns and a refusal the sim must be able to make: the ad screen is
+ * a surface, and a surface cannot be the thing that decides whether a pull is
+ * owed.
+ */
+export function claimFreePull(
+  state: GameState, banner: BannerId, now: number,
+): FreePullResult {
+  if (BANNERS[banner].freePerDay <= 0) return { result: 'NoFreePulls' };
+  if (freePullsLeft(state, banner, now) <= 0) return { result: 'NoneLeft' };
+  if (now < freePullReadyAt(state, banner)) return { result: 'OnCooldown' };
+  const ledger = rollFreePulls(state, banner, now);
+  ledger.used += 1;
+  ledger.readyAt = now + BANNERS[banner].freeCooldownSeconds * 1000;
+  return { result: 'Pulled', pull: pull(state, banner, { free: true }) };
 }
 
 /**

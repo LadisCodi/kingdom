@@ -44,7 +44,10 @@ import {
   previewExpedition, pushDeeper, supplyCost, unitSlots,
   type ExpeditionPreview, type LaunchBlock,
 } from './sim/expeditions';
-import { levelUpHero, pull, pullMany, raiseHeroTier, STANDARD_BANNER } from './sim/heroes';
+import {
+  claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft, levelUpHero,
+  pull, pullMany, raiseHeroTier, STANDARD_BANNER, type PullResult,
+} from './sim/heroes';
 import {
   mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
 } from './sim/mana';
@@ -158,6 +161,10 @@ export class Game {
   /** When the fake ad started playing. A UI moment, not sim state — a reload
    *  mid-ad simply drops back to the offer, which is still standing. */
   adWatchStartedAt: number | null = null;
+  /** WHAT the ad being watched pays for. The Mana refill was the only
+   *  placement until the banners got their free call (2026-09-08), and the
+   *  screen is the same screen — only the payout differs. */
+  adWatchPurpose: 'mana' | BannerId = 'mana';
   /** The map SITE whose card is open — a landmark or a ruin. Sites are not
    *  districts (they are authored content on a cell, not something the player
    *  built), so they get their own slot rather than being squeezed into
@@ -900,6 +907,7 @@ export class Game {
 
   startAdWatch(): void {
     if (this.adOffer() === null) return;
+    this.adWatchPurpose = 'mana';
     this.adWatchStartedAt = this.now();
     this.setOverlay(null); // the ad is its own surface, above everything
     this.notify();
@@ -915,9 +923,40 @@ export class Game {
     return { secondsLeft: left, ready: left === 0 };
   }
 
+  /** Watch an ad for a banner's free call. The allowance is the sim's — this
+   *  only refuses early so the screen is never opened on a pull that would
+   *  then be turned down. */
+  startFreePullWatch(banner: BannerId): void {
+    if (!freePullAvailable(this.state, banner, this.now())) return;
+    this.adWatchPurpose = banner;
+    this.adWatchStartedAt = this.now();
+    this.setOverlay(null); // the ad is its own surface, above everything
+    this.notify();
+  }
+
+  /** What a banner's free call is waiting on, for its button. */
+  freePull(banner: BannerId): { left: number; readyAt: number; ready: boolean } {
+    return {
+      left: freePullsLeft(this.state, banner, this.now()),
+      readyAt: freePullReadyAt(this.state, banner),
+      ready: freePullAvailable(this.state, banner, this.now()),
+    };
+  }
+
   doClaimAdReward(): void {
     const watch = this.adWatch();
     if (watch === null || !watch.ready) return;
+    if (this.adWatchPurpose !== 'mana') {
+      const banner = this.adWatchPurpose;
+      const claimed = claimFreePull(this.state, banner, this.now());
+      if (claimed.result === 'Pulled') {
+        playSfx('gemSpend');
+        this.announcePull(banner, claimed.pull);
+      }
+      this.adWatchStartedAt = null;
+      this.setOverlay(null);
+      return;
+    }
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
@@ -1115,6 +1154,28 @@ export class Game {
     }
     this.notify();
     return result;
+  }
+
+  /** A new hero gets the pennant; anything else gets a line. Shared by the
+   *  paid call and the one an ad pays for, because a hero found for free is
+   *  still a hero found. */
+  private announcePull(banner: BannerId, result: PullResult, before?: number): void {
+    const owned = before ?? this.state.heroes.owned.length - 1;
+    if (result.heroId !== null && this.state.heroes.owned.length > owned) {
+      const hero = HEROES[result.heroId];
+      this.queueBanner({
+        title: result.rarity === 'Legendary' ? 'A legend answers!' : 'A new hero answers!',
+        icon: hero.glyph,
+        name: hero.name,
+        desc: hero.traitText,
+        sprite: hero.sprite,
+        tone: 'gold',
+        sfx: 'chainFinished',
+      });
+    } else if (result.fragmentsOf !== null) {
+      this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
+    }
+    void banner;
   }
 
   /** Ten calls at once. The banner card shows the ten results; the presenter
@@ -1674,20 +1735,7 @@ export class Game {
       this.shake([BANNERS[banner].key]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
-      if (result.heroId !== null && this.state.heroes.owned.length > before) {
-        const hero = HEROES[result.heroId];
-        this.queueBanner({
-          title: 'A new hero answers!',
-          icon: hero.glyph,
-          name: hero.name,
-          desc: hero.traitText,
-          sprite: hero.sprite,
-          tone: 'gold',
-          sfx: 'chainFinished',
-        });
-      } else if (result.fragmentsOf !== null) {
-        this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
-      }
+      this.announcePull(banner, result, before);
     }
     this.notify();
   }

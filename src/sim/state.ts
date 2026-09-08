@@ -392,6 +392,19 @@ export interface GameState {
   gacha: {
     pullCounts: Record<string, number>;
     pityCounters: Record<string, number>;
+    /**
+     * The free-pull allowance a rewarded ad spends, per banner: which day the
+     * count belongs to, how many of that day's are gone, and when the next
+     * one is offered.
+     *
+     * A STAMP plus a counter, the shape `store.ts` uses for the monthly
+     * budget — the stamp is rolled lazily by every writer, so a stale day
+     * never leaks and nothing has to run at midnight. Deliberately NOT a
+     * boundary source (`adOffers.ts` makes the argument): a five-minute timer
+     * registered in `advance()` would propose ~8,600 boundaries across a
+     * thirty-day absence against a seatbelt of 10,000.
+     */
+    freePulls: Record<string, { day: number; used: number; readyAt: number }>;
     /** Pulls since the last Legendary, per banner. A second counter rather
      *  than a second meaning for the first: the short pity guarantees A hero,
      *  this one guarantees the rarity, and a player has to be able to read

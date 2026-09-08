@@ -16,7 +16,7 @@ import type { Game } from '../game';
 import {
   heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary,
 } from '../sim/heroes';
-import { el } from './format';
+import { el, formatDuration } from './format';
 import { action, iconEl } from './kit';
 
 export function bannerPanel(game: Game): HTMLElement {
@@ -58,6 +58,7 @@ function oneBanner(game: Game, banner: BannerId): HTMLElement {
     el('div', { class: 'store-banner-calls' },
       callAction(game, banner, price, 1),
       callAction(game, banner, price, 10)),
+    freeCall(game, banner),
     el('div', { class: 'rel-note' }, keyNote(game, banner)),
   );
 }
@@ -74,6 +75,30 @@ function keyNote(game: Game, banner: BannerId): string {
   const name = def.key === 'GoldKey' ? 'gold keys' : 'silver keys';
   return `You hold ${held} ${name}. More are ${def.keyGemCost} Gems each, `
     + 'or watch for the free call.';
+}
+
+/**
+ * The free call an ad pays for, and what it is waiting on when it is not
+ * offered — a button that is merely absent teaches the player nothing about
+ * why. Silent on a banner that has no free call at all.
+ */
+function freeCall(game: Game, banner: BannerId): HTMLElement | string {
+  const def = BANNERS[banner];
+  if (def.freePerDay <= 0) return '';
+  const free = game.freePull(banner);
+  if (free.ready) {
+    return action({
+      label: 'Free call — watch an ad',
+      kind: 'secondary',
+      onClick: () => game.startFreePullWatch(banner),
+      info: el('span', { class: 'muted' },
+        `${free.left} of ${def.freePerDay} left today`),
+    });
+  }
+  const why = free.left <= 0
+    ? `No free calls left today — ${def.freePerDay} a day`
+    : `Next free call in ${formatDuration(Math.max(0, free.readyAt - game.now()) / 1000)}`;
+  return el('div', { class: 'rel-note' }, why);
 }
 
 /** A summon button, split out so the quest hint can light it — `action()`

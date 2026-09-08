@@ -11,8 +11,9 @@ import {
   BANNERS, CONJUNCTION_BOONS, EVENTS, HERO_ORDER, HEROES, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
-  heroChanceAt, legendaryPityCount, pityCount, pull, pullMany, pullPrice,
-  pullsToGuarantee, pullsToLegendary, STANDARD_BANNER,
+  claimFreePull, freePullAvailable, freePullsLeft, heroChanceAt, legendaryPityCount,
+  pityCount, pull, pullMany, pullPrice, pullsToGuarantee, pullsToLegendary,
+  STANDARD_BANNER,
 } from '../src/sim/heroes';
 import { deserialize, serialize } from '../src/sim/save';
 import {
@@ -414,6 +415,83 @@ describe('the gacha', () => {
     expect(pityCount(state, 'advanced')).toBe(0);
     expect(legendaryPityCount(state, 'advanced')).toBe(0);
     expect(pullsToGuarantee(state, 'advanced')).toBe(BANNERS.advanced.hardPityAt);
+  });
+
+  // ---- the free call, and what an ad is allowed to pay for ---------------
+
+  it('offers the free call, spends it, and puts it on a cooldown', () => {
+    const state = freshGame(); // no keys at all: the ad is the whole purse
+    const def = BANNERS.basic;
+    expect(freePullAvailable(state, 'basic', T0)).toBe(true);
+    expect(freePullsLeft(state, 'basic', T0)).toBe(def.freePerDay);
+
+    expect(claimFreePull(state, 'basic', T0).result).toBe('Pulled');
+    expect(freePullsLeft(state, 'basic', T0)).toBe(def.freePerDay - 1);
+    // …and the next one waits out the cooldown rather than the day.
+    expect(claimFreePull(state, 'basic', T0).result).toBe('OnCooldown');
+    const ready = T0 + def.freeCooldownSeconds * 1000;
+    expect(claimFreePull(state, 'basic', ready).result).toBe('Pulled');
+  });
+
+  it('costs no key, and still pays Stardust and fragments', () => {
+    const state = freshGame();
+    const dust = getWallet(state.kingdom.wallet, 'Stardust');
+    const claimed = claimFreePull(state, 'basic', T0);
+    expect(claimed.result).toBe('Pulled');
+    expect(getWallet(state.player.wallet, 'SilverKey')).toBe(0); // nothing to take
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(dust + BANNERS.basic.pullStardust);
+  });
+
+  it('stops at the daily cap, and opens again on the next UTC day', () => {
+    const state = freshGame();
+    const def = BANNERS.basic;
+    let t = T0;
+    for (let i = 0; i < def.freePerDay; i += 1) {
+      expect(claimFreePull(state, 'basic', t).result, `free call ${i + 1}`).toBe('Pulled');
+      t += def.freeCooldownSeconds * 1000;
+    }
+    // The cooldown is up but the day's allowance is not.
+    expect(claimFreePull(state, 'basic', t).result).toBe('NoneLeft');
+    expect(freePullsLeft(state, 'basic', t)).toBe(0);
+    // T0 is noon UTC, so +13 h is tomorrow and +11 h is not.
+    expect(freePullsLeft(state, 'basic', T0 + 11 * 3_600_000)).toBe(0);
+    expect(freePullsLeft(state, 'basic', T0 + 13 * 3_600_000)).toBe(def.freePerDay);
+    expect(claimFreePull(state, 'basic', T0 + 13 * 3_600_000).result).toBe('Pulled');
+  });
+
+  it('gives the golden call one a day, on the DAY and not on a 24-hour clock', () => {
+    // The cap is the rule and the cooldown is only spacing, so the golden
+    // call carries no cooldown at all: one a day that resets at midnight,
+    // rather than one every 24 hours, which would drift an hour later every
+    // time the player was slow to claim it.
+    const state = freshGame();
+    expect(BANNERS.advanced.freePerDay).toBe(1);
+    expect(BANNERS.advanced.freeCooldownSeconds).toBe(0);
+    expect(claimFreePull(state, 'advanced', T0).result).toBe('Pulled');
+    expect(claimFreePull(state, 'advanced', T0 + 3_600_000).result).toBe('NoneLeft');
+    // T0 is noon UTC, so +11 h is the same day and +13 h is the next one.
+    expect(claimFreePull(state, 'advanced', T0 + 11 * 3_600_000).result).toBe('NoneLeft');
+    expect(claimFreePull(state, 'advanced', T0 + 13 * 3_600_000).result).toBe('Pulled');
+  });
+
+  it('keeps the two allowances apart, and survives a reload', () => {
+    const state = freshGame();
+    claimFreePull(state, 'basic', T0);
+    expect(freePullsLeft(state, 'advanced', T0)).toBe(BANNERS.advanced.freePerDay);
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(freePullsLeft(restored, 'basic', T0)).toBe(BANNERS.basic.freePerDay - 1);
+    expect(freePullAvailable(restored, 'basic', T0)).toBe(false); // the cooldown too
+  });
+
+  it('is never touched by the sim clock', () => {
+    // The architectural guarantee, and the reason the ledger is a stamp rather
+    // than a boundary: a five-minute timer in advance() would propose ~8,600
+    // boundaries across a month against a seatbelt of 10,000.
+    const state = freshGame();
+    claimFreePull(state, 'basic', T0);
+    const before = JSON.stringify(state.gacha);
+    advance(state, map, T0 + 30 * 86_400_000);
+    expect(JSON.stringify(state.gacha)).toBe(before);
   });
 
   // ---- ten at a time ------------------------------------------------------
