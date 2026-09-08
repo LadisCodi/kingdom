@@ -35,15 +35,17 @@ import { iconEl, type IconName } from './kit';
 // tab (Docs/features/10-heroes.md §8). A roster of thirty-two is a
 // DESTINATION — the player goes to it to spend what a delve paid — and a
 // destination reached by opening another screen and finding the right tab is
-// one the design is hiding. It sits beside Relics because the two are the
-// collection, and the collection is the half of the game the map does not
-// hold.
+// one the design is hiding.
+//
+// ORDER, authored 2026-09-08: the two collection tabs sit together in the
+// middle, and Build takes the right edge — the end of the bar a right thumb
+// reaches without moving, for the tab the player presses most.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
   { name: 'store', label: 'Store', icon: 'Gems' },
-  { name: 'build', label: 'Build', icon: 'build' },
-  { name: 'heroes', label: 'Heroes', icon: 'army' },
   { name: 'reliquary', label: 'Relics', icon: 'Mana' },
+  { name: 'heroes', label: 'Heroes', icon: 'army' },
   { name: 'research', label: 'Research', icon: 'research' },
+  { name: 'build', label: 'Build', icon: 'build' },
 ];
 
 export function mountNavbar(game: Game, root: HTMLElement): void {
