@@ -10,7 +10,6 @@
 > the rank ladders, the Knowledge drip and the Stardust split are
 > **built**, and the shape is authored in `?dev=tree`
 > ([`../tech-tree-editor.md`](../tech-tree-editor.md)). Designed, not built:
-> the centred node sheet (§5.4), the Gem finish on a running research (§1),
 > spells as Magic nodes (§6), contested-landmark lumps (§7), guild investment
 > (§8).
 
@@ -62,8 +61,11 @@
   A prerequisite never points into another tome, and never at a card further
   down its own page. A card on a page's **first row** requires nothing —
   there is nothing above it to require, which is what opening a book means.
-- Gems finish a running research the way they finish a build *(designed, not
-  built)*.
+- **Gems finish a running research**, at the same price per second a build
+  rush pays (`rush.seconds_per_gem`), pressed from the technology's own sheet.
+  The technology is moved to completed there and then rather than by
+  shortening its duration: a duration edited backwards puts a boundary in the
+  past, and one-call replay and stepped ticking would land on it differently.
 - The tree has 180 rows: **Civics 71 · Magic 57 · Warfare 52**, totalling
   **550,165 Gold and 50,495 Knowledge**. Price bands per era are in
   [`tech-tree.md`](tech-tree.md) §5.
@@ -264,7 +266,8 @@ A `bonus` names its effects, and each is four fields:
 - **The balance rides on the game's own plank while the research screen is
   open**, beside Gold, in place of Food and timber — a technology is priced in
   both halves and neither should be a screen away from the button that spends
-  it. The screen keeps the one thing the plank cannot say: **the rate**.
+  it. **The rate rides with it**, a small `+1/h` beside the number, because a
+  drip you cannot see the speed of is a drip you cannot plan against.
 - A kingdom holding nothing drips **1/h** (24 a day); a fully explored
   province — ten landmarks, five ruins — **4/h** (96 a day) before
   `Conquest`, **5.5/h** after.
@@ -348,13 +351,20 @@ A `bonus` names its effects, and each is four fields:
   a `planned` badge.
 - Requirements read as ✓ / ✗ in the panel.
 
-### 5.4 The info panel
+### 5.4 The technology's sheet
 
-Built as a side panel; the design is a **centred sheet** *(not built)*.
+**A modal over the whole book** (built 2026-09-08), not a panel resting on the
+bottom of it. A panel had to stay short enough to leave the page usable
+behind it, which is the wrong constraint on the one surface that has to say
+what a card does, what it needs, what it costs and how long it takes — and
+nothing else is actionable while it is up, so nothing else needs the room.
 
-- One tap on a card, one sheet over the page, with its own close knob
-  (`kit/surface.ts`). Header and nav stay above it, so the purse is readable
-  while the player reads prices.
+- One tap on a card, one sheet over the page, centred, on the scrim. **Two
+  ways out** — the ✕ in its header and the scrim itself — because a modal with
+  one is a trap. Header and nav stay above it, so the purse is readable while
+  the player reads prices.
+- **Start research** while it is idle, and **Finish now** in Gems while it is
+  running (§1).
 - Title: name, with the rank numeral for a minor (*Sawpits II*).
 - **What it does:** the generated line in full (§1) — the first and only place
   it is read.
@@ -370,9 +380,26 @@ Tap Power        +40%  →  +60%
   draw (§2.2).
 - Cost: Gold, Knowledge, time; time-to-afford when Knowledge is short. Behind
   a locked bar the action reads "Reveal N more cells to read on".
-- Action: **Research**, or **Finish with Gems** on a running one *(not built)*.
-- Slots: the bar shows in-flight research and a **Hire** button at
-  `slotGemCost`.
+- Action: **Start research**, or **Finish now** in Gems on a running one.
+
+### 5.5 The slots
+
+**A horizontal strip anchored left, across the top of the book.** It replaced
+a sentence — *2 of 3 at work* — and a Hire button beside it. A count is an
+abstraction; a row of desks is the thing itself: how many you have, which are
+running, when each frees up, and what the next one costs, in one glance and
+in the same units.
+
+- **Every unlocked slot, plus one locked one while there are more to buy.**
+  Never the whole ladder: an empty slot is an invitation, and four of them is
+  a shop.
+- Three states, each with its own line underneath:
+
+| State | The box | The line under it |
+|---|---|---|
+| **Free** | drawn open, dashed — an invitation, not a filled thing | *Free* |
+| **In use** | the technology's glyph; tapping it opens that technology's sheet, which is where the Gem finish is | the time left |
+| **Locked** | the one gem-toned slab on the row; tapping it buys | the Gems it costs |
 
 ## 6. Spells — designed, not built
 
@@ -496,7 +523,6 @@ Tap Power        +40%  →  +60%
 - A technology that grants a slot; a per-tome research slot.
 - Tomes found in ruins; a tome gated behind a ruin (§7).
 - A contested landmark that raises the Knowledge rate (§7).
-- A floating info card instead of a sheet (§5.4).
 - A `mul` op beside `percent` and `flat`. `SanctifiedRuins` and `Roadworks`
   multiply an inner term, and giving them an op would make the resolver's one
   shape — `(base + Σflat) × (1 + Σpct)` — two shapes (§1.2). `Salvage` and

@@ -4,7 +4,8 @@
 // in real time through the unified advance (like the build queue).
 
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, UNITS,
+  DISTRICTS, ERA_UNLOCK_CELLS, RESEARCH_SETTINGS, RUSH, TECHNOLOGIES, TECH_ORDER, TOMES,
+  UNITS,
 } from './data/definitions';
 import {
   addToWallet, getWallet,
@@ -242,6 +243,42 @@ export const techCompletesAt = (state: GameState, id: TechId): number | null => 
     ? null
     : active.startedAt + (active.durationMs ?? TECHNOLOGIES[id].durationSeconds * 1000);
 };
+
+/**
+ * Gems to put a running research on the shelf right now.
+ *
+ * The same price a build rush pays — `RUSH.secondsPerGem` — because it is the
+ * same offer, and a player who has learned what a minute costs at the
+ * Townhall must not have to learn it again at the lectern
+ * (Docs/features/07-research.md §1). Null when nothing is running.
+ */
+export function techRushCost(state: GameState, id: TechId, now: number): number | null {
+  const at = techCompletesAt(state, id);
+  if (at === null) return null;
+  return Math.max(1, Math.ceil(Math.max(0, at - now) / 1000 / RUSH.secondsPerGem));
+}
+
+export type TechRushResult = 'Finished' | 'NotActive' | 'NotEnoughGems';
+
+/**
+ * Finish it now.
+ *
+ * The technology is moved to `completed` HERE rather than by shortening its
+ * duration and letting the advance find it: a duration edited backwards would
+ * put a boundary in the past, and one-call replay and stepped ticking would
+ * then land on it differently (invariant 1).
+ */
+export function finishTechWithGems(
+  state: GameState, id: TechId, now: number,
+): TechRushResult {
+  const cost = techRushCost(state, id, now);
+  if (cost === null) return 'NotActive';
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  state.research.active = state.research.active.filter((a) => a.id !== id);
+  state.research.completed.push(id);
+  return 'Finished';
+}
 
 /** Complete every active technology whose time is up (in completion order). */
 export function advanceResearch(state: GameState, toTime: number): TechId[] {

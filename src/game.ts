@@ -49,7 +49,7 @@ import {
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
+  mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems, knowledgePerHour,
 } from './sim/mana';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
 import { hasMarket, salePayout, sellGoods } from './sim/market';
@@ -59,6 +59,7 @@ import {
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
   anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
+  finishTechWithGems, techRushCost,
 } from './sim/research';
 import { describeTech } from './sim/techProse';
 import {
@@ -1320,6 +1321,18 @@ export class Game {
     this.notify();
   }
 
+  /** Gems to finish this research now, or null when it is not running. */
+  techRushGems(id: TechId): number | null {
+    return techRushCost(this.state, id, this.now());
+  }
+
+  doFinishTech(id: TechId): void {
+    const result = finishTechWithGems(this.state, id, this.now());
+    if (result === 'Finished') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
   doStartTech(id: TechId): void {
     const result = startTech(this.state, id, this.now());
     if (result === 'Started') playSfx('research');
@@ -2363,6 +2376,24 @@ export class Game {
    * and for the same reason. A coin on the plank is a coin you spend from
    * anywhere; neither of those is one.
    */
+  /**
+   * The small line a coin carries beside its number, or null.
+   *
+   * ONE coin has one today: Knowledge is a CLOCK rather than a pile, and a
+   * drip you cannot see the speed of is a drip you cannot plan against. It
+   * only appears on the screen that spends it, which is also the only screen
+   * the coin appears on at all.
+   *
+   * Rounded here, not in the view: the rate is a sum of fractions and binary
+   * floating point renders some of them with a long tail — one reached a
+   * screenshot as `+2.4000000000000004/h`.
+   */
+  coinRate(c: CurrencyId): string | null {
+    if (c !== 'Knowledge' || this.openOverlay !== 'research') return null;
+    const rate = knowledgePerHour(this.state);
+    return rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : null;
+  }
+
   visibleCurrencies(): CurrencyId[] {
     // THE PLANK CARRIES WHAT THE OPEN SCREEN SPENDS.
     //

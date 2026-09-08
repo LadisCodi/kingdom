@@ -57,7 +57,7 @@ const GLYPH_BOXES: readonly string[] = [
   '.exp-ruin-art.is-glyph, .exp-portrait.is-glyph, .exp-troop-art.is-glyph, .exp-prize-art.is-glyph',
   '.rel-socket-empty',
   '.b-glyph', '.site-art--glyph', '.ad-screen-fake-mark',
-  '.tech-card.silhouette', '.tech-card-glyph',
+  '.tech-card.silhouette', '.tech-card-glyph', '.res-slot-glyph',
   '.ad-offer-film', '.k-knob', '.legacy-close',
 ];
 

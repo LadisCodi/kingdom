@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import {
-  CURRENCIES, DISTRICTS, ERA_COUNT, KNOWLEDGE, RESEARCH_SETTINGS, TECHNOLOGIES,
+  CURRENCIES, DISTRICTS, ERA_COUNT, KNOWLEDGE, RESEARCH_SETTINGS, RUSH, TECHNOLOGIES,
   TECH_ORDER, TOME_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
@@ -16,6 +16,7 @@ import {
 import {
   CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
 } from '../src/ui/research/layout';
+import { finishTechWithGems, techRushCost } from '../src/sim/research';
 import { knowledgePerHour } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId } from '../src/sim/state';
@@ -600,5 +601,76 @@ describe('planned technologies', () => {
         expect(TECHNOLOGIES[req].planned, `${id} waits on planned ${req}`).toBe(false);
       }
     }
+  });
+});
+
+// Gems finish a running research, at the same price per second a build rush
+// pays (Docs/features/07-research.md §1). It was designed and unbuilt until
+// the slot strip gave it a place to be pressed.
+describe('finishing a research with Gems', () => {
+  const running = () => {
+    const state = freshGame();
+    fund(state, { Gold: 99_999, Knowledge: 999 });
+    state.player.wallet.Gems = 0;
+    expect(startTech(state, 'Forestry', T0)).toBe('Started');
+    return state;
+  };
+
+  it('prices it by the seconds left, like a build', () => {
+    const state = running();
+    // Forestry runs for three seconds, which floors to the one-Gem minimum
+    // whenever you ask — so the ratio is measured on a long wait instead.
+    const TEN_MINUTES = 600_000;
+    state.research.active[0]!.durationMs = TEN_MINUTES;
+
+    const full = techRushCost(state, 'Forestry', T0)!;
+    const half = techRushCost(state, 'Forestry', T0 + TEN_MINUTES / 2)!;
+    const done = techRushCost(state, 'Forestry', T0 + TEN_MINUTES)!;
+
+    expect(full).toBe(Math.ceil(600 / RUSH.secondsPerGem));
+    expect(half).toBe(Math.ceil(300 / RUSH.secondsPerGem));
+    // Never free, however little is left: a press that costs nothing is not
+    // an offer, it is a button that finishes things.
+    expect(done).toBe(1);
+  });
+
+  it('completes it now and charges the Gems', () => {
+    const state = running();
+    const cost = techRushCost(state, 'Forestry', T0)!;
+    state.player.wallet.Gems = cost;
+
+    expect(finishTechWithGems(state, 'Forestry', T0)).toBe('Finished');
+
+    expect(isTechComplete(state, 'Forestry')).toBe(true);
+    expect(state.research.active).toEqual([]); // the slot is free again
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+  });
+
+  it('refuses without the Gems, and takes nothing', () => {
+    const state = running();
+    state.player.wallet.Gems = techRushCost(state, 'Forestry', T0)! - 1;
+
+    expect(finishTechWithGems(state, 'Forestry', T0)).toBe('NotEnoughGems');
+    expect(isTechComplete(state, 'Forestry')).toBe(false);
+    expect(state.research.active).toHaveLength(1);
+  });
+
+  it('refuses a technology that is not running', () => {
+    const state = freshGame();
+    expect(techRushCost(state, 'Forestry', T0)).toBeNull();
+    expect(finishTechWithGems(state, 'Forestry', T0)).toBe('NotActive');
+  });
+
+  // The one thing a rush must not do: leave a boundary behind it. Completing
+  // by editing the duration backwards would put one in the past, and one-call
+  // replay and stepped ticking would land on it differently (invariant 1).
+  it('leaves nothing for a later advance to complete twice', () => {
+    const state = running();
+    state.player.wallet.Gems = 9999;
+    finishTechWithGems(state, 'Forestry', T0);
+    const completedTwice = state.research.completed.filter((id) => id === 'Forestry');
+    advance(state, map, T0 + TECHNOLOGIES.Forestry.durationSeconds * 2000);
+    expect(state.research.completed.filter((id) => id === 'Forestry'))
+      .toEqual(completedTwice);
   });
 });
