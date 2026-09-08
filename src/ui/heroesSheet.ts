@@ -282,7 +282,25 @@ function detail(game: Game, id: HeroId): HTMLElement {
     return body;
   }
 
-  const levelled = view.entry.level >= COLLECTION.maxLevel;
+  const levelled = view.entry.level >= COLLECTION.heroMaxLevel;
+  const capped = !levelled && view.entry.level >= view.levelCap;
+
+  // At the ascension's ceiling the widget goes away entirely and says what to
+  // do instead. A disabled button with a reason beside it is still a button
+  // offering a press, and the press is not the answer here — the answer is
+  // the Ascend on the portrait, which the message points at.
+  if (capped) {
+    body.append(el('div', { class: 'hero-level is-capped' },
+      el('div', { class: 'hero-level-read' },
+        el('span', { class: 'hero-level-label' }, 'Level'),
+        el('b', {}, `${view.entry.level}`),
+        el('span', { class: 'hero-level-cap' }, `of ${view.levelCap}`)),
+      el('div', { class: 'hero-level-block' },
+        iconEl('ascension', { size: 'sm' }),
+        'Ascend them to go further')));
+    return body;
+  }
+
   body.append(el('div', { class: 'hero-level' },
     el('div', { class: 'hero-level-read' },
       el('span', { class: 'hero-level-label' }, 'Level'),
@@ -290,19 +308,13 @@ function detail(game: Game, id: HeroId): HTMLElement {
       el('span', { class: 'hero-level-cap' },
         levelled ? 'at the ceiling' : `of ${view.levelCap}`)),
     ...(levelled ? [] : [btn({
-      label: 'Train',
+      label: 'Level Up',
       kind: 'primary',
       onClick: () => game.doLevelHero(id),
       cost: { HeroXp: xpLevelCost(view.entry.level) },
       have: (c) => game.walletValue(c),
-      disabledReason: view.entry.level >= view.levelCap
-        ? 'Their ascension holds them back' : undefined,
     })]),
   ));
-  if (!levelled && view.entry.level >= view.levelCap) {
-    body.append(el('div', { class: 'hero-note' },
-      'Their ascension holds them back — raise it with fragments.'));
-  }
   return body;
 }
 

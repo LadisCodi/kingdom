@@ -10,7 +10,7 @@ import {
   ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, levelUpHero,
   ownsHeroId, pull, raiseHeroTier, unlockHero,
 } from '../src/sim/heroes';
-import { xpLevelCost } from '../src/sim/collection';
+import { heroLevelCapForTier, levelCapForTier, xpLevelCost } from '../src/sim/collection';
 import type { PullResult } from '../src/sim/heroes';
 import { COLLECTION } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
@@ -237,10 +237,38 @@ describe('a level costs Hero XP', () => {
   it('still refuses at the tier cap, before it looks at the purse', () => {
     const state = freshGame();
     grantHero(state, 'Bard');
-    state.heroes.levels.Bard = 2; // tier 1 caps at 2
+    // Derived, not typed in: a hero's ascension is worth ten levels and the
+    // number has already moved once.
+    state.heroes.levels.Bard = heroLevelCapForTier(1);
     addToWallet(state.kingdom.wallet, 'HeroXp', 999_999);
 
     expect(levelUpHero(state, 'Bard')).toBe('TierCapped');
     expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(999_999);
+  });
+});
+
+// Ten levels an ascension, fifty in all — a hero's ladder is five times a
+// relic's, because the collection arc is spent on the roster and an ascension
+// worth two levels is not worth chasing (Docs/features/10-heroes.md §4).
+describe('a hero ascension is worth ten levels', () => {
+  it('caps each tier ten levels above the last, and fifty at the top', () => {
+    expect(heroLevelCapForTier(1)).toBe(10);
+    expect(heroLevelCapForTier(2)).toBe(20);
+    expect(heroLevelCapForTier(COLLECTION.maxTier)).toBe(50);
+  });
+
+  it('leaves the relics on their own two-level rungs', () => {
+    expect(levelCapForTier(1)).toBe(2);
+    expect(levelCapForTier(COLLECTION.maxTier)).toBe(10);
+  });
+
+  it('keeps the XP curve payable over fifty levels', () => {
+    // 1.6 a level is fine over ten and absurd over fifty: level 50 alone
+    // would cost 4e11. The curve flattens as the ladder stretches.
+    let total = 0;
+    for (let l = 1; l < 50; l += 1) total += xpLevelCost(l);
+    expect(xpLevelCost(1)).toBeLessThan(200);
+    expect(xpLevelCost(49)).toBeLessThan(10_000);
+    expect(total).toBeLessThan(200_000);
   });
 });

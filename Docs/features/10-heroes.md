@@ -24,7 +24,11 @@
 
 - Heroes and relics share one **ladder shape**: collect → a tier caps the
   level → a currency buys levels inside the cap → equip into limited slots.
-- **A tier is worth two levels**; both ladders end at tier 5 / level 10.
+- **They share the shape, not the length.** A hero's ascension is worth **ten
+  levels** and its ladder ends at tier 5 / **level 50**; a relic's is worth
+  two and ends at level 10. A relic is one passive the player wears and
+  forgets; a hero is a roster of thirty-two the whole collection arc is spent
+  on, and an ascension worth a pair of levels is not worth chasing.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
   **Fragments + Stardust**; a relic levels on Stardust and tiers on ingredients
   ([`09-relics.md`](09-relics.md) §4). No second vocabulary beyond that.
@@ -114,8 +118,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 | | Raise | Cost |
 |---|---|---|
 | **Recruit** | not owned → owned, at tier 1 level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the tier cap | Hero XP: `round(100 × 1.6^level)` — **18,060** to carry one hero to level 10 |
-| **Ascension** | +1 tier, cap +2 levels | that hero's Fragments **and** a Stardust toll |
+| **Level** | +1, up to the tier cap | Hero XP: `round(100 × 1.09^level)` — 109 for level 2, 6,822 for level 50, **81,412** for the whole ladder |
+| **Ascension** | +1 tier, **cap +10 levels** | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
 
@@ -134,18 +138,20 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | Ascension | Fragments | Cumulative | Stardust toll | New level cap |
 |---|---|---|---|---|
-| tier 1 → 2 | 10 | 10 | 50 | 4 |
-| tier 2 → 3 | 20 | 30 | 100 | 6 |
-| tier 3 → 4 | 40 | 70 | 200 | 8 |
-| tier 4 → 5 | 80 | **150** | 400 | **10** (max) |
+| tier 1 → 2 | 10 | 10 | 50 | 20 |
+| tier 2 → 3 | 20 | 30 | 100 | 30 |
+| tier 3 → 4 | 40 | 70 | 200 | 40 |
+| tier 4 → 5 | 80 | **150** | 400 | **50** (max) |
 
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
   today is levelled with the XP the Commons earned.
-- **The XP curve is five times the relics' Stardust one**, because its faucet
-  is: a room pays ×10 XP against ×2 Stardust and the completed-depth trickle
-  keeps the same ratio ([`11-expeditions.md`](11-expeditions.md) §7). Same
-  pacing, bigger numbers. Whether that holds up in play is **OQ-79**.
+- **The XP curve flattens because the ladder is long.** 1.6 a level is fine
+  over ten rungs and absurd over fifty — level 50 alone would cost 4×10¹¹ — so
+  the growth carries the length and the TOTAL is what is held steady: about
+  4.5× the relics' Stardust ladder, against a faucet that runs 5× as fast
+  ([`11-expeditions.md`](11-expeditions.md) §7). Whether that survives a
+  playtest is **OQ-79**.
 - **Fragments are per hero**, a counter beside the hero, as today.
 - The Stardust toll totals **750** to max one hero — about a fifth of what a
   relic costs to max (~3,612) — so Stardust stays the relics' currency with a
@@ -304,6 +310,10 @@ Each of these is data, not code:
 - **The level and its button are one widget at the foot of the card.** They
   were a number in one box and a button four rows below it, which is two
   places to look for one decision.
+- **At the ascension's ceiling the button is gone**, and the widget says
+  *Ascend them to go further* in its place. Not a disabled button with a
+  caption: a disabled button still offers a press, and the press is not the
+  answer — the Ascend on the portrait is.
 - **An unowned hero gets the same card**, stats and passive and all. What the
   player is deciding is whether to chase this one, and that is a question
   about its type, its numbers and what it does — a fragment bar alone is a
@@ -374,6 +384,7 @@ the rewarded video.
 | A hero's passive | §2.4 | `Heroes.troop_dmg_mult`, `troop_hp_mult`, `troop_def_bonus`, `passive_per_tier` |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarity_stat_mult_*`, `heroes.rarity_passive_mult_*` |
 | What a level costs in XP | §4 | `collection.xp_level_cost_base`, `collection.xp_level_cost_growth` |
+| How long a hero's ladder is | 10 a tier, 50 in all | `collection.hero_levels_per_tier`, `collection.hero_max_level` |
 | What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragments_per_tier_base` |
 | What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragments_per_tier_*`, `collection.ascension_stardust_base`, `collection.ascension_stardust_growth` |
 | What a hero slot costs | §3 | `heroes.slot_gem_cost_base`, `slot_gem_cost_growth`, `heroes.max_slots` |

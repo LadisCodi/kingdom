@@ -35,8 +35,8 @@ import {
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
 import {
-  emptyEntry, isMaxLevel, levelCapForTier, tierBlock, tierCost, xpLevelCost,
-  type CollectionEntry,
+  emptyEntry, heroLevelCapForTier, isHeroMaxLevel, tierBlock, tierCost,
+  xpLevelCost, type CollectionEntry,
 } from './collection';
 import { dayIndex } from './daily';
 import { rand } from './rng';
@@ -85,8 +85,8 @@ export type HeroLevelResult =
 export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
-  if (isMaxLevel(entry)) return 'AtMaxLevel';
-  if (entry.level >= levelCapForTier(entry.tier)) return 'TierCapped';
+  if (isHeroMaxLevel(entry)) return 'AtMaxLevel';
+  if (entry.level >= heroLevelCapForTier(entry.tier)) return 'TierCapped';
   const cost = xpLevelCost(entry.level);
   if (getWallet(state.kingdom.wallet, 'HeroXp') < cost) return 'NotEnoughXp';
   addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
@@ -510,7 +510,7 @@ export function rosterView(state: GameState): Array<{
       id,
       owned: ownsHeroId(state, id),
       entry,
-      levelCap: Math.min(COLLECTION.maxLevel, entry.tier * COLLECTION.levelsPerTier),
+      levelCap: heroLevelCapForTier(entry.tier),
     };
   });
 }

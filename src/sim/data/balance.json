@@ -2538,7 +2538,9 @@
     "ascensionStardustBase": 50,
     "ascensionStardustGrowth": 2,
     "xpLevelCostBase": 100,
-    "xpLevelCostGrowth": 1.6
+    "xpLevelCostGrowth": 1.09,
+    "heroLevelsPerTier": 10,
+    "heroMaxLevel": 50
   },
   "knowledge": {
     "basePerHour": 0.8,

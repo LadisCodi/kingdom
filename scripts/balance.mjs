@@ -232,6 +232,15 @@ const SETTINGS = [
   // whether that holds up in play.**
   ['collection.xp_level_cost_base', 'collection.xpLevelCostBase'],
   ['collection.xp_level_cost_growth', 'collection.xpLevelCostGrowth'],
+  // A HERO's ladder is longer than a relic's and has its own two numbers.
+  // `levels_per_tier` and `max_level` above stay the relics': ten levels an
+  // ascension is a roster the player grinds for weeks, and a relic is not
+  // that shape. **The XP growth is what pays for the length** — 1.6 a level
+  // is fine over ten and absurd over fifty (level 50 alone would cost 4e11),
+  // so the curve flattens as the ladder stretches and the TOTAL is what is
+  // held roughly steady. **OQ-79.**
+  ['collection.hero_levels_per_tier', 'collection.heroLevelsPerTier'],
+  ['collection.hero_max_level', 'collection.heroMaxLevel'],
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   // The floor under the clock: what a kingdom holding no ground still learns

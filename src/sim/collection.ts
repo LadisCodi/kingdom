@@ -40,12 +40,28 @@ export const xpLevelCost = (level: number): number =>
 export const tierCost = (tier: number): number =>
   Math.round(COLLECTION.fragmentsPerTierBase * COLLECTION.fragmentsPerTierGrowth ** (tier - 1));
 
-/** The highest level this tier allows. A tier is worth exactly two levels, so
- *  a chase for Fragments always converts into somewhere for Stardust to go. */
+/** The highest level a RELIC's tier allows. A tier is worth exactly two
+ *  levels, so a chase for ingredients always converts into somewhere for
+ *  Stardust to go. */
 export const levelCapForTier = (tier: number): number =>
   Math.min(COLLECTION.maxLevel, tier * COLLECTION.levelsPerTier);
 
+/**
+ * The highest level a HERO's ascension allows — ten of them, against a
+ * relic's two.
+ *
+ * The two ladders share a SHAPE, not a length. A relic is one passive the
+ * player wears and forgets; a hero is a roster of thirty-two that the whole
+ * collection arc is spent on, so its ascension has to be worth more than a
+ * pair of levels to be worth chasing at all.
+ */
+export const heroLevelCapForTier = (tier: number): number =>
+  Math.min(COLLECTION.heroMaxLevel, tier * COLLECTION.heroLevelsPerTier);
+
 export const isMaxLevel = (e: CollectionEntry): boolean => e.level >= COLLECTION.maxLevel;
+
+export const isHeroMaxLevel = (e: CollectionEntry): boolean =>
+  e.level >= COLLECTION.heroMaxLevel;
 export const isMaxTier = (e: CollectionEntry): boolean => e.tier >= COLLECTION.maxTier;
 
 /** Everything the UI needs to explain why a level-up button is grey. */

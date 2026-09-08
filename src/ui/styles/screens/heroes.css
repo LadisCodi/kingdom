@@ -292,6 +292,19 @@
 .hero-level-label, .hero-level-cap { color: var(--ink-muted); }
 .hero-level .k-btn { flex: 0 0 auto; }
 
+/* At the ceiling the button is gone and this stands where it was, pointing
+   at the Ascend on the portrait. Not a disabled button with a caption: a
+   disabled button still offers a press, and the press is not the answer. */
+.hero-level.is-capped { background: var(--parchment); }
+.hero-level-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+  text-align: right;
+}
+
 .hero-statline {
   display: flex;
   justify-content: space-around;
