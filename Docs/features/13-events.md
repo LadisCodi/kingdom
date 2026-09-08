@@ -2,18 +2,21 @@
 
 > **Scope.** The event skeleton every content drop is a skin on: an event
 > counter, a fog-island minigame, a milestone track that doubles as the pass, a
-> shop, and a window that closes. Plus the weekly event.
+> shop, and a window that closes.
 >
-> **Status: the weekly event and its scheduling machinery are built and
-> verified; the archetype (§1–§4) is designed, not built.** The game has one
-> authored event and zero banners.
+> **Status: the scheduling machinery is built and verified; the archetype
+> (§1–§4) is designed, not built.** **The catalogue is EMPTY** — the weekly
+> Conjunction was retired on 2026-09-08 and events are being redesigned, so
+> `EVENTS` holds nothing and a new kingdom has no schedule at all. The
+> machinery keeps its tests, driven by hand-built windows, because the next
+> event lands on it unchanged: one template in `EVENTS` schedules one again.
 
 ## 1. Engine extensions (designed, not built)
 
 | Extension | Built | Designed, not built |
 |---|---|---|
 | **Modifier stats** | 12 values, including Stardust yield, active cost, delve speed and attunement slots | **build speed**, **research speed**, **training speed**, **ingredient yield** |
-| **Schedule payloads** | the weekly event and a banner | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
+| **Schedule payloads** | a banner | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
 | **Where schedules live** | in code, beside the definitions | a hand-written events file (live-ops content with wall-clock dates) |
 
 - `grantModifier` carries a template id, not a magnitude. Magnitudes live in a
@@ -33,7 +36,6 @@ Where each number lives:
 | windows, periods, occurrence horizons | modifier template magnitudes |
 | which track and shop an event uses | track thresholds and reward amounts |
 | banner pools and rate-up | shop prices and stock quantities |
-| the weekly boon table | |
 
 ## 2. The archetype
 
@@ -127,16 +129,30 @@ threshold   free reward         paid reward
 - A window that opens and closes inside an absence still fires.
 - **OQ-24.**
 
-## 5. The weekly event (built)
+## 5. The scheduling machinery (built, with nothing scheduled)
 
-- A **48-hour window every 7 days**.
-- Stable occurrence ids. Phases are persisted, so an event that paid out cannot
-  pay twice on reload.
-- Reconciliation runs before the offline replay.
-- Seeded RNG picks the week's boon from five: Mana regen ×2 · active costs −50%
-  · Stardust ×3 · delve speed ×2 · a free attunement slot for the window.
-- On opening it pays a lump plus 5 Gems, then closes.
-- It has no counter, minigame, track or shop (§2).
+**`EVENTS` is empty.** The weekly Conjunction — a 48-hour window every 7 days
+paying a lump and a boon drawn by seeded RNG — was **retired on 2026-09-08**,
+because events are being redesigned and a live one would have shaped the
+redesign around itself.
+
+What survives is the part every future event needs, and it keeps its tests:
+
+- **A template in `EVENTS` schedules an event.** Id, first start, duration,
+  period. That is the whole of adding one back.
+- **Stable occurrence ids** (`<template>#<n>`, counted from the template's
+  epoch), so the same window is the same window on every client.
+- **Phases are persisted**, so an event that paid out cannot pay twice on
+  reload, and a replay of any length fires each transition once.
+- **Reconciliation runs before the offline replay**, which is what lets a
+  content drop reach an existing save.
+- **A window is a boundary source**, so it opens and closes at the exact
+  instant whether or not the player is there.
+- **A kingdom is not paid for a window it never lived through.** A window
+  already open when the kingdom was created starts `done`; one the player
+  slept through does not. Learned the hard way: the Conjunction used to hand a
+  brand-new game its opening lump on the first tick, which read as a starting
+  grant nobody had authored.
 
 ## 6. Dials, in the order to reach for them
 
@@ -146,7 +162,7 @@ threshold   free reward         paid reward
 | Points per source (§2.2) | workbook |
 | Reveal prices on the event island | workbook |
 | Shop stock, prices, refresh cadence | workbook |
-| Window duration and period | the events file |
+| Window duration and period | `EVENTS` (empty today) |
 | Modifier template magnitudes | workbook |
 
 ## 7. Deliberately not in this design

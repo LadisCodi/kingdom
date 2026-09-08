@@ -1765,59 +1765,13 @@ export interface EventTemplate {
   periodMs: number;
 }
 
-const EPOCH_MONDAY = Date.parse('2026-01-05T00:00:00Z');
-
-export const EVENTS: readonly EventTemplate[] = [
-  {
-    id: 'conjunction',
-    startsAt: EPOCH_MONDAY,
-    durationMs: 48 * 3_600_000, // 48 hours...
-    periodMs: 7 * 86_400_000,   // ...every seven days
-  },
-];
-
 /**
- * What a Conjunction can be. Every primitive at once: the timeline schedules
- * it, the RNG picks it, a modifier applies it, and the deadline is the
- * pressure.
- *
- * The free-socket boon earns its keep by making this week's loadout decision
- * different from last week's, which is the whole point of an event that
- * returns rather than a one-off gift.
+ * The authored schedule. EMPTY on purpose (2026-09-08): the Conjunction was
+ * retired and events are being redesigned, so the timeline machinery stands
+ * with no content in it. Adding a template here is all it takes to schedule
+ * one again ([`Docs/features/13-events.md`]).
  */
-export interface ConjunctionBoon {
-  id: string;
-  text: string;
-  stat: ModifierStat;
-  op: 'add' | 'mul';
-  value: number;
-  /** Paid on OPENING, so showing up inside the window is itself rewarded. */
-  knowledge: number;
-  gems: number;
-}
-
-export const CONJUNCTION_BOONS: readonly ConjunctionBoon[] = [
-  {
-    id: 'flood', text: 'The leylines run high — Mana gathers twice as fast.',
-    stat: 'manaRegen', op: 'mul', value: 2, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'cheapMagic', text: 'Spellwork comes easy — abilities cost half.',
-    stat: 'activeCost', op: 'mul', value: 0.5, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'insight', text: 'The old writing makes sense — Knowledge comes three times over.',
-    stat: 'knowledgeYield', op: 'mul', value: 3, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'swiftDelves', text: 'The dark is thin — parties move through ruins twice as fast.',
-    stat: 'delveSpeed', op: 'mul', value: 0.5, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'lentSocket', text: 'The sky lends you a socket — one extra relic, for now.',
-    stat: 'attunementSlots', op: 'add', value: 1, knowledge: 6, gems: 5,
-  },
-];
+export const EVENTS: readonly EventTemplate[] = [];
 
 export const GAME_VERSION = '0.1.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is

@@ -259,7 +259,6 @@ A `bonus` names its effects, and each is four fields:
 | `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
 | `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
-| the **Conjunction** boon | — | +6 | `CONJUNCTION_BOONS[*].knowledge` (**OQ-12**) |
 | the **quest chain** | — | 50 across nine quests | `rewardKnowledge` (Quests sheet) |
 
 - A kingdom holding nothing drips **0.8/h** (19 a day); a fully explored
@@ -437,7 +436,6 @@ Tap Power        +40%  →  +60%
 | Landmark drip · claim lump | 2/h · 50 | `knowledge.perClaimedLandmarkPerHour` · `knowledge.landmarkClaimLump` |
 | Ruin drip · first-clear lump | 2/h · 150 | `knowledge.dripPerClearedRuinPerHour` · `delve.firstClearKnowledge` |
 | Conquest drip | 3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
-| Conjunction Knowledge lump | 60 | `CONJUNCTION_BOONS[*].knowledge` |
 | Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
 | **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
 | **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |

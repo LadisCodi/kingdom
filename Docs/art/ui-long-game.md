@@ -265,7 +265,7 @@ rather than a number going up:
 
 - Mana and Knowledge join the resource rows.
 - Units that finished training get a row each, counted by type.
-- **Things that happened**, in their own list: a Conjunction opened, a party
+- **Things that happened**, in their own list: a window opened, a party
   reached depth 4, a spell you cast ran its course.
 
 That last group is the point. Deposits and taxes are an amount; a window

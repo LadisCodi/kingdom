@@ -14,7 +14,6 @@ import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
-import { forceConjunction } from './sim/timeline';
 import { grantBuilder } from './sim/commands';
 import { addGood } from './sim/goods';
 import { GOOD_ORDER } from './sim/data/definitions';
@@ -404,7 +403,6 @@ async function boot(): Promise<void> {
         for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);
         runTick();
       }),
-      button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {
         game.state.ads.readyAt = 0;

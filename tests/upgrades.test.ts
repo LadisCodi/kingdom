@@ -490,7 +490,7 @@ describe('the Warfare lines reach their numbers', () => {
     expect(effectiveHaulLoss(state)).toBeGreaterThanOrEqual(0.2);
   });
 
-  it('Pathfinders shortens every depth, through the same door a Conjunction uses', () => {
+  it('Pathfinders shortens every depth, through the door a timed boon uses', () => {
     const state = freshGame();
     const full = depthMs(state, 'HollowBarrow', 1);
     completeRanks(state, 'Pathfinders', 2); // −20%

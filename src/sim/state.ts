@@ -213,7 +213,6 @@ export interface Worker {
  *  them are pure functions of (state, entry, t) — no closures over UI, or the
  *  sim stops being replayable. */
 export type SchedulePayload =
-  | { kind: 'conjunction'; occurrence: number }
   | { kind: 'banner'; occurrence: number };
 
 export interface ScheduledEntry {
@@ -369,7 +368,7 @@ export interface GameState {
     slotsPurchased: number;
   };
   /**
-   * Scheduled content: seasons, events, gacha banners, the Conjunction.
+   * Scheduled content: seasons, events and gacha banners.
    *
    * Reconciled from the BUILD's catalogue at load, so a save written before a
    * content drop still learns the new window exists — and a window that

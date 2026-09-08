@@ -61,7 +61,7 @@ import { canAfford, pay } from './wallet';
 // ------------------------------------------------------------------- slots
 
 /** How long a depth actually takes right now. Kept in ONE place so a
- *  Conjunction that speeds delves up cannot apply to the launch and not to the
+ *  timed boon that speeds delves up cannot apply to the launch and not to the
  *  push, or to the timer and not to the estimate on the sheet. */
 export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
   Math.max(1000, Math.round(resolve(state, 'delveSpeed',

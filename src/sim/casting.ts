@@ -42,7 +42,7 @@ export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
 }
 
 /** What casting actually costs right now — Resonance buys it down permanently,
- *  a Conjunction can halve it on top. */
+ *  a timed boon can halve it on top. */
 export function castCost(state: GameState, id: ArtifactId): number {
   const active = ARTIFACTS[id].active;
   if (active === null) return 0;

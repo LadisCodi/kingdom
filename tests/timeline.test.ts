@@ -1,14 +1,19 @@
-// The timeline, the Conjunction and the gacha
-// (Docs/implementation-plan.md §1/§7, Docs/features/10-heroes.md §5).
+// The timeline machinery and the gacha
+// (Docs/implementation-plan.md §1/§7, Docs/features/10-heroes.md §6).
+//
+// THE CATALOGUE IS EMPTY. The Conjunction was retired on 2026-09-08 and events
+// are being redesigned, so there is no authored window to drive these with —
+// and the machinery is exactly the part that must not rot in the meantime.
+// The schedule tests therefore build their entries by hand and drive them
+// through `advance`, which is what a future event will do anyway.
 //
 // The three things the design says are easy to get wrong are the three things
-// asserted here: reconciliation reaches an existing save, a window that opened
-// AND closed during an absence still fires, and `phase` stops an event paying
-// twice.
+// asserted here: reconciliation reaches an existing save, a window is paid for
+// exactly once, and a kingdom is not paid for a window it never lived through.
 import { describe, expect, it } from 'vitest';
 import { advance, buyKeys } from '../src/sim/commands';
 import {
-  BANNERS, CONJUNCTION_BOONS, EVENTS, HERO_ORDER, HEROES, CURRENCIES,
+  BANNERS, EVENTS, HERO_ORDER, HEROES, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   claimFreePull, freePullAvailable, freePullsLeft, heroChanceAt, legendaryPityCount,
@@ -17,156 +22,138 @@ import {
 } from '../src/sim/heroes';
 import { newGame } from '../src/sim/newGame';
 import { deserialize, serialize } from '../src/sim/save';
-import {
-  activeConjunction, conjunctionBoon, nextConjunction, reconcileSchedule,
-} from '../src/sim/timeline';
-import { getWallet, type GameState } from '../src/sim/state';
+import { reconcileSchedule } from '../src/sim/timeline';
+import { getWallet, type GameState, type ScheduledEntry } from '../src/sim/state';
 import { freshGame, map, T0 } from './helpers';
 
-const CONJUNCTION = EVENTS.find((e) => e.id === 'conjunction')!;
 const HOUR = 3_600_000;
 
-/** The next Conjunction's opening instant, from the authored epoch. */
-function nextWindowStart(after: number): number {
-  const since = after - CONJUNCTION.startsAt;
-  const n = Math.ceil(since / CONJUNCTION.periodMs);
-  return CONJUNCTION.startsAt + n * CONJUNCTION.periodMs;
-}
+/** A window, hand-built, standing in for the authored content there is none
+ *  of. `phase` is the field every rule here turns on. */
+const window = (over: Partial<ScheduledEntry> = {}): ScheduledEntry => ({
+  id: 'test#0',
+  templateId: 'test',
+  startsAt: T0 + HOUR,
+  endsAt: T0 + 3 * HOUR,
+  payload: { kind: 'banner', occurrence: 0 },
+  phase: 'pending',
+  ...over,
+});
 
-describe('reconciliation', () => {
-  it('materialises windows around now, and only around now', () => {
-    const state = freshGame();
-    expect(state.schedule.length).toBeGreaterThan(0);
-    for (const e of state.schedule) {
-      expect(Math.abs(e.startsAt - T0)).toBeLessThan(40 * 86_400_000);
-    }
+describe('the catalogue', () => {
+  // Deliberate, and the reason the tests below are synthetic. A template here
+  // is all it takes to schedule an event again.
+  it('is empty while events are redesigned', () => {
+    expect(EVENTS).toEqual([]);
   });
 
-  it('is idempotent — loading twice does not duplicate a window', () => {
+  it('leaves a new kingdom with an empty schedule and nothing paid for', () => {
     const state = freshGame();
-    const before = state.schedule.length;
-    reconcileSchedule(state, T0);
-    reconcileSchedule(state, T0);
-    expect(state.schedule.length).toBe(before);
-  });
-
-  it('a window that closed before the timeline began never happened', () => {
-    // Otherwise a brand-new game would immediately be paid for every
-    // Conjunction since the epoch.
-    const state = freshGame();
-    const past = state.schedule.filter((e) => (e.endsAt ?? 0) <= T0);
-    expect(past.length).toBeGreaterThan(0);
-    for (const e of past) expect(e.phase).toBe('done');
+    expect(state.schedule).toEqual([]);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
     expect(getWallet(state.player.wallet, 'Gems')).toBe(500); // the starting grant, no more
   });
 
-  it('reaches a save written before the content existed', () => {
+  it('is idempotent — reconciling twice adds nothing', () => {
     const state = freshGame();
-    // A save from a build that had no timeline at all.
-    const save = serialize(state, T0);
+    reconcileSchedule(state, T0);
+    reconcileSchedule(state, T0);
+    expect(state.schedule).toEqual([]);
+  });
+
+  it('reaches a save written before the timeline existed', () => {
+    const save = serialize(freshGame(), T0);
     delete (save.Modules as Record<string, unknown>)['kingdom.schedule'];
-    const restored = deserialize(save, map, T0)!;
-    expect(restored.schedule.length).toBeGreaterThan(0);
+    // The point is that it LOADS and reconciles rather than throwing; with an
+    // empty catalogue there is simply nothing to materialise.
+    expect(deserialize(save, map, T0)!.schedule).toEqual([]);
   });
 });
 
-describe('the Conjunction', () => {
-  const openAt = nextWindowStart(T0 + HOUR);
-
-  it('opens on its own schedule, applies a boon, and pays on opening', () => {
+describe('a window opens and closes exactly once', () => {
+  const run = (): GameState => {
     const state = freshGame();
-    const gems = getWallet(state.player.wallet, 'Gems');
-    const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
+    state.schedule = [window()];
+    return state;
+  };
 
-    advance(state, map, openAt - 1000);
-    expect(activeConjunction(state)).toBeUndefined();
+  it('opens when its moment comes, and not before', () => {
+    const state = run();
+    expect(advance(state, map, T0 + HOUR / 2).scheduleEvents).toEqual([]);
+    expect(state.schedule[0]!.phase).toBe('pending');
 
-    const report = advance(state, map, openAt);
-    expect(activeConjunction(state)).toBeDefined();
-    expect(report.scheduleEvents.some((e) => e.transition === 'opened')).toBe(true);
-    expect(getWallet(state.player.wallet, 'Gems')).toBeGreaterThan(gems);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBeGreaterThan(knowledge);
-    // The boon is a modifier with the window's own end as its expiry.
-    const boon = state.modifiers.find((m) => m.source === 'season');
-    expect(boon).toBeDefined();
-    expect(boon!.expiresAt).toBe(activeConjunction(state)!.endsAt);
+    const opened = advance(state, map, T0 + HOUR).scheduleEvents;
+    expect(opened.map((e) => e.transition)).toEqual(['opened']);
+    expect(state.schedule[0]!.phase).toBe('active');
   });
 
-  it('closes on schedule, and the boon goes with it', () => {
-    const state = freshGame();
-    advance(state, map, openAt);
-    advance(state, map, openAt + CONJUNCTION.durationMs);
-    expect(activeConjunction(state)).toBeUndefined();
-    expect(state.modifiers.some((m) => m.source === 'season')).toBe(false);
-  });
-
-  it('a window that opened AND closed during an absence still fires', () => {
-    // The payoff for absolute-time boundaries: one call across the whole gap.
-    const state = freshGame();
-    const gems = getWallet(state.player.wallet, 'Gems');
-    const report = advance(state, map, openAt + CONJUNCTION.durationMs + HOUR);
-    const opened = report.scheduleEvents.filter((e) => e.transition === 'opened');
-    const closed = report.scheduleEvents.filter((e) => e.transition === 'closed');
-    expect(opened.length).toBeGreaterThan(0);
-    expect(closed.length).toBe(opened.length);
-    expect(getWallet(state.player.wallet, 'Gems')).toBeGreaterThan(gems);
-  });
-
-  it('never pays twice — phase is the termination guarantee', () => {
-    const state = freshGame();
-    advance(state, map, openAt + CONJUNCTION.durationMs);
-    const gems = getWallet(state.player.wallet, 'Gems');
-    // Replay the same window a dozen times; nothing more comes out.
-    for (let i = 0; i < 12; i++) advance(state, map, openAt + CONJUNCTION.durationMs);
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems);
-  });
-
-  it('picks the same boon for the same week, however the window was replayed', () => {
-    const a = freshGame();
-    const b = freshGame();
-    advance(a, map, openAt + HOUR);
-    for (let t = HOUR; t <= openAt - T0 + HOUR; t += HOUR) advance(b, map, T0 + t);
-    const boonA = a.modifiers.find((m) => m.source === 'season');
-    const boonB = b.modifiers.find((m) => m.source === 'season');
-    expect(boonA?.stat).toBe(boonB?.stat);
-    expect(boonA?.value).toBe(boonB?.value);
-  });
-
-  it('draws from the authored list, and every boon is reachable', () => {
-    const state = freshGame();
-    const seen = new Set<string>();
-    for (let n = 0; n < 200; n++) seen.add(conjunctionBoon(state, n).id);
-    expect(seen.size).toBe(CONJUNCTION_BOONS.length);
-  });
-
-  it('counts down to the next one', () => {
-    const state = freshGame();
-    const next = nextConjunction(state, T0);
-    expect(next).toBeDefined();
-    expect(next!.startsAt).toBeGreaterThan(T0);
-  });
-
-  it('one-call replay equals stepped ticking across a whole window', () => {
-    const build = (): GameState => freshGame();
-    const oneCall = build();
-    advance(oneCall, map, openAt + CONJUNCTION.durationMs + HOUR);
-    const stepped = build();
-    for (let t = HOUR; t <= openAt - T0 + CONJUNCTION.durationMs + HOUR; t += HOUR) {
-      advance(stepped, map, T0 + t);
+  it('closes at its end, and never fires either transition twice', () => {
+    const state = run();
+    advance(state, map, T0 + 3 * HOUR);
+    expect(state.schedule[0]!.phase).toBe('done');
+    // `phase` is what makes this terminate: twelve more advances change
+    // nothing, which is the property a replay depends on.
+    for (let i = 0; i < 12; i += 1) {
+      expect(advance(state, map, T0 + 4 * HOUR).scheduleEvents).toEqual([]);
     }
-    expect(getWallet(stepped.player.wallet, 'Gems'))
-      .toBe(getWallet(oneCall.player.wallet, 'Gems'));
-    expect(stepped.schedule.filter((e) => e.phase === 'done').length)
-      .toBe(oneCall.schedule.filter((e) => e.phase === 'done').length);
   });
 
-  it('survives a save round-trip without re-firing', () => {
-    const state = freshGame();
-    advance(state, map, openAt + HOUR);
-    const gems = getWallet(state.player.wallet, 'Gems');
-    const restored = deserialize(serialize(state, openAt + HOUR), map, openAt + HOUR)!;
-    expect(getWallet(restored.player.wallet, 'Gems')).toBe(gems);
-    expect(activeConjunction(restored)).toBeDefined();
+  it('fires a window that opened AND closed during an absence, in one call', () => {
+    const state = run();
+    // One call across the whole window: the absence is paid in full, which is
+    // the load-bearing assertion of the engine (invariant 1).
+    const events = advance(state, map, T0 + 4 * HOUR).scheduleEvents;
+    expect(events.map((e) => e.transition)).toEqual(['opened', 'closed']);
+  });
+
+  it('is a boundary source, so stepped ticking agrees with one call', () => {
+    const oneCall = run();
+    advance(oneCall, map, T0 + 4 * HOUR);
+
+    const stepped = run();
+    for (let t = T0 + HOUR / 4; t <= T0 + 4 * HOUR; t += HOUR / 4) {
+      advance(stepped, map, t);
+    }
+    expect(stepped.schedule[0]!.phase).toBe(oneCall.schedule[0]!.phase);
+  });
+
+  it('survives a save and load mid-window', () => {
+    const state = run();
+    advance(state, map, T0 + 2 * HOUR);
+    expect(state.schedule[0]!.phase).toBe('active');
+
+    const back = deserialize(serialize(state, T0 + 2 * HOUR), map, T0 + 2 * HOUR)!;
+    expect(back.schedule.find((e) => e.id === 'test#0')!.phase).toBe('active');
+  });
+});
+
+// THE STARTING GRANT THAT CAME BACK THROUGH ANOTHER DOOR.
+//
+// The retired Conjunction paid 6 Knowledge on opening and hung a week-long
+// boon, one of which tripled `knowledgeYield`. The schedule runs on absolute
+// calendar time, so a kingdom created mid-window caught that opening on its
+// very first advance: a brand-new game reported 6 Knowledge and +2.4/h, which
+// is exactly the grant that had just been removed on purpose.
+//
+// A RESUMED save must still be paid for the window it slept through. Only a
+// kingdom that did not exist when the window opened is not. Kept with the
+// catalogue empty, because the next event will land in the same trap.
+describe('a new kingdom is not paid for a window it never lived through', () => {
+  // `reconcileSchedule(state, now, { fresh: true })` is what marks it done;
+  // with the catalogue empty the rule is asserted on what that produces — a
+  // window the kingdom never saw open pays nothing when it is advanced past.
+  it('pays nothing for a window already in progress when it began', () => {
+    const state = newGame(map, T0);
+    state.schedule = [window({ startsAt: T0 - HOUR, endsAt: T0 + HOUR, phase: 'done' })];
+    expect(advance(state, map, T0 + HOUR / 2).scheduleEvents).toEqual([]);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+  });
+
+  it('still pays a resumed save for the window it slept through', () => {
+    const state = newGame(map, T0);
+    state.schedule = [window({ startsAt: T0 - HOUR, endsAt: T0 + HOUR, phase: 'pending' })];
+    const events = advance(state, map, T0 + HOUR / 2).scheduleEvents;
+    expect(events.map((e) => e.transition)).toEqual(['opened']);
   });
 });
 
@@ -557,45 +544,5 @@ describe('the gacha', () => {
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(restored.gacha.pullCounts).toEqual(state.gacha.pullCounts);
     expect(restored.gacha.pityCounters).toEqual(state.gacha.pityCounters);
-  });
-});
-
-// THE STARTING GRANT THAT CAME BACK THROUGH ANOTHER DOOR.
-//
-// The Conjunction pays 6 Knowledge on opening and hangs a week-long boon —
-// one of them triples `knowledgeYield`. The schedule runs on absolute
-// calendar time, so a kingdom created mid-window used to catch that opening on
-// its very first advance: a brand-new game reported 6 Knowledge and
-// +2.4/h, which is exactly the grant that had just been removed on purpose.
-//
-// A resumed save must still be paid for the window it slept through. Only a
-// kingdom that did not exist when the window opened is not.
-describe('a new kingdom is not paid for a window it never lived through', () => {
-  it('starts with no Knowledge and fires nothing, mid-window', () => {
-    // Mid-Conjunction by construction: start from a fresh game, find the
-    // window, and create a kingdom inside it.
-    const probe = freshGame();
-    const conj = probe.schedule.find((e) => e.payload.kind === 'conjunction');
-    expect(conj).toBeDefined();
-    const inside = conj!.startsAt + 1000;
-
-    const state = newGame(map, inside);
-    const events = advance(state, map, inside + 1000).scheduleEvents;
-
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
-    expect(events.filter((e) => e.transition === 'opened')).toEqual([]);
-  });
-
-  it('still pays a RESUMED save for the window it slept through', () => {
-    const probe = freshGame();
-    const conj = probe.schedule.find((e) => e.payload.kind === 'conjunction')!;
-    // A kingdom that existed BEFORE the window, saved, and came back inside
-    // it: that absence is real and the opening is owed.
-    const before = conj.startsAt - 86_400_000;
-    const state = newGame(map, before);
-    const file = serialize(state, before);
-    const back = deserialize(file, map, conj.startsAt + 1000)!;
-
-    expect(getWallet(back.kingdom.wallet, 'Knowledge')).toBeGreaterThan(0);
   });
 });
