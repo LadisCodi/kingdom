@@ -6,8 +6,8 @@
 > [`08-magic.md`](08-magic.md) §6, the two call placements in
 > [`10-heroes.md`](10-heroes.md) §6.2.
 >
-> **Status: three ad placements, the builder offer, and the store's first cut
-> are built** — the payer profile and its monthly budget (§3), and four
+> **Status: three ad placements, the builder offer, the Royal chest and the
+> store's first cut are built** — the payer profile and its monthly budget (§3), and four
 > surfaces: builders for Gems, keys for Gems, Gem packs for simulated dollars,
 > and the two hero banners (§2.1). The remaining SKUs, the other four
 > placements and the telemetry pipeline (§4) are designed, not built.
@@ -35,7 +35,8 @@
   month otherwise ([`10-heroes.md`](10-heroes.md) §6.2).
 - The first rung of every ladder is earned by play: research grants the second
   attunement slot and the third party slot before Gems can buy any; the daily
-  chest pays Gems at the week marker.
+  chest's free track pays Gems every season, and the Royal chest's own gold
+  keys are the same keys an ad already gives away daily.
 
 | Family | Examples | Effect |
 |---|---|---|
@@ -53,9 +54,11 @@
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends — so the two banners have two prices without a second Gem price
   ([`10-heroes.md`](10-heroes.md) §6.1).
-- Faucet: **3,750 up front plus ~1,000/month** — seven silver keys, or two
-  gold ones, or the second builder and change. 500 to start, 750 across the
-  quest chain, 500 a first delve clear, 250 at the week marker.
+- Faucet: **3,750 up front plus ~4,500/month** — 500 to start, 750 across the
+  quest chain, 500 a first delve clear, and **3,000 a daily-chest season** (a
+  season is 20 days, so ~4,500 a month — [`12-quests.md`](12-quests.md) §3.2).
+  The season is the faucet; everything else is the opening. A free player
+  earns three gold keys, or a builder and change, every month.
 
 ## 2. The catalogue
 
@@ -63,7 +66,9 @@
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - The six Gem packs are built and live in the workbook's `Store` sheet. The
   builders and the two keys are built and priced in Gems — a Gem price is not
-  a `Store` row, which is real money and must grant Gems. Everything else is designed, not built.
+  a `Store` row. **A `Store` row is real money**; most of them grant Gems, and
+  the ones that do not (the Royal chest, the banner set) grant a lot for a
+  season or once and never a currency drip. Everything else is designed, not built.
 
 | SKU | Family | Price | Grants |
 |---|---|---|---|
@@ -72,7 +77,7 @@
 | **Gold key** | chance | Gems (1,500) | one golden call — built |
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
-| **Monthly card** | subscription | $4.99/mo | Gems daily for 30 days |
+| **Royal chest** | season | **€9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
 | **Event pass, paid track** | season | $4.99 | unlocks the paid column |
 | Fog charter | land | $2.99 | a bundle of instant reveals |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
@@ -107,6 +112,11 @@
 
 - **500 Gems to the dollar, flat across every tier**: $0.99 buys 500, $99.99
   buys 50,000. No tier is a better deal than another.
+- **The Royal chest sits outside the ladder on purpose** — €9.99 for 50,000
+  Gems of value, ten times the rate, paid out over fourteen logins in twenty
+  days. A pack is Gems now; the pass is Gems, keys and XP for showing up. Half
+  its value is not Gems at all, which is what keeps the packs worth measuring
+  ([`12-quests.md`](12-quests.md) §3.2).
 - Every Gem sink is priced to the ladder (§9). Anchors: a second builder is
   the $4.99 pack; a silver key is 500 Gems and a gold one 1,500; an hour of
   speed-up is 720 Gems.
@@ -284,7 +294,8 @@ One page, refreshed weekly:
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
 | Attunement slot | 1,000, `×2` ($1.99 / $3.99 / $7.99 / $15.99) | `attunement.slot_gem_cost_*` |
-| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · 250 at the week marker | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
+| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
+| The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
 | Ad eligibility | below half a pool | `ads.eligible_below_fraction` |
 | Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `Store` sheet |
@@ -294,6 +305,9 @@ One page, refreshed weekly:
 
 - A real charge, ever.
 - A second premium currency.
+- **A monthly card.** A subscription measured in calendar days over a ladder
+  that is not; the Royal chest is the season product
+  ([`12-quests.md`](12-quests.md) §3.3).
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.

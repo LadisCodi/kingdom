@@ -74,7 +74,7 @@ Two more that are design-visible:
 | Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
 | Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks. **Superseded by the 2026-09-08 rewrite**: ruins become depths of rooms ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)) and combat becomes a tick auto-battler ([`combat.md`](features/combat.md)) — designed, unbuilt |
-| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03 |
+| The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03. The chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09 |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
 | **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **designed 2026-09-08**, unbuilt — Step 7 |

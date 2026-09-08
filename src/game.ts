@@ -9,9 +9,10 @@ import {
 } from './sim/commands';
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST,
-  LANDMARK_ART, LANDMARKS, MANA, RUINS,
+  LANDMARK_ART, LANDMARKS, MANA, RUINS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
+import { formatDuration } from './ui/format';
 import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
@@ -84,7 +85,9 @@ import {
   type Wallet,
 } from './sim/state';
 import {
-  chestAvailable, chestReward, claimDailyChest, ladderLength, nextStep,
+  anyRoyalPending, buyRoyalChest, chestAvailable, chestSheetOpen, claimFreeRung,
+  claimRoyalRung, freeReward, ladderLength, nextRung, royalOwned, royalPending,
+  royalReward, rungsClaimed, seasonEndsAt,
 } from './sim/daily';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
@@ -219,6 +222,8 @@ export class Game {
   openCheckpoint: string | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
+  /** Which sheet the confirmation was opened from, and returns to. */
+  pendingSkuFrom: OverlayName = 'store';
   /** What was asked for while the payer-profile sheet had the screen. The
    *  profile sheet is modal in the strong sense (14-monetization.md §3), so
    *  whatever wanted to open — the welcome report, chiefly — waits here and
@@ -974,47 +979,121 @@ export class Game {
   // ------------------------------------------------------------ daily chest
 
   /**
-   * Today's chest, or null when it has already been taken.
+   * The season: the whole ladder, both tracks, and how long is left.
    *
-   * `ladder` is the whole cycle rather than just this step, because the sheet
-   * draws it: a ladder you can see is what makes step 5 feel like somewhere
-   * you got to rather than a number in a corner.
+   * Never null. The sheet has to render after the last rung is taken, because
+   * the Royal chest stays buyable until the window closes — the PILL decides
+   * whether there is a reason to open it, not this.
+   *
+   * Every cell carries its OWN `claimable` and `claimed`, because every cell
+   * is its own button (Docs/features/12-quests.md §3.2). Nothing else on the
+   * sheet decides what can be taken.
    */
-  dailyChest(): {
-    step: number;
+  dailySeason(): {
+    rung: number;
+    claimed: number;
     length: number;
-    reward: Wallet;
-    ladder: Array<{ step: number; reward: Wallet; claimed: boolean; isToday: boolean }>;
-  } | null {
-    if (!chestAvailable(this.state, this.now())) return null;
-    const step = nextStep(this.state);
+    available: boolean;
+    complete: boolean;
+    royal: boolean;
+    royalPriceUsd: number;
+    endsIn: string;
+    ladder: Array<{
+      rung: number;
+      free: { reward: Wallet; claimed: boolean; claimable: boolean };
+      royal: { reward: Wallet; claimed: boolean; claimable: boolean; locked: boolean };
+    }>;
+  } {
+    const now = this.now();
     const length = ladderLength();
+    const claimed = rungsClaimed(this.state, now);
+    const available = chestAvailable(this.state, now);
+    const rung = nextRung(this.state, now);
+    const owned = royalOwned(this.state, now);
     return {
-      step,
+      rung,
+      claimed,
       length,
-      reward: chestReward(this.state, step),
-      ladder: Array.from({ length }, (_, i) => ({
-        step: i + 1,
-        reward: chestReward(this.state, i + 1),
-        // Everything before today's step in THIS cycle is already taken.
-        claimed: i + 1 < step,
-        isToday: i + 1 === step,
-      })),
+      available,
+      complete: claimed >= length,
+      royal: owned,
+      royalPriceUsd: STORE.RoyalChest.priceUsd,
+      endsIn: formatDuration((seasonEndsAt(now) - now) / 1000),
+      ladder: Array.from({ length }, (_, i) => {
+        const n = i + 1;
+        const pending = royalPending(this.state, n, now);
+        return {
+          rung: n,
+          free: {
+            reward: freeReward(this.state, n),
+            claimed: n <= claimed,
+            claimable: available && n === rung,
+          },
+          royal: {
+            reward: royalReward(this.state, n),
+            // Reached, owned and not pending means it has been taken.
+            claimed: owned && n <= claimed && !pending,
+            claimable: pending,
+            locked: !owned,
+          },
+        };
+      }),
     };
   }
 
-  doClaimDailyChest(): void {
-    const chest = this.dailyChest();
-    if (chest === null) return;
-    if (claimDailyChest(this.state, this.now()) !== 'Claimed') return;
+  /** Is there a reason to show the pill at all? A rung waiting, a Royal cell
+   *  waiting, or a Royal chest still on the table (§3.4). */
+  dailyPillState(): { showing: boolean; glowing: boolean; label: string } | null {
+    const now = this.now();
+    if (!chestSheetOpen(this.state, now)) return null;
+    const ready = chestAvailable(this.state, now);
+    const pending = anyRoyalPending(this.state, now);
+    const season = this.dailySeason();
+    return {
+      showing: true,
+      glowing: ready || pending,
+      label: ready
+        ? `Day ${season.rung} of ${season.length}`
+        : pending
+          ? 'Rewards waiting'
+          : `Ends in ${season.endsIn}`,
+    };
+  }
+
+  /** The free cell of today's rung — the tap that advances the ladder. */
+  doClaimFreeRung(): void {
+    const now = this.now();
+    if (!chestAvailable(this.state, now)) return;
+    // Read the haul BEFORE the claim: after it, this rung is behind us.
+    const haul = freeReward(this.state, nextRung(this.state, now));
+    if (claimFreeRung(this.state, now) !== 'Claimed') return;
+    this.announceChest(haul);
+  }
+
+  /** One Royal cell, of a rung already climbed. */
+  doClaimRoyalRung(rung: number): void {
+    const now = this.now();
+    if (!royalPending(this.state, rung, now)) return;
+    const haul = royalReward(this.state, rung);
+    if (claimRoyalRung(this.state, rung, now) !== 'Claimed') return;
+    this.announceChest(haul);
+  }
+
+  /** The sheet STAYS OPEN after a claim — there are thirteen more cells on it,
+   *  and closing it after every tap would make taking a bought season a
+   *  thirteen-round trip through the pill. */
+  private announceChest(haul: Wallet): void {
     playSfx('quest');
-    this.setOverlay(null);
-    // The reward is the point, so it is said out loud rather than left to be
-    // spotted in the header.
-    const parts = (Object.entries(chest.reward) as Array<[CurrencyId, number]>)
+    const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
       .map(([c, n]) => `+${n} ${c}`);
     this.toast(parts.join(' · '));
     this.notify();
+  }
+
+  /** The Royal chest goes through the same confirmation every other real-money
+   *  SKU does — the price meets the budget in exactly one place (iapSheet.ts). */
+  doBuyRoyalChest(): void {
+    this.openIap('RoyalChest', 'daily');
   }
 
   adOffer(): { reward: number } | null {
@@ -1233,21 +1312,40 @@ export class Game {
   }
 
   /** A price was tapped: open the confirmation, which is where the price meets
-   *  the budget. Nothing is granted from the store card itself. */
-  openIap(id: StoreSkuId): void {
+   *  the budget. Nothing is granted from the store card itself.
+   *
+   *  `from` is where "Not now" and a completed purchase go back to — the store
+   *  for a Gem pack, the daily chest for the Royal one. A confirmation that
+   *  always returned to the store would take a player who tapped a price on
+   *  the chest somewhere they never asked to go. */
+  openIap(id: StoreSkuId, from: OverlayName = 'store'): void {
     this.pendingSku = id;
+    this.pendingSkuFrom = from;
     this.setOverlay('iapConfirm');
+  }
+
+  /** Where the confirmation came from, and where it returns. */
+  iapReturn(): OverlayName {
+    return this.pendingSkuFrom;
   }
 
   confirmIap(): void {
     const id = this.pendingSku;
     if (id === null) return;
-    const result = buySku(this.state, id, this.now());
-    if (result === 'Purchased') {
+    // The Royal chest is not a grant, it is an unlock plus a back-pay, so it
+    // goes through its own command — which still spends the budget through
+    // `buySku` (sim/daily.ts).
+    const result = id === 'RoyalChest'
+      ? buyRoyalChest(this.state, this.now())
+      : buySku(this.state, id, this.now());
+    if (result === 'Purchased' || result === 'AlreadyOwned') {
       playSfx('gemSpend');
+      const back = this.pendingSkuFrom;
       this.pendingSku = null;
-      this.toast('Gems added to your purse');
-      this.setOverlay('store');
+      this.toast(id === 'RoyalChest'
+        ? 'The Royal chest is yours for the season'
+        : 'Gems added to your purse');
+      this.setOverlay(back);
     } else {
       // A refusal is data (store.ts) and a denial (the shake). The sheet
       // stays put so the player can read the numbers that said no.

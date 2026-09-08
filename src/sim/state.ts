@@ -78,7 +78,10 @@ export type TomeId = 'Civics' | 'Warfare' | 'Magic';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
-  | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury';
+  | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury'
+  /** Not a Gem pack: it grants nothing on purchase and unlocks the daily
+   *  chest's Royal track for the season (sim/daily.ts). */
+  | 'RoyalChest';
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
  *  choice per save; the only way to another profile is a fresh game. */
@@ -318,17 +321,28 @@ export interface GameState {
     wallet: Wallet;
     /** Epoch ms anchor for the Knowledge drip (whole units only). */
     lastKnowledgeAt: number;
-    /** The daily chest ladder. KINGDOM-scoped on purpose, like Knowledge, so
+    /** The daily chest season. KINGDOM-scoped on purpose, like Knowledge, so
      *  it survives a region reset — a habit is a property of the player, not
      *  of the city they happen to be playing. See sim/daily.ts. */
     daily: {
-      /** Days PLAYED, not days elapsed. The ladder position is this modulo
-       *  the ladder's length, so it cycles and never resets. */
-      ladderStep: number;
+      /** The `seasonIndex` `rung` belongs to. A stale one reads as rung 0,
+       *  so a season turns over with nothing scheduled and nothing to reset. */
+      season: number;
+      /** Rungs claimed INSIDE that season — days played, not days elapsed. */
+      rung: number;
       /** `dayIndex` of the last claim, or null if none — stamped rather than
        *  incremented, so a second claim in one day is impossible however the
        *  clock moves, including backwards. */
       lastClaimedDay: number | null;
+      /** The `seasonIndex` the Royal chest was bought for, or null. A
+       *  comparison rather than a flag, so nothing has to clear it when the
+       *  season turns. */
+      royalSeason: number | null;
+      /** Which Royal cells have been taken this season, by rung. The paid
+       *  track is claimed CELL BY CELL and out of order — buying the chest on
+       *  rung 9 leaves nine of them waiting — so this cannot be a count.
+       *  Belongs to `season`: a stale one reads as empty. */
+      royalClaimed: number[];
     };
   };
   player: {

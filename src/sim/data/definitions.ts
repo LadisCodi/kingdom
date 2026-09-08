@@ -1723,7 +1723,14 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
+  RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
 };
+
+/** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
+ *  on purchase is sold where it is UNDERSTOOD, not on the pack shelf
+ *  (Docs/features/12-quests.md §3.3). */
+export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => (balance.store as Record<string, { gems: number }>)[id]!.gems > 0);
 
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
@@ -1740,8 +1747,10 @@ export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
  *  (Docs/features/14-monetization.md §3). */
 export const PAYER = balance.payer;
 
-/** The daily chest ladder — Docs/features/12-quests.md §3.1. Three parallel
- *  lists, one per reward kind; their length IS the length of the ladder. */
+/** The daily chest season — Docs/features/12-quests.md §3. Parallel lists,
+ *  one per reward kind; their length IS the length of the ladder. The free
+ *  track is `manaFractions` and `gems`; the Royal track is the `premium*`
+ *  ones. */
 export const DAILY = balance.daily;
 
 // ------------------------------------------------------------ the timeline
@@ -1794,4 +1803,10 @@ export const GAME_VERSION = '0.1.0';
 // additive and its reader defaults to a fresh day, so there is no migrator;
 // the bump exists so a build without the counters refuses a save that holds
 // them rather than handing the player unlimited refills.
-export const SAVE_VERSION = 34;
+// v34 predates the mana refill split. v35 turns the daily chest into a SEASON
+// with a second track: `Daily.LadderStep` becomes `Daily.Rung` inside a
+// `Daily.Season`, and `Daily.RoyalSeason` records the paid track. The rung
+// count means something different from the step count, so this one HAS a
+// migrator (save.ts) — it drops the old block and lands the player in the
+// running season owing nothing.
+export const SAVE_VERSION = 35;

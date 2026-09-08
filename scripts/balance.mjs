@@ -68,6 +68,12 @@ const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water']
 // Row order is the order the store shows them in.
 const STORE_IDS = [
   'GemsPouch', 'GemsPurse', 'GemsChest', 'GemsVault', 'GemsHoard', 'GemsTreasury',
+  // Not a Gem pack: the Royal chest grants nothing on purchase, it unlocks the
+  // daily chest's paid column for the season and pays out a rung at a time
+  // (Docs/features/12-quests.md §3.3). It is a Store row because the BUDGET is
+  // the instrument — the purchase log, the refusal and the monthly allowance
+  // all have to see it.
+  'RoyalChest',
 ];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
@@ -175,13 +181,20 @@ const SETTINGS = [
   ['payer.dolphin_monthly_usd', 'payer.dolphinMonthlyUsd'],
   ['payer.whale_monthly_usd', 'payer.whaleMonthlyUsd'],
   ['payer.super_whale_monthly_usd', 'payer.superWhaleMonthlyUsd'],
-  // The daily chest ladder (Docs/features/12-quests.md §3.1). Three parallel
-  // seven-long lists, one per reward kind, so a step is a column rather than a
-  // sheet — and so the ladder's LENGTH is the length of these lists.
+  // The daily chest season (Docs/features/12-quests.md §3). Parallel lists,
+  // one per reward kind, so a rung is a column rather than a sheet — and so
+  // the ladder's LENGTH is the length of these lists. The first two are the
+  // free track, the `premium_*` ones the Royal track.
+  ['daily.season_days', 'daily.seasonDays'],
   ['daily.mana_fractions', 'daily.manaFractions', 'list'],
-  ['daily.gold_seconds', 'daily.goldSeconds', 'list'],
   ['daily.gems', 'daily.gems', 'list'],
-  ['daily.gold_floor', 'daily.goldFloor'],
+  ['daily.premium_gems', 'daily.premiumGems', 'list'],
+  ['daily.premium_gold_keys', 'daily.premiumGoldKeys', 'list'],
+  // Hero XP is priced in HOURS of the player's own delve trickle, floored —
+  // an absolute XP number goes stale by era three. The floor is what pays a
+  // city that has never delved, which is most of them.
+  ['daily.premium_xp_hours', 'daily.premiumXpHours', 'list'],
+  ['daily.premium_xp_floor', 'daily.premiumXpFloor'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -211,6 +224,9 @@ const SETTINGS = [
   ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
   // The COLLECTION substrate: one set of rules shared by artifacts and heroes.
   // Fragments raise a tier cap; Knowledge buys levels within it.
+  // The completed-depth XP trickle, per tier per depth per hour
+  // (Docs/features/10-heroes.md §5). Read by the daily chest's Royal track.
+  ['collection.xp_trickle_per_tier_depth', 'collection.xpTricklePerTierDepth'],
   ['collection.level_cost_base', 'collection.levelCostBase'],
   ['collection.level_cost_growth', 'collection.levelCostGrowth'],
   ['collection.max_level', 'collection.maxLevel'],
@@ -382,9 +398,10 @@ const SHEETS = {
   Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
   // Real-money SKUs of the simulated store. `price_usd` is what the purchase
-  // deducts from the player's monthly budget; `gems` is what it grants. Only
-  // Gem packs live here — builders are priced in Gems (Settings) and the hero
-  // banner in Gems (Settings), so the store shows them without owning them.
+  // deducts from the player's monthly budget; `gems` is what it grants ON
+  // PURCHASE, which is 0 for a SKU that pays out over a season. Builders and
+  // the hero banner are priced in Gems (Settings), so the store shows them
+  // without owning them.
   Store: ['id', 'price_usd', 'gems'],
   // One row per banner. Odds and prices are numbers a designer tunes, so they
   // belong here — unlike a banner SCHEDULE, which is a wall-clock live-ops
@@ -905,7 +922,8 @@ async function importXlsx() {
   for (const [id, r] of byId(readSheet(workbook, 'Store'), STORE_IDS)) {
     const priceUsd = num(r, 'price_usd');
     const gems = num(r, 'gems');
-    if (priceUsd <= 0 || gems <= 0) fail(where(r), 'a Gem pack needs a positive price and a positive grant');
+    if (priceUsd <= 0) fail(where(r), 'a store SKU needs a positive price');
+    if (gems < 0) fail(where(r), 'a store SKU cannot grant negative Gems');
     out.store[id] = { priceUsd, gems };
   }
 

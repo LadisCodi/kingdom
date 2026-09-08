@@ -2413,6 +2413,10 @@
     "GemsTreasury": {
       "priceUsd": 99.99,
       "gems": 50000
+    },
+    "RoyalChest": {
+      "priceUsd": 9.99,
+      "gems": 0
     }
   },
   "payer": {
@@ -2534,6 +2538,7 @@
     "swapLockSeconds": 300
   },
   "collection": {
+    "xpTricklePerTierDepth": 10,
     "levelCostBase": 20,
     "levelCostGrowth": 1.6,
     "maxLevel": 10,
@@ -2563,6 +2568,7 @@
     "damageAbsorbedPerDefence": 0.5
   },
   "daily": {
+    "seasonDays": 20,
     "manaFractions": [
       0.34,
       0.34,
@@ -2570,27 +2576,80 @@
       0.34,
       0.5,
       0.34,
+      1,
+      0.34,
+      0.5,
+      0.34,
+      0.5,
+      0.34,
+      0.5,
       1
-    ],
-    "goldSeconds": [
-      0,
-      0,
-      0,
-      900,
-      0,
-      0,
-      0
     ],
     "gems": [
       0,
       0,
+      200,
       0,
       0,
+      400,
       0,
       0,
-      250
+      600,
+      0,
+      0,
+      800,
+      0,
+      1000
     ],
-    "goldFloor": 100
+    "premiumGems": [
+      500,
+      500,
+      800,
+      800,
+      1000,
+      1000,
+      3000,
+      1200,
+      1200,
+      1500,
+      1500,
+      2000,
+      2000,
+      8000
+    ],
+    "premiumGoldKeys": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      2,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      2
+    ],
+    "premiumXpHours": [
+      0,
+      0,
+      12,
+      0,
+      0,
+      12,
+      0,
+      0,
+      12,
+      0,
+      0,
+      12,
+      0,
+      12
+    ],
+    "premiumXpFloor": 20000
   },
   "delve": {
     "goldPerDepthPerTier": 25,

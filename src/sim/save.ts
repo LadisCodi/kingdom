@@ -294,6 +294,23 @@ const MIGRATIONS: readonly Migration[] = [
       delete modules['kingdom.cellHarvest'];
     },
   },
+  {
+    // v35 — the daily chest became a SEASON (Docs/features/12-quests.md §3).
+    // `LadderStep` counted days played on a seven-rung cycle that never ended;
+    // `Rung` counts them inside a twenty-day window, so the two numbers do not
+    // mean the same thing and the old one cannot be converted honestly — a
+    // step-11 save is on rung 4 of a cycle that no longer exists.
+    //
+    // So the block is dropped and the reader defaults it: the player lands in
+    // whatever season is running, at rung 0, owing nothing. That costs at most
+    // one season's progress on a ladder that was never a possession, and it is
+    // the only reading that cannot pay out a rung twice.
+    to: 35,
+    migrate: (modules) => {
+      const kingdom = modules['kingdom.kingdoms'] as { Daily?: unknown } | undefined;
+      if (kingdom !== undefined) delete kingdom.Daily;
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -369,8 +386,11 @@ export function serialize(state: GameState, now: number): SaveFile {
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         Daily: {
-          LadderStep: state.kingdom.daily.ladderStep,
+          Season: state.kingdom.daily.season,
+          Rung: state.kingdom.daily.rung,
           LastClaimedDay: state.kingdom.daily.lastClaimedDay,
+          RoyalSeason: state.kingdom.daily.royalSeason,
+          RoyalClaimed: state.kingdom.daily.royalClaimed,
         },
       },
       'kingdom.fogOfWar': {
@@ -660,12 +680,19 @@ export function deserialize(
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     // Additive: a save written before the chest existed has no Daily block and
-    // the defaults below start the ladder at zero, which is exactly right for
-    // a player meeting it for the first time. No migrator (Docs/implementation-plan.md §1).
-    const daily = kingdomDto.Daily as { LadderStep?: number; LastClaimedDay?: number | null };
+    // the defaults below start the season at rung zero, which is exactly right
+    // for a player meeting it for the first time. `Season: -1` matches no real
+    // season, so a missing block reads as "not in one" rather than as season 0.
+    const daily = kingdomDto.Daily as {
+      Season?: number; Rung?: number; LastClaimedDay?: number | null;
+      RoyalSeason?: number | null; RoyalClaimed?: number[];
+    };
     if (daily) {
-      state.kingdom.daily.ladderStep = daily.LadderStep ?? 0;
+      state.kingdom.daily.season = daily.Season ?? -1;
+      state.kingdom.daily.rung = daily.Rung ?? 0;
       state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
+      state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
+      state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
     }
   }
 
