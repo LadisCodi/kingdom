@@ -293,27 +293,6 @@
 .hero-level-label, .hero-level-cap { color: var(--ink-muted); }
 .hero-level .k-btn { flex: 0 0 auto; }
 
-/* Still used by the unowned card, which has one ladder and no level. */
-.hero-ladder {
-  display: flex;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-}
-.hero-ladder-line {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  font-size: var(--text-helper);
-}
-.hero-ladder-line b { font-family: var(--font-display); font-size: var(--text-title); line-height: 1; }
-.hero-ladder-label { color: var(--ink-muted); }
-.hero-ladder-cap { color: var(--ink-muted); }
-
 .hero-statline {
   display: flex;
   justify-content: space-around;

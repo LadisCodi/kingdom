@@ -296,9 +296,17 @@ Each of these is data, not code:
 - **The level and its button are one widget at the foot of the card.** They
   were a number in one box and a button four rows below it, which is two
   places to look for one decision.
-- An unowned hero's card is the same screen with the ladders replaced by its
-  fragment count, a **Recruit** button priced in those fragments, and one way
-  to the banner.
+- **An unowned hero gets the same card**, stats and passive and all. What the
+  player is deciding is whether to chase this one, and that is a question
+  about its type, its numbers and what it does — a fragment bar alone is a
+  progress meter for a thing it never described.
+- The foot widget is the one part that differs, and only in what it reads and
+  what its button does: **fragments of ten**, and **Call for aid** into the
+  banner, which becomes **Recruit** the moment ten have piled up. One button,
+  whichever door is open.
+- **The card is centred, not anchored to the bottom.** A drawer is something
+  you pull up over a screen you are still working with; the card is the whole
+  of what the player is doing.
 
 ### 8.3 The reveal
 

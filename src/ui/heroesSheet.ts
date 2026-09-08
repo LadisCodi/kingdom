@@ -187,8 +187,8 @@ function detail(game: Game, id: HeroId): HTMLElement {
   // thing on the card after the art itself — ascension is the ladder the
   // player is chasing, and a row of 16px pips said so in a whisper.
   const foot = el('div', { class: 'hero-stage-foot' });
+  foot.append(stars(view.entry.tier, true));
   if (owned) {
-    foot.append(stars(view.entry.tier, true));
     if (view.entry.tier < COLLECTION.maxTier) {
       const toll = ascensionStardustCost(view.entry.tier);
       const shortFragments = view.entry.fragments < tierCost(view.entry.tier);
@@ -231,42 +231,10 @@ function detail(game: Game, id: HeroId): HTMLElement {
       el('div', { class: 'hero-subtitle' }, def.title)),
   );
 
-  if (!owned) {
-    const short = heroUnlockCost() - view.entry.fragments;
-    body.append(
-      el('div', { class: 'hero-note' },
-        short <= 0
-          ? 'You have enough fragments. Recruit them.'
-          : `Not yet found. ${short} more fragment${short === 1 ? '' : 's'} recruits them, `
-            + 'and every miss on the banner pays some.'),
-      el('div', { class: 'hero-ladder' },
-        el('div', { class: 'hero-ladder-line' },
-          el('span', { class: 'hero-ladder-label' }, 'Fragments'),
-          el('b', {}, `${view.entry.fragments}`),
-          el('span', { class: 'hero-ladder-cap' }, `of ${heroUnlockCost()}`))),
-      // Two doors to the same hero, which is the whole point of the fragment:
-      // the banner may hand them over outright, and a pile of ten buys them
-      // whether or not it ever does (Docs/features/10-heroes.md §4).
-      action({
-        label: 'Recruit',
-        kind: 'primary',
-        onClick: () => game.doUnlockHero(id),
-        costExtra: [{
-          icon: 'sparkle',
-          amount: `${view.entry.fragments} / ${heroUnlockCost()}`,
-          short: short > 0,
-        }],
-      }),
-      action({
-        label: 'Call for aid',
-        kind: 'gem',
-        icon: 'star',
-        onClick: () => game.setOverlay('store'),
-      }),
-    );
-    return body;
-  }
-
+  // AN UNOWNED HERO GETS THE SAME CARD. What the player is deciding is whether
+  // to chase this one, and that is a question about its stats, its type and
+  // its passive — the card used to answer none of them and show a fragment
+  // bar instead, which is a progress meter for a thing it never described.
   body.append(el('div', { class: 'hero-statline' },
     stat('army', String(s.atk), 'atk'),
     stat('padlock', String(s.def), 'def'),
@@ -276,15 +244,47 @@ function detail(game: Game, id: HeroId): HTMLElement {
   body.append(el('div', { class: 'hero-passive' },
     iconEl('sparkle', { size: 'sm' }), def.traitText));
 
-  if (heroIsBusy(game.state, id)) {
+  if (owned && heroIsBusy(game.state, id)) {
     body.append(el('div', { class: 'hero-note' }, 'Currently underground.'));
   }
 
-  // THE LEVEL AND ITS BUTTON ARE ONE WIDGET, at the foot of the card. They
-  // were a number in one box and a button four rows below it, which is two
-  // places to look for one decision. Ascension went the other way — onto the
-  // portrait, beside its stars — so each ladder now sits with the thing it
-  // moves.
+  // THE FOOT WIDGET: one reading and one button, whichever pair is true.
+  //
+  // Owned, it is the level and Train — they were a number in one box and a
+  // button four rows below it, which is two places to look for one decision.
+  // Unowned, it is the fragment count and the way to get more of them: the
+  // banner, or Recruit once ten have piled up. Same shape either way, so the
+  // card does not reshuffle itself the moment the hero is yours.
+  if (!owned) {
+    const enough = view.entry.fragments >= heroUnlockCost();
+    body.append(el('div', { class: 'hero-level' },
+      el('div', { class: 'hero-level-read' },
+        el('span', { class: 'hero-level-label' }, 'Fragments'),
+        el('b', {}, `${view.entry.fragments}`),
+        el('span', { class: 'hero-level-cap' }, `of ${heroUnlockCost()}`)),
+      // Two doors to the same hero, which is the whole point of the fragment:
+      // the banner may hand them over outright, and a pile of ten buys them
+      // whether or not it ever does (Docs/features/10-heroes.md §4.1). One
+      // button, whichever door is open.
+      enough
+        ? btn({
+          label: 'Recruit',
+          kind: 'primary',
+          onClick: () => game.doUnlockHero(id),
+          costExtra: [{
+            icon: 'sparkle', amount: `${heroUnlockCost()}`, short: false,
+          }],
+        })
+        : btn({
+          label: 'Call for aid',
+          kind: 'gem',
+          icon: 'star',
+          onClick: () => game.setOverlay('store'),
+        }),
+    ));
+    return body;
+  }
+
   const levelled = view.entry.level >= COLLECTION.maxLevel;
   body.append(el('div', { class: 'hero-level' },
     el('div', { class: 'hero-level-read' },
@@ -321,7 +321,15 @@ export function renderHeroesSheet(game: Game): HTMLElement {
   // above them would print the name twice. The back knob on the portrait is
   // the way out, and tapping beside the sheet still closes the screen.
   return sheet(
-    { title: HEROES[open].name, onClose: () => game.dismiss(), bare: true },
+    {
+      title: HEROES[open].name,
+      onClose: () => game.dismiss(),
+      bare: true,
+      // Centred, not anchored to the bottom edge. A drawer is something you
+      // pull up over a screen you are still working with; the card is the
+      // whole of what the player is doing, so it sits in the middle.
+      centred: true,
+    },
     detail(game, open),
   );
 }
