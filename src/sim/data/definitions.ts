@@ -32,6 +32,10 @@ export const levelIndexed = <T>(list: readonly T[], level: number): T =>
 export interface TechnologyDef {
   id: TechId;
   name: string;
+  /** A `mechanic`'s written prose, and empty on every other kind. What the
+   *  player reads is `techLine(id)` (`src/sim/techProse.ts`), generated from
+   *  `unlocks` or `effects` — this is only the fallback that generator reaches
+   *  for when there is nothing in the data to read. */
   description: string;
   glyph: string;
   /** Which tome this sits in, and which band of it. The shelf IS the layout:
@@ -43,10 +47,17 @@ export interface TechnologyDef {
   era: number;
   /** Its slot on that page: which row down, and which of the three columns
    *  across ([`Docs/tech-tree-editor.md`](../../../Docs/tech-tree-editor.md)).
-   *  Every technology has one — ranks included. Flat, not a nested `slot`,
-   *  so `TECHNOLOGIES` is directly what `ui/research/layout.ts` lays out. */
+   *  Flat, not a nested `slot`, so `TECHNOLOGIES` is directly what
+   *  `ui/research/layout.ts` lays out. Meaningless when `placed` is false. */
   row: number;
   col: number;
+  /** Is it on a page at all? `?dev=tree` can leave a technology in the
+   *  holding pen (`techTreeRules.ts`), and such a file saves, so the game has
+   *  to cope with one: an UNPLACED technology is not drawn, cannot be
+   *  researched and gates nothing. Its four slot fields carry `NO_SLOT` so
+   *  every reader stays total, and this is the flag that says not to trust
+   *  them. */
+  placed: boolean;
   /** What this technology IS: content it opens, a number it moves, or
    *  something the code reads by id (`techTreeRules.ts`). Authored — it is
    *  the first thing `?dev=tree` asks for. */
@@ -89,14 +100,14 @@ const DOC = (treeDoc as unknown as TechTreeDoc).technologies;
 export const TECH_ORDER: TechId[] = techIds(treeDoc as unknown as TechTreeDoc) as TechId[];
 
 /**
- * Where a technology with no slot is drawn: nowhere anyone will look.
+ * The slot a technology with no slot reports: inert, and never read.
  *
- * `?dev=tree` can take one OFF THE PAGE while a book is rearranged, and the
- * rules call that an error, so the save endpoint and CI both refuse a tree
- * that still has one — the game cannot receive it. This is what a
- * hand-broken file gets instead of a crash: a card in the corner of Civics
- * era 1, colliding with whatever is there, which is loud in the editor and
- * harmless in the sim.
+ * `?dev=tree` can take one OFF THE PAGE while a book is rearranged, and such
+ * a tree SAVES — a rearrangement that spans a coffee break has to survive
+ * being written down. So the game receives them, and `placed: false` is how
+ * every consumer knows to leave them out: `techsInTome` does not list one,
+ * the page does not draw one, `canStartTech` refuses one and `GATES` below
+ * skips one. These four numbers only exist so the fields stay non-optional.
  */
 const NO_SLOT = { tome: 'Civics' as TomeId, era: 1, row: 0, col: 0 };
 
@@ -108,7 +119,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
     return [id, {
       id,
       name: node.name,
-      description: node.description,
+      description: node.description ?? '',
       glyph: node.glyph,
       kind: node.kind,
       unlocks: node.unlocks ?? [],
@@ -116,6 +127,7 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
       era: slot.era,
       row: slot.row,
       col: slot.col,
+      placed: isPlaced(node),
       requires: (node.requires ?? []) as TechId[],
       cost: knowledge > 0 ? { Gold: node.gold, Knowledge: knowledge } : { Gold: node.gold },
       durationSeconds: node.seconds,
@@ -135,6 +147,12 @@ export const TECHNOLOGIES: Record<TechId, TechnologyDef> = Object.fromEntries(
  * lookup — which is the direction a designer thinks in, and the only one an
  * editor can author. `techTreeRules.ts` refuses two technologies claiming one
  * gate, so each of these is unambiguous.
+ *
+ * OFF THE PAGE opens nothing. A technology in the editor's holding pen cannot
+ * be researched, so leaving it in charge of a gate would lock the Sawmill
+ * away with no card anywhere that opens it — silently, which is the worst of
+ * the two answers. Ungated is the loud one, and it is also what "this
+ * technology is not in the game yet" ought to mean.
  */
 const GATES = (() => {
   const district = new Map<string, TechId>();
@@ -144,6 +162,7 @@ const GATES = (() => {
   const harvest = new Map<string, TechId>();
   const terrain = new Map<string, TechId>();
   for (const id of TECH_ORDER) {
+    if (!TECHNOLOGIES[id].placed) continue;
     for (const unlock of TECHNOLOGIES[id].unlocks) {
       if ('district' in unlock) district.set(unlock.district, id);
       else if ('districtLevel' in unlock) {
@@ -645,7 +664,9 @@ const DISTRICT_CONTENT = {
   FarmLands: {
     ...rules,
     id: 'FarmLands',
-    name: 'FarmLands',
+    // The id is a key; the name is read aloud on a card ("Unlocks the crop
+    // plots"), so it is two words and lower case like the thing it names.
+    name: 'crop plots',
     description: 'A crop plot: tap it for Food. Build a Farm nearby to have workers harvest it.',
     glyph: '🟩',
     sprite: 'farmlands',
@@ -951,9 +972,10 @@ export const TOMES: Record<TomeId, TomeDef> = {
 
 export const TOME_ORDER = Object.keys(TOMES) as TomeId[];
 
-/** Every technology in one tome, in workbook order. */
+/** Every technology on one tome's page, in file order. One in the editor's
+ *  holding pen is on no page, so it is in no book. */
 export const techsInTome = (tome: TomeId): TechId[] =>
-  TECH_ORDER.filter((id) => TECHNOLOGIES[id].tome === tome);
+  TECH_ORDER.filter((id) => TECHNOLOGIES[id].placed && TECHNOLOGIES[id].tome === tome);
 
 /**
  * How many bands each book has — authored in `?dev=tree`, not a constant.

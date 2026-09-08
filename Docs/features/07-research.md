@@ -19,10 +19,15 @@
 - A technology is a one-time research that unlocks content: a building, a
   district level, a unit, a terrain, a mechanic, or one numeric step.
 - **A technology is one object**, in `src/sim/data/tech-tree.json`, authored in
-  `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name,
-  prose and glyph, its KIND, what it unlocks or what it moves, its Gold,
-  Knowledge and seconds, its slot on its tome page and what it requires. There
-  is no `Technologies` sheet.
+  `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)): its name
+  and glyph, its KIND, what it unlocks or what it moves, its Gold, Knowledge
+  and seconds, its slot on its tome page and what it requires. There is no
+  `Technologies` sheet.
+- **What a technology SAYS is generated from what it does**
+  (`src/sim/techProse.ts`) — from its `unlocks`, or from one sentence per
+  effect written against the stat in the registry. Only a `mechanic` carries
+  written prose, because only a mechanic's effect lives in code. A technology
+  keeps no line it would have to hold in step with its own numbers.
 - **Every technology is one of three kinds**, and it says which:
 
 | Kind | What it does | Authored |
@@ -87,6 +92,12 @@ A `bonus` names its effects, and each is four fields:
 | `op` | `percent` or `flat` |
 | `value` | **signed**, in whole points for a percent — `-22` is −22% |
 | `target` | what it aims at: a district, a unit, a unit tag, a harvest source, a tome. Absent = every subject of that stat |
+
+- A stat may **narrow which ids of a kind it accepts**, where only some of
+  them have the number at all: a recovery bonus aimed at a berry bush, which
+  is consumed rather than regrown, is refused the way a `flat` on a bare
+  multiplier is. The narrowing is derived from the workbook, so giving the
+  berries a regrowth time is what makes them aimable.
 
 - A total is the **sum over completed technologies** whose effects match
   `(stat, target)`. An unaimed effect reaches every query of its stat; an aimed
@@ -284,9 +295,9 @@ A `bonus` names its effects, and each is four fields:
 
 | State | Drawn as |
 |---|---|
-| **Normal** | researched, researching, or every prerequisite started |
-| **`?` silhouette** | one step ahead — every prerequisite is normal. A dim dashed card with a `?`: no name, no cost, not tappable |
-| **Hidden** | anything deeper is not rendered |
+| **Normal** | researched, researching, or buyable — every prerequisite researched |
+| **`?` silhouette** | one step ahead — every prerequisite is **normal**, so what comes next appears as soon as the card before it can be read, not once the player has paid for it. A dim dashed card with a `?`: no name, no cost, not tappable |
+| **Hidden** | anything deeper is not rendered. A silhouette does not reveal its own children, so the frontier stays one step wide |
 
 - The page is as long as what the fog shows: a row the fog has emptied
   collapses, so there are no blank lines in the middle of the flow.
@@ -298,9 +309,11 @@ A `bonus` names its effects, and each is four fields:
 
 ### 5.3 Cards
 
-- A card carries its **name** and one line of what it is for — what it
-  unlocks, or its own effect for a minor rank. A dot marks anything startable
-  now; an active research shows a progress bar.
+- A card carries its **glyph and its name**, and nothing else. What a
+  technology does is a sentence, and a sentence on a 120px card is three
+  clipped lines that have to be tapped to be read anyway — so the card is an
+  emblem and §5.4 does the talking. A dot marks anything startable now; an
+  active research shows a progress bar.
 - Colour is the state: researched, available, running.
 - A card in a **locked band** is drained of colour and not startable; the bar
   above it says how many cells are left.
@@ -316,8 +329,8 @@ Built as a side panel; the design is a **centred sheet** *(not built)*.
   (`kit/surface.ts`). Header and nav stay above it, so the purse is readable
   while the player reads prices.
 - Title: name, with the rank numeral for a minor (*Sawpits II*).
-- **Unlocks:** the sprite of what the node gives — district, district level,
-  unit — from `techUnlocks` (`src/sim/research.ts`).
+- **What it does:** the generated line in full (§1) — the first and only place
+  it is read.
 - A minor shows **before → after**:
 
 ```
@@ -402,7 +415,8 @@ Tap Power        +40%  →  +60%
 | Conquest drip | 3/h per cleared ruin | `knowledge.conquestPerClearedRuinPerHour` |
 | Conjunction Knowledge lump | 60 | `CONJUNCTION_BOONS[*].knowledge` |
 | Chain Knowledge | 500 total | `rewardKnowledge` (Quests sheet) |
-| **A whole technology** — name, prose, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **A whole technology** — name, glyph, kind, unlocks or effects, Gold, Knowledge, seconds, tome, band, slot, requirements (prose only for a `mechanic`) | per technology | `tech-tree.json`, through **`?dev=tree`** ([`../tech-tree-editor.md`](../tech-tree-editor.md)) |
+| **What a card says about one number** | one sentence per stat and op | `TECH_STATS[...].says` (`src/sim/data/techEffectRules.ts`) |
 | How many bands a book has, and what each asks for | 3 · 4 · 4 bands; 0 · 30 · 100 · 220 cells | `tech-tree.json` `eras`, through **`?dev=tree`** |
 | Three columns, card size, gutter, side channel | 3 · 120×96 · 36 · 14 px | `src/ui/research/layout.ts` |
 | Research slots | 1, max 3, Gems 2,500 × 2^n | `research.techSlots` · `research.maxSlots` · `research.slotGemCostBase` · `research.slotGemCostGrowth` |
@@ -414,6 +428,10 @@ Tap Power        +40%  →  +60%
 
 - Instant, Gold-only upgrades as a second kind of node (`UPGRADES`,
   `buyUpgrade`, `state.upgrades`, the `BuyUpgrade` quest goal).
+- **A hand-written line on a technology.** Prose beside the numbers it
+  describes drifts the first time a ladder is rebalanced: 150 cards once
+  shared 68 sentences, and five contradicted their own effects. The card is
+  generated (§1); a `mechanic` writes one because its effect is code.
 - A Knowledge cap.
 - A base Knowledge rate, or one scaled by Townhall level or population.
 - A city-scoped research clock.

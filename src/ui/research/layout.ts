@@ -75,8 +75,9 @@ export type PageRow =
  * or the game's definition; both satisfy it.
  *
  * Optional, because a technology can be OFF THE PAGE in the editor: with no
- * tome it matches no page and simply is not laid out. The rules call that an
- * error, so the game never sees one.
+ * tome it matches no page and simply is not laid out. Such a tree saves, so
+ * the game does see one — and this is half of why it costs nothing: the
+ * research page also filters on `placed` before it gets here.
  */
 export interface Placed {
   tome?: string;

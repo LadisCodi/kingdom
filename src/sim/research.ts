@@ -164,7 +164,10 @@ export const isGranted = (id: TechId): boolean =>
   techCost(id) === 0 && TECHNOLOGIES[id].durationSeconds === 0;
 
 export const canStartTech = (state: GameState, id: TechId): boolean =>
-  !isGranted(id)
+  // A technology in the editor's holding pen is on no page, so there is no
+  // card to press and nothing should light the tab on its behalf.
+  TECHNOLOGIES[id].placed
+  && !isGranted(id)
   && !isTechComplete(state, id)
   && !isTechActive(state, id)
   && requirementsMet(state, id)
@@ -176,10 +179,45 @@ export const canStartTech = (state: GameState, id: TechId): boolean =>
 export const anyResearchActionable = (state: GameState): boolean =>
   TECH_ORDER.some((id) => canStartTech(state, id));
 
+// ------------------------------------------------------------- tree fog
+
+/**
+ * How much of a technology the page shows
+ * ([`Docs/features/07-research.md`](../../Docs/features/07-research.md) §5.2).
+ *
+ * A fact about the TREE rather than about pixels, which is why it lives here
+ * and not in the screen that draws it: the screen turns `silhouette` into a
+ * dashed `?` and `hidden` into nothing, and that is all it decides.
+ */
+export type TechVisibility = 'normal' | 'silhouette' | 'hidden';
+
+/**
+ * **normal** — researched, researching, or buyable right now.
+ * **silhouette** — every prerequisite is NORMAL, so what comes next appears as
+ * soon as the card before it can be read. Waiting until the player had
+ * committed to the step before meant a tree nobody could plan a route through:
+ * the next `?` only ever appeared once you had already paid.
+ * **hidden** — everything else.
+ *
+ * ONE step deep. A silhouette does not reveal its own children, so the far end
+ * of a book stays a promise and the frontier stays a legible edge rather than
+ * the whole page at half opacity.
+ */
+export function techVisibility(state: GameState, id: TechId): TechVisibility {
+  // Not recursive, deliberately: `revealed` IS the `normal` test, and asking
+  // it of the requirements is the one step.
+  const revealed = (t: TechId): boolean =>
+    isTechComplete(state, t) || isTechActive(state, t) || requirementsMet(state, t);
+  if (revealed(id)) return 'normal';
+  if (TECHNOLOGIES[id].requires.every(revealed)) return 'silhouette';
+  return 'hidden';
+}
+
 export function startTech(state: GameState, id: TechId, now: number): StartTechResult {
   // A cover page is granted by an event in the world, so asking to research
-  // one is asking for something that has not happened yet.
-  if (isGranted(id)) return 'MissingRequirement';
+  // one is asking for something that has not happened yet. Same answer for a
+  // technology the tree editor left off the page: it is not in the game.
+  if (isGranted(id) || !TECHNOLOGIES[id].placed) return 'MissingRequirement';
   if (isTechComplete(state, id)) return 'AlreadyDone';
   if (isTechActive(state, id)) return 'AlreadyActive';
   if (!requirementsMet(state, id)) return 'MissingRequirement';

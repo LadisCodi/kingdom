@@ -72,6 +72,31 @@ export interface StatDef {
   what: string;
   /** Which ops make sense here. One entry means the other is inert. */
   ops: readonly TechEffectOp[];
+  /**
+   * What a PLAYER is told, one sentence per op in `ops`.
+   *
+   * `what` is the AUTHORING blurb and stays in authoring units — "seconds of
+   * work one tap is worth" — which is why a card cannot be built from it:
+   * "+20% seconds of work one tap is worth" is not a sentence anyone reads.
+   * This is the card. A technology no longer carries prose of its own
+   * (`src/sim/techProse.ts` renders these), so a stat with no sentence is a
+   * bonus nobody can read.
+   *
+   * The little language, filled in by `effectSentence`:
+   *
+   * | `{v}`        | the signed amount — `+5%`, `−0.05`, `+1`               |
+   * | `{pct}`      | a value authored as a FRACTION, read as a percentage:
+   *                  `0.05` → `+5%`. For the flat stats whose unit is `×`    |
+   * | `{target}`   | the target as a complete noun phrase                   |
+   * | `{resource}` | the currency a harvest target pays                     |
+   * | `[ … ]`      | dropped whole when the effect is unaimed               |
+   *
+   * Two rules for anyone writing one. **Articles**: a district, unit or unit
+   * tag is a proper noun, so the template writes `the` or nothing; only a
+   * harvest source is polymorphic, so it carries its own article. **Never a
+   * noun that has to agree in number with `{v}`** — `'{v} bed'` breaks at +2.
+   */
+  says: Partial<Record<TechEffectOp, string>>;
   /** Which kinds of target this stat accepts. `global` only = unaimed. */
   targets: readonly TargetKind[];
   /** Which IDS of that kind it accepts, when only some of them read the
@@ -93,7 +118,13 @@ export interface StatDef {
  *
  * Adding a stat is two lines here plus a `techValue()` call in the helper that
  * owns that number — the same shape as adding a `ModifierStat`, and the same
- * reason: a stat nothing reads is a bonus nobody collects.
+ * reason: a stat nothing reads is a bonus nobody collects. One of those two
+ * lines is `says`: a technology carries no prose of its own any more, so a
+ * stat without a sentence is a card the player cannot read.
+ *
+ * No stat accepts a `tome` target today, so no sentence is written around one.
+ * The first stat that declares `targets: ['global', 'tome']` has to write the
+ * wording; nothing here can guess it.
  *
  * The names say WHERE the number enters, not what it feels like. "More gold"
  * is deliberately not one stat: gold arrives as tax (`taxRate`), as a sale
@@ -119,162 +150,205 @@ export const TECH_STATS = {
   tapWorkSeconds: {
     what: 'seconds of work one tap is worth',
     ops: ['percent'], targets: ['global'], unit: 's',
+    says: { percent: '{v} out of every tap' },
     reads: 'upgrades.ts#tapWorkSeconds',
   },
   autoTapCooldown: {
     what: 'seconds between auto-taps while a finger is held',
     ops: ['flat', 'percent'], targets: ['global'], unit: 's',
+    says: { flat: '{v}s between auto-taps', percent: '{v} on the auto-tap wait' },
     reads: 'upgrades.ts#effectiveAutoTapCooldownMs',
   },
   harvestUnitsPerStrike: {
     what: 'units one extraction takes out of a KIND OF CELL — the tap and the crew alike',
     ops: ['flat', 'percent'], targets: ['global', 'harvest'], unit: 'units',
+    says: {
+      flat: '{v}[ {resource}] per tap and delivery[ from {target}]',
+      percent: '{v}[ {resource}] per tap and delivery[ from {target}]',
+    },
     reads: 'upgrades.ts#effectiveUnitsPerStrike',
   },
   harvestRecovery: {
     what: 'the seconds a drained cell stays a stump before it grows back',
     ops: ['percent'], targets: ['global', 'harvest'], unit: 's',
+    says: { percent: '{v} time before[ {target}] grows back' },
     targetIds: RECOVERING_SOURCES,
     reads: 'harvest.ts#effectiveRecoveryMs',
   },
   workerStrikeUnits: {
     what: 'units one WORKER delivery carries, on top of the cell’s own',
     ops: ['flat', 'percent'], targets: ['global'], unit: 'units',
+    says: { flat: '{v} on every worker delivery', percent: '{v} on every worker delivery' },
     reads: 'upgrades.ts#effectiveWorkerStrike',
   },
   workerSpeed: {
     what: 'tiles a second a worker walks',
     ops: ['percent'], targets: ['global'], unit: 'tiles/s',
+    says: { percent: '{v} worker walking speed' },
     reads: 'upgrades.ts#effectiveWorkerSpeed',
   },
   // ---- the city
   buildTime: {
     what: 'the multiplier on seconds to raise or upgrade a building',
     ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} time to build and upgrade' },
     reads: 'upgrades.ts#effectiveBuildTimeMultiplier',
   },
   researchTime: {
     what: 'the multiplier on seconds to finish a research, fixed when it starts',
     ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} time to finish a research' },
     reads: 'upgrades.ts#effectiveResearchTimeMultiplier',
   },
   salePrice: {
     what: 'multiplier POINTS added to the best Market’s level multiplier — not a percentage of it',
     ops: ['flat'], targets: ['global'], unit: '×',
+    says: { flat: '{pct} on Market prices' },
     reads: 'upgrades.ts#effectiveSalePriceMultiplier',
   },
   taxRate: {
     what: 'Gold a housed villager pays a minute',
     ops: ['percent', 'flat'], targets: ['global', 'district'], unit: 'gold/min',
+    says: {
+      percent: '{v} tax income[ from {target}]',
+      flat: '{v} Gold a minute per villager[ in {target}]',
+    },
     reads: 'upgrades.ts#effectiveTaxRate',
   },
   populationCapacity: {
     what: 'beds a district provides',
     ops: ['flat', 'percent'], targets: ['global', 'district'], unit: 'beds',
+    says: { flat: '{v} bed space[ at {target}]', percent: '{v} bed space[ at {target}]' },
     reads: 'population.ts#districtCapacity',
   },
   // ---- magic and the clock
   manaCap: {
     what: 'the ceiling of the Mana pool',
     ops: ['flat', 'percent'], targets: ['global'], unit: 'mana',
+    says: {
+      flat: '{v} to the Mana the kingdom holds',
+      percent: '{v} to the Mana the kingdom holds',
+    },
     reads: 'mana.ts#manaCap',
   },
   manaPerClaimedLandmark: {
     what: 'Mana an hour from EVERY claimed landmark',
     ops: ['flat'], targets: ['global'], unit: 'mana/h',
+    says: { flat: '{v} Mana an hour per claimed landmark' },
     reads: 'mana.ts#manaProduction',
   },
   knowledgePerClaimedLandmark: {
     what: 'Knowledge an hour from EVERY claimed landmark',
     ops: ['flat'], targets: ['global'], unit: 'knowledge/h',
+    says: { flat: '{v} Knowledge an hour per claimed landmark' },
     reads: 'mana.ts#knowledgePerHour',
   },
   knowledgePerClearedRuin: {
     what: 'Knowledge an hour from EVERY cleared ruin',
     ops: ['flat'], targets: ['global'], unit: 'knowledge/h',
+    says: { flat: '{v} Knowledge an hour per cleared ruin' },
     reads: 'mana.ts#knowledgePerHour',
   },
   knowledgeYield: {
     what: 'the multiplier on the whole Knowledge drip',
     ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} on the whole Knowledge drip' },
     reads: 'mana.ts#knowledgePerHour',
   },
   activeCost: {
     what: 'the Mana a relic’s ability costs to cast',
     ops: ['percent'], targets: ['global'], unit: 'mana',
+    says: { percent: '{v} Mana to cast a relic' },
     reads: 'casting.ts#castCost',
   },
   // ---- the fog
   revealCost: {
     what: 'the Gold one cell of fog costs to clear',
     ops: ['percent'], targets: ['global'], unit: 'gold',
+    says: { percent: '{v} Gold to clear a cell of fog' },
     reads: 'fog.ts#revealCostForCell',
   },
   fogRevealPerTap: {
     what: 'the reveal progress one tap on the fog buys',
     ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} progress from every tap on the fog' },
     reads: 'fog.ts#revealPerTap',
   },
   discoverRadius: {
     what: 'how far a building sees into the fog — never how far it REVEALS',
     ops: ['flat'], targets: ['global', 'district'], unit: 'tiles',
+    says: { flat: '{v} sight into the fog for every[ {target}] building' },
     reads: 'fog.ts#effectiveDiscoverRadius',
   },
   claimCost: {
     what: 'the Gold a landmark costs to claim',
     ops: ['percent'], targets: ['global'], unit: 'gold',
+    says: { percent: '{v} Gold to claim a landmark' },
     reads: 'landmarks.ts#landmarkClaimCost',
   },
   // ---- the army
   armyCap: {
     what: 'the army power the halls can field',
     ops: ['flat', 'percent'], targets: ['global'], unit: 'power',
+    says: {
+      flat: '{v} army power the halls can field',
+      percent: '{v} army power the halls can field',
+    },
     reads: 'army.ts#maxArmyPower',
   },
   recruitCost: {
     what: 'the multiplier on what a unit costs to recruit',
     ops: ['percent'], targets: ['global', 'unit'], unit: '×',
+    says: { percent: '{v} on recruit costs[ for the {target}]' },
     reads: 'army.ts#trainCost',
   },
   unitAtk: {
     what: 'flat ATK on a unit',
     ops: ['flat'], targets: ['global', 'unitTag'], unit: 'atk',
+    says: { flat: '{v} ATK to every[ {target}] unit' },
     reads: 'expeditions.ts#drillOf',
   },
   unitDef: {
     what: 'flat DEF on a unit',
     ops: ['flat'], targets: ['global', 'unitTag'], unit: 'def',
+    says: { flat: '{v} DEF to every[ {target}] unit' },
     reads: 'expeditions.ts#drillOf',
   },
   typeDisadvantage: {
     what: 'how much of a bad matchup’s penalty is taken off — never past neutral',
     ops: ['flat'], targets: ['global'], unit: '×',
+    says: { flat: '{pct} off a bad matchup’s penalty' },
     reads: 'expeditions.ts#drillOf',
   },
   // ---- the delve
   supplyCost: {
     what: 'the multiplier on what an expedition costs to provision',
     ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} to what an expedition costs' },
     reads: 'expeditions.ts#supplyCost',
   },
   delveSpeed: {
     what: 'the multiplier on how long one depth takes to resolve',
     ops: ['percent'], targets: ['global'], unit: '×',
+    says: { percent: '{v} time to resolve a depth' },
     reads: 'expeditions.ts#depthMs',
   },
   haulLoss: {
     what: 'the fraction of the haul a failed depth loses',
     ops: ['flat'], targets: ['global'], unit: '×',
+    says: { flat: '{pct} of the haul lost on a bad depth' },
     reads: 'expeditions.ts#effectiveHaulLoss',
   },
   heroXp: {
     what: 'the multiplier on the XP a delve pays a hero',
     ops: ['percent'], targets: ['global'], unit: 'xp',
+    says: { percent: '{v} XP a hero brings back' },
     reads: 'heroes.ts#addHeroXp',
   },
   stardustYield: {
     what: 'the multiplier on the Stardust a depth pays',
     ops: ['percent'], targets: ['global'], unit: 'stardust',
+    says: { percent: '{v} Stardust out of a ruin' },
     reads: 'expeditions.ts#depthHaul',
   },
 } as const satisfies Record<string, StatDef>;

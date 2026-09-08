@@ -13,7 +13,7 @@
 // questions and calls these, and never reaches into the document.
 
 import {
-  ERA_CEILING, MAX_REQUIRES, TECH_KINDS, eraCount, isPlaced, isTechId, techIds,
+  ERA_CEILING, MAX_REQUIRES, TECH_KINDS, eraCount, isPlaced, isTechId, saysItself, techIds,
   validateTechTree,
   type PlacedTech, type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation,
   type TechUnlock,
@@ -52,6 +52,13 @@ export class TreeDoc {
       eras: structuredClone(initial.eras),
       technologies: structuredClone(initial.technologies),
     };
+    // A technology whose data says what it does carries no prose. Dropping it
+    // ON LOAD rather than only on edit is what makes the change a single save
+    // — and it keeps a hand-edited or old-branch file from arriving with a
+    // hundred lines the rules would refuse.
+    for (const node of Object.values(this.doc.technologies)) {
+      if (saysItself(node)) delete node.description;
+    }
     this.savedText = this.serialise();
   }
 
@@ -65,8 +72,8 @@ export class TreeDoc {
   node(id: string): TechNodeDoc | null { return this.doc.technologies[id] ?? null; }
 
   /** Every technology with no slot — taken off the page, or newly arrived and
-   *  not put anywhere yet. The rules make each of them an error, so this is
-   *  also the list blocking the save. */
+   *  not put anywhere yet. Pending work, not an error: the file saves with
+   *  them in it, and the game leaves them out. */
   get offPage(): string[] {
     return this.ids.filter((id) => !isPlaced(this.doc.technologies[id]));
   }
@@ -198,8 +205,8 @@ export class TreeDoc {
       this.doc.technologies[id] = {
         name: fields.name?.trim() || id,
         glyph: fields.glyph?.trim() || '📜',
-        description: fields.description?.trim() || '',
         kind: fields.kind ?? 'unlock',
+        ...(fields.description?.trim() ? { description: fields.description.trim() } : {}),
         tome,
         era,
         row: slot.row,
@@ -226,9 +233,10 @@ export class TreeDoc {
    * every requirement pointing AT it: a card cannot wait on something that is
    * nowhere. Put it back with a drag and the slot hands it new ones.
    *
-   * The rules call this an error, so a tree with anything off the page cannot
-   * be saved — which is the difference from deleting: this is a holding pen
-   * inside one session's work, not a state the repo can hold.
+   * The rules call this PENDING, not an error, and the file saves with it —
+   * a book half rearranged has to survive a coffee break. The difference from
+   * deleting is that the technology is still there, whole: the game leaves an
+   * unplaced card out entirely until it has a slot again.
    */
   unplace(id: string): void {
     this.edit(() => { this.reroot(this.detach(id)); });
@@ -325,6 +333,11 @@ export class TreeDoc {
       if (node.planned !== true) delete node.planned;
       if (node.unlocks?.length === 0) delete node.unlocks;
       if (node.effects?.length === 0) delete node.effects;
+      // PROSE goes the moment the data speaks for itself: the card is
+      // generated from `unlocks`/`effects` (`sim/techProse.ts`), and a line
+      // left beside them is a second answer nothing keeps in step.
+      if (saysItself(node)) delete node.description;
+      if ((node.description ?? '').trim() === '') delete node.description;
     });
   }
 

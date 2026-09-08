@@ -30,9 +30,9 @@ identity in `definitions.ts`. Three of those are the same list.
 - **Errors arrived late and in a terminal**, half a minute after the mistake.
 
 **The workbook is still the source of truth for every balancing number**
-(invariant 5). A technology is not one: it is identity, prose, a kind, a set
-of unlocks, a price, a slot and a set of edges — one object, authored in one
-place.
+(invariant 5). A technology is not one: it is identity, a kind, a set of
+unlocks or effects, a price, a slot and a set of edges — one object, authored
+in one place. What it SAYS is not authored at all (§3.1).
 
 ## 2. What a technology is
 
@@ -41,7 +41,6 @@ place.
 ```json
 "Saws": {
   "name": "Saws", "glyph": "🪚", "kind": "unlock",
-  "description": "Unlocks the Sawmill — its workers chop nearby forests for you.",
   "tome": "Civics", "era": 1, "row": 2, "col": 0,
   "requires": ["Forestry"],
   "gold": 175, "seconds": 20,
@@ -49,10 +48,14 @@ place.
 }
 ```
 
+Its card reads **"Unlocks the Sawmill"**, and nobody typed that: what a
+technology says is generated from what it does (§3.1).
+
 | Field | Means |
 |---|---|
 | the key | the `TechId`. `TechId` **is** `keyof` this file, so a new one is a type the moment it is saved |
-| `name` · `glyph` · `description` | what the player reads |
+| `name` · `glyph` | what the player reads on the card |
+| `description` | **`mechanic` only** — the one kind with nothing in its own data to read (§3.1). Every other line is generated |
 | `kind` | `unlock`, `bonus` or `mechanic` (§3) |
 | `tome` · `era` | which book, which band — the book says how many it has (`eras`) |
 | `row` · `col` | its slot on that book's three-column page; a requirement always sits on a smaller row |
@@ -70,8 +73,9 @@ dropping a middle band silently re-pointed the numbers left behind.
 
 - `tome`, `era`, `row` and `col` are **absent together** on a technology taken
   OFF THE PAGE (§5). It still exists and is still editable; the rules count it
-  as PENDING rather than wrong, and refuse the save while any exist, so the
-  repo never holds one.
+  as PENDING rather than wrong, and the file saves with it, so a book half
+  rearranged survives being written down. The game leaves such a card out
+  entirely (§4).
 - `definitions.ts` builds `TECHNOLOGIES` by walking this file, and `TECH_ORDER`
   is its key order — which the editor writes in reading order, so it is also
   rank order inside a rank ladder.
@@ -79,6 +83,23 @@ dropping a middle band silently re-pointed the numbers left behind.
   up in `git diff` as the technologies that changed.
 
 ## 3. The three kinds
+
+### 3.1 What a card says, and who writes it
+
+Nobody types it. A technology's line is **generated from what it does**
+(`src/sim/techProse.ts`): from its `unlocks` for an `unlock`, from its
+`effects` for a `bonus`. Rebalance a rank and its own sentence follows.
+
+| Kind | Its line | Example |
+|---|---|---|
+| `unlock` | `Unlocks …`, one clause per thing, with display names. Building levels that share a number fold into one clause | *Unlocks Barracks, Spear Hall, Shooting Grounds and Stables at level 4* |
+| `bonus` | one sentence per effect, from the stat's `says` in the registry | *+1 Wood per tap and delivery from a forest* |
+| `mechanic` | its `description`, the only written prose left in the tree | *Paved ways — every worker walks a quarter faster.* |
+
+In the game the card shows only the glyph and the name; the line is read in
+the info panel a tap opens ([`features/07-research.md`](features/07-research.md)
+§5.4). In the editor it is on the card, because a designer arranging a page is
+reading what each one does.
 
 **`unlock` — it opens content.** The technology says what, and every gate in
 the game is derived from that (`GATES`, `definitions.ts`):
@@ -131,7 +152,7 @@ cannot author:
 | To… | Change |
 |---|---|
 | add a rank to a ladder, or a bonus of a kind nothing has yet — "+5% gold at Housing" | nothing — the editor |
-| move a **number nothing reads yet** | an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`), then `techValue(state, 'yourStat', base, target?)` at the call site that owns it |
+| move a **number nothing reads yet** | an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — then `techValue(state, 'yourStat', base, target?)` at the call site that owns it |
 | let events or relics move the same number | a `ModifierStat` in `modifiers.ts` and a `resolve()` at that call site |
 
 The `stat` dropdown offers every stat the registry declares, whether or not a
@@ -156,15 +177,22 @@ enforced in all three or in none.
 The rules give three answers, not two. **Pending** is the third: a technology
 **off the page** has no slot yet, which is unfinished work and not a mistake —
 clearing a band (§6) makes a dozen at once. It is counted, never listed
-card-by-card among the errors, and it still refuses the save. A rule that
-depends on where a card sits is not applied to one that sits nowhere, so a
-cleared band raises no errors at all; the links are checked again when the
-cards are placed. A card still on the page that requires one off it **is** an
-error, in its own words.
+card-by-card among the errors, and it **does not block the save**: a book half
+rearranged has to survive being written down. A rule that depends on where a
+card sits is not applied to one that sits nowhere, so a cleared band raises no
+errors at all; the links are checked again when the cards are placed. A card
+still on the page that requires one off it **is** an error, in its own words.
+
+A saved technology with no slot is **not in the game**: no card on any page,
+nothing to research, and it gates nothing — whatever it unlocks is simply
+ungated until it is placed again.
 
 **Errors** (a save is refused):
 
-- an illegal id, or no name, glyph or description
+- an illegal id, or no name or glyph
+- prose on a technology whose `unlocks` or `effects` already say what it does
+- no prose on a `mechanic`, whose effect is code and whose card has nothing
+  else to read
 - two cards in one slot of one page (the same slot on another page is fine)
 - a tome that is not a tome, a band outside 1–4, a column outside 0–2
 - one row shared by two eras — an era bar takes a whole line
@@ -207,10 +235,11 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
 | middle | the open book's page: three columns of slots, era bars between bands |
 | right | the selected technology's fields, its unlocks, and the problem list |
 
-- **+ new technology** asks for an id, name, glyph, prose, kind, era, Gold and
-  seconds, and drops the result at the end of that band — placed, because a
-  technology with no slot is one the game cannot draw. Then say what it
-  unlocks; the problem list will be asking you to.
+- **+ new technology** asks for an id, name, glyph, kind, era, Gold and
+  seconds — and for prose only when the kind is `mechanic`, because every
+  other card writes its own line. It drops the result at the end of that band,
+  placed. Then say what it unlocks or moves; the problem list will be asking
+  you to.
 - **Drag** a technology from the palette (or from another slot) onto a slot.
   Dropping onto an occupied slot **swaps** the two.
 - **A drop sets the requirements**: the filled slot directly above the target,
@@ -231,9 +260,14 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
 - **Click a connector to cut it.** `⇢ link` is the same gesture for cards that
   are NOT on neighbouring rows: select one, press it, click the other.
   `take the slot's default` puts the drop's guess back.
-- **Everything in the inspector is editable** — name, glyph, prose, Gold,
-  Knowledge, seconds, kind, what it unlocks or moves, `planned`. Switching the
-  kind clears the fields that no longer mean anything.
+- **Everything in the inspector is editable** — name, glyph, Gold, Knowledge,
+  seconds, kind, what it unlocks or moves, `planned`. Switching the kind clears
+  the fields that no longer mean anything. Where the prose box would be, a
+  technology that says it itself shows **the sentence the player will read**,
+  and cannot be typed over; only a `mechanic` still has the box.
+- **The first unlock or effect takes the prose with it**, which is the one
+  gesture that deletes writing as a side effect of adding data. It says so
+  when it happens, and `⌘Z` puts it back.
 - **`+ unlock`** adds one: pick what kind of thing, then which one (and which
   level, for a building level). **`+ effect`** is the same gesture for a bonus:
   stat, op, value, then what it aims at. Click a chip to cut either.
@@ -255,11 +289,11 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
 - The last row of each band is an empty **spare row**. Dropping into it pushes
   the bands below down a line.
 - **Off the page is not deleted.** `⤴ take off the page` (or `Delete`) lets go
-  of the slot and keeps the technology — its prose, price, kind and unlocks all
+  of the slot and keeps the technology — its name, price, kind and unlocks all
   survive; only where it sat, and what it required, do not. It waits in the
-  **off the page** group at the top of the palette, and the tree cannot be
-  saved while anything is there, which is what keeps the holding pen inside one
-  session. Drag it into a slot and the slot hands it new requirements.
+  **off the page** group at the top of the palette, and the tree saves with it
+  there; the game leaves it out until it has a slot (§4). Drag it into a slot
+  and the slot hands it new requirements.
   `🗑 delete for good` is the other verb: it ends the technology, and every
   requirement pointing at it.
 - **`⤴ clear era…`** is the same gesture for a whole band: pick the era, and
@@ -312,9 +346,14 @@ and writes `src/sim/data/tech-tree.json`. The endpoint cannot exist in a build.
   the old graph; there is no button for it, because a designer arranging a page
   is the point of the tool.
 - **Undo across a save.** Undo is the session's; the file's history is git's.
-- **Shipping a technology that is off the page.** The state exists for the
-  minutes a book is being rearranged, and the rules refuse to save it — a
-  technology the game cannot draw is not a state the repo can hold.
+- **A per-technology prose override.** A written line beside the numbers it
+  describes drifts the first time a ladder is rebalanced: 150 cards once
+  shared 68 sentences, and five of them contradicted their own effects. A
+  `mechanic` writes prose because its effect is code; nothing else needs the
+  door open.
+- **Drawing a technology that is off the page.** The file may hold one, and
+  the game shows nothing of it — no card, no research, no gate. Where it goes
+  is a decision the editor makes, not one the renderer guesses.
 - **Renaming a technology's id.** A save holds completed ids, so a rename is a
   delete and a create — which the save reader survives (it drops ids the build
   no longer has), and which loses that technology's progress.

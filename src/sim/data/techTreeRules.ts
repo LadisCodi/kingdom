@@ -54,16 +54,23 @@ export const TECH_KINDS: TechKind[] = ['unlock', 'bonus', 'mechanic'];
 export interface TechNodeDoc {
   name: string;
   glyph: string;
-  description: string;
+  /**
+   * `mechanic` only — the one kind whose effect is code, so the one kind with
+   * nothing in its own data to read. Every other card's line is GENERATED
+   * from its `unlocks` or `effects` (`src/sim/techProse.ts`), and carrying a
+   * second answer beside the first is what let 150 cards share 68 sentences.
+   */
+  description?: string;
   kind: TechKind;
   /**
    * Its slot, or nothing at all.
    *
    * All four are absent together on a technology that has been taken OFF THE
-   * PAGE — which exists, is editable, and is an ERROR until it is put back
-   * (the game has nowhere to draw it). That is a different state from deleted,
-   * and the difference is the point: a technology can be set aside while its
-   * page is rearranged without losing its prose, its price or its unlocks.
+   * PAGE — which exists, is editable, and is PENDING rather than wrong. That
+   * is a different state from deleted, and the difference is the point: a
+   * technology can be set aside while its page is rearranged without losing
+   * its prose, its price or its unlocks. The game does not draw it and does
+   * not read its gates, so a tree with one in the holding pen still saves.
    */
   tome?: TomeId;
   era?: number;
@@ -123,9 +130,11 @@ export interface TechTreeValidation {
    * errors buries the ones that are actually wrong, which is the whole job of
    * an error list.
    *
-   * It still stops the save: `ok` is false while any of them exist, so the
-   * holding pen lives inside one session and never reaches the repo, where
-   * the game would have nowhere to draw them.
+   * It does NOT stop the save. A rearrangement that spans a coffee break has
+   * to survive being written down, so the holding pen ships: a technology
+   * with no slot is simply **not in the game** — no card on any page, nothing
+   * to research, and no gate of its own (`definitions.ts`). It is counted
+   * here so the editor and the status bar can say how much is still waiting.
    */
   offPage: string[];
   ok: boolean;
@@ -197,6 +206,20 @@ const DISTRICT_MAX_LEVEL = balance.districts as unknown as Record<string, { maxL
 /** A technology that HAS a slot — the same object, with the four fields known
  *  to be there, so one check narrows all of them. */
 export type PlacedTech = TechNodeDoc & Required<Pick<TechNodeDoc, 'tome' | 'era' | 'row' | 'col'>>;
+
+/**
+ * Does this technology's own DATA say what it does?
+ *
+ * The one question three places have to answer the same way: the rules (which
+ * refuse prose on a technology that has this), the editor (which drops the
+ * field the moment it becomes true) and `sim/techProse.ts` (which renders the
+ * sentence). A technology that says it itself carries no description at all —
+ * a hand-written line drifts from the numbers beside it, and 150 cards sharing
+ * 68 sentences is what that drift looked like.
+ */
+export const saysItself = (node: TechNodeDoc): boolean =>
+  (node.kind === 'unlock' && (node.unlocks ?? []).length > 0)
+  || (node.kind === 'bonus' && (node.effects ?? []).length > 0);
 
 /** Is this technology on a page at all? All four slot fields, or none. */
 export const isPlaced = (node: TechNodeDoc): node is PlacedTech =>
@@ -354,8 +377,36 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
     }
     if ((node.name ?? '').trim() === '') errors.push({ message: `${id} has no name`, tech: id });
     if ((node.glyph ?? '').trim() === '') errors.push({ message: `${id} has no glyph`, tech: id });
-    if ((node.description ?? '').trim() === '') {
-      errors.push({ message: `${id} has no description`, tech: id });
+    // PROSE, in both directions. A technology whose unlocks or effects speak
+    // for themselves carries none: the card is generated from the data
+    // (`sim/techProse.ts`), so a line typed beside it is a second answer that
+    // nothing keeps in step. One that has nothing to generate from has to
+    // carry one, or its card is blank.
+    const prose = (node.description ?? '').trim();
+    if (saysItself(node) && prose !== '') {
+      errors.push({
+        message: `${id} carries a description, but its `
+          + `${node.kind === 'unlock' ? 'unlocks' : 'effects'} already say what it does `
+          + '— delete the line',
+        tech: id,
+      });
+    }
+    // Only a MECHANIC has to write one, and it is the one kind that always
+    // does: its effect is code, so there is nothing in its data to read. The
+    // other two kinds either say it themselves or are already an error further
+    // down — a `bonus` that moves nothing, an `unlock` that opens nothing —
+    // and asking those for prose as well would report one mistake twice.
+    //
+    // A `planned` node lands here too, because a promise about content that
+    // does not exist yet is exactly what nothing can generate: `planned` and
+    // `mechanic` are the same set, and the "unlocks nothing" rule below keeps
+    // them that way.
+    if (node.kind === 'mechanic' && prose === '') {
+      errors.push({
+        message: `${id} says nothing about itself — a mechanic has to carry a description, `
+          + 'because its effect is code and there is nothing in its data to read',
+        tech: id,
+      });
     }
   }
 
@@ -566,9 +617,7 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         tech: id,
       });
     } else if (node.kind === 'unlock') {
-      // A PLANNED unlock has nothing to name yet: it is on the tree for its
-      // shape, and what it will open does not exist (tech-tree.md §7).
-      if (unlocks.length === 0 && node.planned !== true) {
+      if (unlocks.length === 0) {
         errors.push({
           message: `${id} unlocks nothing — say what it opens, or make it a mechanic`,
           tech: id,
@@ -600,6 +649,12 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
       // ONE technology per gate. Two would leave the game asking which of them
       // opens the Sawmill, and the answer would be whichever the loop that
       // derives the gates happened to read last.
+      //
+      // Counted ON THE PAGE only, because a gate is derived from the page: a
+      // technology in the holding pen opens nothing (`definitions.ts`). That
+      // is what lets a designer hand the Sawmill to a new card by taking the
+      // old one off the page, instead of having to delete it first.
+      if (!isPlaced(node)) continue;
       const key = unlockKey(unlock);
       const holder = claimed.get(key);
       if (holder !== undefined) {
@@ -703,6 +758,6 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
 
   return {
     errors, warnings, offPage,
-    ok: errors.length === 0 && offPage.length === 0,
+    ok: errors.length === 0,
   };
 }

@@ -54,7 +54,7 @@ describe('the shipped tech tree', () => {
       const def = TECHNOLOGIES[id];
       expect(def.name).toBe(entry.name);
       expect(def.glyph).toBe(entry.glyph);
-      expect(def.description).toBe(entry.description);
+      expect(def.description).toBe(entry.description ?? '');
       expect(def.kind).toBe(entry.kind);
       expect(def.requires).toEqual(entry.requires);
       expect(def.tome).toBe(entry.tome);
@@ -270,6 +270,50 @@ describe('what the rules refuse', () => {
     expect(messages(glyph).some((m) => m.includes('has no glyph'))).toBe(true);
   });
 
+  // PROSE, in both directions. What a card says is generated from what the
+  // technology does (`src/sim/techProse.ts`), so a line typed beside the data
+  // is a second answer that nothing keeps in step — 150 cards once shared 68
+  // sentences that way, and five of them contradicted their own numbers.
+  describe('prose, which only a mechanic writes', () => {
+    it('refuses a description on a technology whose data already says it', () => {
+      const d = clone();
+      d.technologies.Saws.description = 'Two men and a pit.';
+      expect(messages(d).some((m) => m.includes('Saws carries a description'))).toBe(true);
+      const bonus = clone();
+      const rank = Object.keys(bonus.technologies)
+        .find((id) => bonus.technologies[id].kind === 'bonus')!;
+      bonus.technologies[rank].description = '+1 of something';
+      expect(messages(bonus).some((m) => m.includes('already say what it does'))).toBe(true);
+    });
+
+    it('asks a mechanic for one, because its effect is code', () => {
+      const d = clone();
+      const mech = Object.keys(d.technologies)
+        .find((id) => d.technologies[id].kind === 'mechanic')!;
+      delete d.technologies[mech].description;
+      expect(messages(d).some((m) => m.includes('says nothing about itself'))).toBe(true);
+    });
+
+    it('is happy with a technology that carries none at all', () => {
+      const d = clone();
+      delete d.technologies.Saws.description;
+      expect(messages(d).filter((m) => m.startsWith('Saws '))).toEqual([]);
+    });
+
+    // ONE mistake, one message. A bonus that moves nothing is already an
+    // error of its own; asking it for prose as well would say the same thing
+    // twice about one card.
+    it('reports a bonus that moves nothing once, not twice', () => {
+      const d = clone();
+      const rank = Object.keys(d.technologies)
+        .find((id) => d.technologies[id].kind === 'bonus')!;
+      delete d.technologies[rank].effects;
+      delete d.technologies[rank].description;
+      expect(messages(d).filter((m) => m.startsWith(`${rank} `)))
+        .toEqual([`${rank} is a bonus that moves no number`]);
+    });
+  });
+
   // NOTHING is free. The granted cover pages were the one exemption and they
   // are gone: every book is open, so there is nothing left to grant.
   it('a technology that costs nothing and takes no time', () => {
@@ -331,10 +375,9 @@ describe('what the rules refuse', () => {
   // OFF THE PAGE is a real state of the document — `?dev=tree` takes a
   // technology out of its slot without deleting it — and it is the THIRD
   // answer the rules give: not an error, because it is unfinished work rather
-  // than a mistake, and clearing a band makes twenty of them at once. It
-  // still fails the verdict, which is what stops it reaching the repo: the
-  // save endpoint and CI refuse it, so the holding pen only exists inside a
-  // session.
+  // than a mistake, and clearing a band makes twenty of them at once. It does
+  // not fail the verdict either: a book half rearranged saves, and the game
+  // leaves an unplaced card out (`definitions.ts`).
   it('a technology with no slot — as pending, not as an error', () => {
     const d = clone();
     const masonry = d.technologies.Masonry;
@@ -345,7 +388,6 @@ describe('what the rules refuse', () => {
     masonry.requires = [];
     const said = validateTechTree(d);
     expect(said.offPage).toEqual(['Masonry']);
-    expect(said.ok, 'the tree cannot be saved while a card has no slot').toBe(false);
     // NOTHING in the error list about it, and not four things either: no tome,
     // no era, no row, no column is one fact, and the three that cascade would
     // bury whatever is genuinely wrong.
@@ -354,6 +396,27 @@ describe('what the rules refuse', () => {
     // placed card waiting on nowhere is a real problem with the page.
     expect(messages(d).some((m) => m.includes('requires Masonry, which is off the page')))
       .toBe(true);
+  });
+
+  // The holding pen SHIPS. A book half rearranged has to survive being
+  // written down, so pending work does not fail the verdict — the editor
+  // saves it and the game leaves the card out (`definitions.ts`). What the
+  // editor does when it takes a card off the page is exactly this: the slot
+  // goes, and so does every requirement at either end of it.
+  it('a tree with a card in the holding pen still saves', () => {
+    const d = clone();
+    // A leaf, so taking it off the page leaves nothing waiting on nowhere —
+    // which is what `unplace` arranges for in the editor.
+    const leaf = d.technologies.Communities;
+    delete leaf.tome;
+    delete leaf.era;
+    delete leaf.row;
+    delete leaf.col;
+    leaf.requires = [];
+    const said = validateTechTree(d);
+    expect(said.offPage).toEqual(['Communities']);
+    expect(said.errors.map((e) => e.message)).toEqual([]);
+    expect(said.ok, 'pending work does not block the save').toBe(true);
   });
 
   it('a column the page does not have', () => {

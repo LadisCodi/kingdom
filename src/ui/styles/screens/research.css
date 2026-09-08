@@ -96,18 +96,21 @@
 
 /* ---------------------------------------------------------- the cards --- */
 
-/* A card, not a medallion: the page has room to say what a technology IS,
-   which is the thing the glyph-only node could never do. Width and height
-   come from layout.ts, inline. */
+/* A card, not a medallion: it carries the NAME, which is what lets a player
+   find a technology someone told them about and read the page as a flow. What
+   it DOES is a sentence, and a sentence belongs in the panel a tap opens.
+   Width and height come from layout.ts, inline. */
 .tech-card {
   position: absolute;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   padding: 6px 7px;
   margin: 0;
-  text-align: left;
+  text-align: center;
   border-radius: 10px;
   background: var(--parchment-shade);
   border: 3px solid var(--wood-dark);
@@ -117,23 +120,19 @@
   cursor: pointer;
   overflow: hidden;
 }
-/* The name on ONE line and three of what it does under it — a card that grew
-   to fit its prose would push the row below it out of the geometry the
-   connectors were drawn against. Both at --text-helper: 18px is the only size
-   the body face has (ui/styles/tokens.css), so the helper tier is carried by
-   --ink-muted rather than by size. */
-.tech-card-name,
-.tech-card-effect {
+/* A GLYPH AND A NAME, and nothing else. What a technology does is a sentence,
+   and a sentence on a 120px card is three clipped lines that have to be tapped
+   to be read anyway — so the card is an emblem and the panel does the talking.
+   The name gets two lines because the card no longer competes for them. */
+.tech-card-glyph { font-size: 26px; line-height: 1; }
+.tech-card-name {
   font-size: var(--text-helper);
   line-height: 1.15;
+  font-weight: 700;
   overflow: hidden;
-}
-.tech-card-name { font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
-.tech-card-effect {
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  color: var(--ink-muted);
 }
 .tech-card.done { background: var(--leaf); border-color: var(--leaf-dark); }
 .tech-card.available { background: var(--gold); border-color: var(--gold-dark); }
@@ -256,25 +255,16 @@
   background: var(--parchment-shade); border: 1px solid var(--wood-dark); }
 .tech-info .pip.on { background: var(--gold); border-color: var(--gold-dark); }
 
-/* What this technology is FOR — the line the old screen never had. */
-.res-unlocks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
-.res-unlocks-label {
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-}
-.res-unlock {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px 3px 4px;
+/* WHAT IT DOES, whole. The card is a glyph and a name, so this is where the
+ * generated sentence is read — given its own panel so it reads as the answer
+ * to the tap rather than as a caption. */
+.res-says {
+  margin: 8px 0;
+  padding: 6px 9px;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  border-radius: var(--radius-sm, 8px);
 }
-.res-unlock img { width: 22px; height: 22px; object-fit: contain; image-rendering: pixelated; }
 
 /* --------------------------------------------------------- the shelf --- */
 

@@ -57,6 +57,7 @@ import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/ques
 import {
   anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
 } from './sim/research';
+import { describeTech } from './sim/techProse';
 import {
   effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
@@ -289,7 +290,7 @@ export class Game {
       const tech = TECHNOLOGIES[id];
       this.queueBanner({
         title: 'Research complete!', icon: tech.glyph, name: tech.name,
-        desc: tech.description, tone: 'sky', sfx: 'researchComplete',
+        desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
       // A minor RANK unlocks nothing and announces nothing: its reward is the

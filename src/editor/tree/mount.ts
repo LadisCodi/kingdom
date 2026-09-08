@@ -18,18 +18,19 @@ import '../editor.css';
 import treeJson from '../../sim/data/tech-tree.json';
 import {
   DISTRICT_IDS, HARVEST_IDS, MAX_REQUIRES, TECH_KINDS, TERRAIN_IDS, TOME_IDS, UNIT_IDS,
-  isDrawnEdge, isPlaced, unlockLabel,
+  isDrawnEdge, isPlaced, saysItself, unlockLabel,
   type PlacedTech, type TechIssue, type TechKind, type TechNodeDoc, type TechTreeDoc,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
 import { ERA_CEILING } from '../../sim/data/techTreeRules';
 import {
   TARGET_IDS, TECH_EFFECT_OPS, TECH_STATS, effectLabel,
-  type TargetKind, type TechEffectOp, type TechStat, type TechTarget,
+  type TargetKind, type TechEffect, type TechEffectOp, type TechStat, type TechTarget,
 } from '../../sim/data/techEffectRules';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, rowTops, ROW_GAP,
 } from '../../ui/research/layout';
+import { describeTech, effectSentence } from '../../sim/techProse';
 import type { TomeId } from '../../sim/state';
 import { TreeDoc } from './doc';
 
@@ -107,11 +108,6 @@ export function mountEditor(): void {
       toast(`${errors.length} problem${errors.length === 1 ? '' : 's'} — fix them first`, true);
       return;
     }
-    if (offPage.length > 0) {
-      toast(`${offPage.length} technolog${offPage.length === 1 ? 'y is' : 'ies are'} `
-        + 'off the page — every card needs a slot before this can be saved', true);
-      return;
-    }
     saving = true;
     refresh();
     try {
@@ -123,8 +119,13 @@ export function mountEditor(): void {
       const body = await res.json() as { ok?: boolean; error?: string; warnings?: TechIssue[] };
       if (!res.ok || body.ok !== true) throw new Error(body.error ?? `HTTP ${res.status}`);
       doc.markSaved();
+      // The holding pen is saved WITH the file, so the count goes in the
+      // toast: a rearrangement left half-done is a fine thing to write down,
+      // and a bad thing to forget.
       toast(`Saved tech-tree.json${(body.warnings ?? []).length > 0
-        ? ` — ${body.warnings!.length} warning(s)` : ''}`);
+        ? ` — ${body.warnings!.length} warning(s)` : ''}`
+        + (offPage.length > 0
+          ? ` — ${offPage.length} still off the page` : ''));
     } catch (err) {
       toast(`Save failed: ${(err as Error).message}`, true);
     } finally {
@@ -351,7 +352,7 @@ export function mountEditor(): void {
     const group = (label: string, n: number) =>
       el('div', { class: 'tre-group' }, `${label} · ${n}`);
     // Anything off the page goes to the top: it is the work in progress, and
-    // the tree cannot be saved while it is there.
+    // the game shows none of it until it has a slot.
     if (adrift.length > 0) {
       list.append(group('off the page', adrift.length));
       for (const id of adrift) list.append(paletteItem(id, troubled));
@@ -377,7 +378,7 @@ export function mountEditor(): void {
         + (selected === id ? ' is-selected' : ''),
       draggable: 'true',
       title: settled
-        ? `${id} — ${node.description}`
+        ? `${id} — ${describeTech(node)}`
         : `${id} — ${doc.validation.errors.find((e) => e.tech === id)?.message
           ?? 'off the page — drag it into a slot'}`,
     },
@@ -414,8 +415,15 @@ export function mountEditor(): void {
     const id = el('input', { class: 'tre-search', placeholder: 'Id — Bellows' });
     const name = el('input', { class: 'tre-search', placeholder: 'Name' });
     const glyph = el('input', { class: 'tre-search', placeholder: 'Glyph', value: '📜' });
+    // PROSE only for a mechanic. Every other kind's line comes from what it
+    // unlocks or moves, so a box asking for one here would be asking for
+    // something the create is about to drop.
     const description = el('textarea', { class: 'tre-search', placeholder: 'What it does' });
     const kind = select([...TECH_KINDS], 'unlock');
+    const proseRow = field('description', description);
+    const syncProse = (): void => { proseRow.hidden = kind.value !== 'mechanic'; };
+    kind.addEventListener('change', syncProse);
+    syncProse();
     const era = select(doc.eraList(tome).map(String), '1');
     const gold = el('input', { class: 'tre-search', type: 'number', value: '100' });
     const seconds = el('input', { class: 'tre-search', type: 'number', value: '60' });
@@ -433,13 +441,14 @@ export function mountEditor(): void {
       if (problem !== null) { toast(problem, true); return; }
       selected = newId;
       drafting = false;
-      toast(`Created ${newId} — say what it unlocks`);
+      toast(`Created ${newId}${kind.value === 'mechanic' ? '' : ' — say what it '
+        + (kind.value === 'bonus' ? 'moves' : 'unlocks')}`);
       refresh();
     });
     return el('div', { class: 'ed-card tre-draft' },
       el('h2', {}, 'New technology'),
-      id, name, glyph, description,
-      field('kind', kind), field('era', era),
+      id, name, glyph,
+      field('kind', kind), proseRow, field('era', era),
       field('gold', gold), field('seconds', seconds),
       make);
   }
@@ -715,11 +724,10 @@ export function mountEditor(): void {
     // slot beyond doubt for the rest of this function.
     const node = doc.node(id) as PlacedTech;
     const bad = doc.validation.errors.some((e) => e.tech === id);
-    const says = node.kind === 'bonus'
-      ? (node.effects ?? []).map(effectLabel).join(', ') || '—'
-      : node.kind === 'unlock'
-        ? (node.unlocks ?? []).map(unlockLabel).join(', ') || '—'
-        : 'read by the sim';
+    // The PLAYER's sentence, not a second summary of the same data: the card
+    // in the editor and the card in the game read the same line, which is the
+    // only way a designer can see what they are shipping.
+    const says = describeTech(node) || '—';
     const card = el('div', {
       class: `tre-card is-${node.kind}`
         + (selected === id ? ' is-selected' : '')
@@ -727,7 +735,7 @@ export function mountEditor(): void {
         + (node.planned === true ? ' is-planned' : ''),
       draggable: 'true',
       style: `left:${colLeft(col)}px;top:${top}px;width:${NODE_W}px;height:${NODE_H}px`,
-      title: node.description,
+      title: says,
     },
     el('b', {}, node.name),
     el('span', { class: 'tre-card-says' }, says),
@@ -800,12 +808,21 @@ export function mountEditor(): void {
     // ---- identity
     card.append(field('name', text(node.name, (v) => doc.update(id, { name: v }))));
     card.append(field('glyph', text(node.glyph, (v) => doc.update(id, { glyph: v }))));
-    const prose = el('textarea', { class: 'tre-search' }, node.description);
-    prose.addEventListener('change', () => {
-      doc.update(id, { description: prose.value });
-      refresh();
-    });
-    card.append(field('description', prose));
+    // PROSE, or the sentence that replaced it. A technology whose unlocks or
+    // effects say what it does has its line generated (`sim/techProse.ts`), so
+    // there is nothing here to type — and it is shown as a NOTE rather than a
+    // disabled box, because a greyed-out input reads as broken where a line of
+    // text reads as derived.
+    if (saysItself(node)) {
+      card.append(field('says', el('p', { class: 'ed-note' }, describeTech(node))));
+    } else {
+      const prose = el('textarea', { class: 'tre-search' }, node.description ?? '');
+      prose.addEventListener('change', () => {
+        doc.update(id, { description: prose.value });
+        refresh();
+      });
+      card.append(field('description', prose));
+    }
 
     // ---- what it costs
     card.append(field('gold', number(node.gold, (v) => doc.update(id, { gold: v }))));
@@ -877,6 +894,20 @@ export function mountEditor(): void {
   }
 
   /** What a technology opens: chips to cut, and one row to add another. */
+  /** The prose a technology is carrying right now, for the warning below. */
+  const sayProse = (id: string): string => (doc.node(id)?.description ?? '').trim();
+
+  /**
+   * The FIRST unlock or effect takes the prose with it — that is the rule
+   * (`saysItself`), and it is the one gesture in the editor that deletes
+   * writing as a side effect of adding data. So it says so, with the way back.
+   */
+  const saidGoodbye = (id: string, had: string): void => {
+    if (had !== '' && sayProse(id) === '') {
+      toast(`${id} now says it itself — its written line is gone (⌘Z to undo)`);
+    }
+  };
+
   function unlockEditor(id: string, node: TechNodeDoc): HTMLElement {
     const box = el('div', {});
     const chips = el('div', { class: 'ed-chips' });
@@ -905,7 +936,9 @@ export function mountEditor(): void {
       const unlock: TechUnlock = what.value === 'districtLevel'
         ? { districtLevel: { id: target.value, level: Math.round(Number(level.value)) } }
         : ({ [what.value]: target.value } as unknown as TechUnlock);
+      const had = sayProse(id);
       doc.addUnlock(id, unlock);
+      saidGoodbye(id, had);
       refresh();
     });
     box.append(el('p', { class: 'ed-hint' }, 'Unlocks (click to cut)'), chips,
@@ -944,11 +977,32 @@ export function mountEditor(): void {
     const what = select([...TARGET_KINDS], 'global');
     const target = select([], '');
     const blurb = el('p', { class: 'ed-note' });
+    /** What the PLAYER will read, live, for the row being composed. The line
+     *  is the card now, so a designer choosing a stat should see the sentence
+     *  they are about to ship rather than only the id they are picking. */
+    const preview = el('p', { class: 'ed-ok' });
 
+    /** The row as it stands, as an effect — the same object `+ effect` builds. */
+    const composed = (): TechEffect => {
+      const v = Number(value.value);
+      const kind = what.value as TargetKind;
+      return {
+        stat: stat.value as TechStat,
+        op: op.value as TechEffectOp,
+        value: Number.isFinite(v) ? v : 0,
+        ...(kind === 'global'
+          ? {}
+          : { target: { [kind]: target.value } as unknown as TechTarget }),
+      };
+    };
+    const syncPreview = (): void => {
+      preview.textContent = effectSentence(composed()) || '—';
+    };
     const syncTarget = (): void => {
       const ids = TARGET_IDS[what.value as TargetKind];
       target.replaceChildren(...ids.map((v) => el('option', { value: v }, v)));
       target.hidden = ids.length === 0;
+      syncPreview();
     };
     const syncStat = (): void => {
       const def = TECH_STATS[stat.value as TechStat];
@@ -963,27 +1017,22 @@ export function mountEditor(): void {
     stat.addEventListener('change', syncStat);
     op.addEventListener('change', syncStat);
     what.addEventListener('change', syncTarget);
+    target.addEventListener('change', syncPreview);
+    value.addEventListener('input', syncPreview);
     syncStat();
 
     const add = el('button', { class: 'ed-btn' }, '+ effect');
     add.addEventListener('click', () => {
-      const v = Number(value.value);
-      const kind = what.value as TargetKind;
-      doc.addEffect(id, {
-        stat: stat.value as TechStat,
-        op: op.value as TechEffectOp,
-        value: Number.isFinite(v) ? v : 0,
-        ...(kind === 'global'
-          ? {}
-          : { target: { [kind]: target.value } as unknown as TechTarget }),
-      });
+      const had = sayProse(id);
+      doc.addEffect(id, composed());
+      saidGoodbye(id, had);
       refresh();
     });
 
     box.append(el('p', { class: 'ed-hint' }, 'Moves (click to cut)'), chips,
       el('div', { class: 'tre-unlock-add' }, stat, op, value, unit),
       el('div', { class: 'tre-unlock-add' }, what, target, add),
-      blurb);
+      preview, blurb);
     return box;
   }
 
@@ -991,20 +1040,21 @@ export function mountEditor(): void {
     const { errors, warnings, offPage } = doc.validation;
     const box = el('div', { class: 'ed-card' },
       el('h2', {}, `Problems — ${errors.length} error(s), ${warnings.length} warning(s)`));
-    // Only when there is nothing pending either: "the tree validates" beside
-    // a Save button that refuses is the list contradicting itself.
-    if (errors.length === 0 && warnings.length === 0 && offPage.length === 0) {
+    // Pending work does not contradict it: the tree validates, and some of it
+    // is still in the palette. The note below says how much.
+    if (errors.length === 0 && warnings.length === 0) {
       box.append(el('p', { class: 'ed-ok' }, 'The tree validates.'));
     }
     // NOT one row per card. A cleared band puts twenty technologies off the
     // page at once, and twenty rows saying so would bury whatever is actually
     // wrong — which is the only reason this list exists. They are already
-    // named at the top of the palette; here they are a count and a reason the
-    // Save button is waiting.
+    // named at the top of the palette; here they are a count and what the
+    // game will make of them.
     if (offPage.length > 0) {
       box.append(el('p', { class: 'ed-note tre-pending' },
         `${offPage.length} technolog${offPage.length === 1 ? 'y is' : 'ies are'} off the page`
-        + ' — drag them into slots. The save waits for them; nothing else does.'));
+        + ' — this saves, and the game leaves them out: no card, nothing to'
+        + ' research, and whatever they unlock is ungated until they are placed.'));
     }
     const issues = [
       ...errors.map((e) => [e, 'err'] as const),

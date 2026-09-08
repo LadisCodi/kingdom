@@ -16,22 +16,20 @@
 
 import type { Game } from '../game';
 import {
-  DISTRICTS, ERA_COUNT, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER, UNITS,
+  ERA_COUNT, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOMES, TOME_ORDER,
 } from '../sim/data/definitions';
 import {
   canStartTech, eraShortfall, eraUnlocked, isTechActive, isTechComplete, isTomeOpen,
   knowledgeShortfallMs, requirementsMet, slotGemCost, techCompletesAt, techEraUnlocked,
-  techSlots, techUnlocks,
+  techSlots, techVisibility,
 } from '../sim/research';
+import { techLine } from '../sim/techProse';
 import { knowledgePerHour } from '../sim/mana';
 import { resourceDiscoveryKey } from '../sim/discovery';
-import { unlockLabel } from '../sim/data/techTreeRules';
-import { effectLabel } from '../sim/data/techEffectRules';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
 } from './research/layout';
-import { spriteUrl } from '../render/sprites';
 import { action, btn, iconEl, knob } from './kit';
 import { el, formatDuration } from './format';
 
@@ -50,47 +48,6 @@ let pageEl: HTMLElement | null = null;
 const isFreshMount = (): boolean => pageEl === null || !pageEl.isConnected;
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
-
-// Tree fog. normal = researched / researching / requirements met;
-// silhouette = one step beyond what's actually researched or researching
-// (every prerequisite complete or active — a merely-available tech does NOT
-// reveal its children); hidden = everything else.
-type Visibility = 'normal' | 'silhouette' | 'hidden';
-function visibility(state: GameState, id: TechId): Visibility {
-  if (
-    isTechComplete(state, id) || isTechActive(state, id) || requirementsMet(state, id)
-  ) return 'normal';
-  const started = (t: TechId) => isTechComplete(state, t) || isTechActive(state, t);
-  if (TECHNOLOGIES[id].requires.every(started)) return 'silhouette';
-  return 'hidden';
-}
-
-/**
- * The one line under a card's name: what the technology is FOR.
- *
- * An `unlock` says it itself — `unlocks` is authored on the technology
- * (`?dev=tree`), so this reads it rather than deriving it back out of the
- * gates, and it covers the things a gate list cannot: a harvest source, a
- * terrain, one more of a building.
- *
- * A `bonus` uses its PROSE, not its `effects`, even though the effects are
- * right there and machine-readable. The registry's blurbs are written in the
- * units a value is authored in — "seconds of work one tap is worth" — so
- * generating from them gives "+20% seconds of work one tap is worth" where a
- * designer wrote "Every tap is worth a fifth more work". The generated line is
- * the FALLBACK, for a card whose prose has not been written yet: better than
- * an empty card, and visibly not the finished copy.
- */
-function effectLine(id: TechId): string {
-  const def = TECHNOLOGIES[id];
-  if (def.kind === 'unlock' && def.unlocks.length > 0) {
-    return `Unlocks ${def.unlocks.map(unlockLabel).join(', ')}`;
-  }
-  if (def.description.trim() === '' && def.effects.length > 0) {
-    return def.effects.map(effectLabel).join(', ');
-  }
-  return def.description;
-}
 
 /** The shelf: one tab per tome the player has actually opened. A book they
  *  have not earned is not shown at all — an empty tab is the same lie as a
@@ -125,7 +82,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // Drop a selection the fog no longer shows (e.g. after a fresh load), or one
   // that belongs to a page the player has since turned away from.
   if (selected?.kind === 'tech'
-    && (visibility(state, selected.id) !== 'normal'
+    && (techVisibility(state, selected.id) !== 'normal'
       || TECHNOLOGIES[selected.id].tome !== activeTome)) selected = null;
 
   const busy = state.research.active.length;
@@ -178,7 +135,8 @@ export function renderResearchMenu(game: Game): HTMLElement {
 
   // ---- the page (as long as what the fog currently shows) ----
   const rows = pageRows(TECHNOLOGIES, activeTome,
-    (id) => visibility(state, id as TechId) !== 'hidden');
+    (id) => TECHNOLOGIES[id as TechId].placed
+      && techVisibility(state, id as TechId) !== 'hidden');
   const { tops, height } = rowTops(rows);
   /** Where a technology's card sits, or null when this page does not show it. */
   const at = new Map<string, { top: number; col: number; index: number }>();
@@ -229,7 +187,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
       if (from === undefined) continue;
       drew = true;
       stroke(edgeD(edgePath(from, to, columnClear(from, to))),
-        visibility(state, id as TechId) === 'silhouette' ? 'tech-edge dim'
+        techVisibility(state, id as TechId) === 'silhouette' ? 'tech-edge dim'
           : isTechComplete(state, req) ? 'tech-edge open' : 'tech-edge');
     }
     // A requirement with no end on this page — off the page mid-rearrangement,
@@ -325,7 +283,7 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   const def = TECHNOLOGIES[id];
   const place = `left:${colLeft(col)}px;top:${top}px;`
     + `width:${NODE_W}px;height:${NODE_H}px`;
-  if (visibility(state, id) === 'silhouette') {
+  if (techVisibility(state, id) === 'silhouette') {
     return el('div', { class: 'tech-card silhouette', style: place }, '?');
   }
   const done = isTechComplete(state, id);
@@ -339,8 +297,8 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
       + (techEraUnlocked(state, id) ? '' : ' era-locked'),
     style: place,
   },
-  el('span', { class: 'tech-card-name' }, def.name),
-  el('span', { class: 'tech-card-effect' }, effectLine(id)));
+  el('span', { class: 'tech-card-glyph' }, def.glyph),
+  el('span', { class: 'tech-card-name' }, def.name));
   // A dot on everything startable RIGHT NOW. The page shows a lot of cards
   // the player cannot act on yet — done, running, unaffordable, missing a
   // prerequisite, behind a bar — and `available` styling only means the
@@ -366,7 +324,10 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
   const def = TECHNOLOGIES[id];
   const panel = el('div', { class: 'tech-info' });
   panel.append(el('h3', {}, `${def.glyph} ${def.name}`));
-  panel.append(el('div', { class: 'muted' }, def.description));
+  // WHAT IT DOES, in full. The card carries only the glyph and the name, so
+  // this is the first place the player reads the sentence — and the whole of
+  // it, where a card would have clipped it to three lines.
+  panel.append(el('div', { class: 'res-says' }, techLine(id)));
   if (def.planned) {
     // Said in the game, not only in a doc: a playtester who researches this
     // must know before they pay that it does nothing yet.
@@ -377,30 +338,6 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
     panel.append(el('div', { class: 'rows' }, ...def.requires.map((req) =>
       el('div', { class: isTechComplete(state, req) ? 'muted' : 'blocked' },
         `Requires ${TECHNOLOGIES[req].name} ${isTechComplete(state, req) ? '✓' : '✗'}`))));
-  }
-
-  // The single most valuable missing piece of information in the old UI: a
-  // player could not tell what a technology was FOR until it finished and a
-  // banner announced it. techUnlocks() has always known.
-  const unlocks = techUnlocks(id);
-  if (unlocks.length > 0) {
-    const row = el('div', { class: 'res-unlocks' },
-      el('span', { class: 'res-unlocks-label' }, 'Unlocks'));
-    for (const u of unlocks) {
-      if (u.kind === 'district') {
-        const url = spriteUrl(`${DISTRICTS[u.id].sprite}_l1`);
-        row.append(el('span', { class: 'res-unlock' },
-          url ? el('img', { src: url, alt: '' }) : iconEl(u.id, { size: 'sm' }),
-          DISTRICTS[u.id].name));
-      } else if (u.kind === 'districtLevel') {
-        row.append(el('span', { class: 'res-unlock' },
-          iconEl('star', { size: 'sm' }), `${DISTRICTS[u.id].name} lv${u.level}`));
-      } else if (u.kind === 'unit') {
-        row.append(el('span', { class: 'res-unlock' },
-          iconEl(u.id, { size: 'sm' }), UNITS[u.id].name));
-      }
-    }
-    panel.append(row);
   }
 
   if (isTechComplete(state, id)) {

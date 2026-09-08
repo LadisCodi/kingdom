@@ -10,7 +10,7 @@ import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
   anyResearchActionable, buySlot, canStartTech, eraShortfall, isTechComplete, isTomeOpen,
   knowledgeShortfallMs, openTomes, slotGemCost, startTech, techCost, techKnowledgeCost,
-  techSlots, techUnlocks,
+  techSlots, techUnlocks, techVisibility,
 } from '../src/sim/research';
 import {
   CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
@@ -243,6 +243,59 @@ describe('save round-trip', () => {
 // collisions, a requirement pointing back up the page, a rank out of turn —
 // is `tests/techTree.test.ts` against `techTreeRules.ts`, the module the
 // editor and the save endpoint check too. This block is the pixels.
+// TREE FOG (Docs/features/07-research.md §5.2). Pinned here because the rule
+// has been wrong once already: the page used to hold a technology hidden until
+// the player STARTED researching the card before it, so the next `?` only ever
+// appeared after you had committed — a tree nobody could plan a route through.
+// The doc said "every prerequisite is normal" the whole time.
+describe('tree fog', () => {
+  /** The first row of a book: nothing above it, so it is buyable from the off. */
+  const roots = (): TechId[] => TECH_ORDER
+    .filter((id) => TECHNOLOGIES[id].placed && TECHNOLOGIES[id].requires.length === 0);
+  /** What a root opens directly. */
+  const childrenOf = (parent: TechId): TechId[] => TECH_ORDER
+    .filter((id) => TECHNOLOGIES[id].requires.includes(parent));
+
+  it('shows what comes next as a silhouette, without researching anything', () => {
+    const state = freshGame();
+    const root = roots()[0];
+    expect(techVisibility(state, root), 'a root is buyable from the first minute')
+      .toBe('normal');
+    // Its children require it and it is NOT researched — the point of the rule.
+    const next = childrenOf(root);
+    expect(next.length, 'the fixture needs a root with children').toBeGreaterThan(0);
+    for (const id of next) {
+      expect(techVisibility(state, id), `${id} should be a silhouette under ${root}`)
+        .toBe('silhouette');
+    }
+  });
+
+  it('stops at one step, so a silhouette reveals nothing of its own', () => {
+    const state = freshGame();
+    const root = roots()[0];
+    for (const child of childrenOf(root)) {
+      for (const grandchild of childrenOf(child)) {
+        // …unless it hangs off something else that IS revealed, which is the
+        // honest reading of "every prerequisite is normal".
+        const revealedParent = TECHNOLOGIES[grandchild].requires
+          .every((r) => techVisibility(state, r) === 'normal');
+        if (revealedParent) continue;
+        expect(techVisibility(state, grandchild), `${grandchild} is two steps out`)
+          .toBe('hidden');
+      }
+    }
+  });
+
+  it('turns a silhouette normal when the card before it is researched', () => {
+    const state = freshGame();
+    const root = roots()[0];
+    const child = childrenOf(root)[0];
+    expect(techVisibility(state, child)).toBe('silhouette');
+    completeTech(state, root);
+    expect(techVisibility(state, child)).toBe('normal');
+  });
+});
+
 describe('tome page geometry (layout is content)', () => {
   // THE PAGE HAS TO FIT THE PHONE. Three columns and two side channels is
   // the whole width budget, and the old canvas was 1,160px wide behind a

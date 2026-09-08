@@ -21,10 +21,12 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TREE_PATH = join(ROOT, 'src/sim/data/tech-tree.json');
 
-const NOTE = 'Every technology in the game: its name and prose, what KIND it '
+const NOTE = 'Every technology in the game: its name, what KIND it '
   + 'is and what it unlocks or moves, its price and clock, and its slot on its '
   + 'tome page with what it needs before it — plus each book\'s BANDS and what '
-  + 'each one asks for in revealed cells. Authored in ?dev=tree '
+  + 'each one asks for in revealed cells. What a card SAYS is generated from '
+  + 'its unlocks or effects (src/sim/techProse.ts); only a mechanic, whose '
+  + 'effect is code, carries a written description. Authored in ?dev=tree '
   + '(Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, '
   + 'and the districts, units and harvest sources no longer name their own '
   + 'gate. Ordered by tome, then down the page, then left to right.';
@@ -52,8 +54,14 @@ const json = (v) => JSON.stringify(v);
 const nodeBlock = (id, n) => {
   const lines = [
     `      "name": ${json(n.name)}, "glyph": ${json(n.glyph)}, "kind": ${json(n.kind)}`,
-    `      "description": ${json(n.description)}`,
   ];
+  // PROSE is a `mechanic`'s alone. Every other card's line is generated from
+  // its unlocks or effects (`src/sim/techProse.ts`), so a description beside
+  // them is a second answer nothing keeps in step — the rules refuse one, and
+  // this is what stops a stale string surviving a round-trip.
+  if ((n.description ?? '').trim() !== '') {
+    lines.push(`      "description": ${json(n.description)}`);
+  }
   // All four slot fields, or none: a technology taken off the page keeps
   // everything else and simply says nothing about where it sits.
   if (n.tome !== undefined) {
@@ -127,22 +135,15 @@ export function treeEditorPlugin() {
           if (errors.length > 0) {
             return send(422, { error: 'the tree does not validate', errors });
           }
-          // Off the page is a holding pen inside one editing session, not a
-          // state the repo can hold: the game has nowhere to draw a card with
-          // no slot. It is not an error in the tree, so it is refused in its
-          // own words.
-          if (offPage.length > 0) {
-            return send(422, {
-              error: `${offPage.length} technolog${offPage.length === 1 ? 'y is' : 'ies are'} `
-                + `off the page: ${offPage.join(', ')}`,
-              errors: [],
-            });
-          }
           writeFileSync(TREE_PATH, serialiseTechTree(doc, rules.TOME_IDS));
           const count = Object.keys(doc.technologies).length;
+          // Off the page is a holding pen, and it ships: a book half
+          // rearranged has to survive being written down. The game leaves
+          // those cards out (`definitions.ts`), so the log says how many so
+          // an unfinished tree does not go quiet.
           server.config.logger.info(
             `tree editor: wrote tech-tree.json (${count} technologies, `
-            + `${warnings.length} warnings)`,
+            + `${warnings.length} warnings, ${offPage.length} off the page)`,
           );
           send(200, { ok: true, technologies: count, warnings });
         } catch (err) {

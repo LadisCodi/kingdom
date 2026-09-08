@@ -80,9 +80,12 @@ coordinate, which a spreadsheet expresses badly, so it lives in
 `src/sim/data/region-map.json` and is edited in `?dev=map`
 (`Docs/map-editor.md`). A **technology is whole** in
 `src/sim/data/tech-tree.json`, edited in `?dev=tree`
-(`Docs/tech-tree-editor.md`): its name, prose and glyph, what KIND it is
+(`Docs/tech-tree-editor.md`): its name and glyph, what KIND it is
 (`unlock` / `bonus` / `mechanic`) and what it unlocks, its Gold, Knowledge and
-seconds, its slot on its tome's three-column page, and what it requires. The
+seconds, its slot on its tome's three-column page, and what it requires. What
+it SAYS is not authored at all — the card is generated from its unlocks or its
+effects (`src/sim/techProse.ts`), and only a `mechanic`, whose effect is code,
+carries written prose. The
 same file says what BANDS each book has and what each one asks for in revealed
 cells (`eras`), because a band and its gate are one fact and the count has to
 travel with the number. There is **no `Technologies` sheet and no `Eras`
@@ -109,8 +112,8 @@ three ways (`tests/techTree.test.ts`).
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
 | a Gem pack = a row on the `Store` sheet; a payer profile's monthly budget = a `payer.*` setting | a new payer profile (`PayerProfile` is a union), a non-Gem SKU |
 | a seasonal hero = one hero row + one banner row; **how many bands a book has and what each asks for** — `?dev=tree` creates and drops them per book | a new tome (`TomeId` is a union) |
-| **a whole new technology** — id, name, prose, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
-| **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) plus a `techValue(...)` read at the call site that owns it |
+| **a whole new technology** — id, name, glyph, kind, unlocks, **what numbers it moves**, price, clock, slot, requirements (prose only for a `mechanic`) — in `?dev=tree` (`Docs/tech-tree-editor.md`); `TechId` is the file's keys, so the type follows | a new `TechKind`, a new kind of `TechUnlock`, or a rule about what a legal tree is (`src/sim/data/techTreeRules.ts`) |
+| **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
