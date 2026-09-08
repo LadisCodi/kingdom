@@ -1825,4 +1825,9 @@ export const GAME_VERSION = '0.1.0';
 // is what makes an older build REFUSE such a save instead of loading it and
 // finding an undefined definition; no migrator, since an older save simply
 // has no decoration in it.
-export const SAVE_VERSION = 31;
+// v32 adds the two banners: two wallet keys on the player wallet, and
+// `gacha.legendaryPity` and `gacha.freePulls`. Every one of them is additive
+// and read defensively, so there is no migrator; the bump exists so that a
+// build without the keys refuses a save that holds them rather than dropping
+// what the player paid Gems for.
+export const SAVE_VERSION = 32;

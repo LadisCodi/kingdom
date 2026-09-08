@@ -2,14 +2,15 @@
 
 > **Scope.** What a wallet may buy, the rewarded-video placements, and the
 > **simulated** store: real in every way that produces data, fake in exactly one
-> — the charge. The one ad placement that ships is designed in
-> [`08-magic.md`](08-magic.md) §6.
+> — the charge. The Mana placement is designed in
+> [`08-magic.md`](08-magic.md) §6, the two call placements in
+> [`10-heroes.md`](10-heroes.md) §5.2.
 >
-> **Status: the ad placement, the builder offer, and the store's first cut
-> are built** — the payer profile and its monthly budget (§3), and three
-> surfaces: builders for Gems, Gem packs for simulated dollars, and the hero
-> banner (§2.1). The remaining SKUs, the other four placements and the
-> telemetry pipeline (§4) are designed, not built.
+> **Status: three ad placements, the builder offer, and the store's first cut
+> are built** — the payer profile and its monthly budget (§3), and four
+> surfaces: builders for Gems, keys for Gems, Gem packs for simulated dollars,
+> and the two hero banners (§2.1). The remaining SKUs, the other four
+> placements and the telemetry pipeline (§4) are designed, not built.
 
 ## 0. Rules
 
@@ -24,37 +25,49 @@
 
 ## 1. What a wallet is allowed to buy
 
-- Wallets buy comfort and breadth; play buys everything else.
+- Wallets buy comfort, breadth and chance; play buys everything else.
 - Nothing is purchase-only that cannot also be earned. The first rung of every
   ladder is earned by play: research grants the second attunement slot and the
   third party slot before Gems can buy any; the daily chest pays Gems at the
   week marker.
-- Nothing a wallet buys is access or power.
+- **Nothing a wallet buys is out of reach by play.** A wallet buys it sooner
+  and in quantity; the free path to the same thing always exists. The daily
+  free golden call is the worked example: a Legendary hero is a wallet's
+  fastest purchase and roughly thirty free calls a month otherwise
+  ([`10-heroes.md`](10-heroes.md) §5.2).
 
 | Family | Examples | Effect |
 |---|---|---|
 | **Comfort** | rush a timer, refill Mana, refresh the shop | buys back the player's time |
-| **Breadth** | attunement slots, party slots, builders, gacha pulls | more things at once, never stronger things |
+| **Breadth** | attunement slots, party slots, builders | more things at once, never stronger things |
+| **Chance** | silver and gold keys | more calls at the same published odds, never better ones |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
 
 - The Gems plaque in the header opens the store (§2.1).
-- Gems buy **five** things: pulls, party slots, attunement slots, builders,
+- Gems buy **five** things: **keys**, party slots, attunement slots, builders,
   Mana refills. Three of those are one-time ladders.
-- Faucet: **3,750 up front plus ~1,000/month** — 500 to start, 750 across the
+- **Gems never buy a pull directly.** They buy a key, and the key is what a
+  call spends — so the two banners have two prices without a second Gem price
+  ([`10-heroes.md`](10-heroes.md) §5.1).
+- Faucet: **3,750 up front plus ~1,000/month** — seven silver keys, or two
+  gold ones, or the second builder and change. 500 to start, 750 across the
   quest chain, 500 a first delve clear, 250 at the week marker.
 
 ## 2. The catalogue
 
-- Twelve SKUs in four families.
+- Fourteen SKUs in five families.
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - The six Gem packs are built and live in the workbook's `Store` sheet. The
-  builders are built and priced in Gems. Everything else is designed, not built.
+  builders and the two keys are built and priced in Gems — a Gem price is not
+  a `Store` row, which is real money and must grant Gems. Everything else is designed, not built.
 
 | SKU | Family | Price | Grants |
 |---|---|---|---|
 | **Gems ×500 / ×2,500 / ×5,000 / ×10,000 / ×25,000 / ×50,000** | currency | **$0.99 / $4.99 / $9.99 / $19.99 / $49.99 / $99.99** | Gems — built; six packs on a 3×2 grid (§2.2) |
+| **Silver key** | chance | Gems (500) | one common call — built |
+| **Gold key** | chance | Gems (1,500) | one golden call — built |
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
 | **Monthly card** | subscription | $4.99/mo | Gems daily for 30 days |
@@ -73,11 +86,12 @@
 
 - One sheet, two doors: the **leftmost tab of the nav bar** and the **Gems
   plaque in the header**.
-- Three sections, in this order:
+- Four sections, in this order:
 
 | Section | Content | Paid with |
 |---|---|---|
-| **Heroes** | the hero banner itself — chance, pity, the Call button. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §7), so the store keeps what Gems are BOUGHT with and the Tavern is where a pull spends them. Here until the Tavern is built | Gems |
+| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §7). Here until the Tavern is built | a key |
+| **Keys** | one card per banner: what a key costs in Gems and how many the player holds. **This section stays** when the banners leave — the store is where a currency is bought | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
 | **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
 
@@ -92,9 +106,10 @@
 - **500 Gems to the dollar, flat across every tier**: $0.99 buys 500, $99.99
   buys 50,000. No tier is a better deal than another.
 - Every Gem sink is priced to the ladder (§9). Anchors: a second builder is
-  the $4.99 pack; a hero pull is 1,000 Gems; an hour of speed-up is 720 Gems.
-- The first pair of prices a player meets is a Mana refill against a hero
-  pull: 500 against 1,000 — one pack against two on the store.
+  the $4.99 pack; a silver key is 500 Gems and a gold one 1,500; an hour of
+  speed-up is 720 Gems.
+- The first pair of prices a player meets is a Mana refill against a silver
+  key: 500 against 500 — one dollar pack buys either.
 
 ## 3. The simulated budget
 
@@ -175,29 +190,50 @@ offer_shown → store_opened → sku_viewed → confirm_opened
 - If it ranks, cosmetics become a pipeline decision; if it does not, the
   cosmetic thesis is recorded as weaker than assumed. **OQ-26.**
 
-## 6. Rewarded video: five placements
+## 6. Rewarded video: seven placements
 
 | # | Placement | Reward | Status |
 |---|---|---|---|
 | 1 | **Mana refill** | a full pool | built |
-| 2 | Double a quest reward | ×2 on claim | designed |
-| 3 | Refresh the event shop | one refresh | designed |
-| 4 | Skip a builder timer | a slice of the remaining build | designed |
-| 5 | A second daily chest | one extra ladder claim | designed |
+| 2 | **A free common call** | one pull, 5 a day | built |
+| 3 | **A free golden call** | one pull, 1 a day | built |
+| 4 | Double a quest reward | ×2 on claim | designed |
+| 5 | Refresh the event shop | one refresh | designed |
+| 6 | Skip a builder timer | a slice of the remaining build | designed |
+| 7 | A second daily chest | one extra ladder claim | designed |
 
-- Placement 1: the reward is a whole pool; ten sanctuaries double the pool and
-  therefore double every future ad; the offer only appears below half a pool;
-  the cooldown is randomised 30–90 s.
+- Placement 1: the reward is a whole pool, so the Sanctum — which raises the
+  cap — raises the value of every future ad with it; the offer only appears
+  below half a pool; the cooldown is randomised 30–90 s.
+- Placements 2 and 3 are the free path to a hero
+  ([`10-heroes.md`](10-heroes.md) §5.2). They are the only placements with a
+  **daily cap** rather than a shortage condition, because a call answers no
+  shortage — the cap is what keeps them from becoming the whole game.
 - Wonders offer no ad placement ([`12-quests.md`](12-quests.md) §6): no timer
   to skip, no slot to reroll, and a Wonder discount would sell permanent
   progression (§1).
 - An offer answers a shortage rather than interrupting: placement 1 only
-  appears below half a pool; 3 and 5 only on a card the player already opened.
+  appears below half a pool; 5 and 7 only on a card the player already opened.
 - The reward is priced in the player's own production, never as an absolute,
   so an ad is worth the same fraction of progress at hour 1 and hour 40.
-- A full pool is ~5.5 minutes of the city's own production; five ads a day buy
-  a watcher about **2–3%** faster progress. Re-derive once all five exist.
-  **OQ-43, OQ-45, OQ-51.**
+
+### 6.1 What the ads are worth
+
+- **A day is about eleven ads**: five Mana refills, five common calls, one
+  golden call. Only the first five buy production.
+- A tap hands back **10 seconds** of what was tapped and costs **1 Mana**, so
+  Mana is a production budget: the base **12/h** pays for **288 taps a day**,
+  worth **48 minutes** of production against the 24 hours the city runs
+  anyway — taps are **~3%** of a day's income.
+- A refill is a full pool, **100 Mana** at the base cap. Five of them add
+  **500 taps**, worth **83 minutes** of production — the watcher's day is
+  **~6% richer**, and their tap budget is close to **three times** the
+  non-watcher's.
+- The six call placements buy **no production at all**: they buy roughly
+  **150 common calls and 30 golden ones a month**, which is what makes a
+  Legendary reachable without a wallet (§1).
+- Both figures scale with the Sanctum, which raises the cap and therefore the
+  size of every refill. **OQ-43, OQ-45, OQ-51.**
 
 ## 7. The read-out
 

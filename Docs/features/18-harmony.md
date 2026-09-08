@@ -100,9 +100,9 @@
 
 ## 8. Save
 
-- Nothing new is serialized. Save version 31, no migrator: the bump exists so
-  that a build without the decorations refuses a save that names one, rather
-  than loading an id it cannot resolve.
+- Nothing new is serialized, and there is no migrator. The save version was
+  bumped anyway, so that a build without the decorations refuses a save that
+  names one rather than loading an id it cannot resolve.
 
 ## 9. Dials, in the order to reach for them
 

@@ -637,21 +637,24 @@ relic**, which is the thing the player already did.
   (`2,4,4,6,6,8,8,10,10,10`); `Settings` for XP bonus (L5) and the weekly free
   pull (L7).
 - **Sim:** `heroLevelCap(state)` read by `levelUpHero` (`heroes.ts:67`);
-  `pull()` (`:174`) refuses without a Tavern. The **rumour** (L3): one daily
+  `pull()` refuses without a Tavern — both banners, including the free call,
+  which must not be a way around the building. The **rumour** (L3): one daily
   party quest priced in production — reuses the daily chest's scheduling
   (`12-quests.md` §3) and the quest goal types that exist; a new goal type only
   if none fits (that is code — see `CLAUDE.md`'s data-or-code table).
-- **Banner relocation — settled 2026-09-08: the banner moves.**
-  `bannerPanel()` (`bannerPanel.ts:15`) mounts in the Tavern's card instead of
-  `storeSheet.ts:79`, and **tapping the building is how a player calls a
-  hero**. The store keeps its Builders and Gems sections and loses its Heroes
-  one; `14-monetization.md` §2.1 and `10-heroes.md` §7 move with it. What does
-  NOT move is where the Gems go: a pull is still Gems, and the store is still
-  where Gems are bought.
+- **Banner relocation — settled 2026-09-08: the banners move.**
+  `bannerPanel()` mounts in the Tavern's card instead of `storeSheet.ts`, and
+  **tapping the building is how a player calls a hero**. The store keeps its
+  Builders, **Keys** and Gems sections and loses its Heroes one;
+  `14-monetization.md` §2.1 and `10-heroes.md` §7 move with it. What does NOT
+  move is where the Gems go: Gems buy keys in the store, and a key is what a
+  call spends — so the store stays the place a currency is bought and the
+  Tavern becomes the place one is spent.
 - **Existing saves:** a save that owns a hero is granted a built Tavern L1
   (same migrator pattern as step 8).
-- **UI:** the Tavern card is the hero destination — heroes owned, the banner
-  with its Call button and pity counter, the rumour of the day. Tapping the
+- **UI:** the Tavern card is the hero destination — heroes owned, **both
+  banners** with their Call and Call ×10 buttons, their pity counters and
+  their free calls, and the rumour of the day. Tapping the
   building opens it, the way tapping the Market opens the trade screen and
   tapping a workshop opens its queue.
 - **Save:** bump, plus the migrator.

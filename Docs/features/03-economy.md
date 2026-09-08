@@ -25,12 +25,22 @@
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
 | **Stardust** | dungeons | relic and hero levels | kingdom | no — reads in the Reliquary |
 | **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
-| **Gems** | quests, first clears, the daily week marker, the simulated store | comfort and breadth | player | yes |
+| **Gems** | quests, first clears, the daily week marker, the simulated store | comfort, breadth and chance | player | yes |
+| **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, or a free call's ad | one call on the golden banner | player | no — a price on a button |
 
-- Eight wallet rows; five on the plank; three of them for the whole first hour.
+- Ten wallet rows; five on the plank; three of them for the whole first hour.
 - Adding a wallet row needs an argument. The usual alternatives: a
   per-collectible counter (the Fragments precedent) or event points as a
   counter ([`13-events.md`](13-events.md) §2.1).
+- **The keys took the row.** A counter would have worked for holding them, but
+  a key is a **price**, and a price is what a wallet row is for: the button
+  that spends one renders its cost and its short state from the wallet, the
+  way every other price in the game does. Two rows rather than one because
+  the two banners must be able to cost differently
+  ([`10-heroes.md`](10-heroes.md) §5.1).
+- A key never reaches the plank and never reaches the Market: it has no gold
+  value, so nothing can trade it.
 - **Refined goods follow that rule**: Planks, Cut Stone, Iron and Runestone
   are a stockpile counter, not a wallet row
   ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §1).

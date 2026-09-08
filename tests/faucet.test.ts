@@ -60,9 +60,10 @@ describe('the up-front Gem faucet', () => {
 describe('the Gem sinks the faucet has to reach', () => {
   // Promise 3: every paid ladder is earned FIRST. Since the sinks were priced
   // to the Gem ladder (2026-09-04) the up-front faucet no longer buys every
-  // slot by play — it buys the second builder and a pull, and the rest comes
-  // at a rung a month from the daily chest. What it must always reach is the
-  // first rung of the ladder a new player meets: the second builder.
+  // slot by play. 3,750 Gems is the second builder and change, or seven
+  // silver keys, or two gold ones — and the rest comes at a rung a month from
+  // the daily chest. What it must always reach is the first rung of the
+  // ladder a new player meets: the second builder.
   it('leaves the second builder reachable without a purchase', () => {
     expect(startingGems() + questGems() + ruinGems())
       .toBeGreaterThanOrEqual(KINGDOM_DEF.builderGemCostBase);

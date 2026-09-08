@@ -39,8 +39,10 @@ Every feature below is shaped by these.
    chest pays a fraction of the pool. A ladder is relative too: a Wonder's cost
    is a curve, not a table.
 3. **The offline cap limits what the city produces, never what a timer does.**
-4. **Adding a wallet row needs an argument.** Eight rows, five things on the
-   plank. A counter beside the thing it belongs to usually beats a coin.
+4. **Adding a wallet row needs an argument.** Ten rows, five things on the
+   plank. A counter beside the thing it belongs to usually beats a coin — the
+   argument that wins is that the thing is a *price* on a button, which is
+   what the two gacha keys are.
 5. **One job per currency.**
 
 **The paid fog is the differentiator.** It pays back three ways: resources,
