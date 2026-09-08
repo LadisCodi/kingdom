@@ -332,6 +332,32 @@ describe('the gacha', () => {
     expect(resultsB.map((r) => r.heroId)).toEqual(resultsA.map((r) => r.heroId));
   });
 
+  it('splits thirty-two heroes across three rarities, and both pools are real', () => {
+    // The roster is content, so this pins the SHAPE rather than the names: a
+    // rarity nobody carries would make a banner weight point at nothing, and
+    // `pull` would quietly fall back to another rarity forever.
+    const byRarity = HERO_ORDER.reduce<Record<string, number>>((acc, id) => {
+      acc[HEROES[id].rarity] = (acc[HEROES[id].rarity] ?? 0) + 1;
+      return acc;
+    }, {});
+    expect(HERO_ORDER).toHaveLength(32);
+    expect(byRarity).toEqual({ Common: 14, Rare: 12, Legendary: 6 });
+    // …and every rarity a banner weights has somebody in it.
+    for (const banner of ['basic', 'advanced'] as const) {
+      for (const rarity of ['Common', 'Rare', 'Legendary'] as const) {
+        if (BANNERS[banner].weights[rarity] > 0) {
+          expect(HERO_ORDER.filter((id) => HEROES[id].rarity === rarity).length,
+            `${banner} weights ${rarity} at nobody`).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  it('gives every hero a portrait of its own', () => {
+    const sprites = HERO_ORDER.map((id) => HEROES[id].sprite);
+    expect(new Set(sprites).size, 'two heroes share a portrait').toBe(sprites.length);
+  });
+
   // ---- rarity, and the two guarantees -----------------------------------
 
   it('never rolls a rarity its banner weights at zero', () => {

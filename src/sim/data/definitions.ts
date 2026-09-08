@@ -1470,6 +1470,141 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
     name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
     traitText: 'Sees what waits at the next depth before you commit to it',
   },
+  Adventurer: {
+    name: 'The Adventurer', title: 'In it for the story', glyph: '🎒',
+    sprite: 'hero_adventurer',
+    traitText: 'Brings back 25% more fragments',
+  },
+  Bard: {
+    name: 'The Bard', title: 'Sings the road shorter', glyph: '🎻',
+    sprite: 'hero_bard',
+    traitText: 'Brings back 25% more Stardust',
+  },
+  BeastkinHunter: {
+    name: 'The Beastkin Hunter', title: 'Reads a trail nobody else sees', glyph: '🐺',
+    sprite: 'hero_beastkin_hunter',
+    traitText: 'Sees what waits at the next depth before you commit to it',
+  },
+  Cleric: {
+    name: 'The Cleric', title: 'Keeps the wounded upright', glyph: '✚',
+    sprite: 'hero_cleric',
+    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+  },
+  Cook: {
+    name: 'The Cook', title: 'Makes a week of three days’ rations', glyph: '🍲',
+    sprite: 'hero_cook',
+    traitText: 'Packs light — expeditions cost 15% less to supply',
+  },
+  Gardener: {
+    name: 'The Gardener', title: 'Patient with everything that grows', glyph: '🌿',
+    sprite: 'hero_gardener',
+    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+  },
+  Joker: {
+    name: 'The Joker', title: 'Pockets what nobody was watching', glyph: '🃏',
+    sprite: 'hero_joker',
+    traitText: 'Brings back 25% more fragments',
+  },
+  Merchant: {
+    name: 'The Merchant', title: 'Never pays the asking price', glyph: '⚖️',
+    sprite: 'hero_merchant',
+    traitText: 'Packs light — expeditions cost 15% less to supply',
+  },
+  Priest: {
+    name: 'The Priest', title: 'Says the words that hold a line', glyph: '🕯️',
+    sprite: 'hero_priest',
+    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+  },
+  Rogue: {
+    name: 'The Rogue', title: 'Light fingers, lighter step', glyph: '🗡️',
+    sprite: 'hero_rogue',
+    traitText: 'Brings back 25% more fragments',
+  },
+  ThreeMice: {
+    name: 'Three Mice in a Coat', title: 'Nobody has ever asked', glyph: '🐭',
+    sprite: 'hero_three_mouses',
+    traitText: 'Brings back 25% more Stardust',
+  },
+  Sellsword: {
+    name: 'The Sellsword', title: 'Paid by the day, loyal by the hour', glyph: '⚔️',
+    sprite: 'hero_warrior',
+    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+  },
+  DarkKnight: {
+    name: 'The Dark Knight', title: 'Owes somebody something', glyph: '🖤',
+    sprite: 'hero_dark_knight',
+    traitText: 'The whole party fights harder to stay standing (+30% defence)',
+  },
+  Paladin: {
+    name: 'The Paladin', title: 'Has never once been late', glyph: '🛡️',
+    sprite: 'hero_paladin',
+    traitText: 'The whole party fights harder to stay standing (+30% defence)',
+  },
+  Wizard: {
+    name: 'The Wizard', title: 'Certain about the wrong things, loudly', glyph: '🧙',
+    sprite: 'hero_wizard',
+    traitText: 'Brings back 50% more Stardust',
+  },
+  Witch: {
+    name: 'The Witch', title: 'Knows which mushrooms', glyph: '🌙',
+    sprite: 'hero_witch',
+    traitText: 'Brings back 50% more Stardust',
+  },
+  Druid: {
+    name: 'The Druid', title: 'Eats what the road offers', glyph: '🍃',
+    sprite: 'hero_druid',
+    traitText: 'Packs light — expeditions cost 25% less to supply',
+  },
+  IceLancer: {
+    name: 'The Ice Lancer', title: 'Colder than the depth she stands in', glyph: '❄️',
+    sprite: 'hero_ice_lancer',
+    traitText: 'The whole party fights harder to stay standing (+30% defence)',
+  },
+  HolyWarrior: {
+    name: 'The Holy Warrior', title: 'Digs where the light falls', glyph: '☀️',
+    sprite: 'hero_holy_warrior',
+    traitText: 'Brings back 50% more fragments',
+  },
+  SavageWarrior: {
+    name: 'The Savage', title: 'Takes the whole door with him', glyph: '🪓',
+    sprite: 'hero_savage_warrior',
+    traitText: 'Brings back 50% more fragments',
+  },
+  Spymaster: {
+    name: 'The Spymaster', title: 'Was already down there yesterday', glyph: '🕵️',
+    sprite: 'hero_spymaster',
+    traitText: 'Sees what waits at the next depth before you commit to it',
+  },
+  ElectricArcher: {
+    name: 'The Storm Archer', title: 'Counts the seconds between', glyph: '⚡',
+    sprite: 'hero_electric_archer',
+    traitText: 'Brings back 50% more Stardust',
+  },
+  GoldenDragon: {
+    name: 'The Golden Dragon', title: 'Older than the ruin, and bored of it', glyph: '🐉',
+    sprite: 'hero_golden_dragon',
+    traitText: 'The whole party fights harder to stay standing (+45% defence)',
+  },
+  VampireLord: {
+    name: 'The Vampire Lord', title: 'Collects, and has done for centuries', glyph: '🦇',
+    sprite: 'hero_vampire_lord',
+    traitText: 'Brings back 85% more fragments',
+  },
+  Necromancer: {
+    name: 'The Necromancer', title: 'Asks the previous expedition', glyph: '💀',
+    sprite: 'hero_necromancer',
+    traitText: 'Brings back 85% more Stardust',
+  },
+  Pharao: {
+    name: 'The Pharaoh', title: 'Was buried with better men', glyph: '𓂀',
+    sprite: 'hero_pharao',
+    traitText: 'The whole party fights harder to stay standing (+45% defence)',
+  },
+  ElvenPrincess: {
+    name: 'The Elven Princess', title: 'Travels light, and expects you to', glyph: '🌸',
+    sprite: 'hero_elven_princess',
+    traitText: 'Packs light — expeditions cost 40% less to supply',
+  },
 };
 
 const heroBalance = balance.heroes as Record<HeroId, {
@@ -1494,8 +1629,14 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
   }),
 ) as Record<HeroId, HeroDef>;
 
+/** Roster order: the five the game shipped with, then the rest by rarity.
+ *  It is the pool order and the order every roster screen lists. */
 export const HERO_ORDER: HeroId[] = [
-  'Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout',
+  'Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout', 'Adventurer', 'Bard',
+  'BeastkinHunter', 'Cleric', 'Cook', 'Gardener', 'Joker', 'Merchant', 'Priest', 'Rogue',
+  'ThreeMice', 'Sellsword', 'DarkKnight', 'Paladin', 'Wizard', 'Witch', 'Druid',
+  'IceLancer', 'HolyWarrior', 'SavageWarrior', 'Spymaster', 'ElectricArcher',
+  'GoldenDragon', 'VampireLord', 'Necromancer', 'Pharao', 'ElvenPrincess'
 ];
 
 /** Every hero of a rarity, in roster order. The pool a banner rolls from is

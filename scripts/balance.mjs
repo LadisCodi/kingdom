@@ -90,7 +90,12 @@ const QUEST_GOAL_TYPES = {
 const FEATURE_IDS = [
   'Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal',
 ];
-const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
+const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout',
+  'Adventurer', 'Bard', 'BeastkinHunter', 'Cleric', 'Cook', 'Gardener', 'Joker',
+  'Merchant', 'Priest', 'Rogue', 'ThreeMice', 'Sellsword', 'DarkKnight', 'Paladin',
+  'Wizard', 'Witch', 'Druid', 'IceLancer', 'HolyWarrior', 'SavageWarrior', 'Spymaster',
+  'ElectricArcher', 'GoldenDragon', 'VampireLord', 'Necromancer', 'Pharao',
+  'ElvenPrincess'];
 /** What a hero's rarity is worth: its stats, its trait magnitude, and WHICH
  *  banner can roll it. A banner weights each rarity, and a weight of 0 is what
  *  keeps a rarity off a banner — so there is no `pool` column, because the

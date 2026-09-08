@@ -60,7 +60,13 @@ export type RuinId =
   | 'HollowBarrow' | 'SunkenChapel' | 'DrownedIronworks' | 'CountingHouse' | 'StarObservatory';
 export type ArtifactId =
   | 'DowsingRod' | 'VerdantSeal' | 'ForemansSigil' | 'GildedLedger' | 'WanderersCompass';
-export type HeroId = 'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout';
+export type HeroId =
+  'Warden' | 'Quartermaster' | 'Scholar' | 'RelicHunter' | 'Scout' | 'Adventurer' |
+  'Bard' | 'BeastkinHunter' | 'Cleric' | 'Cook' | 'Gardener' | 'Joker' | 'Merchant' |
+  'Priest' | 'Rogue' | 'ThreeMice' | 'Sellsword' | 'DarkKnight' | 'Paladin' | 'Wizard' |
+  'Witch' | 'Druid' | 'IceLancer' | 'HolyWarrior' | 'SavageWarrior' | 'Spymaster' |
+  'ElectricArcher' | 'GoldenDragon' | 'VampireLord' | 'Necromancer' | 'Pharao' |
+  'ElvenPrincess';
 /** The three tomes. The shelf is the layout: one bounded page per book,
  *  each paced by eras (Docs/features/07-research.md §2). */
 export type TomeId = 'Civics' | 'Warfare' | 'Magic';
