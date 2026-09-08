@@ -149,7 +149,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 
 | Major | Unlocks |
 |---|---|
-| **Veterancy** *(planned)* | heroes gain levels from delving |
+| ~~**Veterancy**~~ | retired — heroes level from Hero XP by design ([`10-heroes.md`](10-heroes.md) §4); Drillmaster keeps the XP bonus |
 | **Tactics** | the type-disadvantage penalty softens, 0.75 → 0.85 (through the `Drill`) |
 | **Scouting** *(planned)* | a ruin's threat type shows before you launch |
 

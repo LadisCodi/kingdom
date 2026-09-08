@@ -53,14 +53,14 @@
 | **19–21** | `SawTeeth` · `TheSawmill` · `Crewed` | **Saws → the Sawmill → two workers on it.** |
 | **22–24** | `Levies` · `Sawpits` · `Regrowth` | **Taxes I → Sawpits I → Reforesting I** — the three cards the book puts between Saws and the Market. A requirement is the row above, so the chain walks the rows in order rather than pointing past them. |
 | **25–27** | `Trade` · `ToMarket` · `Merchant` | Research, build and use the Market — once the Sawmill has made there be a surplus to sell. |
-| **28** | `FurtherAfield` | Fifteen more cells — the near shrine comes into view, and the Orcs on it. |
-| **29–31** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 41. **The Barracks rouses the shrine's garrison: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
+| **28** | `FurtherAfield` | Fifteen more cells — the near shrine and the Hollow Barrow come into view. **Discovering the Barrow starts its gate's counter: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
+| **29–31** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 41. |
 | **32** | `FirstSummon` | **Summon at the banner. The first call is free.** |
-| **33** | `DriveThemOut` | **Defend the village: clear the shrine's Orcs.** The free hero wins alone at any matchup; the first fight is on the surface, the enemy in view, the outcome guaranteed. Pays Gold. |
-| **34–35** | `OldStones` · `Attuned` | **Claim the near shrine**, consecrate a Sanctum. |
+| **33** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** The free hero wins alone at any matchup; the first fight is on the surface, the enemy in view, the outcome guaranteed. Pays Gold. |
+| **34–35** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
 | **36–37** | `Mapmakers` · `Surveyors` | **Cartography**, then **Surveying ×2**. Each Surveying level makes one tap on the fog do the work of one more; it does not change a cell's price (far rings cost 320 and 640 Gold at one Gold a tap). |
 | **38–39** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. Both hang off Cartography. |
-| **40** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow. Its Orcs (strength 4) are cleared on the way; the hint says so. |
+| **40** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 33. |
 
 - **Quests 41–55:** the Quarry, Urban Planning, Townhall 3 and Mining, then
   Attunement, the Sanctum, a warband, the first full ruin clear, attuning a

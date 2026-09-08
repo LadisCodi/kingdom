@@ -126,11 +126,12 @@ Submitted as they happen:
 
 - The siege is the **world map's** encounter
   ([`02-map-scopes.md`](02-map-scopes.md) §7): a contested landmark held by an
-  authored threat, cleared by a guild. The province's garrisons are cleared
+  authored threat, cleared by a guild. The province's ruin gates are cleared
   solo, by a hero and a party
-  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)); province
+  landmarks are claimed for Gold.
 - A player **commits units** to a besieged landmark. Committed units are
-  unavailable for delves and assaults, and are not home defenders.
+  unavailable for delves.
 - At the week's deadline the **sum of committed power** is scored against the
   landmark's authored threat with the delve scoring pass: same type chart,
   same safe-depth-style preview. A well-prepared siege never fails.

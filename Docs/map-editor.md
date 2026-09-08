@@ -48,16 +48,17 @@ four kinds of map content:
 ```
 terrain   { cells: [{x, y, id}] }   every cell that exists; absent = void
 features  { cells: [{x, y, id}] }   at most one per cell
-landmarks [{id, kind, x, y, claimCost, guard}]
+landmarks [{id, kind, x, y, claimCost}]
 ruins     { <RuinId>: {x, y, tier, difficulty, baseDepthSeconds,
                        depthGrowth, maxDepth, supplies, affinity, artifact,
                        guard} }
-guard     { threat, strength, warningMinutes, periodMinutes }   on every site
+guard     { threat, power, warningMinutes, periodMinutes }   on every ruin
 ```
 
-*(`guard` is designed, not built — today a landmark carries `defended: boolean`
-and a ruin carries nothing. [`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
-§2; the validator will ask for a unit type or `Any`, a strength of at least 1
+*(`guard` is designed, not built — today a landmark carries `defended: boolean`,
+which is retired, and a ruin carries nothing.
+[`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
+§2; the validator will ask for a unit type or `Any`, a `power` of at least 1
 and both counters of at least one minute.)*
 
 `definitions.ts` reads `LANDMARKS` and `RUINS` from here rather than from

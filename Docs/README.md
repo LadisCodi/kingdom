@@ -47,8 +47,8 @@ Every feature below is shaped by these.
 
 **The paid fog is the differentiator.** It pays back three ways: resources,
 landmarks that make exploration compound, and ruins that are places you return
-to ([`01`](features/01-map-and-fog.md)) — and every landmark and ruin is held
-by a garrison the army has to clear before the fog pays
+to ([`01`](features/01-map-and-fog.md)) — and every ruin opens with a gate
+the army has to clear before the ruin pays
 ([`18`](features/18-garrisons-and-raids.md)).
 
 ## The features
@@ -66,7 +66,7 @@ One file per feature, in the order a player meets them.
 | 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
 | 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |
 | 9 | [Relics](features/09-relics.md) | the five relics as **passives only**, attune-or-arm, and the **nine-piece ingredient set** | built / designed |
-| 10 | [Heroes and the gacha](features/10-heroes.md) | the shared collection substrate, five heroes, pity, no dead pulls | built |
+| 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | gacha built; **hero reworked 2026-09-08** |
 | 11 | [Ruins](features/11-expeditions.md) | ruins as **depths of numbered rooms**, opened by the Adventurers' Guild, a boss at the end of every depth, per-room rewards and permanent generation on a clear; the resolver is [`combat.md`](features/combat.md), the screens are [`11a-ruins-ui.md`](features/11a-ruins-ui.md) | delves built; **rooms designed 2026-09-08** |
 | 11 | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls | designed 2026-09-08 |
 | 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest | built |
@@ -76,7 +76,7 @@ One file per feature, in the order a player meets them.
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
 | 18 | [Harmony and the decorations](features/18-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
-| 18 | [Garrisons and raids](features/18-garrisons-and-raids.md) | **defend your village** — the garrison on every site, the minute-scale counter a discovered one starts, the bounded and recoverable raid, home defence, and the assault that is the doorway to combat | designed |
+| 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | designed |
 
 ## Reference
 

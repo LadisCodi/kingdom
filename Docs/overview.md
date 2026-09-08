@@ -39,8 +39,8 @@
 1. **Reveal** — spend Gold to peel back the fog. Cost scales steeply with
    distance from the Townhall. **The frontier stays connected**, and a building
    sees further than it can buy.
-2. **Clear** — every ruin and landmark is held by a garrison, and a discovered
-   garrison starts a counter: send hero and troops before it raids the city.
+2. **Clear** — every ruin opens with a gate, and discovering the ruin starts
+   the gate's counter: clear it with hero and troops before it raids the city.
 3. **Harvest** — tap resource cells directly. Every tap spends **1 Mana**. Cells
    exhaust after a number of taps and recover on a timer.
 4. **Build** — place districts on revealed land. Costs are charged up front;

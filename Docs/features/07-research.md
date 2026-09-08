@@ -294,7 +294,7 @@ A `bonus` names its effects, and each is four fields:
 | Currency | Buys | Source | Scope | Shown in |
 |---|---|---|---|---|
 | **Knowledge** | technologies | claimed landmarks, cleared ruins, quest lumps | kingdom | the Research header, with its rate |
-| **Stardust** | hero and relic levels (`src/sim/collection.ts`, `src/sim/artifacts.ts`) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the Reliquary and hero screens |
+| **Stardust** | relic levels and the hero ascension toll (`src/sim/collection.ts`, `src/sim/artifacts.ts`; [`10-heroes.md`](10-heroes.md) §4) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the Reliquary and hero screens |
 
 - One job each. `knowledgeYield` multiplies the drip; `stardustYield`
   multiplies what a depth pays.

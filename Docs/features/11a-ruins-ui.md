@@ -42,9 +42,10 @@ City HUD ─────▶ Reservoir meter
 |---|---|
 | Data per ruin | Name, tier, affinity, total progress |
 | Data per depth | `depth_index`, name, `rooms`, rooms cleared, `guild_req`, boss name + art + chest contents, `passive_on_complete` |
-| Elements | Vertical stack, deepest at bottom; one band per depth showing `7/12`; boss card at the end of each band with reward art |
-| States | Locked · open · in progress · complete · bottomed out |
-| Rules | Locked depths display `guild_req` and their boss reward. Bottomed out is a distinct visual from locked. Tapping an in-progress band opens the frontier room |
+| Data for the gate | creature + type, raid countdown, trips left, hoard ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §7) — while it stands |
+| Elements | Vertical stack, deepest at bottom; the gate band above Depth 1 while it stands; one band per depth showing `7/12`; boss card at the end of each band with reward art |
+| States | Gated · locked · open · in progress · complete · bottomed out |
+| Rules | While the gate stands every depth reads gated and only the gate band is tappable. Locked depths display `guild_req` and their boss reward. Bottomed out is a distinct visual from locked. Tapping an in-progress band opens the frontier room |
 
 ### 2.4 Room ladder
 

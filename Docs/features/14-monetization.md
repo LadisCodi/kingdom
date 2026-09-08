@@ -4,7 +4,7 @@
 > **simulated** store: real in every way that produces data, fake in exactly one
 > — the charge. The Mana placement is designed in
 > [`08-magic.md`](08-magic.md) §6, the two call placements in
-> [`10-heroes.md`](10-heroes.md) §5.2.
+> [`10-heroes.md`](10-heroes.md) §6.2.
 >
 > **Status: three ad placements, the builder offer, and the store's first cut
 > are built** — the payer profile and its monthly budget (§3), and four
@@ -32,7 +32,7 @@
   buys it sooner, in quantity, and without the wait; the free path to the same
   thing always exists. The daily free golden call is the worked example — a
   Legendary is a wallet's fastest purchase and roughly thirty free calls a
-  month otherwise ([`10-heroes.md`](10-heroes.md) §5.2).
+  month otherwise ([`10-heroes.md`](10-heroes.md) §6.2).
 - The first rung of every ladder is earned by play: research grants the second
   attunement slot and the third party slot before Gems can buy any; the daily
   chest pays Gems at the week marker.
@@ -51,7 +51,7 @@
   Mana refills. Three of those are one-time ladders.
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends — so the two banners have two prices without a second Gem price
-  ([`10-heroes.md`](10-heroes.md) §5.1).
+  ([`10-heroes.md`](10-heroes.md) §6.1).
 - Faucet: **3,750 up front plus ~1,000/month** — seven silver keys, or two
   gold ones, or the second builder and change. 500 to start, 750 across the
   quest chain, 500 a first delve clear, 250 at the week marker.
@@ -91,7 +91,7 @@
 
 | Section | Content | Paid with |
 |---|---|---|
-| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §7). Here until the Tavern is built | a key |
+| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §8). Here until the Tavern is built | a key |
 | **Keys** | one card per banner: what a key costs in Gems and how many the player holds. **This section stays** when the banners leave — the store is where a currency is bought | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
 | **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
@@ -207,7 +207,7 @@ offer_shown → store_opened → sku_viewed → confirm_opened
   cap — raises the value of every future ad with it; the offer only appears
   below half a pool; the cooldown is randomised 30–90 s.
 - Placements 2 and 3 are the free path to a hero
-  ([`10-heroes.md`](10-heroes.md) §5.2). They are the only placements with a
+  ([`10-heroes.md`](10-heroes.md) §6.2). They are the only placements with a
   **daily cap** rather than a shortage condition, because a call answers no
   shortage — the cap is what keeps them from becoming the whole game.
 - Wonders offer no ad placement ([`12-quests.md`](12-quests.md) §6): no timer

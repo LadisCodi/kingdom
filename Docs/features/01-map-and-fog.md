@@ -156,25 +156,22 @@ Authored per ring, doubling from ring 4, with a ×1.25 fallback past ring 10.
 - A revealed ruin is a repeatable dungeon node, not a one-time pickup.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
   through the Discovered scrim once discovered.
-- **Every site is held by a garrison.** Discovering it starts a counter; clear
-  it before it raids, and the site is yours to claim or delve
-  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+- **Every ruin opens with a gate.** Discovering it starts a counter; clear the
+  gate before it raids, and the ruin is yours to delve
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A landmark has
+  no guard: it is claimed for its Gold.
 
 ### The landmark tiers
 
 Costs are **authored per sanctuary**, not derived from distance.
 
-| Tier | Cost | Count | Guard |
-|---|---|---|---|
-| The near one | **2,000** | 1 | Orcs, strength 2 — the first fight |
-| The middle ring | **25,000** | 5 | strength 6–8 |
-| The far ring | **100,000** | 4 | a Drake, strength 30–36 |
+| Tier | Cost | Count |
+|---|---|---|
+| The near one | **2,000** | 1 |
+| The middle ring | **25,000** | 5 |
+| The far ring | **100,000** | 4 |
 
-- The nearest sanctuary is the cheapest, and its guard is the one the free hero
-  beats alone.
-- The far ring is the dearest tier: it needs the Gold *and* an army.
-- Every guard is authored on the sanctuary in `?dev=map`; clearing one is
-  [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md).
+- The nearest sanctuary is the cheapest; the far ring is the dearest.
 
 ### The five ruins
 
@@ -205,9 +202,9 @@ Costs are **authored per sanctuary**, not derived from distance.
   moved and retuned but not added.
 - Landmarks have no code-side identity beyond their `kind`; they are fully
   editable.
-- Every landmark and ruin carries a `guard` — threat, strength, and its two
-  counters in minutes ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)
-  §2).
+- Every ruin carries a `guard` — threat, power, and its two counters in
+  minutes ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §2).
+  Landmarks carry none.
 
 ## 8. Dials, in the order to reach for them
 

@@ -31,8 +31,9 @@ Three arcs run past TH3:
   Adventurers' Guild ([`11-expeditions.md`](11-expeditions.md) §3).
 - **The Mana economy** — capacity from the Sanctum and from landmarks — gates
   session length ([`08-magic.md`](08-magic.md)).
-- **Ingredients and Stardust** gate relic and hero levels, on a curve measured
-  in weeks ([`09-relics.md`](09-relics.md)).
+- **Ingredients, Stardust, Fragments and Hero XP** gate relic and hero levels,
+  on a curve measured in weeks ([`09-relics.md`](09-relics.md),
+  [`10-heroes.md`](10-heroes.md) §4).
 
 ## 2. The districts
 

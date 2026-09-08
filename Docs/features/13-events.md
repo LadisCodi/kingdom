@@ -58,7 +58,7 @@ Six parts. Every authored event is a skin on them.
 | Buying a **Wonder level** | [`16-wonders.md`](16-wonders.md) |
 | Extracting from a **delve** | scales with depth |
 | Claiming a **landmark**, clearing a **ruin** depth | |
-| Clearing a **garrison**, repelling a **raid** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
+| Clearing a ruin's **gate** | [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) |
 | **Taps** | low rate |
 | The **daily chest** | one lump a day |
 | A **rewarded video** | capped; the third ad placement |

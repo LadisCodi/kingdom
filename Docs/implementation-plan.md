@@ -72,12 +72,12 @@ Two more that are design-visible:
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
 | Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
-| Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **built** — two holes, §3 |
+| Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
 | Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks. **Superseded by the 2026-09-08 rewrite**: ruins become depths of rooms ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)) and combat becomes a tick auto-battler ([`combat.md`](features/combat.md)) — designed, unbuilt |
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03 |
 | The timeline, the weekly event, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
-| **Garrisons and raids — defend your village** | [`18`](features/18-garrisons-and-raids.md) | **designed 2026-09-08**, unbuilt — Step 7 |
+| **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **designed 2026-09-08**, unbuilt — Step 7 |
 | **Wonders — the ladder with no top** | [`16`](features/16-wonders.md) | **designed, reviewed and closed 2026-09-03.** Unstarted and deliberately unsequenced — late-game by construction, and the game's only unbounded sink |
 
 **The load-bearing assertion holds at every step** — across a research
@@ -92,9 +92,9 @@ each has an answer, or has one waiting in a doc.
 | # | Hole | Where |
 |---|---|---|
 | ~~**H0**~~ | ~~**The tap mints matter, and the economy has no ceiling.**~~ **FIXED 2026-09-03** — §4 step 0. | [`04`](features/04-harvest.md) |
-| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. A visible dead end, and the only thing that would give combat a job outside dungeons. **Design closed 2026-09-08** — every site gets a garrison and a solo assault writes the flag; built by **Step 7**. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
-| **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. Give it a job or delete the field. | [`10`](features/10-heroes.md) §9 |
-| **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §9 |
+| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. **Design closed 2026-09-08 by deletion** — `defended` is retired and every landmark is claimed for Gold; the fight with a clock moves to the ruin's **gate**, built by **Step 7**. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
+| **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. **Design closed 2026-09-08** — XP is a kingdom currency that buys hero levels, Stardust moves to the ascension toll; built by **Step 8**. | [`10`](features/10-heroes.md) §4 |
+| **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
 | **H7** | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
@@ -497,55 +497,109 @@ their systems.
   banner's home (`14-monetization.md` §2.1) for the Tavern.
 - **Size:** weeks; steps 2–4 alone are about two.
 
-### Step 7 · Garrisons and raids — defend your village
+### Step 7 · The gate — a garrison with a clock
 
-**The army's second job, and the doorway to combat.** Every ruin and landmark
-is held by a garrison; discovering one starts a minute-scale counter; when it
-runs out the garrison raids the city for a bounded, recoverable slice of the
-banked materials; a hero and a party clear it through the expedition sheet.
-**This is the step that reopened promise 1**, on purpose and in writing
-([`overview.md`](overview.md)), and it closes **H1**.
+**The doorway to combat, and the clock that sends the player to it.** Every
+ruin opens with one garrison room before Depth 1; discovering the ruin starts
+a minute-scale counter; when it runs out the garrison takes a bounded,
+recoverable slice of the banked materials, with no fight; a hero and a party
+clear the gate as a room. **This is the step that reopened promise 1**, on
+purpose and in writing ([`overview.md`](overview.md)), and it closes **H1** by
+deletion — `defended` is retired and every landmark is claimed for Gold.
 
 - **Design:** [`18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md) — complete.
-- **Blocked on: nothing.** Every number is **OQ-72** and needs the playtest;
-  **OQ-73** (a defence lever) and **OQ-74** (full or partial restitution) do
-  not change the shape.
+- **Blocked on: the resolver** ([`combat.md`](features/combat.md)) — the gate
+  is a room on its board. Every number is **OQ-72** and needs the playtest;
+  **OQ-74** (full or partial restitution) does not change the shape.
 - **What it costs, and where invariant 1 has to hold:**
-  - state: a `garrisons` module — per site `{rousedAt, nextRaidAt, trips,
-    hoard}`, `cleared`, the raid reports — absorbing `landmarks.cleared`;
-    `SAVE_VERSION` 32. A save whose sites are already visible carries
-    `rousedAt: null` and is stamped **inside `advance()`** from
-    `state.lastAdvance` (invariant 3), with its full warning; a landmark
-    already claimed is written cleared.
-  - rousing happens where `recordSiteDiscovery` already sweeps (build
-    completion) **and at military-hall completion**, stamped with that
-    boundary's `t`.
-  - `nextBoundary`: the earliest `nextRaidAt` and the assault's arrival;
-    two `applyDueAt` branches. Minute-scale periods with a three-trip cap stay
-    far under `MAX_BOUNDARY_STEPS`.
-  - `combat.ts`: `resolveGarrison` on the existing `effectiveAttack` /
-    `resolveDepth` maths; `homeDefence(state, threat)` over `availableRoster`
-    **minus assault parties**, plus heroes in neither a delve nor an assault.
+  - state: a `gates` module — per ruin `{nextRaidAt, trips, hoard, cleared}`,
+    the raid reports; `landmarks.cleared` and `defended` go. `SAVE_VERSION`
+    bump. A save whose ruins are already visible stamps `nextRaidAt` **inside
+    `advance()`** from `state.lastAdvance` (invariant 3), with the full
+    warning.
+  - the counter starts where `recordSiteDiscovery` already sweeps, stamped
+    with that boundary's `t`.
+  - `nextBoundary`: the earliest `nextRaidAt`; one `applyDueAt` branch that
+    takes and writes the report. Minute-scale periods with a three-trip cap
+    stay far under `MAX_BOUNDARY_STEPS`.
   - the city's rate per material: the crews' gather rate the harvest module
     already exposes, plus the tax rate the daily chest already prices against
     for Gold — no third rate.
-  - `expeditions.ts`: assault launch and arrival; the claim and the delve
-    launch read `garrisons.cleared`.
-  - `mapRules.ts` and `?dev=map`: the `guard` field on every site.
+  - the resolver: the gate is generated from `guard` by the room generator,
+    seeded by ruin id; clearing it is a room attempt whose win writes
+    `cleared`, stops the counter and pays the hoard. The delve launch reads
+    `gates.cleared`; the landmark claim reads nothing.
+  - `mapRules.ts` and `?dev=map`: the `guard` field on every ruin — a unit
+    type or `Any`, a `power` of at least 1, two counters in minutes; the
+    landmark `defended` field removed.
   - the workbook: a `Garrisons` sheet (take seconds, supplies per tier) and
-    `raid.*` / `march.*` settings; the importer schema.
-  - quests: the `ClearGarrisons` goal type, the `DriveThemOut` row, the
-    onboarding reordered ([`12-quests.md`](features/12-quests.md) §2) and its
-    beat test renumbered.
-  - UI: the raid widget in the Mana-refill offer's slot (z 4), the raid sheet
-    in `#overlay`, the site tap routing to it while a garrison stands, the
-    expedition sheet's assault mode, five camp sprites.
+    `raid.*` settings; the importer schema.
+  - quests: the `ClearGarrisons` goal type, the `DriveThemOut` row on the
+    Barrow's gate, the onboarding reordered ([`12-quests.md`](features/12-quests.md) §2)
+    and its beat test renumbered.
+  - UI: the raid widget in the Mana-refill offer's slot (z 4) opening the
+    ruin sheet, the gate band above the depth stack, the countdown badge on
+    the map marker, the room sheet on a gate with **Clear the gate** for
+    *Descend*, five camp sprites.
 - **Gate:** the replay assertion holds across a raid landing during an
-  absence; a week away with three camps roused is nine raids and never more;
+  absence; a week away with three gates open is nine raids and never more;
   the reordered onboarding plays through `DriveThemOut` and `OldStones`
-  unfunded with `Mapmakers` still affordable; no army ⇒ never roused; a party
-  parked at a checkpoint is not a defender.
-- **Size:** about a week — the sim half is small, the UI half is most of it.
+  unfunded with `Mapmakers` still affordable; the free hero alone clears the
+  Barrow's gate; a cleared gate never raids again and its hoard is back in the
+  purse.
+- **Size:** three to four days once the resolver exists — the sim half is
+  small, the widget and the gate band are most of it.
+
+### Step 8 · Heroes onto the resolver
+
+**The hero the code carries is the delve's** — `atk/def/hp`, five economy
+traits, Stardust-bought levels, "one hero, one job". The designed hero is a
+slot fighter with a type passive ([`10-heroes.md`](features/10-heroes.md) §2),
+levelled with Hero XP and ascended with Fragments plus a Stardust toll (§4),
+on hero slots bought with Gems (§3). **It lands with the room-and-resolver
+rewrite** ([`combat.md`](features/combat.md)); nothing here is worth building
+against the staged delve. Closes **H2**.
+
+- **Design:** [`10-heroes.md`](features/10-heroes.md) — complete.
+- **Blocked on:** the resolver step it rides on. **OQ-79** (the XP curve),
+  **OQ-80** (boss Fragments) and **OQ-78** (the Stardust toll against the
+  relic curve) are numbers, not shape.
+- **What it costs:**
+  - the workbook: `Heroes` loses `trait`, `trait_value`, `atk`, `atk_per_level`
+    and gains `dmg`, `cooldown`, `dmg_per_level`, `troop_dmg_mult`,
+    `troop_hp_mult`, `troop_def_bonus`, `passive_per_tier`, `power_base`,
+    `power_per_level`; `heroes.*` settings for the rarity multipliers, the XP
+    curve, the ascension toll and the hero-slot ladder; the importer schema.
+    **The `Scout` row becomes `Ranger`**, with its portrait
+    (`hero_scout.png`).
+  - state: `heroes.xp` collapses from a per-hero map to **one kingdom
+    number** — a `HeroXp` wallet row on `state.kingdom.wallet`, beside
+    Stardust; `heroes.heroSlotsPurchased`. `SAVE_VERSION` bump.
+  - **the migration that matters:** a save whose heroes were levelled with
+    Stardust keeps every level; its per-hero XP sums into the kingdom counter.
+    No level is ever taken back.
+  - `heroes.ts`: `levelUpHero` charges Hero XP; `raiseHeroTier` charges
+    Fragments **and** Stardust; `heroStats` becomes the resolved stat block
+    (rarity multiplier, level growth, passive stepped by tier); `heroIsBusy`
+    and `freeHeroes` go — nothing is ever busy.
+  - `combat.ts` (the resolver): hero slots read the stat block and apply the
+    passive at battle start; the mandatory-hero check; `hero_power` by formula.
+  - `expeditions.ts`: the supply discount and the reward traits are deleted
+    with the traits; XP and Stardust are paid per room
+    ([`11-expeditions.md`](features/11-expeditions.md) §7).
+  - UI: the Reliquary hero tab reads the block and the passive and sells a
+    level in XP and an ascension in Fragments plus Stardust; the party sheet
+    fills up to three hero slots and sells the next one; the room sheet's
+    power read includes `hero_power`.
+  - tests: `heroes.test.ts` for the two ladders and the migration; a golden
+    board with two heroes of one type asserting the additive passive; the
+    replay assertion across a room paying XP into the kingdom wallet.
+- **Gate:** an old save loads with every hero level intact and its XP summed;
+  a fight with no hero is refused; two Warden-type heroes buff Warriors once
+  by `1 + Σ(mult − 1)`; a hero's passive survives its death within the fight;
+  the Guild ladder buys no hero slot.
+- **Size:** two to three days once the resolver exists — mostly data and the
+  two screens.
 
 ## 5. Deliberately after everything above
 
@@ -593,7 +647,7 @@ Data versus code, in one table:
 | event and banner schedules, modifier magnitudes by template id | a new schedule payload kind and its handler |
 | a seasonal hero = one hero row + one banner row; **the whole shape of the tech tree**, in `?dev=tree` | a rule about what a legal tech tree is (`techTreeRules.ts`) |
 | a second region = a JSON map + a row in the region table | anything multi-region beyond the discriminator |
-| a garrison's threat, strength and counters, per site in the editor; take seconds and supplies per tier in the workbook | the `ClearGarrisons` goal type; a lever that moves a raid (OQ-73) |
+| a gate's threat, power and counters, per ruin in the editor; take seconds and supplies per tier in the workbook | the `ClearGarrisons` goal type |
 
 ## 7. Testing conventions worth keeping
 
