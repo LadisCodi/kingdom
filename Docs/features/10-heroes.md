@@ -279,9 +279,14 @@ Each of these is data, not code:
 
 ### 8.2 The card
 
-- Opened by tapping a tile. Portrait on its rarity, with the **rarity** and
-  the **unit type** named, and an arrow each side that steps to the next hero
-  — comparing two of them is most of what the card is for.
+- Opened by tapping a tile. **The card has no header**: the portrait and the
+  name below it are the title, and a plank repeating the name above them would
+  spend a band of the screen saying it twice.
+- Portrait on its rarity, with the **rarity** at the foot and the **unit type**
+  in the corner, an arrow each side that steps to the next hero — comparing
+  two of them is most of what the card is for — and **the way back riding on
+  the portrait**, not in a row of its own. Every pixel above the fold belongs
+  to the art.
 - Name and title, then the **two ladders side by side** — level of cap, and
   ascension in stars — because they gate each other and the reason a level is
   refused has to be in the same glance as the button refusing it.

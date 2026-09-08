@@ -9,6 +9,9 @@
  * legible at arm's length with no label read. */
 
 .hero { display: flex; flex-direction: column; gap: 14px; }
+/* A bare sheet has no plank to sit under, so the card starts at the top of
+   the panel and the portrait is the first thing on screen. */
+.k-sheet.is-bare .hero { gap: 12px; }
 
 /* --------------------------------------------------------------- the purse */
 
@@ -71,12 +74,11 @@
 
 /* The portrait fills the tile and is CONTAINED, never cropped: the sheet is
    mixed (128² for some, 42×74 for others) and a cover would behead half the
-   roster. */
-/* The BOX is fixed to the tile and `object-fit` does the fitting. Sizing the
-   image itself instead — auto width against a max — lets a 128² sprite
-   overflow the inset box and get clipped by the tile, which is the bug this
-   shape avoids: every portrait letterboxes inside the same rectangle, so a
-   tall hero and a square one line up across a row. */
+   roster. The BOX is fixed to the tile and `object-fit` does the fitting.
+   Sizing the image itself instead — auto width against a max — lets a 128²
+   sprite overflow the inset box and get clipped by the tile, which is the bug
+   this shape avoids: every portrait letterboxes inside the same rectangle,
+   so a tall hero and a square one line up across a row. */
 .hero-art {
   position: absolute;
   top: 6px;
@@ -149,10 +151,9 @@
 
 /* ------------------------------------------------------------- the detail - */
 
-.hero-back { align-self: flex-start; }
-
 /* The stage: portrait on its rarity, with the two arrows that step the
-   roster. Comparing two heroes is most of what the card is for. */
+   roster and the way back riding in its corner. Comparing two heroes is most
+   of what the card is for, and none of that chrome may cost a row. */
 .hero-stage {
   position: relative;
   display: flex;
@@ -181,9 +182,20 @@
 }
 .hero-stage .k-knob { flex: 0 0 auto; z-index: 1; }
 
-.hero-rarity {
+/* On the portrait, not above it — a row of its own cost a band of the screen
+   to say one word. */
+.hero-back {
   position: absolute;
   top: 8px;
+  left: 8px;
+  z-index: 2;
+}
+
+/* Under the back knob, at the foot of the stage: the corner it used to sit in
+   belongs to the way out now. */
+.hero-rarity {
+  position: absolute;
+  bottom: 8px;
   left: 10px;
   padding: 2px 8px;
   border-radius: var(--radius-sm);

@@ -23,7 +23,7 @@ import { spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { action, btn, iconEl, knob, sheet, stat } from './kit';
+import { action, iconEl, knob, sheet, stat } from './kit';
 
 /** Which hero's card is open, or null for the grid. Module-level so it
  *  survives the per-tick rebuild — the same reason the market's amount
@@ -166,10 +166,12 @@ function detail(game: Game, id: HeroId): HTMLElement {
   const s = heroStats(game.state, id);
   const owned = view.owned;
 
-  const back = btn({
-    label: '← Heroes',
-    onClick: () => { openHero = null; game.notify(); },
-  });
+  // The way back rides ON the portrait rather than above it. A row of its own
+  // cost a band of the screen to say one word, and the card is a screen the
+  // player scrolls — every pixel above the fold is the portrait's.
+  // '←', not '‹': the step arrows are '‹' and '›', and two left-pointing
+  // chevrons on the same edge meaning different things is a coin toss.
+  const back = knob('←', () => { openHero = null; game.notify(); }, { label: 'All heroes' });
   back.classList.add('hero-back');
 
   const arrow = (by: 1 | -1) => knob(by === 1 ? '›' : '‹', () => {
@@ -178,17 +180,17 @@ function detail(game: Game, id: HeroId): HTMLElement {
   }, { label: by === 1 ? 'Next hero' : 'Previous hero' });
 
   const stage = el('div', { class: `hero-stage ${RARITY_CLASS[def.rarity]}` },
-    el('span', { class: 'hero-rarity' }, RARITY_LABEL[def.rarity]),
+    back,
     el('span', { class: 'hero-stage-type' },
       iconEl(def.unitType, { size: 'md' }),
       el('span', {}, def.unitType)),
     arrow(-1),
     heroArt(def, !owned),
     arrow(1),
+    el('span', { class: 'hero-rarity' }, RARITY_LABEL[def.rarity]),
   );
 
   const body = el('div', { class: 'hero' },
-    back,
     stage,
     el('div', { class: 'hero-title' },
       el('div', { class: 'hero-name' }, def.name),
@@ -291,8 +293,14 @@ export function renderHeroesSheet(game: Game): HTMLElement {
   // a reset save is not, and a stale id would draw a card for nobody.
   if (openHero !== null && !(openHero in HEROES)) openHero = null;
   const open = openHero;
+  if (open === null) {
+    return sheet({ title: 'Heroes', onClose: () => game.dismiss() }, grid(game));
+  }
+  // The card is BARE: its portrait and its name are the title, and a plank
+  // above them would print the name twice. The back knob on the portrait is
+  // the way out, and tapping beside the sheet still closes the screen.
   return sheet(
-    { title: open === null ? 'Heroes' : HEROES[open].name, onClose: () => game.dismiss() },
-    open === null ? grid(game) : detail(game, open),
+    { title: HEROES[open].name, onClose: () => game.dismiss(), bare: true },
+    detail(game, open),
   );
 }
