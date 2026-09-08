@@ -383,18 +383,23 @@ paying or charging, never by refusing.**
 
 `max_level` 1, no crew, no tap, no upgrade — movable like anything else.
 
-| Piece | Size | Supply | Build cost | Count cap, by Townhall level |
-|---|---|---|---|---|
-| **Garden** | 1×1 | 4 | 200 Wood · 100 Food | `0,0,0,0,4,6,8,10,12,14` |
-| **Well** | 1×1 | 6 | 200 Stone · 1 Cut Stone | `0,0,0,0,0,2,4,6,8,10` |
-| **Orchard** | 2×1 | 12 | 2 Planks · 500 Food | `0,0,0,0,0,1,2,3,4,5` |
-| **Statue** | 1×1 | 10 | 2 Cut Stone · 5,000 Gold | `0,0,0,0,0,0,1,2,3,4` |
-| **Plaza** | 2×2 | 30 | 4 Planks · 4 Cut Stone | `0,0,0,0,0,0,0,1,2,3` |
-| **Shrine** | 2×2 | 40 | 2 Runestone | `0,0,0,0,0,0,0,0,1,2` |
+| Piece | Size | Supply | Build cost | Count cap, by Townhall level | Discovered by |
+|---|---|---|---|---|---|
+| **Garden** | 1×1 | 4 | 200 Wood · 100 Food | `0,0,0,0,4,6,8,10,12,14` | **Gardening** (Civics 3, under Engineering) |
+| **Well** | 1×1 | 6 | 200 Stone · 1 Cut Stone | `0,0,0,0,0,2,4,6,8,10` | **Sculpture** (Civics 3, under Architecture) |
+| **Orchard** | 2×1 | 12 | 2 Planks · 500 Food | `0,0,0,0,0,1,2,3,4,5` | **Gardening** |
+| **Statue** | 1×1 | 10 | 2 Cut Stone · 5,000 Gold | `0,0,0,0,0,0,1,2,3,4` | **Sculpture** |
+| **Plaza** | 2×2 | 30 | 4 Planks · 4 Cut Stone | `0,0,0,0,0,0,0,1,2,3` | **Paving** (Civics 3, under Guildhalls) |
+| **Shrine** | 2×2 | 40 | 2 Runestone | `0,0,0,0,0,0,0,0,1,2` | **Sacred Grounds** (Civics 3, under Scriveners II) |
 
-- The cap array is **both the unlock and the ceiling**, the way a workshop's
-  already is (`0,0,0,0,1,1,1,2,2,2`): a leading 0 is the Townhall gate, so no
-  decoration needs a `required_townhall_level_per_level` of its own.
+- The cap array is the **Townhall gate and the ceiling** in one, the way a
+  workshop's already is (`0,0,0,0,1,1,1,2,2,2`), so no decoration needs a
+  `required_townhall_level_per_level` of its own. **Discovery is a technology
+  on top** (2026-09-08): four Civics era-3 cards open the pieces in pairs and
+  singles, paired by material — plants under Gardening, cut stone under
+  Sculpture, the Plaza under Paving, the Shrine under Sacred Grounds. A
+  tech-locked building is hidden from the build sheet, so the page is where a
+  piece is met; the count cap then says when it may stand.
 - **Every piece past the Garden is priced in a good**, which is what makes a
   decoration cost the workshop queue rather than a walk to the map. The
   Shrine's Runestone is the Rune Carver's second customer.

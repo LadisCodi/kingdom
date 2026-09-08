@@ -47,8 +47,11 @@ const PROMISE: Partial<Record<string, string>> = {
 function harmonyHeader(game: Game): HTMLElement | null {
   const supply = harmonySupply(game.state);
   const demand = harmonyDemand(game.state);
-  const buildable = DECORATIONS.some(
-    (id) => maxDistrictCount(game.state, DISTRICTS[id]) > 0);
+  const buildable = DECORATIONS.some((id) => {
+    const def = DISTRICTS[id];
+    const known = def.requiredTech === null || isTechComplete(game.state, def.requiredTech);
+    return known && maxDistrictCount(game.state, def) > 0;
+  });
   if (supply === 0 && demand === 0 && !buildable) return null;
   const tier = harmonySurplusTier(game.state);
   const nextTier = HARMONY.surplusTiers.find((t) => tier === null || t.at > tier.at);

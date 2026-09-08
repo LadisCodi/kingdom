@@ -18,7 +18,7 @@ import { cancelQueueItem, enqueueBuild, upgradeDistrict } from '../src/sim/comma
 import { placementBlock, validPlacementCells } from '../src/sim/districts';
 import { effectiveTaxRate } from '../src/sim/upgrades';
 import { townhall, type GameState } from '../src/sim/state';
-import { addBuilt, freshGame, fund, map } from './helpers';
+import { addBuilt, completeTech, freshGame, fund, map } from './helpers';
 
 const districts = Object.entries(DISTRICTS);
 
@@ -255,6 +255,10 @@ describe('a decoration is bought like anything else', () => {
     const state = freshGame();
     townhall(state).level = 6;
     fund(state, { Gold: 9e9, Wood: 9e9, Stone: 9e9, Food: 9e9 });
+    // A decoration is discovered in Civics before it is built: Gardening
+    // opens the Garden and the Orchard, Sculpture the Well and the Statue.
+    completeTech(state, 'Gardening');
+    completeTech(state, 'Sculpture');
     return state;
   };
 

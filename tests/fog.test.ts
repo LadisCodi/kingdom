@@ -196,15 +196,16 @@ describe('exploring pays in ground, not in currency', () => {
     // edit that puts the tree out of reach fails here rather than in
     // playtest.
     //
-    // 485,330 in Gold. It was 6,600 before the 15 levelled upgrades became
+    // 519,830 in Gold. It was 6,600 before the 15 levelled upgrades became
     // ranked technologies, 520,165 when the three tomes added their
-    // keystones, and it came DOWN when Civics became a whole book
-    // (2026-09-08): 67 cards on the page, two planned ones cut, the ranks
-    // re-priced for the row they sit on. 07-research.md calls a tree the
-    // quest chain funds twice over "not a sink, a formality"; this is the
-    // other side of that.
+    // keystones, 485,330 when Civics became a whole book (2026-09-08: 67
+    // cards, two planned ones cut, the ranks re-priced for their rows), and
+    // it went back up by 34,500 when the four decoration technologies joined
+    // Civics' third band the same day. 07-research.md calls a tree the quest
+    // chain funds twice over "not a sink, a formality"; this is the other
+    // side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(485_330);
+    expect(tree).toBe(519_830);
     // Every tech is Gold plus, from era 2 on, Knowledge — the research clock
     // (07-research.md §3). Never materials: a full quarry buys no
     // research, which is what keeps the tree in the same contest as fog and

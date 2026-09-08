@@ -8,7 +8,7 @@
 > [`../tech-tree-editor.md`](../tech-tree-editor.md).
 > `src/sim/data/definitions.ts` points at this file.
 >
-> **Status.** Built: **174 technologies** in `src/sim/data/tech-tree.json`,
+> **Status.** Built: **178 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)),
 > priced to §5's bands, with every §6 number wired. **15 era-2/3 majors are on the
 > tree flagged `planned`** — drawn, researchable, no effect yet (§7); Civics
@@ -28,7 +28,7 @@
   in the workbook.
 - A technology never requires a technology in another tome.
 
-## 2. Tome I — Civics — 67 nodes
+## 2. Tome I — Civics — 71 nodes
 
 > *The city and its purse.* Open, like every book.
 
@@ -68,7 +68,7 @@ hang off it.
 | **Mining** | the Smelter, and the iron mountain the Quarry works for Stone |
 | **Communities** | +1 resident in every Housing |
 
-### 2.3 Era 3 · Borough — 31 nodes
+### 2.3 Era 3 · Borough — 35 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -79,6 +79,15 @@ hang off it.
 | **Deep Mining** | the gold mountain — the Quarry works it for Gold |
 | **Guildhalls** | a second Market (`extra_count_tech` on the district) |
 | **Roadworks** | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |
+| **Gardening** | the Garden and the Orchard — the first decorations, under Engineering |
+| **Sculpture** | the Well and the Statue — cut stone for the eye, under Architecture |
+| **Paving** | the Plaza, under Guildhalls |
+| **Sacred Grounds** | the Shrine, under Scriveners II — the last thing the band opens |
+
+The four decoration cards sit where their pieces' Townhall gates fall
+([`18-harmony.md`](18-harmony.md)): a piece is DISCOVERED here and then waits
+on the count cap its row on the `Districts` sheet gives it, so the build sheet
+never shows a decoration the player has not read about.
 
 Civics carries **no `planned` card**. With every requirement one row up (§2.4,
 [`07-research.md`](07-research.md) §2), a card that does nothing yet is a toll
@@ -256,14 +265,15 @@ and every rank is an ordinary card gated by the row above it like any other.
 - **Era 1 costs no Knowledge.**
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **485,330 Gold and 44,110 Knowledge**, of which the two sealed
+- Whole tree: **519,830 Gold and 47,405 Knowledge**, of which the two sealed
   era-4 keystones are 60,000 Gold and 6,000 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
 | 1 | 4,445 | 0 |
-| 2 | 46,600 | 3,580 |
-| 3 | 374,285 | 34,530 |
+| 2 | 46,600 | 3,425 |
+| 3 | 408,785 | 37,980 |
+| 4 | 60,000 | 6,000 |
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
   are about **eight weeks** at 30/h and **five and a half** at 45/h.
