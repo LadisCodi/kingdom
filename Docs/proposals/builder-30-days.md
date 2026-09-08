@@ -223,10 +223,12 @@ Recommendation: **one tier of three goods, and one late good**.
 - Decorations have no level, no crew, no tap. They are movable.
 - **Store decorations** (Gems): same Harmony per tile as an earned piece of
   the same footprint, better art. Cosmetic breadth, promise 3.
-- Harmony per tile is the real dial: it decides how much of the **plot** goes
-  to decoration, which is what makes **plot expansions** (OQ-71) worth
-  buying. Elvenar's whole late game is this tension. First pass: at TH10 a
-  city needs ~25% of its plot in decoration.
+- ~~Harmony per tile is the real dial~~ — **superseded 2026-09-08.** With
+  **OQ-1** closed the other way the plot is not the scarce thing, so what
+  prices Harmony is **a count cap per piece and a good in every piece past the
+  Garden**: reaching a Townhall's demand needs several KINDS, and each kind is
+  a queue at a workshop
+  ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §6).
 
 ## 5. Watchtower — the world map
 
@@ -359,8 +361,8 @@ Not in this proposal, deliberately:
 - One good tier plus Runestone, or Elvenar's three tiers (§2.1).
 - Does Runestone touch relic levels, and how does that sit with OQ-7 and
   OQ-9 (§2.1, §6).
-- Harmony surplus bonus on taxes, on all production, or none (§4.1).
+- ~~Harmony surplus bonus on taxes, on all production, or none~~ — **taxes, decided 2026-09-08** (§4.1), and no bonus at all while demand is 0.
 - Whether the banner leaves the store for the Tavern (§7) —
   [`../features/14-monetization.md`](../features/14-monetization.md).
 - ~~The `Adjacency` sheet growing a `stat` column~~ — **done 2026-09-07** (§8, OQ-48 closed).
-- Plot expansions as the price of Harmony (§4.2, OQ-71).
+- ~~Plot expansions as the price of Harmony~~ — **moot** (OQ-71: there is nothing to expand).

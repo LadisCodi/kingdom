@@ -16,6 +16,7 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "buildCost": {},
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 0,
@@ -35,7 +36,9 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": []
     },
     "Housing": {
       "size": {
@@ -80,6 +83,7 @@
       "buildCost": {
         "Wood": 10
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 1.25,
       "buildCostExponentialGrowth": 1.1,
       "buildDurationSeconds": 20,
@@ -120,7 +124,20 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Farm": {
       "size": {
@@ -176,6 +193,7 @@
       "buildCost": {
         "Wood": 30
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.5,
       "buildDurationSeconds": 20,
@@ -237,7 +255,20 @@
       ],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "FarmLands": {
       "size": {
@@ -261,6 +292,7 @@
       "buildCost": {
         "Wood": 10
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 10,
@@ -278,7 +310,9 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": []
     },
     "Sawmill": {
       "size": {
@@ -334,6 +368,7 @@
       "buildCost": {
         "Wood": 20
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2.5,
       "buildCostExponentialGrowth": 1.15,
       "buildDurationSeconds": 20,
@@ -395,7 +430,20 @@
       ],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Market": {
       "size": {
@@ -426,6 +474,7 @@
       "buildCost": {
         "Wood": 40
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 30,
@@ -477,7 +526,20 @@
         1.27
       ],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Quarry": {
       "size": {
@@ -533,6 +595,7 @@
       "buildCost": {
         "Wood": 30
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2.5,
       "buildCostExponentialGrowth": 1.15,
       "buildDurationSeconds": 20,
@@ -594,7 +657,20 @@
       ],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Docks": {
       "size": {
@@ -650,6 +726,7 @@
       "buildCost": {
         "Wood": 25
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2.5,
       "buildCostExponentialGrowth": 1.15,
       "buildDurationSeconds": 20,
@@ -711,7 +788,20 @@
       ],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Sanctum": {
       "size": {
@@ -743,6 +833,7 @@
         "Gold": 300,
         "Stone": 40
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 1,
       "buildCostExponentialGrowth": 1,
       "buildDurationSeconds": 90,
@@ -783,7 +874,20 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Barracks": {
       "size": {
@@ -826,6 +930,7 @@
         "Wood": 60,
         "Stone": 20
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 1,
       "buildCostExponentialGrowth": 1,
       "buildDurationSeconds": 45,
@@ -866,7 +971,20 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "SpearHall": {
       "size": {
@@ -909,6 +1027,7 @@
         "Wood": 80,
         "Stone": 30
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 1,
       "buildCostExponentialGrowth": 1,
       "buildDurationSeconds": 60,
@@ -949,7 +1068,20 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "ShootingGrounds": {
       "size": {
@@ -992,6 +1124,7 @@
         "Wood": 80,
         "Stone": 30
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 1,
       "buildCostExponentialGrowth": 1,
       "buildDurationSeconds": 60,
@@ -1032,7 +1165,20 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Stables": {
       "size": {
@@ -1075,6 +1221,7 @@
         "Wood": 120,
         "Stone": 70
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 1,
       "buildCostExponentialGrowth": 1,
       "buildDurationSeconds": 90,
@@ -1115,7 +1262,20 @@
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
-      "queueLengthPerLevel": []
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Carpenter": {
       "size": {
@@ -1166,6 +1326,7 @@
       "buildCost": {
         "Wood": 120
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
@@ -1216,6 +1377,19 @@
         10,
         11,
         12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
       ]
     },
     "MasonsYard": {
@@ -1268,6 +1442,7 @@
         "Wood": 100,
         "Stone": 60
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 90,
@@ -1319,6 +1494,19 @@
         10,
         11,
         12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
       ]
     },
     "Smelter": {
@@ -1371,6 +1559,7 @@
         "Gold": 400,
         "Stone": 120
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 120,
@@ -1422,6 +1611,19 @@
         10,
         11,
         12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
       ]
     },
     "RuneCarver": {
@@ -1474,6 +1676,7 @@
         "Gold": 800,
         "Stone": 200
       },
+      "buildCostGoods": {},
       "buildCostMultiplier": 2,
       "buildCostExponentialGrowth": 1.2,
       "buildDurationSeconds": 180,
@@ -1525,7 +1728,332 @@
         10,
         11,
         12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
       ]
+    },
+    "Garden": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Wood": 200,
+        "Food": 100
+      },
+      "buildCostGoods": {},
+      "buildCostMultiplier": 0.35,
+      "buildCostExponentialGrowth": 0.3,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1.1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostLateLevelGrowth": 0,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "upgradeCostGoodsPerLevel": [],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 4,
+      "harmonyCostPerLevel": []
+    },
+    "Well": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Stone": 200
+      },
+      "buildCostGoods": {
+        "CutStone": 1
+      },
+      "buildCostMultiplier": 0.35,
+      "buildCostExponentialGrowth": 0.3,
+      "buildDurationSeconds": 90,
+      "buildDurationDistrictGrowth": 1.1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostLateLevelGrowth": 0,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "upgradeCostGoodsPerLevel": [],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 6,
+      "harmonyCostPerLevel": []
+    },
+    "Orchard": {
+      "size": {
+        "x": 2,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Food": 500
+      },
+      "buildCostGoods": {
+        "Planks": 2
+      },
+      "buildCostMultiplier": 0.4,
+      "buildCostExponentialGrowth": 0.3,
+      "buildDurationSeconds": 180,
+      "buildDurationDistrictGrowth": 1.15,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostLateLevelGrowth": 0,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "upgradeCostGoodsPerLevel": [],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 12,
+      "harmonyCostPerLevel": []
+    },
+    "Statue": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Gold": 5000
+      },
+      "buildCostGoods": {
+        "CutStone": 2
+      },
+      "buildCostMultiplier": 0.4,
+      "buildCostExponentialGrowth": 0.3,
+      "buildDurationSeconds": 180,
+      "buildDurationDistrictGrowth": 1.15,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostLateLevelGrowth": 0,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "upgradeCostGoodsPerLevel": [],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 10,
+      "harmonyCostPerLevel": []
+    },
+    "Plaza": {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Stone": 800
+      },
+      "buildCostGoods": {
+        "Planks": 4,
+        "CutStone": 4
+      },
+      "buildCostMultiplier": 0.5,
+      "buildCostExponentialGrowth": 0.3,
+      "buildDurationSeconds": 420,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostLateLevelGrowth": 0,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "upgradeCostGoodsPerLevel": [],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 30,
+      "harmonyCostPerLevel": []
+    },
+    "Shrine": {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Gold": 20000
+      },
+      "buildCostGoods": {
+        "Runestone": 2
+      },
+      "buildCostMultiplier": 0.5,
+      "buildCostExponentialGrowth": 0.3,
+      "buildDurationSeconds": 600,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {},
+      "upgradeCostLevelGrowth": 1.5,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeCostLateLevelGrowth": 0,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "upgradeCostGoodsPerLevel": [],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 40,
+      "harmonyCostPerLevel": []
     }
   },
   "goods": {
@@ -1824,6 +2352,12 @@
       "neighbor": "Housing",
       "stat": "goldPerMinute",
       "magnitude": -1
+    },
+    {
+      "district": "Housing",
+      "neighbor": "AnyDecoration",
+      "stat": "goldPerMinute",
+      "magnitude": 1
     },
     {
       "district": "AnyHall",
@@ -2928,6 +3462,22 @@
     "maxBuilders": 4,
     "builderGemCostBase": 2500,
     "builderGemCostGrowth": 2
+  },
+  "harmony": {
+    "surplusTiers": [
+      {
+        "at": 1.1,
+        "bonus": 0.05
+      },
+      {
+        "at": 1.25,
+        "bonus": 0.1
+      },
+      {
+        "at": 1.5,
+        "bonus": 0.15
+      }
+    ]
   },
   "offlineCapHours": 8
 }

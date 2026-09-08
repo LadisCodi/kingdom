@@ -282,6 +282,9 @@
   border-radius: 999px;
 }
 .k-chip.is-short { color: var(--clay); border-color: var(--clay); }
+/* A chip that is a GAIN rather than a price — what a decoration adds, beside
+ * what it costs. */
+.k-chip.is-gain { color: var(--leaf-dark); border-color: var(--leaf-dark); }
 .k-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* icon + value + unit, for a rate or a count. */

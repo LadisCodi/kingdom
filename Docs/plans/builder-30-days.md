@@ -8,7 +8,8 @@
 > designs will live in `features/` as each step closes, and open decisions in
 > [`../open-questions.md`](../open-questions.md).
 >
-> **Status: steps 1–4 done.** Save version 29.
+> **Status: steps 1–5 done; step 6 is next and its design is settled (§6).**
+> Save version 30.
 
 ## 0. How the steps are cut
 
@@ -40,7 +41,7 @@
 | 4 | levels 5–10 of every building, gated by goods | 6, 8, 9 | 2–3 days |
 | 5 | adjacency v2: stat-typed rules | 6 | 2–3 days |
 | 6 | Harmony and the decorations | 7 | 4–5 days |
-| 7 | Townhall 5–10, and Harmony on the levels from 8 | 8, 9, 10, 11 | 2–3 days |
+| 7 | Townhall 5–10 | 8, 9, 10, 11 | 2–3 days |
 | 8 | the Reliquary as a building | — | 2 days |
 | 9 | the Tavern as a building | — | 2–3 days |
 | 10 | the Watchtower (the building and the flag) | the world map, later | 1–2 days |
@@ -331,46 +332,205 @@ paying or charging, never by refusing.**
 
 ## 6. Step 6 · Harmony and the decorations
 
-- **Data:** `Districts` gains `harmony_supply` (a decoration's supply) and
-  `harmony_cost_per_level` (list). Six decoration rows — Garden, Well,
-  Orchard, Statue, Plaza, Shrine — `max_level` 1, no crew, no tap, footprints
-  as proposed, costs in currencies and goods, `required_townhall_level_per_level`
-  for their TH gate. Every existing row's `harmony_cost_per_level` is empty
-  until step 7. `Settings` gains `harmony.surplus_tiers`
-  (`1.10:0.05|1.25:0.10|1.50:0.15`) and `harmony.surplus_stat` (`taxRate`).
-- **Sim:** `src/sim/harmony.ts`: `harmonySupply(state)` sums built
-  decorations' supply; `harmonyDemand(state)` sums every built district's
-  `harmony_cost_per_level[level]`; `harmonyBlock(state, def, level)` returns
-  `'NeedsHarmony'` when `supply < demand + cost`. Checked in `placementBlock`
-  (`districts.ts:55-120`) for a build and in `upgradeDistrict`
-  (`commands.ts:185-189`) for an upgrade. A **gate, never a drain**: nothing
-  reads Harmony after the build starts. Surplus tier → a term in `taxRate`
-  (`upgrades.ts:206`) at the base stage. Adjacency row Housing–decoration
-  `+1 Gold/min` lands here as data.
-- **UI:** the build menu header shows `supply / demand`; a decoration category
-  tab; the card of a gated building says *Needs N more Harmony*; the ghost
-  shows the supply a decoration adds.
-- **Save:** none (derived from built districts). Bump not needed.
-- **Tests:** `harmony.test.ts` — supply and demand from the built set; a build
-  refused at `supply < demand + cost`; a built building never blocks on a
-  later deficit; the surplus tier moves taxes; a decoration moved keeps its
-  supply. `move.test.ts`: decorations are movable.
-- **What OQ-1 changed here.** The plot is not bounded, so a decoration's
-  footprint is not the scarce thing the proposal (§4.2) assumed: Harmony
-  becomes a **price in ground already revealed and in the build cost of the
-  piece**, not a competition for tiles. Worth re-reading §4 of the proposal
-  before this step starts, and re-deciding whether the surplus bonus carries
-  enough on its own.
-- **Art:** six pieces. Store decorations are *not* in this step
-  (`14-monetization.md` decides them, OQ-26).
-- **Done when:** the harness at week 3 builds decorations to reach the next
-  level.
+> **Settled 2026-09-08, after OQ-1 removed the ground as the scarce thing.**
+> Harmony stays a **city total** — one supply, one demand, computed on read.
+> Its decision content comes from **a count cap per decoration**, so reaching
+> a Townhall's demand needs several KINDS of piece and each kind is priced in
+> a different good; and from **adjacency**, so where a piece stands pays. The
+> surplus bonus lands on **housing taxes**, as proposed.
 
-## 7. Step 7 · Harmony on the late levels, and Townhall 5–10
+### 6.1 The rule
 
-Levels 8–10 landed with step 4; what is left here is **the Townhall ladder**,
-which is the only thing standing between the player and everything step 4
-authored, and the **Harmony cost** on the levels from 8.
+- **Supply** is the `harmony_supply` of every **Built** decoration. A piece
+  under construction supplies nothing yet.
+- **Demand** is every district's `harmony_cost_per_level` at the level it
+  holds — or at the level it is **upgrading to**, so two waits in flight
+  cannot be spent against the same surplus.
+- The column is the **TOTAL a building demands at that level, not an
+  increment**, indexed from level 1 like `army_cap_per_level`. One column
+  therefore states both the build gate (entry 0) and every upgrade gate, and
+  nothing anywhere sums a prefix.
+- A build or an upgrade may **start** only while
+  `supply ≥ demand − what this building demands today + what it will demand`.
+  Nothing reads Harmony after it starts: **a gate, never a drain**, so a
+  deficit blocks the next thing and never punishes the last (promise 1).
+- Supply only grows and demand only grows — there is no demolition — so a
+  city is never pushed into deficit by anything but its own next purchase.
+
+### 6.2 The surplus bonus
+
+- `ratio = supply / demand`, and three tiers on `taxRate`: `1.10 → +5%`,
+  `1.25 → +10%`, `1.50 → +15%`. A **base-stage** term inside
+  `effectiveTaxRate`, beside `marketSaleLevelMultiplier` — never a modifier.
+- **With demand 0 there is no ratio and no bonus.** Otherwise one Garden at
+  TH5 pays the top tier for the whole midgame, for free.
+- Nothing new needs repricing: the tax anchor is already settled around every
+  boundary batch and around a move (`population.ts:207`,
+  `commands.ts:165, 387`), and a decoration completing IS a build completion.
+- The harness ends the month on 16.8 M unspent Gold, so this bonus is a
+  legibility win rather than a real reward — it pays where a player can SEE
+  it, on the Townhall card. If it turns out to carry nothing, `surplus_tiers`
+  is one setting and the stat it moves is one call site.
+
+### 6.3 The six pieces
+
+`max_level` 1, no crew, no tap, no upgrade — movable like anything else.
+
+| Piece | Size | Supply | Build cost | Count cap, by Townhall level |
+|---|---|---|---|---|
+| **Garden** | 1×1 | 4 | 200 Wood · 100 Food | `0,0,0,0,4,6,8,10,12,14` |
+| **Well** | 1×1 | 6 | 200 Stone · 1 Cut Stone | `0,0,0,0,0,2,4,6,8,10` |
+| **Orchard** | 2×1 | 12 | 2 Planks · 500 Food | `0,0,0,0,0,1,2,3,4,5` |
+| **Statue** | 1×1 | 10 | 2 Cut Stone · 5,000 Gold | `0,0,0,0,0,0,1,2,3,4` |
+| **Plaza** | 2×2 | 30 | 4 Planks · 4 Cut Stone | `0,0,0,0,0,0,0,1,2,3` |
+| **Shrine** | 2×2 | 40 | 2 Runestone | `0,0,0,0,0,0,0,0,1,2` |
+
+- The cap array is **both the unlock and the ceiling**, the way a workshop's
+  already is (`0,0,0,0,1,1,1,2,2,2`): a leading 0 is the Townhall gate, so no
+  decoration needs a `required_townhall_level_per_level` of its own.
+- **Every piece past the Garden is priced in a good**, which is what makes a
+  decoration cost the workshop queue rather than a walk to the map. The
+  Shrine's Runestone is the Rune Carver's second customer.
+- Most supply reachable at each Townhall level: TH5 **16**, TH6 **48**,
+  TH7 **90**, TH8 **162**, TH9 **274**, TH10 **386**.
+
+### 6.4 The demand, on the levels from 8
+
+- `harmony_cost_per_level` = `,,,,,,,2,4,6` on all **fifteen** buildings that
+  reach level 10 — +2 a level from 8, which is a ladder a player can read off
+  a card. The Townhall's own is step 7's, along with its ladder.
+- **Where that lands.** On the count caps as they stand today a maxed city is
+  38 buildings and demands **228** against the **386** it can supply, a ratio
+  of 1.69 — every tier reachable, with room. On step 7's intended caps
+  (Housing 21, producers 5–6, two of each workshop) it is 59 buildings
+  demanding **354**, plus the Townhall's own 30, for a ratio of **1.01** —
+  and no tier reachable at all.
+- So the surplus tiers are comfortable now and unreachable at full build-out,
+  and **the gap between the two is step 7's to tune**: it is the step that
+  authors both halves of the ratio, the caps and the Townhall's own demand,
+  and it has the harness to measure them with. The shape to aim at is the
+  first tier reachable by a maxed city and the top tier only by a city that
+  chose to stay slim.
+- Levels 8–10 are unreachable until step 7 lands the Townhall ladder, so this
+  is authored-and-waiting exactly as step 4's goods wall is. It is authored
+  **here** rather than in step 7 so that this step's gate is live, testable
+  and measurable on its own.
+
+### 6.5 Data
+
+Three new `Districts` columns and one new `Settings` row:
+
+- `harmony_supply` — a scalar. Blank = 0 = not a decoration.
+- `harmony_cost_per_level` — a list, the total at each level, from level 1.
+- `build_cost_goods` — a goods list (`Planks:2,CutStone:2`), the build's
+  price in refined goods, which no building could name before. The
+  `|`-separated per-level form already exists for upgrades; a build has one
+  level, so this is one entry.
+- `harmony.surplus_tiers` — `1.10:0.05|1.25:0.10|1.50:0.15`, a new **`tiers`**
+  setting kind, because a threshold and its bonus are one fact and have to
+  travel together. It is the first setting that is neither a number nor a
+  list, so the export marks it a Text cell the way a list already is. There is deliberately **no `harmony.surplus_stat`**: the
+  stat a bonus moves is a call site, so a setting whose only legal value is
+  `taxRate` would be a knob that cannot turn.
+
+The importer refuses: a row with `harmony_supply` that also has a level ladder,
+a crew, a queue, residents or something it trains (a decoration is none of
+those); a `harmony_cost_per_level` that falls between levels (it is a total);
+tiers that are not ascending, or a threshold below 1.
+
+### 6.6 Sim
+
+- `src/sim/harmony.ts` — `harmonySupply`, `harmonyDemand`,
+  `harmonyBlock(state, def, targetLevel, district?)` and
+  `harmonySurplusMultiplier`. Everything derived, nothing stored.
+- Gates: `'NeedsHarmony'` in `placementBlock` (beside `CountLimit`, the other
+  rule that is about the building rather than the cell) and in
+  `upgradeDistrict`, whose refusals become **three** —
+  `NotEnoughResources`, `NotEnoughGoods`, `NeedsHarmony`, each a different
+  errand: the map, the workshop, the decorations.
+- **Goods at build time.** `enqueueBuild` pays `build_cost_goods` when the
+  build is QUEUED and `cancelQueueItem` refunds it in full — the rule a
+  workshop item already follows. `EnqueueBuildResult` gains
+  `'NotEnoughGoods'` and `'NeedsHarmony'`, which today would both collapse
+  into `'InvalidCell'`.
+- One `Adjacency` row, `Housing · AnyDecoration · goldPerMinute · +1` — the
+  mirror of `Housing ↔ Housing −1`, and the local reason to put a piece among
+  the houses. `AnyDecoration` is a fourth `ADJACENCY_GROUP`, its predicate
+  `harmonySupply > 0`. The Sanctum's Mana rule (proposal §8) waits for a
+  `manaPerHour` adjacency stat and is **not** in this step.
+- No boundary and no accrual: Harmony is neither timed nor produced.
+
+### 6.7 UI
+
+- The Build sheet grows a **Harmony header** — `supply / demand`, and either
+  the tier that pays or the next one to reach — and a **Decorations** section
+  under the buildings. The header appears from the Townhall level the first
+  piece unlocks, not from the first point supplied: it is the one place the
+  mechanic is explained rather than merely counted, and the card that sends
+  the player here names a number this sheet would otherwise never mention.
+- A card whose piece or level is gated says **_Needs N more Harmony_** in the
+  ribbon that already says what lifts a count cap, so the player never enters
+  placement only to be refused there.
+- The placement ghost shows the supply a decoration adds, next to the
+  adjacency labels it already pushes.
+- The Townhall card shows the same line, where the taxes it moves are read;
+  a decoration's own card says what it supplies, since a card with no crew, no
+  queue and no tap would otherwise be empty.
+- Refined goods ride beside the currencies in all three places a build is
+  priced — the card, the menu and the placement bar — and Harmony rides with
+  them on the upgrade button: it is a **requirement quoted at the price**,
+  which a chip says and a sentence beside the button does not.
+
+### 6.8 Save
+
+**Version 31, no migrator.** Nothing new is *serialized* — supply, demand and
+the bonus are all derived from the built set. What changes is that a save can
+now name a district id an older build cannot resolve, and `DefinitionID` is
+read as a blind cast (`save.ts:560`), so the bump is what makes such a build
+refuse the save rather than load it and find an undefined definition. An older
+save needs nothing: it has no decoration in it.
+
+### 6.9 Tests — `tests/harmony.test.ts`
+
+- Supply and demand from the built set; a piece under construction supplies
+  nothing; a district upgrading demands its TARGET level.
+- A build and an upgrade refused at `supply < demand + cost`; a building
+  already standing never blocks on a later deficit.
+- The surplus tiers, and **no bonus at demand 0**.
+- A decoration moved keeps its supply (`move.test.ts`); decorations are
+  movable.
+- Goods paid when a build is queued and refunded in full on cancel.
+- `levelGates.test.ts`: a level-8 upgrade is refused for the Townhall first,
+  then goods, then Harmony — the three errands in order.
+- The harness gains a `harmony` column; the assertion it can carry today is
+  that a player who cannot reach level 8 never builds a decoration, and step 7
+  is where the row turns into pacing.
+
+### 6.10 The commits, in order
+
+| | Lands |
+|---|---|
+| **6a** — **DONE** | the schema — three `Districts` columns, the `tiers` setting, every refusal, `balance:export` → `balance`. Every cell blank but the tiers, and `tests/harmony.test.ts` guards the shape |
+| **6b** — **DONE** | `harmony.ts`, both gates, goods at build time, the surplus term in `effectiveTaxRate` |
+| **6c** — **DONE** | the six decoration rows, their identity in `definitions.ts`, `buildMenuOrder`, the `AnyDecoration` adjacency row |
+| **6d** — **DONE** | the demand: `,,,,,,,2,4,6` on the fifteen |
+| **6e** — **DONE** | the UI — the header, the section, the ribbon, the ghost, the Townhall card |
+| **6f** | [`../features/18-harmony.md`](../features/18-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
+
+- **Art: done.** All six world sprites exist (`garden_l1`, `well_l1`,
+  `orchard_l1`, `statue_l1`, `plaza_l1`, `shrine_l1`). What is missing is the
+  six 16 px menu icons — six slices in
+  [`../art/ui/atlas.manifest.json`](../art/ui/atlas.manifest.json), or the six
+  names in `AWAITING_ART` until the sheet is cut.
+- **Done when:** a player at TH8 cannot buy a level 8 without decorations,
+  the decorations cost the workshop queue to buy, and the Townhall card says
+  what the surplus is paying.
+
+## 7. Step 7 · Townhall 5–10
+
+Levels 8–10 landed with step 4 and their Harmony demand with step 6; what is
+left here is **the Townhall ladder**, which is the only thing standing between
+the player and everything the two steps authored.
 
 - **Data:** Townhall `max_level` 10, `required_tech_per_level`
   `,CharterII,CharterIII,,,,,,` (nothing past 4), `upgrade_cost_goods_per_level`
@@ -380,8 +540,9 @@ authored, and the **Harmony cost** on the levels from 8.
   Townhall is the clock every other ladder hangs from. Every
   `max_count_per_townhall_level` array extended to 10 entries (Housing
   `2,4,6,9,11,13,15,17,19,21`; producers to 5–6; workshops
-  `0,0,0,0,1,1,1,2,2,2`). Every row's `harmony_cost_per_level` filled for 8–10
-  and for the §5–§7 buildings.
+  `0,0,0,0,1,1,1,2,2,2`). The Townhall's own `harmony_cost_per_level`,
+  `,,,,,,,10,20,30` — the fourteen districts' is step 6's (§6.4), so what is
+  left here is the building that gates them all.
 - **Sim:** nothing new — the gates from steps 2, 4 and 6 compose.
 - **UI:** the Townhall card lists what the next level unlocks (count caps) as
   today (`districtCard.ts:133-136`). `levelStars` already became a numeral in
@@ -536,7 +697,7 @@ The one new mechanic; last, and in three commits.
 | 3 | Runestone takes Mana as an input — the first non-tap Mana sink | OQ-44, `08-magic.md` §3 |
 | 4 | Producers' L6+ buy haul and speed, not crew — as ADDED units, since a chunk is 1-5 units and a percentage of it rounds away | proposal §1.1 |
 | 5 | The `Adjacency` sheet gains `stat` and `magnitude` | **OQ-48** |
-| 6 | Harmony surplus bonus lands on taxes; and what Harmony costs now the plot is unbounded | proposal §4.1 |
+| 6 | ~~Harmony surplus bonus lands on taxes; and what Harmony costs now the plot is unbounded~~ — **closed 2026-09-08**: a city total gated by a count cap per piece, every piece past the Garden priced in a good, and the surplus on taxes (§6) | proposal §4.1 |
 | 7 | Townhall 5–10 gated by goods and Harmony, not keystones. **Level 4 keeps `Charter III`**: the late city stays behind the delve loop, which is what welds the two halves together (settled 2026-09-04) | proposal §1.2; `07-research.md` §3 |
 | 8 | Runestone and the Reliquary L9 recipe as the province route past relic L3 | **OQ-7**, **OQ-9** |
 | 9 | The banner moves from the store to the Tavern | proposal §11; `14-monetization.md` §2.1 |

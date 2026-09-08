@@ -41,6 +41,10 @@ const DISTRICT_IDS = [
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
   // Workshops: each turns raw resources into ONE refined good.
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
+  // Decorations: they SUPPLY Harmony and do nothing else. Each has its own
+  // count cap, so a Townhall's demand needs several KINDS, and each kind is
+  // priced in a different good (Docs/plans/builder-30-days.md §6.3).
+  'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
 ];
 // Refined goods: what a workshop turns raw resources into, and what an
 // advanced building level is priced in. They are NOT wallet rows — the city
@@ -251,12 +255,19 @@ const SETTINGS = [
   ['ads.cooldown_max_seconds', 'ads.cooldownMaxSeconds'],
   ['ads.eligible_below_fraction', 'ads.eligibleBelowFraction'],
   ['ads.watch_seconds', 'ads.watchSeconds'],
+  // Harmony's surplus bonus: `supply / demand` thresholds and what each pays
+  // on the tax rate. A THRESHOLD AND ITS BONUS ARE ONE FACT, so they travel
+  // in one cell rather than two parallel lists. There is deliberately no
+  // `harmony.surplus_stat` beside it: the stat a bonus moves is a call site,
+  // so a setting whose only legal value is `taxRate` would be a knob that
+  // cannot turn (Docs/plans/builder-30-days.md §6.5).
+  ['harmony.surplus_tiers', 'harmony.surplusTiers', 'tiers'],
 ];
 
 /** Kept in step with `AdjacencyStat` and `ADJACENCY_GROUPS` in
  *  src/sim/data/definitions.ts, and with the ±clamp the resolver applies. */
 const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'];
-const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer'];
+const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDecoration'];
 const ADJACENCY_CLAMP = 0.25;
 
 const DISTRICT_COLUMNS = [
@@ -266,7 +277,7 @@ const DISTRICT_COLUMNS = [
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'army_cap_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
-  'build_cost_stone',
+  'build_cost_stone', 'build_cost_goods',
   'build_cost_multiplier', 'build_cost_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
   'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
@@ -278,6 +289,7 @@ const DISTRICT_COLUMNS = [
   'extra_units_per_delivery_per_level', 'strike_speed_per_level',
   'sale_price_per_level',
   'produces', 'queue_length_per_level',
+  'harmony_supply', 'harmony_cost_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
@@ -285,6 +297,7 @@ const DISTRICT_LIST_COLUMNS = [
   'army_cap_per_level',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level', 'sale_price_per_level',
+  'build_cost_goods', 'harmony_cost_per_level',
 ];
 
 const SHEETS = {
@@ -483,6 +496,36 @@ function goodsList(row, col) {
   });
 }
 
+/**
+ * A ladder of thresholds and what each one pays, written
+ * `1.10:0.05|1.25:0.10|1.50:0.15` — read as "at 110% of demand, +5%".
+ * Ascending, because a reader takes the LAST tier reached and a ladder that
+ * doubled back would silently pay the wrong one.
+ */
+function tiers(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
+  const out = [];
+  for (const part of String(raw).split('|')) {
+    const entry = part.trim();
+    if (entry === '') continue;
+    const [at, bonus] = entry.split(':').map((x) => Number(String(x).trim()));
+    if (!Number.isFinite(at) || at < 1) {
+      fail(where(row), `"${col}" has a threshold below 1 ("${entry}") — it is a RATIO of demand`);
+    }
+    if (!Number.isFinite(bonus) || bonus === 0) {
+      fail(where(row), `"${col}" has no bonus for the ${at} tier ("${entry}")`);
+    }
+    const last = out[out.length - 1];
+    if (last && at <= last.at) {
+      fail(where(row), `"${col}" is not ascending (${last.at} then ${at})`);
+    }
+    out.push({ at, bonus });
+  }
+  if (out.length === 0) fail(where(row), `"${col}" names no tier`);
+  return out;
+}
+
 function byId(rows, expectedIds, idColumn = 'id') {
   const seen = new Map();
   for (const row of rows) {
@@ -519,11 +562,19 @@ async function importXlsx() {
     artifacts: {},
     quests: [],
     fog: { rings: [], fallbackGrowth: 0 },
-    city: { initialCurrencies: {} }, kingdom: {},
+    city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
   };
 
   for (const [id, r] of byId(readSheet(workbook, 'Districts'), DISTRICT_IDS)) {
+    // A build has ONE level, so its goods price is one entry of the
+    // `|`-separated form the upgrade column already uses — same parser, same
+    // validation of the ids and the amounts.
+    const buildGoodsLevels = goodsList(r, 'build_cost_goods');
+    if (buildGoodsLevels.length > 1) {
+      fail(where(r), '"build_cost_goods" has more than one level — a build has only one');
+    }
+    const buildGoods = buildGoodsLevels[0] ?? {};
     out.districts[id] = {
       size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
       maxLevel: num(r, 'max_level'),
@@ -536,6 +587,10 @@ async function importXlsx() {
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
       armyCapPerLevel: list(r, 'army_cap_per_level'),
       buildCost: wallet(r, 'build_cost'),
+      // Refined goods a BUILD costs, on top of the currencies. Only the
+      // decorations name any today, and that is the point of them: a piece of
+      // beauty is a queue at a workshop rather than a walk to the map.
+      buildCostGoods: buildGoods,
       buildCostMultiplier: num(r, 'build_cost_multiplier'),
       buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
       buildDurationSeconds: num(r, 'build_duration_seconds'),
@@ -565,6 +620,13 @@ async function importXlsx() {
       // Sawmill's identity is the forest.
       produces: (r.produces === '' || r.produces === undefined) ? null : r.produces,
       queueLengthPerLevel: list(r, 'queue_length_per_level'),
+      // Harmony. A decoration SUPPLIES; everything else DEMANDS, and the
+      // demand is the TOTAL at that level rather than an increment — indexed
+      // from level 1 like `army_cap_per_level`, so one column states the
+      // build gate (entry 0) and every upgrade gate, and nothing anywhere has
+      // to sum a prefix (Docs/plans/builder-30-days.md §6.1).
+      harmonySupply: num(r, 'harmony_supply', { blankAs: 0 }),
+      harmonyCostPerLevel: list(r, 'harmony_cost_per_level'),
     };
     const made = out.districts[id].produces;
     if (made !== null && !GOOD_IDS.includes(made)) {
@@ -573,6 +635,32 @@ async function importXlsx() {
     if ((made === null) !== (out.districts[id].queueLengthPerLevel.length === 0)) {
       fail(where(r), 'a workshop needs both "produces" and "queue_length_per_level"');
     }
+    const d = out.districts[id];
+    // A decoration has no level, no crew, no residents, no queue and nothing
+    // it trains. Its whole contribution is the number in `harmony_supply`, so
+    // a row that supplies AND does something else is a row whose author meant
+    // two different buildings.
+    if (d.harmonySupply > 0) {
+      if (!Number.isInteger(d.harmonySupply)) {
+        fail(where(r), '"harmony_supply" is not a whole number');
+      }
+      if (d.maxLevel !== 1) fail(where(r), 'a decoration has no ladder — "max_level" must be 1');
+      for (const col of ['max_workers_per_level', 'population_capacity',
+        'army_cap_per_level', 'influence_radius_per_level', 'queue_length_per_level']) {
+        if (list(r, col).length > 0) fail(where(r), `a decoration has no "${col}"`);
+      }
+      if (made !== null) fail(where(r), 'a decoration makes nothing — clear "produces"');
+      if (d.harmonyCostPerLevel.length > 0) {
+        fail(where(r), 'a decoration supplies Harmony; it does not demand it');
+      }
+    }
+    // Demand is a TOTAL at each level, so it can stand still but never fall.
+    d.harmonyCostPerLevel.forEach((n, i) => {
+      if (i > 0 && n < d.harmonyCostPerLevel[i - 1]) {
+        fail(where(r), '"harmony_cost_per_level" falls at level '
+          + `${i + 1} (${d.harmonyCostPerLevel[i - 1]} then ${n}) — it is a total, not an increment`);
+      }
+    });
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Goods'), GOOD_IDS)) {
@@ -771,7 +859,9 @@ async function importXlsx() {
   const settings = byId(readSheet(workbook, 'Settings'), SETTINGS.map(([k]) => k), 'key');
   for (const [key, path, kind] of SETTINGS) {
     const row = settings.get(key);
-    const value = kind === 'list' ? list(row, 'value') : num(row, 'value');
+    const value = kind === 'list' ? list(row, 'value')
+      : kind === 'tiers' ? tiers(row, 'value')
+        : num(row, 'value');
     const parts = path.split('.');
     let target = out;
     while (parts.length > 1) target = target[parts.shift()];
@@ -810,6 +900,7 @@ const goodsCell = (levels) => levels
   .map((m) => Object.entries(m).map(([id, n]) => `${id}:${n}`).join(','))
   .join('|');
 const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] && w[c] !== 0 ? w[c] : ''));
+const tiersCell = (ts) => ts.map((t) => `${t.at}:${t.bonus}`).join('|');
 
 /** isTextCell(colName, rowValues) marks list cells: they get Excel's Text
  *  format so a two-entry list like "3,5" can't collapse into the number 3.5. */
@@ -842,6 +933,7 @@ async function exportXlsx() {
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       listCell(d.armyCapPerLevel),
       ...costCells(d.buildCost),
+      goodsCell(Object.keys(d.buildCostGoods).length > 0 ? [d.buildCostGoods] : []),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
       ...costCells(d.upgradeCost),
@@ -852,6 +944,7 @@ async function exportXlsx() {
       listCell(d.extraUnitsPerDeliveryPerLevel), listCell(d.strikeSpeedPerLevel),
       listCell(d.salePricePerLevel),
       d.produces ?? '', listCell(d.queueLengthPerLevel),
+      d.harmonySupply || '', listCell(d.harmonyCostPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
 
@@ -916,9 +1009,11 @@ async function exportXlsx() {
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
     for (const part of path.split('.')) value = value[part];
-    return [key, kind === 'list' ? listCell(value) : value];
+    return [key, kind === 'list' ? listCell(value)
+      : kind === 'tiers' ? tiersCell(value)
+        : value];
   }), (col, row) => col === 'value' &&
-    SETTINGS.some(([key, , kind]) => key === row[0] && kind === 'list'));
+    SETTINGS.some(([key, , kind]) => key === row[0] && kind !== undefined));
 
   await workbook.xlsx.writeFile(XLSX_PATH);
   console.log(`balance: wrote ${XLSX_PATH}`);

@@ -7,6 +7,7 @@ import { effectiveBuildTimeMultiplier } from './upgrades';
 import { isTechComplete } from './research';
 import { cellHasSite } from './sites';
 import { goodsCostForLevel } from './goods';
+import { harmonyBlock } from './harmony';
 import {
   cellsOfRect, coordKey, districtAt, townhall,
   type Coord, type District, type DistrictId, type GameState, type GoodsStock,
@@ -40,6 +41,7 @@ export type PlacementBlock =
   | 'HasFeature' | 'NotRevealed' | 'Occupied' | 'OffMap' | 'CountLimit'
   | 'NeedsResearch' | 'NeedsShoreline'
   | 'NeedsLand'
+  | 'NeedsHarmony'
   | 'HasSite';
 
 /**
@@ -48,10 +50,10 @@ export type PlacementBlock =
  *
  * **A building goes anywhere the player has revealed.** Every condition below
  * is about the GROUND — it exists, it is empty, it is dry, it is not somebody
- * else's — plus the count cap and the unlock technology. There is no rule
- * about where a building sits RELATIVE to another one, and the Docks' need
- * for a shoreline is the single exception, which is terrain rather than
- * layout.
+ * else's — plus the three that are about the BUILDING: the count cap, the
+ * unlock technology and the Harmony it demands. There is no rule about where
+ * a building sits RELATIVE to another one, and the Docks' need for a
+ * shoreline is the single exception, which is terrain rather than layout.
  *
  * Layout is guided instead of policed: adjacency pays or charges for a
  * neighbour ([`03-economy.md`](../../Docs/features/03-economy.md) §3.1), so a
@@ -97,6 +99,11 @@ export function placementBlock(
     return 'CountLimit';
   }
   if (def.requiredTech && !isTechComplete(state, def.requiredTech)) return 'NeedsResearch';
+  // Harmony, like the count cap above it, is about the BUILDING rather than
+  // the cell — every cell on the map answers the same way, which is why the
+  // build menu refuses the card before the player ever enters placement
+  // (Docs/plans/builder-30-days.md §6.7).
+  if (movingId === undefined && harmonyBlock(state, def, 1) !== null) return 'NeedsHarmony';
   // The one per-type rule left, and it is about terrain rather than layout:
   // a pier spanning the shoreline needs exactly ONE of its 2×1 cells on
   // Water. Horizontal only — no rotation; the coast decides which half is wet
@@ -197,6 +204,12 @@ export function upgradeCost(definitionId: DistrictId, n: number, currentLevel: n
  */
 export const upgradeGoodsCost = (definitionId: DistrictId, targetLevel: number): GoodsStock =>
   goodsCostForLevel(DISTRICTS[definitionId], targetLevel);
+
+/** What a BUILD costs in refined goods. Flat — unlike the currencies, which
+ *  the count multiplier makes dearer with every one already standing, since a
+ *  recipe does not care how many of the thing you own. */
+export const buildGoodsCost = (definitionId: DistrictId): GoodsStock =>
+  DISTRICTS[definitionId].buildCostGoods;
 
 /** Build time in seconds (Carpentry: −5%/rank). Rounding: round. */
 export const buildDuration = (

@@ -30,6 +30,7 @@ import type { CurrencyId, District, DistrictId, GameState } from './state';
 import { techMultiplier, techValue } from './techEffects';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
+import { harmonySurplusMultiplier } from './harmony';
 
 /**
  * What the city gathers of one resource per second, from its own numbers.
@@ -224,10 +225,18 @@ export const effectiveSalePriceMultiplier = (state: GameState): number =>
  * of building — "+5% gold income at Housing" — rather than only at every roof
  * at once. Absent is every roof, which is what the ladders in the tree today
  * do.
+ *
+ * The Harmony surplus rides at the **base stage**, the way
+ * `marketSaleLevelMultiplier` does: a city kept beautiful past what its
+ * buildings ask of it is a standing fact about the city, not a modifier with
+ * an expiry. The tax anchor is already settled around every boundary batch and
+ * around a move, so a decoration completing — which IS a build completion —
+ * reprices the partial stretch without anything new (`population.ts`).
  */
 export const effectiveTaxRate = (state: GameState, district?: DistrictId): number =>
   Math.max(0, resolve(
     state, 'taxRate',
-    techValue(state, 'taxRate', TAXES.goldPerPopulationPerMinute,
+    techValue(state, 'taxRate',
+      TAXES.goldPerPopulationPerMinute * harmonySurplusMultiplier(state),
       district === undefined ? undefined : { district }),
   ));

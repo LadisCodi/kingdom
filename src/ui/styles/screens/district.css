@@ -254,6 +254,14 @@
 .dc-army-note { color: var(--ink-muted); }
 .dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* What a decoration supplies, and — on the Townhall — what the city's whole
+ * beauty is paying for. Same shape as the army line above it: both are facts
+ * about the CITY that happen to be read on one building's card. */
+.dc-harmony {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: var(--text-helper);
+}
+
 /* ------------------------------------------------- the training section ---
  * Shared by every building that turns something out — the Townhall's
  * villagers and a hall's soldiers are one mechanic, so they are one block.

@@ -23,6 +23,7 @@ import {
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
+import { harmonyBlock } from './sim/harmony';
 import {
   committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
   trainingCompletesAt,
@@ -938,9 +939,27 @@ export class Game {
     } else if (result === 'NoBuilderFree') {
       this.offerBuilder();
     } else {
-      this.toast(result);
+      this.toast(this.refusalWords(result, definitionId, 1));
     }
     this.notify();
+  }
+
+  /**
+   * A refusal in plain words, and — where there is one — the errand that
+   * answers it. Three of them are a different trip each: the map, a workshop
+   * queue, a decoration. A bare enum name told the player none of that.
+   */
+  private refusalWords(
+    result: string, definitionId: DistrictId, targetLevel: number, district?: District,
+  ): string {
+    if (result === 'NotEnoughGoods') {
+      return 'Not enough refined goods — queue some at a workshop';
+    }
+    if (result === 'NeedsHarmony') {
+      const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
+      return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+    }
+    return result;
   }
 
   /**
@@ -1086,7 +1105,10 @@ export class Game {
       // same wall and deserves the same offer rather than a bare refusal.
       this.offerBuilder();
     } else if (result !== 'Started') {
-      this.toast(result);
+      const d = districtById(this.state, districtId);
+      this.toast(d === undefined
+        ? result
+        : this.refusalWords(result, d.definitionId, d.level + 1, d));
     }
     this.notify();
     return result;

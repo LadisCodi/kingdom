@@ -27,7 +27,8 @@ export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Sanctum'
   | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' // military
-  | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver'; // workshops
+  | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver' // workshops
+  | 'Garden' | 'Well' | 'Orchard' | 'Statue' | 'Plaza' | 'Shrine'; // decorations
 /** Which authored region this kingdom is playing. One today — the field
  *  exists now because the SAVE FILE is the only artefact that cannot be
  *  changed retroactively: every save written before it exists is ambiguous

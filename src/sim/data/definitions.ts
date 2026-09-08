@@ -356,6 +356,17 @@ export const TRAINING = balance.training;
 // rent forward, bounded by the Mana pool and nothing else.
 export const TAXES = balance.taxes;
 
+/**
+ * Harmony's surplus bonus: what `supply / demand` has to reach, and what each
+ * tier pays on the tax rate. Ascending — a reader takes the LAST tier
+ * reached. **At demand 0 there is no ratio and no bonus**, or one Garden at
+ * Townhall 5 would pay the top tier for the whole midgame, for free
+ * (Docs/plans/builder-30-days.md §6.2).
+ */
+export const HARMONY = balance.harmony as {
+  readonly surplusTiers: readonly { readonly at: number; readonly bonus: number }[];
+};
+
 // Adjacency rules (Adjacency sheet): flat gold a district gains — or loses —
 // per adjacent neighbor of a given type. Directional: (district, neighbor).
 /**
@@ -378,13 +389,14 @@ export type AdjacencyStat = 'goldPerMinute' | 'workTime' | 'trainTime';
  * time a building joins the kind. Membership is DERIVED from what a district
  * already is, so nothing is authored twice.
  */
-export type AdjacencyGroup = 'AnyHall' | 'AnyWorkshop' | 'AnyProducer';
+export type AdjacencyGroup = 'AnyHall' | 'AnyWorkshop' | 'AnyProducer' | 'AnyDecoration';
 export type AdjacencyTarget = DistrictId | AdjacencyGroup;
 
 export const ADJACENCY_GROUPS: Record<AdjacencyGroup, (d: DistrictDef) => boolean> = {
   AnyHall: (d) => d.armyCapPerLevel.length > 0,
   AnyWorkshop: (d) => d.produces !== null,
   AnyProducer: (d) => d.harvestSources.length > 0,
+  AnyDecoration: (d) => d.harmonySupply > 0,
 };
 
 export const isAdjacencyGroup = (t: string): t is AdjacencyGroup => t in ADJACENCY_GROUPS;
@@ -481,6 +493,12 @@ export interface DistrictDef {
   providesHarvestSource: HarvestSourceId | null;
   maxLevel: number;
   buildCost: Wallet;
+  /** Refined goods a BUILD costs on top of the currencies, paid when the
+   *  build is queued and refunded in full on cancel — the rule a workshop
+   *  item already follows. Empty = priced in raw resources alone. Only the
+   *  decorations name any, and that is what makes a piece of beauty a queue
+   *  at a workshop rather than a walk to the map. */
+  buildCostGoods: GoodsStock;
   buildCostMultiplier: number;
   buildCostExponentialGrowth: number;
   buildDurationSeconds: number;
@@ -543,6 +561,16 @@ export interface DistrictDef {
    *  A longer queue is a longer absence covered, never more goods per hour —
    *  that is the crew (Docs/plans/builder-30-days.md §2.2). */
   queueLengthPerLevel: readonly number[];
+  /** Harmony this building SUPPLIES once built. Non-zero = it is a
+   *  decoration, which is the whole of what it does: no level, no crew, no
+   *  residents, no tap. */
+  harmonySupply: number;
+  /** Harmony this building DEMANDS — the **total** at each level, not an
+   *  increment, indexed from level 1 the way `armyCapPerLevel` is. So entry 0
+   *  is the gate on BUILDING it and the rest are the gates on its levels, one
+   *  column for both and no prefix summed anywhere. Empty = it demands
+   *  nothing (Docs/plans/builder-30-days.md §6.1). */
+  harmonyCostPerLevel: readonly number[];
 }
 
 // Numbers (costs, times, caps, sizes, radii) come from balance/*.csv via
@@ -555,6 +583,16 @@ const rules = {
 /** A workshop: identity and art here, everything numeric from the sheet, and
  *  its gate from whichever technology says it unlocks it. */
 const workshop = (
+  id: DistrictId, name: string, description: string, glyph: string, sprite: string,
+) => ({
+  ...rules, id, name, description, glyph, sprite,
+});
+
+/** A decoration: it supplies Harmony and does nothing else — no level, no
+ *  crew, no residents, no tap, and no fog ring, which would have made a
+ *  200-Wood Garden a cheaper frontier than paying for one. Its count cap is
+ *  its Townhall gate too, the way a workshop's already is. */
+const decoration = (
   id: DistrictId, name: string, description: string, glyph: string, sprite: string,
 ) => ({
   ...rules, id, name, description, glyph, sprite,
@@ -726,6 +764,36 @@ const DISTRICT_CONTENT = {
       '🔯', 'rune_carver'),
     ...districtBalance(balance.districts.RuneCarver),
   },
+  Garden: {
+    ...decoration('Garden', 'Garden', 'Beds of flowers. The cheapest beauty a city can keep.',
+      '🌷', 'garden'),
+    ...districtBalance(balance.districts.Garden),
+  },
+  Well: {
+    ...decoration('Well', 'Well', 'Cobbled stone and a bucket — where the street meets.',
+      '🪣', 'well'),
+    ...districtBalance(balance.districts.Well),
+  },
+  Orchard: {
+    ...decoration('Orchard', 'Orchard', 'Two rows of fruit trees, kept for the look of them.',
+      '🌳', 'orchard'),
+    ...districtBalance(balance.districts.Orchard),
+  },
+  Statue: {
+    ...decoration('Statue', 'Statue', 'A crowned figure in pale stone. Somebody paid for this.',
+      '🗿', 'statue'),
+    ...districtBalance(balance.districts.Statue),
+  },
+  Plaza: {
+    ...decoration('Plaza', 'Plaza', 'A paved square with room for a market day.',
+      '⛲', 'plaza'),
+    ...districtBalance(balance.districts.Plaza),
+  },
+  Shrine: {
+    ...decoration('Shrine', 'Shrine', 'A round temple of pale stone, cut through with runes.',
+      '⛩️', 'shrine'),
+    ...districtBalance(balance.districts.Shrine),
+  },
 };
 
 export const BUILDABLE_DISTRICTS: DistrictId[] = [
@@ -733,10 +801,15 @@ export const BUILDABLE_DISTRICTS: DistrictId[] = [
   'Sanctum',
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
+  'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
 ];
 
 /** Every workshop, in build-menu order. */
 export const WORKSHOPS: DistrictId[] = ['Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver'];
+
+/** Every decoration, cheapest first — which is also the order their Townhall
+ *  gates open in. The build menu shows them as their own section. */
+export const DECORATIONS: DistrictId[] = ['Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine'];
 
 /**
  * The districts, with the gates the technologies hand them.
@@ -1524,4 +1597,10 @@ export const GAME_VERSION = '0.1.0';
 // migrator, only the version (see Docs/implementation-plan.md §1).
 // v18 predates ad offers. `kingdom.adOffers` is additive and its reader
 // defaults, so this bump needs no migrator either.
-export const SAVE_VERSION = 30;
+// v31 adds the decorations. Nothing new is SERIALIZED — Harmony is derived
+// from the built set — but a save can now name a district id a build without
+// them cannot resolve, and `DefinitionID` is read as a blind cast. The bump
+// is what makes an older build REFUSE such a save instead of loading it and
+// finding an undefined definition; no migrator, since an older save simply
+// has no decoration in it.
+export const SAVE_VERSION = 31;

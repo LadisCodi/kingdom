@@ -14,7 +14,7 @@
 import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
+  DISTRICTS, HARMONY, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { committedArmyPower, maxArmyPower } from '../sim/army';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
@@ -23,6 +23,9 @@ import {
   requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
+import {
+  harmonyBlock, harmonyCost, harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
+} from '../sim/harmony';
 import {
   districtCapacity, houseGoldPerMinute,
 } from '../sim/population';
@@ -204,6 +207,39 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // A workshop turns things out too, so it gets the same kind of block.
     const workshop = workshopSection(game, district);
     if (workshop) body.append(workshop);
+
+    // A decoration is ONE number, and this is it. It has no crew, no queue
+    // and no tap, so without this line its card would be empty.
+    if (isDecoration(def)) {
+      body.append(el('div', { class: 'dc-harmony' },
+        iconEl('harmony', { size: 'sm' }),
+        el('span', {}, `Supplies ${def.harmonySupply} Harmony`),
+        el('span', { class: 'dc-army-note' }, 'and a house beside it collects more rent')));
+    }
+
+    // The city's beauty, read where it is SPENT: the Townhall is where the
+    // taxes the surplus moves are collected. Silent on a city that has
+    // neither supplied nor been asked for any — there is nothing to explain
+    // on day one.
+    if (district.definitionId === 'Townhall') {
+      const supply = harmonySupply(game.state);
+      const demand = harmonyDemand(game.state);
+      if (supply > 0 || demand > 0) {
+        const tier = harmonySurplusTier(game.state);
+        const nextTier = HARMONY.surplusTiers.find(
+          (t) => tier === null || t.at > tier.at);
+        const note = tier !== null
+          ? `+${Math.round(tier.bonus * 100)}% taxes`
+          : nextTier !== undefined && demand > 0
+            ? `${Math.round(nextTier.at * 100)}% of demand pays +${
+              Math.round(nextTier.bonus * 100)}% taxes`
+            : 'nothing demands it yet';
+        body.append(el('div', { class: 'dc-harmony' },
+          iconEl('harmony', { size: 'sm' }),
+          el('span', {}, `Harmony ${supply} supplied, ${demand} demanded`),
+          el('span', { class: 'dc-army-note' }, note)));
+      }
+    }
 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
@@ -397,6 +433,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       reason = `Your Townhall must reach level ${requiredTh}`;
     } else if (gateTech !== null && !isTechComplete(game.state, gateTech)) {
       reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
+    } else {
+      // The third errand, and the only one whose answer is a building the
+      // player has not thought of yet — so it says the number and the verb.
+      const short = harmonyBlock(game.state, def, next, district);
+      if (short !== null) reason = `Needs ${short.shortBy} more Harmony — build a decoration`;
     }
 
     // Refined goods sit beside the currencies rather than among them: they
@@ -410,13 +451,26 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         short: getGood(game.state.city.goods, id) < n,
       }));
 
+    // Harmony rides with the goods rather than with the currencies: it is not
+    // spent and never leaves the city, so it is a REQUIREMENT quoted at the
+    // price — which is what a chip beside the button says and a sentence
+    // above it does not.
+    const harmonyPrice = harmonyCost(def, next);
+    const harmonyTerm = harmonyPrice > harmonyCost(def, district.level)
+      ? [{
+        icon: 'harmony' as const,
+        amount: String(harmonyPrice),
+        short: harmonyBlock(game.state, def, next, district) !== null,
+      }]
+      : [];
+
     const upgrade = action({
       label: 'Upgrade',
       kind: 'primary',
       onClick: () => game.doUpgrade(district.uniqueId),
       disabledReason: reason,
       cost,
-      costExtra: goodsTerms,
+      costExtra: [...goodsTerms, ...harmonyTerm],
       have: (c) => game.walletValue(c),
       // What is left beside the button is the WAIT, which is a consequence
       // rather than a price and has no business inside the press-target.
