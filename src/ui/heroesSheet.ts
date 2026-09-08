@@ -17,7 +17,7 @@
 import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import { heroIsBusy } from '../sim/expeditions';
-import { heroStats, rosterView } from '../sim/heroes';
+import { canUnlockHero, heroStats, heroUnlockCost, rosterView } from '../sim/heroes';
 import { levelCost, tierCost } from '../sim/collection';
 import { spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
@@ -66,7 +66,9 @@ type RosterEntry = ReturnType<typeof rosterView>[number];
 /** Can this hero take a level or an ascension right now? The tile's green
  *  mark — the roster's job is to point at the one card worth opening. */
 function ready(game: Game, view: RosterEntry): boolean {
-  if (!view.owned) return false;
+  // An unfound hero with ten fragments is the most urgent card on the screen:
+  // it is a hero the player already owns and has not noticed.
+  if (!view.owned) return canUnlockHero(game.state, view.id);
   const canLevel = view.entry.level < view.levelCap
     && game.walletValue('Stardust') >= levelCost(view.entry.level);
   const canAscend = view.entry.tier < COLLECTION.maxTier
@@ -103,7 +105,10 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
     // absence. Same treatment the locked relics get.
     t.append(el('span', { class: 'hero-tile-foot is-frag' },
       iconEl('sparkle', { size: 'sm' }),
-      `${view.entry.fragments} / ${tierCost(1)}`));
+      `${view.entry.fragments} / ${heroUnlockCost()}`));
+    if (ready(game, view)) {
+      t.append(el('span', { class: 'hero-tile-ready' }, iconEl('plus', { size: 'sm' })));
+    }
   }
 
   t.addEventListener('click', () => {
@@ -191,16 +196,31 @@ function detail(game: Game, id: HeroId): HTMLElement {
   );
 
   if (!owned) {
+    const short = heroUnlockCost() - view.entry.fragments;
     body.append(
       el('div', { class: 'hero-note' },
-        view.entry.fragments > 0
-          ? 'Not yet found — their fragments are adding up.'
-          : 'Not yet found. The banner might bring them, and every miss pays fragments.'),
+        short <= 0
+          ? 'You have enough fragments. Recruit them.'
+          : `Not yet found. ${short} more fragment${short === 1 ? '' : 's'} recruits them, `
+            + 'and every miss on the banner pays some.'),
       el('div', { class: 'hero-ladder' },
         el('div', { class: 'hero-ladder-line' },
-          iconEl('sparkle', { size: 'sm' }),
-          el('b', {}, `${view.entry.fragments} / ${tierCost(1)}`),
-          el('span', {}, 'fragments toward them'))),
+          el('span', { class: 'hero-ladder-label' }, 'Fragments'),
+          el('b', {}, `${view.entry.fragments}`),
+          el('span', { class: 'hero-ladder-cap' }, `of ${heroUnlockCost()}`))),
+      // Two doors to the same hero, which is the whole point of the fragment:
+      // the banner may hand them over outright, and a pile of ten buys them
+      // whether or not it ever does (Docs/features/10-heroes.md §4).
+      action({
+        label: 'Recruit',
+        kind: 'primary',
+        onClick: () => game.doUnlockHero(id),
+        costExtra: [{
+          icon: 'sparkle',
+          amount: `${view.entry.fragments} / ${heroUnlockCost()}`,
+          short: short > 0,
+        }],
+      }),
       action({
         label: 'Call for aid',
         kind: 'gem',

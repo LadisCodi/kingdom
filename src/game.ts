@@ -8,7 +8,7 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST,
   LANDMARK_ART, LANDMARKS, RUINS,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
@@ -46,7 +46,7 @@ import {
 } from './sim/expeditions';
 import {
   claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft, levelUpHero,
-  pull, pullMany, raiseHeroTier, STANDARD_BANNER, type PullResult,
+  pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
   mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
@@ -135,6 +135,61 @@ export interface Banner {
   sfx?: SfxName;
 }
 
+/**
+ * One thing a call paid, as the reveal screen shows it.
+ *
+ * A `PullResult` is a record of a ROLL — hit or miss, which pity moved, what
+ * it charged. That is the wrong shape to draw: ten of them are ten rows of
+ * bookkeeping, and the player asked "what did I get". So a batch collapses
+ * into prizes, which is the only thing the screen knows about.
+ */
+export type GachaPrize =
+  | { kind: 'hero'; heroId: HeroId }
+  | { kind: 'fragments'; heroId: HeroId; amount: number }
+  | { kind: 'currency'; currency: CurrencyId; amount: number };
+
+export interface GachaReveal {
+  banner: BannerId;
+  /** How many calls this was — the screen says "×10" rather than counting
+   *  prizes, which condense and would undercount. */
+  calls: number;
+  prizes: GachaPrize[];
+}
+
+/**
+ * Collapse a batch into prizes.
+ *
+ * Two rules do all the work. **Same thing, one widget with a count**: ten
+ * calls that each paid 50 Stardust are one 500, and four fragments of the
+ * same hero are one stack of four — otherwise a ten-call is a wall of
+ * identical tiles nobody reads. And **heroes last**, because they are what
+ * the player called for: the sequence should arrive at them rather than open
+ * with them and then spend nine tiles winding down.
+ */
+export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
+  const heroes: GachaPrize[] = [];
+  const fragments = new Map<HeroId, number>();
+  let stardust = 0;
+  for (const p of pulls) {
+    // A duplicate is not a hero prize — it already paid its fragments, and
+    // showing it as a hero would promise a roster entry that is already there.
+    if (p.heroId !== null && !p.duplicate) heroes.push({ kind: 'hero', heroId: p.heroId });
+    if (p.fragmentsOf !== null && p.fragments > 0) {
+      fragments.set(p.fragmentsOf, (fragments.get(p.fragmentsOf) ?? 0) + p.fragments);
+    }
+    stardust += p.stardust;
+  }
+  return [
+    ...(stardust > 0
+      ? [{ kind: 'currency', currency: 'Stardust', amount: stardust } as GachaPrize]
+      : []),
+    ...[...fragments].map(([heroId, amount]): GachaPrize => ({
+      kind: 'fragments', heroId, amount,
+    })),
+    ...heroes,
+  ];
+}
+
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
@@ -172,6 +227,11 @@ export class Game {
   inspectedSite: Coord | null = null;
   private hint: Hint | null = null;
   openOverlay: OverlayName | null = null;
+  /** What a call just paid, while the reveal screen is showing it. Not an
+   *  overlay: `#overlay` is a stacking context under the nav, and a reward
+   *  the player can tap around is not a reward — the same reason the
+   *  rewarded video has a mount of its own. */
+  gachaReveal: GachaReveal | null = null;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -951,7 +1011,7 @@ export class Game {
       const claimed = claimFreePull(this.state, banner, this.now());
       if (claimed.result === 'Pulled') {
         playSfx('gemSpend');
-        this.announcePull(banner, claimed.pull);
+        this.openReveal(banner, [claimed.pull]);
       }
       this.adWatchStartedAt = null;
       this.setOverlay(null);
@@ -1177,30 +1237,32 @@ export class Game {
   /** A new hero gets the pennant; anything else gets a line. Shared by the
    *  paid call and the one an ad pays for, because a hero found for free is
    *  still a hero found. */
-  private announcePull(banner: BannerId, result: PullResult, before?: number): void {
-    const owned = before ?? this.state.heroes.owned.length - 1;
-    if (result.heroId !== null && this.state.heroes.owned.length > owned) {
-      const hero = HEROES[result.heroId];
-      this.queueBanner({
-        title: result.rarity === 'Legendary' ? 'A legend answers!' : 'A new hero answers!',
-        icon: hero.glyph,
-        name: hero.name,
-        desc: hero.traitText,
-        sprite: hero.sprite,
-        tone: 'gold',
-        sfx: 'chainFinished',
-      });
-    } else if (result.fragmentsOf !== null) {
-      this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
-    }
-    void banner;
+  /**
+   * Hand a batch to the reveal screen.
+   *
+   * This used to be a top banner for a hero and a toast for fragments, which
+   * had the ten-call announcing itself in a single line of summary — a call
+   * is the one moment in the game the player paid for a surprise, and a
+   * one-line receipt is the opposite of one. The screen owns it now
+   * (Docs/features/10-heroes.md §8.3); nothing is queued, so there is no
+   * second announcement to collide with it.
+   */
+  private openReveal(banner: BannerId, pulls: readonly PullResult[]): void {
+    const prizes = gachaPrizes(pulls);
+    if (prizes.length === 0) return;
+    this.gachaReveal = { banner, calls: pulls.length, prizes };
+  }
+
+  /** The player has read it. */
+  dismissGachaReveal(): void {
+    this.gachaReveal = null;
+    this.notify();
   }
 
   /** Ten calls at once. The banner card shows the ten results; the presenter
    *  only announces the heroes among them, because ten toasts is not a
    *  reward, it is a queue. */
   doPullMany(banner: BannerId = STANDARD_BANNER, count = 10): void {
-    const before = this.state.heroes.owned.length;
     const batch = pullMany(this.state, banner, count);
     if (batch.result === 'NotEnoughKeys') {
       this.shake([BANNERS[banner].key]);
@@ -1209,11 +1271,7 @@ export class Game {
     }
     if (batch.result === 'Pulled') {
       playSfx('gemSpend');
-      const gained = this.state.heroes.owned.length - before;
-      const fragments = batch.pulls.reduce((n, p) => n + p.fragments, 0);
-      this.toast(gained > 0
-        ? `${gained} new hero${gained === 1 ? '' : 'es'} · +${fragments} fragments`
-        : `No new heroes · +${fragments} fragments`);
+      this.openReveal(banner, batch.pulls);
     }
     this.notify();
   }
@@ -1747,14 +1805,22 @@ export class Game {
   // --------------------------------------------------------------- heroes
 
   doPull(banner: BannerId = STANDARD_BANNER): void {
-    const before = this.state.heroes.owned.length;
     const result = pull(this.state, banner);
     if (result.result === 'NotEnoughKeys') {
       this.shake([BANNERS[banner].key]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
-      this.announcePull(banner, result, before);
+      this.openReveal(banner, [result]);
     }
+    this.notify();
+  }
+
+  /** Ten fragments buy a hero the banner has not offered
+   *  (Docs/features/10-heroes.md §4). */
+  doUnlockHero(id: HeroId): void {
+    const result = unlockHero(this.state, id);
+    if (result === 'Unlocked') playSfx('chainFinished');
+    else if (result === 'NotEnoughFragments') this.toast('Not enough fragments yet');
     this.notify();
   }
 

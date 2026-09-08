@@ -7,7 +7,8 @@
 > [`combat.md`](combat.md) §9.
 >
 > **Status: the gacha is built** (§6), and so are **the nav tab, the roster
-> grid and the hero card** (§8, built 2026-09-08). **The hero itself is
+> grid, the hero card and the reveal screen** (§8, built 2026-09-08), and
+> **recruiting a hero with ten fragments** (§4.1). **The hero itself is
 > designed, not built — reworked 2026-09-08 onto the resolver**: the stat
 > block and the passive (§2), XP-bought levels and the
 > Fragment-plus-Stardust ascension (§4), and Gem-bought hero slots (§3)
@@ -112,8 +113,24 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 | | Raise | Cost |
 |---|---|---|
+| **Recruit** | not owned → owned, at tier 1 level 1 | **10 of that hero's Fragments** |
 | **Level** | +1, up to the tier cap | Hero XP: `heroes.xp_level_cost_base × heroes.xp_level_cost_growth^level` |
 | **Ascension** | +1 tier, cap +2 levels | that hero's Fragments **and** a Stardust toll |
+
+### 4.1 Two doors to a hero
+
+- **A call hands over either a hero or fragments of one. They are different
+  prizes**, and both end at the same place: **ten fragments recruit the hero
+  outright.**
+- Without that second door, fragments of a stranger pile up against a door
+  with no handle, and §4's promise that every drop has a play-based route is
+  only true for heroes the banner has already given you.
+- **Recruiting is not an ascension.** A hero recruited with fragments starts
+  at tier 1 with the whole ladder below still ahead of them, exactly as a
+  pulled one does.
+- The price is the ladder's own base rung, so **the recruit and the first
+  ascension ask for the same ten** and the player learns one number. Change on
+  a bigger pile carries over.
 
 | Ascension | Fragments | Cumulative | Stardust toll | New level cap |
 |---|---|---|---|---|
@@ -252,8 +269,8 @@ Each of these is data, not code:
   cannot act on.
 - A tile carries the portrait, its **unit type** top-left, its **level** and
   its **ascension stars** along the foot.
-- **An unfound hero shows its fragment count**, not a padlock — a silhouette
-  with progress on it is something to want.
+- **An unfound hero shows its fragment count** against the ten that recruit
+  them, not a padlock — a silhouette with progress on it is something to want.
 - **A green mark** on any tile that can take a level or an ascension right
   now. It is the roster's whole job: point at the one card worth opening.
 - **Owned first, then the gaps**, both in roster order. No sort control.
@@ -271,7 +288,34 @@ Each of these is data, not code:
 - The stat block, the passive, and the two actions: **Train** priced in XP,
   **Ascend** priced in Fragments plus Stardust.
 - An unowned hero's card is the same screen with the ladders replaced by its
-  fragment count and one way to the banner.
+  fragment count, a **Recruit** button priced in those fragments, and one way
+  to the banner.
+
+### 8.3 The reveal
+
+What a call paid, and the only screen in the game that covers everything but
+the rewarded video.
+
+- **A grid of prize widgets that deals itself**, one every tenth of a second.
+  A call is the one moment the player paid for a surprise; a finished grid
+  handed over at once is a receipt.
+- **The prompt to leave appears only when the last tile has landed.** A screen
+  saying *tap to finish* while it is still dealing is asking to be skipped.
+- **A ten-call condenses.** Same thing, one widget with a count: ten calls
+  paying 50 Stardust each are one 500, and four fragments of one hero are one
+  stack of four. Otherwise a ten is a wall of identical tiles nobody reads.
+- **Heroes come last**, so the sequence arrives at what the player called for
+  rather than opening with it.
+- **A hero interrupts.** When the next tile would be a hero, the sequence
+  stops and the hero takes the whole screen — portrait, name, rarity — because
+  a roster entry arriving is a different size of event from four fragments and
+  must not be a tile a thumb is already moving past. Tap to carry on.
+- **One tap, three meanings**, in this order: put a hero curtain away and
+  carry on; deal the rest at once, never skipping a curtain; leave. Skipping
+  to the end is what a thumb tries first, and a screen that ignores it feels
+  stuck.
+- A duplicate is **not** drawn as a hero. It already paid its fragments, and a
+  hero tile would promise a roster entry that is already there.
 - **The banners live in the Tavern** (*designed, not built*): heroes are
   unlocked by that building and **tapping it is how one is called**, the way
   tapping the Market opens the trade screen
@@ -305,6 +349,7 @@ Each of these is data, not code:
 | A hero's passive | §2.4 | `Heroes.troop_dmg_mult`, `troop_hp_mult`, `troop_def_bonus`, `passive_per_tier` |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarity_stat_mult_*`, `heroes.rarity_passive_mult_*` |
 | What a level costs in XP | §4 | `heroes.xp_level_cost_base`, `xp_level_cost_growth` |
+| What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragments_per_tier_base` |
 | What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragments_per_tier_*`, `heroes.ascension_stardust_base`, `ascension_stardust_growth` |
 | What a hero slot costs | §3 | `heroes.slot_gem_cost_base`, `slot_gem_cost_growth`, `heroes.max_slots` |
 | What a key costs in Gems | 500 / 1,500 | `Banners.key_gem_cost` |
@@ -331,6 +376,10 @@ Each of these is data, not code:
 - **A gacha currency Gems cannot buy.** The keys are a price on a button and
   a free ad path; nothing else mints them.
 - **A discount on the ten-call.** A batch buys pity walked, not a cheaper key.
+- **A reveal the player cannot skip**, and a reveal that offers a way out
+  before it has finished dealing.
+- **A second announcement of a call** — a banner or a toast beside the reveal.
+  One call, one screen.
 - Standalone equipment with random stats or duplicate fusion.
 - **A hero no amount of play can reach** — every rarity is on a free call.
 - Rotating or time-limited banners — both are permanent.

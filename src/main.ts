@@ -26,6 +26,7 @@ import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
+import { mountGachaScreen } from './ui/gachaScreen';
 import { renderAdOfferSheet } from './ui/adOfferSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderDailySheet } from './ui/dailySheet';
@@ -134,6 +135,7 @@ async function boot(): Promise<void> {
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountGachaScreen(game, document.getElementById('gacha')!);
   mountAdScreen(game, document.getElementById('ad')!);
   // The two bars publish their REAL heights as --hud-h / --nav-h, which is
   // what every other screen positions against. The tokens are only the

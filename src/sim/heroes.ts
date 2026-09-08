@@ -80,6 +80,39 @@ export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   return 'Levelled';
 }
 
+/**
+ * Fragments that buy an unowned hero outright.
+ *
+ * The banner hands out TWO different prizes — a hero, or fragments of one —
+ * and until this existed the second was only worth anything on a hero you
+ * already had. Fragments of a stranger piled up against a door with no
+ * handle, which is the one thing "every gacha drop has a play-based route"
+ * (Docs/features/10-heroes.md §4) cannot survive.
+ *
+ * Priced at the ladder's own base rung, so the entry price and the first
+ * ascension are the same ten and the player learns one number rather than
+ * two. It is deliberately NOT a tier raise: an unlocked hero still starts at
+ * tier 1 with the whole ascension ladder ahead of them.
+ */
+export const heroUnlockCost = (): number => COLLECTION.fragmentsPerTierBase;
+
+export type HeroUnlockResult = 'Unlocked' | 'AlreadyOwned' | 'NotEnoughFragments';
+
+export function unlockHero(state: GameState, id: HeroId): HeroUnlockResult {
+  if (ownsHeroId(state, id)) return 'AlreadyOwned';
+  const held = state.heroes.fragments[id] ?? 0;
+  if (held < heroUnlockCost()) return 'NotEnoughFragments';
+  // Spend, then grant — `grantHero` preserves whatever is left over, so a
+  // player sitting on twelve keeps two toward the first ascension.
+  state.heroes.fragments[id] = held - heroUnlockCost();
+  grantHero(state, id);
+  return 'Unlocked';
+}
+
+/** Enough fragments to recruit them, and not owned yet. */
+export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
+  !ownsHeroId(state, id) && (state.heroes.fragments[id] ?? 0) >= heroUnlockCost();
+
 export type HeroTierResult = 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments';
 
 export function raiseHeroTier(state: GameState, id: HeroId): HeroTierResult {
