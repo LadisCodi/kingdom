@@ -430,6 +430,23 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
       info: el('span', { class: 'res-time' },
         iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
     }));
+    // INSTANT: the whole wait, bought. Both halves of it are time — the
+    // Knowledge the drip still owes, and the research itself — so both are
+    // priced per second like every other rush. Under Start, because starting
+    // it is the ordinary answer and this is the one that costs money.
+    const instant = game.techInstantGems(id);
+    if (instant !== null) {
+      panel.append(action({
+        label: 'Instant',
+        kind: 'gem',
+        onClick: () => game.doBuyTechInstant(id),
+        cost: { Gems: instant },
+        have: (c) => game.walletValue(c),
+        disabledReason: busy >= slots ? 'Every scholar is busy' : undefined,
+        info: el('span', { class: 'res-time' },
+          iconEl('tick', { size: 'sm' }), 'Researched at once'),
+      }));
+    }
     // A trickle currency without a time-to-afford line is one the player
     // cannot plan against (07-research.md §4). Only when Knowledge is
     // the thing short: Gold has its own answer, which is to go and earn it.

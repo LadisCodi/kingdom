@@ -60,6 +60,7 @@ import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/ques
 import {
   anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
   finishTechWithGems, techRushCost,
+  buyTechInstantly, instantTechGems,
 } from './sim/research';
 import { describeTech } from './sim/techProse';
 import {
@@ -1324,6 +1325,22 @@ export class Game {
   /** Gems to finish this research now, or null when it is not running. */
   techRushGems(id: TechId): number | null {
     return techRushCost(this.state, id, this.now());
+  }
+
+  /** Gems to have this technology now — the Knowledge it is short of, priced
+   *  through its own drip, plus the research itself. Null when it is not
+   *  something the player could start. */
+  techInstantGems(id: TechId): number | null {
+    return instantTechGems(this.state, id, knowledgePerHour(this.state));
+  }
+
+  doBuyTechInstant(id: TechId): void {
+    const result = buyTechInstantly(this.state, id, knowledgePerHour(this.state));
+    if (result === 'Researched') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    else if (result === 'NoFreeSlot') this.toast('Every research slot is busy');
+    this.notify();
   }
 
   doFinishTech(id: TechId): void {

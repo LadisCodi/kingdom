@@ -258,6 +258,70 @@ export function techRushCost(state: GameState, id: TechId, now: number): number 
   return Math.max(1, Math.ceil(Math.max(0, at - now) / 1000 / RUSH.secondsPerGem));
 }
 
+/**
+ * Gems to have a technology outright, right now — the price of the whole
+ * wait, not just the half of it a running research has left.
+ *
+ * TWO WAITS, ONE RATE. A technology idle at the lectern is behind two clocks:
+ * the Knowledge it is short of, which the drip has to produce, and the
+ * research itself. Both are TIME, so both are priced at
+ * `RUSH.secondsPerGem` — the same per-second offer the Townhall makes.
+ * Converting the Knowledge shortfall through its own rate is what makes the
+ * two comparable at all: a currency that arrives on a clock is a duration
+ * wearing a number.
+ *
+ * **Gold is not in it.** There is no Gems→Gold rate anywhere in this game and
+ * inventing one here would be a monetisation decision rather than a button:
+ * Gems buy time, breadth and power, and the city's own purse is the city's
+ * (Docs/features/14-monetization.md §1). The Gold is still paid, so a
+ * technology the city cannot afford cannot be bought instantly either.
+ *
+ * Null when it is not something you could start — already done, already
+ * running, requirements or era unmet — or when nothing is dripping at all, in
+ * which case the Knowledge half has no finite price.
+ */
+export function instantTechGems(
+  state: GameState, id: TechId, ratePerHour: number,
+): number | null {
+  if (isGranted(id) || !TECHNOLOGIES[id].placed) return null;
+  if (isTechComplete(state, id) || isTechActive(state, id)) return null;
+  if (!requirementsMet(state, id) || !techEraUnlocked(state, id)) return null;
+  const waitMs = knowledgeShortfallMs(state, id, ratePerHour);
+  if (!Number.isFinite(waitMs)) return null;
+  const researchMs = TECHNOLOGIES[id].durationSeconds * 1000
+    * effectiveResearchTimeMultiplier(state);
+  return Math.max(1, Math.ceil((waitMs + researchMs) / 1000 / RUSH.secondsPerGem));
+}
+
+export type InstantTechResult =
+  | 'Researched' | 'Unavailable' | 'NoFreeSlot' | 'NotEnoughGold' | 'NotEnoughGems';
+
+/**
+ * Buy it and shelve it in one press.
+ *
+ * It still takes a slot check: the strip is the statement of how much the
+ * kingdom can study at once, and a purchase that ignores it would make the
+ * slots decorative. It spends whatever Knowledge the kingdom DOES hold — the
+ * Gems paid for the shortfall, not for a refund of the rest.
+ */
+export function buyTechInstantly(
+  state: GameState, id: TechId, ratePerHour: number,
+): InstantTechResult {
+  const gems = instantTechGems(state, id, ratePerHour);
+  if (gems === null) return 'Unavailable';
+  if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
+  if (getWallet(state.city.wallet, 'Gold') < techCost(id)) return 'NotEnoughGold';
+  if (getWallet(state.player.wallet, 'Gems') < gems) return 'NotEnoughGems';
+
+  addToWallet(state.player.wallet, 'Gems', -gems);
+  addToWallet(state.city.wallet, 'Gold', -techCost(id));
+  // Whatever is in the purse, up to the price: the Gems covered the gap.
+  const held = knowledge(state);
+  addToWallet(state.kingdom.wallet, 'Knowledge', -Math.min(held, techKnowledgeCost(id)));
+  state.research.completed.push(id);
+  return 'Researched';
+}
+
 export type TechRushResult = 'Finished' | 'NotActive' | 'NotEnoughGems';
 
 /**

@@ -16,7 +16,9 @@ import {
 import {
   CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
 } from '../src/ui/research/layout';
-import { finishTechWithGems, techRushCost } from '../src/sim/research';
+import {
+  buyTechInstantly, finishTechWithGems, instantTechGems, techRushCost,
+} from '../src/sim/research';
 import { knowledgePerHour } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId } from '../src/sim/state';
@@ -672,5 +674,101 @@ describe('finishing a research with Gems', () => {
     advance(state, map, T0 + TECHNOLOGIES.Forestry.durationSeconds * 2000);
     expect(state.research.completed.filter((id) => id === 'Forestry'))
       .toEqual(completedTwice);
+  });
+});
+
+// INSTANT: the whole wait, bought. Two clocks stand between an idle
+// technology and the shelf — the Knowledge the drip still owes, and the
+// research itself — and both are time, so both are priced per second like
+// every other rush (Docs/features/07-research.md §1).
+describe('buying a technology outright', () => {
+  const RATE = 1; // per hour, the base drip
+
+  const ready = () => {
+    const state = freshGame();
+    fund(state, { Gold: 99_999, Knowledge: 0 });
+    state.player.wallet.Gems = 0;
+    return state;
+  };
+
+  it('prices the Knowledge shortfall through its own drip, plus the research', () => {
+    const state = ready();
+    const need = techKnowledgeCost('Forestry');
+    const waitSeconds = (need / RATE) * 3600;
+    const research = TECHNOLOGIES.Forestry.durationSeconds;
+
+    expect(instantTechGems(state, 'Forestry', RATE))
+      .toBe(Math.ceil((waitSeconds + research) / RUSH.secondsPerGem));
+  });
+
+  it('costs less once the Knowledge is already in hand', () => {
+    const short = instantTechGems(ready(), 'Forestry', RATE)!;
+
+    const funded = ready();
+    fund(funded, { Gold: 99_999, Knowledge: 999 });
+    const held = instantTechGems(funded, 'Forestry', RATE)!;
+
+    expect(held).toBeLessThan(short);
+    // …and what is left is the research time alone.
+    expect(held).toBe(
+      Math.ceil(TECHNOLOGIES.Forestry.durationSeconds / RUSH.secondsPerGem),
+    );
+  });
+
+  it('researches it now, charging Gems, Gold and the Knowledge held', () => {
+    const state = ready();
+    fund(state, { Gold: 500, Knowledge: 1 }); // one short of Forestry's two
+    const gems = instantTechGems(state, 'Forestry', RATE)!;
+    state.player.wallet.Gems = gems;
+
+    expect(buyTechInstantly(state, 'Forestry', RATE)).toBe('Researched');
+
+    expect(isTechComplete(state, 'Forestry')).toBe(true);
+    expect(state.research.active).toEqual([]); // it never occupied a slot
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(500 - techCost('Forestry'));
+    // The Gems paid for the GAP, so the Knowledge in hand is still spent.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+  });
+
+  // Gems buy time, breadth and power — never the city's own purse. There is
+  // no Gems→Gold rate in this game and this button does not invent one.
+  it('still needs the Gold, and takes nothing when it is short', () => {
+    const state = ready();
+    fund(state, { Gold: techCost('Forestry') - 1 });
+    state.player.wallet.Gems = 99_999;
+
+    expect(buyTechInstantly(state, 'Forestry', RATE)).toBe('NotEnoughGold');
+    expect(isTechComplete(state, 'Forestry')).toBe(false);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(99_999);
+  });
+
+  it('refuses when every slot is busy — the strip is not decorative', () => {
+    const state = ready();
+    fund(state, { Gold: 99_999, Knowledge: 999 });
+    state.player.wallet.Gems = 99_999;
+    expect(startTech(state, 'Forestry', T0)).toBe('Started'); // the only slot
+
+    expect(buyTechInstantly(state, 'Warrior', RATE)).toBe('NoFreeSlot');
+  });
+
+  it('is unavailable for anything the player could not start anyway', () => {
+    const state = ready();
+    fund(state, { Gold: 99_999, Knowledge: 999 });
+    // A requirement short.
+    expect(instantTechGems(state, 'Agriculture', RATE)).toBeNull();
+    // Already running.
+    startTech(state, 'Forestry', T0);
+    expect(instantTechGems(state, 'Forestry', RATE)).toBeNull();
+    // Already done.
+    completeTech(state, 'Warrior');
+    expect(instantTechGems(state, 'Warrior', RATE)).toBeNull();
+  });
+
+  it('has no price at all when nothing is dripping', () => {
+    const state = ready();
+    // A rate of zero makes the Knowledge half an infinite wait, and an
+    // infinite wait has no honest price.
+    expect(instantTechGems(state, 'Forestry', 0)).toBeNull();
   });
 });

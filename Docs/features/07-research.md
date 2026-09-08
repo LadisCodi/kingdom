@@ -66,6 +66,31 @@
   The technology is moved to completed there and then rather than by
   shortening its duration: a duration edited backwards puts a boundary in the
   past, and one-call replay and stepped ticking would land on it differently.
+- **Gems also buy an idle technology outright — `Instant`.** Two clocks stand
+  between it and the shelf, and both are priced the same way:
+
+```
+gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time )
+       ÷ rush.seconds_per_gem
+```
+
+- **A currency that arrives on a clock is a duration wearing a number**, so
+  the shortfall is converted through its own rate and the two waits become
+  comparable. Knowledge always has a base rate, which is what keeps the
+  conversion finite; at a rate of zero there is no honest price and the button
+  is not offered.
+- **Gold is not in it.** There is no Gems→Gold rate anywhere in the game and
+  this does not invent one: Gems buy time, breadth and power, and the city's
+  purse is the city's ([`14-monetization.md`](14-monetization.md) §1). The
+  Gold is still paid, and the Knowledge already held is still spent — the Gems
+  bought the gap, not a refund.
+- **It takes a slot check.** The strip says how much the kingdom can study at
+  once; a purchase that ignored it would make the slots decorative.
+- **The magnitude is a live question.** `seconds_per_gem` was calibrated on
+  BUILD waits, which run in seconds and minutes; a Knowledge wait runs in
+  hours. Two Knowledge at the base 1/h is two hours, which is **1,440 Gems**
+  — against a 500-Gem opening purse. Consistent with every other rush, and
+  probably too steep to ever be pressed. **OQ-87.**
 - The tree has 180 rows: **Civics 71 · Magic 57 · Warfare 52**, totalling
   **550,165 Gold and 50,495 Knowledge**. Price bands per era are in
   [`tech-tree.md`](tech-tree.md) §5.
@@ -380,7 +405,8 @@ Tap Power        +40%  →  +60%
   draw (§2.2).
 - Cost: Gold, Knowledge, time; time-to-afford when Knowledge is short. Behind
   a locked bar the action reads "Reveal N more cells to read on".
-- Action: **Start research**, or **Finish now** in Gems on a running one.
+- Actions: **Start research**, **Instant** in Gems on an idle one (§1), or
+  **Finish now** in Gems on a running one.
 
 ### 5.5 The slots
 
