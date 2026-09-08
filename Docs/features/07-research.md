@@ -197,10 +197,14 @@ A `bonus` names its effects, and each is four fields:
 - A page is **three columns** wide and as many rows tall as the book needs.
   Three, because a fourth does not fit a phone and the flow stops reading as a
   flow past three.
-- **A row is depth.** Every requirement sits on a smaller row than the card
-  that needs it, which is what makes a loop impossible and the page readable
-  downward. One to three requirements per card; a card on the page's FIRST
-  ROW may have none, because there is nothing above it to require.
+- **A row is depth.** Every requirement sits on the row IMMEDIATELY above the
+  card that needs it, so the page reads a line at a time and no edge is traced
+  past cards it does not touch. One to three requirements per card; a card on
+  the page's FIRST ROW requires nothing, because there is nothing above it.
+- **A rank ladder is a name, not a chain.** `Sawpits II` does not require
+  `Sawpits I`, nor sit anywhere near it: the numeral tells the player the bonus
+  goes further down the book, and every rank is an ordinary card gated by the
+  row above it.
 - **Every technology has a slot, ranks included.** `Sawpits II` is a card in
   band 2, not a bead hanging off its parent — the fan the old canvas needed is
   gone, and so are `FAN_DX`/`FAN_DY`.

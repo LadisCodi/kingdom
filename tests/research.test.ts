@@ -18,8 +18,8 @@ import {
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId } from '../src/sim/state';
 import {
-  addAllTrainers, bonusLadders, completeRanks, completeTech, freshGame, freshPresenter, fund,
-  ladderParent, ladders, map, openEveryEra, rankOf, T0, tickAt,
+  addAllTrainers, completeRanks, completeTech, freshGame, freshPresenter, fund,
+  ladders, map, openEveryEra, rankOf, T0, tickAt,
 } from './helpers';
 
 const FARM_CELL = { x: 2, y: 0 }; // revealed grassland
@@ -151,8 +151,9 @@ describe('technology basics', () => {
   it('costs are paid up front, in Gold, from the city purse', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000, Wood: 500, Stardust: 5000, Knowledge: 5_000 });
-    // Sailing sits in Magic era 2, so it wants the era-1 keystone above it.
-    completeTech(state, 'AttunementII');
+    // Sailing sits a band down in Magic, so whatever the row above it holds
+    // has to be standing — read off the tree, since that is a drag away.
+    for (const req of TECHNOLOGIES.Sailing.requires) completeTech(state, req);
     openEveryEra(state); // Sailing is a band down, and a band is a gate in the world
     const purse = getWallet(state.city.wallet, 'Gold');
     expect(startTech(state, 'Sailing', T0)).toBe('Started');
@@ -498,9 +499,13 @@ describe('planned technologies', () => {
   // The flag is the statement: it draws the hatched node and the panel's
   // "Not yet in the prototype" line. Pinning the SET stops one being quietly
   // un-flagged (shipping a no-op as content) or a new no-op arriving unflagged.
-  it('are exactly the seventeen the design lists, and no more', () => {
+  // Fifteen: Civics kept none. `Land Survey` and `Apprenticeships` were cut
+  // when the book was laid out — with every requirement one row up, a card
+  // that does nothing is a toll on the way to one that does, and the answer
+  // for a Civics page with no room for a leaf was to drop them.
+  it('are exactly the fifteen the design lists, and no more', () => {
     expect(PLANNED.sort()).toEqual([
-      'Apprenticeships', 'FieldMedicine', 'FrugalRites', 'Invocation', 'LandSurvey',
+      'FieldMedicine', 'FrugalRites', 'Invocation',
       'LeyLines', 'LeyReading', 'LeyStorm', 'Lorekeeping', 'RitualCasting', 'Scouting',
       'Scrying', 'Siegecraft', 'Standards', 'Vanguard', 'Veterancy', 'Wayshrines',
     ].sort());
@@ -519,10 +524,18 @@ describe('planned technologies', () => {
     for (const id of PLANNED) expect(techUnlocks(id)).toEqual([]);
   });
 
-  it("are never a rank ladder's parent, so no working ladder hangs off a no-op", () => {
-    for (const ladder of bonusLadders) {
-      const parent = ladderParent(ladder)!;
-      expect(TECHNOLOGIES[parent].planned, `${ladder} hangs off planned ${parent}`).toBe(false);
+  // Wider than the ladders it used to name: NOTHING that works waits on a
+  // no-op, wherever it sits. A planned card in the middle of a page makes the
+  // player buy nothing to reach something, and with every requirement now one
+  // row up (`techTreeRules.ts`) that is a shape the page can fall into by
+  // accident — the drop default prefers a card that does something for exactly
+  // this reason.
+  it('are never required by anything that works, so nothing waits on a no-op', () => {
+    for (const id of TECH_ORDER) {
+      if (TECHNOLOGIES[id].planned) continue;
+      for (const req of TECHNOLOGIES[id].requires) {
+        expect(TECHNOLOGIES[req].planned, `${id} waits on planned ${req}`).toBe(false);
+      }
     }
   });
 });

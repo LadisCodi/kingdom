@@ -131,10 +131,13 @@ export function treeEditorPlugin() {
           const doc = JSON.parse(await readBody(req));
           // The editor's own rules, not a second copy of them.
           const rules = await server.ssrLoadModule('/src/sim/data/techTreeRules.ts');
+          // NOTHING IS REFUSED. The endpoint validates so it can say what is
+          // wrong, not so it can withhold the file: a page mid-rearrangement
+          // is when the work most needs writing down, and a save that says no
+          // is a save that loses an afternoon. What ships is held by CI
+          // (`tests/techTree.test.ts`), which is the right place for it —
+          // there a broken tree fails a build, here it is a Tuesday.
           const { errors, warnings, offPage } = rules.validateTechTree(doc);
-          if (errors.length > 0) {
-            return send(422, { error: 'the tree does not validate', errors });
-          }
           writeFileSync(TREE_PATH, serialiseTechTree(doc, rules.TOME_IDS));
           const count = Object.keys(doc.technologies).length;
           // Off the page is a holding pen, and it ships: a book half
@@ -143,9 +146,10 @@ export function treeEditorPlugin() {
           // an unfinished tree does not go quiet.
           server.config.logger.info(
             `tree editor: wrote tech-tree.json (${count} technologies, `
-            + `${warnings.length} warnings, ${offPage.length} off the page)`,
+            + `${errors.length} errors, ${warnings.length} warnings, `
+            + `${offPage.length} off the page)`,
           );
-          send(200, { ok: true, technologies: count, warnings });
+          send(200, { ok: true, technologies: count, errors, warnings });
         } catch (err) {
           server.config.logger.error(`tree editor: save failed — ${err.stack ?? err}`);
           send(500, { error: String(err.message ?? err) });

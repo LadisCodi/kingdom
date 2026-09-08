@@ -86,9 +86,14 @@ export function mountEditor(): void {
    */
   let wiring: { id: string; side: 'in' | 'out' } | null = null;
 
-  const palette = el('div', { class: 'ed-toolbar tre-palette' });
+  // `data-keep-scroll` is the game host's idiom (`ui/kit/host.ts`) and it is
+  // here for the same reason: every gesture in this editor redraws all four
+  // panes, and a redraw throws the scroll away. Working on row 28 of Civics
+  // meant being thrown back to row 0 on every click — including a click on a
+  // connector, which is a gesture you make deep in a page by definition.
+  const palette = el('div', { class: 'ed-toolbar tre-palette', 'data-keep-scroll': '' });
   const stage = el('main', { class: 'ed-stage tre-stage' });
-  const side = el('aside', { class: 'ed-side' });
+  const side = el('aside', { class: 'ed-side', 'data-keep-scroll': '' });
   const status = el('footer', { class: 'ed-status' });
   const root = el('div', { class: 'ed-root tre-root' }, palette, stage, side, status);
   document.body.append(root);
@@ -104,10 +109,6 @@ export function mountEditor(): void {
   const save = async (): Promise<void> => {
     if (saving) return;
     const { errors, offPage } = doc.validation;
-    if (errors.length > 0) {
-      toast(`${errors.length} problem${errors.length === 1 ? '' : 's'} — fix them first`, true);
-      return;
-    }
     saving = true;
     refresh();
     try {
@@ -119,13 +120,18 @@ export function mountEditor(): void {
       const body = await res.json() as { ok?: boolean; error?: string; warnings?: TechIssue[] };
       if (!res.ok || body.ok !== true) throw new Error(body.error ?? `HTTP ${res.status}`);
       doc.markSaved();
-      // The holding pen is saved WITH the file, so the count goes in the
-      // toast: a rearrangement left half-done is a fine thing to write down,
-      // and a bad thing to forget.
-      toast(`Saved tech-tree.json${(body.warnings ?? []).length > 0
-        ? ` — ${body.warnings!.length} warning(s)` : ''}`
-        + (offPage.length > 0
-          ? ` — ${offPage.length} still off the page` : ''));
+      // WHAT IS WRONG WITH IT goes in the toast, and nothing is refused. A
+      // page mid-rearrangement is exactly when the work most needs writing
+      // down; a save button that says no is a save button that loses an
+      // afternoon. The problem list is already on screen, and CI still holds
+      // the line for what ships (`tests/techTree.test.ts`).
+      const noted = [
+        errors.length > 0 ? `${errors.length} error(s)` : '',
+        (body.warnings ?? []).length > 0 ? `${body.warnings!.length} warning(s)` : '',
+        offPage.length > 0 ? `${offPage.length} off the page` : '',
+      ].filter((n) => n !== '');
+      toast(`Saved tech-tree.json${noted.length > 0 ? ` — ${noted.join(', ')}` : ''}`,
+        errors.length > 0);
     } catch (err) {
       toast(`Save failed: ${(err as Error).message}`, true);
     } finally {
@@ -459,7 +465,11 @@ export function mountEditor(): void {
     const tabs = el('div', { class: 'tre-tabs' });
     for (const id of TOME_IDS) {
       const tab = el('button', { class: `ed-btn tre-tab${id === tome ? ' on' : ''}` }, id);
-      tab.addEventListener('click', () => { tome = id; selected = null; refresh(); });
+      // A different book starts at its own beginning — keeping the scroll
+      // would open Warfare halfway down for no reason anyone asked for.
+      tab.addEventListener('click', () => {
+        tome = id; selected = null; toTop = true; refresh();
+      });
       tabs.append(tab);
     }
     const undo = el('button', { class: 'ed-btn' }, '↶ undo');
@@ -567,7 +577,7 @@ export function mountEditor(): void {
       refresh();
     };
 
-    const page = el('div', { class: 'tre-page' });
+    const page = el('div', { class: 'tre-page', 'data-keep-scroll': '' });
     const flow = el('div', {
       class: `tre-flow${wiring === null ? '' : ' is-wiring'}`,
       style: `width:${PAGE_W}px;height:${height}px`,
@@ -1142,11 +1152,28 @@ export function mountEditor(): void {
     return node;
   }
 
+  /** Set for the one gesture that SHOULD start a page over: opening a book. */
+  let toTop = false;
+
   function refresh(): void {
+    // Matched by document order, which is stable because a redraw produces the
+    // same four panes in the same places.
+    const kept = toTop ? [] : [...root.querySelectorAll<HTMLElement>('[data-keep-scroll]')]
+      .map((n) => [n.scrollTop, n.scrollLeft] as const);
+    toTop = false;
+
     drawPalette();
     drawStage();
     drawSide();
     drawStatus();
+
+    const now = root.querySelectorAll<HTMLElement>('[data-keep-scroll]');
+    kept.forEach(([top, left], i) => {
+      const n = now[i];
+      if (n === undefined) return;
+      n.scrollTop = top;
+      n.scrollLeft = left;
+    });
   }
 
   window.addEventListener('beforeunload', (e) => {

@@ -59,7 +59,7 @@ technology says is generated from what it does (§3.1).
 | `kind` | `unlock`, `bonus` or `mechanic` (§3) |
 | `tome` · `era` | which book, which band — the book says how many it has (`eras`) |
 | `row` · `col` | its slot on that book's three-column page; a requirement always sits on a smaller row |
-| `requires` | one to three technologies — none needed by anything on the page's first row |
+| `requires` | one to three technologies, all on the **row immediately above** — none needed by anything on the page's first row |
 | `gold` · `knowledge` · `seconds` | what it costs and how long it takes; `knowledge` omitted when 0 |
 | `unlocks` | `kind: unlock` only (§3) |
 | `effects` | `kind: bonus` only — one line each, so a rebalance diffs as the values that changed (§3) |
@@ -187,7 +187,7 @@ A saved technology with no slot is **not in the game**: no card on any page,
 nothing to research, and it gates nothing — whatever it unlocks is simply
 ungated until it is placed again.
 
-**Errors** (a save is refused):
+**Errors** (they do not stop a save — see below):
 
 - an illegal id, or no name or glyph
 - prose on a technology whose `unlocks` or `effects` already say what it does
@@ -200,6 +200,9 @@ ungated until it is placed again.
   page's first row** — the first row is where a root belongs, because there is
   nothing above it to require
 - a requirement in another tome, at or below the card, or naming itself
+- a requirement that reaches **further up than the row above**: every
+  prerequisite is the card directly before this one, so the page can be read a
+  line at a time
 - a band that starts at or above the one before it
 - a negative or fractional price; anything free at all, since nothing is
   granted any more; Knowledge charged in era 1, where the clock has not started
@@ -213,11 +216,20 @@ ungated until it is placed again.
 - an effect naming a stat the registry does not have, an op that stat does not
   accept, a target of a kind it does not accept, or a target id that does not
   exist
-- a rank that does not require the rank before it, or a ladder whose numerals
-  skip one
+- a ladder whose numerals skip one. A ladder is a NAME, not a chain: rank II
+  does not require rank I and need not sit near it — the numeral tells the
+  player the bonus goes further down the book, and carries no mechanism
 
-**Warnings** (a save goes through): a requirement on a `planned` technology,
-which does nothing yet.
+**Warnings**: a requirement on a `planned` technology, which does nothing yet.
+The drop default already prefers a card that does something, so this only
+happens where a whole row is planned.
+
+**Nothing is refused.** The rules exist to say what is wrong, not to withhold
+the file: a page mid-rearrangement is exactly when the work most needs writing
+down, and a save button that says no is one that loses an afternoon. The save
+reports what it found — errors, warnings, cards still in the palette — and
+writes anyway. What SHIPS is held by `tests/techTree.test.ts`, which is the
+right place for it: there a broken tree fails a build, here it is a Tuesday.
 
 There is deliberately **no rule about connectors crossing cards**. The routing
 makes it impossible: a line runs down its own column only while that column is
@@ -243,9 +255,10 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
 - **Drag** a technology from the palette (or from another slot) onto a slot.
   Dropping onto an occupied slot **swaps** the two.
 - **A drop sets the requirements**: the filled slot directly above the target,
-  or the whole of the nearest row above when that one is empty. That is the
-  converge-and-fan the flow chart is made of, and it is a starting point, not
-  a verdict.
+  or the rest of that row when that slot is empty — the row IMMEDIATELY above
+  and no further, which is the only place a requirement may point. It prefers
+  a card that does something over a `planned` one. That is the converge-and-fan
+  the flow chart is made of, and it is a starting point, not a verdict.
 - **Hover a card and two ports appear**, one over its top edge (its INPUT,
   where a line from the row above lands) and one under its bottom edge (its
   OUTPUT). Press one to start a connection:
@@ -300,6 +313,12 @@ editor** button on the `?dev` bar. `← game` in the status bar goes back.
   every technology in it goes to the palette. It asks first, with the COUNT —
   "clear era 2" is not a sentence anyone can check and "20 technologies" is —
   and it is **one undo**, not twenty.
+- **The scroll stays where you left it.** Every gesture redraws all four
+  panes, so each one keeps its own position across the redraw — a click on a
+  card, or on a connector, is a gesture you make deep in a page, and being
+  thrown back to row 0 for it made the bottom of a book unworkable. Opening
+  another book is the one thing that starts at the top, because it is another
+  page.
 - `⌘Z`/`⌘S` undo and save. Undo covers both verbs.
 - A technology the rules object to is red in **both** panes — outlined on the
   page, and on its palette row — and every problem in the list is a button

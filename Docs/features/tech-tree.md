@@ -8,11 +8,12 @@
 > [`../tech-tree-editor.md`](../tech-tree-editor.md).
 > `src/sim/data/definitions.ts` points at this file.
 >
-> **Status.** Built: **180 technologies** in `src/sim/data/tech-tree.json`,
+> **Status.** Built: **174 technologies** in `src/sim/data/tech-tree.json`,
 > authored in `?dev=tree` ([`../tech-tree-editor.md`](../tech-tree-editor.md)),
-> priced to §5's bands, with every §6 number wired. **17 era-2/3 majors are on the
-> tree flagged `planned`** — drawn, researchable, no effect yet (§7). **Nine
-> ladders are designed, not built**, and are marked so in the tables.
+> priced to §5's bands, with every §6 number wired. **15 era-2/3 majors are on the
+> tree flagged `planned`** — drawn, researchable, no effect yet (§7); Civics
+> carries none. **Nine ladders are designed, not built**, and are marked so in
+> the tables.
 
 ## 1. Reading the tables
 
@@ -27,7 +28,7 @@
   in the workbook.
 - A technology never requires a technology in another tome.
 
-## 2. Tome I — Civics — 69 nodes
+## 2. Tome I — Civics — 67 nodes
 
 > *The city and its purse.* Open, like every book.
 
@@ -42,61 +43,72 @@ door.
 
 Civics runs to **three bands**; Warfare and Magic run to four.
 
-### 2.1 Era 1 · Settlement — 16 nodes
+### 2.1 Era 1 · Settlement — 19 nodes
 
 | Major | Unlocks |
 |---|---|
 | **Forestry** | the forest and berry taps |
+| **Agriculture** | crop plots |
 | **Saws** | the Sawmill |
-| **Agriculture** | crop plots and the Farm that works them |
+| **Farming** | the Farm that works the plots |
 | **Masonry** | the Quarry |
+| **Market** | the Market |
 | **Urban Planning** | Housing level 2 |
 
-### 2.2 Era 2 · Township — 20 nodes
+The band opens on one root and fans twice: Masonry and the Market split the
+page, and Urban Planning gathers them again before the three thumb ladders
+hang off it.
+
+### 2.2 Era 2 · Township — 17 nodes
 
 | Major | Unlocks |
 |---|---|
+| **Bureaucracy** | Townhall 3 |
 | **Hunting** | the wild game tap |
-| **Farming** | Farm level 2 |
-| **Market** | the Market |
-| **Mining** | the iron vein — the Quarry works it for Stone |
+| **Mining** | the Smelter, and the iron mountain the Quarry works for Stone |
 | **Communities** | +1 resident in every Housing |
 
-### 2.3 Era 3 · Borough — 34 nodes
+### 2.3 Era 3 · Borough — 31 nodes
 
 | Major | Unlocks |
 |---|---|
-| **Engineering** | Quarry L2, Sawmill L3 |
-| **Deep Mining** | the gold mountain — the Quarry works it for Gold |
-| **Architecture** | Quarry L3, Sawmill L4 |
+| **Magistracy** | Townhall 4 — the card the band opens on |
+| **Engineering** | Sawmill L3, Quarry L2, the Carpenter and the Mason's Yard |
 | **Aqueducts** | Housing L3 |
+| **Architecture** | Sawmill L4, Quarry L3 |
+| **Deep Mining** | the gold mountain — the Quarry works it for Gold |
 | **Guildhalls** | a second Market (`extra_count_tech` on the district) |
 | **Roadworks** | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |
-| **Land Survey** *(planned)* | +1 influence radius on every district |
-| **Apprenticeships** *(planned)* | the Townhall trains two villagers at once |
+
+Civics carries **no `planned` card**. With every requirement one row up (§2.4,
+[`07-research.md`](07-research.md) §2), a card that does nothing yet is a toll
+on the way to one that does — `Land Survey` and `Apprenticeships` were cut when
+the book was laid out rather than parked mid-page.
 
 ### 2.4 Civics rank ladders
 
+A ladder is a NAME, not a chain. Rank II does not require rank I and need not
+sit near it: the numeral tells the player the bonus goes further down the book,
+and every rank is an ordinary card gated by the row above it like any other.
+
 | Ladder | Effect per rank | Ranks by era |
 |---|---|---|
-| **Tap Power I–V** | +1 per collect tap | I·II / III·IV / V |
-| **Trade Routes I–V** | +10% tax income | — / I·II / III·IV·V |
-| **Quick Hands I–III** | −0.05 s between auto-taps while holding | I / II / III |
-| **Worker Load I–III** | +1 per worker delivery | I / II / III |
-| **Sawpits I–III** | +1 Wood per worker delivery | I / II / III |
-| **Scythes I–III** | +1 Food per tap on a crop plot | I / II / III |
-| **Stonecutting I–III** | +1 Stone per worker delivery | I / II / III |
-| **Carpentry I–III** | −5% district build time | I / II / III |
-| **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | I / II |
-| **Butchery I–III** | +1 Food per tap on game | — / I / II |
-| **Irrigation I–III** | +1 Food per delivery from a farm | — / I / II |
-| **Iron Picks I–III** | +1 Stone per delivery from a vein | — / I / II |
-| **Market Stall I–III** | +5% Market sale prices | — / I / II |
-| **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — / I / II |
-| **Load-Bearing I–III** *(designed, not built)* | +1 Stone per tap on rocks | — / — / I |
-| **Scriveners I–III** | −5% research time | — / — / I |
-| **Cartage I–III** | +5% worker move speed | — / — / I |
-
+| **Tap Power I–V** | +20% of what a tap is worth | I / II / III·IV·V |
+| **Quick Hands I–V** | −0.05 s between auto-taps while holding | I / II / III·IV·V |
+| **Trade Routes I–V** | +10% tax income | I / II / III·IV·V |
+| **Market Stall I–IV** | +5% Market prices | I / II / III·IV |
+| **Worker Load I–III** | +1 on every worker delivery | I / II / III |
+| **Stonecutting I–III** | +1 Stone per tap and delivery on a mountain | I / II / III |
+| **Carpentry I–III** | −5% time to build and upgrade | I / II / III |
+| **Sawpits I–III** | +1 Wood per tap and delivery from a forest | I / II / III |
+| **Irrigation I–III** | +1 Food per tap and delivery from a farm plot | I / II / III |
+| **Butchery I–III** | +1 Food per tap and delivery from wild game | — / I·II / III |
+| **Iron Picks I–III** | +1 Stone per tap and delivery from an iron mountain | — / I·II / III |
+| **Scriveners I–III** | −5% time to finish a research | — / — / I·II·III |
+| **Cartage I–III** | +5% worker walking speed | — / — / I·II·III |
+| **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | — |
+| **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — |
+| **Load-Bearing I–III** *(designed, not built)* | +1 Stone per tap on rocks | — |
 ## 3. Tome II — Warfare — 52 nodes
 
 > *The army, and what it goes into the ground for.* Opens on your first
@@ -245,14 +257,14 @@ Civics runs to **three bands**; Warfare and Magic run to four.
 - **Era 1 costs no Knowledge.**
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **550,165 Gold and 50,495 Knowledge**, of which the three sealed
-  era-4 keystones are 90,000 Gold and 9,000 Knowledge.
+- Whole tree: **487,450 Gold and 44,110 Knowledge**, of which the two sealed
+  era-4 keystones are 60,000 Gold and 6,000 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 4,265 | 0 |
-| 2 | 49,650 | 3,820 |
-| 3 | 406,250 | 37,675 |
+| 1 | 6,565 | 0 |
+| 2 | 46,600 | 3,580 |
+| 3 | 374,285 | 34,530 |
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
   are about **eight weeks** at 30/h and **five and a half** at 45/h.
@@ -346,7 +358,7 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
   until their own major works.
 - `tests/research.test.ts` pins the exact set and all four rules.
 
-**Planned (17):** Land Survey, Apprenticeships · Field Medicine, Veterancy,
+**Planned (15):** Field Medicine, Veterancy,
 Siegecraft, Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
 Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
 

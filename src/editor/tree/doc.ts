@@ -15,7 +15,7 @@
 import {
   ERA_CEILING, MAX_REQUIRES, TECH_KINDS, eraCount, isPlaced, isTechId, saysItself, techIds,
   validateTechTree,
-  type PlacedTech, type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation,
+  type TechKind, type TechNodeDoc, type TechTreeDoc, type TechTreeValidation,
   type TechUnlock,
 } from '../../sim/data/techTreeRules';
 import { TECH_STAT_IDS, type TechEffect } from '../../sim/data/techEffectRules';
@@ -595,29 +595,25 @@ export class TreeDoc {
    * allowed to be.
    */
   defaultRequires(tome: TomeId, row: number, col: number): string[] {
-    const rows = [...new Set(Object.values(this.doc.technologies)
-      .filter((n): n is PlacedTech => isPlaced(n) && n.tome === tome && n.row < row)
-      .map((n) => n.row))].sort((a, b) => b - a);
-    // A PLANNED card is on the tree for its shape and does nothing yet, so a
-    // requirement on one is a card waiting on a no-op — which the rules warn
-    // about. Skipped rather than warned about later: the default should not
-    // author the problem in the first place.
-    const real = (r: number, c: number): string | null => {
-      const id = this.at(tome, r, c);
-      return id === null || this.doc.technologies[id].planned === true ? null : id;
-    };
-    // Nearest row upward that has anything real on it — walked, because a
-    // whole row of planned cards is a real shape (Warfare era 2's row 6).
-    for (const above of rows) {
-      const straight = real(above, col);
-      if (straight !== null) return [straight];
-      const whole: string[] = [];
-      for (let c = 0; c < COLS; c++) {
-        const id = real(above, c);
-        if (id !== null) whole.push(id);
-      }
-      if (whole.length > 0) return whole.slice(0, MAX_REQUIRES);
+    // THE ROW IMMEDIATELY ABOVE, and nowhere else: a requirement is the card
+    // directly before this one, so the page can be read a line at a time
+    // (`techTreeRules.ts`). Reaching further up is an edge the eye has to
+    // trace past cards it does not touch, and the rules refuse it.
+    const above = row - 1;
+    const planned = (id: string): boolean => this.doc.technologies[id].planned === true;
+    const straight = this.at(tome, above, col);
+    // A PLANNED card is on the tree for its shape and does nothing yet, so
+    // waiting on one is waiting on nothing — preferred against, but not
+    // refused: adjacency comes first, and a whole row of planned cards is a
+    // real shape (Warfare era 2's row 6). The rules warn, and the answer is
+    // to move the planned card, not to reach past it.
+    if (straight !== null && !planned(straight)) return [straight];
+    const whole: string[] = [];
+    for (let c = 0; c < COLS; c++) {
+      const id = this.at(tome, above, c);
+      if (id !== null && !planned(id)) whole.push(id);
     }
-    return [];
+    if (whole.length > 0) return whole.slice(0, MAX_REQUIRES);
+    return straight !== null ? [straight] : [];
   }
 }

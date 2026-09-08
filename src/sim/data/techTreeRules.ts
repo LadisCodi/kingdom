@@ -147,14 +147,17 @@ export interface TechTreeValidation {
 export const TOME_IDS: TomeId[] = ['Civics', 'Warfare', 'Magic'];
 
 /**
- * A RANK LADDER is a naming convention, not a field: a stem plus a roman
- * numeral — `SawpitsI`, `SawpitsII`, `SawpitsIII`.
+ * A RANK LADDER is a naming convention, not a field and not a chain: a stem
+ * plus a roman numeral — `SawpitsI`, `SawpitsII`, `SawpitsIII`.
  *
  * It used to be a `line` field naming a hook in code, which is why adding a
  * kind of bonus was a code change. A technology now says what it moves in its
- * own `effects`, so a ladder is only the thing the PAGE needs it to be: a
- * chain of cards, each requiring the one above. This reads that chain off the
- * ids, and nothing else in the file records it.
+ * own `effects`, so the numeral carries NO mechanism at all: it tells the
+ * player this bonus goes further down the book, and nothing else. Rank II
+ * does not require rank I, the ranks need not share a column, and each is an
+ * ordinary card gated only by the row above it. This reads the numeral off
+ * the id so the ids can be checked for a hole; nothing else in the file
+ * records a ladder.
  *
  * The numeral is DECODED rather than matched against a list of suffixes,
  * because `IV` ends with `V` and suffix matching would read the fourth rank as
@@ -536,12 +539,15 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         });
         continue;
       }
-      // The page reads downward, and this one rule is what makes a loop
-      // impossible and a row number mean "depth".
-      if (from.row >= node.row) {
+      // ONE ROW UP, always. The page reads downward — that is what makes a
+      // loop impossible and a row number mean "depth" — and a requirement
+      // reaching further than the row above is an edge the player has to
+      // trace past cards it does not touch. Every prerequisite is the card
+      // directly before it, so the page can be read a line at a time.
+      if (from.row !== node.row - 1) {
         errors.push({
           message: `${id} on row ${node.row} requires ${req} on row ${from.row} — `
-            + 'a requirement always sits higher up the page',
+            + `a requirement sits on the row immediately above, ${node.row - 1}`,
           tech: id,
         });
       }
@@ -694,14 +700,14 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
   // `SawpitsIII` reads as a three-rank ladder missing its middle everywhere a
   // stem gets grouped.
   //
-  // Scoped to BONUSES, which is the scope the `line` field had. The three
-  // tome ladders — `WarbandII…IV` and `AttunementII…IV` — share the naming and are
-  // deliberately not chains: a keystone gates its era and hangs off that
-  // era's own requirements, not off the keystone before it.
+  // Scoped to BONUSES, which is the scope the `line` field had.
   //
-  // What is NOT a rule any more: that every rank be worth the same step. A
-  // ladder may ramp (+1, +2, +3), because each rank carries its own value
-  // instead of the whole line being priced off rank I's.
+  // What is NOT a rule: that rank II REQUIRE rank I, or sit anywhere near it.
+  // A numeral is a promise to the player that the bonus goes further down the
+  // book, not a mechanism — every rank is an ordinary card gated by the row
+  // above it like any other, and the two may be twenty rows and three
+  // requirements apart. Nor need every rank be worth the same step: a ladder
+  // may ramp, because each rank carries its own value.
   const bonusRanks = new Map<string, Map<number, string>>();
   for (const id of all) {
     if (nodes[id].kind !== 'bonus') continue;
@@ -720,17 +726,6 @@ export function validateTechTree(doc: TechTreeDoc): TechTreeValidation {
         // cards all still exist wherever they sit.
         errors.push({ message: `the ${stem} ladder reaches ${top} but has no rank ${n}` });
         continue;
-      }
-      const above = ranks.get(n - 1);
-      if (above === undefined) continue;
-      // Both ends have to be ON THE PAGE. A card off the page has no
-      // requirements by construction — `unplace` empties them, because
-      // "above me on the page" is exactly what it no longer has — so asking
-      // it to require anything would report the holding pen as a mistake,
-      // once per rank. The link is checked again the moment it is placed.
-      if (!isPlaced(nodes[id]) || !isPlaced(nodes[above])) continue;
-      if (!(nodes[id].requires ?? []).includes(above)) {
-        errors.push({ message: `${id} does not require ${above}, the rank before it`, tech: id });
       }
     }
   }

@@ -219,10 +219,19 @@ export const ladderOf: Partial<Record<TechId, string>> = (() => {
 export const rankOf = (state: GameState, ladder: string): number =>
   ladders[ladder].filter((id) => state.research.completed.includes(id)).length;
 
-/** The technology a ladder hangs off: rank I's first requirement. `null` for a
- *  ladder rooted at nothing, which is a bug the tests are there to catch. */
-export const ladderParent = (ladder: string): TechId | null =>
-  TECHNOLOGIES[ladders[ladder][0]].requires[0] ?? null;
+/**
+ * Research everything a technology waits on, so it is the next thing the
+ * player could start.
+ *
+ * This replaced `ladderParent`, which answered "the major a ladder hangs off"
+ * — a question the tree no longer has. A rank is an ordinary card gated by the
+ * row above it, and WHICH cards those are is a drag away in `?dev=tree`, so a
+ * test that needs a technology reachable asks for this instead of naming its
+ * parent.
+ */
+export const completeRequirements = (state: GameState, id: TechId): void => {
+  for (const req of TECHNOLOGIES[id].requires) completeTech(state, req);
+};
 
 /** The ladders whose ranks carry a BONUS — the 37 the old `line` field named,
  *  as opposed to the tome ladders (`Warband`, `Attunement`),

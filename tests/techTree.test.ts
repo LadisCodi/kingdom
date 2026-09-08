@@ -199,10 +199,33 @@ describe('what the rules refuse', () => {
 
   // One rule, and it is what makes a row number mean depth — and a loop
   // impossible, which is why there is no cycle finder any more.
+  // ONE ROW UP, ALWAYS. Not "somewhere above": a requirement two rows up is an
+  // edge the eye has to trace past cards it does not touch, and a rank ladder
+  // is no exception — the numeral tells the player the bonus goes further down
+  // the book, it does not wire one card to another.
   it('a requirement lower down the page than the card that needs it', () => {
     const d = clone();
     d.technologies.Forestry.requires = ['Saws']; // Saws is a row BELOW Forestry
-    expect(messages(d).some((m) => m.includes('always sits higher up the page'))).toBe(true);
+    expect(messages(d).some((m) => m.includes('immediately above'))).toBe(true);
+  });
+
+  it('a requirement that reaches further up than the row above', () => {
+    const d = clone();
+    // Two rows up, which used to be legal and is the shape this rule replaced.
+    const far = Object.keys(d.technologies).find((id) => {
+      const n = d.technologies[id];
+      if (n.tome === undefined || n.row === undefined) return false;
+      if ((n.requires ?? []).length === 0 || n.row < 2) return false; // needs a row to reach past
+      return d.technologies[n.requires[0]]?.row === n.row - 1;
+    })!;
+    const node = d.technologies[far];
+    const grandparent = Object.keys(d.technologies).find((id) => {
+      const n = d.technologies[id];
+      return n.tome === node.tome && n.row === node.row! - 2;
+    });
+    expect(grandparent, 'the fixture needs a card two rows up').toBeDefined();
+    node.requires = [grandparent!];
+    expect(messages(d).some((m) => m.includes('immediately above'))).toBe(true);
   });
 
   it('a fourth requirement', () => {
@@ -231,12 +254,6 @@ describe('what the rules refuse', () => {
     expect(messages(below).some((m) => m.includes('available from the first minute'))).toBe(true);
   });
 
-  it('a rank that does not require the rank before it', () => {
-    const d = clone();
-    d.technologies.SawpitsII.requires = ['Saws'];
-    expect(messages(d).some((m) => m.includes('does not require SawpitsI'))).toBe(true);
-  });
-
   it('an era that climbs back above the one before it', () => {
     const d = clone();
     d.technologies.Bureaucracy = { ...d.technologies.Bureaucracy, era: 2, row: 0, col: 0 };
@@ -245,9 +262,20 @@ describe('what the rules refuse', () => {
 
   it('one row shared by two eras, because the bar takes a whole line', () => {
     const d = clone();
-    // Forestry shares row 1 with Agriculture; putting it in the next band
-    // asks the page to draw an era bar through the middle of a row.
-    d.technologies.Forestry = { ...d.technologies.Forestry, era: 2 };
+    // ANY row with two cards on it: pushing one of them into the next band
+    // asks the page to draw an era bar through the middle of a row. Found
+    // rather than named, because which cards share a row is the designer's to
+    // change and this rule is not.
+    const rows = new Map<string, string[]>();
+    for (const [id, node] of Object.entries(d.technologies)) {
+      if (node.tome === undefined || node.era === undefined) continue;
+      if (node.era >= (d.eras[node.tome] ?? []).length) continue; // room to push
+      const key = `${node.tome}:${node.row}`;
+      rows.set(key, [...(rows.get(key) ?? []), id]);
+    }
+    const shared = [...rows.values()].find((ids) => ids.length > 1);
+    expect(shared, 'the fixture needs a row with two cards on it').toBeDefined();
+    d.technologies[shared![0]].era! += 1;
     expect(messages(d).some((m) => m.includes('an era bar takes a whole line'))).toBe(true);
   });
 
@@ -359,16 +387,28 @@ describe('what the rules refuse', () => {
   // A ladder is a naming convention now, so the two things that used to be
   // guaranteed by the `line` field are rules instead: a rank requires the one
   // above it, and the numerals run without a gap.
-  it('a rank that does not hang off the rank before it', () => {
+  // A LADDER IS NOT A CHAIN. Rank II may hang off anything the row above it
+  // holds; the numeral is a promise that the bonus goes further down the book,
+  // and the rules have nothing to say about where its ranks sit.
+  it('accepts a rank that hangs off something other than the rank before it', () => {
     const d = clone();
-    d.technologies.SawpitsII.requires = ['Saws'];
-    expect(messages(d).some((m) => m.includes('does not require SawpitsI'))).toBe(true);
+    const above = Object.keys(d.technologies).find((id) => {
+      const n = d.technologies[id];
+      return n.tome === d.technologies.SawpitsII.tome
+        && n.row === d.technologies.SawpitsII.row! - 1;
+    })!;
+    d.technologies.SawpitsII.requires = [above];
+    expect(messages(d).filter((m) => m.startsWith('SawpitsII '))).toEqual([]);
   });
 
+  // The NAMING still has to run I…n: `SawpitsI` then `SawpitsIII` reads as a
+  // three-rank ladder missing its middle everywhere a stem gets grouped.
   it('a ladder with a hole in its numerals', () => {
     const d = clone();
     delete (d.technologies as Record<string, unknown>).SawpitsII;
-    d.technologies.SawpitsIII.requires = ['SawpitsI'];
+    for (const node of Object.values(d.technologies)) {
+      node.requires = (node.requires ?? []).filter((r) => r !== 'SawpitsII');
+    }
     expect(messages(d).some((m) => m.includes('no rank 2'))).toBe(true);
   });
 
@@ -405,16 +445,22 @@ describe('what the rules refuse', () => {
   // goes, and so does every requirement at either end of it.
   it('a tree with a card in the holding pen still saves', () => {
     const d = clone();
-    // A leaf, so taking it off the page leaves nothing waiting on nowhere —
-    // which is what `unplace` arranges for in the editor.
-    const leaf = d.technologies.Communities;
+    // A LEAF — nothing requires it — so taking it off the page leaves nothing
+    // waiting on nowhere, which is what `unplace` arranges for in the editor.
+    // Found rather than named: which cards are leaves moves with the page.
+    const needed = new Set(Object.values(d.technologies)
+      .flatMap((n) => n.requires ?? []));
+    const id = Object.keys(d.technologies)
+      .find((k) => d.technologies[k].tome !== undefined && !needed.has(k));
+    expect(id, 'the fixture needs a placed leaf').toBeDefined();
+    const leaf = d.technologies[id!];
     delete leaf.tome;
     delete leaf.era;
     delete leaf.row;
     delete leaf.col;
     leaf.requires = [];
     const said = validateTechTree(d);
-    expect(said.offPage).toEqual(['Communities']);
+    expect(said.offPage).toEqual([id]);
     expect(said.errors.map((e) => e.message)).toEqual([]);
     expect(said.ok, 'pending work does not block the save').toBe(true);
   });
@@ -435,10 +481,15 @@ describe('which edges the page draws', () => {
   // cards appear to grow from nothing reads as a page starting over rather
   // than one continuing. The line passes under the bar.
   it('draws a requirement that reaches back over an era bar', () => {
-    expect(TECHNOLOGIES.SawpitsII.requires).toContain('SawpitsI');
-    expect(TECHNOLOGIES.SawpitsII.era).toBe(2);
-    expect(TECHNOLOGIES.SawpitsI.era).toBe(1);
-    expect(isDrawnEdge(doc, 'SawpitsI', 'SawpitsII')).toBe(true);
+    // The first row of a band and the last of the one before it are adjacent
+    // rows, so a band always connects to the one above through real edges.
+    const crossing = TECH_ORDER.flatMap((id) => TECHNOLOGIES[id].requires
+      .filter((req) => TECHNOLOGIES[req].tome === TECHNOLOGIES[id].tome
+        && TECHNOLOGIES[req].era === TECHNOLOGIES[id].era - 1)
+      .map((req) => [req, id] as const));
+    expect(crossing.length, 'a band that connects to nothing is a page starting over')
+      .toBeGreaterThan(0);
+    for (const [from, to] of crossing) expect(isDrawnEdge(doc, from, to)).toBe(true);
   });
 
   // What is NOT drawn is an edge with an end that is nowhere.
