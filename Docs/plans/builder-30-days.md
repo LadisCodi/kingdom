@@ -8,8 +8,9 @@
 > designs will live in `features/` as each step closes, and open decisions in
 > [`../open-questions.md`](../open-questions.md).
 >
-> **Status: steps 1–5 done; step 6 is next and its design is settled (§6).**
-> Save version 30.
+> **Status: steps 1–6 done; step 7 is next.** Save version 31. The design of
+> step 6 lives in [`../features/18-harmony.md`](../features/18-harmony.md);
+> §6 below is the record of how it landed.
 
 ## 0. How the steps are cut
 
@@ -40,7 +41,7 @@
 | 3 | the four workshops: queue, crew, sharing, rush | 4 | 4–6 days |
 | 4 | levels 5–10 of every building, gated by goods | 6, 8, 9 | 2–3 days |
 | 5 | adjacency v2: stat-typed rules | 6 | 2–3 days |
-| 6 | Harmony and the decorations | 7 | 4–5 days |
+| 6 | Harmony and the decorations — **done** | 7 | 4–5 days |
 | 7 | Townhall 5–10 | 8, 9, 10, 11 | 2–3 days |
 | 8 | the Reliquary as a building | — | 2 days |
 | 9 | the Tavern as a building | — | 2–3 days |
@@ -337,7 +338,7 @@ paying or charging, never by refusing.**
   player does not lay out its city deliberately, which is exactly the point of
   a guidance mechanism. The place adjacency shows up is a player who chooses.
 
-## 6. Step 6 · Harmony and the decorations
+## 6. Step 6 · Harmony and the decorations — **DONE**
 
 > **Settled 2026-09-08, after OQ-1 removed the ground as the scarce thing.**
 > Harmony stays a **city total** — one supply, one demand, computed on read.
@@ -527,7 +528,7 @@ save needs nothing: it has no decoration in it.
 | **6c** — **DONE** | the six decoration rows, their identity in `definitions.ts`, `buildMenuOrder`, the `AnyDecoration` adjacency row |
 | **6d** — **DONE** | the demand: `,,,,,,,2,4,6` on the fifteen |
 | **6e** — **DONE** | the UI — the header, the section, the ribbon, the ghost, the Townhall card |
-| **6f** | [`../features/18-harmony.md`](../features/18-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
+| **6f** — **DONE** | [`../features/18-harmony.md`](../features/18-harmony.md), the `buildings.md` rows, the harness column, `CLAUDE.md`'s data-or-code row |
 
 - **Art: done.** All six world sprites exist (`garden_l1`, `well_l1`,
   `orchard_l1`, `statue_l1`, `plaza_l1`, `shrine_l1`). What is missing is the

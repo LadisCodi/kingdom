@@ -50,6 +50,12 @@
 | **Mason's Yard** | 1×1 | Engineering | 1 at TH5, 2 at TH8 | **10** | crew dresses Stone into blocks |
 | **Smelter** | 1×1 | Mining | 1 at TH5, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
 | **Rune Carver** | 1×1 | Attunement II | 1 at TH5, 2 at TH8 | **10** | crew pours Mana into cut stone |
+| **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
+| **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
+| **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
+| **Statue** | 1×1 | Sculpture | 1 at TH7 → 4 | **1** | supplies 10 Harmony |
+| **Plaza** | 2×2 | Paving | 1 at TH8 → 3 | **1** | supplies 30 Harmony |
+| **Shrine** | 2×2 | Sacred Grounds | 1 at TH9 → 2 | **1** | supplies 40 Harmony |
 | **Wonders** ×3 *(designed)* | large | Townhall final level | 1 each | **none** | one stat, raised without end |
 
 ## 3. The Townhall
@@ -280,6 +286,17 @@ written once. The Townhall's own ladder past 4 is not built yet.
 | Market | +3% on a sold unit a level, to +27% |
 | the four workshops | crew and queue as §4.10 |
 
+- **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
+  the decorations supply ([`18-harmony.md`](18-harmony.md)).
+
+### 4.12 The six decorations
+
+One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
+does nothing else, and every piece past the Garden is priced in a refined
+good, paid when the build is queued. The count cap per piece is its Townhall
+gate and its ceiling in one; the piece is discovered by a Civics era-3 card.
+The table is [`18-harmony.md`](18-harmony.md) §2.
+
 ## 5. Wonders — designed, not built
 
 Full design: [`16-wonders.md`](16-wonders.md).
@@ -322,8 +339,10 @@ levels a building is bought with a Townhall level and goods (§4.11).
 |---|---|
 | A building's max level | `Districts.max_level` |
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
-| Per-level gates | `Districts.required_townhall_level_per_level`, `required_tech_per_level` |
-| The unlock technology | `requiredTech` on the district (`src/sim/data/definitions.ts`) |
+| Per-level gates | `Districts.required_townhall_level_per_level`; a technology that gates a level says so in `?dev=tree` |
+| The unlock technology | the card's `unlocks` in `?dev=tree` — derived onto `requiredTech` |
+| What a piece supplies, and what a level demands | `Districts.harmony_supply`, `harmony_cost_per_level` — [`18-harmony.md`](18-harmony.md) |
+| What a build costs in refined goods | `Districts.build_cost_goods` |
 | Residents, workers, radius, army cap per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level` |
 | Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
 | What a Market level pays for a sold unit | `Districts.sale_price_per_level` |
@@ -341,7 +360,7 @@ levels a building is bought with a Townhall level and goods (§4.11).
 - A library, scholar or other Knowledge building
   ([`07-research.md`](07-research.md) §10).
 - Mana production or army cap from the Townhall level.
-- A building with more than one job.
-- Decorations.
+- A building with more than one job. A decoration has exactly one — the
+  Harmony it supplies ([`18-harmony.md`](18-harmony.md)) — and no level.
 
 **Open questions:** OQ-46, OQ-57, OQ-58.

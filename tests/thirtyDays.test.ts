@@ -26,6 +26,7 @@ import {
 import { explorationGate, fogState, isReachable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
 import { claimLandmark, isLandmarkClaimed, visibleLandmarks } from '../src/sim/landmarks';
+import { harmonyDemand, harmonySupply } from '../src/sim/harmony';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
 import { availableWorkers, houseTap, housedPopulation, maxPopulation } from '../src/sim/population';
@@ -70,7 +71,7 @@ const BUILD_ORDER: DistrictId[] = [
 interface WeekRow {
   week: number; townhall: number; population: number; districts: number;
   maxed: number; levels: number; techs: number; gold: number; knowledge: number;
-  army: number; ruins: number; landmarks: number; idleDays: number;
+  army: number; ruins: number; landmarks: number; harmony: string; idleDays: number;
 }
 
 const townhall = (state: GameState): District =>
@@ -362,6 +363,10 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
           knowledge: Math.round(getWallet(state.kingdom.wallet, 'Knowledge')),
           army: maxArmyPower(state),
+          // Supply over demand. Both stay 0 until the Townhall ladder past 4
+          // lands: the first piece opens at TH5 and the first level that
+          // demands any is 8 (Docs/features/18-harmony.md).
+          harmony: `${harmonySupply(state)}/${harmonyDemand(state)}`,
           ruins: Object.keys(state.ruinsCleared).length,
           landmarks: Object.keys(state.landmarks.claimed).length,
           idleDays: idleInWeek,

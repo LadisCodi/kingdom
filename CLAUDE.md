@@ -10,7 +10,7 @@ game in five minutes. Then:
 | Where | What it holds |
 |---|---|
 | [`Docs/README.md`](Docs/README.md) | the index, the design intentions, and the house rules for the docs |
-| `Docs/features/01`–`17` | **the live source of truth, one file per feature** |
+| `Docs/features/01`–`18` | **the live source of truth, one file per feature** |
 | [`Docs/open-questions.md`](Docs/open-questions.md) | every decision still to make, with stable ids (`OQ-n`) |
 | [`Docs/implementation-plan.md`](Docs/implementation-plan.md) | what is built, what is next, and which questions block it |
 
@@ -117,6 +117,7 @@ three ways (`tests/techTree.test.ts`).
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
 | a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
+| **a decoration** = a `Districts` row with `harmony_supply` (one level, no crew), priced in goods through `build_cost_goods`, capped and Townhall-gated by `max_count_per_townhall_level`, discovered by a card in `?dev=tree`; **what a level demands** = `harmony_cost_per_level`, a TOTAL from level 1; the surplus tiers = `harmony.surplus_tiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
 | a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 

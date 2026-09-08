@@ -87,8 +87,8 @@ here pays or charges, and none refuses.
   on read. Footprints must share an **edge**; diagonal corner contact does not
   count.
 - **Either side may name a kind instead of a building**: `AnyHall`,
-  `AnyWorkshop`, `AnyProducer`. Membership is what a district already is, so a
-  new hall needs no new row.
+  `AnyWorkshop`, `AnyProducer`, `AnyDecoration`. Membership is what a district
+  already is, so a new hall needs no new row.
 - Units are the stat's: `goldPerMinute` is flat Gold a minute, everything else
   is a **fraction** of the base. For a duration a negative magnitude is the
   good one.
@@ -101,6 +101,7 @@ here pays or charges, and none refuses.
 | District | Next to | Moves | By |
 |---|---|---|---|
 | **Housing** | Housing | Gold a minute | **−1** each |
+| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`18-harmony.md`](18-harmony.md) §6) |
 | **a hall** | another hall | training time | **−10%** each |
 | **Carpenter** | Sawmill | work time | −10% |
 | **Mason's Yard** | Quarry | work time | −10% |

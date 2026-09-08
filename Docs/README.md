@@ -72,6 +72,7 @@ One file per feature, in the order a player meets them.
 | 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
 | 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
 | 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
+| 18 | [Harmony and the decorations](features/18-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
 | 18 | [Garrisons and raids](features/18-garrisons-and-raids.md) | **defend your village** — the garrison on every site, the minute-scale counter a discovered one starts, the bounded and recoverable raid, home defence, and the assault that is the doorway to combat | designed |
 
 ## Reference
