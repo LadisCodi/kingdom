@@ -152,13 +152,14 @@
    16px pips said so in a whisper; these are the loudest thing under the art. */
 .hero-stars.is-big { gap: 2px; }
 .hero-stars.is-big .icon { --icon-size: 34px; }
-/* The two filters are written apart on purpose. `.icon.is-locked` is what
-   greys an unearned star, and one rule setting `filter` on every icon here
-   would out-specify it and light all five. */
+/* An unearned star is a DERIVED cell in the atlas now, not a CSS filter, so
+   the silhouette is pixel-identical to an earned one and the row cannot
+   shift as a hero ascends. The drop shadow is kept off it — a star that is
+   not there casts nothing. */
 .hero-stars.is-big .icon:not(.is-locked) {
   filter: drop-shadow(0 2px 0 rgba(24, 15, 8, 0.55));
 }
-.hero-stars.is-big .icon.is-locked { filter: grayscale(1) brightness(0.5); opacity: 0.5; }
+.hero-stars.is-big .icon.is-locked { opacity: 0.6; }
 @container frame (max-width: 380px) {
   .hero-stars.is-big .icon { --icon-size: 26px; }
 }

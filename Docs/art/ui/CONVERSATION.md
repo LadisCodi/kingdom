@@ -267,3 +267,42 @@ attachment") and to specify the silhouette rather than the subject: *thin flat
 rectangular boards, square-cut ends, no bark, no end-grain rings*. Ask for a
 single-cell redraw and the model merges it into the approved sheet rather than
 regenerating the other seven.
+
+
+## The collection's own icons — seven singles, 2026-09-08
+
+Not a sheet. Seven hand-authored 16 px icons, each its own file and its own
+`dense: { size: 16, cols: 1 }` manifest entry, the way the two keys already
+were: they were drawn one at a time for one screen, and a grid of seven would
+only have been a container.
+
+| Cell | File | Replaces |
+|---|---|---|
+| `Stardust` | `icon_currency_stardust.png` | the 🌟 emoji fallback — it had been on `AWAITING_ART` since the currency was renamed |
+| `ascension` | `icon_ascendancy_star.png` | `star`, which is the district card's generic pip |
+| `fragment` | `icon_hero_fragment.png` | `sparkle`, on hero fragments only |
+| `heroXp` | `icon_currency_xp.png` | nothing yet — Hero XP is Step 8 |
+| `atk` · `def` · `hp` | `icon_stat_attack/defense/hp.png` | `army`, `padlock`, `population` |
+
+### The three things this taught
+
+**A stand-in icon is a wrong picture, not a missing one.** A hero's three
+numbers were drawn with a shield, a padlock and a crowd — so *defence* was a
+padlock and *attack* was a shield, which is the shield pointing at the wrong
+number in the same row. Nobody reads that as pending art; they read it as the
+design.
+
+**`star` and `ascension` are two names for a reason.** A rung of a ladder must
+not change shape because a decoration did. They are separate cells even though
+the first pass of both was a star.
+
+**A single icon is not a sparse sheet.** `checkAlpha` failed the XP book at
+alpha mean 0.81, on a threshold calibrated for a grid of icons on a canvas
+that is mostly gutter. A chunky 16 px icon legitimately inks four fifths of
+its box. The decisive test for a baked-in checkerboard is not the mean, it is
+that **no pixel is transparent anywhere** — so that is what the check asserts
+now, with the mean kept only for files that really are mostly gutter.
+
+**Stardust was 13 px** and the dense path refuses a size that does not divide
+the 32 px cell. It was padded to 16, not rescaled: a resample would have
+softened every pixel of it.

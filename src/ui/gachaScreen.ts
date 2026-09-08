@@ -61,7 +61,7 @@ function prizeTile(prize: GachaPrize): HTMLElement {
   }
   return el('div', { class: `gr-tile is-fragment ${RARITY_CLASS[def.rarity]}` },
     portrait(prize.heroId, 'gr-art'),
-    el('span', { class: 'gr-mark' }, iconEl('sparkle', { size: 'sm' })),
+    el('span', { class: 'gr-mark' }, iconEl('fragment', { size: 'sm' })),
     el('span', { class: 'gr-count' }, String(prize.amount)));
 }
 

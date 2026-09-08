@@ -29,9 +29,6 @@ const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
  * lands, leaving the name here fails.
  */
 const AWAITING_ART: readonly string[] = [
-  // Stardust — the renamed collection currency (2026-09-03). Knowledge kept
-  // its scroll; the dust that levels a relic needs its own cell.
-  'Stardust',
   // The six decorations (2026-09-08). All six WORLD sprites are drawn — what
   // is missing is one 16 px sheet, which is a generated sheet rather than a
   // crop of an existing one (Docs/art/ui/CONVERSATION.md). Until it is cut

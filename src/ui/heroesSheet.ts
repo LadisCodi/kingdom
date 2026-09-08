@@ -57,7 +57,7 @@ function heroArt(def: HeroDef, locked: boolean): HTMLElement {
 function stars(tier: number, big = false): HTMLElement {
   const row = el('span', { class: `hero-stars${big ? ' is-big' : ''}` });
   for (let i = 0; i < COLLECTION.maxTier; i++) {
-    row.append(iconEl('star', { size: 'sm', locked: i >= tier, label: 'ascension' }));
+    row.append(iconEl('ascension', { size: 'sm', locked: i >= tier, label: 'ascension' }));
   }
   return row;
 }
@@ -105,7 +105,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
     // the progress bar, so a silhouette is something to want rather than an
     // absence. Same treatment the locked relics get.
     t.append(el('span', { class: 'hero-tile-foot is-frag' },
-      iconEl('sparkle', { size: 'sm' }),
+      iconEl('fragment', { size: 'sm' }),
       `${view.entry.fragments} / ${heroUnlockCost()}`));
     if (ready(game, view)) {
       t.append(el('span', { class: 'hero-tile-ready' }, iconEl('plus', { size: 'sm' })));
@@ -199,7 +199,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
         cost: { Stardust: toll },
         have: (c) => game.walletValue(c),
         costExtra: [{
-          icon: 'sparkle',
+          icon: 'fragment',
           amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
           short: shortFragments,
         }],
@@ -233,9 +233,9 @@ function detail(game: Game, id: HeroId): HTMLElement {
   // its passive — the card used to answer none of them and show a fragment
   // bar instead, which is a progress meter for a thing it never described.
   body.append(el('div', { class: 'hero-statline' },
-    stat('army', String(s.atk), 'atk'),
-    stat('padlock', String(s.def), 'def'),
-    stat('population', String(s.hp), 'hp'),
+    stat('atk', String(s.atk), 'atk'),
+    stat('def', String(s.def), 'def'),
+    stat('hp', String(s.hp), 'hp'),
   ));
 
   body.append(el('div', { class: 'hero-passive' },
@@ -269,7 +269,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
           kind: 'primary',
           onClick: () => game.doUnlockHero(id),
           costExtra: [{
-            icon: 'sparkle', amount: `${heroUnlockCost()}`, short: false,
+            icon: 'fragment', amount: `${heroUnlockCost()}`, short: false,
           }],
         })
         : btn({

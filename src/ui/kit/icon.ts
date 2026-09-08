@@ -31,7 +31,17 @@ export type UiIconName =
   | 'population' | 'builders' | 'workers' | 'harmony'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
-  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video';
+  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video'
+  // The collection's own marks. `ascension` is the star on a hero's card and
+  // is NOT `star`: that one is a generic highlight the district pips already
+  // use, and a rung of a ladder should not change shape when a decoration
+  // does. `fragment` is a hero SHARD — the relics keep `sparkle`, because the
+  // art is a person and a relic is not one.
+  | 'ascension' | 'fragment' | 'heroXp'
+  // The three a hero fights with. They were borrowing `army`, `padlock` and
+  // `population` — a shield for attack, a padlock for defence and a crowd for
+  // health — which is three wrong pictures in one row.
+  | 'atk' | 'def' | 'hp';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -65,6 +75,10 @@ export const ICON_EMOJI: Record<IconName, string> = {
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
   star: '★', // district card level pips (Phase 3)
   video: '▶', // a rewarded video — the mark on any button an ad pays for
+  // the collection
+  ascension: '★', fragment: '🧩', heroXp: '📘',
+  // a hero's three numbers
+  atk: '🗡️', def: '🛡️', hp: '❤️',
 };
 
 export interface IconOpts {
