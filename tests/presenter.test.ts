@@ -553,6 +553,12 @@ describe('the heroes screen signature', () => {
 
   it('moves when a hero is granted, levelled, ascended or paid fragments', () => {
     const game = freshPresenter();
+    // Funded up front, so each move below is the hero action and not the
+    // funding: a level spends Hero XP, an ascension spends both fragments and
+    // the Stardust toll.
+    addToWallet(game.state.kingdom.wallet, 'HeroXp', 50_000);
+    addToWallet(game.state.kingdom.wallet, 'Stardust', 5_000);
+
     const seen = new Set<string>([game.heroesSignature()]);
 
     grantHero(game.state, 'Bard');
@@ -561,13 +567,15 @@ describe('the heroes screen signature', () => {
     game.state.heroes.fragments.Bard = 40;
     seen.add(game.heroesSignature());
 
-    addToWallet(game.state.kingdom.wallet, 'Stardust', 5000);
+    game.openHeroId = 'Bard';
     seen.add(game.heroesSignature());
 
     game.doLevelHero('Bard');
+    expect(game.state.heroes.levels.Bard).toBe(2); // it really happened
     seen.add(game.heroesSignature());
 
     game.doRaiseHeroTier('Bard');
+    expect(game.state.heroes.tiers.Bard).toBe(2);
     seen.add(game.heroesSignature());
 
     // Five moves, five distinct readings: none of them collide.

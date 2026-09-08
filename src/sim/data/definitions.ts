@@ -263,6 +263,7 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   // Docs/features/07-research.md §4.
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Stardust: currency('kingdom', balance.currencies.Stardust),
+  HeroXp: currency('kingdom', balance.currencies.HeroXp),
   Gems: currency('player', balance.currencies.Gems),
   SilverKey: currency('player', balance.currencies.SilverKey),
   GoldKey: currency('player', balance.currencies.GoldKey),
@@ -1830,4 +1831,4 @@ export const GAME_VERSION = '0.1.0';
 // and read defensively, so there is no migrator; the bump exists so that a
 // build without the keys refuses a save that holds them rather than dropping
 // what the player paid Gems for.
-export const SAVE_VERSION = 32;
+export const SAVE_VERSION = 33;

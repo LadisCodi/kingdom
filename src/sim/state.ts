@@ -13,7 +13,12 @@ export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
   | 'Mana' // the only capped currency — see sim/mana.ts
   | 'Knowledge' // kingdom-scoped research clock; buys technologies and nothing else
-  | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
+  | 'Stardust' // kingdom-scoped; levels relics, and tolls a hero's ascension
+  // Kingdom-scoped, and spent on ANY hero rather than the one that earned it:
+  // a Legendary pulled today is levelled with what the Commons brought back
+  // (Docs/features/10-heroes.md §4). Not on the plank — it reads on the
+  // roster, beside the button that spends it.
+  | 'HeroXp'
   | 'Gems' // player-scoped, premium
   // The two gacha keys: one banner each, bought with Gems, spent on a pull.
   // Player-scoped like Gems, and NOT on the plank — the purse is where they
@@ -382,7 +387,6 @@ export interface GameState {
     levels: Partial<Record<HeroId, number>>;
     tiers: Partial<Record<HeroId, number>>;
     fragments: Partial<Record<HeroId, number>>;
-    xp: Partial<Record<HeroId, number>>;
     /** Extra party slots bought with Gems. */
     partySlotsPurchased: number;
   };

@@ -8,16 +8,15 @@
 >
 > **Status: the gacha is built** (§6), and so are **the nav tab, the roster
 > grid, the hero card and the reveal screen** (§8, built 2026-09-08), and
-> **recruiting a hero with ten fragments** (§4.1) and **the Stardust toll on
-> an ascension** (§4). **The hero itself is
+> **the whole ladder** (§4): **Hero XP buys levels**, ten fragments recruit a
+> hero, and an ascension costs fragments plus a Stardust toll. **The hero itself is
 > designed, not built — reworked 2026-09-08 onto the resolver**: the stat
 > block and the passive (§2), XP-bought levels and the
 > Fragment-plus-Stardust ascension (§4), and Gem-bought hero slots (§3)
-> replace the delve-era hero the code still carries. **So the screens are
-> ahead of the sim**: the card's Train button charges Stardust and its
-> passive line reads a delve-era trait until Step 8 lands
+> replace the delve-era hero the code still carries. **One thing is still ahead of the sim**: the
+> card's passive line reads a delve-era trait until Step 8 lands
 > ([`../implementation-plan.md`](../implementation-plan.md) §4), which changes
-> those two call sites and nothing about the layout. The **Tavern**, the
+> that one call site and nothing about the layout. The **Tavern**, the
 > building heroes arrive through, is designed and unbuilt
 > ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §9).
 
@@ -115,7 +114,7 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 | | Raise | Cost |
 |---|---|---|
 | **Recruit** | not owned → owned, at tier 1 level 1 | **10 of that hero's Fragments** |
-| **Level** | +1, up to the tier cap | Hero XP: `heroes.xp_level_cost_base × heroes.xp_level_cost_growth^level` |
+| **Level** | +1, up to the tier cap | Hero XP: `round(100 × 1.6^level)` — **18,060** to carry one hero to level 10 |
 | **Ascension** | +1 tier, cap +2 levels | that hero's Fragments **and** a Stardust toll |
 
 ### 4.1 Two doors to a hero
@@ -143,6 +142,10 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **Hero XP is a kingdom currency**, one counter spent on any hero. It survives
   a region reset like Stardust. Nothing is local to a hero: a Legendary pulled
   today is levelled with the XP the Commons earned.
+- **The XP curve is five times the relics' Stardust one**, because its faucet
+  is: a room pays ×10 XP against ×2 Stardust and the completed-depth trickle
+  keeps the same ratio ([`11-expeditions.md`](11-expeditions.md) §7). Same
+  pacing, bigger numbers. Whether that holds up in play is **OQ-79**.
 - **Fragments are per hero**, a counter beside the hero, as today.
 - The Stardust toll totals **750** to max one hero — about a fifth of what a
   relic costs to max (~3,612) — so Stardust stays the relics' currency with a
@@ -365,7 +368,7 @@ the rewarded video.
 | A hero's stat block and growth | §2.3 | `Heroes.dmg`, `hp`, `def`, `cooldown`, `dmg_per_level`, `hp_per_level` |
 | A hero's passive | §2.4 | `Heroes.troop_dmg_mult`, `troop_hp_mult`, `troop_def_bonus`, `passive_per_tier` |
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarity_stat_mult_*`, `heroes.rarity_passive_mult_*` |
-| What a level costs in XP | §4 | `heroes.xp_level_cost_base`, `xp_level_cost_growth` |
+| What a level costs in XP | §4 | `collection.xp_level_cost_base`, `collection.xp_level_cost_growth` |
 | What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragments_per_tier_base` |
 | What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragments_per_tier_*`, `collection.ascension_stardust_base`, `collection.ascension_stardust_growth` |
 | What a hero slot costs | §3 | `heroes.slot_gem_cost_base`, `slot_gem_cost_growth`, `heroes.max_slots` |

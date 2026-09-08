@@ -204,7 +204,7 @@
         "cols": 1
       },
       "names": [
-        "heroXp"
+        "HeroXp"
       ]
     },
     {
@@ -254,7 +254,6 @@
       "close",
       "def",
       "fragment",
-      "heroXp",
       "hp",
       "minus",
       "padlock",
@@ -274,6 +273,7 @@
       "Gems",
       "Gold",
       "GoldKey",
+      "HeroXp",
       "Iron",
       "Knowledge",
       "Mana",
@@ -287,7 +287,6 @@
       "builders",
       "def",
       "fragment",
-      "heroXp",
       "hp",
       "padlock",
       "population",

@@ -1275,6 +1275,9 @@ export class Game {
     return [
       this.openHeroId ?? '-',
       JSON.stringify(this.state.heroes),
+      // Both purses the screen spends from: XP buys a level, Stardust tolls
+      // an ascension.
+      this.walletValue('HeroXp'),
       this.walletValue('Stardust'),
       // The card's one line from outside the roster: who is underground.
       this.state.delves.map((d) => `${d.heroId}:${d.phase}`).join(','),
@@ -1855,8 +1858,8 @@ export class Game {
   doLevelHero(id: HeroId): void {
     const result = levelUpHero(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
-    else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
+    else if (result === 'NotEnoughXp') this.shake(['HeroXp']);
+    else if (result === 'TierCapped') this.toast('Their ascension holds them back');
     this.notify();
   }
 
@@ -2593,7 +2596,7 @@ export const adjacencyReadout = (
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-    Knowledge: '📜', Stardust: '🌟', Gems: '💎',
+    Knowledge: '📜', Stardust: '🌟', HeroXp: '📘', Gems: '💎',
     SilverKey: '🔑', GoldKey: '🗝️',
   };
   return icons[c];

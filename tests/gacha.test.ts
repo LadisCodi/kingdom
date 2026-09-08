@@ -7,9 +7,10 @@
 import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
-  ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, ownsHeroId,
-  pull, raiseHeroTier, unlockHero,
+  ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, levelUpHero,
+  ownsHeroId, pull, raiseHeroTier, unlockHero,
 } from '../src/sim/heroes';
+import { xpLevelCost } from '../src/sim/collection';
 import type { PullResult } from '../src/sim/heroes';
 import { COLLECTION } from '../src/sim/data/definitions';
 import { addToWallet, getWallet } from '../src/sim/state';
@@ -204,5 +205,42 @@ describe('an ascension asks two prices', () => {
   it('costs 750 Stardust to carry one hero to the top', () => {
     const total = [1, 2, 3, 4].reduce((n, tier) => n + ascensionStardustCost(tier), 0);
     expect(total).toBe(750);
+  });
+});
+
+// A LEVEL COSTS HERO XP, an ascension costs fragments and a Stardust toll,
+// and a relic's level costs Stardust. Three prices, three jobs — the split is
+// the whole reason Hero XP is a currency (Docs/features/10-heroes.md §4).
+describe('a level costs Hero XP', () => {
+  it('spends XP and leaves Stardust alone', () => {
+    const state = freshGame();
+    grantHero(state, 'Bard');
+    addToWallet(state.kingdom.wallet, 'HeroXp', 1000);
+    addToWallet(state.kingdom.wallet, 'Stardust', 1000);
+
+    expect(levelUpHero(state, 'Bard')).toBe('Levelled');
+
+    expect(state.heroes.levels.Bard).toBe(2);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(1000 - xpLevelCost(1));
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000);
+  });
+
+  it('refuses on an empty XP purse, however much Stardust is banked', () => {
+    const state = freshGame();
+    grantHero(state, 'Bard');
+    addToWallet(state.kingdom.wallet, 'Stardust', 99_999);
+
+    expect(levelUpHero(state, 'Bard')).toBe('NotEnoughXp');
+    expect(state.heroes.levels.Bard).toBe(1);
+  });
+
+  it('still refuses at the tier cap, before it looks at the purse', () => {
+    const state = freshGame();
+    grantHero(state, 'Bard');
+    state.heroes.levels.Bard = 2; // tier 1 caps at 2
+    addToWallet(state.kingdom.wallet, 'HeroXp', 999_999);
+
+    expect(levelUpHero(state, 'Bard')).toBe('TierCapped');
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(999_999);
   });
 });

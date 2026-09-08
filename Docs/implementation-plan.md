@@ -93,7 +93,7 @@ each has an answer, or has one waiting in a doc.
 |---|---|---|
 | ~~**H0**~~ | ~~**The tap mints matter, and the economy has no ceiling.**~~ **FIXED 2026-09-03** — §4 step 0. | [`04`](features/04-harvest.md) |
 | **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. **Design closed 2026-09-08 by deletion** — `defended` is retired and every landmark is claimed for Gold; the fight with a clock moves to the ruin's **gate**, built by **Step 7**. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
-| **H2** | **Hero XP is written and never read.** Every extraction banks it; nothing consumes it. **Design closed 2026-09-08** — XP is a kingdom currency that buys hero levels, Stardust moves to the ascension toll; built by **Step 8**. | [`10`](features/10-heroes.md) §4 |
+| ~~**H2**~~ | ~~**Hero XP is written and never read.**~~ **FIXED 2026-09-08.** It is a kingdom wallet row that buys any hero's levels; Stardust moved to the ascension toll. `SAVE_VERSION` 33 folds every save's per-hero tally into the one counter — nothing was ever spent from it, so every point is still owed. | [`10`](features/10-heroes.md) §4 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue holds only the weekly event — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
@@ -572,14 +572,11 @@ against the staged delve. Closes **H2**.
     curve, the ascension toll and the hero-slot ladder; the importer schema.
     **The `Scout` row becomes `Ranger`**, with its portrait
     (`hero_scout.png`).
-  - state: `heroes.xp` collapses from a per-hero map to **one kingdom
-    number** — a `HeroXp` wallet row on `state.kingdom.wallet`, beside
-    Stardust; `heroes.heroSlotsPurchased`. `SAVE_VERSION` bump.
-  - **the migration that matters:** a save whose heroes were levelled with
-    Stardust keeps every level; its per-hero XP sums into the kingdom counter.
-    No level is ever taken back.
-  - `heroes.ts`: `levelUpHero` charges Hero XP; `raiseHeroTier` charges
-    Fragments **and** Stardust; `heroStats` becomes the resolved stat block
+  - ~~state: the `HeroXp` wallet row and the XP-priced level~~ **done
+    2026-09-08** (`SAVE_VERSION` 33), as is the Stardust toll on an ascension.
+    What is left here is `heroes.heroSlotsPurchased`.
+  - `heroes.ts`: ~~`levelUpHero` charges Hero XP; `raiseHeroTier` charges
+    Fragments **and** Stardust~~ **done**; `heroStats` becomes the resolved stat block
     (rarity multiplier, level growth, passive stepped by tier); `heroIsBusy`
     and `freeHeroes` go — nothing is ever busy.
   - `combat.ts` (the resolver): hero slots read the stat block and apply the

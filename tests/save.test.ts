@@ -182,6 +182,31 @@ describe('save versions', () => {
     expect(getWallet(restored.city.wallet, 'Stone')).toBe(3);
   });
 
+  // v33: Hero XP stopped being a tally beside each hero and became a kingdom
+  // wallet row that buys ANY hero's levels. It was written and never read
+  // until then, so nothing was ever spent from it and every point a save
+  // holds is still owed — the whole per-hero map folds into the one counter.
+  it('folds every hero\'s XP tally into one kingdom counter', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    (save.Modules['kingdom.heroes'] as any).Xp = { Warden: 120, Bard: 30, Scholar: 7 };
+    save.SaveVersion = 32;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    expect(getWallet(restored.kingdom.wallet, 'HeroXp')).toBe(157);
+  });
+
+  // …and a save that never banked any is not handed a phantom balance.
+  it('gives a hero-less save no XP at all', () => {
+    const save = serialize(freshGame(), T0);
+    (save.Modules['kingdom.heroes'] as any).Xp = {};
+    save.SaveVersion = 32;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(getWallet(restored.kingdom.wallet, 'HeroXp')).toBe(0);
+  });
+
   // v23: Knowledge and Stardust swapped jobs. Every Knowledge a live save
   // holds was earned as COLLECTION currency, so it must keep buying relics
   // and heroes — it becomes Stardust. This is the whole point of the migrator

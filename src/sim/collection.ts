@@ -7,7 +7,8 @@
 // there is ONE set of rules here, and heroes and artifacts are two kinds of
 // thing rather than two systems with two vocabularies:
 //
-//   FRAGMENTS raise a tier cap.   KNOWLEDGE buys levels within it.
+//   FRAGMENTS raise a tier cap.   A CURRENCY buys levels within it —
+//   Hero XP for a hero, Stardust for a relic.
 //
 // Fragments come from repeat delves AND from gacha duplicates, which is what
 // makes "every gacha drop has a play-based route" true: the wallet buys the
@@ -24,10 +25,16 @@ export interface CollectionEntry {
 
 export const emptyEntry = (): CollectionEntry => ({ level: 1, tier: 1, fragments: 0 });
 
-/** Stardust for the NEXT level. `round(base × growth^level)` — the same
+/** Stardust for a RELIC's next level. `round(base × growth^level)` — the same
  *  formula the gold upgrades already use, reused rather than reinvented. */
 export const levelCost = (level: number): number =>
   Math.round(COLLECTION.levelCostBase * COLLECTION.levelCostGrowth ** level);
+
+/** Hero XP for a HERO's next level — the same curve in the other currency.
+ *  Two ladders of one shape, because a hero and a relic are two kinds of
+ *  thing rather than two systems (Docs/features/10-heroes.md §1). */
+export const xpLevelCost = (level: number): number =>
+  Math.round(COLLECTION.xpLevelCostBase * COLLECTION.xpLevelCostGrowth ** level);
 
 /** Fragments to raise the tier cap from `tier` to `tier + 1`. */
 export const tierCost = (tier: number): number =>

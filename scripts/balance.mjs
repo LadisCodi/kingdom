@@ -111,7 +111,7 @@ const ARTIFACT_IDS = [
 
 const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
-  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'Gems',
+  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'HeroXp', 'Gems',
   // The two gacha keys. Player-scoped like Gems, bought with them, and spent
   // on one banner each — a PRICE on a button, which is the argument for a
   // wallet row over a counter (Docs/features/03-economy.md §1).
@@ -223,6 +223,15 @@ const SETTINGS = [
   // thirty-third hero with no stats.
   ['collection.ascension_stardust_base', 'collection.ascensionStardustBase'],
   ['collection.ascension_stardust_growth', 'collection.ascensionStardustGrowth'],
+  // A HERO's levels are bought with Hero XP, a relic's with Stardust
+  // (Docs/features/10-heroes.md §4) — so the substrate carries two level
+  // curves of the same shape in two currencies. The XP one is FIVE TIMES the
+  // Stardust one because its faucet is: a room pays x10 XP against x2
+  // Stardust and the completed-depth trickle keeps the same ratio
+  // (11-expeditions.md §7). Same pacing, bigger numbers. **OQ-79 owns
+  // whether that holds up in play.**
+  ['collection.xp_level_cost_base', 'collection.xpLevelCostBase'],
+  ['collection.xp_level_cost_growth', 'collection.xpLevelCostGrowth'],
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   // The floor under the clock: what a kingdom holding no ground still learns

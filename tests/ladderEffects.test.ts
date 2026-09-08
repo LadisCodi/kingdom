@@ -21,6 +21,7 @@
 // readable assertion at a time.
 
 import { describe, expect, it } from 'vitest';
+import { getWallet } from '../src/sim/state';
 import {
   DELVE, HARVEST, LANDMARKS, RUINS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
@@ -177,10 +178,10 @@ function probe(state: GameState): Record<string, number> {
 
   // The hero, measured as the XP one delve pays. Read on a COPY: a probe must
   // not be the thing that changes the state it is measuring.
-  const before = state.heroes.xp.Scout ?? 0;
-  addHeroXp(state, 'Scout', 100);
-  put('heroXp.per100', (state.heroes.xp.Scout ?? 0) - before);
-  state.heroes.xp.Scout = before;
+  const before = getWallet(state.kingdom.wallet, 'HeroXp');
+  addHeroXp(state, 100);
+  put('heroXp.per100', getWallet(state.kingdom.wallet, 'HeroXp') - before);
+  state.kingdom.wallet.HeroXp = before;
 
   // A control that no ladder may move: the ruin's own clock and the depth
   // price the sheet authors.

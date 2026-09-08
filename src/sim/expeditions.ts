@@ -477,7 +477,7 @@ export function extract(state: GameState, delveId: string): ExtractReport {
   if (delve.haulFragments > 0) addArtifactFragments(state, artifactId, delve.haulFragments);
   // XP lands whether or not the run banked anything, so a bad push still
   // taught the party something.
-  addHeroXp(state, delve.heroId, delve.depth * RUINS[delve.ruinId].tier);
+  addHeroXp(state, delve.depth * RUINS[delve.ruinId].tier);
   const report: ExtractReport = {
     result: 'Extracted',
     wallet: { ...delve.haul },

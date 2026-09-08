@@ -20,15 +20,25 @@
 .hero-purse {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
 }
-.hero-purse-body { flex: 1; min-width: 0; }
-.hero-purse-title { font-size: var(--text-body); }
-.hero-purse-hint { font-size: var(--text-helper); color: var(--ink-muted); }
+.hero-purse-coin { display: flex; align-items: center; gap: 5px; }
+.hero-purse-coin b { font-size: var(--text-body); }
+.hero-purse-coin span { font-size: var(--text-helper); color: var(--ink-muted); }
+.hero-purse-found {
+  margin-left: auto;
+  text-align: right;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+@container frame (max-width: 380px) {
+  .hero-purse { gap: 10px; }
+  .hero-purse-coin span { display: none; }
+}
 
 /* ---------------------------------------------------------------- the grid */
 

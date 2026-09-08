@@ -34,7 +34,10 @@ import {
   type BannerId, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
-import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
+import {
+  emptyEntry, isMaxLevel, levelCapForTier, tierBlock, tierCost, xpLevelCost,
+  type CollectionEntry,
+} from './collection';
 import { dayIndex } from './daily';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
@@ -68,14 +71,25 @@ export function grantHero(
 }
 
 export type HeroLevelResult =
-  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
+  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughXp';
 
+/**
+ * A level costs HERO XP, not Stardust.
+ *
+ * The two are not interchangeable and the split is the point: Stardust is the
+ * relics' currency with a hero tax on it (the ascension toll), and XP is what
+ * a hero's own levels are bought with. Written out longhand rather than
+ * through the shared `levelBlock`, which reads a Stardust purse and is the
+ * relics'.
+ */
 export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
-  const block = levelBlock(entry, getWallet(state.kingdom.wallet, 'Stardust'));
-  if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
+  if (isMaxLevel(entry)) return 'AtMaxLevel';
+  if (entry.level >= levelCapForTier(entry.tier)) return 'TierCapped';
+  const cost = xpLevelCost(entry.level);
+  if (getWallet(state.kingdom.wallet, 'HeroXp') < cost) return 'NotEnoughXp';
+  addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
   state.heroes.levels[id] = entry.level + 1;
   return 'Levelled';
 }
@@ -154,12 +168,21 @@ export function heroStats(state: GameState, id: HeroId): { atk: number; def: num
   };
 }
 
-/** Delves pay XP whether or not the run banked anything, so a bad push still
- *  taught the party something. XP is a soft second track: it never gates. */
-export function addHeroXp(state: GameState, id: HeroId, amount: number): void {
+/**
+ * Bank what a fight taught the party.
+ *
+ * ONE KINGDOM COUNTER, not a tally per hero. XP used to be written beside the
+ * hero that earned it and read by nobody, and the moment it started buying
+ * levels that shape would have been the wrong one: a Legendary pulled today
+ * would arrive at level 1 with an empty tally of its own, unusable until it
+ * had gone and earned one. It is levelled with what the Commons brought back
+ * instead (Docs/features/10-heroes.md §4).
+ */
+export function addHeroXp(state: GameState, amount: number): void {
   // Drillmaster: +5%/rank, rounded once here so XP stays a whole number.
   const paid = Math.round(resolve(state, 'heroXp', techValue(state, 'heroXp', amount)));
-  state.heroes.xp[id] = (state.heroes.xp[id] ?? 0) + paid;
+  addToWallet(state.kingdom.wallet, 'HeroXp', paid);
+  recordResourceDiscovery(state, 'HeroXp');
 }
 
 // ------------------------------------------------------------------ the pull

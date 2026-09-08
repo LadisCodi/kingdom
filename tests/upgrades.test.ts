@@ -499,11 +499,11 @@ describe('the Warfare lines reach their numbers', () => {
 
   it('Drillmaster pays a hero more XP for the same delve', () => {
     const state = freshGame();
-    addHeroXp(state, 'Warden', 20);
-    expect(state.heroes.xp.Warden).toBe(20);
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(20);
     completeRanks(state, 'Drillmaster', 2); // +10%
-    addHeroXp(state, 'Warden', 20);
-    expect(state.heroes.xp.Warden).toBe(42);
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(42);
   });
 });
 

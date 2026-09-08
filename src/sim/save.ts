@@ -119,6 +119,33 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
  *  entry here — the defensive readers below already default the new field. */
 const MIGRATIONS: readonly Migration[] = [
   {
+    // v33 — Hero XP stopped being a tally beside each hero and became a
+    // KINGDOM WALLET ROW that buys any hero's levels
+    // (Docs/features/10-heroes.md §4). It was written and never read until
+    // now, so nothing was ever spent from it and every point a save holds is
+    // still owed: the whole per-hero map folds into the one counter.
+    //
+    // Listed FIRST so the array stays ordered by nothing in particular but
+    // remains append-only in effect — `migrate` runs every entry whose `to`
+    // is above the save's version, in array order, and this one touches keys
+    // no other migrator does.
+    to: 33,
+    migrate: (modules) => {
+      const heroes = modules['kingdom.heroes'] as
+        { Xp?: Record<string, number> } | undefined;
+      const xp = heroes?.Xp;
+      if (xp === undefined) return;
+      const total = Object.values(xp).reduce((n, v) => n + (typeof v === 'number' ? v : 0), 0);
+      delete heroes!.Xp;
+      if (total <= 0) return;
+      const kingdom = modules['kingdom.kingdoms'] as
+        { Currencies?: Record<string, number> } | undefined;
+      if (kingdom === undefined) return;
+      kingdom.Currencies = { ...(kingdom.Currencies ?? {}) };
+      kingdom.Currencies.HeroXp = (kingdom.Currencies.HeroXp ?? 0) + total;
+    },
+  },
+  {
     // v21 — Berries, Meat, Fish and Iron stopped being wallet rows. Bushes,
     // game and shoals pay Food now and veins pay Stone, so a save's balances
     // convert at the rates they were EARNED at: the old `countsAs` values
@@ -446,7 +473,6 @@ export function serialize(state: GameState, now: number): SaveFile {
         Levels: state.heroes.levels,
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
-        Xp: state.heroes.xp,
         PartySlotsPurchased: state.heroes.partySlotsPurchased,
       },
       'kingdom.gacha': {
@@ -784,7 +810,6 @@ export function deserialize(
       levels: { ...(heroesDto.Levels ?? {}) },
       tiers: { ...(heroesDto.Tiers ?? {}) },
       fragments: { ...(heroesDto.Fragments ?? {}) },
-      xp: { ...(heroesDto.Xp ?? {}) },
       partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
     };
   }

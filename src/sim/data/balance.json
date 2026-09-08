@@ -2315,6 +2315,12 @@
       "primary": false,
       "goldValue": null
     },
+    "HeroXp": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "goldValue": null
+    },
     "Gems": {
       "cap": null,
       "start": 500,
@@ -2530,7 +2536,9 @@
     "fragmentsPerTierBase": 10,
     "fragmentsPerTierGrowth": 2,
     "ascensionStardustBase": 50,
-    "ascensionStardustGrowth": 2
+    "ascensionStardustGrowth": 2,
+    "xpLevelCostBase": 100,
+    "xpLevelCostGrowth": 1.6
   },
   "knowledge": {
     "basePerHour": 0.8,

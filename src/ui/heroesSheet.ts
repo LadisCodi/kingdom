@@ -28,7 +28,7 @@ import { heroIsBusy } from '../sim/expeditions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
 } from '../sim/heroes';
-import { levelCost, tierCost } from '../sim/collection';
+import { tierCost, xpLevelCost } from '../sim/collection';
 import { spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
@@ -71,7 +71,7 @@ function ready(game: Game, view: RosterEntry): boolean {
   // it is a hero the player already owns and has not noticed.
   if (!view.owned) return canUnlockHero(game.state, view.id);
   const canLevel = view.entry.level < view.levelCap
-    && game.walletValue('Stardust') >= levelCost(view.entry.level);
+    && game.walletValue('HeroXp') >= xpLevelCost(view.entry.level);
   const canAscend = view.entry.tier < COLLECTION.maxTier
     && view.entry.fragments >= tierCost(view.entry.tier);
   return canLevel || canAscend;
@@ -127,11 +127,19 @@ function grid(game: Game): HTMLElement {
   const found = roster.filter((h) => h.owned).length;
 
   return el('div', { class: 'hero' },
+    // Both purses, because the screen spends both and neither is on the
+    // plank: XP buys a level, Stardust tolls an ascension. A price with no
+    // purse in sight is the same bug as a purse with nothing to spend it on.
     el('div', { class: 'hero-purse' },
-      iconEl('Stardust', { size: 'lg' }),
-      el('div', { class: 'hero-purse-body' },
-        el('div', { class: 'hero-purse-title' }, `${game.walletValue('Stardust')} Stardust`),
-        el('div', { class: 'hero-purse-hint' }, `${found} of ${roster.length} found`))),
+      el('div', { class: 'hero-purse-coin' },
+        iconEl('HeroXp', { size: 'lg' }),
+        el('b', {}, String(game.walletValue('HeroXp'))),
+        el('span', {}, 'XP')),
+      el('div', { class: 'hero-purse-coin' },
+        iconEl('Stardust', { size: 'lg' }),
+        el('b', {}, String(game.walletValue('Stardust'))),
+        el('span', {}, 'Stardust')),
+      el('div', { class: 'hero-purse-found' }, `${found} of ${roster.length} found`)),
     el('div', { class: 'hero-grid' }, ...ordered.map((view) => tile(game, view))),
     // The way to another hero. The banner lives in the store
     // (Docs/features/14-monetization.md §2.1) and moves to the Tavern when
@@ -293,7 +301,7 @@ function detail(game: Game, id: HeroId): HTMLElement {
       label: 'Train',
       kind: 'primary',
       onClick: () => game.doLevelHero(id),
-      cost: { Stardust: levelCost(view.entry.level) },
+      cost: { HeroXp: xpLevelCost(view.entry.level) },
       have: (c) => game.walletValue(c),
       disabledReason: view.entry.level >= view.levelCap
         ? 'Their ascension holds them back' : undefined,
