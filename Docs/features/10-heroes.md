@@ -5,7 +5,9 @@
 > where heroes are *used* is [`11-expeditions.md`](11-expeditions.md).
 >
 > **Status: built**, except the ingredient conversion (§3) and one hole — hero
-> XP is written and never read (§9).
+> XP is written and never read (§9). **Designed, not built:** the **Tavern**,
+> the building heroes arrive through (§7,
+> [`../plans/builder-30-days.md`](../plans/builder-30-days.md) §9).
 
 ## 1. The collection substrate
 
@@ -125,10 +127,17 @@ Each of these is data, not code:
 
 ## 7. The screens
 
-- **The Reliquary** carries heroes and relics as **two tabs of one screen**.
-- **The banner** lives on the store, first thing on it; the Reliquary's heroes
-  tab points there ([`14-monetization.md`](14-monetization.md) §2.1). It has
-  no tab of its own.
+- **The Reliquary** carries heroes and relics as **two tabs of one screen** —
+  a nav tab, and **not a building**: relics unlock on owning the first one
+  ([`09-relics.md`](09-relics.md) §1.1).
+- **The banner lives in the Tavern** (*designed, not built*): heroes are
+  unlocked by that building and **tapping it is how one is called**, the way
+  tapping the Market opens the trade screen. It moved out of the store on
+  2026-09-08 ([`14-monetization.md`](14-monetization.md) §2.1); the store keeps
+  what Gems are *bought* with, and the Tavern is where they are spent on a
+  pull.
+- Until the Tavern is built, the banner keeps its place on the store — the
+  relocation is one mount, and it lands with the building.
 - **There is no standing hero-management destination.** Heroes are configured
   in the expedition sheet.
 

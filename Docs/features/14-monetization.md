@@ -77,7 +77,7 @@
 
 | Section | Content | Paid with |
 |---|---|---|
-| **Heroes** | the hero banner itself — chance, pity, the Call button. The Reliquary's heroes tab keeps the roster and points here | Gems |
+| **Heroes** | the hero banner itself — chance, pity, the Call button. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §7), so the store keeps what Gems are BOUGHT with and the Tavern is where a pull spends them. Here until the Tavern is built | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
 | **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
 

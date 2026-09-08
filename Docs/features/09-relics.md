@@ -4,7 +4,8 @@
 > nine-piece **ingredient set** that gates tiers, and the attune-or-arm rule.
 > Heroes share the same substrate — [`10-heroes.md`](10-heroes.md).
 >
-> **Status.** Relics, attunement and attune-or-arm are **built**. Ingredients
+> **Status.** Relics, attunement and attune-or-arm are **built**. The nav tab
+> that carries them is shown from the first relic owned (§1.1). Ingredients
 > and trading (§4, §6) are **designed, not built**; the build gates tiers with
 > **Fragments**, a per-collectible counter. Spells as tome nodes
 > ([`07-research.md`](07-research.md) §6) are **designed, not built**; the build
@@ -28,6 +29,23 @@
 | **Spell** | a tome node ([`07-research.md`](07-research.md) §6) | being discovered, once | tome upgrades (Gold, instant, stacking) |
 
 - A discovered spell costs only **Mana** to cast.
+
+### 1.1 How the mechanic opens
+
+- **Owning a relic is what unlocks it.** A relic is found at the bottom of a
+  ruin, and the Relics tab is hidden until the player has one — a tab for a
+  system with nothing in it advertises a screen that can only disappoint, and
+  the same rule already hides a currency the player has not met
+  ([`03-economy.md`](03-economy.md) §1).
+- **There is no building in front of it.** The builder programme proposed a
+  Reliquary district whose levels capped a relic's level and it was **cut on
+  2026-09-08**: a mechanic the player has just been handed the first piece of
+  must not then ask them to go and build something before they may look at it.
+  What that building would also have carried — ingredient trading, and a
+  weekly Runestone recipe for a 3★ ingredient — has no home now, which is
+  **OQ-7** open again.
+- A relic's level cap is its **tier**, and a tier is Fragments (§1). Nothing
+  else caps it.
 
 ## 2. The five relics
 

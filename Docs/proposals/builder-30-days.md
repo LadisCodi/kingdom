@@ -83,7 +83,7 @@ Three gate layers, so the ladder is paced by three different clocks:
 | Week | Townhall | Player is doing |
 |---|---|---|
 | 1 | TH1 → TH5 | today's game: fog, tree, first ruins |
-| 2 | TH6 → TH7 | first workshops, first goods, Watchtower, Reliquary |
+| 2 | TH6 → TH7 | first workshops, first goods, Watchtower |
 | 3 | TH8 | Harmony arrives: decorations, plot expansions, Tavern |
 | 4 | TH9 | Dragon's Nest, second workshop tier, halls to 8 |
 | 5+ | TH10 | Wonders take over as the endless ladder |
@@ -251,6 +251,12 @@ Recommendation: **one tier of three goods, and one late good**.
 
 ## 6. Reliquary — the relic system as a building
 
+> **CUT, 2026-09-08.** There is no Reliquary building. A relic is found at the
+> bottom of a ruin, and the mechanic unlocks on owning one — asking the player
+> to go and build something before they may look at the first relic they were
+> handed is a gate in the wrong place. What the building carried and nobody
+> now does is in the plan's §8, **OQ-7 included**.
+
 - Today the Reliquary is a **screen**; relics arrive from the first ruin
   cleared. Proposal: a 1×1 district, one per city, unlocked at TH3 by
   `Consecration`; **L1 unlocks attunement**.
@@ -276,7 +282,8 @@ Recommendation: **one tier of three goods, and one late good**.
 - A 2×1 district, one per city, unlocked at TH4 by a Civics technology
   (`Hospitality`, new, era 2). **L1 unlocks heroes and the banner**
   ([`../features/10-heroes.md`](../features/10-heroes.md)); the banner moves out
-  of the store and into the Tavern, where Kingshot keeps it.
+  of the store and into the Tavern, where Kingshot keeps it — **decided
+  2026-09-08**, and tapping the building is how a hero is called.
 - Levels 1–10:
 
 | Level | Grants |
@@ -334,7 +341,7 @@ Principles, on top of what exists ([`../features/03-economy.md`](../features/03-
 | §3 Dragon's Nest | 1 district, eggs, 1 unit type | incubation, feeding, party slot | nest, 3 eggs, 1–3 creatures | **incubation** | timer |
 | §4 Harmony | 6 decorations, `harmony_cost` column | supply/demand stat, gate, surplus bonus | 6 pieces + seasonal | none | — |
 | §5 Watchtower | 1 district | world-map dials read from a building level | 1 building | none | — |
-| §6 Reliquary | 1 district | relic cap and drop hooks on a level | 1 building | none | — |
+| ~~§6 Reliquary~~ | **cut** — relics unlock on the first relic owned | a hidden nav tab | none (3 sprites go unused) | none | — |
 | §7 Tavern | 1 district, `Hospitality` | hero cap, rumours, banner relocation | 1 building | none | — |
 | §8 Adjacency | sheet columns | stat-typed rules in the resolver | none | none | — |
 
@@ -362,7 +369,8 @@ Not in this proposal, deliberately:
 - Does Runestone touch relic levels, and how does that sit with OQ-7 and
   OQ-9 (§2.1, §6).
 - ~~Harmony surplus bonus on taxes, on all production, or none~~ — **taxes, decided 2026-09-08** (§4.1), and no bonus at all while demand is 0.
-- Whether the banner leaves the store for the Tavern (§7) —
-  [`../features/14-monetization.md`](../features/14-monetization.md).
+- ~~Whether the banner leaves the store for the Tavern (§7)~~ — **it does,
+  decided 2026-09-08**; tapping the Tavern is the hero destination
+  ([`../features/14-monetization.md`](../features/14-monetization.md) §2.1).
 - ~~The `Adjacency` sheet growing a `stat` column~~ — **done 2026-09-07** (§8, OQ-48 closed).
 - ~~Plot expansions as the price of Harmony~~ — **moot** (OQ-71: there is nothing to expand).

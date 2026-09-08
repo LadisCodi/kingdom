@@ -9,7 +9,7 @@
 > [`../open-questions.md`](../open-questions.md).
 >
 > **Status: steps 1–7 done; steps 8–11 are next and independent of each
-> other.** Save version 31. The designs live in `features/` —
+> other. Step 8 shrank on 2026-09-08 — the Reliquary is not a building.** Save version 31. The designs live in `features/` —
 > [`18-harmony.md`](../features/18-harmony.md) for step 6,
 > [`buildings.md`](../features/buildings.md) §3.1 for step 7 — and §6–§7 below
 > are the record of how they landed.
@@ -45,8 +45,8 @@
 | 5 | adjacency v2: stat-typed rules | 6 | 2–3 days |
 | 6 | Harmony and the decorations — **done** | 7 | 4–5 days |
 | 7 | Townhall 5–10 — **done** | 8, 9, 10, 11 | 2–3 days |
-| 8 | the Reliquary as a building | — | 2 days |
-| 9 | the Tavern as a building | — | 2–3 days |
+| 8 | relics unlock on the first relic — no building | — | half a day |
+| 9 | the Tavern: heroes and the banner behind a building | — | 2–3 days |
 | 10 | the Watchtower (the building and the flag) | the world map, later | 1–2 days |
 | 11 | the Dragon's Nest | — | 5–7 days |
 
@@ -594,32 +594,40 @@ with a few days of slack, and measured **2 · 3 · 7 · 9 · 9 · 11 · 14 · 21
   `goods.test.ts` (goods from 5 on the Townhall alone), `levelGates.test.ts`,
   the harness (the pacing table as bounds).
 
-## 8. Step 8 · The Reliquary
+## 8. Step 8 · Relics arrive with the first relic
 
-- **Data:** one `Districts` row, 1×1, one per city, `required_tech` (in
-  `definitions.ts`) `Consecration`, `max_level` 10, TH gate 3, goods from 6,
-  Harmony from 8. New per-level columns on the row: `relic_level_cap_per_level`
-  (`1,2,2,3,3,4,4,5,5,5`), plus `Settings` for the flat bonuses at 3, 5, 7, 9.
-- **Sim:** `relicLevelCap(state)` reads the Reliquary's level (0 if unbuilt);
-  `levelUpArtifact` refuses above it. `attune` (`artifacts.ts:177`) refuses
-  with `'NoReliquary'` when none is built. Ingredient drop and Stardust bonuses
-  are **modifiers** added by `syncArtifactModifiers`'s pattern (`:228`) from the
-  building's level — they are stats that already exist (`stardustYield`;
-  ingredient yield arrives with the ingredient rework). Trading (L5) and the
-  weekly 3★ recipe (L9) are stubs until their systems exist; the step lands the
-  gate values, not the systems.
-- **Existing saves:** a save that already owns a relic is **granted a built
-  Reliquary L1 next to the Townhall** by a migrator (a reshape of state, so a
-  migrator, `save.ts:88-249` shape). Promise 1: nothing owned is taken.
-- **UI:** the Relics nav tab (`navbar.ts:33-38`) hides until the Reliquary is
-  built; the reliquary sheet opens from the building's card as well as the
-  tab.
-- **Save:** bump, plus the migrator.
-- **Tests:** `artifacts.test.ts`: no attune without the building; the cap
-  follows the level; the migrator on a v28 save with a relic. `chrome.test.ts`
-  for the hidden tab.
-- **Done when:** a fresh game meets relics only after building the Reliquary,
-  and an old save loses nothing.
+**The decision this step opened with (2026-09-08): there is no Reliquary
+building.** The proposal (§6) put the relic system behind a 1×1 district with
+ten levels that capped a relic's level, and it is cut. A relic is **found**,
+out in the fog, at the bottom of a ruin — and a mechanic the player has just
+been handed the first piece of should not then ask them to go and build
+something before they may look at it. **What unlocks the mechanic is owning a
+relic**, which is the thing the player already did.
+
+- **Data:** none. No district row, no per-level columns, no settings.
+- **Sim:** none. `attune` and `levelUpArtifact` keep the gates they have —
+  slots are Gems and nothing else ([`../features/07-research.md`](../features/07-research.md)
+  §1), and a relic's level cap is its TIER, which is Fragments
+  ([`../features/09-relics.md`](../features/09-relics.md) §1).
+- **UI, and it is the whole step:** the **Relics nav tab is hidden until the
+  player owns a relic** (`navbar.ts:33-38`, where the tab list is a constant
+  today and every tab is always shown). The same rule the HUD already uses for
+  a currency the player has not met — a tab for a system with nothing in it
+  advertises a screen that can only disappoint.
+- **Save:** none. Ownership is already serialized (`state.artifacts.owned`),
+  so the gate is derived and needs no version.
+- **Tests:** `chrome.test.ts` for the hidden tab, and that it appears the
+  moment a relic is granted.
+- **Done when:** a fresh game has no Relics tab, and clearing the first ruin
+  puts one there.
+- **What the cut costs.** Three things the proposal hung on the building lose
+  their home, and each is now homeless rather than solved: the **relic level
+  cap** ladder (§6's `relic_level_cap_per_level`), the **ingredient trading**
+  it opened at L5, and — the one that matters — the **weekly Runestone recipe
+  for a 3★ ingredient at L9**, which was the answer written down for
+  **OQ-7** (a province-only player capping out at relic level 3 of 5). OQ-7 is
+  open again, and wider than it was. Three drawn sprites go unused with it
+  (`reliquary_l1/_l4/_l8`).
 
 ## 9. Step 9 · The Tavern
 
@@ -633,19 +641,25 @@ with a few days of slack, and measured **2 · 3 · 7 · 9 · 9 · 11 · 14 · 21
   party quest priced in production — reuses the daily chest's scheduling
   (`12-quests.md` §3) and the quest goal types that exist; a new goal type only
   if none fits (that is code — see `CLAUDE.md`'s data-or-code table).
-- **Banner relocation:** `bannerPanel()` (`bannerPanel.ts:15`) mounts in the
-  Tavern's card instead of `storeSheet.ts:79`. **Blocked on the decision in
-  the proposal §11** — `14-monetization.md` §2.1 has the banner as a store
-  doorway; settle which before this commit.
+- **Banner relocation — settled 2026-09-08: the banner moves.**
+  `bannerPanel()` (`bannerPanel.ts:15`) mounts in the Tavern's card instead of
+  `storeSheet.ts:79`, and **tapping the building is how a player calls a
+  hero**. The store keeps its Builders and Gems sections and loses its Heroes
+  one; `14-monetization.md` §2.1 and `10-heroes.md` §7 move with it. What does
+  NOT move is where the Gems go: a pull is still Gems, and the store is still
+  where Gems are bought.
 - **Existing saves:** a save that owns a hero is granted a built Tavern L1
   (same migrator pattern as step 8).
-- **UI:** the Tavern card: heroes owned, the banner, the rumour of the day.
+- **UI:** the Tavern card is the hero destination — heroes owned, the banner
+  with its Call button and pity counter, the rumour of the day. Tapping the
+  building opens it, the way tapping the Market opens the trade screen and
+  tapping a workshop opens its queue.
 - **Save:** bump, plus the migrator.
 - **Tests:** `heroes.test.ts`-shape tests for the cap and the pull gate; the
   migrator; the rumour's reward priced in production (`faucet.test.ts`
   pattern).
-- **Done when:** heroes arrive through a building, and the old save keeps its
-  heroes.
+- **Done when:** heroes arrive through a building, tapping it calls one, and
+  the old save keeps its heroes.
 
 ## 10. Step 10 · The Watchtower
 
@@ -738,6 +752,6 @@ The one new mechanic; last, and in three commits.
 | 5 | The `Adjacency` sheet gains `stat` and `magnitude` | **OQ-48** |
 | 6 | ~~Harmony surplus bonus lands on taxes; and what Harmony costs now the plot is unbounded~~ — **closed 2026-09-08**: a city total gated by a count cap per piece, every piece past the Garden priced in a good, and the surplus on taxes (§6) | proposal §4.1 |
 | 7 | Townhall 5–10 gated by goods and Harmony, not keystones. **Level 4 keeps `Charter III`**: the late city stays behind the delve loop, which is what welds the two halves together (settled 2026-09-04) | proposal §1.2; `07-research.md` §3 |
-| 8 | Runestone and the Reliquary L9 recipe as the province route past relic L3 | **OQ-7**, **OQ-9** |
-| 9 | The banner moves from the store to the Tavern | proposal §11; `14-monetization.md` §2.1 |
+| 8 | ~~Runestone and the Reliquary L9 recipe as the province route past relic L3~~ — **moot 2026-09-08: there is no Reliquary.** Relics unlock on the first relic (§8), and **OQ-7 loses the answer the building carried** | **OQ-7**, **OQ-9** |
+| 9 | ~~The banner moves from the store to the Tavern~~ — **closed 2026-09-08: it moves**, and tapping the Tavern is how a hero is called | proposal §11; `14-monetization.md` §2.1 |
 | 11 | A creature slot sits outside the Gem slot ladder | proposal §3; the slots rule in `07-research.md` §1 |
