@@ -971,8 +971,9 @@ large haul, unknown next) · scouted next depth · the failure report.
 
 **Show this.**
 
-- Bottom sheet, two tabs — **Relics** and **Heroes** — because they share one set
-  of collection rules and should look like one system.
+- Bottom sheet, relics only. *(Superseded 2026-09-08: this was two tabs,
+  Relics and Heroes; heroes left for a nav tab and a roster grid —
+  [`../features/10-heroes.md`](../features/10-heroes.md) §8.)*
 - **Attunement slots at the top**, as physical sockets. A locked slot says
   whether research or Gems opens it. A slot in its **5-minute swap lock** shows
   the time remaining on the socket itself.

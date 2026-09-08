@@ -80,6 +80,17 @@
   --sky: #4fa3c7; /* in progress, research, information */
   --locked: #cbba96; /* gated — warm, never grey */
 
+  /* ---- rarity ----
+   * A hero's rarity is the whole background of its tile, so the roster reads
+   * as a ladder before a single label does. Blue → violet → gold is the
+   * genre's universal one, and the eye sorts it without being taught.
+   * Common borrows --sky rather than a fourth blue; the violet is the one
+   * hue the palette did not already carry, tuned warm so it sits beside
+   * parchment instead of on top of it. */
+  --rarity-common: #5f8fa8;
+  --rarity-rare: #8a6bc4;
+  --rarity-legendary: #d99a2b;
+
   /* Warm, not near-black: the kingdom stays legible behind an open sheet. */
   --scrim: rgba(60, 36, 18, 0.35);
 

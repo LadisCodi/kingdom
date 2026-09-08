@@ -109,8 +109,8 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder' | 'daily'
-  | 'store' | 'payerProfile' | 'iapConfirm';
+  | 'reliquary' | 'heroes' | 'expedition' | 'checkpoint' | 'adOffer' | 'builder'
+  | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */

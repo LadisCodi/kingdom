@@ -40,6 +40,7 @@ import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
+import { renderHeroesSheet, resetHeroesView } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
@@ -158,6 +159,7 @@ async function boot(): Promise<void> {
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
     reliquary: renderReliquarySheet,
+    heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
     checkpoint: renderCheckpointSheet,
     adOffer: renderAdOfferSheet,
@@ -206,10 +208,13 @@ async function boot(): Promise<void> {
     // Overlays. Exhaustive over OverlayName, so adding a name without a
     // screen is a compile error rather than an overlay that draws nothing.
     const overlay = game.openOverlay;
+    // Leaving the roster forgets which hero was open, so coming back lands on
+    // the grid rather than inside whoever was last read.
+    if (overlay !== 'heroes') resetHeroesView();
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
+        'purse', 'reliquary', 'heroes', 'expedition', 'checkpoint', 'welcome', 'settings',
         'adOffer', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);

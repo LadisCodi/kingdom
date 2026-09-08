@@ -89,7 +89,9 @@ Three stacked sections, in the order of how often they change:
 3. **Relics and Heroes**, as two tabs of ONE screen, because they share one
    set of rules: Fragments raise a tier cap, Knowledge buys levels within it.
    Two screens would teach the player the same lesson twice and neither would
-   feel special.
+   feel special. *(Superseded 2026-09-08: heroes took a nav tab and a roster
+   grid of their own — [`../features/10-heroes.md`](../features/10-heroes.md)
+   §8. They share the ladder, not the job.)*
 
 ### An unfound relic is a signpost, not a locked box
 

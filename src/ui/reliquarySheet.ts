@@ -1,5 +1,12 @@
 // The Reliquary (Docs/features/08-magic.md §4) — where relics live.
 //
+// Heroes used to be a second tab here. They left on 2026-09-08 for a nav tab
+// and a roster grid of their own (src/ui/heroesSheet.ts): the two share one
+// collection LADDER, which was the argument for one screen, but they do not
+// share a job. This screen's job is the SOCKET — which passive you are
+// willing to go without — and a roster of thirty-two portraits under it made
+// that decision the smaller half of the page.
+//
 // The screen has one job the HUD deliberately refuses to do: explain the Mana
 // arithmetic. The header shows a pool and ONE net rate, because
 // "+6/h base −4/h upkeep = +2/h" in a status bar is exactly the spreadsheet
@@ -14,8 +21,6 @@
 import {
   ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, HEROES, RUINS,
 } from '../sim/data/definitions';
-import { heroIsBusy } from '../sim/expeditions';
-import { heroStats, rosterView } from '../sim/heroes';
 import {
   artifactEntry, attunementSlotGemCost, attunementSlots, isAttuned, isSlotLocked,
   ownsArtifact, passiveValue, slotUnlocksIn,
@@ -28,7 +33,7 @@ import { spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, card, iconEl, pips, progress, sheet, stat } from './kit';
+import { action, btn, card, iconEl, pips, progress, sheet } from './kit';
 
 /** Relic art at card size — sprite if it exists, glyph if not. */
 function relicArt(id: ArtifactId, locked: boolean): HTMLElement {
@@ -99,7 +104,9 @@ function manaPanel(game: Game): HTMLElement {
  *
  * Stardust has no coin on the plank: it buys levels for relics and heroes and
  * nothing else, so it reads here, beside the Study buttons that spend it, the
- * way Fragments do. A price with no purse in sight is the same bug as a purse
+ * way Fragments do. The roster screen carries the same line, for the same
+ * reason — a price with no purse in sight is a bug on whichever screen the
+ * price is on. A price with no purse in sight is the same bug as a purse
  * with nothing to spend it on — this is the half that has to be here.
  *
  * It is hidden until the player has met it. Stardust only ever comes out of a
@@ -305,115 +312,9 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   return el('div', { class: 'rel-entry' }, body);
 }
 
-// -------------------------------------------------------------- the heroes
-//
-// Heroes and relics are TWO TABS OF ONE SCREEN because they share one set of
-// rules — Fragments raise a tier cap, Stardust buys levels within it. Two
-// screens would teach the player the same lesson twice and neither would feel
-// special.
-
-function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTMLElement {
-  const hero = HEROES[view.id];
-  const stats = heroStats(game.state, view.id);
-  const busy = heroIsBusy(game.state, view.id);
-
-  const art = spriteUrl(hero.sprite);
-
-  if (!view.owned) {
-    // The SILHOUETTE, desaturated — not a stand-in glyph. A locked hero the
-    // player can already see is something to want; a padlock over a box is
-    // not. Same treatment the locked relics get.
-    return card({
-      art: art
-        ? el('img', { class: 'rel-art is-locked', src: art, alt: '' })
-        : el('div', { class: 'rel-art rel-art--glyph is-locked' }, hero.glyph),
-      name: hero.name,
-      desc: view.entry.fragments > 0
-        ? 'Not yet found — their fragments are adding up'
-        : 'Not yet found — the banner might bring them',
-      locked: true,
-    }, el('span', { class: 'rel-frag' },
-      iconEl('sparkle', { size: 'sm' }),
-      `${view.entry.fragments}`));
-  }
-  const body = el('div', { class: 'rel-card' },
-    el('div', { class: 'rel-card-head' },
-      art ? el('img', { class: 'rel-art', src: art, alt: '' })
-        : el('div', { class: 'rel-art rel-art--glyph' }, hero.glyph),
-      el('div', {},
-        el('div', { class: 'rel-name' }, hero.name),
-        el('div', { class: 'rel-tier' },
-          pips(view.entry.tier, COLLECTION.maxTier),
-          el('span', {}, `Level ${view.entry.level} / ${view.levelCap}`)))),
-    el('div', { class: 'rel-passive' }, iconEl('sparkle', { size: 'sm' }), hero.traitText),
-    el('div', { class: 'rel-hero-stats' },
-      stat('army', String(stats.atk), 'atk'),
-      stat('padlock', String(stats.def), 'def'),
-      stat('population', String(stats.hp), 'hp'),
-      stat(hero.unitType, hero.unitType, 'fights as')),
-    ...(busy ? [el('div', { class: 'rel-note' }, 'Currently underground.')] : []),
-  );
-
-  if (view.entry.level < COLLECTION.maxLevel) {
-    const cost = levelCost(view.entry.level);
-    body.append(action({
-      label: 'Train',
-      onClick: () => game.doLevelHero(view.id),
-      cost: { Stardust: cost },
-      have: (c) => game.walletValue(c),
-      disabledReason: view.entry.level >= view.levelCap
-        ? 'Their tier holds them back — raise it with Fragments'
-        : undefined,
-    }));
-  }
-  if (view.entry.tier < COLLECTION.maxTier) {
-    body.append(action({
-      label: 'Raise their tier',
-      onClick: () => game.doRaiseHeroTier(view.id),
-      costExtra: [{
-        icon: 'sparkle',
-        amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
-        short: view.entry.fragments < tierCost(view.entry.tier),
-      }],
-      info: view.entry.fragments < tierCost(view.entry.tier)
-        ? 'Pull for them, or delve again' : undefined,
-    }));
-  }
-  return el('div', { class: 'rel-entry' }, body);
-}
-
-/** The roster's way to the banner, which lives on the store now
- *  (Docs/features/14-monetization.md §2.1): a call for aid is a purchase, and
- *  the store is where purchases are made and measured. */
-function toTheBanner(game: Game): HTMLElement {
-  return action({
-    label: 'Call for aid',
-    kind: 'gem',
-    icon: 'star',
-    onClick: () => game.setOverlay('store'),
-    info: 'The banner is in the store. Every miss still pays fragments.',
-  });
-}
-
-/** Which tab is open. Module-level so it survives the per-tick rebuild — the
- *  same reason the market's amount selector lives outside its render. */
-let openTab: 'relics' | 'heroes' = 'relics';
-
 export function renderReliquarySheet(game: Game): HTMLElement {
   const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
   const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
-
-  const tabs = el('div', { class: 'rel-tabs' },
-    ...(['relics', 'heroes'] as const).map((tab) => {
-      const b = el('button', {
-        class: `rel-tab${openTab === tab ? ' is-active' : ''}`, type: 'button',
-      }, tab === 'relics' ? 'Relics' : 'Heroes');
-      b.addEventListener('click', () => {
-        openTab = tab;
-        game.notify();
-      });
-      return b;
-    }));
 
   const relics = el('div', { class: 'rel-section' },
     el('div', { class: 'rel-heading' },
@@ -427,22 +328,12 @@ export function renderReliquarySheet(game: Game): HTMLElement {
       : owned.map((id) => relicCard(game, id))),
     ...missing.map((id) => relicCard(game, id)));
 
-  const roster = rosterView(game.state);
-  const heroes = el('div', { class: 'rel-section' },
-    el('div', { class: 'rel-heading' },
-      el('span', {}, 'Heroes'),
-      el('span', { class: 'rel-heading-note' },
-        `${roster.filter((h) => h.owned).length} of ${roster.length} found`)),
-    ...roster.map((view) => heroCard(game, view)),
-    toTheBanner(game));
-
   const purse = stardustPanel(game);
   const body = el('div', { class: 'rel' },
     manaPanel(game),
     ...(purse === null ? [] : [purse]),
     slots(game),
-    tabs,
-    openTab === 'relics' ? relics : heroes,
+    relics,
   );
 
   return sheet({ title: 'Reliquary', onClose: () => game.dismiss() }, body);

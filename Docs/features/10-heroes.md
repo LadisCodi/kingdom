@@ -6,12 +6,18 @@
 > [`11-expeditions.md`](11-expeditions.md) and how the fight resolves is
 > [`combat.md`](combat.md) §9.
 >
-> **Status: the gacha is built** (§6). **The hero itself is designed, not
-> built — reworked 2026-09-08 onto the resolver**: the stat block and the
-> passive (§2), XP-bought levels and the Fragment-plus-Stardust ascension (§4),
-> and Gem-bought hero slots (§3) replace the delve-era hero the code still
-> carries. The **Tavern**, the building heroes arrive through, is designed and
-> unbuilt (§8, [`../plans/builder-30-days.md`](../plans/builder-30-days.md) §9).
+> **Status: the gacha is built** (§6), and so are **the nav tab, the roster
+> grid and the hero card** (§8, built 2026-09-08). **The hero itself is
+> designed, not built — reworked 2026-09-08 onto the resolver**: the stat
+> block and the passive (§2), XP-bought levels and the
+> Fragment-plus-Stardust ascension (§4), and Gem-bought hero slots (§3)
+> replace the delve-era hero the code still carries. **So the screens are
+> ahead of the sim**: the card's Train button charges Stardust and its
+> passive line reads a delve-era trait until Step 8 lands
+> ([`../implementation-plan.md`](../implementation-plan.md) §4), which changes
+> those two call sites and nothing about the layout. The **Tavern**, the
+> building heroes arrive through, is designed and unbuilt
+> ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §9).
 
 ## 1. The collection substrate
 
@@ -230,10 +236,42 @@ Each of these is data, not code:
 
 ## 8. The screens
 
-- **The Reliquary** carries heroes and relics as **two tabs of one screen** —
-  a nav tab, and **not a building**. The hero tab is where XP is spent on a
-  level and Fragments plus Stardust on an ascension; each card reads its stat
-  block, its passive and its type.
+- **Heroes have a nav tab of their own**, beside Relics. The two share a
+  collection LADDER, which was the argument for sharing a screen, but not a
+  job: the Reliquary's job is the socket, and a roster of thirty-two under it
+  made that decision the smaller half of the page.
+
+### 8.1 The roster
+
+- **A grid of portraits, three across.** Thirty-two heroes, most of them not
+  owned, only read as a collection when the gaps are visible; a list of rows
+  cannot show them.
+- **Rarity is the tile's background**, blue → violet → gold, so the ladder
+  reads with no label. An unfound hero loses its rarity for warm stone: a
+  locked tile that still glowed gold would advertise a Legendary the player
+  cannot act on.
+- A tile carries the portrait, its **unit type** top-left, its **level** and
+  its **ascension stars** along the foot.
+- **An unfound hero shows its fragment count**, not a padlock — a silhouette
+  with progress on it is something to want.
+- **A green mark** on any tile that can take a level or an ascension right
+  now. It is the roster's whole job: point at the one card worth opening.
+- **Owned first, then the gaps**, both in roster order. No sort control.
+- One line above the grid: Stardust held, and how many of the roster are
+  found. One button below it: **Call for aid**, into the banner.
+
+### 8.2 The card
+
+- Opened by tapping a tile. Portrait on its rarity, with the **rarity** and
+  the **unit type** named, and an arrow each side that steps to the next hero
+  — comparing two of them is most of what the card is for.
+- Name and title, then the **two ladders side by side** — level of cap, and
+  ascension in stars — because they gate each other and the reason a level is
+  refused has to be in the same glance as the button refusing it.
+- The stat block, the passive, and the two actions: **Train** priced in XP,
+  **Ascend** priced in Fragments plus Stardust.
+- An unowned hero's card is the same screen with the ladders replaced by its
+  fragment count and one way to the banner.
 - **The banners live in the Tavern** (*designed, not built*): heroes are
   unlocked by that building and **tapping it is how one is called**, the way
   tapping the Market opens the trade screen
@@ -255,8 +293,9 @@ Each of these is data, not code:
   allowance is spent. The ×10 is always the ten and always priced.
 - **Heroes are put on the board in the party composition sheet**
   ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.6), which also sells the next hero
-  slot, the way it sells the next party slot. There is no standing
-  hero-management destination beyond the Reliquary tab.
+  slot, the way it sells the next party slot. The roster is where a hero is
+  GROWN; the party sheet is where one is SENT, and neither does the other's
+  job.
 
 ## 9. Dials, in the order to reach for them
 

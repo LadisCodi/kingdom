@@ -23,8 +23,8 @@
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
-| **Stardust** | dungeons | relic levels · the toll on a hero's ascension | kingdom | no — reads in the Reliquary |
-| **Hero XP** | dungeons | hero levels, on any hero | kingdom | no — reads in the Reliquary |
+| **Stardust** | dungeons | relic levels · the toll on a hero's ascension | kingdom | no — reads in the Reliquary and on the roster |
+| **Hero XP** | dungeons | hero levels, on any hero | kingdom | no — reads on the roster |
 | **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
 | **Gems** | quests, first clears, the daily week marker, the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
