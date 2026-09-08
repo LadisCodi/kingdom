@@ -261,6 +261,10 @@ A `bonus` names its effects, and each is four fields:
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
 | the **quest chain** | — | 50 across nine quests | `rewardKnowledge` (Quests sheet) |
 
+- **The balance rides on the game's own plank while the research screen is
+  open**, beside Gold, in place of Food and timber — a technology is priced in
+  both halves and neither should be a screen away from the button that spends
+  it. The screen keeps the one thing the plank cannot say: **the rate**.
 - A kingdom holding nothing drips **1/h** (24 a day); a fully explored
   province — ten landmarks, five ruins — **4/h** (96 a day) before
   `Conquest`, **5.5/h** after.

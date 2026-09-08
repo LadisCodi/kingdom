@@ -323,7 +323,9 @@
   font-family: var(--font-body);
   font-size: var(--text-helper);
 }
-.res-clock-rate { opacity: 0.8; }
+/* The rate is the whole of this pill now — the balance moved to the plank
+   while the screen is open — so it is no longer the dimmed half of a pair. */
+.res-clock-rate { opacity: 1; }
 .res-wait {
   display: flex;
   align-items: center;

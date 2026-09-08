@@ -25,7 +25,6 @@ import {
 } from '../sim/research';
 import { techLine } from '../sim/techProse';
 import { knowledgePerHour } from '../sim/mana';
-import { resourceDiscoveryKey } from '../sim/discovery';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
@@ -119,19 +118,19 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // RATE beside the balance because a drip you cannot see the speed of is a
   // drip you cannot plan against. Hidden until the player has met it: a zero
   // row would advertise a currency the tutorial has not yet introduced.
-  const held = game.walletValue('Knowledge');
+  // THE BALANCE IS ON THE PLANK while this screen is open
+  // (`Game.visibleCurrencies`), so what is left here is the one thing the
+  // header cannot say: how fast it is filling. A drip you cannot see the
+  // speed of is a drip you cannot plan against.
+  //
+  // Rounded, because the rate is a SUM OF FRACTIONS — 1 an hour plus 0.2 a
+  // landmark — and binary floating point can render one as
+  // "+2.4000000000000004/h".
   const rate = knowledgePerHour(state);
-  if (held > 0 || rate > 0 || state.discoveries[resourceDiscoveryKey('Knowledge')] === true) {
-    bar.append(el('span', { class: 'res-clock' },
-      iconEl('Knowledge', { size: 'sm' }),
-      el('b', {}, String(held)),
-      // Rounded, because the rate is a SUM OF FRACTIONS — 0.8 an hour plus
-      // 0.2 a landmark — and binary floating point renders three of them as
-      // "+2.4000000000000004/h". One decimal, and no trailing ".0" on a whole
-      // one.
-      el('span', { class: 'res-clock-rate' },
-        rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : 'no drip')));
-  }
+  bar.append(el('span', { class: 'res-clock' },
+    iconEl('Knowledge', { size: 'sm' }),
+    el('span', { class: 'res-clock-rate' },
+      rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : 'no drip')));
   const tabs = shelf(game);
   root.append(el('div', { class: 'research-topbar' },
     el('h2', {}, TOMES[activeTome].name), bar, close));

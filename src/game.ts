@@ -2377,6 +2377,11 @@ export class Game {
     // buy nothing here. Same move the plaque under it already makes
     // (`hudSlot`): show the reading the player can act on, not all of them.
     if (this.openOverlay === 'heroes') return ['HeroXp', 'Stardust'];
+    // The tree spends Gold AND the clock, so unlike the roster this one keeps
+    // a city coin: a technology's price has two halves and a plank showing
+    // one of them is worse than a plank showing neither. Food and timber buy
+    // no research, so they stand down.
+    if (this.openOverlay === 'research') return ['Gold', 'Knowledge'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
     return [

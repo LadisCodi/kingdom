@@ -560,6 +560,16 @@ describe('the plank follows the screen', () => {
     expect(game.visibleCurrencies()).toEqual(['HeroXp', 'Stardust']);
   });
 
+  it('keeps Gold beside the clock on the research screen', () => {
+    const game = freshPresenter();
+    game.setOverlay('research');
+
+    // Not the roster's clean swap: a technology is priced in Gold AND
+    // Knowledge, and a plank showing one half of a price is worse than one
+    // showing neither.
+    expect(game.visibleCurrencies()).toEqual(['Gold', 'Knowledge']);
+  });
+
   it('gives the coins back when the roster closes', () => {
     const game = freshPresenter();
     game.setOverlay('heroes');
