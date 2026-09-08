@@ -111,6 +111,7 @@ describe('technology basics', () => {
   it('charges Gold from the city AND Knowledge from the kingdom, from era 2 on', () => {
     const state = freshGame();
     fund(state, { Gold: 50_000 });
+    state.kingdom.wallet.Knowledge = 0; // the opening grant, spent — this is about the purse
     // Era 1 is Gold and time alone — the clock has not started.
     expect(techKnowledgeCost('Forestry')).toBe(0);
     expect(canStartTech(state, 'Forestry')).toBe(true);
@@ -132,7 +133,8 @@ describe('technology basics', () => {
 
   it('says how long until the Knowledge is there, or that nothing is dripping', () => {
     const state = freshGame();
-    // 100 short at 20/h is five hours.
+    state.kingdom.wallet.Knowledge = 0; // the opening grant, spent — this is about the wait
+    // Short by the whole price at 20/h.
     expect(knowledgeShortfallMs(state, 'ScalingTools', 20))
       .toBe((techKnowledgeCost('ScalingTools') / 20) * 3_600_000);
     // …and with no territory there is no answer but "go and take some".

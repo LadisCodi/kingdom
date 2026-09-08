@@ -8,9 +8,11 @@
 > designs will live in `features/` as each step closes, and open decisions in
 > [`../open-questions.md`](../open-questions.md).
 >
-> **Status: steps 1–6 done; step 7 is next.** Save version 31. The design of
-> step 6 lives in [`../features/18-harmony.md`](../features/18-harmony.md);
-> §6 below is the record of how it landed.
+> **Status: steps 1–7 done; steps 8–11 are next and independent of each
+> other.** Save version 31. The designs live in `features/` —
+> [`18-harmony.md`](../features/18-harmony.md) for step 6,
+> [`buildings.md`](../features/buildings.md) §3.1 for step 7 — and §6–§7 below
+> are the record of how they landed.
 
 ## 0. How the steps are cut
 
@@ -42,7 +44,7 @@
 | 4 | levels 5–10 of every building, gated by goods | 6, 8, 9 | 2–3 days |
 | 5 | adjacency v2: stat-typed rules | 6 | 2–3 days |
 | 6 | Harmony and the decorations — **done** | 7 | 4–5 days |
-| 7 | Townhall 5–10 | 8, 9, 10, 11 | 2–3 days |
+| 7 | Townhall 5–10 — **done** | 8, 9, 10, 11 | 2–3 days |
 | 8 | the Reliquary as a building | — | 2 days |
 | 9 | the Tavern as a building | — | 2–3 days |
 | 10 | the Watchtower (the building and the flag) | the world map, later | 1–2 days |
@@ -177,7 +179,7 @@ one good, and the first producer in the game that is a crew from the start.
 
 - **Data:** four `Districts` rows, 1×1, `max_level` 10, crew
   `1,2,3,3,4,4,5,5,6,6` and queue `3…12` by level, count caps
-  `0,0,0,0,1,1,1,2,2,2` (one at TH5, two at TH8). Two new columns, `produces`
+  `0,0,0,1,1,1,1,2,2,2` (one at TH4, two at TH8 — moved up a level in step 7, since Townhall 5 is the first level priced in goods and a good needs a workshop to exist first). Two new columns, `produces`
   and `queue_length_per_level`, and the importer refuses a row that has one
   without the other. Unlock technologies: `Engineering` for the Carpenter and
   the Mason's Yard, `Mining` for the Smelter, `Attunement II` for the Rune
@@ -394,7 +396,7 @@ paying or charging, never by refusing.**
 | **Shrine** | 2×2 | 40 | 2 Runestone | `0,0,0,0,0,0,0,0,1,2` | **Sacred Grounds** (Civics 3, under Scriveners II) |
 
 - The cap array is the **Townhall gate and the ceiling** in one, the way a
-  workshop's already is (`0,0,0,0,1,1,1,2,2,2`), so no decoration needs a
+  workshop's already is (`0,0,0,1,1,1,1,2,2,2`), so no decoration needs a
   `required_townhall_level_per_level` of its own. **Discovery is a technology
   on top** (2026-09-08): four Civics era-3 cards open the pieces in pairs and
   singles, paired by material — plants under Gardening, cut stone under
@@ -539,34 +541,53 @@ save needs nothing: it has no decoration in it.
   the decorations cost the workshop queue to buy, and the Townhall card says
   what the surplus is paying.
 
-## 7. Step 7 · Townhall 5–10
+## 7. Step 7 · Townhall 5–10 — **DONE**
 
-Levels 8–10 landed with step 4 and their Harmony demand with step 6; what is
-left here is **the Townhall ladder**, which is the only thing standing between
-the player and everything the two steps authored.
+**The target this step was authored against (2026-09-08):** Townhall 2 on
+day 1, 3 on day 2, 4 on day 5, 5 on day 7, 6 on day 10, 7 on day 14, 8 on
+day 20, 9 on day 24, 10 on day 30 — days orientative. The harness asserts it
+with a few days of slack, and measured **2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 ·
+25** on landing.
 
-- **Data:** Townhall `max_level` 10, `required_tech_per_level`
-  `,CharterII,CharterIII,,,,,,` (nothing past 4), `upgrade_cost_goods_per_level`
-  from 5, the late-curve columns (§3.1 of
-  [`../features/05-city-and-districts.md`](../features/05-city-and-districts.md))
-  set so L6 ≈ 4 h, L8 ≈ 12 h, L10 ≈ 36 h — twice a district's, since the
-  Townhall is the clock every other ladder hangs from. Every
-  `max_count_per_townhall_level` array extended to 10 entries (Housing
-  `2,4,6,9,11,13,15,17,19,21`; producers to 5–6; workshops
-  `0,0,0,0,1,1,1,2,2,2`). The Townhall's own `harmony_cost_per_level`,
-  `,,,,,,,10,20,30` — the fourteen districts' is step 6's (§6.4), so what is
-  left here is the building that gates them all.
-- **Sim:** nothing new — the gates from steps 2, 4 and 6 compose.
-- **UI:** the Townhall card lists what the next level unlocks (count caps) as
-  today (`districtCard.ts:133-136`). `levelStars` already became a numeral in
-  step 4.
-- **Save:** none.
-- **Tests:** `levelGates.test.ts`: TH5 needs goods, TH8 needs Harmony, no
-  Townhall level past 4 needs a technology; `costs.test.ts` the durations;
-  the harness: TH5 week 1, TH7 week 2, TH8 week 3, TH9 week 4 — **this is the
-  step where the pacing table becomes an assertion**, and where step 4's
-  goods wall is reached for the first time.
-- **Done when:** the harness passes the whole pacing table with steps 2–7 in.
+- **Data:** Townhall `max_level` 10; goods from level 5 (`2/2` Planks and Cut
+  Stone, rising to `20/20/14 Iron/4 Runestone` at 10); Harmony `,,,,,,,10,20,30`;
+  the late wait **6 h at 6, doubling a level to 96 h at 10**; cost ×1.7 a
+  level from 6. No level past 4 asks for a technology — 3 stays `Bureaucracy`
+  and 4 `Magistracy`. Six count-cap arrays extended to ten entries (Housing to
+  21, producers to 5–6, plots to 28). **The workshops moved from Townhall 5 to
+  4**: level 5 is the first priced in goods, and a good needs a workshop to
+  exist first — at 5 the ladder deadlocked on itself. The table is
+  [`../features/buildings.md`](../features/buildings.md) §3.1.
+- **What the Knowledge economy had to become for it.** At the tree's old
+  prices the ladder could not run on a calendar: Townhall 4 alone was
+  `Magistracy` and its column, 1,410 Knowledge, against a scripted month's
+  income of ~1,500 — the whole late city sat behind Civics era 3. Three
+  changes, all data: **a base drip of 8 an hour** (`knowledge.base_per_hour`,
+  one line in `knowledgePerHour`), **120 Knowledge at the start**
+  (`Currencies.Knowledge.start`), and **every Knowledge price on the tree
+  halved** (23,775 in all). Territory still adds to the clock; it no longer
+  IS the clock ([`../features/07-research.md`](../features/07-research.md) §3).
+- **What the harness had to learn to measure it** — five things a player does
+  that a cheapest-first script did not: chain short researches inside a visit
+  (with half the purse as the tree's budget); research what the Townhall's
+  card asks for, and the workshop whose good the next level wants; build that
+  workshop first and crew it first, moving a villager if nobody is idle; queue
+  goods to the next level's need rather than to the brim (a full queue turned
+  every stone into blocks and left none for the Rune Carver's 200); and keep
+  the one builder for a Townhall that is ready in everything but a builder.
+  Each was found by a level that would not come, and each is a real-player
+  behaviour rather than a cheat — the harness prints the day every level and
+  every gating card first stood.
+- **What the run shows that is not fine.** With the builder kept for the
+  Townhall the scripted city ends the month with **7 villagers, no army, no
+  ruin cleared**: one builder is enough for the ladder and nothing else, and a
+  second is 2,500 Gems the chain does not pay. Population is Food-priced
+  (×1.45 a villager) and the crews that make goods are the crews that grew
+  food. Both are the game's, not the harness's, and both are step 8–11's to
+  look at; the pacing bounds hold with them as they are.
+- **Save:** none. **Tests:** `costs.test.ts` (the Townhall's own wait),
+  `goods.test.ts` (goods from 5 on the Townhall alone), `levelGates.test.ts`,
+  the harness (the pacing table as bounds).
 
 ## 8. Step 8 · The Reliquary
 

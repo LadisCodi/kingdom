@@ -5,8 +5,9 @@
 > level ([`buildings.md`](buildings.md)); the worker, the building and the
 > cell as three actors is [`04-harvest.md`](04-harvest.md) §7.
 >
-> **Status: built**, and reachable at Townhall 5 — the count cap below opens
-> there, and the Townhall ladder past level 4 is not built yet.
+> **Status: built**, and reachable at Townhall 4 — the count cap below opens
+> there, one level before the first Townhall level that is priced in goods,
+> so the ladder never asks for a good nothing can yet make.
 
 ## 1. A good is not a currency
 
@@ -37,10 +38,10 @@
 
 | Workshop | Makes | Footprint | Unlock | Count cap |
 |---|---|---|---|---|
-| **Carpenter** | Planks | 1×1 | `Engineering` | 1 at TH5, 2 at TH8 |
-| **Mason's Yard** | Cut Stone | 1×1 | `Engineering` | 1 at TH5, 2 at TH8 |
-| **Smelter** | Iron | 1×1 | `Mining` | 1 at TH5, 2 at TH8 |
-| **Rune Carver** | Runestone | 1×1 | `Attunement II` | 1 at TH5, 2 at TH8 |
+| **Carpenter** | Planks | 1×1 | `Engineering` | 1 at TH4, 2 at TH8 |
+| **Mason's Yard** | Cut Stone | 1×1 | `Engineering` | 1 at TH4, 2 at TH8 |
+| **Smelter** | Iron | 1×1 | `Mining` | 1 at TH4, 2 at TH8 |
+| **Rune Carver** | Runestone | 1×1 | `Attunement II` | 1 at TH4, 2 at TH8 |
 
 - Max level **10**. Fog ring as any building: reveal 1, discover 2. Movable.
 - A tap opens the queue. It does not hurry the work and costs no Mana.
@@ -116,7 +117,7 @@
 | Which workshop makes which good | §3 | `Districts.produces` |
 | Queue length by level | 3 → 12 | `Districts.queue_length_per_level` |
 | Crew by level | 1 → 6 | `Districts.max_workers_per_level` |
-| How many the city may own | 1 at TH5, 2 at TH8 | `Districts.max_count_per_townhall_level` |
+| How many the city may own | 1 at TH4, 2 at TH8 | `Districts.max_count_per_townhall_level` |
 | What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | `Districts.upgrade_cost_goods_per_level` |
 | Gem price of the item in progress | 5 s a Gem | `rush.seconds_per_gem` |
 | Offline cap | 8 h | `offlineCapHours` |

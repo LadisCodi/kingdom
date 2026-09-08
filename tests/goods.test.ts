@@ -108,6 +108,11 @@ describe('a building level priced in goods', () => {
         continue;
       }
       for (let level = 2; level < LATE_FROM; level++) {
+        // The one exception: the Townhall's ladder is priced in goods from
+        // level 5, one level before the pivot — it is the clock every other
+        // ladder hangs from, and the workshops open at 4 so that a good exists
+        // before the first level that asks for one.
+        if (def.id === 'Townhall' && level === LATE_FROM - 1) continue;
         expect(goodsCostForLevel(def, level), `${def.id} level ${level}`).toEqual({});
       }
       // Every late level asks for a good, so no building's ladder can be

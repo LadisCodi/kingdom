@@ -19,7 +19,7 @@ import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
 import {
   ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
-  UNITS,
+  UNITS, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
@@ -835,14 +835,16 @@ describe('finishing a training line with gems', () => {
 describe('Knowledge is the research clock, and cleared ruins drive it', () => {
   it('a ruin drips nothing until it has been CLEARED', () => {
     const state = readyToDelve();
-    // The Barrow is discovered — readyToDelve can launch into it — and still
-    // pays nothing per hour.
-    expect(knowledgePerHour(state)).toBe(0);
+    // The Barrow is discovered — readyToDelve can launch into it — and adds
+    // nothing yet: only the base rate runs.
+    const base = KNOWLEDGE.basePerHour;
+    expect(knowledgePerHour(state)).toBe(base);
+    const before = getWallet(state.kingdom.wallet, 'Knowledge');
     advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + base);
 
     state.ruinsCleared[BARROW] = true;
-    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
+    expect(knowledgePerHour(state)).toBe(base + KNOWLEDGE.dripPerClearedRuinPerHour);
   });
 
   // The other half of the rate, and the reason the fog compounds into the
@@ -854,24 +856,28 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
     fund(state, { Gold: 1_000_000 });
     const def = LANDMARKS.find((l) => !l.defended)!;
     reveal(state, [def.location]);
-    expect(knowledgePerHour(state)).toBe(0); // no territory, no clock
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour); // no territory: the floor
 
+    const held = getWallet(state.kingdom.wallet, 'Knowledge');
     expect(claimLandmark(state, map, def.location)).toBe('Claimed');
     // The lump lands the moment the ground is taken.
     expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(KNOWLEDGE.landmarkClaimLump);
-    // …and the rate is now running.
-    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.perClaimedLandmarkPerHour);
+      .toBe(held + KNOWLEDGE.landmarkClaimLump);
+    // …and the rate has territory on top of the floor.
+    expect(knowledgePerHour(state))
+      .toBe(KNOWLEDGE.basePerHour + KNOWLEDGE.perClaimedLandmarkPerHour);
   });
 
-  // There is deliberately NO base rate. A player who has taken nothing
-  // generates nothing — era 1 of the tree costing no Knowledge is what keeps
-  // that from being a wall (Docs §3, and its own open decision 3).
-  it('pays nothing at all to a player who has taken no ground', () => {
+  // There IS a base rate (2026-09-08): the tree opens on the calendar, and
+  // the province makes it open faster. A player who has taken no ground
+  // learns the floor and nothing more — and starts with the opening's grant.
+  it('pays a player who has taken no ground the floor, and only the floor', () => {
     const state = freshGame();
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour);
     advance(state, map, T0 + 24 * 3_600_000);
-    expect(knowledgePerHour(state)).toBe(0);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(CURRENCIES.Knowledge.start + 24 * KNOWLEDGE.basePerHour);
   });
 
   // THE LOAD-BEARING ASSERTION, for a rate that CHANGES mid-window.
@@ -915,8 +921,8 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
     expect(oneCall.ruinsCleared[BARROW]).toBe(true);
     expect(stepped.ruinsCleared[BARROW]).toBe(true);
     // …and the rate really did change part-way through.
-    expect(knowledgePerHour(oneCall))
-      .toBe(KNOWLEDGE.perClaimedLandmarkPerHour + KNOWLEDGE.dripPerClearedRuinPerHour);
+    expect(knowledgePerHour(oneCall)).toBe(KNOWLEDGE.basePerHour
+      + KNOWLEDGE.perClaimedLandmarkPerHour + KNOWLEDGE.dripPerClearedRuinPerHour);
     // …and both paths banked exactly the same Knowledge, off the same anchor.
     expect(getWallet(stepped.kingdom.wallet, 'Knowledge'))
       .toBe(getWallet(oneCall.kingdom.wallet, 'Knowledge'));
@@ -927,12 +933,13 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
     const state = readyToDelve();
     state.ruinsCleared[BARROW] = true;
     state.ruinsCleared.SunkenChapel = true;
-    expect(knowledgePerHour(state)).toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+    const rate = KNOWLEDGE.basePerHour + 2 * KNOWLEDGE.dripPerClearedRuinPerHour;
+    expect(knowledgePerHour(state)).toBe(rate);
 
     state.kingdom.lastKnowledgeAt = T0;
+    const before = getWallet(state.kingdom.wallet, 'Knowledge');
     advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + rate);
   });
 
   // The runway that replaces the old "the map holds more Knowledge than the
@@ -949,7 +956,9 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
       (_, i) => levelCost(i + 1),
     ).reduce((a, b) => a + b, 0);
 
-    expect(perDay).toBe(240);
+    // The floor plus five ruins' drip: (8 + 5 × 2) × 24.
+    expect(perDay).toBe((KNOWLEDGE.basePerHour
+      + Object.keys(RUINS).length * KNOWLEDGE.dripPerClearedRuinPerHour) * 24);
     // Meaningful progress inside a month, an endgame horizon past it.
     expect(oneCollectible / perDay).toBeGreaterThan(7);
     expect(oneCollectible / perDay).toBeLessThan(30);

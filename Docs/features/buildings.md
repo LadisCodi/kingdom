@@ -33,7 +33,7 @@
 
 | Building | Footprint | Unlock | Count cap | Max level | Job |
 |---|---|---|---|---|---|
-| **Townhall** | 2×2 | — | 1 | **4** (5 designed) | the era gate; trains villagers; the map's origin |
+| **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; the map's origin |
 | **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold |
 | **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
 | **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
@@ -46,10 +46,10 @@
 | **Spear Hall** | 1×1 | Spears | 1 | **10** | army cap; trains Lancer |
 | **Shooting Grounds** | 1×1 | Archery | 1 | **10** | army cap; trains Archer |
 | **Stables** | 1×1 | Cavalry | 1 | **10** | army cap; trains Cavalry |
-| **Carpenter** | 1×1 | Engineering | 1 at TH5, 2 at TH8 | **10** | crew works Wood into Planks |
-| **Mason's Yard** | 1×1 | Engineering | 1 at TH5, 2 at TH8 | **10** | crew dresses Stone into blocks |
-| **Smelter** | 1×1 | Mining | 1 at TH5, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
-| **Rune Carver** | 1×1 | Attunement II | 1 at TH5, 2 at TH8 | **10** | crew pours Mana into cut stone |
+| **Carpenter** | 1×1 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew works Wood into Planks |
+| **Mason's Yard** | 1×1 | Engineering | 1 at TH4, 2 at TH8 | **10** | crew dresses Stone into blocks |
+| **Smelter** | 1×1 | Mining | 1 at TH4, 2 at TH8 | **10** | crew smelts ore and Gold into Iron |
+| **Rune Carver** | 1×1 | Attunement II | 1 at TH4, 2 at TH8 | **10** | crew pours Mana into cut stone |
 | **Garden** | 1×1 | Gardening | 4 at TH5 → 14 | **1** | supplies 4 Harmony |
 | **Well** | 1×1 | Sculpture | 2 at TH6 → 10 | **1** | supplies 6 Harmony |
 | **Orchard** | 2×1 | Gardening | 1 at TH6 → 5 | **1** | supplies 12 Harmony |
@@ -77,6 +77,33 @@
 | 2 | — | 60 Wood | 30 s |
 | 3 | `Bureaucracy` (Civics era 2) | ×3.9 per level | ×4 per level |
 | 4 | `Magistracy` (Civics era 3) | | |
+
+### 3.1 The ladder to 10
+
+- **Levels 2–4 are gated by the tree**: 3 by `Bureaucracy` (Civics era 2), 4
+  by `Magistracy` (Civics era 3). **No level past 4 asks for a technology.**
+- **Levels 5–10 are priced in refined goods**, from one level before every
+  other building is (the workshops open at Townhall 4 so a good exists first):
+
+| Reaching | Planks | Cut Stone | Iron | Runestone |
+|---|---|---|---|---|
+| 5 | 2 | 2 | | |
+| 6 | 4 | 4 | | |
+| 7 | 6 | 6 | 2 | |
+| 8 | 10 | 10 | 6 | |
+| 9 | 14 | 14 | 10 | 2 |
+| 10 | 20 | 20 | 14 | 4 |
+
+- **Levels 8, 9 and 10 demand Harmony** — 10, 20, 30 in total
+  ([`18-harmony.md`](18-harmony.md)).
+- **The wait doubles a level from 6**: 6 h · 12 h · 24 h · 48 h · 96 h, twice
+  and more a district's, since the Townhall is the clock every other ladder
+  hangs from. Currencies grow ×1.7 a level from 6, continuous with the early
+  curve.
+- **Pacing** (the design's target, days orientative — the thirty-day harness
+  asserts it with slack): 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 · day 7 —
+  6 · day 10 — 7 · day 14 — 8 · day 20 — 9 · day 24 — 10 · day 30. Measured
+  2026-09-08: 2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 · 25.
 
 ## 4. The districts
 
@@ -251,7 +278,7 @@ Upgrades grow ×1.6 in cost and ×1.6 in time per level.
 ### 4.11 The late ladder — levels 6 to 10
 
 Every building above that reaches level 10 climbs the same way, so it is
-written once. The Townhall's own ladder past 4 is not built yet.
+written once. The Townhall's own ladder is §3.
 
 - **The gate is the Townhall, and only the Townhall**: level 6 needs TH6,
   level 7 TH7, and so on to TH10. **No technology gates any late level** — the

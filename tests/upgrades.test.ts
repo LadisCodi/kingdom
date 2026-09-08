@@ -658,12 +658,13 @@ describe('the era-2/3 majors that are live', () => {
     // is — including any that lift the whole drip — is the designer's to
     // rearrange.
     const yielded = (n: number): number => n * techMultiplier(state, 'knowledgeYield');
-    expect(knowledgePerHour(state)).toBe(drip);
+    const base = KNOWLEDGE.basePerHour;
+    expect(knowledgePerHour(state)).toBe(base + drip);
     completeTech(state, 'Conquest');
     expect(knowledgePerHour(state))
-      .toBeCloseTo(yielded(drip + KNOWLEDGE.conquestPerClearedRuinPerHour));
+      .toBeCloseTo(yielded(base + drip + KNOWLEDGE.conquestPerClearedRuinPerHour));
     completeTech(state, 'SanctifiedRuins');
     expect(knowledgePerHour(state))
-      .toBeCloseTo(yielded(drip * 2 + KNOWLEDGE.conquestPerClearedRuinPerHour));
+      .toBeCloseTo(yielded(base + drip * 2 + KNOWLEDGE.conquestPerClearedRuinPerHour));
   });
 });

@@ -77,12 +77,12 @@ describe('the late curve, from level 6', () => {
   const LATE: readonly DistrictId[] = (Object.keys(DISTRICTS) as DistrictId[])
     .filter((id) => DISTRICTS[id].maxLevel >= LATE_FROM);
 
-  it('reaches the late city on fifteen buildings, and stops on the rest', () => {
-    // Ten producers and halls, the four workshops, and the Market. The two
-    // exceptions each have a reason: the Townhall's own ladder is step 7, and
-    // the crop plot IS a cell rather than a building.
-    expect(LATE.length).toBe(15);
-    expect(DISTRICTS.Townhall.maxLevel).toBe(4);
+  it('reaches the late city on sixteen buildings, and stops on the rest', () => {
+    // Ten producers and halls, the four workshops, the Market — and the
+    // Townhall, whose ladder landed with step 7. The crop plot is a cell
+    // rather than a building, and the six decorations have one level each.
+    expect(LATE.length).toBe(16);
+    expect(DISTRICTS.Townhall.maxLevel).toBe(10);
     expect(DISTRICTS.FarmLands.maxLevel).toBe(1);
   });
 
@@ -102,9 +102,19 @@ describe('the late curve, from level 6', () => {
 
   it('waits two hours for level 6 and about seventeen for level 10', () => {
     for (const id of LATE) {
+      if (id === 'Townhall') continue; // twice a district's — below
       expect(upgradeDuration(base, id, LATE_FROM - 1), `${id} level 6`).toBe(7200);
       expect(upgradeDuration(base, id, 9) / 3600, `${id} level 10`).toBeCloseTo(16.7, 1);
     }
+  });
+
+  it('makes the Townhall wait far longer than a district: six hours at 6, four days at 10', () => {
+    // The Townhall is the clock every other ladder hangs from, so its late
+    // wait starts at 6 h and DOUBLES a level — 12, 24, 48, 96 h — which is
+    // what puts levels 8, 9 and 10 in weeks 3 and 4 (buildings.md §3.1).
+    expect(upgradeDuration(base, 'Townhall', LATE_FROM - 1)).toBe(21_600);
+    expect(upgradeDuration(base, 'Townhall', 7) / 3600).toBeCloseTo(24, 0);
+    expect(upgradeDuration(base, 'Townhall', 9) / 3600).toBeCloseTo(96, 0);
   });
 
   it('is the only thing the pivot changes: every level below it is the old curve', () => {

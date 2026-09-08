@@ -257,7 +257,11 @@ export function knowledgePerHour(state: GameState): number {
     * (isTechComplete(state, 'SanctifiedRuins') ? 2 : 1)
     + techFlat(state, 'knowledgePerClearedRuin')
     + (isTechComplete(state, 'Conquest') ? KNOWLEDGE.conquestPerClearedRuinPerHour : 0);
-  const raw = cleared * perRuin
+  // The base is the floor under the clock — what a kingdom holding no ground
+  // still learns an hour — and territory adds to it rather than replacing it,
+  // so the tree opens on the calendar and the province makes it open faster.
+  const raw = KNOWLEDGE.basePerHour
+    + cleared * perRuin
     + claimed * (KNOWLEDGE.perClaimedLandmarkPerHour
       + techFlat(state, 'knowledgePerClaimedLandmark'));
   if (raw === 0) return 0;

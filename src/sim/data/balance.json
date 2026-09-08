@@ -6,7 +6,7 @@
         "x": 2,
         "y": 2
       },
-      "maxLevel": 4,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -28,17 +28,62 @@
       "upgradeCostLevelGrowth": 3.9,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 4,
-      "upgradeCostLateLevelGrowth": 0,
-      "upgradeDurationLateSeconds": 0,
-      "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
+      "upgradeCostLateLevelGrowth": 1.7,
+      "upgradeDurationLateSeconds": 21600,
+      "upgradeDurationLateLevelGrowth": 2,
+      "upgradeCostGoodsPerLevel": [
+        {},
+        {},
+        {},
+        {
+          "Planks": 2,
+          "CutStone": 2
+        },
+        {
+          "Planks": 4,
+          "CutStone": 4
+        },
+        {
+          "Planks": 6,
+          "CutStone": 6,
+          "Iron": 2
+        },
+        {
+          "Planks": 10,
+          "CutStone": 10,
+          "Iron": 6
+        },
+        {
+          "Planks": 14,
+          "CutStone": 14,
+          "Iron": 10,
+          "Runestone": 2
+        },
+        {
+          "Planks": 20,
+          "CutStone": 20,
+          "Iron": 14,
+          "Runestone": 4
+        }
+      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        20,
+        30
+      ]
     },
     "Housing": {
       "size": {
@@ -65,7 +110,13 @@
         2,
         4,
         6,
-        9
+        9,
+        11,
+        13,
+        15,
+        17,
+        19,
+        21
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
@@ -164,7 +215,13 @@
         1,
         1,
         2,
-        3
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        5
       ],
       "influenceRadiusPerLevel": [
         1,
@@ -284,7 +341,13 @@
         6,
         6,
         12,
-        16
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
@@ -339,7 +402,13 @@
         1,
         2,
         3,
-        4
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        6
       ],
       "influenceRadiusPerLevel": [
         2,
@@ -566,7 +635,13 @@
         1,
         2,
         3,
-        4
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        6
       ],
       "influenceRadiusPerLevel": [
         2,
@@ -697,7 +772,13 @@
         1,
         2,
         3,
-        4
+        4,
+        4,
+        5,
+        5,
+        5,
+        6,
+        6
       ],
       "influenceRadiusPerLevel": [
         4,
@@ -1302,7 +1383,7 @@
         0,
         0,
         0,
-        0,
+        1,
         1,
         1,
         1,
@@ -1417,7 +1498,7 @@
         0,
         0,
         0,
-        0,
+        1,
         1,
         1,
         1,
@@ -1534,7 +1615,7 @@
         0,
         0,
         0,
-        0,
+        1,
         1,
         1,
         1,
@@ -1651,7 +1732,7 @@
         0,
         0,
         0,
-        0,
+        1,
         1,
         1,
         1,
@@ -2224,7 +2305,7 @@
     },
     "Knowledge": {
       "cap": null,
-      "start": 0,
+      "start": 120,
       "primary": false,
       "goldValue": null
     },
@@ -2438,6 +2519,7 @@
     "fragmentsPerTierGrowth": 2
   },
   "knowledge": {
+    "basePerHour": 8,
     "dripPerClearedRuinPerHour": 2,
     "perClaimedLandmarkPerHour": 2,
     "landmarkClaimLump": 50,

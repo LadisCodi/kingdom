@@ -181,15 +181,21 @@ describe('supply and demand', () => {
 
 describe('the gate', () => {
   /** A city with a Townhall high enough for a late level, and a purse. */
+  /** A city with a Townhall high enough for a late level, and a purse. The
+   *  Townhall at 10 demands 30 of its own, and the Plaza supplies exactly
+   *  that — so every number below reads as if the Townhall were not there. */
   const lateCity = (): GameState => {
     const state = freshGame();
     townhall(state).level = 10;
+    addBuilt(state, 'Plaza', { x: 6, y: 4 });
     fund(state, { Gold: 9e9, Wood: 9e9, Stone: 9e9, Food: 9e9 });
     for (const id of ['Planks', 'CutStone', 'Iron', 'Runestone'] as const) {
       state.city.goods[id] = 999;
     }
     return state;
   };
+  /** The Townhall's own demand at 10 — what the Plaza above is for. */
+  const TH_DEMAND = 30;
 
   it('refuses the upgrade that would take the city past its supply', () => {
     const state = lateCity();
@@ -210,9 +216,9 @@ describe('the gate', () => {
     addBuilt(state, 'Housing', { x: 4, y: 0 });
     const house = state.city.districts.find((d) => d.definitionId === 'Housing')!;
     house.level = 8;
-    expect(harmonyDemand(state)).toBe(2);
+    expect(harmonyDemand(state)).toBe(TH_DEMAND + 2);
     expect(upgradeDistrict(state, house.uniqueId)).toBe('Started');
-    expect(harmonyDemand(state)).toBe(4); // and now it is spent to the last point
+    expect(harmonyDemand(state)).toBe(TH_DEMAND + 4); // and now it is spent to the last point
   });
 
   it('never takes back what is already standing', () => {
@@ -229,7 +235,7 @@ describe('the gate', () => {
     expect(upgradeDistrict(state, second.uniqueId)).toBe('NeedsHarmony');
     // The level 9 house is untouched, and still level 9.
     expect(houses[0]!.level).toBe(9);
-    expect(harmonySupply(state)).toBe(4);
+    expect(harmonySupply(state)).toBe(TH_DEMAND + 4);
   });
 
   it('asks the three errands in order: the Townhall, then goods, then Harmony', () => {
@@ -242,6 +248,7 @@ describe('the gate', () => {
     house.level = 7;
     expect(upgradeDistrict(state, house.uniqueId)).toBe('RequirementsNotMet');
     townhall(state).level = 10;
+    addBuilt(state, 'Plaza', { x: 6, y: 4 }); // covers the Townhall's own 30
     expect(upgradeDistrict(state, house.uniqueId)).toBe('NotEnoughGoods');
     state.city.goods.Planks = 999;
     expect(upgradeDistrict(state, house.uniqueId)).toBe('NeedsHarmony');
@@ -293,9 +300,12 @@ describe('a decoration is bought like anything else', () => {
 });
 
 describe('the surplus bonus', () => {
+  /** A Townhall at 10 demanding 30, met exactly by a Plaza, and one house at
+   *  10 demanding 6 — so `supply / demand` below is (30 + gardens) / 36. */
   const surplusCity = (): GameState => {
     const state = freshGame();
     townhall(state).level = 10;
+    addBuilt(state, 'Plaza', { x: 6, y: 4 });
     addBuilt(state, 'Housing', { x: 4, y: 0 });
     state.city.districts.find((d) => d.definitionId === 'Housing')!.level = 10; // demands 6
     return state;
@@ -317,18 +327,18 @@ describe('the surplus bonus', () => {
       state.city.districts = state.city.districts.filter((d) => d.definitionId !== 'Garden');
       for (let i = 0; i < n; i += 1) addBuilt(state, 'Garden', { x: 4 + i, y: 4 });
     };
-    supply(1); // 4 / 6 — under demand, no tier
+    supply(1); // 34 / 36 — under demand, no tier
     expect(harmonySurplusMultiplier(state)).toBe(1);
-    supply(2); // 8 / 6 = 1.33 → the middle tier
+    supply(4); // 46 / 36 = 1.28 → the middle tier
     expect(harmonySurplusTier(state)?.bonus).toBe(0.1);
-    supply(3); // 12 / 6 = 2.0 → the top tier
+    supply(6); // 54 / 36 = 1.5 → the top tier
     expect(harmonySurplusTier(state)?.bonus).toBe(0.15);
   });
 
   it('moves the tax rate, at the base stage', () => {
     const state = surplusCity();
     const base = effectiveTaxRate(state);
-    for (let i = 0; i < 3; i += 1) addBuilt(state, 'Garden', { x: 4 + i, y: 4 });
+    for (let i = 0; i < 6; i += 1) addBuilt(state, 'Garden', { x: 4 + i, y: 6 }); // 54 / 36
     expect(harmonySurplusMultiplier(state)).toBe(1.15);
     expect(effectiveTaxRate(state)).toBeCloseTo(base * 1.15, 10);
   });

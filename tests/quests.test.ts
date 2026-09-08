@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef,
+  DISTRICTS, ERA_UNLOCK_CELLS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -298,7 +298,9 @@ describe('quests fund the research tree', () => {
       done.add(id);
       return techKnowledgeCost(id) + TECHNOLOGIES[id].requires.reduce((n, r) => n + need(r), 0);
     };
-    let held = 0;
+    // The opening's grant is the game's, so the chain-follower holds it; the
+    // base drip is not counted — zero drip stays the worst case.
+    let held = CURRENCIES.Knowledge.start;
     let worstSlack = Infinity;
     for (const q of QUESTS) {
       if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
@@ -323,7 +325,8 @@ describe('quests fund the research tree', () => {
     state.quests.index = i;
     completeTech(state, QUESTS[i].goalTarget as TechId);
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(QUESTS[i].rewardKnowledge);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(CURRENCIES.Knowledge.start + QUESTS[i].rewardKnowledge);
   });
 
   // THE RATIO INVERTED ON 2026-09-04, on purpose.

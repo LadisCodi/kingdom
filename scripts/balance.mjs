@@ -203,6 +203,9 @@ const SETTINGS = [
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
+  // The floor under the clock: what a kingdom holding no ground still learns
+  // an hour. Territory adds to it; it never replaces it.
+  ['knowledge.base_per_hour', 'knowledge.basePerHour'],
   ['knowledge.drip_per_cleared_ruin_per_hour', 'knowledge.dripPerClearedRuinPerHour'],
   // The research clock's rate is the ground you have taken, and nothing else:
   // there is deliberately NO base term, so a player who claims nothing

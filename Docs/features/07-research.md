@@ -232,10 +232,15 @@ A `bonus` names its effects, and each is four fields:
 - **Buys technologies and nothing else** (plus guild investment, §8, when
   built).
 - **Uncapped.** A lump is a plain addition.
-- **No base rate.** The rate is the ground the kingdom holds:
+- **A base rate, and territory on top of it.** The kingdom learns 8 an hour
+  holding nothing, so the tree opens on the calendar; every landmark and ruin
+  adds to that, so the province makes it open faster. A new kingdom starts
+  with **120 Knowledge**, enough for the first cards past era 1
+  (`Currencies.Knowledge.start`).
 
 | Source | Rate | One-off | Key |
 |---|---|---|---|
+| the **base rate** | +8/h | 120 at the start | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
 | each **claimed landmark** | +2/h | +50 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
 | each **cleared ruin** | +2/h | +150 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
 | the **`Conquest`** technology | +3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
@@ -246,8 +251,9 @@ A `bonus` names its effects, and each is four fields:
 | the **Conjunction** boon | — | +60 | `CONJUNCTION_BOONS[*].knowledge` (**OQ-12**) |
 | the **quest chain** | — | 500 across nine quests | `rewardKnowledge` (Quests sheet) |
 
-- A fully explored province — ten landmarks, five ruins — drips **30/h**
-  (720 a day) before `Conquest`, **45/h** (1,080 a day) after.
+- A kingdom holding nothing drips **8/h** (192 a day); a fully explored
+  province — ten landmarks, five ruins — **38/h** (912 a day) before
+  `Conquest`, **53/h** after.
 - **The chain seeds the clock.** Nine quests pay Knowledge — `OldStones`,
   `Attuned`, `Mapmakers`, `Surveyors`, `Highlands`, `PutToSea`, `SecondStory`,
   `IronRoad`, `Architect` — so every technology the chain asks for is

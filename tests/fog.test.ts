@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER,
+  DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, recordVisibleSites, revealAroundDistrict,
@@ -183,12 +183,12 @@ describe('exploring pays in ground, not in currency', () => {
 
     const near = { x: 3, y: 1 }; // ring 2
     while (revealTap(state, map, near) === 'Paid') { /* pay it off */ }
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
 
     const far = { x: 4, y: 1 }; // ring 3, reachable now
     expect(townhallDistance(map, far)).toBe(3);
     while (revealTap(state, map, far) === 'Paid') { /* pay it off */ }
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
   });
 
   it('the tech tree is priced against what the CITY earns, in Gold', () => {

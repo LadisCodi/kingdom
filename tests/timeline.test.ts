@@ -7,7 +7,8 @@
 // twice.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { CONJUNCTION_BOONS, EVENTS, GACHA, HERO_ORDER } from '../src/sim/data/definitions';
+import { CONJUNCTION_BOONS, EVENTS, GACHA, HERO_ORDER, CURRENCIES,
+} from '../src/sim/data/definitions';
 import {
   heroChanceAt, pityCount, pull, pullCost, pullsToGuarantee, STANDARD_BANNER,
 } from '../src/sim/heroes';
@@ -210,7 +211,7 @@ describe('the gacha', () => {
   // what stops a pull from being dead even when the roster is full.
   it('every pull pays Knowledge into the kingdom purse', () => {
     const state = rich();
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
     // Past hard pity, so the run covers a miss AND a hero rather than one
     // long unlucky streak.
     const seen = new Set<string>();

@@ -5,10 +5,10 @@
 > pays. What a level otherwise costs is [`buildings.md`](buildings.md) §4.11;
 > where a piece is discovered is [`tech-tree.md`](tech-tree.md) §2.3.
 >
-> **Status: built** (`src/sim/harmony.ts`), and waiting on the Townhall: the
-> first piece opens at Townhall 5 and the first level that demands any is 8,
-> while the Townhall's own ladder stops at 4 until the builder programme's
-> step 7 ([`../plans/builder-30-days.md`](../plans/builder-30-days.md) §7).
+> **Status: built** (`src/sim/harmony.ts`) and reachable: the first piece
+> opens at Townhall 5, the first level that demands any is 8, and the Townhall
+> ladder reaches 10 ([`buildings.md`](buildings.md) §3). The thirty-day harness
+> stands on 30 of 30 at day 30.
 
 ## 1. A stat, not a currency
 
@@ -49,7 +49,8 @@
 ## 3. Demand — the levels from 8
 
 - Every building that reaches level 10 demands **2 at level 8, 4 at 9, 6 at
-  10**, and nothing below 8. The Townhall's own demand lands with its ladder.
+  10**, and nothing below 8. The Townhall demands **10, 20, 30** at the same
+  levels ([`buildings.md`](buildings.md) §3.1).
 - The number is the **total at that level, not an increment** — indexed from
   level 1 like an army cap — so one column states the gate on building a thing
   and every gate on its levels, and a level replaces the one under it rather
