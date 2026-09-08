@@ -15,38 +15,38 @@
     },
     "Agriculture": {
       "name": "Agriculture", "glyph": "🌱", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 1, "col": 0,
+      "tome": "Civics", "era": 1, "row": 1, "col": 1,
       "requires": ["Forestry"],
-      "gold": 100, "seconds": 45,
+      "gold": 25, "seconds": 5,
       "unlocks": [{"district":"FarmLands"}]
+    },
+    "Farming": {
+      "name": "Farming", "glyph": "🚜", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 2, "col": 0,
+      "requires": ["Agriculture"],
+      "gold": 30, "seconds": 10,
+      "unlocks": [{"district":"Farm"}]
+    },
+    "Saws": {
+      "name": "Saws", "glyph": "🪚", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 2, "col": 2,
+      "requires": ["Agriculture"],
+      "gold": 100, "seconds": 10,
+      "unlocks": [{"district":"Sawmill"}]
     },
     "Taxes01": {
       "name": "Taxes I", "glyph": "📜", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 1, "col": 1,
-      "requires": ["Forestry"],
+      "tome": "Civics", "era": 1, "row": 3, "col": 1,
+      "requires": ["Farming", "Saws"],
       "gold": 100, "seconds": 60,
       "effects": [
         {"stat":"taxRate","op":"percent","value":5,"target":{"district":"Housing"}}
       ]
     },
-    "Saws": {
-      "name": "Saws", "glyph": "🪚", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 1, "col": 2,
-      "requires": ["Forestry"],
-      "gold": 175, "seconds": 20,
-      "unlocks": [{"district":"Sawmill"}]
-    },
-    "Farming": {
-      "name": "Farming", "glyph": "🚜", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 2, "col": 1,
-      "requires": ["Agriculture", "Taxes01", "Saws"],
-      "gold": 2000, "seconds": 1500,
-      "unlocks": [{"district":"Farm"}]
-    },
     "IrrigationI": {
       "name": "Irrigation I", "glyph": "💧", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 3, "col": 0,
-      "requires": ["Farming"],
+      "tome": "Civics", "era": 1, "row": 4, "col": 0,
+      "requires": ["Taxes01"],
       "gold": 120, "seconds": 20,
       "effects": [
         {"stat":"harvestRecovery","op":"percent","value":5,"target":{"harvest":"Crops"}}
@@ -54,8 +54,8 @@
     },
     "SawpitsI": {
       "name": "Sawpits I", "glyph": "🪵", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 3, "col": 2,
-      "requires": ["Farming"],
+      "tome": "Civics", "era": 1, "row": 4, "col": 2,
+      "requires": ["Taxes01"],
       "gold": 120, "seconds": 20,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Forest"}}
@@ -63,7 +63,7 @@
     },
     "Sickles01": {
       "name": "Sickles I", "glyph": "📜", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 4, "col": 0,
+      "tome": "Civics", "era": 1, "row": 5, "col": 0,
       "requires": ["IrrigationI"],
       "gold": 100, "seconds": 60,
       "effects": [
@@ -72,7 +72,7 @@
     },
     "Reforesting01": {
       "name": "Reforesting I", "glyph": "📜", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 4, "col": 2,
+      "tome": "Civics", "era": 1, "row": 5, "col": 2,
       "requires": ["SawpitsI"],
       "gold": 100, "seconds": 60,
       "effects": [
@@ -81,21 +81,21 @@
     },
     "Masonry": {
       "name": "Masonry", "glyph": "🧱", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 5, "col": 0,
+      "tome": "Civics", "era": 1, "row": 6, "col": 0,
       "requires": ["Sickles01"],
       "gold": 100, "seconds": 45,
       "unlocks": [{"district":"Quarry"}]
     },
     "Market": {
       "name": "Market", "glyph": "🤝", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 5, "col": 2,
+      "tome": "Civics", "era": 1, "row": 6, "col": 2,
       "requires": ["Reforesting01"],
       "gold": 150, "seconds": 45,
       "unlocks": [{"district":"Market"}]
     },
     "StonecuttingI": {
       "name": "Stonecutting I", "glyph": "🪨", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 6, "col": 0,
+      "tome": "Civics", "era": 1, "row": 7, "col": 0,
       "requires": ["Masonry"],
       "gold": 100, "seconds": 20,
       "effects": [
@@ -104,14 +104,14 @@
     },
     "UrbanPlanning": {
       "name": "Urban Planning", "glyph": "🏘️", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 6, "col": 1,
+      "tome": "Civics", "era": 1, "row": 7, "col": 1,
       "requires": ["Masonry", "Market"],
       "gold": 200, "seconds": 60,
       "unlocks": [{"districtLevel":{"id":"Housing","level":2}}]
     },
     "MarketStallI": {
       "name": "Market Stall I", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 6, "col": 2,
+      "tome": "Civics", "era": 1, "row": 7, "col": 2,
       "requires": ["Market"],
       "gold": 100, "seconds": 20,
       "effects": [
@@ -120,7 +120,7 @@
     },
     "CarpentryI": {
       "name": "Carpentry I", "glyph": "🧰", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 7, "col": 0,
+      "tome": "Civics", "era": 1, "row": 8, "col": 0,
       "requires": ["StonecuttingI"],
       "gold": 60, "seconds": 20,
       "effects": [
@@ -129,7 +129,7 @@
     },
     "WorkerLoadI": {
       "name": "Worker Load I", "glyph": "🎒", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 7, "col": 1,
+      "tome": "Civics", "era": 1, "row": 8, "col": 1,
       "requires": ["UrbanPlanning"],
       "gold": 200, "seconds": 20,
       "effects": [
@@ -138,7 +138,7 @@
     },
     "TradeRoutesI": {
       "name": "Trade Routes I", "glyph": "⛵", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 7, "col": 2,
+      "tome": "Civics", "era": 1, "row": 8, "col": 2,
       "requires": ["MarketStallI"],
       "gold": 150, "seconds": 20,
       "effects": [
@@ -147,7 +147,7 @@
     },
     "TapPowerI": {
       "name": "Tap Power I", "glyph": "👆", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 8, "col": 0,
+      "tome": "Civics", "era": 1, "row": 9, "col": 0,
       "requires": ["CarpentryI", "WorkerLoadI"],
       "gold": 50, "seconds": 20,
       "effects": [
@@ -156,7 +156,7 @@
     },
     "QuickHandsI": {
       "name": "Quick Hands I", "glyph": "⚡", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 8, "col": 2,
+      "tome": "Civics", "era": 1, "row": 9, "col": 2,
       "requires": ["TradeRoutesI", "WorkerLoadI"],
       "gold": 75, "seconds": 20,
       "effects": [
@@ -165,21 +165,21 @@
     },
     "Bureaucracy": {
       "name": "Bureaucracy", "glyph": "🗂️", "kind": "unlock",
-      "tome": "Civics", "era": 2, "row": 9, "col": 1,
+      "tome": "Civics", "era": 2, "row": 10, "col": 1,
       "requires": ["TapPowerI", "QuickHandsI"],
       "gold": 800, "knowledge": 40, "seconds": 900,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":3}}]
     },
     "Hunting": {
       "name": "Hunting", "glyph": "🏹", "kind": "unlock",
-      "tome": "Civics", "era": 2, "row": 10, "col": 0,
+      "tome": "Civics", "era": 2, "row": 11, "col": 0,
       "requires": ["Bureaucracy"],
       "gold": 1500, "knowledge": 120, "seconds": 1200,
       "unlocks": [{"harvest":"Meat"}]
     },
     "Communities": {
       "name": "Communities", "glyph": "👥", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 10, "col": 1,
+      "tome": "Civics", "era": 2, "row": 11, "col": 1,
       "requires": ["Bureaucracy"],
       "gold": 1000, "knowledge": 80, "seconds": 900,
       "effects": [
@@ -188,14 +188,14 @@
     },
     "Mining": {
       "name": "Mining", "glyph": "⛏️", "kind": "unlock",
-      "tome": "Civics", "era": 2, "row": 10, "col": 2,
+      "tome": "Civics", "era": 2, "row": 11, "col": 2,
       "requires": ["Bureaucracy"],
       "gold": 2500, "knowledge": 200, "seconds": 1800,
       "unlocks": [{"district":"Smelter"}, {"harvest":"MountainIron"}]
     },
     "ButcheryI": {
       "name": "Butchery I", "glyph": "🍖", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 11, "col": 0,
+      "tome": "Civics", "era": 2, "row": 12, "col": 0,
       "requires": ["Hunting"],
       "gold": 250, "knowledge": 20, "seconds": 180,
       "effects": [
@@ -204,7 +204,7 @@
     },
     "TapPowerII": {
       "name": "Tap Power II", "glyph": "👆", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 11, "col": 1,
+      "tome": "Civics", "era": 2, "row": 12, "col": 1,
       "requires": ["Communities"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -213,7 +213,7 @@
     },
     "IronPicksI": {
       "name": "Iron Picks I", "glyph": "⛏️", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 11, "col": 2,
+      "tome": "Civics", "era": 2, "row": 12, "col": 2,
       "requires": ["Mining"],
       "gold": 250, "knowledge": 20, "seconds": 180,
       "effects": [
@@ -222,7 +222,7 @@
     },
     "ButcheryII": {
       "name": "Butchery II", "glyph": "🍖", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 12, "col": 0,
+      "tome": "Civics", "era": 2, "row": 13, "col": 0,
       "requires": ["ButcheryI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
       "effects": [
@@ -231,7 +231,7 @@
     },
     "QuickHandsII": {
       "name": "Quick Hands II", "glyph": "⚡", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 12, "col": 1,
+      "tome": "Civics", "era": 2, "row": 13, "col": 1,
       "requires": ["TapPowerII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -240,7 +240,7 @@
     },
     "IronPicksII": {
       "name": "Iron Picks II", "glyph": "⛏️", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 12, "col": 2,
+      "tome": "Civics", "era": 2, "row": 13, "col": 2,
       "requires": ["IronPicksI"],
       "gold": 800, "knowledge": 60, "seconds": 480,
       "effects": [
@@ -249,7 +249,7 @@
     },
     "CarpentryII": {
       "name": "Carpentry II", "glyph": "🧰", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 13, "col": 0,
+      "tome": "Civics", "era": 2, "row": 14, "col": 0,
       "requires": ["ButcheryII", "QuickHandsII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -258,7 +258,7 @@
     },
     "MarketStallII": {
       "name": "Market Stall II", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 13, "col": 2,
+      "tome": "Civics", "era": 2, "row": 14, "col": 2,
       "requires": ["IronPicksII", "QuickHandsII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -267,7 +267,7 @@
     },
     "WorkerLoadII": {
       "name": "Worker Load II", "glyph": "🎒", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 14, "col": 1,
+      "tome": "Civics", "era": 2, "row": 15, "col": 1,
       "requires": ["CarpentryII", "MarketStallII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -276,7 +276,7 @@
     },
     "SawpitsII": {
       "name": "Sawpits II", "glyph": "🪵", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 15, "col": 0,
+      "tome": "Civics", "era": 2, "row": 16, "col": 0,
       "requires": ["WorkerLoadII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -285,7 +285,7 @@
     },
     "IrrigationII": {
       "name": "Irrigation II", "glyph": "💧", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 15, "col": 1,
+      "tome": "Civics", "era": 2, "row": 16, "col": 1,
       "requires": ["WorkerLoadII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -294,7 +294,7 @@
     },
     "StonecuttingII": {
       "name": "Stonecutting II", "glyph": "🪨", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 15, "col": 2,
+      "tome": "Civics", "era": 2, "row": 16, "col": 2,
       "requires": ["WorkerLoadII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -303,7 +303,7 @@
     },
     "TradeRoutesII": {
       "name": "Trade Routes II", "glyph": "⛵", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 16, "col": 1,
+      "tome": "Civics", "era": 2, "row": 17, "col": 1,
       "requires": ["IrrigationII", "SawpitsII", "StonecuttingII"],
       "gold": 525, "knowledge": 40, "seconds": 330,
       "effects": [
@@ -312,35 +312,35 @@
     },
     "Magistracy": {
       "name": "Magistracy", "glyph": "⚖️", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 17, "col": 1,
+      "tome": "Civics", "era": 3, "row": 18, "col": 1,
       "requires": ["TradeRoutesII"],
       "gold": 5000, "knowledge": 500, "seconds": 3600,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":4}}]
     },
     "Engineering": {
       "name": "Engineering", "glyph": "⚙️", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 18, "col": 0,
+      "tome": "Civics", "era": 3, "row": 19, "col": 0,
       "requires": ["Magistracy"],
       "gold": 7285, "knowledge": 730, "seconds": 4620,
       "unlocks": [{"districtLevel":{"id":"Sawmill","level":3}}, {"districtLevel":{"id":"Quarry","level":2}}, {"district":"Carpenter"}, {"district":"MasonsYard"}]
     },
     "Aqueducts": {
       "name": "Aqueducts", "glyph": "🚰", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 18, "col": 2,
+      "tome": "Civics", "era": 3, "row": 19, "col": 2,
       "requires": ["Magistracy"],
       "gold": 9855, "knowledge": 985, "seconds": 6660,
       "unlocks": [{"districtLevel":{"id":"Housing","level":3}}]
     },
     "Architecture": {
       "name": "Architecture", "glyph": "📐", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 19, "col": 1,
+      "tome": "Civics", "era": 3, "row": 20, "col": 1,
       "requires": ["Engineering", "Aqueducts"],
       "gold": 6000, "knowledge": 600, "seconds": 3600,
       "unlocks": [{"districtLevel":{"id":"Sawmill","level":4}}, {"districtLevel":{"id":"Quarry","level":3}}]
     },
     "WorkerLoadIII": {
       "name": "Worker Load III", "glyph": "🎒", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 20, "col": 1,
+      "tome": "Civics", "era": 3, "row": 21, "col": 1,
       "requires": ["Architecture"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -349,7 +349,7 @@
     },
     "StonecuttingIII": {
       "name": "Stonecutting III", "glyph": "🪨", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 21, "col": 0,
+      "tome": "Civics", "era": 3, "row": 22, "col": 0,
       "requires": ["WorkerLoadIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -358,7 +358,7 @@
     },
     "CarpentryIII": {
       "name": "Carpentry III", "glyph": "🧰", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 21, "col": 2,
+      "tome": "Civics", "era": 3, "row": 22, "col": 2,
       "requires": ["WorkerLoadIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -367,7 +367,7 @@
     },
     "SawpitsIII": {
       "name": "Sawpits III", "glyph": "🪵", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 22, "col": 0,
+      "tome": "Civics", "era": 3, "row": 23, "col": 0,
       "requires": ["StonecuttingIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -376,7 +376,7 @@
     },
     "IrrigationIII": {
       "name": "Irrigation III", "glyph": "💧", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 22, "col": 2,
+      "tome": "Civics", "era": 3, "row": 23, "col": 2,
       "requires": ["CarpentryIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -385,14 +385,14 @@
     },
     "DeepMining": {
       "name": "Deep Mining", "glyph": "🕯️", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 23, "col": 0,
+      "tome": "Civics", "era": 3, "row": 24, "col": 0,
       "requires": ["SawpitsIII"],
       "gold": 8570, "knowledge": 855, "seconds": 5640,
       "unlocks": [{"harvest":"MountainGold"}]
     },
     "Guildhalls": {
       "name": "Guildhalls", "glyph": "🏪", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 23, "col": 2,
+      "tome": "Civics", "era": 3, "row": 24, "col": 2,
       "requires": ["IrrigationIII"],
       "gold": 11145, "knowledge": 1115, "seconds": 7740,
       "unlocks": [{"districtCount":"Market"}]
@@ -400,13 +400,13 @@
     "Roadworks": {
       "name": "Roadworks", "glyph": "🛤️", "kind": "mechanic",
       "description": "Paved ways — every worker walks a quarter faster.",
-      "tome": "Civics", "era": 3, "row": 24, "col": 1,
+      "tome": "Civics", "era": 3, "row": 25, "col": 1,
       "requires": ["DeepMining", "Guildhalls"],
       "gold": 12430, "knowledge": 1245, "seconds": 8760
     },
     "ButcheryIII": {
       "name": "Butchery III", "glyph": "🍖", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 25, "col": 0,
+      "tome": "Civics", "era": 3, "row": 26, "col": 0,
       "requires": ["Roadworks"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -415,7 +415,7 @@
     },
     "TapPowerIII": {
       "name": "Tap Power III", "glyph": "👆", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 25, "col": 1,
+      "tome": "Civics", "era": 3, "row": 26, "col": 1,
       "requires": ["Roadworks"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
       "effects": [
@@ -424,7 +424,7 @@
     },
     "IronPicksIII": {
       "name": "Iron Picks III", "glyph": "⛏️", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 25, "col": 2,
+      "tome": "Civics", "era": 3, "row": 26, "col": 2,
       "requires": ["Roadworks"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -433,7 +433,7 @@
     },
     "CartageI": {
       "name": "Cartage I", "glyph": "🐂", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 26, "col": 0,
+      "tome": "Civics", "era": 3, "row": 27, "col": 0,
       "requires": ["ButcheryIII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
       "effects": [
@@ -442,7 +442,7 @@
     },
     "QuickHandsIII": {
       "name": "Quick Hands III", "glyph": "⚡", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 26, "col": 1,
+      "tome": "Civics", "era": 3, "row": 27, "col": 1,
       "requires": ["TapPowerIII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
       "effects": [
@@ -451,7 +451,7 @@
     },
     "ScrivenersI": {
       "name": "Scriveners I", "glyph": "✒️", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 26, "col": 2,
+      "tome": "Civics", "era": 3, "row": 27, "col": 2,
       "requires": ["IronPicksIII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
       "effects": [
@@ -460,7 +460,7 @@
     },
     "CartageII": {
       "name": "Cartage II", "glyph": "🐂", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 27, "col": 0,
+      "tome": "Civics", "era": 3, "row": 28, "col": 0,
       "requires": ["CartageI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -469,7 +469,7 @@
     },
     "TapPowerIV": {
       "name": "Tap Power IV", "glyph": "👆", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 27, "col": 1,
+      "tome": "Civics", "era": 3, "row": 28, "col": 1,
       "requires": ["QuickHandsIII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -478,7 +478,7 @@
     },
     "ScrivenersII": {
       "name": "Scriveners II", "glyph": "✒️", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 27, "col": 2,
+      "tome": "Civics", "era": 3, "row": 28, "col": 2,
       "requires": ["ScrivenersI"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -487,7 +487,7 @@
     },
     "QuickHandsIV": {
       "name": "Quick Hands IV", "glyph": "⚡", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 28, "col": 1,
+      "tome": "Civics", "era": 3, "row": 29, "col": 1,
       "requires": ["TapPowerIV", "CartageII", "ScrivenersII"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -496,7 +496,7 @@
     },
     "CartageIII": {
       "name": "Cartage III", "glyph": "🐂", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 29, "col": 0,
+      "tome": "Civics", "era": 3, "row": 30, "col": 0,
       "requires": ["QuickHandsIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
       "effects": [
@@ -505,7 +505,7 @@
     },
     "TapPowerV": {
       "name": "Tap Power V", "glyph": "👆", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 29, "col": 1,
+      "tome": "Civics", "era": 3, "row": 30, "col": 1,
       "requires": ["QuickHandsIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
       "effects": [
@@ -514,7 +514,7 @@
     },
     "ScrivenersIII": {
       "name": "Scriveners III", "glyph": "✒️", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 29, "col": 2,
+      "tome": "Civics", "era": 3, "row": 30, "col": 2,
       "requires": ["QuickHandsIV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
       "effects": [
@@ -523,7 +523,7 @@
     },
     "MarketStallIII": {
       "name": "Market Stall III", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 30, "col": 0,
+      "tome": "Civics", "era": 3, "row": 31, "col": 0,
       "requires": ["CartageIII"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
       "effects": [
@@ -532,7 +532,7 @@
     },
     "TradeRoutesIII": {
       "name": "Trade Routes III", "glyph": "⛵", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 30, "col": 1,
+      "tome": "Civics", "era": 3, "row": 31, "col": 1,
       "requires": ["TapPowerV"],
       "gold": 1500, "knowledge": 150, "seconds": 1200,
       "effects": [
@@ -541,7 +541,7 @@
     },
     "MarketStallIV": {
       "name": "Market Stall IV", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 30, "col": 2,
+      "tome": "Civics", "era": 3, "row": 31, "col": 2,
       "requires": ["ScrivenersIII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
       "effects": [
@@ -550,7 +550,7 @@
     },
     "QuickHandsV": {
       "name": "Quick Hands V", "glyph": "⚡", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 31, "col": 1,
+      "tome": "Civics", "era": 3, "row": 32, "col": 1,
       "requires": ["TradeRoutesIII"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
       "effects": [
@@ -559,7 +559,7 @@
     },
     "TradeRoutesIV": {
       "name": "Trade Routes IV", "glyph": "⛵", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 32, "col": 0,
+      "tome": "Civics", "era": 3, "row": 33, "col": 0,
       "requires": ["QuickHandsV"],
       "gold": 3250, "knowledge": 275, "seconds": 1950,
       "effects": [
@@ -568,7 +568,7 @@
     },
     "TradeRoutesV": {
       "name": "Trade Routes V", "glyph": "⛵", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 32, "col": 2,
+      "tome": "Civics", "era": 3, "row": 33, "col": 2,
       "requires": ["QuickHandsV"],
       "gold": 5000, "knowledge": 400, "seconds": 2700,
       "effects": [

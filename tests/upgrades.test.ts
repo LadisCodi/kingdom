@@ -390,7 +390,7 @@ describe('the era-2/3 lines reach their numbers', () => {
   it('Scriveners shortens a research that starts AFTER it, not one already running', () => {
     const state = freshGame();
     fund(state, { Gold: 99_999 });
-    completeTech(state, 'Forestry');
+    completeRequirements(state, 'Saws');
     const full = TECHNOLOGIES.Saws.durationSeconds * 1000;
     expect(startTech(state, 'Saws', T0)).toBe('Started');
     expect(techCompletesAt(state, 'Saws')).toBe(T0 + full);
@@ -398,11 +398,14 @@ describe('the era-2/3 lines reach their numbers', () => {
     completeRanks(state, 'Scriveners', 2); // −10%, lands mid-research
     expect(techCompletesAt(state, 'Saws'), 'must not shorten what is on the desk').toBe(T0 + full);
 
-    // The next research is quicker.
+    // The next research is quicker — whichever one the page offers next, since
+    // what sits beside `Saws` is a drag away in `?dev=tree`.
     state.research.slotsPurchased = 1;
-    expect(startTech(state, 'Agriculture', T0)).toBe('Started');
-    expect(techCompletesAt(state, 'Agriculture'))
-      .toBe(T0 + Math.round(TECHNOLOGIES.Agriculture.durationSeconds * 1000 * 0.9));
+    const next = TECH_ORDER.find((id) => canStartTech(state, id));
+    expect(next, 'the fixture needs a second startable technology').toBeDefined();
+    expect(startTech(state, next!, T0)).toBe('Started');
+    expect(techCompletesAt(state, next!))
+      .toBe(T0 + Math.round(TECHNOLOGIES[next!].durationSeconds * 1000 * 0.9));
   });
 
   it('one-call replay equals stepped ticking with Scriveners landing mid-window', () => {

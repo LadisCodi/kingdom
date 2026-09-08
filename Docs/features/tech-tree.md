@@ -257,12 +257,12 @@ and every rank is an ordinary card gated by the row above it like any other.
 - **Era 1 costs no Knowledge.**
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **487,450 Gold and 44,110 Knowledge**, of which the two sealed
+- Whole tree: **485,330 Gold and 44,110 Knowledge**, of which the two sealed
   era-4 keystones are 60,000 Gold and 6,000 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 6,565 | 0 |
+| 1 | 4,445 | 0 |
 | 2 | 46,600 | 3,580 |
 | 3 | 374,285 | 34,530 |
 
