@@ -369,7 +369,7 @@ const SHEETS = {
   Adjacency: ['district', 'neighbor', 'stat', 'magnitude'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_stardust', 'reward_knowledge'],
+    'reward_gems', 'reward_stardust', 'reward_knowledge', 'reward_mana'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -843,6 +843,10 @@ async function importXlsx() {
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
       rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
       rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
+      // Mana is a city currency but not one of the four `reward_*` wallet
+      // columns, which are the materials every cost sheet shares. It gets a
+      // scalar of its own, the way Gems and Stardust do.
+      rewardMana: num(r, 'reward_mana', { blankAs: 0 }),
     });
   }
 
@@ -1067,7 +1071,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
-    q.rewardKnowledge || '',
+    q.rewardKnowledge || '', q.rewardMana || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

@@ -470,6 +470,11 @@ export interface QuestDef {
   reward: Wallet;
   /** Gems paid into the PLAYER wallet (city currencies go through `reward`). */
   rewardGems: number;
+  /** Mana, into the city purse. A city currency, but not one of the four
+   *  materials `reward` carries — and the one reward that buys TAPS rather
+   *  than things, which is what the opening is short of
+   *  (Docs/features/12-quests.md §2.1). */
+  rewardMana: number;
   /** Kingdom-scoped, so it is NOT part of `reward` — that wallet is the
    *  city's. Quests are the steady half of the research budget; exploring
    *  is the half that scales. */

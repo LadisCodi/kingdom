@@ -34,7 +34,7 @@ describe('technology basics', () => {
   // Decided 2026-09-08, when Civics became a whole book.
   it('the farming chain: Agriculture opens the plots, Farming the Farm', () => {
     const state = freshGame();
-    fund(state, { Gold: 5000, Wood: 500, Food: 500 });
+    fund(state, { Gold: 5000, Wood: 500, Food: 500, Knowledge: 500 });
     expect(placementBlock(state, map, 'FarmLands', PLOT_CELL)).toBe('NeedsResearch');
     expect(placementBlock(state, map, 'Farm', FARM_CELL)).toBe('NeedsResearch');
     // Farming is a band down in Civics, so it waits on what it requires.
@@ -179,7 +179,7 @@ describe('technology basics', () => {
 
   it('refuses a technology the city cannot pay for, however much Stardust the kingdom holds', () => {
     const state = freshGame();
-    fund(state, { Gold: techCost('Forestry') - 1, Wood: 999_999, Stardust: 999_999 });
+    fund(state, { Gold: techCost('Forestry') - 1, Wood: 999_999, Stardust: 999_999, Knowledge: 500 });
     expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
     fund(state, { Gold: techCost('Forestry') });
     expect(startTech(state, 'Forestry', T0)).toBe('Started');
@@ -190,7 +190,7 @@ describe('research slots', () => {
   it('base slot limits concurrency; a gem-bought slot lifts it', () => {
     const state = freshGame();
     state.player.wallet.Gems = 2500; // exactly the second slot
-    fund(state, { Gold: 5000 });
+    fund(state, { Gold: 5000, Knowledge: 500 });
     expect(techSlots(state)).toBe(RESEARCH_SETTINGS.techSlots); // 1
     // The first card of two different BOOKS, so neither waits on the other
     // and both reach the slot check this test is about. Within one book a
@@ -222,7 +222,7 @@ describe('research slots', () => {
   it('two active technologies complete independently, in time order', () => {
     const state = freshGame();
     state.player.wallet.Gems = 2500;
-    fund(state, { Gold: 5000 });
+    fund(state, { Gold: 5000, Knowledge: 500 });
     // Urban Planning asks for the row above it — Masonry AND the Market —
     // and the Warrior is a first-row card of another book, so the two are
     // independent. Agriculture would not do: Market's own chain already
@@ -467,7 +467,7 @@ describe('what the player can actually act on', () => {
 
   it('goes dark when every slot is busy, even with the money', () => {
     const state = freshGame();
-    fund(state, { Gold: 99_999 });
+    fund(state, { Gold: 99_999, Knowledge: 999 });
     expect(anyResearchActionable(state)).toBe(true);
     // Fill every slot: nothing is startable even though everything is paid for.
     while (state.research.active.length < techSlots(state)) {
@@ -486,7 +486,7 @@ describe('what the player can actually act on', () => {
     // goes further down the book. Every rank is an ordinary card gated by
     // its own row above, which is what let the page be laid out for READING.
     const state = freshGame();
-    fund(state, { Gold: 99_999 });
+    fund(state, { Gold: 99_999, Knowledge: 999 });
     expect(canStartTech(state, 'TapPowerI')).toBe(false); // its row above is not done
     expect(TECHNOLOGIES.TapPowerI.requires).not.toEqual([]);
     for (const above of TECHNOLOGIES.TapPowerI.requires) completeTech(state, above);

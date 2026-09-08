@@ -11,7 +11,7 @@
   is chain order.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **55 quests** once `DriveThemOut` lands (54 today), paying 11,865 Gold plus its reward, 750 Gems and 158 Stardust.
+- **55 quests** once `DriveThemOut` lands (54 today), paying 11,725 Gold plus its reward, 100 Mana, 750 Gems, 158 Stardust and **Knowledge on every single one**.
 
 ### 1.1 Goal types
 
@@ -70,9 +70,21 @@
 
 ### 2.1 The opening economy
 
-- A new kingdom starts with **50 Gold**, **500 Gems** and **25 Knowledge** — the last is what the chain's own research costs, at zero drip.
-- Quest 1's four forest cells cost ~16 Gold; Forestry costs 25; quest 1 pays
-  10 Gold. 50 + 10 covers both, **asserted at the dearest frontier the player
+- A new kingdom starts with **50 Gold** and **500 Gems**, and **no Knowledge
+  at all**. The chain pays for the research it asks for: **quest 1 pays 7**,
+  which is Forestry's 2 plus the five of headroom the chain test insists on so
+  a re-priced technology never strands the tutorial, and **every quest after
+  it pays at least 1**. A grant handed over at the title screen taught the
+  player nothing about where the clock comes from; a reward on the quest
+  before the research does.
+- **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
+  `ByHand`, 30 · 30 · 40. They are the tapping beats, and the pool is what the
+  opening is short of, not coin: a reward that buys taps arrives exactly where
+  the player has just emptied it. Mana may overfill; an overcharged pool is a
+  supported state and reads as one on the gauge.
+- Quest 1's four forest cells cost ~16 Gold; Forestry costs 25 Gold and 2
+  Knowledge; quest 1 pays 10 Gold and 7 Knowledge. 50 + 10 covers the Gold,
+  **asserted at the dearest frontier the player
   could pick**.
 - Forest cells refuse work until Forestry is researched; the refusal names
   Forestry.

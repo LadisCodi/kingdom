@@ -48,7 +48,8 @@
   part-payment.
 - **Every era costs Knowledge, era 1 included** (2026-09-08): the clock runs
   from the first minute on a base rate, so the opening pays it too — 1 for a
-  rank, 2 for a major, against a grant of 25. Era-1 nodes run 3–120 s.
+  rank, 2 for a major, against nothing at all — the quest chain pays for what
+  it asks for ([`12-quests.md`](12-quests.md) §2.1). Era-1 nodes run 3–120 s.
 - Research completes through the unified advance, in real time, while the
   player is away. `techCompletesAt` is its boundary source.
 - **Slots:** base 1, max 3. Slot 2 costs 2,500 Gems, slot 3 costs 5,000
@@ -237,8 +238,10 @@ A `bonus` names its effects, and each is four fields:
 - **A base rate, and territory on top of it.** The kingdom learns **0.8 an
   hour** holding nothing, so the tree opens on the calendar; every landmark
   and ruin adds to that, so the province makes it open faster. A new kingdom
-  starts with **25 Knowledge**, which is what the opening chain's cards cost
-  (`Currencies.Knowledge.start`).
+  starts with **no Knowledge**. The opening chain pays for its own cards
+  instead — quest 1 covers the first research and every quest after it pays at
+  least 1 ([`12-quests.md`](12-quests.md) §2.1). A grant at the title screen
+  taught the player nothing about where the clock comes from.
 - **The rate is a fraction of one an hour, and the prices are tens.** Both
   were divided by ten on 2026-09-08: a research had come to cost thousands of
   a currency that dripped in whole units, which is a number nobody can hold in
@@ -248,7 +251,7 @@ A `bonus` names its effects, and each is four fields:
 
 | Source | Rate | One-off | Key |
 |---|---|---|---|
-| the **base rate** | +0.8/h | 25 at the start | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
+| the **base rate** | +0.8/h | nothing at the start — the chain pays | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
 | each **claimed landmark** | +0.2/h | +5 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
 | each **cleared ruin** | +0.2/h | +15 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
 | the **`Conquest`** technology | +0.3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |

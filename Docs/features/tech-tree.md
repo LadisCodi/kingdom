@@ -267,10 +267,11 @@ and every rank is an ordinary card gated by the row above it like any other.
   ladder could run on a calendar, then halved by ten again because a research
   priced in thousands of a currency that drips in ones is a number nobody can
   hold in their head. **Era 1 pays it too**, 1 for a rank and 2 for a major,
-  against a starting grant of 25.
+  against no starting grant at all — the quest chain funds the cards it asks
+  for ([`12-quests.md`](12-quests.md) §2.1).
 
 - The bands are the design; the exact rows are the workbook's.
-- **Era 1 costs Knowledge too** — 1 or 2, out of the opening grant.
+- **Era 1 costs Knowledge too** — 1 or 2, out of what the chain has paid.
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
 - Whole tree: **519,830 Gold and 2,442 Knowledge**, of which the two
