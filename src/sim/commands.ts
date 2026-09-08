@@ -1,7 +1,7 @@
 // The sim's public command API and the unified advance: one event-ordered pass
 // serves both the live once-per-second tick and offline replay.
 
-import { DISTRICTS, KINGDOM_DEF, TECHNOLOGIES,
+import { BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import { RUSH } from './data/definitions';
 import {
@@ -86,6 +86,25 @@ export function buyBuilder(state: GameState): BuyBuilderResult {
   if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
   addToWallet(state.player.wallet, 'Gems', -cost);
   state.kingdom.builders += 1;
+  return 'Purchased';
+}
+
+export type BuyKeysResult = 'Purchased' | 'NotEnoughGems';
+
+/**
+ * Buy gacha keys with Gems — the one place Gems reach the banners since a
+ * pull stopped costing them directly (`heroes.ts#pullPrice`).
+ *
+ * Not a store SKU: a SKU is real money and grants Gems, and the importer
+ * refuses a `Store` row that does not. This is the shape the second builder
+ * already uses — a Gem-priced card the store shows without owning.
+ */
+export function buyKeys(state: GameState, banner: BannerId, count = 1): BuyKeysResult {
+  const def = BANNERS[banner];
+  const cost = def.keyGemCost * count;
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  addToWallet(state.player.wallet, def.key, count);
   return 'Purchased';
 }
 

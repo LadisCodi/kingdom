@@ -3,7 +3,7 @@
 
 import {
   advance, builderGemCost, buyBuilder, canAfford, cancelQueueItem, changeWorkers, collectTap,
-  enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
+  buyKeys, enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
@@ -1000,6 +1000,24 @@ export class Game {
       return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
     }
     return result;
+  }
+
+  /** What a key costs, and what the player holds — the store card's whole
+   *  content. One card per banner, because the two keys are two prices. */
+  keyOffer(banner: BannerId): { cost: number; held: number; key: CurrencyId } {
+    const def = BANNERS[banner];
+    return { cost: def.keyGemCost, held: this.walletValue(def.key), key: def.key };
+  }
+
+  doBuyKeys(banner: BannerId, count = 1): void {
+    if (buyKeys(this.state, banner, count) === 'Purchased') {
+      playSfx('gemSpend');
+      const kind = BANNERS[banner].key === 'GoldKey' ? 'gold' : 'silver';
+      this.toast(`+${count} ${kind} key${count === 1 ? '' : 's'}`);
+    } else {
+      this.shake(['Gems']);
+    }
+    this.notify();
   }
 
   /**

@@ -107,11 +107,14 @@ function freeCall(game: Game, banner: BannerId): HTMLElement | string {
 function callAction(
   game: Game, banner: BannerId, price: { currency: string; amount: number }, times: number,
 ): HTMLElement {
-  const total = price.amount * times;
+  // The free first call is free ONCE, so a ten-call over it costs nine — the
+  // same arithmetic `pullMany` charges. Showing "free" on the ten would be a
+  // lie the purse then contradicts.
+  const total = price.amount === 0 ? Math.max(0, times - 1) : price.amount * times;
   const row = action({
     // A price of zero is not a price. The free first call says so on the
     // button rather than rendering "0 🔑", which reads as a bug.
-    label: total === 0 ? 'Call — free' : times === 1 ? 'Call' : 'Call ×10',
+    label: total === 0 ? 'Call — free' : times === 1 ? 'Call' : `Call ×${times}`,
     kind: 'gem',
     onClick: () => (times === 1 ? game.doPull(banner) : game.doPullMany(banner, times)),
     cost: total === 0 ? undefined : { [price.currency]: total },

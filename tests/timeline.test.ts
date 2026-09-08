@@ -6,7 +6,7 @@
 // AND closed during an absence still fires, and `phase` stops an event paying
 // twice.
 import { describe, expect, it } from 'vitest';
-import { advance } from '../src/sim/commands';
+import { advance, buyKeys } from '../src/sim/commands';
 import {
   BANNERS, CONJUNCTION_BOONS, EVENTS, HERO_ORDER, HEROES, CURRENCIES,
 } from '../src/sim/data/definitions';
@@ -417,6 +417,22 @@ describe('the gacha', () => {
     expect(pullsToGuarantee(state, 'advanced')).toBe(BANNERS.advanced.hardPityAt);
   });
 
+  it('sells keys for Gems, and that is the only way Gems reach a banner', () => {
+    const state = freshGame();
+    state.player.wallet.Gems = BANNERS.basic.keyGemCost + BANNERS.advanced.keyGemCost;
+    expect(buyKeys(state, 'basic')).toBe('Purchased');
+    expect(getWallet(state.player.wallet, 'SilverKey')).toBe(1);
+    expect(buyKeys(state, 'advanced')).toBe('Purchased');
+    expect(getWallet(state.player.wallet, 'GoldKey')).toBe(1);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(0);
+    expect(buyKeys(state, 'basic')).toBe('NotEnoughGems');
+    // …and a pull never touches the Gem purse, however rich it is.
+    state.player.wallet.Gems = 99_999;
+    pull(state, 'basic'); // the free first call
+    pull(state, 'basic');
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(99_999);
+  });
+
   // ---- the free call, and what an ad is allowed to pay for ---------------
 
   it('offers the free call, spends it, and puts it on a cooldown', () => {
@@ -504,6 +520,14 @@ describe('the gacha', () => {
     expect(batch.result).toBe('Pulled');
     expect(batch.pulls).toHaveLength(10);
     expect(keys(state, 'basic')).toBe(before - 10); // no discount, on purpose
+  });
+
+  it('charges nine for a ten-call over the free first one', () => {
+    // The free call is free once, not ten times.
+    const state = freshGame();
+    state.player.wallet.SilverKey = 9;
+    expect(pullMany(state, 'basic', 10).result).toBe('Pulled');
+    expect(getWallet(state.player.wallet, 'SilverKey')).toBe(0);
   });
 
   it('refuses a ten-call whole rather than spending nine keys', () => {
