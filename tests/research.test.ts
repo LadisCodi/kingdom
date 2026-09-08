@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { trainUnit } from '../src/sim/army';
 import { advance, enqueueBuild } from '../src/sim/commands';
 import {
-  DISTRICTS, ERA_COUNT, RESEARCH_SETTINGS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, UNITS,
+  CURRENCIES, DISTRICTS, ERA_COUNT, KNOWLEDGE, RESEARCH_SETTINGS, TECHNOLOGIES,
+  TECH_ORDER, TOME_ORDER, UNITS,
 } from '../src/sim/data/definitions';
 import { placementBlock, requiredTechForLevel } from '../src/sim/districts';
 import {
@@ -15,6 +16,7 @@ import {
 import {
   CHANNEL_W, COLS, colLeft, edgePath, NODE_H, NODE_W, PAGE_W, pageRows, ROW_GAP,
 } from '../src/ui/research/layout';
+import { knowledgePerHour } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type TechId } from '../src/sim/state';
 import {
@@ -183,6 +185,34 @@ describe('technology basics', () => {
     expect(startTech(state, 'Forestry', T0)).toBe('NotEnoughResources');
     fund(state, { Gold: techCost('Forestry') });
     expect(startTech(state, 'Forestry', T0)).toBe('Started');
+  });
+});
+
+// What a BRAND NEW kingdom holds, pinned — the opening grant was removed on
+// 2026-09-08 and "I start with some Knowledge" is now a save that survived,
+// not a design. Anything on screen above these two numbers is an old save.
+describe('a new kingdom starts with nothing and the base drip', () => {
+  it('holds no Knowledge at all', () => {
+    expect(getWallet(freshGame().kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(CURRENCIES.Knowledge.start).toBe(0);
+  });
+
+  it('drips at the base rate, with no ground held', () => {
+    const state = freshGame();
+    expect(state.landmarks.claimed).toEqual({});
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour);
+  });
+
+  // The rate is a sum of fractions, so it is a float. The screen rounds it;
+  // this is the reminder of why (`+2.4000000000000004/h` reached a
+  // screenshot).
+  it('is a fraction, which is why the readout rounds', () => {
+    const state = freshGame();
+    state.landmarks.claimed = Object.fromEntries(
+      Array.from({ length: 8 }, (_, i) => [`L${i}`, true]),
+    );
+    expect(knowledgePerHour(state)).not.toBe(2.4);
+    expect(Math.round(knowledgePerHour(state) * 10) / 10).toBe(2.4);
   });
 });
 

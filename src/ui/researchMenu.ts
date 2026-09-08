@@ -125,7 +125,12 @@ export function renderResearchMenu(game: Game): HTMLElement {
     bar.append(el('span', { class: 'res-clock' },
       iconEl('Knowledge', { size: 'sm' }),
       el('b', {}, String(held)),
-      el('span', { class: 'res-clock-rate' }, rate > 0 ? `+${rate}/h` : 'no drip')));
+      // Rounded, because the rate is a SUM OF FRACTIONS — 0.8 an hour plus
+      // 0.2 a landmark — and binary floating point renders three of them as
+      // "+2.4000000000000004/h". One decimal, and no trailing ".0" on a whole
+      // one.
+      el('span', { class: 'res-clock-rate' },
+        rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : 'no drip')));
   }
   const tabs = shelf(game);
   root.append(el('div', { class: 'research-topbar' },
