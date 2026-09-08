@@ -375,6 +375,13 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
   // this is the first place the player reads the sentence — and the whole of
   // it, where a card would have clipped it to three lines.
   panel.append(el('div', { class: 'res-says' }, techLine(id)));
+  // A PROPERTY OF THE TECHNOLOGY, so it reads with the other properties
+  // rather than inside a button. It was a note on Start, where it looked like
+  // a fact about the press instead of a fact about the card — and it is true
+  // whichever button the player ends up using, or neither.
+  panel.append(el('div', { class: 'res-duration' },
+    iconEl('hourglass', { size: 'sm' }),
+    `Duration: ${formatDuration(def.durationSeconds)}`));
   if (def.planned) {
     // Said in the game, not only in a doc: a playtester who researches this
     // must know before they pay that it does nothing yet.
@@ -436,18 +443,9 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
     // which is the fact that tells the two apart — `Instant` needs no line
     // under it saying what the word already says.
     const row = el('div', { class: 'tech-info-actions' });
-    row.append(btn({
-      label: 'Start',
-      kind: 'primary',
-      onClick: () => game.doStartTech(id),
-      note: formatDuration(def.durationSeconds),
-      cost: def.cost,
-      have: (c) => game.walletValue(c),
-      disabledReason: blocked,
-    }));
-    // INSTANT: the whole wait, bought. Both halves of it are time — the
-    // Knowledge the drip still owes, and the research itself — so both are
-    // priced per second like every other rush.
+    // INSTANT on the LEFT. The whole wait, bought: both halves of it are time
+    // — the Knowledge the drip still owes, and the research itself — so both
+    // are priced per second like every other rush.
     const instant = game.techInstantGems(id);
     if (instant !== null) {
       row.append(btn({
@@ -459,6 +457,14 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
         disabledReason: blocked,
       }));
     }
+    row.append(btn({
+      label: 'Start',
+      kind: 'primary',
+      onClick: () => game.doStartTech(id),
+      cost: def.cost,
+      have: (c) => game.walletValue(c),
+      disabledReason: blocked,
+    }));
     panel.append(row);
     // A trickle currency without a time-to-afford line is one the player
     // cannot plan against (07-research.md §4). Only when Knowledge is

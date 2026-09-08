@@ -294,6 +294,15 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .tech-info .action-row .info { flex: 1; }
 
+/* A property of the card, with the other properties. */
+.res-duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--ink-muted);
+}
+
 /* The two ways to have the same thing, side by side: choosing between them is
    comparing two prices, and a price under a price is a list. Equal widths so
    neither reads as the afterthought. */
