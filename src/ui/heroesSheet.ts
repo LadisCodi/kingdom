@@ -17,13 +17,15 @@
 import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
 import { heroIsBusy } from '../sim/expeditions';
-import { canUnlockHero, heroStats, heroUnlockCost, rosterView } from '../sim/heroes';
+import {
+  ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
+} from '../sim/heroes';
 import { levelCost, tierCost } from '../sim/collection';
 import { spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { action, iconEl, knob, sheet, stat } from './kit';
+import { action, btn, iconEl, knob, sheet, stat } from './kit';
 
 /** Which hero's card is open, or null for the grid. Module-level so it
  *  survives the per-tick rebuild — the same reason the market's amount
@@ -52,9 +54,11 @@ function heroArt(def: HeroDef, locked: boolean): HTMLElement {
     : el('div', { class: `${cls} hero-art--glyph` }, def.glyph);
 }
 
-/** Ascension, as the stars the player counts rather than a number they read. */
-function stars(tier: number): HTMLElement {
-  const row = el('span', { class: 'hero-stars' });
+/** Ascension, as the stars the player counts rather than a number they read.
+ *  `big` is the card's row, which rides on the portrait and is the loudest
+ *  thing under it; the tile's is the same row at icon size. */
+function stars(tier: number, big = false): HTMLElement {
+  const row = el('span', { class: `hero-stars${big ? ' is-big' : ''}` });
   for (let i = 0; i < COLLECTION.maxTier; i++) {
     row.append(iconEl('star', { size: 'sm', locked: i >= tier, label: 'ascension' }));
   }
@@ -179,15 +183,45 @@ function detail(game: Game, id: HeroId): HTMLElement {
     game.notify();
   }, { label: by === 1 ? 'Next hero' : 'Previous hero' });
 
+  // The foot rides ON the portrait's lower edge. The stars are the loudest
+  // thing on the card after the art itself — ascension is the ladder the
+  // player is chasing, and a row of 16px pips said so in a whisper.
+  const foot = el('div', { class: 'hero-stage-foot' });
+  if (owned) {
+    foot.append(stars(view.entry.tier, true));
+    if (view.entry.tier < COLLECTION.maxTier) {
+      const toll = ascensionStardustCost(view.entry.tier);
+      const shortFragments = view.entry.fragments < tierCost(view.entry.tier);
+      const ascend = btn({
+        label: 'Ascend',
+        kind: 'primary',
+        onClick: () => game.doRaiseHeroTier(id),
+        // Both prices, inside the button that spends them: the Stardust toll
+        // is a wallet row, the fragments are a counter beside the hero, and
+        // one shown without the other is a button whose refusal has no reason.
+        cost: { Stardust: toll },
+        have: (c) => game.walletValue(c),
+        costExtra: [{
+          icon: 'sparkle',
+          amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
+          short: shortFragments,
+        }],
+      });
+      ascend.classList.add('hero-ascend');
+      foot.append(ascend);
+    }
+  }
+
   const stage = el('div', { class: `hero-stage ${RARITY_CLASS[def.rarity]}` },
     back,
+    el('span', { class: 'hero-rarity' }, RARITY_LABEL[def.rarity]),
     el('span', { class: 'hero-stage-type' },
       iconEl(def.unitType, { size: 'md' }),
       el('span', {}, def.unitType)),
     arrow(-1),
     heroArt(def, !owned),
     arrow(1),
-    el('span', { class: 'hero-rarity' }, RARITY_LABEL[def.rarity]),
+    foot,
   );
 
   const body = el('div', { class: 'hero' },
@@ -233,19 +267,6 @@ function detail(game: Game, id: HeroId): HTMLElement {
     return body;
   }
 
-  // The two ladders, side by side, because they gate each other: a level is
-  // refused by the tier above it, and the reason has to be visible in the
-  // same glance as the button that is refused.
-  body.append(el('div', { class: 'hero-ladder' },
-    el('div', { class: 'hero-ladder-line' },
-      el('span', { class: 'hero-ladder-label' }, 'Level'),
-      el('b', {}, `${view.entry.level}`),
-      el('span', { class: 'hero-ladder-cap' }, `of ${view.levelCap}`)),
-    el('div', { class: 'hero-ladder-line' },
-      el('span', { class: 'hero-ladder-label' }, 'Ascension'),
-      stars(view.entry.tier)),
-  ));
-
   body.append(el('div', { class: 'hero-statline' },
     stat('army', String(s.atk), 'atk'),
     stat('padlock', String(s.def), 'def'),
@@ -259,31 +280,31 @@ function detail(game: Game, id: HeroId): HTMLElement {
     body.append(el('div', { class: 'hero-note' }, 'Currently underground.'));
   }
 
-  if (view.entry.level < COLLECTION.maxLevel) {
-    body.append(action({
+  // THE LEVEL AND ITS BUTTON ARE ONE WIDGET, at the foot of the card. They
+  // were a number in one box and a button four rows below it, which is two
+  // places to look for one decision. Ascension went the other way — onto the
+  // portrait, beside its stars — so each ladder now sits with the thing it
+  // moves.
+  const levelled = view.entry.level >= COLLECTION.maxLevel;
+  body.append(el('div', { class: 'hero-level' },
+    el('div', { class: 'hero-level-read' },
+      el('span', { class: 'hero-level-label' }, 'Level'),
+      el('b', {}, `${view.entry.level}`),
+      el('span', { class: 'hero-level-cap' },
+        levelled ? 'at the ceiling' : `of ${view.levelCap}`)),
+    ...(levelled ? [] : [btn({
       label: 'Train',
+      kind: 'primary',
       onClick: () => game.doLevelHero(id),
       cost: { Stardust: levelCost(view.entry.level) },
       have: (c) => game.walletValue(c),
       disabledReason: view.entry.level >= view.levelCap
         ? 'Their ascension holds them back' : undefined,
-    }));
-  }
-  if (view.entry.tier < COLLECTION.maxTier) {
-    body.append(action({
-      label: 'Ascend',
-      onClick: () => game.doRaiseHeroTier(id),
-      // Fragments are a per-hero counter rather than a wallet row, but a
-      // price is a price: it goes in the button like every other one, reading
-      // "have / needed" so the gap is the thing you see.
-      costExtra: [{
-        icon: 'sparkle',
-        amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
-        short: view.entry.fragments < tierCost(view.entry.tier),
-      }],
-      info: view.entry.fragments < tierCost(view.entry.tier)
-        ? 'Pull for them, or delve again' : undefined,
-    }));
+    })]),
+  ));
+  if (!levelled && view.entry.level >= view.levelCap) {
+    body.append(el('div', { class: 'hero-note' },
+      'Their ascension holds them back — raise it with fragments.'));
   }
   return body;
 }

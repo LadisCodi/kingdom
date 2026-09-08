@@ -1836,6 +1836,7 @@ export class Game {
     const result = raiseHeroTier(this.state, id);
     if (result === 'Raised') playSfx('upgradeBought');
     else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     this.notify();
   }
 

@@ -148,6 +148,20 @@
 
 .hero-stars { display: inline-flex; gap: 1px; align-items: center; }
 .hero-stars .icon.is-locked { opacity: 0.35; }
+/* The card's row. Ascension is the ladder the player is chasing and a row of
+   16px pips said so in a whisper; these are the loudest thing under the art. */
+.hero-stars.is-big { gap: 2px; }
+.hero-stars.is-big .icon { --icon-size: 34px; }
+/* The two filters are written apart on purpose. `.icon.is-locked` is what
+   greys an unearned star, and one rule setting `filter` on every icon here
+   would out-specify it and light all five. */
+.hero-stars.is-big .icon:not(.is-locked) {
+  filter: drop-shadow(0 2px 0 rgba(24, 15, 8, 0.55));
+}
+.hero-stars.is-big .icon.is-locked { filter: grayscale(1) brightness(0.5); opacity: 0.5; }
+@container frame (max-width: 380px) {
+  .hero-stars.is-big .icon { --icon-size: 26px; }
+}
 
 /* ------------------------------------------------------------- the detail - */
 
@@ -160,8 +174,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 220px;
-  padding: 12px 8px;
+  min-height: 250px;
+  /* The bottom padding is the band the foot rides in. The stars overlap the
+     art rather than clearing it, so it is deliberately less than the foot is
+     tall. */
+  padding: 12px 8px 34px;
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
@@ -179,6 +196,30 @@
   width: 60%;
   height: 200px;
   object-position: center;
+}
+
+/* Below the portrait and slightly OVER it. The stars belong to the hero, not
+   to a row under the hero, and the overlap is what says so. */
+.hero-stage-foot {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.hero-stage-foot > * { pointer-events: auto; }
+/* The stars take the space the button does not, and centre in it — so the
+   two can never collide, at any frame width. */
+.hero-stage-foot .hero-stars { flex: 1; min-width: 0; justify-content: center; }
+
+/* Bottom-right, inside the frame, carrying both prices. */
+.hero-ascend {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 4px 10px;
 }
 .hero-stage .k-knob { flex: 0 0 auto; z-index: 1; }
 
@@ -218,13 +259,41 @@
   font-size: var(--text-helper);
 }
 
+/* No plank above it, so the name is the card's title and carries the weight. */
 .hero-title { text-align: center; }
 .hero-name { font-family: var(--font-display); font-size: var(--text-title); }
 .hero-subtitle { font-size: var(--text-helper); color: var(--ink-muted); }
 
-/* The two ladders side by side, because they gate each other: a level is
-   refused by the ascension above it, and the reason has to be in the same
-   glance as the button that is refused. */
+/* THE LEVEL AND ITS BUTTON ARE ONE WIDGET, at the foot of the card: one
+   decision, one place to look. Ascension went the other way, onto the
+   portrait beside its stars, so each ladder sits with the thing it moves. */
+.hero-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.hero-level-read {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-helper);
+}
+.hero-level-read b {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1;
+}
+.hero-level-label, .hero-level-cap { color: var(--ink-muted); }
+.hero-level .k-btn { flex: 0 0 auto; }
+
+/* Still used by the unowned card, which has one ladder and no level. */
 .hero-ladder {
   display: flex;
   gap: 8px;

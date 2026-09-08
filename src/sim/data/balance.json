@@ -2528,7 +2528,9 @@
     "levelsPerTier": 2,
     "maxTier": 5,
     "fragmentsPerTierBase": 10,
-    "fragmentsPerTierGrowth": 2
+    "fragmentsPerTierGrowth": 2,
+    "ascensionStardustBase": 50,
+    "ascensionStardustGrowth": 2
   },
   "knowledge": {
     "basePerHour": 0.8,

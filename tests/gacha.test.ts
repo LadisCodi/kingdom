@@ -7,11 +7,12 @@
 import { describe, expect, it } from 'vitest';
 import { gachaPrizes, type GachaPrize } from '../src/game';
 import {
-  canUnlockHero, grantHero, heroUnlockCost, ownsHeroId, pull, unlockHero,
+  ascensionStardustCost, canUnlockHero, grantHero, heroUnlockCost, ownsHeroId,
+  pull, raiseHeroTier, unlockHero,
 } from '../src/sim/heroes';
 import type { PullResult } from '../src/sim/heroes';
 import { COLLECTION } from '../src/sim/data/definitions';
-import { addToWallet } from '../src/sim/state';
+import { addToWallet, getWallet } from '../src/sim/state';
 import { freshGame, freshPresenter } from './helpers';
 
 /** A pull result with only the fields a test cares about set. */
@@ -164,5 +165,44 @@ describe('the presenter hands a call to the reveal screen', () => {
 
     game.doPull('basic'); // …and now there is nothing to spend
     expect(game.gachaReveal).toBeNull();
+  });
+});
+
+// An ascension asks TWO prices: the fragments are the chase, the Stardust is
+// the toll that keeps it a tax on the relics' currency rather than a second
+// hero currency (Docs/features/10-heroes.md §4).
+describe('an ascension asks two prices', () => {
+  const armed = () => {
+    const state = freshGame();
+    grantHero(state, 'Bard');
+    state.heroes.fragments.Bard = 999;
+    return state;
+  };
+
+  it('charges the fragments and the Stardust toll together', () => {
+    const state = armed();
+    addToWallet(state.kingdom.wallet, 'Stardust', 1000);
+
+    expect(raiseHeroTier(state, 'Bard')).toBe('Raised');
+
+    expect(state.heroes.tiers.Bard).toBe(2);
+    expect(state.heroes.fragments.Bard).toBe(999 - 10);
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000 - ascensionStardustCost(1));
+  });
+
+  it('refuses without the Stardust, and takes nothing when it refuses', () => {
+    const state = armed();
+    addToWallet(state.kingdom.wallet, 'Stardust', ascensionStardustCost(1) - 1);
+
+    expect(raiseHeroTier(state, 'Bard')).toBe('NotEnoughStardust');
+
+    // The fragments are still there: a half-paid ascension would eat them.
+    expect(state.heroes.fragments.Bard).toBe(999);
+    expect(state.heroes.tiers.Bard).toBe(1);
+  });
+
+  it('costs 750 Stardust to carry one hero to the top', () => {
+    const total = [1, 2, 3, 4].reduce((n, tier) => n + ascensionStardustCost(tier), 0);
+    expect(total).toBe(750);
   });
 });

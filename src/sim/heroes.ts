@@ -113,13 +113,31 @@ export function unlockHero(state: GameState, id: HeroId): HeroUnlockResult {
 export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
   !ownsHeroId(state, id) && (state.heroes.fragments[id] ?? 0) >= heroUnlockCost();
 
-export type HeroTierResult = 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments';
+/**
+ * The Stardust an ascension asks for on top of the fragments.
+ *
+ * A hero pays TWO prices to ascend and a relic pays one: the fragments are
+ * the chase, the Stardust is the toll (Docs/features/10-heroes.md §4). It is
+ * what keeps Stardust the relics' currency with a hero tax on it rather than
+ * a second hero currency — 750 to max one hero against ~3,612 for a relic.
+ */
+export const ascensionStardustCost = (tier: number): number => Math.round(
+  COLLECTION.ascensionStardustBase * COLLECTION.ascensionStardustGrowth ** (tier - 1),
+);
+
+export type HeroTierResult =
+  | 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments' | 'NotEnoughStardust';
 
 export function raiseHeroTier(state: GameState, id: HeroId): HeroTierResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
   const block = tierBlock(entry);
   if (block !== null) return block;
+  const toll = ascensionStardustCost(entry.tier);
+  if (getWallet(state.kingdom.wallet, 'Stardust') < toll) return 'NotEnoughStardust';
+  // Both prices, or neither: a half-paid ascension would eat the fragments
+  // and leave the tier where it was.
+  addToWallet(state.kingdom.wallet, 'Stardust', -toll);
   state.heroes.fragments[id] = entry.fragments - tierCost(entry.tier);
   state.heroes.tiers[id] = entry.tier + 1;
   return 'Raised';

@@ -8,7 +8,8 @@
 >
 > **Status: the gacha is built** (§6), and so are **the nav tab, the roster
 > grid, the hero card and the reveal screen** (§8, built 2026-09-08), and
-> **recruiting a hero with ten fragments** (§4.1). **The hero itself is
+> **recruiting a hero with ten fragments** (§4.1) and **the Stardust toll on
+> an ascension** (§4). **The hero itself is
 > designed, not built — reworked 2026-09-08 onto the resolver**: the stat
 > block and the passive (§2), XP-bought levels and the
 > Fragment-plus-Stardust ascension (§4), and Gem-bought hero slots (§3)
@@ -287,11 +288,14 @@ Each of these is data, not code:
   two of them is most of what the card is for — and **the way back riding on
   the portrait**, not in a row of its own. Every pixel above the fold belongs
   to the art.
-- Name and title, then the **two ladders side by side** — level of cap, and
-  ascension in stars — because they gate each other and the reason a level is
-  refused has to be in the same glance as the button refusing it.
-- The stat block, the passive, and the two actions: **Train** priced in XP,
-  **Ascend** priced in Fragments plus Stardust.
+- **Each ladder sits with the thing it moves.** The **ascension stars** ride
+  on the portrait's lower edge, overlapping it, at the size the chase
+  deserves; **Ascend** is a button in the frame's bottom-right corner, showing
+  the Stardust toll and the fragment count it also asks for.
+- Name and title, then the stat block and the passive.
+- **The level and its button are one widget at the foot of the card.** They
+  were a number in one box and a button four rows below it, which is two
+  places to look for one decision.
 - An unowned hero's card is the same screen with the ladders replaced by its
   fragment count, a **Recruit** button priced in those fragments, and one way
   to the banner.
@@ -355,7 +359,7 @@ the rewarded video.
 | The rarity multipliers | ×1.0 / ×1.2 / ×1.5 · ×1.0 / ×1.25 / ×1.75 | `heroes.rarity_stat_mult_*`, `heroes.rarity_passive_mult_*` |
 | What a level costs in XP | §4 | `heroes.xp_level_cost_base`, `xp_level_cost_growth` |
 | What a recruit costs | 10 Fragments — the ladder's base rung | `collection.fragments_per_tier_base` |
-| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragments_per_tier_*`, `heroes.ascension_stardust_base`, `ascension_stardust_growth` |
+| What an ascension costs | 10 / 20 / 40 / 80 Fragments · 50 / 100 / 200 / 400 Stardust | `collection.fragments_per_tier_*`, `collection.ascension_stardust_base`, `collection.ascension_stardust_growth` |
 | What a hero slot costs | §3 | `heroes.slot_gem_cost_base`, `slot_gem_cost_growth`, `heroes.max_slots` |
 | What a key costs in Gems | 500 / 1,500 | `Banners.key_gem_cost` |
 | The odds and both pities | §6.1 | `Banners.hero_chance`, `soft_pity_at`, `hard_pity_at`, `legendary_pity_at` |

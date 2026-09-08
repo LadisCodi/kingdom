@@ -216,6 +216,13 @@ const SETTINGS = [
   ['collection.max_tier', 'collection.maxTier'],
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
+  // The Stardust TOLL on an ascension, which only HEROES pay: a relic's tier
+  // is ingredients and nothing else (Docs/features/10-heroes.md §4). It lives
+  // in the shared block rather than under `heroes.` because that key is the
+  // Heroes SHEET — thirty-two rows — and a setting written into it would be a
+  // thirty-third hero with no stats.
+  ['collection.ascension_stardust_base', 'collection.ascensionStardustBase'],
+  ['collection.ascension_stardust_growth', 'collection.ascensionStardustGrowth'],
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   // The floor under the clock: what a kingdom holding no ground still learns
