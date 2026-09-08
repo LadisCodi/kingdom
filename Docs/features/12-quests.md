@@ -11,7 +11,7 @@
   is chain order.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **54 quests, paying 11,865 Gold, 750 Gems and 158 Stardust.**
+- **55 quests** once `DriveThemOut` lands (54 today), paying 11,865 Gold plus its reward, 750 Gems and 158 Stardust.
 
 ### 1.1 Goal types
 
@@ -70,7 +70,7 @@
 
 ### 2.1 The opening economy
 
-- A new kingdom starts with **50 Gold**, **500 Gems** and **25 Knowledge** — the last is what the chain’s own research costs, at zero drip.
+- A new kingdom starts with **50 Gold**, **500 Gems** and **25 Knowledge** — the last is what the chain's own research costs, at zero drip.
 - Quest 1's four forest cells cost ~16 Gold; Forestry costs 25; quest 1 pays
   10 Gold. 50 + 10 covers both, **asserted at the dearest frontier the player
   could pick**.

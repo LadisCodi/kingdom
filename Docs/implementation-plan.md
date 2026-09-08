@@ -435,11 +435,11 @@ evaporating.**
 2. Neighbours, daily help with a cap, gifts drained at load.
 3. Guilds and membership.
 4. The guild week: the bar, contributions, threshold chests.
-5. **The siege** — which is what finally writes the cleared flag and closes H1.
+5. **The siege** — the world map's co-op encounter. (The province's
+   garrisons and H1 are Step 7.)
 
 - **Design:** [`15-social.md`](features/15-social.md) — complete.
-- **Blocked on: OQ-35** (how a siege resolves — the design has an answer that
-  scales from one player to ten, and it needs signing off), **OQ-33** (guild
+- **Blocked on: OQ-33** (guild
   ranked or cooperative), **OQ-34** (help touches whose state), **OQ-36**,
   **OQ-38**, **OQ-39**. And **OQ-7** and **OQ-10** if ingredients ship with it.
 - **Depends on:** Step 3's build-speed modifier stat.

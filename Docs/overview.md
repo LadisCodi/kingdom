@@ -102,7 +102,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 - **Mana is what magic costs, wherever you are.** In the city it hurries
   production — a tap is a small spell. On the world map it bends an expedition
-  or shortens a siege.
+  or shortens a march.
 - The only capped currency. It refills whether or not the player is playing.
 - A new kingdom starts full.
 - The pool fills in 10 hours at every stage — past the 8-hour offline cap, so
