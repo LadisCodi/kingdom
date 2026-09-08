@@ -11,8 +11,16 @@
 // A list of rows cannot do that; a grid of portraits can, which is why every
 // game with a roster draws one.
 //
-// So: a grid, and a detail behind each tile. Two views, one overlay — the
-// nav tab stays put and `openHero` decides which of them draws.
+// So: a grid, and a detail behind each tile. Two views, one overlay — the nav
+// tab stays put and `game.openHeroId` decides which of them draws. That lives
+// on the presenter, not here, for the reason `expeditionRuin` does: it
+// survives the per-tick rebuild and it is node-testable.
+//
+// THE SCREEN DOES NOT REBUILD ON THE TICK. It draws thirty-two `<img>`
+// portraits and nothing on it is time-dependent, so it opts out through
+// `game.heroesSignature()` (src/ui/kit/host.ts). Recreating those images once
+// a second made the grid blink, because a fresh `<img>` decodes before its
+// first paint.
 
 import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
@@ -26,17 +34,6 @@ import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
 import { action, btn, iconEl, knob, sheet, stat } from './kit';
-
-/** Which hero's card is open, or null for the grid. Module-level so it
- *  survives the per-tick rebuild — the same reason the market's amount
- *  selector lives outside its render. */
-let openHero: HeroId | null = null;
-
-/** Reset to the grid. Called when the overlay closes, so re-opening the tab
- *  never lands the player back inside whoever they last read. */
-export function resetHeroesView(): void {
-  openHero = null;
-}
 
 /** Blue → violet → gold. The rarity is the tile's whole background, so the
  *  roster reads as a ladder before a single label is read. */
@@ -116,7 +113,7 @@ function tile(game: Game, view: RosterEntry): HTMLElement {
   }
 
   t.addEventListener('click', () => {
-    openHero = view.id;
+    game.openHeroId = view.id;
     game.notify();
   });
   return t;
@@ -175,11 +172,11 @@ function detail(game: Game, id: HeroId): HTMLElement {
   // player scrolls — every pixel above the fold is the portrait's.
   // '←', not '‹': the step arrows are '‹' and '›', and two left-pointing
   // chevrons on the same edge meaning different things is a coin toss.
-  const back = knob('←', () => { openHero = null; game.notify(); }, { label: 'All heroes' });
+  const back = knob('←', () => { game.openHeroId = null; game.notify(); }, { label: 'All heroes' });
   back.classList.add('hero-back');
 
   const arrow = (by: 1 | -1) => knob(by === 1 ? '›' : '‹', () => {
-    openHero = step(id, by);
+    game.openHeroId = step(id, by);
     game.notify();
   }, { label: by === 1 ? 'Next hero' : 'Previous hero' });
 
@@ -312,8 +309,8 @@ function detail(game: Game, id: HeroId): HTMLElement {
 export function renderHeroesSheet(game: Game): HTMLElement {
   // A hero the save no longer has cannot be open — the roster is fixed, but
   // a reset save is not, and a stale id would draw a card for nobody.
-  if (openHero !== null && !(openHero in HEROES)) openHero = null;
-  const open = openHero;
+  if (game.openHeroId !== null && !(game.openHeroId in HEROES)) game.openHeroId = null;
+  const open = game.openHeroId;
   if (open === null) {
     return sheet({ title: 'Heroes', onClose: () => game.dismiss() }, grid(game));
   }

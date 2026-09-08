@@ -41,7 +41,7 @@ import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
-import { renderHeroesSheet, resetHeroesView } from './ui/heroesSheet';
+import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
@@ -175,6 +175,19 @@ async function boot(): Promise<void> {
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
   };
 
+  /**
+   * Screens that opt OUT of the per-tick rebuild, by saying what they read.
+   *
+   * A screen with no countdown on it has nothing to redraw a second later,
+   * and one that draws images pays for the rebuild visibly — a fresh `<img>`
+   * decodes before its first paint, so a grid of portraits blinks once a
+   * second. Anything absent from this map keeps rebuilding, which is the
+   * safe default.
+   */
+  const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
+    heroes: () => game.heroesSignature(),
+  };
+
   // Each mount point holds one keyed screen: same key → re-render in place,
   // different key → tear down and build. Screens still rebuild themselves
   // wholesale via legacy(); only the container is now stable, which is what
@@ -210,9 +223,6 @@ async function boot(): Promise<void> {
     // Overlays. Exhaustive over OverlayName, so adding a name without a
     // screen is a compile error rather than an overlay that draws nothing.
     const overlay = game.openOverlay;
-    // Leaving the roster forgets which hero was open, so coming back lands on
-    // the grid rather than inside whoever was last read.
-    if (overlay !== 'heroes') resetHeroesView();
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
@@ -223,6 +233,7 @@ async function boot(): Promise<void> {
       overlaySlot.show(overlay, () => legacy(
         () => OVERLAYS[overlay](game),
         needsKnob ? () => game.dismiss() : undefined,
+        OVERLAY_SIGNATURES[overlay],
       ));
     }
     else overlaySlot.clear();

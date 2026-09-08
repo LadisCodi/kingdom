@@ -232,6 +232,10 @@ export class Game {
    *  the player can tap around is not a reward — the same reason the
    *  rewarded video has a mount of its own. */
   gachaReveal: GachaReveal | null = null;
+  /** The hero whose card is open on the roster screen, or null for the grid.
+   *  On the presenter rather than in the view for the reason `expeditionRuin`
+   *  is: it survives the per-tick rebuild, and it is node-testable. */
+  openHeroId: HeroId | null = null;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -1253,6 +1257,30 @@ export class Game {
     this.gachaReveal = { banner, calls: pulls.length, prizes };
   }
 
+  /**
+   * Everything the roster screen reads, as one string.
+   *
+   * The screen draws thirty-two `<img>` portraits and the overlay is rebuilt
+   * on every notify() — once a second from the tick — so without this the
+   * images are recreated every second and blink as each new element decodes.
+   * Nothing on that screen is time-dependent: it only moves when the player
+   * moves it (`src/ui/kit/host.ts`).
+   *
+   * **Deliberately coarse.** `state.heroes` goes in whole rather than field
+   * by field, so a screen that grows a new line tomorrow is covered without
+   * anybody remembering to come back here. A signature that misses an input
+   * does not flicker — it goes stale, which is the worse bug.
+   */
+  heroesSignature(): string {
+    return [
+      this.openHeroId ?? '-',
+      JSON.stringify(this.state.heroes),
+      this.walletValue('Stardust'),
+      // The card's one line from outside the roster: who is underground.
+      this.state.delves.map((d) => `${d.heroId}:${d.phase}`).join(','),
+    ].join('|');
+  }
+
   /** The player has read it. */
   dismissGachaReveal(): void {
     this.gachaReveal = null;
@@ -1908,6 +1936,9 @@ export class Game {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
+    // Leaving the roster forgets which hero was open, so coming back lands on
+    // the grid rather than inside whoever was last read.
+    if (name !== 'heroes') this.openHeroId = null;
     this.notify();
   }
 

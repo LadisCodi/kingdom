@@ -18,6 +18,8 @@ import {
   addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map,
   reveal, screenAt,
 } from './helpers';
+import { grantHero } from '../src/sim/heroes';
+import { addToWallet } from '../src/sim/state';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -534,5 +536,41 @@ describe('placement labels read the ground', () => {
       expect(parseInt(y.label, 10))
         .toBe(effectiveStock(map, y.cell, HARVEST.Forest));
     }
+  });
+});
+
+// The heroes screen opts out of the per-tick rebuild by declaring what it
+// reads (src/ui/kit/host.ts). A signature that misses an input does not
+// flicker — it goes stale — so these assert the two halves of the contract:
+// a bare second changes nothing, and every hero-facing move changes it.
+describe('the heroes screen signature', () => {
+  it('does not move on a tick that changed nothing it draws', () => {
+    const game = freshPresenter();
+    const before = game.heroesSignature();
+    game.tick();
+    expect(game.heroesSignature()).toBe(before);
+  });
+
+  it('moves when a hero is granted, levelled, ascended or paid fragments', () => {
+    const game = freshPresenter();
+    const seen = new Set<string>([game.heroesSignature()]);
+
+    grantHero(game.state, 'Bard');
+    seen.add(game.heroesSignature());
+
+    game.state.heroes.fragments.Bard = 40;
+    seen.add(game.heroesSignature());
+
+    addToWallet(game.state.kingdom.wallet, 'Stardust', 5000);
+    seen.add(game.heroesSignature());
+
+    game.doLevelHero('Bard');
+    seen.add(game.heroesSignature());
+
+    game.doRaiseHeroTier('Bard');
+    seen.add(game.heroesSignature());
+
+    // Five moves, five distinct readings: none of them collide.
+    expect(seen.size).toBe(6);
   });
 });
