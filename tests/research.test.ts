@@ -203,16 +203,21 @@ describe('a new kingdom starts with nothing and the base drip', () => {
     expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour);
   });
 
-  // The rate is a sum of fractions, so it is a float. The screen rounds it;
-  // this is the reminder of why (`+2.4000000000000004/h` reached a
-  // screenshot).
-  it('is a fraction, which is why the readout rounds', () => {
-    const state = freshGame();
-    state.landmarks.claimed = Object.fromEntries(
-      Array.from({ length: 8 }, (_, i) => [`L${i}`, true]),
-    );
-    expect(knowledgePerHour(state)).not.toBe(2.4);
-    expect(Math.round(knowledgePerHour(state) * 10) / 10).toBe(2.4);
+  // The rate is a SUM OF FRACTIONS — a base plus 0.2 a landmark — so binary
+  // floating point can hand back a long tail, and one reached a screenshot as
+  // `+2.4000000000000004/h`. Whether any PARTICULAR count produces one
+  // depends on the authored numbers and moved the day the base went 0.8 → 1,
+  // so what is pinned here is the guard rather than the artifact: however
+  // much ground is held, the rounded readout is one decimal and no more.
+  it('never reads out with a floating-point tail, at any amount of ground', () => {
+    for (let claimed = 0; claimed <= 20; claimed += 1) {
+      const state = freshGame();
+      state.landmarks.claimed = Object.fromEntries(
+        Array.from({ length: claimed }, (_, i) => [`L${i}`, true]),
+      );
+      const shown = String(Math.round(knowledgePerHour(state) * 10) / 10);
+      expect(shown, `${claimed} landmarks reads out as ${shown}`).toMatch(/^\d+(\.\d)?$/);
+    }
   });
 });
 

@@ -2543,7 +2543,7 @@
     "heroMaxLevel": 50
   },
   "knowledge": {
-    "basePerHour": 0.8,
+    "basePerHour": 1,
     "dripPerClearedRuinPerHour": 0.2,
     "perClaimedLandmarkPerHour": 0.2,
     "landmarkClaimLump": 5,

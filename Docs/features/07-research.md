@@ -235,7 +235,7 @@ A `bonus` names its effects, and each is four fields:
 - **Buys technologies and nothing else** (plus guild investment, §8, when
   built).
 - **Uncapped.** A lump is a plain addition.
-- **A base rate, and territory on top of it.** The kingdom learns **0.8 an
+- **A base rate, and territory on top of it.** The kingdom learns **1 an
   hour** holding nothing, so the tree opens on the calendar; every landmark
   and ruin adds to that, so the province makes it open faster. A new kingdom
   starts with **no Knowledge**. The opening chain pays for its own cards
@@ -251,7 +251,7 @@ A `bonus` names its effects, and each is four fields:
 
 | Source | Rate | One-off | Key |
 |---|---|---|---|
-| the **base rate** | +0.8/h | nothing at the start — the chain pays | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
+| the **base rate** | +1/h | nothing at the start — the chain pays | `knowledge.basePerHour`, `Currencies.Knowledge.start` |
 | each **claimed landmark** | +0.2/h | +5 on claiming | `knowledge.perClaimedLandmarkPerHour`, `knowledge.landmarkClaimLump` |
 | each **cleared ruin** | +0.2/h | +15 on first clear | `knowledge.dripPerClearedRuinPerHour`, `delve.firstClearKnowledge` |
 | the **`Conquest`** technology | +0.3/h per cleared ruin | — | `knowledge.conquestPerClearedRuinPerHour` |
@@ -261,9 +261,9 @@ A `bonus` names its effects, and each is four fields:
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
 | the **quest chain** | — | 50 across nine quests | `rewardKnowledge` (Quests sheet) |
 
-- A kingdom holding nothing drips **0.8/h** (19 a day); a fully explored
-  province — ten landmarks, five ruins — **3.8/h** (91 a day) before
-  `Conquest`, **5.3/h** after.
+- A kingdom holding nothing drips **1/h** (24 a day); a fully explored
+  province — ten landmarks, five ruins — **4/h** (96 a day) before
+  `Conquest`, **5.5/h** after.
 - The clock banks whole units on a **whole-millisecond period** rounded from
   the rate, which is what keeps one-call replay identical to stepped ticking
   when the rate is a fraction (invariant 1).
