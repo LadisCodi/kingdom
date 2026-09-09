@@ -91,19 +91,37 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
 
   // ---------------------------------------------------------- the queue
   if (line.length > 0) {
+    // CONSECUTIVE RUNS, not one slot each and not one slot per type. Four
+    // warriors in a row is one fact — "four warriors" — and four identical
+    // faces spent four slots saying it. Collapsing by type ALONE would be
+    // wrong for the opposite reason: the line is ordered, and a queue of
+    // Warrior, Lancer, Warrior, Warrior shown as "Warrior x3, Lancer x1"
+    // lies about what comes out next. So: runs.
+    //
+    // A ward is already one item that hands over many, so a run adds those
+    // counts up rather than counting items.
+    const runs: Array<{ trainee: TrainableId; count: number; first: number }> = [];
+    line.forEach((item, i) => {
+      const last = runs[runs.length - 1];
+      if (last !== undefined && last.trainee === item.trainee) last.count += itemCount(item);
+      else runs.push({ trainee: item.trainee, count: itemCount(item), first: i });
+    });
+
     const strip = el('div', { class: 'tr-queue' },
-      ...line.map((item, i) => {
-        // A ward is one item that hands over many, so the slot has to say how
-        // many — otherwise nine mended soldiers read as one recruit.
-        const many = itemCount(item);
+      ...runs.map((run) => {
+        const name = nameFor(run.trainee);
         return el('div', {
-          class: `tr-slot${i === 0 ? ' is-active' : ''}`,
-          title: many > 1 ? `${many} ${nameFor(item.trainee)}s mending` : nameFor(item.trainee),
+          // The run that holds the HEAD of the line is the one being worked
+          // on, which is what the bar underneath is counting down.
+          class: `tr-slot${run.first === 0 ? ' is-active' : ''}`,
+          title: run.count > 1
+            ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
+            : name,
         },
-          item.trainee === 'Villager'
-            ? iconEl(iconFor(item.trainee), { size: 'lg' })
-            : unitBust(item.trainee, 'tr-slot-art'),
-          ...(many > 1 ? [el('span', { class: 'tr-slot-count' }, `x${many}`)] : []));
+          run.trainee === 'Villager'
+            ? iconEl(iconFor(run.trainee), { size: 'lg' })
+            : unitBust(run.trainee, 'tr-slot-art'),
+          ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
       }));
 
     const head = line[0];
