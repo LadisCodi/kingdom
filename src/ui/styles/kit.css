@@ -126,6 +126,12 @@
   justify-content: center;
   gap: 8px;
   min-height: 56px;
+  /* A FLOOR, so a slab's width comes from the row it sits in rather than from
+     how many characters its label happens to have. "Finish 10" next to
+     "Upgrade 180 60" read as two different kinds of control when one was half
+     the other's width. Knobs are excluded by name: they set an explicit 48px
+     square, and `min-width` would beat it. */
+  min-width: 120px;
   padding: 12px 20px;
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
   font-family: var(--font-body);
@@ -198,6 +204,7 @@
   width: 48px;
   height: 48px;
   min-height: 48px;
+  min-width: 0;
   padding: 0;
   border-radius: 50%;
   font-size: 20px;
