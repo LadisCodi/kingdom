@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   armyCap, armySize, cancelTraining, committedTroops, healCost, healSeconds,
-  healWounded, lineFor, takeCasualties, trainCost, trainUnit, woundedCap,
+  applyLosses, healWounded, lineFor, trainCost, trainUnit, woundedCap,
   woundedCount, woundedOf,
 } from '../src/sim/army';
 import { advance } from '../src/sim/commands';
@@ -46,7 +46,7 @@ const hallFor = (state: GameState, unitId: UnitId) =>
 describe('a casualty is two different things', () => {
   it('splits the fallen between the grave and the ward', () => {
     const state = mustered({ Warrior: 60 });
-    const { losses, wounded } = takeCasualties(state, [{ unitId: 'Warrior', count: 60 }], 200);
+    const { losses, wounded } = applyLosses(state, [{ unitId: 'Warrior', count: 24 }]);
     const fell = losses.reduce((sum, l) => sum + l.count, 0);
     const hurt = wounded.reduce((sum, l) => sum + l.count, 0);
     expect(fell).toBeGreaterThan(0);
@@ -66,7 +66,7 @@ describe('a casualty is two different things', () => {
     // Fill it to the brim first…
     state.city.wounded.Warrior = cap;
     const before = armySize(state);
-    const { losses, wounded } = takeCasualties(state, [{ unitId: 'Warrior', count: 200 }], 900);
+    const { losses, wounded } = applyLosses(state, [{ unitId: 'Warrior', count: 90 }]);
     const fell = losses.reduce((sum, l) => sum + l.count, 0);
     expect(fell).toBeGreaterThan(0);
     expect(wounded).toEqual([]); // nowhere to put them
@@ -76,7 +76,7 @@ describe('a casualty is two different things', () => {
 
   it('a hero is never in it — only soldiers fall', () => {
     const state = mustered({ Warrior: 40 });
-    takeCasualties(state, [{ unitId: 'Warrior', count: 40 }], 150);
+    applyLosses(state, [{ unitId: 'Warrior', count: 12 }]);
     expect(state.heroes.owned.length).toBeGreaterThan(0);
   });
 });
@@ -229,7 +229,7 @@ describe('the ward is a building, not a rule', () => {
     const state = mustered({ Warrior: 60 });
     state.city.districts = state.city.districts.filter((d) => d.definitionId !== 'Infirmary');
     expect(woundedCap(state)).toBe(0);
-    const { losses, wounded } = takeCasualties(state, [{ unitId: 'Warrior', count: 60 }], 200);
+    const { losses, wounded } = applyLosses(state, [{ unitId: 'Warrior', count: 24 }]);
     expect(losses.reduce((sum, l) => sum + l.count, 0)).toBeGreaterThan(0);
     expect(wounded).toEqual([]);
     expect(woundedCount(state)).toBe(0);

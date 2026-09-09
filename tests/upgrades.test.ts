@@ -21,8 +21,8 @@ import {
 import { techMultiplier } from '../src/sim/techEffects';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
 import { armyCap, trainCost } from '../src/sim/army';
-import { drillOf, partyOf, supplyCost } from '../src/sim/expeditions';
-import { effectiveAttack, partyStats, typeMultiplier } from '../src/sim/combat';
+import { drillOf, partyBoard, partyOf, supplyCost } from '../src/sim/expeditions';
+import { partyStats, typeMultiplier } from '../src/sim/combat';
 import type { GameState } from '../src/sim/state';
 import { addHeroXp } from '../src/sim/heroes';
 import { landmarkClaimCost } from '../src/sim/landmarks';
@@ -520,12 +520,14 @@ describe('the combat lines reach the fight', () => {
     expect(cav()).toBe(c0 + 2);
   });
 
-  it('Warhorns lifts every unit, and reaches the attack roll', () => {
+  it('Warhorns lifts every unit, and reaches the swing itself', () => {
+    // The drill is resolved into the BOARD now, so a rank shows up where it
+    // matters: on what a squad hits for (Docs/features/combat.md §7).
     const state = freshGame();
-    const party = partyOf(state, [{ unitId: 'Warrior', count: 3 }]);
-    const a0 = effectiveAttack(party, 'Any');
-    completeRanks(state, 'Warhorns', 2); // +2 ATK each
-    expect(effectiveAttack(partyOf(state, party.slots), 'Any')).toBe(a0 + 6);
+    const slots = [{ unitId: 'Warrior' as const, count: 3 }];
+    const before = partyBoard(partyOf(state, slots)).slots[0]!.dmg;
+    completeRanks(state, 'Warhorns', 2); // +2 damage each
+    expect(partyBoard(partyOf(state, slots)).slots[0]!.dmg).toBe(before + 2);
   });
 
   it('Manoeuvre softens a bad matchup, and never past neutral', () => {

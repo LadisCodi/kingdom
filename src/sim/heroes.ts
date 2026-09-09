@@ -162,7 +162,7 @@ export function heroStats(state: GameState, id: HeroId): { atk: number; def: num
   const def = HEROES[id];
   const level = heroEntry(state, id).level;
   return {
-    atk: Math.round(def.atk + def.atkPerLevel * (level - 1)),
+    atk: Math.round(def.dmg + def.dmgPerLevel * (level - 1)),
     def: Math.round(def.def + def.defPerLevel * (level - 1)),
     hp: Math.round(def.hp + def.hpPerLevel * (level - 1)),
   };

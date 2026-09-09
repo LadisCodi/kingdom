@@ -303,14 +303,35 @@ const SETTINGS = [
   // Taking ground is an EVENT, not just a rate change a nobody is looking at.
   ['knowledge.landmark_claim_lump', 'knowledge.landmarkClaimLump'],
   ['knowledge.conquest_per_cleared_ruin_per_hour', 'knowledge.conquestPerClearedRuinPerHour'],
-  // Combat is a SCORING PASS, not a simulation — these six numbers are the
-  // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
-  // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
+  // What a bad matchup is worth on the SHEET — the estimate the player reads
+  // before committing. The FIGHT itself uses the integer fractions below, so
+  // these two only colour a preview (Docs/features/combat.md §12).
   ['army.type_advantage', 'army.typeAdvantage'],
   ['army.type_disadvantage', 'army.typeDisadvantage'],
   ['army.threat_floor_fraction', 'army.threatFloorFraction'],
-  ['army.damage_per_strength', 'army.damagePerStrength'],
-  ['army.damage_absorbed_per_defence', 'army.damageAbsorbedPerDefence'],
+  // THE RESOLVER (Docs/features/combat.md §7, §8, §10, §11). A tick is
+  // logical, not a frame: the fight is resolved before the first one is
+  // drawn, and the screen replays the event stream it emitted. The type
+  // fractions are INTEGER pairs on purpose — the whole resolver is integer
+  // arithmetic so a replay is bit-identical wherever it runs, which is what
+  // makes a server-resolved PvP fight possible later (§16).
+  ['combat.tick_ms', 'combat.tickMs'],
+  ['combat.timeout_ticks', 'combat.timeoutTicks'],
+  ['combat.type_advantage_num', 'combat.typeAdvantageNum'],
+  ['combat.type_advantage_den', 'combat.typeAdvantageDen'],
+  ['combat.type_disadvantage_num', 'combat.typeDisadvantageNum'],
+  ['combat.type_disadvantage_den', 'combat.typeDisadvantageDen'],
+  // The generator: how many squads a room fields, and when it spends part of
+  // the budget on a villain instead (§11).
+  ['combat.gen_slots_min', 'combat.genSlotsMin'],
+  ['combat.gen_slots_max', 'combat.genSlotsMax'],
+  ['combat.gen_villain_threshold', 'combat.genVillainThreshold'],
+  ['combat.gen_villain_share', 'combat.genVillainShare'],
+  ['combat.gen_villain_slots', 'combat.genVillainSlots'],
+  // What a hero is worth in the POWER estimate, as a share of what it hits
+  // for. A hero has no `power_per_troop` of its own — this is the one number
+  // that makes it comparable to the squads beside it.
+  ['combat.hero_power_per_dmg', 'combat.heroPowerPerDmg'],
   // WHAT A FIGHT COSTS IN BODIES, and how much of it comes back. Every fight
   // takes casualties (Docs/features/combat.md §4); `wounded_share` of them
   // are carried to the Infirmary instead of the grave — and only as many as
@@ -401,7 +422,7 @@ const SHEETS = {
   // `squad_size` is how many troops of the type ONE squad holds — the cap on
   // a party slot's count, and the ceiling the battle screen fills a slot to
   // (Docs/features/combat.md §4, §5).
-  Units: ['id', 'power', 'atk', 'def', 'hp', 'squad_size',
+  Units: ['id', 'power', 'dmg', 'def', 'hp', 'squad_size', 'frontage', 'cooldown',
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'train_duration_seconds'],
   // What the ground under a cell does to what comes out of it. A multiplier
@@ -438,8 +459,19 @@ const SHEETS = {
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
     'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
-  Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
-    'atk_per_level', 'def_per_level', 'hp_per_level'],
+  // A hero is a BODY on the board (Docs/features/combat.md §9): it hits for
+  // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
+  // every squad of its own type on that side, applied at battle start and
+  // surviving its death.
+  Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value',
+    'dmg', 'def', 'hp', 'cooldown',
+    'dmg_per_level', 'def_per_level', 'hp_per_level',
+    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus'],
+  // A VILLAIN is an enemy hero: same schema, same slots, same rules — only
+  // where the stats come from differs, and a villain's are authored (§9).
+  Villains: ['id', 'name', 'glyph', 'sprite', 'unit_type',
+    'dmg', 'def', 'hp', 'cooldown', 'power',
+    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus'],
   // Real-money SKUs of the simulated store. `price_usd` is what the purchase
   // deducts from the player's monthly budget; `gems` is what it grants ON
   // PURCHASE, which is 0 for a SKU that pays out over a season. Builders and
@@ -459,12 +491,17 @@ const SHEETS = {
   // pays (§7.1); the supply columns are what ONE ROOM ATTEMPT costs in this
   // depth, paid on entry and never refunded.
   //
+  // `villain_pool` is who the generator may spend budget on above the
+  // threshold, and `boss_villain` is who the last room of the depth always
+  // fields (Docs/features/combat.md §11).
+  //
   // NOT here yet, and each needs a system that does not exist: `threat_mix`
-  // (the generator's weights), `boss` and `villain_pool` (villains),
-  // `room_rewards` overrides, `boss_reward` (chests) and
-  // `passive_on_complete` (the idle reservoir).
+  // (the generator's weights beyond the ruin's affinity), `room_rewards`
+  // overrides, `boss_reward` (chests) and `passive_on_complete` (the idle
+  // reservoir).
   Depths: ['ruin', 'depth', 'rooms', 'guild_req', 'power_start', 'power_step',
-    'reward_base', 'supply_gold', 'supply_wood', 'supply_food', 'supply_stone'],
+    'reward_base', 'villain_pool', 'boss_villain',
+    'supply_gold', 'supply_wood', 'supply_food', 'supply_stone'],
   // One row per ruin TIER. `take_seconds` is how many seconds of the city's
   // own production a raid takes of each material; the supply columns are what
   // clearing that tier's gate costs, paid on entry and never refunded.
@@ -845,18 +882,26 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
-    const atk = num(r, 'atk');
-    // A unit's POWER — what it costs against the army cap — equals its ATK,
-    // so the cap table reads directly as attack potential.
-    if (num(r, 'power') !== atk) fail(where(r), `power must equal atk (${atk})`);
+    // POWER is not damage. `power_per_troop` is the scale the ARMY CAP and
+    // every room's `power_req` are written in; `dmg` is what the resolver
+    // hits with (Docs/features/combat.md §5, §12). They were one number while
+    // combat was a scoring pass, and a room that reads "72" would mean
+    // something else if it followed the damage table.
     const squadSize = num(r, 'squad_size');
     if (squadSize < 1) fail(where(r), 'squad_size must be 1 or more');
+    const frontage = num(r, 'frontage');
+    if (frontage < 1) fail(where(r), 'frontage must be 1 or more');
+    if (frontage > squadSize) fail(where(r), 'frontage cannot exceed squad_size');
+    const cooldown = num(r, 'cooldown');
+    if (cooldown < 1) fail(where(r), 'cooldown is in TICKS and must be 1 or more');
     out.units[id] = {
-      power: atk,
-      atk,
+      power: num(r, 'power'),
+      dmg: num(r, 'dmg'),
       def: num(r, 'def'),
       hp: num(r, 'hp'),
       squadSize,
+      frontage,
+      cooldown,
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
@@ -875,6 +920,8 @@ async function importXlsx() {
       powerStart: num(r, 'power_start'),
       powerStep: num(r, 'power_step'),
       rewardBase: num(r, 'reward_base'),
+      villainPool: String(r.villain_pool ?? ''),
+      bossVillain: String(r.boss_villain ?? ''),
       supplies: wallet(r, 'supply'),
     });
   }
@@ -1016,12 +1063,35 @@ async function importXlsx() {
       unitType: r.unit_type,
       trait: r.trait,
       traitValue: num(r, 'trait_value'),
-      atk: num(r, 'atk'),
+      dmg: num(r, 'dmg'),
       def: num(r, 'def'),
       hp: num(r, 'hp'),
-      atkPerLevel: num(r, 'atk_per_level'),
+      cooldown: num(r, 'cooldown'),
+      dmgPerLevel: num(r, 'dmg_per_level'),
       defPerLevel: num(r, 'def_per_level'),
       hpPerLevel: num(r, 'hp_per_level'),
+      troopDmgMult: num(r, 'troop_dmg_mult'),
+      troopHpMult: num(r, 'troop_hp_mult'),
+      troopDefBonus: num(r, 'troop_def_bonus'),
+    };
+  }
+
+  out.villains = {};
+  for (const r of readSheet(workbook, 'Villains')) {
+    if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
+    out.villains[r.id] = {
+      name: r.name,
+      glyph: r.glyph,
+      sprite: r.sprite,
+      unitType: r.unit_type,
+      dmg: num(r, 'dmg'),
+      def: num(r, 'def'),
+      hp: num(r, 'hp'),
+      cooldown: num(r, 'cooldown'),
+      troopDmgMult: num(r, 'troop_dmg_mult'),
+      troopHpMult: num(r, 'troop_hp_mult'),
+      troopDefBonus: num(r, 'troop_def_bonus'),
+      power: num(r, 'power'),
     };
   }
 
@@ -1088,7 +1158,13 @@ async function importXlsx() {
         : num(row, 'value');
     const parts = path.split('.');
     let target = out;
-    while (parts.length > 1) target = target[parts.shift()];
+    // A block whose every key is a Setting — `combat.*` is one — has no loop
+    // of its own to create it, so the first setting that names it does.
+    while (parts.length > 1) {
+      const step = parts.shift();
+      if (target[step] === undefined) target[step] = {};
+      target = target[step];
+    }
     target[parts[0]] = value;
   }
 
@@ -1173,7 +1249,8 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
-    return [id, u.power, u.atk, u.def, u.hp, u.squadSize, ...costCells(u.recruitCost), u.trainDurationSeconds];
+    return [id, u.power, u.dmg, u.def, u.hp, u.squadSize, u.frontage, u.cooldown,
+      ...costCells(u.recruitCost), u.trainDurationSeconds];
   }));
 
   addSheet(workbook, 'Terrain', TERRAIN_IDS.map((id) => {
@@ -1220,9 +1297,16 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
     const h = b.heroes[id];
-    return [id, h.rarity, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
-      h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
+    return [id, h.rarity, h.unitType, h.trait, h.traitValue,
+      h.dmg, h.def, h.hp, h.cooldown,
+      h.dmgPerLevel, h.defPerLevel, h.hpPerLevel,
+      h.troopDmgMult, h.troopHpMult, h.troopDefBonus];
   }));
+
+  addSheet(workbook, 'Villains', Object.entries(b.villains ?? {}).map(([id, v]) =>
+    [id, v.name, v.glyph, v.sprite, v.unitType,
+      v.dmg, v.def, v.hp, v.cooldown, v.power,
+      v.troopDmgMult, v.troopHpMult, v.troopDefBonus]));
 
   addSheet(workbook, 'Banners', BANNER_IDS.map((id) => {
     const n = b.banners[id];
@@ -1239,7 +1323,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Depths', (b.depths ?? []).map((d) =>
     [d.ruin, d.depth, d.rooms, d.guildReq, d.powerStart, d.powerStep, d.rewardBase,
-      ...costCells(d.supplies)]));
+      d.villainPool, d.bossVillain, ...costCells(d.supplies)]));
 
   addSheet(workbook, 'Garrisons', (b.garrisons ?? []).map((g) =>
     [g.tier, g.takeSeconds, ...costCells(g.supplies)]));

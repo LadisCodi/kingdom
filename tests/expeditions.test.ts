@@ -10,9 +10,8 @@ import {
   armyCap, finishLineWithGems, lineFor, lineRemainingSeconds, lineRushCost, trainUnit,
   woundedOf,
 } from '../src/sim/army';
-import {
-  BEATS, effectiveAttack, partyStats, typeMultiplier, type Party,
-} from '../src/sim/combat';
+import { BEATS, typeMultiplier } from '../src/sim/combat';
+import { buildBoard, resolveBattle } from '../src/sim/battle';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
 import { techKnowledgeCost } from '../src/sim/research';
@@ -21,7 +20,7 @@ import {
   RUIN_ORDER, TECH_ORDER, UNITS, depthDef, depthsOf, roomCount, roomPower,
 } from '../src/sim/data/definitions';
 import {
-  enterRoom, frontier, previewRoom, roomBlock, roomReward, roomsCleared,
+  enterRoom, frontier, previewRoom, roomBlock, roomBoard, roomReward, roomsCleared,
   ruinIsFinished, supplyCost,
 } from '../src/sim/expeditions';
 import { claimLandmark } from '../src/sim/landmarks';
@@ -55,8 +54,6 @@ function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 60 }):
   return state;
 }
 
-const party = (slots: Array<{ unitId: UnitId; count: number }>): Party =>
-  ({ heroes: [{ id: 'Warden', level: 1 }], slots });
 
 describe('the type chart', () => {
   it('is a cycle, and nothing beats itself', () => {
@@ -81,26 +78,45 @@ describe('the type chart', () => {
     expect(ARMY.typeDisadvantage).toBeGreaterThanOrEqual(0.75);
   });
 
-  it('does its work at COMPOSITION time', () => {
-    const lancers = party([{ unitId: 'Lancer', count: 4 }]);
-    const plain = partyStats(lancers).atk;
-    expect(effectiveAttack(lancers, 'Cavalry')).toBeGreaterThan(plain);
-    expect(effectiveAttack(lancers, 'Archer')).toBeLessThan(plain);
+  it('does its work inside the FIGHT, on the swing (§7)', () => {
+    // Four Lancers against a Cavalry squad and against an Archer one: the
+    // same troops, the same swing, three halves against a quarter less.
+    const swing = (against: UnitId): number => {
+      const log = resolveBattle(
+        buildBoard([{ unitId: 'Lancer', count: 4 }], []),
+        buildBoard([{ unitId: against, count: 40 }], []),
+      );
+      const first = log.events.find((e) => e.kind === 'attack' && e.from.side === 'ours');
+      return first?.kind === 'attack' ? first.dealt : 0;
+    };
+    // Lancer beats Cavalry, loses to Warrior, and is neutral to an Archer.
+    expect(swing('Cavalry')).toBeGreaterThan(swing('Archer'));
+    expect(swing('Warrior')).toBeLessThan(swing('Archer'));
   });
 });
 
 describe('unit stats make a real trade', () => {
-  it('Archers buy attack, Warriors buy survival — neither is right alone', () => {
+  it('Archers buy reach, Warriors buy survival — neither is right alone', () => {
     const archer = UNITS.Archer;
     const warrior = UNITS.Warrior;
-    const goldOf = (u: typeof archer) => u.recruitCost.Gold ?? 0;
-    expect(archer.atk / goldOf(archer)).toBeGreaterThan(warrior.atk / goldOf(warrior));
+    // An archer line puts more troops in range of the enemy than any other
+    // type; a warrior line outlasts it.
+    expect(archer.frontage).toBeGreaterThan(warrior.frontage);
     expect(warrior.hp).toBeGreaterThan(archer.hp);
     expect(warrior.def).toBeGreaterThan(archer.def);
   });
 
-  it('power equals attack, so the cap table reads as attack potential', () => {
-    for (const u of Object.values(UNITS)) expect(u.power).toBe(u.atk);
+  it('prices POWER apart from damage, because they answer different questions', () => {
+    // `power` is what a troop costs against the army cap and what a room's
+    // budget is written in; `dmg` is what it hits for. They were one number
+    // while combat was a scoring pass, and the resolver made them two
+    // (Docs/features/combat.md §5, §12).
+    for (const u of Object.values(UNITS)) {
+      expect(u.power).toBeGreaterThan(0);
+      expect(u.dmg).toBeGreaterThan(u.power);
+      expect(u.frontage).toBeLessThanOrEqual(u.squadSize);
+      expect(u.cooldown).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -130,44 +146,59 @@ describe('the army cap is a city decision', () => {
 
   // The arc Docs/features/11-expeditions.md §6 promises, asserted rather than
   // hoped for: each rung of ARMY opens more of the path and leaves the ruin
-  // after it a real stretch. Measured in ROOMS a party can walk through in
-  // order — which is what a ruin is now — and against the WORST matchup, so
-  // these are floors rather than best cases.
+  // after it a real stretch. Measured by FIGHTING every room in order with
+  // the resolver — the only thing that can answer it now, and the reason the
+  // authored ladder was rewritten when it landed.
   it('the tier ladder actually holds at the authored numbers', () => {
-    const reach = (troops: number, ruinId: RuinId): number => {
-      let best = 0;
-      for (const u of Object.keys(UNITS) as UnitId[]) {
-        const attack = Math.round(
-          (UNITS[u].atk * troops + HEROES.Warden.atk) * ARMY.typeDisadvantage);
-        let rooms = 0;
-        outer: for (const d of depthsOf(ruinId)) {
-          for (let r = 1; r <= d.rooms; r++) {
-            if (attack < roomPower(ruinId, d.depth, r)) break outer;
-            rooms += 1;
-          }
+    const state = freshGame();
+    const reach = (troops: number, heroes: number, ruinId: RuinId): number => {
+      const per = Math.ceil(troops / 4);
+      const squads = (Object.keys(UNITS) as UnitId[])
+        .map((u) => ({ unitId: u, count: Math.min(UNITS[u].squadSize, per) }));
+      const h = HEROES.Warden;
+      const ours = buildBoard(squads, Array.from({ length: heroes }, (_, i) => ({
+        id: `h${i}`, name: h.name, type: h.unitType, dmg: h.dmg, def: h.def, hp: h.hp,
+        cooldown: h.cooldown, power: Math.round(h.dmg / 2),
+        troopDmgMult: h.troopDmgMult, troopHpMult: h.troopHpMult, troopDefBonus: h.troopDefBonus,
+      })));
+      let rooms = 0;
+      for (const d of depthsOf(ruinId)) {
+        for (let r = 1; r <= d.rooms; r++) {
+          const theirs = roomBoard(state, ruinId, d.depth, r);
+          if (resolveBattle(ours, theirs).winner !== 'ours') return rooms;
+          rooms += 1;
         }
-        best = Math.max(best, rooms);
       }
-      return best;
+      return rooms;
     };
-    // The company the quest chain musters: half the Barrow, and the door of
-    // the next ruin shut.
-    expect(reach(24, 'HollowBarrow')).toBeGreaterThan(0);
-    expect(reach(24, 'HollowBarrow')).toBeLessThan(roomCount('HollowBarrow'));
-    expect(reach(24, 'SunkenChapel')).toBe(0);
+    // The company the quest chain musters, behind the one free hero: most of
+    // the Barrow, and the next ruin a wall rather than a door.
+    const barrow = reach(24, 1, 'HollowBarrow');
+    expect(barrow).toBeGreaterThan(roomCount('HollowBarrow') * 0.4);
+    expect(barrow).toBeLessThan(roomCount('HollowBarrow'));
+    expect(reach(24, 1, 'SunkenChapel')).toBeLessThan(roomCount('SunkenChapel') * 0.3);
     // Sixty under arms — the chain's later warband — walks the Barrow out and
     // gets most of the way through the Chapel.
-    expect(reach(60, 'HollowBarrow')).toBe(roomCount('HollowBarrow'));
-    expect(reach(60, 'SunkenChapel')).toBeGreaterThan(0);
-    expect(reach(60, 'SunkenChapel')).toBeLessThan(roomCount('SunkenChapel'));
-    // A hundred and fifty finishes the Chapel and stalls inside the Ironworks.
-    expect(reach(150, 'SunkenChapel')).toBe(roomCount('SunkenChapel'));
-    expect(reach(150, 'DrownedIronworks')).toBeLessThan(roomCount('DrownedIronworks'));
-    // A full board of the best type — the ceiling of what any party can be —
-    // takes the Counting House and still leaves the deepest ruin unfinished.
-    expect(reach(600, 'CountingHouse')).toBe(roomCount('CountingHouse'));
-    expect(reach(600, 'StarObservatory')).toBeGreaterThan(0);
-    expect(reach(600, 'StarObservatory')).toBeLessThan(roomCount('StarObservatory'));
+    expect(reach(60, 1, 'HollowBarrow')).toBe(roomCount('HollowBarrow'));
+    const chapel = reach(60, 1, 'SunkenChapel');
+    expect(chapel).toBeGreaterThan(roomCount('SunkenChapel') * 0.5);
+    expect(chapel).toBeLessThan(roomCount('SunkenChapel'));
+    // A hundred and fifty behind three heroes finishes the Chapel and stalls
+    // inside the Ironworks.
+    expect(reach(150, 3, 'SunkenChapel')).toBe(roomCount('SunkenChapel'));
+    const ironworks = reach(150, 3, 'DrownedIronworks');
+    expect(ironworks).toBeGreaterThan(0);
+    expect(ironworks).toBeLessThan(roomCount('DrownedIronworks'));
+    // A FULL board — every squad at its size, every hero slot bought — takes
+    // the Ironworks and gets a long way into the Counting House, and the
+    // deepest ruin stays out of reach. What is left after that is hero levels
+    // and unit tiers, not more bodies: six slots is six slots.
+    expect(reach(340, 3, 'DrownedIronworks')).toBe(roomCount('DrownedIronworks'));
+    const counting = reach(340, 3, 'CountingHouse');
+    expect(counting).toBeGreaterThan(roomCount('CountingHouse') * 0.5);
+    expect(counting).toBeLessThan(roomCount('CountingHouse'));
+    expect(reach(340, 3, 'StarObservatory')).toBeGreaterThan(0);
+    expect(reach(340, 3, 'StarObservatory')).toBeLessThan(roomCount('StarObservatory'));
   });
 
   it('an unfinished building contributes nothing', () => {
@@ -321,12 +352,23 @@ describe('entering a room', () => {
     expect(roomsCleared(state, BARROW)).toBe(2);
   });
 
+  /** A room deep enough to actually hit back, for the tests about bodies. */
+  const bloodyRoom = (units: Partial<Record<UnitId, number>>): GameState => {
+    const state = readyToDelve(units);
+    fund(state, { Gold: 40_000, Food: 9000, Stone: 4000 });
+    reveal(state, [RUINS.SunkenChapel.location]);
+    // A tier-II room, five rooms into its second depth: deep enough that the
+    // Chapel's own creature gets its swings in.
+    state.ruins.SunkenChapel = { depth: 2, cleared: 4 };
+    return state;
+  };
+
   it('sends most of the fallen to the infirmary, and the rest nowhere', () => {
-    const state = readyToDelve({ Warrior: 60 });
+    const state = bloodyRoom({ Warrior: 60 });
     // Only a city that BUILT one has a ward; without it they simply die
     // (tests/infirmary.test.ts).
     addBuilt(state, 'Infirmary', { x: 4, y: 8 });
-    const report = enterRoom(state, map, BARROW, ['Warden'], company);
+    const report = enterRoom(state, map, 'SunkenChapel', ['Warden'], company);
     const fell = report.losses.reduce((sum, l) => sum + l.count, 0);
     const hurt = report.wounded.reduce((sum, l) => sum + l.count, 0);
     expect(fell).toBeGreaterThan(0);
@@ -337,16 +379,25 @@ describe('entering a room', () => {
     expect(state.army).toHaveLength(60 - fell);
   });
 
-  it('costs soldiers, win or lose, and the fallen leave the ranks', () => {
-    const state = readyToDelve({ Warrior: 60 });
-    const won = enterRoom(state, map, BARROW, ['Warden'], company);
-    expect(won.result).toBe('Cleared');
-    const lostWinning = won.losses.reduce((sum, l) => sum + l.count, 0);
-    expect(lostWinning).toBeGreaterThan(0);
-    expect(state.army).toHaveLength(60 - lostWinning);
+  it('charges the fight\'s own dead, so a rout is free and a scrape is not', () => {
+    // OVERWHELMING FORCE COSTS NOTHING. Sixty against the first room of the
+    // first ruin wipe it before it swings, and the roster is untouched —
+    // which is the whole reason to bring more than enough.
+    const rout = readyToDelve({ Warrior: 60 });
+    const easy = enterRoom(rout, map, BARROW, ['Warden'], company);
+    expect(easy.result).toBe('Cleared');
+    expect(easy.losses).toEqual([]);
+    expect(rout.army).toHaveLength(60);
 
-    // …and a beating costs more than a win, because a party that is driven
-    // off gives the enemy all the time it needs.
+    // A fight that lasts costs bodies, win or lose, and they leave the ranks.
+    const state = bloodyRoom({ Warrior: 60 });
+    const hard = enterRoom(state, map, 'SunkenChapel', ['Warden'], company);
+    const fell = hard.losses.reduce((sum, l) => sum + l.count, 0);
+    expect(fell).toBeGreaterThan(0);
+    expect(state.army).toHaveLength(60 - fell);
+
+    // And a party that is driven off pays with everyone who was standing
+    // there: the fight only ends when one side is gone.
     const beaten = readyToDelve({ Warrior: 2 });
     openRuin(beaten, 'StarObservatory');
     reveal(beaten, [RUINS.StarObservatory.location]);
@@ -354,18 +405,23 @@ describe('entering a room', () => {
     const report = enterRoom(beaten, map, 'StarObservatory', ['Warden'],
       [{ unitId: 'Warrior', count: 2 }]);
     expect(report.result).toBe('Repelled');
-    expect(report.losses.reduce((sum, l) => sum + l.count, 0)).toBeGreaterThan(0);
-    expect(beaten.army.length).toBeLessThan(2);
+    expect(report.losses.reduce((sum, l) => sum + l.count, 0)).toBe(2);
+    expect(beaten.army).toHaveLength(0);
   });
 
-  it('says what an attempt will cost in bodies before it is made', () => {
+  it('shows the room it is about to fight, and nothing it cannot know', () => {
     const state = readyToDelve({ Warrior: 60 });
     const preview = previewRoom(state, BARROW, ['Warden'], company);
-    const expected = preview.losses.reduce((sum, l) => sum + l.count, 0);
-    expect(expected).toBeGreaterThan(0);
-    const report = enterRoom(state, map, BARROW, ['Warden'], company);
-    expect(report.losses).toEqual(preview.losses);
-    expect(state.army).toHaveLength(60 - expected);
+    // The squads on the sheet ARE the board the resolver will use — the same
+    // seeded room, asked twice.
+    expect(preview.enemy).toEqual(
+      roomBoard(state, BARROW, 1, 1).slots
+        .filter((s) => s.unitId !== null)
+        .map((s) => ({ unitId: s.unitId, count: s.count })));
+    // …and the two numbers beside them are an ESTIMATE, which is all a sheet
+    // can honestly be now (Docs/features/combat.md §12).
+    expect(preview.attack).toBeGreaterThan(0);
+    expect(preview.enough).toBe(preview.attack >= preview.power);
   });
 
   it('costs the supplies and nothing the player has banked when beaten', () => {

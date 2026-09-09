@@ -1668,25 +1668,25 @@
     "HollowBarrow": {
       "x": 7, "y": 1,
       "tier": 1,
-      "guard": { "threat": "Warrior", "power": 60, "warningMinutes": 30, "periodMinutes": 30 },
+      "guard": { "threat": "Warrior", "power": 45, "warningMinutes": 30, "periodMinutes": 30 },
       "affinity": "Warrior", "artifact": "DowsingRod"
     },
     "SunkenChapel": {
       "x": -3, "y": 9,
       "tier": 2,
-      "guard": { "threat": "Archer", "power": 144, "warningMinutes": 90, "periodMinutes": 90 },
+      "guard": { "threat": "Archer", "power": 180, "warningMinutes": 90, "periodMinutes": 90 },
       "affinity": "Archer", "artifact": "VerdantSeal"
     },
     "DrownedIronworks": {
       "x": -15, "y": 20,
       "tier": 3,
-      "guard": { "threat": "Lancer", "power": 250, "warningMinutes": 120, "periodMinutes": 120 },
+      "guard": { "threat": "Lancer", "power": 440, "warningMinutes": 120, "periodMinutes": 120 },
       "affinity": "Lancer", "artifact": "ForemansSigil"
     },
     "CountingHouse": {
       "x": 7, "y": -15,
       "tier": 4,
-      "guard": { "threat": "Cavalry", "power": 500, "warningMinutes": 180, "periodMinutes": 180 },
+      "guard": { "threat": "Cavalry", "power": 700, "warningMinutes": 180, "periodMinutes": 180 },
       "affinity": "Cavalry", "artifact": "GildedLedger"
     },
     "StarObservatory": {

@@ -106,30 +106,26 @@ describe('entering a room', () => {
     expect(game.expeditionBlock(BARROW)).toBeNull();
   });
 
-  it('spends supplies and soldiers on the way in, and nothing banked', () => {
-    const game = freshPresenter(ready({ Warrior: 20 }));
+  it('spends the supplies on the way in, whatever the fight does', () => {
+    const game = freshPresenter(ready({ Warrior: 2 }));
     game.openExpedition(BARROW);
     const preview = game.expeditionPreview()!;
-    expect(preview.enough).toBe(false);
     const food = getWallet(game.state.city.wallet, 'Food');
     const army = game.state.army.length;
     game.doLaunchExpedition();
-    expect(game.ruinProgress(BARROW).cleared).toBe(0); // the room is still there
     expect(getWallet(game.state.city.wallet, 'Food'))
       .toBe(food - (preview.supplies.Food ?? 0));
-    // The room fights back, and the dead do not come home
+    // Two soldiers against a room: they do not come home
     // (Docs/features/combat.md §4).
     expect(game.state.army.length).toBeLessThan(army);
   });
 
-  it('costs soldiers when it goes well, too, and re-forms the board', () => {
+  it('re-forms the board on whoever came back', () => {
     const game = freshPresenter(ready(HOST));
     game.openExpedition(BARROW);
-    const army = game.state.army.length;
     game.doLaunchExpedition();
     expect(game.ruinProgress(BARROW).cleared).toBe(1);
-    expect(game.state.army.length).toBeLessThan(army);
-    // The squads on the board came down with the roster, so the next room is
+    // The squads on the board follow the roster, so the next room is
     // enterable without the player touching a slot.
     const roster = game.availableTroops();
     const board = game.expeditionParty

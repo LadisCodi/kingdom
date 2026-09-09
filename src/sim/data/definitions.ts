@@ -946,6 +946,11 @@ export const RESEARCH_SETTINGS = balance.research;
  */
 export const ARMY = balance.army;
 
+/** THE RESOLVER'S OWN DIALS (Docs/features/combat.md §17). A tick is logical
+ *  — 100 ms of replay, not a frame — and the type fractions are integer pairs
+ *  because the whole fight is integer arithmetic (§16). */
+export const COMBAT = balance.combat;
+
 // ------------------------------------------------------------------ tomes
 
 export interface TomeDef {
@@ -1040,12 +1045,29 @@ export interface UnitDef {
    *  `<sprite>_avatar` is the bust the small widgets draw, because a standing
    *  figure at 48px is a smudge (Docs/art/portraits/unit-blocks.md §2). */
   sprite: string;
-  /** What it costs against the army cap — equal to `atk` by construction, so
-   *  the cap table reads directly as attack potential. */
+  /**
+   * What it costs against the army cap, and the scale every room's
+   * `power_req` is written in (Docs/features/combat.md §12).
+   *
+   * **Power is not damage.** They were one number while combat was a scoring
+   * pass; the resolver hits with `dmg`, and a room that reads "72" would mean
+   * something else entirely if it followed the damage table.
+   */
   power: number;
-  atk: number;
+  /** What one troop of this type takes off a target it hits (§7). */
+  dmg: number;
   def: number;
   hp: number;
+  /**
+   * How many troops of the squad can reach the enemy at once (§7).
+   *
+   * `hits = min(alive, frontage)`, so a squad's output is FLAT until its
+   * count falls below this and then falls linearly — everyone above it is
+   * reserve who absorbs damage and swings at nothing.
+   */
+  frontage: number;
+  /** Ticks between this type's attacks (§10). A tick is 100 ms logical. */
+  cooldown: number;
   /** Troops of this type in ONE squad — the cap on a party slot's count, and
    *  the size the battle screen fills a slot to (Docs/features/combat.md §4).
    *  Fixed at every tier: a tier multiplies what a troop is worth, never how
@@ -1401,6 +1423,12 @@ export interface DepthDef {
   powerStep: number;
   /** Scales what every room in the depth pays (§7.1). */
   rewardBase: number;
+  /** Who the generator may spend part of a room's budget on, above the
+   *  threshold ([`combat.md`](combat.md) §11). Empty = squads only. */
+  villainPool: string;
+  /** Who stands in the last room of the depth, always — a boss's villain is
+   *  authored, never rolled (§11). */
+  bossVillain: string;
   /** What ONE room attempt costs, paid on entry and never refunded. */
   supplies: Wallet;
 }
@@ -1513,13 +1541,59 @@ export interface HeroDef {
   trait: HeroTrait;
   traitValue: number;
   traitText: string;
-  atk: number;
+  /** The body it brings to the board: it hits for `dmg` every `cooldown`
+   *  ticks with a frontage of one, and dies when its `hp` runs out — which
+   *  stops it attacking and nothing else (Docs/features/combat.md §9.1). */
+  dmg: number;
   def: number;
   hp: number;
-  atkPerLevel: number;
+  cooldown: number;
+  dmgPerLevel: number;
   defPerLevel: number;
   hpPerLevel: number;
+  /**
+   * THE PASSIVE (§9.2). Applies to every squad on this hero's side whose type
+   * matches its own — no effect on any other type — computed at battle start
+   * and standing whether or not the hero survives.
+   */
+  troopDmgMult: number;
+  troopHpMult: number;
+  troopDefBonus: number;
 }
+
+/**
+ * A VILLAIN is an enemy hero.
+ *
+ * Same schema, same slots, same rules — the resolver has one code path and
+ * reads a resolved stat block either way. The only difference is where the
+ * numbers come from: a hero's are derived from its level, a villain's are
+ * authored per room (Docs/features/combat.md §9).
+ */
+export interface VillainDef {
+  id: VillainId;
+  name: string;
+  glyph: string;
+  sprite: string;
+  unitType: UnitId;
+  dmg: number;
+  def: number;
+  hp: number;
+  cooldown: number;
+  /** What it costs the generator against a room's budget — its own output
+   *  AND the buff it hands the squads beside it (§11). */
+  power: number;
+  troopDmgMult: number;
+  troopHpMult: number;
+  troopDefBonus: number;
+}
+
+export type VillainId = keyof typeof balance.villains;
+
+export const VILLAINS: Record<VillainId, VillainDef> = Object.fromEntries(
+  Object.entries(balance.villains).map(([id, v]) => [id, { id: id as VillainId, ...v }]),
+) as Record<VillainId, VillainDef>;
+
+export const VILLAIN_ORDER = Object.keys(VILLAINS) as VillainId[];
 
 const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sprite' | 'traitText'>> = {
   Warden: {
@@ -1686,8 +1760,9 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
 
 const heroBalance = balance.heroes as Record<HeroId, {
   rarity: string; unitType: string; trait: string; traitValue: number;
-  atk: number; def: number; hp: number;
-  atkPerLevel: number; defPerLevel: number; hpPerLevel: number;
+  dmg: number; def: number; hp: number; cooldown: number;
+  dmgPerLevel: number; defPerLevel: number; hpPerLevel: number;
+  troopDmgMult: number; troopHpMult: number; troopDefBonus: number;
 }>;
 
 export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
@@ -1700,8 +1775,11 @@ export const HEROES: Record<HeroId, HeroDef> = Object.fromEntries(
       unitType: b.unitType as UnitId,
       trait: b.trait as HeroTrait,
       traitValue: b.traitValue,
-      atk: b.atk, def: b.def, hp: b.hp,
-      atkPerLevel: b.atkPerLevel, defPerLevel: b.defPerLevel, hpPerLevel: b.hpPerLevel,
+      dmg: b.dmg, def: b.def, hp: b.hp, cooldown: b.cooldown,
+      dmgPerLevel: b.dmgPerLevel, defPerLevel: b.defPerLevel, hpPerLevel: b.hpPerLevel,
+      troopDmgMult: b.troopDmgMult,
+      troopHpMult: b.troopHpMult,
+      troopDefBonus: b.troopDefBonus,
     }];
   }),
 ) as Record<HeroId, HeroDef>;

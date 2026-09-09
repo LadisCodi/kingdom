@@ -22,7 +22,7 @@
 // that opens the ruin in the first place.
 
 import {
-  ARMY, ARTIFACTS, COLLECTION, DELVE, HEROES, PARTY, RUINS,
+  ARTIFACTS, COLLECTION, COMBAT, DELVE, HEROES, PARTY, RUINS, UNITS,
   depthCount, depthDef, depthsOf, roomPower,
 } from './data/definitions';
 import {
@@ -32,14 +32,15 @@ import {
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  effectiveAttack, enemyFormation, formationPower, matchupAgainst, partyStats,
-  resolveRoom, worstThreatFor,
+  carriedStats, partyPower, partyStats,
   type CarriedArtifact, type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
-import { availableRoster, casualtiesFor, takeCasualties } from './army';
 import {
-  gateFormation, gateIsCleared, gatePower, gateSupplies, markGateCleared,
-} from './gates';
+  boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
+  type Board, type BattleLog, type FighterSpec, type SquadSpec,
+} from './battle';
+import { availableRoster, applyLosses } from './army';
+import { gateBoard, gateIsCleared, gateSupplies, markGateCleared } from './gates';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
@@ -145,6 +146,82 @@ export const partyOf = (
   drill: drillOf(state),
 });
 
+/**
+ * OUR SIDE OF THE BOARD (Docs/features/combat.md §3, §9).
+ *
+ * Every hero in the party is a fighter with its level's numbers, and the one
+ * carrying a relic wears it: the stone arms the arm that holds it rather than
+ * being sprinkled over the soldiers, which is what "attune or arm" means when
+ * there is a board to stand on.
+ */
+export function partyBoard(party: Party): Board {
+  const drill = party.drill ?? { atk: {}, def: {}, disadvantageOffset: 0 };
+  const relic = carriedStats(party.artifact);
+  const fighters: FighterSpec[] = party.heroes.map((h, i) => {
+    const def = HEROES[h.id];
+    const step = h.level - 1;
+    return {
+      id: h.id,
+      name: def.name,
+      type: def.unitType,
+      // The relic rides on the FIRST hero — the one who carried it down.
+      dmg: def.dmg + def.dmgPerLevel * step + (i === 0 ? relic.atk : 0),
+      def: def.def + def.defPerLevel * step + (i === 0 ? relic.def : 0),
+      hp: def.hp + def.hpPerLevel * step + (i === 0 ? relic.hp : 0),
+      cooldown: def.cooldown,
+      power: Math.round((def.dmg + def.dmgPerLevel * step) * COMBAT.heroPowerPerDmg),
+      troopDmgMult: def.troopDmgMult,
+      troopHpMult: def.troopHpMult,
+      troopDefBonus: def.troopDefBonus,
+    };
+  });
+  const bonus = {
+    dmg: (unitId: UnitId) => drillFlat(drill.atk, UNITS[unitId].tags),
+    def: (unitId: UnitId) => drillFlat(drill.def, UNITS[unitId].tags),
+  };
+  return buildBoard(party.slots.filter((s) => s.count > 0) as SquadSpec[], fighters, bonus);
+}
+
+/** The drill's flat, for one unit's tags: the unaimed term plus every tag it
+ *  carries (a Cavalry reads both `Mounted` and its own). */
+const drillFlat = (
+  table: Partial<Record<string, number>>, tags: readonly string[],
+): number => (table.all ?? 0) + tags.reduce((sum, t) => sum + (table[t] ?? 0), 0);
+
+/** WHAT A ROOM FIELDS. Seeded by the room's address, so the preview and the
+ *  attempt are the same query (§11). */
+export function roomBoard(state: GameState, ruinId: RuinId, depth: number, room: number): Board {
+  const def = depthDef(ruinId, depth) ?? null;
+  const isBoss = def !== null && room >= def.rooms;
+  const pool = (def?.villainPool ?? '').split(',').map((v) => v.trim()).filter(Boolean);
+  const plan = generateEnemy({
+    seed: state.seed,
+    parts: [ruinId, depth, room],
+    budget: roomPower(ruinId, depth, room),
+    affinity: RUINS[ruinId].affinity,
+    villainPool: pool as never[],
+    boss: isBoss && def?.bossVillain ? (def.bossVillain as never) : null,
+  });
+  return buildBoard(plan.squads, plan.fighters);
+}
+
+/** The squads a board is showing, for the screens that draw one. */
+export const boardSquads = (board: Board): EnemySquad[] => board.slots
+  .filter((s) => s.kind === 'troop' && s.unitId !== null)
+  .map((s) => ({ unitId: s.unitId as UnitId, count: s.count }));
+
+/** What our slots lost, read off the log: `count − alive`, per slot (§4). */
+export function lossesFrom(log: BattleLog, board: Board): Array<{ unitId: UnitId; count: number }> {
+  const left = survivorsOf(log, 'ours');
+  const out: Array<{ unitId: UnitId; count: number }> = [];
+  for (const slot of board.slots) {
+    if (slot.kind !== 'troop' || slot.unitId === null) continue;
+    const fell = slot.count - (left.get(slot.id) ?? slot.count);
+    if (fell > 0) out.push({ unitId: slot.unitId, count: fell });
+  }
+  return out;
+}
+
 // ------------------------------------------------------------------- heroes
 
 export const heroLevel = (state: GameState, id: HeroId): number => state.heroes.levels[id] ?? 1;
@@ -209,9 +286,13 @@ export function gateBlock(
 
 export interface GateReport {
   result: 'Cleared' | 'Repelled' | GateBlock;
-  /** The party's attack after the matchup, and what it had to beat. */
+  /** The party's power estimate, and what it was up against. Neither decided
+   *  anything — `log` did (Docs/features/combat.md §12). */
   attack: number;
   power: number;
+  /** THE FIGHT, tick by tick. What the battle screen replays; null when the
+   *  attempt was refused before anyone drew a weapon. */
+  log: BattleLog | null;
   /** Everything the garrison had taken, banked on the way out. */
   hoard: Wallet;
   supplies: Wallet;
@@ -220,24 +301,6 @@ export interface GateReport {
   losses: Array<{ unitId: UnitId; count: number }>;
   /** The share of them that reached the infirmary and can be healed back. */
   wounded: Array<{ unitId: UnitId; count: number }>;
-}
-
-/**
- * What the enemy deals back, in any fight — a gate or a room.
- *
- * Its power against the party's defence, and then **a rout costs less than a
- * repulse**: a party that wins takes it in proportion to how outmatched the
- * enemy was, so bringing more than enough buys fewer funerals as well as a
- * win. Bringing exactly enough pays the full price.
- *
- * **The dead do not come back.** Every fight is paid for in bodies, win or
- * lose ([`combat.md`](../../Docs/features/combat.md) §4).
- */
-export function battleDamage(power: number, partyDef: number, attack: number): number {
-  const raw = Math.max(1, Math.round(
-    power * ARMY.damagePerStrength - partyDef * ARMY.damageAbsorbedPerDefence));
-  if (attack < power) return raw; // driven off: they had all the time they needed
-  return Math.max(1, Math.round(raw * Math.min(1, power / Math.max(1, attack))));
 }
 
 /**
@@ -254,31 +317,33 @@ export function attemptGate(
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
 ): GateReport {
-  const guard = RUINS[ruinId].guard;
-  // What is scored is the squads the player was SHOWN, not the budget they
-  // were generated from.
-  const power = gatePower(ruinId);
+  const theirs = gateBoard(state, ruinId);
+  const power = boardPower(theirs);
   const supplies = gateSupplies(ruinId);
   const block = gateBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) {
-    return { result: block, attack: 0, power, hoard: {}, supplies, losses: [], wounded: [] };
+    return {
+      result: block, attack: 0, power, log: null, hoard: {}, supplies,
+      losses: [], wounded: [],
+    };
   }
   pay(state.city.wallet, supplies);
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const party = partyOf(state, committed, heroIds);
-  const attack = effectiveAttack(party, guard.threat);
-  // The garrison swings back either way. Some of the fallen are carried home
-  // to the infirmary; the rest are gone for good (army.ts).
-  const { losses, wounded } = takeCasualties(
-    state, committed, battleDamage(power, partyStats(party).def, attack));
-  if (attack < power) {
-    return { result: 'Repelled', attack, power, hoard: {}, supplies, losses, wounded };
+  const ours = partyBoard(party);
+  const attack = partyPower(party);
+  const log = resolveBattle(ours, theirs);
+  // The garrison swings back either way, and who fell is read straight off
+  // the fight: some are carried home to the infirmary, the rest are gone.
+  const { losses, wounded } = applyLosses(state, lossesFrom(log, ours));
+  if (log.winner !== 'ours') {
+    return { result: 'Repelled', attack, power, log, hoard: {}, supplies, losses, wounded };
   }
   const hoard = markGateCleared(state, ruinId);
   // The fight taught the party something whether or not the garrison was
   // holding anything, and a tier-5 gate teaches more than the Barrow's.
   addHeroXp(state, RUINS[ruinId].tier);
-  return { result: 'Cleared', attack, power, hoard, supplies, losses, wounded };
+  return { result: 'Cleared', attack, power, log, hoard, supplies, losses, wounded };
 }
 
 /** What the room sheet shows before the player commits: the threat is always
@@ -292,12 +357,11 @@ export interface GatePreview {
   attack: number;
   stats: { atk: number; def: number; hp: number };
   supplies: Wallet;
-  /** True when the party already beats the gate on paper. A shortfall warns,
-   *  it never blocks. */
+  /** True when the party already beats the gate ON PAPER. A shortfall warns,
+   *  it never blocks — and the paper is an estimate now, so a party that
+   *  reads short can still win the fight and one that reads long can lose it
+   *  (Docs/features/combat.md §12). */
   enough: boolean;
-  /** Soldiers this attempt is expected to cost — the price of the fight,
-   *  shown before it is paid. */
-  losses: Array<{ unitId: UnitId; count: number }>;
 }
 
 export function previewGate(
@@ -309,20 +373,18 @@ export function previewGate(
   const guard = RUINS[ruinId].guard;
   const committed = slots.filter((s) => s.count > 0);
   const party = partyOf(state, committed, heroIds);
-  const attack = effectiveAttack(party, guard.threat);
-  const enemy = gateFormation(ruinId);
-  const power = formationPower(enemy);
-  const stats = partyStats(party);
+  const theirs = gateBoard(state, ruinId);
+  const attack = partyPower(party);
+  const power = boardPower(theirs);
   return {
     ruinId,
     threat: guard.threat,
-    enemy,
+    enemy: boardSquads(theirs),
     power,
     attack,
-    stats,
+    stats: partyStats(party),
     supplies: gateSupplies(ruinId),
     enough: attack >= power,
-    losses: casualtiesFor(committed, battleDamage(power, stats.def, attack)),
   };
 }
 
@@ -390,10 +452,11 @@ export function roomReward(
   };
 }
 
-/** The squads a room fields, sized from its power and typed by the ruin's
- *  affinity — the bias every room of the ruin is drawn with. */
-export const roomFormation = (ruinId: RuinId, depth: number, room: number): EnemySquad[] =>
-  enemyFormation(roomPower(ruinId, depth, room), RUINS[ruinId].affinity);
+/** The squads a room fields, for the sheet that draws them before the fight.
+ *  The board is the authority; this is the picture of it. */
+export const roomFormation = (
+  state: GameState, ruinId: RuinId, depth: number, room: number,
+): EnemySquad[] => boardSquads(roomBoard(state, ruinId, depth, room));
 
 export type RoomBlock =
   | 'RuinNotFound' | 'GateStanding' | 'Finished' | 'NoHero' | 'TooManyHeroes'
@@ -442,6 +505,9 @@ export interface RoomReport {
   attack: number;
   power: number;
   supplies: Wallet;
+  /** THE FIGHT, tick by tick — what the battle screen replays. Null when the
+   *  attempt was refused before anyone drew a weapon. */
+  log: BattleLog | null;
   /** What the room paid. Empty on a repulse: a failed room grants nothing
    *  beyond what the fight itself cost (§5). */
   wallet: Wallet;
@@ -480,7 +546,8 @@ export function enterRoom(
   const at = frontier(state, ruinId);
   const empty: RoomReport = {
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
-    power: roomPower(ruinId, at.depth, at.room), supplies: {}, losses: [], wounded: [],
+    power: roomPower(ruinId, at.depth, at.room), log: null, supplies: {},
+    losses: [], wounded: [],
     wallet: {}, heroXp: 0, fragments: 0, depthCompleted: false, artifact: null,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots, artifactId);
@@ -493,17 +560,17 @@ export function enterRoom(
   const artifact: CarriedArtifact | null = artifactId === null
     ? null : { id: artifactId, level: artifactEntry(state, artifactId).level };
   const party = partyOf(state, committed, heroIds, artifact);
-  const power = roomPower(ruinId, at.depth, at.room);
-  const outcome = resolveRoom(party, power, RUINS[ruinId].affinity);
+  const ours = partyBoard(party);
+  const theirs = roomBoard(state, ruinId, at.depth, at.room);
+  const power = boardPower(theirs);
+  const attack = partyPower(party);
+  const log = resolveBattle(ours, theirs);
   // What lives in the room swings back, win or lose — the same rule the gate
   // follows: some of the fallen reach the infirmary, the rest are gone for
   // good (combat.md §4).
-  const { losses, wounded } = takeCasualties(
-    state, committed, battleDamage(power, partyStats(party).def, outcome.attack));
-  if (!outcome.cleared) {
-    return {
-      ...empty, result: 'Repelled', attack: outcome.attack, power, supplies, losses, wounded,
-    };
+  const { losses, wounded } = applyLosses(state, lossesFrom(log, ours));
+  if (log.winner !== 'ours') {
+    return { ...empty, result: 'Repelled', attack, power, log, supplies, losses, wounded };
   }
 
   // Cleared. The room pays into the wallets it belongs in, immediately: there
@@ -549,8 +616,9 @@ export function enterRoom(
     result: 'Cleared',
     depth: at.depth,
     room: at.room,
-    attack: outcome.attack,
+    attack,
     power,
+    log,
     supplies,
     losses,
     wounded,
@@ -582,16 +650,11 @@ export interface RoomPreview {
   threat: UnitId | 'Any';
   attack: number;
   stats: { atk: number; def: number; hp: number };
-  /** 1.5 = a strong answer to the ruin, 0.75 = the wrong tool. */
-  matchup: number;
-  worstThreat: UnitId | 'Any';
   supplies: Wallet;
-  /** Soldiers this attempt is expected to cost — the price of the fight,
-   *  known before it is paid. */
-  losses: Array<{ unitId: UnitId; count: number }>;
   reward: { wallet: Wallet; heroXp: number; fragments: number };
-  /** True when the party already beats the room on paper. A shortfall warns,
-   *  it never blocks (§5). */
+  /** True when the party out-powers the room ON PAPER. A shortfall warns and
+   *  never blocks — and paper is all it is: the resolver decides the fight,
+   *  and it counts things a sum cannot (Docs/features/combat.md §12). */
   enough: boolean;
 }
 
@@ -608,10 +671,9 @@ export function previewRoom(
     ? null : { id: artifactId, level: artifactEntry(state, artifactId).level };
   const party = partyOf(state, committed, heroIds, artifact);
   const affinity = RUINS[ruinId].affinity;
-  const enemy = roomFormation(ruinId, at.depth, at.room);
-  const power = formationPower(enemy);
-  const attack = effectiveAttack(party, affinity);
-  const stats = partyStats(party);
+  const theirs = roomBoard(state, ruinId, at.depth, at.room);
+  const power = boardPower(theirs);
+  const attack = partyPower(party);
   return {
     ruinId,
     depth: at.depth,
@@ -620,15 +682,12 @@ export function previewRoom(
     rooms: depthsOf(ruinId).reduce((sum, d) => sum + d.rooms, 0),
     done: at.done,
     isBoss: !at.done && isBossRoom(ruinId, at.depth, at.room),
-    enemy,
+    enemy: boardSquads(theirs),
     power,
     threat: affinity,
     attack,
-    stats,
-    matchup: matchupAgainst(party, affinity),
-    worstThreat: worstThreatFor(party, affinity),
+    stats: partyStats(party),
     supplies: supplyCost(state, ruinId, at.depth, heroIds),
-    losses: casualtiesFor(committed, battleDamage(power, stats.def, attack)),
     reward: roomReward(state, ruinId, at.depth, at.room),
     enough: attack >= power,
   };

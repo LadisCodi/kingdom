@@ -1,26 +1,23 @@
-// Combat: a SCORING PASS, not a simulation (Docs/features/combat.md).
+// What a party IS, before it fights (Docs/features/combat.md §4, §12).
 //
-// One room is one fight and it resolves the instant the player enters it:
+// The fight itself moved out. `battle.ts` is the resolver — ticks, rows,
+// frontage, targeting, an event stream — and this file is what it is handed:
+// the shape of a party, the type chart both sides read, what a carried relic
+// adds, and the POWER ESTIMATE the screens print before anyone commits.
 //
-//   ATK × the type chart  vs  what the room fields  → cleared, or not
+// The estimate and the outcome are deliberately two different numbers. A sum
+// of `power_per_troop` is what a player can be shown and can compare; who
+// actually wins depends on which rank stands in front, how many troops can
+// reach at once, and what dies first — and a sheet that promised to know that
+// in advance would be promising to make the fight pointless. The doc says it
+// in one line: "This is an estimate; the resolver decides the outcome."
 //
-// and nothing carries out of it. No timer, no attrition, no journey — the
-// decision the player makes is WHICH TROOPS, and it is made before they press
-// the button (Docs/features/11-expeditions.md §5).
-//
-// The type chart therefore does its work at COMPOSITION time, which is where
-// the decision belongs in a management game. A tactical resolution would move
-// the decision inside a fight — a different genre, and one that eats the
-// thirty-minute session budget. The middle option is the worst of the three:
-// simulating combat in detail without showing it means the player sees only
-// win or lose and learns nothing from all that machinery.
-//
-// EVERYTHING HERE IS DETERMINISTIC. Two identical parties in the same room
-// always get the same answer, and the answer is knowable before committing:
-// the room sheet shows the two numbers it compares.
+// The type chart still does its work at COMPOSITION time, which is where the
+// decision belongs in a management game: the player picks WHICH TROOPS, and
+// the resolver plays out what that choice was worth.
 
 import type { UnitTag } from './data/definitions';
-import { ARMY, ARTIFACTS, HEROES, UNITS } from './data/definitions';
+import { ARMY, ARTIFACTS, COMBAT, HEROES, UNITS } from './data/definitions';
 import type { ArtifactId, HeroId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
@@ -139,13 +136,13 @@ export function partyStats(party: Party): PartyStats {
   const drill = party.drill ?? NO_DRILL;
   for (const slot of party.slots) {
     const u = UNITS[slot.unitId];
-    atk += (u.atk + drillFor(drill.atk, u.tags)) * slot.count;
+    atk += (u.dmg + drillFor(drill.atk, u.tags)) * slot.count;
     def += (u.def + drillFor(drill.def, u.tags)) * slot.count;
     hp += u.hp * slot.count;
   }
   for (const hero of party.heroes) {
     const h = HEROES[hero.id];
-    atk += h.atk + h.atkPerLevel * (hero.level - 1);
+    atk += h.dmg + h.dmgPerLevel * (hero.level - 1);
     def += h.def + h.defPerLevel * (hero.level - 1);
     hp += h.hp + h.hpPerLevel * (hero.level - 1);
     // The Warden's trait is party-wide DEF, which reads to the player as "we
@@ -163,30 +160,27 @@ export function partyStats(party: Party): PartyStats {
   return { atk: Math.round(atk), def: Math.round(def), hp: Math.round(hp) };
 }
 
-/** ATK after the matchup — the number that actually clears a depth. A hero
- *  carries a unit type of its own, so the hero choice feeds the same chart. */
-export function effectiveAttack(party: Party, threat: UnitId | 'Any'): number {
-  const drill = party.drill ?? NO_DRILL;
-  let atk = 0;
-  for (const slot of party.slots) {
-    const u = UNITS[slot.unitId];
-    atk += (u.atk + drillFor(drill.atk, u.tags)) * slot.count
-      * typeMultiplier(slot.unitId, threat, drill.disadvantageOffset);
-  }
-  // Every hero carries a type of its own, so a second hero is coverage of a
-  // second matchup as well as a second body.
+/**
+ * THE ESTIMATE (Docs/features/combat.md §12) — the number the launch screen
+ * prints beside the room's own, and the bar at the top of the battle screen.
+ *
+ * It is a sum, and it is honest about being one: `power_per_troop` is a
+ * scale, not a swing. What decides a fight is the resolver (`battle.ts`),
+ * which cares about frontage, rows, cooldowns and the order things die in —
+ * none of which a sum can express. So this is deliberately NOT `dmg`: a
+ * Cavalry hits for 22 and is worth 7, and a party that reads stronger here
+ * can still lose to a board that answers it.
+ */
+export function partyPower(party: Party): number {
+  let power = 0;
+  for (const slot of party.slots) power += UNITS[slot.unitId].power * slot.count;
   for (const hero of party.heroes) {
     const h = HEROES[hero.id];
-    atk += (h.atk + h.atkPerLevel * (hero.level - 1))
-      * typeMultiplier(h.unitType, threat, drill.disadvantageOffset);
+    power += (h.dmg + h.dmgPerLevel * (hero.level - 1)) * COMBAT.heroPowerPerDmg;
   }
-  // A relic has no unit type, so its ATK is TYPE-NEUTRAL: it lands whole
-  // whatever is down there. That is deliberate, and it is what a relic is FOR
-  // — it is worth most in exactly the run where the matchup went against you,
-  // which makes socketing one a real answer to uncertainty rather than a flat
-  // power bump you would always take.
-  atk += carriedStats(party.artifact).atk;
-  return Math.round(atk);
+  // A carried relic arms the hero, so it is worth what a hero's damage is.
+  power += carriedStats(party.artifact).atk * COMBAT.heroPowerPerDmg;
+  return Math.round(power);
 }
 
 // -------------------------------------------------------- enemy formations
@@ -197,103 +191,6 @@ export interface EnemySquad {
   count: number;
 }
 
-/**
- * What a power budget is standing there AS (Docs/features/combat.md §11).
- *
- * A named threat is one kind of creature in as many squads as the budget
- * fills; `Any` splits it evenly across the four, which is what makes a mixed
- * warband have no type answer. Whole troops, and never fewer than one: a
- * share too small for a single body still puts one there.
- *
- * THE FORMATION IS WHAT THE PARTY FIGHTS, not a picture of it — every caller
- * scores against `formationPower` of what it showed. A display derived from
- * one number while the fight used another is the fault this module's header
- * warns about: a promise on the sheet the descent does not keep.
- */
-export function enemyFormation(power: number, threat: UnitId | 'Any'): EnemySquad[] {
-  const types: UnitId[] = threat === 'Any' ? (Object.keys(BEATS) as UnitId[]) : [threat];
-  const share = power / types.length;
-  const squads: EnemySquad[] = [];
-  for (const unitId of types) {
-    const def = UNITS[unitId];
-    let left = Math.max(1, Math.round(share / def.power));
-    // A squad holds `squad_size` and no more, so a big budget spills into a
-    // second squad of the same type rather than an impossible stack.
-    while (left > 0) {
-      const count = Math.min(def.squadSize, left);
-      squads.push({ unitId, count });
-      left -= count;
-    }
-  }
-  return squads;
-}
-
 /** What a formation is worth — and therefore what a party has to beat. */
 export const formationPower = (squads: readonly EnemySquad[]): number =>
   squads.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
-
-// ------------------------------------------------------------------ rooms
-
-/**
- * Resolve one ROOM. Pure, total, and the only place a fight's outcome is
- * decided until the tick resolver lands (Docs/features/combat.md).
- *
- * A room is one fight and it happens the INSTANT the player enters it: there
- * is no journey, no timer and no attrition carried anywhere. The party's
- * attack after the type chart against what the room fields, and that is the
- * whole of it (Docs/features/11-expeditions.md §5, §6).
- */
-export interface RoomOutcome {
-  cleared: boolean;
-  /** The party's attack after the matchup, and what it had to beat. */
-  attack: number;
-  power: number;
-}
-
-export function resolveRoom(
-  party: Party,
-  power: number,
-  threat: UnitId | 'Any',
-): RoomOutcome {
-  const attack = effectiveAttack(party, threat);
-  return { cleared: attack >= power, attack, power };
-}
-
-/**
- * The threat type this party scores worst against.
- *
- * EVERY type is on the table, whatever the ruin's affinity: a room's threat
- * is drawn with a bias toward it and can be any of the four, so a promise
- * computed against the affinity alone would be one the sim does not make.
- */
-export function worstThreatFor(party: Party, affinity: UnitId | 'Any'): UnitId | 'Any' {
-  void affinity;
-  const candidates: Array<UnitId | 'Any'> = Object.keys(BEATS) as UnitId[];
-  let worst: UnitId | 'Any' = candidates[0];
-  let lowest = Infinity;
-  for (const c of candidates) {
-    const score = effectiveAttack(party, c);
-    if (score < lowest) {
-      lowest = score;
-      worst = c;
-    }
-  }
-  return worst;
-}
-
-/**
- * How this party reads against a ruin's affinity, for the launch screen:
- * 1.5 is a strong answer, 0.75 is the wrong tool.
- *
- * The carried relic is deliberately EXCLUDED. This number answers "did I bring
- * the right troops", and a relic's ATK is type-neutral — so counting it would
- * pull the ratio toward 1 and socketing a relic would make a good matchup read
- * WORSE while the party got stronger. The relic's contribution is already
- * shown, honestly, in the safe depth and the stat deltas.
- */
-export function matchupAgainst(party: Party, affinity: UnitId | 'Any'): number {
-  if (affinity === 'Any') return 1;
-  const troops: Party = { heroes: party.heroes, slots: party.slots };
-  const plain = partyStats(troops).atk;
-  return plain === 0 ? 1 : effectiveAttack(troops, affinity) / plain;
-}

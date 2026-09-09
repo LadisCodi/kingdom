@@ -229,10 +229,21 @@ describe('clearing the gate', () => {
     expect(clearedGateCount(state)).toBe(1);
   });
 
-  it('is NOT beatable by a hero alone — twenty orcs is a company\'s job', () => {
+  it('IS beatable by a hero alone — the first fight needs no army', () => {
+    // The one place in the game where that is true, and it is the point of
+    // the beat: a garrison arrives before the player owns a company
+    // (Docs/features/18-garrisons-and-raids.md §5). The Warden is a body on
+    // the board now, and the Barrow's doorway is nine of the weakest thing
+    // there is.
     const state = readyToFight();
-    expect(previewGate(state, BARROW, ['Warden'], []).enough).toBe(false);
-    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Repelled');
+    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Cleared');
+  });
+
+  it('is not beatable alone one ruin deeper — that one wants the company', () => {
+    const state = readyToFight();
+    reveal(state, [RUINS.SunkenChapel.location]);
+    advance(state, map, T0);
+    expect(attemptGate(state, map, 'SunkenChapel', ['Warden'], []).result).toBe('Repelled');
   });
 
   it('stops the counter for good', () => {
@@ -261,24 +272,28 @@ describe('clearing the gate', () => {
     expect(state.raidReports).toHaveLength(0);
   });
 
-  it('costs soldiers, win or lose — a garrison fights back', () => {
+  it('costs what the fight cost — nothing when it is a rout', () => {
+    // The company the chain musters walks over the Barrow's doorway before it
+    // can swing, and the roster is untouched. Bringing more than enough is
+    // supposed to be worth something, and this is what it is worth
+    // (Docs/features/combat.md §4).
     const state = readyToFight();
     const before = state.army.length;
     const report = attemptGate(state, map, BARROW, ['Warden'], company);
     expect(report.result).toBe('Cleared');
-    expect(report.losses.length).toBeGreaterThan(0);
-    const dead = report.losses.reduce((n, l) => n + l.count, 0);
-    expect(state.army.length).toBe(before - dead);
+    expect(state.army.length).toBe(before - report.losses.reduce((n, l) => n + l.count, 0));
 
-    // Being driven off costs MORE than winning: the garrison had all the time
-    // it needed. Same party, a gate it cannot beat.
+    // Being driven off costs the party: the garrison had all the time it
+    // needed, and the fight only ends when one side is gone.
     const beaten = readyToFight();
-    reveal(beaten, [RUINS.SunkenChapel.location]);
+    reveal(beaten, [RUINS.DrownedIronworks.location]);
     advance(beaten, map, T0);
-    fund(beaten, { Gold: 20_000, Food: 5000 });
-    const repulse = attemptGate(beaten, map, 'SunkenChapel', ['Warden'], company);
+    fund(beaten, { Gold: 20_000, Food: 5000, Stone: 2000 });
+    const armed = beaten.army.length;
+    const repulse = attemptGate(beaten, map, 'DrownedIronworks', ['Warden'], company);
     expect(repulse.result).toBe('Repelled');
-    expect(repulse.losses.reduce((n, l) => n + l.count, 0)).toBeGreaterThan(dead);
+    expect(repulse.losses.reduce((n, l) => n + l.count, 0)).toBeGreaterThan(0);
+    expect(beaten.army.length).toBeLessThan(armed);
   });
 
   it('costs the supplies and the fallen when it fails, and nothing else', () => {
@@ -415,15 +430,16 @@ describe('the route to a gate', () => {
 // from `guard`, and the fight is scored against the formation — so a squad on
 // the screen can never be decoration.
 describe('the formation in the doorway', () => {
-  it('is the ruin\'s own creature, in as many squads as the budget fills', () => {
+  it('LEADS with the ruin\'s own creature, and is never only that', () => {
+    // The generator spends the lion's share on the affinity and the rest
+    // across the others (Docs/features/combat.md §11), so a doorway teaches
+    // the matchup without being a single-answer puzzle.
+    const state = freshGame();
     for (const id of RUIN_ORDER) {
-      const squads = gateFormation(id);
+      const squads = gateFormation(state, id);
       expect(squads.length).toBeGreaterThan(0);
-      if (RUINS[id].guard.threat === 'Any') {
-        // The drake: an even mix across the four, and therefore no type answer.
-        expect(new Set(squads.map((s) => s.unitId)).size).toBe(4);
-      } else {
-        for (const squad of squads) expect(squad.unitId).toBe(RUINS[id].guard.threat);
+      if (RUINS[id].guard.threat !== 'Any') {
+        expect(squads[0]!.unitId, `${id}'s gate`).toBe(RUINS[id].guard.threat);
       }
       for (const squad of squads) {
         expect(squad.count).toBeGreaterThan(0);
@@ -433,12 +449,14 @@ describe('the formation in the doorway', () => {
   });
 
   it('is worth what the gate was authored to be worth', () => {
+    const state = freshGame();
     for (const id of RUIN_ORDER) {
       const budget = RUINS[id].guard.power;
-      // Whole troops, so the sum lands within one body of the budget — and
-      // never below one troop, however small the authored number.
-      const slack = Math.max(...gateFormation(id).map((s) => UNITS[s.unitId].power));
-      expect(Math.abs(gatePower(id) - budget), `${id}'s gate`).toBeLessThanOrEqual(slack);
+      // Whole troops, so a formation lands a little under its budget and
+      // never over it: what a board cannot hold, a doorway does not field.
+      const spent = gatePower(state, id);
+      expect(spent, `${id}'s gate`).toBeLessThanOrEqual(budget);
+      expect(spent, `${id}'s gate`).toBeGreaterThan(budget * 0.75);
     }
   });
 
@@ -450,7 +468,7 @@ describe('the formation in the doorway', () => {
     }
     const company = [{ unitId: 'Warrior' as const, count: 24 }];
     const preview = previewGate(state, BARROW, ['Warden'], company);
-    expect(preview.enemy).toEqual(gateFormation(BARROW));
+    expect(preview.enemy).toEqual(gateFormation(state, BARROW));
     expect(preview.power).toBe(formationPower(preview.enemy));
     const report = attemptGate(state, map, BARROW, ['Warden'], company);
     expect(report.power).toBe(preview.power);
@@ -474,9 +492,10 @@ describe('every authored gate', () => {
   });
 
   it('never fields more than one body past that first room', () => {
+    const state = freshGame();
     for (const id of RUIN_ORDER) {
-      const body = Math.max(...gateFormation(id).map((s) => UNITS[s.unitId].power));
-      expect(gatePower(id), `${id}'s gate`)
+      const body = Math.max(...gateFormation(state, id).map((s) => UNITS[s.unitId].power));
+      expect(gatePower(state, id), `${id}'s gate`)
         .toBeLessThanOrEqual(roomPower(id, 1, 1) + body);
     }
   });

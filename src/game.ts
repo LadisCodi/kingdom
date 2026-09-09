@@ -8,7 +8,7 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
@@ -94,6 +94,7 @@ import {
   claimRoyalRung, freeReward, ladderLength, nextRung, royalOwned, royalPending,
   royalReward, rungsClaimed, seasonEndsAt,
 } from './sim/daily';
+import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
@@ -165,13 +166,24 @@ export interface Banner {
 export type GachaPrize =
   | { kind: 'hero'; heroId: HeroId }
   | { kind: 'fragments'; heroId: HeroId; amount: number }
+  | { kind: 'relicFragments'; artifactId: ArtifactId; amount: number }
   | { kind: 'currency'; currency: CurrencyId; amount: number };
 
+/**
+ * A sequence of prizes, dealt one at a time.
+ *
+ * It was built for the gacha and it is not the gacha's alone any more: a
+ * cleared room hands it what the room paid (Docs/features/11a-ruins-ui.md
+ * §2.5). Hence the optional half — a banner and a call count are what a PULL
+ * has to say about itself, and a fight says something else.
+ */
 export interface GachaReveal {
-  banner: BannerId;
+  banner?: BannerId;
   /** How many calls this was — the screen says "×10" rather than counting
    *  prizes, which condense and would undercount. */
-  calls: number;
+  calls?: number;
+  /** The line under the grid, when it is not a call count. */
+  caption?: string;
   prizes: GachaPrize[];
 }
 
@@ -208,6 +220,32 @@ export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
     ...heroes,
   ];
 }
+
+/**
+ * A FIGHT BEING WATCHED (Docs/features/combat.md §13).
+ *
+ * The fight itself is over before this exists: the resolver ran, the rewards
+ * were paid and the fallen were taken off the roster the instant the player
+ * tapped. What is left is a replay, and a replay can be interrupted by
+ * anything — a closed tab, a reload — without costing the player a thing.
+ *
+ * The phase walks one way and is driven by the clock the caller passes in, so
+ * the whole machine is testable without a DOM: `playing` while the log has
+ * events left, `result` for the two seconds the plaque needs, `rewards` while
+ * the prize sequence deals, `done` when only the way out is left.
+ */
+export interface BattlePlayback {
+  log: BattleLog;
+  title: string;
+  subtitle: string;
+  prizes: GachaPrize[];
+  /** Wall clock at the first tick — everything else is derived from it. */
+  startedAt: number;
+  phase: 'playing' | 'result' | 'rewards' | 'done';
+}
+
+/** How long the plaque waits after the last blow. */
+export const BATTLE_RESULT_DELAY_MS = 2000;
 
 export class Game {
   mode: Mode = { kind: 'normal' };
@@ -260,6 +298,10 @@ export class Game {
    *  the player can tap around is not a reward — the same reason the
    *  rewarded video has a mount of its own. */
   gachaReveal: GachaReveal | null = null;
+  /** The fight being replayed, or null when none is. Its own mount for the
+   *  same reason the reveal has one — and the reveal plays OVER it, which is
+   *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.5). */
+  battle: BattlePlayback | null = null;
   /** The hero whose card is open on the roster screen, or null for the grid.
    *  On the presenter rather than in the view for the reason `expeditionRuin`
    *  is: it survives the per-tick rebuild, and it is node-testable. */
@@ -1995,34 +2037,27 @@ export class Game {
     const report = attemptGate(
       this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty);
     if (report.result === 'Cleared') {
-      playSfx('questComplete');
       this.setOverlay(null);
       this.gateRuin = null;
-      const hoard = Object.entries(report.hoard)
-        .map(([c, n]) => `${n} ${c}`).join(', ');
-      this.queueBanner({
-        title: 'The gate is ours!',
-        icon: RUINS[ruinId].glyph,
-        name: RUINS[ruinId].name,
-        desc: hoard === ''
-          ? 'The way in is open. Nothing they took, because they never came.'
-          : `The way in is open, and they gave back everything: ${hoard}.`,
-        sprite: RUINS[ruinId].sprite,
-        tone: 'gold',
-        sfx: 'chainFinished',
-      });
-    } else if (report.result === 'Repelled') {
-      playSfx('error');
-      const cost = lossLine(report.losses, report.wounded);
-      this.toast(cost === ''
-        ? 'Driven off. The supplies are gone — come back stronger.'
-        : `Driven off. ${cost}`);
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(gateSupplies(ruinId)) as CurrencyId[]);
-    } else {
-      this.toast(GATE_BLOCK_TEXT[report.result]);
+      this.reconcileParty();
+      this.notify();
+      return;
+    } else if (report.log === null) {
+      this.toast(GATE_BLOCK_TEXT[report.result as GateBlock]);
+      this.reconcileParty();
+      this.notify();
+      return;
     }
     this.reconcileParty();
+    // What the garrison was holding comes back as the prize sequence, so the
+    // hoard arrives as things rather than as a sentence.
+    this.openBattle(report.log!, {
+      title: `${gateView(this.state, ruinId)?.creature ?? 'A warband'} at the gate`,
+      subtitle: RUINS[ruinId].name,
+      prizes: report.result === 'Cleared' ? walletPrizes(report.hoard) : [],
+    });
     this.notify();
   }
 
@@ -2274,14 +2309,7 @@ export class Game {
     // The dead are off the roster now, so the squads on the board have to
     // come back down to what is left of them.
     this.reconcileParty();
-    const cost = lossLine(report.losses, report.wounded);
     if (report.result === 'Cleared') {
-      playSfx(report.depthCompleted ? 'questComplete' : 'quest');
-      const paid = Object.entries(report.wallet)
-        .filter(([, n]) => n > 0).map(([c, n]) => `${n} ${c}`).join(', ');
-      this.toast(report.depthCompleted
-        ? `Depth ${report.depth} is yours — ${paid}${cost === '' ? '' : `. ${cost}`}`
-        : `Room ${report.room} cleared — ${paid}${cost === '' ? '' : `. ${cost}`}`);
       if (report.artifact !== null) {
         const relic = ARTIFACTS[report.artifact];
         this.queueBanner({
@@ -2301,16 +2329,89 @@ export class Game {
         this.expeditionRuin = null;
         this.setOverlay(null);
       }
-    } else if (report.result === 'Repelled') {
-      playSfx('error');
-      this.toast(cost === ''
-        ? 'Driven back. The supplies are gone — try again, or bring more.'
-        : `Driven back. ${cost}`);
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(report.supplies) as CurrencyId[]);
-    } else {
-      this.toast(ROOM_BLOCK_TEXT[report.result]);
+      this.notify();
+      return;
+    } else if (report.log === null) {
+      this.toast(ROOM_BLOCK_TEXT[report.result as RoomBlock]);
+      this.notify();
+      return;
     }
+    // The fight already happened — every wallet and every roster is where the
+    // resolver left them. What opens now is a REPLAY of it.
+    this.openBattle(report.log!, {
+      title: RUINS[ruinId].name,
+      subtitle: report.depthCompleted
+        ? `Depth ${report.depth} is yours`
+        : `Depth ${report.depth} · Room ${report.room}`,
+      prizes: report.result === 'Cleared' ? roomPrizes(report, RUINS[ruinId].artifact) : [],
+    });
+    this.notify();
+  }
+
+  // -------------------------------------------------------------- the fight
+
+  /** Start replaying a fight that has already happened. */
+  private openBattle(
+    log: BattleLog,
+    about: { title: string; subtitle: string; prizes: GachaPrize[] },
+  ): void {
+    this.battle = {
+      log,
+      title: about.title,
+      subtitle: about.subtitle,
+      prizes: about.prizes,
+      startedAt: this.now(),
+      phase: 'playing',
+    };
+  }
+
+  /** Which tick of the fight the screen should be drawing at `now`. Past the
+   *  end it stays at the end, so a slow frame cannot skip the last blow. */
+  battleTick(now: number): number {
+    const b = this.battle;
+    if (b === null) return 0;
+    return Math.min(b.log.ticks, Math.floor((now - b.startedAt) / COMBAT.tickMs));
+  }
+
+  /**
+   * Walk the playback forward. Called from the screen's own timer, because
+   * the game's one-second tick is far too coarse for a fight — but every
+   * decision it makes is here rather than in the DOM.
+   */
+  advanceBattle(now: number): void {
+    const b = this.battle;
+    if (b === null) return;
+    const elapsed = now - b.startedAt;
+    if (b.phase === 'playing') {
+      if (elapsed < b.log.ticks * COMBAT.tickMs) return;
+      b.phase = 'result';
+      playSfx(b.log.winner === 'ours' ? 'questComplete' : 'error');
+      this.notify();
+      return;
+    }
+    if (b.phase === 'result') {
+      if (elapsed < b.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS) return;
+      // The prizes deal on the reveal screen, over the board — the one place
+      // in the game that already knows how to hand things over one at a time.
+      b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
+      if (b.phase === 'rewards') {
+        this.gachaReveal = { prizes: b.prizes, caption: 'Spoils' };
+      }
+      this.notify();
+      return;
+    }
+    // The reveal owns the screen until the player dismisses it; when it does,
+    // the way out appears underneath.
+    if (b.phase === 'rewards' && this.gachaReveal === null) {
+      b.phase = 'done';
+      this.notify();
+    }
+  }
+
+  dismissBattle(): void {
+    this.battle = null;
     this.notify();
   }
 
@@ -3170,25 +3271,30 @@ function trainerName(unitId: UnitId): string {
 
 /** Why a room cannot be entered, in words the player can act on. */
 /**
- * What a fight cost, in one clause.
+ * What a cleared room paid, as a sequence of prizes.
  *
- * The two halves are different news and have to read as different news: the
- * dead are a loss, the wounded are a bill the player can choose to pay
- * (Docs/features/combat.md §4). Empty when nobody fell, so the caller can say
- * nothing at all.
+ * The wallet rows first, then the hero XP, then the relic shards — the same
+ * order the reveal deals them in, and the shards last because they are the
+ * thing a player is collecting toward rather than spending.
  */
-function lossLine(
-  losses: ReadonlyArray<{ count: number }>,
-  wounded: ReadonlyArray<{ count: number }>,
-): string {
-  const fell = losses.reduce((sum, l) => sum + l.count, 0);
-  if (fell === 0) return '';
-  const hurt = wounded.reduce((sum, l) => sum + l.count, 0);
-  const dead = fell - hurt;
-  if (hurt === 0) return `${dead} dead`;
-  if (dead === 0) return `${hurt} wounded — heal them at a military hall`;
-  return `${dead} dead, ${hurt} wounded — heal them at a military hall`;
+function roomPrizes(
+  report: { wallet: Wallet; heroXp: number; fragments: number },
+  artifactId: ArtifactId,
+): GachaPrize[] {
+  const prizes = walletPrizes(report.wallet);
+  if (report.heroXp > 0) {
+    prizes.push({ kind: 'currency', currency: 'HeroXp', amount: report.heroXp });
+  }
+  if (report.fragments > 0) {
+    prizes.push({ kind: 'relicFragments', artifactId, amount: report.fragments });
+  }
+  return prizes;
 }
+
+const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) as
+  Array<[CurrencyId, number]>)
+  .filter(([, n]) => n > 0)
+  .map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount }));
 
 const ROOM_BLOCK_TEXT: Record<RoomBlock, string> = {
   RuinNotFound: 'You have not found this ruin yet',
@@ -3220,7 +3326,7 @@ const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
 /** How well a unit type answers a ruin's affinity — used only to pre-fill a
  *  sensible party, never to decide anything. */
 const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
-  typeMultiplier(unitId, affinity) * UNITS[unitId].atk;
+  typeMultiplier(unitId, affinity) * UNITS[unitId].dmg;
 
 /** "in 3 days" / "in 5 hours" / "in 12 minutes" — coarse on purpose; the
  *  budget refills on the first of the month, not on a stopwatch. */

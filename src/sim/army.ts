@@ -59,36 +59,15 @@ export const committedTroops = (state: GameState): number =>
 /**
  * WHO DOES NOT COME BACK.
  *
- * A garrison fights back, so a gate costs soldiers whether it falls or not
- * (Docs/features/18-garrisons-and-raids.md §5). The damage is spread across
- * the committed squads by their share of the party's own hit points — the
- * biggest squad takes the most, which is what makes a wide party a way of
- * absorbing a fight as well as winning it — and only whole troops are lost.
+ * The resolver decides this now, not a formula: a squad that ended the fight
+ * with 340 hit points out of 2,000 lost 83 of its hundred, and those 83 are
+ * what the roster is charged (Docs/features/combat.md §4, §7). Which is why
+ * "a rout costs less than a repulse" needs no rule of its own any more — a
+ * party that wins in twenty ticks is simply swung at fewer times.
  *
  * Heroes are never in it: a hero can fall in a fight and is whole again when
  * it ends (Docs/features/10-heroes.md §2.3). What dies here is soldiers.
  */
-export function casualtiesFor(
-  slots: readonly { unitId: UnitId; count: number }[],
-  damage: number,
-): Array<{ unitId: UnitId; count: number }> {
-  const totalHp = slots.reduce((sum, s) => sum + UNITS[s.unitId].hp * s.count, 0);
-  if (totalHp <= 0 || damage <= 0) return [];
-  const out: Array<{ unitId: UnitId; count: number }> = [];
-  for (const slot of slots) {
-    const hp = UNITS[slot.unitId].hp;
-    const share = (hp * slot.count) / totalHp;
-    const lost = Math.min(slot.count, Math.floor((damage * share) / hp));
-    if (lost > 0) out.push({ unitId: slot.unitId, count: lost });
-  }
-  // A fight that killed nobody still killed somebody: the smallest loss the
-  // game can express is one soldier, taken from the biggest squad.
-  if (out.length === 0) {
-    const biggest = [...slots].sort((a, b) => b.count - a.count)[0];
-    if (biggest !== undefined && biggest.count > 0) out.push({ unitId: biggest.unitId, count: 1 });
-  }
-  return out;
-}
 
 /**
  * THE INFIRMARY — a building, and the only reason a casualty is ever
@@ -134,12 +113,10 @@ export interface Casualties {
  * soldier, and nothing on an `ArmyUnit` tells them apart — so this is a
  * count, not a choice.
  */
-export function takeCasualties(
+export function applyLosses(
   state: GameState,
-  slots: readonly { unitId: UnitId; count: number }[],
-  damage: number,
+  losses: readonly { unitId: UnitId; count: number }[],
 ): Casualties {
-  const losses = casualtiesFor(slots, damage);
   const wounded: Array<{ unitId: UnitId; count: number }> = [];
   let room = Math.max(0, woundedCap(state) - woundedCount(state));
   for (const loss of losses) {
@@ -154,7 +131,7 @@ export function takeCasualties(
     state.city.wounded[loss.unitId] = woundedOf(state, loss.unitId) + saved;
     wounded.push({ unitId: loss.unitId, count: saved });
   }
-  return { losses, wounded };
+  return { losses: [...losses], wounded };
 }
 
 // ------------------------------------------------------------ putting them back

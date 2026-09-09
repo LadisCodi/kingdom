@@ -30,7 +30,8 @@
 // whether the gate still stands.
 
 import { GARRISONS, RAID, RUINS, RUIN_ORDER, garrisonForTier } from './data/definitions';
-import { enemyFormation, formationPower, type EnemySquad } from './combat';
+import type { EnemySquad } from './combat';
+import { boardPower, buildBoard, generateEnemy, type Board } from './battle';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { cityGoldPerMinute } from './population';
@@ -206,12 +207,26 @@ export function nextRaidBoundary(state: GameState, after: number): number | null
  * resolver's (`combat.ts`, combat.md §11) — a gate is a room, and a room's
  * enemies are made one way.
  */
-export const gateFormation = (ruinId: RuinId): EnemySquad[] =>
-  enemyFormation(RUINS[ruinId].guard.power, RUINS[ruinId].guard.threat);
+export function gateBoard(state: GameState, ruinId: RuinId): Board {
+  const guard = RUINS[ruinId].guard;
+  const plan = generateEnemy({
+    seed: state.seed,
+    parts: [ruinId, 'gate'],
+    budget: guard.power,
+    affinity: guard.threat,
+  });
+  return buildBoard(plan.squads, plan.fighters);
+}
 
-/** The gate's power, read off the squads that are actually standing there. */
-export const gatePower = (ruinId: RuinId): number =>
-  formationPower(gateFormation(ruinId));
+/** The squads in the doorway, for the sheet that draws them. */
+export const gateFormation = (state: GameState, ruinId: RuinId): EnemySquad[] =>
+  gateBoard(state, ruinId).slots
+    .filter((s) => s.unitId !== null)
+    .map((s) => ({ unitId: s.unitId!, count: s.count }));
+
+/** The gate's power, read off the board that is actually standing there. */
+export const gatePower = (state: GameState, ruinId: RuinId): number =>
+  boardPower(gateBoard(state, ruinId));
 
 // ---------------------------------------------------------------- clearing
 

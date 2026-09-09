@@ -103,7 +103,7 @@ function troopCards(game: Game): HTMLElement[] {
       type: kindOf(unit),
       name: unit.name,
       stats: [
-        { icon: 'atk', value: unit.atk },
+        { icon: 'atk', value: unit.dmg },
         { icon: 'def', value: unit.def },
         { icon: 'hp', value: unit.hp },
       ],

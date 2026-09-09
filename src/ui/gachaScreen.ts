@@ -19,7 +19,7 @@
 // different size of event from four fragments and must not be a tile the
 // player's thumb is already moving past.
 
-import { HEROES } from '../sim/data/definitions';
+import { ARTIFACTS, HEROES } from '../sim/data/definitions';
 import { playSfx } from '../audio/sfx';
 import { spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
@@ -49,6 +49,17 @@ function prizeTile(prize: GachaPrize): HTMLElement {
   if (prize.kind === 'currency') {
     return el('div', { class: 'gr-tile is-currency' },
       iconEl(prize.currency, { size: 'lg' }),
+      el('span', { class: 'gr-count' }, String(prize.amount)));
+  }
+  // A relic's shards, which a room pays and a call never does. Same tile as a
+  // hero's fragments, keyed on the relic instead.
+  if (prize.kind === 'relicFragments') {
+    const relic = ARTIFACTS[prize.artifactId];
+    const url = spriteUrl(relic.sprite);
+    return el('div', { class: 'gr-tile is-fragment' },
+      url ? el('img', { class: 'gr-art', src: url, alt: '' })
+        : el('div', { class: 'gr-art is-glyph' }, relic.glyph),
+      el('span', { class: 'gr-mark' }, iconEl('fragment', { size: 'sm' })),
       el('span', { class: 'gr-count' }, String(prize.amount)));
   }
   const def = HEROES[prize.heroId];
@@ -104,8 +115,8 @@ export function mountGachaScreen(game: Game, root: HTMLElement): void {
     const screen = el('div', { class: 'gr-screen' },
       el('div', { class: 'gr-plaque' }, 'Rewards'),
       el('div', { class: `gr-grid${prizes.length > 6 ? ' is-dense' : ''}` }, ...tiles),
-      el('div', { class: 'gr-calls' },
-        reveal.calls === 1 ? 'One call' : `${reveal.calls} calls`),
+      el('div', { class: 'gr-calls' }, reveal.caption
+        ?? (reveal.calls === 1 ? 'One call' : `${reveal.calls ?? 0} calls`)),
       prompt,
       curtainSlot,
     );
