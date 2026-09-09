@@ -3051,13 +3051,14 @@ export class Game {
     return { value: this.state.city.population, max: maxPopulation(this.state) };
   }
 
-  hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
+  hudSlot(): {
+    kind: 'population' | 'workers' | 'builders' | 'army'; value: number; max: number;
+  } {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
       const max = builderCount(this.state);
       return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
     }
-    // Staffing something → workers assigned vs. the whole workforce.
     const inspected = this.inspectedDistrictId === null
       ? undefined
       : districtById(this.state, this.inspectedDistrictId);
@@ -3068,6 +3069,16 @@ export class Game {
     return {
       kind: 'population',
       value: this.state.city.population,
+    // Looking at a hall that turns out SOLDIERS → the army cap. It is the
+    // number that explains a refused Train, and it is about the city rather
+    // than the building, which is exactly what the plaque is for: it used to
+    // sit inside the card, where a city-wide ceiling read as a property of
+    // whichever hall you happened to have open.
+    if (inspected && DISTRICTS[inspected.definitionId].trains.some((t) => t !== 'Villager')) {
+      const army = this.armyRoom();
+      return { kind: 'army', value: army.used, max: army.cap };
+    }
+    // Staffing something → workers assigned vs. the whole workforce.
       max: maxPopulation(this.state),
     };
   }

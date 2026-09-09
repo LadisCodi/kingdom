@@ -16,7 +16,6 @@ import { gemRushCost } from '../sim/commands';
 import {
   DISTRICTS, HARMONY, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
-import { committedTroops, armyCap } from '../sim/army';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
   canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
@@ -300,15 +299,10 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       }
     }
 
-    // The army headroom line stays: it is about the CITY, not about any one
-    // unit, and it is the number that explains a refused Train.
-    if (def.trains.some((t) => t !== 'Villager')) {
-      body.append(el('div', { class: 'dc-army' },
-        iconEl('army', { size: 'sm' }),
-        el('span', {}, `Army ${committedTroops(game.state)} of ${armyCap(game.state)}`),
-        el('span', { class: 'dc-army-note' },
-          `this hall holds ${levelIndexed(def.armyCapPerLevel, district.level)} of it`)));
-    }
+    // The army headroom moved to the HEADER's plaque (`hudSlot`), where the
+    // contextual read-outs live: it is a ceiling on the CITY, and inside the
+    // card it read as a property of whichever hall was open. What this hall
+    // contributes to it is already the upgrade row's delta.
 
     // A worker building is an AREA and the people you put in it. Both were
     // numbers in a table; both are now pictures.

@@ -338,8 +338,8 @@
 .tr-pick {
   display: grid;
   place-items: center;
-  width: 68px;
-  height: 68px;
+  width: 84px;
+  height: 84px;
   padding: 0;
   overflow: hidden;
   border-radius: 10px;
@@ -353,6 +353,11 @@
 .tr-pick:active { transform: translateY(2px); box-shadow: none; }
 
 /* The detail panel: portrait, what it is, and the one button that spends. */
+/* Portrait | (what it is, then the one button that spends). The action used to
+   span the full width on a row of its own, which left a band the width of the
+   panel holding nothing but a "15s" in its corner. Putting it under the body
+   instead costs no height — the button is shorter than the text beside it was
+   tall — and hands the whole of it to the portrait. */
 .tr-info {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -378,8 +383,11 @@
    place a unit is read rather than counted, and the panel beside it is about
    this tall anyway — name, tag, description, stats. */
 .tr-portrait.is-body {
-  width: 76px;
-  height: 114px;
+  grid-row: 1 / 3;
+  align-self: stretch;
+  width: 124px;
+  height: auto;
+  min-height: 150px;
   align-items: end;
 }
 .tr-pick-art,
@@ -421,7 +429,19 @@
 }
 /* The Train button spans both columns, so it is the full width of the panel
  * and unmistakably the thing that spends. */
-.tr-info > .k-action { grid-column: 1 / -1; }
+/* Column 2, so it sits under the text rather than under the portrait — which
+   is what lets the portrait have the height of both rows. */
+.tr-info > .k-action { grid-column: 2; }
+/* The wait, with the numbers it belongs to. */
+.tr-wait {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink-soft);
+}
 
 /* The ward: the same panel, in the colour of a thing that is waiting rather
  * than a thing that is for sale. One per wounded type this hall can mend. */

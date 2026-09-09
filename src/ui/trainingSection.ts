@@ -209,7 +209,9 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         // No duration here: it already sits beside the Train button, where
         // every other card puts a wait (§6.4).
         el('div', { class: 'tr-stats' },
-          stat('population', String(game.state.city.population), 'living here'))),
+          stat('population', String(game.state.city.population), 'living here')),
+        el('div', { class: 'tr-wait' },
+          iconEl('hourglass', { size: 'sm' }), formatDuration(seconds))),
       action({
         label: 'Train',
         kind: 'primary',
@@ -217,8 +219,6 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         cost,
         have: (c) => game.walletValue(c),
         disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
-        info: el('span', { class: 'dc-uptime' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
       }),
     );
     return info;
@@ -238,7 +238,12 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         stat('padlock', String(unit.def), 'defence'),
         stat('population', String(unit.hp), 'health'),
         // The chart, in one phrase, rather than a table the player has to read.
-        el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`))),
+        el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`)),
+      // The wait sits WITH the numbers it belongs to. It used to hang in the
+      // action's info slot, which parked it alone at the bottom-left of the
+      // panel and cost a whole empty band to say "15s".
+      el('div', { class: 'tr-wait' },
+        iconEl('hourglass', { size: 'sm' }), formatDuration(seconds))),
     action({
       label: 'Train',
       kind: 'primary',
@@ -250,8 +255,6 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         : army.used + 1 > army.cap
           ? 'Your army is full — upgrade this hall'
           : undefined,
-      info: el('span', { class: 'dc-uptime' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
     }),
   );
   return info;

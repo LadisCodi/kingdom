@@ -21,7 +21,8 @@
 //     player looks when they want more of them. The header is for things you
 //     spend from anywhere; population is a property of one building;
 //   * the plaque under the plank keeps only the CONTEXTUAL read-outs
-//     (workers while staffing, builders while building);
+//     (workers while staffing, builders while building, the army cap while
+//     looking at a hall that trains soldiers);
 //   * the save badge moved to Settings, where it belongs.
 //
 // The presenter decides all of it (visibleCurrencies, hudSlot) — this file
@@ -33,9 +34,12 @@ import { el, formatCount } from './format';
 import { currencyIcon, iconEl } from './kit';
 
 /** What the plaque shows, per kind. */
-const SLOT_ICON = { population: 'population', workers: 'workers', builders: 'builders' } as const;
+const SLOT_ICON = {
+  population: 'population', workers: 'workers', builders: 'builders', army: 'army',
+} as const;
 const SLOT_LABEL = {
   population: 'Population', workers: 'Workers at work', builders: 'Builders free',
+  army: 'Army',
 } as const;
 
 export function mountHeader(game: Game, root: HTMLElement): void {
