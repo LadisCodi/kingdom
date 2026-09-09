@@ -98,6 +98,14 @@ body {
 #edge > * { pointer-events: auto; }
 #adoffer[hidden], #raids[hidden] { display: none; }
 
+/* The battle screen's card panel. A sibling of #overlay at the same z-index
+   and AFTER it in the markup, so it stacks over the sheet it belongs to while
+   the header (8) and the nav (10) still outrank it — a panel is not a reason
+   to cover the purse or the way out. It is hidden rather than emptied, so an
+   inset:0 element never swallows a tap on the map. */
+#picker[hidden] { display: none; }
+#picker { position: absolute; inset: 0; z-index: 7; }
+
 /* The header and the nav bar outrank EVERY menu — full-screen ones included.
    A menu is something you opened over the game, never a replacement for it:
    your purse has to stay readable while you decide what to spend, and the
@@ -111,7 +119,8 @@ body {
    inescapable to be worth anything.
 
    The stack, bottom to top: map · the right-edge column (4) · district card (6) ·
-   menus and sheets (7) · header (8) · nav bar (10) · settings knob (20) ·
+   menus and sheets, then the battle picker over them (7) · header (8) ·
+   nav bar (10) · settings knob (20) ·
    the gacha reveal (100) · the video (200). */
 #header { position: relative; z-index: 8; }
 

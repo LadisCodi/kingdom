@@ -168,26 +168,8 @@
 
 /* ------------------------------------------------------------ the panels */
 
-/* A layer INSIDE the sheet, pinned to the bottom of the FRAME.
-   `position: fixed` resolves against the viewport, which on a desktop is
-   wider than the pillarboxed 9:16 frame — so the width comes from `100cqw`,
-   the inline size of the `frame` container (#app), and the layer is centred
-   the way the frame is. That asks the frame how wide it is instead of
-   restating its formula, which is the whole reason #app is a query
-   container.
-
-   It stays inside the sheet's DOM on purpose: #overlay has a z-index and is
-   therefore a stacking context, so nothing in here can rise above the header
-   or the nav — which is the design, not a limitation (CLAUDE.md). */
-.bt-layer {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100cqw;
-  z-index: 2;
-}
+/* The panel lives in #picker (style.css), which is a child of #ui and
+   therefore already the frame — no geometry to restate here. */
 .bt-scrim { position: absolute; inset: 0; background: var(--scrim); }
 
 .bt-picker {
@@ -203,14 +185,17 @@
   border-radius: 14px 14px 0 0;
   background: var(--parchment);
   box-shadow: 0 -8px 24px rgba(20, 12, 6, 0.4);
-  animation: bt-picker-in var(--motion-sheet) ease-out;
 }
+/* The slide runs when the panel ARRIVES and never again: the class is added
+   by the mount, which knows the difference between opening and refreshing
+   (ui/battlePicker.ts). */
+.bt-picker.is-in { animation: bt-picker-in var(--motion-sheet) ease-out; }
 @keyframes bt-picker-in {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bt-picker { animation: none; }
+  .bt-picker.is-in { animation: none; }
 }
 .bt-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .bt-picker-head h3 {

@@ -2432,7 +2432,12 @@ export class Game {
       if (name !== null) this.afterProfileOverlay = name;
       name = 'payerProfile';
     }
+    // A card panel belongs to the screen that opened it, and it lives in its
+    // own mount — so leaving that screen has to close it here rather than
+    // letting it fall off with the sheet's DOM.
+    const leaving = this.openOverlay;
     this.openOverlay = name;
+    if (name !== leaving) this.battlePicker = null;
     if (name !== null) {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;

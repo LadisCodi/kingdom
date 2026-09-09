@@ -51,6 +51,7 @@ import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountDelvePill } from './ui/delvePill';
 import { mountRaidPill } from './ui/raidPill';
+import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
@@ -133,6 +134,9 @@ async function boot(): Promise<void> {
   mountDailyPill(game, document.getElementById('daily')!);
   mountDelvePill(game, document.getElementById('delves')!);
   mountRaidPill(game, document.getElementById('raids')!);
+  // The battle screen's card panel. Its own mount, because the sheet it
+  // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
+  mountBattlePicker(game, document.getElementById('picker')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);

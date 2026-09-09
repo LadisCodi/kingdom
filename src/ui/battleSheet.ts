@@ -18,21 +18,20 @@
 // types stand against what is in the doorway, and a stepper buries that under
 // eight plus-and-minus knobs.
 //
-// The panel is a layer inside the sheet rather than a second overlay, because
-// `#overlay` is a stacking context and nothing inside it may rise above the
-// header or the nav — which is the design (CLAUDE.md). It closes on its own
-// knob, on the scrim, and on the first Escape/back, and the screen behind it
-// is still readable while it is open: the slots stay in view above it.
+// The panel is NOT drawn here: it is its own mount (`ui/battlePicker.ts`),
+// built once and mutated. This sheet rebuilds on the tick — it carries a
+// countdown — and a panel rebuilt with it restarts its slide-in animation
+// every second, loses the rail's scroll position, and re-decodes every
+// portrait on it. The same reason the quest pill and the ad tab are mutated
+// rather than replaced.
 
 import { HEROES, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/gates';
-import { heroIsBusy } from '../sim/expeditions';
-import { rosterView } from '../sim/heroes';
 import { spriteUrl } from '../render/sprites';
 import type { CurrencyId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { action, btn, iconEl, knob, sheet } from './kit';
+import { action, btn, iconEl, sheet } from './kit';
 
 /** Everything the screen needs that is not the player's own army. */
 export interface BattleView {
@@ -198,104 +197,6 @@ function partyBox(game: Game, view: BattleView): HTMLElement {
 
 // ------------------------------------------------------------- the panels
 
-/** A card in a picker panel: art, a name, and one line about what tapping it
- *  does. The heroes screen's card, in a horizontal rail. */
-function pickerCard(opts: {
-  cls: string;
-  art: HTMLElement;
-  name: string;
-  note: string;
-  tag?: string;
-  disabled?: boolean;
-  onPick: () => void;
-}): HTMLElement {
-  const card = el('button', {
-    class: `bt-card ${opts.cls}${opts.disabled === true ? ' is-out' : ''}`,
-    type: 'button',
-  },
-    opts.tag === undefined ? '' : el('span', { class: 'bt-card-tag' }, opts.tag),
-    opts.art,
-    el('span', { class: 'bt-card-name' }, opts.name),
-    el('span', { class: 'bt-card-note' }, opts.note),
-  );
-  if (opts.disabled === true) card.disabled = true;
-  else card.addEventListener('click', opts.onPick);
-  return card;
-}
-
-function troopRail(game: Game): HTMLElement {
-  const rail = el('div', { class: 'bt-rail' });
-  const roster = game.availableTroops();
-  const owned = (Object.keys(roster) as UnitId[]).filter((u) => roster[u] > 0);
-  if (owned.length === 0) {
-    return el('div', { class: 'bt-rail-empty' },
-      'No soldiers at home. Train some at a military hall first.');
-  }
-  for (const unitId of owned) {
-    const unit = UNITS[unitId];
-    const would = game.troopsAvailableFor(unitId);
-    const left = game.troopsLeftAtHome(unitId);
-    // A card that cannot be tapped says WHICH of the two ceilings stopped it,
-    // because the answers are different errands: train more, or build a hall.
-    const note = would > 0
-      ? `Send ${would} of ${roster[unitId]}`
-      : left === 0
-        ? 'All of them are with the party'
-        : 'No room left in the army cap';
-    rail.append(pickerCard({
-      cls: 'is-troop',
-      art: el('span', { class: 'bt-card-art' }, iconEl(unitId, { size: 'lg' })),
-      name: unit.name,
-      note,
-      tag: `atk ${unit.atk}`,
-      disabled: would <= 0,
-      onPick: () => game.assignTroop(unitId),
-    }));
-  }
-  return rail;
-}
-
-function heroRail(game: Game): HTMLElement {
-  const rail = el('div', { class: 'bt-rail' });
-  const owned = rosterView(game.state).filter((h) => h.owned);
-  if (owned.length === 0) {
-    return el('div', { class: 'bt-rail-empty' }, 'No heroes yet. Call one at the banner.');
-  }
-  for (const view of owned) {
-    const def = HEROES[view.id];
-    const inParty = game.partyHeroes.includes(view.id);
-    // A hero is never busy for a fight that resolves on entry
-    // (Docs/features/10-heroes.md §2.5); a DELVE is the exception, and it is
-    // the delve's own screen that says so.
-    const busy = game.battleHeroesAreCommitted() && heroIsBusy(game.state, view.id);
-    rail.append(pickerCard({
-      cls: 'is-hero',
-      art: art(def.sprite, def.glyph, 'bt-card-portrait'),
-      name: def.name,
-      note: inParty ? 'Already with the party' : busy ? 'Underground' : `Lv ${view.entry.level}`,
-      tag: def.unitType,
-      disabled: inParty || busy,
-      onPick: () => game.assignHero(view.id),
-    }));
-  }
-  return rail;
-}
-
-/** The panel itself: a scrim that closes it, and a drawer over the bottom of
- *  the screen. */
-function picker(game: Game): HTMLElement {
-  const kind = game.battlePicker!;
-  const scrim = el('div', { class: 'bt-scrim' });
-  scrim.addEventListener('click', () => game.closeBattlePicker());
-  const panel = el('div', { class: 'bt-picker' },
-    el('div', { class: 'bt-picker-head' },
-      el('h3', {}, kind === 'troops' ? 'Who goes' : 'Who leads'),
-      knob('✕', () => game.closeBattlePicker(), { label: 'Close the list' })),
-    kind === 'troops' ? troopRail(game) : heroRail(game),
-  );
-  return el('div', { class: 'bt-layer' }, scrim, panel);
-}
-
 // -------------------------------------------------------------- the screen
 
 export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
@@ -337,8 +238,6 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   const close = btn({ label: 'Not yet', onClick: () => game.dismiss() });
   close.setAttribute('data-own-close', '');
   body.append(el('div', { class: 'bt-back' }, close));
-
-  if (game.battlePicker !== null) body.append(picker(game));
 
   return sheet({ title: view.title, onClose: () => game.dismiss() }, body);
 }
