@@ -32,7 +32,7 @@ const section = (name, cells) => `  "${name}": {\n    "cells": [\n`
 
 const landmarkLine = (l) =>
   `    { "id": ${JSON.stringify(l.id)}, "kind": ${JSON.stringify(l.kind)}, `
-  + `"x": ${l.x}, "y": ${l.y}, "defended": ${l.defended === true}, "claimCost": ${l.claimCost} }`;
+  + `"x": ${l.x}, "y": ${l.y}, "claimCost": ${l.claimCost} }`;
 
 const ruinLines = (id, r) => {
   const supplies = Object.entries(r.supplies ?? {})
@@ -43,6 +43,11 @@ const ruinLines = (id, r) => {
     `      "baseDepthSeconds": ${r.baseDepthSeconds}, "depthGrowth": ${r.depthGrowth}, `
       + `"maxDepth": ${r.maxDepth}`,
     `      "supplies": { ${supplies} }`,
+    // The gate: one garrison on the surface, with a clock
+    // (Docs/features/18-garrisons-and-raids.md §2).
+    `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
+      + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
+      + `"periodMinutes": ${r.guard.periodMinutes} }`,
     `      "affinity": ${JSON.stringify(r.affinity)}, "artifact": ${JSON.stringify(r.artifact)}`,
   ].join(',\n') + '\n    }';
 };

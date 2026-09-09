@@ -69,7 +69,10 @@ export function newGame(map: MapData, now: number): GameState {
     },
     deepestDepth: 0,
     ruinsCleared: {},
-    landmarks: { claimed: {}, cleared: {} },
+    landmarks: { claimed: {} },
+    // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
+    gates: {},
+    raidReports: [],
     artifacts: {
       owned: [], levels: {}, tiers: {}, fragments: {},
       attuned: [null], slotsPurchased: 0, lockedUntil: [0],

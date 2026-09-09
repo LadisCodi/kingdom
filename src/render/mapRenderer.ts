@@ -280,8 +280,8 @@ export function drawMap(
             drawGlyph(ctx, art.glyph, x, y, size, size * 0.5);
           }
         });
-        // A star means "claimable"; a bang means "something is holding it".
-        if (!claimed) drawSiteBadge(x, y, landmark.defended ? '!' : '\u2726');
+        // A star means "claimable". Nothing holds a sanctuary: it is bought.
+        if (!claimed) drawSiteBadge(x, y, '\u2726');
       }
       const ruin = ruinDefAt(cell);
       if (ruin) {

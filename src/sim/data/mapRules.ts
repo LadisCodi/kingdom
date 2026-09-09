@@ -23,12 +23,17 @@ export interface RegionMapDoc {
   terrain: { cells: Array<{ x: number; y: number; id: string }> };
   features: { cells: Array<{ x: number; y: number; id: string }> };
   landmarks: Array<{
-    id: string; kind: string; x: number; y: number; defended: boolean; claimCost: number;
+    id: string; kind: string; x: number; y: number; claimCost: number;
   }>;
   ruins: Record<string, {
     x: number; y: number; tier: number; difficulty: number; baseDepthSeconds: number;
     depthGrowth: number; maxDepth: number; supplies: Record<string, number>;
     affinity: string; artifact: string;
+    /** The gate that holds the entrance, and its clock
+     *  (Docs/features/18-garrisons-and-raids.md §2). */
+    guard: {
+      threat: string; power: number; warningMinutes: number; periodMinutes: number;
+    };
   }>;
 }
 
@@ -178,6 +183,23 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
     if (!isCount(r.maxDepth) || r.maxDepth < 1) err(`${what} needs a max depth of 1 or more`, r);
     if (typeof r.depthGrowth !== 'number' || !(r.depthGrowth >= 1)) {
       err(`${what}'s depth growth must be 1 or more — below 1 makes deeper delves faster`, r);
+    }
+    // The gate. A ruin without one would be a dungeon nobody is asked to
+    // hurry to, and the counter is what makes discovering one an event.
+    const g = r.guard;
+    if (!g || typeof g !== 'object') {
+      err(`${what} has no guard — every ruin opens with a gate`, r);
+    } else {
+      if (g.threat !== 'Any' && !(UNIT_ORDER as string[]).includes(g.threat)) {
+        err(`${what}'s guard threat must be a unit or "Any" (got "${g.threat}")`, r);
+      }
+      if (!isCount(g.power) || g.power < 1) err(`${what}'s guard needs a power of 1 or more`, r);
+      if (!isCount(g.warningMinutes) || g.warningMinutes < 1) {
+        err(`${what}'s guard needs a warning of 1 minute or more`, r);
+      }
+      if (!isCount(g.periodMinutes) || g.periodMinutes < 1) {
+        err(`${what}'s guard needs a raid period of 1 minute or more`, r);
+      }
     }
     for (const [currency, amount] of Object.entries(r.supplies ?? {})) {
       if (!(currency in CURRENCIES)) err(`${what} asks for an unknown currency "${currency}"`, r);

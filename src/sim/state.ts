@@ -306,6 +306,32 @@ export interface Delve {
   outcome: 'extracted' | 'failed' | null;
 }
 
+/**
+ * One ruin's gate.
+ *
+ * `nextRaidAt` is the whole clock: null means nothing is counting — the gate
+ * is cleared, or the garrison is out of trips and sitting on what it took.
+ * The `hoard` is what it holds, and clearing the gate hands every coin of it
+ * back, which is what keeps a raid a bill rather than a loss.
+ */
+export interface GateState {
+  /** Epoch ms of the next raid, or null when nothing is counting. */
+  nextRaidAt: number | null;
+  /** Raids that actually took something. Capped at `raid.maxRaids`. */
+  trips: number;
+  /** What it has taken, returned in full when the gate falls. */
+  hoard: Wallet;
+  cleared: boolean;
+}
+
+/** One raid, for the widget. Kept until the player dismisses it. */
+export interface RaidReport {
+  id: string;
+  ruinId: RuinId;
+  at: number;
+  took: Wallet;
+}
+
 export interface GameState {
   regionId: RegionId;
   city: City;
@@ -468,13 +494,27 @@ export interface GameState {
    *  is granted on the FIRST one — no randomness on the thing that gates a
    *  system. */
   ruinsCleared: Partial<Record<RuinId, true>>;
-  /** Claimed landmarks (by content id) and, for the defended ones, whose
-   *  guard has already been beaten. Claiming raises Mana PRODUCTION, which is
-   *  what makes exploration compound rather than merely pay. */
+  /** Claimed landmarks, by content id. Claiming raises the Mana CEILING,
+   *  which is what makes exploration compound rather than merely pay. No
+   *  landmark is defended: a sanctuary is bought with Gold, and the fight
+   *  with a clock belongs to the ruins (sim/gates.ts). */
   landmarks: {
     claimed: Record<string, true>;
-    cleared: Record<string, true>;
   };
+  /**
+   * The gate on every ruin — one garrison, one clock
+   * (Docs/features/18-garrisons-and-raids.md).
+   *
+   * Absent = the ruin has not been discovered, so nothing is counting. The
+   * entry is written by the sweep in `advance()` rather than by the reveal,
+   * so the counter is stamped with a boundary's `t` and never with a clock
+   * the sim is not allowed to read.
+   */
+  gates: Partial<Record<RuinId, GateState>>;
+  /** Raids the player has not read yet. Persisted: a raid that landed over
+   *  lunch is still news when they come back, and the widget carries it until
+   *  it is dismissed. */
+  raidReports: RaidReport[];
   /**
    * The relic collection. `attuned` is indexed BY SLOT and is exactly as long
    * as the player has slots, so a null is a visibly empty socket rather than

@@ -285,14 +285,17 @@ describe('landmarks', () => {
     expect(claimLandmark(state, map, distant.location)).toBe('NotRevealed');
   });
 
-  it('a defended one waits for the party that clears it', () => {
+  // Nothing holds a sanctuary any more: `defended` was retired with the
+  // encounter it named, and the fight with a clock lives on the ruins'
+  // gates instead (Docs/features/18-garrisons-and-raids.md §9). Gold is the
+  // whole price, at every tier.
+  it('asks for Gold and nothing else, however dear the tier', () => {
     const state = freshGame();
-    const defended = LANDMARKS.find((l) => l.defended)!;
-    fund(state, { Gold: 100_000 });
-    reveal(state, [defended.location]);
-    expect(claimLandmark(state, map, defended.location)).toBe('Defended');
-    state.landmarks.cleared[defended.id] = true;
-    expect(claimLandmark(state, map, defended.location)).toBe('Claimed');
+    const dearest = [...LANDMARKS]
+      .sort((a, b) => landmarkClaimCost(state, b) - landmarkClaimCost(state, a))[0];
+    fund(state, { Gold: 1_000_000 });
+    reveal(state, [dearest.location]);
+    expect(claimLandmark(state, map, dearest.location)).toBe('Claimed');
   });
 
   it('get farther and dearer, so exploration compounds instead of paying flat', () => {
@@ -340,21 +343,11 @@ describe('landmarks', () => {
       .toBeGreaterThan(5 * getWallet(state.city.wallet, 'Gold'));
   });
 
-  it('reserves the dearest tier for the ones an army has to clear', () => {
-    const state = freshGame();
-    const dearest = Math.max(...LANDMARKS.map((l) => landmarkClaimCost(state, l)));
-    for (const l of LANDMARKS) {
-      if (landmarkClaimCost(state, l) === dearest) expect(l.defended).toBe(true);
-    }
-  });
-
   it('survive a save round-trip', () => {
     const state = freshGame();
     state.landmarks.claimed[first.id] = true;
-    state.landmarks.cleared['CircleOfNine'] = true;
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(restored.landmarks.claimed[first.id]).toBe(true);
-    expect(restored.landmarks.cleared.CircleOfNine).toBe(true);
     expect(manaProduction(restored)).toBe(manaProduction(state));
   });
 });

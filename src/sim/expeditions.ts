@@ -41,10 +41,12 @@ import {
 import { addHeroXp } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  depthDurationMs, guaranteedDepth, matchupAgainst, partyStats, resolveDepth,
-  worstThreatFor, type CarriedArtifact, type Party, type PartySlot, type Drill,
+  depthDurationMs, effectiveAttack, guaranteedDepth, matchupAgainst, partyStats,
+  resolveDepth, worstThreatFor,
+  type CarriedArtifact, type Party, type PartySlot, type Drill,
 } from './combat';
 import { availableRoster, maxArmyPower } from './army';
+import { gateIsCleared, gateSupplies, markGateCleared } from './gates';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
@@ -189,7 +191,7 @@ export const freeHeroes = (state: GameState): HeroId[] =>
 // ------------------------------------------------------------------ launch
 
 export type LaunchBlock =
-  | 'RuinNotFound' | 'NoHero' | 'HeroBusy' | 'EmptyParty' | 'TooManySlots'
+  | 'RuinNotFound' | 'GateStanding' | 'NoHero' | 'HeroBusy' | 'EmptyParty' | 'TooManySlots'
   | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies'
   | 'ArtifactNotOwned' | 'ArtifactAttuned' | 'ArtifactCarried';
 
@@ -202,6 +204,9 @@ export function launchBlock(
   artifactId: ArtifactId | null = null,
 ): LaunchBlock | null {
   if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
+  // Nothing in the ruin can be entered until the gate is cleared: the garrison
+  // is standing in the doorway (Docs/features/18-garrisons-and-raids.md §1).
+  if (!gateIsCleared(state, ruinId)) return 'GateStanding';
   if (heroId === null || !ownsHero(state, heroId)) return 'NoHero';
   if (heroIsBusy(state, heroId)) return 'HeroBusy';
   const committed = slots.filter((s) => s.count > 0);
@@ -264,6 +269,131 @@ export function launchDelve(
     outcome: null,
   });
   return 'Launched';
+}
+
+// -------------------------------------------------------------- the gate
+
+/**
+ * The gate is the ruin's FRONTIER ROOM while it stands: it sits above Depth 1
+ * and is entered the same way, with `Clear the gate` in place of *Descend*
+ * (Docs/features/18-garrisons-and-raids.md §5).
+ *
+ * It lives here rather than in `gates.ts` because clearing one is a PARTY
+ * command — a hero, a matchup and supplies — and this module already owns all
+ * three. `gates.ts` owns the clock and the hoard, and knows nothing about how
+ * a garrison is beaten.
+ *
+ * Two things make it the right first fight. The threat is in VIEW — no
+ * scouting, no hidden type — and the party may be a hero ALONE, so the very
+ * first battle needs no army at all. A shortfall warns rather than blocks, and
+ * a retry is identical to a first attempt: nothing is lost but the supplies.
+ */
+export type GateBlock =
+  | 'RuinNotFound' | 'AlreadyCleared' | 'NoHero' | 'HeroBusy' | 'TooManySlots'
+  | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies';
+
+export function gateBlock(
+  state: GameState,
+  map: MapData,
+  ruinId: RuinId,
+  heroId: HeroId | null,
+  slots: readonly PartySlot[],
+): GateBlock | null {
+  if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
+  if (gateIsCleared(state, ruinId)) return 'AlreadyCleared';
+  if (heroId === null || !ownsHero(state, heroId)) return 'NoHero';
+  if (heroIsBusy(state, heroId)) return 'HeroBusy';
+  // A hero alone is a legal board, so there is no EmptyParty here.
+  const committed = slots.filter((s) => s.count > 0);
+  if (committed.length > unitSlots(state)) return 'TooManySlots';
+  const available = availableRoster(state);
+  for (const s of committed) {
+    if (s.count > available[s.unitId]) return 'NotEnoughUnits';
+  }
+  const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
+  if (power > maxArmyPower(state)) return 'OverArmyCap';
+  if (!canAfford(state.city.wallet, gateSupplies(ruinId))) return 'NotEnoughSupplies';
+  return null;
+}
+
+export interface GateReport {
+  result: 'Cleared' | 'Repelled' | GateBlock;
+  /** The party's attack after the matchup, and what it had to beat. */
+  attack: number;
+  power: number;
+  /** Everything the garrison had taken, banked on the way out. */
+  hoard: Wallet;
+  supplies: Wallet;
+}
+
+/**
+ * One attempt on a gate, resolved on entry with the player attacking.
+ *
+ * Win: the gate is cleared, its counter stops, its hoard is paid in full and
+ * Depth 1 becomes the frontier. Lose: the supplies are gone and the gate
+ * stands — no casualties, no cooldown, no second timer.
+ */
+export function attemptGate(
+  state: GameState,
+  map: MapData,
+  ruinId: RuinId,
+  heroId: HeroId,
+  slots: readonly PartySlot[],
+): GateReport {
+  const guard = RUINS[ruinId].guard;
+  const supplies = gateSupplies(ruinId);
+  const block = gateBlock(state, map, ruinId, heroId, slots);
+  if (block !== null) {
+    return { result: block, attack: 0, power: guard.power, hoard: {}, supplies };
+  }
+  pay(state.city.wallet, supplies);
+  const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
+  const party = partyOf(state, committed, heroId);
+  const attack = effectiveAttack(party, guard.threat, heroLevel(state, heroId));
+  if (attack < guard.power) {
+    return { result: 'Repelled', attack, power: guard.power, hoard: {}, supplies };
+  }
+  const hoard = markGateCleared(state, ruinId);
+  // The fight taught the party something whether or not the garrison was
+  // holding anything, and a tier-5 gate teaches more than the Barrow's.
+  addHeroXp(state, RUINS[ruinId].tier);
+  return { result: 'Cleared', attack, power: guard.power, hoard, supplies };
+}
+
+/** What the room sheet shows before the player commits: the threat is always
+ *  visible on a gate, so this hides nothing. */
+export interface GatePreview {
+  ruinId: RuinId;
+  threat: UnitId | 'Any';
+  power: number;
+  attack: number;
+  stats: { atk: number; def: number; hp: number };
+  supplies: Wallet;
+  /** True when the party already beats the gate on paper. A shortfall warns,
+   *  it never blocks. */
+  enough: boolean;
+}
+
+export function previewGate(
+  state: GameState,
+  ruinId: RuinId,
+  heroId: HeroId | null,
+  slots: readonly PartySlot[],
+): GatePreview {
+  const guard = RUINS[ruinId].guard;
+  const committed = slots.filter((s) => s.count > 0);
+  const party = partyOf(state, committed, heroId);
+  const level = heroId === null ? 1 : heroLevel(state, heroId);
+  const attack = effectiveAttack(party, guard.threat, level);
+  return {
+    ruinId,
+    threat: guard.threat,
+    power: guard.power,
+    attack,
+    stats: partyStats(party, level),
+    supplies: gateSupplies(ruinId),
+    enough: attack >= guard.power,
+  };
 }
 
 /** What waits at a depth. Keyed by (ruin, depth, seed) so it is the same

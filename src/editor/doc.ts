@@ -237,7 +237,7 @@ export class MapDoc {
     let id = `NewShrine${n}`;
     while (this.doc.landmarks.some((l) => l.id === id)) id = `NewShrine${++n}`;
     this.doc.landmarks.push({
-      id, kind: 'Shrine', x: cell.x, y: cell.y, defended: false, claimCost: 25000,
+      id, kind: 'Shrine', x: cell.x, y: cell.y, claimCost: 25000,
     });
     this.revision += 1;
     return id;

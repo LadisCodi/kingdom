@@ -10,8 +10,8 @@ import {
 } from '../src/sim/data/definitions';
 import { ladderRank } from '../src/sim/data/techTreeRules';
 import {
-  coordKey, getWallet, type Coord, type DistrictId, type GameState, type TechId,
-  type UnitId,
+  coordKey, getWallet, type Coord, type DistrictId, type GameState, type RuinId,
+  type TechId, type UnitId,
 } from '../src/sim/state';
 
 export const map = buildMapData();
@@ -94,6 +94,18 @@ export const canGather = (state: GameState): GameState => {
 
 export const reveal = (state: GameState, cells: Coord[]): void => {
   for (const c of cells) state.fog.revealed[coordKey(c)] = true;
+};
+
+/**
+ * Take the gate down without fighting for it.
+ *
+ * Every ruin opens with a garrison, and nothing inside can be entered until
+ * it falls (Docs/features/18-garrisons-and-raids.md §1). A test about DELVING
+ * is not a test about the gate, so it says so here in one line;
+ * tests/gates.test.ts is where the garrison itself is held to its contract.
+ */
+export const openRuin = (state: GameState, ruinId: RuinId): void => {
+  state.gates[ruinId] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: true };
 };
 
 /**

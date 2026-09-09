@@ -30,7 +30,6 @@ function art(sprite: string, glyph: string): HTMLElement {
 function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   const look = LANDMARK_ART[def.kind];
   const claimed = game.state.landmarks.claimed[def.id] === true;
-  const cleared = !def.defended || game.state.landmarks.cleared[def.id] === true;
   const cost = landmarkClaimCost(game.state, def);
 
   const body = el('div', { class: 'site' },
@@ -76,7 +75,6 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     onClick: () => game.doClaimLandmark(def.location),
     cost: { Gold: cost },
     have: (c) => game.walletValue(c),
-    disabledReason: !cleared ? 'An enemy warband holds this place' : undefined,
   }));
   return panel(body);
 }

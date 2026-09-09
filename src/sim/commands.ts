@@ -12,6 +12,7 @@ import {
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
 import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
+import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
 import { revealAroundDistrict } from './fog';
 import {
   advanceSchedule, nextScheduleBoundary, type ScheduleEvent,
@@ -402,12 +403,14 @@ export interface AdvanceResult {
   /** Windows that opened or closed — including ones that did BOTH while the
    *  player was away, which is the payoff for absolute-time boundaries. */
   scheduleEvents: ScheduleEvent[];
+  /** Garrisons that came down off the hill while the player was away. */
+  raids: RaidEvent[];
 }
 
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], delveEvents: [], scheduleEvents: [], goodsMade: [],
+  trainedUnits: [], delveEvents: [], scheduleEvents: [], goodsMade: [], raids: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -456,6 +459,13 @@ function applyDueAt(
     // PRODUCES, never what a timer does. A party at a checkpoint proposes no
     // boundary at all — it waits, indefinitely, until the player answers.
     out.delveEvents.push(...advanceDelves(state, t));
+    // A gate is a TIMER too: the counter a discovery started runs and pays out
+    // in full while the player is away. Arming comes first, so a ruin found
+    // between two boundaries — or by a save that predates gates entirely —
+    // starts its warning HERE, stamped with this boundary's t, and cannot be
+    // raided in the same instant it was noticed.
+    armGates(state, map, t);
+    out.raids.push(...advanceRaids(state, t));
     out.scheduleEvents.push(...advanceSchedule(state, t));
     // A finished good lands in the stockpile here rather than in
     // `runContinuous`, because it changes another subsystem's inputs: the
@@ -494,6 +504,7 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   consider(nextModifierExpiry(state, after));
   consider(nextTrainingCompletion(state, after));
   consider(nextDelveBoundary(state, after));
+  consider(nextRaidBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
   consider(nextWorkshopCompletion(state, after));
   return t;

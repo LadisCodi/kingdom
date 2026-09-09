@@ -20,7 +20,7 @@ import { advance } from '../src/sim/commands';
 import { techKnowledgeCost } from '../src/sim/research';
 import {
   ARMY, ARTIFACTS, TECH_ORDER, DELVE, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
-  UNITS, CURRENCIES,
+  RUIN_ORDER, UNITS, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
@@ -33,7 +33,9 @@ import { deserialize, serialize } from '../src/sim/save';
 import {
   getWallet, townhall, type ArtifactId, type GameState, type UnitId,
 } from '../src/sim/state';
-import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
+import {
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openRuin, reveal, T0,
+} from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
 
@@ -43,6 +45,9 @@ function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 2 }): 
   addAllTrainers(state);
   fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
   reveal(state, [RUINS[BARROW].location]);
+  // The gate is tests/gates.test.ts's subject; every delve test starts on the
+  // far side of it (Docs/features/18-garrisons-and-raids.md §1).
+  for (const id of RUIN_ORDER) openRuin(state, id);
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -856,7 +861,7 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
   it('a claimed landmark drips too, and pays a lump for taking the ground', () => {
     const state = freshGame();
     fund(state, { Gold: 1_000_000 });
-    const def = LANDMARKS.find((l) => !l.defended)!;
+    const def = LANDMARKS[0];
     reveal(state, [def.location]);
     expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour); // no territory: the floor
 

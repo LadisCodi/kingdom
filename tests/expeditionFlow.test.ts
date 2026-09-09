@@ -14,7 +14,9 @@ import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { depthDurationMs } from '../src/sim/combat';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
-import { addAllTrainers, freshGame, freshPresenter, fund, map, reveal } from './helpers';
+import {
+  addAllTrainers, freshGame, freshPresenter, fund, map, openRuin, reveal,
+} from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
 
@@ -23,6 +25,9 @@ function ready(units: Partial<Record<UnitId, number>> = { Warrior: 4 }): GameSta
   addAllTrainers(state);
   fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
   reveal(state, [RUINS[BARROW].location]);
+  // The garrison is somebody else's test (tests/gates.test.ts): these are
+  // about the route into the ruin behind it.
+  openRuin(state, BARROW);
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });

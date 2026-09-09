@@ -578,10 +578,6 @@ export function mountEditor(): void {
         doc.stroke(() => doc.updateLandmark(l.id, { claimCost: v }));
         refresh();
       })));
-      card.append(field('defended', checkbox(l.defended, (v) => {
-        doc.stroke(() => doc.updateLandmark(l.id, { defended: v }));
-        refresh();
-      })));
       card.append(el('p', { class: 'ed-hint' },
         `at (${l.x}, ${l.y}) · ring ${doc.distanceAt(l)} · `
         + `${LANDMARK_ART[l.kind as keyof typeof LANDMARK_ART]?.name ?? l.kind}`));
@@ -616,6 +612,18 @@ export function mountEditor(): void {
       (v) => patch({ affinity: v }))));
     card.append(field('artifact', select([...ARTIFACT_ORDER], r.artifact,
       (v) => patch({ artifact: v }))));
+    // The gate: one garrison on the surface, and the clock discovering the
+    // ruin starts (Docs/features/18-garrisons-and-raids.md §2). The creature
+    // is derived from the threat, so there is nothing else to pick.
+    card.append(el('div', { class: 'ed-label' }, 'The gate'));
+    card.append(field('threat', select(['Any', ...UNIT_ORDER], r.guard.threat,
+      (v) => patch({ guard: { ...r.guard, threat: v } }))));
+    card.append(field('power', numberInput(r.guard.power,
+      (v) => patch({ guard: { ...r.guard, power: v } }))));
+    card.append(field('warning min', numberInput(r.guard.warningMinutes,
+      (v) => patch({ guard: { ...r.guard, warningMinutes: v } }))));
+    card.append(field('period min', numberInput(r.guard.periodMinutes,
+      (v) => patch({ guard: { ...r.guard, periodMinutes: v } }))));
     card.append(el('div', { class: 'ed-label' }, 'Supplies'));
     for (const c of SUPPLY_CURRENCIES) {
       if (!(c in CURRENCIES)) continue;
@@ -797,13 +805,6 @@ function select(options: string[], value: string, onCommit: (v: string) => void)
   node.value = value;
   node.onchange = () => onCommit(node.value);
   return node;
-}
-
-function checkbox(value: boolean, onCommit: (v: boolean) => void): HTMLInputElement {
-  const input = el('input', { type: 'checkbox' });
-  input.checked = value;
-  input.onchange = () => onCommit(input.checked);
-  return input;
 }
 
 function rectBetween(a: Coord, b: Coord): Coord[] {

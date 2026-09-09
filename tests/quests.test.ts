@@ -374,7 +374,10 @@ describe('quests fund the research tree', () => {
     // `Trade`, the research that opens them — was added in front at 100.
     // 11,725: three opening beats pay Mana instead of Gold (2026-09-08) —
     // the pool is what the opening is short of, not coin.
-    expect(chain).toBe(11_725);
+    // 11,975: `DriveThemOut` joins the military block at 250 — the beat that
+    // sends the player at the Barrow's gate before it raids them
+    // (Docs/features/18-garrisons-and-raids.md §6).
+    expect(chain).toBe(11_975);
     expect(tree).toBe(518_955); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The

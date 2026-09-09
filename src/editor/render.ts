@@ -143,7 +143,7 @@ export function drawEditor(
       const art = LANDMARK_ART[l.kind as LandmarkKind];
       const picked = view.selected?.kind === 'landmark' && view.selected.id === l.id;
       drawSite(ctx, camera, l, size, art?.sprite ?? '', art?.glyph ?? '❔', l.id, picked,
-        l.defended ? '#ff9d5a' : '#8fe08f');
+        '#8fe08f');
     }
     for (const [id, r] of Object.entries(doc.ruins)) {
       const art = RUINS[id as RuinId];

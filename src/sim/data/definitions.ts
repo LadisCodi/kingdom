@@ -449,7 +449,7 @@ export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
   | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature' | 'SellGoods'
-  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'OwnArtifacts'
+  | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'ClearGarrisons' | 'OwnArtifacts'
   | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
@@ -1119,8 +1119,6 @@ export interface LandmarkDef {
   id: string; // content id — data-side, not a TS union
   kind: LandmarkKind;
   location: Coord;
-  /** An enemy army holds it: clear the encounter first, then claim. */
-  defended: boolean;
   /** Gold to claim. Authored per sanctuary rather than derived from distance:
    *  the tiers are the design — one in sight to save up for, then two rings
    *  beyond it — and no curve lands on 5,000 / 25,000 / 100,000 exactly. */
@@ -1134,12 +1132,11 @@ export const LANDMARK_ART: Record<LandmarkKind, { name: string; glyph: string; s
 };
 
 export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
-  id: string; kind: string; x: number; y: number; defended: boolean; claimCost: number;
+  id: string; kind: string; x: number; y: number; claimCost: number;
 }>).map((l) => ({
   id: l.id,
   kind: l.kind as LandmarkKind,
   location: { x: l.x, y: l.y },
-  defended: l.defended,
   claimCost: l.claimCost,
 }));
 
@@ -1353,6 +1350,27 @@ export interface RuinDef {
   /** Granted, guaranteed, on the first full clear. No randomness on the thing
    *  that gates a system. */
   artifact: ArtifactId;
+  /** The gate that holds the entrance (Docs/features/18-garrisons-and-raids.md). */
+  guard: GuardDef;
+}
+
+/**
+ * The garrison on a ruin's doorstep, and its clock.
+ *
+ * `threat` is a unit type or 'Any', and the creature is DERIVED from it —
+ * there is no second list to keep in step (§2). It is also the ruin's
+ * affinity, so the first fight teaches the matchup the whole ruin is built
+ * on. `power` is the gate's budget, authored BELOW the ruin's first depth:
+ * the gate is easier than the room it guards, because it is the room the
+ * player is pushed into on a clock.
+ */
+export interface GuardDef {
+  threat: UnitId | 'Any';
+  power: number;
+  /** Minutes from DISCOVERY to the first raid. */
+  warningMinutes: number;
+  /** Minutes between raids after that. */
+  periodMinutes: number;
 }
 
 const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
@@ -1381,6 +1399,7 @@ const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph'
 const ruinBalance = regionMap.ruins as Record<RuinId, {
   x: number; y: number; tier: number; difficulty: number; baseDepthSeconds: number;
   depthGrowth: number; maxDepth: number; supplies: Wallet; affinity: string; artifact: string;
+  guard: { threat: string; power: number; warningMinutes: number; periodMinutes: number };
 }>;
 
 /** Every ruin the code knows about. RuinId is a union, so the roster is fixed
@@ -1405,6 +1424,7 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
       supplies: b.supplies,
       affinity: b.affinity as RuinDef['affinity'],
       artifact: b.artifact as ArtifactId,
+      guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];
   }),
 ) as Record<RuinId, RuinDef>;
@@ -1695,6 +1715,30 @@ export const BANNER_ORDER = Object.keys(bannerContent) as BannerId[];
 /** Delve rewards, the 50% failure bite, and party slots. */
 export const DELVE = balance.delve;
 export const PARTY = balance.party;
+
+/**
+ * What a garrison is worth per ruin TIER: how many seconds of the city's own
+ * production a raid takes of each material, and what clearing that tier's
+ * gate costs in supplies. Everything ELSE about a gate — its creature, its
+ * power and its two counters — is authored by coordinate in `?dev=map`,
+ * because it belongs to the site rather than to the tier
+ * (Docs/features/18-garrisons-and-raids.md §8).
+ */
+export interface GarrisonDef {
+  tier: number;
+  takeSeconds: number;
+  supplies: Wallet;
+}
+
+export const GARRISONS = balance.garrisons as GarrisonDef[];
+
+/** The tier row, or the deepest one authored — a ruin can never fall off the
+ *  end of the table and take nothing. */
+export const garrisonForTier = (tier: number): GarrisonDef =>
+  GARRISONS.find((g) => g.tier === tier) ?? GARRISONS[GARRISONS.length - 1];
+
+/** How a raid is bounded: a fraction of the purse, and a trip count. */
+export const RAID = balance.raid;
 /** Rewarded-ad offers: the cooldown range, the pool fraction that makes one
  *  eligible, and how long the (faked) video runs. */
 export const AD = balance.ads;
@@ -1809,4 +1853,4 @@ export const GAME_VERSION = '0.1.0';
 // count means something different from the step count, so this one HAS a
 // migrator (save.ts) — it drops the old block and lands the player in the
 // running season owing nothing.
-export const SAVE_VERSION = 36;
+export const SAVE_VERSION = 37;

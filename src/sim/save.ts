@@ -27,6 +27,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
+  type RuinId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -537,7 +538,22 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
-        Cleared: Object.keys(state.landmarks.cleared),
+      },
+      // The gates and what they have taken. `NextRaidAtUtc` is a TIMER, so it
+      // is not shifted by the offline cap below: the counter a discovery
+      // started runs while the player is away, and the raid it owes resolves
+      // on the next advance (Docs/features/18-garrisons-and-raids.md §3).
+      'kingdom.gates': {
+        Gates: Object.entries(state.gates).map(([ruinId, g]) => ({
+          RuinID: ruinId,
+          NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
+          Trips: g!.trips,
+          Hoard: g!.hoard,
+          Cleared: g!.cleared,
+        })),
+        Reports: state.raidReports.map((r) => ({
+          ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
+        })),
       },
       'kingdom.artifacts': {
         Owned: state.artifacts.owned,
@@ -897,9 +913,27 @@ export function deserialize(
 
   const landmarksDto = modules['kingdom.landmarks'];
   if (landmarksDto) {
-    state.landmarks = { claimed: {}, cleared: {} };
+    // `Cleared` was the defended landmark's flag and is gone: a sanctuary is
+    // claimed for Gold and nothing holds one. An older save still carries the
+    // key; it is simply not read.
+    state.landmarks = { claimed: {} };
     for (const id of (landmarksDto.Claimed ?? []) as string[]) state.landmarks.claimed[id] = true;
-    for (const id of (landmarksDto.Cleared ?? []) as string[]) state.landmarks.cleared[id] = true;
+  }
+
+  const gatesDto = modules['kingdom.gates'];
+  if (gatesDto) {
+    state.gates = {};
+    for (const g of (gatesDto.Gates ?? []) as any[]) {
+      state.gates[g.RuinID as RuinId] = {
+        nextRaidAt: msOrNull(g.NextRaidAtUtc),
+        trips: g.Trips ?? 0,
+        hoard: { ...(g.Hoard ?? {}) },
+        cleared: g.Cleared === true,
+      };
+    }
+    state.raidReports = ((gatesDto.Reports ?? []) as any[]).map((r) => ({
+      id: r.ID, ruinId: r.RuinID as RuinId, at: ms(r.AtUtc), took: { ...(r.Took ?? {}) },
+    }));
   }
 
   const artifactsDto = modules['kingdom.artifacts'];

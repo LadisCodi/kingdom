@@ -45,7 +45,7 @@ import { grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
 import { advance } from '../src/sim/commands';
 import {
-  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, reveal, T0,
+  addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, openRuin, reveal, T0,
 } from './helpers';
 
 
@@ -103,6 +103,7 @@ function probeState(): GameState {
  */
 function stardustOneDepth(state: GameState): number {
   const probe = structuredClone(state);
+  openRuin(probe, 'HollowBarrow');
   const slots = [{ unitId: 'Warrior' as const, count: 1 }];
   if (launchDelve(probe, map, 'HollowBarrow', 'Scout', slots, T0) !== 'Launched') return -1;
   advance(probe, map, T0 + depthMs(probe, 'HollowBarrow', 1) + 1000);

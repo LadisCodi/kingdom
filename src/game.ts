@@ -1822,8 +1822,6 @@ export class Game {
       });
     } else if (result === 'NotEnoughGold') {
       this.shake(['Gold']);
-    } else if (result === 'Defended') {
-      this.toast('An enemy warband holds this place — clear it first');
     }
     this.notify();
   }
@@ -2756,9 +2754,7 @@ function siteBanner(id: string): Banner | null {
       icon: art.glyph,
       name: art.name,
       // What it is FOR, in one line — the site card carries the detail.
-      desc: landmark.defended
-        ? 'Something holds it. Clear a path, then clear the guard.'
-        : 'Clear a path to it and claim it.',
+      desc: 'Clear a path to it and claim it.',
       sprite: art.sprite,
       tone: 'sky',
     };
@@ -2843,6 +2839,7 @@ function trainerName(unitId: UnitId): string {
 /** Why a launch is blocked, in words the player can act on. */
 const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
   RuinNotFound: 'You have not found this ruin yet',
+  GateStanding: 'The garrison at the gate has to come down first',
   NoHero: 'Pick a hero to lead them',
   HeroBusy: 'That hero is already underground',
   EmptyParty: 'Send at least one unit with them',

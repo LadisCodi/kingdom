@@ -8,6 +8,7 @@ import {
   QUESTS, RELATIVE_QUEST_TYPES, type QuestDef,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
+import { clearedGateCount } from './gates';
 import { refund } from './wallet';
 import {
   addToWallet, getWallet,
@@ -86,6 +87,8 @@ export function questValue(state: GameState, quest: QuestDef): number {
       return state.deepestDepth;
     case 'ClearRuins':
       return Object.keys(state.ruinsCleared).length;
+    case 'ClearGarrisons':
+      return clearedGateCount(state);
     case 'OwnArtifacts':
       return state.artifacts.owned.length;
     case 'OwnHeroes':

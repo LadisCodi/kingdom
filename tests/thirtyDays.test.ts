@@ -458,7 +458,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
 
   // 8. Claim an affordable landmark: Mana capacity and the research clock.
   for (const lm of visibleLandmarks(state, map)) {
-    if (lm.defended || isLandmarkClaimed(state, lm.id)) continue;
+    if (isLandmarkClaimed(state, lm.id)) continue;
     if (claimLandmark(state, map, lm.location) === 'Claimed') acted = true;
   }
 
@@ -596,7 +596,6 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
       'discovered;', Object.keys(state.ruinsCleared).length, 'cleared; deepest',
       state.deepestDepth,
       '| landmarks visible', visibleLandmarks(state, map).length,
-      'defended', visibleLandmarks(state, map).filter((l) => l.defended).length,
       'claimed', Object.keys(state.landmarks.claimed).length,
       '| launched', launched, 'extracted', extracted,
       '| revealed cells', map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length,

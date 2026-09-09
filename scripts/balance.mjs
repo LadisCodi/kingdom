@@ -62,6 +62,12 @@ const TECH_IDS = Object.keys(JSON.parse(
 ).technologies);
 
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
+// A ruin's TIER keys the garrison numbers that are not authored per site: what
+// a raid takes, and what clearing the gate costs in supplies. The gate itself
+// — its creature, its power and its two counters — is authored by coordinate
+// in `?dev=map`, like the rest of the map
+// (Docs/features/18-garrisons-and-raids.md §2).
+const RUIN_TIERS = [1, 2, 3, 4, 5];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
 const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
 // The SIMULATED store's real-money SKUs (Docs/features/14-monetization.md §2).
@@ -84,6 +90,9 @@ const QUEST_GOAL_TYPES = {
   // The long game: magic and expeditions.
   ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
   OwnHeroes: null,
+  // Gates beaten. The doorway to combat, and the beat that teaches the room
+  // sheet before a depth adds the power ladder.
+  ClearGarrisons: null,
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
   // "clear two cells with forest on them" — a DiscoverCells that cares WHAT
@@ -183,6 +192,12 @@ const SETTINGS = [
   // spend a MONTH, in dollars. A profile is chosen once per save, and the
   // budget is what turns a free tap into a preference — with money that is
   // scarce, buying one thing means not buying another.
+  // A raid is bounded twice: `take_seconds` (the Garrisons sheet) bounds it on
+  // a large purse, this fraction bounds it on a small one — and a garrison
+  // makes at most `max_raids` trips before it sits on what it took
+  // (Docs/features/18-garrisons-and-raids.md §4).
+  ['raid.take_fraction_max', 'raid.takeFractionMax'],
+  ['raid.max_raids', 'raid.maxRaids'],
   ['payer.f2p_monthly_usd', 'payer.f2pMonthlyUsd'],
   ['payer.minnow_monthly_usd', 'payer.minnowMonthlyUsd'],
   ['payer.dolphin_monthly_usd', 'payer.dolphinMonthlyUsd'],
@@ -417,6 +432,11 @@ const SHEETS = {
     'legendary_pity_at', 'weight_common', 'weight_rare', 'weight_legendary',
     'duplicate_fragments', 'fragments_per_miss', 'pull_stardust',
     'free_per_day', 'free_cooldown_seconds'],
+  // One row per ruin TIER. `take_seconds` is how many seconds of the city's
+  // own production a raid takes of each material; the supply columns are what
+  // clearing that tier's gate costs, paid on entry and never refunded.
+  Garrisons: ['tier', 'take_seconds',
+    'supply_gold', 'supply_wood', 'supply_food', 'supply_stone'],
   Settings: ['key', 'value'],
 };
 
@@ -629,7 +649,7 @@ async function importXlsx() {
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
-    delve: {}, party: {}, heroes: {}, ads: {},
+    delve: {}, party: {}, heroes: {}, ads: {}, garrisons: [], raid: {},
     artifacts: {},
     quests: [], banners: {},
     fog: { rings: [], fallbackGrowth: 0 },
@@ -801,6 +821,15 @@ async function importXlsx() {
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
   }
+
+  for (const [tier, r] of byId(readSheet(workbook, 'Garrisons'), RUIN_TIERS, 'tier')) {
+    out.garrisons.push({
+      tier,
+      takeSeconds: num(r, 'take_seconds'),
+      supplies: wallet(r, 'supply'),
+    });
+  }
+  out.garrisons.sort((a, b) => a.tier - b.tier);
 
   const adjacencySeen = new Set();
   for (const r of readSheet(workbook, 'Adjacency')) {
@@ -1130,6 +1159,9 @@ async function exportXlsx() {
     const s = b.store[id];
     return [id, s.priceUsd, s.gems];
   }));
+
+  addSheet(workbook, 'Garrisons', (b.garrisons ?? []).map((g) =>
+    [g.tier, g.takeSeconds, ...costCells(g.supplies)]));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
