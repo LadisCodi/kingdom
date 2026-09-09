@@ -23,7 +23,8 @@
 import type { Game } from '../game';
 import { DISTRICTS, UNITS, type UnitDef } from '../sim/data/definitions';
 import {
-  lineFor, lineRushCost, trainCost, trainSecondsAt, trainingCompletesAt, trainingProgress,
+  itemCount, lineFor, lineRushCost, trainCost, trainSecondsAt, trainingCompletesAt,
+  trainingProgress,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
@@ -72,10 +73,17 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
   // ---------------------------------------------------------- the queue
   if (line.length > 0) {
     const strip = el('div', { class: 'tr-queue' },
-      ...line.map((item, i) => el('div', {
-        class: `tr-slot${i === 0 ? ' is-active' : ''}`,
-        title: nameFor(item.trainee),
-      }, iconEl(iconFor(item.trainee), { size: 'lg' }))));
+      ...line.map((item, i) => {
+        // A ward is one item that hands over many, so the slot has to say how
+        // many — otherwise nine mended soldiers read as one recruit.
+        const many = itemCount(item);
+        return el('div', {
+          class: `tr-slot${i === 0 ? ' is-active' : ''}`,
+          title: many > 1 ? `${many} ${nameFor(item.trainee)}s mending` : nameFor(item.trainee),
+        },
+          iconEl(iconFor(item.trainee), { size: 'lg' }),
+          ...(many > 1 ? [el('span', { class: 'tr-slot-count' }, `x${many}`)] : []));
+      }));
 
     const head = line[0];
     const bar = progress('gold');
@@ -102,6 +110,41 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
         iconEl('showme', { size: 'sm' }),
         `Tap the ${def.name} itself to hurry it along`),
     );
+  }
+
+  // ------------------------------------------------------------- the ward
+  //
+  // Wounded soldiers of the types THIS hall turns out. It sits above the
+  // picker because it is the cheaper way to field the same soldier, and a
+  // player who has just lost a fight should meet it before the recruit price.
+  const ward = game.woundedInfo();
+  const mine = ward.byUnit.filter((w) => (offers as TrainableId[]).includes(w.unitId));
+  if (mine.length > 0) {
+    root.append(el('div', { class: 'tr-head' }, `Infirmary — ${ward.used} of ${ward.cap}`));
+    for (const { unitId, count } of mine) {
+      const seconds = game.healWait(unitId, count);
+      root.append(el('div', { class: 'tr-info is-ward' },
+        el('div', { class: 'tr-portrait' }, iconEl(unitId, { size: 'lg' })),
+        el('div', { class: 'tr-body' },
+          el('div', { class: 'tr-name' }, `${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
+          el('div', { class: 'tr-tag' }, 'Wounded'),
+          el('div', { class: 'tr-desc' },
+            'Off the roster until they are back on their feet. Cheaper to mend '
+            + 'than to replace.')),
+        action({
+          label: 'Heal',
+          kind: 'primary',
+          onClick: () => game.doHealWounded(unitId, count, district),
+          cost: game.healPrice(unitId, count),
+          have: (c) => game.walletValue(c),
+          disabledReason: game.armyRoom().used + count > game.armyRoom().cap
+            ? 'No room in the ranks — upgrade this hall'
+            : undefined,
+          info: el('span', { class: 'dc-uptime' },
+            iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
+        }),
+      ));
+    }
   }
 
   // --------------------------------------------------------- the picker
@@ -190,7 +233,7 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
       have: (c) => game.walletValue(c),
       disabledReason: !techOk
         ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
-        : army.used + unit.power > army.cap
+        : army.used + 1 > army.cap
           ? 'Your army is full — upgrade this hall'
           : undefined,
       info: el('span', { class: 'dc-uptime' },

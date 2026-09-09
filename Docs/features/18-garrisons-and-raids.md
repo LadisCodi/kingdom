@@ -148,7 +148,7 @@ take = floor( min(base, banked × take_fraction_max) )
   - **Lose:** the supplies are gone and the gate stands.
 - **The attempt costs soldiers, win or lose**, by the rule every fight
   follows ([`combat.md`](combat.md) §4): the gate's power against the party's
-  defence, and the dead are gone for good.
+  defence, most of the fallen into the infirmary and the rest gone.
   - Heroes are never among the dead: a hero can fall in a fight and is whole
     when it ends ([`10-heroes.md`](10-heroes.md) §2.3).
   - **The screen says the price before it is paid** — the expected losses sit

@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   armyCap, finishLineWithGems, lineFor, lineRemainingSeconds, lineRushCost, trainUnit,
+  woundedOf,
 } from '../src/sim/army';
 import {
   BEATS, effectiveAttack, partyStats, typeMultiplier, type Party,
@@ -320,7 +321,20 @@ describe('entering a room', () => {
     expect(roomsCleared(state, BARROW)).toBe(2);
   });
 
-  it('costs soldiers, win or lose, and the fallen never come back', () => {
+  it('sends most of the fallen to the infirmary, and the rest nowhere', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const report = enterRoom(state, map, BARROW, ['Warden'], company);
+    const fell = report.losses.reduce((sum, l) => sum + l.count, 0);
+    const hurt = report.wounded.reduce((sum, l) => sum + l.count, 0);
+    expect(fell).toBeGreaterThan(0);
+    // A bad room is a bill rather than a loss: what the ward catches can be
+    // bought back at a military hall (tests/infirmary.test.ts).
+    expect(hurt).toBe(Math.round(fell * ARMY.woundedShare));
+    expect(woundedOf(state, 'Warrior')).toBe(hurt);
+    expect(state.army).toHaveLength(60 - fell);
+  });
+
+  it('costs soldiers, win or lose, and the fallen leave the ranks', () => {
     const state = readyToDelve({ Warrior: 60 });
     const won = enterRoom(state, map, BARROW, ['Warden'], company);
     expect(won.result).toBe('Cleared');

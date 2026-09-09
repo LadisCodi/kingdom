@@ -310,6 +310,17 @@ const SETTINGS = [
   ['army.threat_floor_fraction', 'army.threatFloorFraction'],
   ['army.damage_per_strength', 'army.damagePerStrength'],
   ['army.damage_absorbed_per_defence', 'army.damageAbsorbedPerDefence'],
+  // WHAT A FIGHT COSTS IN BODIES, and how much of it comes back. Every fight
+  // takes casualties (Docs/features/combat.md §4); `wounded_share` of them
+  // reach the infirmary instead of the grave, and `wounded_cap_share` — a
+  // share of the army cap, so the halls that hold the army hold its wounded —
+  // is how many can wait there at once. Anything past it dies, which is what
+  // makes the number a decision. Healing is priced against RECRUITING the
+  // same soldier: cheaper in both coins and clock, or nobody would bother.
+  ['army.wounded_share', 'army.woundedShare'],
+  ['army.wounded_cap_share', 'army.woundedCapShare'],
+  ['army.heal_cost_share', 'army.healCostShare'],
+  ['army.heal_time_share', 'army.healTimeShare'],
   // Delves. `fail_haul_loss` is the number that most needs playtest rather
   // than argument: lower is gentler and may make pushing automatic, higher
   // bites but starts to feel like the loss aversion the positioning rules out.

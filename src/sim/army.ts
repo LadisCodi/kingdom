@@ -22,7 +22,7 @@
 
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
-import { DISTRICTS, RUSH, TRAINING, UNITS, levelIndexed } from './data/definitions';
+import { ARMY, DISTRICTS, RUSH, TRAINING, UNITS, levelIndexed } from './data/definitions';
 import { isTechComplete } from './research';
 import {
   cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
@@ -47,9 +47,11 @@ import { canAfford, pay } from './wallet';
 export const armySize = (state: GameState): number => state.army.length;
 
 /** Units already paid for but not yet delivered still count against the cap —
- *  otherwise the queue is a way to exceed it. */
-export const queuedTroops = (state: GameState): number =>
-  state.city.trainingQueue.filter((i) => i.trainee !== 'Villager').length;
+ *  otherwise the queue is a way to exceed it. A heal is a whole batch in one
+ *  item, so what counts is what it will hand over. */
+export const queuedTroops = (state: GameState): number => state.city.trainingQueue
+  .filter((i) => i.trainee !== 'Villager')
+  .reduce((sum, i) => sum + itemCount(i), 0);
 
 export const committedTroops = (state: GameState): number =>
   armySize(state) + queuedTroops(state);
@@ -88,23 +90,135 @@ export function casualtiesFor(
   return out;
 }
 
-/** Take them off the roster. The units removed are the plainest ones of their
- *  type — a soldier is a soldier, and nothing on an `ArmyUnit` tells them
- *  apart — so this is a count, not a choice. */
+/**
+ * THE INFIRMARY.
+ *
+ * How many wounded the city can hold at once, as a share of the army it can
+ * field: a bigger army is a bigger stretcher party, so the halls that raise
+ * the ceiling raise this with it and there is no second building to place.
+ * A kingdom with no hall has no infirmary either.
+ */
+export const woundedCap = (state: GameState): number =>
+  Math.round(armyCap(state) * ARMY.woundedCapShare);
+
+/** Soldiers waiting to be put back together, of every type. */
+export const woundedCount = (state: GameState): number =>
+  Object.values(state.city.wounded).reduce((sum, n) => sum + (n ?? 0), 0);
+
+export const woundedOf = (state: GameState, unitId: UnitId): number =>
+  state.city.wounded[unitId] ?? 0;
+
+/** What one fight did to the ranks: everyone who left them, and how many of
+ *  those can still be saved. */
+export interface Casualties {
+  /** Everyone taken off the roster — dead and wounded together. This is what
+   *  the party lost, which is what a screen showing squads has to say. */
+  losses: Array<{ unitId: UnitId; count: number }>;
+  /** The share of them that reached the infirmary. */
+  wounded: Array<{ unitId: UnitId; count: number }>;
+}
+
+/**
+ * Take them off the roster, and split them.
+ *
+ * **A casualty is not always a death.** `army.woundedShare` of them come back
+ * as wounded and wait in the infirmary until a military hall heals them
+ * (`healWounded`); the rest are gone for good. Anything the infirmary has no
+ * room for dies with them — which is what makes its capacity a decision
+ * rather than a display.
+ *
+ * The units removed are the plainest ones of their type — a soldier is a
+ * soldier, and nothing on an `ArmyUnit` tells them apart — so this is a
+ * count, not a choice.
+ */
 export function takeCasualties(
   state: GameState,
   slots: readonly { unitId: UnitId; count: number }[],
   damage: number,
-): Array<{ unitId: UnitId; count: number }> {
+): Casualties {
   const losses = casualtiesFor(slots, damage);
+  const wounded: Array<{ unitId: UnitId; count: number }> = [];
+  let room = Math.max(0, woundedCap(state) - woundedCount(state));
   for (const loss of losses) {
     let left = loss.count;
     state.army = state.army.filter((u) => {
       if (left > 0 && u.definitionId === loss.unitId) { left -= 1; return false; }
       return true;
     });
+    const saved = Math.min(room, Math.round(loss.count * ARMY.woundedShare));
+    if (saved <= 0) continue;
+    room -= saved;
+    state.city.wounded[loss.unitId] = woundedOf(state, loss.unitId) + saved;
+    wounded.push({ unitId: loss.unitId, count: saved });
   }
-  return losses;
+  return { losses, wounded };
+}
+
+// ------------------------------------------------------------ putting them back
+
+/** What one item hands over when its clock runs out: a recruit is one soldier,
+ *  a heal is however many were put on the table. */
+export const itemCount = (item: TrainingItem): number =>
+  (item.kind === 'heal' ? Math.max(1, item.count ?? 1) : 1);
+
+/** What it costs to put `count` of a type back on their feet: a fraction of
+ *  recruiting them, in the same coins. Cheaper than the funeral. */
+export function healCost(
+  state: GameState, unitId: UnitId, count: number,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [c, n] of Object.entries(trainCost(state, unitId))) {
+    out[c] = Math.max(1, Math.round(n * count * ARMY.healCostShare));
+  }
+  return out;
+}
+
+/** And what it costs in time. One wait for the whole batch — an infirmary
+ *  works on a ward, not on a queue of beds. */
+export const healSeconds = (unitId: UnitId, count: number): number =>
+  Math.max(1, Math.round(trainSeconds(unitId) * count * ARMY.healTimeShare));
+
+export type HealResult =
+  | 'Queued' | 'NoneWounded' | 'NoBuilding' | 'NotEnoughResources' | 'ArmyAtCapacity';
+
+/**
+ * Put wounded soldiers back in the ranks.
+ *
+ * They go into the hall's own line, behind whatever it is already turning
+ * out, because a hall does one thing at a time — and that is the pacing:
+ * healing competes with recruiting for the same bench.
+ */
+export function healWounded(
+  state: GameState,
+  unitId: UnitId,
+  count: number,
+  now = 0,
+  at?: District,
+): HealResult {
+  const want = Math.min(Math.max(0, Math.floor(count)), woundedOf(state, unitId));
+  if (want <= 0) return 'NoneWounded';
+  const building = at ?? trainerFor(state, unitId);
+  if (!building || !DISTRICTS[building.definitionId].trains.includes(unitId)) return 'NoBuilding';
+  if (building.state !== 'Built') return 'NoBuilding';
+  // They left the roster when they fell, so they have to fit back into it.
+  if (committedTroops(state) + want > armyCap(state)) return 'ArmyAtCapacity';
+  const cost = healCost(state, unitId, want);
+  if (!canAfford(state.city.wallet, cost)) return 'NotEnoughResources';
+  pay(state.city.wallet, cost);
+  state.city.wounded[unitId] = woundedOf(state, unitId) - want;
+  const idle = lineFor(state, building.uniqueId).length === 0;
+  const item: TrainingItem = {
+    uniqueId: newId(state, `healing_${unitId}`),
+    trainee: unitId,
+    kind: 'heal',
+    count: want,
+    buildingId: building.uniqueId,
+    startedAt: null,
+    seconds: null,
+  };
+  state.city.trainingQueue.push(item);
+  if (idle) startTrainee(state, item, now);
+  return 'Queued';
 }
 
 /** The military buildings, in city order. */
@@ -156,16 +270,23 @@ export function trainSecondsAt(state: GameState, buildingId: string, trainee: Tr
   return Math.max(1, Math.round(trainSeconds(trainee) * mult));
 }
 
-/** Start one trainee's clock: the moment, and the duration that goes with it. */
+/** Start one trainee's clock: the moment, and the duration that goes with it.
+ *  A ward full of wounded is one wait, priced by the same neighbours. */
 function startTrainee(state: GameState, item: TrainingItem, at: number): void {
   item.startedAt = at;
-  item.seconds = trainSecondsAt(state, item.buildingId, item.trainee);
+  const building = districtById(state, item.buildingId);
+  const mult = building === undefined ? 1 : adjacencyMultiplier(state, building, 'trainTime');
+  item.seconds = item.kind === 'heal'
+    ? Math.max(1, Math.round(healSeconds(item.trainee as UnitId, itemCount(item)) * mult))
+    : trainSecondsAt(state, item.buildingId, item.trainee);
 }
 
 /** What is on this item's clock: what it was stamped with, or the authored
  *  duration for a pre-30 save that has none. */
 export const itemTrainSeconds = (item: TrainingItem): number =>
-  item.seconds ?? trainSeconds(item.trainee);
+  item.seconds ?? (item.kind === 'heal'
+    ? healSeconds(item.trainee as UnitId, itemCount(item))
+    : trainSeconds(item.trainee));
 
 // There is no tap that hurries a trainee along. A queue is a FIXED duration
 // and a tap is a scaling one (`tap.workSeconds` x TapPower), so a maxed thumb
@@ -254,6 +375,17 @@ export function cancelTraining(state: GameState, itemId: string): CancelTraining
   const index = state.city.trainingQueue.findIndex((i) => i.uniqueId === itemId);
   if (index === -1) return 'NotFound';
   const [item] = state.city.trainingQueue.splice(index, 1);
+  // A cancelled heal is not a cancelled purchase: the soldiers go back to
+  // their beds, and the ward is where they were before the order.
+  if (item.kind === 'heal') {
+    const unitId = item.trainee as UnitId;
+    state.city.wounded[unitId] = woundedOf(state, unitId) + itemCount(item);
+    for (const [c, n] of Object.entries(healCost(state, unitId, itemCount(item)))) {
+      state.city.wallet[c as keyof typeof state.city.wallet] =
+        (state.city.wallet[c as keyof typeof state.city.wallet] ?? 0) + n;
+    }
+    return 'Cancelled';
+  }
   // Refunded at what it COST, which for a villager is the price at its place
   // in the line — recomputed after the splice, so it matches what was paid.
   for (const [c, n] of Object.entries(trainCost(state, item.trainee))) {
@@ -312,8 +444,8 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
     const at = trainingCompletesAt(earliest);
     state.city.trainingQueue.splice(state.city.trainingQueue.indexOf(earliest), 1);
 
-    deliver(state, earliest.trainee, at);
-    delivered.push(earliest.trainee);
+    deliver(state, earliest.trainee, at, itemCount(earliest));
+    for (let i = 0; i < itemCount(earliest); i++) delivered.push(earliest.trainee);
     // The next in THAT line starts when the slot freed, not at `toTime`.
     const next = lineFor(state, earliest.buildingId)[0];
     if (next && next.startedAt === null) startTrainee(state, next, at);
@@ -328,14 +460,16 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
  * property one-call replay parity rests on. Shared with the gem rush, so a
  * bought unit lands by exactly the same path as a waited-for one.
  */
-function deliver(state: GameState, trainee: TrainableId, at: number): void {
+function deliver(state: GameState, trainee: TrainableId, at: number, count = 1): void {
   if (trainee === 'Villager') {
     const rateBefore = cityGoldPerMinute(state);
-    state.city.population += 1;
+    state.city.population += count;
     repriceTaxAnchor(state, at, rateBefore);
     return;
   }
-  state.army.push({ uniqueId: newId(state, `unit_${trainee}`), definitionId: trainee });
+  for (let i = 0; i < count; i++) {
+    state.army.push({ uniqueId: newId(state, `unit_${trainee}`), definitionId: trainee });
+  }
 }
 
 // ------------------------------------------------------------- buying the wait

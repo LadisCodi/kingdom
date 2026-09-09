@@ -26,7 +26,8 @@ import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
-  committedTroops, finishLineWithGems, lineFor, armyCap, trainUnit,
+  committedTroops, finishLineWithGems, healCost, healSeconds, healWounded, lineFor,
+  armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   trainingCompletesAt,
 } from './sim/army';
 import {
@@ -2038,10 +2039,10 @@ export class Game {
       });
     } else if (report.result === 'Repelled') {
       playSfx('error');
-      const fallen = report.losses.reduce((sum, l) => sum + l.count, 0);
-      this.toast(fallen === 0
+      const cost = lossLine(report.losses, report.wounded);
+      this.toast(cost === ''
         ? 'Driven off. The supplies are gone — come back stronger.'
-        : `Driven off, and ${fallen} did not come home. Come back stronger.`);
+        : `Driven off. ${cost}`);
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(gateSupplies(ruinId)) as CurrencyId[]);
     } else {
@@ -2299,15 +2300,14 @@ export class Game {
     // The dead are off the roster now, so the squads on the board have to
     // come back down to what is left of them.
     this.reconcileParty();
-    const fallen = report.losses.reduce((sum, l) => sum + l.count, 0);
-    const cost = fallen === 0 ? '' : `, ${fallen} lost`;
+    const cost = lossLine(report.losses, report.wounded);
     if (report.result === 'Cleared') {
       playSfx(report.depthCompleted ? 'questComplete' : 'quest');
       const paid = Object.entries(report.wallet)
         .filter(([, n]) => n > 0).map(([c, n]) => `${n} ${c}`).join(', ');
       this.toast(report.depthCompleted
-        ? `Depth ${report.depth} is yours — ${paid}${cost}`
-        : `Room ${report.room} cleared — ${paid}${cost}`);
+        ? `Depth ${report.depth} is yours — ${paid}${cost === '' ? '' : `. ${cost}`}`
+        : `Room ${report.room} cleared — ${paid}${cost === '' ? '' : `. ${cost}`}`);
       if (report.artifact !== null) {
         const relic = ARTIFACTS[report.artifact];
         this.queueBanner({
@@ -2329,9 +2329,9 @@ export class Game {
       }
     } else if (report.result === 'Repelled') {
       playSfx('error');
-      this.toast(fallen === 0
+      this.toast(cost === ''
         ? 'Driven back. The supplies are gone — try again, or bring more.'
-        : `Driven back, and ${fallen} did not come home. Try again, or bring more.`);
+        : `Driven back. ${cost}`);
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(report.supplies) as CurrencyId[]);
     } else {
@@ -2395,6 +2395,40 @@ export class Game {
     if (result === 'Success') playSfx('gemSpend');
     else if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
+  }
+
+  /** Put a ward's worth of wounded back in the ranks. One order, one wait,
+   *  in the hall the player pressed it on. */
+  doHealWounded(unitId: UnitId, count: number, at?: District): void {
+    const result = healWounded(this.state, unitId, count, this.now(), at);
+    if (result === 'Queued') {
+      playSfx('unitTrained');
+      this.toast(`${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'} on the mend`);
+    } else if (result === 'NotEnoughResources') {
+      this.shake(Object.keys(healCost(this.state, unitId, count)) as CurrencyId[]);
+    } else if (result === 'ArmyAtCapacity') {
+      this.toast('No room in the ranks — upgrade a military hall');
+    } else if (result === 'NoBuilding') {
+      this.toast('No hall here can look after them');
+    }
+    this.notify();
+  }
+
+  /** The infirmary, for the card that draws it: who is waiting, and how full
+   *  the ward is. */
+  woundedInfo(): { byUnit: Array<{ unitId: UnitId; count: number }>; used: number; cap: number } {
+    const byUnit = (Object.keys(UNITS) as UnitId[])
+      .map((unitId) => ({ unitId, count: woundedOf(this.state, unitId) }))
+      .filter((w) => w.count > 0);
+    return { byUnit, used: woundedCount(this.state), cap: woundedCap(this.state) };
+  }
+
+  healPrice(unitId: UnitId, count: number): Record<string, number> {
+    return healCost(this.state, unitId, count);
+  }
+
+  healWait(unitId: UnitId, count: number): number {
+    return healSeconds(unitId, count);
   }
 
   doTrain(unitId: TrainableId, at?: District): void {
@@ -3165,6 +3199,27 @@ function trainerName(unitId: UnitId): string {
 
 
 /** Why a room cannot be entered, in words the player can act on. */
+/**
+ * What a fight cost, in one clause.
+ *
+ * The two halves are different news and have to read as different news: the
+ * dead are a loss, the wounded are a bill the player can choose to pay
+ * (Docs/features/combat.md §4). Empty when nobody fell, so the caller can say
+ * nothing at all.
+ */
+function lossLine(
+  losses: ReadonlyArray<{ count: number }>,
+  wounded: ReadonlyArray<{ count: number }>,
+): string {
+  const fell = losses.reduce((sum, l) => sum + l.count, 0);
+  if (fell === 0) return '';
+  const hurt = wounded.reduce((sum, l) => sum + l.count, 0);
+  const dead = fell - hurt;
+  if (hurt === 0) return `${dead} dead`;
+  if (dead === 0) return `${hurt} wounded — heal them at a military hall`;
+  return `${dead} dead, ${hurt} wounded — heal them at a military hall`;
+}
+
 const ROOM_BLOCK_TEXT: Record<RoomBlock, string> = {
   RuinNotFound: 'You have not found this ruin yet',
   GateStanding: 'The garrison at the gate has to come down first',

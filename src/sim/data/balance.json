@@ -2569,7 +2569,11 @@
     "typeDisadvantage": 0.75,
     "threatFloorFraction": 0.4,
     "damagePerStrength": 0.9,
-    "damageAbsorbedPerDefence": 0.5
+    "damageAbsorbedPerDefence": 0.5,
+    "woundedShare": 0.6,
+    "woundedCapShare": 0.25,
+    "healCostShare": 0.3,
+    "healTimeShare": 0.25
   },
   "daily": {
     "seasonDays": 20,

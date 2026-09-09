@@ -93,9 +93,10 @@ own state, distinct from *locked*. Depths 4–5 sit behind Guild 8+.
 Rules:
 
 - Supplies are deducted on entry and **never refunded**.
-- **The room fights back: the attempt costs soldiers, win or lose, and the
-  dead are gone** ([`combat.md`](combat.md) §4). Supplies and bodies are the
-  whole price — nothing the player has banked is ever taken.
+- **The room fights back: the attempt costs soldiers, win or lose.** Most of
+  the fallen reach the infirmary and can be mended at a military hall; the
+  rest are gone ([`combat.md`](combat.md) §4). Supplies and bodies are the
+  whole price — nothing else the player has banked is ever taken.
 - A power shortfall **warns, never blocks**.
 - No attempt cap, no cooldown.
 - Party HP does not carry between rooms.

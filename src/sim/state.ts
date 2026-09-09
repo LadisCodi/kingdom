@@ -176,6 +176,17 @@ export interface City {
   /** Every workshop's queue, by district uniqueId. Absent = never used as
    *  one (sim/workshops.ts). */
   workshops: Record<string, WorkshopLine>;
+  /**
+   * THE INFIRMARY: soldiers who came back from a fight and cannot stand in a
+   * line yet, by type.
+   *
+   * They are off the roster — they do not count against the army cap and they
+   * cannot be sent anywhere — until a military hall puts them back together
+   * (sim/army.ts). What the hall charges is a fraction of what recruiting the
+   * same soldier would, which is the whole point of the pool: a bad fight is
+   * a bill rather than a loss.
+   */
+  wounded: Partial<Record<UnitId, number>>;
   /** Epoch ms anchor for passive tax gold (whole units only). */
   lastTaxAt: number;
   /** Epoch ms anchor for Mana regeneration (whole units only), the same
@@ -251,6 +262,18 @@ export interface TrainingItem {
   uniqueId: string;
   trainee: TrainableId;
   buildingId: string;
+  /**
+   * What this item IS. A `recruit` turns a price into a new soldier; a `heal`
+   * takes `count` of them out of the infirmary and puts them back in the
+   * ranks, cheaper and faster than recruiting the same number.
+   *
+   * Absent in a pre-41 save, which is a save with no infirmary in it, so it
+   * reads as `recruit` and nothing else has to change.
+   */
+  kind?: 'recruit' | 'heal';
+  /** How many this item delivers. Only a `heal` sets it — a recruit is always
+   *  one — so the whole batch is one wait rather than a queue of them. */
+  count?: number;
   startedAt: number | null;
   /** Seconds this one will take, stamped with `startedAt` — because the
    *  building's neighbours are priced when the clock starts, not on read

@@ -298,6 +298,20 @@
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
 }
+/* A ward in the line hands over several at once, so its slot carries the
+ * count the way a party's squad face does. */
+.tr-slot { position: relative; }
+.tr-slot-count {
+  position: absolute;
+  right: -2px;
+  bottom: -4px;
+  padding: 0 4px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--parchment);
+  background: var(--wood-dark);
+  border-radius: 999px;
+}
 /* The one on the bench, which is the one the bar below is counting down. */
 .tr-slot.is-active {
   border-color: var(--gold-dark);
@@ -375,6 +389,15 @@
 /* The Train button spans both columns, so it is the full width of the panel
  * and unmistakably the thing that spends. */
 .tr-info > .k-action { grid-column: 1 / -1; }
+
+/* The ward: the same panel, in the colour of a thing that is waiting rather
+ * than a thing that is for sale. One per wounded type this hall can mend. */
+.tr-info.is-ward {
+  border-color: var(--clay);
+  background: var(--parchment);
+  margin-bottom: 6px;
+}
+.tr-info.is-ward .tr-tag { background: var(--clay); }
 
 /* ------------------------------------------------------- workshops (§3)
  * A workshop card is the training block in different materials: what it

@@ -218,6 +218,8 @@ export interface GateReport {
   /** Who did not come back. A garrison fights: it costs soldiers whether it
    *  falls or not (§5). */
   losses: Array<{ unitId: UnitId; count: number }>;
+  /** The share of them that reached the infirmary and can be healed back. */
+  wounded: Array<{ unitId: UnitId; count: number }>;
 }
 
 /**
@@ -259,23 +261,24 @@ export function attemptGate(
   const supplies = gateSupplies(ruinId);
   const block = gateBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) {
-    return { result: block, attack: 0, power, hoard: {}, supplies, losses: [] };
+    return { result: block, attack: 0, power, hoard: {}, supplies, losses: [], wounded: [] };
   }
   pay(state.city.wallet, supplies);
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const party = partyOf(state, committed, heroIds);
   const attack = effectiveAttack(party, guard.threat);
-  // The garrison swings back either way, and the dead are gone for good.
-  const losses = takeCasualties(
+  // The garrison swings back either way. Some of the fallen are carried home
+  // to the infirmary; the rest are gone for good (army.ts).
+  const { losses, wounded } = takeCasualties(
     state, committed, battleDamage(power, partyStats(party).def, attack));
   if (attack < power) {
-    return { result: 'Repelled', attack, power, hoard: {}, supplies, losses };
+    return { result: 'Repelled', attack, power, hoard: {}, supplies, losses, wounded };
   }
   const hoard = markGateCleared(state, ruinId);
   // The fight taught the party something whether or not the garrison was
   // holding anything, and a tier-5 gate teaches more than the Barrow's.
   addHeroXp(state, RUINS[ruinId].tier);
-  return { result: 'Cleared', attack, power, hoard, supplies, losses };
+  return { result: 'Cleared', attack, power, hoard, supplies, losses, wounded };
 }
 
 /** What the room sheet shows before the player commits: the threat is always
@@ -445,6 +448,8 @@ export interface RoomReport {
   /** Who did not come back. The enemy fights: a room costs soldiers whether
    *  it falls or not (combat.md §4). */
   losses: Array<{ unitId: UnitId; count: number }>;
+  /** The share of them that reached the infirmary and can be healed back. */
+  wounded: Array<{ unitId: UnitId; count: number }>;
   heroXp: number;
   fragments: number;
   /** Set when this room was the last of its depth. */
@@ -475,7 +480,7 @@ export function enterRoom(
   const at = frontier(state, ruinId);
   const empty: RoomReport = {
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
-    power: roomPower(ruinId, at.depth, at.room), supplies: {}, losses: [],
+    power: roomPower(ruinId, at.depth, at.room), supplies: {}, losses: [], wounded: [],
     wallet: {}, heroXp: 0, fragments: 0, depthCompleted: false, artifact: null,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots, artifactId);
@@ -490,13 +495,14 @@ export function enterRoom(
   const party = partyOf(state, committed, heroIds, artifact);
   const power = roomPower(ruinId, at.depth, at.room);
   const outcome = resolveRoom(party, power, RUINS[ruinId].affinity);
-  // What lives in the room swings back, and the dead are gone for good —
-  // win or lose, the same rule the gate follows (combat.md §4).
-  const losses = takeCasualties(
+  // What lives in the room swings back, win or lose — the same rule the gate
+  // follows: some of the fallen reach the infirmary, the rest are gone for
+  // good (combat.md §4).
+  const { losses, wounded } = takeCasualties(
     state, committed, battleDamage(power, partyStats(party).def, outcome.attack));
   if (!outcome.cleared) {
     return {
-      ...empty, result: 'Repelled', attack: outcome.attack, power, supplies, losses,
+      ...empty, result: 'Repelled', attack: outcome.attack, power, supplies, losses, wounded,
     };
   }
 
@@ -547,6 +553,7 @@ export function enterRoom(
     power,
     supplies,
     losses,
+    wounded,
     wallet: reward.wallet,
     heroXp: reward.heroXp,
     fragments: reward.fragments,

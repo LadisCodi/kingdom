@@ -27,7 +27,7 @@ import {
   type Coord, type District, type GameState, type QueueItem,
   type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
   type PayerProfile, type StoreSkuId,
-  type RuinId,
+  type RuinId, type UnitId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -419,7 +419,14 @@ export function serialize(state: GameState, now: number): SaveFile {
               // Stamped with the clock, so a save reads back the wait the
               // player was promised rather than today's neighbours.
               Seconds: i.seconds,
+              // A ward of wounded is one item that hands over many. Written
+              // only when it is one, so a recruit's row is what it always was.
+              ...(i.kind === 'heal' ? { Kind: 'heal', Count: i.count ?? 1 } : {}),
             })),
+            // The infirmary: who is waiting to be put back together.
+            Wounded: Object.entries(state.city.wounded)
+              .filter(([, n]) => (n ?? 0) > 0)
+              .map(([unitId, n]) => ({ UnitID: unitId, Count: n })),
             LastManaAt: iso(state.city.lastManaAt),
           },
         ],
@@ -689,7 +696,13 @@ export function deserialize(
       // A pre-30 save has no stamp: the authored duration is what it was
       // running on anyway (`itemTrainSeconds`).
       seconds: i.Seconds ?? null,
+      // A pre-41 save has no infirmary in it, so every item is a recruit.
+      ...(i.Kind === 'heal' ? { kind: 'heal' as const, count: i.Count ?? 1 } : {}),
     }));
+    state.city.wounded = {};
+    for (const w of (cityDto.Wounded ?? []) as any[]) {
+      state.city.wounded[w.UnitID as UnitId] = w.Count ?? 0;
+    }
     // ---- migrating a save written before the two queues became one ----
     // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
     // and one timestamp on the city. Both become items in the single line.

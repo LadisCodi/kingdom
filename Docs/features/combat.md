@@ -48,18 +48,31 @@ and the army cap; hero slots one free, the rest Gems
 - **Hit points do not carry between fights.** They are spent inside one and
   reset when it ends; a squad's HP pool is its count times `hp_unit` every
   time.
-- **EVERY FIGHT COSTS SOLDIERS, WIN OR LOSE. The dead are gone for good.**
-  What kills them is the enemy's power against the party's defence, spread
-  across the committed squads by their share of the party's hit points. Only
-  whole troops die, and never fewer than one.
+- **EVERY FIGHT COSTS SOLDIERS, WIN OR LOSE.** What takes them down is the
+  enemy's power against the party's defence, spread across the committed
+  squads by their share of the party's hit points. Only whole troops fall, and
+  never fewer than one.
+- **A casualty is two things.** `army.wounded_share` of the fallen are carried
+  back to the **infirmary** and the rest are dead. Both leave the roster at
+  once: a wounded soldier cannot be sent anywhere and does not count against
+  the army cap.
+  - The infirmary holds `army.wounded_cap_share × army cap` at a time, so the
+    military halls that hold the army hold its wounded. **Anything the ward
+    has no room for dies**, which is what makes the ceiling a decision.
+  - A military hall mends them: `army.heal_cost_share` of what recruiting the
+    same soldiers costs and `army.heal_time_share` of the clock, as **one
+    order and one wait** for the whole ward, in the same line the hall
+    recruits from. Mending needs no technology — they are already trained.
+  - Cancelling an order puts them back in their beds and the coin back in the
+    purse.
 - **A rout costs less than a repulse.** A party that wins takes the damage in
   proportion to how outmatched the enemy was, so bringing more than enough
   buys fewer funerals as well as a win; a party that is driven off pays it in
   full.
 - **What else an ATTEMPT costs is the caller's rule.** A room and a gate both
   charge supplies on the way in ([`11-expeditions.md`](11-expeditions.md) §5,
-  [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing the
-  player has already banked is ever taken.
+  [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
+  the player has banked is ever taken.
 
 ## 5. Unit stats — Tier 1
 
@@ -290,6 +303,9 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Tick length, timeout | `combat.tick_ms`, `combat.timeout_ticks` |
 | Enemy slot count band, hero budget threshold, row assignment | `combat.gen_*` |
 | Army cap per building level | `Districts.army_cap_per_level` |
+| What a fight costs in bodies | `army.damage_per_strength`, `army.damage_absorbed_per_defence` |
+| How much of a casualty is saveable, and how many beds there are | `army.wounded_share`, `army.wounded_cap_share` |
+| What mending costs against recruiting | `army.heal_cost_share`, `army.heal_time_share` |
 
 ## 18. Not in this version
 
