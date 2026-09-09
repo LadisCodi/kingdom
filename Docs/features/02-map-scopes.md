@@ -20,8 +20,8 @@
 
 - One authored map, identical for every player: `region-map.json` as it is. No
   procedural province generator.
-- 1,470 cells; the whole fog costs **142,585,875 Gold** across the 1,466 that
-  are priced.
+- 1,470 cells; the whole fog costs **4,729,789,354 Gold** across the 1,466
+  that are priced.
 - The buildable plot is **the revealed province** (§6): no bound, no expansion
   block. Room is bought by paying the fog.
 - Square grid with its three distance metrics
@@ -123,7 +123,7 @@
 
 - Revealing a hex costs **Gold and time, scaling with distance**.
 - **Not Mana** ([`09-relics.md`](09-relics.md) §3). Gold's sink at world scale
-  once the province's 142,585,875 is spent.
+  once the province's 4,729,789,354 is spent.
 - The world-map scout post continues the province's ladder:
   `fog.claimDiscoverRadius` = 5 and **Pitons** (−10% a rank on the fog's
   Gold). Nothing buys reveal taps: a cell is five presses at every ring

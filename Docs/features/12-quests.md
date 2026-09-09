@@ -59,7 +59,7 @@
 | **32** | `FirstSummon` | **Summon at the banner. The first call is free.** |
 | **33** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** The free hero wins alone at any matchup; the first fight is on the surface, the enemy in view, the outcome guaranteed. Pays Gold. |
 | **34–35** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
-| **36–37** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 50 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
+| **36–37** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 20 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
 | **38–39** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. |
 | **40** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 33. |
 

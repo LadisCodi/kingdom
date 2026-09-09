@@ -70,9 +70,19 @@ describe('map data', () => {
 });
 
 describe('reveal cost curve (balance.xlsx FogRings)', () => {
-  it('d 1–10 → 1,3,10,50,100,200,400,800,1600,3200 (doubling from d4)', () => {
-    const expected = [1, 3, 10, 50, 100, 200, 400, 800, 1600, 3200];
+  it('d 1–10 → 3,5,10,20,40,75,120,250,500,1000', () => {
+    const expected = [3, 5, 10, 20, 40, 75, 120, 250, 500, 1000];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));
+  });
+  // The workbook authors twenty rings, and the second ten is a clean
+  // doubling: the far province is priced by the curve, not by the fallback.
+  it('doubles from d10 to d20, then falls back on ×1.25 a ring', () => {
+    for (let d = 11; d <= 20; d += 1) {
+      expect(revealCost(d), `ring ${d}`).toBe(revealCost(d - 1) * 2);
+    }
+    const last = revealCost(20);
+    expect(revealCost(21)).toBe(Math.round(last * FOG.fallbackGrowth));
+    expect(revealCost(23)).toBe(Math.round(last * FOG.fallbackGrowth ** 3));
   });
   // Five taps a cell, so a ring price five does not divide charges uneven
   // fifths. Every ring from 3 out — the whole of the province a player really
@@ -105,7 +115,7 @@ describe('paying to reveal', () => {
   it('counts the taps and reveals on the fifth', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 50; // the start has 0 Gold
-    // Distance 2 from the footprint → 3 Gold, on ungated ground.
+    // Distance 2 from the footprint → 5 Gold, on ungated ground.
     const cell = { x: 3, y: 1 };
     for (let tap = 1; tap < FOG.tapsToReveal; tap += 1) {
       expect(revealTap(state, map, cell)).toBe('Paid');
@@ -114,7 +124,7 @@ describe('paying to reveal', () => {
     expect(revealTap(state, map, cell)).toBe('Revealed');
     expect(state.fog.revealed[coordKey(cell)]).toBe(true);
     expect(state.fog.progress[coordKey(cell)]).toBeUndefined();
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 3);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 5);
   });
   it('rejects taps on Undiscovered cells', () => {
     const state = newGame(map, NOW);
@@ -163,7 +173,7 @@ describe('the frontier stays connected', () => {
 describe('exploration gates (Sailing / Scaling Tools)', () => {
   it('sea cells are locked until Sailing is researched', () => {
     const state = newGame(map, NOW);
-    state.city.wallet.Gold = 999_999; // the shore can be a dozen rings out
+    state.city.wallet.Gold = 99_999_999; // the shore is thirty rings out
     // Water is the ONE remaining reveal gate (mountains became a feature, so
     // Scaling Tools gates working one instead — see explorationGate). The
     // cell is found rather than pinned: the coastline moves whenever the

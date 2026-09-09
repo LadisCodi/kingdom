@@ -126,26 +126,31 @@ Respawn:
 
 ## 5. The price of a cell
 
-Authored per ring, doubling from ring 4, with a ×1.25 fallback past ring 10.
+Authored per ring out to ring 20 — roughly doubling from ring 3, exactly
+doubling from ring 10 — with a ×1.25 fallback past ring 20. The province
+reaches ring 40.
 
-| Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11+ |
+| Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Gold** | 3 | 5 | 10 | 20 | 40 | 75 | 120 | 250 | 500 | 1,000 |
+
+| Distance | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21+ |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **Gold** | 1 | 3 | 10 | 50 | 100 | 200 | 400 | 800 | 1,600 | 3,200 | ×1.25/ring |
+| **Gold** | 2,000 | 4,000 | 8,000 | 16,000 | 32,000 | 64,000 | 128,000 | 256,000 | 512,000 | 1,024,000 | ×1.25/ring |
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
-- Every ring from 3 out is a multiple of five, so the fifths come out whole.
-  Rings 1 and 2 sit inside the Townhall's own shadow and are pennies. A price
-  five does not divide — a discounted one, or one of those two — is split into
+- Every ring from 2 out is a multiple of five, so the fifths come out whole.
+  A price five does not divide — ring 1, or a discounted one — is split into
   slices that still sum to it exactly, never rounded either way.
 - A cell never costs less than `fog.minCost`, however deep the discounts go.
 - Hold-to-repeat covers reveal taps.
 - **Pitons** discounts the Gold (−10%/level), and it is the only thing that
   moves the fog: nothing buys a tap back.
-- **The whole map is 142,585,875 Gold across 1,466 priced cells.** It is the
-  largest Gold sink in the game by two orders of magnitude, and what limits
-  how fast it is spent is the purse
-  ([`02-map-scopes.md`](02-map-scopes.md)).
+- **The whole map is 4,729,789,354 Gold across 1,466 priced cells**, and the
+  outer third of it is most of that. It is the largest Gold sink in the game
+  by three orders of magnitude, and what limits how fast it is spent is the
+  purse ([`02-map-scopes.md`](02-map-scopes.md)).
 
 ## 6. What the fog holds
 
@@ -214,7 +219,7 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 | Dial | Value | Where |
 |---|---|---|
-| Fog price per ring | 1 → 3,200, ×1.25 past ring 10 | `FogRings` sheet |
+| Fog price per ring | 3 → 1,024,000, ×1.25 past ring 20 | `FogRings` sheet |
 | Taps to clear a cell | 5 | `fog.taps_to_reveal` |
 | The floor under a cell's price | 1 | `fog.min_cost` |
 | Claim discover radius | 5 | `fog.claim_discover_radius` |
