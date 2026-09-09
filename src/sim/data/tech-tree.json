@@ -31,7 +31,7 @@
       "name": "Hunting", "glyph": "🏹", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 1,
       "requires": ["Agriculture"],
-      "gold": 0, "knowledge": 2, "seconds": 1200,
+      "gold": 0, "knowledge": 2, "seconds": 10,
       "unlocks": [{"harvest":"Meat"}]
     },
     "Saws": {

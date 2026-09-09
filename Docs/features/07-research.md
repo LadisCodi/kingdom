@@ -93,8 +93,8 @@ gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time
   hours. Two Knowledge at the base 1/h is two hours, which is **1,440 Gems**
   — against a 500-Gem opening purse. Consistent with every other rush, and
   probably too steep to ever be pressed. **OQ-87.**
-- The tree has 180 rows: **Civics 71 · Magic 57 · Warfare 52**, totalling
-  **550,165 Gold and 50,495 Knowledge**. Price bands per era are in
+- The tree has 172 rows: **Civics 66 · Magic 53 · Warfare 53**, totalling
+  **504,430 Gold and 2,366 Knowledge**. Price bands per era are in
   [`tech-tree.md`](tech-tree.md) §5.
 
 ### 1.1 Majors and minors
@@ -268,9 +268,11 @@ A `bonus` names its effects, and each is four fields:
   hour** holding nothing, so the tree opens on the calendar; every landmark
   and ruin adds to that, so the province makes it open faster. A new kingdom
   starts with **no Knowledge**. The opening chain pays for its own cards
-  instead — quest 1 covers the first research and every quest after it pays at
-  least 1 ([`12-quests.md`](12-quests.md) §2.1). A grant at the title screen
-  taught the player nothing about where the clock comes from.
+  instead — quest 1 covers the first research, and eleven quests pay Knowledge
+  between them, enough to carry the chain to `Attuned` with no drip
+  ([`12-quests.md`](12-quests.md) §2.1). A grant at the title screen
+  taught the player nothing about where the clock comes from. **After the
+  opening the base rate is the funding**, which is what the rate is for.
 - **The rate is a fraction of one an hour, and the prices are tens.** Both
   were divided by ten on 2026-09-08: a research had come to cost thousands of
   a currency that dripped in whole units, which is a number nobody can hold in
@@ -288,7 +290,7 @@ A `bonus` names its effects, and each is four fields:
 | `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
 | `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
 | `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
-| the **quest chain** | — | 50 across nine quests | `rewardKnowledge` (Quests sheet) |
+| the **quest chain** | — | 27 across eleven quests | `rewardKnowledge` (Quests sheet) |
 
 - **The balance rides on the game's own plank while the research screen is
   open**, beside Gold, in place of Food and timber — a technology is priced in
@@ -301,10 +303,13 @@ A `bonus` names its effects, and each is four fields:
 - The clock banks whole units on a **whole-millisecond period** rounded from
   the rate, which is what keeps one-call replay identical to stepped ticking
   when the rate is a fraction (invariant 1).
-- **The chain seeds the clock.** Nine quests pay Knowledge — `OldStones`,
-  `Attuned`, `Mapmakers`, `Surveyors`, `Highlands`, `PutToSea`, `SecondStory`,
-  `IronRoad`, `Architect` — so every technology the chain asks for is
-  affordable when asked, with zero drip (`tests/quests.test.ts`).
+- **The chain seeds the clock, then lets go.** Eleven quests pay Knowledge —
+  `FirstSteps`, `Explorer`, `Fields`, `ProperCapital`, `TheSawmill`, `Crewed`,
+  `Levies`, `FurtherAfield`, `OldStones`, `IntoTheDark`, `Stoneworks` — all of
+  them in the opening, so every technology the chain asks for **up to
+  `Attuned`** is affordable when asked with zero drip
+  (`tests/quests.test.ts`). Past it the drip pays, and the back half's cards
+  are a wait rather than a wall.
 - `knowledgePerHour` and `accrueKnowledge` (`src/sim/mana.ts`) accrue whole
   units against the anchor `state.kingdom.lastKnowledgeAt` — the same shape as
   taxes and Mana, so all three replay identically. No boundary source and no

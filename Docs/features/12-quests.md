@@ -12,7 +12,8 @@
   is chain order.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **56 quests**, paying 12,375 Gold, 100 Mana, 750 Gems, 158 Stardust and **Knowledge on every single one**.
+- **53 quests**, paying 12,175 Gold, 100 Mana, 750 Gems, 158 Stardust and
+  **27 Knowledge across eleven of them** (§2.1).
 
 ### 1.1 Goal types
 
@@ -77,21 +78,29 @@
   cost 3 and 5 Gold, and at fifty a player who spent on the border before
   raising a roof had no rent coming and no way back — the 30-day harness
   never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
-  it twice over. The chain pays for the research it asks for: **quest 1 pays 7**,
-  which is Forestry's 2 plus the five of headroom the chain test insists on so
-  a re-priced technology never strands the tutorial, and **every quest after
-  it pays at least 1**. A grant handed over at the title screen taught the
-  player nothing about where the clock comes from; a reward on the quest
-  before the research does.
+  it twice over.
+- **The chain funds the research it asks for, through the opening only.**
+  Quest 1 pays Forestry's 2 outright, and **eleven quests pay Knowledge**,
+  placed so that every card the chain demands up to `Attuned` — quest 33, the
+  Sanctum — is affordable **with no drip at all**, prerequisites included.
+  A grant handed over at the title screen taught the player nothing about
+  where the clock comes from; a reward on the quest before the research does.
+- **Past `Attuned` the chain stops paying and the clock takes over**
+  ([`07-research.md`](07-research.md) §3). A player at `Highlands` holds
+  territory that drips, so the research the back half asks for is a wait
+  rather than a wall, and the wait is content by then. The zero-drip
+  guarantee is asserted for the opening and **only** the opening
+  (`tests/quests.test.ts`); the cut is by chain position, not by era —
+  `MoreRoom` asks for an era-1 card at quest 40, well past it.
 - **Three opening beats pay Mana instead of Gold** — `Timber`, `Rations` and
   `ByHand`, 30 · 30 · 40. They are the tapping beats, and the pool is what the
   opening is short of, not coin: a reward that buys taps arrives exactly where
   the player has just emptied it. Mana may overfill; an overcharged pool is a
   supported state and reads as one on the gauge.
-- Quest 1's four forest cells cost ~16 Gold; Forestry costs 25 Gold and 2
-  Knowledge; quest 1 pays 10 Gold and 7 Knowledge. 50 + 10 covers the Gold,
-  **asserted at the dearest frontier the player
-  could pick**.
+- Quest 1's four forest cells cost ~16 Gold; **Forestry costs no Gold at all**
+  — the first four cards are priced in the clock alone — and 2 Knowledge,
+  which is exactly what quest 1 pays alongside its 10 Gold. The 100 covers the
+  cells, **asserted at the dearest frontier the player could pick**.
 - Forest cells refuse work until Forestry is researched; the refusal names
   Forestry.
 - A pull costs 1,000 Gems. The first call on the standard banner is free,

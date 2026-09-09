@@ -263,11 +263,10 @@ describe('first-time discoveries', () => {
     expect(restored.pendingDiscoveries).toEqual([]); // never re-announced
   });
 
-  // INVERTED 2026-09-08. This used to assert Gold alone, on the reasoning
-  // that paying Knowledge early would announce a currency hours before the
-  // player owned anything to spend it on. The opening grant is gone now and
-  // the chain funds the research it asks for, so Knowledge is spent from the
-  // second quest — announcing it late would be the bug.
+  // Timber is a tapping beat and pays MANA, so Mana is what it announces.
+  // Knowledge is not in the list because Knowledge is not on this quest: the
+  // clock is seeded by quest 1 and then by the beats that stand in front of a
+  // research, not by every beat in the chain (§2.1).
   it('quest rewards discover their currencies too', () => {
     const state = canGather(freshGame());
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Timber');
@@ -277,16 +276,17 @@ describe('first-time discoveries', () => {
     expect(claimQuest(state)).toBe('Claimed');
     // Mana, not Gold: this is one of the tapping beats, and the reward that
     // buys taps arrives where the pool is empty.
-    expect(state.pendingDiscoveries).toEqual(['resource:Mana', 'resource:Knowledge']);
+    expect(state.pendingDiscoveries).toEqual(['resource:Mana']);
   });
 
-  // Every quest pays the clock, so a chain-follower always has the next
-  // research in hand (Docs/features/12-quests.md §2.1).
-  it('pays Knowledge on every quest, and the first pays the first research', () => {
-    expect(QUESTS.every((q) => q.rewardKnowledge >= 1)).toBe(true);
+  // Quest 1 pays the first card outright, because nothing is handed over at
+  // the title screen (Docs/features/12-quests.md §2.1).
+  it('the first quest pays the first research', () => {
     expect(QUESTS[0].rewardKnowledge).toBeGreaterThanOrEqual(techKnowledgeCost('Forestry'));
-    // …because nothing is handed over at the start any more.
     expect(CURRENCIES.Knowledge.start).toBe(0);
+    // The clock the back half leans on instead of the chain (§3) — if this
+    // ever went to zero, nothing else in the game would fund a technology.
+    expect(KNOWLEDGE.basePerHour).toBeGreaterThan(0);
   });
 
   // Some of the opening pays MANA instead of Gold: the pool is what the
@@ -317,13 +317,22 @@ describe('quests fund the research tree', () => {
     expect(getWallet(state.city.wallet, 'Stardust')).toBe(0);
   });
 
-  // THE CHAIN SEEDS THE CLOCK. Knowledge drips from territory, and a player
-  // early in the chain holds none — so every technology the chain asks for,
-  // prerequisites included, has to be affordable out of what the chain itself
-  // has paid, with NO drip at all. Zero drip is the worst case: the player
-  // who does the whole opening in one sitting. The one thing this may lean
-  // on is the lump a claim pays, because `OldStones` IS a claim.
-  it('pays enough Knowledge that a chain-follower is never stuck, with zero drip', () => {
+  // THE CHAIN SEEDS THE CLOCK, THROUGH THE OPENING ONLY. Knowledge drips
+  // from territory, and a player early in the chain holds none — so every
+  // technology the OPENING asks for, prerequisites included, has to be
+  // affordable out of what the chain itself has paid, with NO drip at all.
+  // Zero drip is the worst case: the player who does the whole opening in one
+  // sitting. The one thing this may lean on is the lump a claim pays, because
+  // `OldStones` IS a claim.
+  //
+  // NARROWED 2026-09-09 to end at `Attuned`. Past the Sanctum the chain stops
+  // funding its own research and the base rate takes over (§3): a player at
+  // `Highlands` has a province dripping, and by then the wait is the content
+  // rather than a wall. The cut is by CHAIN POSITION, not by era — `MoreRoom`
+  // asks for an era-1 card at quest 40, long after the drip is the funding.
+  const OPENING_ENDS_AT = 'Attuned';
+
+  it('pays enough Knowledge that the OPENING is never stuck, with zero drip', () => {
     // Nothing starts researched: every book is open from the first minute and
     // no cover page is granted, so the chain-follower pays for all of it.
     const done = new Set<TechId>();
@@ -335,23 +344,22 @@ describe('quests fund the research tree', () => {
     // The opening's grant is the game's, so the chain-follower holds it; the
     // base drip is not counted — zero drip stays the worst case.
     let held = CURRENCIES.Knowledge.start;
-    let worstSlack = Infinity;
+    let asked = 0;
     for (const q of QUESTS) {
       if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
       if (q.goalType === 'CompleteTech') {
         const demand = need(q.goalTarget as TechId);
         expect(held, `${q.id} asks for ${q.goalTarget} (${demand} Knowledge) with ${held} in hand`)
           .toBeGreaterThanOrEqual(demand);
-        if (demand > 0) worstSlack = Math.min(worstSlack, held - demand);
+        if (demand > 0) asked++;
         held -= demand;
       }
       held += q.rewardKnowledge;
+      if (q.id === OPENING_ENDS_AT) break;
     }
-    // Enough margin that a re-priced rank or a moved quest does not silently
-    // put the tutorial one Knowledge short. Five, not thirty: Knowledge was
-    // rescaled by ten on 2026-09-08, and the whole opening chain now asks for
-    // 64 of it against a grant of 25 and the chain's own 50.
-    expect(worstSlack).toBeGreaterThanOrEqual(5);
+    // The opening asks for nine cards, and the guarantee is worth nothing if a
+    // re-scoped chain quietly stops covering most of them.
+    expect(asked).toBe(9);
   });
 
   it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
@@ -390,19 +398,20 @@ describe('quests fund the research tree', () => {
     // in the doorway are a company's job and the chain pays for the company.
     // 12,175: the three Market beats leave with the Market (2026-09-09).
     expect(chain).toBe(12_175);
-    expect(tree).toBe(506_110); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(504_430); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
       .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    // 2,030 across 16 era-1 majors: Civics became a whole book (2026-09-08)
+    // 1,850 across 17 era-1 majors: Civics became a whole book (2026-09-08)
     // and its opening walks a single column down to Bureaucracy, and
     // Cartography (with the fog's tap ladder, 01-map-and-fog.md §5), the
     // Market and `Field Medicine` — now a ranked ladder, not a major
-    // (2026-09-09) — have left the count since.
-    expect(opening).toBe(2030);
+    // (2026-09-09) — have left the count since. `Hunting` joined it coming
+    // back to era 1, and the first four cards stopped costing Gold.
+    expect(opening).toBe(1850);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

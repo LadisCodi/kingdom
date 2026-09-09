@@ -232,8 +232,11 @@ describe('exploring pays in ground, not in currency', () => {
     // three-rank Warfare ladder (2026-09-09). 07-research.md
     // calls a tree the quest chain funds twice over "not a sink, a
     // formality"; this is the other side of that.
+    // 504,430: the opening stopped charging Gold at all (2026-09-09) —
+    // Forestry, Agriculture, Farming and Saws are priced in the clock alone,
+    // and `Hunting` came back to era 1 with them, off 1,500 Gold.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(506_110);
+    expect(tree).toBe(504_430);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree
