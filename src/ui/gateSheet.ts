@@ -1,126 +1,71 @@
-// The room sheet, on a gate (Docs/features/18-garrisons-and-raids.md §7).
+// The gate, on the battle screen (Docs/features/18-garrisons-and-raids.md §7).
 //
-// It is the ruin's frontier room while the garrison stands, so it is the
-// expedition sheet with three things taken away and one added.
+// The board, the slots and the panels are `battleSheet.ts` — every fight in
+// the game uses them. This file is the one thing a gate does that a ruin's
+// room does not: it carries a CLOCK, and the clock is why the player is here.
 //
-// TAKEN AWAY: the depth stack, the standing order and the relic socket. There
-// is one room, it resolves the moment the player commits, and nothing about
-// it lasts long enough for a relic to be a decision.
-//
-// ADDED: the countdown. This is the only screen in the game with a clock that
-// costs the player something when it runs out, and the whole point of the
-// gate is that it is a fight you are being HURRIED into — so the counter is
-// the second thing on the sheet, under the power comparison that says whether
-// the hurry is warranted.
-//
-// The threat is always in view. A gate teaches the type chart before Depth 1
-// adds the power ladder, and a lesson you cannot see is not one.
+// So the dynamic band under the art is the countdown, the trips left in the
+// garrison and what it is holding, and the Rewards box is the hoard — every
+// unit of which comes home when the gate falls. There is no room reward and
+// no loot table: the ruin behind it is the prize.
 
 import { RUINS } from '../sim/data/definitions';
 import type { Game } from '../game';
-import { heroPicker, troopPicker } from './expeditionSheet';
-import { spriteUrl } from '../render/sprites';
+import { renderBattleSheet, type BattleView } from './battleSheet';
 import { el, formatDuration } from './format';
-import { action, btn, iconEl, sheet, stat } from './kit';
-
-const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
-  const url = spriteUrl(sprite);
-  return url
-    ? el('img', { class: cls, src: url, alt: '' })
-    : el('div', { class: `${cls} is-glyph` }, glyph);
-};
+import { iconEl } from './kit';
+import type { CurrencyId } from '../sim/state';
 
 export function renderGateSheet(game: Game): HTMLElement {
   const ruinId = game.gateRuin!;
   const ruin = RUINS[ruinId];
   const gate = game.gateFor(ruinId);
   const preview = game.gatePreview()!;
-  const blocked = game.gateBlockText();
-  const threatIcon = preview.threat === 'Any' ? 'army' : preview.threat;
 
-  // THE number, the way the safe depth is the expedition sheet's: what the
-  // party swings for against what is standing in the door. A shortfall is a
-  // warning, never a refusal — the player may always try.
-  const power = el('div', { class: `gate-power${preview.enough ? '' : ' is-short'}` },
-    el('div', { class: 'gate-power-row' },
-      el('div', { class: 'gate-power-side' },
-        el('b', {}, String(preview.attack)),
-        el('span', {}, 'your attack')),
-      el('div', { class: 'gate-power-vs' }, 'vs'),
-      el('div', { class: 'gate-power-side' },
-        el('b', {}, String(preview.power)),
-        el('span', {}, 'they hold'))),
-    el('div', { class: 'gate-power-note' }, preview.enough
-      ? 'Enough to drive them off.'
-      : 'Short — you may still try, and lose only the supplies.'),
-  );
-
-  const body = el('div', { class: 'gate' },
-    el('div', { class: 'gate-head' },
-      art(ruin.sprite, ruin.glyph, 'gate-art'),
-      el('div', {},
-        el('div', { class: 'gate-name' }, `${gate?.creature ?? 'A warband'} at the gate`),
-        el('div', { class: 'gate-kind' }, `${ruin.name} · tier ${ruin.tier}`))),
-
-    el('div', { class: 'gate-stats' },
-      stat(threatIcon, preview.threat === 'Any' ? 'mixed' : `${preview.threat}s`, 'hold it'),
-      stat('atk', String(preview.stats.atk), 'attack'),
-      stat('hp', String(preview.stats.hp), 'health')),
-
-    power,
-  );
-
+  const info: Array<Node | string> = [];
   if (gate !== null && gate.nextRaidAt !== null) {
     const left = Math.max(0, (gate.nextRaidAt - game.now()) / 1000);
-    body.append(el('div', { class: 'gate-clock' },
+    info.push(el('div', { class: 'bt-info-line' },
       iconEl('hourglass', { size: 'sm' }),
-      `They come for the city in ${formatDuration(left)} — `
-      + `${gate.tripsLeft} raid${gate.tripsLeft === 1 ? '' : 's'} left in them.`));
+      `They come for the city in ${formatDuration(left)}`));
+    info.push(el('div', { class: 'bt-info-line is-soft' },
+      `${gate.tripsLeft} raid${gate.tripsLeft === 1 ? '' : 's'} left in them, `
+      + 'and each takes a slice of what the city has banked.'));
   } else if (gate !== null) {
-    body.append(el('div', { class: 'gate-clock' },
+    info.push(el('div', { class: 'bt-info-line' },
       iconEl('clock', { size: 'sm' }),
       'They have taken all they came for, and sit on it.'));
   }
 
   const hoard = Object.entries(gate?.hoard ?? {}).filter(([, n]) => n > 0);
   if (hoard.length > 0) {
-    body.append(el('div', { class: 'gate-hoard' },
-      el('div', { class: 'gate-hoard-title' }, 'What they are holding'),
-      el('div', { class: 'gate-hoard-row' },
-        ...hoard.map(([c, n]) => stat(c as 'Gold', String(n), ''))),
-      el('div', { class: 'gate-hoard-note' }, 'Clear the gate and every unit of it comes home.')));
+    info.push(el('div', { class: 'bt-info-line is-soft' },
+      'Cleared, every unit of what they took comes home.'));
   }
 
-  body.append(
-    el('div', { class: 'exp-section' },
-      el('div', { class: 'exp-heading' }, 'Who leads'),
-      // A hero ALONE is a legal board here, which is what makes this the
-      // first fight in the game: it asks for no army at all.
-      el('div', { class: 'exp-subheading' },
-        'A hero can go alone — the first gate needs no army.'),
-      heroPicker(game)),
+  const view: BattleView = {
+    title: `${gate?.creature ?? 'A warband'} at the gate`,
+    subtitle: `${ruin.name} · tier ${ruin.tier}`,
+    sprite: ruin.sprite,
+    glyph: ruin.glyph,
+    info,
+    enemy: { squads: preview.enemy, power: preview.power, threat: preview.threat },
+    attack: preview.attack,
+    enough: preview.enough,
+    supplies: preview.supplies,
+    // The hoard IS the reward, and Hero XP rides on any fight. There is no
+    // room reward and no loot table: what a gate really pays is the ruin.
+    rewards: [
+      ...hoard.map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
+      { icon: 'HeroXp' as CurrencyId, label: `+${ruin.tier}` },
+    ],
+    rewardNote: hoard.length > 0
+      ? 'Everything they took comes home with it.'
+      : `The way into ${ruin.name}, and its ${ruin.maxDepth} depths.`,
+    actionLabel: 'Clear the gate',
+    onFight: () => game.doClearGate(),
+    blocked: game.gateBlockText(),
+  };
 
-    el('div', { class: 'exp-section' },
-      el('div', { class: 'exp-heading' }, 'Who goes'),
-      troopPicker(game)),
-
-    action({
-      label: 'Clear the gate',
-      kind: 'primary',
-      onClick: () => game.doClearGate(),
-      cost: preview.supplies,
-      have: (c) => game.walletValue(c),
-      disabledReason: blocked ?? undefined,
-    }),
-
-    el('div', { class: 'gate-note' },
-      'Supplies are spent whether you win or lose. Nobody dies, and you can '
-      + 'come back as many times as you like.'),
-  );
-
-  const close = btn({ label: 'Not yet', onClick: () => game.dismiss() });
-  close.setAttribute('data-own-close', '');
-  body.append(el('div', { class: 'exp-back' }, close));
-
-  return sheet({ title: 'The gate', onClose: () => game.dismiss() }, body);
+  return renderBattleSheet(game, view);
 }

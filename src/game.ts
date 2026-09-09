@@ -42,6 +42,7 @@ import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/worksho
 import { typeMultiplier } from './sim/combat';
 import {
   attemptGate, buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, gateBlock,
+  partySlotGemCost,
   launchBlock, launchDelve, previewExpedition, previewGate, pushDeeper, supplyCost, unitSlots,
   type ExpeditionPreview, type GateBlock, type GatePreview, type LaunchBlock,
 } from './sim/expeditions';
@@ -2072,18 +2073,21 @@ export class Game {
    * whichever runs out first (Docs/features/combat.md §4).
    */
   troopsAvailableFor(unitId: UnitId): number {
-    const roster = availableRoster(this.state);
-    const committed = this.expeditionParty.reduce(
-      (sum, slot) => sum + slot.count, 0);
-    const owned = Math.max(0, roster[unitId] - this.expeditionParty
-      .filter((slot) => slot.unitId === unitId)
-      .reduce((sum, slot) => sum + slot.count, 0));
-    void committed;
+    const owned = this.troopsLeftAtHome(unitId);
     const power = UNITS[unitId].power;
     const spent = this.expeditionParty.reduce(
       (sum, slot) => sum + UNITS[slot.unitId].power * slot.count, 0);
     const budget = Math.max(0, maxArmyPower(this.state) - spent);
     return Math.max(0, Math.min(UNITS[unitId].squadSize, owned, Math.floor(budget / power)));
+  }
+
+  /** Of this type, how many are still at home — the roster minus what the
+   *  party has already committed. */
+  troopsLeftAtHome(unitId: UnitId): number {
+    const roster = availableRoster(this.state);
+    return Math.max(0, roster[unitId] - this.expeditionParty
+      .filter((slot) => slot.unitId === unitId)
+      .reduce((sum, slot) => sum + slot.count, 0));
   }
 
   /** Fill the first free troop slot with as big a squad of this type as the
@@ -2100,6 +2104,10 @@ export class Game {
     }
     this.expeditionParty.push({ unitId, count });
     playSfx('click');
+    // The panel stays up while there is another slot to fill, and gets out of
+    // the way the moment there is not: a list of cards over a full board is a
+    // panel asking a question the player has already answered.
+    if (this.expeditionParty.length >= this.troopSlotsOpen()) this.battlePicker = null;
     this.notify();
   }
 
@@ -2119,6 +2127,7 @@ export class Game {
     }
     this.partyHeroes.push(heroId);
     playSfx('click');
+    if (this.partyHeroes.length >= this.heroSlotsOpen()) this.battlePicker = null;
     this.notify();
   }
 
@@ -2147,6 +2156,27 @@ export class Game {
   closeBattlePicker(): void {
     this.battlePicker = null;
     this.notify();
+  }
+
+  /** The troop roster the picker rail draws, minus nothing: a type with none
+   *  left still shows, saying so, because an absent card reads as a bug. */
+  availableTroops(): Record<UnitId, number> {
+    return availableRoster(this.state);
+  }
+
+  /** Whether THIS battle screen has to respect a hero being underground.
+   *  A gate resolves on entry, so it does not (Docs/features/10-heroes.md
+   *  §2.5); the delve's own launch does. */
+  battleHeroesAreCommitted(): boolean {
+    return this.gateRuin === null;
+  }
+
+  partySlotOffer(): { cost: number; slots: number; ceiling: number } {
+    return {
+      cost: partySlotGemCost(this.state),
+      slots: this.troopSlotsOpen(),
+      ceiling: this.troopSlotCeiling(),
+    };
   }
 
   heroSlotOffer(): { cost: number; slots: number; ceiling: number } {
@@ -2436,6 +2466,15 @@ export class Game {
   /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
   dismiss(): void {
     this.mode = { kind: 'normal' };
+    // A picker panel is a layer INSIDE the battle screen, so the first
+    // dismissal closes it and leaves the screen behind it standing — the same
+    // way tapping outside the panel does.
+    if (this.battlePicker !== null) {
+      this.battlePicker = null;
+      this.notify();
+      return;
+    }
+    this.battlePicker = null;
     // The profile sheet cannot be dismissed — there is nothing behind it yet.
     this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;

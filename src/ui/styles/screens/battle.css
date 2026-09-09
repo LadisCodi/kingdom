@@ -1,0 +1,283 @@
+/* The screen before a fight (Docs/features/11a-ruins-ui.md §2.5) — the board,
+ * the slots, and the card panels that fill them. The gate's own band is
+ * screens/gates.css; the party pickers the DELVE still uses are
+ * screens/expedition.css. */
+
+.bt { display: flex; flex-direction: column; gap: 12px; }
+
+/* ------------------------------------------------------------ the header */
+
+.bt-head { display: flex; align-items: center; gap: 12px; }
+.bt-art { width: 56px; height: 56px; image-rendering: pixelated; }
+.bt-art.is-glyph { display: grid; place-items: center; font-size: 32px; }
+.bt-name { font-family: var(--font-display); font-size: var(--text-title); color: var(--ink); }
+.bt-where { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-soft); }
+
+/* The dynamic band: whatever THIS kind of battle has to say. */
+.bt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+  background: var(--parchment-shade);
+}
+.bt-info:empty { display: none; }
+.bt-info-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink);
+}
+.bt-info-line.is-soft { color: var(--ink-soft); }
+
+/* ------------------------------------------------------- the two armies */
+
+.bt-army,
+.bt-rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+}
+/* Theirs reads cold, ours warm — the two boxes are the same shape, so colour
+   is what tells them apart at a glance. */
+.bt-army.is-enemy { background: rgba(122, 52, 44, 0.14); }
+.bt-army.is-mine { background: rgba(96, 140, 72, 0.16); }
+.bt-army.is-mine.is-short { background: rgba(150, 90, 40, 0.16); }
+.bt-rewards { background: var(--parchment-shade); }
+
+.bt-army-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.bt-army-head h3 {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.bt-power {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.bt-army-label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-helper);
+  color: var(--ink-soft);
+  text-align: center;
+}
+.bt-army-note,
+.bt-note {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------- the slots */
+
+/* One row of squares, wrapping rather than scrolling: a board the player can
+   see all of is the point of a board. */
+.bt-slots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+.bt-slot {
+  position: relative; /* the clear badge hangs off the corner */
+  appearance: none;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 10px;
+  background: var(--parchment);
+  color: var(--ink);
+  cursor: pointer;
+}
+.bt-slot.is-empty { border-style: dashed; background: transparent; }
+.bt-slot.is-locked { border-style: dashed; background: rgba(60, 36, 18, 0.08); }
+.bt-slot.is-filled { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.25); }
+.bt-slot:hover { filter: brightness(1.05); }
+
+.bt-face { display: grid; place-items: center; }
+.bt-count {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+.bt-portrait { width: 40px; height: 40px; image-rendering: pixelated; object-fit: contain; }
+.bt-portrait.is-glyph { display: grid; place-items: center; font-size: 24px; }
+.bt-slot-name { font-family: var(--font-body); font-size: 12px; color: var(--ink-soft); }
+.bt-price {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* The X: a red disc on the corner, the way the mockup has it. It is a button
+   inside a button, so it stops the tap from re-opening the panel. */
+.bt-clear {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 2px solid #6d1f1f;
+  border-radius: 50%;
+  background: #c8402f;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.bt-clear:hover { filter: brightness(1.1); }
+
+/* ----------------------------------------------------------- the rewards */
+
+.bt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bt-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 999px;
+  background: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.bt-back { display: flex; justify-content: center; }
+
+/* ------------------------------------------------------------ the panels */
+
+/* A layer INSIDE the sheet, pinned to the bottom of the FRAME.
+   `position: fixed` resolves against the viewport, which on a desktop is
+   wider than the pillarboxed 9:16 frame — so the width comes from `100cqw`,
+   the inline size of the `frame` container (#app), and the layer is centred
+   the way the frame is. That asks the frame how wide it is instead of
+   restating its formula, which is the whole reason #app is a query
+   container.
+
+   It stays inside the sheet's DOM on purpose: #overlay has a z-index and is
+   therefore a stacking context, so nothing in here can rise above the header
+   or the nav — which is the design, not a limitation (CLAUDE.md). */
+.bt-layer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100cqw;
+  z-index: 2;
+}
+.bt-scrim { position: absolute; inset: 0; background: var(--scrim); }
+
+.bt-picker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px calc(var(--nav-h) + 10px);
+  border-top: var(--outline) solid var(--wood-dark);
+  border-radius: 14px 14px 0 0;
+  background: var(--parchment);
+  box-shadow: 0 -8px 24px rgba(20, 12, 6, 0.4);
+  animation: bt-picker-in var(--motion-sheet) ease-out;
+}
+@keyframes bt-picker-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bt-picker { animation: none; }
+}
+.bt-picker-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bt-picker-head h3 {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+/* The rail: cards side by side, scrolled with the thumb. */
+.bt-rail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.bt-rail-empty { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-soft); }
+
+.bt-card {
+  position: relative;
+  appearance: none;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 104px;
+  padding: 8px 6px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 10px;
+  background: var(--parchment-shade);
+  color: var(--ink);
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+.bt-card:hover { filter: brightness(1.05); }
+.bt-card.is-out { opacity: 0.45; cursor: default; }
+.bt-card-art { display: grid; place-items: center; height: 44px; }
+.bt-card-portrait { width: 44px; height: 44px; image-rendering: pixelated; object-fit: contain; }
+.bt-card-portrait.is-glyph { display: grid; place-items: center; font-size: 24px; }
+.bt-card-name {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-helper);
+  text-align: center;
+  line-height: 1.1;
+}
+.bt-card-note {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+/* The one fact that decides whether this card belongs in the party: its
+   type, as the WORD — four unit icons at 16px are four similar silhouettes.
+   Same call the roster tile makes. */
+.bt-card-tag {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(60, 36, 18, 0.14);
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-soft);
+}

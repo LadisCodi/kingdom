@@ -12,11 +12,11 @@
 //  3. THE DOOR. Nothing enters a ruin until its gate is down.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { RAID, RUINS, RUIN_ORDER, garrisonForTier } from '../src/sim/data/definitions';
+import { RAID, RUINS, RUIN_ORDER, UNITS, garrisonForTier } from '../src/sim/data/definitions';
 import { threatStrength } from '../src/sim/combat';
 import {
-  advanceRaids, cityRatePerSecond, clearedGateCount, gateIsCleared, gateSupplies,
-  nextRaidBoundary, openGates, raidTake,
+  advanceRaids, cityRatePerSecond, clearedGateCount, formationPower, gateFormation,
+  gateIsCleared, gatePower, gateSupplies, nextRaidBoundary, openGates, raidTake,
 } from '../src/sim/gates';
 import { attemptGate, launchDelve, previewGate } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
@@ -367,13 +367,68 @@ describe('the route to a gate', () => {
   });
 });
 
+// What the player is SHOWN is what the party fights. The formation is derived
+// from `guard`, and the fight is scored against the formation — so a squad on
+// the screen can never be decoration.
+describe('the formation in the doorway', () => {
+  it('is the ruin\'s own creature, in as many squads as the budget fills', () => {
+    for (const id of RUIN_ORDER) {
+      const squads = gateFormation(id);
+      expect(squads.length).toBeGreaterThan(0);
+      if (RUINS[id].guard.threat === 'Any') {
+        // The drake: an even mix across the four, and therefore no type answer.
+        expect(new Set(squads.map((s) => s.unitId)).size).toBe(4);
+      } else {
+        for (const squad of squads) expect(squad.unitId).toBe(RUINS[id].guard.threat);
+      }
+      for (const squad of squads) {
+        expect(squad.count).toBeGreaterThan(0);
+        expect(squad.count).toBeLessThanOrEqual(UNITS[squad.unitId].squadSize);
+      }
+    }
+  });
+
+  it('is worth what the gate was authored to be worth', () => {
+    for (const id of RUIN_ORDER) {
+      const budget = RUINS[id].guard.power;
+      // Whole troops, so the sum lands within one body of the budget — and
+      // never below one troop, however small the authored number.
+      const slack = Math.max(...gateFormation(id).map((s) => UNITS[s.unitId].power));
+      expect(Math.abs(gatePower(id) - budget), `${id}'s gate`).toBeLessThanOrEqual(slack);
+    }
+  });
+
+  it('is exactly what the attempt is scored against', () => {
+    const state = watched();
+    addAllTrainers(state);
+    const preview = previewGate(state, BARROW, ['Warden'], []);
+    expect(preview.enemy).toEqual(gateFormation(BARROW));
+    expect(preview.power).toBe(formationPower(preview.enemy));
+    const report = attemptGate(state, map, BARROW, ['Warden'], []);
+    expect(report.power).toBe(preview.power);
+  });
+});
+
 // Content, not machinery: the authored numbers have a shape the design states,
 // and a map edit that breaks it should fail here rather than in a playtest.
 describe('every authored gate', () => {
-  it('is easier than the first room of the ruin it guards', () => {
+  // The AUTHORED budget is the designer's number and the rule is on that:
+  // a gate is easier than the first room of the ruin it guards, because it is
+  // the room the player is pushed into on a clock. What the generator makes
+  // of it can land a body above, because a formation is whole troops and at
+  // today's scale one soldier is worth more than a tier-1 ruin's first
+  // depth — which is what **OQ-86** exists to re-author.
+  it('is authored below the first room of the ruin it guards', () => {
     for (const id of RUIN_ORDER) {
-      expect(RUINS[id].guard.power, `${id}'s gate`)
-        .toBeLessThan(threatStrength(id, 1));
+      expect(RUINS[id].guard.power, `${id}'s gate`).toBeLessThan(threatStrength(id, 1));
+    }
+  });
+
+  it('never fields more than one body past that first room', () => {
+    for (const id of RUIN_ORDER) {
+      const body = Math.max(...gateFormation(id).map((s) => UNITS[s.unitId].power));
+      expect(gatePower(id), `${id}'s gate`)
+        .toBeLessThanOrEqual(threatStrength(id, 1) + body);
     }
   });
 

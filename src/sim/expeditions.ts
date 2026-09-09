@@ -46,7 +46,10 @@ import {
   type CarriedArtifact, type Party, type PartySlot, type Drill,
 } from './combat';
 import { availableRoster, maxArmyPower } from './army';
-import { gateIsCleared, gateSupplies, markGateCleared } from './gates';
+import {
+  formationPower, gateFormation, gateIsCleared, gatePower, gateSupplies, markGateCleared,
+  type EnemySquad,
+} from './gates';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { resolve } from './modifiers';
@@ -363,23 +366,26 @@ export function attemptGate(
   slots: readonly PartySlot[],
 ): GateReport {
   const guard = RUINS[ruinId].guard;
+  // What is scored is the squads the player was SHOWN, not the budget they
+  // were generated from.
+  const power = gatePower(ruinId);
   const supplies = gateSupplies(ruinId);
   const block = gateBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) {
-    return { result: block, attack: 0, power: guard.power, hoard: {}, supplies };
+    return { result: block, attack: 0, power, hoard: {}, supplies };
   }
   pay(state.city.wallet, supplies);
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const party = partyOf(state, committed, heroIds);
   const attack = effectiveAttack(party, guard.threat);
-  if (attack < guard.power) {
-    return { result: 'Repelled', attack, power: guard.power, hoard: {}, supplies };
+  if (attack < power) {
+    return { result: 'Repelled', attack, power, hoard: {}, supplies };
   }
   const hoard = markGateCleared(state, ruinId);
   // The fight taught the party something whether or not the garrison was
   // holding anything, and a tier-5 gate teaches more than the Barrow's.
   addHeroXp(state, RUINS[ruinId].tier);
-  return { result: 'Cleared', attack, power: guard.power, hoard, supplies };
+  return { result: 'Cleared', attack, power, hoard, supplies };
 }
 
 /** What the room sheet shows before the player commits: the threat is always
@@ -387,6 +393,8 @@ export function attemptGate(
 export interface GatePreview {
   ruinId: RuinId;
   threat: UnitId | 'Any';
+  /** The squads in the doorway, and what they are worth. */
+  enemy: EnemySquad[];
   power: number;
   attack: number;
   stats: { atk: number; def: number; hp: number };
@@ -406,14 +414,17 @@ export function previewGate(
   const committed = slots.filter((s) => s.count > 0);
   const party = partyOf(state, committed, heroIds);
   const attack = effectiveAttack(party, guard.threat);
+  const enemy = gateFormation(ruinId);
+  const power = formationPower(enemy);
   return {
     ruinId,
     threat: guard.threat,
-    power: guard.power,
+    enemy,
+    power,
     attack,
     stats: partyStats(party),
     supplies: gateSupplies(ruinId),
-    enough: attack >= guard.power,
+    enough: attack >= power,
   };
 }
 
