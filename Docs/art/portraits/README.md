@@ -15,6 +15,7 @@ forms, saturated palette.
 
 | File | What |
 |---|---|
+| [`prompt-template.md`](prompt-template.md) | **the reusable prompt** — the generic block, the per-character block it takes, and the verification |
 | `hero_elven_princess.png` | 1024×1536, true alpha. The raw generation, untouched. |
 | `elven-princess.prompt.txt` | The exact prompt, verbatim. |
 
@@ -22,6 +23,9 @@ Nothing here is wired into the build — `src/render/assets/hero_*.png` are stil
 the 42×74 placeholder cards.
 
 ## 2. What a portrait prompt has to say that a tile prompt does not
+
+The prompt that carries all of this is [`prompt-template.md`](prompt-template.md);
+this section is the reasoning behind its shape.
 
 The template in [`../art-promts.md`](../art-promts.md) is written for a
 settlement diorama. Three of its clauses have to be overridden by name, or the

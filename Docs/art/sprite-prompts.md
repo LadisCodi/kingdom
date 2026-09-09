@@ -389,6 +389,11 @@ system is scheduled:
   glance.
 - **5 artifacts** — relic icons, readable at both inventory and slot size.
 
+**A first probe exists** — [`portraits/`](portraits/), one Legendary generated
+against the stylized-3D [`style-reference.png`](style-reference.png) with the
+reusable prompt in [`portraits/prompt-template.md`](portraits/prompt-template.md).
+It settles the pipeline, not the style.
+
 Portraits need a style decision the world art does not answer: the world is
 zoomed-out and impersonal by design, and a face is the opposite of that. Resolve
 that before generating a set. Note the audit's warning that the pixel style
