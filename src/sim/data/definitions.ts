@@ -1036,6 +1036,10 @@ export interface UnitDef {
   name: string;
   description: string;
   glyph: string;
+  /** Stem of its art in src/render/assets/. `<sprite>` is the whole soldier;
+   *  `<sprite>_avatar` is the bust the small widgets draw, because a standing
+   *  figure at 48px is a smudge (Docs/art/portraits/unit-blocks.md §2). */
+  sprite: string;
   /** What it costs against the army cap — equal to `atk` by construction, so
    *  the cap table reads directly as attack potential. */
   power: number;
@@ -1059,6 +1063,7 @@ const UNIT_CONTENT = {
     id: 'Warrior',
     name: 'Warrior',
     description: 'Sturdy front line: the most armour and health per Gold.',
+    sprite: 'unit_warrior',
     glyph: '⚔️',
     tags: ['Melee'],
     ...balance.units.Warrior,
@@ -1067,6 +1072,7 @@ const UNIT_CONTENT = {
     id: 'Lancer',
     name: 'Lancer',
     description: 'Long reach that keeps the line safe.',
+    sprite: 'unit_lancer',
     glyph: '🔱',
     tags: ['Melee'],
     ...balance.units.Lancer,
@@ -1075,6 +1081,7 @@ const UNIT_CONTENT = {
     id: 'Archer',
     name: 'Archer',
     description: 'Ranged support: the most attack per Gold, and the least of everything else.',
+    sprite: 'unit_archer',
     glyph: '🏹',
     tags: ['Distance'],
     ...balance.units.Archer,
@@ -1083,6 +1090,7 @@ const UNIT_CONTENT = {
     id: 'Cavalry',
     name: 'Cavalry',
     description: 'Fast and hard-hitting.',
+    sprite: 'unit_cavalry',
     glyph: '🐎',
     tags: ['Mounted', 'Melee'],
     ...balance.units.Cavalry,

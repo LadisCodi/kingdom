@@ -32,6 +32,7 @@ import type { CurrencyId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
 import { action, iconEl, sheet } from './kit';
+import { unitFace } from './battlePicker';
 
 /** Everything the screen needs that is not the player's own army. */
 export interface BattleView {
@@ -90,7 +91,7 @@ const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
  *  so a filled slot on one side reads against the other at a glance. */
 const squadFace = (unitId: UnitId, count: number): HTMLElement =>
   el('div', { class: 'bt-face' },
-    iconEl(unitId, { size: 'lg' }),
+    unitFace(unitId, 'bt-portrait'),
     el('span', { class: 'bt-count' }, `x${count}`));
 
 // ------------------------------------------------------------- the enemy
