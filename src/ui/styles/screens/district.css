@@ -288,16 +288,23 @@
   scrollbar-width: none;
 }
 .tr-queue::-webkit-scrollbar { display: none; }
+/* The queue is FACES, not a number (see the header of trainingSection.ts): a
+   row of them says what you are waiting for, which is the question when a hall
+   turns out three different units. So the slot carries the bust, and it grew
+   to 48px to be read next to the picker above it rather than merely counted. */
 .tr-slot {
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
 }
+/* The art is rounded rather than the slot CLIPPED, because the ward's count
+   badge hangs outside this box on purpose and `overflow: hidden` would eat it. */
+.tr-slot-art { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
 /* A ward in the line hands over several at once, so its slot carries the
  * count the way a party's squad face does. */
 .tr-slot { position: relative; }

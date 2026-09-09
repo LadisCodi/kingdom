@@ -85,7 +85,9 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
           class: `tr-slot${i === 0 ? ' is-active' : ''}`,
           title: many > 1 ? `${many} ${nameFor(item.trainee)}s mending` : nameFor(item.trainee),
         },
-          iconEl(iconFor(item.trainee), { size: 'lg' }),
+          item.trainee === 'Villager'
+            ? iconEl(iconFor(item.trainee), { size: 'lg' })
+            : unitBust(item.trainee, 'tr-slot-art'),
           ...(many > 1 ? [el('span', { class: 'tr-slot-count' }, `x${many}`)] : []));
       }));
 
