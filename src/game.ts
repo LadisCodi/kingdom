@@ -301,6 +301,10 @@ export class Game {
    *  On the presenter rather than in the view for the reason `expeditionRuin`
    *  is: it survives the per-tick rebuild, and it is node-testable. */
   openHeroId: HeroId | null = null;
+  /** The relic whose card is open on the Reliquary screen, or null for the
+   *  grid. Same shape and same reason as `openHeroId`: the two screens are
+   *  one pattern — a collection, and one piece of it opened. */
+  openRelicId: ArtifactId | null = null;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -867,6 +871,10 @@ export class Game {
     }
     this.mode = { kind: 'casting', artifactId, selected };
     this.openOverlay = null;
+    // Cast mode closes the sheet without going through `setOverlay`, so the
+    // open card has to be forgotten here as well — otherwise the next visit
+    // to the Reliquary lands inside whatever was last cast.
+    this.openRelicId = null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
     if (selected) this.camera.centerOnCell(selected);
@@ -2525,6 +2533,7 @@ export class Game {
     // Leaving the roster forgets which hero was open, so coming back lands on
     // the grid rather than inside whoever was last read.
     if (name !== 'heroes') this.openHeroId = null;
+    if (name !== 'reliquary') this.openRelicId = null;
     this.notify();
   }
 

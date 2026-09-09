@@ -133,21 +133,49 @@
 
 ## 7. The screens
 
-**Relics menu**
-- An `Attuned` row of slots: a filled slot shows level, the passive summary
-  and, when locked, the remaining swap time; an `Empty` slot; a Gem-priced
-  `Unlock` for the next slot.
-- The `Relics` grid: owned relics with level, passive chip, name and an `n/9`
-  progress bar.
-- Unowned relics are **silhouettes in black**, not `?`, with their ingredient
-  progress shown.
+Two views behind one nav tab — the collection, and one piece of it opened.
+Same shape as the roster ([`10-heroes.md`](10-heroes.md) §8).
 
-**Relic details**
-- Name, level, icon, passive line.
-- The active as its own panel with its Mana cost and a `Cast` button (built;
-  leaves with the spells to the tome — designed, not built).
-- The 3×3 ingredient grid: star rarity per slot, `+n` on duplicates.
-- `Upgrade`, with its Stardust cost.
+### 7.1 The Reliquary
+
+- The **Stardust** purse, hidden until the player has met it.
+- The `Attuned` row — **one box per socket, with a line under each**:
+  - **empty**: drawn open, and its line reads `Empty`, or the time left when
+    the socket is still settling from a swap.
+  - **filled**: the relic's art, and its name on the line. Tapping it opens
+    that relic's card. A settling socket carries the time left on the box.
+  - **the next socket to buy**: the same box in the gem tone with a plus, its
+    Gems on the line. What is bought is a socket, so it is drawn as one —
+    never a button under the row.
+- The `Relics` grid — **three cards to a row**, one per relic, **found first
+  then the gaps**, both in collection order:
+  - **found**: the art, then the name, the level and the tier pips on the foot.
+    Attuned reads as a **gold tile with a tick**; anything with a level or a
+    tier to buy right now reads as a **green plus**. Never both — a relic in a
+    socket is where the player put it.
+  - **unfound**: warm stone, the art in silhouette, and **the ruin it waits
+    in** — a signpost, not a locked box.
+- **Every card opens**, found or not.
+
+### 7.2 A relic's card
+
+- Centred over the grid and **bare**: the art and the name below it are the
+  title, so there is no plank repeating it.
+- The art on its stage, **the tier pips overlapping its lower edge**, an arrow
+  each side that steps the collection, and a close in the top-right corner.
+  An attuned relic's stage is **gold** and carries an `Attuned` pill.
+- The name, the level against its tier's cap, and the passive.
+- The spell as its own panel; a relic without one says so.
+- **`Attune` / `Remove` and `Cast` side by side**, equal widths — neither is
+  the primary reading of a relic. **One line under them says why either is
+  dead**, and a reason both give is printed once. Being unable to afford the
+  Mana is not one of them: the red price in the button has already said it.
+- **`Study`** (Stardust, one level) and **`Raise its tier`** (Fragments, the
+  ceiling) — the 3×3 ingredient grid of §4 takes the second one's place when
+  ingredients land.
+- **An unfound relic gets the same card**: what the player is deciding is
+  whether to go and get this one, which is a question about the passive, not
+  about buttons it has not earned. It carries the ruin to clear instead.
 
 ## 8. Dials, in the order to reach for them
 
