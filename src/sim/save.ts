@@ -46,6 +46,8 @@ export interface SaveFile {
 interface DistrictDto {
   UniqueID: string;
   DefinitionID: string;
+  /** Which one of its kind it is, stamped when it was placed. */
+  Ordinal?: number;
   VisualVariant: number;
   AssignedWorkers: number;
   Level: number;
@@ -119,6 +121,32 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 /** Ordered, gap-free, append-only. A version bump with no reshape needs NO
  *  entry here — the defensive readers below already default the new field. */
 const MIGRATIONS: readonly Migration[] = [
+  {
+    // v43 — a building carries the ORDINAL it was placed with, and that
+    // ordinal prices every level of it for ever
+    // (Docs/features/05-city-and-districts.md §3.1). An additive field would
+    // normally need no migrator, but the default is not innocent: leaving it
+    // blank would make every building in an old city the cheap #1.
+    //
+    // The saved list is placement order — nothing is ever removed from it —
+    // so numbering each kind in the order it appears reconstructs exactly
+    // what the player built.
+    to: 43,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as
+        { Cities?: { Districts?: { DefinitionID?: string; Ordinal?: number }[] }[] }
+        | undefined)?.Cities?.[0];
+      const districts = city?.Districts;
+      if (districts === undefined) return;
+      const seen = new Map<string, number>();
+      for (const d of districts) {
+        const kind = String(d.DefinitionID ?? '');
+        const n = (seen.get(kind) ?? 0) + 1;
+        seen.set(kind, n);
+        d.Ordinal = n;
+      }
+    },
+  },
   {
     // v33 — Hero XP stopped being a tally beside each hero and became a
     // KINGDOM WALLET ROW that buys any hero's levels
@@ -439,6 +467,7 @@ export function serialize(state: GameState, now: number): SaveFile {
               (d): DistrictDto => ({
                 UniqueID: d.uniqueId,
                 DefinitionID: d.definitionId,
+                Ordinal: d.ordinal,
                 VisualVariant: d.visualVariant,
                 AssignedWorkers: d.assignedWorkers,
                 Level: d.level,
@@ -712,6 +741,7 @@ export function deserialize(
       (d): District => ({
         uniqueId: d.UniqueID,
         definitionId: d.DefinitionID as District['definitionId'],
+        ordinal: d.Ordinal ?? 1,
         level: d.Level ?? 1,
         assignedWorkers: d.AssignedWorkers ?? 0,
         location: d.GridLocation,

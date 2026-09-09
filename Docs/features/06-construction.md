@@ -11,7 +11,10 @@
   refused.
 - Jobs in flight = builder count.
 - An upgrade occupies a builder exactly as a build does.
-- Cancel refunds the full cost, recomputed from the cost formula.
+- **A build cannot be cancelled.** It is paid for when it starts, and a
+  building put in the wrong place is moved rather than undone
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §4.2) — which is why
+  a move works on an unfinished building.
 
 ## 2. The offer
 
@@ -62,5 +65,6 @@
 - A free trial of a builder.
 - Rushing offered inline in the offer sheet.
 - A store card for builders ([`14-monetization.md`](14-monetization.md) §2).
+- Cancelling a build, and the refund that went with it (§1).
 
 **Open questions:** OQ-31, OQ-32.

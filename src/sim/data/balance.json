@@ -17,57 +17,99 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {},
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "costPerLevel": [
+        {
+          "cost": {},
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 234
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 912
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 3559
+          },
+          "goods": {
+            "Planks": 2,
+            "CutStone": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6050
+          },
+          "goods": {
+            "Planks": 4,
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 10285
+          },
+          "goods": {
+            "Planks": 6,
+            "CutStone": 6,
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 17486
+          },
+          "goods": {
+            "Planks": 10,
+            "CutStone": 10,
+            "Iron": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 29726
+          },
+          "goods": {
+            "Planks": 14,
+            "CutStone": 14,
+            "Iron": 10,
+            "Runestone": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 50534
+          },
+          "goods": {
+            "Planks": 20,
+            "CutStone": 20,
+            "Iron": 14,
+            "Runestone": 4
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 0,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 60
-      },
-      "upgradeCostLevelGrowth": 3.9,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 4,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 21600,
       "upgradeDurationLateLevelGrowth": 2,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {
-          "Planks": 2,
-          "CutStone": 2
-        },
-        {
-          "Planks": 4,
-          "CutStone": 4
-        },
-        {
-          "Planks": 6,
-          "CutStone": 6,
-          "Iron": 2
-        },
-        {
-          "Planks": 10,
-          "CutStone": 10,
-          "Iron": 6
-        },
-        {
-          "Planks": 14,
-          "CutStone": 14,
-          "Iron": 10,
-          "Runestone": 2
-        },
-        {
-          "Planks": 20,
-          "CutStone": 20,
-          "Iron": 14,
-          "Runestone": 4
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -145,46 +187,96 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 10
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1.25,
-      "buildCostExponentialGrowth": 1.1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 10
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 30,
+            "Stone": 10
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 45,
+            "Stone": 15
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 67,
+            "Stone": 22
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 101,
+            "Stone": 33
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 172,
+            "Stone": 57
+          },
+          "goods": {
+            "Planks": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 292,
+            "Stone": 97
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 497,
+            "Stone": 165
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 845,
+            "Stone": 281
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1437,
+            "Stone": 479
+          },
+          "goods": {
+            "Planks": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1.25,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 30,
-        "Stone": 10
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 20,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Planks": 2
-        },
-        {
-          "Planks": 3
-        },
-        {
-          "Planks": 4
-        },
-        {
-          "Planks": 5
-        },
-        {
-          "Planks": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -262,45 +354,87 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 30
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.5,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 50
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 75
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 112
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 168
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 286
+          },
+          "goods": {
+            "Planks": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 487
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 829
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1409
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 2396
+          },
+          "goods": {
+            "Planks": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 50
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Planks": 2
-        },
-        {
-          "Planks": 3
-        },
-        {
-          "Planks": 4
-        },
-        {
-          "Planks": 5
-        },
-        {
-          "Planks": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [
         0,
         0,
@@ -368,23 +502,23 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 10
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 10
+          },
+          "goods": {}
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 10,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -451,45 +585,87 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 20
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 20
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 150
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 375
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 937
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1593
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 2709
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4605
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 7830
+          },
+          "goods": {
+            "Planks": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 13311
+          },
+          "goods": {
+            "Planks": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2.5,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 60
-      },
-      "upgradeCostLevelGrowth": 2.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Planks": 3
-        },
-        {
-          "Planks": 4
-        },
-        {
-          "Planks": 5
-        },
-        {
-          "Planks": 6
-        },
-        {
-          "Planks": 7
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [
         0,
         0,
@@ -589,45 +765,87 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 30
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 40
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 90
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 135
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 229
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 390
+          },
+          "goods": {
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 663
+          },
+          "goods": {
+            "CutStone": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1127
+          },
+          "goods": {
+            "CutStone": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1916
+          },
+          "goods": {
+            "CutStone": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2.5,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 40
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "CutStone": 3
-        },
-        {
-          "CutStone": 4
-        },
-        {
-          "CutStone": 5
-        },
-        {
-          "CutStone": 6
-        },
-        {
-          "CutStone": 7
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [
         0,
         0,
@@ -727,45 +945,87 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 25
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 25
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 35
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 52
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 78
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 118
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 200
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 341
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 580
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 986
+          },
+          "goods": {
+            "Planks": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1677
+          },
+          "goods": {
+            "Planks": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2.5,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 35
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Planks": 3
-        },
-        {
-          "Planks": 4
-        },
-        {
-          "Planks": 5
-        },
-        {
-          "Planks": 6
-        },
-        {
-          "Planks": 7
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [
         0,
         0,
@@ -834,47 +1094,97 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Gold": 300,
-        "Stone": 40
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 300,
+            "Stone": 40
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 500,
+            "Stone": 80
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 900,
+            "Stone": 144
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1620,
+            "Stone": 259
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 2916,
+            "Stone": 466
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 4957,
+            "Stone": 793
+          },
+          "goods": {
+            "CutStone": 2
+          }
+        },
+        {
+          "cost": {
+            "Gold": 8427,
+            "Stone": 1348
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 14326,
+            "Stone": 2292
+          },
+          "goods": {
+            "Runestone": 2
+          }
+        },
+        {
+          "cost": {
+            "Gold": 24354,
+            "Stone": 3896
+          },
+          "goods": {
+            "Runestone": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 41403,
+            "Stone": 6624
+          },
+          "goods": {
+            "Runestone": 4
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 90,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Gold": 500,
-        "Stone": 80
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "CutStone": 2
-        },
-        {
-          "CutStone": 3
-        },
-        {
-          "Runestone": 2
-        },
-        {
-          "Runestone": 3
-        },
-        {
-          "Runestone": 4
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -932,47 +1242,97 @@
         2600
       ],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 60,
-        "Stone": 20
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 60,
+            "Stone": 20
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 180,
+            "Stone": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 324,
+            "Stone": 108
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 583,
+            "Stone": 194
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1049,
+            "Stone": 349
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1784,
+            "Stone": 594
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 3033,
+            "Stone": 1011
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 5157,
+            "Stone": 1719
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 8767,
+            "Stone": 2922
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 14905,
+            "Stone": 4968
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 45,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 180,
-        "Stone": 60
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 90,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Iron": 2
-        },
-        {
-          "Iron": 3
-        },
-        {
-          "Iron": 4
-        },
-        {
-          "Iron": 5
-        },
-        {
-          "Iron": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1030,47 +1390,97 @@
         2600
       ],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 80,
-        "Stone": 30
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 80,
+            "Stone": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 240,
+            "Stone": 90
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 432,
+            "Stone": 162
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 777,
+            "Stone": 291
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1399,
+            "Stone": 524
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2379,
+            "Stone": 892
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4045,
+            "Stone": 1516
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6876,
+            "Stone": 2578
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11690,
+            "Stone": 4383
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 19873,
+            "Stone": 7452
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 240,
-        "Stone": 90
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Iron": 2
-        },
-        {
-          "Iron": 3
-        },
-        {
-          "Iron": 4
-        },
-        {
-          "Iron": 5
-        },
-        {
-          "Iron": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1128,47 +1538,97 @@
         2600
       ],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 80,
-        "Stone": 30
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 80,
+            "Stone": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 240,
+            "Stone": 90
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 432,
+            "Stone": 162
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 777,
+            "Stone": 291
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1399,
+            "Stone": 524
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2379,
+            "Stone": 892
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4045,
+            "Stone": 1516
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6876,
+            "Stone": 2578
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11690,
+            "Stone": 4383
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 19873,
+            "Stone": 7452
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 240,
-        "Stone": 90
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Iron": 2
-        },
-        {
-          "Iron": 3
-        },
-        {
-          "Iron": 4
-        },
-        {
-          "Iron": 5
-        },
-        {
-          "Iron": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1226,47 +1686,97 @@
         2600
       ],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 120,
-        "Stone": 70
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 120,
+            "Stone": 70
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 360,
+            "Stone": 210
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 648,
+            "Stone": 378
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1166,
+            "Stone": 680
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2099,
+            "Stone": 1224
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 3569,
+            "Stone": 2082
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6067,
+            "Stone": 3539
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 10314,
+            "Stone": 6017
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 17535,
+            "Stone": 10228
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 29810,
+            "Stone": 17389
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 90,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 360,
-        "Stone": 210
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 180,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Iron": 2
-        },
-        {
-          "Iron": 3
-        },
-        {
-          "Iron": 4
-        },
-        {
-          "Iron": 5
-        },
-        {
-          "Iron": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1324,47 +1834,97 @@
         330,
         400
       ],
-      "buildCost": {
-        "Wood": 80,
-        "Stone": 40
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 80,
+            "Stone": 40
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 240,
+            "Stone": 120
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 432,
+            "Stone": 216
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 777,
+            "Stone": 388
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1399,
+            "Stone": 699
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2379,
+            "Stone": 1189
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4045,
+            "Stone": 2022
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6876,
+            "Stone": 3438
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11690,
+            "Stone": 5845
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 19873,
+            "Stone": 9936
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 240,
-        "Stone": 120
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Iron": 2
-        },
-        {
-          "Iron": 3
-        },
-        {
-          "Iron": 4
-        },
-        {
-          "Iron": 5
-        },
-        {
-          "Iron": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1431,45 +1991,87 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 120
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 120
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 200
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 320
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 512
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 819
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1392
+          },
+          "goods": {
+            "CutStone": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 2367
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4024
+          },
+          "goods": {
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6842
+          },
+          "goods": {
+            "CutStone": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11631
+          },
+          "goods": {
+            "CutStone": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 200
-      },
-      "upgradeCostLevelGrowth": 1.6,
       "upgradeDurationSeconds": 120,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "CutStone": 2
-        },
-        {
-          "CutStone": 3
-        },
-        {
-          "CutStone": 4
-        },
-        {
-          "CutStone": 5
-        },
-        {
-          "CutStone": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": "Planks",
@@ -1547,47 +2149,97 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 100,
-        "Stone": 60
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 100,
+            "Stone": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 160,
+            "Stone": 100
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 256,
+            "Stone": 160
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 409,
+            "Stone": 256
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 655,
+            "Stone": 409
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1114,
+            "Stone": 696
+          },
+          "goods": {
+            "Planks": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1893,
+            "Stone": 1183
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 3219,
+            "Stone": 2012
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 5473,
+            "Stone": 3421
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 9305,
+            "Stone": 5815
+          },
+          "goods": {
+            "Planks": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 90,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 160,
-        "Stone": 100
-      },
-      "upgradeCostLevelGrowth": 1.6,
       "upgradeDurationSeconds": 180,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Planks": 2
-        },
-        {
-          "Planks": 3
-        },
-        {
-          "Planks": 4
-        },
-        {
-          "Planks": 5
-        },
-        {
-          "Planks": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": "CutStone",
@@ -1665,47 +2317,97 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Gold": 400,
-        "Stone": 120
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 400,
+            "Stone": 120
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 600,
+            "Stone": 200
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 960,
+            "Stone": 320
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1536,
+            "Stone": 512
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 2457,
+            "Stone": 819
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 4177,
+            "Stone": 1392
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 7102,
+            "Stone": 2367
+          },
+          "goods": {
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Gold": 12074,
+            "Stone": 4024
+          },
+          "goods": {
+            "CutStone": 5
+          }
+        },
+        {
+          "cost": {
+            "Gold": 20526,
+            "Stone": 6842
+          },
+          "goods": {
+            "CutStone": 6
+          }
+        },
+        {
+          "cost": {
+            "Gold": 34894,
+            "Stone": 11631
+          },
+          "goods": {
+            "CutStone": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 120,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Gold": 600,
-        "Stone": 200
-      },
-      "upgradeCostLevelGrowth": 1.6,
       "upgradeDurationSeconds": 240,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "CutStone": 3
-        },
-        {
-          "CutStone": 4
-        },
-        {
-          "CutStone": 5
-        },
-        {
-          "CutStone": 6
-        },
-        {
-          "CutStone": 7
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": "Iron",
@@ -1783,47 +2485,97 @@
       ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Gold": 800,
-        "Stone": 200
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 800,
+            "Stone": 200
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1200,
+            "Stone": 300
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1920,
+            "Stone": 480
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 3072,
+            "Stone": 768
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 4915,
+            "Stone": 1228
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 8355,
+            "Stone": 2088
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Gold": 14204,
+            "Stone": 3551
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 24148,
+            "Stone": 6037
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Gold": 41052,
+            "Stone": 10263
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Gold": 69788,
+            "Stone": 17447
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 180,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Gold": 1200,
-        "Stone": 300
-      },
-      "upgradeCostLevelGrowth": 1.6,
       "upgradeDurationSeconds": 360,
       "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
       "upgradeDurationLateSeconds": 7200,
       "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Iron": 2
-        },
-        {
-          "Iron": 3
-        },
-        {
-          "Iron": 4
-        },
-        {
-          "Iron": 5
-        },
-        {
-          "Iron": 6
-        }
-      ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": "Runestone",
@@ -1880,24 +2632,24 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Wood": 200,
-        "Food": 100
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 0.35,
-      "buildCostExponentialGrowth": 0.3,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 200,
+            "Food": 100
+          },
+          "goods": {}
+        }
+      ],
+      "instanceLinearGrowth": 0.35,
+      "instanceExponentialGrowth": 1,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1.1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1932,25 +2684,25 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Stone": 200
-      },
-      "buildCostGoods": {
-        "CutStone": 1
-      },
-      "buildCostMultiplier": 0.35,
-      "buildCostExponentialGrowth": 0.3,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Stone": 200
+          },
+          "goods": {
+            "CutStone": 1
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.35,
+      "instanceExponentialGrowth": 1,
       "buildDurationSeconds": 90,
       "buildDurationDistrictGrowth": 1.1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -1985,25 +2737,25 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Food": 500
-      },
-      "buildCostGoods": {
-        "Planks": 2
-      },
-      "buildCostMultiplier": 0.4,
-      "buildCostExponentialGrowth": 0.3,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Food": 500
+          },
+          "goods": {
+            "Planks": 2
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.4,
+      "instanceExponentialGrowth": 1,
       "buildDurationSeconds": 180,
       "buildDurationDistrictGrowth": 1.15,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -2038,25 +2790,25 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Gold": 5000
-      },
-      "buildCostGoods": {
-        "CutStone": 2
-      },
-      "buildCostMultiplier": 0.4,
-      "buildCostExponentialGrowth": 0.3,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 5000
+          },
+          "goods": {
+            "CutStone": 2
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.4,
+      "instanceExponentialGrowth": 1,
       "buildDurationSeconds": 180,
       "buildDurationDistrictGrowth": 1.15,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -2091,26 +2843,26 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Stone": 800
-      },
-      "buildCostGoods": {
-        "Planks": 4,
-        "CutStone": 4
-      },
-      "buildCostMultiplier": 0.5,
-      "buildCostExponentialGrowth": 0.3,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Stone": 800
+          },
+          "goods": {
+            "Planks": 4,
+            "CutStone": 4
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.5,
+      "instanceExponentialGrowth": 1,
       "buildDurationSeconds": 420,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -2145,25 +2897,25 @@
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
-      "buildCost": {
-        "Gold": 20000
-      },
-      "buildCostGoods": {
-        "Runestone": 2
-      },
-      "buildCostMultiplier": 0.5,
-      "buildCostExponentialGrowth": 0.3,
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 20000
+          },
+          "goods": {
+            "Runestone": 2
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.5,
+      "instanceExponentialGrowth": 1,
       "buildDurationSeconds": 600,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
       "upgradeDurationLevelGrowth": 1.5,
-      "upgradeCostLateLevelGrowth": 0,
       "upgradeDurationLateSeconds": 0,
       "upgradeDurationLateLevelGrowth": 0,
-      "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
       "produces": null,
@@ -3567,7 +4319,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 7,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3583,7 +4335,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3597,7 +4349,7 @@
       "reward": {},
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 30
     },
     {
@@ -3613,7 +4365,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3627,7 +4379,7 @@
       "reward": {},
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 30
     },
     {
@@ -3643,7 +4395,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3659,7 +4411,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3675,7 +4427,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3691,7 +4443,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 6,
       "rewardMana": 0
     },
     {
@@ -3707,7 +4459,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3721,7 +4473,7 @@
       "reward": {},
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 40
     },
     {
@@ -3737,7 +4489,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3753,7 +4505,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3769,7 +4521,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3785,7 +4537,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3801,7 +4553,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3817,7 +4569,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3833,7 +4585,7 @@
       },
       "rewardGems": 150,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3849,7 +4601,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3865,7 +4617,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3881,7 +4633,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3897,7 +4649,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3913,7 +4665,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3929,7 +4681,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3945,7 +4697,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -3961,7 +4713,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3977,7 +4729,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -3993,7 +4745,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4009,7 +4761,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 20,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4025,7 +4777,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4041,7 +4793,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4057,7 +4809,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 4,
+      "rewardKnowledge": 3,
       "rewardMana": 0
     },
     {
@@ -4073,7 +4825,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 4,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4089,7 +4841,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 4,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4105,7 +4857,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 6,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4121,7 +4873,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 8,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4137,7 +4889,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 4,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4153,7 +4905,7 @@
       },
       "rewardGems": 150,
       "rewardStardust": 25,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -4169,7 +4921,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 2,
       "rewardMana": 0
     },
     {
@@ -4185,7 +4937,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4202,7 +4954,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 4,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4219,7 +4971,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4235,7 +4987,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 8,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4251,7 +5003,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 8,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4267,7 +5019,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4283,7 +5035,7 @@
       },
       "rewardGems": 250,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4300,7 +5052,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4317,7 +5069,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4333,7 +5085,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 20,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4349,7 +5101,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 18,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4366,7 +5118,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 0,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4383,7 +5135,7 @@
       },
       "rewardGems": 0,
       "rewardStardust": 30,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     },
     {
@@ -4399,7 +5151,7 @@
       },
       "rewardGems": 200,
       "rewardStardust": 45,
-      "rewardKnowledge": 1,
+      "rewardKnowledge": 0,
       "rewardMana": 0
     }
   ],

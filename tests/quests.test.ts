@@ -169,7 +169,7 @@ describe('the quest chain', () => {
     expect(activeQuest(state)!.id).toBe('ARoof');
     // Enough for the roof AND the crop plot that comes six beats later.
     expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThanOrEqual(
-      DISTRICTS.Housing.buildCost.Wood! + DISTRICTS.FarmLands.buildCost.Wood!);
+      DISTRICTS.Housing.costPerLevel[0].cost.Wood! + DISTRICTS.FarmLands.costPerLevel[0].cost.Wood!);
   });
 
   it('absolute goals complete instantly when the work was already done', () => {

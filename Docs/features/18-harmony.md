@@ -111,7 +111,7 @@
 | What a piece supplies | §2 | `Districts.harmony_supply` |
 | What a level demands, as a total from level 1 | `,,,,,,,2,4,6` | `Districts.harmony_cost_per_level` |
 | When a piece may stand, and how many | §2 | `Districts.max_count_per_townhall_level` |
-| What a piece costs in goods | §2 | `Districts.build_cost_goods` |
+| What a piece costs in goods | §2 | the `DistrictCosts` sheet, its level 1 row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | The surplus tiers and what each pays | `1.10:0.05\|1.25:0.10\|1.50:0.15` | `harmony.surplus_tiers` |
 | Which technology discovers a piece | §2 | the card's `unlocks` in `?dev=tree` |
 | A house's rent beside a piece | +1 a minute | the `Adjacency` sheet |

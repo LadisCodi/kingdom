@@ -2,7 +2,7 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, builderGemCost, buyBuilder, canAfford, cancelQueueItem, changeWorkers, collectTap,
+  advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectTap,
   buyKeys, enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
@@ -16,7 +16,7 @@ import { formatDuration } from './ui/format';
 import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
-  maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
+  maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
 } from './sim/districts';
 import {
   explorationGate, fogState, nextRevealTapCost, revealCostForCell, revealTap,
@@ -1440,7 +1440,7 @@ export class Game {
     const result = upgradeDistrict(this.state, districtId);
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
-      this.shake(Object.keys(DISTRICTS[d.definitionId].upgradeCost) as CurrencyId[]);
+      this.shake(Object.keys(upgradeCost(d.definitionId, d.ordinal, d.level)) as CurrencyId[]);
     } else if (result === 'NoBuilderFree') {
       // An upgrade occupies a builder exactly as a build does, so it hits the
       // same wall and deserves the same offer rather than a bare refusal.
@@ -1529,12 +1529,6 @@ export class Game {
     const result = finishWithGems(this.state, this.map, itemId, this.now());
     if (result === 'Success') playSfx('gemSpend');
     if (result === 'NotEnoughGems') this.shake(['Gems']);
-    this.notify();
-  }
-
-  doCancelItem(itemId: string): void {
-    cancelQueueItem(this.state, itemId);
-    this.inspectedDistrictId = null;
     this.notify();
   }
 

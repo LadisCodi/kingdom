@@ -4,7 +4,7 @@ import { HARVEST, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definiti
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
-import { getWallet, parseCoordKey } from '../src/sim/state';
+import { getWallet, parseCoordKey, type DistrictId } from '../src/sim/state';
 import { effectiveStock } from '../src/sim/harvest';
 import { isTechComplete, isTomeOpen } from '../src/sim/research';
 import { tapWorkSeconds } from '../src/sim/upgrades';
@@ -180,6 +180,32 @@ describe('save versions', () => {
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(getWallet(restored.city.wallet, 'Food')).toBe(5);
     expect(getWallet(restored.city.wallet, 'Stone')).toBe(3);
+  });
+
+  // v43: a building carries the ORDINAL it was placed with, and that ordinal
+  // prices every level of it for ever. An old save has none, and defaulting
+  // to 1 would make every building in a grown city the cheap first one — so
+  // the migrator numbers each kind in the order the save lists it, which IS
+  // the order the player built them.
+  it('numbers an old save\'s buildings in the order they were placed', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addBuilt(state, 'Sawmill', { x: 4, y: 0 });
+    addBuilt(state, 'Housing', { x: 2, y: 2 });
+    addBuilt(state, 'Housing', { x: 4, y: 2 });
+    const save = serialize(state, T0);
+    for (const d of (save.Modules['kingdom.cities'] as any).Cities[0].Districts) {
+      delete d.Ordinal;
+    }
+    save.SaveVersion = 42;
+
+    const restored = deserialize(save, map, T0)!;
+    const kind = (id: DistrictId) => restored.city.districts
+      .filter((d) => d.definitionId === id).map((d) => d.ordinal);
+    expect(kind('Housing')).toEqual([1, 2, 3]);
+    expect(kind('Sawmill')).toEqual([1]);
+    // Each kind counts on its own — the Townhall is not Housing #0.
+    expect(kind('Townhall')).toEqual([1]);
   });
 
   // v33: Hero XP stopped being a tally beside each hero and became a kingdom

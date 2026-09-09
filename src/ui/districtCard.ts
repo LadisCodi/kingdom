@@ -18,7 +18,7 @@ import {
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
-  canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
+  canMoveDistrict, districtLabel, maxCountForTownhallLevel, requiredTechForLevel,
   requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
@@ -418,19 +418,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       cost: { Gems: gemRushCost(queueItem, now) },
       have: (c) => game.walletValue(c),
     });
-    const buttons = el('div', { class: 'dc-actions' }, rush);
-    if (queueItem.kind === 'build') {
-      buttons.append(btn({
-        label: 'Cancel',
-        kind: 'destructive',
-        onClick: () => game.doCancelItem(queueItem.uniqueId),
-      }));
-    }
-    foot.append(buttons);
+    // No Cancel: a build is paid for when it starts, and a building put in
+    // the wrong place is MOVED rather than undone
+    // (Docs/features/06-construction.md §1).
+    foot.append(el('div', { class: 'dc-actions' }, rush));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     const next = district.level + 1;
-    const n = districtCount(game.state, district.definitionId);
-    const cost = upgradeCost(district.definitionId, n, district.level);
+    const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
     const requiredTh = requiredTownhallLevel(district.definitionId, next);
     const gateTech = requiredTechForLevel(district.definitionId, next);
 
@@ -522,7 +516,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     el('div', { class: 'dc-head' },
       portrait(def, district.level),
       el('div', { class: 'dc-id' },
-        el('div', { class: 'dc-name' }, def.name),
+        el('div', { class: 'dc-name' }, districtLabel(game.state, district)),
         levelStars(district.level, def.maxLevel),
         el('div', { class: 'dc-what' }, def.description)),
       head),

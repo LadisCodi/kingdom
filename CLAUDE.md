@@ -69,7 +69,12 @@ than in live ticking, and a new consumer would shift every later roll. Integer
 arithmetic (`Math.imul`, `>>> 0`) so it is bit-identical across engines.
 
 **5. The workbook is the source of truth for every NUMBER; the map editor for
-the MAP; `?dev=tree` for the TECHNOLOGIES and the BANDS.** `balance/balance.xlsx` →
+the MAP; `?dev=tree` for the TECHNOLOGIES and the BANDS.** What a building
+COSTS is its own sheet, `DistrictCosts` — one row per building per level,
+level 1 being the build, the four currencies and the four goods on it. There
+is no cost curve: the `Districts` row carries only `instance_linear_growth`
+and `instance_exponential_growth`, which say how much dearer a LATER instance
+is (`Docs/features/05-city-and-districts.md` §3). `balance/balance.xlsx` →
 `npm run balance` → `src/sim/data/balance.json`. **Editing `balance.json` by
 hand is silently overwritten** on the next dev/build. To add a column: edit the
 JSON *and* the importer schema in `scripts/balance.mjs`, then
@@ -106,7 +111,7 @@ three ways (`tests/techTree.test.ts`).
 
 | Data — no code change | Code |
 |---|---|
-| every balance number (`Districts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
+| every balance number (`Districts`, `DistrictCosts`, `Harvest`, `Quests`, `Currencies`, `Units`, `Artifacts`, `Heroes`, `Adjacency`, `Settings`) | new quest **goal types** |
 | the whole map — terrain, features, landmark and ruin placement and properties — in `?dev=map` | a new terrain/feature id, or a sixth ruin (`RuinId` is a union) |
 | the whole quest chain — **row order is chain order** | new `ModifierStat` values (a line in `modifiers.ts` + a `resolve()` call in the helper that owns that number) |
 | event and banner schedules, modifier magnitudes by template id | new `SchedulePayload` kinds and their handlers |
@@ -116,14 +121,14 @@ three ways (`tests/techTree.test.ts`).
 | **what a bonus moves** — a `stat` from the registry, an `op`, a signed `value` and what it aims at. A kind of bonus nothing has yet ("+5% gold income at Housing") is a target, not code. A rank ladder is a stem plus a roman numeral, not a field, and each rank carries its own value | a **new number** a technology can move: an entry in `TECH_STATS` (`src/sim/data/techEffectRules.ts`) — including `says`, the sentence a player reads, one per op it accepts — plus a `techValue(...)` read at the call site that owns it |
 | **which technology unlocks a building, a building level, one more of a building, a unit, a harvest source or a terrain** — it is a dropdown on the technology | a gate on something that has no `TechUnlock` yet |
 | a second region = a JSON map + a row in `grid.ts`'s `REGIONS` | anything multi-region beyond `regionId` |
-| a refined good's recipe and work time (`Goods`); what a building level costs in goods (`Districts.upgrade_cost_goods_per_level`); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
-| **a decoration** = a `Districts` row with `harmony_supply` (one level, no crew), priced in goods through `build_cost_goods`, capped and Townhall-gated by `max_count_per_townhall_level`, discovered by a card in `?dev=tree`; **what a level demands** = `harmony_cost_per_level`, a TOTAL from level 1; the surplus tiers = `harmony.surplus_tiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
+| a refined good's recipe and work time (`Goods`); what a building level costs in goods (the `DistrictCosts` row for that level); a workshop's good and queue length (`produces`, `queue_length_per_level`) | a new `GoodId` |
+| **a decoration** = a `Districts` row with `harmony_supply` (one level, no crew), priced in goods on its `DistrictCosts` level 1 row, capped and Townhall-gated by `max_count_per_townhall_level`, discovered by a card in `?dev=tree`; **what a level demands** = `harmony_cost_per_level`, a TOTAL from level 1; the surplus tiers = `harmony.surplus_tiers` | a new number the surplus moves (it is the tax rate, at the base stage in `effectiveTaxRate`); Harmony with reach |
 | a new animated character = its frames dropped in `Docs/art/characters/` + `npm run art:characters` | which building casts it (`src/render/cast.ts` — checked by `tests/characters.test.ts`) |
 | a new adjacency rule = a row on `Adjacency` (`district`, `neighbour`, `stat`, `magnitude`; either side may name `AnyHall`/`AnyWorkshop`/`AnyProducer`) | a new `AdjacencyStat` (one line in `definitions.ts` plus the call site that owns that number) or a new group token |
 
 ## Saves
 
-`SAVE_VERSION` is 42; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 43; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -166,6 +171,13 @@ than the build is rejected rather than downgraded.
   reveal at z 100 in its own for the same one; both carry
   `:empty { display: none }` — without it an `inset: 0` element swallows every
   tap on the map.
+- **A building's price is a fact about that building, not about the city.**
+  `District.ordinal` is stamped when it is placed and never changes; it prices
+  every level of it for ever, and it is what a card calls it (*Housing #3*).
+  It stays unique without a counter because nothing ever leaves the district
+  list: there is no demolish, and **a build cannot be cancelled** — a
+  misplaced building is MOVED, which is why `canMoveDistrict` allows an
+  unfinished one.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a
   throttled background tab resolves correctly on return.
 - **An adjacency on a TIMER is priced when the timer starts and stored on the

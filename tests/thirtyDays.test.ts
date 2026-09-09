@@ -109,7 +109,7 @@ function chooseCell(state: GameState, def: DistrictDef): Coord | null {
   if (def.harvestSources.length > 0) {
     const score = (cell: Coord): number => {
       const ghost: District = {
-        uniqueId: 'ghost', definitionId: def.id, level: 1, assignedWorkers: 0,
+        uniqueId: 'ghost', definitionId: def.id, ordinal: 1, level: 1, assignedWorkers: 0,
         location: cell, state: 'Built', visualVariant: 1,
       };
       return influenceCells(map, ghost).filter((c) => {

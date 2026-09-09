@@ -101,6 +101,7 @@ export function newGame(map: MapData, now: number): GameState {
   state.city.districts.push({
     uniqueId: `district_Townhall_${state.nextId++}`,
     definitionId: 'Townhall',
+    ordinal: 1,
     level: 1,
     assignedWorkers: 0,
     location: TOWNHALL_ORIGIN,

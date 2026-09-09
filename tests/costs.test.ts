@@ -1,36 +1,136 @@
 // Every worked example from Docs/features/05-city-and-districts.md becomes an assertion.
 import { describe, expect, it } from 'vitest';
-import { freshGame } from './helpers';
+import { completeTech, freshGame, fund, map } from './helpers';
 import {
-  LATE_FROM, buildCost, buildDuration, upgradeCost, upgradeDuration,
+  LATE_FROM, buildCost, buildDuration, instanceMultiplier, levelCost,
+  upgradeCost, upgradeDuration, upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
 import { DISTRICTS } from '../src/sim/data/definitions';
-import type { DistrictId } from '../src/sim/state';
-import { gemRushCost } from '../src/sim/commands';
+import { townhall, type DistrictId } from '../src/sim/state';
+import { enqueueBuild, gemRushCost, grantBuilder } from '../src/sim/commands';
 
-describe('build cost by instance (Docs/04 table)', () => {
-  it('Housing: 10 → 26 → 83 → 172 Wood', () => {
-    expect(buildCost('Housing', 0)).toEqual({ Wood: 10 });
-    expect(buildCost('Housing', 1)).toEqual({ Wood: 26 });
-    expect(buildCost('Housing', 2)).toEqual({ Wood: 83 });
-    expect(buildCost('Housing', 3)).toEqual({ Wood: 172 });
+// A build is the level 1 row of `DistrictCosts` times the instance
+// multiplier, `M(N) = linear × (N − 1) + growth^(N − 1)`
+// (Docs/features/05-city-and-districts.md §3).
+describe('build cost by instance', () => {
+  it('the first one pays the authored number, untouched', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      expect(buildCost(id, 1), id).toEqual(DISTRICTS[id].costPerLevel[0].cost);
+    }
   });
-  it('Farm: 30 → 169 → 623 Wood', () => {
-    expect(buildCost('Farm', 0)).toEqual({ Wood: 30 });
-    expect(buildCost('Farm', 1)).toEqual({ Wood: 169 });
-    expect(buildCost('Farm', 2)).toEqual({ Wood: 623 });
+  it('M(1) is exactly 1, which is what makes that true', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      expect(instanceMultiplier(id, 1), id).toBe(1);
+    }
   });
-  it('Sawmill: 20 → 110 → 353 Wood', () => {
-    expect(buildCost('Sawmill', 0)).toEqual({ Wood: 20 });
-    expect(buildCost('Sawmill', 1)).toEqual({ Wood: 110 });
-    expect(buildCost('Sawmill', 2)).toEqual({ Wood: 353 });
+  it('Housing (1.25 + 1.2): 10 → 25 → 39 → 55 Wood', () => {
+    expect(buildCost('Housing', 1)).toEqual({ Wood: 10 });
+    expect(buildCost('Housing', 2)).toEqual({ Wood: 25 });
+    expect(buildCost('Housing', 3)).toEqual({ Wood: 39 });
+    expect(buildCost('Housing', 4)).toEqual({ Wood: 55 });
+  });
+  it('Farm (2 + 1.2): 30 → 96 → 163 Wood', () => {
+    expect(buildCost('Farm', 1)).toEqual({ Wood: 30 });
+    expect(buildCost('Farm', 2)).toEqual({ Wood: 96 });
+    expect(buildCost('Farm', 3)).toEqual({ Wood: 163 });
+  });
+  it('Sawmill (2.5 + 1.2): 20 → 74 → 129 Wood', () => {
+    expect(buildCost('Sawmill', 1)).toEqual({ Wood: 20 });
+    expect(buildCost('Sawmill', 2)).toEqual({ Wood: 74 });
+    expect(buildCost('Sawmill', 3)).toEqual({ Wood: 129 });
   });
   // The cheapest thing in the game, deliberately: a crop plot is a furrow,
   // and at 20 Wood it cost twice a House — which stranded the player at
   // onboarding step 10 with nothing left after the roof.
-  it('FarmLands: 10 → 45 → 149 → 316 → 551 → 858', () => {
-    const expected = [10, 45, 149, 316, 551, 858];
-    expected.forEach((wood, n) => expect(buildCost('FarmLands', n)).toEqual({ Wood: wood }));
+  it('FarmLands: 10 → 32 → 54 → 77 → 101 → 125', () => {
+    const expected = [10, 32, 54, 77, 101, 125];
+    expected.forEach((wood, i) => expect(buildCost('FarmLands', i + 1)).toEqual({ Wood: wood }));
+  });
+});
+
+// The ordinal prices the WHOLE ladder of a building, not just its build
+// (Docs/features/05-city-and-districts.md §3.1).
+describe('the ordinal prices every level', () => {
+  it('Housing level 5 costs 101 Wood for #1, 247 for #2, 398 for #3', () => {
+    expect(upgradeCost('Housing', 1, 4)).toEqual({ Wood: 101, Stone: 33 });
+    expect(upgradeCost('Housing', 2, 4)).toEqual({ Wood: 247, Stone: 81 });
+    expect(upgradeCost('Housing', 3, 4)).toEqual({ Wood: 398, Stone: 130 });
+  });
+
+  it('is one curve for the whole ladder: every level scales by the same M(N)', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      const def = DISTRICTS[id];
+      for (let ordinal = 2; ordinal <= 4; ordinal += 1) {
+        const mult = instanceMultiplier(id, ordinal);
+        for (let level = 1; level <= def.maxLevel; level += 1) {
+          const row = def.costPerLevel[level - 1].cost;
+          for (const [c, base] of Object.entries(row)) {
+            const paid = levelCost(id, ordinal, level)[c as keyof typeof row]!;
+            // Three significant figures, so compare the ratio.
+            expect(paid / (base * mult), `${id} #${ordinal} level ${level} ${c}`)
+              .toBeCloseTo(1, 1);
+          }
+        }
+      }
+    }
+  });
+
+  it('rounds a multiplied price to three significant figures, and only then', () => {
+    // 101 × 2.45 = 247.45, which reads back as 247 rather than 247.45 — but
+    // an AUTHORED 101 is never nudged to 100.
+    expect(upgradeCost('Housing', 1, 4).Wood).toBe(101);
+    expect(String(upgradeCost('Housing', 4, 9).Wood)).toMatch(/^\d{3}0+$/);
+  });
+
+  it('never multiplies the refined goods', () => {
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      for (let level = 1; level <= DISTRICTS[id].maxLevel; level += 1) {
+        expect(upgradeGoodsCost(id, level), `${id} level ${level}`)
+          .toEqual(DISTRICTS[id].costPerLevel[level - 1].goods);
+      }
+    }
+  });
+});
+
+// The claim the whole scheme rests on: the ordinal is a fact about the
+// BUILDING, so nothing the city does later reprices a building already
+// standing (Docs/features/05-city-and-districts.md §3.1).
+describe('the ordinal is stamped once and never moves', () => {
+  const city = () => {
+    const state = freshGame();
+    fund(state, { Gold: 9e9, Wood: 9e9, Stone: 9e9, Food: 9e9 });
+    completeTech(state, 'UrbanPlanning');
+    townhall(state).level = 4; // the count cap, not the price, is what limits houses
+    grantBuilder(state); // three jobs in flight, so three houses can be queued
+    grantBuilder(state);
+    return state;
+  };
+
+  it('stamps each build with the next number of its kind', () => {
+    const state = city();
+    for (let i = 0; i < 3; i += 1) {
+      // Recomputed each time: the last house is standing on one of them now.
+      const cell = validPlacementCells(state, map, 'Housing')[0]!;
+      expect(enqueueBuild(state, map, 'Housing', cell)).toBe('Started');
+    }
+    expect(state.city.districts.filter((d) => d.definitionId === 'Housing')
+      .map((d) => d.ordinal)).toEqual([1, 2, 3]);
+  });
+
+  it('does not reprice a house already standing when another one goes up', () => {
+    const state = city();
+    expect(enqueueBuild(state, map, 'Housing',
+      validPlacementCells(state, map, 'Housing')[0]!)).toBe('Started');
+    const first = state.city.districts.find((d) => d.definitionId === 'Housing')!;
+    const before = upgradeCost('Housing', first.ordinal, 1);
+
+    expect(enqueueBuild(state, map, 'Housing',
+      validPlacementCells(state, map, 'Housing')[0]!)).toBe('Started');
+    expect(upgradeCost('Housing', first.ordinal, 1)).toEqual(before);
+    // …and the new one is dearer, which is the whole point.
+    const second = state.city.districts.filter((d) => d.definitionId === 'Housing')[1]!;
+    expect(upgradeCost('Housing', second.ordinal, 1).Wood!)
+      .toBeGreaterThan(before.Wood!);
   });
 });
 

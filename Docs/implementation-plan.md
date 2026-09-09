@@ -67,7 +67,7 @@ Two more that are design-visible:
 | The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** |
 | Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
-| Districts, placement, cost curves, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
+| Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
@@ -660,6 +660,44 @@ that sell both. Closes **H2**.
   the Guild ladder buys no hero slot.
 - **Size:** two to three days once the resolver exists — mostly data and the
   two screens.
+
+### Step 9 · Costs become a table — **DONE 2026-09-09**
+
+**An authoring change, not a systems one** — and the one that makes every other
+balance pass cheaper, because a price stops being an argument about three
+growth dials and becomes a number a designer types. The sheet was seeded by
+running the old curves, so the FIRST instance of every building costs exactly
+what it did; every later one is on the new, much flatter curve.
+
+- **Design:** [`05-city-and-districts.md`](features/05-city-and-districts.md)
+  §3.
+- **The workbook first.** A new `DistrictCosts` sheet — `district | level |
+  gold | wood | food | stone | planks | cut_stone | iron | runestone` — one row
+  per building per level, level 1 being the build. The `Districts` sheet loses
+  every price it carried: `build_cost_gold/wood/food/stone`,
+  `upgrade_cost_gold/wood/food/stone`, `build_cost_goods`,
+  `upgrade_cost_goods_per_level`, `upgrade_cost_level_growth` and
+  `upgrade_cost_late_level_growth`. It gains `instance_linear_growth` and
+  `instance_exponential_growth` in place of `build_cost_multiplier` and
+  `build_cost_exponential_growth`. `city.late_upgrade_from_level` stays: it
+  still pivots the **wait**.
+- **The goods columns are read, not multiplied** — one branch in the cost
+  helper, and `buildGoodsCost`/`upgradeGoodsCost` collapse into one read of
+  the row.
+- **The ordinal is a save field.** A district carries the ordinal it was placed
+  with. It is additive, so it needs no migrator — but an existing save has
+  none, and a migrator that numbers each definition's districts in list order
+  is what keeps an old city's prices from all collapsing to #1.
+- **Also do:** delete `cancelQueueItem` and the card's Cancel button, and drop
+  the Built-only clause from `canMoveDistrict`
+  ([`06-construction.md`](features/06-construction.md) §1).
+- **Gate:** the second Sawmill costs `M(2)` times the first at every level, not
+  just at build; upgrading Housing #1 costs the same before and after Housing
+  #4 is built; a card and a one-call offline replay agree on every price.
+- **Also update `CLAUDE.md`** — its data-or-code table and its decoration line
+  both name the goods columns that this step deletes.
+- **Size:** a day of code, and then the authoring — 23 buildings × up to 10
+  levels is the real cost of the step.
 
 ## 5. Deliberately after everything above
 

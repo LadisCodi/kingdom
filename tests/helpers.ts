@@ -9,6 +9,7 @@ import {
   DISTRICTS, ERA_UNLOCK_CELLS, TECHNOLOGIES, TECH_ORDER, TOME_ORDER, type DistrictDef,
 } from '../src/sim/data/definitions';
 import { ladderRank } from '../src/sim/data/techTreeRules';
+import { districtCount } from '../src/sim/districts';
 import {
   coordKey, getWallet, type Coord, type DistrictId, type GameState, type RuinId,
   type TechId, type UnitId,
@@ -150,7 +151,10 @@ export const drain = (state: GameState, cell: Coord, now = T0): number => {
 export const addBuilt = (state: GameState, definitionId: DistrictId, location: Coord): void => {
   state.city.districts.push({
     uniqueId: `district_${definitionId}_${state.nextId++}`,
-    definitionId, level: 1, assignedWorkers: 0, location, state: 'Built', visualVariant: 1,
+    definitionId,
+    // Stamped the way `enqueueBuild` stamps it: the next one of its kind.
+    ordinal: districtCount(state, definitionId) + 1,
+    level: 1, assignedWorkers: 0, location, state: 'Built', visualVariant: 1,
   });
 };
 

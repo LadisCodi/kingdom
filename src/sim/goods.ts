@@ -33,15 +33,14 @@ export function refundGoods(stock: GoodsStock, cost: GoodsStock): void {
 export const isFreeOfGoods = (cost: GoodsStock): boolean => Object.keys(cost).length === 0;
 
 /**
- * What reaching `targetLevel` costs in goods.
+ * What reaching `level` costs in goods — level 1 being the BUILD, the same
+ * row of `DistrictCosts` that prices it in currencies.
  *
- * Indexed like every other per-level district column: entry 0 is the price of
- * reaching level 2. A level past the end of the list is free of goods — the
- * list is authored only as far as goods are actually charged, so a building
- * whose column is blank never asks for any.
+ * The instance ordinal never enters: a recipe does not know how many of the
+ * thing the city owns (Docs/features/05-city-and-districts.md §3.2).
  */
-export function goodsCostForLevel(def: DistrictDef, targetLevel: number): GoodsStock {
-  return def.upgradeCostGoodsPerLevel[targetLevel - 2] ?? {};
+export function goodsCostForLevel(def: DistrictDef, level: number): GoodsStock {
+  return def.costPerLevel[level - 1]?.goods ?? {};
 }
 
 /** Everything the city holds, in authored order, for a card that lists it. */

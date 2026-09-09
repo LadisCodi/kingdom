@@ -16,16 +16,22 @@ import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GoodsStock } from '../src/sim/state';
 import { addBuilt, freshGame, fund, map, T0 } from './helpers';
 
+type CostRow = { cost: Record<string, number>; goods: GoodsStock };
+
 /** Price one district's next level in goods, for the length of one test —
  *  a price at a LOW level, which the sheet never authors, so a refusal can be
  *  tested without a Townhall ladder in front of it. `unpriced` puts the
- *  authored column back rather than blanking it. */
-const AUTHORED = DISTRICTS.Sawmill.upgradeCostGoodsPerLevel;
-const priced = (id: 'Sawmill', levels: readonly GoodsStock[]): void => {
-  (DISTRICTS[id] as { upgradeCostGoodsPerLevel: readonly GoodsStock[] })
-    .upgradeCostGoodsPerLevel = levels;
+ *  authored rows back rather than blanking them. */
+const AUTHORED = DISTRICTS.Sawmill.costPerLevel;
+/** Indexed the way every other per-level column is: entry 0 prices level 2. */
+const priced = (id: 'Sawmill', goods: readonly GoodsStock[]): void => {
+  (DISTRICTS[id] as { costPerLevel: readonly CostRow[] }).costPerLevel =
+    AUTHORED.map((row, i) => ({ ...row, goods: goods[i - 1] ?? {} })) as CostRow[];
 };
-const unpriced = (id: 'Sawmill'): void => priced(id, AUTHORED);
+const unpriced = (id: 'Sawmill'): void => {
+  (DISTRICTS[id] as { costPerLevel: readonly CostRow[] }).costPerLevel =
+    AUTHORED as unknown as CostRow[];
+};
 
 describe('the goods stockpile', () => {
   it('counts up and down, and never below zero', () => {
@@ -91,20 +97,28 @@ describe('the goods recipes', () => {
 describe('a building level priced in goods', () => {
   afterEach(() => unpriced('Sawmill'));
 
-  it('indexes the price the way every other per-level column does', () => {
-    const def = { upgradeCostGoodsPerLevel: [{ Planks: 2 }, { Planks: 4 }] } as unknown as DistrictDef;
-    expect(goodsCostForLevel(def, 2)).toEqual({ Planks: 2 }); // entry 0 = reaching level 2
+  it('reads the goods off the same row that prices the level', () => {
+    const def = {
+      costPerLevel: [{ cost: {}, goods: {} }, { cost: {}, goods: { Planks: 2 } },
+        { cost: {}, goods: { Planks: 4 } }],
+    } as unknown as DistrictDef;
+    expect(goodsCostForLevel(def, 1)).toEqual({}); // level 1 is the BUILD
+    expect(goodsCostForLevel(def, 2)).toEqual({ Planks: 2 });
     expect(goodsCostForLevel(def, 3)).toEqual({ Planks: 4 });
-    // Past the end of the list is free of goods, which is what every level of
-    // every building is today.
+    // Past the last level there is no row, and no goods.
     expect(goodsCostForLevel(def, 4)).toEqual({});
   });
 
   it('charges nothing below the late city, and something at every level of it', () => {
     for (const def of Object.values(DISTRICTS)) {
       if (def.maxLevel < LATE_FROM) {
-        expect(def.upgradeCostGoodsPerLevel, `${def.id} stops early and is priced in goods`)
-          .toEqual([]);
+        // A short ladder is priced in raw resources alone — except a
+        // decoration, whose whole point is the workshop queue.
+        if (def.harmonySupply > 0) continue;
+        for (let level = 1; level <= def.maxLevel; level++) {
+          expect(goodsCostForLevel(def, level), `${def.id} stops early, level ${level}`)
+            .toEqual({});
+        }
         continue;
       }
       for (let level = 2; level < LATE_FROM; level++) {

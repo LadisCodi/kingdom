@@ -135,6 +135,11 @@ export type ConstructionState = 'UnderConstruction' | 'Built';
 export interface District {
   uniqueId: string;
   definitionId: DistrictId;
+  /** Which one of its kind this is — 1 for the first Sawmill, 2 for the next.
+   *  Stamped when it is placed and never changed, because it prices every
+   *  level of this building for ever (Docs/features/05-city-and-districts.md
+   *  §3.1). It is also what a card calls it: *Housing #3*. */
+  ordinal: number;
   level: number;
   assignedWorkers: number;
   location: Coord;

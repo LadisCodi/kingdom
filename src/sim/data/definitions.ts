@@ -527,34 +527,30 @@ export interface DistrictDef {
   /** This district's own cell IS a resource cell of this type (FarmLands → Crops). */
   providesHarvestSource: HarvestSourceId | null;
   maxLevel: number;
-  buildCost: Wallet;
-  /** Refined goods a BUILD costs on top of the currencies, paid when the
-   *  build is queued and refunded in full on cancel — the rule a workshop
-   *  item already follows. Empty = priced in raw resources alone. Only the
-   *  decorations name any, and that is what makes a piece of beauty a queue
-   *  at a workshop rather than a walk to the map. */
-  buildCostGoods: GoodsStock;
-  buildCostMultiplier: number;
-  buildCostExponentialGrowth: number;
+  /** What every level costs the FIRST instance of this building, one entry
+   *  per level: index 0 is the BUILD, index 1 what reaching level 2 costs.
+   *  Authored on the `DistrictCosts` sheet, never derived from a curve
+   *  (Docs/features/05-city-and-districts.md §3). Exactly `maxLevel` long. */
+  costPerLevel: readonly { cost: Wallet; goods: GoodsStock }[];
+  /** How much dearer a LATER instance is:
+   *  `M(N) = linear × (N − 1) + growth^(N − 1)`, which is exactly 1 at N = 1,
+   *  so the first one pays the table. The linear term prices the early
+   *  copies, the exponential the tail. Currencies only — a recipe does not
+   *  know how many of the thing the city owns, so the goods column is never
+   *  multiplied (§3.2). */
+  instanceLinearGrowth: number;
+  instanceExponentialGrowth: number;
   buildDurationSeconds: number;
   buildDurationDistrictGrowth: number;
   buildDurationDistanceGrowth: number;
-  upgradeCost: Wallet;
-  /** Refined goods an upgrade costs on top of the currencies; index 0 = the
-   *  price of reaching level 2, the same indexing as every other per-level
-   *  column. Empty = this building is priced in raw resources alone. */
-  upgradeCostGoodsPerLevel: readonly GoodsStock[];
-  upgradeCostLevelGrowth: number;
   upgradeDurationSeconds: number;
   upgradeDurationLevelGrowth: number;
-  /** The LATE curve, from `city.lateUpgradeFromLevel`. The columns above are
-   *  tuned for the opening — minutes and tens of Wood — and continuing them
-   *  to level 10 gives a day-20 upgrade that costs a morning's tapping and
-   *  finishes in eight minutes. 0 = this building has no late levels, and
-   *  every level is priced and timed by the curve above. */
-  upgradeCostLateLevelGrowth: number;
-  /** Seconds to reach the pivot level itself; the growth compounds from
-   *  there. 0 = the early curve simply continues. */
+  /** The late WAIT, from `city.lateUpgradeFromLevel`: seconds to reach the
+   *  pivot level itself, the growth compounding from there. The early columns
+   *  are tuned for the opening — minutes — and continuing them to level 10
+   *  gives a day-20 upgrade that finishes in eight. 0 = this building has no
+   *  late levels and the early curve simply continues. There is no late COST
+   *  curve: a late level is dear because a designer typed a big number. */
   upgradeDurationLateSeconds: number;
   upgradeDurationLateLevelGrowth: number;
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
@@ -1970,4 +1966,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 42;
+export const SAVE_VERSION = 43;

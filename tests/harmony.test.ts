@@ -14,7 +14,7 @@ import { DECORATIONS, DISTRICTS, HARMONY, levelIndexed } from '../src/sim/data/d
 import {
   harmonyDemand, harmonyFree, harmonySupply, harmonySurplusMultiplier, harmonySurplusTier,
 } from '../src/sim/harmony';
-import { cancelQueueItem, enqueueBuild, upgradeDistrict } from '../src/sim/commands';
+import { enqueueBuild, upgradeDistrict } from '../src/sim/commands';
 import { placementBlock, validPlacementCells } from '../src/sim/districts';
 import { effectiveTaxRate } from '../src/sim/upgrades';
 import { townhall, type GameState } from '../src/sim/state';
@@ -65,7 +65,7 @@ describe('the harmony columns', () => {
     // start before their first workshop.
     for (const [id, def] of districts) {
       if (def.harmonySupply > 0) continue;
-      expect(def.buildCostGoods, `${id} costs goods to build`).toEqual({});
+      expect(def.costPerLevel[0].goods, `${id} costs goods to build`).toEqual({});
     }
   });
 });
@@ -113,9 +113,11 @@ describe('the six decorations', () => {
     // walk to the map — the whole reason Harmony is not just a second wallet.
     for (const id of DECORATIONS) {
       const def = DISTRICTS[id];
-      expect(Object.keys(def.buildCost).length, `${id} has no raw cost`).toBeGreaterThan(0);
+      expect(Object.keys(def.costPerLevel[0].cost).length, `${id} has no raw cost`)
+        .toBeGreaterThan(0);
       if (id === 'Garden') continue;
-      expect(Object.keys(def.buildCostGoods).length, `${id} costs no goods`).toBeGreaterThan(0);
+      expect(Object.keys(def.costPerLevel[0].goods).length, `${id} costs no goods`)
+        .toBeGreaterThan(0);
     }
   });
 
@@ -144,7 +146,7 @@ describe('supply and demand', () => {
     expect(harmonySupply(state)).toBe(0);
     // Under construction: the ground is taken, the beauty is not delivered.
     state.city.districts.push({
-      uniqueId: 'pending', definitionId: 'Garden', level: 1, assignedWorkers: 0,
+      uniqueId: 'pending', definitionId: 'Garden', ordinal: 1, level: 1, assignedWorkers: 0,
       location: { x: 4, y: 0 }, state: 'UnderConstruction', visualVariant: 1,
     });
     expect(harmonySupply(state)).toBe(0);
@@ -269,17 +271,15 @@ describe('a decoration is bought like anything else', () => {
     return state;
   };
 
-  it('pays its goods when the build is QUEUED and refunds them on cancel', () => {
-    // The rule a workshop item already follows: the stockpile is charged at
-    // the moment of the promise, not at delivery.
+  it('pays its goods when the build is QUEUED, and there is no taking it back', () => {
+    // Charged at the moment of the promise, not at delivery — and a build
+    // cannot be cancelled, so the stockpile never sees them again
+    // (Docs/features/06-construction.md §1).
     const state = gardenCity();
     state.city.goods.CutStone = 3;
     const cell = validPlacementCells(state, map, 'Well')[0]!;
     expect(enqueueBuild(state, map, 'Well', cell)).toBe('Started');
     expect(state.city.goods.CutStone).toBe(2);
-    const item = state.city.queue.find((q) => q.kind === 'build')!;
-    expect(cancelQueueItem(state, item.uniqueId)).toBe('Cancelled');
-    expect(state.city.goods.CutStone).toBe(3);
   });
 
   it('refuses a build the stockpile cannot pay for, and says which purse', () => {

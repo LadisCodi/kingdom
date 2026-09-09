@@ -392,6 +392,9 @@ const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'];
 const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDecoration'];
 const ADJACENCY_CLAMP = 0.25;
 
+// NO PRICES. What a building costs is the DistrictCosts sheet, one row per
+// level (Docs/features/05-city-and-districts.md §3); this row carries only
+// what it IS and how much dearer a later copy of it is.
 const DISTRICT_COLUMNS = [
   'id', 'size_x', 'size_y', 'max_level', 'population_capacity',
   'tax_bonus_per_level',
@@ -399,16 +402,10 @@ const DISTRICT_COLUMNS = [
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'army_cap_per_level', 'beds_per_level',
-  'build_cost_gold', 'build_cost_wood', 'build_cost_food',
-  'build_cost_stone', 'build_cost_goods',
-  'build_cost_multiplier', 'build_cost_exponential_growth',
+  'instance_linear_growth', 'instance_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
-  'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
-  'upgrade_cost_stone',
-  'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
-  'upgrade_cost_late_level_growth',
+  'upgrade_duration_seconds', 'upgrade_duration_level_growth',
   'upgrade_duration_late_seconds', 'upgrade_duration_late_level_growth',
-  'upgrade_cost_goods_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level',
   'produces', 'queue_length_per_level',
   'harmony_supply', 'harmony_cost_per_level',
@@ -417,13 +414,22 @@ const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'tax_bonus_per_level', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'army_cap_per_level', 'beds_per_level',
-  'upgrade_cost_goods_per_level', 'queue_length_per_level',
+  'queue_length_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level',
-  'build_cost_goods', 'harmony_cost_per_level',
+  'harmony_cost_per_level',
 ];
+/** The snake_case column each good is priced in on DistrictCosts. */
+const GOOD_COLUMNS = { Planks: 'planks', CutStone: 'cut_stone', Iron: 'iron', Runestone: 'runestone' };
 
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
+  // ONE ROW PER BUILDING PER LEVEL, and the whole price is on it: the four
+  // currencies and the four refined goods. Level 1 is what the BUILD costs.
+  // Prices the FIRST instance; a later one multiplies the currencies by the
+  // instance curve and leaves the goods alone
+  // (Docs/features/05-city-and-districts.md §3).
+  DistrictCosts: ['district', 'level', 'gold', 'wood', 'food', 'stone',
+    'planks', 'cut_stone', 'iron', 'runestone'],
   // `squad_size` is how many troops of the type ONE squad holds — the cap on
   // a party slot's count, and the ceiling the battle screen fills a slot to
   // (Docs/features/combat.md §4, §5).
@@ -733,14 +739,6 @@ async function importXlsx() {
   };
 
   for (const [id, r] of byId(readSheet(workbook, 'Districts'), DISTRICT_IDS)) {
-    // A build has ONE level, so its goods price is one entry of the
-    // `|`-separated form the upgrade column already uses — same parser, same
-    // validation of the ids and the amounts.
-    const buildGoodsLevels = goodsList(r, 'build_cost_goods');
-    if (buildGoodsLevels.length > 1) {
-      fail(where(r), '"build_cost_goods" has more than one level — a build has only one');
-    }
-    const buildGoods = buildGoodsLevels[0] ?? {};
     out.districts[id] = {
       size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
       maxLevel: num(r, 'max_level'),
@@ -761,27 +759,25 @@ async function importXlsx() {
       // (Docs/features/combat.md §4). Only the Infirmary has any, which is
       // what makes healing a building rather than a rule.
       bedsPerLevel: list(r, 'beds_per_level'),
-      buildCost: wallet(r, 'build_cost'),
-      // Refined goods a BUILD costs, on top of the currencies. Only the
-      // decorations name any today, and that is the point of them: a piece of
-      // beauty is a queue at a workshop rather than a walk to the map.
-      buildCostGoods: buildGoods,
-      buildCostMultiplier: num(r, 'build_cost_multiplier'),
-      buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
+      // What every level costs is DistrictCosts, filled in below. These two
+      // are how much dearer a LATER instance of the building is:
+      // M(N) = linear × (N − 1) + growth^(N − 1), which is 1 at N = 1, so the
+      // first one pays the table exactly.
+      costPerLevel: [],
+      instanceLinearGrowth: num(r, 'instance_linear_growth'),
+      instanceExponentialGrowth: num(r, 'instance_exponential_growth'),
       buildDurationSeconds: num(r, 'build_duration_seconds'),
       buildDurationDistrictGrowth: num(r, 'build_duration_district_growth'),
       buildDurationDistanceGrowth: num(r, 'build_duration_distance_growth'),
-      upgradeCost: wallet(r, 'upgrade_cost'),
-      upgradeCostLevelGrowth: num(r, 'upgrade_cost_level_growth'),
       upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
       upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
-      // The late curve. 0 = "this row has no late levels", and every level is
-      // priced and timed by the columns above it.
-      upgradeCostLateLevelGrowth: num(r, 'upgrade_cost_late_level_growth', { blankAs: 0 }),
+      // The late WAIT. 0 = "this row has no late levels", and every level is
+      // timed by the two columns above it. There is no late COST curve: a
+      // late level is dear because a designer typed a big number into
+      // DistrictCosts.
       upgradeDurationLateSeconds: num(r, 'upgrade_duration_late_seconds', { blankAs: 0 }),
       upgradeDurationLateLevelGrowth:
         num(r, 'upgrade_duration_late_level_growth', { blankAs: 0 }),
-      upgradeCostGoodsPerLevel: goodsList(r, 'upgrade_cost_goods_per_level'),
       // What a producer's late level buys instead of crew: units ADDED to a
       // delivery (the shape WorkerLoad already uses, because a chunk is 1-5
       // units and a percentage of that rounds away), and a multiplier on the
@@ -849,6 +845,44 @@ async function importXlsx() {
           + `${i + 1} (${d.taxBonusPerLevel[i - 1]} then ${n}) — it is a total, not an increment`);
       }
     });
+  }
+
+  // What every building costs: one row per level, level 1 being the build.
+  // A building has exactly as many rows as it has levels, and the rows are
+  // read by their `level` rather than by their position, so the sheet may be
+  // sorted any way a designer likes.
+  const costSeen = new Map();
+  for (const r of readSheet(workbook, 'DistrictCosts')) {
+    const id = r.district;
+    if (!DISTRICT_IDS.includes(id)) fail(where(r), `unknown district "${id}"`);
+    const level = num(r, 'level');
+    if (!Number.isInteger(level) || level < 1) fail(where(r), `"level" is not a level (${level})`);
+    if (level > out.districts[id].maxLevel) {
+      fail(where(r), `${id} level ${level} is past its "max_level" (${out.districts[id].maxLevel})`);
+    }
+    if (!costSeen.has(id)) costSeen.set(id, new Map());
+    if (costSeen.get(id).has(level)) fail(where(r), `${id} level ${level} is priced twice`);
+    const cost = {};
+    for (const c of COST_CURRENCIES) {
+      const v = num(r, c.toLowerCase(), { blankAs: 0 });
+      if (v > 0) cost[c] = v;
+    }
+    const goods = {};
+    for (const g of GOOD_IDS) {
+      const v = num(r, GOOD_COLUMNS[g], { blankAs: 0 });
+      if (v > 0) goods[g] = v;
+    }
+    costSeen.get(id).set(level, { cost, goods });
+  }
+  for (const id of DISTRICT_IDS) {
+    const rows = costSeen.get(id);
+    const max = out.districts[id].maxLevel;
+    if (!rows) fail('DistrictCosts', `"${id}" has no rows — every level needs a price`);
+    for (let level = 1; level <= max; level += 1) {
+      if (!rows.has(level)) fail('DistrictCosts', `"${id}" has no row for level ${level}`);
+    }
+    out.districts[id].costPerLevel =
+      Array.from({ length: max }, (unused, i) => rows.get(i + 1));
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Goods'), GOOD_IDS)) {
@@ -1245,20 +1279,24 @@ async function exportXlsx() {
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
       listCell(d.armyCapPerLevel), listCell(d.bedsPerLevel),
-      ...costCells(d.buildCost),
-      goodsCell(Object.keys(d.buildCostGoods).length > 0 ? [d.buildCostGoods] : []),
-      d.buildCostMultiplier, d.buildCostExponentialGrowth,
+      d.instanceLinearGrowth, d.instanceExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
-      ...costCells(d.upgradeCost),
-      d.upgradeCostLevelGrowth, d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
-      d.upgradeCostLateLevelGrowth || '',
+      d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
       d.upgradeDurationLateSeconds || '', d.upgradeDurationLateLevelGrowth || '',
-      goodsCell(d.upgradeCostGoodsPerLevel),
       listCell(d.extraUnitsPerDeliveryPerLevel), listCell(d.strikeSpeedPerLevel),
       d.produces ?? '', listCell(d.queueLengthPerLevel),
       d.harmonySupply || '', listCell(d.harmonyCostPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
+
+  // One row per building per level, grouped by building and ascending — the
+  // order a designer reads a ladder in.
+  addSheet(workbook, 'DistrictCosts', DISTRICT_IDS.flatMap((id) =>
+    b.districts[id].costPerLevel.map((row, i) => [
+      id, i + 1,
+      ...costCells(row.cost),
+      ...GOOD_IDS.map((g) => row.goods[g] || ''),
+    ])));
 
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];

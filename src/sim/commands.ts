@@ -5,9 +5,9 @@ import { BANNERS, DISTRICTS, KINGDOM_DEF, TECHNOLOGIES, type BannerId,
 } from './data/definitions';
 import { RUSH } from './data/definitions';
 import {
-  buildDurationForCell, buildCost as buildCostFormula, buildGoodsCost, canMoveDistrict,
-  nextBuildCost,
-  districtCount, placementBlock, requiredTechForLevel, requiredTownhallLevel,
+  buildDurationForCell, buildGoodsCost, canMoveDistrict,
+  nextBuildCost, nextOrdinal,
+  placementBlock, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
@@ -25,8 +25,8 @@ import { advanceCityLife, repriceTaxAnchorAround } from './population';
 import { advanceQueue } from './queue';
 import { advanceResearch, isTechComplete, techCompletesAt } from './research';
 import { pruneExpiredModifiers, nextModifierExpiry, type Modifier } from './modifiers';
-import { canAfford, pay, refund } from './wallet';
-import { canAffordGoods, payGoods, refundGoods } from './goods';
+import { canAfford, pay } from './wallet';
+import { canAffordGoods, payGoods } from './goods';
 import { harmonyBlock } from './harmony';
 import {
   advanceWorkshops, completeWorkshopItems, isWorkshop, nextWorkshopCompletion, reanchor,
@@ -140,6 +140,9 @@ export function enqueueBuild(
   const district: District = {
     uniqueId: newId(state, `district_${definitionId}`),
     definitionId,
+    // Stamped here and never changed: it prices every level of this building
+    // for ever (Docs/features/05-city-and-districts.md §3.1).
+    ordinal: nextOrdinal(state, definitionId),
     level: 1,
     assignedWorkers: 0,
     location: cell,
@@ -198,11 +201,16 @@ export function moveDistrict(
   repriceTaxAnchorAround(state, now, () => {
     district.location = cell;
   });
-  relocateCrew(state, map, district, from, now);
-  // The new address pushes back the fog exactly as finishing a build does —
-  // otherwise a building could be moved to the frontier and sit there staring
-  // at ground it has already paid to see.
-  revealAroundDistrict(state, map, district);
+  // An unfinished building has no crew and no ring: its fog is pushed back
+  // when the build COMPLETES, and revealing it early would hand the player
+  // ground the fog has not been paid for.
+  if (district.state === 'Built') {
+    relocateCrew(state, map, district, from, now);
+    // The new address pushes back the fog exactly as finishing a build does —
+    // otherwise a building could be moved to the frontier and sit there
+    // staring at ground it has already paid to see.
+    revealAroundDistrict(state, map, district);
+  }
   // Its old neighbours may have cells free now, and its new ones may not.
   wakeIdleWorkersAt(state, now);
   return 'Moved';
@@ -226,7 +234,7 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
   if (gateTech !== null && !isTechComplete(state, gateTech)) return 'RequirementsNotMet';
   if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
-  const cost = upgradeCost(district.definitionId, districtCount(state, district.definitionId), district.level);
+  const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
   // Two purses, two refusals. Goods are told apart from raw resources because
   // the answer to each is a different errand: one is a trip to the map, the
   // other a queue at a workshop.
@@ -250,25 +258,10 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   return 'Started';
 }
 
-export type CancelResult = 'Cancelled' | 'NotFound' | 'NotCancellable';
-
-/** Cancel a queued BUILD: remove item + district, refund the cost recomputed
- *  after removal so the count multiplier matches what was actually paid. */
-export function cancelQueueItem(state: GameState, itemId: string): CancelResult {
-  const item = state.city.queue.find((q) => q.uniqueId === itemId);
-  if (!item) return 'NotFound';
-  if (item.kind !== 'build') return 'NotCancellable';
-  const district = districtById(state, item.districtUniqueId);
-  state.city.queue.splice(state.city.queue.indexOf(item), 1);
-  if (district) {
-    state.city.districts.splice(state.city.districts.indexOf(district), 1);
-    // Refund recomputed with the count AFTER removal, matching what was paid.
-    const cost = buildCostFormula(district.definitionId, districtCount(state, district.definitionId));
-    refund(state.city.wallet, cost);
-    refundGoods(state.city.goods, buildGoodsCost(district.definitionId));
-  }
-  return 'Cancelled';
-}
+// A queued BUILD cannot be cancelled: it is paid for when it starts, and a
+// building put in the wrong place is MOVED rather than undone
+// (Docs/features/06-construction.md §1). That is also what keeps an ordinal
+// unique without a counter of its own — nothing ever leaves the list.
 
 // --------------------------------------------------------------- completions
 

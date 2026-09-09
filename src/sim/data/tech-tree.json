@@ -10,28 +10,35 @@
       "name": "Forestry", "glyph": "🪓", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 0, "col": 1,
       "requires": [],
-      "gold": 25, "knowledge": 2, "seconds": 3,
+      "gold": 0, "knowledge": 2, "seconds": 3,
       "unlocks": [{"harvest":"Forest"}, {"harvest":"Berries"}]
     },
     "Agriculture": {
       "name": "Agriculture", "glyph": "🌱", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 1, "col": 1,
       "requires": ["Forestry"],
-      "gold": 25, "knowledge": 2, "seconds": 5,
+      "gold": 0, "knowledge": 2, "seconds": 5,
       "unlocks": [{"district":"FarmLands"}]
     },
     "Farming": {
       "name": "Farming", "glyph": "🚜", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 0,
       "requires": ["Agriculture"],
-      "gold": 30, "knowledge": 2, "seconds": 10,
+      "gold": 0, "knowledge": 2, "seconds": 10,
       "unlocks": [{"district":"Farm"}]
+    },
+    "Hunting": {
+      "name": "Hunting", "glyph": "🏹", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 2, "col": 1,
+      "requires": ["Agriculture"],
+      "gold": 0, "knowledge": 2, "seconds": 1200,
+      "unlocks": [{"harvest":"Meat"}]
     },
     "Saws": {
       "name": "Saws", "glyph": "🪚", "kind": "unlock",
       "tome": "Civics", "era": 1, "row": 2, "col": 2,
       "requires": ["Agriculture"],
-      "gold": 100, "knowledge": 2, "seconds": 10,
+      "gold": 0, "knowledge": 2, "seconds": 10,
       "unlocks": [{"district":"Sawmill"}]
     },
     "Taxes01": {
@@ -154,13 +161,6 @@
       "gold": 800, "knowledge": 2, "seconds": 900,
       "unlocks": [{"districtLevel":{"id":"Townhall","level":3}}]
     },
-    "Hunting": {
-      "name": "Hunting", "glyph": "🏹", "kind": "unlock",
-      "tome": "Civics", "era": 2, "row": 11, "col": 0,
-      "requires": ["Bureaucracy"],
-      "gold": 1500, "knowledge": 6, "seconds": 1200,
-      "unlocks": [{"harvest":"Meat"}]
-    },
     "Communities": {
       "name": "Communities", "glyph": "👥", "kind": "bonus",
       "tome": "Civics", "era": 2, "row": 11, "col": 1,
@@ -180,7 +180,7 @@
     "ButcheryI": {
       "name": "Butchery I", "glyph": "🍖", "kind": "bonus",
       "tome": "Civics", "era": 2, "row": 12, "col": 0,
-      "requires": ["Hunting"],
+      "requires": ["Communities"],
       "gold": 250, "knowledge": 1, "seconds": 180,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Meat"}}
@@ -198,7 +198,7 @@
     "IronPicksI": {
       "name": "Iron Picks I", "glyph": "⛏️", "kind": "bonus",
       "tome": "Civics", "era": 2, "row": 12, "col": 2,
-      "requires": ["Mining"],
+      "requires": ["Mining", "Communities"],
       "gold": 250, "knowledge": 1, "seconds": 180,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"MountainIron"}}

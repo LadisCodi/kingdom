@@ -11,7 +11,9 @@
 // target, not a small Select button beside it.
 
 import { CITY_DEF, DECORATIONS, DISTRICTS, HARMONY } from '../sim/data/definitions';
-import { buildCost, buildDuration, buildGoodsCost, districtCount, maxDistrictCount } from '../sim/districts';
+import {
+  buildCost, buildDuration, buildGoodsCost, districtCount, isNumbered, maxDistrictCount,
+} from '../sim/districts';
 import { getGood } from '../sim/goods';
 import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '../sim/harmony';
 import { isTechComplete } from '../sim/research';
@@ -78,7 +80,7 @@ function buildCard(game: Game, id: string): HTMLElement | null {
   const count = districtCount(game.state, def.id);
   const maxCount = maxDistrictCount(game.state, def);
   const capped = count >= maxCount;
-  const cost = buildCost(def.id, count);
+  const cost = buildCost(def.id, count + 1);
   const short = harmonyBlock(game.state, def, 1);
 
   // When capped, say what lifts the cap — in words, not "Townhall lvl 3".
@@ -108,7 +110,10 @@ function buildCard(game: Game, id: string): HTMLElement | null {
     el('div', { class: 'bld-art' }, art
       ? el('img', { src: art, alt: '' })
       : iconEl(def.id, { size: 'lg' })),
-    el('div', { class: 'bld-name' }, def.name),
+    // Named with the ordinal it WOULD be, because the price on this card is
+    // that instance's price (Docs/features/05-city-and-districts.md §3.1).
+    el('div', { class: 'bld-name' },
+      capped || !isNumbered(game.state, def) ? def.name : `${def.name} #${count + 1}`),
     el('div', { class: 'bld-promise' }, PROMISE[def.id] ?? def.description),
     el('div', { class: 'bld-cost' },
       costChips(cost, (c) => game.walletValue(c)),

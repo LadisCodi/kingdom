@@ -118,7 +118,7 @@
 | Queue length by level | 3 → 12 | `Districts.queue_length_per_level` |
 | Crew by level | 1 → 6 | `Districts.max_workers_per_level` |
 | How many the city may own | 1 at TH4, 2 at TH8 | `Districts.max_count_per_townhall_level` |
-| What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | `Districts.upgrade_cost_goods_per_level` |
+| What a building level costs in goods | [`buildings.md`](buildings.md) §4.11 | the `DistrictCosts` sheet, that level's row — [`05-city-and-districts.md`](05-city-and-districts.md) §3.2 |
 | Gem price of the item in progress | 5 s a Gem | `rush.seconds_per_gem` |
 | Offline cap | 8 h | `offlineCapHours` |
 

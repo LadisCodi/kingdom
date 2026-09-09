@@ -125,7 +125,7 @@ describe('a player can actually play the onboarding', () => {
     chop(QUESTS.find((q) => q.id === 'Timber')!.goalAmount);
     finish('Timber');
 
-    expect(wood()).toBeGreaterThanOrEqual(DISTRICTS.Housing.buildCost.Wood!);
+    expect(wood()).toBeGreaterThanOrEqual(DISTRICTS.Housing.costPerLevel[0].cost.Wood!);
     build('Housing', { x: 2, y: 0 });
     finish('ARoof');
 
@@ -193,7 +193,7 @@ describe('a player can actually play the onboarding', () => {
     finish('ToWork');
 
     // ---- steps 16-17: a second House, and the villager it makes room for ----
-    chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
+    chop(Math.max(0, DISTRICTS.Housing.costPerLevel[0].cost.Wood! * 3 - wood()));
     build('Housing', { x: 0, y: -1 });
     finish('GrowingTown');
 
@@ -207,7 +207,7 @@ describe('a player can actually play the onboarding', () => {
     finish('Neighbors');
 
     // ---- step 18: a proper capital ----
-    chop(Math.max(0, DISTRICTS.Townhall.upgradeCost.Wood! - wood()));
+    chop(Math.max(0, DISTRICTS.Townhall.costPerLevel[1].cost.Wood! - wood()));
     expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
     tick(120);
     expect(townhall(state).level).toBe(2);
@@ -216,7 +216,7 @@ describe('a player can actually play the onboarding', () => {
     // ---- steps 19-21: the wood, automated ----
     research('Saws');
     finish('SawTeeth');
-    chop(Math.max(0, DISTRICTS.Sawmill.buildCost.Wood! - wood()));
+    chop(Math.max(0, DISTRICTS.Sawmill.costPerLevel[0].cost.Wood! - wood()));
     const millSpot = [...map.terrain.keys()].map(parseCoordKey)
       .find((c) => placementBlock(state, map, 'Sawmill', c) === null);
     expect(millSpot, 'nowhere legal to put the Sawmill').toBeDefined();
@@ -360,8 +360,10 @@ describe('the chain never asks for a material the map cannot yet yield', () => {
 
     QUESTS.forEach((quest, i) => {
       const id = quest.goalTarget as keyof typeof DISTRICTS;
-      const cost = quest.goalType === 'BuildDistrict' ? DISTRICTS[id].buildCost
-        : quest.goalType === 'UpgradeDistrict' ? DISTRICTS[id].upgradeCost
+      // Level 1 is the build; level 2 is the cheapest upgrade a quest asks
+      // for, and the first that could name a currency the map cannot pay.
+      const cost = quest.goalType === 'BuildDistrict' ? DISTRICTS[id].costPerLevel[0].cost
+        : quest.goalType === 'UpgradeDistrict' ? DISTRICTS[id].costPerLevel[1].cost
           : null;
       if (cost === null) return;
       for (const currency of Object.keys(cost)) {

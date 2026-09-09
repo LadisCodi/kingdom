@@ -39,13 +39,39 @@ describe('what may be moved', () => {
     expect(moveDistrict(state, map, townhall(state).uniqueId, FAR_CELL, T0)).toBe('Immovable');
   });
 
-  it('an unfinished building may not — Cancel is what that card offers', () => {
+  // A build cannot be cancelled, so moving is the ONLY remedy for a
+  // misplacement (Docs/features/06-construction.md §1).
+  it('an unfinished building may too, and its wait is not repriced', () => {
     const state = freshGame();
     const house = houseAt(state, HOUSE_CELL);
     house.state = 'UnderConstruction';
-    expect(canMoveDistrict(house)).toBe(false);
-    expect(moveDistrict(state, map, house.uniqueId, NEIGHBOUR_CELL, T0)).toBe('Immovable');
-    expect(house.location).toEqual(HOUSE_CELL);
+    state.city.queue.push({
+      uniqueId: 'q', kind: 'build', districtUniqueId: house.uniqueId,
+      durationSeconds: 26, startedAt: T0,
+    });
+    expect(canMoveDistrict(house)).toBe(true);
+    expect(moveDistrict(state, map, house.uniqueId, NEIGHBOUR_CELL, T0)).toBe('Moved');
+    expect(house.location).toEqual(NEIGHBOUR_CELL);
+    // The wait is stamped on the queue item when the builder starts it, so
+    // the new address cannot make it longer or shorter.
+    expect(state.city.queue[0].durationSeconds).toBe(26);
+  });
+
+  it('reveals no fog for an unfinished building — its ring waits for the build', () => {
+    const state = freshGame();
+    reveal(state, [FAR_CELL]);
+    const house = houseAt(state, HOUSE_CELL);
+    house.state = 'UnderConstruction';
+    const before = Object.keys(state.fog.revealed).length;
+    expect(moveDistrict(state, map, house.uniqueId, FAR_CELL, T0)).toBe('Moved');
+    expect(Object.keys(state.fog.revealed).length).toBe(before);
+
+    // And the guard is what does it: the same move, finished, pushes the ring
+    // out at the new address.
+    house.state = 'Built';
+    expect(moveDistrict(state, map, house.uniqueId, HOUSE_CELL, T0)).toBe('Moved');
+    expect(moveDistrict(state, map, house.uniqueId, FAR_CELL, T0)).toBe('Moved');
+    expect(Object.keys(state.fog.revealed).length).toBeGreaterThan(before);
   });
 });
 

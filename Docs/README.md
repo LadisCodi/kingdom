@@ -61,7 +61,7 @@ One file per feature, in the order a player meets them.
 | 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map as a **hex lattice** with two zoom registers and per-player fog, travel time as its pacing dial, and how much PvP the promises allow | designed |
 | 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
 | 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
-| 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, cost curves, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
+| 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, **every level's cost authored and multiplied by the building's instance ordinal**, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
 | 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
 | 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
 | 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |

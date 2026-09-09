@@ -1,11 +1,12 @@
 # 5 · The city — districts, placement and moving
 
-> **Scope.** The Townhall as era gate, the cost curves, where a building may
+> **Scope.** The Townhall as era gate, what a building costs, where it may
 > go, and how it is moved. The building list is [`buildings.md`](buildings.md);
 > construction itself is [`06-construction.md`](06-construction.md); what
 > workers do is [`04-harvest.md`](04-harvest.md).
 >
-> **Status: built.**
+> **Status: built 2026-09-09.** Every level is authored on the `DistrictCosts`
+> sheet and priced by the building's own instance ordinal (§3).
 
 ## 1. The Townhall level is the era
 
@@ -46,39 +47,95 @@ Three arcs run past TH3:
 - A district card says *Research X required*; a research-complete banner says
   *Housing can now reach level 2*.
 
-## 3. Cost curves
+## 3. What a building costs
+
+**Every level of every building is authored, one number per resource.** There
+is no cost curve. The prices live on their own sheet, `DistrictCosts`, one row
+per building per level — the four currencies and the four refined goods side
+by side:
 
 ```
-buildCost(n)     = floor(base × max(mult × n × (n+1)^exp, 1))       n = existing count
-upgradeCost(L)   = floor(base × countMult × levelGrowth^(L−1))
-buildDuration    = round(seconds × districtGrowth^n × distanceGrowth^d)
-upgradeDuration  = round(seconds × durationGrowth^(L−1))
+district | level | gold | wood | food | stone | planks | cut_stone | iron | runestone
 ```
 
-- Distance is priced in build **time**, never in cost.
-- Worker buildings use multiplier 2.5 and exponent 1.15: the second Sawmill
-  costs ×5.5 the first (20 → 110 → 353).
-- The Farm's base cost is 30 Wood.
+- **Level 1 is the build.** Levels 2 and up are what reaching that level
+  costs. A build price and an upgrade price are the same kind of thing, so
+  they are one column of numbers, not two bases with a curve between them.
+- The table prices the **first** instance of the building. Every later one
+  multiplies it (§3.1).
+- Distance is priced in build **time**, never in cost (§3.3).
+- The ordinal multiplier applies to the currencies only. Goods are authored
+  per level like everything else and are never multiplied (§3.2).
+- A building has exactly as many rows as it has levels; the importer refuses a
+  `max_level` that reaches past the last row authored for it.
+- What each level buys: [`buildings.md`](buildings.md).
 
-### 3.1 The late half of both curves
+### 3.1 The instance multiplier
 
-The curves above are tuned for the opening — tens of Wood, tens of seconds.
-Levels 6 to 10 are a different clock, so they are a **piecewise** continuation
-that pivots at `city.late_upgrade_from_level` (6):
+A building is stamped with its **ordinal** when it is placed — the second
+Sawmill is Sawmill #2 — and keeps it for life. That ordinal prices every level
+of that building, for ever: a house built early stays the cheap house to
+upgrade. Cards and menus name it, *Housing #3*, on any building whose count
+cap can pass 1.
 
 ```
-upgradeCost(L≥6)     = the level-5 term × lateCostGrowth^(L−5)
+cost(level, N) = table[level] × M(N)
+M(N)           = linear × (N − 1) + growth^(N − 1)
+```
+
+- `M(1) = 1` exactly. The table is what the first one costs, by construction.
+- The two terms **take turns**. The linear term prices the early copies, where
+  `growth^(N−1)` is still near 1; the exponential prices the tail, from
+  wherever it overtakes `linear × (N − 1)`. Retuning one barely moves the
+  other's half of the ladder, which is the point of having both.
+- Rounded to **three significant figures**, per resource per level per
+  ordinal — a pure function of the four, so a card and an offline replay never
+  disagree.
+- Two dials a building: `instance_linear_growth`, `instance_exponential_growth`.
+
+At 2 and 1.2:
+
+| Ordinal | #2 | #3 | #5 | #10 | #21 |
+|---|---|---|---|---|---|
+| Multiplier | ×3.2 | ×5.4 | ×10.1 | ×23.2 | ×78.3 |
+
+- **The ordinal has no gaps.** Nothing is ever demolished and a build cannot be
+  cancelled ([`06-construction.md`](06-construction.md) §1), so the next
+  ordinal is the count plus one and stays unique without a counter of its own.
+- Because the multiplier is flat next to the level ladder, **what paces the
+  city is how high buildings are pushed, not how many stand**. What limits how
+  many stand is `max_count_per_townhall_level` (§1), not the price.
+
+### 3.2 Refined goods, in the same table and unmultiplied
+
+- The four goods are four more columns on the same row, under the same rule:
+  the level 1 row is what the **build** costs in goods, levels 2 and up what
+  that level costs.
+- **The ordinal multiplier skips them.** A recipe does not know how many of
+  the thing the city owns, and a workshop makes goods one at a time: an
+  ordinal multiplier would price a second workshop's worth of days into a
+  single upgrade.
+- A building's whole price — raw and refined, build and every level — is
+  therefore one row per level and nothing else. No goods list packed into a
+  text cell, and no separate column for the build.
+- A **decoration** has one level, so its goods price is its level 1 row
+  ([`18-harmony.md`](18-harmony.md) §2).
+
+### 3.3 The wait
+
+The wait is still a curve, and it still pivots.
+
+```
+buildDuration        = round(seconds × districtGrowth^(N−1) × distanceGrowth^d)
+upgradeDuration(L)   = round(seconds × durationGrowth^(L−2))
 upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 ```
 
-- The **cost** is continuous: reaching level 6 is the early curve's last step
-  times the late growth (1.7 everywhere today), so nothing jumps.
-- The **wait** is not, deliberately: it restarts at its own base — 2 h for
-  every district — because a minute-long step cannot be compounded into a
-  multi-day ladder without deforming the opening.
-- A row that stops at 5 leaves the late columns blank, and the importer
-  refuses a row that reaches 6 without them.
-- What each late level buys: [`buildings.md`](buildings.md) §4.11.
+- The pivot is `city.late_upgrade_from_level` (6), and the late half restarts
+  at its own base — 2 h for every district — because a minute-long step cannot
+  be compounded into a multi-day ladder without deforming the opening.
+- A build's wait grows with the ordinal and with distance from the Townhall;
+  neither touches the price.
 
 ## 4. Placement, and moving
 
@@ -120,15 +177,17 @@ upgradeDuration(L≥6) = lateSeconds × lateDurationGrowth^(L−6)
 ### 4.2 Moving
 
 - A move is free, instant, and never fails halfway.
-- The building never leaves the Built state, never enters the queue, never
-  stops paying taxes or working its cells.
-- Only position changes. Everything that reads position follows: housing
-  adjacency, influence radius, worker walking distance, the fog ring.
+- A move changes nothing but position: a Built building keeps paying taxes and
+  working its cells, an unfinished one keeps its place in the queue and the
+  wait it was stamped with.
+- Everything that reads position follows: housing adjacency, influence radius,
+  worker walking distance, the fog ring.
 
 What may move:
 
-- **Built only.** An unfinished building's card offers **Cancel** (a full
-  refund) instead.
+- **Anything, finished or not.** A building still in the queue moves too — its
+  wait is priced when the builder starts it and stamped on the queue item, so
+  moving never reprices it.
 - **Buildable only**, which excludes exactly the Townhall.
 
 Placement rules that change for a move, and only these:
@@ -139,6 +198,7 @@ Placement rules that change for a move, and only these:
 
 What follows the building:
 
+- Its ordinal, and so its price (§3.1).
 - Adjacency, computed on read. The tax anchor is settled at the instant of the
   move.
 - The fog ring, at the new address.
@@ -146,6 +206,8 @@ What follows the building:
   - a loaded worker keeps its load and walks to the new address
     ([`04-harvest.md`](04-harvest.md) §4);
   - an empty-handed worker releases its claim and goes Idle.
+- An unfinished building has neither ring nor crew yet, so its address is the
+  only thing that moves.
 
 ### 4.3 The two gestures
 
@@ -167,7 +229,8 @@ What follows the building:
 | Dial | Where |
 |---|---|
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
-| Build and upgrade costs, and their curves | `Districts.build_cost_*`, `upgrade_cost_*` |
+| What every level costs, build included — currencies and goods alike | the `DistrictCosts` sheet — §3 |
+| How much dearer a later instance is | `Districts.instance_linear_growth`, `instance_exponential_growth` — §3.1 |
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
 | Housing capacity per level | `Districts.population_capacity` — OQ-46 |
@@ -175,7 +238,7 @@ What follows the building:
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
 | Army cap per level | 6 / 10 / 15 / 21 / 28 then +8 a level to 68, on the four military halls ([`buildings.md`](buildings.md) §4.9, §4.11) |
-| The late half of the curves | `Districts.upgrade_*_late_*`, `city.late_upgrade_from_level` — §3.1 |
+| The late half of the wait | `Districts.upgrade_duration_late_seconds`, `upgrade_duration_late_level_growth`, `city.late_upgrade_from_level` — §3.3 |
 | Adjacency | `Adjacency` sheet — [`03-economy.md`](03-economy.md) §3 |
 
 ## 6. Deliberately not in this design
@@ -185,6 +248,12 @@ What follows the building:
 - Multi-select moves.
 - Moving the Townhall.
 - A distance term in build **cost**.
+- A cost curve of any kind. Every level is a number a designer typed (§3).
+- An instance multiplier that varies by level: one curve prices the whole
+  ladder of a building (§3.1).
+- An instance multiplier on refined goods (§3.2).
+- Renumbering ordinals. #2 is #2 for life, and there is nothing that could
+  free the number (§3.1).
 - `Desert`, a declared terrain with zero cells.
 
 **Open questions:** OQ-46.
