@@ -15,12 +15,14 @@ forms, saturated palette.
 
 | File | What |
 |---|---|
-| [`prompt-template.md`](prompt-template.md) | **the reusable prompt** — the generic block, the per-character block it takes, and the verification |
-| `hero_elven_princess.png` | 1024×1536, true alpha. The raw generation, untouched. |
-| `elven-princess.prompt.txt` | The exact prompt, verbatim. |
+| [`prompt-template.md`](prompt-template.md) | **the reusable prompt** — the generic block, the per-character block, how to get the alpha, how to land it in the build |
+| [`alpha_from_pair.py`](alpha_from_pair.py) | **the tool that solved the background** — alpha from a black/white pair, and the check that says whether it may |
+| `hero_elven_princess.png` | 1024×1536 master, true alpha |
+| `hero_necromancer.png` | 1024×1536 master, alpha from the pair |
+| `*.prompt.txt` | each one's exact prompt, verbatim |
 
-Nothing here is wired into the build — `src/render/assets/hero_*.png` are still
-the 42×74 placeholder cards.
+Both are wired into the build as `src/render/assets/hero_<id>.png`, normalized
+to 512×768. The other thirty are still the 42×74 placeholder cards.
 
 ## 2. What a portrait prompt has to say that a tile prompt does not
 
@@ -88,3 +90,50 @@ fix.
 Download from the link in the message body → the file viewer → its own
 download icon, top right. The image's own editor still bakes the checkerboard
 in.
+
+**Superseded.** Do not repeat this. Nothing in a prompt prevents the baked
+checkerboard, and the correction is where generations get lost — see NEC-A.
+
+## 4. NEC-A — The Necromancer, and the end of asking for transparency
+
+- **Date:** 2026-09-09
+- **Conversation:** <https://chatgpt.com/c/6aa14d78-7b64-83eb-88c4-62c6b4b46a31>
+  ("Generar nigromante PNG", Codigames workspace)
+- **Model:** GPT-5.6 Sol, effort Alta
+- **Prompt:** [`prompt-template.md`](prompt-template.md) §1 in Spanish, with
+  every mention of transparency removed from it
+- **Verification:** master `1024x1536`; the pair's channel spread of `1−α` is
+  **0.0000** and no pixel out of range, so the two files are one render; alpha
+  `66.52% / 33.48%` split with **zero** intermediate values; three opaque
+  islands — the figure `823×1449`, the soul flame `123×236`, its mote `25×27`
+
+### Four ways of asking, four checkerboards
+
+The word *transparencia* was the suspect, so it was removed everywhere: from
+the background block, from the export block, from the whole prompt. **The
+checkerboard came back anyway** — and the model volunteered the word itself,
+unprompted, in its very first line of reasoning. It is not in the wording.
+
+Worse, the *correction* is where the work dies. Twice the turn ended inside it
+and delivered no file at all: once at `Procesando`, once after
+`Analizados los metadatos`. A good render was lost each time.
+
+### What actually worked
+
+Stop asking for a cut-out. Ask for the **same figure over pure black and over
+pure white**, both opaque, and do the compositing arithmetic locally
+(§3 of [`prompt-template.md`](prompt-template.md)).
+
+The clause that made it exact was *"píxel a píxel igual en las dos"*: the model
+chose, on its own, to render once and derive the second file from that same
+master — *"Crearé una única versión sobre blanco y, a partir de ese mismo
+archivo, derivaré la negra"*. That is precisely the condition the arithmetic
+needs, and the channel-spread check confirms it held.
+
+**The cost is a 1-bit mask.** It flood-fills the master's background, so there
+is no anti-aliased edge and no semi-transparent glow. Invisible here — the
+master is 1024 wide and the asset is 512, so the downscale anti-aliases it —
+and unacceptable for anything that needs a genuinely soft edge.
+
+**One render, ~5 min, nothing lost.** Against seven-plus minutes and two dead
+generations for the Elven Princess.

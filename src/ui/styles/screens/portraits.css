@@ -21,6 +21,7 @@
  * selectors instead. The attribute selector outranks a single class, so this
  * wins wherever the portrait is drawn, whatever the barrel's order.
  */
-img[src*='hero_elven_princess'] {
+img[src*='hero_elven_princess'],
+img[src*='hero_necromancer'] {
   image-rendering: auto;
 }
