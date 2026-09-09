@@ -258,3 +258,38 @@ magick -size 128x128 xc:none \( spr-r-sanctum-l8.png -crop 748x749+144+111 +repa
 The Sanctum now reads base → `_l4` → `_l8` as one building growing: a domed
 stone shrine, then a blue-domed observatory, then a great observatory with a
 second dome and a full rune ring.
+
+## SPR-S — the Infirmary, three tiers
+
+`spr-s-infirmary.png` (1254×1254, alpha repaired locally — see below).
+**Conversation:** <https://chatgpt.com/c/6aa15675-1314-83ed-80ce-37abeeba1a39>
+("Generar PNG de enfermería", Codigames workspace, GPT-5.6 Sol Alta,
+2026-09-09). First message carried `reference.png` and a fresh
+`existing_sprites.png` montage (barracks, sanctum, market_l3, quarry_l3,
+carpenter_l4, housing_l3).
+
+Two rounds. Round 1 came back **3/4 isometric with fine detail** — the same
+drift `sprite-prompts.md` warns about, and it arrives even with the camera
+line already in the first message. Round 2 fixed it in 2m17s with the four
+corrections spelled out again on their own: *80° camera, the TOP face of the
+roof is what you see*, *two or three flat tones and one outline*, *nothing
+under 4 px, drawn for 128 px wide*, *saturation up to the montage*, plus
+smaller buildings inside each quadrant.
+
+**The model's own alpha loop is a trap.** Round 1 spent **eleven minutes** in
+a code-interpreter loop diagnosing its own baked checkerboard and never
+delivered a file. Round 2 was told *not* to check or post-process the channel
+in code, and delivered the sheet with its download link in 2m17s — with the
+checkerboard baked, as always. Repairing it locally takes seconds and is
+deterministic: the two greys are ~130 and ~191 with antialiased values
+between them, so the mask is *any near-grey between 115 and 208* and then only
+the component **connected to the border**, which is what keeps a pale blanket
+or a grey cistern from being punched out. Corner ends `srgba(0,0,0,0)`, alpha
+mean 0.14.
+
+| Sheet | Quad | File | Command |
+|---|---|---|---|
+| spr-s | tl | `infirmary_l1.png` | `fish norm_sq.fish spr-s-infirmary.png tl 0.72 infirmary_l1.png 128` |
+| spr-s | tr | `infirmary_l4.png` | `… tr 0.82 infirmary_l4.png 128` |
+| spr-s | bl | `infirmary_l8.png` | `… bl 0.92 infirmary_l8.png 128` |
+| spr-s | br | — | left empty on purpose; only three tiers were wanted |

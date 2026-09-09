@@ -158,6 +158,13 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
       levelIndexed(def.armyCapPerLevel, district.level),
       levelIndexed(def.armyCapPerLevel, next));
   }
+  // The Infirmary's whole ladder: how many wounded can wait for a bed before
+  // the rest of them die (Docs/features/combat.md §4).
+  if (def.bedsPerLevel.length > 0) {
+    delta('beds',
+      levelIndexed(def.bedsPerLevel, district.level),
+      levelIndexed(def.bedsPerLevel, next));
+  }
   if (def.populationCapacityPerLevel.length > 0) {
     const capNow = districtCapacity(game.state, district);
     delta('homes', capNow, capNow

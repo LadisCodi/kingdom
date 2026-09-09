@@ -42,13 +42,19 @@ What actually worked when generating the full v2 set with ChatGPT:
 2. **Generate in 2×2 vignette sheets**, four assets per image — massively
    better style/scale consistency than one-off sprites, and 4× fewer
    generations. Describe each vignette by grid position (TOP-LEFT …).
-3. **ChatGPT bakes a fake checkerboard instead of real alpha.** Ask it,
-   in the same message, to *"apply the true-alpha transparency correction
-   and give me the download link for the corrected PNG"* — after being
-   called out once it reliably runs its own alpha extraction + channel
-   verification and hands back a genuinely transparent PNG. Verify
-   locally anyway: `magick sheet.png -format "%[pixel:p{0,0}]" info:`
-   must print `srgba(0,0,0,0)`.
+3. **ChatGPT bakes a fake checkerboard instead of real alpha, always.** No
+   wording prevents it — the v2 set asked for "true alpha", the 2026-09-09
+   sheet asked only for *"el PNG sin fondo"*, and both came back opaque.
+   **Do not ask the model to fix its own channel**: that starts a code-
+   interpreter loop that has cost eleven minutes and delivered nothing
+   (`originals/v3-sheets/LOG.md`, SPR-S). Tell it *not* to check or
+   post-process the file, take the link, and repair it locally in seconds:
+
+   ```sh
+   python3 Docs/art/originals/v3-sheets/unbake_checkerboard.py sheet.png sheet_alpha.png
+   magick sheet_alpha.png -format "%[pixel:p{0,0}]" info:            # srgba(0,0,0,0)
+   magick sheet_alpha.png -alpha extract -format "%[fx:mean]" info:  # < 0.5
+   ```
 4. **Full-bleed tiles (farmlands, terrain) go in their own sheets** where
    each quadrant is completely filled, flat and self-wrapping — never mix
    them with vignettes, and say "no rotation, no diamond shape, no 3D
