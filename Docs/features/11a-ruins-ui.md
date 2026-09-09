@@ -10,9 +10,9 @@
 ```
 World map ──▶ Discovery card (one-off)
      │
-     └──▶ Ruin sheet ──▶ Room ladder ──▶ Room sheet ──▶ Battle ──▶ Result (cleared / failed)
-                                              │                         │
-                                       Party composition                └─▶ Room ladder
+     └──▶ Ruin sheet ──▶ Room ladder ──▶ Room sheet ──▶ Battle playback ──▶ Spoils
+                                              │                                │
+                                       Party composition          the room sheet, next room
 
 Guild screen ──▶ Next-level unlock preview
 City HUD ─────▶ Reservoir meter
@@ -101,21 +101,34 @@ Two rows of slots on the battle screen, filled from card panels.
 | Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight; nothing gates one and nothing sells one |
 | Cards | The heroes screen's card, in a horizontal rail: art, name, the **type as a word** (Melee / Ranged / Mounted for a troop, the hero's own type for a hero), the **power the pick would add** as the headline, the unit's **ATK / DEF / HP**, and one line saying what tapping it does — or which ceiling stopped it |
 
-### 2.7 Result — cleared
+### 2.7 The fight — the playback
+
+**Built 2026-09-09** (`src/ui/battleScreen.ts`). Its own full-screen mount at
+z 90, under the reveal (100) and over the nav (10): a fight the player can tap
+around is not a fight.
+
+**The fight is already over when this opens.** The resolver ran on the tap,
+the rewards are banked and the fallen are off the roster — this replays the
+event stream ([`combat.md`](combat.md) §13) at the tick it was written in, so
+an interrupted replay costs nothing.
 
 | | |
 |---|---|
-| Data | Rewards granted, first-clear flag, boss chest contents, passive generation delta |
-| Elements | Chest reveal; on a boss, passive counter animating upward; fragments called out separately from currencies |
-| Rules | Exits to the next room or to the ruin sheet — never to the map |
+| Data | The log, and nothing else: the two boards from its `start`, then every `attack`, `troops_lost` and `slot_wiped` in order |
+| Elements | **The power bar** at the top — two totals and one split fill, falling as squads come apart (§12). **Six rows of slots**: their heroes · their back · their front · *a gap* · our front · our back · our heroes. The back rank draws smaller, because the row is what decides who gets hit |
+| Hit | The slot flashes white for two frames and a hit sound plays |
+| Death | The portrait desaturates, a skull is painted over it, a death sound plays |
+| Ending | **Two seconds** after the last blow, a Victory or Defeat plaque over the middle of the board |
+| Rewards | On a victory with spoils, the **gacha reveal** deals them over the board — the one screen that already knows how to hand things over one at a time (§8.3 of [`10-heroes.md`](10-heroes.md)) |
+| Leaving | Then, and only then, a button at the bottom. It returns to the room sheet, which is already showing the NEXT room |
+| Rules | No controls: no speed, no skip. One tick is 100 ms, so the replay is exactly as long as the fight was |
 
-### 2.8 Result — failed
+### 2.8 Result — the sheet behind it
 
-| | |
-|---|---|
-| Data | Room, supplies spent, party power vs. `power_req`, the losing matchup, remaining Food/Gold |
-| Elements | The gap stated explicitly: *"Your 24 against 31. Their cavalry beat your archers."* Actions: `Retry`, `Change party`, `Leave` |
-| Rules | No defeat fanfare. The diagnosis is the content of the screen |
+There is no separate result screen. The room sheet is still standing when the
+playback closes, showing the next room, the survivors already in its slots and
+the same numbers it always shows — which is the diagnosis a beaten player
+needs (*their power against yours*) without a screen of its own.
 
 ### 2.9 Guild screen — unlock preview
 

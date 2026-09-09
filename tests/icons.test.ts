@@ -44,6 +44,8 @@ const AWAITING_ART: readonly string[] = [
   // one more crop on the next UI sheet — and there is a free slot for it now
   // that the Market has left the game.
   'Infirmary',
+  // The battle screen's death mark (2026-09-09), painted over a wiped slot.
+  'skull',
 ];
 
 const pending = new Set(AWAITING_ART);

@@ -157,8 +157,8 @@ than the build is rejected rather than downgraded.
   `raidPill.ts`, `adOfferPill.ts`. They hide behind any sheet.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
   column — raid countdown, then the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
-  (10) · settings knob (20) · the gacha reveal (100) · the rewarded video
-  (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
+  (10) · **the battle playback (90)** · the gacha reveal (100) · the rewarded
+  video (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header or the nav — **which is the design, not
   a limitation**: a menu is opened over the game, so the purse stays readable
   and the way out stays put.

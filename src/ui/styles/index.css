@@ -34,6 +34,7 @@
 @import './screens/mana.css';
 @import './screens/gates.css';
 @import './screens/battle.css';
+@import './screens/battlefield.css';
 /* Last, and deliberately: it overrides the portrait rules of every screen
    above for the heroes whose art has been repainted. */
 @import './screens/portraits.css';

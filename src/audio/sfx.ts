@@ -45,7 +45,11 @@ export type SfxName =
   | 'constructionComplete' | 'upgradeBought' | 'gemSpend' | 'unitTrained'
   | 'boatSplash' | 'chainFinished'
   | 'tapTree' | 'tapBerries' | 'tapHouse' | 'tapAnimals' | 'tapStone'
-  | 'tapIron' | 'tapFish';
+  | 'tapIron' | 'tapFish'
+  // The two the battle screen needs. Re-pitched takes rather than new files,
+  // the way `tapIron` is `tapStone` an octave down: a hit is the pick-axe
+  // sharpened, a death is it slowed and dropped.
+  | 'hit' | 'death';
 
 interface SoundSpec {
   /** One or more takes — a random one plays each time (organic repeats). */
@@ -90,6 +94,8 @@ const SOUNDS: Record<SfxName, SoundSpec> = {
   tapStone: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.5, jitter: 0.05 },
   // Iron shares the pick-axe takes, pitched down — heavier metal.
   tapIron: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.5, jitter: 0.05, rate: 0.85 },
+  hit: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.32, jitter: 0.12, rate: 1.35 },
+  death: { urls: [tapStone1, tapStone2, tapStone3], volume: 0.45, jitter: 0.08, rate: 0.6 },
   // Fish taps reuse the boat splash, pitched up — a lighter plip.
   tapFish: { urls: one(boatSplashUrl), volume: 0.4, jitter: 0.08, rate: 1.2 },
 };

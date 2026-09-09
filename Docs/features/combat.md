@@ -5,6 +5,11 @@
 > future PvP conquest map. Hero fields, levels and ascension:
 > [`10-heroes.md`](10-heroes.md). Relics: [`09-relics.md`](09-relics.md).
 > Building levels and costs: [`buildings.md`](buildings.md).
+>
+> **Status: built 2026-09-09.** The resolver is `src/sim/battle.ts` and the
+> screen that replays its stream is `src/ui/battleScreen.ts`. Still ahead:
+> unit tiers T2–T5 (§6, no technology opens one yet) and authored boss
+> FORMATIONS beyond the boss villain (§11).
 
 ## 1. Model
 
@@ -48,10 +53,14 @@ and the army cap; hero slots one free, the rest Gems
 - **Hit points do not carry between fights.** They are spent inside one and
   reset when it ends; a squad's HP pool is its count times `hp_unit` every
   time.
-- **EVERY FIGHT COSTS SOLDIERS, WIN OR LOSE.** What takes them down is the
-  enemy's power against the party's defence, spread across the committed
-  squads by their share of the party's hit points. Only whole troops fall, and
-  never fewer than one.
+- **WHAT DIES IN THE FIGHT IS GONE FROM THE ROSTER.** A squad that ends with
+  340 of its 2,000 hit points lost 83 of its hundred, and those 83 are what
+  the city is charged. There is no separate formula: the losses are read off
+  the log (§13).
+- **A rout is free, and a scrape is expensive.** A party that wipes a room
+  before it can swing loses nobody at all; one that wins on the last tick
+  comes home in pieces. Bringing more than enough is worth something, and
+  this is what it is worth.
 - **A casualty is two things — if the city has an Infirmary.**
   `army.wounded_share` of the fallen are carried to its beds and the rest are
   dead. Both leave the roster at once: a wounded soldier cannot be sent
@@ -69,10 +78,6 @@ and the army cap; hero slots one free, the rest Gems
     the building: they are already trained.
   - Cancelling an order puts them back in their beds and the coin back in the
     purse.
-- **A rout costs less than a repulse.** A party that wins takes the damage in
-  proportion to how outmatched the enemy was, so bringing more than enough
-  buys fewer funerals as well as a win; a party that is driven off pays it in
-  full.
 - **What else an ATTEMPT costs is the caller's rule.** A room and a gate both
   charge supplies on the way in ([`11-expeditions.md`](11-expeditions.md) §5,
   [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing else
@@ -168,8 +173,9 @@ A hero or villain occupies a hero slot and does two things.
 
 - Stats: `hp`, `dmg`, `def`, `cooldown`, type. Attacks with `frontage = 1` and
   `alive = 1`.
-- Balanced to roughly **70%** of a full squad's output at equivalent
-  investment.
+- Balanced against a full squad's output: a level-1 Common is about a fifth
+  of one, and rarity and levels close the gap toward the **70%** the design
+  aims at. A hero is a body, never an army.
 - Dies when its `hp` reaches 0: it stops attacking. Its passive stands.
 
 ### 9.2 It buffs one troop type — the passive
@@ -200,41 +206,49 @@ Rooms carry a `power_req` budget and a `threat_mix`
 ([`11-expeditions.md`](11-expeditions.md) §2). The generator converts
 them:
 
-1. Seed from `(ruin_id, depth_index, room_index)`. Same room, same enemies.
-2. Pick a slot count of 2–5, scaled by budget.
-3. Split the budget across types by `threat_mix` weights.
-4. Per type: `count = floor(share / power_per_troop)`, clamped to `squad_size`;
-   overflow spills into a second squad of the same type.
-5. Assign rows: melee and flankers front, ranged back, until the front row is
-   full.
-6. Above a threshold budget, spend part of it on **villains** instead of
-   squads, drawn from the depth's villain pool.
+1. Seed from `(ruin_id, depth_index, room_index)`. Same room, same enemies —
+   the preview and the attempt are one query.
+2. **Villains first**, because what is left is what the squads may cost. Above
+   `combat.gen_villain_threshold`, up to `combat.gen_villain_slots` of them
+   (three, the same hero slots the player fields) are drawn from the depth's
+   `villain_pool`, each costing its authored `power`.
+3. Pick a slot count of 2–6, whichever is larger: the roll, or the number of
+   squads the budget actually needs.
+4. Split the budget across types, **the ruin's affinity first** and taking the
+   lion's share (60%), the rest even across the others.
+5. Per type: `count = floor(share / power_per_troop)`, clamped to `squad_size`;
+   overflow spills into a second squad of the same type, and whatever the
+   shares leave on the table goes to the affinity while a slot remains.
+6. Rows are the unit's own: melee and flankers front, ranged back (§8).
 
-**Overrides:** any room row may specify an explicit formation, including named
-villains in named slots. **Boss rooms always author their villains** — never
-generated.
+**The board is the ceiling.** Six troop slots of `squad_size` is all a side
+can field, so past roughly two thousand points another thousand buys nothing
+— which is why a deep room spends on villains instead. Budget that cannot be
+fielded is simply not fielded, and the authored ladder lives under that
+ceiling.
 
-**Budget accounting:** a villain's cost against `power_req` must include the
-buff it grants, not only its own output. A villain placed alongside squads of
-its matching type is worth more than one placed with mismatched squads.
+**Overrides:** **boss rooms always field their authored villain** (`Depths`
+`boss_villain`), never a rolled one. Authoring a whole formation — named
+villains in named slots, beside chosen squads — is designed and not built.
+
+**Budget accounting:** a villain's `power` covers the buff it grants as well
+as its own output, because it is authored rather than derived.
 
 ## 12. Power
 
 Shown against `power_req` in the room sheet:
 
 ```
-squad_power = count × power_per_troop(tier) × troop_dmg_mult
+squad_power = count × power_per_troop(tier)
 party_power = Σ squad_power + Σ hero_power
+hero_power  = dmg(hero at its level) × combat.hero_power_per_dmg
 ```
 
-`hero_power` is a formula of the hero's resolved stat block and passive at its
-level and tier, not a table:
-
-```
-hero_power = power_base(hero) × rarity_mult × (1 + power_per_level × (level − 1))
-```
-
-This is an estimate; the resolver decides the outcome.
+**This is an estimate; the resolver decides the outcome.** A sum cannot
+express frontage, rows, cooldowns or the order things die in — so a party
+that reads stronger can lose, and the sheet says nothing more definite than
+"enough on paper". The same sum is the bar at the top of the battle screen,
+falling as squads come apart.
 
 ## 13. Event stream
 
@@ -252,6 +266,12 @@ fast-forward or restart.
 The stream is fully sufficient to draw the fight; the renderer never recomputes
 state. Resolution completes before the first frame — the result is known
 instantly and the animation is a replay.
+
+**And the replay is disposable.** Every consequence of the fight — the
+rewards, the frontier, the fallen — is applied when the resolver runs, so a
+player who closes the tab mid-animation loses nothing but the animation. It
+is also the seam a server-resolved PvP fight arrives through: a replay is
+`(both boards, the list)`, and the screen cannot tell which produced it.
 
 ## 14. Army cap and military buildings
 
@@ -288,10 +308,11 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 - All state in integers. Only the type fraction divides, floored.
 - Resolution order is fixed (§10); never iterate an unordered collection.
-- **Golden tests:** stored board pairs with expected event streams, checked
-  byte-for-byte in CI. Changes to §7, §8 or §10 must regenerate them
-  deliberately.
-- A replay is `(both boards, seed)`.
+- **Golden tests:** `tests/battle.test.ts` holds one board pair and its whole
+  event stream, compared as a snapshot. A change to §7, §8 or §10 rewrites it,
+  and a diff that rewrites it has to say why.
+- A replay is `(both boards, the event list)` — no seed needed, because
+  nothing inside the fight rolls anything.
 
 ## 17. Dials
 
@@ -300,14 +321,14 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Unit stats, `frontage`, `squad_size`, `power_per_troop` | `Units` sheet |
 | Troop slots on the board, hero slots and their Gem ladder | `party.*` |
 | Tier multipliers | `Units` sheet |
-| Type fractions (3/2, 3/4) | `combat.type_*` |
+| Type fractions, as integer pairs | `combat.type_advantage_num/den`, `combat.type_disadvantage_num/den` |
 | Hero stat blocks, passives, the 70% share and the rarity multipliers | `Heroes` sheet, `heroes.rarity_*` ([`10-heroes.md`](10-heroes.md) §9) |
 | Villain stat blocks, per room | `Villains` sheet |
 | Villain pool per depth | `Depths` sheet |
 | Tick length, timeout | `combat.tick_ms`, `combat.timeout_ticks` |
-| Enemy slot count band, hero budget threshold, row assignment | `combat.gen_*` |
+| Enemy slot band, villain threshold, share and slots | `combat.gen_slots_min/max`, `combat.gen_villain_threshold`, `gen_villain_share`, `gen_villain_slots` |
+| What a hero is worth in the ESTIMATE | `combat.hero_power_per_dmg` |
 | Army cap per building level | `Districts.army_cap_per_level` |
-| What a fight costs in bodies | `army.damage_per_strength`, `army.damage_absorbed_per_defence` |
 | How much of a casualty is saveable, and how many beds there are | `army.wounded_share`, `Districts.beds_per_level` |
 | What mending costs against recruiting | `army.heal_cost_share`, `army.heal_time_share` |
 
@@ -323,10 +344,13 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - Heroes inside troop slots, or bonuses to non-matching types
 - Villains with levels or ascension — their stats are authored
 - Villain buffs crossing sides
+- **A whole authored formation** — named villains in named slots beside chosen
+  squads. A boss's villain is authored; the squads around it are still rolled
 - Casualties *inside* the resolver, healing timers, permanent garrisons
 - RNG in resolution
 - Draws
 
-**Pending:** villain hero-slot count per room, and whether it is capped like
-the player's (**OQ-82**) · tier conversion cost, if any (**OQ-85**) ·
-`power_start` re-authoring against the full T1–T5 power range (**OQ-86**).
+**Pending:** tier conversion cost, if any (**OQ-85**) · `power_start`
+re-authoring against the full T1–T5 power range once tiers exist (**OQ-86**).
+**OQ-82 closed 2026-09-09**: three villain slots, the same three the player
+fields.

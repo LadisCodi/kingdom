@@ -2384,30 +2384,37 @@ export class Game {
     const b = this.battle;
     if (b === null) return;
     const elapsed = now - b.startedAt;
-    if (b.phase === 'playing') {
-      if (elapsed < b.log.ticks * COMBAT.tickMs) return;
-      b.phase = 'result';
-      playSfx(b.log.winner === 'ours' ? 'questComplete' : 'error');
-      this.notify();
-      return;
-    }
-    if (b.phase === 'result') {
-      if (elapsed < b.log.ticks * COMBAT.tickMs + BATTLE_RESULT_DELAY_MS) return;
-      // The prizes deal on the reveal screen, over the board — the one place
-      // in the game that already knows how to hand things over one at a time.
-      b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
-      if (b.phase === 'rewards') {
-        this.gachaReveal = { prizes: b.prizes, caption: 'Spoils' };
+    const fight = b.log.ticks * COMBAT.tickMs;
+    let moved = false;
+    // A LOOP, not a step: a frame the browser skipped, or a test that jumps
+    // the clock, must land on the phase the clock says rather than one
+    // behind it.
+    for (;;) {
+      if (b.phase === 'playing' && elapsed >= fight) {
+        b.phase = 'result';
+        playSfx(b.log.winner === 'ours' ? 'questComplete' : 'error');
+        moved = true;
+        continue;
       }
-      this.notify();
-      return;
+      if (b.phase === 'result' && elapsed >= fight + BATTLE_RESULT_DELAY_MS) {
+        // The prizes deal on the reveal screen, over the board — the one
+        // place in the game that already knows how to hand things over one
+        // at a time.
+        b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
+        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils' };
+        moved = true;
+        continue;
+      }
+      // The reveal owns the screen until the player dismisses it; when it
+      // does, the way out appears underneath.
+      if (b.phase === 'rewards' && this.gachaReveal === null) {
+        b.phase = 'done';
+        moved = true;
+        continue;
+      }
+      break;
     }
-    // The reveal owns the screen until the player dismisses it; when it does,
-    // the way out appears underneath.
-    if (b.phase === 'rewards' && this.gachaReveal === null) {
-      b.phase = 'done';
-      this.notify();
-    }
+    if (moved) this.notify();
   }
 
   dismissBattle(): void {
@@ -3062,13 +3069,6 @@ export class Game {
     const inspected = this.inspectedDistrictId === null
       ? undefined
       : districtById(this.state, this.inspectedDistrictId);
-    if (inspected && DISTRICTS[inspected.definitionId].maxWorkersPerLevel.length > 0) {
-      const working = this.state.city.districts.reduce((n, d) => n + d.assignedWorkers, 0);
-      return { kind: 'workers', value: working, max: working + this.freeWorkers() };
-    }
-    return {
-      kind: 'population',
-      value: this.state.city.population,
     // Looking at a hall that turns out SOLDIERS → the army cap. It is the
     // number that explains a refused Train, and it is about the city rather
     // than the building, which is exactly what the plaque is for: it used to
@@ -3079,6 +3079,13 @@ export class Game {
       return { kind: 'army', value: army.used, max: army.cap };
     }
     // Staffing something → workers assigned vs. the whole workforce.
+    if (inspected && DISTRICTS[inspected.definitionId].maxWorkersPerLevel.length > 0) {
+      const working = this.state.city.districts.reduce((n, d) => n + d.assignedWorkers, 0);
+      return { kind: 'workers', value: working, max: working + this.freeWorkers() };
+    }
+    return {
+      kind: 'population',
+      value: this.state.city.population,
       max: maxPopulation(this.state),
     };
   }

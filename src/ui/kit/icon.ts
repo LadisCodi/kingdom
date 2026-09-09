@@ -48,7 +48,10 @@ export type UiIconName =
   // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
   // `chest` and `daily` are two halves of one screen and stay two cells: the
   // chest is the PRIZE and the calendar page is the DAY.
-  | 'relics' | 'dungeon' | 'chest' | 'daily';
+  | 'relics' | 'dungeon' | 'chest' | 'daily'
+  // The mark the battle screen paints over a squad that is gone. It is the
+  // one icon that is drawn ON something rather than beside it.
+  | 'skull';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -86,7 +89,7 @@ export const ICON_EMOJI: Record<IconName, string> = {
   // the collection
   ascension: '★', fragment: '🧩',
   // destinations that are not nav tabs
-  relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅',
+  relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅', skull: '💀',
   // a hero's three numbers
   atk: '🗡️', def: '🛡️', hp: '❤️',
 };

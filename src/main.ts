@@ -25,6 +25,7 @@ import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
+import { mountBattleScreen } from './ui/battleScreen';
 import { mountGachaScreen } from './ui/gachaScreen';
 import { renderManaSheet } from './ui/manaSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
@@ -137,6 +138,8 @@ async function boot(): Promise<void> {
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  // The fight, under the reveal that deals what it paid.
+  mountBattleScreen(game, document.getElementById('battle')!);
   mountGachaScreen(game, document.getElementById('gacha')!);
   mountAdScreen(game, document.getElementById('ad')!);
   // The two bars publish their REAL heights as --hud-h / --nav-h, which is

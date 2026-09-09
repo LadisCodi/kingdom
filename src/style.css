@@ -69,6 +69,12 @@ body {
 #gacha:empty { display: none; }
 #gacha { position: absolute; inset: 0; z-index: 100; }
 
+/* The battle, one layer under the reveal — because a cleared room's spoils
+   are dealt by the reveal, OVER the board that just won them. Same mount
+   argument as the two above, and the same `:empty` rule. */
+#battle:empty { display: none; }
+#battle { position: absolute; inset: 0; z-index: 90; }
+
 /* THE RIGHT-EDGE COLUMN: every slab that slides in from the right lives here,
    in one vertical stack, flush to the right edge of the FRAME (#app) rather
    than the viewport — everything inside positions against the 9:16 frame.

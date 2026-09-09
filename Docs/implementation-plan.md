@@ -73,7 +73,7 @@ Two more that are design-visible:
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
 | Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
-| Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each room one fight resolved on entry, cleared in order and never replayed ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)). The delve, its checkpoints, its standing orders and its haul are gone. The **tick auto-battler** ([`combat.md`](features/combat.md)) is still the scoring pass ahead |
+| Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each one fight resolved on entry ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)), and the fight is the **tick auto-battler** ([`combat.md`](features/combat.md)) with the screen that replays its event stream. Tiers T2–T5 and authored boss formations are what is left |
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03. The chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09 |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
@@ -585,15 +585,40 @@ depth and no haul to carry home or lose.
   is the formula ×4 rather than the authored chest of §7.2; and the passive
   generation of §7.3 is unbuilt. **H8** is the debt this step created.
 
+### Step 7c · The tick resolver, and the screen that replays it — **DONE 2026-09-09**
+
+**Combat stops being a sum.** `sim/battle.ts` is the auto-battler
+[`combat.md`](features/combat.md) has specified since the beginning — hit
+point pools, two rows a side, `frontage`, per-type targeting, cooldowns in
+ticks, a 600-tick timeout the defender wins — and it emits the §13 event
+stream. `ui/battleScreen.ts` replays that stream on its own mount, flashes a
+slot that was hit, greys and marks one that fell, and hands a victory's
+spoils to the gacha reveal.
+
+- **What landed:** §5's unit table as authored data (`dmg`, `frontage`,
+  `cooldown`, and `power` as a scale distinct from damage), a `combat.*`
+  block, the §9.2 hero type passive, a `Villains` sheet and the seeded §11
+  generator. Casualties are now whatever died in the fight, so `battleDamage`
+  and `casualtiesFor` are gone — and a party that overwhelms a room loses
+  nobody, which is what "bring more than enough" is finally worth.
+- **What moved with it:** every `power_start`/`power_step` and every gate,
+  re-measured by fighting rather than by arithmetic. 24 troops take most of
+  the Barrow, 60 walk it out, 150 behind three heroes clear the Chapel, and a
+  full board cannot bottom the Observatory.
+- **What is asserted:** each rule against a hand-built board, plus a golden
+  event stream (`tests/battle.test.ts`) and the playback machine on a fake
+  clock (`tests/battlePlayback.test.ts`).
+- **Left open:** unit tiers T2–T5 (no technology opens one), authored boss
+  FORMATIONS beyond the boss villain, and **OQ-86** — re-authoring the ladder
+  against the full tier range once tiers exist.
+
 ### Step 8 · Heroes onto the resolver
 
-**The hero the code carries is the delve's** — `atk/def/hp`, five economy
-traits, Stardust-bought levels, "one hero, one job". The designed hero is a
-slot fighter with a type passive ([`10-heroes.md`](features/10-heroes.md) §2),
-levelled with Hero XP and ascended with Fragments plus a Stardust toll (§4),
-on hero slots bought with Gems (§3). **It lands with the room-and-resolver
-rewrite** ([`combat.md`](features/combat.md)); nothing here is worth building
-against the staged delve. Closes **H2**.
+**Half of this landed with the resolver.** A hero is a body on the board with
+`dmg`/`def`/`hp`/`cooldown` and the §9.2 type passive, and villains read the
+same block. What is left is the COLLECTION half: Hero XP levels against the
+authored curve, Fragment-plus-Stardust ascension (§4), and the roster screens
+that sell both. Closes **H2**.
 
 - **Design:** [`10-heroes.md`](features/10-heroes.md) — complete.
 - **Blocked on:** the resolver step it rides on. **OQ-79** (the XP curve),
