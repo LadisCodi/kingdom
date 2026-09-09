@@ -173,7 +173,12 @@
   margin: 6px 0;
   font-family: var(--font-body);
 }
-.dc-drip { margin: 4px 0; }
+/* The rent, and beside it what the house's own level adds to it. */
+.dc-drip {
+  display: flex; align-items: baseline; gap: 6px;
+  margin: 4px 0;
+}
+.dc-drip .dc-army-note { font-size: var(--text-helper); }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
 /* What a tap costs, and what is left to spend it from. Replaces the cycle

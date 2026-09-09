@@ -394,6 +394,7 @@ const ADJACENCY_CLAMP = 0.25;
 
 const DISTRICT_COLUMNS = [
   'id', 'size_x', 'size_y', 'max_level', 'population_capacity',
+  'tax_bonus_per_level',
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
@@ -413,7 +414,7 @@ const DISTRICT_COLUMNS = [
   'harmony_supply', 'harmony_cost_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
-  'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
+  'population_capacity', 'tax_bonus_per_level', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'army_cap_per_level', 'beds_per_level',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
@@ -744,6 +745,11 @@ async function importXlsx() {
       size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
       maxLevel: num(r, 'max_level'),
       populationCapacityPerLevel: list(r, 'population_capacity'),
+      // What a house's LEVEL does to the rent its residents pay: a fraction
+      // of the base rate, the TOTAL at that level rather than an increment,
+      // indexed from level 1 like `army_cap_per_level`. Blank = +0%, which is
+      // every building that houses nobody.
+      taxBonusPerLevel: list(r, 'tax_bonus_per_level'),
       fogRevealRadius: num(r, 'fog_reveal_radius'),
       fogDiscoverRadius: num(r, 'fog_discover_radius'),
       maxWorkersPerLevel: list(r, 'max_workers_per_level'),
@@ -828,6 +834,19 @@ async function importXlsx() {
       if (i > 0 && n < d.harmonyCostPerLevel[i - 1]) {
         fail(where(r), '"harmony_cost_per_level" falls at level '
           + `${i + 1} (${d.harmonyCostPerLevel[i - 1]} then ${n}) — it is a total, not an increment`);
+      }
+    });
+    // The rent bonus is a HOUSE's ladder: a row that houses nobody has no
+    // rent for it to move, so a number there is an author who meant a
+    // different column.
+    if (d.taxBonusPerLevel.length > 0 && d.populationCapacityPerLevel.length === 0) {
+      fail(where(r), '"tax_bonus_per_level" on a row that houses nobody');
+    }
+    // A total at each level too, and for the same reason.
+    d.taxBonusPerLevel.forEach((n, i) => {
+      if (i > 0 && n < d.taxBonusPerLevel[i - 1]) {
+        fail(where(r), '"tax_bonus_per_level" falls at level '
+          + `${i + 1} (${d.taxBonusPerLevel[i - 1]} then ${n}) — it is a total, not an increment`);
       }
     });
   }
@@ -1221,6 +1240,7 @@ async function exportXlsx() {
     const d = b.districts[id];
     return [
       id, d.size.x, d.size.y, d.maxLevel, listCell(d.populationCapacityPerLevel),
+      listCell(d.taxBonusPerLevel),
       d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),

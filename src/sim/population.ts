@@ -48,19 +48,38 @@ export const housedPopulation = (state: GameState): number =>
   Math.min(state.city.population, maxPopulation(state));
 
 /**
- * Gold per minute ONE house pays: residents × the rate the tree has left it,
- * plus flat adjacency bonuses and penalties from its built neighbours. Empty
- * (or fully crowded-out) houses pay nothing — clamped at 0.
+ * What this house's LEVEL adds to its residents' rent, as a fraction of the
+ * base rate: `Districts.tax_bonus_per_level`, a total at each level.
+ *
+ * A level fact, so it is read off the building at the base stage and never
+ * re-expressed as a modifier — the same rule `armyCapPerLevel` and
+ * `strikeSpeedPerLevel` follow. Every building that houses nobody returns 0.
+ */
+export const houseTaxBonus = (district: District): number => {
+  const list = DISTRICTS[district.definitionId].taxBonusPerLevel;
+  return list.length === 0 ? 0 : levelIndexed(list, district.level);
+};
+
+/**
+ * Gold per minute ONE house pays: residents × the rate the tree has left it
+ * × what the house's own level adds, plus flat adjacency bonuses and
+ * penalties from its built neighbours. Empty (or fully crowded-out) houses
+ * pay nothing — clamped at 0.
  *
  * The house is passed to the RATE as well as to the adjacency, which is what
  * makes "+5% gold income at Housing" a thing a technology can say: an aimed
  * effect reaches only the kind of building it names, and an unaimed one every
  * roof. This is the one reader that knows which house is paying.
+ *
+ * A level's bonus scales the RENT and not the neighbourhood: adjacency is
+ * flat Gold a minute, and a crowded row of houses is worth the same −1 each
+ * whatever the levels standing in it.
  */
 export function houseGoldPerMinute(state: GameState, district: District): number {
   const residents = residentsOf(state, district);
   if (residents === 0) return 0;
   return Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
+    * (1 + houseTaxBonus(district))
     + districtAdjacency(state, district));
 }
 

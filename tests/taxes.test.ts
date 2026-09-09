@@ -10,9 +10,9 @@
 // share-scaling still stops a large city minting more per press than a small
 // one.
 import { describe, expect, it } from 'vitest';
-import { TAP, TAXES } from '../src/sim/data/definitions';
+import { DISTRICTS, TAP, TAXES } from '../src/sim/data/definitions';
 import { tapCell } from '../src/sim/harvest';
-import { cityGoldPerMinute, houseTap } from '../src/sim/population';
+import { cityGoldPerMinute, houseTap, houseTaxBonus } from '../src/sim/population';
 import { lineFor, trainUnit } from '../src/sim/army';
 import { mana } from '../src/sim/mana';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
@@ -39,6 +39,46 @@ describe('passive tax gold', () => {
     expect(getWallet(state.city.wallet, 'Gold')).toBe(1);
     tickAt(state, T0 + 60_000);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(60);
+  });
+
+  it("a house's level raises the rent its own residents pay", () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    const h = house(state);
+    state.city.population = 2; // both in the L1 house, which pays the base
+    expect(DISTRICTS.Housing.taxBonusPerLevel[0]).toBe(0);
+    expect(cityGoldPerMinute(state)).toBe(2 * TAXES.goldPerPopulationPerMinute);
+
+    // Level 2 buys room for four AND a better rent from each of them.
+    h.level = 2;
+    state.city.population = 4;
+    expect(DISTRICTS.Housing.taxBonusPerLevel[1]).toBe(0.25);
+    expect(houseTaxBonus(h)).toBe(0.25);
+    expect(cityGoldPerMinute(state)).toBe(4 * TAXES.goldPerPopulationPerMinute * 1.25);
+
+    // And the passive accrual is that rate: 4 × 30 × 1.25 = 150 a minute.
+    state.city.wallet.Gold = 0;
+    state.city.lastTaxAt = T0;
+    tickAt(state, T0 + 60_000);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(150);
+  });
+
+  it("a house's level raises what a tap on it pulls forward", () => {
+    // A tap sells `tap.workSeconds` of the house's OWN rent, so the level
+    // that raised the rent has to show up in the press as well.
+    const tapWithLevel = (level: number): number => {
+      const state = freshGame();
+      addBuilt(state, 'Housing', HOUSE);
+      const h = house(state);
+      h.level = level; // the only house, so its share of the city is all of it
+      state.city.population = 2; // two residents either way
+      state.city.wallet.Gold = 0;
+      const rent = Math.floor((cityGoldPerMinute(state) / 60) * TAP.workSeconds);
+      const gold = houseTap(state, h, T0).gold;
+      expect(gold).toBe(rent);
+      return gold;
+    };
+    expect(tapWithLevel(2)).toBeGreaterThan(tapWithLevel(1));
   });
 
   it('only HOUSED villagers pay: no housing, no gold — and no banked time', () => {

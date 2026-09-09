@@ -170,7 +170,8 @@ What follows the building:
 | Build and upgrade costs, and their curves | `Districts.build_cost_*`, `upgrade_cost_*` |
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
-| Housing capacity per level | `Districts.population_capacity_per_level` — OQ-46 |
+| Housing capacity per level | `Districts.population_capacity` — OQ-46 |
+| House rent bonus per level | `Districts.tax_bonus_per_level` — +25% a level ([`03-economy.md`](03-economy.md) §3) |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |
 | What the ground under a cell multiplies | [`04-harvest.md`](04-harvest.md) §2.2 |
 | Army cap per level | 6 / 10 / 15 / 21 / 28 then +8 a level to 68, on the four military halls ([`buildings.md`](buildings.md) §4.9, §4.11) |

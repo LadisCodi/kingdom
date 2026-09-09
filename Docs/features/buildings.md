@@ -34,7 +34,7 @@
 | Building | Footprint | Unlock | Count cap | Max level | Job |
 |---|---|---|---|---|---|
 | **Townhall** | 2×2 | — | 1 | **10** | the era gate; trains villagers; the map's origin |
-| **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold |
+| **Housing** | 1×1 | — | 2 / 4 / 6 / 9 | **10** | houses residents, who pay Gold — more of it at every level |
 | **FarmLands** (crop plot) | 1×1 | Agriculture | 6 / 6 / 12 / 16 | **1** | a Food cell the player builds |
 | **Farm** | 1×1 | Agriculture | 1 / 1 / 2 / 3 | **10** | crew works crop plots in reach |
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
@@ -102,7 +102,9 @@
 - **Pacing** (the design's target, days orientative — the thirty-day harness
   asserts it with slack): 2 · day 1 — 3 · day 2 — 4 · day 5 — 5 · day 7 —
   6 · day 10 — 7 · day 14 — 8 · day 20 — 9 · day 24 — 10 · day 30. Measured
-  2026-09-08: 2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 · 25.
+  2026-09-09: 2 · 3 · 6 · 8 · 8 · 10 · 12 · 16 · 21 — the whole ladder runs
+  ahead of target now that a house's level pays rent as well as room
+  ([`03-economy.md`](03-economy.md) §3).
 
 ## 4. The districts
 
@@ -111,18 +113,23 @@
 - Residents pay `taxes.goldPerPopulationPerMinute` = 30 Gold/min each; a tap
   pulls 10 s of the house's rent forward ([`03-economy.md`](03-economy.md)
   §3).
-- Housing next to Housing: −1 Gold/min per neighbour.
+- A level buys **room and rent**: +25% on what each resident pays, a total
+  from level 1 (`Districts.tax_bonus_per_level`). A tap on the house is worth
+  the same more, since it sells the house's own rent.
+- Housing next to Housing: −1 Gold/min per neighbour, flat — a level does not
+  scale it.
 - `Communities` (Civics era 2) adds +1 resident to every Housing.
 - Build 10 Wood, 20 s. Upgrade 30 Wood + 10 Stone, 20 s, ×1.5 per level.
-- Levels 6–10 add two residents each, to 20 (§4.11).
+- Levels 6–10 add two residents and +25% rent each, to 20 residents at +225%
+  (§4.11).
 
-| Level | Residents | Gate |
-|---|---|---|
-| 1 | 2 | — |
-| 2 | 4 | `Urban Planning` |
-| 3 | 6 | `Aqueducts` |
-| 4 | 8 | TH3 |
-| 5 | 10 | TH4 |
+| Level | Residents | Rent | Gate |
+|---|---|---|---|
+| 1 | 2 | — | — |
+| 2 | 4 | +25% | `Urban Planning` |
+| 3 | 6 | +50% | `Aqueducts` |
+| 4 | 8 | +75% | TH3 |
+| 5 | 10 | +100% | TH4 |
 
 ### 4.2 FarmLands — the crop plot
 
@@ -300,7 +307,7 @@ written once. The Townhall's own ladder is §3.
 
 | Building | Levels 6–10 add |
 |---|---|
-| Housing | +2 residents a level, to 20 |
+| Housing | +2 residents and **+25% rent** a level, to 20 residents at +225% |
 | Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a 10% faster swing a level** — crew and reach stop growing at 5, because the plot has more cells than a crew can work |
 | the four military halls | army cap in TROOPS, 150 at level 1 to 2,600 at ten ([`combat.md`](combat.md) §14) |
 | the Infirmary | beds for the wounded, 30 at level 1 to 400 at ten |

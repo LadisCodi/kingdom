@@ -26,7 +26,7 @@ import {
   harmonyBlock, harmonyCost, harmonyDemand, harmonySupply, harmonySurplusTier, isDecoration,
 } from '../sim/harmony';
 import {
-  districtCapacity, houseGoldPerMinute,
+  districtCapacity, houseGoldPerMinute, houseTaxBonus,
 } from '../sim/population';
 import { mana } from '../sim/mana';
 import { harvestSourceAt } from '../sim/harvest';
@@ -163,6 +163,15 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
       + levelIndexed(def.populationCapacityPerLevel, next)
       - levelIndexed(def.populationCapacityPerLevel, district.level));
   }
+  // A level buys a house MORE ROOM and BETTER RENT, and the second half is
+  // the reason to keep upgrading a house that is already full.
+  if (def.taxBonusPerLevel.length > 0) {
+    const pct = (level: number) =>
+      `+${Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100)}%`;
+    if (pct(next) !== pct(district.level)) {
+      delta('rent each', pct(district.level), pct(next));
+    }
+  }
   // Mana is a per-level number too, on exactly two buildings — and neither
   // had anything to show before, so both upgrades read as blank.
   // The Sanctum owns BOTH Mana numbers now — it is the engine as well as the
@@ -269,9 +278,16 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
         el('span', {}, `${residents} of ${capacity} homes filled`)));
 
       if (residents > 0) {
+        const bonus = houseTaxBonus(district);
         body.append(el('div', { class: 'dc-drip' },
           stat('Gold', Number.isInteger(perMinute) ? String(perMinute) : perMinute.toFixed(1),
-            'per minute')));
+            'per minute'),
+          // What the house's own level is worth, said where the rent is read
+          // rather than only on the upgrade button.
+          ...(bonus > 0
+            ? [el('span', { class: 'dc-army-note' },
+              `+${Math.round(bonus * 100)}% rent from level ${district.level}`)]
+            : [])));
       }
       // Adjacency as a verdict rather than a signed number.
       if (adjacency !== 0) {

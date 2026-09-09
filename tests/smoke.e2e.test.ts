@@ -6,7 +6,7 @@ import { armySize, armyCap, trainUnit, lineFor } from '../src/sim/army';
 import {
   changeWorkers, enqueueBuild, finishWithGems, upgradeDistrict,
 } from '../src/sim/commands';
-import { TAXES } from '../src/sim/data/definitions';
+import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
 import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
 import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
@@ -223,13 +223,16 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const earned = getWallet(restored.city.wallet, 'Gold') - gold;
     // Six villagers across four houses, filled in BUILD ORDER: the two L2
     // houses (capacity 4) take 4 and 2, the two L1 houses stand empty and pay
-    // nothing. Each occupied house has exactly one crowding neighbour, and the
-    // rate per villager is the sheet's 30 lifted by whatever tax rank the
-    // Market's chain pulled in on the way (`Taxes I`, +5% at Housing — a
-    // requirement is the row above, and that card sits on it):
-    // (4 × 31.5 − 1) + (2 × 31.5 − 1) = 187/min.
+    // nothing. A level buys rent as well as room, so each of those residents
+    // pays the L2 house's +25% (`Districts.tax_bonus_per_level`). Each
+    // occupied house has exactly one crowding neighbour, and the rate per
+    // villager is the sheet's 30 lifted by whatever tax rank the Market's
+    // chain pulled in on the way (`Taxes I`, +5% at Housing — a requirement
+    // is the row above, and that card sits on it):
+    // (4 × 37.5 − 1) + (2 × 37.5 − 1) = 223/min.
     const perVillager = TAXES.goldPerPopulationPerMinute
-      * techMultiplier(state, 'taxRate', { district: 'Housing' });
+      * techMultiplier(state, 'taxRate', { district: 'Housing' })
+      * (1 + DISTRICTS.Housing.taxBonusPerLevel[1]); // both occupied houses are L2
     const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1);
     expect(perMinute).toBe(cityGoldPerMinute(state));
     expect(earned).toBeGreaterThanOrEqual(perMinute * 10 - 1);

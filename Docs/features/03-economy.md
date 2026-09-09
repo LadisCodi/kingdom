@@ -87,6 +87,12 @@
 - **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
   +20% while attuned, through the modifier layer.
 - Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
+- **A house's own level raises the rent its residents pay.**
+  `Districts.tax_bonus_per_level` is a fraction of the base rate and a
+  **total** at each level, indexed from level 1: +0% at 1, then +25% a level to
+  +225% at 10. It scales the residents' rent only — adjacency stays flat Gold a
+  minute — and a tap on the house is worth the same more (§5), because a tap
+  sells that house's own rent.
 - Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 120
   Gold/min idle.
 
@@ -191,6 +197,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 | Dial | Value | Key |
 |---|---|---|
 | Tax rate | 30 Gold/pop/min | `taxes.gold_per_population_per_minute` |
+| House rent bonus per level | +0% then +25% a level, to +225% | `Districts.tax_bonus_per_level` |
 | Seconds a tap is worth | **10 s of work** | `tap.work_seconds` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `Districts` sheet |

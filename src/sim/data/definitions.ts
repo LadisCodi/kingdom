@@ -507,6 +507,13 @@ export interface DistrictDef {
   requiredTech: TechId | null;
   /** Housing capacity by level; empty = houses nobody. */
   populationCapacityPerLevel: readonly number[];
+  /** What this house's LEVEL adds to the rent its residents pay: a fraction
+   *  of the base rate, the TOTAL at that level rather than an increment,
+   *  indexed from level 1 like `armyCapPerLevel`. So entry 0 is what a
+   *  freshly built house pays over the base (+0%) and the rest are its
+   *  levels. Empty = +0% everywhere, which is every building that houses
+   *  nobody. A level fact, read at the base stage — never a modifier. */
+  taxBonusPerLevel: readonly number[];
   maxWorkersPerLevel: readonly number[]; // empty = no workers
   maxCountPerTownhallLevel: readonly number[]; // empty = unlimited
   /** Chebyshev radius of the area of influence, by level. Empty = no area. */
