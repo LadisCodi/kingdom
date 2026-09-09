@@ -11,7 +11,7 @@
 
 ## 1. A good is not a currency
 
-- The city keeps a **counter per good**, like the collection's ingredients.
+- The city keeps a **counter per good**, like the collection's stars.
   No coin on the plank, no cap, no Gold price.
 - A good is read where it is spent: a workshop's queue, and the price of a
   building level — **every** level from 6 upward, on every building that has

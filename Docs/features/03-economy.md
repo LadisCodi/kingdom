@@ -1,7 +1,7 @@
 # 3 · The economy — currencies and taxes
 
 > **Scope.** Every currency and its job, and where the city's Gold comes from.
-> Mana is [`08-magic.md`](08-magic.md); Stardust and ingredients
+> Mana is [`08-magic.md`](08-magic.md); the collection's cards
 > are [`09-relics.md`](09-relics.md); Knowledge as a research clock is
 > [`07-research.md`](07-research.md).
 >
@@ -12,7 +12,7 @@
 
 - The city runs on Gold, Food, Wood and Stone.
 - Mana is what magic costs.
-- Stardust comes out of dungeons and levels the collection.
+- Stardust comes out of dungeons and pays a hero's ascension toll.
 - Knowledge is a clock that paces research.
 
 | Currency | Source | Buys | Scope | On the plank? |
@@ -23,9 +23,9 @@
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
-| **Stardust** | dungeons | relic levels · the toll on a hero's ascension | kingdom | no — reads in the Reliquary and on the roster |
+| **Stardust** | dungeons | the toll on a hero's ascension | kingdom | no — reads on the roster |
 | **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
-| **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
+| **Cards** | packs — every room, every boss, the chest, the event, the pass, offers | the collection's albums, which level the relics; wiped each season ([`09-relics.md`](09-relics.md)) | kingdom | no — an album, not a row |
 | **Gems** | quests, first clears, the daily chest (both tracks), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
 | **Gold key** | 1,500 Gems, a free call's ad, or the daily chest's Royal track | one call on the golden banner | player | no — a price on a button |
@@ -53,7 +53,7 @@
 | Name | Job | Source | Scope |
 |---|---|---|---|
 | **Knowledge** | the research clock | time, capped | **city** |
-| **Stardust** | levels of relics; the toll on a hero's ascension | dungeons | **kingdom** |
+| **Stardust** | the toll on a hero's ascension | dungeons | **kingdom** |
 | **Hero XP** | levels of heroes | dungeons | **kingdom** |
 
 - Knowledge is city-scoped, like Mana; it does not survive a region reset.
@@ -85,7 +85,7 @@
 - Roofless villagers pay nothing; empty minutes are never banked.
 - A lived-in house is a tappable Gold cell (§5).
 - **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
-  +20% while attuned, through the modifier layer.
+  +X% per level, through the modifier layer ([`09-relics.md`](09-relics.md) §2).
 - Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
 - **A house's own level raises the rent its residents pay.**
   `Districts.tax_bonus_per_level` is a fraction of the base rate and a

@@ -66,7 +66,10 @@
 
 - **Quests 42–56:** the Quarry, Urban Planning, Townhall 3 and Mining, then
   Attunement, the Sanctum, a warband, the first full ruin clear, attuning a
-  relic, four landmarks, depth five, and three relics held at once.
+  relic, four landmarks, depth five, and three relics held at once. **The two
+  relic beats are stale**: nothing is attuned any more, and a relic arrives
+  from an album on the season's clock ([`09-relics.md`](09-relics.md)) —
+  **OQ-91**.
 - `OldStones` moving after the fight moves its Knowledge lump with it; the
   chain test still has to find `Mapmakers` affordable with zero drip.
 
@@ -323,4 +326,4 @@ and the thing you press are the same object.
   as an ad placement or pass reward ([`14-monetization.md`](14-monetization.md))
   goes with them.
 
-**Open questions:** OQ-47, OQ-53. Moot with generated orders: OQ-16, OQ-17.
+**Open questions:** OQ-47, OQ-53, OQ-91. Moot with generated orders: OQ-16, OQ-17.

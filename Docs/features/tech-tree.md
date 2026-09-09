@@ -239,7 +239,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Pitons I–II** | −10% Gold to clear a cell of fog | — / I / II |
 | **Scriptorium I–III** | +5% Knowledge drip rate | — / I / II |
 | **Wayposts I–III** | +1 Knowledge/h per claimed landmark | — / I / II |
-| **Reliquary I–III** *(designed, not built)* | +5% ingredient drops from rooms | — / I / II |
+| **Reliquary I–III** *(designed, not built)* | +5% chance a room's card pack is one tier better | — / I / II |
 | **Pilgrimage I–III** | −5% landmark claim cost | — / I / II |
 | **Confluence I–III** *(designed, not built)* | +5% to the Sanctum adjacency bonus | — / I / II |
 | **Thrift I–III** *(designed, not built)* | +10% chance a tap costs no Mana | — / I / II |

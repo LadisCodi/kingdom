@@ -99,7 +99,7 @@ Three Wonders. Each effect is a stat that already exists.
 Not in the set:
 
 - A Gold Wonder (§3.1).
-- A fog-discount Wonder — relics already do that (**OQ-23**).
+- A fog-discount Wonder — the Pitons ladder already does that (**OQ-23**).
 - A combat Wonder — the army cap is a city-building decision
   ([`combat.md`](combat.md) §14).
 - A build-speed Wonder — waits for `buildSpeed` to land as a modifier stat with

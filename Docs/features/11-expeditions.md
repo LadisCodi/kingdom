@@ -127,11 +127,15 @@ hero_xp   = reward_base(D) × 10 × t × 1.06^(r − 1)
 `reward_base(D)` continues the previous depth's curve. Individual rows may be
 overridden by hand.
 
+Every room also pays a **Bronze card pack** for the collection
+([`09-relics.md`](09-relics.md) §6).
+
 ### 7.2 Boss — authored chest
 
-Ignores the formula. Contains: a named relic
-([`09-relics.md`](09-relics.md)), a Gem lump, and **hero fragments** from a
-per-boss pool ([`10-heroes.md`](10-heroes.md) §5).
+Ignores the formula. Contains: a **Silver card pack**
+([`09-relics.md`](09-relics.md) §6), a Gem lump, and **hero fragments** from a
+per-boss pool ([`10-heroes.md`](10-heroes.md) §5). A relic never drops: the
+last room of the last depth pays the ruin's best chest, not an item.
 
 ### 7.3 Depth completion — permanent generation
 
@@ -156,8 +160,9 @@ Stardust/h a full reservoir is 360 (2 h) or 1,440 (8 h).
 | Currency | Use | Source |
 |---|---|---|
 | Hero XP | Hero levels. A **kingdom** currency, spent on any hero ([`10-heroes.md`](10-heroes.md) §4) | Rooms + trickle |
-| Stardust | Relic levels; the Stardust toll on a hero's ascension | Rooms + trickle + every gacha call |
+| Stardust | The Stardust toll on a hero's ascension | Rooms + trickle + every gacha call |
 | Hero fragments | Hero ascension, with the toll, which sets the hero's level cap. Per hero | Boss chests + banner |
+| Card packs | The collection's albums, which level the relics ([`09-relics.md`](09-relics.md)) | Bronze every room, Silver every boss |
 | Gold | Anecdotal | Rooms + trickle |
 
 Wood, Stone and Food are not in the trickle.
@@ -200,6 +205,6 @@ Append a depth to a ruin (row + two tables + one authored boss), or add a ruin
 in a new region. Nothing is authored per room.
 
 **Unresolved:** OQ-75 daily attempt cap · OQ-76 outlet when fully walled ·
-OQ-77 deeper strata · OQ-78 Stardust vs. relic curve · OQ-79 XP vs. hero level
+OQ-77 deeper strata · OQ-78 the Stardust trickle · OQ-79 XP vs. hero level
 curve · OQ-80 boss fragment rate · OQ-81 ruins navigation. Inherited: OQ-41.
 Landmarks: [`combat.md`](combat.md) §15.

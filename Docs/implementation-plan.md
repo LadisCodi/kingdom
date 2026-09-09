@@ -71,7 +71,7 @@ Two more that are design-visible:
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
-| Five relics, passives, attunement | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; the **actives leave for the tomes** (designed 2026-09-03); a relic is never carried into a fight (2026-09-09) |
+| Five relics, passives, attunement | [`09`](features/09-relics.md) | **built, and superseded** — the build has relics dropping from ruins, attunement slots, Stardust levels and a Fragments gate; **the design of 2026-09-09 replaces all four with the card collection** (§4, the collection rework). The actives left for the tomes 2026-09-03 |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
 | Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each one fight resolved on entry ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)), and the fight is the **tick auto-battler** ([`combat.md`](features/combat.md)) with the screen that replays its event stream. Tiers T2–T5 and authored boss formations are what is left |
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03. The chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09 |
@@ -385,7 +385,7 @@ ship. What is missing is **the archetype** — the thing you author ten times a
 year.
 
 Three widenings first, once, deliberately: four new modifier stats (build speed,
-research speed, training speed, ingredient yield), three new schedule payloads
+research speed, training speed, card yield), three new schedule payloads
 (a modifier by template id, an event track, an event shop), and moving the
 schedules out of code into a live-ops data file. **Doing them in one pass is what
 stops the next three events from each being a sprint.**
@@ -442,21 +442,31 @@ evaporating.**
 - **Design:** [`15-social.md`](features/15-social.md) — complete.
 - **Blocked on: OQ-33** (guild
   ranked or cooperative), **OQ-34** (help touches whose state), **OQ-36**,
-  **OQ-38**, **OQ-39**. And **OQ-7** and **OQ-10** if ingredients ship with it.
+  **OQ-38**, **OQ-39**. And **OQ-89** if card trading ships with it.
 - **Depends on:** Step 3's build-speed modifier stat.
 - **Gate:** two playtesters in one guild each see the bar move because of what
   the other did; the daily cap holds against a client that spends it twice; a
   gift applied during an absence **still leaves the replay assertion true**.
 - **Size:** weeks.
 
-### The ingredient rework
+### The collection rework
 
-Designed and deliberately not sequenced — large, a reshape rather than an
-addition, and it needs answers first.
+Designed 2026-09-09 and deliberately not sequenced — a reshape of the relics
+rather than an addition, and it wants the repeatable dungeon under it.
 
 | Rework | Design | Blocked on |
 |---|---|---|
-| **Nine-piece ingredient sets, replacing Fragments** | [`09`](features/09-relics.md) §4 | **OQ-7**, **OQ-8**, **OQ-9**, **OQ-10** |
+| **The card collection, replacing attunement, Stardust levels, the Fragments gate and the relic drop** | [`09`](features/09-relics.md) | **OQ-88** (the free pack faucet — the repeatable dungeon), **OQ-91** (the chain's relic beats). OQ-89 and OQ-90 are numbers, not shape |
+
+What it touches, so it is sized honestly: `attunement.*` and the slot SKU go;
+`ArtifactDef` loses its level curve and keeps `base` and `per_level`; the
+Fragments counter becomes a per-season card state plus stars; a **seasons
+file** beside the events file names the albums and the hero; the season close
+is one more `consider()` in `nextBoundary` and one branch in `applyDueAt`; a
+pack's cards are rolled by hash on the pack id; the Relics tab becomes the
+Collection tab and the reveal screen gains a second caller. **The migrator
+keeps every relic a player holds at its level and drops the attunement and
+Fragments state** — nothing a player earned converts to less.
 
 Two notes that will otherwise be rediscovered painfully:
 
@@ -647,7 +657,7 @@ that sell both. Closes **H2**.
   - `expeditions.ts`: the supply discount and the reward traits are deleted
     with the traits; XP and Stardust are paid per room
     ([`11-expeditions.md`](features/11-expeditions.md) §7).
-  - UI: the Reliquary hero tab reads the block and the passive and sells a
+  - UI: the hero tab reads the block and the passive and sells a
     level in XP and an ascension in Fragments plus Stardust; the party sheet
     fills up to three hero slots and sells the next one; the room sheet's
     power read includes `hero_power`.

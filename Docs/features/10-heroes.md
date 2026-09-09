@@ -22,17 +22,19 @@
 
 ## 1. The collection substrate
 
-- Heroes and relics share one **ladder shape**: collect → a tier caps the
-  level → a currency buys levels inside the cap → equip into limited slots.
-- **They share the shape, not the length.** A hero's ascension is worth **ten
-  levels** and its ladder ends at tier 5 / **level 50**; a relic's is worth
-  two and ends at level 10. A relic is one passive the player wears and
-  forgets; a hero is a roster of thirty-two the whole collection arc is spent
-  on, and an ascension worth a pair of levels is not worth chasing.
+- Heroes and relics are the game's two collections, and **they are built to
+  feel different** ([`09-relics.md`](09-relics.md) §1). A hero is a **ladder**:
+  collect → a tier caps the level → a currency buys levels inside the cap →
+  equip into limited slots. A relic is an **album**: nine cards a season,
+  completed once, and a permanent level with no cap and no slot.
+- A hero's ascension is worth **ten levels** and its ladder ends at tier 5 /
+  **level 50**. A relic's ladder never ends.
 - The currencies differ by type. A hero levels on **Hero XP** and ascends on
-  **Fragments + Stardust**; a relic levels on Stardust and tiers on ingredients
-  ([`09-relics.md`](09-relics.md) §4). No second vocabulary beyond that.
-  **OQ-6.**
+  **Fragments + Stardust**; a relic is levelled by **cards** and nothing else,
+  so the toll is Stardust's only sink (**OQ-78**). **OQ-6.**
+- The two meet twice: an album pays **keys**, and the collection prize is a
+  golden call guaranteed to be the **season hero**
+  ([`09-relics.md`](09-relics.md) §5, §10).
 
 ## 2. The hero
 
@@ -129,8 +131,8 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **One hero slot is free. Every further one is Gems, always** — up to the
   board's three ([`combat.md`](combat.md) §3).
 - Price: `party.hero_slot_gem_cost_base × party.hero_slot_gem_cost_growth^n`,
-  the attunement-slot ladder with a higher base, because a hero slot carries a
-  type buff as well as a body. They sit under `party.*` rather than `heroes.*`
+  the escalating-slot curve builders and research slots use, with a higher
+  base because a hero slot carries a type buff as well as a body. They sit under `party.*` rather than `heroes.*`
   because that key is the Heroes SHEET.
 - **It is the only slot in a party that is sold.** Every troop slot on the
   board is open from the first fight ([`combat.md`](combat.md) §3).
@@ -175,13 +177,14 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **The XP curve flattens because the ladder is long.** 1.6 a level is fine
   over ten rungs and absurd over fifty — level 50 alone would cost 4×10¹¹ — so
   the growth carries the length and the TOTAL is what is held steady: about
-  4.5× the relics' Stardust ladder, against a faucet that runs 5× as fast
+  4.5× what the old relic ladder cost, against a faucet that runs 5× as fast
   ([`11-expeditions.md`](11-expeditions.md) §7). Whether that survives a
   playtest is **OQ-79**.
 - **Fragments are per hero**, a counter beside the hero, as today.
-- The Stardust toll totals **750** to max one hero — about a fifth of what a
-  relic costs to max (~3,612) — so Stardust stays the relics' currency with a
-  hero tax on it, not a second hero currency.
+- The Stardust toll totals **750** to max one hero. Since 2026-09-09 the toll
+  is **Stardust's only sink** — relic levels come from albums
+  ([`09-relics.md`](09-relics.md)) — so whether the trickle is now oversized
+  is **OQ-78**.
 - **Every gacha drop has a play-based route.** Fragments fall from boss chests
   as well as from calls; the wallet buys the same hero sooner, never alone.
 
@@ -285,14 +288,13 @@ Each of these is data, not code:
 | A third banner | one `Banners` row — its weights are its pool |
 | Rebalancing a banner | its row: odds, both pities, weights, key price, free calls |
 | Rebalancing the hero's share of a fight | the rarity multipliers and the 70% target, on the `Heroes` sheet |
-| A new relic | one relic row + one ruin |
+| A new relic | one relic row + two albums in the seasons file ([`09-relics.md`](09-relics.md) §3) |
 
 ## 8. The screens
 
-- **Heroes have a nav tab of their own**, beside Relics. The two share a
-  collection LADDER, which was the argument for sharing a screen, but not a
-  job: the Reliquary's job is the socket, and a roster of thirty-two under it
-  made that decision the smaller half of the page.
+- **Heroes have a nav tab of their own**, beside the Collection. A roster of
+  thirty-two and an album of ninety cards are two screens with two jobs; the
+  one thing they share is the reveal ([`09-relics.md`](09-relics.md) §11.3).
 
 ### 8.1 The roster
 
@@ -402,7 +404,7 @@ the rewarded video.
   allowance is spent. The ×10 is always the ten and always priced.
 - **Heroes are put on the board in the party composition sheet**
   ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.6), which also sells the next hero
-  slot, the way it sells the next attunement slot. The roster is where a hero is
+  slot, the way the store sells the next builder. The roster is where a hero is
   GROWN; the party sheet is where one is SENT, and neither does the other's
   job.
 
@@ -449,13 +451,16 @@ the rewarded video.
   One call, one screen.
 - Standalone equipment with random stats or duplicate fusion.
 - **A hero no amount of play can reach** — every rarity is on a free call.
-- Rotating or time-limited banners — both are permanent.
+- Rotating or time-limited banners — both are permanent. The **season hero**
+  is a rate-up on the permanent golden banner, not a banner
+  ([`09-relics.md`](09-relics.md) §10).
 - A server-authoritative implementation.
 
 ## 11. Known holes
 
 - **Rate-up is untested.** The timeline still carries a banner payload and the
   activation query exists, but the two banners are permanent rows, so nothing
-  exercises a scheduled one.
+  exercises a scheduled one. The season hero
+  ([`09-relics.md`](09-relics.md) §10) is its first consumer.
 
 **Open questions:** OQ-6, OQ-41, OQ-78, OQ-79, OQ-80.

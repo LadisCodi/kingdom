@@ -1,8 +1,8 @@
 # 15 · The social layer
 
 > **Scope.** Identity, daily help, a persistent guild, a weekly collective bar,
-> and the co-op siege that clears the world map's landmarks. Ingredient trading is
-> [`09-relics.md`](09-relics.md) §6; investing research points into a guild
+> and the co-op siege that clears the world map's landmarks. Card trading is
+> [`09-relics.md`](09-relics.md) §8; investing research points into a guild
 > structure is [`07-research.md`](07-research.md) §8.
 >
 > **Status: designed, not built.** The game has no social mechanic today.
@@ -144,11 +144,16 @@ Submitted as they happen:
 - No synchronous play, no battle screen.
 - The one route into combat that does not require a hero.
 
-## 7. Ingredient trading
+## 7. Card trading
 
-- Rules: [`09-relics.md`](09-relics.md) §6.
-- Born with a cap, a window, and **3★ either untradeable or one per event**.
-- **OQ-10.**
+- Rules: [`09-relics.md`](09-relics.md) §8 — a **one-way gift**, three sends a
+  day, receiving uncapped, gold cards never.
+- The send is a server mutation on the model of daily help (§3): idempotent,
+  capped on the sender, drained by the receiver at next load before the
+  offline advance.
+- Safe because of the season: a card is wiped at the close, so a spare is
+  free to give and pointless to hoard.
+- What the trade screen carries beyond the send: **OQ-89.**
 
 ## 8. Exit gate
 
@@ -172,4 +177,4 @@ Submitted as they happen:
 - A live-presence requirement
 - The sim on the server
 
-**Open questions:** OQ-10, OQ-33, OQ-34, OQ-36, OQ-37, OQ-38, OQ-39.
+**Open questions:** OQ-89, OQ-33, OQ-34, OQ-36, OQ-37, OQ-38, OQ-39.

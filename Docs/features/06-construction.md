@@ -34,7 +34,7 @@
 ## 3. The price
 
 - `round(base × growth^purchased)`: the same escalating-slot curve as the
-  research, party and attunement slots.
+  research and party slots.
 - `purchased` is **derived**, `builders − startBuilders`, not stored. A
   *granted* builder (a quest, an event) makes the next *bought* one dearer.
 - Every Gem sink is priced on the 500-Gems-a-dollar ladder

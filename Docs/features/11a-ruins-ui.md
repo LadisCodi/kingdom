@@ -77,7 +77,7 @@ under the board.
 | Fight | The widget carries |
 |---|---|
 | **A gate** | the raid countdown, trips left, the hoard |
-| **A room** | the address (`Depth 2 · Room 5`), **two progress bars**, and the relic waiting at the bottom |
+| **A room** | the address (`Depth 2 · Room 5`), **two progress bars**, and the boss's chest at the end of the depth |
 
 **The room's two bars.** One for the **depth**, one for the **room inside it**,
 with a **skull at the end of the room bar** — the boss of this depth, dim until
@@ -92,8 +92,8 @@ the player is standing at it.
   ruin's **bias**: what a room drew is not shown until the Guild's scouting
   buys it, so the box says *mostly*, never *is*.
 - **No band under the board.** A room used to carry one for the relic the hero
-  took down; relics never leave the Reliquary
-  ([`09-relics.md`](09-relics.md) §5), and there is nothing else a room decides
+  took down; a relic is never on a board or in a ruin
+  ([`09-relics.md`](09-relics.md) §1), and there is nothing else a room decides
   that is not a slot.
 - There is no "how far will you go" control: one room, one fight, resolved on
   the tap ([`11-expeditions.md`](11-expeditions.md) §5). The button reads

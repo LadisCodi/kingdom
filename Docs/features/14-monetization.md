@@ -33,8 +33,8 @@
   thing always exists. The daily free golden call is the worked example — a
   Legendary is a wallet's fastest purchase and roughly thirty free calls a
   month otherwise ([`10-heroes.md`](10-heroes.md) §6.2).
-- The first rung of every ladder is earned by play: research grants the second
-  attunement slot before Gems can buy any, and **a hero slot is the only slot
+- The first rung of every ladder is earned by play: every ruin room pays a
+  card pack before an offer sells a wildcard, and **a hero slot is the only slot
   in a party that is ever sold** — every troop slot on the board is open from
   the first fight ([`combat.md`](combat.md) §3); the daily
   chest's free track pays Gems every season, and the Royal chest's own gold
@@ -42,29 +42,35 @@
 
 | Family | Examples | Effect |
 |---|---|---|
-| **Power** | silver and gold keys | stronger heroes, sooner — at published odds |
+| **Power** | silver and gold keys; card packs and wildcards | stronger heroes and higher relics, sooner — at published odds |
 | **Comfort** | rush a timer, refill Mana, refresh the shop | buys back the player's time |
-| **Breadth** | attunement slots, hero slots, builders | more things at once |
+| **Breadth** | hero slots, builders | more things at once |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
 
 - The Gems plaque in the header opens the store (§2.1).
-- Gems buy **five** things: **keys**, hero slots, attunement slots, builders,
-  Mana refills. Three of those are one-time ladders; the refill is a ladder
-  that **resets every day** ([`08-magic.md`](08-magic.md) §6).
+- Gems buy **five** things: **keys**, hero slots, builders, Mana refills, and
+  the collection's **packs and wildcards**, through offers
+  ([`09-relics.md`](09-relics.md) §6, §9). Two of those are one-time ladders;
+  the refill is a ladder that **resets every day**
+  ([`08-magic.md`](08-magic.md) §6).
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends — so the two banners have two prices without a second Gem price
   ([`10-heroes.md`](10-heroes.md) §6.1).
-- Faucet: **3,750 up front plus ~4,500/month** — 500 to start, 750 across the
-  quest chain, 500 a first delve clear, and **3,000 a daily-chest season** (a
-  season is 20 days, so ~4,500 a month — [`12-quests.md`](12-quests.md) §3.2).
-  The season is the faucet; everything else is the opening. A free player
-  earns three gold keys, or a builder and change, every month.
+- Faucet: **3,750 up front, ~4,500/month from the chest, and what the
+  collection pays** — 500 to start, 750 across the quest chain, 500 a first
+  delve clear, **3,000 a daily-chest season** (20 days, so ~4,500 a month —
+  [`12-quests.md`](12-quests.md) §3.2), and **1,000 an album with 25,000 for
+  the whole collection** ([`09-relics.md`](09-relics.md) §5): 35,000 a season
+  to a player who completes it, of the order of a Royal chest, and most of it
+  behind the gold cards a free player rarely finishes. The chest is the floor
+  and the collection is the ceiling; a free player earns three gold keys, or a
+  builder and change, from the chest alone every month.
 
 ## 2. The catalogue
 
-- Fourteen SKUs in five families.
+- Fifteen SKUs in five families.
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - The six Gem packs are built and live in the workbook's `Store` sheet. The
   builders and the two keys are built and priced in Gems — a Gem price is not
@@ -84,7 +90,9 @@
 | Fog charter | land | $2.99 | a bundle of instant reveals |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
-| Attunement / hero slot | one-time ladder | Gems | built |
+| Hero slot | one-time ladder | Gems | built |
+| **Card pack** | chance | Gems, in offers | a Gold or Star pack of the running season, at published odds ([`09-relics.md`](09-relics.md) §6) — designed |
+| **Wildcard offer** | chance | Gems | a wildcard aimed at an album the player has nearly finished; never gold ([`09-relics.md`](09-relics.md) §9) — designed |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
 
 - The second builder is sold in two places: the offer raised by a refused
@@ -295,7 +303,8 @@ One page, refreshed weekly:
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.seconds_per_gem` |
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
-| Attunement slot | 1,000, `×2` ($1.99 / $3.99 / $7.99 / $15.99) | `attunement.slot_gem_cost_*` |
+| Card pack offer · wildcard offer | priced to the ladder — a Gold pack about a silver key, a wildcard about a gold one | `Packs` sheet, `collection.wildcard_gem_cost` |
+| The collection's Gems | 1,000 an album · 25,000 the prize | `collection.album_gems`, `collection.prize_gems` |
 | Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
 | The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
@@ -313,7 +322,8 @@ One page, refreshed weekly:
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.
-- Loot boxes beyond the hero banner.
+- Loot boxes beyond the hero banner and the collection's card packs, both at
+  published odds.
 - An ad that gates rather than accelerates.
 - A cosmetic pipeline before the probe reports.
 

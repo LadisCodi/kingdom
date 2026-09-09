@@ -53,7 +53,7 @@
 7. **Reinvest** — upgrade districts, research technologies, buy upgrades.
 8. **Fight** — clear the garrison at a ruin's gate, then take its rooms one at
    a time with a hero and a party.
-9. **Empower** — attune the relics they bring back, and spend Mana on magic.
+9. **Empower** — fill the albums that level the relics, and spend Mana on magic.
 
 ## The fog
 
@@ -63,7 +63,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
-| **Ruins** | dungeons of rooms to clear — relics, ingredients, Stardust |
+| **Ruins** | dungeons of rooms to clear — card packs, Stardust, hero fragments |
 | **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |
 
 - Landmarks compound: a bigger Mana pool is a bigger session and a bigger ad
@@ -95,7 +95,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   - housing taxes → Gold → fog, buildings and research
   - harvest → materials → buildings
   - Mana → magic
-  - rooms → relics and Stardust → a stronger collection
+  - rooms → card packs → albums → relic levels
 
 **Full design:** [`features/03-economy.md`](features/03-economy.md).
 
@@ -113,23 +113,25 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 
 **Full design:** [`features/08-magic.md`](features/08-magic.md).
 
-## Relics
+## Relics and the collection
 
-- Relics are won from ruins.
-- Each grants a **passive** while attuned to the kingdom, and nothing else.
-- One attunement slot to start; a second from research; the rest cost Gems.
+- A relic is a **permanent kingdom passive with no ceiling**: one effect, one
+  number, rising with the relic's level. Every relic the player has is on.
+- Relics are **levelled by a card collection**: a 30-day season on a shared
+  calendar, ten albums of nine cards, two albums per relic. The first album a
+  relic ever completes hands it over; every album after adds a level.
+- Cards come in **packs** — every ruin room pays one — and an album pays a
+  level, a chest of production hours, keys and Gems. Completing all ten pays
+  the season hero and a pile of Gems.
+- At the close the cards are wiped and the levels stay. A duplicate is free to
+  give, which is what makes trading work.
 - **Spells are a separate thing, in the Magic tome**: discovered as a research
   node, improved by the upgrades under it, castable for Mana from then on.
-  **A relic is what you wear; a spell is what you know**
+  **A relic is what the kingdom has; a spell is what you know**
   ([`features/07-research.md`](features/07-research.md) §6).
 
-> **A relic is worn by the kingdom, or it is on the shelf. It never goes
-> anywhere.**
-
-- The scarce thing is SLOTS: wearing the Foreman's Sigil for +1 worker yield
-  is a slot the Dowsing Rod's cheaper fog is not in.
-- Unlocking and levelling a relic needs a **nine-piece ingredient set** with
-  1★/2★/3★ rarities from three different sources.
+> **A relic never drops, is never worn, and never goes anywhere. It is a
+> number the kingdom has earned, season after season.**
 
 **Full design:** [`features/09-relics.md`](features/09-relics.md).
 
@@ -172,7 +174,7 @@ Three arcs run at different speeds.
 |---|---|---|
 | **The city** | the Townhall level — how many of each district, and how high | hours |
 | **The army** — garrisons cleared, and therefore how deep the rooms go | four military buildings the player chooses to build | hours to days |
-| **The collection** — relics and heroes | ingredients and Stardust | **weeks** |
+| **The collection** — relics and heroes | card albums on a 30-day shared season; Fragments and Hero XP | **weeks and seasons** |
 
 ## The three scopes of the map
 

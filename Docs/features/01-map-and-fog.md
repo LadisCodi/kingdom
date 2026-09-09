@@ -158,7 +158,7 @@ reaches ring 40.
 |---|---|---|---|
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
 | **Landmarks** | 10 | **+10 max Mana**, permanently, and a discover ring | clear, then claim |
-| **Ruins** | 5 | artifacts, ingredients, Stardust — a ladder of rooms | clear the gate, then take the rooms |
+| **Ruins** | 5 | card packs, Stardust, hero fragments — a ladder of rooms | clear the gate, then take the rooms |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
   (including the ad reward, which is a whole pool) is larger.

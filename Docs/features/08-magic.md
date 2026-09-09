@@ -53,8 +53,8 @@ cap     = 100 + Sanctum level (24 / 48 / 72 / 100 / 132) + 10 per claimed landma
 ## 3. Mana sinks
 
 - Only the player spends Mana. There is no upkeep of any kind.
-- Attuning a relic is free. A relic is worn at home *or* carried underground,
-  never both ([`09-relics.md`](09-relics.md) §5).
+- A relic costs nothing: no upkeep, and nothing to attune — every relic the
+  player has is on ([`09-relics.md`](09-relics.md) §1).
 
 | Sink | Cost |
 |---|---|

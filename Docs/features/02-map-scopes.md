@@ -172,18 +172,18 @@ The outer scope feeds the inner one.
 
 | The world map pays | Which lands in |
 |---|---|
-| **3★ relic ingredients** — its exclusive output | the collection arc, whose passives improve the province economy |
+| **Star card packs** — a gold card guaranteed ([`09-relics.md`](09-relics.md) §6) | the collection's last albums, whose relic levels improve the province economy |
 | **Knowledge cap** — contested landmarks raise it | research, per [`07-research.md`](07-research.md) §7 |
 | Resources the province cannot produce | province sinks |
 
-- The loop: world → 3★ → maxed relics → economy passives → a stronger
-  province → more capacity to contest the world. Rarity split:
-  [`09-relics.md`](09-relics.md) §2.
+- The loop: world → gold cards → the hard albums → relic levels → a stronger
+  province → more capacity to contest the world. The pack tiers:
+  [`09-relics.md`](09-relics.md) §6.
 - Option (not designed): high-tier technologies from world exploration, as a
   second exclusive output — tomes found by exploring
   ([`07-research.md`](07-research.md) §2) on the shared map
-  rather than in the authored province. Same rarity logic as the 3★
-  ingredients.
+  rather than in the authored province. Same rarity logic as the gold
+  cards.
 
 ## 6. The plot, and the save shape
 
