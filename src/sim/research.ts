@@ -294,22 +294,24 @@ export function instantTechGems(
 }
 
 export type InstantTechResult =
-  | 'Researched' | 'Unavailable' | 'NoFreeSlot' | 'NotEnoughGold' | 'NotEnoughGems';
+  | 'Researched' | 'Unavailable' | 'NotEnoughGold' | 'NotEnoughGems';
 
 /**
  * Buy it and shelve it in one press.
  *
- * It still takes a slot check: the strip is the statement of how much the
- * kingdom can study at once, and a purchase that ignores it would make the
- * slots decorative. It spends whatever Knowledge the kingdom DOES hold — the
- * Gems paid for the shortfall, not for a refund of the rest.
+ * **No slot check.** A slot is a scholar's desk — what the strip limits is how
+ * much the kingdom can have UNDER STUDY at once, and this technology is never
+ * under study: it goes straight to `completed` without occupying a desk for a
+ * single tick. A full strip is exactly the moment the offer is worth taking,
+ * so refusing it there would kill the button precisely where it earns its
+ * price. It spends whatever Knowledge the kingdom DOES hold — the Gems paid
+ * for the shortfall, not for a refund of the rest.
  */
 export function buyTechInstantly(
   state: GameState, id: TechId, ratePerHour: number,
 ): InstantTechResult {
   const gems = instantTechGems(state, id, ratePerHour);
   if (gems === null) return 'Unavailable';
-  if (state.research.active.length >= techSlots(state)) return 'NoFreeSlot';
   if (getWallet(state.city.wallet, 'Gold') < techCost(id)) return 'NotEnoughGold';
   if (getWallet(state.player.wallet, 'Gems') < gems) return 'NotEnoughGems';
 

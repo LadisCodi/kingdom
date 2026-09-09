@@ -421,21 +421,23 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
     }
   } else {
     const short = eraShortfall(state, def.tome, def.era);
-    // ONE reason for the pair. Both buttons are stopped by the same three
-    // things — a requirement, a shut band, a full strip — so saying it twice
-    // between two buttons would be a wall of the same sentence. Affordability
-    // is not in here: the red number inside each button has already said it
-    // (§6.3, §6.4).
+    // ONE line for the pair, and never two: whichever reason is true, the
+    // player reads a single sentence. Affordability is not in here — the red
+    // number inside each button has already said it (§6.3, §6.4).
+    //
+    // A requirement and a shut band stop BOTH buttons. A full strip stops
+    // only `Start`: `Instant` needs no scholar, because what it buys never
+    // goes under study (07-research.md §6.4). The line is still worth saying
+    // there — it is the sentence that explains why the Gems are the way on.
     const blocked = !requirementsMet(state, id)
       ? 'Research what it needs first'
       : short > 0
         ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
-        : busy >= slots
-          ? 'Every scholar is busy'
-          : undefined;
-    if (blocked !== undefined) {
+        : undefined;
+    const startBlocked = blocked ?? (busy >= slots ? 'Every scholar is busy' : undefined);
+    if (startBlocked !== undefined) {
       panel.append(el('div', { class: 'tech-info-blocked' },
-        iconEl('padlock', { size: 'sm' }), blocked));
+        iconEl('padlock', { size: 'sm' }), startBlocked));
     }
 
     // Side by side: two ways to have the same thing, and a player choosing
@@ -463,7 +465,7 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
       onClick: () => game.doStartTech(id),
       cost: def.cost,
       have: (c) => game.walletValue(c),
-      disabledReason: blocked,
+      disabledReason: startBlocked,
     }));
     panel.append(row);
     // A trickle currency without a time-to-afford line is one the player

@@ -743,13 +743,19 @@ describe('buying a technology outright', () => {
     expect(getWallet(state.player.wallet, 'Gems')).toBe(99_999);
   });
 
-  it('refuses when every slot is busy — the strip is not decorative', () => {
+  // A slot is a scholar's desk, and what it limits is what is UNDER STUDY.
+  // This never is: it goes straight to the shelf. A full strip is the moment
+  // the offer is worth taking, so it must not be the moment it dies.
+  it('needs no free slot — it occupies no desk', () => {
     const state = ready();
     fund(state, { Gold: 99_999, Knowledge: 999 });
     state.player.wallet.Gems = 99_999;
     expect(startTech(state, 'Forestry', T0)).toBe('Started'); // the only slot
 
-    expect(buyTechInstantly(state, 'Warrior', RATE)).toBe('NoFreeSlot');
+    expect(buyTechInstantly(state, 'Warrior', RATE)).toBe('Researched');
+    expect(isTechComplete(state, 'Warrior')).toBe(true);
+    // …and the running research is untouched: still the one on the desk.
+    expect(state.research.active.map((a) => a.id)).toEqual(['Forestry']);
   });
 
   it('is unavailable for anything the player could not start anyway', () => {

@@ -1500,7 +1500,6 @@ export class Game {
     if (result === 'Researched') playSfx('gemSpend');
     else if (result === 'NotEnoughGems') this.shake(['Gems']);
     else if (result === 'NotEnoughGold') this.shake(['Gold']);
-    else if (result === 'NoFreeSlot') this.toast('Every research slot is busy');
     this.notify();
   }
 

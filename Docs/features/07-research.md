@@ -84,8 +84,10 @@ gems = ceil( (the Knowledge it is short of ÷ the drip rate) + its research time
   purse is the city's ([`14-monetization.md`](14-monetization.md) §1). The
   Gold is still paid, and the Knowledge already held is still spent — the Gems
   bought the gap, not a refund.
-- **It takes a slot check.** The strip says how much the kingdom can study at
-  once; a purchase that ignored it would make the slots decorative.
+- **It needs no free slot.** A slot is a scholar's desk and the strip limits
+  what is *under study*; an instant purchase never goes under study, so it
+  occupies no desk and a full strip does not stop it. On the technology's
+  sheet the "Every scholar is busy" line therefore disables `Start` only.
 - **The magnitude is a live question.** `seconds_per_gem` was calibrated on
   BUILD waits, which run in seconds and minutes; a Knowledge wait runs in
   hours. Two Knowledge at the base 1/h is two hours, which is **1,440 Gems**
@@ -409,6 +411,9 @@ Tap Power        +40%  →  +60%
   on the left — two ways to have the same thing, and choosing between them is
   comparing two prices, so neither sits under the other. **Finish now** in
   Gems on a running one.
+- **One blocked line for the pair.** A missing requirement or a shut band
+  stops both buttons; a full slot strip stops `Start` alone, since `Instant`
+  needs no scholar (§1).
 - **`Duration: 5m` reads with the other properties**, under the description.
   It is a fact about the technology, true whichever button the player uses or
   neither, so it does not live inside one of them.
