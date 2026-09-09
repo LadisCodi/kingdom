@@ -149,6 +149,10 @@ const SETTINGS = [
   ['tap.collect_cooldown_seconds', 'tap.collectCooldownSeconds'],
   ['training.seconds', 'training.seconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
+  // The Townhall's own ladder on that rate: a TOTAL multiplier at each level,
+  // indexed from level 1 like `mana.sanctum_cap_per_level`. Blank = ×1, and
+  // it rides at the base stage of effectiveTaxRate beside the Harmony surplus.
+  ['taxes.townhall_multiplier_per_level', 'taxes.townhallMultiplierPerLevel', 'list'],
   ['tap.mana_cost', 'tap.manaCost'],
   // Buying time: one Gem finishes this many seconds of a build or a training
   // line. One rule wherever the player meets it. Kingshot charges 800 Gems an

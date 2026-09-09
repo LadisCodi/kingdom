@@ -1,8 +1,8 @@
-# The four troops — blocks, and the two sizes each one needs
+# The four troops and the villager — blocks, and the two sizes each one needs
 
-> **Scope.** The `=== LA TROPA ===` block per unit type, and why each unit
-> ships **two** files where a hero ships one. Heroes are
-> [`roster-blocks.md`](roster-blocks.md); the shared prompt is
+> **Scope.** The `=== LA TROPA ===` block per unit type, the villager's block
+> beside them (§4), and why each one ships **two** files where a hero ships
+> one. Heroes are [`roster-blocks.md`](roster-blocks.md); the shared prompt is
 > [`prompt-template.md`](prompt-template.md).
 
 ## 1. A troop is a uniform, a hero is an individual
@@ -136,3 +136,61 @@ they are not this. Its avatar keeps the horse's head — see §2.
 > La cara del jinete, sus dos manos y las cuatro patas del caballo visibles y legibles. La lanza entera dentro del encuadre.
 >
 > EVITAR: sin caballo encabritado, sin galope, sin polvo ni tierra levantada, sin pose de carga, sin barda completa que tape al caballo, sin cuernos ni penachos altos, sin capa, sin adornos personales.
+
+## 4. The villager — the same panel, so the same two files
+
+The Townhall trains villagers on the **same training block** the halls use for
+soldiers (`src/ui/trainingSection.ts`), and that block draws a whole figure in
+its detail panel and a bust in its queue. So a villager ships the same pair —
+`unit_villager.png` at 512×768 and `unit_villager_avatar.png` at 256×256, the
+avatar cropped with `bust.py` — and `src/ui/unitArt.ts` picks both up by that
+stem. The master is `units/unit_villager.png`, 1024×1536, beside the troops'.
+
+**This one came back with true alpha on the first ask** (2026-09-09): the
+generic block's opening line, unchanged, produced a 1024×1536 RGBA with 58% of
+its pixels at alpha 0 and no baked checkerboard, so the black/white pair
+([`prompt-template.md`](prompt-template.md) §3) was not needed. One
+counterexample does not retire §3 — five for five went the other way — but
+check the file's own alpha before asking for the pair: a same-origin `fetch` of
+the image in the ChatGPT tab and a canvas read is enough to know.
+
+One thing the block has to say that the troops' do not: **this is not a
+soldier.** It is the same kingdom in a civilian register — the map's own
+worker (`src/render/assets/worker.png`) wears a straw hat, a cream shirt and
+brown trousers, and the portrait should be recognisably that person at card
+size. The royal blue appears once, small, as a tie-in; no armour, no weapon,
+the "weapon shape" is a tool.
+
+### Villager — el que trabaja
+
+> El Aldeano — el que trabaja. Levanta los edificios, los hace funcionar y paga la renta. Todo lo demás depende de él.
+>
+> Hombre joven de constitución media, ni fuerte ni menudo, plantado de frente con el peso repartido y las botas separadas, relajado. Contento y despierto, con una media sonrisa de quien está a gusto con su jornada, sin posar para la cámara. No es un soldado y no debe parecerlo.
+>
+> Pelo castaño corto que asoma bajo un SOMBRERO DE PAJA de ala ancha, cara redonda y amable, ojos marrones, sin barba. El sombrero es el rasgo que lo identifica desde lejos; la cara queda despejada y bien visible bajo el ala, y los hombros libres.
+>
+> Ropa de trabajo sencilla y limpia: camisa de lino CREMA con las mangas remangadas hasta el codo, un pañuelo AZUL REAL anudado al cuello como único guiño al reino, chaleco corto de cuero marrón, cinturón ancho de cuero con una bolsita, pantalón marrón de tela basta y botas gruesas de trabajo. Sin armadura de ninguna clase, sin capa.
+>
+> Su herramienta es una AZADA de mango largo de madera clara con la pala de hierro, sostenida en vertical en la mano derecha, apoyada en el suelo y bien pegada a su costado, con la pala abajo — sin cruzarle la cara. Bajo el brazo izquierdo, un saco pequeño de arpillera medio lleno, apoyado en la cadera.
+>
+> Las dos manos y los dos pies visibles y claramente legibles. La azada entera dentro del encuadre, pala y mango incluidos.
+>
+> EVITAR: sin armas, sin escudo, sin armadura, sin yelmo, sin capa, sin pose heroica ni de ataque, sin cara seria de soldado, sin herramienta al hombro ni en horizontal, sin cesta en la cabeza, sin animales, sin carro, sin adornos personales, sin montura.
+
+Two things the troops' blocks already carry and this one keeps: **the hat
+must not shade the face** — the bust is cropped from this master, and a
+brim-shadowed face at 48px is a dark blob; and **nothing crosses the head or
+shoulders**, for the same crop. Livery colours are the troops' cream and blue
+in reverse weight: cream is the garment, blue is the accent.
+
+Into the build exactly as the troops (`prompt-template.md` §4, §2 above):
+
+```sh
+magick villager.png -trim +repage -resize x706 -background none \
+  -gravity south -extent 512x748 -gravity north -extent 512x768 \
+  -strip -define png:compression-level=9 src/render/assets/unit_villager.png
+python3 Docs/art/portraits/bust.py villager.png src/render/assets/unit_villager_avatar.png
+```
+
+`src/ui/styles/screens/portraits.css` already lists `unit_villager`, so the
+smooth render is not pixelated on landing.

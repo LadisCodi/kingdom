@@ -641,11 +641,17 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    month — 715 of 1,470 cells, measured with the five-tap fog — so they
     //    still meet only some of the ruins and landmarks the Knowledge drip
     //    is made of, and the drip is what the late city is gated behind.
+    //
+    //    Landmarks re-pinned 5 → 7 on 2026-09-09, when the Townhall's level
+    //    began multiplying the rent (03-economy.md §3). The extra Gold has one
+    //    sink, the frontier, and it buys the next two landmarks in weeks 3–4
+    //    — at ANY ladder, ×1.9 or ×3.25 alike, so softening it bought
+    //    nothing. The Townhall's own days did not move by more than one.
     const revealed = map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length;
     expect(revealed / map.cells.length, 'share of the province uncovered by day 30')
       .toBeLessThan(0.55);
     expect(end.ruins, 'ruins cleared by day 30').toBeLessThan(3);
-    expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThanOrEqual(5);
+    expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThanOrEqual(7);
     expect(end.knowledge, 'Knowledge in hand at day 30').toBeLessThan(10_000);
 
     // 5. The late weeks still buy levels, and the ladder reaches its top:

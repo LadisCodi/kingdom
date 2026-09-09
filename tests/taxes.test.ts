@@ -237,3 +237,26 @@ describe('a training queue cannot be hurried by hand', () => {
     expect(lineFor(state, townhall(state).uniqueId)[0].startedAt).toBe(startedAt);
   });
 });
+
+// Docs/features/03-economy.md §3 — the Townhall's level multiplies every
+// house's rent. A level fact at the BASE stage, beside the Harmony surplus:
+// never a modifier, so it reaches the residents' rent and the house tap alike.
+describe("the Townhall's level multiplies the rent", () => {
+  it('is a ladder from ×1, one entry per Townhall level', () => {
+    const ladder = TAXES.townhallMultiplierPerLevel;
+    expect(ladder.length).toBe(DISTRICTS.Townhall.maxLevel);
+    expect(ladder[0]).toBe(1); // a fresh capital changes nothing
+    for (let i = 1; i < ladder.length; i++) expect(ladder[i]).toBeGreaterThan(ladder[i - 1]);
+  });
+
+  it('raises every house by the same factor, and only through the rate', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', HOUSE);
+    addBuilt(state, 'Housing', HOUSE2);
+    state.city.population = 4;
+    const at1 = cityGoldPerMinute(state);
+    townhall(state).level = 2;
+    expect(cityGoldPerMinute(state)).toBeCloseTo(at1 * TAXES.townhallMultiplierPerLevel[1], 6);
+    expect(TAXES.townhallMultiplierPerLevel[1]).toBe(1.25);
+  });
+});

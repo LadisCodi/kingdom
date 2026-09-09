@@ -26,7 +26,7 @@ import {
   DISTRICTS, HARVEST, TAP, TAXES, WORKER, levelIndexed,
   type DistrictDef, type HarvestSpec,
 } from './data/definitions';
-import type { CurrencyId, District, DistrictId, GameState } from './state';
+import { townhall, type CurrencyId, type District, type DistrictId, type GameState } from './state';
 import { techMultiplier, techValue } from './techEffects';
 import { isTechComplete } from './research';
 import { resolve } from './modifiers';
@@ -203,17 +203,30 @@ export const effectiveResearchTimeMultiplier = (state: GameState): number =>
  * at once. Absent is every roof, which is what the ladders in the tree today
  * do.
  *
- * The Harmony surplus rides at the **base stage**, the way
- * `marketSaleLevelMultiplier` does: a city kept beautiful past what its
- * buildings ask of it is a standing fact about the city, not a modifier with
- * an expiry. The tax anchor is already settled around every boundary batch and
- * around a move, so a decoration completing — which IS a build completion —
- * reprices the partial stretch without anything new (`population.ts`).
+ * The Harmony surplus and the Townhall's level ride at the **base stage**, the
+ * way `marketSaleLevelMultiplier` does: a city kept beautiful past what its
+ * buildings ask of it, and a capital that has grown, are standing facts about
+ * the city, not modifiers with an expiry. The tax anchor is already settled
+ * around every boundary batch and around a move, so a decoration or an
+ * upgrade completing — each IS a build completion — reprices the partial
+ * stretch without anything new (`population.ts`).
  */
 export const effectiveTaxRate = (state: GameState, district?: DistrictId): number =>
   Math.max(0, resolve(
     state, 'taxRate',
     techValue(state, 'taxRate',
-      TAXES.goldPerPopulationPerMinute * harmonySurplusMultiplier(state),
+      TAXES.goldPerPopulationPerMinute
+        * harmonySurplusMultiplier(state)
+        * townhallTaxMultiplier(state),
       district === undefined ? undefined : { district }),
   ));
+
+/**
+ * What the Townhall's LEVEL does to every house's rent — the reason to raise
+ * it once the count caps stop mattering. A total at each level, indexed from
+ * level 1 (`taxes.townhall_multiplier_per_level`); an empty ladder is ×1.
+ */
+export const townhallTaxMultiplier = (state: GameState): number => {
+  const ladder = TAXES.townhallMultiplierPerLevel;
+  return ladder.length === 0 ? 1 : levelIndexed(ladder, townhall(state).level);
+};

@@ -13,6 +13,10 @@
 - The Townhall level gates **how many of each district the city may own** and
   **how high each may level**. It is the only gate that moves all of them at
   once.
+- It also **multiplies every house's rent**: ×1 at level 1, +0.25 a level, to
+  ×3.25 at 10 (`taxes.townhall_multiplier_per_level`,
+  [`03-economy.md`](03-economy.md) §3). This is the number its Level Up card
+  shows — the count caps are gates, not a stat a player reads.
 
 | | TH1 | TH2 | TH3 | TH4 |
 |---|---|---|---|---|
@@ -229,6 +233,7 @@ What follows the building:
 | Dial | Where |
 |---|---|
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
+| Townhall rent multiplier per level | `taxes.townhall_multiplier_per_level` — ×1 then +0.25 a level ([`03-economy.md`](03-economy.md) §3) |
 | What every level costs, build included — currencies and goods alike | the `DistrictCosts` sheet — §3 |
 | How much dearer a later instance is | `Districts.instance_linear_growth`, `instance_exponential_growth` — §3.1 |
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |

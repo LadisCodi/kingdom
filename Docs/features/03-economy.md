@@ -93,8 +93,18 @@
   +225% at 10. It scales the residents' rent only — adjacency stays flat Gold a
   minute — and a tap on the house is worth the same more (§5), because a tap
   sells that house's own rent.
+- **The Townhall's level multiplies every house's rent.**
+  `taxes.townhall_multiplier_per_level` is a **total** at each level, indexed
+  from level 1: ×1 at 1, then +0.25 a level to ×3.25 at 10. It rides at the
+  base stage of the rate beside the Harmony surplus — a level fact, never a
+  modifier — so it reaches the residents' rent and the house tap alike, and
+  adjacency stays flat. It is the one number the Townhall's Level Up card
+  shows. What it moves in a month is the frontier, not the ladder: the
+  30-day harness reaches every Townhall level on the same day ±1 with or
+  without it, and claims 7 landmarks of 10 instead of 5, because the extra
+  Gold has one sink and that is the fog.
 - Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 120
-  Gold/min idle.
+  Gold/min idle; the same city at Townhall 2 ≈ 150.
 
 ### 3.1 Adjacency
 
@@ -198,6 +208,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 |---|---|---|
 | Tax rate | 30 Gold/pop/min | `taxes.gold_per_population_per_minute` |
 | House rent bonus per level | +0% then +25% a level, to +225% | `Districts.tax_bonus_per_level` |
+| Townhall rent multiplier per level | ×1 then +0.25 a level, to ×3.25 | `taxes.townhall_multiplier_per_level` |
 | Seconds a tap is worth | **10 s of work** | `tap.work_seconds` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `Districts` sheet |
