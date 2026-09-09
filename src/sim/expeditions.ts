@@ -39,7 +39,7 @@ import {
   boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
   type Board, type BattleLog, type FighterSpec, type SquadSpec,
 } from './battle';
-import { availableRoster, applyLosses } from './army';
+import { applyLosses, availableRoster, woundedShareFor } from './army';
 import { gateBoard, gateIsCleared, gateSupplies, markGateCleared } from './gates';
 import { fogState } from './fog';
 import type { MapData } from './grid';
@@ -230,7 +230,7 @@ export const ownsHero = (state: GameState, id: HeroId): boolean => state.heroes.
 
 // NOBODY IS EVER BUSY. A room resolves on entry, so no hero is underground
 // between two fights and the same hero leads every room the player enters
-// (Docs/features/10-heroes.md §2.5). The rule the staged delve needed — one
+// (Docs/features/10-heroes.md §2.6). The rule the staged delve needed — one
 // hero, one party, until it came back — went with the journey.
 export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned];
 
@@ -268,7 +268,7 @@ export function gateBlock(
   if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
   // NO 'HeroBusy'. A gate resolves on ENTRY, so a hero is never busy for it —
   // the same hero leads every room the player enters
-  // (Docs/features/10-heroes.md §2.5). Only a DELVE parks a party
+  // (Docs/features/10-heroes.md §2.6). Only a DELVE parks a party
   // underground, and only `launchBlock` asks.
   // A hero alone is a legal board, so there is no EmptyParty here either.
   const committed = slots.filter((s) => s.count > 0);
@@ -335,7 +335,8 @@ export function attemptGate(
   const log = resolveBattle(ours, theirs);
   // The garrison swings back either way, and who fell is read straight off
   // the fight: some are carried home to the infirmary, the rest are gone.
-  const { losses, wounded } = applyLosses(state, lossesFrom(log, ours));
+  const { losses, wounded } = applyLosses(
+    state, lossesFrom(log, ours), woundedShareFor(state, heroIds));
   if (log.winner !== 'ours') {
     return { result: 'Repelled', attack, power, log, hoard: {}, supplies, losses, wounded };
   }
@@ -568,7 +569,8 @@ export function enterRoom(
   // What lives in the room swings back, win or lose — the same rule the gate
   // follows: some of the fallen reach the infirmary, the rest are gone for
   // good (combat.md §4).
-  const { losses, wounded } = applyLosses(state, lossesFrom(log, ours));
+  const { losses, wounded } = applyLosses(
+    state, lossesFrom(log, ours), woundedShareFor(state, heroIds));
   if (log.winner !== 'ours') {
     return { ...empty, result: 'Repelled', attack, power, log, supplies, losses, wounded };
   }

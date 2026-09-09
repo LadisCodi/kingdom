@@ -1526,7 +1526,11 @@ export type HeroRarity = 'Common' | 'Rare' | 'Legendary';
 export const HERO_RARITIES: HeroRarity[] = ['Common', 'Rare', 'Legendary'];
 
 export type HeroTrait =
-  | 'PartyDefence' | 'SupplyDiscount' | 'KnowledgeBonus' | 'FragmentBonus' | 'RevealNextDepth';
+  | 'PartyDefence' | 'SupplyDiscount' | 'KnowledgeBonus' | 'FragmentBonus'
+  /** How many of the fallen are carried home alive. Read where a fight's
+   *  casualties are split (Docs/features/combat.md §4) — a hero with it is
+   *  worth bringing precisely when a fight is going to be expensive. */
+  | 'WoundedRecovery';
 
 export interface HeroDef {
   id: HeroId;
@@ -1615,11 +1619,8 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
     traitText: 'Finds half again as many Fragments',
   },
   Scout: {
-    // A design piece rather than a stat: it converts the delve's uncertainty
-    // from something you endure into something you can buy your way out of,
-    // which is exactly what a management game should sell.
     name: 'The Scout', title: 'Goes on ahead', glyph: '🧭', sprite: 'hero_scout',
-    traitText: 'Sees what waits at the next depth before you commit to it',
+    traitText: 'Knows the short road — a room costs 40% less to supply',
   },
   Adventurer: {
     name: 'The Adventurer', title: 'In it for the story', glyph: '🎒',
@@ -1634,12 +1635,12 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   BeastkinHunter: {
     name: 'The Beastkin Hunter', title: 'Reads a trail nobody else sees', glyph: '🐺',
     sprite: 'hero_beastkin_hunter',
-    traitText: 'Sees what waits at the next depth before you commit to it',
+    traitText: 'Lives off the land — a room costs 15% less to supply',
   },
   Cleric: {
     name: 'The Cleric', title: 'Keeps the wounded upright', glyph: '✚',
     sprite: 'hero_cleric',
-    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+    traitText: 'Walks the field afterwards — 15% more of the fallen reach a bed',
   },
   Cook: {
     name: 'The Cook', title: 'Makes a week of three days’ rations', glyph: '🍲',
@@ -1664,7 +1665,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Priest: {
     name: 'The Priest', title: 'Says the words that hold a line', glyph: '🕯️',
     sprite: 'hero_priest',
-    traitText: 'The whole party fights harder to stay standing (+20% defence)',
+    traitText: 'Says the words over them — 15% more of the fallen reach a bed',
   },
   Rogue: {
     name: 'The Rogue', title: 'Light fingers, lighter step', glyph: '🗡️',
@@ -1689,7 +1690,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Paladin: {
     name: 'The Paladin', title: 'Has never once been late', glyph: '🛡️',
     sprite: 'hero_paladin',
-    traitText: 'The whole party fights harder to stay standing (+30% defence)',
+    traitText: 'Carries them out himself — 25% more of the fallen reach a bed',
   },
   Wizard: {
     name: 'The Wizard', title: 'Certain about the wrong things, loudly', glyph: '🧙',
@@ -1704,7 +1705,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Druid: {
     name: 'The Druid', title: 'Eats what the road offers', glyph: '🍃',
     sprite: 'hero_druid',
-    traitText: 'Packs light — expeditions cost 25% less to supply',
+    traitText: 'Knows which leaves close a wound — 25% more of the fallen reach a bed',
   },
   IceLancer: {
     name: 'The Ice Lancer', title: 'Colder than the depth she stands in', glyph: '❄️',
@@ -1724,7 +1725,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Spymaster: {
     name: 'The Spymaster', title: 'Was already down there yesterday', glyph: '🕵️',
     sprite: 'hero_spymaster',
-    traitText: 'Sees what waits at the next depth before you commit to it',
+    traitText: 'Had the road scouted already — a room costs 25% less to supply',
   },
   ElectricArcher: {
     name: 'The Storm Archer', title: 'Counts the seconds between', glyph: '⚡',
@@ -1749,7 +1750,7 @@ const heroContent: Record<HeroId, Pick<HeroDef, 'name' | 'title' | 'glyph' | 'sp
   Pharao: {
     name: 'The Pharaoh', title: 'Was buried with better men', glyph: '𓂀',
     sprite: 'hero_pharao',
-    traitText: 'The whole party fights harder to stay standing (+45% defence)',
+    traitText: 'Death waits when he says so — 40% more of the fallen reach a bed',
   },
   ElvenPrincess: {
     name: 'The Elven Princess', title: 'Travels light, and expects you to', glyph: '🌸',

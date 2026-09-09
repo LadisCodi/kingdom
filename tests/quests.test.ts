@@ -390,18 +390,19 @@ describe('quests fund the research tree', () => {
     // in the doorway are a company's job and the chain pays for the company.
     // 12,175: the three Market beats leave with the Market (2026-09-09).
     expect(chain).toBe(12_175);
-    expect(tree).toBe(502_335); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(506_110); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
       .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    // 2,180 across 17 era-1 majors: Civics became a whole book (2026-09-08)
-    // and its opening walks a single column down to Bureaucracy, and both
-    // Cartography (with the fog's tap ladder, 01-map-and-fog.md §5) and the
-    // Market (2026-09-09) have left the tree since.
-    expect(opening).toBe(2180);
+    // 2,030 across 16 era-1 majors: Civics became a whole book (2026-09-08)
+    // and its opening walks a single column down to Bureaucracy, and
+    // Cartography (with the fog's tap ladder, 01-map-and-fog.md §5), the
+    // Market and `Field Medicine` — now a ranked ladder, not a major
+    // (2026-09-09) — have left the count since.
+    expect(opening).toBe(2030);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

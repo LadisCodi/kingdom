@@ -22,7 +22,9 @@
 
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
-import { ARMY, DISTRICTS, RUSH, TRAINING, UNITS, levelIndexed } from './data/definitions';
+import {
+  ARMY, DISTRICTS, HEROES, RUSH, TRAINING, UNITS, levelIndexed,
+} from './data/definitions';
 import { isTechComplete } from './research';
 import {
   cityGoldPerMinute, maxPopulation, populationCost, repriceTaxAnchor,
@@ -30,7 +32,8 @@ import {
 import { adjacencyMultiplier } from './adjacency';
 import {
   addToWallet, districtById, getWallet, newId,
-  type District, type GameState, type TrainableId, type TrainingItem, type UnitId,
+  type District, type GameState, type HeroId, type TrainableId, type TrainingItem,
+  type UnitId,
 } from './state';
 import { canAfford, pay } from './wallet';
 
@@ -101,13 +104,35 @@ export interface Casualties {
 }
 
 /**
+ * WHAT SHARE OF THE FALLEN IS CARRIED HOME (Docs/features/combat.md §4).
+ *
+ * Ten per cent of its own accord: a battlefield keeps most of what it takes,
+ * and the rest is EARNED — `Field Medicine` in the Warfare tree, and the
+ * heroes who walk the field afterwards. Which makes a medic hero worth
+ * bringing exactly when a fight is going to be expensive, rather than being
+ * a flat bonus nobody chooses against.
+ *
+ * Capped below one: someone always stays out there.
+ */
+export const WOUNDED_SHARE_CAP = 0.9;
+
+export function woundedShareFor(state: GameState, heroIds: readonly HeroId[] = []): number {
+  // The best medic in the party, not the sum of them, the way the
+  // quartermaster's discount works (Docs/features/10-heroes.md §2.5): two
+  // healers must not add up to a fight nobody dies in.
+  const fromHeroes = heroIds.reduce((best, id) => (HEROES[id].trait === 'WoundedRecovery'
+    ? Math.max(best, HEROES[id].traitValue) : best), 0);
+  const share = techValue(state, 'woundedShare', ARMY.woundedShare) + fromHeroes;
+  return Math.min(WOUNDED_SHARE_CAP, Math.max(0, share));
+}
+
+/**
  * Take them off the roster, and split them.
  *
- * **A casualty is not always a death.** `army.woundedShare` of them come back
- * as wounded and wait in the infirmary until a military hall heals them
- * (`healWounded`); the rest are gone for good. Anything the infirmary has no
- * room for dies with them — which is what makes its capacity a decision
- * rather than a display.
+ * **A casualty is not always a death.** `share` of them come back as wounded
+ * and wait in the infirmary until it heals them (`healWounded`); the rest are
+ * gone for good. Anything the infirmary has no room for dies with them —
+ * which is what makes its capacity a decision rather than a display.
  *
  * The units removed are the plainest ones of their type — a soldier is a
  * soldier, and nothing on an `ArmyUnit` tells them apart — so this is a
@@ -116,6 +141,7 @@ export interface Casualties {
 export function applyLosses(
   state: GameState,
   losses: readonly { unitId: UnitId; count: number }[],
+  share: number = woundedShareFor(state),
 ): Casualties {
   const wounded: Array<{ unitId: UnitId; count: number }> = [];
   let room = Math.max(0, woundedCap(state) - woundedCount(state));
@@ -125,7 +151,7 @@ export function applyLosses(
       if (left > 0 && u.definitionId === loss.unitId) { left -= 1; return false; }
       return true;
     });
-    const saved = Math.min(room, Math.round(loss.count * ARMY.woundedShare));
+    const saved = Math.min(room, Math.round(loss.count * share));
     if (saved <= 0) continue;
     room -= saved;
     state.city.wounded[loss.unitId] = woundedOf(state, loss.unitId) + saved;

@@ -116,7 +116,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | — |
 | **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — |
 | **Load-Bearing I–III** *(designed, not built)* | +1 Stone per tap on rocks | — |
-## 3. Tome II — Warfare — 51 nodes
+## 3. Tome II — Warfare — 53 nodes
 
 > *The army, and what it goes into the ground for.* Opens on your first
 > discovered ruin.
@@ -141,9 +141,8 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Spears** | the Spear Hall and the Lancer |
 | **Archery** | the Shooting Grounds and the Archer |
 | **Cavalry** | the Stables and the Cavalry |
-| **Field Medicine** *(planned)* | the party recovers HP **between depths** |
 
-### 3.2 Era 2 · The Company — 17 nodes
+### 3.2 Era 2 · The Company — 18 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -151,7 +150,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Tactics** | the type-disadvantage penalty softens, 0.75 → 0.85 (through the `Drill`) |
 | **Scouting** *(planned)* | a ruin's threat type shows before you launch |
 
-### 3.3 Era 3 · The Host — 25 nodes
+### 3.3 Era 3 · The Host — 26 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -171,6 +170,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Poultices I–III** *(designed, not built)* | +5% HP recovered between rooms | I / II / III |
 | **Rations I–III** | −5% room supply cost | I / II / III |
 | **Muster Drill I–III** | −10% unit recruit cost | I / II / III |
+| **Field Medicine I–III** | +5% of the fallen come home wounded instead of dead | I / II / III |
 | **Drillmaster I–III** | +5% hero XP | — / I / II |
 | **Manoeuvre I–III** | +2% off the type-disadvantage penalty | — / I / II |
 | **Bearers I–III** *(inert — a failed room loses nothing to buy back)* | — | — / I / II |
@@ -270,14 +270,14 @@ and every rank is an ordinary card gated by the row above it like any other.
 - **Era 1 costs Knowledge too** — 1 or 2, out of what the chain has paid.
 - Era 1's majors sit *below* the band as authored (Forestry: 25 Gold,
   3 seconds). `tests/onboarding.test.ts` pins the opening beat by beat.
-- Whole tree: **519,830 Gold and 2,442 Knowledge**, of which the two
+- Whole tree: **506,110 Gold and 2,370 Knowledge**, of which the two
   sealed era-4 keystones are 60,000 Gold and 300 Knowledge.
 
 | Era | Gold | Knowledge |
 |---|---|---|
-| 1 | 4,445 | 58 |
-| 2 | 46,600 | 171 |
-| 3 | 408,785 | 1,913 |
+| 1 | 3,845 | 52 |
+| 2 | 47,875 | 175 |
+| 3 | 394,390 | 1,843 |
 | 4 | 60,000 | 300 |
 
 - At a full province's drip ([`07-research.md`](07-research.md) §3) eras 1–3
@@ -333,6 +333,7 @@ names the one call site that owns its number, and
 | `recruitCost` | Muster Drill | |
 | `unitAtk` · `unitDef` | Warhorns, Fletching, Shield Wall, Barding | **aimed at a unit tag**, so a Cavalry reads its two tags plus the unaimed term once. `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party` |
 | `typeDisadvantage` | Manoeuvre | never softens past neutral. `Tactics` moves the same number and stays a `mechanic`: as an effect it would re-associate the sum, and float addition is not associative |
+| `woundedShare` | Field Medicine | the share of a fight's dead the Infirmary gets to keep, capped at 90% ([`combat.md`](combat.md) §4). A hero with the `WoundedRecovery` passive adds to the same sum |
 | `supplyCost` | Rations | `delveSpeed` and `haulLoss` are **retired**: nothing reads them, and the two ladders that name them (Pathfinders, Bearers) are inert until they are re-pointed |
 | `heroXp` · `stardustYield` | Drillmaster, Prospecting | |
 | `populationCapacity` | **Communities** | +1 bed globally, which is what "every district that houses anyone" means: a district with no capacity table is not a house. Aimable at one kind of house |
@@ -346,12 +347,11 @@ capacity · Mana regen · discover radius · influence radius · worker move spe
 · Knowledge drip rate · ingredient yield · Stardust yield · landmark claim cost
 · expedition supply cost · expedition duration · failed-haul loss · army power
 cap · hero XP · relic active duration · the type-disadvantage penalty · the
-Sanctum adjacency bonus.
+wounded share · the Sanctum adjacency bonus.
 
 ### 6.3 Mechanics behind planned majors (designed, not built)
 
-**Veterancy** (hero levels), **Field Medicine** (HP between depths),
-**Vanguard** (auto-resolving depth 1), **Invocation** (a second charge),
+**Veterancy** (hero levels), **Vanguard** (auto-resolving depth 1), **Invocation** (a second charge),
 **Ritual Casting** (a building as a cast target), **Ley Storm** (a daily
 self-cast window), **Ley Lines** (adjacency v2), **Frugal Rites** (an RNG roll
 on a tap — `parts` must identify the tap, never the moment).
@@ -370,8 +370,8 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
   until their own major works.
 - `tests/research.test.ts` pins the exact set and all four rules.
 
-**Planned (14):** Field Medicine, Veterancy,
-Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
+**Planned (14):** Veterancy,
+Scouting, Vanguard, Standards, Siegecraft · Ley Reading, Scrying, Invocation,
 Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
 
 **Live era-2/3 majors (8):** Aqueducts, Roadworks, Tactics, Salvage,

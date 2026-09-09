@@ -343,6 +343,12 @@ export const TECH_STATS = {
       + 'home and nothing to lose on a bad one (§5). Bearers is inert until '
       + 'it is re-pointed.',
   },
+  woundedShare: {
+    what: 'how much of what falls in a fight is carried home alive instead of buried',
+    ops: ['flat'], targets: ['global'], unit: '×',
+    says: { flat: '{pct} of the fallen carried home alive' },
+    reads: 'army.ts#woundedShareFor',
+  },
   heroXp: {
     what: 'the multiplier on the XP a delve pays a hero',
     ops: ['percent'], targets: ['global'], unit: 'xp',

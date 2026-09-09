@@ -10,14 +10,16 @@ import { describe, expect, it } from 'vitest';
 import {
   armyCap, armySize, cancelTraining, committedTroops, healCost, healSeconds,
   applyLosses, healWounded, lineFor, trainCost, trainUnit, woundedCap,
-  woundedCount, woundedOf,
+  woundedCount, woundedOf, woundedShareFor, WOUNDED_SHARE_CAP,
 } from '../src/sim/army';
 import { advance } from '../src/sim/commands';
-import { ARMY, DISTRICTS, UNITS } from '../src/sim/data/definitions';
+import { ARMY, DISTRICTS, HEROES, UNITS } from '../src/sim/data/definitions';
 import { deserialize, serialize } from '../src/sim/save';
-import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, T0,
+  getWallet, type GameState, type HeroId, type TechId, type UnitId,
+} from '../src/sim/state';
+import {
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openEveryEra, T0,
 } from './helpers';
 
 /** A city with halls, a ward, coin, and a company standing in it. */
@@ -239,5 +241,66 @@ describe('the ward is a building, not a rule', () => {
     const state = mustered({ Warrior: 10 });
     wardIn(state).state = 'UnderConstruction';
     expect(woundedCap(state)).toBe(0);
+  });
+});
+
+// CLAIM: a tenth of the fallen is the FLOOR, and everything above it is bought
+// — `Field Medicine` in Warfare, and a hero who walks the field afterwards
+// (Docs/features/combat.md §4).
+describe('how much of the fallen is carried home', () => {
+  /** The medics, and the best one of them. */
+  const MEDIC: HeroId = 'Pharao';   // the biggest WoundedRecovery in the book
+  const LESSER: HeroId = 'Cleric';
+
+  it('starts at a tenth, with nothing researched and nobody leading', () => {
+    expect(woundedShareFor(freshGame())).toBe(ARMY.woundedShare);
+    expect(ARMY.woundedShare).toBe(0.1);
+  });
+
+  it('every Field Medicine rank adds to it', () => {
+    const state = freshGame();
+    openEveryEra(state);
+    let last = woundedShareFor(state);
+    for (const id of ['FieldMedicineI', 'FieldMedicineII', 'FieldMedicineIII'] as TechId[]) {
+      completeTech(state, id);
+      const now = woundedShareFor(state);
+      expect(now, id).toBeGreaterThan(last);
+      last = now;
+    }
+  });
+
+  // The party-trait rule (Docs/features/10-heroes.md §2.5): the best medic in
+  // the party, never the sum of them, or two of them buy a fight nobody dies in.
+  it('takes the best medic in the party and never the sum', () => {
+    const state = freshGame();
+    const base = woundedShareFor(state);
+    const alone = woundedShareFor(state, [MEDIC]);
+    expect(alone).toBeGreaterThan(base);
+    expect(woundedShareFor(state, [LESSER])).toBeLessThan(alone);
+    expect(woundedShareFor(state, [MEDIC, LESSER])).toBe(alone);
+    expect(HEROES[MEDIC].trait).toBe('WoundedRecovery');
+  });
+
+  it('a hero and the ranks stack, and the whole thing is capped short of one', () => {
+    const state = freshGame();
+    openEveryEra(state);
+    completeTech(state, 'FieldMedicineIII');
+    expect(woundedShareFor(state, [MEDIC])).toBeGreaterThan(woundedShareFor(state));
+    // Nothing the game can research or recruit empties a battlefield.
+    expect(woundedShareFor(state, [MEDIC])).toBeLessThanOrEqual(WOUNDED_SHARE_CAP);
+    expect(WOUNDED_SHARE_CAP).toBeLessThan(1);
+  });
+
+  // The share is what `applyLosses` splits by, so a medic in the party is
+  // felt on the roster and not only in a number.
+  it('a medic in the party puts more of them in beds', () => {
+    const plain = mustered({ Warrior: 200 });
+    const led = mustered({ Warrior: 200 });
+    const fallen = [{ unitId: 'Warrior' as UnitId, count: 100 }];
+    const bare = applyLosses(plain, fallen).wounded
+      .reduce((sum, l) => sum + l.count, 0);
+    const helped = applyLosses(led, fallen, woundedShareFor(led, [MEDIC])).wounded
+      .reduce((sum, l) => sum + l.count, 0);
+    expect(helped).toBeGreaterThan(bare);
   });
 });

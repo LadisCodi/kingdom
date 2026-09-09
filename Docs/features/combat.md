@@ -24,7 +24,7 @@
 - Every fight fields **troop slots and hero slots**: gates, ruin rooms,
   bosses, PvP. There is no hero-only mode.
 - **At least one hero is mandatory** on the player's side
-  ([`10-heroes.md`](10-heroes.md) §2.5). Troop slots may be empty.
+  ([`10-heroes.md`](10-heroes.md) §2.6). Troop slots may be empty.
 
 ## 3. Board
 
@@ -62,9 +62,18 @@ and the army cap; hero slots one free, the rest Gems
   comes home in pieces. Bringing more than enough is worth something, and
   this is what it is worth.
 - **A casualty is two things — if the city has an Infirmary.**
-  `army.wounded_share` of the fallen are carried to its beds and the rest are
+  A share of the fallen are carried to its beds and the rest are
   dead. Both leave the roster at once: a wounded soldier cannot be sent
   anywhere and does not count against the army cap.
+  - **The share starts at `army.wounded_share` — a tenth — and is EARNED
+    upward.** A battlefield keeps most of what it takes; bringing more of it
+    home is something the player builds towards rather than a rate they are
+    given.
+    - **`Field Medicine I–III`** in Warfare, +5 points a rank
+      ([`tech-tree.md`](tech-tree.md) §3.4).
+    - **A hero with the `WoundedRecovery` trait**, +15 to +40 points, the best
+      in the party and never the sum ([`10-heroes.md`](10-heroes.md) §2.5).
+    - Capped at **90%**: someone always stays out there.
   - **The ward is a building, not a rule.** With no Infirmary built there are
     no beds, so every casualty is a death. It is opened by the `Infirmary`
     technology in Civics and holds `Districts.beds_per_level`, which is the
@@ -329,7 +338,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Enemy slot band, villain threshold, share and slots | `combat.gen_slots_min/max`, `combat.gen_villain_threshold`, `gen_villain_share`, `gen_villain_slots` |
 | What a hero is worth in the ESTIMATE | `combat.hero_power_per_dmg` |
 | Army cap per building level | `Districts.army_cap_per_level` |
-| How much of a casualty is saveable, and how many beds there are | `army.wounded_share`, `Districts.beds_per_level` |
+| How much of a casualty is saveable, and how many beds there are | `army.wounded_share` (the floor), `Heroes.trait_value`, the `Field Medicine` ranks, `Districts.beds_per_level` |
 | What mending costs against recruiting | `army.heal_cost_share`, `army.heal_time_share` |
 
 ## 18. Not in this version

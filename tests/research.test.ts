@@ -564,13 +564,16 @@ describe('planned technologies', () => {
   // The flag is the statement: it draws the hatched node and the panel's
   // "Not yet in the prototype" line. Pinning the SET stops one being quietly
   // un-flagged (shipping a no-op as content) or a new no-op arriving unflagged.
-  // Fifteen: Civics kept none. `Land Survey` and `Apprenticeships` were cut
+  // Fourteen: Civics kept none. `Land Survey` and `Apprenticeships` were cut
   // when the book was laid out — with every requirement one row up, a card
   // that does nothing is a toll on the way to one that does, and the answer
   // for a Civics page with no room for a leaf was to drop them.
-  it('are exactly the fifteen the design lists, and no more', () => {
+  it('are exactly the fourteen the design lists, and no more', () => {
+    // `Field Medicine` left the list on 2026-09-09: it is a real three-rank
+    // ladder now, and what it moves is how much of a fight's dead is carried
+    // home alive (Docs/features/combat.md §4).
     expect(PLANNED.sort()).toEqual([
-      'FieldMedicine', 'FrugalRites', 'Invocation',
+      'FrugalRites', 'Invocation',
       'LeyLines', 'LeyReading', 'LeyStorm', 'Lorekeeping', 'RitualCasting', 'Scouting',
       'Scrying', 'Siegecraft', 'Standards', 'Vanguard', 'Veterancy', 'Wayshrines',
     ].sort());

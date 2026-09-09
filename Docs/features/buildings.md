@@ -238,8 +238,9 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
 ### 4.9 The Infirmary
 
 - **Beds for the soldiers who came back hurt.** With no Infirmary built, every
-  casualty of every fight is a death; with one, `army.wounded_share` of them
-  wait in its beds instead ([`combat.md`](combat.md) §4).
+  casualty of every fight is a death; with one, a tenth of them wait in its
+  beds instead — more once `Field Medicine` is researched or a medic hero
+  walks the field ([`combat.md`](combat.md) §4).
 - Opened by the **`Infirmary` technology in Civics**. One per city.
 - **Beds per level** — 30, 50, 75, 105, 140, 180, 225, 275, 330, 400 — is the
   whole of what a level buys, and the ward's ceiling: what does not fit dies.

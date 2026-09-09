@@ -147,16 +147,19 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   a depth opens the next one.
 - **A room pays the moment it falls**, so nothing is ever carried and nothing
   can be lost on the way home.
-- **A fight costs soldiers, win or lose.** Most of the fallen come home
-  **wounded** and wait in a military hall until the player pays a fraction of
-  what recruiting them would cost; the rest are dead. Supplies and bodies are
+- **A fight costs soldiers, win or lose.** Most of the fallen are dead; a
+  tenth come home **wounded** and wait in the Infirmary until the player pays
+  a fraction of what recruiting them would cost, and research and medic heroes
+  buy that share upward. Supplies and bodies are
   the whole price of an attempt — a room that beats the party takes nothing
   else the player has banked, and it is still there to try again.
 
 > **Enter the room, or go and train?**
 
-- Combat is a **scoring pass, not a simulation**: units have ATK/DEF/HP, each
-  ruin has a threat type, and a matchup chart rewards composition.
+- Combat is a **deterministic tick auto-battler**: six troop slots and three
+  hero slots a side, units with DMG/DEF/HP, and a type chart that rewards
+  composition. It resolves the instant the room is entered and the screen
+  replays the log ([`features/combat.md`](features/combat.md)).
 - Party HP does not carry between rooms.
 
 **Full design:** [`features/11-expeditions.md`](features/11-expeditions.md).

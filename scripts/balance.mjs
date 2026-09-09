@@ -123,7 +123,11 @@ const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout',
 const HERO_RARITIES = ['Common', 'Rare', 'Legendary'];
 const BANNER_IDS = ['basic', 'advanced'];
 const HERO_TRAITS = [
-  'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
+  'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus',
+  // What share of the fallen a hero carries home (Docs/features/combat.md §4).
+  // It replaced `RevealNextDepth`, which read the next depth's threat — a
+  // thing rooms stopped having when they started showing their own squads.
+  'WoundedRecovery',
 ];
 const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',

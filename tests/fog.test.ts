@@ -227,11 +227,13 @@ describe('exploring pays in ground, not in currency', () => {
     // tomes added their keystones, 485,330 when Civics became a whole book
     // (2026-09-08: 67 cards, two planned ones cut, the ranks re-priced for
     // their rows), and it went back up by 34,500 when the four decoration
-    // technologies joined Civics' third band the same day. 07-research.md
+    // technologies joined Civics' third band the same day, and by 3,775 more
+    // when `Field Medicine` stopped being one planned card and became a
+    // three-rank Warfare ladder (2026-09-09). 07-research.md
     // calls a tree the quest chain funds twice over "not a sink, a
     // formality"; this is the other side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(502_335);
+    expect(tree).toBe(506_110);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree

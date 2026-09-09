@@ -125,7 +125,7 @@ function heroCards(game: Game): HTMLElement[] {
     const def = HEROES[view.id];
     // Already on the board is the only reason a hero cannot be picked: no
     // hero is ever BUSY, because every fight resolves on entry
-    // (Docs/features/10-heroes.md §2.5).
+    // (Docs/features/10-heroes.md §2.6).
     const inParty = game.partyHeroes.includes(view.id);
     const line = heroStats(game.state, view.id);
     return pickerCard({

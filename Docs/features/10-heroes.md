@@ -94,7 +94,25 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   moves the buff, so both ladders are felt.
 - A hero on a board with no troops of its type fights and buffs nobody.
 
-### 2.5 The party rule
+### 2.5 The trait
+
+- **A hero also carries one TRAIT, and a trait acts off the board.** The stat
+  block and the passive win the fight; the trait changes what the trip costs
+  or what comes home from it. One per hero, authored on the `Heroes` sheet as
+  a name and a value, and printed on the card as a sentence.
+- The three the game reads:
+
+  | Trait | What it moves |
+  |---|---|
+  | `SupplyDiscount` | a slice off a room's supplies ([`11-expeditions.md`](11-expeditions.md) §5) |
+  | `PartyDefence` | the party's DEF in the power estimate ([`combat.md`](combat.md) §12) |
+  | `WoundedRecovery` | adds to the share of the fallen that reaches a bed instead of dying ([`combat.md`](combat.md) §4) |
+
+- **A party trait is the best in the party, never the sum**: two
+  quartermasters do not buy a free trip, and two medics do not buy a fight
+  nobody dies in.
+
+### 2.6 The party rule
 
 - **At least one hero is mandatory** in every fight: gates, rooms, bosses.
   There is no fight without a hero and no hero-only fight.
@@ -116,8 +134,6 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
   because that key is the Heroes SHEET.
 - **It is the only slot in a party that is sold.** Every troop slot on the
   board is open from the first fight ([`combat.md`](combat.md) §3).
-- **A party trait is the best in the party, never the sum**: two
-  quartermasters do not buy a free trip.
 - The Adventurers' Guild opens **depths**, never slots
   ([`11-expeditions.md`](11-expeditions.md) §3).
 - A second hero is worth two things: a second buffed type, and a second body on
@@ -415,8 +431,9 @@ the rewarded video.
   hero is a body and a buff.
 - **A hero-only battle mode.** Every fight fields troops and heroes. A hero
   arena is a possible future, not this version.
-- **Economy traits** — supply discounts, reward bonuses, a threat reveal. The
-  threat preview is a Guild perk; rewards and costs are the room's.
+- **A trait that reads the room before it is entered.** The threat preview is
+  a Guild perk, not a hero's; a hero's trait moves a cost or a casualty
+  (§2.5), never what the player is told.
 - **A party-wide stat.** A hero buffs its own type or nothing.
 - **Per-hero XP.** One kingdom counter, or the gacha hands out heroes the
   player cannot use.

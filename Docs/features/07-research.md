@@ -147,7 +147,7 @@ A `bonus` names its effects, and each is four fields:
 - A row may carry `planned: true`: it is on the tree, researchable, and does
   nothing yet.
 - Its info panel says so ("Not yet in the prototype").
-- 17 rows are planned; the list and the rules are
+- 14 rows are planned; the list and the rules are
   [`tech-tree.md`](tech-tree.md) §7.
 
 ## 2. The shelf — three tomes

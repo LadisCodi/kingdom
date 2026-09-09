@@ -94,7 +94,7 @@ export interface PartyHero {
 
 export interface Party {
   /** One per HERO SLOT, and at least one always — there is no fight without a
-   *  hero (Docs/features/10-heroes.md §2.5). */
+   *  hero (Docs/features/10-heroes.md §2.6). */
   heroes: readonly PartyHero[];
   slots: readonly PartySlot[];
   /** Carried into the delve, and therefore NOT attuned to the kingdom. */

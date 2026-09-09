@@ -567,14 +567,6 @@
       "gold": 150, "knowledge": 2, "seconds": 45,
       "unlocks": [{"district":"SpearHall"}, {"unit":"Lancer"}]
     },
-    "FieldMedicine": {
-      "name": "Field Medicine", "glyph": "🩹", "kind": "mechanic",
-      "description": "Bandages and splints — the party recovers some HP between depths.",
-      "tome": "Warfare", "era": 1, "row": 1, "col": 1,
-      "requires": [],
-      "gold": 150, "knowledge": 2, "seconds": 120,
-      "planned": true
-    },
     "Warrior": {
       "name": "Warrior", "glyph": "🗡️", "kind": "unlock",
       "tome": "Warfare", "era": 1, "row": 1, "col": 2,
@@ -616,6 +608,15 @@
       "gold": 60, "knowledge": 1, "seconds": 20,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1}
+      ]
+    },
+    "FieldMedicineI": {
+      "name": "Field Medicine I", "glyph": "🩹", "kind": "bonus",
+      "tome": "Warfare", "era": 1, "row": 3, "col": 1,
+      "requires": ["MusterDrillI"],
+      "gold": 150, "knowledge": 2, "seconds": 120,
+      "effects": [
+        {"stat":"woundedShare","op":"flat","value":0.05}
       ]
     },
     "ShieldWallI": {
@@ -760,6 +761,15 @@
       "gold": 800, "knowledge": 3, "seconds": 480,
       "effects": [
         {"stat":"unitAtk","op":"flat","value":1,"target":{"unitTag":"Distance"}}
+      ]
+    },
+    "FieldMedicineII": {
+      "name": "Field Medicine II", "glyph": "🩹", "kind": "bonus",
+      "tome": "Warfare", "era": 2, "row": 9, "col": 1,
+      "requires": ["DrillmasterI"],
+      "gold": 525, "knowledge": 2, "seconds": 330,
+      "effects": [
+        {"stat":"woundedShare","op":"flat","value":0.05}
       ]
     },
     "DrillmasterII": {
@@ -975,6 +985,15 @@
       "gold": 3250, "knowledge": 14, "seconds": 1950,
       "effects": [
         {"stat":"delveSpeed","op":"percent","value":-10}
+      ]
+    },
+    "FieldMedicineIII": {
+      "name": "Field Medicine III", "glyph": "🩹", "kind": "bonus",
+      "tome": "Warfare", "era": 3, "row": 18, "col": 0,
+      "requires": ["ManoeuvreIII"],
+      "gold": 3250, "knowledge": 14, "seconds": 1950,
+      "effects": [
+        {"stat":"woundedShare","op":"flat","value":0.05}
       ]
     },
     "PathfindersIII": {

@@ -25,7 +25,7 @@ import { getWallet } from '../src/sim/state';
 import {
   HARVEST, LANDMARKS, RUINS, TECHNOLOGIES, roomPower,
 } from '../src/sim/data/definitions';
-import { armyCap, trainCost } from '../src/sim/army';
+import { armyCap, trainCost, woundedShareFor } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import {
   drillOf, enterRoom, roomReward, supplyCost,
@@ -175,6 +175,10 @@ function probe(state: GameState): Record<string, number> {
   // round differently, and the deepest boss in the game is that number.
   put('stardust.deepRoom',
     roomReward(state, 'StarObservatory', 3, 18).wallet.Stardust ?? 0);
+  // What a fight gives back: the share of the fallen that reaches a bed
+  // (Docs/features/combat.md §4). Probed without heroes, so this is the
+  // TREE's half of the number.
+  put('woundedShare', woundedShareFor(state));
   const drill = drillOf(state);
   put('drill.atk.all', drill.atk.all ?? 0);
   put('drill.atk.Distance', drill.atk.Distance ?? 0);

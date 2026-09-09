@@ -138,7 +138,7 @@ take = floor( min(base, banked × take_fraction_max) )
   owns an army.
 - **No hero is ever busy.** Every fight in the game resolves the instant it is
   entered, so a hero is never away and never unavailable
-  ([`10-heroes.md`](10-heroes.md) §2.5).
+  ([`10-heroes.md`](10-heroes.md) §2.6).
 - **Supplies** are a flat cost per tier, paid on entry and never refunded.
 - The fight resolves on entry, the player attacking
   ([`11-expeditions.md`](11-expeditions.md) §5). A power shortfall warns,
