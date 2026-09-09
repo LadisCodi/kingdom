@@ -265,6 +265,13 @@
         {"stat":"salePrice","op":"flat","value":0.05}
       ]
     },
+    "Infirmary": {
+      "name": "Infirmary", "glyph": "⛑️", "kind": "unlock",
+      "tome": "Civics", "era": 2, "row": 15, "col": 0,
+      "requires": ["CarpentryII"],
+      "gold": 1800, "knowledge": 6, "seconds": 1200,
+      "unlocks": [{"district":"Infirmary"}]
+    },
     "WorkerLoadII": {
       "name": "Worker Load II", "glyph": "🎒", "kind": "bonus",
       "tome": "Civics", "era": 2, "row": 15, "col": 1,

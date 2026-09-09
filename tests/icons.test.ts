@@ -40,6 +40,9 @@ const AWAITING_ART: readonly string[] = [
   // The rewarded-video mark (2026-09-08). It rides INSIDE a button at 16 px,
   // so it needs the small cell too.
   'video',
+  // The Infirmary (2026-09-09). Its WORLD sprite is drawn; the 16 px cell is
+  // one more crop on the next UI sheet.
+  'Infirmary',
 ];
 
 const pending = new Set(AWAITING_ART);

@@ -59,7 +59,7 @@ The band opens on one root and fans twice: Masonry and the Market split the
 page, and Urban Planning gathers them again before the three thumb ladders
 hang off it.
 
-### 2.2 Era 2 · Township — 17 nodes
+### 2.2 Era 2 · Township — 18 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -67,6 +67,7 @@ hang off it.
 | **Hunting** | the wild game tap |
 | **Mining** | the Smelter, and the iron mountain the Quarry works for Stone |
 | **Communities** | +1 resident in every Housing |
+| **Infirmary** | the Infirmary — beds for the wounded, who die without them ([`combat.md`](combat.md) §4) |
 
 ### 2.3 Era 3 · Borough — 35 nodes
 

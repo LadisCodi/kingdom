@@ -323,6 +323,9 @@ describe('entering a room', () => {
 
   it('sends most of the fallen to the infirmary, and the rest nowhere', () => {
     const state = readyToDelve({ Warrior: 60 });
+    // Only a city that BUILT one has a ward; without it they simply die
+    // (tests/infirmary.test.ts).
+    addBuilt(state, 'Infirmary', { x: 4, y: 8 });
     const report = enterRoom(state, map, BARROW, ['Warden'], company);
     const fell = report.losses.reduce((sum, l) => sum + l.count, 0);
     const hurt = report.wounded.reduce((sum, l) => sum + l.count, 0);

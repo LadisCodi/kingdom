@@ -52,17 +52,21 @@ and the army cap; hero slots one free, the rest Gems
   enemy's power against the party's defence, spread across the committed
   squads by their share of the party's hit points. Only whole troops fall, and
   never fewer than one.
-- **A casualty is two things.** `army.wounded_share` of the fallen are carried
-  back to the **infirmary** and the rest are dead. Both leave the roster at
-  once: a wounded soldier cannot be sent anywhere and does not count against
-  the army cap.
-  - The infirmary holds `army.wounded_cap_share × army cap` at a time, so the
-    military halls that hold the army hold its wounded. **Anything the ward
-    has no room for dies**, which is what makes the ceiling a decision.
-  - A military hall mends them: `army.heal_cost_share` of what recruiting the
+- **A casualty is two things — if the city has an Infirmary.**
+  `army.wounded_share` of the fallen are carried to its beds and the rest are
+  dead. Both leave the roster at once: a wounded soldier cannot be sent
+  anywhere and does not count against the army cap.
+  - **The ward is a building, not a rule.** With no Infirmary built there are
+    no beds, so every casualty is a death. It is opened by the `Infirmary`
+    technology in Civics and holds `Districts.beds_per_level`, which is the
+    whole of what its levels buy ([`buildings.md`](buildings.md) §4.10).
+  - **Anything the beds have no room for dies**, which is what makes the
+    ceiling a decision.
+  - The Infirmary mends them: `army.heal_cost_share` of what recruiting the
     same soldiers costs and `army.heal_time_share` of the clock, as **one
-    order and one wait** for the whole ward, in the same line the hall
-    recruits from. Mending needs no technology — they are already trained.
+    order and one wait** for the whole ward, on its own bench — so mending
+    never competes with recruiting. It needs no technology of its own beyond
+    the building: they are already trained.
   - Cancelling an order puts them back in their beds and the coin back in the
     purse.
 - **A rout costs less than a repulse.** A party that wins takes the damage in
@@ -304,7 +308,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Enemy slot count band, hero budget threshold, row assignment | `combat.gen_*` |
 | Army cap per building level | `Districts.army_cap_per_level` |
 | What a fight costs in bodies | `army.damage_per_strength`, `army.damage_absorbed_per_defence` |
-| How much of a casualty is saveable, and how many beds there are | `army.wounded_share`, `army.wounded_cap_share` |
+| How much of a casualty is saveable, and how many beds there are | `army.wounded_share`, `Districts.beds_per_level` |
 | What mending costs against recruiting | `army.heal_cost_share`, `army.heal_time_share` |
 
 ## 18. Not in this version

@@ -557,6 +557,10 @@ export interface DistrictDef {
   /** Army cap this building contributes at each level (TOTAL, not
    *  incremental). Empty = it is not a military building. */
   armyCapPerLevel: readonly number[];
+  /** Beds for the wounded, per level. Only the Infirmary has any: it is what
+   *  turns a casualty into a bill instead of a loss
+   *  (Docs/features/combat.md §4). */
+  bedsPerLevel: readonly number[];
   /** Everything this building can turn out; empty = it trains nothing. A list
    *  rather than one id, so a hall can offer a choice — and so the Townhall
    *  can offer the Villager on the same footing. Army size is a
@@ -743,6 +747,16 @@ const DISTRICT_CONTENT = {
     trains: ['Warrior', 'Lancer', 'Archer'],
     ...districtBalance(balance.districts.Barracks),
   },
+  Infirmary: {
+    ...rules,
+    id: 'Infirmary',
+    name: 'Infirmary',
+    description: 'Beds for the soldiers who came back hurt. Mending one costs a '
+      + 'fraction of replacing them.',
+    glyph: '⛑️',
+    sprite: 'infirmary',
+    ...districtBalance(balance.districts.Infirmary),
+  },
   SpearHall: {
     ...rules,
     id: 'SpearHall',
@@ -828,7 +842,7 @@ const DISTRICT_CONTENT = {
 export const BUILDABLE_DISTRICTS: DistrictId[] = [
   'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Market',
   'Sanctum',
-  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables', 'Infirmary',
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
   'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
 ];

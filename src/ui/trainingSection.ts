@@ -64,7 +64,10 @@ const tagFor = (unit: UnitDef): string =>
 export function trainingSection(game: Game, district: District): HTMLElement | null {
   const def = DISTRICTS[district.definitionId];
   const offers = def.trains;
-  if (offers.length === 0) return null;
+  // A building with BEDS runs the same block with no picker: its line mends
+  // rather than recruits (Docs/features/combat.md §4).
+  const isWard = def.bedsPerLevel.length > 0;
+  if (offers.length === 0 && !isWard) return null;
 
   const now = game.now();
   const line = lineFor(game.state, district.uniqueId);
@@ -88,13 +91,15 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
     const head = line[0];
     const bar = progress('gold');
     const left = head.startedAt === null
-      ? trainSecondsAt(game.state, district.uniqueId, head.trainee)
+      ? (head.kind === 'heal'
+        ? game.healWait(head.trainee as UnitId, itemCount(head))
+        : trainSecondsAt(game.state, district.uniqueId, head.trainee))
       : Math.max(0, (trainingCompletesAt(head) - now) / 1000);
     bar.set(trainingProgress(game.state, district.uniqueId, now), formatDuration(Math.ceil(left)));
 
     const rush = lineRushCost(game.state, district.uniqueId, now);
     root.append(
-      el('div', { class: 'tr-head' }, 'Training queue'),
+      el('div', { class: 'tr-head' }, isWard ? 'On the table' : 'Training queue'),
       el('div', { class: 'tr-queue-row' },
         el('div', { class: 'tr-queue-col' }, strip, bar.root),
         action({
@@ -114,14 +119,17 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
 
   // ------------------------------------------------------------- the ward
   //
-  // Wounded soldiers of the types THIS hall turns out. It sits above the
-  // picker because it is the cheaper way to field the same soldier, and a
-  // player who has just lost a fight should meet it before the recruit price.
-  const ward = game.woundedInfo();
-  const mine = ward.byUnit.filter((w) => (offers as TrainableId[]).includes(w.unitId));
-  if (mine.length > 0) {
-    root.append(el('div', { class: 'tr-head' }, `Infirmary — ${ward.used} of ${ward.cap}`));
-    for (const { unitId, count } of mine) {
+  // Every wounded soldier in the city, on the building that has the beds.
+  // Empty is worth drawing: the ward's size is what the level buys, and a
+  // player looking at the card wants to know how much of it is spoken for.
+  if (isWard) {
+    const ward = game.woundedInfo();
+    root.append(el('div', { class: 'tr-head' }, `The ward — ${ward.used} of ${ward.cap} beds`));
+    if (ward.byUnit.length === 0) {
+      root.append(el('div', { class: 'tr-desc' },
+        'Nobody in the beds. Soldiers hurt in a fight wait here instead of dying.'));
+    }
+    for (const { unitId, count } of ward.byUnit) {
       const seconds = game.healWait(unitId, count);
       root.append(el('div', { class: 'tr-info is-ward' },
         el('div', { class: 'tr-portrait' }, iconEl(unitId, { size: 'lg' })),
@@ -146,6 +154,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
       ));
     }
   }
+  if (offers.length === 0) return root;
 
   // --------------------------------------------------------- the picker
   const current = picked.get(district.uniqueId) ?? offers[0];

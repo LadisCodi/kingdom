@@ -108,6 +108,9 @@ describe('every upgradable building has something to show for the level', () => 
   const PER_LEVEL = [
     'influenceRadiusPerLevel', 'maxWorkersPerLevel',
     'armyCapPerLevel', 'populationCapacityPerLevel',
+    // The Infirmary's whole ladder: beds for the wounded
+    // (Docs/features/combat.md §4).
+    'bedsPerLevel',
     // What a producer's LATE level buys, since crew and reach stop growing at
     // five (Docs/plans/builder-30-days.md §4).
     'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',

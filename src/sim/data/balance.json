@@ -83,7 +83,8 @@
         10,
         20,
         30
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Housing": {
       "size": {
@@ -188,7 +189,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Farm": {
       "size": {
@@ -325,7 +327,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "FarmLands": {
       "size": {
@@ -375,7 +378,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     },
     "Sawmill": {
       "size": {
@@ -512,7 +516,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Market": {
       "size": {
@@ -608,7 +613,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Quarry": {
       "size": {
@@ -745,7 +751,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Docks": {
       "size": {
@@ -882,7 +889,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Sanctum": {
       "size": {
@@ -968,7 +976,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Barracks": {
       "size": {
@@ -1065,7 +1074,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "SpearHall": {
       "size": {
@@ -1162,7 +1172,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "ShootingGrounds": {
       "size": {
@@ -1259,7 +1270,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Stables": {
       "size": {
@@ -1356,6 +1368,105 @@
         2,
         4,
         6
+      ],
+      "bedsPerLevel": []
+    },
+    "Infirmary": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 1,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "armyCapPerLevel": [],
+      "buildCost": {
+        "Wood": 80,
+        "Stone": 40
+      },
+      "buildCostGoods": {},
+      "buildCostMultiplier": 1,
+      "buildCostExponentialGrowth": 1,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeCost": {
+        "Wood": 240,
+        "Stone": 120
+      },
+      "upgradeCostLevelGrowth": 1.8,
+      "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeCostLateLevelGrowth": 1.7,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "upgradeCostGoodsPerLevel": [
+        {},
+        {},
+        {},
+        {},
+        {
+          "Iron": 2
+        },
+        {
+          "Iron": 3
+        },
+        {
+          "Iron": 4
+        },
+        {
+          "Iron": 5
+        },
+        {
+          "Iron": 6
+        }
+      ],
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "salePricePerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ],
+      "bedsPerLevel": [
+        30,
+        50,
+        75,
+        105,
+        140,
+        180,
+        225,
+        275,
+        330,
+        400
       ]
     },
     "Carpenter": {
@@ -1471,7 +1582,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "MasonsYard": {
       "size": {
@@ -1588,7 +1700,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Smelter": {
       "size": {
@@ -1705,7 +1818,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "RuneCarver": {
       "size": {
@@ -1822,7 +1936,8 @@
         2,
         4,
         6
-      ]
+      ],
+      "bedsPerLevel": []
     },
     "Garden": {
       "size": {
@@ -1873,7 +1988,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 4,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     },
     "Well": {
       "size": {
@@ -1925,7 +2041,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 6,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     },
     "Orchard": {
       "size": {
@@ -1977,7 +2094,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 12,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     },
     "Statue": {
       "size": {
@@ -2029,7 +2147,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 10,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     },
     "Plaza": {
       "size": {
@@ -2082,7 +2201,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 30,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     },
     "Shrine": {
       "size": {
@@ -2134,7 +2254,8 @@
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 40,
-      "harmonyCostPerLevel": []
+      "harmonyCostPerLevel": [],
+      "bedsPerLevel": []
     }
   },
   "goods": {
@@ -2571,7 +2692,6 @@
     "damagePerStrength": 0.9,
     "damageAbsorbedPerDefence": 0.5,
     "woundedShare": 0.6,
-    "woundedCapShare": 0.25,
     "healCostShare": 0.3,
     "healTimeShare": 0.25
   },

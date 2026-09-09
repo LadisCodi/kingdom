@@ -8,9 +8,10 @@
 > [`06-construction.md`](06-construction.md); what workers do is
 > [`04-harvest.md`](04-harvest.md).
 >
-> **Status.** Built: the eighteen districts below are `Districts` rows in the
-> workbook — the fourteen of the province economy, and the four workshops
-> (§4.10), which the count cap opens at Townhall 5. Designed, not built:
+> **Status.** Built: the nineteen districts below are `Districts` rows in the
+> workbook — the fourteen of the province economy, the Infirmary (§4.10), and
+> the four workshops (§4.11), which the count cap opens at Townhall 5.
+> Designed, not built:
 > Townhall 5, and the three Wonders (§5,
 > [`16-wonders.md`](16-wonders.md)).
 
@@ -20,9 +21,9 @@
   which reach level 10, are authored as far as TH10.
 - **Gate** on a level is what must be true to *start* that upgrade: a Townhall
   level, a technology, or both — and from level 6 a price in refined goods
-  (§4.11). Level 1 is the build; its gate is the unlock technology.
+  (§4.12). Level 1 is the build; its gate is the unlock technology.
 - **The tables below stop at level 5.** Every building that goes on to 10 has
-  the same late ladder, and it is written once, in §4.11.
+  the same late ladder, and it is written once, in §4.12.
 - Costs are the base of the curve; the curves are
   [`05-city-and-districts.md`](05-city-and-districts.md) §3.
 - Every building has a fog ring: reveal 1, discover 2 (the four halls discover
@@ -115,7 +116,7 @@
 - Housing next to Housing: −1 Gold/min per neighbour.
 - `Communities` (Civics era 2) adds +1 resident to every Housing.
 - Build 10 Wood, 20 s. Upgrade 30 Wood + 10 Stone, 20 s, ×1.5 per level.
-- Levels 6–10 add two residents each, to 20 (§4.11).
+- Levels 6–10 add two residents each, to 20 (§4.12).
 
 | Level | Residents | Gate |
 |---|---|---|
@@ -206,7 +207,7 @@
 | 4 | +9% | TH3 |
 | 5 | +12% | TH4 |
 
-Levels 6–10 continue at +3% a level, to +27% (§4.11).
+Levels 6–10 continue at +3% a level, to +27% (§4.12).
 
 ### 4.8 Sanctum
 
@@ -234,12 +235,6 @@ regeneration +20, +25, +30, +36, +42 an hour.
   level 5 field 3,400 troops.
 - Every unit is behind its own technology; the Barracks trains every foot
   soldier, the Spear Hall and Shooting Grounds are parallel lines for theirs.
-- **A hall is also the infirmary for what it trains.** Soldiers wounded in a
-  fight wait there, off the roster, until the player orders them mended: one
-  order for the whole ward, at a fraction of the cost and the clock of
-  recruiting the same number, in the hall's own line
-  ([`combat.md`](combat.md) §4). The ward's ceiling is a share of the army cap,
-  so it grows with the halls and nothing new is placed for it.
 
 | Hall | Trains | Unlock | Build | Upgrade base |
 |---|---|---|---|---|
@@ -262,7 +257,21 @@ same for all four:
 Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten field
 272.
 
-### 4.10 The four workshops
+### 4.10 The Infirmary
+
+- **Beds for the soldiers who came back hurt.** With no Infirmary built, every
+  casualty of every fight is a death; with one, `army.wounded_share` of them
+  wait in its beds instead ([`combat.md`](combat.md) §4).
+- Opened by the **`Infirmary` technology in Civics**. One per city.
+- **Beds per level** — 30, 50, 75, 105, 140, 180, 225, 275, 330, 400 — is the
+  whole of what a level buys, and the ward's ceiling: what does not fit dies.
+- Mending is **one order and one wait** for a whole ward of one type, on the
+  Infirmary's own bench, at `army.heal_cost_share` of the recruit price and
+  `army.heal_time_share` of the recruit clock. It never competes with a hall's
+  recruiting.
+- 1×1, 80 Wood + 40 Stone to build.
+
+### 4.11 The four workshops
 
 - Each makes one refined good from a queue its crew works; nothing is made
   without a villager assigned. Full design:
@@ -281,7 +290,7 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
 
 Upgrades grow ×1.6 in cost and ×1.6 in time per level.
 
-### 4.11 The late ladder — levels 6 to 10
+### 4.12 The late ladder — levels 6 to 10
 
 Every building above that reaches level 10 climbs the same way, so it is
 written once. The Townhall's own ladder is §3.
@@ -314,15 +323,16 @@ written once. The Townhall's own ladder is §3.
 |---|---|
 | Housing | +2 residents a level, to 20 |
 | Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a 10% faster swing a level** — crew and reach stop growing at 5, because the plot has more cells than a crew can work |
-| the four military halls | army cap in TROOPS, 150 at level 1 to 2,600 at ten ([`combat.md`](combat.md) §14), and the infirmary that holds a share of it |
+| the four military halls | army cap in TROOPS, 150 at level 1 to 2,600 at ten ([`combat.md`](combat.md) §14) |
+| the Infirmary | beds for the wounded, 30 at level 1 to 400 at ten |
 | Sanctum | the Mana curve, to 352 held and 42 an hour |
 | Market | +3% on a sold unit a level, to +27% |
-| the four workshops | crew and queue as §4.10 |
+| the four workshops | crew and queue as §4.11 |
 
 - **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
   the decorations supply ([`18-harmony.md`](18-harmony.md)).
 
-### 4.12 The six decorations
+### 4.13 The six decorations
 
 One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
 does nothing else, and every piece past the Garden is priced in a refined
@@ -350,7 +360,7 @@ Full design: [`16-wonders.md`](16-wonders.md).
 ## 6. The last technology on each ladder
 
 Research owns the early half of every ladder and nothing above it: past these
-levels a building is bought with a Townhall level and goods (§4.11).
+levels a building is bought with a Townhall level and goods (§4.12).
 
 **Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
 

@@ -35,7 +35,7 @@ export type GoodsStock = Partial<Record<GoodId, number>>;
 export type DistrictId =
   | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
   | 'Quarry' | 'Docks' | 'Sanctum'
-  | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' // military
+  | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' | 'Infirmary' // military
   | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver' // workshops
   | 'Garden' | 'Well' | 'Orchard' | 'Statue' | 'Plaza' | 'Shrine'; // decorations
 /** Which authored region this kingdom is playing. One today — the field

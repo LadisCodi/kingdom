@@ -91,15 +91,18 @@ export function casualtiesFor(
 }
 
 /**
- * THE INFIRMARY.
+ * THE INFIRMARY — a building, and the only reason a casualty is ever
+ * anything but a death (Docs/features/combat.md §4).
  *
- * How many wounded the city can hold at once, as a share of the army it can
- * field: a bigger army is a bigger stretcher party, so the halls that raise
- * the ceiling raise this with it and there is no second building to place.
- * A kingdom with no hall has no infirmary either.
+ * Beds are the whole of it: with none, nobody is carried home. So an
+ * unbuilt infirmary is not a smaller ward, it is no ward — which is what
+ * makes the technology that opens it a real decision rather than a discount.
  */
-export const woundedCap = (state: GameState): number =>
-  Math.round(armyCap(state) * ARMY.woundedCapShare);
+export const infirmaries = (state: GameState): District[] => state.city.districts
+  .filter((d) => d.state === 'Built' && DISTRICTS[d.definitionId].bedsPerLevel.length > 0);
+
+export const woundedCap = (state: GameState): number => infirmaries(state)
+  .reduce((beds, d) => beds + levelIndexed(DISTRICTS[d.definitionId].bedsPerLevel, d.level), 0);
 
 /** Soldiers waiting to be put back together, of every type. */
 export const woundedCount = (state: GameState): number =>
@@ -197,8 +200,10 @@ export function healWounded(
 ): HealResult {
   const want = Math.min(Math.max(0, Math.floor(count)), woundedOf(state, unitId));
   if (want <= 0) return 'NoneWounded';
-  const building = at ?? trainerFor(state, unitId);
-  if (!building || !DISTRICTS[building.definitionId].trains.includes(unitId)) return 'NoBuilding';
+  // Mending happens where the beds are, never at the hall that recruited
+  // them: the Infirmary is the building the player built for this.
+  const building = at ?? infirmaries(state)[0];
+  if (!building || DISTRICTS[building.definitionId].bedsPerLevel.length === 0) return 'NoBuilding';
   if (building.state !== 'Built') return 'NoBuilding';
   // They left the roster when they fell, so they have to fit back into it.
   if (committedTroops(state) + want > armyCap(state)) return 'ArmyAtCapacity';
@@ -249,6 +254,12 @@ export const trainerFor = (state: GameState, trainee: TrainableId): District | u
 /** Everything this building can turn out — the UNITS row on its card. */
 export const trainableAt = (district: District): readonly TrainableId[] =>
   DISTRICTS[district.definitionId].trains;
+
+/** Whether this building has a bench at all: one that trains, or one that
+ *  mends. Both use the same line, one item at a time. */
+export const runsALine = (district: District): boolean =>
+  trainableAt(district).length > 0
+  || DISTRICTS[district.definitionId].bedsPerLevel.length > 0;
 
 /** Seconds on the clock for one trainee, as authored. Villagers are authored
  *  once in Settings; soldiers carry their own duration. */
@@ -429,7 +440,7 @@ export function advanceTraining(state: GameState, toTime: number): TrainableId[]
     // that trains anything runs a line, which is what put the Townhall's
     // villagers on the same clock as the halls' soldiers.
     for (const d of state.city.districts) {
-      if (d.state !== 'Built' || trainableAt(d).length === 0) continue;
+      if (d.state !== 'Built' || !runsALine(d)) continue;
       const head = lineFor(state, d.uniqueId)[0];
       if (head && head.startedAt === null) startTrainee(state, head, toTime);
     }

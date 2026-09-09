@@ -312,13 +312,12 @@ const SETTINGS = [
   ['army.damage_absorbed_per_defence', 'army.damageAbsorbedPerDefence'],
   // WHAT A FIGHT COSTS IN BODIES, and how much of it comes back. Every fight
   // takes casualties (Docs/features/combat.md §4); `wounded_share` of them
-  // reach the infirmary instead of the grave, and `wounded_cap_share` — a
-  // share of the army cap, so the halls that hold the army hold its wounded —
-  // is how many can wait there at once. Anything past it dies, which is what
-  // makes the number a decision. Healing is priced against RECRUITING the
-  // same soldier: cheaper in both coins and clock, or nobody would bother.
+  // are carried to the Infirmary instead of the grave — and only as many as
+  // it has BEDS for, which is `Districts.beds_per_level` and nothing here,
+  // because the ward is a building the player chose to place. Healing is
+  // priced against RECRUITING the same soldier: cheaper in both coins and
+  // clock, or nobody would bother.
   ['army.wounded_share', 'army.woundedShare'],
-  ['army.wounded_cap_share', 'army.woundedCapShare'],
   ['army.heal_cost_share', 'army.healCostShare'],
   ['army.heal_time_share', 'army.healTimeShare'],
   // Delves. `fail_haul_loss` is the number that most needs playtest rather
@@ -372,7 +371,7 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'army_cap_per_level',
+  'army_cap_per_level', 'beds_per_level',
   'build_cost_gold', 'build_cost_wood', 'build_cost_food',
   'build_cost_stone', 'build_cost_goods',
   'build_cost_multiplier', 'build_cost_exponential_growth',
@@ -391,7 +390,7 @@ const DISTRICT_COLUMNS = [
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'army_cap_per_level',
+  'army_cap_per_level', 'beds_per_level',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level', 'sale_price_per_level',
   'build_cost_goods', 'harmony_cost_per_level',
@@ -711,6 +710,10 @@ async function importXlsx() {
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
       armyCapPerLevel: list(r, 'army_cap_per_level'),
+      // The infirmary's beds: how many wounded the city can hold at once
+      // (Docs/features/combat.md §4). Only the Infirmary has any, which is
+      // what makes healing a building rather than a rule.
+      bedsPerLevel: list(r, 'beds_per_level'),
       buildCost: wallet(r, 'build_cost'),
       // Refined goods a BUILD costs, on top of the currencies. Only the
       // decorations name any today, and that is the point of them: a piece of
@@ -771,7 +774,8 @@ async function importXlsx() {
       }
       if (d.maxLevel !== 1) fail(where(r), 'a decoration has no ladder — "max_level" must be 1');
       for (const col of ['max_workers_per_level', 'population_capacity',
-        'army_cap_per_level', 'influence_radius_per_level', 'queue_length_per_level']) {
+        'army_cap_per_level', 'beds_per_level', 'influence_radius_per_level',
+        'queue_length_per_level']) {
         if (list(r, col).length > 0) fail(where(r), `a decoration has no "${col}"`);
       }
       if (made !== null) fail(where(r), 'a decoration makes nothing — clear "produces"');
