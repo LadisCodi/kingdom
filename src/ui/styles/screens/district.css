@@ -500,10 +500,15 @@
   white-space: nowrap;
 }
 /* The number is the thing being compared across four tiles, so it is the
-   biggest ink in the block and it lines up under its own mark. */
+   biggest ink in the block and it lines up under its own mark.
+   THE BODY FACE, not the display one: a number is body copy by the rule in
+   tokens.css, and BoldPixels is crisp only at 16/32/48 — at --text-body it
+   was being antialiased, which is the one thing a pixel face exists not to
+   do. --text-body still reads as the loudest line here, against the head's
+   --text-helper above it. */
 .tr-fig-value {
   padding-left: 2px;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: var(--text-body);
   color: var(--ink);
 }
