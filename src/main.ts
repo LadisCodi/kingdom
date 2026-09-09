@@ -42,6 +42,7 @@ import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
+import { renderGateSheet } from './ui/gateSheet';
 import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
@@ -49,6 +50,7 @@ import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
 import { mountDelvePill } from './ui/delvePill';
+import { mountRaidPill } from './ui/raidPill';
 import { mountBanner } from './ui/banner';
 import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
@@ -130,6 +132,7 @@ async function boot(): Promise<void> {
   mountQuestPill(game, document.getElementById('quest')!);
   mountDailyPill(game, document.getElementById('daily')!);
   mountDelvePill(game, document.getElementById('delves')!);
+  mountRaidPill(game, document.getElementById('raids')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
@@ -162,6 +165,7 @@ async function boot(): Promise<void> {
     reliquary: renderReliquarySheet,
     heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
+    gate: renderGateSheet,
     checkpoint: renderCheckpointSheet,
     mana: renderManaSheet,
     builder: renderBuilderSheet,
@@ -225,7 +229,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'reliquary', 'heroes', 'expedition', 'checkpoint', 'welcome', 'settings',
+        'purse', 'reliquary', 'heroes', 'expedition', 'gate', 'checkpoint', 'welcome', 'settings',
         'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);

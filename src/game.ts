@@ -41,10 +41,14 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, launchBlock, launchDelve,
-  previewExpedition, pushDeeper, supplyCost, unitSlots,
-  type ExpeditionPreview, type LaunchBlock,
+  attemptGate, buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, gateBlock,
+  launchBlock, launchDelve, previewExpedition, previewGate, pushDeeper, supplyCost, unitSlots,
+  type ExpeditionPreview, type GateBlock, type GatePreview, type LaunchBlock,
 } from './sim/expeditions';
+import {
+  dismissRaidReports, gateCreature, gateIsCleared, gateSupplies, gateView, nextGateToRaid,
+  openGates, type GateView,
+} from './sim/gates';
 import {
   claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft, levelUpHero,
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
@@ -118,7 +122,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'heroes' | 'expedition' | 'checkpoint' | 'mana' | 'builder'
+  | 'reliquary' | 'heroes' | 'expedition' | 'gate' | 'checkpoint' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
@@ -209,6 +213,11 @@ export class Game {
   inspectedDistrictId: string | null = null;
   /** The ruin the expedition sheet is being composed for. */
   expeditionRuin: RuinId | null = null;
+  /** The ruin whose GATE the room sheet is being composed for. The party
+   *  fields below are shared with the expedition sheet on purpose: it is the
+   *  same board, and the gate is the ruin's frontier room while it stands
+   *  (Docs/features/18-garrisons-and-raids.md §5). */
+  gateRuin: RuinId | null = null;
   /** What the player has picked so far, by unit type. Lives on the presenter
    *  rather than in the view because it survives the per-tick rebuild and is
    *  node-testable. */
@@ -372,6 +381,15 @@ export class Game {
           desc: `Now level ${district.level}`, tone: 'leaf',
           sprite: `${def.sprite}_l${district.level}`, sfx: 'constructionComplete'
         });
+    }
+    // A raid landing while the player is HERE gets a line: the widget carries
+    // the report, but a purse that quietly shrinks is the one thing this
+    // feature must never do silently. An absence is summarised by the widget
+    // instead — the welcome sheet already owns "while you were away".
+    for (const raid of result.raids) {
+      if (Object.keys(raid.took).length === 0) continue;
+      const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
+      this.toast(`${gateCreature(raid.ruinId)} raided the city — ${took}`);
     }
     for (const id of result.completedResearch) {
       const tech = TECHNOLOGIES[id];
@@ -1685,6 +1703,15 @@ export class Game {
         }
         break;
       }
+      case 'ClearGarrisons': {
+        // The gate whose counter is nearest, which is the one the quest
+        // means; failing that, the frontier — the answer is "go and find
+        // one".
+        const open = this.openGateViews()[0];
+        if (open) this.showRuin(open.ruinId);
+        else centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      }
       case 'ReachDepth':
       case 'ClearRuins': {
         // A party already underground is the answer; otherwise the nearest
@@ -1853,16 +1880,19 @@ export class Game {
     // passive the player is living off, and the sheet must not make that
     // choice on their behalf — an empty socket is the only honest default.
     this.expeditionArtifact = null;
+    this.prefillParty(RUINS[ruinId].affinity);
+    this.setOverlay('expedition');
+  }
+
+  /** The party a sheet opens with: the best-answering types on hand, clamped
+   *  to the army cap. Proposing a party the player cannot field is worse than
+   *  proposing a small one — the sheet would open pre-filled AND pre-blocked,
+   *  which reads as the game refusing its own suggestion. */
+  private prefillParty(affinity: UnitId | 'Any'): void {
     const roster = availableRoster(this.state);
-    const affinity = RUINS[ruinId].affinity;
-    // Best-answering type first, then whatever else is on hand — a sensible
-    // default the player can immediately override, not a recommendation.
     const order = (Object.keys(roster) as UnitId[])
       .filter((u) => roster[u] > 0)
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
-    // Clamped to the army cap. Proposing a party the player cannot field is
-    // worse than proposing a small one: the sheet would open pre-filled AND
-    // pre-blocked, which reads as the game refusing its own suggestion.
     let budget = maxArmyPower(this.state);
     this.expeditionParty = [];
     for (const unitId of order.slice(0, unitSlots(this.state))) {
@@ -1871,7 +1901,136 @@ export class Game {
       budget -= affordable * UNITS[unitId].power;
       this.expeditionParty.push({ unitId, count: affordable });
     }
-    this.setOverlay('expedition');
+  }
+
+  // ------------------------------------------------------------- the gate
+
+  /** Gates the player has found and not yet cleared, nearest raid first. */
+  openGateViews(): GateView[] {
+    return openGates(this.state)
+      .map((id) => gateView(this.state, id)!)
+      .sort((a, b) => (a.nextRaidAt ?? Infinity) - (b.nextRaidAt ?? Infinity));
+  }
+
+  gateFor(ruinId: RuinId): GateView | null {
+    return gateView(this.state, ruinId);
+  }
+
+  gateIsCleared(ruinId: RuinId): boolean {
+    return gateIsCleared(this.state, ruinId);
+  }
+
+  /**
+   * The raid widget, in the slot the Mana offer uses.
+   *
+   * It never opens itself: it says which garrison is closest to coming down
+   * the hill, or what the last one took, and waits to be tapped.
+   */
+  raidWidget(): {
+    ruinId: RuinId; creature: string; raidsAt: number | null; others: number;
+    took: Wallet | null; reports: number;
+  } | null {
+    if (this.state.raidReports.length > 0) {
+      const last = this.state.raidReports[this.state.raidReports.length - 1];
+      const took: Wallet = {};
+      // Several raids in one absence are ONE summary, not a stack of pills.
+      for (const r of this.state.raidReports) {
+        for (const [c, n] of Object.entries(r.took)) {
+          took[c as CurrencyId] = (took[c as CurrencyId] ?? 0) + n;
+        }
+      }
+      return {
+        ruinId: last.ruinId,
+        creature: gateCreature(last.ruinId),
+        raidsAt: null,
+        others: 0,
+        took,
+        reports: this.state.raidReports.length,
+      };
+    }
+    const soonest = nextGateToRaid(this.state);
+    if (soonest === null) return null;
+    const gate = this.gateFor(soonest)!;
+    return {
+      ruinId: soonest,
+      creature: gate.creature,
+      raidsAt: gate.nextRaidAt,
+      others: this.openGateViews().filter((g) => g.nextRaidAt !== null).length - 1,
+      took: null,
+      reports: 0,
+    };
+  }
+
+  dismissRaids(): void {
+    dismissRaidReports(this.state);
+    this.notify();
+  }
+
+  /** Fly to a ruin and open its card. The widget's only action, and the
+   *  quest chain's when it points at a garrison. */
+  showRuin(ruinId: RuinId): void {
+    this.setOverlay(null);
+    this.inspectedSite = RUINS[ruinId].location;
+    this.inspectedDistrictId = null;
+    this.camera.centerOnCell(RUINS[ruinId].location);
+    this.notify();
+  }
+
+  /** Open the room sheet on a gate. A hero ALONE is a legal board here, so
+   *  this never opens pre-blocked for want of an army. */
+  openGate(ruinId: RuinId): void {
+    this.gateRuin = ruinId;
+    this.expeditionHero = freeHeroes(this.state)[0] ?? null;
+    this.expeditionArtifact = null;
+    this.prefillParty(RUINS[ruinId].guard.threat);
+    this.setOverlay('gate');
+  }
+
+  gatePreview(): GatePreview | null {
+    if (this.gateRuin === null) return null;
+    return previewGate(this.state, this.gateRuin, this.expeditionHero, this.expeditionParty);
+  }
+
+  /** Why the attempt cannot be made, in words. A power SHORTFALL is not here:
+   *  it warns on the sheet and lets the player go anyway. */
+  gateBlockText(): string | null {
+    if (this.gateRuin === null) return 'No gate chosen';
+    const block = gateBlock(
+      this.state, this.map, this.gateRuin, this.expeditionHero, this.expeditionParty);
+    return block === null ? null : GATE_BLOCK_TEXT[block];
+  }
+
+  doClearGate(): void {
+    if (this.gateRuin === null || this.expeditionHero === null) return;
+    const ruinId = this.gateRuin;
+    const report = attemptGate(
+      this.state, this.map, ruinId, this.expeditionHero, this.expeditionParty);
+    if (report.result === 'Cleared') {
+      playSfx('questComplete');
+      this.setOverlay(null);
+      this.gateRuin = null;
+      const hoard = Object.entries(report.hoard)
+        .map(([c, n]) => `${n} ${c}`).join(', ');
+      this.queueBanner({
+        title: 'The gate is ours!',
+        icon: RUINS[ruinId].glyph,
+        name: RUINS[ruinId].name,
+        desc: hoard === ''
+          ? 'The way in is open. Nothing they took, because they never came.'
+          : `The way in is open, and they gave back everything: ${hoard}.`,
+        sprite: RUINS[ruinId].sprite,
+        tone: 'gold',
+        sfx: 'chainFinished',
+      });
+    } else if (report.result === 'Repelled') {
+      playSfx('error');
+      this.toast('Driven off. The supplies are gone — come back stronger.');
+    } else if (report.result === 'NotEnoughSupplies') {
+      this.shake(Object.keys(gateSupplies(ruinId)) as CurrencyId[]);
+    } else {
+      this.toast(GATE_BLOCK_TEXT[report.result]);
+    }
+    this.notify();
   }
 
   setExpeditionHero(heroId: HeroId): void {
@@ -2852,6 +3011,19 @@ const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
   // choice is the feature, so the refusal has to read as one.
   ArtifactAttuned: 'That relic is attuned — unsocket it from the Reliquary first',
   ArtifactCarried: 'That relic is already with another party',
+};
+
+/** Why a gate attempt is refused. A power shortfall is NOT one of these: it
+ *  warns on the sheet and the player may go anyway. */
+const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
+  RuinNotFound: 'Clear a path to the ruin first',
+  AlreadyCleared: 'That gate is already down',
+  NoHero: 'Pick a hero to lead them',
+  HeroBusy: 'That hero is already underground',
+  TooManySlots: 'Too many kinds of unit — buy another party slot',
+  NotEnoughUnits: 'You do not have that many at home',
+  OverArmyCap: 'More than your army can field',
+  NotEnoughSupplies: 'Not enough supplies to march',
 };
 
 /** How well a unit type answers a ruin's affinity — used only to pre-fill a

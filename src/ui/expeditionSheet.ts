@@ -76,8 +76,9 @@ function artifactPicker(game: Game): HTMLElement {
   return row;
 }
 
-/** Who leads. A hero is MANDATORY, so this is never an empty row. */
-function heroPicker(game: Game): HTMLElement {
+/** Who leads. A hero is MANDATORY, so this is never an empty row. Exported
+ *  because the gate's room sheet fields the same board (ui/gateSheet.ts). */
+export function heroPicker(game: Game): HTMLElement {
   const free = freeHeroes(game.state);
   const row = el('div', { class: 'exp-heroes' });
   for (const id of game.state.heroes.owned) {
@@ -101,7 +102,7 @@ function heroPicker(game: Game): HTMLElement {
 /** The troops. A slot holds a unit TYPE and every unit of it you send, so
  *  this is a stepper per type, and the LIMIT is how many types — which is
  *  what makes the matchup chart a real decision. */
-function troopPicker(game: Game): HTMLElement {
+export function troopPicker(game: Game): HTMLElement {
   const roster = availableRoster(game.state);
   const owned = (Object.keys(roster) as UnitId[]).filter((u) => roster[u] > 0);
   const chosenTypes = game.expeditionParty.filter((s) => s.count > 0).length;

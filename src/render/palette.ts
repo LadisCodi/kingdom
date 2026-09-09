@@ -18,6 +18,10 @@ export const PALETTE = {
   siteBadge: '#f4e2b8',
   siteBadgeEdge: '#5a3d24',
   siteBadgeInk: '#3a2716',
+  // The same badge while a garrison is counting down on a ruin: the minutes
+  // left, in the colour of the thing that is about to happen.
+  siteBadgeRaid: '#d8613f',
+  siteBadgeRaidInk: '#2a120c',
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',

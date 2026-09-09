@@ -1670,7 +1670,7 @@
       "tier": 1, "difficulty": 6,
       "baseDepthSeconds": 180, "depthGrowth": 1.15, "maxDepth": 5,
       "supplies": { "Food": 20, "Gold": 50 },
-      "guard": { "threat": "Warrior", "power": 2, "warningMinutes": 30, "periodMinutes": 30 },
+      "guard": { "threat": "Warrior", "power": 1, "warningMinutes": 30, "periodMinutes": 30 },
       "affinity": "Warrior", "artifact": "DowsingRod"
     },
     "SunkenChapel": {

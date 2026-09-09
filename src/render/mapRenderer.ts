@@ -159,16 +159,16 @@ export function drawMap(
   };
 
   /** A small corner tag on a site: what it still wants from the player. */
-  const drawSiteBadge = (x: number, y: number, text: string): void => {
+  const drawSiteBadge = (x: number, y: number, text: string, alarm = false): void => {
     const r = Math.max(6, size * 0.13);
     ctx.beginPath();
     ctx.arc(x + size - r - 2, y + r + 2, r, 0, Math.PI * 2);
-    ctx.fillStyle = PALETTE.siteBadge;
+    ctx.fillStyle = alarm ? PALETTE.siteBadgeRaid : PALETTE.siteBadge;
     ctx.fill();
     ctx.strokeStyle = PALETTE.siteBadgeEdge;
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = PALETTE.siteBadgeInk;
+    ctx.fillStyle = alarm ? PALETTE.siteBadgeRaidInk : PALETTE.siteBadgeInk;
     ctx.font = labelFont(r * 1.2, 12, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -291,8 +291,15 @@ export function drawMap(
           }
         });
         // The tier alone: a bare digit reads at any zoom, and "T1" in a
-        // pixel display face is one stroke away from an arrow.
-        drawSiteBadge(x, y, String(ruin.tier));
+        // pixel display face is one stroke away from an arrow. While a
+        // garrison is counting down it takes the badge instead — the minutes
+        // left, which is the only thing about this ruin that is urgent
+        // (Docs/features/18-garrisons-and-raids.md §7).
+        const gate = state.gates[ruin.id];
+        const raidIn = gate && !gate.cleared && gate.nextRaidAt !== null
+          ? Math.max(0, Math.ceil((gate.nextRaidAt - now) / 60_000)) : null;
+        if (raidIn !== null) drawSiteBadge(x, y, String(raidIn), true);
+        else drawSiteBadge(x, y, String(ruin.tier));
       }
 
       if (fog === 'Revealed') drawResourceState(cell, x, y);
