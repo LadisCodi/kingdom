@@ -4121,7 +4121,7 @@
   },
   "city": {
     "initialCurrencies": {
-      "Gold": 50,
+      "Gold": 100,
       "Food": 0
     },
     "initialPopulation": 0,

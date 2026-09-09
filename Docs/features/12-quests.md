@@ -71,8 +71,13 @@
 
 ### 2.1 The opening economy
 
-- A new kingdom starts with **50 Gold** and **500 Gems**, and **no Knowledge
-  at all**. The chain pays for the research it asks for: **quest 1 pays 7**,
+- A new kingdom starts with **100 Gold** and **500 Gems**, and **no Knowledge
+  at all**. The purse doubled with the fog's price table
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §5): the first frontier cells now
+  cost 3 and 5 Gold, and at fifty a player who spent on the border before
+  raising a roof had no rent coming and no way back — the 30-day harness
+  never reached Townhall 2. The cliff sat between 50 and 60; a hundred clears
+  it twice over. The chain pays for the research it asks for: **quest 1 pays 7**,
   which is Forestry's 2 plus the five of headroom the chain test insists on so
   a re-priced technology never strands the tutorial, and **every quest after
   it pays at least 1**. A grant handed over at the title screen taught the

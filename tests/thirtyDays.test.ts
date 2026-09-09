@@ -436,7 +436,9 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   }
   // Half the purse is the tree's for this visit; the other half stays for fog
   // and buildings. Without a budget a chained researcher spends the opening's
-  // fifty Gold on cards and never buys a house.
+  // hundred Gold on cards and never buys a house — and the other half is what
+  // has to cover the first cells of fog AND the first roof, which is the
+  // knife-edge that set the opening purse (12-quests.md §2.1).
   let budget = getWallet(state.city.wallet, 'Gold') / 2;
   for (let i = 0; i < 40; i++) {
     const byCost = (a: TechId, b: TechId) => techCost(a) - techCost(b);
