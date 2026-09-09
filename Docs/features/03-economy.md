@@ -23,22 +23,26 @@
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
 | **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
 | **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
-| **Stardust** | dungeons | relic and hero levels | kingdom | no — reads in the Reliquary |
+| **Stardust** | dungeons | relic levels · the toll on a hero's ascension | kingdom | no — reads in the Reliquary and on the roster |
+| **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
 | **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
-| **Gems** | quests, first clears, the daily week marker, the simulated store | power, comfort and breadth | player | yes |
+| **Gems** | quests, first clears, the daily chest (both tracks), the simulated store | power, comfort and breadth | player | yes |
 | **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
-| **Gold key** | 1,500 Gems, or a free call's ad | one call on the golden banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, a free call's ad, or the daily chest's Royal track | one call on the golden banner | player | no — a price on a button |
 
-- Ten wallet rows; five on the plank; three of them for the whole first hour.
+- Eleven wallet rows; five on the plank; three of them for the whole first hour.
 - Adding a wallet row needs an argument. The usual alternatives: a
   per-collectible counter (the Fragments precedent) or event points as a
   counter ([`13-events.md`](13-events.md) §2.1).
+- **Hero XP took a row** because it is spent on *any* hero: a per-hero counter
+  would leave a freshly pulled hero at level 1 with nothing to level it
+  ([`10-heroes.md`](10-heroes.md) §4).
 - **The keys took the row.** A counter would have worked for holding them, but
   a key is a **price**, and a price is what a wallet row is for: the button
   that spends one renders its cost and its short state from the wallet, the
   way every other price in the game does. Two rows rather than one because
   the two banners must be able to cost differently
-  ([`10-heroes.md`](10-heroes.md) §5.1).
+  ([`10-heroes.md`](10-heroes.md) §6.1).
 - A key never reaches the plank and never reaches the Market: it has no gold
   value, so nothing can trade it.
 - **Refined goods follow that rule**: Planks, Cut Stone, Iron and Runestone
@@ -50,10 +54,11 @@
 | Name | Job | Source | Scope |
 |---|---|---|---|
 | **Knowledge** | the research clock | time, capped | **city** |
-| **Stardust** | levels of relics and heroes | dungeons | **kingdom** |
+| **Stardust** | levels of relics; the toll on a hero's ascension | dungeons | **kingdom** |
+| **Hero XP** | levels of heroes | dungeons | **kingdom** |
 
 - Knowledge is city-scoped, like Mana; it does not survive a region reset.
-- Stardust is kingdom-scoped; it survives a region reset.
+- Stardust and Hero XP are kingdom-scoped; they survive a region reset.
 - In docs and code the key is `Stardust`; *Polvo estelar* is the localised
   string.
 

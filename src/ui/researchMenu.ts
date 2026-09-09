@@ -25,7 +25,6 @@ import {
 } from '../sim/research';
 import { techLine } from '../sim/techProse';
 import { knowledgePerHour } from '../sim/mana';
-import { resourceDiscoveryKey } from '../sim/discovery';
 import { type GameState, type TechId, type TomeId } from '../sim/state';
 import {
   colLeft, edgeD, edgePath, GATE_BAR_H, NODE_H, NODE_W, PAGE_W, pageRows, rowTops, ROW_GAP,
@@ -88,45 +87,9 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const busy = state.research.active.length;
   const slots = techSlots(state);
 
-  // Scholars at lecterns, not "Slots: 1 busy / 2". A concurrency limit is an
-  // abstraction; people at desks is something the player can picture.
-  const desks = el('div', { class: 'res-desks' });
-  for (let i = 0; i < slots; i++) {
-    desks.append(el('span', { class: `res-desk${i < busy ? ' is-busy' : ''}` },
-      iconEl(i < busy ? 'research' : 'clock', { size: 'sm' })));
-  }
-  const bar = el('div', { class: 'res-scholars' },
-    desks,
-    el('span', { class: 'res-desk-label' }, busy === 0
-      ? `${slots} ${slots === 1 ? 'scholar' : 'scholars'} idle`
-      : `${busy} of ${slots} at work`));
-  if (slots < RESEARCH_SETTINGS.maxSlots) {
-    const cost = slotGemCost(state);
-    bar.append(btn({
-      label: 'Hire',
-      kind: 'gem',
-      onClick: () => game.doBuySlot(),
-      // The price used to be spliced into the label, where it read as part of
-      // the verb rather than as something you pay.
-      cost: { Gems: cost },
-      have: (c) => game.walletValue(c),
-    }));
-  }
   const close = knob('✕', () => game.dismiss(), { label: 'Close Research' });
   close.setAttribute('data-own-close', '');
-  // The clock, where it is spent. Knowledge has no coin on the plank — it is
-  // paid in exactly one screen, so it reads in that screen's header, with its
-  // RATE beside the balance because a drip you cannot see the speed of is a
-  // drip you cannot plan against. Hidden until the player has met it: a zero
-  // row would advertise a currency the tutorial has not yet introduced.
-  const held = game.walletValue('Knowledge');
-  const rate = knowledgePerHour(state);
-  if (held > 0 || rate > 0 || state.discoveries[resourceDiscoveryKey('Knowledge')] === true) {
-    bar.append(el('span', { class: 'res-clock' },
-      iconEl('Knowledge', { size: 'sm' }),
-      el('b', {}, String(held)),
-      el('span', { class: 'res-clock-rate' }, rate > 0 ? `+${rate}/h` : 'no drip')));
-  }
+  const bar = slotStrip(game, busy, slots);
   const tabs = shelf(game);
   root.append(el('div', { class: 'research-topbar' },
     el('h2', {}, TOMES[activeTome].name), bar, close));
@@ -245,11 +208,79 @@ export function renderResearchMenu(game: Game): HTMLElement {
   }
   root.append(page);
 
-  // ---- floating bottom info panel, only while something is selected ----
+  // ---- the card's own sheet, over everything, while one is selected ----
   if (selected?.kind === 'tech') {
-    root.append(techInfoPanel(game, selected.id, busy, slots));
+    root.append(techInfoModal(game, selected.id, busy, slots));
   }
   return root;
+}
+
+/**
+ * THE SLOTS, as a row of desks you can point at.
+ *
+ * This replaced a sentence ("2 of 3 at work") and a Hire button beside it.
+ * A count is an abstraction; a strip of slots is the thing itself — how many
+ * you have, which are running, when each frees up, and what the next one
+ * costs, all in one glance and all in the same units.
+ *
+ * The row is every unlocked slot, plus ONE locked one when there are more to
+ * buy. Never the whole ladder: an empty slot is an invitation and four of
+ * them is a shop.
+ *
+ * Three states, each with its own line underneath:
+ *   free    — nothing running; the line says so
+ *   in use  — the time left on what is running
+ *   locked  — the Gems it costs, and pressing it buys
+ */
+function slotStrip(game: Game, busy: number, slots: number): HTMLElement {
+  const state = game.state;
+  const strip = el('div', { class: 'res-slots' });
+
+  // Active research in start order, so a slot does not change its occupant
+  // when another finishes.
+  const running = [...state.research.active]
+    .sort((a, b) => a.startedAt - b.startedAt);
+
+  for (let i = 0; i < slots; i += 1) {
+    const active = running[i];
+    if (active === undefined) {
+      strip.append(el('div', { class: 'res-slot is-free' },
+        el('div', { class: 'res-slot-box' }, iconEl('plus', { size: 'md' })),
+        el('div', { class: 'res-slot-note' }, 'Free')));
+      continue;
+    }
+    const def = TECHNOLOGIES[active.id];
+    const completesAt = techCompletesAt(state, active.id)!;
+    const left = Math.max(0, (completesAt - game.now()) / 1000);
+    const box = el('button', {
+      class: 'res-slot-box is-busy', type: 'button', 'aria-label': def.name,
+    }, el('span', { class: 'res-slot-glyph' }, def.glyph));
+    // Tapping the desk opens what is on it, which is where the Gem finish is.
+    box.addEventListener('click', () => {
+      selected = { kind: 'tech', id: active.id };
+      game.notify();
+    });
+    strip.append(el('div', { class: 'res-slot is-busy' },
+      box,
+      el('div', { class: 'res-slot-note' }, formatDuration(left))));
+  }
+
+  if (slots < RESEARCH_SETTINGS.maxSlots) {
+    const cost = slotGemCost(state);
+    const short = game.walletValue('Gems') < cost;
+    const box = el('button', {
+      class: `res-slot-box is-locked${short ? ' is-short' : ''}`,
+      type: 'button',
+      'aria-label': `Unlock a research slot for ${cost} Gems`,
+    }, iconEl('plus', { size: 'md' }));
+    box.addEventListener('click', () => game.doBuySlot());
+    strip.append(el('div', { class: 'res-slot is-locked' },
+      box,
+      el('div', { class: `res-slot-note${short ? ' is-short' : ''}` },
+        iconEl('Gems', { size: 'sm' }), String(cost))));
+  }
+  void busy;
+  return strip;
 }
 
 /**
@@ -319,15 +350,38 @@ function card(game: Game, id: TechId, top: number, col: number): HTMLElement {
   return node;
 }
 
-function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTMLElement {
+/**
+ * A technology, opened.
+ *
+ * A MODAL over the whole book, not a panel resting on the bottom of it. The
+ * panel had to be short enough to leave the page usable behind it, which is
+ * the wrong constraint on the one surface that has to say what a card does,
+ * what it needs, what it costs and how long it takes. Nothing else is
+ * actionable while it is up, so nothing else needs the room.
+ *
+ * Two ways out, because a modal with one is a trap: the ✕ and the scrim.
+ */
+function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTMLElement {
   const state = game.state;
   const def = TECHNOLOGIES[id];
+  const dismiss = (): void => { selected = null; game.notify(); };
+
   const panel = el('div', { class: 'tech-info' });
-  panel.append(el('h3', {}, `${def.glyph} ${def.name}`));
+  const head = el('div', { class: 'tech-info-head' },
+    el('h3', {}, `${def.glyph} ${def.name}`),
+    knob('✕', dismiss, { label: 'Close' }));
+  panel.append(head);
   // WHAT IT DOES, in full. The card carries only the glyph and the name, so
   // this is the first place the player reads the sentence — and the whole of
   // it, where a card would have clipped it to three lines.
   panel.append(el('div', { class: 'res-says' }, techLine(id)));
+  // A PROPERTY OF THE TECHNOLOGY, so it reads with the other properties
+  // rather than inside a button. It was a note on Start, where it looked like
+  // a fact about the press instead of a fact about the card — and it is true
+  // whichever button the player ends up using, or neither.
+  panel.append(el('div', { class: 'res-duration' },
+    iconEl('hourglass', { size: 'sm' }),
+    `Duration: ${formatDuration(def.durationSeconds)}`));
   if (def.planned) {
     // Said in the game, not only in a doc: a playtester who researches this
     // must know before they pay that it does nothing yet.
@@ -352,24 +406,66 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
     (bar.querySelector('.fill') as HTMLElement).style.width =
       `${Math.min(100, Math.max(0, (1 - (completesAt - game.now()) / total) * 100))}%`;
     panel.append(bar);
+    // The same offer the Townhall makes, at the same price per second: a
+    // player who has learned what a minute costs there does not learn it
+    // again here (Docs/features/07-research.md §1).
+    const gems = game.techRushGems(id);
+    if (gems !== null) {
+      panel.append(action({
+        label: 'Finish now',
+        kind: 'gem',
+        onClick: () => game.doFinishTech(id),
+        cost: { Gems: gems },
+        have: (c) => game.walletValue(c),
+      }));
+    }
   } else {
     const short = eraShortfall(state, def.tome, def.era);
-    panel.append(action({
+    // ONE reason for the pair. Both buttons are stopped by the same three
+    // things — a requirement, a shut band, a full strip — so saying it twice
+    // between two buttons would be a wall of the same sentence. Affordability
+    // is not in here: the red number inside each button has already said it
+    // (§6.3, §6.4).
+    const blocked = !requirementsMet(state, id)
+      ? 'Research what it needs first'
+      : short > 0
+        ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
+        : busy >= slots
+          ? 'Every scholar is busy'
+          : undefined;
+    if (blocked !== undefined) {
+      panel.append(el('div', { class: 'tech-info-blocked' },
+        iconEl('padlock', { size: 'sm' }), blocked));
+    }
+
+    // Side by side: two ways to have the same thing, and a player choosing
+    // between them is comparing two prices. The wait rides INSIDE Start,
+    // which is the fact that tells the two apart — `Instant` needs no line
+    // under it saying what the word already says.
+    const row = el('div', { class: 'tech-info-actions' });
+    // INSTANT on the LEFT. The whole wait, bought: both halves of it are time
+    // — the Knowledge the drip still owes, and the research itself — so both
+    // are priced per second like every other rush.
+    const instant = game.techInstantGems(id);
+    if (instant !== null) {
+      row.append(btn({
+        label: 'Instant',
+        kind: 'gem',
+        onClick: () => game.doBuyTechInstant(id),
+        cost: { Gems: instant },
+        have: (c) => game.walletValue(c),
+        disabledReason: blocked,
+      }));
+    }
+    row.append(btn({
       label: 'Start',
       kind: 'primary',
       onClick: () => game.doStartTech(id),
       cost: def.cost,
       have: (c) => game.walletValue(c),
-      disabledReason: !requirementsMet(state, id)
-        ? 'Research what it needs first'
-        : short > 0
-          ? `Reveal ${short} more ${short === 1 ? 'cell' : 'cells'} to read on`
-          : busy >= slots
-            ? 'Every scholar is busy'
-            : undefined,
-      info: el('span', { class: 'res-time' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(def.durationSeconds)),
+      disabledReason: blocked,
     }));
+    panel.append(row);
     // A trickle currency without a time-to-afford line is one the player
     // cannot plan against (07-research.md §4). Only when Knowledge is
     // the thing short: Gold has its own answer, which is to go and earn it.
@@ -382,5 +478,10 @@ function techInfoPanel(game: Game, id: TechId, busy: number, slots: number): HTM
           : 'Claim a landmark or clear a ruin — nothing is dripping yet'));
     }
   }
-  return panel;
+
+  const scrim = el('div', { class: 'tech-modal' }, panel);
+  // The scrim dismisses; the panel does not, or every press inside it would
+  // close the thing being pressed.
+  scrim.addEventListener('click', (e) => { if (e.target === scrim) dismiss(); });
+  return scrim;
 }

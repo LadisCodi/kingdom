@@ -64,13 +64,13 @@
 | Tap a province cell | **1 Mana** |
 | Cast a **spell**, either map ([`07-research.md`](07-research.md) §6) | **Mana** |
 | Reveal a world hex | **Gold + time**, scaling with distance |
-| Send a party, assault a garrison, claim, besiege | supplies, army commitment, time |
+| Send a party, clear a gate, claim, besiege | supplies, army commitment, time |
 
 - A spell aimed at a shared node or a guild siege is *a modifier with an expiry,
   delivered as a pending effect* — the daily-help mechanism of
   [`15-social.md`](15-social.md) §3.1. Examples:
-  - reveal the threat on a contested node (the Scout's trait, pointed at the
-    world);
+  - reveal the threat on a contested node (the Guild's scouting, pointed at
+    the world);
   - speed every guildmate's committed units in a siege (Haste, guild scope);
   - shield a claim for 12 hours.
 - Casting reuses **placement mode**: select, valid cells highlight, tap to

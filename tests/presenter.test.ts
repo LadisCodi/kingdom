@@ -18,6 +18,8 @@ import {
   addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map,
   reveal, screenAt,
 } from './helpers';
+import { grantHero } from '../src/sim/heroes';
+import { addToWallet } from '../src/sim/state';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -534,5 +536,85 @@ describe('placement labels read the ground', () => {
       expect(parseInt(y.label, 10))
         .toBe(effectiveStock(map, y.cell, HARVEST.Forest));
     }
+  });
+});
+
+// The heroes screen opts out of the per-tick rebuild by declaring what it
+// reads (src/ui/kit/host.ts). A signature that misses an input does not
+// flicker — it goes stale — so these assert the two halves of the contract:
+// a bare second changes nothing, and every hero-facing move changes it.
+// The plank carries what the OPEN SCREEN spends. The roster's two coins are
+// on no plank anywhere, and the city's four buy nothing there — so it is a
+// swap, not an addition, which is also what keeps the row from clipping.
+describe('the plank follows the screen', () => {
+  it('carries the city coins on the map', () => {
+    const game = freshPresenter();
+    expect(game.visibleCurrencies()).toContain('Gold');
+    expect(game.visibleCurrencies()).not.toContain('HeroXp');
+  });
+
+  it('swaps to Hero XP and Stardust while the roster is open', () => {
+    const game = freshPresenter();
+    game.setOverlay('heroes');
+
+    expect(game.visibleCurrencies()).toEqual(['HeroXp', 'Stardust']);
+  });
+
+  it('keeps Gold beside the clock on the research screen', () => {
+    const game = freshPresenter();
+    game.setOverlay('research');
+
+    // Not the roster's clean swap: a technology is priced in Gold AND
+    // Knowledge, and a plank showing one half of a price is worse than one
+    // showing neither.
+    expect(game.visibleCurrencies()).toEqual(['Gold', 'Knowledge']);
+  });
+
+  it('gives the coins back when the roster closes', () => {
+    const game = freshPresenter();
+    game.setOverlay('heroes');
+    game.setOverlay(null);
+
+    expect(game.visibleCurrencies()).toContain('Gold');
+  });
+});
+
+describe('the heroes screen signature', () => {
+  it('does not move on a tick that changed nothing it draws', () => {
+    const game = freshPresenter();
+    const before = game.heroesSignature();
+    game.tick();
+    expect(game.heroesSignature()).toBe(before);
+  });
+
+  it('moves when a hero is granted, levelled, ascended or paid fragments', () => {
+    const game = freshPresenter();
+    // Funded up front, so each move below is the hero action and not the
+    // funding: a level spends Hero XP, an ascension spends both fragments and
+    // the Stardust toll.
+    addToWallet(game.state.kingdom.wallet, 'HeroXp', 50_000);
+    addToWallet(game.state.kingdom.wallet, 'Stardust', 5_000);
+
+    const seen = new Set<string>([game.heroesSignature()]);
+
+    grantHero(game.state, 'Bard');
+    seen.add(game.heroesSignature());
+
+    game.state.heroes.fragments.Bard = 40;
+    seen.add(game.heroesSignature());
+
+    game.openHeroId = 'Bard';
+    seen.add(game.heroesSignature());
+
+    game.doLevelHero('Bard');
+    expect(game.state.heroes.levels.Bard).toBe(2); // it really happened
+    seen.add(game.heroesSignature());
+
+    game.doRaiseHeroTier('Bard');
+    expect(game.state.heroes.tiers.Bard).toBe(2);
+    seen.add(game.heroesSignature());
+
+    // Five moves, five distinct readings: none of them collide.
+    expect(seen.size).toBe(6);
   });
 });

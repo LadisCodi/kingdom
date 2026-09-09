@@ -308,3 +308,11 @@
    because full means "you are spilling" and this means "you are ahead". */
 .hud-mana.is-over { border-color: var(--leaf); background: #2f4a3a; }
 .hud-mana.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
+
+/* A coin that is a clock: its speed sits beside its number, quieter than the
+   balance because the balance is what a price is checked against. */
+.hud-coin-rate {
+  margin-left: 3px;
+  font-size: 12px;
+  opacity: 0.75;
+}

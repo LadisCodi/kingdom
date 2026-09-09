@@ -9,6 +9,8 @@
 ## 1. Structure
 
 - **Ruin** → numbered **depths** → numbered **rooms**. One room = one fight.
+- Before Depth 1 sits the **gate**: one garrison room with a raid counter,
+  cleared once ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
 - The last room of a depth is its **boss**.
 - Canonical address: `Depth 2 · Room 5`. Persist `depth_index` and
   `room_index`; never a bare `depth`.
@@ -44,7 +46,8 @@ with different affinities.
 
 ## 3. Gates
 
-- **Ruin availability:** discovered on the map. Depth 1 opens with discovery.
+- **Ruin availability:** discovered on the map, gate cleared. Depth 1 opens
+  when the gate falls.
 - **Depth availability:** `guild_req` ≤ current Adventurers' Guild level.
 
 | Guild level | Opens | Also |
@@ -58,6 +61,9 @@ with different affinities.
 | 7 | Observatory D3 | +1 party slot |
 
 Guild upgrades cost city resources only — never a ruin-sourced resource.
+
+Party slots above are **troop** slots. Hero slots are never Guild-gated: one
+is free, the rest are Gems ([`10-heroes.md`](10-heroes.md) §3).
 
 ## 4. Launch content
 
@@ -119,7 +125,7 @@ overridden by hand.
 
 Ignores the formula. Contains: a named relic
 ([`09-relics.md`](09-relics.md) §5.1), a Gem lump, and **hero fragments** from a
-per-boss pool ([`10-heroes.md`](10-heroes.md) §4).
+per-boss pool ([`10-heroes.md`](10-heroes.md) §5).
 
 ### 7.3 Depth completion — permanent generation
 
@@ -143,9 +149,9 @@ Stardust/h a full reservoir is 360 (2 h) or 1,440 (8 h).
 
 | Currency | Use | Source |
 |---|---|---|
-| Hero XP | Hero levels. A counter, not inventory items | Rooms + trickle |
-| Stardust | Relic upgrades; flat toll on hero ascension | Rooms + trickle |
-| Hero fragments | Hero ascension, which sets the hero's level cap | Boss chests + banner |
+| Hero XP | Hero levels. A **kingdom** currency, spent on any hero ([`10-heroes.md`](10-heroes.md) §4) | Rooms + trickle |
+| Stardust | Relic levels; the Stardust toll on a hero's ascension | Rooms + trickle + every gacha call |
+| Hero fragments | Hero ascension, with the toll, which sets the hero's level cap. Per hero | Boss chests + banner |
 | Gold | Anecdotal | Rooms + trickle |
 
 Wood, Stone and Food are not in the trickle.

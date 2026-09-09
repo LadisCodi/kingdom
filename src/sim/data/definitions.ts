@@ -263,6 +263,7 @@ export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   // Docs/features/07-research.md §4.
   Knowledge: currency('kingdom', balance.currencies.Knowledge),
   Stardust: currency('kingdom', balance.currencies.Stardust),
+  HeroXp: currency('kingdom', balance.currencies.HeroXp),
   Gems: currency('player', balance.currencies.Gems),
   SilverKey: currency('player', balance.currencies.SilverKey),
   GoldKey: currency('player', balance.currencies.GoldKey),
@@ -469,6 +470,11 @@ export interface QuestDef {
   reward: Wallet;
   /** Gems paid into the PLAYER wallet (city currencies go through `reward`). */
   rewardGems: number;
+  /** Mana, into the city purse. A city currency, but not one of the four
+   *  materials `reward` carries — and the one reward that buys TAPS rather
+   *  than things, which is what the opening is short of
+   *  (Docs/features/12-quests.md §2.1). */
+  rewardMana: number;
   /** Kingdom-scoped, so it is NOT part of `reward` — that wallet is the
    *  city's. Quests are the steady half of the research budget; exploring
    *  is the half that scales. */
@@ -1717,7 +1723,14 @@ const skuContent: Record<StoreSkuId, Pick<StoreSkuDef, 'name' | 'description' | 
   GemsVault: { name: 'Vault of Gems', description: "Every slot the kingdom has, and then some.", sprite: 'gems_vault' },
   GemsHoard: { name: 'Hoard of Gems', description: "A season of pulls.", sprite: 'gems_hoard' },
   GemsTreasury: { name: 'Treasury of Gems', description: "The whole ladder, twice over.", sprite: 'gems_treasury' },
+  RoyalChest: { name: 'The Royal chest', description: "The daily chest's second track, for one season.", sprite: 'royal_chest' },
 };
+
+/** The Gem packs alone, for the store's 3×2 grid. A SKU that grants no Gems
+ *  on purchase is sold where it is UNDERSTOOD, not on the pack shelf
+ *  (Docs/features/12-quests.md §3.3). */
+export const GEM_PACK_ORDER = (Object.keys(balance.store) as StoreSkuId[])
+  .filter((id) => (balance.store as Record<string, { gems: number }>)[id]!.gems > 0);
 
 export const STORE: Record<StoreSkuId, StoreSkuDef> = Object.fromEntries(
   (Object.keys(skuContent) as StoreSkuId[]).map((id) => {
@@ -1734,8 +1747,10 @@ export const STORE_ORDER = Object.keys(balance.store) as StoreSkuId[];
  *  (Docs/features/14-monetization.md §3). */
 export const PAYER = balance.payer;
 
-/** The daily chest ladder — Docs/features/12-quests.md §3.1. Three parallel
- *  lists, one per reward kind; their length IS the length of the ladder. */
+/** The daily chest season — Docs/features/12-quests.md §3. Parallel lists,
+ *  one per reward kind; their length IS the length of the ladder. The free
+ *  track is `manaFractions` and `gems`; the Royal track is the `premium*`
+ *  ones. */
 export const DAILY = balance.daily;
 
 // ------------------------------------------------------------ the timeline
@@ -1759,59 +1774,13 @@ export interface EventTemplate {
   periodMs: number;
 }
 
-const EPOCH_MONDAY = Date.parse('2026-01-05T00:00:00Z');
-
-export const EVENTS: readonly EventTemplate[] = [
-  {
-    id: 'conjunction',
-    startsAt: EPOCH_MONDAY,
-    durationMs: 48 * 3_600_000, // 48 hours...
-    periodMs: 7 * 86_400_000,   // ...every seven days
-  },
-];
-
 /**
- * What a Conjunction can be. Every primitive at once: the timeline schedules
- * it, the RNG picks it, a modifier applies it, and the deadline is the
- * pressure.
- *
- * The free-socket boon earns its keep by making this week's loadout decision
- * different from last week's, which is the whole point of an event that
- * returns rather than a one-off gift.
+ * The authored schedule. EMPTY on purpose (2026-09-08): the Conjunction was
+ * retired and events are being redesigned, so the timeline machinery stands
+ * with no content in it. Adding a template here is all it takes to schedule
+ * one again ([`Docs/features/13-events.md`]).
  */
-export interface ConjunctionBoon {
-  id: string;
-  text: string;
-  stat: ModifierStat;
-  op: 'add' | 'mul';
-  value: number;
-  /** Paid on OPENING, so showing up inside the window is itself rewarded. */
-  knowledge: number;
-  gems: number;
-}
-
-export const CONJUNCTION_BOONS: readonly ConjunctionBoon[] = [
-  {
-    id: 'flood', text: 'The leylines run high — Mana gathers twice as fast.',
-    stat: 'manaRegen', op: 'mul', value: 2, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'cheapMagic', text: 'Spellwork comes easy — abilities cost half.',
-    stat: 'activeCost', op: 'mul', value: 0.5, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'insight', text: 'The old writing makes sense — Knowledge comes three times over.',
-    stat: 'knowledgeYield', op: 'mul', value: 3, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'swiftDelves', text: 'The dark is thin — parties move through ruins twice as fast.',
-    stat: 'delveSpeed', op: 'mul', value: 0.5, knowledge: 6, gems: 5,
-  },
-  {
-    id: 'lentSocket', text: 'The sky lends you a socket — one extra relic, for now.',
-    stat: 'attunementSlots', op: 'add', value: 1, knowledge: 6, gems: 5,
-  },
-];
+export const EVENTS: readonly EventTemplate[] = [];
 
 export const GAME_VERSION = '0.1.0';
 // v16 predates Mana, artifacts and expeditions. Everything those add is
@@ -1830,4 +1799,14 @@ export const GAME_VERSION = '0.1.0';
 // and read defensively, so there is no migrator; the bump exists so that a
 // build without the keys refuses a save that holds them rather than dropping
 // what the player paid Gems for.
-export const SAVE_VERSION = 32;
+// v33 predates the daily refill allowances. `kingdom.adOffers.Refills` is
+// additive and its reader defaults to a fresh day, so there is no migrator;
+// the bump exists so a build without the counters refuses a save that holds
+// them rather than handing the player unlimited refills.
+// v34 predates the mana refill split. v35 turns the daily chest into a SEASON
+// with a second track: `Daily.LadderStep` becomes `Daily.Rung` inside a
+// `Daily.Season`, and `Daily.RoyalSeason` records the paid track. The rung
+// count means something different from the step count, so this one HAS a
+// migrator (save.ts) — it drops the old block and lands the player in the
+// running season owing nothing.
+export const SAVE_VERSION = 35;

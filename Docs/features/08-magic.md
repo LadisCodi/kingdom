@@ -96,13 +96,45 @@ Ten landmarks on the map:
 | ten landmarks, Sanctum L3 | 272 | **272** |
 | ten landmarks, Sanctum L5, Meditation, Deep Wells V | 412 | **412** |
 
-## 6. The rewarded ad
+## 6. The refill
 
-- One rewarded placement. The reward is **a whole pool** (the current cap).
-- The offer appears only **below half a pool**.
-- The cooldown between offers is **randomised 30–90 s**.
-- **A reward lands on top of the cap.** An overcharged pool has its own HUD
-  state, distinct from full.
+A refill is **a whole pool** (the current cap), landing **on top of** whatever
+is banked — an overcharged pool has its own HUD state, distinct from full.
+Two routes pay it, and they share nothing but the prize.
+
+**By video**
+
+- Offered only **below half a pool**, on a cooldown **randomised 30–90 s**.
+- **5 a day.** With the day spent, the tab does not return until the reset.
+
+**By Gems**
+
+- Available whenever the pool has room. No cooldown, no half-pool gate.
+- A **ladder priced by refills already bought today**: 400 · 600 · 800 ·
+  1,000 · 2,000 Gems. The price is never per Mana — what rises is the rung,
+  not the size of the pool it buys.
+- **5 a day**: the ladder's rungs *are* the cap.
+
+**The day**
+
+- One counter per route. Spending the videos never closes the ladder, and
+  buying pools never costs a video — so the day's ceiling is **ten refills**.
+- Both reset at **00:00 UTC**, for the reason [`12-quests.md`](12-quests.md) §4
+  gives for the chest: the sim may not read a clock it was not handed.
+- Both roll **lazily**, on the next read, so nothing happens at midnight and a
+  session left open across it resolves correctly.
+
+### The screen
+
+- Both routes live in the **Mana sheet**, which the header gauge opens as well
+  as the offer tab — the Gem ladder is not an ad, so it must be reachable on a
+  day with no video left.
+- It carries the pool, the one rate line, and the two buttons under a single
+  prize line — **Gems left, video right, equal widths**, each under its own
+  `Left today: n/5`.
+- A route that cannot be taken says which of its conditions failed: the day's
+  allowance (the count above the button, in clay), the cooldown, a full pool,
+  or a pool still over half. A reason both routes share is printed once.
 
 ### Session arithmetic
 
@@ -116,7 +148,7 @@ tap 50      →   50        offer returns
 ```
 
 - **~400 taps per visit** (96 free + 3 ads × 100) ≈ 10–12 minutes.
-- **~10 ads/day** across three visits.
+- **5 videos/day**, the allowance — about two visits' worth.
 - **~290 free taps/day** for a player who never watches an ad (12/h × 24).
   Worker income is unaffected by ads.
 - **Ads are worth about three times the free allowance**: ten pools a day is
@@ -137,13 +169,15 @@ tap 50      →   50        offer returns
    hand-play pays once `QuickHands` and `TapPower` are bought. **Doubling it
    doubles the ad with it.** Whether the ad economy balances on ~5.5 minutes
    is OQ-51.
-2. **`mana.gem_refill_full_pool`** — a full pool is **500 Gems** at every stage
-   (one $0.99 pouch, [`14-monetization.md`](14-monetization.md) §2.2); a
-   half-empty pool costs half. Priced against the cap, not per Mana.
+2. **`mana.gem_refill_costs`** — the Gem ladder, **400 / 600 / 800 / 1,000 /
+   2,000**, indexed by refills bought today. Its LENGTH is the daily cap, so
+   adding a rung both extends the day and sets its price
+   ([`14-monetization.md`](14-monetization.md) §2.2).
 3. **`mana.base_cap`** — 100, flat. Session length per pool.
-4. **`ads.cooldown_max_seconds`** — 90. The rhythm between offers.
-5. **`mana.base_per_hour`** — 12, flat. The free allowance. Moves with `base_cap`: the two are tuned to keep the fill just past the offline cap (§2).
-6. **`ads.eligible_below_fraction`** — 0.5. How early the offer shows up.
+4. **`ads.mana_refills_per_day`** — 5. The video's allowance, its own counter.
+5. **`ads.cooldown_max_seconds`** — 90. The rhythm between offers.
+6. **`mana.base_per_hour`** — 12, flat. The free allowance. Moves with `base_cap`: the two are tuned to keep the fill just past the offline cap (§2).
+7. **`ads.eligible_below_fraction`** — 0.5. How early the offer shows up.
 
 | Also | Value | Key |
 |---|---|---|
@@ -152,7 +186,8 @@ tap 50      →   50        offer returns
 | Landmark capacity | **+10 each** | `mana.landmark_cap` |
 | `Meditation` | +30 capacity | `mana.meditation_cap` |
 | `Deep Wells I–V` · `Ley Taps I–III` | +10 capacity per rank · +1/h per landmark per rank | `?dev=tree` ([`tech-tree.md`](tech-tree.md) §4.4) |
-| Gem refill | **500 Gems a full pool**, pro rata on what is missing | `mana.gem_refill_full_pool` |
+| Gem refill | a whole pool, **400 → 2,000 Gems** by rung, 5 a day | `mana.gem_refill_costs` |
+| Video refill | a whole pool, **5 a day** | `ads.mana_refills_per_day` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Ad reward | the whole cap | — |
 
@@ -161,7 +196,7 @@ tap 50      →   50        offer returns
 - The header carries the pool as a **gauge**: the fill bar draws the ratio and
   the rim turns gold when it is spilling. No numeric readout beside it.
 - **Never a breakdown** of regen in the HUD.
-- The full reading lives in the Reliquary.
+- The full reading lives in the **Mana sheet**, which the gauge opens (§6).
 
 ## 9. Deliberately not in this design
 

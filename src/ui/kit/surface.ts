@@ -30,6 +30,19 @@ export function sheet(
      *  where the bottom-sheet idiom (a drawer you pull up over a screen you
      *  are still using) is the wrong metaphor. */
     centred?: boolean;
+    /**
+     * Drop the grab handle and the plank.
+     *
+     * For a sheet whose CONTENT already names it — a hero's card carries the
+     * portrait and the name, so a plank repeating the name above them spends
+     * a band of the screen saying it twice. `title` is still required and
+     * still labels the sheet for a screen reader.
+     *
+     * The caller then owns the way out. `onClose` is not wired to anything
+     * here, so a bare sheet must carry its own affordance or it is a room
+     * with no door.
+     */
+    bare?: boolean;
   },
   ...children: Array<Node | string>
 ): HTMLElement {
@@ -37,16 +50,19 @@ export function sheet(
   close.setAttribute('data-own-close', '');
   return el(
     'div',
-    { class: `k-sheet${opts.centred ? ' is-centred' : ''}` },
+    { class: `k-sheet${opts.centred ? ' is-centred' : ''}${opts.bare ? ' is-bare' : ''}` },
     el(
       'div',
       { class: 'k-panel' },
-      el('div', { class: 'k-grab' }),
-      plank(opts.title, close),
+      ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title, close)]),
       // The body scrolls; the plank and its close knob do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
       // the per-tick rebuild, so reading a long sheet is possible at all.
-      el('div', { class: 'k-sheet-body', 'data-keep-scroll': '' }, ...children),
+      el(
+        'div',
+        { class: 'k-sheet-body', 'data-keep-scroll': '', 'aria-label': opts.title },
+        ...children,
+      ),
     ),
   );
 }

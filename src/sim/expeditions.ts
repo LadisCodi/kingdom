@@ -61,7 +61,7 @@ import { canAfford, pay } from './wallet';
 // ------------------------------------------------------------------- slots
 
 /** How long a depth actually takes right now. Kept in ONE place so a
- *  Conjunction that speeds delves up cannot apply to the launch and not to the
+ *  timed boon that speeds delves up cannot apply to the launch and not to the
  *  push, or to the timer and not to the estimate on the sheet. */
 export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
   Math.max(1000, Math.round(resolve(state, 'delveSpeed',
@@ -477,7 +477,7 @@ export function extract(state: GameState, delveId: string): ExtractReport {
   if (delve.haulFragments > 0) addArtifactFragments(state, artifactId, delve.haulFragments);
   // XP lands whether or not the run banked anything, so a bad push still
   // taught the party something.
-  addHeroXp(state, delve.heroId, delve.depth * RUINS[delve.ruinId].tier);
+  addHeroXp(state, delve.depth * RUINS[delve.ruinId].tier);
   const report: ExtractReport = {
     result: 'Extracted',
     wallet: { ...delve.haul },

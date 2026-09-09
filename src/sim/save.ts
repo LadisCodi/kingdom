@@ -119,6 +119,33 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
  *  entry here — the defensive readers below already default the new field. */
 const MIGRATIONS: readonly Migration[] = [
   {
+    // v33 — Hero XP stopped being a tally beside each hero and became a
+    // KINGDOM WALLET ROW that buys any hero's levels
+    // (Docs/features/10-heroes.md §4). It was written and never read until
+    // now, so nothing was ever spent from it and every point a save holds is
+    // still owed: the whole per-hero map folds into the one counter.
+    //
+    // Listed FIRST so the array stays ordered by nothing in particular but
+    // remains append-only in effect — `migrate` runs every entry whose `to`
+    // is above the save's version, in array order, and this one touches keys
+    // no other migrator does.
+    to: 33,
+    migrate: (modules) => {
+      const heroes = modules['kingdom.heroes'] as
+        { Xp?: Record<string, number> } | undefined;
+      const xp = heroes?.Xp;
+      if (xp === undefined) return;
+      const total = Object.values(xp).reduce((n, v) => n + (typeof v === 'number' ? v : 0), 0);
+      delete heroes!.Xp;
+      if (total <= 0) return;
+      const kingdom = modules['kingdom.kingdoms'] as
+        { Currencies?: Record<string, number> } | undefined;
+      if (kingdom === undefined) return;
+      kingdom.Currencies = { ...(kingdom.Currencies ?? {}) };
+      kingdom.Currencies.HeroXp = (kingdom.Currencies.HeroXp ?? 0) + total;
+    },
+  },
+  {
     // v21 — Berries, Meat, Fish and Iron stopped being wallet rows. Bushes,
     // game and shoals pay Food now and veins pay Stone, so a save's balances
     // convert at the rates they were EARNED at: the old `countsAs` values
@@ -267,6 +294,23 @@ const MIGRATIONS: readonly Migration[] = [
       delete modules['kingdom.cellHarvest'];
     },
   },
+  {
+    // v35 — the daily chest became a SEASON (Docs/features/12-quests.md §3).
+    // `LadderStep` counted days played on a seven-rung cycle that never ended;
+    // `Rung` counts them inside a twenty-day window, so the two numbers do not
+    // mean the same thing and the old one cannot be converted honestly — a
+    // step-11 save is on rung 4 of a cycle that no longer exists.
+    //
+    // So the block is dropped and the reader defaults it: the player lands in
+    // whatever season is running, at rung 0, owing nothing. That costs at most
+    // one season's progress on a ladder that was never a possession, and it is
+    // the only reading that cannot pay out a rung twice.
+    to: 35,
+    migrate: (modules) => {
+      const kingdom = modules['kingdom.kingdoms'] as { Daily?: unknown } | undefined;
+      if (kingdom !== undefined) delete kingdom.Daily;
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -342,8 +386,11 @@ export function serialize(state: GameState, now: number): SaveFile {
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
         Daily: {
-          LadderStep: state.kingdom.daily.ladderStep,
+          Season: state.kingdom.daily.season,
+          Rung: state.kingdom.daily.rung,
           LastClaimedDay: state.kingdom.daily.lastClaimedDay,
+          RoyalSeason: state.kingdom.daily.royalSeason,
+          RoyalClaimed: state.kingdom.daily.royalClaimed,
         },
       },
       'kingdom.fogOfWar': {
@@ -446,7 +493,6 @@ export function serialize(state: GameState, now: number): SaveFile {
         Levels: state.heroes.levels,
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
-        Xp: state.heroes.xp,
         PartySlotsPurchased: state.heroes.partySlotsPurchased,
       },
       'kingdom.gacha': {
@@ -463,6 +509,13 @@ export function serialize(state: GameState, now: number): SaveFile {
         ReadyAtUtc: iso(state.ads.readyAt),
         Claims: state.ads.claims,
         Pending: state.ads.pending,
+        // The day's two refill counters. `Day` is a day INDEX, so a save
+        // reloaded tomorrow rolls itself the first time anything reads it.
+        Refills: {
+          Day: state.ads.refills.day,
+          Watched: state.ads.refills.watched,
+          Bought: state.ads.refills.bought,
+        },
       },
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
@@ -627,12 +680,19 @@ export function deserialize(
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
     // Additive: a save written before the chest existed has no Daily block and
-    // the defaults below start the ladder at zero, which is exactly right for
-    // a player meeting it for the first time. No migrator (Docs/implementation-plan.md §1).
-    const daily = kingdomDto.Daily as { LadderStep?: number; LastClaimedDay?: number | null };
+    // the defaults below start the season at rung zero, which is exactly right
+    // for a player meeting it for the first time. `Season: -1` matches no real
+    // season, so a missing block reads as "not in one" rather than as season 0.
+    const daily = kingdomDto.Daily as {
+      Season?: number; Rung?: number; LastClaimedDay?: number | null;
+      RoyalSeason?: number | null; RoyalClaimed?: number[];
+    };
     if (daily) {
-      state.kingdom.daily.ladderStep = daily.LadderStep ?? 0;
+      state.kingdom.daily.season = daily.Season ?? -1;
+      state.kingdom.daily.rung = daily.Rung ?? 0;
       state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
+      state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
+      state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
     }
   }
 
@@ -784,17 +844,26 @@ export function deserialize(
       levels: { ...(heroesDto.Levels ?? {}) },
       tiers: { ...(heroesDto.Tiers ?? {}) },
       fragments: { ...(heroesDto.Fragments ?? {}) },
-      xp: { ...(heroesDto.Xp ?? {}) },
       partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
     };
   }
 
   const adsDto = modules['kingdom.adOffers'];
   if (adsDto) {
+    const refills = (adsDto.Refills ?? {}) as {
+      Day?: number; Watched?: number; Bought?: number;
+    };
     state.ads = {
       readyAt: adsDto.ReadyAtUtc ? ms(adsDto.ReadyAtUtc) : lastSaved,
       claims: adsDto.Claims ?? 0,
       pending: adsDto.Pending === true,
+      // A save written before the allowances existed reads as a fresh day,
+      // which is the generous default and the only safe one.
+      refills: {
+        day: refills.Day ?? state.ads.refills.day,
+        watched: refills.Watched ?? 0,
+        bought: refills.Bought ?? 0,
+      },
     };
   }
 

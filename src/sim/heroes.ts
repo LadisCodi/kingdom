@@ -34,7 +34,10 @@ import {
   type BannerId, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
-import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
+import {
+  emptyEntry, heroLevelCapForTier, isHeroMaxLevel, tierBlock, tierCost,
+  xpLevelCost, type CollectionEntry,
+} from './collection';
 import { dayIndex } from './daily';
 import { rand } from './rng';
 import { addToWallet, getWallet, type CurrencyId, type GameState, type HeroId } from './state';
@@ -68,25 +71,87 @@ export function grantHero(
 }
 
 export type HeroLevelResult =
-  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
+  | 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughXp';
 
+/**
+ * A level costs HERO XP, not Stardust.
+ *
+ * The two are not interchangeable and the split is the point: Stardust is the
+ * relics' currency with a hero tax on it (the ascension toll), and XP is what
+ * a hero's own levels are bought with. Written out longhand rather than
+ * through the shared `levelBlock`, which reads a Stardust purse and is the
+ * relics'.
+ */
 export function levelUpHero(state: GameState, id: HeroId): HeroLevelResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
-  const block = levelBlock(entry, getWallet(state.kingdom.wallet, 'Stardust'));
-  if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
+  if (isHeroMaxLevel(entry)) return 'AtMaxLevel';
+  if (entry.level >= heroLevelCapForTier(entry.tier)) return 'TierCapped';
+  const cost = xpLevelCost(entry.level);
+  if (getWallet(state.kingdom.wallet, 'HeroXp') < cost) return 'NotEnoughXp';
+  addToWallet(state.kingdom.wallet, 'HeroXp', -cost);
   state.heroes.levels[id] = entry.level + 1;
   return 'Levelled';
 }
 
-export type HeroTierResult = 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments';
+/**
+ * Fragments that buy an unowned hero outright.
+ *
+ * The banner hands out TWO different prizes — a hero, or fragments of one —
+ * and until this existed the second was only worth anything on a hero you
+ * already had. Fragments of a stranger piled up against a door with no
+ * handle, which is the one thing "every gacha drop has a play-based route"
+ * (Docs/features/10-heroes.md §4) cannot survive.
+ *
+ * Priced at the ladder's own base rung, so the entry price and the first
+ * ascension are the same ten and the player learns one number rather than
+ * two. It is deliberately NOT a tier raise: an unlocked hero still starts at
+ * tier 1 with the whole ascension ladder ahead of them.
+ */
+export const heroUnlockCost = (): number => COLLECTION.fragmentsPerTierBase;
+
+export type HeroUnlockResult = 'Unlocked' | 'AlreadyOwned' | 'NotEnoughFragments';
+
+export function unlockHero(state: GameState, id: HeroId): HeroUnlockResult {
+  if (ownsHeroId(state, id)) return 'AlreadyOwned';
+  const held = state.heroes.fragments[id] ?? 0;
+  if (held < heroUnlockCost()) return 'NotEnoughFragments';
+  // Spend, then grant — `grantHero` preserves whatever is left over, so a
+  // player sitting on twelve keeps two toward the first ascension.
+  state.heroes.fragments[id] = held - heroUnlockCost();
+  grantHero(state, id);
+  return 'Unlocked';
+}
+
+/** Enough fragments to recruit them, and not owned yet. */
+export const canUnlockHero = (state: GameState, id: HeroId): boolean =>
+  !ownsHeroId(state, id) && (state.heroes.fragments[id] ?? 0) >= heroUnlockCost();
+
+/**
+ * The Stardust an ascension asks for on top of the fragments.
+ *
+ * A hero pays TWO prices to ascend and a relic pays one: the fragments are
+ * the chase, the Stardust is the toll (Docs/features/10-heroes.md §4). It is
+ * what keeps Stardust the relics' currency with a hero tax on it rather than
+ * a second hero currency — 750 to max one hero against ~3,612 for a relic.
+ */
+export const ascensionStardustCost = (tier: number): number => Math.round(
+  COLLECTION.ascensionStardustBase * COLLECTION.ascensionStardustGrowth ** (tier - 1),
+);
+
+export type HeroTierResult =
+  | 'Raised' | 'NotOwned' | 'AtMaxTier' | 'NotEnoughFragments' | 'NotEnoughStardust';
 
 export function raiseHeroTier(state: GameState, id: HeroId): HeroTierResult {
   if (!ownsHeroId(state, id)) return 'NotOwned';
   const entry = heroEntry(state, id);
   const block = tierBlock(entry);
   if (block !== null) return block;
+  const toll = ascensionStardustCost(entry.tier);
+  if (getWallet(state.kingdom.wallet, 'Stardust') < toll) return 'NotEnoughStardust';
+  // Both prices, or neither: a half-paid ascension would eat the fragments
+  // and leave the tier where it was.
+  addToWallet(state.kingdom.wallet, 'Stardust', -toll);
   state.heroes.fragments[id] = entry.fragments - tierCost(entry.tier);
   state.heroes.tiers[id] = entry.tier + 1;
   return 'Raised';
@@ -103,12 +168,21 @@ export function heroStats(state: GameState, id: HeroId): { atk: number; def: num
   };
 }
 
-/** Delves pay XP whether or not the run banked anything, so a bad push still
- *  taught the party something. XP is a soft second track: it never gates. */
-export function addHeroXp(state: GameState, id: HeroId, amount: number): void {
+/**
+ * Bank what a fight taught the party.
+ *
+ * ONE KINGDOM COUNTER, not a tally per hero. XP used to be written beside the
+ * hero that earned it and read by nobody, and the moment it started buying
+ * levels that shape would have been the wrong one: a Legendary pulled today
+ * would arrive at level 1 with an empty tally of its own, unusable until it
+ * had gone and earned one. It is levelled with what the Commons brought back
+ * instead (Docs/features/10-heroes.md §4).
+ */
+export function addHeroXp(state: GameState, amount: number): void {
   // Drillmaster: +5%/rank, rounded once here so XP stays a whole number.
   const paid = Math.round(resolve(state, 'heroXp', techValue(state, 'heroXp', amount)));
-  state.heroes.xp[id] = (state.heroes.xp[id] ?? 0) + paid;
+  addToWallet(state.kingdom.wallet, 'HeroXp', paid);
+  recordResourceDiscovery(state, 'HeroXp');
 }
 
 // ------------------------------------------------------------------ the pull
@@ -436,7 +510,7 @@ export function rosterView(state: GameState): Array<{
       id,
       owned: ownsHeroId(state, id),
       entry,
-      levelCap: Math.min(COLLECTION.maxLevel, entry.tier * COLLECTION.levelsPerTier),
+      levelCap: heroLevelCapForTier(entry.tier),
     };
   });
 }

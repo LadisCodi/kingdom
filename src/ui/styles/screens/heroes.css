@@ -1,0 +1,324 @@
+/* The Heroes roster and the card behind each tile.
+ *
+ * The grid is the screen. A relic list can be rows because there are five of
+ * them; thirty-two heroes, most of them not owned, only read as a COLLECTION
+ * when they are portraits side by side — the gaps are the content, and a row
+ * per hero would need thirty-two scrolls to show them.
+ *
+ * Rarity is the tile's background rather than a badge on it, so the ladder is
+ * legible at arm's length with no label read. */
+
+.hero { display: flex; flex-direction: column; gap: 14px; }
+/* A bare sheet has no plank to sit under, so the card starts at the top of
+   the panel and the portrait is the first thing on screen. */
+.k-sheet.is-bare .hero { gap: 12px; }
+
+/* --------------------------------------------------------------- the purse */
+
+/* Stardust has no coin on the plank and this screen spends it, so the amount
+   reads here. One line, not a panel: the roster is what the player came for. */
+.hero-purse {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.hero-purse-found { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* ---------------------------------------------------------------- the grid */
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+/* A narrow frame drops to two rather than squeezing three portraits into
+   thumbnails nobody can tell apart. */
+@container frame (max-width: 340px) {
+  .hero-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.hero-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 var(--lip) 0 var(--wood-dark);
+  cursor: pointer;
+  transition: transform var(--motion-snap) steps(1);
+  /* Set per rarity below; the gradient lifts the portrait off a flat fill. */
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.22)),
+    var(--tile, var(--rarity-common));
+}
+.hero-tile:hover { filter: brightness(1.06); }
+.hero-tile:active { transform: translateY(var(--lip)); box-shadow: none; }
+
+.hero-tile.is-common { --tile: var(--rarity-common); }
+.hero-tile.is-rare { --tile: var(--rarity-rare); }
+.hero-tile.is-legendary { --tile: var(--rarity-legendary); }
+/* An unfound hero keeps its rarity nowhere: a locked tile that still glowed
+   gold would advertise a Legendary the player has no way to act on. Warm
+   stone, the same treatment every other gated thing gets. */
+.hero-tile.is-locked { --tile: var(--locked); }
+
+/* The portrait fills the tile and is CONTAINED, never cropped: the sheet is
+   mixed (128² for some, 42×74 for others) and a cover would behead half the
+   roster. The BOX is fixed to the tile and `object-fit` does the fitting.
+   Sizing the image itself instead — auto width against a max — lets a 128²
+   sprite overflow the inset box and get clipped by the tile, which is the bug
+   this shape avoids: every portrait letterboxes inside the same rectangle,
+   so a tall hero and a square one line up across a row. */
+.hero-art {
+  position: absolute;
+  top: 6px;
+  left: 4px;
+  right: 4px;
+  bottom: 22px;
+  width: calc(100% - 8px);
+  height: calc(100% - 28px);
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: pixelated;
+}
+.hero-art.is-locked { filter: grayscale(0.85) brightness(0.72); }
+/* No hero is without art today; this is the path that keeps a missing sheet
+   from drawing a stretched box. */
+.hero-art--glyph {
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  line-height: 1;
+}
+
+/* WHAT IT FIGHTS AS, as a word rather than a mark. One pill, one rule, both
+   screens: the four unit icons are four similar silhouettes at 16px, and the
+   card was saying it twice — icon and name side by side. */
+.hero-type {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(59, 36, 18, 0.6);
+  color: var(--ink-inverse);
+  font-size: var(--text-helper);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.hero-type.is-tile {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  padding: 0 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: rgba(59, 36, 18, 0.62);
+}
+
+.hero-tile-foot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 2px 5px;
+  background: rgba(59, 36, 18, 0.62);
+  color: var(--ink-inverse);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.hero-tile-foot.is-frag { justify-content: center; gap: 4px; }
+.hero-tile-level { font-family: var(--font-body); white-space: nowrap; }
+
+/* The green mark: this card has something to press right now. It is the
+   roster's whole job — pointing at the one tile worth opening. */
+.hero-tile-ready {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--leaf);
+  border: 2px solid var(--leaf-dark);
+}
+
+/* ------------------------------------------------------------- the stars -- */
+
+.hero-stars { display: inline-flex; gap: 1px; align-items: center; }
+.hero-stars .icon.is-locked { opacity: 0.35; }
+/* The card's row. Ascension is the ladder the player is chasing and a row of
+   16px pips said so in a whisper; these are the loudest thing under the art. */
+.hero-stars.is-big { gap: 2px; }
+.hero-stars.is-big .icon { --icon-size: 34px; }
+/* An unearned star is a DERIVED cell in the atlas now, not a CSS filter, so
+   the silhouette is pixel-identical to an earned one and the row cannot
+   shift as a hero ascends. The drop shadow is kept off it — a star that is
+   not there casts nothing. */
+.hero-stars.is-big .icon:not(.is-locked) {
+  filter: drop-shadow(0 2px 0 rgba(24, 15, 8, 0.55));
+}
+.hero-stars.is-big .icon.is-locked { opacity: 0.6; }
+@container frame (max-width: 380px) {
+  .hero-stars.is-big .icon { --icon-size: 26px; }
+}
+
+/* ------------------------------------------------------------- the detail - */
+
+/* The stage: portrait on its rarity, with the two arrows that step the
+   roster and the way back riding in its corner. Comparing two heroes is most
+   of what the card is for, and none of that chrome may cost a row. */
+.hero-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 250px;
+  /* The bottom padding is the band the foot rides in. The stars overlap the
+     art rather than clearing it, so it is deliberately less than the foot is
+     tall. */
+  padding: 12px 8px 34px;
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.32), transparent 70%),
+    var(--tile, var(--rarity-common));
+}
+.hero-stage.is-common { --tile: var(--rarity-common); }
+.hero-stage.is-rare { --tile: var(--rarity-rare); }
+.hero-stage.is-legendary { --tile: var(--rarity-legendary); }
+
+.hero-stage .hero-art {
+  position: static;
+  inset: auto;
+  width: 60%;
+  height: 200px;
+  object-position: center;
+}
+
+/* Below the portrait and slightly OVER it. The stars belong to the hero, not
+   to a row under the hero, and the overlap is what says so. */
+.hero-stage-foot {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.hero-stage-foot > * { pointer-events: auto; }
+/* The stars take the space the button does not, and centre in it — so the
+   two can never collide, at any frame width. */
+.hero-stage-foot .hero-stars { flex: 1; min-width: 0; justify-content: center; }
+
+/* Bottom-right, inside the frame, carrying both prices. */
+.hero-ascend {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 4px 10px;
+}
+.hero-stage .k-knob { flex: 0 0 auto; z-index: 1; }
+
+/* On the portrait, not above it — a row of its own cost a band of the screen
+   to say one word. The cross sits right, where every sheet in the game puts
+   one; the type pill takes the corner it left. */
+.hero-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+.hero-stage > .hero-type {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 2;
+}
+
+/* Under the back knob, at the foot of the stage: the corner it used to sit in
+   belongs to the way out now. */
+.hero-rarity {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 36, 18, 0.6);
+  color: var(--ink-inverse);
+  font-size: var(--text-helper);
+  letter-spacing: 0.04em;
+}
+/* No plank above it, so the name is the card's title and carries the weight. */
+.hero-title { text-align: center; }
+.hero-name { font-family: var(--font-display); font-size: var(--text-title); }
+.hero-subtitle { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* THE LEVEL AND ITS BUTTON ARE ONE WIDGET, at the foot of the card: one
+   decision, one place to look. Ascension went the other way, onto the
+   portrait beside its stars, so each ladder sits with the thing it moves. */
+.hero-level {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.hero-level-read {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-helper);
+}
+.hero-level-read b {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1;
+}
+.hero-level-label, .hero-level-cap { color: var(--ink-muted); }
+.hero-level .k-btn { flex: 0 0 auto; }
+
+/* At the ceiling the button is gone and this stands where it was, pointing
+   at the Ascend on the portrait. Not a disabled button with a caption: a
+   disabled button still offers a press, and the press is not the answer. */
+.hero-level.is-capped { background: var(--parchment); }
+.hero-level-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+  text-align: right;
+}
+
+.hero-statline {
+  display: flex;
+  justify-content: space-around;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero-passive {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--text-helper);
+  line-height: 1.35;
+}
+.hero-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }

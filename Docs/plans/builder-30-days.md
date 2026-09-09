@@ -646,7 +646,7 @@ relic**, which is the thing the player already did.
   `bannerPanel()` mounts in the Tavern's card instead of `storeSheet.ts`, and
   **tapping the building is how a player calls a hero**. The store keeps its
   Builders, **Keys** and Gems sections and loses its Heroes one;
-  `14-monetization.md` §2.1 and `10-heroes.md` §7 move with it. What does NOT
+  `14-monetization.md` §2.1 and `10-heroes.md` §8 move with it. What does NOT
   move is where the Gems go: Gems buy keys in the store, and a key is what a
   call spends — so the store stays the place a currency is bought and the
   Tavern becomes the place one is spent.

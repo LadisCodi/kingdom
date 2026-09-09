@@ -110,6 +110,15 @@ export function claimQuest(state: GameState): ClaimResult {
   for (const currency of Object.keys(quest.reward)) {
     recordResourceDiscovery(state, currency as CurrencyId);
   }
+  // Mana, into the city purse. It is the one reward that buys TAPS rather
+  // than things, and the opening is short of taps rather than of Gold: the
+  // beats that pay it are the ones the player reaches with an empty pool
+  // (Docs/features/12-quests.md §2.1). It may overfill — an overcharged pool
+  // is a supported state and reads as one on the gauge.
+  if (quest.rewardMana > 0) {
+    addToWallet(state.city.wallet, 'Mana', quest.rewardMana);
+    recordResourceDiscovery(state, 'Mana');
+  }
   if (quest.rewardGems > 0) {
     addToWallet(state.player.wallet, 'Gems', quest.rewardGems);
     recordResourceDiscovery(state, 'Gems');

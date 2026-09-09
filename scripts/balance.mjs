@@ -68,6 +68,12 @@ const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water']
 // Row order is the order the store shows them in.
 const STORE_IDS = [
   'GemsPouch', 'GemsPurse', 'GemsChest', 'GemsVault', 'GemsHoard', 'GemsTreasury',
+  // Not a Gem pack: the Royal chest grants nothing on purchase, it unlocks the
+  // daily chest's paid column for the season and pays out a rung at a time
+  // (Docs/features/12-quests.md §3.3). It is a Store row because the BUDGET is
+  // the instrument — the purchase log, the refusal and the monthly allowance
+  // all have to see it.
+  'RoyalChest',
 ];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
@@ -111,7 +117,7 @@ const ARTIFACT_IDS = [
 
 const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
-  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'Gems',
+  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'HeroXp', 'Gems',
   // The two gacha keys. Player-scoped like Gems, bought with them, and spent
   // on one banner each — a PRICE on a button, which is the argument for a
   // wallet row over a counter (Docs/features/03-economy.md §1).
@@ -175,13 +181,20 @@ const SETTINGS = [
   ['payer.dolphin_monthly_usd', 'payer.dolphinMonthlyUsd'],
   ['payer.whale_monthly_usd', 'payer.whaleMonthlyUsd'],
   ['payer.super_whale_monthly_usd', 'payer.superWhaleMonthlyUsd'],
-  // The daily chest ladder (Docs/features/12-quests.md §3.1). Three parallel
-  // seven-long lists, one per reward kind, so a step is a column rather than a
-  // sheet — and so the ladder's LENGTH is the length of these lists.
+  // The daily chest season (Docs/features/12-quests.md §3). Parallel lists,
+  // one per reward kind, so a rung is a column rather than a sheet — and so
+  // the ladder's LENGTH is the length of these lists. The first two are the
+  // free track, the `premium_*` ones the Royal track.
+  ['daily.season_days', 'daily.seasonDays'],
   ['daily.mana_fractions', 'daily.manaFractions', 'list'],
-  ['daily.gold_seconds', 'daily.goldSeconds', 'list'],
   ['daily.gems', 'daily.gems', 'list'],
-  ['daily.gold_floor', 'daily.goldFloor'],
+  ['daily.premium_gems', 'daily.premiumGems', 'list'],
+  ['daily.premium_gold_keys', 'daily.premiumGoldKeys', 'list'],
+  // Hero XP is priced in HOURS of the player's own delve trickle, floored —
+  // an absolute XP number goes stale by era three. The floor is what pays a
+  // city that has never delved, which is most of them.
+  ['daily.premium_xp_hours', 'daily.premiumXpHours', 'list'],
+  ['daily.premium_xp_floor', 'daily.premiumXpFloor'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -198,10 +211,12 @@ const SETTINGS = [
   ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
   ['mana.meditation_cap', 'mana.meditationCap'],
-  // Gems for a FULL pool. Priced against the cap rather than per Mana, so a
-  // refill is the same offer at every stage of the game — one $0.99 pouch
-  // (14-monetization.md §2.2) — and half a pool is half that.
-  ['mana.gem_refill_full_pool', 'mana.gemRefillFullPool'],
+  // The Gem price of a refill, as a LADDER indexed by how many refills have
+  // already been bought TODAY — one entry per rung, so the list's length is
+  // also the daily cap (src/sim/manaRefill.ts). A refill is always a whole
+  // pool, so the price is never per Mana: what rises is the rung, not the
+  // pool.
+  ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
   ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
@@ -209,6 +224,9 @@ const SETTINGS = [
   ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
   // The COLLECTION substrate: one set of rules shared by artifacts and heroes.
   // Fragments raise a tier cap; Knowledge buys levels within it.
+  // The completed-depth XP trickle, per tier per depth per hour
+  // (Docs/features/10-heroes.md §5). Read by the daily chest's Royal track.
+  ['collection.xp_trickle_per_tier_depth', 'collection.xpTricklePerTierDepth'],
   ['collection.level_cost_base', 'collection.levelCostBase'],
   ['collection.level_cost_growth', 'collection.levelCostGrowth'],
   ['collection.max_level', 'collection.maxLevel'],
@@ -216,6 +234,31 @@ const SETTINGS = [
   ['collection.max_tier', 'collection.maxTier'],
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
+  // The Stardust TOLL on an ascension, which only HEROES pay: a relic's tier
+  // is ingredients and nothing else (Docs/features/10-heroes.md §4). It lives
+  // in the shared block rather than under `heroes.` because that key is the
+  // Heroes SHEET — thirty-two rows — and a setting written into it would be a
+  // thirty-third hero with no stats.
+  ['collection.ascension_stardust_base', 'collection.ascensionStardustBase'],
+  ['collection.ascension_stardust_growth', 'collection.ascensionStardustGrowth'],
+  // A HERO's levels are bought with Hero XP, a relic's with Stardust
+  // (Docs/features/10-heroes.md §4) — so the substrate carries two level
+  // curves of the same shape in two currencies. The XP one is FIVE TIMES the
+  // Stardust one because its faucet is: a room pays x10 XP against x2
+  // Stardust and the completed-depth trickle keeps the same ratio
+  // (11-expeditions.md §7). Same pacing, bigger numbers. **OQ-79 owns
+  // whether that holds up in play.**
+  ['collection.xp_level_cost_base', 'collection.xpLevelCostBase'],
+  ['collection.xp_level_cost_growth', 'collection.xpLevelCostGrowth'],
+  // A HERO's ladder is longer than a relic's and has its own two numbers.
+  // `levels_per_tier` and `max_level` above stay the relics': ten levels an
+  // ascension is a roster the player grinds for weeks, and a relic is not
+  // that shape. **The XP growth is what pays for the length** — 1.6 a level
+  // is fine over ten and absurd over fifty (level 50 alone would cost 4e11),
+  // so the curve flattens as the ladder stretches and the TOTAL is what is
+  // held roughly steady. **OQ-79.**
+  ['collection.hero_levels_per_tier', 'collection.heroLevelsPerTier'],
+  ['collection.hero_max_level', 'collection.heroMaxLevel'],
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
   // The floor under the clock: what a kingdom holding no ground still learns
@@ -265,6 +308,9 @@ const SETTINGS = [
   ['ads.cooldown_max_seconds', 'ads.cooldownMaxSeconds'],
   ['ads.eligible_below_fraction', 'ads.eligibleBelowFraction'],
   ['ads.watch_seconds', 'ads.watchSeconds'],
+  // How many refills a day a video may pay for. Its own counter, independent
+  // of the Gem ladder's, and both roll at UTC midnight.
+  ['ads.mana_refills_per_day', 'ads.manaRefillsPerDay'],
   // Harmony's surplus bonus: `supply / demand` thresholds and what each pays
   // on the tax rate. A THRESHOLD AND ITS BONUS ARE ONE FACT, so they travel
   // in one cell rather than two parallel lists. There is deliberately no
@@ -344,7 +390,7 @@ const SHEETS = {
   Adjacency: ['district', 'neighbor', 'stat', 'magnitude'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_stardust', 'reward_knowledge'],
+    'reward_gems', 'reward_stardust', 'reward_knowledge', 'reward_mana'],
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
     'active_duration_seconds', 'active_radius',
     'carried_atk', 'carried_def', 'carried_hp',
@@ -352,9 +398,10 @@ const SHEETS = {
   Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
     'atk_per_level', 'def_per_level', 'hp_per_level'],
   // Real-money SKUs of the simulated store. `price_usd` is what the purchase
-  // deducts from the player's monthly budget; `gems` is what it grants. Only
-  // Gem packs live here — builders are priced in Gems (Settings) and the hero
-  // banner in Gems (Settings), so the store shows them without owning them.
+  // deducts from the player's monthly budget; `gems` is what it grants ON
+  // PURCHASE, which is 0 for a SKU that pays out over a season. Builders and
+  // the hero banner are priced in Gems (Settings), so the store shows them
+  // without owning them.
   Store: ['id', 'price_usd', 'gems'],
   // One row per banner. Odds and prices are numbers a designer tunes, so they
   // belong here — unlike a banner SCHEDULE, which is a wall-clock live-ops
@@ -818,6 +865,10 @@ async function importXlsx() {
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
       rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
       rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
+      // Mana is a city currency but not one of the four `reward_*` wallet
+      // columns, which are the materials every cost sheet shares. It gets a
+      // scalar of its own, the way Gems and Stardust do.
+      rewardMana: num(r, 'reward_mana', { blankAs: 0 }),
     });
   }
 
@@ -871,7 +922,8 @@ async function importXlsx() {
   for (const [id, r] of byId(readSheet(workbook, 'Store'), STORE_IDS)) {
     const priceUsd = num(r, 'price_usd');
     const gems = num(r, 'gems');
-    if (priceUsd <= 0 || gems <= 0) fail(where(r), 'a Gem pack needs a positive price and a positive grant');
+    if (priceUsd <= 0) fail(where(r), 'a store SKU needs a positive price');
+    if (gems < 0) fail(where(r), 'a store SKU cannot grant negative Gems');
     out.store[id] = { priceUsd, gems };
   }
 
@@ -1042,7 +1094,7 @@ async function exportXlsx() {
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
     q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
-    q.rewardKnowledge || '',
+    q.rewardKnowledge || '', q.rewardMana || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {

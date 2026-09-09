@@ -252,16 +252,39 @@ describe('first-time discoveries', () => {
     expect(restored.pendingDiscoveries).toEqual([]); // never re-announced
   });
 
+  // INVERTED 2026-09-08. This used to assert Gold alone, on the reasoning
+  // that paying Knowledge early would announce a currency hours before the
+  // player owned anything to spend it on. The opening grant is gone now and
+  // the chain funds the research it asks for, so Knowledge is spent from the
+  // second quest — announcing it late would be the bug.
   it('quest rewards discover their currencies too', () => {
     const state = canGather(freshGame());
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Timber');
     state.quests.progress = QUESTS.find((q) => q.id === 'Timber')!.goalAmount;
     tapCell(state, map, FOREST, T0);
     state.pendingDiscoveries = [];
-    expect(claimQuest(state)).toBe('Claimed'); // pays Gold
-    // Gold alone. The early chain pays no Knowledge now — that would announce
-    // a currency hours before the player owns anything to spend it on.
-    expect(state.pendingDiscoveries).toEqual(['resource:Gold']);
+    expect(claimQuest(state)).toBe('Claimed');
+    // Mana, not Gold: this is one of the tapping beats, and the reward that
+    // buys taps arrives where the pool is empty.
+    expect(state.pendingDiscoveries).toEqual(['resource:Mana', 'resource:Knowledge']);
+  });
+
+  // Every quest pays the clock, so a chain-follower always has the next
+  // research in hand (Docs/features/12-quests.md §2.1).
+  it('pays Knowledge on every quest, and the first pays the first research', () => {
+    expect(QUESTS.every((q) => q.rewardKnowledge >= 1)).toBe(true);
+    expect(QUESTS[0].rewardKnowledge).toBeGreaterThanOrEqual(techKnowledgeCost('Forestry'));
+    // …because nothing is handed over at the start any more.
+    expect(CURRENCIES.Knowledge.start).toBe(0);
+  });
+
+  // Some of the opening pays MANA instead of Gold: the pool is what the
+  // opening is short of, not coin. Only the tapping beats, and only early.
+  it('pays Mana on a few opening beats and nowhere else', () => {
+    const manaQuests = QUESTS.filter((q) => q.rewardMana > 0);
+    expect(manaQuests.map((q) => q.id)).toEqual(['Timber', 'Rations', 'ByHand']);
+    // A Mana reward replaces the Gold rather than sitting on top of it.
+    for (const q of manaQuests) expect(q.reward.Gold ?? 0).toBe(0);
   });
 });
 
@@ -347,7 +370,9 @@ describe('quests fund the research tree', () => {
     // to their new position (250/290 -> 110/120, since 540 Gold at quest 15
     // would have nearly doubled the early economy), and a third beat —
     // `Trade`, the research that opens them — was added in front at 100.
-    expect(chain).toBe(11_865);
+    // 11,725: three opening beats pay Mana instead of Gold (2026-09-08) —
+    // the pool is what the opening is short of, not coin.
+    expect(chain).toBe(11_725);
     expect(tree).toBe(519_830); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
@@ -429,7 +454,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test', description: '',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -501,7 +526,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test', description: '',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
     });
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null });

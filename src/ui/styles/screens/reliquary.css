@@ -16,21 +16,6 @@
 }
 .rel-heading-note { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-muted); }
 
-/* ------------------------------------------------------------- the pool --- */
-
-.rel-mana {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: linear-gradient(160deg, rgba(96, 128, 208, 0.2), rgba(96, 128, 208, 0.06));
-  border: 2px solid rgba(72, 96, 168, 0.4);
-}
-.rel-mana-head { display: flex; align-items: center; gap: 8px; }
-.rel-mana-title { font-family: var(--font-display); font-size: var(--text-title); flex: 1; }
-.rel-mana-hint { font-size: var(--text-helper); color: var(--ink-muted); }
-
 /* ---------------------------------------------------------- the Stardust --- */
 
 /* Stardust has no coin on the plank — it buys relic and hero levels and
@@ -51,7 +36,8 @@
 .rel-purse-hint { font-size: var(--text-helper); color: var(--ink-muted); }
 .rel-purse-value { font-family: var(--font-body); font-size: var(--text-title); }
 
-/* The breakdown the header refuses to show. Here it IS the point. */
+/* A two-column ledger line. The pool's own breakdown moved to the Mana sheet
+   (screens/mana.css); the banner panel still draws its pity count with these. */
 .rel-breakdown { display: flex; flex-direction: column; gap: 2px; }
 .rel-line {
   display: flex;

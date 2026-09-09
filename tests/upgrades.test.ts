@@ -46,7 +46,7 @@ const research = (state: ReturnType<typeof freshGame>, id: Parameters<typeof sta
 describe('researching a rank', () => {
   it('costs Gold and TIME — the opening rank as authored, the later ones on the bands', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000 });
+    fund(state, { Gold: 1000, Knowledge: 500 });
     // Whatever the row above holds — the designer's to move in `?dev=tree`,
     // so it is read off the tree rather than named here.
     completeRequirements(state, 'TapPowerI');
@@ -69,7 +69,7 @@ describe('researching a rank', () => {
   // it hangs off one, and is refused until that one is researched, is not.
   it('hangs off its parent technology in the tree', () => {
     const state = freshGame();
-    fund(state, { Gold: 1000 });
+    fund(state, { Gold: 1000, Knowledge: 500 });
     // Refused on a fresh kingdom, and startable the moment the major it hangs
     // off is researched — for every ladder the tree has, not one named pair.
     for (const ladder of bonusLadders) {
@@ -396,7 +396,7 @@ describe('the era-2/3 lines reach their numbers', () => {
   // which one-call replay and stepped ticking would then land on differently.
   it('Scriveners shortens a research that starts AFTER it, not one already running', () => {
     const state = freshGame();
-    fund(state, { Gold: 99_999 });
+    fund(state, { Gold: 99_999, Knowledge: 500 });
     completeRequirements(state, 'Saws');
     const full = TECHNOLOGIES.Saws.durationSeconds * 1000;
     expect(startTech(state, 'Saws', T0)).toBe('Started');
@@ -490,7 +490,7 @@ describe('the Warfare lines reach their numbers', () => {
     expect(effectiveHaulLoss(state)).toBeGreaterThanOrEqual(0.2);
   });
 
-  it('Pathfinders shortens every depth, through the same door a Conjunction uses', () => {
+  it('Pathfinders shortens every depth, through the door a timed boon uses', () => {
     const state = freshGame();
     const full = depthMs(state, 'HollowBarrow', 1);
     completeRanks(state, 'Pathfinders', 2); // −20%
@@ -499,11 +499,11 @@ describe('the Warfare lines reach their numbers', () => {
 
   it('Drillmaster pays a hero more XP for the same delve', () => {
     const state = freshGame();
-    addHeroXp(state, 'Warden', 20);
-    expect(state.heroes.xp.Warden).toBe(20);
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(20);
     completeRanks(state, 'Drillmaster', 2); // +10%
-    addHeroXp(state, 'Warden', 20);
-    expect(state.heroes.xp.Warden).toBe(42);
+    addHeroXp(state, 20);
+    expect(getWallet(state.kingdom.wallet, 'HeroXp')).toBe(42);
   });
 });
 

@@ -13,7 +13,12 @@ export type CurrencyId =
   | 'Gold' | 'Food' | 'Wood' | 'Stone' // city coins
   | 'Mana' // the only capped currency — see sim/mana.ts
   | 'Knowledge' // kingdom-scoped research clock; buys technologies and nothing else
-  | 'Stardust' // kingdom-scoped; levels heroes and relics and nothing else
+  | 'Stardust' // kingdom-scoped; levels relics, and tolls a hero's ascension
+  // Kingdom-scoped, and spent on ANY hero rather than the one that earned it:
+  // a Legendary pulled today is levelled with what the Commons brought back
+  // (Docs/features/10-heroes.md §4). Not on the plank — it reads on the
+  // roster, beside the button that spends it.
+  | 'HeroXp'
   | 'Gems' // player-scoped, premium
   // The two gacha keys: one banner each, bought with Gems, spent on a pull.
   // Player-scoped like Gems, and NOT on the plank — the purse is where they
@@ -73,7 +78,10 @@ export type TomeId = 'Civics' | 'Warfare' | 'Magic';
 
 /** A real-money SKU of the simulated store (definitions.ts `STORE`). */
 export type StoreSkuId =
-  | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury';
+  | 'GemsPouch' | 'GemsPurse' | 'GemsChest' | 'GemsVault' | 'GemsHoard' | 'GemsTreasury'
+  /** Not a Gem pack: it grants nothing on purchase and unlocks the daily
+   *  chest's Royal track for the season (sim/daily.ts). */
+  | 'RoyalChest';
 
 /** Who the playtester says they are (Docs/features/14-monetization.md §3). One
  *  choice per save; the only way to another profile is a fresh game. */
@@ -208,7 +216,6 @@ export interface Worker {
  *  them are pure functions of (state, entry, t) — no closures over UI, or the
  *  sim stops being replayable. */
 export type SchedulePayload =
-  | { kind: 'conjunction'; occurrence: number }
   | { kind: 'banner'; occurrence: number };
 
 export interface ScheduledEntry {
@@ -314,17 +321,28 @@ export interface GameState {
     wallet: Wallet;
     /** Epoch ms anchor for the Knowledge drip (whole units only). */
     lastKnowledgeAt: number;
-    /** The daily chest ladder. KINGDOM-scoped on purpose, like Knowledge, so
+    /** The daily chest season. KINGDOM-scoped on purpose, like Knowledge, so
      *  it survives a region reset — a habit is a property of the player, not
      *  of the city they happen to be playing. See sim/daily.ts. */
     daily: {
-      /** Days PLAYED, not days elapsed. The ladder position is this modulo
-       *  the ladder's length, so it cycles and never resets. */
-      ladderStep: number;
+      /** The `seasonIndex` `rung` belongs to. A stale one reads as rung 0,
+       *  so a season turns over with nothing scheduled and nothing to reset. */
+      season: number;
+      /** Rungs claimed INSIDE that season — days played, not days elapsed. */
+      rung: number;
       /** `dayIndex` of the last claim, or null if none — stamped rather than
        *  incremented, so a second claim in one day is impossible however the
        *  clock moves, including backwards. */
       lastClaimedDay: number | null;
+      /** The `seasonIndex` the Royal chest was bought for, or null. A
+       *  comparison rather than a flag, so nothing has to clear it when the
+       *  season turns. */
+      royalSeason: number | null;
+      /** Which Royal cells have been taken this season, by rung. The paid
+       *  track is claimed CELL BY CELL and out of order — buying the chest on
+       *  rung 9 leaves nine of them waiting — so this cannot be a count.
+       *  Belongs to `season`: a stale one reads as empty. */
+      royalClaimed: number[];
     };
   };
   player: {
@@ -364,7 +382,7 @@ export interface GameState {
     slotsPurchased: number;
   };
   /**
-   * Scheduled content: seasons, events, gacha banners, the Conjunction.
+   * Scheduled content: seasons, events and gacha banners.
    *
    * Reconciled from the BUILD's catalogue at load, so a save written before a
    * content drop still learns the new window exists — and a window that
@@ -382,7 +400,6 @@ export interface GameState {
     levels: Partial<Record<HeroId, number>>;
     tiers: Partial<Record<HeroId, number>>;
     fragments: Partial<Record<HeroId, number>>;
-    xp: Partial<Record<HeroId, number>>;
     /** Extra party slots bought with Gems. */
     partySlotsPurchased: number;
   };
@@ -430,6 +447,18 @@ export interface GameState {
     claims: number;
     /** Latched: set when the offer becomes visible, cleared by claiming. */
     pending: boolean;
+    /**
+     * The refills taken TODAY, one counter per route (sim/manaRefill.ts).
+     *
+     * Both routes to a refill live here because they are one surface — the
+     * Mana sheet — and they roll on the same day, but the counters are
+     * separate: a video allowance spent does not close the Gem ladder, and
+     * buying five does not cost the player a video.
+     *
+     * `day` is a `dayIndex`, rolled LAZILY by every reader, so nothing has to
+     * happen at midnight and a stale day can never leak.
+     */
+    refills: { day: number; watched: number; bought: number };
   };
   /** The deepest depth any party has ever cleared. Persisted rather than
    *  derived, because a delve that ended is gone — and "how deep have you

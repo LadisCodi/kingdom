@@ -14,30 +14,27 @@
 - **No RNG in resolution.** The only seeded RNG is enemy generation (§10).
 - One resolver for every caller.
 
-## 2. Battle modes
+## 2. One battle
 
-| Mode | Troop slots | Hero slots | Used by |
-|---|---|---|---|
-| **Army battle** | Enabled | Enabled | Ruin rooms, landmarks, PvP |
-| **Hero battle** | Disabled | Enabled | Hero-only content |
-
-The only difference is whether troop slots may be filled. Board, ticks, damage,
-targeting and victory rules are identical. In a hero battle no troop type
-bonuses apply, since there are no troops to receive them.
+- Every fight fields **troop slots and hero slots**: gates, ruin rooms,
+  bosses, PvP. There is no hero-only mode.
+- **At least one hero is mandatory** on the player's side
+  ([`10-heroes.md`](10-heroes.md) §2.5). Troop slots may be empty.
 
 ## 3. Board
 
 Per side:
 
 - **6 troop slots** — 2 rows × 3.
-- **2 hero slots**, expandable to 3.
+- **3 hero slots**.
 - Every slot, troop or hero, is assigned to the **front** or **back** row.
 - Hero slots are independent of troop slots: a hero never occupies a troop slot
   and never joins a squad.
 - Position determines targeting order only (§8).
 
-Slot availability comes from party slots
-([`11-expeditions.md`](11-expeditions.md) §3).
+How many slots the player may fill: troop slots from party slots
+([`11-expeditions.md`](11-expeditions.md) §3); hero slots one free, the rest
+Gems ([`10-heroes.md`](10-heroes.md) §3).
 
 ## 4. Squads
 
@@ -140,28 +137,19 @@ A hero or villain occupies a hero slot and does two things.
   `alive = 1`.
 - Balanced to roughly **70%** of a full squad's output at equivalent
   investment.
-- Dies when its `hp` reaches 0: it stops attacking and its ultimate stops
-  firing.
+- Dies when its `hp` reaches 0: it stops attacking. Its passive stands.
 
-### 9.2 It buffs one troop type
+### 9.2 It buffs one troop type — the passive
 
-- `troop_dmg_mult` and `troop_hp_mult` apply to **every squad on that side of
-  the board whose type matches the hero's type**, regardless of slot or row.
+- `troop_dmg_mult`, `troop_hp_mult` and `troop_def_bonus` (flat, added to
+  `def`) apply to **every squad on that side of the board whose type matches
+  the hero's type**, regardless of slot or row.
 - **No effect on non-matching types.**
 - Multipliers from several heroes of the same type are additive on the excess:
-  `1 + Σ(mult − 1)`.
+  `1 + Σ(mult − 1)`; flat bonuses sum.
 - **Bonuses are computed at battle start and persist if the hero dies.**
-- The hero's passive and ultimate are always active while the hero lives,
-  whether or not any matching troops are present.
-
-### 9.3 Energy and ultimate
-
-- +1 per tick, +5 per attack made, +2 per attack received.
-- Fires at **100**, resets to 0.
-- One ultimate and one passive per hero, scaled by `ability_power`. Unit types
-  have no abilities.
-- Ultimate effects are limited to: damage to one or all enemy slots, a timed
-  buff, or restoring `hp_pool`.
+- This is the hero's only ability. No ultimate, no energy, no abilities on
+  unit types.
 
 ## 10. Ticks and victory
 
@@ -206,9 +194,14 @@ squad_power = count × power_per_troop(tier) × troop_dmg_mult
 party_power = Σ squad_power + Σ hero_power
 ```
 
-`hero_power` is authored per hero and level
-([`10-heroes.md`](10-heroes.md)). This is an estimate; the resolver decides the
-outcome.
+`hero_power` is a formula of the hero's resolved stat block and passive at its
+level and tier, not a table:
+
+```
+hero_power = power_base(hero) × rarity_mult × (1 + power_per_level × (level − 1))
+```
+
+This is an estimate; the resolver decides the outcome.
 
 ## 13. Event stream
 
@@ -221,8 +214,6 @@ fast-forward or restart.
 | `attack` | tick, source slot, target slot, `hits`, `dealt`, type fraction |
 | `troops_lost` | tick, slot, new `alive`, new `hp_pool` |
 | `slot_wiped` | tick, slot |
-| `energy` | tick, hero slot, value |
-| `ultimate` | tick, hero slot, ability id, affected slots, per-slot effect |
 | `end` | tick, winner, reason (`wiped` \| `timeout`) |
 
 The stream is fully sufficient to draw the fight; the renderer never recomputes
@@ -248,9 +239,10 @@ The cap limits **total troops owned**, not party size.
 
 ## 15. Landmarks
 
-A contested landmark resolves as an army battle with one authored formation.
-Clearing it is a one-off; no garrison remains. The co-op siege on the world map
-is [`15-social.md`](15-social.md) §6.
+A province landmark is claimed for Gold; it has no fight. Every ruin opens
+with a **gate** — a formation the generator builds from the ruin's `guard`,
+fought on this board as a room ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 
 ## 16. Determinism
 
@@ -268,11 +260,10 @@ is [`15-social.md`](15-social.md) §6.
 | Unit stats, `frontage`, `squad_size`, `power_per_troop` | `Units` sheet |
 | Tier multipliers | `Units` sheet |
 | Type fractions (3/2, 3/4) | `combat.type_*` |
-| Hero output share of the board (target 30–40%) | `Heroes` sheet |
+| Hero stat blocks, passives, the 70% share and the rarity multipliers | `Heroes` sheet, `heroes.rarity_*` ([`10-heroes.md`](10-heroes.md) §9) |
 | Villain stat blocks, per room | `Villains` sheet |
 | Villain pool per depth | `Depths` sheet |
 | Tick length, timeout | `combat.tick_ms`, `combat.timeout_ticks` |
-| Energy gain, ultimate threshold | `combat.energy_*` |
 | Enemy slot count band, hero budget threshold, row assignment | `combat.gen_*` |
 | Army cap per building level | `Districts.army_cap_per_level` |
 
@@ -280,7 +271,9 @@ is [`15-social.md`](15-social.md) §6.
 
 - Any input during the fight
 - Movement, pathfinding or facing
-- Abilities on unit types
+- Abilities on unit types; ultimates, energy or any hero ability beyond the
+  type passive
+- A hero-only battle mode — a hero arena is a possible future
 - Upgradeable `frontage` or `squad_size`
 - Partial squads, or mixed tiers of one type
 - Heroes inside troop slots, or bonuses to non-matching types
@@ -291,7 +284,5 @@ is [`15-social.md`](15-social.md) §6.
 - Draws
 
 **Pending:** villain hero-slot count per room, and whether it is capped like
-the player's (**OQ-82**) · third hero slot unlock (**OQ-83**) · ultimate
-targeting when the intended row is empty (**OQ-84**) · tier conversion cost, if
-any (**OQ-85**) · `power_start` re-authoring against the full T1–T5 power range
-(**OQ-86**).
+the player's (**OQ-82**) · tier conversion cost, if any (**OQ-85**) ·
+`power_start` re-authoring against the full T1–T5 power range (**OQ-86**).

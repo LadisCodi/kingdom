@@ -194,29 +194,9 @@ export function accrueMana(state: GameState, toTime: number): number {
   return addMana(state, units);
 }
 
-/** Gems for a refill, priced on what is MISSING as a share of the cap: a
- *  FULL pool is `gemRefillFullPool` Gems — one $0.99 pouch, at every stage of
- *  the game (Docs/features/14-monetization.md §2.2) — and half a pool is half
- *  that. Never a price per Mana, which is what went stale as the pool grew
- *  (a flat 4 a Gem once made a full refill cost 83 Gems against a lifetime
- *  faucet of 75). A full pool costs 0. */
-export const manaRefillGemCost = (state: GameState): number => {
-  const cap = manaCap(state);
-  if (cap <= 0) return 0;
-  const missing = Math.max(0, cap - mana(state));
-  return Math.ceil((missing / cap) * MANA.gemRefillFullPool);
-};
-
-export type RefillResult = 'Refilled' | 'AlreadyFull' | 'NotEnoughGems';
-
-export function refillManaWithGems(state: GameState): RefillResult {
-  const cost = manaRefillGemCost(state);
-  if (cost <= 0) return 'AlreadyFull';
-  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
-  addToWallet(state.player.wallet, 'Gems', -cost);
-  addMana(state, manaCap(state));
-  return 'Refilled';
-}
+/** Both ways to buy a pool back — the video's allowance and the Gem ladder —
+ *  live in `manaRefill.ts`, because a refill is one offer with two tills and
+ *  a day that limits both. */
 
 // ------------------------------------------------------------- the Knowledge drip
 

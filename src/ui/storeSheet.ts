@@ -20,7 +20,7 @@
 // against a wallet.
 
 import type { Game } from '../game';
-import { KINGDOM_DEF, STORE, STORE_ORDER } from '../sim/data/definitions';
+import { GEM_PACK_ORDER, KINGDOM_DEF, STORE } from '../sim/data/definitions';
 import { formatUsd } from '../sim/store';
 import { spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
@@ -69,7 +69,10 @@ export function renderStoreSheet(game: Game): HTMLElement {
   });
 
   // ---- gem packs: upright cards, count over art over price
-  const packs = STORE_ORDER.map((id) => {
+  // GEM_PACK_ORDER, not every SKU: the Royal chest is a Store row because the
+  // budget has to see it, but it is sold on the daily chest where the ladder
+  // beside it explains the price (Docs/features/12-quests.md §3.3).
+  const packs = GEM_PACK_ORDER.map((id) => {
     const sku = STORE[id];
     // Each pack has its own art, dropped into render/assets as
     // `<sprite>.png`; until it lands the Gems icon stands in.

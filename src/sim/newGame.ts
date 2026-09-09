@@ -2,6 +2,7 @@
 // fog seed, authored map features.
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
+import { dayIndex } from './daily';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -34,7 +35,7 @@ export function newGame(map: MapData, now: number): GameState {
     kingdom: {
       builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
-      daily: { ladderStep: 0, lastClaimedDay: null },
+      daily: { season: -1, rung: 0, lastClaimedDay: null, royalSeason: null, royalClaimed: [] },
       lastKnowledgeAt: now,
     },
     player: { wallet: playerWallet, payer: null },
@@ -55,12 +56,17 @@ export function newGame(map: MapData, now: number): GameState {
     // access, so the system has to be reachable without it.
     heroes: {
       owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
-      fragments: {}, xp: {}, partySlotsPurchased: 0,
+      fragments: {}, partySlotsPurchased: 0,
     },
     gacha: { pullCounts: {}, pityCounters: {}, legendaryPity: {}, freePulls: {} },
     // Ready from the first minute: a new kingdom starts with a full pool, so
     // the offer simply waits for the player to spend down to half.
-    ads: { readyAt: now, claims: 0, pending: false },
+    ads: {
+      readyAt: now,
+      claims: 0,
+      pending: false,
+      refills: { day: dayIndex(now), watched: 0, bought: 0 },
+    },
     deepestDepth: 0,
     ruinsCleared: {},
     landmarks: { claimed: {}, cleared: {} },
@@ -102,7 +108,9 @@ export function newGame(map: MapData, now: number): GameState {
   // is read from it.
   state.city.wallet.Mana = manaCap(state);
 
-  reconcileSchedule(state, now);
+  // `fresh`: a kingdom created this instant did not live through a window
+  // that is already open, so it is not paid for one.
+  reconcileSchedule(state, now, { fresh: true });
   seedFog(state, map);
 
   if (!state.fog.revealed[coordKey(TOWNHALL_ORIGIN)]) {

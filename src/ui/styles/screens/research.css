@@ -48,27 +48,61 @@
   font-weight: 400;
   color: var(--parchment);
 }
-/* The knob keeps the top-right cell; the scholars take the whole second row. */
+/* The knob keeps the top-right cell; the slots take the whole second row. */
 .research-topbar > .k-knob { grid-row: 1; grid-column: 2; }
-.research-topbar > .res-scholars { grid-row: 2; grid-column: 1 / -1; }
+.research-topbar > .res-slots { grid-row: 2; grid-column: 1 / -1; }
 
-/* Scholars at lecterns: a concurrency limit made picturable. */
-.res-scholars { display: flex; align-items: center; gap: 8px; }
-.res-desks { display: flex; gap: 4px; }
-.res-desk {
-  width: 28px;
-  height: 28px;
+/* THE SLOTS. Left-anchored and horizontal: a row of desks the player can
+   point at, in place of the sentence ("2 of 3 at work") and the Hire button
+   that used to sit beside it. Every unlocked slot, plus one locked one while
+   there are more to buy — never the whole ladder, because an empty slot is an
+   invitation and four of them is a shop. */
+.res-slots {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.res-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 66px; }
+.res-slot-box {
+  width: 56px;
+  height: 42px;
   display: grid;
   place-items: center;
+  padding: 0;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
-  border-radius: 6px;
-  opacity: 0.55;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 var(--lip) 0 var(--wood-dark);
 }
-.res-desk.is-busy { background: var(--parchment); opacity: 1; }
-/* Takes the slack so Hire sits at the right end of its own row, under the
-   close knob, rather than floating in the middle of it. */
-.res-desk-label { flex: 1; font-size: var(--text-helper); color: var(--parchment); }
+button.res-slot-box { cursor: pointer; }
+button.res-slot-box:hover { filter: brightness(1.06); }
+button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none; }
+
+/* A free desk is an invitation, so it is drawn open rather than filled. */
+.res-slot.is-free .res-slot-box {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.75;
+}
+/* One at work carries what is on it. */
+.res-slot.is-busy .res-slot-box { background: var(--parchment); }
+.res-slot-glyph { font-size: 22px; line-height: 1; }
+/* One still to buy is the only slab with the gem tone on this row. */
+.res-slot.is-locked .res-slot-box { background: var(--sky); border-color: var(--wood-dark); }
+.res-slot.is-locked .res-slot-box.is-short { filter: grayscale(0.5) brightness(0.9); }
+
+.res-slot-note {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--parchment);
+  white-space: nowrap;
+}
+.res-slot-note.is-short { color: var(--clay); }
 .research-topbar .k-btn { min-height: 40px; padding: 8px 14px; margin-bottom: 0; }
 
 /* Aged parchment ground, faintly stained. Vertical scroll only: the page is
@@ -220,15 +254,25 @@
    does not pretend it is reachable. */
 .res-era.is-sealed { background: rgba(92, 58, 30, 0.35); border-style: dashed; }
 
-/* The floating card, on parchment like everything else. */
-.tech-info {
+/* A MODAL over the book, not a shelf resting on the bottom of it. The panel
+   had to stay short enough to leave the page usable behind it, which is the
+   wrong constraint on the one surface that has to say what a card does, what
+   it needs, what it costs and how long it takes. */
+.tech-modal {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: calc(var(--nav-h) + 10px);
-  max-height: 46%;
-  overflow-y: auto;
+  inset: 0;
   z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--hud-h) + 12px) 12px calc(var(--nav-h) + 12px);
+  background: var(--scrim);
+}
+.tech-info {
+  width: 100%;
+  max-width: 420px;
+  max-height: 100%;
+  overflow-y: auto;
   padding: 12px 14px;
   color: var(--ink);
   font-family: var(--font-body);
@@ -238,13 +282,41 @@
   border-radius: var(--radius);
   box-shadow: 0 6px 0 rgba(60, 36, 18, 0.3), 0 12px 26px rgba(60, 36, 18, 0.35);
 }
-.tech-info h3 { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; margin-bottom: 4px; }
+/* The title takes the row and the way out takes its end. */
+.tech-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.tech-info-head h3 { flex: 1; min-width: 0; }
+.tech-info-head .k-knob { flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; }
+.tech-info h3 { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
 .tech-info .muted { color: var(--ink-muted); }
 .tech-info .blocked { color: var(--clay); }
 .tech-info .delta { color: var(--leaf-dark); font-weight: 700; }
 .tech-info .rows { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
 .tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .tech-info .action-row .info { flex: 1; }
+
+/* A property of the card, with the other properties. */
+.res-duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--ink-muted);
+}
+
+/* The two ways to have the same thing, side by side: choosing between them is
+   comparing two prices, and a price under a price is a list. Equal widths so
+   neither reads as the afterthought. */
+.tech-info-actions { display: flex; gap: 8px; margin-top: 8px; }
+.tech-info-actions > .k-btn { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+/* One reason for the pair, above it — saying it twice between two buttons is
+   a wall of the same sentence. */
+.tech-info-blocked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--clay);
+}
 .tech-info .progress { position: relative; height: 16px; margin: 8px 0; border-radius: 8px;
   overflow: hidden; background: var(--parchment-shade); border: 2px solid var(--wood-dark); }
 .tech-info .progress .fill { position: absolute; inset: 0; background: var(--sky); }
@@ -323,7 +395,9 @@
   font-family: var(--font-body);
   font-size: var(--text-helper);
 }
-.res-clock-rate { opacity: 0.8; }
+/* The rate is the whole of this pill now — the balance moved to the plank
+   while the screen is open — so it is no longer the dimmed half of a pair. */
+.res-clock-rate { opacity: 1; }
 .res-wait {
   display: flex;
   align-items: center;

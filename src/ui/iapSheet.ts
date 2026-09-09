@@ -13,7 +13,7 @@ import { STORE } from '../sim/data/definitions';
 import type { StoreSkuId } from '../sim/state';
 import { formatUsd, priceCents } from '../sim/store';
 import { el } from './format';
-import { btn, currencyIcon, iconEl, sheet } from './kit';
+import { btn, iconEl, sheet } from './kit';
 
 export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
   const sku = STORE[id];
@@ -21,17 +21,22 @@ export function renderIapSheet(game: Game, id: StoreSkuId): HTMLElement {
   const price = priceCents(id);
   const remaining = payer?.remainingCents ?? 0;
   const affordable = payer !== null && remaining >= price;
-  const back = () => game.setOverlay('store');
+  // Back to wherever the price was tapped — the store for a pack, the daily
+  // chest for the Royal one.
+  const back = () => game.setOverlay(game.iapReturn());
 
   const row = (label: string, value: string, cls = '') =>
     el('div', { class: `iap-row ${cls}` }, el('span', {}, label), el('b', {}, value));
 
   const body = el('div', { class: 'iap' },
     el('div', { class: 'iap-head' },
-      currencyIcon('Gems', { size: 'lg' }),
+      iconEl(sku.gems > 0 ? 'Gems' : 'chest', { size: 'lg' }),
       el('div', {},
         el('div', { class: 'iap-name' }, sku.name),
-        el('div', { class: 'iap-grant' }, `${sku.gems} Gems`))),
+        // A SKU that grants no Gems on purchase says what it DOES instead:
+        // "0 Gems" would be a true sentence and a wrong one.
+        el('div', { class: 'iap-grant' },
+          sku.gems > 0 ? `${sku.gems} Gems` : sku.description))),
     el('div', { class: 'iap-rows' },
       row('Price', formatUsd(price)),
       row('Left this month', payer === null ? '—' : formatUsd(remaining)),

@@ -15,9 +15,10 @@ import {
 } from '../src/sim/state';
 
 export const map = buildMapData();
-/** A Thursday, deliberately: it sits in the quiet gap between two
- *  Conjunction windows (which run Monday to Wednesday), so a test that does
- *  not care about the timeline is not silently inside a season. */
+/** A Thursday. It was chosen to sit in the quiet gap between two Conjunction
+ *  windows, back when the catalogue had one; the catalogue is empty now
+ *  (2026-09-08), so nothing depends on the weekday and it is kept only
+ *  because every stored expectation in the suite is priced against it. */
 export const T0 = Date.parse('2026-08-20T12:00:00Z');
 
 /** A fixed world seed. newGame() rolls a real one, so without this two

@@ -21,7 +21,7 @@ Code-level contracts are the invariants below.
 
 ```bash
 npm run dev          # vite; predev runs the balance import
-npm test             # vitest run — 47 suites, keep them all green
+npm test             # vitest run — 55 suites, keep them all green
 npm run harness      # the 30-day pacing harness (slow, not in npm test)
 npm run build        # tsc --noEmit && vite build
 npm run balance      # balance.xlsx  → src/sim/data/balance.json
@@ -123,7 +123,7 @@ three ways (`tests/techTree.test.ts`).
 
 ## Saves
 
-`SAVE_VERSION` is 32; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 34; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -157,11 +157,13 @@ than the build is rejected rather than downgraded.
   `delvePill.ts`, `adOfferPill.ts`. They hide behind any sheet.
 - **Z-order is load-bearing.** The stack, bottom to top: map · ad-offer tab (4)
   · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
-  (10) · settings knob (20) · the rewarded video (200). `#overlay` has a
-  z-index, so it is a **stacking context** and nothing inside it can rise above
-  the header or the nav — **which is the design, not a limitation**: a menu is
-  opened over the game, so the purse stays readable and the way out stays put.
-  The ad screen lives at z 200 in its own mount for that reason, and carries
+  (10) · settings knob (20) · the gacha reveal (100) · the rewarded video
+  (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
+  inside it can rise above the header or the nav — **which is the design, not
+  a limitation**: a menu is opened over the game, so the purse stays readable
+  and the way out stays put.
+  The ad screen lives at z 200 in its own mount for that reason, and the gacha
+  reveal at z 100 in its own for the same one; both carry
   `:empty { display: none }` — without it an `inset: 0` element swallows every
   tap on the map.
 - **Countdowns derive from a timestamp**, never a decremented integer, so a

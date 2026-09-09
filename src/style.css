@@ -62,6 +62,13 @@ body {
 #ad:empty { display: none; }
 #ad { position: absolute; inset: 0; z-index: 200; }
 
+/* The gacha reveal, on the same argument and just under the video: what a
+   call paid has to be read before the game comes back, and a reward the
+   player can tap around is not a reward. `:empty` is load-bearing here for
+   the same reason it is above. */
+#gacha:empty { display: none; }
+#gacha { position: absolute; inset: 0; z-index: 100; }
+
 /* The offer tab, flush to the right edge of the FRAME (#app), not the
    viewport — everything inside positions against the 9:16 frame. */
 #adoffer[hidden] { display: none; }
@@ -87,7 +94,7 @@ body {
 
    The stack, bottom to top: map · ad-offer tab (4) · district card (6) ·
    menus and sheets (7) · header (8) · nav bar (10) · settings knob (20) ·
-   the video (200). */
+   the gacha reveal (100) · the video (200). */
 #header { position: relative; z-index: 8; }
 
 #overlay:empty { display: none; }

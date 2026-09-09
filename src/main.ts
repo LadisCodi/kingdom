@@ -14,7 +14,6 @@ import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
-import { forceConjunction } from './sim/timeline';
 import { grantBuilder } from './sim/commands';
 import { addGood } from './sim/goods';
 import { GOOD_ORDER } from './sim/data/definitions';
@@ -26,7 +25,8 @@ import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
-import { renderAdOfferSheet } from './ui/adOfferSheet';
+import { mountGachaScreen } from './ui/gachaScreen';
+import { renderManaSheet } from './ui/manaSheet';
 import { renderBuilderSheet } from './ui/builderSheet';
 import { renderDailySheet } from './ui/dailySheet';
 import { mountDailyPill } from './ui/dailyPill';
@@ -40,6 +40,7 @@ import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
+import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
@@ -133,6 +134,7 @@ async function boot(): Promise<void> {
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  mountGachaScreen(game, document.getElementById('gacha')!);
   mountAdScreen(game, document.getElementById('ad')!);
   // The two bars publish their REAL heights as --hud-h / --nav-h, which is
   // what every other screen positions against. The tokens are only the
@@ -158,9 +160,10 @@ async function boot(): Promise<void> {
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
     reliquary: renderReliquarySheet,
+    heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
     checkpoint: renderCheckpointSheet,
-    adOffer: renderAdOfferSheet,
+    mana: renderManaSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
@@ -169,6 +172,19 @@ async function boot(): Promise<void> {
     // The confirmation needs a SKU; with none pending it falls back to the
     // store rather than drawing an empty sheet.
     iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
+  };
+
+  /**
+   * Screens that opt OUT of the per-tick rebuild, by saying what they read.
+   *
+   * A screen with no countdown on it has nothing to redraw a second later,
+   * and one that draws images pays for the rebuild visibly — a fresh `<img>`
+   * decodes before its first paint, so a grid of portraits blinks once a
+   * second. Anything absent from this map keeps rebuilding, which is the
+   * safe default.
+   */
+  const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
+    heroes: () => game.heroesSignature(),
   };
 
   // Each mount point holds one keyed screen: same key → re-render in place,
@@ -209,13 +225,14 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
+        'purse', 'reliquary', 'heroes', 'expedition', 'checkpoint', 'welcome', 'settings',
+        'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
         () => OVERLAYS[overlay](game),
         needsKnob ? () => game.dismiss() : undefined,
+        OVERLAY_SIGNATURES[overlay],
       ));
     }
     else overlaySlot.clear();
@@ -386,7 +403,6 @@ async function boot(): Promise<void> {
         for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);
         runTick();
       }),
-      button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {
         game.state.ads.readyAt = 0;

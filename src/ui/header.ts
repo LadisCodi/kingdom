@@ -10,7 +10,9 @@
 // reads in that screen's header instead. Now:
 //
 //   * three coins that gate the early game, with Stone appearing only once
-//     it means something;
+//     it means something — and the whole set SWAPS on a screen that spends
+//     something else: the roster shows Hero XP and Stardust instead, because
+//     neither is on any plank and the city's four buy nothing there;
 //   * MANA, then Gems past the rope. Mana is the energy every tap is paid
 //     from, so it is never hidden and never contextual — a player who cannot
 //     see it cannot tell why a tap just refused;
@@ -53,7 +55,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const manaValue = el('b', {}, '');
   const manaRate = el('span', { class: 'hud-mana-rate' }, '');
   manaGauge.append(manaFill, currencyIcon('Mana', { size: 'sm' }), manaValue, manaRate);
-  manaGauge.addEventListener('click', () => game.setOverlay('reliquary'));
+  manaGauge.addEventListener('click', () => game.openMana());
   plank.append(coins, manaGauge, el('span', { class: 'hud-divider' }), gems);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
@@ -79,6 +81,11 @@ export function mountHeader(game: Game, root: HTMLElement): void {
       const coin = el('button', {
         class: 'hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
       }, currencyIcon(c, { size: 'sm' }), value);
+      // A coin that is a CLOCK carries its speed beside its number — a drip
+      // you cannot see the speed of is a drip you cannot plan against, and
+      // the presenter decides which coin that is and when.
+      const rate = game.coinRate(c);
+      if (rate !== null) coin.append(el('span', { class: 'hud-coin-rate' }, rate));
       coin.addEventListener('click', () => game.setOverlay('purse'));
       return coin;
     }));
@@ -113,7 +120,10 @@ export function mountHeader(game: Game, root: HTMLElement): void {
 
   const refresh = () => {
     const list = game.visibleCurrencies();
-    const key = list.join(',');
+    // The rate is baked into the coin ELEMENT, so it belongs in the key that
+    // decides whether the coins are rebuilt — otherwise it would be drawn
+    // once and then never move.
+    const key = list.map((c) => `${c}${game.coinRate(c) ?? ''}`).join(',');
     if (key !== shown) {
       shown = key;
       buildCoins(list);

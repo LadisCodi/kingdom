@@ -4,10 +4,10 @@
 > **simulated** store: real in every way that produces data, fake in exactly one
 > — the charge. The Mana placement is designed in
 > [`08-magic.md`](08-magic.md) §6, the two call placements in
-> [`10-heroes.md`](10-heroes.md) §5.2.
+> [`10-heroes.md`](10-heroes.md) §6.2.
 >
-> **Status: three ad placements, the builder offer, and the store's first cut
-> are built** — the payer profile and its monthly budget (§3), and four
+> **Status: three ad placements, the builder offer, the Royal chest and the
+> store's first cut are built** — the payer profile and its monthly budget (§3), and four
 > surfaces: builders for Gems, keys for Gems, Gem packs for simulated dollars,
 > and the two hero banners (§2.1). The remaining SKUs, the other four
 > placements and the telemetry pipeline (§4) are designed, not built.
@@ -32,10 +32,11 @@
   buys it sooner, in quantity, and without the wait; the free path to the same
   thing always exists. The daily free golden call is the worked example — a
   Legendary is a wallet's fastest purchase and roughly thirty free calls a
-  month otherwise ([`10-heroes.md`](10-heroes.md) §5.2).
+  month otherwise ([`10-heroes.md`](10-heroes.md) §6.2).
 - The first rung of every ladder is earned by play: research grants the second
   attunement slot and the third party slot before Gems can buy any; the daily
-  chest pays Gems at the week marker.
+  chest's free track pays Gems every season, and the Royal chest's own gold
+  keys are the same keys an ad already gives away daily.
 
 | Family | Examples | Effect |
 |---|---|---|
@@ -48,13 +49,16 @@
 
 - The Gems plaque in the header opens the store (§2.1).
 - Gems buy **five** things: **keys**, party slots, attunement slots, builders,
-  Mana refills. Three of those are one-time ladders.
+  Mana refills. Three of those are one-time ladders; the refill is a ladder
+  that **resets every day** ([`08-magic.md`](08-magic.md) §6).
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
   call spends — so the two banners have two prices without a second Gem price
-  ([`10-heroes.md`](10-heroes.md) §5.1).
-- Faucet: **3,750 up front plus ~1,000/month** — seven silver keys, or two
-  gold ones, or the second builder and change. 500 to start, 750 across the
-  quest chain, 500 a first delve clear, 250 at the week marker.
+  ([`10-heroes.md`](10-heroes.md) §6.1).
+- Faucet: **3,750 up front plus ~4,500/month** — 500 to start, 750 across the
+  quest chain, 500 a first delve clear, and **3,000 a daily-chest season** (a
+  season is 20 days, so ~4,500 a month — [`12-quests.md`](12-quests.md) §3.2).
+  The season is the faucet; everything else is the opening. A free player
+  earns three gold keys, or a builder and change, every month.
 
 ## 2. The catalogue
 
@@ -62,7 +66,9 @@
 - Prices are displayed in dollars; they exist so a choice has a relative cost.
 - The six Gem packs are built and live in the workbook's `Store` sheet. The
   builders and the two keys are built and priced in Gems — a Gem price is not
-  a `Store` row, which is real money and must grant Gems. Everything else is designed, not built.
+  a `Store` row. **A `Store` row is real money**; most of them grant Gems, and
+  the ones that do not (the Royal chest, the banner set) grant a lot for a
+  season or once and never a currency drip. Everything else is designed, not built.
 
 | SKU | Family | Price | Grants |
 |---|---|---|---|
@@ -71,10 +77,10 @@
 | **Gold key** | chance | Gems (1,500) | one golden call — built |
 | **Second builder** | permanent comfort | Gems (2,500, ×2) | +1 builder — built |
 | Third builder | permanent comfort | Gems | +1 more — built |
-| **Monthly card** | subscription | $4.99/mo | Gems daily for 30 days |
+| **Royal chest** | season | **€9.99** | the daily chest's paid column for one 20-day season — 25,000 Gems, ten gold keys and 100,000 Hero XP across 14 rungs: **50,000 Gems of value** ([`12-quests.md`](12-quests.md) §3.3) |
 | **Event pass, paid track** | season | $4.99 | unlocks the paid column |
 | Fog charter | land | $2.99 | a bundle of instant reveals |
-| Mana refill | consumable | Gems | fills the pool |
+| Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
 | Attunement / party slot | one-time ladder | Gems | built |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
@@ -91,7 +97,7 @@
 
 | Section | Content | Paid with |
 |---|---|---|
-| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §7). Here until the Tavern is built | a key |
+| **Heroes** | the two banners themselves — chance, both pities, the Call and Call ×10 buttons, the free call. **Moving to the Tavern** (decided 2026-09-08): heroes are unlocked by that building and called by tapping it ([`10-heroes.md`](10-heroes.md) §8). Here until the Tavern is built | a key |
 | **Keys** | one card per banner: what a key costs in Gems and how many the player holds. **This section stays** when the banners leave — the store is where a currency is bought | Gems |
 | **Builders** | the same hire the refused-build offer sells, with the crew's size beside it; at the ceiling it says so and sells nothing | Gems |
 | **Gems** | six packs on a **3×2 grid of upright cards** — count over art over price, each with its own sprite (`render/assets/gems_*.png`). A tap opens the **confirmation** (§3.2), never a grant | the monthly budget |
@@ -106,11 +112,18 @@
 
 - **500 Gems to the dollar, flat across every tier**: $0.99 buys 500, $99.99
   buys 50,000. No tier is a better deal than another.
+- **The Royal chest sits outside the ladder on purpose** — €9.99 for 50,000
+  Gems of value, ten times the rate, paid out over fourteen logins in twenty
+  days. A pack is Gems now; the pass is Gems, keys and XP for showing up. Half
+  its value is not Gems at all, which is what keeps the packs worth measuring
+  ([`12-quests.md`](12-quests.md) §3.2).
 - Every Gem sink is priced to the ladder (§9). Anchors: a second builder is
   the $4.99 pack; a silver key is 500 Gems and a gold one 1,500; an hour of
   speed-up is 720 Gems.
 - The first pair of prices a player meets is a Mana refill against a silver
-  key: 500 against 500 — one dollar pack buys either.
+  key: **400 against 500** — one $0.99 pack buys either, with change on the
+  refill. The refill then climbs (`08-magic.md` §6) and the key does not, so
+  the second one of the day is already the dearer of the two.
 
 ## 3. The simulated budget
 
@@ -195,7 +208,7 @@ offer_shown → store_opened → sku_viewed → confirm_opened
 
 | # | Placement | Reward | Status |
 |---|---|---|---|
-| 1 | **Mana refill** | a full pool | built |
+| 1 | **Mana refill** | a full pool, 5 a day | built |
 | 2 | **A free common call** | one pull, 5 a day | built |
 | 3 | **A free golden call** | one pull, 1 a day | built |
 | 4 | Double a quest reward | ×2 on claim | designed |
@@ -205,11 +218,16 @@ offer_shown → store_opened → sku_viewed → confirm_opened
 
 - Placement 1: the reward is a whole pool, so the Sanctum — which raises the
   cap — raises the value of every future ad with it; the offer only appears
-  below half a pool; the cooldown is randomised 30–90 s.
+  below half a pool; the cooldown is randomised 30–90 s; and it is capped at
+  **5 a day**, which is what the session arithmetic already assumed
+  ([`08-magic.md`](08-magic.md) §6).
+- Placement 1 is also the only one with a **paid twin**: the same whole pool
+  on a rising Gem ladder beside it, on its own counter. The video is the free
+  path and the ladder is what a player who has spent it can still buy.
 - Placements 2 and 3 are the free path to a hero
-  ([`10-heroes.md`](10-heroes.md) §5.2). They are the only placements with a
-  **daily cap** rather than a shortage condition, because a call answers no
-  shortage — the cap is what keeps them from becoming the whole game.
+  ([`10-heroes.md`](10-heroes.md) §6.2). Like placement 1 they carry a **daily
+  cap** rather than a shortage condition, because a call answers no shortage —
+  the cap is what keeps them from becoming the whole game.
 - Wonders offer no ad placement ([`12-quests.md`](12-quests.md) §6): no timer
   to skip, no slot to reroll, and a Wonder discount would sell permanent
   progression (§1).
@@ -220,8 +238,9 @@ offer_shown → store_opened → sku_viewed → confirm_opened
 
 ### 6.1 What the ads are worth
 
-- **A day is about eleven ads**: five Mana refills, five common calls, one
-  golden call. Only the first five buy production.
+- **A day is about eleven ads**, and each placement's own cap is what says so:
+  five Mana refills, five common calls, one golden call. Only the first five
+  buy production.
 - A tap hands back **10 seconds** of what was tapped and costs **1 Mana**, so
   Mana is a production budget: the base **12/h** pays for **288 taps a day**,
   worth **48 minutes** of production against the 24 hours the city runs
@@ -269,12 +288,14 @@ One page, refreshed weekly:
 |---|---|---|
 | Gacha pull | **1,000** Gems ($1.99) | `gacha.pull_gem_cost` |
 | Second builder | **2,500**, `×2` per builder ($4.99 / $9.99 / $19.99) | `kingdom.builder_gem_cost_*` |
-| Mana refill | **500 Gems a full pool** ($0.99), pro rata on what is missing | `mana.gem_refill_full_pool` |
+| Mana refill | a whole pool, **400 / 600 / 800 / 1,000 / 2,000** by rung, 5 a day | `mana.gem_refill_costs` |
+| Video refill | a whole pool, **5 a day** | `ads.mana_refills_per_day` |
 | Rush a build or a training line | **5 s a Gem** — 720 an hour ($1.44) | `rush.seconds_per_gem` |
 | Research slot | 2,500, `×2` ($4.99 / $9.99) | `research.slot_gem_cost_*` |
 | Party slot | 1,500, `×2` ($2.99 / $5.99 / $11.99) | `party.slot_gem_cost_*` |
 | Attunement slot | 1,000, `×2` ($1.99 / $3.99 / $7.99 / $15.99) | `attunement.slot_gem_cost_*` |
-| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · 250 at the week marker | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
+| Gem faucet | 500 start · 150/150/250/200 in the chain · 500 a first clear · **3,000 a 20-day season** | `Currencies`, `Quests`, `delve.first_clear_gems`, `daily.gems` |
+| The Royal chest | **€9.99** a season; 25,000 Gems, ten gold keys, 100,000 XP | `Store` sheet, `daily.premium_*` |
 | Ad cooldown | 30–90 s | `ads.cooldown_*_seconds` |
 | Ad eligibility | below half a pool | `ads.eligible_below_fraction` |
 | Gem packs | 500 · 2,500 · 5,000 · 10,000 · 25,000 · 50,000 for $0.99 · $4.99 · $9.99 · $19.99 · $49.99 · $99.99 — 500 Gems/$ | `Store` sheet |
@@ -284,6 +305,9 @@ One page, refreshed weekly:
 
 - A real charge, ever.
 - A second premium currency.
+- **A monthly card.** A subscription measured in calendar days over a ladder
+  that is not; the Royal chest is the season product
+  ([`12-quests.md`](12-quests.md) §3.3).
 - A power ceiling no amount of play can reach.
 - A free trial on the builder ([`06-construction.md`](06-construction.md) §5).
 - A streak-repair SKU.

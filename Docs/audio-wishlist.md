@@ -96,7 +96,7 @@ existing SFX fallback behaviour applies.
 
 | Cue | When |
 |---|---|
-| `conjunction_open` / `conjunction_close` | The weekly window |
+| `window_open` / `window_close` | A scheduled window — no event is authored today |
 
 **Tone note.** The audit's positioning is cozy: nothing here should read as a
 threat. `delve_failed` and `mana_full` are the two cues most likely to be

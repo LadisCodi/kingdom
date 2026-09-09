@@ -31,7 +31,24 @@ export type UiIconName =
   | 'population' | 'builders' | 'workers' | 'harmony'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
-  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video';
+  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video'
+  // The collection's own marks. `ascension` is the star on a hero's card and
+  // is NOT `star`: that one is a generic highlight the district pips already
+  // use, and a rung of a ladder should not change shape when a decoration
+  // does. `fragment` is a hero SHARD — the relics keep `sparkle`, because the
+  // art is a person and a relic is not one. (Hero XP needs no name here: it
+  // is a `CurrencyId`, so it is already an `IconName`.)
+  | 'ascension' | 'fragment'
+  // The three a hero fights with. They were borrowing `army`, `padlock` and
+  // `population` — a shield for attack, a padlock for defence and a crowd for
+  // health — which is three wrong pictures in one row.
+  | 'atk' | 'def' | 'hp'
+  // Four destinations that were borrowing a picture of something else. `relics`
+  // is the tab, which wore the Mana orb until the pool got a sheet of its own;
+  // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
+  // `chest` and `daily` are two halves of one screen and stay two cells: the
+  // chest is the PRIZE and the calendar page is the DAY.
+  | 'relics' | 'dungeon' | 'chest' | 'daily';
 
 export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
@@ -41,7 +58,7 @@ export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
   Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-  Knowledge: '📜', Stardust: '🌟', Gems: '💎',
+  Knowledge: '📜', Stardust: '🌟', HeroXp: '📘', Gems: '💎',
   SilverKey: '🗝️', GoldKey: '🔑',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
@@ -65,6 +82,12 @@ export const ICON_EMOJI: Record<IconName, string> = {
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
   star: '★', // district card level pips (Phase 3)
   video: '▶', // a rewarded video — the mark on any button an ad pays for
+  // the collection
+  ascension: '★', fragment: '🧩',
+  // destinations that are not nav tabs
+  relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅',
+  // a hero's three numbers
+  atk: '🗡️', def: '🛡️', hp: '❤️',
 };
 
 export interface IconOpts {
