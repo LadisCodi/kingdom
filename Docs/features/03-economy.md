@@ -99,7 +99,10 @@
   base stage of the rate beside the Harmony surplus — a level fact, never a
   modifier — so it reaches the residents' rent and the house tap alike, and
   adjacency stays flat. It is the one number the Townhall's Level Up card
-  shows.
+  shows. What it moves in a month is the frontier, not the ladder: the
+  30-day harness reaches every Townhall level on the same day ±1 with or
+  without it, and claims 7 landmarks of 10 instead of 5, because the extra
+  Gold has one sink and that is the fog.
 - Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 120
   Gold/min idle; the same city at Townhall 2 ≈ 150.
 
