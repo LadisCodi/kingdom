@@ -323,13 +323,18 @@
 .tr-queue-row .k-btn { min-height: 40px; padding: 8px 12px; font-size: var(--text-helper); }
 
 /* What this hall can turn out. Only drawn when there is a choice to make. */
-.tr-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+/* The picker buttons carry a PORTRAIT now, not a 16px silhouette, so they are
+   sized to be read rather than merely tapped: 44px met the tap minimum and
+   nothing else. The art fills the button and is clipped by its radius, which
+   is what makes a row of them read as a row of faces. */
+.tr-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .tr-pick {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 68px;
+  height: 68px;
   padding: 0;
+  overflow: hidden;
   border-radius: 10px;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -359,7 +364,28 @@
   border-radius: 8px;
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
+  overflow: hidden;
 }
+/* A whole soldier is drawn at 2:3, so the slot that holds one has to be TALLER
+   than it is wide or the figure letterboxes into a thumbnail. This is the one
+   place a unit is read rather than counted, and the panel beside it is about
+   this tall anyway — name, tag, description, stats. */
+.tr-portrait.is-body {
+  width: 76px;
+  height: 114px;
+  align-items: end;
+}
+.tr-pick-art,
+.tr-portrait-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* Feet on the floor of the frame: the figures are normalized standing on it
+   (Docs/art/portraits/prompt-template.md §4), so bottom-aligning them lines
+   every soldier up at the same height. */
+.tr-portrait.is-body .tr-portrait-art { object-position: center bottom; }
+.tr-pick.is-locked .tr-pick-art { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 .tr-body { min-width: 0; }
 .tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
 .tr-tag {

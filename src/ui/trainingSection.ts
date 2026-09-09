@@ -32,6 +32,7 @@ import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
 import { action, iconEl, progress, stat } from './kit';
+import { unitBody, unitBust } from './unitArt';
 
 /** Which trainee each building's card is showing. Module-level so it survives
  *  the per-tick rebuild — the same reason the research tree keeps its
@@ -132,7 +133,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
     for (const { unitId, count } of ward.byUnit) {
       const seconds = game.healWait(unitId, count);
       root.append(el('div', { class: 'tr-info is-ward' },
-        el('div', { class: 'tr-portrait' }, iconEl(unitId, { size: 'lg' })),
+        el('div', { class: 'tr-portrait' }, unitBust(unitId, 'tr-portrait-art')),
         el('div', { class: 'tr-body' },
           el('div', { class: 'tr-name' }, `${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
           el('div', { class: 'tr-tag' }, 'Wounded'),
@@ -171,7 +172,9 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
           class: `tr-pick${t === selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}`,
           type: 'button',
           title: nameFor(t),
-        }, iconEl(iconFor(t), { size: 'lg', locked }));
+        }, t === 'Villager'
+          ? iconEl(iconFor(t), { size: 'lg', locked })
+          : unitBust(t, 'tr-pick-art'));
         b.addEventListener('click', () => {
           picked.set(district.uniqueId, t);
           game.notify();
@@ -223,13 +226,13 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
   const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
   const army = game.armyRoom();
   info.append(
-    el('div', { class: 'tr-portrait' }, iconEl(trainee, { size: 'lg' })),
+    el('div', { class: 'tr-portrait is-body' }, unitBody(trainee as UnitId, 'tr-portrait-art')),
     el('div', { class: 'tr-body' },
       el('div', { class: 'tr-name' }, unit.name),
       el('div', { class: 'tr-tag' }, tagFor(unit)),
       el('div', { class: 'tr-desc' }, unit.description),
       el('div', { class: 'tr-stats' },
-        stat('army', String(unit.atk), 'attack'),
+        stat('army', String(unit.dmg), 'damage'),
         stat('padlock', String(unit.def), 'defence'),
         stat('population', String(unit.hp), 'health'),
         // The chart, in one phrase, rather than a table the player has to read.

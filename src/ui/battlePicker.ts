@@ -24,7 +24,8 @@ import { spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { iconEl, knob, stat } from './kit';
+import { knob, stat } from './kit';
+import { unitBust } from './unitArt';
 
 const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
   const url = spriteUrl(sprite);
@@ -32,28 +33,6 @@ const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
     ? el('img', { class: cls, src: url, alt: '' })
     : el('div', { class: `${cls} is-glyph` }, glyph);
 };
-
-/**
- * A troop's face, at the size the widget actually draws.
- *
- * Units are the one thing on these screens shown SMALL almost everywhere —
- * 48px in a squad slot, 64px in a card — and a whole standing soldier at that
- * size is a smudge, which is why each one ships a bust beside its full body
- * (Docs/art/portraits/unit-blocks.md §2). So: the bust first, the whole
- * soldier if that is all there is, and the atlas icon when neither has landed.
- * The atlas cell is the floor, never the emoji — `tests/icons.test.ts` exists
- * to keep that true.
- *
- * Exported because `battleSheet` draws the same face in its slots, and it
- * already imports this module.
- */
-export function unitFace(unitId: UnitId, cls: string): HTMLElement {
-  const { sprite } = UNITS[unitId];
-  const url = spriteUrl(`${sprite}_avatar`) ?? spriteUrl(sprite);
-  return url
-    ? el('img', { class: cls, src: url, alt: '' })
-    : iconEl(unitId, { size: 'lg' });
-}
 
 /**
  * A card: art, a name, the three numbers, the POWER it would put on the
@@ -118,7 +97,7 @@ function troopCards(game: Game): HTMLElement[] {
       : 'All of them are with the party';
     return pickerCard({
       cls: 'is-troop',
-      art: el('span', { class: 'bt-card-art' }, unitFace(unitId, 'bt-card-portrait')),
+      art: el('span', { class: 'bt-card-art' }, unitBust(unitId, 'bt-card-portrait')),
       // The card's NAME is the type — Warrior, Lancer, Archer, Cavalry — so
       // the chip carries the kind instead of saying the same word twice.
       type: kindOf(unit),

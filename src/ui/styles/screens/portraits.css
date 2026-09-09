@@ -26,6 +26,10 @@ img[src*='hero_necromancer'],
 img[src*='hero_scout'],
 img[src*='hero_golden_dragon'],
 img[src*='hero_vampire_lord'],
-img[src*='hero_pharao'] {
+img[src*='hero_pharao'],
+img[src*='unit_warrior'],
+img[src*='unit_lancer'],
+img[src*='unit_archer'],
+img[src*='unit_cavalry'] {
   image-rendering: auto;
 }
