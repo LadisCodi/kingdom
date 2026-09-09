@@ -14,11 +14,11 @@
 import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARMONY, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
+  DISTRICTS, HARMONY, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
-  canMoveDistrict, districtLabel, maxCountForTownhallLevel, requiredTechForLevel,
+  canMoveDistrict, districtLabel, requiredTechForLevel,
   requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
@@ -188,13 +188,16 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
       levelIndexed(MANA.sanctumPerHourPerLevel, next));
   }
   if (district.definitionId === 'Townhall') {
-    // The Townhall's ONLY job: it is the gate on how much city there can be.
-    const room = (level: number) => Object.values(DISTRICTS)
-      .filter((d) => d.buildable && d.maxCountPerTownhallLevel.length > 0)
-      .reduce((n, d) => n + maxCountForTownhallLevel(d, level), 0);
-    const before = room(district.level);
-    const after = room(next);
-    if (after > before) delta('build', 'Buildings', before, after);
+    // What the capital's level does to every house's rent. The count caps it
+    // also raises are not here: summed across every building they were one
+    // abstract number ("18 → 23") that answered nothing a player asks, and
+    // listed per building they were four tiles. The rent is the one number
+    // the level moves that reads at a glance.
+    const ladder = TAXES.townhallMultiplierPerLevel;
+    if (ladder.length > 0) {
+      delta('Gold', 'Taxes',
+        `×${levelIndexed(ladder, district.level)}`, `×${levelIndexed(ladder, next)}`);
+    }
   }
   return out;
 }
@@ -501,7 +504,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       // shouting louder than the unit art above it.
       el('div', { class: 'dc-up-mark' }, iconEl('star')),
       el('div', { class: 'dc-up-top' },
-        el('div', { class: 'dc-up-title' }, `Level ${next}`),
+        el('div', { class: 'dc-up-heading' },
+          el('div', { class: 'dc-up-title' }, 'Level Up'),
+          // Short on purpose: it shares its row with a 164px button, and a
+          // longer sentence wrapped to four lines and grew the block.
+          el('div', { class: 'dc-up-sub' }, `Upgrade to level ${next} and improve these stats`)),
         upgrade),
       el('div', { class: 'tr-figures dc-up-figures' },
         ...upgradeDeltas(game, district, next),
