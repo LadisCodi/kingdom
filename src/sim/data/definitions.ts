@@ -1858,10 +1858,12 @@ export const GAME_VERSION = '0.1.0';
 // count means something different from the step count, so this one HAS a
 // migrator (save.ts) — it drops the old block and lands the player in the
 // running season owing nothing.
+// v39 predates the open board: `PartySlotsPurchased` is retired with the
+// troop-slot ladder, and a save that holds one is simply read without it.
 // v38 predates the party of heroes: a delve carried ONE `HeroID` and the
 // roster had no `HeroSlotsPurchased`. Both readers default — a one-hero save
 // reads as a party of one, and a roster with no purchases has the free slot
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 38;
+export const SAVE_VERSION = 39;

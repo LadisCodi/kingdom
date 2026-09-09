@@ -79,7 +79,7 @@ Two rows of slots on the battle screen, filled from card panels.
 | Fill rule | A card sends **as much as it legally can**: a whole squad (`squad_size`), or everything left of that type, or everything the army cap still allows |
 | Clearing | The **X** on a slot's corner empties it. It never re-opens the panel |
 | Closing | The panel's own knob, a tap outside it, or the way out of the screen — which leaves the screen standing |
-| Locked slots | A padlock, and the Gem price on the **one a purchase would open**. Troop slots today; hero slots one free and the rest Gems ([`10-heroes.md`](10-heroes.md) §3) |
+| Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight; nothing gates one and nothing sells one |
 | Cards | The heroes screen's card, in a horizontal rail: art, name, the type as a word, and one line saying what tapping it does — or which ceiling stopped it, the roster or the cap |
 
 ### 2.7 Result — cleared

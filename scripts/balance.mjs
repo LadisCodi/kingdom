@@ -319,17 +319,16 @@ const SETTINGS = [
   // this is where ALL Knowledge comes from — clearing fog pays none.
   ['delve.first_clear_knowledge', 'delve.firstClearKnowledge'],
   ['delve.first_clear_stardust', 'delve.firstClearStardust'],
-  ['party.base_slots', 'party.baseSlots'],
-  ['party.max_slots', 'party.maxSlots'],
-  ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
-  ['party.slot_gem_cost_growth', 'party.slotGemCostGrowth'],
-  // THE HERO SLOTS (Docs/features/10-heroes.md §3): one is free and every
-  // further one is Gems, always, up to the board's three
-  // (Docs/features/combat.md §3). The doc calls these `heroes.*`; they live
-  // here because `heroes` is the Heroes SHEET's key — thirty-two rows — and a
-  // setting written into it would be a thirty-third hero with no stats. The
-  // base is above the party-slot ladder's on purpose: a hero slot carries a
-  // type buff as well as a body.
+  // THE BOARD, and it is not for sale. Every troop slot is open from the
+  // start: there is no ladder, nothing to buy and nothing to unlock, so what
+  // limits a party is the ARMY at home and the type chart, never a purchase
+  // (Docs/features/combat.md §3).
+  ['party.troop_slots', 'party.troopSlots'],
+  // THE HERO SLOTS are the exception, and the only one
+  // (Docs/features/10-heroes.md §3): one is free and every further one is
+  // Gems, always, up to the board's three. They live here rather than under
+  // `heroes.*` because that key is the Heroes SHEET — thirty-two rows — and a
+  // setting written into it would be a thirty-third hero with no stats.
   ['party.hero_slots', 'party.heroSlots'],
   ['party.hero_slot_gem_cost_base', 'party.heroSlotGemCostBase'],
   ['party.hero_slot_gem_cost_growth', 'party.heroSlotGemCostGrowth'],

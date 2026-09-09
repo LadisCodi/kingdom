@@ -57,7 +57,7 @@ import { isTechComplete } from './research';
 import { techFlat, techFlatAimed, techValue } from './techEffects';
 import { pick } from './rng';
 import {
-  addToWallet, getWallet, newId,
+  addToWallet, newId,
   type ArtifactId, type Delve, type GameState, type HeroId, type RuinId,
   type UnitId, type Wallet,
 } from './state';
@@ -72,31 +72,18 @@ export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number
   Math.max(1000, Math.round(resolve(state, 'delveSpeed',
     depthDurationMs(ruinId, depth) * Math.max(0.25, techValue(state, 'delveSpeed', 1)))));
 
-/** Two at the start (hero + one unit type), the rest with Gems — the same
- *  Gems-only shape as attunement sockets, for the same reason. */
-export function partySlots(state: GameState): number {
-  return Math.min(
-    PARTY.baseSlots + state.heroes.partySlotsPurchased,
-    PARTY.maxSlots,
-  );
-}
-
-/** Slots hold the HERO plus unit types, so this is what is left for troops. */
-export const unitSlots = (state: GameState): number => Math.max(0, partySlots(state) - 1);
-
-export const partySlotGemCost = (state: GameState): number =>
-  Math.round(PARTY.slotGemCostBase * PARTY.slotGemCostGrowth ** state.heroes.partySlotsPurchased);
-
-export type BuyPartySlotResult = 'Purchased' | 'AtMax' | 'NotEnoughGems';
-
-export function buyPartySlot(state: GameState): BuyPartySlotResult {
-  if (partySlots(state) >= PARTY.maxSlots) return 'AtMax';
-  const cost = partySlotGemCost(state);
-  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
-  addToWallet(state.player.wallet, 'Gems', -cost);
-  state.heroes.partySlotsPurchased += 1;
-  return 'Purchased';
-}
+/**
+ * THE TROOP SLOTS, and there is nothing to buy.
+ *
+ * Every one of the board's slots is open from the first fight
+ * (Docs/features/combat.md §3). They used to be a Gem ladder starting at one,
+ * which priced the thing the type chart needs to be legible: a player with
+ * one slot has no composition to make, so the whole matchup lesson sat behind
+ * a purchase. What limits a party now is the ARMY AT HOME and the army cap —
+ * both of which are earned in the city — and the only slot in the game that
+ * is bought is a HERO slot (Docs/features/10-heroes.md §3).
+ */
+export const troopSlots = (): number => PARTY.troopSlots;
 
 // ---------------------------------------------------------------- supplies
 
@@ -232,7 +219,7 @@ export function launchBlock(
   if (heroIds.some((id) => heroIsBusy(state, id))) return 'HeroBusy';
   const committed = slots.filter((s) => s.count > 0);
   if (committed.length === 0) return 'EmptyParty';
-  if (committed.length > unitSlots(state)) return 'TooManySlots';
+  if (committed.length > troopSlots()) return 'TooManySlots';
   const available = availableRoster(state);
   for (const s of committed) {
     if (s.count > available[s.unitId]) return 'NotEnoughUnits';
@@ -330,7 +317,7 @@ export function gateBlock(
   // underground, and only `launchBlock` asks.
   // A hero alone is a legal board, so there is no EmptyParty here either.
   const committed = slots.filter((s) => s.count > 0);
-  if (committed.length > unitSlots(state)) return 'TooManySlots';
+  if (committed.length > troopSlots()) return 'TooManySlots';
   const available = availableRoster(state);
   for (const s of committed) {
     if (s.count > available[s.unitId]) return 'NotEnoughUnits';

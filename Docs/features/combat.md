@@ -32,15 +32,18 @@ Per side:
   and never joins a squad.
 - Position determines targeting order only (§8).
 
-How many slots the player may fill: troop slots from party slots
-([`11-expeditions.md`](11-expeditions.md) §3); hero slots one free, the rest
-Gems ([`10-heroes.md`](10-heroes.md) §3).
+How many slots the player may fill: **every troop slot, always** — nothing
+gates one and nothing sells one, so what limits a party is the army at home
+and the army cap; hero slots one free, the rest Gems
+([`10-heroes.md`](10-heroes.md) §3).
 
 ## 4. Squads
 
 - A squad is one **unit type** at one **tier**, plus a troop **count**.
-- `count` is capped by the type's `squad_size`. **Only full squads may be
-  committed.**
+- `count` is capped by the type's `squad_size`, and **a partial squad is
+  legal**: a slot takes as many of the type as there are, up to that cap. A
+  full squad is the ceiling, never the entry price — a player with eleven
+  Archers sends eleven.
 - `hp_pool = count × hp_unit`; `alive = ceil(hp_pool / hp_unit)`.
 - **No permanent casualties.** Troops are restored in full when the fight ends,
   win or lose. HP does not carry between rooms.
@@ -258,6 +261,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 | Dial | Key |
 |---|---|
 | Unit stats, `frontage`, `squad_size`, `power_per_troop` | `Units` sheet |
+| Troop slots on the board, hero slots and their Gem ladder | `party.*` |
 | Tier multipliers | `Units` sheet |
 | Type fractions (3/2, 3/4) | `combat.type_*` |
 | Hero stat blocks, passives, the 70% share and the rarity multipliers | `Heroes` sheet, `heroes.rarity_*` ([`10-heroes.md`](10-heroes.md) §9) |
@@ -275,7 +279,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
   type passive
 - A hero-only battle mode — a hero arena is a possible future
 - Upgradeable `frontage` or `squad_size`
-- Partial squads, or mixed tiers of one type
+- Mixed tiers of one type in a squad
 - Heroes inside troop slots, or bonuses to non-matching types
 - Villains with levels or ascension — their stats are authored
 - Villain buffs crossing sides

@@ -57,10 +57,14 @@ describe('the route into a ruin', () => {
     expect(game.expeditionPreview()!.safeDepth).toBeGreaterThan(0);
   });
 
-  it('never pre-fills more unit types than there are slots', () => {
+  it('never pre-fills more unit types than the board has slots', () => {
     const game = freshPresenter(ready({ Warrior: 2, Archer: 2, Lancer: 2, Cavalry: 2 }));
     game.openExpedition(BARROW);
-    expect(game.expeditionParty.length).toBeLessThanOrEqual(1); // base slots = 2, minus the hero
+    expect(game.expeditionParty.length).toBeLessThanOrEqual(game.troopSlotsOpen());
+    // Every slot is open from the start, so the pre-fill is bounded by the
+    // ARMY CAP rather than by a purchase: it spends the cap on the types that
+    // answer this ruin best and stops when the cap runs out, not at one.
+    expect(game.expeditionParty.length).toBeGreaterThan(1);
     expect(game.expeditionLaunchBlock()).toBeNull();
   });
 

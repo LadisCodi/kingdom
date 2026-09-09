@@ -512,7 +512,6 @@ export function serialize(state: GameState, now: number): SaveFile {
         Levels: state.heroes.levels,
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
-        PartySlotsPurchased: state.heroes.partySlotsPurchased,
         HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
       },
       'kingdom.gacha': {
@@ -881,7 +880,8 @@ export function deserialize(
       levels: { ...(heroesDto.Levels ?? {}) },
       tiers: { ...(heroesDto.Tiers ?? {}) },
       fragments: { ...(heroesDto.Fragments ?? {}) },
-      partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
+      // `PartySlotsPurchased` is gone: every troop slot is open from the
+      // start, so an older save's count is simply not read.
       heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
     };
   }

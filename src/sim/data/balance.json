@@ -2666,10 +2666,7 @@
     "firstClearStardust": 150
   },
   "party": {
-    "baseSlots": 2,
-    "maxSlots": 5,
-    "slotGemCostBase": 1500,
-    "slotGemCostGrowth": 2,
+    "troopSlots": 6,
     "heroSlots": 3,
     "heroSlotGemCostBase": 2500,
     "heroSlotGemCostGrowth": 2

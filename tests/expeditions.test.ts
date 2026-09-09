@@ -23,8 +23,8 @@ import {
   RUIN_ORDER, UNITS, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
-  advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
-  pushDeeper, supplyCost, unitSlots,
+  advanceDelves, extract, launchBlock, launchDelve, previewExpedition,
+  pushDeeper, supplyCost, troopSlots,
 } from '../src/sim/expeditions';
 import { artifactIsCarried } from '../src/sim/artifacts';
 import { claimLandmark } from '../src/sim/landmarks';
@@ -310,20 +310,25 @@ describe('launching', () => {
     expect(launchBlock(unfound, map, 'StarObservatory', ['Warden'], slots)).toBe('RuinNotFound');
   });
 
-  it('refuses more unit TYPES than there are slots — breadth is the limit', () => {
+  // THE BOARD IS NOT FOR SALE. Every troop slot is open from the first fight
+  // — nothing gates one and nothing sells one — so the only thing that can
+  // refuse a party for breadth is the board's own count
+  // (Docs/features/combat.md §3).
+  it('takes as many unit TYPES as the board has slots, and no more', () => {
     const state = readyToDelve({ Warrior: 2, Archer: 2, Lancer: 2 });
-    // Slots are Gems-only now — no technology grants one
-    // (Docs/features/07-research.md §4).
-    state.heroes.partySlotsPurchased = 1;
-    expect(partySlots(state)).toBe(3);
-    expect(unitSlots(state)).toBe(2); // the hero takes one
+    expect(troopSlots()).toBeGreaterThanOrEqual(4); // one per type, at least
     const three = [
       { unitId: 'Warrior' as UnitId, count: 1 },
       { unitId: 'Archer' as UnitId, count: 1 },
       { unitId: 'Lancer' as UnitId, count: 1 },
     ];
-    expect(launchBlock(state, map, BARROW, ['Warden'], three)).toBe('TooManySlots');
-    expect(launchBlock(state, map, BARROW, ['Warden'], three.slice(0, 2))).toBeNull();
+    expect(launchBlock(state, map, BARROW, ['Warden'], three)).toBeNull();
+
+    // Past the board, it refuses — a party of more squads than there are
+    // slots is not a party the resolver could field.
+    const tooMany = Array.from({ length: troopSlots() + 1 }, () => (
+      { unitId: 'Warrior' as UnitId, count: 1 }));
+    expect(launchBlock(state, map, BARROW, ['Warden'], tooMany)).toBe('TooManySlots');
   });
 
   it('pays supplies once, up front, and the Quartermaster packs lighter', () => {

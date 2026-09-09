@@ -104,13 +104,13 @@ describe('the troop slots', () => {
     expect(game.expeditionParty).toEqual([{ unitId: 'Archer', count: 2 }]);
   });
 
-  it('shows every slot the board has, and locks the ones not bought yet', () => {
+  // Nothing locks a troop slot and nothing sells one: the row the player sees
+  // on their first fight is the row they will see on their last.
+  it('opens every slot the board has, from the first fight', () => {
     const game = atTheGate();
-    expect(game.troopSlotCeiling()).toBe(PARTY.maxSlots - 1);
-    expect(game.troopSlotsOpen()).toBeLessThan(game.troopSlotCeiling());
-    const before = game.troopSlotsOpen();
-    game.doBuyPartySlot();
-    expect(game.troopSlotsOpen()).toBe(before + 1);
+    expect(game.troopSlotsOpen()).toBe(PARTY.troopSlots);
+    expect(game.troopSlotCeiling()).toBe(game.troopSlotsOpen());
+    expect(freshPresenter(freshGame()).troopSlotsOpen()).toBe(PARTY.troopSlots);
   });
 });
 

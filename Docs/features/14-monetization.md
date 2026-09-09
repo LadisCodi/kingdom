@@ -34,7 +34,9 @@
   Legendary is a wallet's fastest purchase and roughly thirty free calls a
   month otherwise ([`10-heroes.md`](10-heroes.md) §6.2).
 - The first rung of every ladder is earned by play: research grants the second
-  attunement slot and the third party slot before Gems can buy any; the daily
+  attunement slot before Gems can buy any, and **a hero slot is the only slot
+  in a party that is ever sold** — every troop slot on the board is open from
+  the first fight ([`combat.md`](combat.md) §3); the daily
   chest's free track pays Gems every season, and the Royal chest's own gold
   keys are the same keys an ad already gives away daily.
 
@@ -42,13 +44,13 @@
 |---|---|---|
 | **Power** | silver and gold keys | stronger heroes, sooner — at published odds |
 | **Comfort** | rush a timer, refill Mana, refresh the shop | buys back the player's time |
-| **Breadth** | attunement slots, party slots, builders | more things at once |
+| **Breadth** | attunement slots, hero slots, builders | more things at once |
 | **Cosmetic** | a Townhall banner set | zero economic effect |
 
 ### 1.1 Gem sinks and faucet
 
 - The Gems plaque in the header opens the store (§2.1).
-- Gems buy **five** things: **keys**, party slots, attunement slots, builders,
+- Gems buy **five** things: **keys**, hero slots, attunement slots, builders,
   Mana refills. Three of those are one-time ladders; the refill is a ladder
   that **resets every day** ([`08-magic.md`](08-magic.md) §6).
 - **Gems never buy a pull directly.** They buy a key, and the key is what a
@@ -82,7 +84,7 @@
 | Fog charter | land | $2.99 | a bundle of instant reveals |
 | Mana refill | consumable | Gems (400 → 2,000 by rung, 5 a day) | a whole pool — built |
 | Shop refresh | consumable | Gems / ad | refreshes event stock |
-| Attunement / party slot | one-time ladder | Gems | built |
+| Attunement / hero slot | one-time ladder | Gems | built |
 | **Town banner set** | cosmetic | $2.99 | a visual variant — the probe, §5 |
 
 - The second builder is sold in two places: the offer raised by a refused

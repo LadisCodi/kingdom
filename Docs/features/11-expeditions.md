@@ -52,18 +52,20 @@ with different affinities.
 
 | Guild level | Opens | Also |
 |---|---|---|
-| 1 | Barrow D1 · every discovered ruin's D1 | Party: hero + 1 unit |
-| 2 | Barrow D2 | +1 party slot |
+| 1 | Barrow D1 · every discovered ruin's D1 | — |
+| 2 | Barrow D2 | — |
 | 3 | Barrow D3 · Chapel D2 | Scout: room threat preview |
 | 4 | Chapel D3 · Ironworks D2 | — |
-| 5 | Ironworks D3 · Counting House D2 | +1 party slot |
+| 5 | Ironworks D3 · Counting House D2 | — |
 | 6 | Counting House D3 · Observatory D2 | — |
-| 7 | Observatory D3 | +1 party slot |
+| 7 | Observatory D3 | — |
 
 Guild upgrades cost city resources only — never a ruin-sourced resource.
 
-Party slots above are **troop** slots. Hero slots are never Guild-gated: one
-is free, the rest are Gems ([`10-heroes.md`](10-heroes.md) §3).
+**The Guild opens depths and nothing else.** Every TROOP slot on the board is
+open from the first fight — nothing gates one and nothing sells one
+([`combat.md`](combat.md) §3) — and the only slot that is bought is a HERO
+slot ([`10-heroes.md`](10-heroes.md) §3).
 
 ## 4. Launch content
 

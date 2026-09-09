@@ -12,12 +12,12 @@
 // want to be asked sets a depth and leaves.
 
 import {
-  ARTIFACTS, HEROES, PARTY, RUINS, UNITS,
+  ARTIFACTS, HEROES, RUINS, UNITS,
 } from '../sim/data/definitions';
 import { availableRoster } from '../sim/army';
 import { artifactEntry, isAttuned, ownedArtifacts } from '../sim/artifacts';
 import { carriedStats, depthDurationMs } from '../sim/combat';
-import { partySlotGemCost, partySlots, freeHeroes, unitSlots } from '../sim/expeditions';
+import { freeHeroes, troopSlots } from '../sim/expeditions';
 import { spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
@@ -106,7 +106,7 @@ export function troopPicker(game: Game): HTMLElement {
   const roster = availableRoster(game.state);
   const owned = (Object.keys(roster) as UnitId[]).filter((u) => roster[u] > 0);
   const chosenTypes = game.expeditionParty.filter((s) => s.count > 0).length;
-  const limit = unitSlots(game.state);
+  const limit = troopSlots();
 
   const rows = owned.map((unitId) => {
     const unit = UNITS[unitId];
@@ -146,16 +146,6 @@ export function troopPicker(game: Game): HTMLElement {
       : [el('div', { class: 'exp-note' }, 'Nothing to send — train some units first.')]),
   );
 
-  if (partySlots(game.state) < PARTY.maxSlots) {
-    const cost = partySlotGemCost(game.state);
-    body.append(action({
-      label: 'Another slot',
-      kind: 'gem',
-      onClick: () => game.doBuyPartySlot(),
-      cost: { Gems: cost },
-      have: (c) => game.walletValue(c),
-    }));
-  }
   return body;
 }
 

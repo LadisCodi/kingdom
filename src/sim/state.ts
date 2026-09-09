@@ -429,8 +429,6 @@ export interface GameState {
     levels: Partial<Record<HeroId, number>>;
     tiers: Partial<Record<HeroId, number>>;
     fragments: Partial<Record<HeroId, number>>;
-    /** Extra TROOP slots bought with Gems. */
-    partySlotsPurchased: number;
     /** Extra HERO slots bought with Gems: one is free and every further one
      *  is Gems, always, up to the board's three
      *  (Docs/features/10-heroes.md §3). */

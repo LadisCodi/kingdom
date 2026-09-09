@@ -111,9 +111,11 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 - **One hero slot is free. Every further one is Gems, always** — up to the
   board's three ([`combat.md`](combat.md) §3).
 - Price: `party.hero_slot_gem_cost_base × party.hero_slot_gem_cost_growth^n`,
-  the party-slot ladder with a higher base, because a hero slot carries a type
-  buff. They sit under `party.*` rather than `heroes.*` because that key is
-  the Heroes SHEET.
+  the attunement-slot ladder with a higher base, because a hero slot carries a
+  type buff as well as a body. They sit under `party.*` rather than `heroes.*`
+  because that key is the Heroes SHEET.
+- **It is the only slot in a party that is sold.** Every troop slot on the
+  board is open from the first fight ([`combat.md`](combat.md) §3).
 - **A party trait is the best in the party, never the sum**: two
   quartermasters do not buy a free trip.
 - The Adventurers' Guild opens **depths**, never slots
@@ -384,7 +386,7 @@ the rewarded video.
   allowance is spent. The ×10 is always the ten and always priced.
 - **Heroes are put on the board in the party composition sheet**
   ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.6), which also sells the next hero
-  slot, the way it sells the next party slot. The roster is where a hero is
+  slot, the way it sells the next attunement slot. The roster is where a hero is
   GROWN; the party sheet is where one is SENT, and neither does the other's
   job.
 

@@ -139,25 +139,21 @@ function lockedSlot(
   return b;
 }
 
+/** The troop row. Every slot is open — there is no locked troop slot and
+ *  nothing to buy, so this row has exactly two states. */
 function troopSlots(game: Game): HTMLElement {
   const row = el('div', { class: 'bt-slots' });
-  const open = game.troopSlotsOpen();
-  const ceiling = game.troopSlotCeiling();
-  for (let i = 0; i < ceiling; i++) {
+  for (let i = 0; i < game.troopSlotsOpen(); i++) {
     const slot = game.expeditionParty[i];
-    if (slot !== undefined) {
-      const filled = el('div', { class: 'bt-slot is-filled' },
-        squadFace(slot.unitId, slot.count),
-        clearBadge(`Send no ${UNITS[slot.unitId].name}s`, () => game.clearTroopSlot(i)));
-      filled.addEventListener('click', () => game.openBattlePicker('troops'));
-      row.append(filled);
-    } else if (i < open) {
+    if (slot === undefined) {
       row.append(emptySlot('Add troops', () => game.openBattlePicker('troops')));
-    } else {
-      const next = i === open; // the one a purchase would open
-      row.append(lockedSlot(next ? game.partySlotOffer().cost : null,
-        'Buy another troop slot', () => game.doBuyPartySlot()));
+      continue;
     }
+    const filled = el('div', { class: 'bt-slot is-filled' },
+      squadFace(slot.unitId, slot.count),
+      clearBadge(`Send no ${UNITS[slot.unitId].name}s`, () => game.clearTroopSlot(i)));
+    filled.addEventListener('click', () => game.openBattlePicker('troops'));
+    row.append(filled);
   }
   return row;
 }

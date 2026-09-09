@@ -41,9 +41,8 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  attemptGate, buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, gateBlock,
-  partySlotGemCost,
-  launchBlock, launchDelve, previewExpedition, previewGate, pushDeeper, supplyCost, unitSlots,
+  attemptGate, delveById, discoveredRuins, extract, freeHeroes, gateBlock,
+  launchBlock, launchDelve, previewExpedition, previewGate, pushDeeper, supplyCost, troopSlots,
   type ExpeditionPreview, type GateBlock, type GatePreview, type LaunchBlock,
 } from './sim/expeditions';
 import {
@@ -1901,7 +1900,7 @@ export class Game {
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
     let budget = maxArmyPower(this.state);
     this.expeditionParty = [];
-    for (const unitId of order.slice(0, unitSlots(this.state))) {
+    for (const unitId of order.slice(0, troopSlots())) {
       const affordable = Math.min(roster[unitId], Math.floor(budget / UNITS[unitId].power));
       if (affordable <= 0) continue;
       budget -= affordable * UNITS[unitId].power;
@@ -2048,15 +2047,20 @@ export class Game {
   // count, which is the whole difference between composing a party and doing
   // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
 
-  /** Troop slots the player may fill, and the ceiling the rest are locked
-   *  against. Today the ladder is Gems; the design's Adventurers' Guild will
-   *  take it over (11-expeditions.md §3) and this number is where it lands. */
+  /**
+   * Troop slots on the board — all of them, always.
+   *
+   * There is no locked troop slot and nothing to buy: what limits a party is
+   * the army at home and the army cap, both of which are earned in the city.
+   * The pair of readers stays because the HERO row has two different numbers
+   * and the screen draws both rows the same way.
+   */
   troopSlotsOpen(): number {
-    return unitSlots(this.state);
+    return troopSlots();
   }
 
   troopSlotCeiling(): number {
-    return PARTY.maxSlots - 1;
+    return troopSlots();
   }
 
   heroSlotsOpen(): number {
@@ -2169,14 +2173,6 @@ export class Game {
    *  §2.5); the delve's own launch does. */
   battleHeroesAreCommitted(): boolean {
     return this.gateRuin === null;
-  }
-
-  partySlotOffer(): { cost: number; slots: number; ceiling: number } {
-    return {
-      cost: partySlotGemCost(this.state),
-      slots: this.troopSlotsOpen(),
-      ceiling: this.troopSlotCeiling(),
-    };
   }
 
   heroSlotOffer(): { cost: number; slots: number; ceiling: number } {
@@ -2332,13 +2328,6 @@ export class Game {
     }
     this.openCheckpoint = null;
     this.setOverlay(null);
-    this.notify();
-  }
-
-  doBuyPartySlot(): void {
-    const result = buyPartySlot(this.state);
-    if (result === 'Purchased') playSfx('gemSpend');
-    if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 
