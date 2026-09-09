@@ -155,8 +155,8 @@ than the build is rejected rather than downgraded.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
   `delvePill.ts`, `adOfferPill.ts`. They hide behind any sheet.
-- **Z-order is load-bearing.** The stack, bottom to top: map · ad-offer tab (4)
-  · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
+- **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
+  column — raid countdown, then the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · settings knob (20) · the gacha reveal (100) · the rewarded video
   (200). `#overlay` has a z-index, so it is a **stacking context** and nothing
   inside it can rise above the header or the nav — **which is the design, not

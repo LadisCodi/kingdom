@@ -5,25 +5,18 @@
 
 /* ------------------------------------------------------------ the widget */
 
-/* The right edge, just above the Mana offer's tab. The two share a column by
- * design — they are the same kind of thing, a slab that slides in with
- * something waiting on it — and they are stacked rather than swapped because
- * a raid counting down does not stop a refill being worth taking. */
-#raids[hidden] { display: none; }
-#raids {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  /* Its own height above the ad tab's centre line, plus a gap. */
-  transform: translateY(-50%) translateY(-64px);
-  z-index: 4; /* under the overlay scrim, over the map */
-  max-width: 76%;
-}
+/* Top of the right-edge column (`#edge`, style.css), above the Mana offer's
+ * tab: the two are the same kind of thing — a slab that slides in with
+ * something waiting on it — and they stack rather than swap, because a raid
+ * counting down does not stop a refill being worth taking. The column places
+ * it, so all this needs is a ceiling on how wide the sentence may get. */
+#raids { max-width: 100%; min-width: 0; }
 
 .raid-tab {
   display: flex;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
   padding: 7px 10px 7px 11px;
   text-align: left;
   color: var(--parchment);

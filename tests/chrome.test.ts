@@ -79,6 +79,33 @@ describe('chrome metrics', () => {
     expect(users).toEqual(['nav.css']);
   });
 
+  // THE RIGHT EDGE IS A COLUMN, not a place two widgets both aim at.
+  //
+  // The raid countdown and the rewarded offer are both slabs that slide in
+  // from the right, and each was pinned to `top: 50%` with a hand-measured
+  // nudge to miss the other — which held until one of them changed height or
+  // was hidden, and then they drew on top of each other. They live in `#edge`
+  // now and are laid out in flow, so a hidden slab closes the stack up and
+  // the next widget needs no arithmetic at all.
+  it('stacks the right-edge slabs in one column, so they cannot land on each other', () => {
+    const markup = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const column = markup.match(/<div id="edge">([\s\S]*?)<\/div>\s*<\/div>/);
+    expect(column, '#edge is missing from index.html').not.toBeNull();
+    expect(column![1]).toContain('id="raids"');
+    expect(column![1]).toContain('id="adoffer"');
+
+    // …and nothing else aims at the middle of the right edge on its own.
+    const offenders: string[] = [];
+    for (const [name, css] of sheets) {
+      for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        const selector = rule[1].trim();
+        if (!/right:\s*0/.test(rule[2]) || !/top:\s*50%/.test(rule[2])) continue;
+        if (selector !== '#edge') offenders.push(`${name}: ${selector}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   // The frame is pillarboxed to 9:16, so on a desktop the WINDOW is far wider
   // than the box the game is drawn in. A `@media (max-width: …)` therefore
   // asks about a width the player never has, which is how the HUD's phone

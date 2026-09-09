@@ -69,16 +69,34 @@ body {
 #gacha:empty { display: none; }
 #gacha { position: absolute; inset: 0; z-index: 100; }
 
-/* The offer tab, flush to the right edge of the FRAME (#app), not the
-   viewport — everything inside positions against the 9:16 frame. */
-#adoffer[hidden] { display: none; }
-#adoffer {
+/* THE RIGHT-EDGE COLUMN: every slab that slides in from the right lives here,
+   in one vertical stack, flush to the right edge of the FRAME (#app) rather
+   than the viewport — everything inside positions against the 9:16 frame.
+
+   A column rather than two absolutely-positioned widgets, because each one
+   has to know whether the others are there: two slabs pinned to `top: 50%`
+   land on top of each other, and nudging one by a hand-measured offset breaks
+   the moment either changes height or the other is hidden. Here a hidden slab
+   is `display: none`, so the stack closes up and what is left stays centred.
+
+   Order is urgency: the raid countdown first, the rewarded offer under it.
+   `pointer-events` is off on the column and back on for each slab, so the gap
+   between them is still map the player can tap. */
+#edge {
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
   z-index: 4; /* under the overlay scrim, over the map */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 82%;
+  pointer-events: none;
 }
+#edge > * { pointer-events: auto; }
+#adoffer[hidden], #raids[hidden] { display: none; }
 
 /* The header and the nav bar outrank EVERY menu — full-screen ones included.
    A menu is something you opened over the game, never a replacement for it:
@@ -92,7 +110,7 @@ body {
    that covers everything is the rewarded video (#ad, z 200), which has to be
    inescapable to be worth anything.
 
-   The stack, bottom to top: map · ad-offer tab (4) · district card (6) ·
+   The stack, bottom to top: map · the right-edge column (4) · district card (6) ·
    menus and sheets (7) · header (8) · nav bar (10) · settings knob (20) ·
    the gacha reveal (100) · the video (200). */
 #header { position: relative; z-index: 8; }

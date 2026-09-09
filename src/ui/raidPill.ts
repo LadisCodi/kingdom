@@ -50,10 +50,15 @@ export function mountRaidPill(game: Game, root: HTMLElement): void {
     }
     const name = RUINS[widget!.ruinId].name;
     if (widget!.took !== null) {
-      const took = Object.entries(widget!.took)
+      // The two biggest, then a count. A slab is one line wide and four
+      // materials do not fit in it — and "699 Gold" is the number the player
+      // actually reacts to, so the tail is worth trading for a legible head.
+      const entries = Object.entries(widget!.took)
         .filter(([, n]) => n > 0)
-        .map(([c, n]) => `${n} ${c}`)
-        .join(', ');
+        .sort((a, b) => b[1] - a[1]);
+      const head = entries.slice(0, 2).map(([c, n]) => `${n} ${c}`).join(', ');
+      const rest = entries.length - 2;
+      const took = rest > 0 ? `${head} and ${rest} more` : head;
       tab.classList.add('is-hit');
       line.textContent = widget!.reports === 1
         ? `${widget!.creature} raided the city`
