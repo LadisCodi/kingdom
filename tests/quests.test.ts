@@ -391,7 +391,9 @@ describe('quests fund the research tree', () => {
     // 11,975: `DriveThemOut` joins the military block at 250 — the beat that
     // sends the player at the Barrow's gate before it raids them
     // (Docs/features/18-garrisons-and-raids.md §6).
-    expect(chain).toBe(11_975);
+    // 12,375: and `MusterCompany` at 400 in front of it, because twenty orcs
+    // in the doorway are a company's job and the chain pays for the company.
+    expect(chain).toBe(12_375);
     expect(tree).toBe(518_955); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
