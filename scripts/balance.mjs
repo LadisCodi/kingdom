@@ -68,6 +68,10 @@ const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
 // in `?dev=map`, like the rest of the map
 // (Docs/features/18-garrisons-and-raids.md §2).
 const RUIN_TIERS = [1, 2, 3, 4, 5];
+// The five ruins, in code order. `RuinId` is a union in state.ts, so this is
+// the same fixed roster the map editor may retune but never extend.
+const RUIN_IDS = ['HollowBarrow', 'SunkenChapel', 'DrownedIronworks',
+  'CountingHouse', 'StarObservatory'];
 const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
 const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
 // The SIMULATED store's real-money SKUs (Docs/features/14-monetization.md §2).
@@ -309,11 +313,6 @@ const SETTINGS = [
   // Delves. `fail_haul_loss` is the number that most needs playtest rather
   // than argument: lower is gentler and may make pushing automatic, higher
   // bites but starts to feel like the loss aversion the positioning rules out.
-  ['delve.gold_per_depth_per_tier', 'delve.goldPerDepthPerTier'],
-  ['delve.material_per_depth_per_tier', 'delve.materialPerDepthPerTier'],
-  ['delve.stardust_per_depth_per_tier', 'delve.stardustPerDepthPerTier'],
-  ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
-  ['delve.fail_haul_loss', 'delve.failHaulLoss'],
   ['delve.first_clear_gems', 'delve.firstClearGems'],
   // The lump a first clear pays. Together with the drip above and the gacha,
   // this is where ALL Knowledge comes from — clearing fog pays none.
@@ -444,6 +443,18 @@ const SHEETS = {
     'legendary_pity_at', 'weight_common', 'weight_rare', 'weight_legendary',
     'duplicate_fragments', 'fragments_per_miss', 'pull_stardust',
     'free_per_day', 'free_cooldown_seconds'],
+  // ONE ROW PER DEPTH (Docs/features/11-expeditions.md §2). A ruin is depths
+  // of rooms, a room is one fight, and a room's enemy power is
+  // `power_start + power_step x (room - 1)`. `reward_base` scales what a room
+  // pays (§7.1); the supply columns are what ONE ROOM ATTEMPT costs in this
+  // depth, paid on entry and never refunded.
+  //
+  // NOT here yet, and each needs a system that does not exist: `threat_mix`
+  // (the generator's weights), `boss` and `villain_pool` (villains),
+  // `room_rewards` overrides, `boss_reward` (chests) and
+  // `passive_on_complete` (the idle reservoir).
+  Depths: ['ruin', 'depth', 'rooms', 'guild_req', 'power_start', 'power_step',
+    'reward_base', 'supply_gold', 'supply_wood', 'supply_food', 'supply_stone'],
   // One row per ruin TIER. `take_seconds` is how many seconds of the city's
   // own production a raid takes of each material; the supply columns are what
   // clearing that tier's gate costs, paid on entry and never refunded.
@@ -661,7 +672,7 @@ async function importXlsx() {
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
     daily: {},
-    delve: {}, party: {}, heroes: {}, ads: {}, garrisons: [], raid: {},
+    delve: {}, party: {}, heroes: {}, ads: {}, depths: [], garrisons: [], raid: {},
     artifacts: {},
     quests: [], banners: {},
     fog: { rings: [], fallbackGrowth: 0 },
@@ -835,6 +846,44 @@ async function importXlsx() {
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
+  }
+
+  for (const r of readSheet(workbook, 'Depths')) {
+    if (!RUIN_IDS.includes(r.ruin)) fail(where(r), `unknown ruin "${r.ruin}"`);
+    const depth = num(r, 'depth');
+    const rooms = num(r, 'rooms');
+    if (rooms < 1) fail(where(r), 'a depth needs at least one room');
+    out.depths.push({
+      ruin: r.ruin,
+      depth,
+      rooms,
+      guildReq: num(r, 'guild_req', { blankAs: 0 }),
+      powerStart: num(r, 'power_start'),
+      powerStep: num(r, 'power_step'),
+      rewardBase: num(r, 'reward_base'),
+      supplies: wallet(r, 'supply'),
+    });
+  }
+  out.depths.sort((a, b) => (a.ruin === b.ruin ? a.depth - b.depth
+    : RUIN_IDS.indexOf(a.ruin) - RUIN_IDS.indexOf(b.ruin)));
+  // The ladder has to keep climbing: a depth may never open easier than the
+  // one above it finished (Docs/features/11-expeditions.md §2).
+  for (const ruin of RUIN_IDS) {
+    const rows = out.depths.filter((d) => d.ruin === ruin);
+    if (rows.length === 0) fail('Depths', `ruin "${ruin}" has no depths`);
+    rows.forEach((d, i) => {
+      if (d.depth !== i + 1) fail('Depths', `${ruin} depth ${d.depth} is out of order`);
+      const prev = rows[i - 1];
+      if (prev === undefined) return;
+      const prevLast = prev.powerStart + prev.powerStep * (prev.rooms - 1);
+      if (d.powerStart < prevLast) {
+        fail('Depths', `${ruin} depth ${d.depth} starts at ${d.powerStart}, `
+          + `below where depth ${prev.depth} finished (${prevLast})`);
+      }
+      if (d.guildReq < prev.guildReq) {
+        fail('Depths', `${ruin} depth ${d.depth} opens before depth ${prev.depth}`);
+      }
+    });
   }
 
   for (const [tier, r] of byId(readSheet(workbook, 'Garrisons'), RUIN_TIERS, 'tier')) {
@@ -1174,6 +1223,10 @@ async function exportXlsx() {
     const s = b.store[id];
     return [id, s.priceUsd, s.gems];
   }));
+
+  addSheet(workbook, 'Depths', (b.depths ?? []).map((d) =>
+    [d.ruin, d.depth, d.rooms, d.guildReq, d.powerStart, d.powerStep, d.rewardBase,
+      ...costCells(d.supplies)]));
 
   addSheet(workbook, 'Garrisons', (b.garrisons ?? []).map((g) =>
     [g.tier, g.takeSeconds, ...costCells(g.supplies)]));

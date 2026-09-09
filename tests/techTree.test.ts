@@ -12,7 +12,7 @@ import treeDoc from '../src/sim/data/tech-tree.json';
 import {
   isDrawnEdge, unlockKey, validateTechTree, type TechTreeDoc,
 } from '../src/sim/data/techTreeRules';
-import { TECH_STAT_IDS } from '../src/sim/data/techEffectRules';
+import { TECH_STATS, TECH_STAT_IDS } from '../src/sim/data/techEffectRules';
 import {
   DISTRICTS, HARVEST, TECHNOLOGIES, TECH_ORDER, UNITS, terrainGate,
 } from '../src/sim/data/definitions';
@@ -151,6 +151,10 @@ describe('the shipped tech tree', () => {
       ...sources.matchAll(/tech(?:Value|Flat|FlatAimed|Multiplier|Totals)\(\s*state,\s*'([A-Za-z]+)'/g),
     ].map((m) => m[1]));
     for (const stat of TECH_STAT_IDS) {
+      // A RETIRED stat is one whose mechanic was cut: it stays declared so the
+      // ladders that still name it validate and still read as sentences, and
+      // it says so in the registry. Nothing reads it, on purpose.
+      if ('retired' in TECH_STATS[stat]) continue;
       expect(read, `nothing in src/sim reads the ${stat} stat`).toContain(stat);
     }
     // …and every stat a technology names is one the registry declares, which

@@ -21,7 +21,7 @@ import { Camera } from '../render/camera';
 import { TILE_SIZE } from '../render/palette';
 import { spriteUrl } from '../render/sprites';
 import {
-  ARTIFACT_ORDER, CURRENCIES, FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
+  ARTIFACT_ORDER, FEATURES, LANDMARK_ART, RUINS, UNIT_ORDER,
 } from '../sim/data/definitions';
 import regionMap from '../sim/data/region-map.json';
 import {
@@ -45,10 +45,6 @@ type Brush =
   | { kind: 'feature'; id: FeatureId }
   | { kind: 'clearFeature' }
   | { kind: 'void' };
-
-/** Currencies a delve can be provisioned in. Mana, Knowledge and Gems are not
- *  things you pack for a trip. */
-const SUPPLY_CURRENCIES = ['Gold', 'Food', 'Wood', 'Stone'] as const;
 
 /** A void flood-fill has no natural edge, so it gets an explicit one: the
  *  world's bounding box grown by this much. Painting past it is a brush job. */
@@ -602,12 +598,10 @@ export function mountEditor(): void {
       `${sel.id} · at (${r.x}, ${r.y}) · ring ${doc.distanceAt(r)}. `
       + 'The roster of five is fixed in code — a ruin can move and retune, not be added.'));
     card.append(field('tier', numberInput(r.tier, (v) => patch({ tier: v }))));
-    card.append(field('difficulty', numberInput(r.difficulty, (v) => patch({ difficulty: v }))));
-    card.append(field('base depth s', numberInput(r.baseDepthSeconds,
-      (v) => patch({ baseDepthSeconds: v }))));
-    card.append(field('depth growth', numberInput(r.depthGrowth,
-      (v) => patch({ depthGrowth: v }), 0.01)));
-    card.append(field('max depth', numberInput(r.maxDepth, (v) => patch({ maxDepth: v }))));
+    // A ruin's DEPTHS — how many rooms each holds, what they field and what
+    // they pay — are rows on the `Depths` sheet, not map content
+    // (Docs/features/11-expeditions.md §2). What is authored here is where
+    // the ruin is, what it pays out, and who is standing on the door.
     card.append(field('affinity', select(['Any', ...UNIT_ORDER], r.affinity,
       (v) => patch({ affinity: v }))));
     card.append(field('artifact', select([...ARTIFACT_ORDER], r.artifact,
@@ -624,15 +618,6 @@ export function mountEditor(): void {
       (v) => patch({ guard: { ...r.guard, warningMinutes: v } }))));
     card.append(field('period min', numberInput(r.guard.periodMinutes,
       (v) => patch({ guard: { ...r.guard, periodMinutes: v } }))));
-    card.append(el('div', { class: 'ed-label' }, 'Supplies'));
-    for (const c of SUPPLY_CURRENCIES) {
-      if (!(c in CURRENCIES)) continue;
-      card.append(field(c.toLowerCase(), numberInput(r.supplies[c] ?? 0, (v) => {
-        const supplies = { ...r.supplies };
-        if (v > 0) supplies[c] = v; else delete supplies[c];
-        patch({ supplies });
-      })));
-    }
     return card;
   }
 

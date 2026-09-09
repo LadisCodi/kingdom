@@ -2656,11 +2656,6 @@
     "premiumXpFloor": 20000
   },
   "delve": {
-    "goldPerDepthPerTier": 25,
-    "materialPerDepthPerTier": 4,
-    "stardustPerDepthPerTier": 6,
-    "fragmentsPerDepth": 1,
-    "failHaulLoss": 0.5,
     "firstClearGems": 500,
     "firstClearKnowledge": 15,
     "firstClearStardust": 150
@@ -3064,6 +3059,212 @@
     "watchSeconds": 5,
     "manaRefillsPerDay": 5
   },
+  "depths": [
+    {
+      "ruin": "HollowBarrow",
+      "depth": 1,
+      "rooms": 10,
+      "guildReq": 0,
+      "powerStart": 72,
+      "powerStep": 4,
+      "rewardBase": 1,
+      "supplies": {
+        "Gold": 25,
+        "Food": 10
+      }
+    },
+    {
+      "ruin": "HollowBarrow",
+      "depth": 2,
+      "rooms": 12,
+      "guildReq": 2,
+      "powerStart": 112,
+      "powerStep": 4,
+      "rewardBase": 2,
+      "supplies": {
+        "Gold": 40,
+        "Food": 15
+      }
+    },
+    {
+      "ruin": "HollowBarrow",
+      "depth": 3,
+      "rooms": 8,
+      "guildReq": 3,
+      "powerStart": 160,
+      "powerStep": 3,
+      "rewardBase": 3,
+      "supplies": {
+        "Gold": 60,
+        "Food": 20
+      }
+    },
+    {
+      "ruin": "SunkenChapel",
+      "depth": 1,
+      "rooms": 8,
+      "guildReq": 0,
+      "powerStart": 168,
+      "powerStep": 8,
+      "rewardBase": 2,
+      "supplies": {
+        "Gold": 75,
+        "Food": 20
+      }
+    },
+    {
+      "ruin": "SunkenChapel",
+      "depth": 2,
+      "rooms": 12,
+      "guildReq": 2,
+      "powerStart": 232,
+      "powerStep": 8,
+      "rewardBase": 3,
+      "supplies": {
+        "Gold": 110,
+        "Food": 30
+      }
+    },
+    {
+      "ruin": "SunkenChapel",
+      "depth": 3,
+      "rooms": 12,
+      "guildReq": 3,
+      "powerStart": 328,
+      "powerStep": 8,
+      "rewardBase": 4,
+      "supplies": {
+        "Gold": 150,
+        "Food": 40
+      }
+    },
+    {
+      "ruin": "DrownedIronworks",
+      "depth": 1,
+      "rooms": 10,
+      "guildReq": 0,
+      "powerStart": 360,
+      "powerStep": 15,
+      "rewardBase": 3,
+      "supplies": {
+        "Gold": 200,
+        "Food": 30,
+        "Stone": 15
+      }
+    },
+    {
+      "ruin": "DrownedIronworks",
+      "depth": 2,
+      "rooms": 12,
+      "guildReq": 2,
+      "powerStart": 500,
+      "powerStep": 15,
+      "rewardBase": 4,
+      "supplies": {
+        "Gold": 280,
+        "Food": 45,
+        "Stone": 25
+      }
+    },
+    {
+      "ruin": "DrownedIronworks",
+      "depth": 3,
+      "rooms": 14,
+      "guildReq": 3,
+      "powerStart": 672,
+      "powerStep": 17,
+      "rewardBase": 5,
+      "supplies": {
+        "Gold": 380,
+        "Food": 60,
+        "Stone": 35
+      }
+    },
+    {
+      "ruin": "CountingHouse",
+      "depth": 1,
+      "rooms": 12,
+      "guildReq": 0,
+      "powerStart": 720,
+      "powerStep": 30,
+      "rewardBase": 4,
+      "supplies": {
+        "Gold": 450,
+        "Food": 50,
+        "Stone": 30
+      }
+    },
+    {
+      "ruin": "CountingHouse",
+      "depth": 2,
+      "rooms": 14,
+      "guildReq": 2,
+      "powerStart": 1060,
+      "powerStep": 30,
+      "rewardBase": 5,
+      "supplies": {
+        "Gold": 600,
+        "Food": 70,
+        "Stone": 45
+      }
+    },
+    {
+      "ruin": "CountingHouse",
+      "depth": 3,
+      "rooms": 16,
+      "guildReq": 3,
+      "powerStart": 1460,
+      "powerStep": 22,
+      "rewardBase": 6,
+      "supplies": {
+        "Gold": 800,
+        "Food": 95,
+        "Stone": 60
+      }
+    },
+    {
+      "ruin": "StarObservatory",
+      "depth": 1,
+      "rooms": 12,
+      "guildReq": 0,
+      "powerStart": 1440,
+      "powerStep": 60,
+      "rewardBase": 5,
+      "supplies": {
+        "Gold": 1000,
+        "Food": 75,
+        "Stone": 60
+      }
+    },
+    {
+      "ruin": "StarObservatory",
+      "depth": 2,
+      "rooms": 16,
+      "guildReq": 2,
+      "powerStart": 2110,
+      "powerStep": 60,
+      "rewardBase": 6,
+      "supplies": {
+        "Gold": 1300,
+        "Food": 100,
+        "Stone": 80
+      }
+    },
+    {
+      "ruin": "StarObservatory",
+      "depth": 3,
+      "rooms": 18,
+      "guildReq": 3,
+      "powerStart": 3020,
+      "powerStep": 34,
+      "rewardBase": 7,
+      "supplies": {
+        "Gold": 1700,
+        "Food": 130,
+        "Stone": 105
+      }
+    }
+  ],
   "garrisons": [
     {
       "tier": 1,

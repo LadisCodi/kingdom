@@ -1,35 +1,30 @@
-// Sending a party into a ruin, on the battle screen
+// One ROOM of a ruin, on the battle screen
 // (Docs/features/11-expeditions.md §5, Docs/features/11a-ruins-ui.md §2.5).
 //
 // The board, the slots and the card panels are `battleSheet.ts` — every fight
-// in the game uses them, and a delve is a fight with two extra decisions and
-// a longer horizon. So this file is three things and nothing else:
+// in the game uses them. What a room adds is two things:
 //
-//  1. THE WIDGET AT THE TOP, which is where a delve differs from a gate. It
-//     carries the dungeon: how deep it goes, how far THIS party is safe, what
-//     one depth costs in time, and what waits at the bottom. The safe depth is
-//     the loudest line on it, because "a well-prepared run never fails" is a
-//     property of the sim and it only becomes a promise the player can act on
-//     if they can read it before committing.
-//  2. THE ENEMY, sized from the first depth's strength — the number the party
-//     is actually scored against — and typed by the ruin's BIAS. What waits at
-//     a depth is rolled when the party commits to it, so the box says
-//     "mostly", never "is": the gamble is information, not dice.
-//  3. TWO BANDS UNDER THE BOARD: the relic the hero carries down, and the
-//     standing order. Neither stands in a slot, so neither belongs in the
-//     party box.
+//  1. THE WIDGET AT THE TOP, which is where the player is: `Depth 2 · Room 5`,
+//     the rooms behind them and the rooms left, whether this one is the
+//     depth's boss, and what it pays. There is no "how far will you go" on
+//     this screen, because there is no journey: one room, one fight, decided
+//     now (§5).
+//  2. ONE BAND UNDER THE BOARD: the relic the hero carries in. It does not
+//     stand in a slot, so it is not part of the party box — and it is the one
+//     decision here that is not "which troops".
 //
-// The party itself is composed the way every other fight's is: tap a slot,
-// pick a card. The four steppers this screen used to carry went with it.
+// What is NOT here any more, and each was a whole control: the safe depth
+// (there is no run to be safe through), the standing order (there is nothing
+// to stand), and the checkpoint (nothing waits). Enter, see, decide again.
 
-import { ARTIFACTS, DELVE, RUINS } from '../sim/data/definitions';
+import { ARTIFACTS, RUINS, depthCount } from '../sim/data/definitions';
 import { artifactEntry, isAttuned, ownedArtifacts } from '../sim/artifacts';
-import { carriedStats, depthDurationMs } from '../sim/combat';
+import { carriedStats } from '../sim/combat';
 import { spriteUrl } from '../render/sprites';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
-import { el, formatDuration } from './format';
+import { el } from './format';
 import { iconEl } from './kit';
 
 const portrait = (sprite: string, glyph: string, cls: string): HTMLElement => {
@@ -92,29 +87,6 @@ function artifactBand(game: Game): HTMLElement {
   return band;
 }
 
-/** "Delve to depth N, then come back" — set it and walk away. The opt-out is
- *  deliberately not hidden: push-your-luck is the engaged player's mode, and
- *  anyone who does not want to be asked sets a depth and leaves. */
-function orderBand(game: Game, maxDepth: number, safeDepth: number): HTMLElement {
-  const row = el('div', { class: 'exp-orders' });
-  const choose = (value: number | null, label: string, hint: string) => {
-    const b = el('button', {
-      class: `exp-order${game.expeditionOrder === value ? ' is-chosen' : ''}`,
-      type: 'button',
-    }, el('b', {}, label), el('span', {}, hint));
-    b.addEventListener('click', () => game.setStandingOrder(value));
-    return b;
-  };
-  row.append(
-    choose(null, 'Ask me', 'Stop at every depth and decide'),
-    choose(Math.max(1, safeDepth), `To depth ${Math.max(1, safeDepth)}`, 'The safe floor, then home'),
-    choose(maxDepth, 'To the bottom', 'All the way, whatever it costs'),
-  );
-  return el('div', { class: 'exp-band' },
-    el('div', { class: 'exp-band-head' }, 'While you are away'),
-    row);
-}
-
 export function renderExpeditionSheet(game: Game): HTMLElement {
   const ruinId = game.expeditionRuin!;
   const ruin = RUINS[ruinId];
@@ -122,12 +94,11 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
   const relic = ARTIFACTS[ruin.artifact];
   const alreadyHave = game.state.ruinsCleared[ruinId] === true;
 
-  // What the relic bought, if one is socketed. The safe depth carries it when
-  // it moved; a DEFENSIVE relic buys survival past the floor rather than a
-  // deeper floor, so the headline can legitimately not move and the relic
-  // still be the right call — which is why the party's stats are on the board.
+  // What the relic bought, if one is socketed: the attack it adds, against
+  // the room's own number. A relic that did not move this would not be a
+  // choice worth a band of the screen.
   const bare = game.expeditionPreviewUnarmed();
-  const movedDepth = bare !== null && preview.safeDepth !== bare.safeDepth;
+  const relicAttack = bare === null ? 0 : preview.attack - bare.attack;
 
   const matchup = preview.matchup > 1.05
     ? `well matched against what lives here (×${preview.matchup.toFixed(2)})`
@@ -135,68 +106,66 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
       ? `the wrong tools for this place (×${preview.matchup.toFixed(2)})`
       : 'an even match against what lives here';
 
-  // THE WIDGET. A player who can read "safe to depth 4" before committing is
-  // playing a management game; one who cannot is gambling.
+  // THE WIDGET: where the player is standing. A room is one fight and the
+  // address is the whole of the context — how far in, how far left, and
+  // whether the thing behind this door is the depth's boss.
   const info: Array<Node | string> = [
     el('div', { class: 'exp-safe' },
-      el('b', {}, preview.safeDepth === 0 ? '—' : String(preview.safeDepth)),
-      el('span', {}, preview.safeDepth === 0
-        ? 'This party cannot clear the first depth'
-        : `Safe to depth ${preview.safeDepth} of ${preview.maxDepth}`),
-      movedDepth
-        ? el('span', { class: 'exp-safe-delta' }, `${bare!.safeDepth} without the relic`)
-        : ''),
-    el('div', { class: 'bt-info-line is-soft' },
-      'Past that is a gamble you choose — you are asked at every depth.'),
+      el('b', {}, `${preview.depth}·${preview.room}`),
+      el('span', {}, preview.isBoss
+        ? `Depth ${preview.depth}, and this one is the boss`
+        : `Depth ${preview.depth} · Room ${preview.room}`)),
     el('div', { class: 'bt-info-line' },
-      iconEl('dungeon', { size: 'sm' }), `${ruin.maxDepth} depths`,
-      iconEl('hourglass', { size: 'sm' }),
-      `${formatDuration(depthDurationMs(ruinId, 1) / 1000)} for the first`),
+      iconEl('dungeon', { size: 'sm' }),
+      `${preview.cleared} of ${preview.rooms} rooms cleared, across ${depthCount(ruinId)} depths`),
+    el('div', { class: 'bt-info-line is-soft' },
+      'Rooms are fought one at a time, in order, and never again. Clearing the '
+      + 'last one of a depth opens the next.'),
     el('div', { class: 'bt-info-line is-soft' }, alreadyHave
-      ? `${relic.name} is already home; going back down pays fragments to strengthen it.`
-      : `${relic.name} waits at depth ${ruin.maxDepth}, for the first party to reach it.`),
+      ? `${relic.name} is already home; the rooms still pay.`
+      : `${relic.name} is behind the last room of the last depth.`),
   ];
+  if (relicAttack > 0) {
+    info.push(el('div', { class: 'bt-info-line is-soft' },
+      `The relic in the pack is worth ${relicAttack} of that attack.`));
+  }
 
+  const reward = preview.reward;
   const view: BattleView = {
     title: ruin.name,
-    subtitle: `Tier ${ruin.tier} ruin · ${ruin.maxDepth} depths`,
+    subtitle: `Tier ${ruin.tier} ruin · Depth ${preview.depth} · Room ${preview.room}`,
     sprite: ruin.sprite,
     glyph: ruin.glyph,
     info,
     enemy: {
       squads: preview.enemy,
-      power: preview.enemyPower,
-      threat: preview.enemyThreat,
-      // A depth's type is ROLLED when the party commits to it, so the box
-      // says what the ruin is biased to and admits the rest is unknown.
-      note: `${preview.enemyThreat === 'Any' ? 'A mixed warband' : `Mostly ${preview.enemyThreat}s`}`
-        + ` at the first depth — each one rolls its own. You are ${matchup}.`,
+      power: preview.power,
+      threat: preview.threat,
+      // The ruin's bias is public; what this room drew is not, until the
+      // Guild's scouting exists to buy it (§3).
+      note: `${preview.threat === 'Any' ? 'A mixed warband' : `Mostly ${preview.threat}s`}`
+        + ` — this ruin's own. You are ${matchup}.`,
     },
     attack: preview.attack,
-    // The safe depth is the verdict here, not one depth's arithmetic: a party
-    // that clears depth 1 and dies at depth 2 is not ready to go.
-    enough: preview.safeDepth > 0,
+    enough: preview.enough,
     supplies: preview.supplies,
     rewards: [
-      { icon: 'Gold' as CurrencyId, label: `${DELVE.goldPerDepthPerTier * ruin.tier} a depth` },
-      {
-        icon: 'Stardust' as CurrencyId,
-        label: `${DELVE.stardustPerDepthPerTier * ruin.tier} a depth`,
-      },
-      { icon: 'fragment' as const, label: `${DELVE.fragmentsPerDepth * ruin.tier} a depth` },
+      ...Object.entries(reward.wallet)
+        .filter(([, n]) => n > 0)
+        .map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
+      { icon: 'HeroXp' as CurrencyId, label: `+${reward.heroXp}` },
+      ...(reward.fragments > 0
+        ? [{ icon: 'fragment' as const, label: `+${reward.fragments}` }] : []),
     ],
-    rewardNote: alreadyHave
-      ? 'None of it is yours until the party comes back up.'
-      : `And ${relic.name} itself, at the bottom. None of it is yours until they come back up.`,
-    extras: [artifactBand(game), orderBand(game, ruin.maxDepth, preview.safeDepth)],
-    actionLabel: 'Set off',
-    // A delve's small print is not a gate's. What is at risk is the HAUL,
-    // and the haul is not the player's until they bring it up — so the line
-    // states the promise rather than a fraction: nothing you already own is
-    // ever taken, and every depth is a separate decision.
-    actionNote: 'Supplies are spent on the way in. Everything the party finds '
-      + 'is theirs to lose until they bring it up — nothing you already own is '
-      + 'ever at risk.',
+    rewardNote: preview.isBoss
+      ? 'A boss pays four times a room, and the depth behind it opens on the way out.'
+      : 'Paid the moment the room falls — there is nothing to carry home.',
+    extras: [artifactBand(game)],
+    actionLabel: preview.isBoss ? 'Fight the boss' : 'Enter the room',
+    // Supplies are the whole price of an attempt: a room that goes badly
+    // grants nothing and deducts nothing else (§5).
+    actionNote: 'Supplies are spent on the way in, win or lose. Nothing else is '
+      + 'at risk — a room that beats you is still there to try again.',
     onFight: () => game.doLaunchExpedition(),
     blocked: game.expeditionLaunchBlock(),
   };

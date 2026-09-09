@@ -26,10 +26,11 @@
    per camp at most, a tenth of the purse each, and handed back in full when
    you clear it. No decay, no starvation, no failure state. Every other
    pressure is **opportunity that expires** — a Mana pool that overflows, an
-   event window that closes, a haul the player chose to risk.
+   event window that closes, a garrison's clock running down.
 2. **The best-managed economy wins.** Combat is a sink for the economy, not a
-   test of reflexes. There is no battle screen. A well-prepared expedition
-   never fails.
+   test of reflexes. The battle screen is where a fight is **composed**, never
+   played: the party is chosen, the numbers are shown, and the outcome is
+   decided the moment the player commits. A well-prepared party never fails.
 3. **Wallets buy power, comfort and breadth — but never exclusivity.**
    Nothing is purchase-only that cannot also be earned. Every paid ladder is
    earned first — research grants a slot before Gems can buy one.
@@ -50,8 +51,8 @@
 6. **Staff** — assign workers. They are units that walk to cells inside their
    building's area of influence, harvest, and carry back.
 7. **Reinvest** — upgrade districts, research technologies, buy upgrades.
-8. **Delve** — send a hero and a party into an uncovered ruin, and decide at
-   every checkpoint whether to go deeper or bank the haul.
+8. **Fight** — clear the garrison at a ruin's gate, then take its rooms one at
+   a time with a hero and a party.
 9. **Empower** — attune the relics they bring back, and spend Mana on magic.
 
 ## The fog
@@ -62,7 +63,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 |---|---|
 | **Resources** — forest, berries, game, rocks, shoals, iron | the raw materials |
 | **Landmarks** — shrines, standing stones, leysprings | **+10 max Mana**, permanently |
-| **Ruins** | dungeons to delve — relics, ingredients, Stardust |
+| **Ruins** | dungeons of rooms to clear — relics, ingredients, Stardust |
 | **Garrisons** — on every landmark and ruin | the first job for the army: clear them, or they raid |
 
 - Landmarks compound: a bigger Mana pool is a bigger session and a bigger ad
@@ -94,7 +95,7 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   - housing taxes → Gold → fog, buildings and research
   - harvest → materials → buildings
   - Mana → magic
-  - delves → relics and Stardust → a stronger collection
+  - rooms → relics and Stardust → a stronger collection
 
 **Full design:** [`features/03-economy.md`](features/03-economy.md).
 
@@ -122,32 +123,37 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   **A relic is what you wear; a spell is what you know**
   ([`features/07-research.md`](features/07-research.md) §6).
 
-> **A relic is attuned to the kingdom, or carried by a hero into a delve. Never
+> **A relic is attuned to the kingdom, or carried by a hero into a fight. Never
 > both.**
 
 - Example: wear the Foreman's Sigil for +1 worker yield, or send it down to
-  reach depth 6.
+  take a room the party could not otherwise hold.
 - Unlocking and levelling a relic needs a **nine-piece ingredient set** with
   1★/2★/3★ rarities from three different sources.
 
 **Full design:** [`features/09-relics.md`](features/09-relics.md).
 
-## Expeditions
+## Ruins
 
-- A ruin is a **repeatable dungeon**.
-- The party is **one hero** (mandatory) plus units; supplies are paid up front.
-- The party clears one **depth** at a time. At every checkpoint:
+- A ruin is a **ladder of rooms**: numbered depths, numbered rooms, a boss at
+  the end of every depth. One room is one fight.
+- A **garrison** stands at the gate before Depth 1, with a clock on it: clear
+  it or it raids the city ([`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)).
+- The party is **a hero** (mandatory) plus troops in the slots of the battle
+  screen; supplies are paid on the way in.
+- **The fight resolves the instant the room is entered.** There is nothing in
+  flight, nothing to wait for and nothing to come back from.
+- Rooms are cleared **in order and never replayed**. Clearing the last room of
+  a depth opens the next one.
+- **A room pays the moment it falls**, so nothing is ever carried and nothing
+  can be lost on the way home. A room that beats the party costs the supplies
+  and nothing else, and it is still there to try again.
 
-> **Go deeper, or come back with what you're carrying?**
+> **Enter the room, or go and train?**
 
-- Failing costs half the haul and ends the run. The haul is not owned until
-  extracted (promise 1).
 - Combat is a **scoring pass, not a simulation**: units have ATK/DEF/HP, each
-  dungeon has a threat type, and a matchup chart rewards composition. **There is
-  no battle screen.**
-- Party HP does not recover between depths.
-- The player's economy decides how deep the party goes safely; everything past
-  that is a risk opted into on information the player chose not to wait for.
+  ruin has a threat type, and a matchup chart rewards composition.
+- Party HP does not carry between rooms.
 
 **Full design:** [`features/11-expeditions.md`](features/11-expeditions.md).
 
@@ -158,7 +164,7 @@ Three arcs run at different speeds.
 | Arc | Gated by | Measured in |
 |---|---|---|
 | **The city** | the Townhall level — how many of each district, and how high | hours |
-| **The army** — garrisons cleared, and therefore delve depth | four military buildings the player chooses to build | hours to days |
+| **The army** — garrisons cleared, and therefore how deep the rooms go | four military buildings the player chooses to build | hours to days |
 | **The collection** — relics and heroes | ingredients and Stardust | **weeks** |
 
 ## The three scopes of the map
@@ -190,7 +196,7 @@ Three arcs run at different speeds.
 > limits what a TIMER does.**
 
 - Production — workers, taxes, Mana regen — stops at 8 hours.
-- Timers — the build queue, research, delve depths, event windows — resolve in
+- Timers — the build queue, research, a gate's raid, event windows — resolve in
   full.
 - Anything new that is time-based is classified as one or the other in its doc.
 

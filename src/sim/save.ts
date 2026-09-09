@@ -330,6 +330,32 @@ const MIGRATIONS: readonly Migration[] = [
       if (fog !== undefined) delete fog.Progress;
     },
   },
+  {
+    // v40 — `kingdom.delves` became `kingdom.ruins`. A delve was a party in
+    // flight down a ruin on a timer; a ruin is now a ladder of rooms, each one
+    // a fight resolved the instant it is entered
+    // (Docs/features/11-expeditions.md §5). A party mid-descent has nothing to
+    // become, so the flight is dropped — and the two facts that OUTLIVED the
+    // run come across: which ruins were taken to the bottom, and how deep the
+    // player has ever been.
+    //
+    // The room ladder itself is new content, so a ruin whose bottom was
+    // reached under the old model re-opens at Depth 1 Room 1. `Cleared` is
+    // what guards the once-only payout — the relic and the first-clear lump
+    // are already banked and cannot be won twice.
+    to: 40,
+    migrate: (modules) => {
+      const delves = modules['kingdom.delves'] as
+        { Cleared?: string[]; DeepestDepth?: number } | undefined;
+      if (delves === undefined) return;
+      modules['kingdom.ruins'] = {
+        Progress: [],
+        Cleared: delves.Cleared ?? [],
+        DeepestDepth: delves.DeepestDepth ?? 0,
+      };
+      delete modules['kingdom.delves'];
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -485,24 +511,12 @@ export function serialize(state: GameState, now: number): SaveFile {
           Phase: e.phase,
         })),
       },
-      'kingdom.delves': {
-        Delves: state.delves.map((d) => ({
-          ID: d.id,
-          RuinID: d.ruinId,
-          HeroIDs: d.heroIds,
-          ArtifactID: d.artifactId,
-          ArtifactLevel: d.artifactLevel,
-          Party: d.party.map((p) => ({ UnitID: p.unitId, Count: p.count })),
-          Depth: d.depth,
-          PartyHp: d.partyHp,
-          MaxPartyHp: d.maxPartyHp,
-          Haul: d.haul,
-          HaulFragments: d.haulFragments,
-          Phase: d.phase,
-          DepthEndsAtUtc: iso(d.depthEndsAt),
-          StandingOrder: d.standingOrder,
-          Threat: d.threat,
-          Outcome: d.outcome,
+      // HOW FAR INTO EACH RUIN, and nothing in flight: a room resolves the
+      // instant it is entered, so there is no party to persist
+      // (Docs/features/11-expeditions.md §5).
+      'kingdom.ruins': {
+        Progress: Object.entries(state.ruins).map(([ruinId, p]) => ({
+          RuinID: ruinId, Depth: p!.depth, Cleared: p!.cleared,
         })),
         Cleared: Object.keys(state.ruinsCleared),
         DeepestDepth: state.deepestDepth,
@@ -841,34 +855,15 @@ export function deserialize(
     }));
   }
 
-  const delvesDto = modules['kingdom.delves'];
-  if (delvesDto) {
-    state.delves = ((delvesDto.Delves ?? []) as any[]).map((d) => ({
-      id: d.ID,
-      ruinId: d.RuinID,
-      // A save written when a party was ONE hero reads as a party of one:
-      // additive, so no migrator (Docs/implementation-plan.md §1).
-      heroIds: (d.HeroIDs ?? (d.HeroID ? [d.HeroID] : [])) as GameState['delves'][number]['heroIds'],
-      // A save written before attune-or-arm shipped has no relic aboard, and
-      // reads back as a party that carried nothing — which is exactly what it
-      // was. Additive, so no migrator; see Docs/implementation-plan.md §1
-      artifactId: d.ArtifactID ?? null,
-      artifactLevel: d.ArtifactLevel ?? 1,
-      party: ((d.Party ?? []) as any[]).map((p) => ({ unitId: p.UnitID, count: p.Count })),
-      depth: d.Depth ?? 0,
-      partyHp: d.PartyHp ?? 0,
-      maxPartyHp: d.MaxPartyHp ?? 0,
-      haul: { ...(d.Haul ?? {}) },
-      haulFragments: d.HaulFragments ?? 0,
-      phase: d.Phase ?? 'checkpoint',
-      depthEndsAt: ms(d.DepthEndsAtUtc),
-      standingOrder: d.StandingOrder ?? null,
-      threat: d.Threat ?? 'Any',
-      outcome: d.Outcome ?? null,
-    }));
-    state.deepestDepth = delvesDto.DeepestDepth ?? 0;
+  const ruinsDto = modules['kingdom.ruins'];
+  if (ruinsDto) {
+    state.ruins = {};
+    for (const p of (ruinsDto.Progress ?? []) as any[]) {
+      state.ruins[p.RuinID as RuinId] = { depth: p.Depth ?? 1, cleared: p.Cleared ?? 0 };
+    }
+    state.deepestDepth = ruinsDto.DeepestDepth ?? 0;
     state.ruinsCleared = {};
-    for (const id of (delvesDto.Cleared ?? []) as string[]) {
+    for (const id of (ruinsDto.Cleared ?? []) as string[]) {
       state.ruinsCleared[id as keyof typeof state.ruinsCleared] = true;
     }
   }
@@ -1050,9 +1045,10 @@ export function deserialize(
     report.knowledgeEarned += tail.knowledgeEarned;
     report.expiredModifiers.push(...tail.expiredModifiers);
     report.trainedUnits.push(...tail.trainedUnits);
-    // Delve and schedule events come from the TAIL by design: their timers
-    // never paused, so most of what happened past the cap happened here.
-    report.delveEvents.push(...tail.delveEvents);
+    // Schedule events come from the TAIL by design: their windows never
+    // paused, so most of what happened past the cap happened here. Nothing
+    // comes from the ruins — a room resolves on entry, so an absence never
+    // resolves one.
     report.scheduleEvents.push(...tail.scheduleEvents);
   }
   onCatchUp?.({ elapsedMs: capEnd - lastSaved, cappedOut: capEnd < now, result: report });

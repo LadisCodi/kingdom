@@ -303,32 +303,25 @@ describe('the fog discount reaches both the bar and the charge', () => {
 });
 
 // The socket half of attune-or-arm (Docs/features/10-heroes.md §2).
-// The delve half lives in expeditions.test.ts; what matters HERE is that the
-// Reliquary cannot take back a relic the sim has already committed, and that
-// a carried relic draws no upkeep — the asymmetry the whole trade rests on.
-describe('a relic cannot be worn and carried at once', () => {
-  it('a relic underground is committed, and the socket says so', () => {
+//
+// A relic is committed only by the KINGDOM now: a room resolves the instant
+// it is entered (Docs/features/11-expeditions.md §5), so a relic goes into a
+// fight and is out of it again before anything else can ask for it. Nothing
+// is ever "underground".
+describe('a relic is committed by the kingdom, and by nothing else', () => {
+  it('is free until it is attuned, and the socket is the only claim on it', () => {
     const state = withRelic('DowsingRod');
     expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
 
-    // Standing in for a launch: what the sim records is a delve holding it.
-    state.delves.push({
-      id: 'd1', ruinId: 'HollowBarrow', heroIds: ['Warden'],
-      artifactId: 'DowsingRod', artifactLevel: 1,
-      party: [{ unitId: 'Warrior', count: 1 }], depth: 0, partyHp: 10, maxPartyHp: 10,
-      haul: {}, haulFragments: 0, phase: 'descending', depthEndsAt: T0 + 1000,
-      standingOrder: null, threat: 'Any', outcome: null,
-    });
-    expect(artifactIsCarried(state, 'DowsingRod')).toBe(true);
+    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
-    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Carried');
-    // Refused, so the socket is untouched AND unlocked — a refusal must never
-    // cost the player the five minutes a real swap costs.
-    expect(state.artifacts.attuned[0]).toBe(null);
-    expect(isSlotLocked(state, 0, T0)).toBe(false);
+    // …and it is the socket that says so, not a party somewhere.
+    expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
   });
+});
 
+describe('a relic cannot be worn and carried at once', () => {
   it('an attuned relic still un-attunes normally — the rule only blocks the way in', () => {
     const state = withRelic('DowsingRod');
     expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');

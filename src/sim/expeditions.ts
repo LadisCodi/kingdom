@@ -1,38 +1,29 @@
-// Delves (Docs/features/11-expeditions.md §2, §5, §7).
+// Ruins: depths of rooms (Docs/features/11-expeditions.md §1, §5, §7).
 //
-// A ruin is a repeatable DUNGEON, not a chest. Commit one hero plus units, pay
-// supplies once, and the party clears one DEPTH at a time. After each depth it
-// stops at a checkpoint and asks a single question:
+// A ruin is a PATH, not a trip. Numbered depths of numbered rooms, one room is
+// one fight, and the fight happens the instant the player enters it:
 //
-//     Go deeper, or come back with what you're carrying?
+//     pay the supplies · resolve · cleared, or not
 //
-// That is what gives a visit texture. One long expedition produces one decision
-// per visit, so some visits contain nothing; staged depths produce three or
-// four, and the run is self-terminating — you push until you choose to stop.
+// Cleared, the room pays and the frontier moves on one. Not cleared, nothing
+// is granted and nothing else is deducted, and the same room is waiting to be
+// tried again. Rooms go in order and are never replayed, so a ruin is climbed
+// once and the only question the player answers is WHICH TROOPS.
 //
-// TWO RULES KEEP IT COZY, and both are load-bearing rather than decorative.
+// THREE THINGS WENT WITH THE STAGED DELVE, and they are one simplification
+// seen from three sides. There is no party underground, so nothing is ever in
+// flight and `advance()` has no boundary here at all. There is no haul, so
+// nothing is half-lost on a bad fight — a failed room costs its supplies and
+// nothing else. And there is no standing order, because there is nothing to
+// stand: the player enters one room, sees the answer, and decides again.
 //
-//  1. THE HAUL IS NOT YOURS UNTIL YOU EXTRACT IT. That framing is what makes a
-//     50% loss legitimate under "nothing you own is ever taken from you":
-//     nothing you OWN is taken, you declined a sure thing. Identical logic to
-//     Mana overflow — unrealized gain, never property. The UI has to sell this
-//     from the first depth or players will feel robbed whatever the technicality.
-//  2. A CHECKPOINT NEVER EXPIRES. The party waits at depth 3 indefinitely: no
-//     decision timer, no interrupt, no auto-fail while away. That is what stops
-//     the system becoming an interruption engine, and it turns a parked delve
-//     into a return hook. The cost of not deciding is real but gentle — that
-//     hero stays committed until you do.
-//
-// And the rule that decides every timing question here:
-//
-//     The offline cap limits what the CITY PRODUCES while you are away.
-//     It never limits what a TIMER does.
-//
-// Delve timers are timers. They keep running past the cap, like the build
-// queue and research.
+// What is left is the PARTY — what it costs to send and what it is worth —
+// and the two commands that spend it: a room attempt, and the gate attempt
+// that opens the ruin in the first place.
 
 import {
-  ARMY, ARTIFACTS, DELVE, HEROES, PARTY, RUINS,
+  ARMY, ARTIFACTS, COLLECTION, DELVE, HEROES, PARTY, RUINS,
+  depthCount, depthDef, depthsOf, roomPower,
 } from './data/definitions';
 import {
   addArtifactFragments, artifactEntry, artifactIsCarried, grantArtifact, isAttuned,
@@ -41,8 +32,8 @@ import {
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  depthDurationMs, effectiveAttack, enemyFormation, formationPower, guaranteedDepth,
-  matchupAgainst, partyStats, resolveDepth, threatStrength, worstThreatFor,
+  effectiveAttack, enemyFormation, formationPower, matchupAgainst, partyStats,
+  resolveRoom, worstThreatFor,
   type CarriedArtifact, type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
 import { availableRoster, casualtiesFor, takeCasualties } from './army';
@@ -54,45 +45,37 @@ import type { MapData } from './grid';
 import { resolve } from './modifiers';
 import { isTechComplete } from './research';
 import { techFlat, techFlatAimed, techValue } from './techEffects';
-import { pick } from './rng';
 import {
-  addToWallet, newId,
-  type ArtifactId, type Delve, type GameState, type HeroId, type RuinId,
+  addToWallet,
+  type ArtifactId, type GameState, type HeroId, type RuinId, type RuinProgress,
   type UnitId, type Wallet,
 } from './state';
 import { canAfford, pay } from './wallet';
 
 // ------------------------------------------------------------------- slots
 
-/** How long a depth actually takes right now. Kept in ONE place so a
- *  timed boon that speeds delves up cannot apply to the launch and not to the
- *  push, or to the timer and not to the estimate on the sheet. */
-export const depthMs = (state: GameState, ruinId: RuinId, depth: number): number =>
-  Math.max(1000, Math.round(resolve(state, 'delveSpeed',
-    depthDurationMs(ruinId, depth) * Math.max(0.25, techValue(state, 'delveSpeed', 1)))));
-
 /**
  * THE TROOP SLOTS, and there is nothing to buy.
  *
  * Every one of the board's slots is open from the first fight
- * (Docs/features/combat.md §3). They used to be a Gem ladder starting at one,
- * which priced the thing the type chart needs to be legible: a player with
- * one slot has no composition to make, so the whole matchup lesson sat behind
- * a purchase. What limits a party now is the ARMY AT HOME and the army cap —
- * both of which are earned in the city — and the only slot in the game that
- * is bought is a HERO slot (Docs/features/10-heroes.md §3).
+ * (Docs/features/combat.md §3). What limits a party is the ARMY AT HOME and
+ * the army cap — both of which are earned in the city — and the only slot in
+ * the game that is bought is a HERO slot (Docs/features/10-heroes.md §3).
  */
 export const troopSlots = (): number => PARTY.troopSlots;
 
 // ---------------------------------------------------------------- supplies
 
-/** Supplies are a FLAT cost at launch, not per depth, so the depth decision is
- *  purely risk against reward with nothing else muddying it. The
- *  Quartermaster's whole trait is a discount on this. */
+/**
+ * What ONE room attempt costs, authored per depth
+ * (Docs/features/11-expeditions.md §2). Paid on entry, never refunded, win or
+ * lose — so a room is a decision with a price rather than a free retry, and
+ * the price is small enough that the decision is about troops.
+ */
 export function supplyCost(
-  state: GameState, ruinId: RuinId, heroIds: readonly HeroId[],
+  state: GameState, ruinId: RuinId, depth: number, heroIds: readonly HeroId[],
 ): Wallet {
-  const base = RUINS[ruinId].supplies;
+  const base = depthDef(ruinId, depth)?.supplies ?? {};
   // The best quartermaster in the party, not the sum of them: two of them
   // would otherwise stack to a free trip.
   const discount = heroIds.reduce((best, id) => (HEROES[id].trait === 'SupplyDiscount'
@@ -162,122 +145,17 @@ export const partyOf = (
   drill: drillOf(state),
 });
 
-/** The fraction of the haul a failed depth costs (Bearers: −3%/rank, floor
- *  20%). Half by default — enough that a bad push is a real loss, never so
- *  much that a run can be wiped, which promise 1 would not allow. */
-export const effectiveHaulLoss = (state: GameState): number =>
-  Math.min(1, Math.max(0.2, resolve(state, 'haulLoss',
-    DELVE.failHaulLoss
-      - (isTechComplete(state, 'Salvage') ? 0.15 : 0) // half becomes 35%
-      + techFlat(state, 'haulLoss'))));
-
 // ------------------------------------------------------------------- heroes
 
 export const heroLevel = (state: GameState, id: HeroId): number => state.heroes.levels[id] ?? 1;
 
 export const ownsHero = (state: GameState, id: HeroId): boolean => state.heroes.owned.includes(id);
 
-/** A hero already underground cannot lead a second party. One hero means one
- *  delve at a time, which is what makes the second hero a genuine prize. */
-export const heroIsBusy = (state: GameState, id: HeroId): boolean =>
-  state.delves.some((d) => d.heroIds.includes(id) && d.phase !== 'done');
-
-/** What a delve's relic contributes, at the level it went down at. */
-export const carriedOf = (delve: Delve): CarriedArtifact | null =>
-  delve.artifactId === null ? null : { id: delve.artifactId, level: delve.artifactLevel };
-
-export const freeHeroes = (state: GameState): HeroId[] =>
-  state.heroes.owned.filter((id) => !heroIsBusy(state, id));
-
-// ------------------------------------------------------------------ launch
-
-export type LaunchBlock =
-  | 'RuinNotFound' | 'GateStanding' | 'NoHero' | 'HeroBusy' | 'TooManyHeroes'
-  | 'EmptyParty' | 'TooManySlots'
-  | 'NotEnoughUnits' | 'NotEnoughSupplies'
-  | 'ArtifactNotOwned' | 'ArtifactAttuned' | 'ArtifactCarried';
-
-export function launchBlock(
-  state: GameState,
-  map: MapData,
-  ruinId: RuinId,
-  heroIds: readonly HeroId[],
-  slots: readonly PartySlot[],
-  artifactId: ArtifactId | null = null,
-): LaunchBlock | null {
-  if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
-  // Nothing in the ruin can be entered until the gate is cleared: the garrison
-  // is standing in the doorway (Docs/features/18-garrisons-and-raids.md §1).
-  if (!gateIsCleared(state, ruinId)) return 'GateStanding';
-  if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
-  if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
-  // A DELVE parks its party underground, so its hero really is committed
-  // until the run ends. A gate does not (`gateBlock`): it resolves on entry,
-  // and a hero is never busy for a fight like that
-  // (Docs/features/10-heroes.md §2.5).
-  if (heroIds.some((id) => heroIsBusy(state, id))) return 'HeroBusy';
-  const committed = slots.filter((s) => s.count > 0);
-  if (committed.length === 0) return 'EmptyParty';
-  if (committed.length > troopSlots()) return 'TooManySlots';
-  const available = availableRoster(state);
-  for (const s of committed) {
-    if (s.count > available[s.unitId]) return 'NotEnoughUnits';
-  }
-  // No cap check: the army cap bounds what the city OWNS
-  // (Docs/features/combat.md §14), and a party is drawn from what it owns —
-  // so `NotEnoughUnits` above is the only ceiling a composition can hit.
-  if (!canAfford(state.city.wallet, supplyCost(state, ruinId, heroIds))) return 'NotEnoughSupplies';
-  if (artifactId !== null) {
-    if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
-    // Attune OR arm. Refusing here rather than silently un-attuning is the
-    // point: the player gives up a passive they are living off to arm a hero,
-    // so the sim must never make that choice on their behalf.
-    if (isAttuned(state, artifactId)) return 'ArtifactAttuned';
-    if (artifactIsCarried(state, artifactId)) return 'ArtifactCarried';
-  }
-  return null;
-}
-
-export type LaunchResult = 'Launched' | LaunchBlock;
-
-export function launchDelve(
-  state: GameState,
-  map: MapData,
-  ruinId: RuinId,
-  heroIds: readonly HeroId[],
-  slots: readonly PartySlot[],
-  now: number,
-  standingOrder: number | null = null,
-  artifactId: ArtifactId | null = null,
-): LaunchResult {
-  const block = launchBlock(state, map, ruinId, heroIds, slots, artifactId);
-  if (block !== null) return block;
-  pay(state.city.wallet, supplyCost(state, ruinId, heroIds));
-  const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
-  const artifactLevel = artifactId === null ? 1 : artifactEntry(state, artifactId).level;
-  const artifact = artifactId === null ? null : { id: artifactId, level: artifactLevel };
-  const party = partyOf(state, committed, heroIds, artifact);
-  const hp = partyStats(party).hp;
-  state.delves.push({
-    id: newId(state, 'delve'),
-    ruinId,
-    heroIds: [...heroIds],
-    artifactId,
-    artifactLevel,
-    party: committed,
-    depth: 0,
-    partyHp: hp,
-    maxPartyHp: hp,
-    haul: {},
-    haulFragments: 0,
-    phase: 'descending',
-    depthEndsAt: now + depthMs(state, ruinId, 1),
-    standingOrder,
-    threat: rollThreat(state, ruinId, 1),
-    outcome: null,
-  });
-  return 'Launched';
-}
+// NOBODY IS EVER BUSY. A room resolves on entry, so no hero is underground
+// between two fights and the same hero leads every room the player enters
+// (Docs/features/10-heroes.md §2.5). The rule the staged delve needed — one
+// hero, one party, until it came back — went with the journey.
+export const freeHeroes = (state: GameState): HeroId[] => [...state.heroes.owned];
 
 // -------------------------------------------------------------- the gate
 
@@ -443,309 +321,291 @@ export function previewGate(
   };
 }
 
-/** What waits at a depth. Keyed by (ruin, depth, seed) so it is the same
- *  question however the window was replayed — the gamble is that you do not
- *  KNOW it yet, never that it is re-rolled behind you. */
-export function rollThreat(state: GameState, ruinId: RuinId, depth: number): UnitId | 'Any' {
-  const affinity = RUINS[ruinId].affinity;
-  if (affinity !== 'Any') {
-    // A ruin's affinity DOMINATES its depths without owning all of them, so a
-    // dungeon rewards a composition rather than a single unit.
-    const pool: Array<UnitId> = [affinity, affinity, affinity, 'Warrior', 'Lancer', 'Archer', 'Cavalry'];
-    return pick(state.seed, pool, 'threat', ruinId, depth);
-  }
-  return pick(state.seed, ['Warrior', 'Lancer', 'Archer', 'Cavalry'] as UnitId[],
-    'threat', ruinId, depth);
+// -------------------------------------------------------------- the rooms
+
+/** Where the player is in a ruin: the depth, and the rooms cleared in it. */
+export const progressIn = (state: GameState, ruinId: RuinId): RuinProgress =>
+  state.ruins[ruinId] ?? { depth: 1, cleared: 0 };
+
+/** The room the player would enter next — the FRONTIER. Its `room` is
+ *  1-based, and `done` is a ruin with nothing left in it. */
+export function frontier(state: GameState, ruinId: RuinId): {
+  depth: number; room: number; done: boolean;
+} {
+  const at = progressIn(state, ruinId);
+  const def = depthDef(ruinId, at.depth);
+  if (def === undefined) return { depth: depthCount(ruinId), room: 0, done: true };
+  return { depth: at.depth, room: at.cleared + 1, done: false };
 }
 
-// -------------------------------------------------------------- the descent
-
-export interface DelveEvent {
-  delveId: string;
-  ruinId: RuinId;
-  kind: 'checkpoint' | 'failed' | 'bottom';
-  depth: number;
-  /** Set on 'bottom' when the ruin's relic was granted for the first time. */
-  artifact: ArtifactId | null;
+/** Rooms cleared in the whole ruin, and how many it holds. Progress is one
+ *  number to a player, however many depths it is spread over. */
+export function roomsCleared(state: GameState, ruinId: RuinId): number {
+  const at = progressIn(state, ruinId);
+  return depthsOf(ruinId)
+    .filter((d) => d.depth < at.depth)
+    .reduce((sum, d) => sum + d.rooms, 0) + at.cleared;
 }
 
-/** The haul one depth pays, before the hero's traits. Scales with depth AND
- *  tier, so pushing deeper is worth more than delving a shallow ruin twice. */
-function depthHaul(
-  state: GameState, ruinId: RuinId, depth: number, heroIds: readonly HeroId[],
-): { wallet: Wallet; fragments: number } {
-  const ruin = RUINS[ruinId];
-  // The best of each trait in the party, never the sum: a bonus that stacked
-  // per hero would make a hero slot a yield purchase rather than a board one.
-  const best = (trait: string): number => heroIds.reduce(
-    (n, id) => (HEROES[id].trait === trait ? Math.max(n, HEROES[id].traitValue) : n), 0);
-  const stardustBonus = 1 + best('KnowledgeBonus');
-  const fragmentBonus = 1 + best('FragmentBonus');
-  const wallet: Wallet = {
-    Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
-    Stardust: Math.round(resolve(state, 'stardustYield', techValue(state, 'stardustYield',
-      DELVE.stardustPerDepthPerTier * ruin.tier * depth * stardustBonus))),
-  };
-  // The deeper tiers pay materials the city cannot easily reach otherwise —
-  // three times the haul, the rate a vein pays over a plain rock.
-  const material = Math.round(DELVE.materialPerDepthPerTier * ruin.tier * depth);
-  wallet.Stone = ruin.tier >= 3 ? material * 3 : material;
-  return {
-    wallet,
-    fragments: Math.round(DELVE.fragmentsPerDepth * ruin.tier * fragmentBonus),
-  };
-}
+/** True when every room of every depth has fallen. */
+export const ruinIsFinished = (state: GameState, ruinId: RuinId): boolean =>
+  frontier(state, ruinId).done;
 
-const addHaul = (delve: Delve, wallet: Wallet, fragments: number): void => {
-  for (const [c, n] of Object.entries(wallet)) {
-    delve.haul[c as keyof Wallet] = (delve.haul[c as keyof Wallet] ?? 0) + n;
-  }
-  delve.haulFragments += fragments;
-};
+/** The last room of a depth is its BOSS (§1). */
+export const isBossRoom = (ruinId: RuinId, depth: number, room: number): boolean =>
+  room === (depthDef(ruinId, depth)?.rooms ?? 0);
 
 /**
- * Resolve every delve depth that finished by `toTime`. Runs in `applyDueAt`,
- * because a depth completing changes what the next boundary is.
+ * What a cleared room pays (§7.1).
  *
- * A delve at a CHECKPOINT is not a timer — it waits forever, and this loop
- * simply never touches it again until the player answers or a standing order
- * does it for them.
+ * `reward_base(D) × k × tier × 1.06^(r − 1)`: a room pays more the deeper it
+ * is and the further into its depth it is, so the ladder never flattens. The
+ * boss pays a bigger multiple of the same line — the authored chest is
+ * §7.2's, and it needs villains and named loot that do not exist yet.
  */
-export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
-  const events: DelveEvent[] = [];
-  for (const delve of state.delves) {
-    // Bounded by maxDepth: each pass either advances the depth or stops.
-    while (delve.phase === 'descending' && delve.depthEndsAt <= toTime) {
-      const ruin = RUINS[delve.ruinId];
-      const depth = delve.depth + 1;
-      const party = partyOf(state, delve.party, delve.heroIds, carriedOf(delve));
-      const outcome = resolveDepth(party, delve.ruinId, depth, delve.threat);
-      const survived = outcome.cleared && delve.partyHp - outcome.damage > 0;
+export function roomReward(
+  state: GameState, ruinId: RuinId, depth: number, room: number,
+): { wallet: Wallet; heroXp: number; fragments: number } {
+  const def = depthDef(ruinId, depth);
+  const tier = RUINS[ruinId].tier;
+  if (def === undefined) return { wallet: {}, heroXp: 0, fragments: 0 };
+  const scale = def.rewardBase * tier * 1.06 ** (room - 1) * (isBossRoom(ruinId, depth, room) ? 4 : 1);
+  return {
+    wallet: {
+      Gold: Math.round(20 * scale),
+      Stone: Math.round(3 * scale),
+      // Prospecting and any timed boon ride on the Stardust line, the way
+      // they always did: it is the collection's own faucet.
+      Stardust: Math.round(resolve(state, 'stardustYield',
+        techValue(state, 'stardustYield', 2 * scale))),
+    },
+    heroXp: Math.round(10 * scale),
+    // Fragments are the collection's own drip, and only a boss carries them.
+    fragments: isBossRoom(ruinId, depth, room) ? tier : 0,
+  };
+}
 
-      if (!survived) {
-        // A failed push costs HALF the haul and ends the run. Nothing you OWN
-        // is taken — you declined a sure thing.
-        const loss = effectiveHaulLoss(state);
-        for (const [c, n] of Object.entries(delve.haul)) {
-          delve.haul[c as keyof Wallet] = Math.floor(n * (1 - loss));
-        }
-        delve.haulFragments = Math.floor(delve.haulFragments * (1 - loss));
-        delve.partyHp = Math.max(1, delve.partyHp - outcome.damage);
-        delve.phase = 'done';
-        delve.outcome = 'failed';
-        events.push({
-          delveId: delve.id, ruinId: delve.ruinId, kind: 'failed', depth, artifact: null,
-        });
-        break;
-      }
+/** The squads a room fields, sized from its power and typed by the ruin's
+ *  affinity — the bias every room of the ruin is drawn with. */
+export const roomFormation = (ruinId: RuinId, depth: number, room: number): EnemySquad[] =>
+  enemyFormation(roomPower(ruinId, depth, room), RUINS[ruinId].affinity);
 
-      delve.partyHp -= outcome.damage;
-      delve.depth = depth;
-      state.deepestDepth = Math.max(state.deepestDepth, depth);
-      const paid = depthHaul(state, delve.ruinId, depth, delve.heroIds);
-      addHaul(delve, paid.wallet, paid.fragments);
+export type RoomBlock =
+  | 'RuinNotFound' | 'GateStanding' | 'Finished' | 'NoHero' | 'TooManyHeroes'
+  | 'TooManySlots' | 'NotEnoughUnits' | 'NotEnoughSupplies'
+  | 'ArtifactNotOwned' | 'ArtifactAttuned';
 
-      if (depth >= ruin.maxDepth) {
-        // The bottom: the relic is guaranteed on the first clear. No
-        // randomness on the thing that gates a system.
-        let artifact: ArtifactId | null = null;
-        if (state.ruinsCleared[delve.ruinId] !== true) {
-          state.ruinsCleared[delve.ruinId] = true;
-          artifact = ruin.artifact;
-          // The recurring Gem faucet the design needs: one per ruin, once.
-          addToWallet(state.player.wallet, 'Gems', DELVE.firstClearGems);
-          // Conquest pays Knowledge, plunder pays Stardust. Taking the ruin
-          // to its bottom is the conquest: it opens the levelling arc with a
-          // Stardust lump AND starts this ruin's permanent Knowledge drip into
-          // the city's research clock (sim/mana.ts).
-          addToWallet(state.kingdom.wallet, 'Stardust', DELVE.firstClearStardust);
-          recordResourceDiscovery(state, 'Stardust');
-          addToWallet(state.kingdom.wallet, 'Knowledge', DELVE.firstClearKnowledge);
-          recordResourceDiscovery(state, 'Knowledge');
-        }
-        delve.phase = 'checkpoint';
-        events.push({
-          delveId: delve.id, ruinId: delve.ruinId, kind: 'bottom', depth, artifact,
-        });
-        break;
-      }
-
-      // A standing order is the opt-out: "delve to depth N, then return" and
-      // the whole run resolves offline with no prompts.
-      if (delve.standingOrder !== null && depth < delve.standingOrder) {
-        delve.threat = rollThreat(state, delve.ruinId, depth + 1);
-        delve.depthEndsAt += depthMs(state, delve.ruinId, depth + 1);
-        continue;
-      }
-      delve.phase = 'checkpoint';
-      events.push({
-        delveId: delve.id, ruinId: delve.ruinId, kind: 'checkpoint', depth, artifact: null,
-      });
-    }
+export function roomBlock(
+  state: GameState,
+  map: MapData,
+  ruinId: RuinId,
+  heroIds: readonly HeroId[],
+  slots: readonly PartySlot[],
+  artifactId: ArtifactId | null = null,
+): RoomBlock | null {
+  if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
+  // Nothing in the ruin can be entered until the gate is cleared: the
+  // garrison is standing in the doorway (18-garrisons-and-raids.md §1).
+  if (!gateIsCleared(state, ruinId)) return 'GateStanding';
+  if (ruinIsFinished(state, ruinId)) return 'Finished';
+  if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
+  if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
+  const committed = slots.filter((s) => s.count > 0);
+  if (committed.length > troopSlots()) return 'TooManySlots';
+  const available = availableRoster(state);
+  for (const s of committed) {
+    if (s.count > available[s.unitId]) return 'NotEnoughUnits';
   }
-  return events;
-}
-
-/** A boundary source: the next depth to finish. Checkpoints are excluded
- *  deliberately — a party waiting for an answer proposes no boundary at all. */
-export function nextDelveBoundary(state: GameState, after: number): number | null {
-  let best: number | null = null;
-  for (const d of state.delves) {
-    if (d.phase !== 'descending') continue;
-    if (d.depthEndsAt <= after) continue;
-    if (best === null || d.depthEndsAt < best) best = d.depthEndsAt;
+  if (artifactId !== null) {
+    if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
+    // Attune OR arm. Refusing here rather than silently un-attuning is the
+    // point: the player gives up a passive they are living off to arm a hero,
+    // so the sim must never make that choice on their behalf.
+    if (isAttuned(state, artifactId)) return 'ArtifactAttuned';
   }
-  return best;
+  const { depth } = frontier(state, ruinId);
+  if (!canAfford(state.city.wallet, supplyCost(state, ruinId, depth, heroIds))) {
+    return 'NotEnoughSupplies';
+  }
+  return null;
 }
 
-// ----------------------------------------------------------- the checkpoint
-
-export const delveById = (state: GameState, id: string): Delve | undefined =>
-  state.delves.find((d) => d.id === id);
-
-export type PushResult = 'Descending' | 'NotAtCheckpoint' | 'AtBottom';
-
-/** "Go deeper." The threat of the next depth is rolled the moment the party
- *  commits to it, and only then — which is exactly the gamble: information,
- *  not dice. */
-export function pushDeeper(state: GameState, delveId: string, now: number): PushResult {
-  const delve = delveById(state, delveId);
-  if (!delve || delve.phase !== 'checkpoint') return 'NotAtCheckpoint';
-  if (delve.depth >= RUINS[delve.ruinId].maxDepth) return 'AtBottom';
-  delve.phase = 'descending';
-  delve.threat = rollThreat(state, delve.ruinId, delve.depth + 1);
-  delve.depthEndsAt = now + depthMs(state, delve.ruinId, delve.depth + 1);
-  return 'Descending';
-}
-
-export interface ExtractReport {
-  result: 'Extracted' | 'NotFound';
-  wallet: Wallet;
-  fragments: number;
-  artifact: ArtifactId | null;
+export interface RoomReport {
+  result: 'Cleared' | 'Repelled' | RoomBlock;
   depth: number;
-  ruinId: RuinId | null;
+  room: number;
+  attack: number;
+  power: number;
+  supplies: Wallet;
+  /** What the room paid. Empty on a repulse: a failed room grants nothing and
+   *  deducts nothing beyond the supplies (§5). */
+  wallet: Wallet;
+  heroXp: number;
+  fragments: number;
+  /** Set when this room was the last of its depth. */
+  depthCompleted: boolean;
+  /** Set when the ruin's last room fell, and the relic came home with it. */
+  artifact: ArtifactId | null;
 }
 
-/** "Come back with what you're carrying." Banks the haul and frees the hero
- *  and the units. Units return wounded and recover fully on reaching the city
- *  — no healing management, no second timer. */
-export function extract(state: GameState, delveId: string): ExtractReport {
-  const delve = delveById(state, delveId);
-  if (!delve) {
-    return { result: 'NotFound', wallet: {}, fragments: 0, artifact: null, depth: 0, ruinId: null };
+/**
+ * ENTER THE FRONTIER ROOM. The whole of an expedition, in one call.
+ *
+ * The fight resolves here and now — there is no journey to wait out, and
+ * nothing is left in flight when this returns. Cleared: the room pays, the
+ * frontier advances, and a depth that runs out opens the next one. Repelled:
+ * the supplies are gone and the same room is still there.
+ */
+export function enterRoom(
+  state: GameState,
+  map: MapData,
+  ruinId: RuinId,
+  heroIds: readonly HeroId[],
+  slots: readonly PartySlot[],
+  artifactId: ArtifactId | null = null,
+): RoomReport {
+  const at = frontier(state, ruinId);
+  const empty: RoomReport = {
+    result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
+    power: roomPower(ruinId, at.depth, at.room), supplies: {},
+    wallet: {}, heroXp: 0, fragments: 0, depthCompleted: false, artifact: null,
+  };
+  const block = roomBlock(state, map, ruinId, heroIds, slots, artifactId);
+  if (block !== null) return { ...empty, result: block };
+
+  const supplies = supplyCost(state, ruinId, at.depth, heroIds);
+  pay(state.city.wallet, supplies);
+
+  const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
+  const artifact: CarriedArtifact | null = artifactId === null
+    ? null : { id: artifactId, level: artifactEntry(state, artifactId).level };
+  const party = partyOf(state, committed, heroIds, artifact);
+  const power = roomPower(ruinId, at.depth, at.room);
+  const outcome = resolveRoom(party, power, RUINS[ruinId].affinity);
+  if (!outcome.cleared) {
+    return {
+      ...empty, result: 'Repelled', attack: outcome.attack, power, supplies,
+    };
   }
-  const artifactId = RUINS[delve.ruinId].artifact;
-  for (const [c, n] of Object.entries(delve.haul)) {
+
+  // Cleared. The room pays into the wallets it belongs in, immediately: there
+  // is no haul to carry home, so nothing can be lost on the way.
+  const reward = roomReward(state, ruinId, at.depth, at.room);
+  for (const [c, n] of Object.entries(reward.wallet)) {
     if (n <= 0) continue;
     if (c === 'Stardust') {
       addToWallet(state.kingdom.wallet, 'Stardust', n);
       recordResourceDiscovery(state, 'Stardust');
-    }
-    else addToWallet(state.city.wallet, c as keyof Wallet, n);
+    } else addToWallet(state.city.wallet, c as keyof Wallet, n);
   }
-  let granted: ArtifactId | null = null;
-  if (state.ruinsCleared[delve.ruinId] === true && delve.depth >= RUINS[delve.ruinId].maxDepth) {
-    // Duplicates convert to Fragments rather than being a dead reward.
-    granted = grantArtifact(state, artifactId, DELVE.fragmentsPerDepth * RUINS[delve.ruinId].tier)
-      === 'Granted' ? artifactId : null;
+  addHeroXp(state, reward.heroXp);
+  if (reward.fragments > 0) addArtifactFragments(state, RUINS[ruinId].artifact, reward.fragments);
+
+  const def = depthDef(ruinId, at.depth)!;
+  const depthCompleted = at.room >= def.rooms;
+  state.ruins[ruinId] = depthCompleted
+    // The next depth opens the moment this one runs out. The Adventurers'
+    // Guild is what gates it in the design (§3) and it is unbuilt, so
+    // finishing is the only key there is today.
+    ? { depth: at.depth + 1, cleared: 0 }
+    : { depth: at.depth, cleared: at.room };
+  state.deepestDepth = Math.max(state.deepestDepth, at.depth);
+
+  let artifactWon: ArtifactId | null = null;
+  if (ruinIsFinished(state, ruinId) && state.ruinsCleared[ruinId] !== true) {
+    // The bottom: the relic is guaranteed on the first full clear. No
+    // randomness on the thing that gates a system.
+    state.ruinsCleared[ruinId] = true;
+    artifactWon = RUINS[ruinId].artifact;
+    grantArtifact(state, artifactWon, COLLECTION.fragmentsPerTierBase);
+    // The recurring Gem faucet the design needs: one per ruin, once. Taking
+    // a ruin to its bottom is the conquest, and it pays in the two currencies
+    // the long game runs on.
+    addToWallet(state.player.wallet, 'Gems', DELVE.firstClearGems);
+    addToWallet(state.kingdom.wallet, 'Stardust', DELVE.firstClearStardust);
+    addToWallet(state.kingdom.wallet, 'Knowledge', DELVE.firstClearKnowledge);
+    recordResourceDiscovery(state, 'Knowledge');
   }
-  if (delve.haulFragments > 0) addArtifactFragments(state, artifactId, delve.haulFragments);
-  // XP lands whether or not the run banked anything, so a bad push still
-  // taught the party something.
-  addHeroXp(state, delve.depth * RUINS[delve.ruinId].tier);
-  const report: ExtractReport = {
-    result: 'Extracted',
-    wallet: { ...delve.haul },
-    fragments: delve.haulFragments,
-    artifact: granted,
-    depth: delve.depth,
-    ruinId: delve.ruinId,
+
+  return {
+    result: 'Cleared',
+    depth: at.depth,
+    room: at.room,
+    attack: outcome.attack,
+    power,
+    supplies,
+    wallet: reward.wallet,
+    heroXp: reward.heroXp,
+    fragments: reward.fragments,
+    depthCompleted,
+    artifact: artifactWon,
   };
-  state.delves = state.delves.filter((d) => d.id !== delveId);
-  return report;
 }
 
 // -------------------------------------------------------------- the read-out
 
-/** Everything the launch screen has to say BEFORE the player commits. */
-export interface ExpeditionPreview {
+/** Everything the room sheet has to say BEFORE the player commits. */
+export interface RoomPreview {
   ruinId: RuinId;
-  supplies: Wallet;
+  depth: number;
+  room: number;
+  /** Rooms cleared in the whole ruin, and how many there are. */
+  cleared: number;
+  rooms: number;
+  done: boolean;
+  isBoss: boolean;
+  /** What is standing in the room, and what it is worth. */
+  enemy: EnemySquad[];
+  power: number;
+  /** The ruin's bias. A room's own draw is not shown: the gamble is
+   *  information, and the Guild's scouting is what buys it (§3). */
+  threat: UnitId | 'Any';
+  attack: number;
   stats: { atk: number; def: number; hp: number };
-  /** How deep this party is SAFE, assuming the worst matchup every step. */
-  safeDepth: number;
-  maxDepth: number;
   /** 1.5 = a strong answer to the ruin, 0.75 = the wrong tool. */
   matchup: number;
   worstThreat: UnitId | 'Any';
-  /** What the FIRST depth is standing there as, and what it is worth. The
-   *  party is scored against exactly this number when it lands (§5). */
-  enemy: EnemySquad[];
-  enemyPower: number;
-  /** The type the first depth is BIASED to — the ruin's own affinity, which
-   *  is public. What actually waits is rolled per depth and stays unknown
-   *  until the party commits: the gamble is information, not dice. */
-  enemyThreat: UnitId | 'Any';
-  /** The party's attack against that bias — the number to read the enemy's
-   *  against. */
-  attack: number;
+  supplies: Wallet;
+  reward: { wallet: Wallet; heroXp: number; fragments: number };
+  /** True when the party already beats the room on paper. A shortfall warns,
+   *  it never blocks (§5). */
+  enough: boolean;
 }
 
-/**
- * The squads waiting at a depth, sized from the strength the party will
- * actually be scored against and typed by the ruin's own bias.
- *
- * The COUNT is honest — it is `threatStrength` spent on troops — and the TYPE
- * is a bias rather than a promise, which is exactly the shape of what the
- * player knows before they commit.
- */
-export const depthFormation = (ruinId: RuinId, depth: number): EnemySquad[] =>
-  enemyFormation(threatStrength(ruinId, depth), RUINS[ruinId].affinity);
-
-export function previewExpedition(
+export function previewRoom(
   state: GameState,
   ruinId: RuinId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
   artifactId: ArtifactId | null = null,
-): ExpeditionPreview {
+): RoomPreview {
+  const at = frontier(state, ruinId);
   const committed = slots.filter((s) => s.count > 0);
   const artifact: CarriedArtifact | null = artifactId === null
-    ? null
-    : { id: artifactId, level: artifactEntry(state, artifactId).level };
+    ? null : { id: artifactId, level: artifactEntry(state, artifactId).level };
   const party = partyOf(state, committed, heroIds, artifact);
-  const stats = partyStats(party);
   const affinity = RUINS[ruinId].affinity;
-  const enemy = depthFormation(ruinId, 1);
+  const enemy = roomFormation(ruinId, at.depth, at.room);
+  const power = formationPower(enemy);
+  const attack = effectiveAttack(party, affinity);
   return {
     ruinId,
-    supplies: supplyCost(state, ruinId, heroIds),
-    stats,
-    safeDepth: guaranteedDepth(party, ruinId),
-    maxDepth: RUINS[ruinId].maxDepth,
+    depth: at.depth,
+    room: at.room,
+    cleared: roomsCleared(state, ruinId),
+    rooms: depthsOf(ruinId).reduce((sum, d) => sum + d.rooms, 0),
+    done: at.done,
+    isBoss: !at.done && isBossRoom(ruinId, at.depth, at.room),
+    enemy,
+    power,
+    threat: affinity,
+    attack,
+    stats: partyStats(party),
     matchup: matchupAgainst(party, affinity),
     worstThreat: worstThreatFor(party, affinity),
-    enemy,
-    enemyPower: formationPower(enemy),
-    enemyThreat: affinity,
-    attack: effectiveAttack(party, affinity),
-  };
-}
-
-/** What the party can see of the next depth. Only the Scout gets the type —
- *  it converts uncertainty from something you endure into something you can
- *  buy your way out of. */
-export function nextDepthIntel(state: GameState, delve: Delve): {
-  depth: number; threat: UnitId | 'Any' | null; strengthKnown: boolean;
-} {
-  const next = delve.depth + 1;
-  // Any Ranger in the party reads the next room, not only the one leading it.
-  const knows = delve.heroIds.some((id) => HEROES[id].trait === 'RevealNextDepth');
-  return {
-    depth: next,
-    threat: knows ? rollThreat(state, delve.ruinId, next) : null,
-    strengthKnown: true, // strength is authored and public; only the TYPE is hidden
+    supplies: supplyCost(state, ruinId, at.depth, heroIds),
+    reward: roomReward(state, ruinId, at.depth, at.room),
+    enough: attack >= power,
   };
 }
 
@@ -755,5 +615,10 @@ export const discoveredRuins = (state: GameState, map: MapData): RuinId[] =>
     (id) => fogState(state, map, RUINS[id].location) === 'Revealed',
   );
 
-/** Relic art for a ruin's prize, for the launch screen. */
+/** Relic art for a ruin's prize, for the room sheet. */
 export const ruinPrize = (ruinId: RuinId): ArtifactId => ARTIFACTS[RUINS[ruinId].artifact].id;
+
+/** A relic already carried by nobody: with no party underground, the only
+ *  thing that keeps a relic out of a pack is the kingdom wearing it. */
+export const artifactIsAway = (state: GameState, id: ArtifactId): boolean =>
+  artifactIsCarried(state, id);

@@ -59,8 +59,8 @@ City HUD ─────▶ Reservoir meter
 ### 2.5 Room sheet — the battle screen
 
 **Built 2026-09-09**, on the gate
-([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) and on the delve
-launch. One screen serves every fight; the caller hands it a descriptor, and
+([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) and on the room
+attempt. One screen serves every fight; the caller hands it a descriptor, and
 what differs between two fights is **the widget at the top** and the bands
 under the board.
 
@@ -76,13 +76,16 @@ under the board.
 | Fight | The widget carries | Bands under the board |
 |---|---|---|
 | **A gate** | the raid countdown, trips left, the hoard | — |
-| **A delve** | **the safe depth**, the depth count, one depth's clock, and the relic waiting at the bottom | the relic the hero carries, and the standing order |
+| **A room** | the address (`Depth 2 · Room 5`), rooms cleared of the ruin's total, whether this one is the depth's **boss**, and the relic waiting at the bottom | the relic the hero carries |
 
-- A delve's enemy box is sized from the **first depth's strength** and typed
-  by the ruin's **bias**: what waits at a depth is rolled when the party
-  commits to it, so the box says *mostly*, never *is*.
-- Neither the relic nor the standing order stands in a slot, which is why
-  they are bands rather than part of the party box.
+- A room's enemy box is sized from that room's `power_req` and typed by the
+  ruin's **bias**: what a room drew is not shown until the Guild's scouting
+  buys it, so the box says *mostly*, never *is*.
+- The relic does not stand in a slot, which is why it is a band rather than
+  part of the party box.
+- There is no "how far will you go" control: one room, one fight, resolved on
+  the tap ([`11-expeditions.md`](11-expeditions.md) §5). The button reads
+  *Enter the room*, or *Fight the boss* on the last room of a depth.
 
 ### 2.6 Party composition — slots and panels
 
@@ -96,7 +99,7 @@ Two rows of slots on the battle screen, filled from card panels.
 | Clearing | The **X** on a slot's corner empties it. It never re-opens the panel |
 | Closing | The panel's own knob, a tap outside it, or the way out of the screen — which leaves the screen standing |
 | Locked slots | **Hero slots only** — a padlock, and the Gem price on the one a purchase would open. Every troop slot is open from the first fight; nothing gates one and nothing sells one |
-| Cards | The heroes screen's card, in a horizontal rail: art, name, the type as a word, and one line saying what tapping it does — or which ceiling stopped it, the roster or the cap |
+| Cards | The heroes screen's card, in a horizontal rail: art, name, the **type as a word** (Melee / Ranged / Mounted for a troop, the hero's own type for a hero), the **power the pick would add** as the headline, the unit's **ATK / DEF / HP**, and one line saying what tapping it does — or which ceiling stopped it |
 
 ### 2.7 Result — cleared
 

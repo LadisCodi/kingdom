@@ -38,8 +38,10 @@ import {
   armySize, availableRoster, armyCap, trainUnit, trainerFor,
 } from '../src/sim/army';
 import {
-  discoveredRuins, extract, freeHeroes, launchDelve, pushDeeper,
+  discoveredRuins, enterRoom, freeHeroes, troopSlots,
 } from '../src/sim/expeditions';
+import { gateIsCleared } from '../src/sim/gates';
+import { heroSlots } from '../src/sim/heroes';
 import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { influenceCells } from '../src/sim/workers';
 import { canAffordGoods, getGood } from '../src/sim/goods';
@@ -125,8 +127,7 @@ function chooseCell(state: GameState, def: DistrictDef): Coord | null {
 }
 
 /** Delve bookkeeping, for the run's closing diagnostic. */
-let launched = 0;
-let extracted = 0;
+let rooms = 0;
 
 /** One visit. Returns true if the player did anything that moves the city. */
 function playVisit(state: GameState, now: number): { acted: boolean; until: number } {
@@ -373,33 +374,26 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     acted = true;
   }
 
-  // Answer every party waiting at a checkpoint: press on while the party is
-  // healthy and there is more ruin below, otherwise come home with the haul.
-  for (const delve of [...state.delves]) {
-    if (delve.phase !== 'checkpoint') continue;
-    const healthy = delve.partyHp > delve.maxPartyHp / 2;
-    const deeper = delve.depth < RUINS[delve.ruinId].maxDepth;
-    if (healthy && deeper) pushDeeper(state, delve.id, t);
-    else { extract(state, delve.id); extracted += 1; }
-    acted = true;
-  }
-
-  // Send whoever is free at whatever is open, biggest party the cap allows.
-  for (const heroId of freeHeroes(state)) {
-    const busy = new Set(state.delves.map((d) => d.ruinId));
-    const ruin = discoveredRuins(state, map).find((r) => !busy.has(r));
-    if (!ruin) break;
-    const roster = availableRoster(state);
-    const best = (Object.keys(roster) as UnitId[])
-      .filter((u) => roster[u] > 0)
-      .sort((a, b) => UNITS[b].power - UNITS[a].power)[0];
-    if (!best) break;
-    const room = Math.floor(armyCap(state) / UNITS[best].power);
-    const count = Math.max(1, Math.min(roster[best], room));
-    if (launchDelve(state, map, ruin, [heroId], [{ unitId: best, count }], t) === 'Launched') {
+  // 6. THE RUINS. A room is one fight, decided on entry, so the bot enters
+  // the frontier of whatever it can reach and stops when it is beaten — the
+  // same decision a player makes, with none of the waiting the staged delve
+  // used to have.
+  for (const ruin of discoveredRuins(state, map)) {
+    if (!gateIsCleared(state, ruin)) continue;
+    const heroes = freeHeroes(state).slice(0, heroSlots(state));
+    if (heroes.length === 0) break;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const roster = availableRoster(state);
+      const slots = (Object.keys(roster) as UnitId[])
+        .filter((u) => roster[u] > 0)
+        .slice(0, troopSlots())
+        .map((u) => ({ unitId: u, count: roster[u] }));
+      if (slots.length === 0) break;
+      const report = enterRoom(state, map, ruin, heroes, slots);
+      if (report.result !== 'Cleared') break;
+      rooms += 1;
       acted = true;
-      launched += 1;
-    } else break;
+    }
   }
 
   // 7. Research. FIRST whatever gates the next Townhall level — the card says
@@ -496,7 +490,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     const weeks: WeekRow[] = [];
     let idleDays = 0;
     let idleInWeek = 0;
-    launched = 0; extracted = 0;
+    rooms = 0;
 
     // THE DAY each Townhall level, and each technology that gates one, was
     // first seen standing — the pacing table step 7 is measured against
@@ -597,7 +591,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
       state.deepestDepth,
       '| landmarks visible', visibleLandmarks(state, map).length,
       'claimed', Object.keys(state.landmarks.claimed).length,
-      '| launched', launched, 'extracted', extracted,
+      '| rooms cleared', rooms,
       '| revealed cells', map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length,
       'of', map.cells.length);
 

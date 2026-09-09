@@ -3,7 +3,7 @@
 // behaviour. See Docs/features/tech-tree.md §1 rule 2.
 import { describe, expect, it } from 'vitest';
 import {
-  ARMY, DELVE, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
+  ARMY, DISTRICTS, FOG, HARVEST, KNOWLEDGE, LANDMARKS, MANA, TECHNOLOGIES,
   TECH_ORDER, WORKER, levelIndexed,
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
@@ -22,7 +22,7 @@ import {
 import { techMultiplier } from '../src/sim/techEffects';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
 import { armyCap, trainCost } from '../src/sim/army';
-import { depthMs, drillOf, effectiveHaulLoss, partyOf, supplyCost } from '../src/sim/expeditions';
+import { drillOf, partyOf, supplyCost } from '../src/sim/expeditions';
 import { effectiveAttack, partyStats, typeMultiplier } from '../src/sim/combat';
 import type { GameState } from '../src/sim/state';
 import { addHeroXp } from '../src/sim/heroes';
@@ -473,28 +473,21 @@ describe('the Warfare lines reach their numbers', () => {
 
   it('Rations cuts the provisioning, and stacks with the Quartermaster', () => {
     const state = freshGame();
-    const full = supplyCost(state, 'HollowBarrow', []);
+    const full = supplyCost(state, 'HollowBarrow', 1, []);
     completeRanks(state, 'Rations', 2); // −10%
-    const cut = supplyCost(state, 'HollowBarrow', []);
+    const cut = supplyCost(state, 'HollowBarrow', 1, []);
     for (const c of Object.keys(full) as Array<keyof typeof full>) {
       expect(cut[c]).toBe(Math.max(1, Math.round(full[c]! * 0.9)));
     }
   });
 
-  it('Bearers keeps more of a failed haul, down to a floor of one fifth', () => {
-    const state = freshGame();
-    expect(effectiveHaulLoss(state)).toBe(DELVE.failHaulLoss);
-    completeRanks(state, 'Bearers', 3); // −9%
-    expect(effectiveHaulLoss(state)).toBeCloseTo(DELVE.failHaulLoss - 0.09);
-    expect(effectiveHaulLoss(state)).toBeGreaterThanOrEqual(0.2);
-  });
+  // `Bearers` and `Salvage` bought back part of a failed delve's haul, and
+  // `Pathfinders` hurried a depth's clock. The room model has neither: a
+  // failed room grants nothing and deducts nothing, and a room resolves the
+  // instant it is entered (Docs/features/11-expeditions.md §5). The cards are
+  // still in the tree and move nothing — recorded as H8, and listed in
+  // tests/ladderEffects.test.ts so the debt cannot be forgotten.
 
-  it('Pathfinders shortens every depth, through the door a timed boon uses', () => {
-    const state = freshGame();
-    const full = depthMs(state, 'HollowBarrow', 1);
-    completeRanks(state, 'Pathfinders', 2); // −20%
-    expect(depthMs(state, 'HollowBarrow', 1)).toBe(Math.max(1000, Math.round(full * 0.8)));
-  });
 
   it('Drillmaster pays a hero more XP for the same delve', () => {
     const state = freshGame();
@@ -637,13 +630,6 @@ describe('the era-2/3 majors that are live', () => {
       .toBeCloseTo(ARMY.typeDisadvantage + 0.10);
   });
 
-  it('Salvage turns a half-lost haul into 35%, and Bearers still stacks under it', () => {
-    const state = freshGame();
-    completeTech(state, 'Salvage');
-    expect(effectiveHaulLoss(state)).toBeCloseTo(DELVE.failHaulLoss - 0.15);
-    completeRanks(state, 'Bearers', 1);
-    expect(effectiveHaulLoss(state)).toBeCloseTo(DELVE.failHaulLoss - 0.18);
-  });
 
   it('Meditation raises the ceiling by the authored step', () => {
     const state = freshGame();

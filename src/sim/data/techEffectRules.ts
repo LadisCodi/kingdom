@@ -111,6 +111,15 @@ export interface StatDef {
   /** The one call site that owns this number — documentation, and what
    *  `tests/techEffects.test.ts` greps for to prove nothing is inert. */
   reads: string;
+  /**
+   * WHY nothing reads this stat any more. Set only when the mechanic the dial
+   * moved was cut and the ladders that name it have not been re-pointed yet
+   * (`?dev=tree` is where that happens, and the tree is not ours to edit).
+   * The stat stays declared so those ladders still validate and still read as
+   * sentences; the guard that every stat has a reader skips a retired one,
+   * and `tests/ladderEffects.test.ts` skips the ladders themselves.
+   */
+  retired?: string;
 }
 
 /**
@@ -326,12 +335,19 @@ export const TECH_STATS = {
     ops: ['percent'], targets: ['global'], unit: '×',
     says: { percent: '{v} time to resolve a depth' },
     reads: 'expeditions.ts#depthMs',
+    retired: 'A depth is no longer a wait: a room is one fight, resolved the '
+      + 'instant it is entered (Docs/features/11-expeditions.md §5), so there '
+      + 'is no clock left to speed up. Pathfinders is inert until it is '
+      + 're-pointed.',
   },
   haulLoss: {
     what: 'the fraction of the haul a failed depth loses',
     ops: ['flat'], targets: ['global'], unit: '×',
     says: { flat: '{pct} of the haul lost on a bad depth' },
     reads: 'expeditions.ts#effectiveHaulLoss',
+    retired: 'A room pays the moment it falls, so there is no haul to carry '
+      + 'home and nothing to lose on a bad one (§5). Bearers is inert until '
+      + 'it is re-pointed.',
   },
   heroXp: {
     what: 'the multiplier on the XP a delve pays a hero',

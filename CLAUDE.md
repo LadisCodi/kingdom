@@ -53,7 +53,7 @@ never register a source that fires more often than the sim needs to observe it.
 
 **2. The offline cap limits what the city *produces*, never what a *timer*
 does.** `offlineCapHours` is 8. Production — workers, taxes, Mana regen — stops
-at the cap. Timers — build queue, research, delve depths, event windows —
+at the cap. Timers — build queue, research, gate raids, event windows —
 resolve in the uncapped tail advance. When adding anything time-based, decide
 which it is and say so in the doc.
 
@@ -123,7 +123,7 @@ three ways (`tests/techTree.test.ts`).
 
 ## Saves
 
-`SAVE_VERSION` is 36; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
+`SAVE_VERSION` is 40; `MIN_MIGRATABLE_VERSION` is 16 (below that: fresh game).
 `MIGRATIONS` is ordered, gapless and append-only.
 
 **Every module read in `save.ts` is already defensive** (`if (dto)` + `?? default`),
@@ -154,7 +154,7 @@ than the build is rejected rather than downgraded.
   Gold). Nothing else draws against the pool; artifact upkeep was removed.
   A tap refused by a tech gate costs no Mana.
 - **Pills, not modals**, for anything waiting for the player: `questPill.ts`,
-  `delvePill.ts`, `adOfferPill.ts`. They hide behind any sheet.
+  `raidPill.ts`, `adOfferPill.ts`. They hide behind any sheet.
 - **Z-order is load-bearing.** The stack, bottom to top: map · the right-edge
   column — raid countdown, then the ad offer — (4) · district card (6) · **menus and sheets — `#overlay` (7)** · header (8) · nav
   (10) · settings knob (20) · the gacha reveal (100) · the rewarded video

@@ -34,23 +34,19 @@ const landmarkLine = (l) =>
   `    { "id": ${JSON.stringify(l.id)}, "kind": ${JSON.stringify(l.kind)}, `
   + `"x": ${l.x}, "y": ${l.y}, "claimCost": ${l.claimCost} }`;
 
-const ruinLines = (id, r) => {
-  const supplies = Object.entries(r.supplies ?? {})
-    .map(([k, v]) => `"${k}": ${v}`).join(', ');
-  return `    ${JSON.stringify(id)}: {\n` + [
-    `      "x": ${r.x}, "y": ${r.y}`,
-    `      "tier": ${r.tier}, "difficulty": ${r.difficulty}`,
-    `      "baseDepthSeconds": ${r.baseDepthSeconds}, "depthGrowth": ${r.depthGrowth}, `
-      + `"maxDepth": ${r.maxDepth}`,
-    `      "supplies": { ${supplies} }`,
-    // The gate: one garrison on the surface, with a clock
-    // (Docs/features/18-garrisons-and-raids.md §2).
-    `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
-      + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
-      + `"periodMinutes": ${r.guard.periodMinutes} }`,
-    `      "affinity": ${JSON.stringify(r.affinity)}, "artifact": ${JSON.stringify(r.artifact)}`,
-  ].join(',\n') + '\n    }';
-};
+// A ruin is WHERE and WHAT, and nothing about its depths: those are rows on
+// the `Depths` sheet now (Docs/features/11-expeditions.md §2), because a
+// depth is a ladder of numbers and a spreadsheet says those best.
+const ruinLines = (id, r) => `    ${JSON.stringify(id)}: {\n` + [
+  `      "x": ${r.x}, "y": ${r.y}`,
+  `      "tier": ${r.tier}`,
+  // The gate: one garrison on the surface, with a clock
+  // (Docs/features/18-garrisons-and-raids.md §2).
+  `      "guard": { "threat": ${JSON.stringify(r.guard.threat)}, `
+    + `"power": ${r.guard.power}, "warningMinutes": ${r.guard.warningMinutes}, `
+    + `"periodMinutes": ${r.guard.periodMinutes} }`,
+  `      "affinity": ${JSON.stringify(r.affinity)}, "artifact": ${JSON.stringify(r.artifact)}`,
+].join(',\n') + '\n    }';
 
 export function serialiseRegionMap(doc) {
   const text = '{\n' + [

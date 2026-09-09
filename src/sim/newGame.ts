@@ -51,7 +51,7 @@ export function newGame(map: MapData, now: number): GameState {
     // era bars, which ask for revealed cells.
     research: { completed: [], active: [], slotsPurchased: 0 },
     schedule: [],
-    delves: [],
+    ruins: {},
     // One hero free at the start — a wallet may buy power, but never sole
     // access, so the system has to be reachable without it.
     heroes: {

@@ -268,47 +268,6 @@ export interface PartySlotState {
   count: number;
 }
 
-export type DelvePhase = 'descending' | 'checkpoint' | 'done';
-
-/** A party in a ruin. The haul is NOT yours until you extract it — that
- *  framing is what makes a failed push cost half of it without breaking the
- *  promise that nothing you OWN is ever taken. */
-export interface Delve {
-  id: string;
-  ruinId: RuinId;
-  /** Who leads. A party fields one hero per HERO SLOT and at least one
-   *  always (Docs/features/10-heroes.md §2.5); a save written when a party
-   *  was one hero reads as a party of one. */
-  heroIds: HeroId[];
-  /** The relic that went down with them, or null. An artifact is attuned to
-   *  the kingdom OR carried by a hero — never both, which is the rule that
-   *  welds the city half of the game to the delve half. */
-  artifactId: ArtifactId | null;
-  /** The level it went down AT. Snapshotted beside `maxPartyHp`, so levelling
-   *  a relic back home never retroactively re-arms a party already below. */
-  artifactLevel: number;
-  party: PartySlotState[];
-  /** Depths already cleared. */
-  depth: number;
-  partyHp: number;
-  maxPartyHp: number;
-  /** Banked only on extraction. */
-  haul: Wallet;
-  haulFragments: number;
-  phase: DelvePhase;
-  /** When the depth currently being cleared finishes. Delve timers NEVER
-   *  pause: the offline cap limits what the city PRODUCES, never a timer. */
-  depthEndsAt: number;
-  /** "Delve to depth N, then come back" — the opt-out for anyone who does not
-   *  want to be asked. Null = ask me at every checkpoint. */
-  standingOrder: number | null;
-  /** The threat of the depth being cleared right now, rolled when the party
-   *  committed to it. The gamble is INFORMATION, not dice. */
-  threat: UnitId | 'Any';
-  /** How the run ended, for the report. */
-  outcome: 'extracted' | 'failed' | null;
-}
-
 /**
  * One ruin's gate.
  *
@@ -333,6 +292,25 @@ export interface RaidReport {
   ruinId: RuinId;
   at: number;
   took: Wallet;
+}
+
+/**
+ * HOW FAR INTO ONE RUIN THE PLAYER HAS GOT.
+ *
+ * A ruin is depths of rooms and a room is one fight, cleared in order and
+ * never replayed (Docs/features/11-expeditions.md §1). So progress is one
+ * address — the deepest room cleared — and the FRONTIER is the room after it.
+ *
+ * There is no party underground and no timer: a room resolves the instant it
+ * is entered, so nothing about a ruin is ever in flight. That is why this
+ * replaced the staged delve wholesale rather than being added beside it.
+ */
+export interface RuinProgress {
+  /** The depth the frontier is in, 1-based. */
+  depth: number;
+  /** Rooms cleared IN that depth. The frontier is room `cleared + 1`; when it
+   *  reaches the depth's room count, the next depth opens at 0. */
+  cleared: number;
 }
 
 export interface GameState {
@@ -419,10 +397,9 @@ export interface GameState {
    * absolute-time and reconciliation happens before the replay.
    */
   schedule: ScheduledEntry[];
-  /** Parties currently in ruins. One per hero: heroes gate delve throughput
-   *  as well as capability, which is what makes a second hero a prize twice
-   *  over. */
-  delves: Delve[];
+  /** How far into each ruin the player has got. Absent = the gate is still
+   *  standing, or nobody has been in yet. */
+  ruins: Partial<Record<RuinId, RuinProgress>>;
   /** The hero roster, on the same collection substrate as the relics. */
   heroes: {
     owned: HeroId[];
@@ -491,9 +468,9 @@ export interface GameState {
      */
     refills: { day: number; watched: number; bought: number };
   };
-  /** The deepest depth any party has ever cleared. Persisted rather than
-   *  derived, because a delve that ended is gone — and "how deep have you
-   *  been" is a milestone, not a live reading. */
+  /** The deepest depth cleared in ANY ruin — a milestone, and what the quest
+   *  chain reads. Derived from `ruins` on write rather than recomputed, so a
+   *  ruin the player abandons still counts for how deep they have been. */
   deepestDepth: number;
   /** Ruins whose deepest depth has been cleared at least once. The artifact
    *  is granted on the FIRST one — no randomness on the thing that gates a

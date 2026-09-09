@@ -11,7 +11,6 @@ import {
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
-import { advanceDelves, nextDelveBoundary, type DelveEvent } from './expeditions';
 import { advanceRaids, armGates, nextRaidBoundary, type RaidEvent } from './gates';
 import { revealAroundDistrict } from './fog';
 import {
@@ -398,8 +397,6 @@ export interface AdvanceResult {
   trainedUnits: UnitId[];
   /** Goods a workshop crew finished in this window. */
   goodsMade: GoodMade[];
-  /** Depths resolved, checkpoints reached, runs ended. */
-  delveEvents: DelveEvent[];
   /** Windows that opened or closed — including ones that did BOTH while the
    *  player was away, which is the payoff for absolute-time boundaries. */
   scheduleEvents: ScheduleEvent[];
@@ -410,7 +407,7 @@ export interface AdvanceResult {
 const emptyResult = (): AdvanceResult => ({
   strikes: [], deposits: [], completedItems: [], completedResearch: [], goldEarned: 0,
   trainedPopulation: 0, expiredModifiers: [], manaEarned: 0, knowledgeEarned: 0,
-  trainedUnits: [], delveEvents: [], scheduleEvents: [], goodsMade: [], raids: [],
+  trainedUnits: [], scheduleEvents: [], goodsMade: [], raids: [],
 });
 
 /** Discrete work due AT `t`: everything that changes another subsystem's inputs. */
@@ -455,10 +452,9 @@ function applyDueAt(
       if (trainee === 'Villager') out.trainedPopulation += 1;
       else out.trainedUnits.push(trainee);
     }
-    // Delve timers NEVER pause: the offline cap limits what the CITY
-    // PRODUCES, never what a timer does. A party at a checkpoint proposes no
-    // boundary at all — it waits, indefinitely, until the player answers.
-    out.delveEvents.push(...advanceDelves(state, t));
+    // NOTHING FOR THE RUINS. A room resolves the instant the player enters
+    // it (Docs/features/11-expeditions.md §5), so no party is ever in flight
+    // and this loop has no expedition work to do at all.
     // A gate is a TIMER too: the counter a discovery started runs and pays out
     // in full while the player is away. Arming comes first, so a ruin found
     // between two boundaries — or by a save that predates gates entirely —
@@ -503,7 +499,6 @@ function nextBoundary(state: GameState, after: number, builders: number): number
   for (const a of state.research.active) consider(techCompletesAt(state, a.id));
   consider(nextModifierExpiry(state, after));
   consider(nextTrainingCompletion(state, after));
-  consider(nextDelveBoundary(state, after));
   consider(nextRaidBoundary(state, after));
   consider(nextScheduleBoundary(state, after));
   consider(nextWorkshopCompletion(state, after));

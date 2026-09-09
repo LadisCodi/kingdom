@@ -12,7 +12,7 @@
 // not (an island nobody can walk to, whose fog is therefore free).
 
 import {
-  ARTIFACT_ORDER, CURRENCIES, DISTRICTS, FEATURES, LANDMARK_ART, RUIN_ORDER, UNIT_ORDER,
+  ARTIFACT_ORDER, DISTRICTS, FEATURES, LANDMARK_ART, RUIN_ORDER, UNIT_ORDER,
 } from './definitions';
 import {
   cellsOfRect, coordKey, parseCoordKey, type Coord, type FeatureId, type TerrainId,
@@ -26,8 +26,7 @@ export interface RegionMapDoc {
     id: string; kind: string; x: number; y: number; claimCost: number;
   }>;
   ruins: Record<string, {
-    x: number; y: number; tier: number; difficulty: number; baseDepthSeconds: number;
-    depthGrowth: number; maxDepth: number; supplies: Record<string, number>;
+    x: number; y: number; tier: number;
     affinity: string; artifact: string;
     /** The gate that holds the entrance, and its clock
      *  (Docs/features/18-garrisons-and-raids.md §2). */
@@ -176,14 +175,10 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
       err(`${what} rewards an unknown artifact "${r.artifact}"`, r);
     }
     if (!isCount(r.tier) || r.tier < 1) err(`${what} needs a tier of 1 or more`, r);
-    if (!isCount(r.difficulty) || r.difficulty < 1) err(`${what} needs a difficulty of 1 or more`, r);
-    if (!isCount(r.baseDepthSeconds) || r.baseDepthSeconds < 1) {
-      err(`${what} needs a base depth time of 1 s or more`, r);
-    }
-    if (!isCount(r.maxDepth) || r.maxDepth < 1) err(`${what} needs a max depth of 1 or more`, r);
-    if (typeof r.depthGrowth !== 'number' || !(r.depthGrowth >= 1)) {
-      err(`${what}'s depth growth must be 1 or more — below 1 makes deeper delves faster`, r);
-    }
+    // A ruin's DEPTHS are rows on the `Depths` sheet, not map content: how
+    // many rooms one holds and what they field is a ladder of numbers
+    // (Docs/features/11-expeditions.md §2). What lives here is where the ruin
+    // is, what it pays, and who is standing on the door.
     // The gate. A ruin without one would be a dungeon nobody is asked to
     // hurry to, and the counter is what makes discovering one an event.
     const g = r.guard;
@@ -199,12 +194,6 @@ export function validateRegionMap(doc: RegionMapDoc): MapValidation {
       }
       if (!isCount(g.periodMinutes) || g.periodMinutes < 1) {
         err(`${what}'s guard needs a raid period of 1 minute or more`, r);
-      }
-    }
-    for (const [currency, amount] of Object.entries(r.supplies ?? {})) {
-      if (!(currency in CURRENCIES)) err(`${what} asks for an unknown currency "${currency}"`, r);
-      else if (!isCount(amount) || amount <= 0) {
-        err(`${what}'s ${currency} supply must be a positive whole number (got ${amount})`, r);
       }
     }
     claimCell(what, r.x, r.y);

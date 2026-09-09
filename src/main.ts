@@ -43,13 +43,11 @@ import { renderReliquarySheet } from './ui/reliquarySheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
 import { renderGateSheet } from './ui/gateSheet';
-import { renderCheckpointSheet } from './ui/checkpointSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
 import { renderStoreSheet } from './ui/storeSheet';
 import { renderPayerSheet } from './ui/payerSheet';
 import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountDelvePill } from './ui/delvePill';
 import { mountRaidPill } from './ui/raidPill';
 import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
@@ -132,7 +130,6 @@ async function boot(): Promise<void> {
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
   mountDailyPill(game, document.getElementById('daily')!);
-  mountDelvePill(game, document.getElementById('delves')!);
   mountRaidPill(game, document.getElementById('raids')!);
   // The battle screen's card panel. Its own mount, because the sheet it
   // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
@@ -170,7 +167,6 @@ async function boot(): Promise<void> {
     heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
     gate: renderGateSheet,
-    checkpoint: renderCheckpointSheet,
     mana: renderManaSheet,
     builder: renderBuilderSheet,
     daily: renderDailySheet,
@@ -233,7 +229,7 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'reliquary', 'heroes', 'expedition', 'gate', 'checkpoint', 'welcome', 'settings',
+        'purse', 'reliquary', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
         'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);

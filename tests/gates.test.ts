@@ -12,14 +12,15 @@
 //  3. THE DOOR. Nothing enters a ruin until its gate is down.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { RAID, RUINS, RUIN_ORDER, UNITS, garrisonForTier } from '../src/sim/data/definitions';
-import { threatStrength } from '../src/sim/combat';
+import {
+  RAID, RUINS, RUIN_ORDER, UNITS, depthDef, garrisonForTier, roomPower,
+} from '../src/sim/data/definitions';
 import {
   advanceRaids, cityRatePerSecond, clearedGateCount, gateFormation,
   gateIsCleared, gatePower, gateSupplies, nextRaidBoundary, openGates, raidTake,
 } from '../src/sim/gates';
 import { formationPower } from '../src/sim/combat';
-import { attemptGate, launchDelve, previewGate } from '../src/sim/expeditions';
+import { attemptGate, enterRoom, previewGate } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState, type RuinId } from '../src/sim/state';
 import {
@@ -314,14 +315,14 @@ describe('the door', () => {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
     const party = [{ unitId: 'Warrior' as const, count: 24 }];
-    expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('GateStanding');
+    expect(enterRoom(state, map, BARROW, ['Warden'], party).result).toBe('GateStanding');
     expect(attemptGate(state, map, BARROW, ['Warden'], party).result).toBe('Cleared');
     // …and the company that took it is smaller than the one that marched, so
-    // the delve goes in with the survivors (§5).
+    // the first room is entered with the survivors (§5).
     const left = state.army.length;
     expect(left).toBeLessThan(24);
-    expect(launchDelve(state, map, BARROW, ['Warden'],
-      [{ unitId: 'Warrior', count: left }], T0)).toBe('Launched');
+    expect(enterRoom(state, map, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: left }]).result).not.toBe('GateStanding');
   });
 });
 
@@ -467,7 +468,8 @@ describe('every authored gate', () => {
   // depth — which is what **OQ-86** exists to re-author.
   it('is authored below the first room of the ruin it guards', () => {
     for (const id of RUIN_ORDER) {
-      expect(RUINS[id].guard.power, `${id}'s gate`).toBeLessThan(threatStrength(id, 1));
+      expect(RUINS[id].guard.power, `${id}'s gate`)
+        .toBeLessThan(roomPower(id, 1, 1));
     }
   });
 
@@ -475,7 +477,7 @@ describe('every authored gate', () => {
     for (const id of RUIN_ORDER) {
       const body = Math.max(...gateFormation(id).map((s) => UNITS[s.unitId].power));
       expect(gatePower(id), `${id}'s gate`)
-        .toBeLessThanOrEqual(threatStrength(id, 1) + body);
+        .toBeLessThanOrEqual(roomPower(id, 1, 1) + body);
     }
   });
 
@@ -493,10 +495,11 @@ describe('every authored gate', () => {
     }
   });
 
-  it('costs less to enter than the ruin behind it', () => {
+  it('costs no more to enter than the first room of the ruin behind it', () => {
     for (const id of RUIN_ORDER) {
       const gate = gateSupplies(id);
-      for (const [c, n] of Object.entries(RUINS[id].supplies)) {
+      const firstDepth = depthDef(id, 1)!;
+      for (const [c, n] of Object.entries(firstDepth.supplies)) {
         expect(gate[c as 'Gold'] ?? 0, `${id}'s gate supplies`).toBeLessThanOrEqual(n);
       }
     }

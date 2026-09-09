@@ -158,7 +158,7 @@ reaches ring 40.
 |---|---|---|---|
 | **Resources** | 42 features | Wood, Stone, Food | tap / work |
 | **Landmarks** | 10 | **+10 max Mana**, permanently, and a discover ring | clear, then claim |
-| **Ruins** | 5 | artifacts, ingredients, Stardust — a repeatable dungeon | clear, then delve |
+| **Ruins** | 5 | artifacts, ingredients, Stardust — a ladder of rooms | clear the gate, then take the rooms |
 
 - A landmark permanently enlarges the Mana pool, so every future refill
   (including the ad reward, which is a whole pool) is larger.
@@ -166,7 +166,7 @@ reaches ring 40.
 - Neither landmarks nor ruins are visible when a kingdom begins. Sites draw
   through the Discovered scrim once discovered.
 - **Every ruin opens with a gate.** Discovering it starts a counter; clear the
-  gate before it raids, and the ruin is yours to delve
+  gate before it raids, and the ruin's rooms are yours to take
   ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)). A landmark has
   no guard: it is claimed for its Gold.
 

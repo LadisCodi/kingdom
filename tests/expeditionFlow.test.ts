@@ -1,31 +1,33 @@
-// The presenter's half of the delve loop: what the player actually taps.
+// The presenter's half of the room loop: what the player actually taps.
 //
 // The sim tests prove the rules; these prove the ROUTE — that tapping a ruin
-// opens a sheet with a party already in it, that launching empties the map of
-// that hero, that the checkpoint pill appears when a party is waiting, and
-// that both answers at the checkpoint do what they say.
+// opens a sheet with a party already in it, that the fight resolves on the
+// tap, that the sheet redraws on the next room rather than closing, and that
+// it closes itself when the ruin runs out.
+//
+// There is no journey any more, so there is nothing here about checkpoints,
+// standing orders or how far to send: a room is one fight, decided now
+// (Docs/features/11-expeditions.md §5).
 //
 // Node env, no jsdom: everything here is presenter state, which is exactly
 // where the decisions live.
 import { describe, expect, it } from 'vitest';
-import { advance } from '../src/sim/commands';
 import { armyCap } from '../src/sim/army';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
-import { RUINS, UNITS } from '../src/sim/data/definitions';
-import { depthDurationMs } from '../src/sim/combat';
+import { RUINS, UNITS, roomCount } from '../src/sim/data/definitions';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
-  addAllTrainers, freshGame, freshPresenter, fund, map, openRuin, reveal,
+  addAllTrainers, freshGame, freshPresenter, fund, openRuin, reveal,
 } from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
 
-// A COMPANY, not a squad of four: a depth is fought by dozens now
+// A COMPANY, not a squad of four: a room is fought by dozens now
 // (Docs/features/combat.md §14).
 function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameState {
   const state = freshGame();
   addAllTrainers(state);
-  fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
+  fund(state, { Gold: 500_000, Food: 200_000, Wood: 200_000, Stone: 50_000, Iron: 500 });
   reveal(state, [RUINS[BARROW].location]);
   // The garrison is somebody else's test (tests/gates.test.ts): these are
   // about the route into the ruin behind it.
@@ -38,8 +40,11 @@ function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameSt
   return state;
 }
 
+/** A party big enough to walk the Barrow out, in every slot the board has. */
+const HOST = { Warrior: 100, Lancer: 100, Archer: 80, Cavalry: 60 } as const;
+
 describe('the route into a ruin', () => {
-  it('says WHY a ruin cannot be delved, in words the player can act on', () => {
+  it('says WHY a ruin cannot be entered, in words the player can act on', () => {
     const bare = freshPresenter(freshGame());
     // A brand-new kingdom has the free hero but nothing to send with them.
     expect(bare.expeditionBlock(BARROW)).toMatch(/Barracks|army/);
@@ -54,18 +59,20 @@ describe('the route into a ruin', () => {
     expect(game.openOverlay).toBe('expedition');
     expect(game.partyHeroes.length).toBeGreaterThan(0);
     // A player should never have to assemble a party from nothing just to see
-    // what a ruin would take.
+    // what a room would take.
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 60 }]);
-    expect(game.expeditionPreview()!.safeDepth).toBeGreaterThan(0);
+    // And the sheet opens where the player is standing: the frontier.
+    const preview = game.expeditionPreview()!;
+    expect([preview.depth, preview.room]).toEqual([1, 1]);
+    expect(preview.done).toBe(false);
   });
 
   it('never pre-fills more unit types than the board has slots', () => {
     const game = freshPresenter(ready({ Warrior: 30, Archer: 30, Lancer: 30, Cavalry: 30 }));
     game.openExpedition(BARROW);
     expect(game.expeditionParty.length).toBeLessThanOrEqual(game.troopSlotsOpen());
-    // Every slot is open from the start, so the pre-fill is bounded by the
-    // ARMY CAP rather than by a purchase: it spends the cap on the types that
-    // answer this ruin best and stops when the cap runs out, not at one.
+    // Every slot is open from the start, so the pre-fill spends the roster on
+    // the types that answer this ruin best rather than stopping at one.
     expect(game.expeditionParty.length).toBeGreaterThan(1);
     expect(game.expeditionLaunchBlock()).toBeNull();
   });
@@ -77,66 +84,71 @@ describe('the route into a ruin', () => {
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 2 }]);
     game.setExpeditionCount('Warrior', 0);
     expect(game.expeditionParty).toEqual([]);
-    expect(game.expeditionLaunchBlock()).toBe('Send at least one unit with them');
-  });
-
-  it('launching closes the sheet and commits the hero', () => {
-    const game = freshPresenter(ready());
-    game.openExpedition(BARROW);
-    game.doLaunchExpedition();
-    expect(game.openOverlay).toBeNull();
-    expect(game.state.delves).toHaveLength(1);
-    // The same ruin now reports the party that is already in it.
-    expect(game.expeditionBlock(BARROW)).toBe('Your party is already down there');
   });
 });
 
-describe('the checkpoint', () => {
-  /** The presenter reads the real clock, so the sim is advanced relative to
-   *  ITS now rather than to the fixture's T0. */
-  const launched = () => {
-    const game = freshPresenter(ready());
-    game.state.lastAdvance = game.now();
+describe('entering a room', () => {
+  it('resolves the fight on the tap and leaves nothing in flight', () => {
+    const game = freshPresenter(ready(HOST));
     game.openExpedition(BARROW);
+    const dust = getWallet(game.state.kingdom.wallet, 'Stardust');
+    const reward = game.expeditionPreview()!.reward;
     game.doLaunchExpedition();
-    advance(game.state, map, game.now() + depthDurationMs(BARROW, 1));
-    return game;
-  };
-
-  it('a waiting party is visible without demanding an answer', () => {
-    const game = launched();
-    expect(game.waitingDelves()).toHaveLength(1);
-    expect(game.state.delves[0].phase).toBe('checkpoint');
-  });
-
-  it('"go deeper" sends them on', () => {
-    const game = launched();
-    game.openCheckpointFor(game.state.delves[0].id);
-    expect(game.checkpointDelve()).toBeDefined();
-    game.doPushDeeper();
-    expect(game.state.delves[0].phase).toBe('descending');
-    expect(game.openOverlay).toBeNull();
-    expect(game.waitingDelves()).toHaveLength(0);
-  });
-
-  it('"take the haul" banks it and brings everyone home', () => {
-    const game = launched();
-    const gold = getWallet(game.state.city.wallet, 'Gold');
-    game.openCheckpointFor(game.state.delves[0].id);
-    game.doExtract();
-    expect(game.state.delves).toHaveLength(0);
-    expect(getWallet(game.state.city.wallet, 'Gold')).toBeGreaterThan(gold);
-    expect(game.openOverlay).toBeNull();
-    // The hero is free again, so the ruin is available again.
+    // Paid the moment the room fell — there is no haul to carry home.
+    expect(getWallet(game.state.kingdom.wallet, 'Stardust'))
+      .toBe(dust + (reward.wallet.Stardust ?? 0));
+    expect(game.ruinProgress(BARROW).cleared).toBe(1);
+    // The sheet stays open on the NEXT room: the decision the player just
+    // made is the one they are about to make again.
+    expect(game.openOverlay).toBe('expedition');
+    expect(game.expeditionPreview()!.room).toBe(2);
+    // And the ruin is enterable again straight away — nobody is "down there".
     expect(game.expeditionBlock(BARROW)).toBeNull();
   });
 
-  it('dismissing closes the checkpoint without answering it', () => {
-    const game = launched();
-    game.openCheckpointFor(game.state.delves[0].id);
-    game.dismiss();
-    expect(game.openCheckpoint).toBeNull();
-    expect(game.state.delves[0].phase).toBe('checkpoint'); // still waiting, forever
+  it('spends the supplies on the way in, and nothing else, when it goes badly', () => {
+    const game = freshPresenter(ready({ Warrior: 1 }));
+    game.openExpedition(BARROW);
+    const preview = game.expeditionPreview()!;
+    expect(preview.enough).toBe(false);
+    const food = getWallet(game.state.city.wallet, 'Food');
+    const army = game.state.army.length;
+    game.doLaunchExpedition();
+    expect(game.ruinProgress(BARROW).cleared).toBe(0); // the room is still there
+    expect(getWallet(game.state.city.wallet, 'Food'))
+      .toBe(food - (preview.supplies.Food ?? 0));
+    // A room charges supplies, never bodies — that is the gate's rule, not
+    // this one (Docs/features/combat.md §4).
+    expect(game.state.army).toHaveLength(army);
+  });
+
+  it('keeps every soldier when it goes well, too', () => {
+    const game = freshPresenter(ready(HOST));
+    game.openExpedition(BARROW);
+    const army = game.state.army.length;
+    game.doLaunchExpedition();
+    expect(game.ruinProgress(BARROW).cleared).toBe(1);
+    expect(game.state.army).toHaveLength(army);
+  });
+
+  it('clearing the last room of a depth opens the next one', () => {
+    const game = freshPresenter(ready(HOST));
+    game.openExpedition(BARROW);
+    while (game.ruinProgress(BARROW).depth === 1) game.doLaunchExpedition();
+    const at = game.ruinProgress(BARROW);
+    expect(at.depth).toBe(2);
+    expect(at.room).toBe(1);
+    expect(at.cleared).toBeGreaterThan(0);
+  });
+
+  it('closes itself when the ruin runs out, and the relic comes home', () => {
+    const game = freshPresenter(ready(HOST));
+    game.openExpedition(BARROW);
+    for (let i = 0; i < roomCount(BARROW); i++) game.doLaunchExpedition();
+    expect(game.ruinProgress(BARROW).done).toBe(true);
+    expect(game.state.ruinsCleared[BARROW]).toBe(true);
+    expect(game.openOverlay).toBeNull();
+    expect(game.expeditionBlock(BARROW)).toBe('Every room of this ruin has fallen');
   });
 });
 
@@ -165,15 +177,16 @@ describe('the Mana gauge', () => {
 });
 
 describe('the pre-filled party is always launchable', () => {
-  it('clamps to the army cap rather than opening pre-blocked', () => {
+  it('proposes only what the player actually owns', () => {
     // Proposing a party the player cannot field reads as the game refusing
     // its own suggestion.
     const state = ready({ Warrior: 20, Archer: 20 });
     const game = freshPresenter(state);
     game.openExpedition(BARROW);
-    const power = game.expeditionParty
-      .reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
-    expect(power).toBeLessThanOrEqual(armyCap(state));
+    for (const slot of game.expeditionParty) {
+      expect(slot.count).toBeLessThanOrEqual(UNITS[slot.unitId].squadSize);
+    }
+    expect(state.army.length).toBeLessThanOrEqual(armyCap(state));
     expect(game.expeditionLaunchBlock()).toBeNull();
   });
 });
@@ -223,7 +236,7 @@ describe('arming a hero from the expedition sheet', () => {
     game.setExpeditionArtifact('ForemansSigil');
     expect(game.expeditionLaunchBlock()).toMatch(/attuned/i);
     game.doLaunchExpedition();
-    expect(game.state.delves).toHaveLength(0);
+    expect(game.ruinProgress(BARROW).cleared).toBe(0);
   });
 
   it('never shows the stats of a party it is refusing to send', () => {
@@ -238,12 +251,19 @@ describe('arming a hero from the expedition sheet', () => {
     expect(game.expeditionPreviewUnarmed()).toBe(null);
   });
 
-  it('carries it down, and the Reliquary cannot take it back until it returns', () => {
-    const game = armed();
+  it('carries it into the room, and hands it straight back', () => {
+    const game = freshPresenter((() => {
+      const state = ready(HOST);
+      grantArtifact(state, 'ForemansSigil');
+      normaliseSlots(state);
+      return state;
+    })());
+    game.openExpedition(BARROW);
     game.setExpeditionArtifact('ForemansSigil');
     game.doLaunchExpedition();
-    expect(game.state.delves).toHaveLength(1);
-    expect(game.state.delves[0].artifactId).toBe('ForemansSigil');
-    expect(attune(game.state, 0, 'ForemansSigil', game.now())).toBe('Carried');
+    expect(game.ruinProgress(BARROW).cleared).toBe(1);
+    // The fight is over the instant it is fought, so the Reliquary can take
+    // the relic back on the next tap — nothing is away.
+    expect(attune(game.state, 0, 'ForemansSigil', game.now())).toBe('Attuned');
   });
 });

@@ -1667,41 +1667,31 @@
   "ruins": {
     "HollowBarrow": {
       "x": 7, "y": 1,
-      "tier": 1, "difficulty": 180,
-      "baseDepthSeconds": 180, "depthGrowth": 1.15, "maxDepth": 5,
-      "supplies": { "Food": 20, "Gold": 50 },
+      "tier": 1,
       "guard": { "threat": "Warrior", "power": 60, "warningMinutes": 30, "periodMinutes": 30 },
       "affinity": "Warrior", "artifact": "DowsingRod"
     },
     "SunkenChapel": {
       "x": -3, "y": 9,
-      "tier": 2, "difficulty": 420,
-      "baseDepthSeconds": 300, "depthGrowth": 1.2, "maxDepth": 7,
-      "supplies": { "Food": 40, "Gold": 150 },
+      "tier": 2,
       "guard": { "threat": "Archer", "power": 144, "warningMinutes": 90, "periodMinutes": 90 },
       "affinity": "Archer", "artifact": "VerdantSeal"
     },
     "DrownedIronworks": {
       "x": -15, "y": 20,
-      "tier": 3, "difficulty": 900,
-      "baseDepthSeconds": 480, "depthGrowth": 1.25, "maxDepth": 9,
-      "supplies": { "Food": 60, "Gold": 400, "Stone": 30 },
+      "tier": 3,
       "guard": { "threat": "Lancer", "power": 250, "warningMinutes": 120, "periodMinutes": 120 },
       "affinity": "Lancer", "artifact": "ForemansSigil"
     },
     "CountingHouse": {
       "x": 7, "y": -15,
-      "tier": 4, "difficulty": 1800,
-      "baseDepthSeconds": 720, "depthGrowth": 1.3, "maxDepth": 11,
-      "supplies": { "Food": 100, "Gold": 900, "Stone": 60 },
+      "tier": 4,
       "guard": { "threat": "Cavalry", "power": 500, "warningMinutes": 180, "periodMinutes": 180 },
       "affinity": "Cavalry", "artifact": "GildedLedger"
     },
     "StarObservatory": {
       "x": -15, "y": -15,
-      "tier": 5, "difficulty": 3600,
-      "baseDepthSeconds": 1080, "depthGrowth": 1.35, "maxDepth": 13,
-      "supplies": { "Food": 150, "Gold": 2000, "Stone": 120 },
+      "tier": 5,
       "guard": { "threat": "Any", "power": 1000, "warningMinutes": 240, "periodMinutes": 240 },
       "affinity": "Any", "artifact": "WanderersCompass"
     }

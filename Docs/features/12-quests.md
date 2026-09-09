@@ -172,9 +172,9 @@ and the thing you press are the same object.
   the cap** like the ad reward.
 - **Hero XP is priced in hours of the city's own XP trickle**, with an authored
   floor — the same rule as a tap's `workSeconds`. An absolute XP number goes
-  stale by era three. The floor is **20,000 a grant**, so a city with no delve
-  income still takes **100,000 XP** out of a season and a delving one takes
-  more.
+  stale by era three. The floor is **20,000 a grant**, so a city with no ruin
+  income still takes **100,000 XP** out of a season and one that is clearing
+  rooms takes more.
 - Gems and gold keys are absolute: neither has a production rate to be a
   fraction of.
 - The Royal column pays a season of **25,000 Gems, ten gold keys and five XP

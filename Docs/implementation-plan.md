@@ -73,16 +73,16 @@ Two more that are design-visible:
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |
 | Five relics, passives, attunement, attune-or-arm | [`09`](features/09-relics.md) | **built** — Fragments, not ingredients; and the **actives leave for the tomes** (designed 2026-09-03) |
 | Heroes, the collection substrate, the gacha | [`10`](features/10-heroes.md) | **gacha built**; the hero **reworked 2026-09-08 onto the resolver** — a body and a type passive, XP levels, Fragment-plus-Stardust ascension, Gem hero slots — designed, unbuilt (Step 8). One hole, §3 |
-| Ruins, delves, checkpoints, combat, military buildings | [`11`](features/11-expeditions.md) | **built** — no contested landmarks. **Superseded by the 2026-09-08 rewrite**: ruins become depths of rooms ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)) and combat becomes a tick auto-battler ([`combat.md`](features/combat.md)) — designed, unbuilt |
+| Ruins, depths, rooms, combat, military buildings | [`11`](features/11-expeditions.md) | **rebuilt 2026-09-09** — a ruin is depths of rooms, each room one fight resolved on entry, cleared in order and never replayed ([`11`](features/11-expeditions.md), [`11a`](features/11a-ruins-ui.md)). The delve, its checkpoints, its standing orders and its haul are gone. The **tick auto-battler** ([`combat.md`](features/combat.md)) is still the scoring pass ahead |
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03. The chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09 |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
-| **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **built 2026-09-09** — the counter, the raid, the hoard, the fight and the screens. The fight rides the delve's scoring pass until the resolver lands |
+| **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **built 2026-09-09** — the counter, the raid, the hoard, the fight and the screens. The fight is scored the way a room is until the resolver lands |
 | **Wonders — the ladder with no top** | [`16`](features/16-wonders.md) | **designed, reviewed and closed 2026-09-03.** Unstarted and deliberately unsequenced — late-game by construction, and the game's only unbounded sink |
 
 **The load-bearing assertion holds at every step** — across a research
-completion, a modifier expiry, a Mana cap fill, army training, a delve depth
-resolving, and an event window opening *and closing* during an absence.
+completion, a modifier expiry, a Mana cap fill, army training, a gate's raid
+falling due, and an event window opening *and closing* during an absence.
 
 ## 3. Holes in what is built
 
@@ -97,8 +97,8 @@ each has an answer, or has one waiting in a doc.
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue is **empty** since the Conjunction was retired — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
-| **H8** | **The staged delve still halves the haul on a failed push**, and four technologies price that rule — `Bearers I–III` (−3% each) and `Salvage` (half becomes 35%). The room model retired it: **a room grants nothing and deducts nothing when it fails**, and every room is a separate decision ([`11`](features/11-expeditions.md) §5). The battle screen's small print already states the promise that survives the rewrite — *nothing you already own is ever at risk* — and says nothing about a fraction. **The four cards go with the rewrite, not before it.** | [`11`](features/11-expeditions.md) §5 |
-| **H7** | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
+| **H8** | **Two rank ladders price rules the room model retired.** `Bearers I–III` buys back part of a haul (`haulLoss`) and `Pathfinders I–III` hurries a depth's clock (`delveSpeed`); a room has neither — it pays the instant it falls, and a failed one grants nothing and deducts nothing ([`11`](features/11-expeditions.md) §5). Both stats are marked `retired` in `techEffectRules.ts`, which is what keeps the cards valid and legible while nothing reads them, and `tests/ladderEffects.test.ts` names the two ladders so the debt cannot be forgotten. **The fix is to re-point them in `?dev=tree`** — the tree is authored, not code. | [`11`](features/11-expeditions.md) §5 |
+| **H7** | **No new sounds.** Casting, claiming, clearing a room and taking a depth all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
 ## 4. What is next, and what blocks it
 
@@ -549,6 +549,40 @@ deletion — `defended` is retired and every landmark is claimed for Gold.
   Barrow's thirty minutes first. **OQ-74 closed**: the hoard comes back whole.
   Two `planned` technologies still describe the retired defended landmark
   (`Siegecraft`, `Wayshrines`) and want retiring in `?dev=tree`.
+
+### Step 7b · Ruins become rooms — **DONE 2026-09-09**
+
+**The delve is gone.** A ruin is depths of rooms; a room is one fight, fought
+the instant it is entered, cleared in order and never replayed. Nothing is in
+flight, so there is no depth clock, no checkpoint, no standing order, no safe
+depth and no haul to carry home or lose.
+
+- **Design:** [`11-expeditions.md`](features/11-expeditions.md) §1–§7,
+  [`11a-ruins-ui.md`](features/11a-ruins-ui.md) §2.5.
+- **What landed:** a `Depths` sheet — `rooms`, `guild_req`, `power_start`,
+  `power_step`, `reward_base` and the supplies, 15 rows and 186 rooms, with
+  §2's validation in the importer. `state.ruins` is `{depth, cleared}` per
+  ruin; `state.delves` is deleted. `expeditions.ts` gained `frontier`,
+  `roomReward`, `roomFormation`, `roomBlock`, `enterRoom` and `previewRoom`,
+  and `combat.ts` `resolveRoom` in place of the staged descent. A room pays
+  Gold, Stone, Stardust and hero XP by §7.1 with a boss at ×4 and a fragment,
+  and the last room of the last depth is where the ruin's relic comes home.
+  UI: the room sheet is the battle screen with the address in the widget
+  (`Depth 2 · Room 5`, rooms cleared, boss) and the relic band under the
+  board; the checkpoint sheet and the delve pill are deleted. `SAVE_VERSION`
+  40 renames `kingdom.delves` to `kingdom.ruins` and carries the two facts
+  that outlived a run — which ruins were bottomed, and how deep the player has
+  been.
+- **What is asserted:** the tier ladder walked room by room at the worst
+  matchup (24 troops take half the Barrow, 60 finish it, 600 still cannot
+  bottom the Observatory); a failed room grants nothing and deducts nothing
+  but the supplies; no room is replayable; a depth opens only when the one
+  before it runs out (`tests/expeditions.test.ts` 47,
+  `tests/expeditionFlow.test.ts` 18).
+- **Left open:** the Adventurers' Guild does not exist, so `guild_req` gates
+  nothing yet and finishing a depth is the only key there is; the boss chest
+  is the formula ×4 rather than the authored chest of §7.2; and the passive
+  generation of §7.3 is unbuilt. **H8** is the debt this step created.
 
 ### Step 8 · Heroes onto the resolver
 

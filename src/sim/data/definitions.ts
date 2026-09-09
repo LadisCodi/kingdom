@@ -1341,14 +1341,6 @@ export interface RuinDef {
   sprite: string;
   location: Coord;
   tier: number;
-  /** Threat strength at depth 1; each depth raises it. */
-  difficulty: number;
-  baseDepthSeconds: number;
-  depthGrowth: number;
-  maxDepth: number;
-  /** Flat, paid once at launch — NOT per depth, so the checkpoint decision is
-   *  purely risk against reward with nothing else muddying it. */
-  supplies: Wallet;
   /** The threat type dominating its depths: a dungeon rewards a COMPOSITION
    *  rather than a single unit. 'Any' rotates. */
   affinity: UnitId | 'Any';
@@ -1365,7 +1357,7 @@ export interface RuinDef {
  * `threat` is a unit type or 'Any', and the creature is DERIVED from it —
  * there is no second list to keep in step (§2). It is also the ruin's
  * affinity, so the first fight teaches the matchup the whole ruin is built
- * on. `power` is the gate's budget, authored BELOW the ruin's first depth:
+ * on. `power` is the gate's budget, authored BELOW the ruin's first room:
  * the gate is easier than the room it guards, because it is the room the
  * player is pushed into on a clock.
  */
@@ -1376,6 +1368,30 @@ export interface GuardDef {
   warningMinutes: number;
   /** Minutes between raids after that. */
   periodMinutes: number;
+}
+
+/**
+ * ONE DEPTH OF ONE RUIN (Docs/features/11-expeditions.md §2).
+ *
+ * A ruin is depths of ROOMS and a room is one fight, resolved the instant the
+ * player enters it. Rooms are cleared in order and never replayed, so a
+ * depth is a ladder the player climbs once: `power_start` is what room 1
+ * fields and `power_step` is what each room adds.
+ */
+export interface DepthDef {
+  ruin: RuinId;
+  /** 1-based. The canonical address of a fight is `Depth D · Room R`. */
+  depth: number;
+  rooms: number;
+  /** The Adventurers' Guild level that opens it. Nothing reads it yet — the
+   *  Guild is unbuilt, so a depth opens when the one above it is finished. */
+  guildReq: number;
+  powerStart: number;
+  powerStep: number;
+  /** Scales what every room in the depth pays (§7.1). */
+  rewardBase: number;
+  /** What ONE room attempt costs, paid on entry and never refunded. */
+  supplies: Wallet;
 }
 
 const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph' | 'sprite'>> = {
@@ -1402,8 +1418,7 @@ const ruinContent: Record<RuinId, Pick<RuinDef, 'name' | 'description' | 'glyph'
 };
 
 const ruinBalance = regionMap.ruins as Record<RuinId, {
-  x: number; y: number; tier: number; difficulty: number; baseDepthSeconds: number;
-  depthGrowth: number; maxDepth: number; supplies: Wallet; affinity: string; artifact: string;
+  x: number; y: number; tier: number; affinity: string; artifact: string;
   guard: { threat: string; power: number; warningMinutes: number; periodMinutes: number };
 }>;
 
@@ -1422,17 +1437,37 @@ export const RUINS: Record<RuinId, RuinDef> = Object.fromEntries(
       ...ruinContent[id],
       location: { x: b.x, y: b.y },
       tier: b.tier,
-      difficulty: b.difficulty,
-      baseDepthSeconds: b.baseDepthSeconds,
-      depthGrowth: b.depthGrowth,
-      maxDepth: b.maxDepth,
-      supplies: b.supplies,
       affinity: b.affinity as RuinDef['affinity'],
       artifact: b.artifact as ArtifactId,
       guard: { ...b.guard, threat: b.guard.threat as GuardDef['threat'] },
     }];
   }),
 ) as Record<RuinId, RuinDef>;
+
+/** Every depth of every ruin, in ruin order then depth order. */
+export const DEPTHS = balance.depths as DepthDef[];
+
+/** The depths of one ruin, shallowest first. */
+export const depthsOf = (ruinId: RuinId): DepthDef[] =>
+  DEPTHS.filter((d) => d.ruin === ruinId);
+
+export const depthDef = (ruinId: RuinId, depth: number): DepthDef | undefined =>
+  DEPTHS.find((d) => d.ruin === ruinId && d.depth === depth);
+
+/** How many depths a ruin has, and how many rooms in all of them. */
+export const depthCount = (ruinId: RuinId): number => depthsOf(ruinId).length;
+export const roomCount = (ruinId: RuinId): number =>
+  depthsOf(ruinId).reduce((sum, d) => sum + d.rooms, 0);
+
+/**
+ * What room `room` of depth `depth` fields:
+ * `power_start + power_step × (room − 1)` (§6).
+ */
+export function roomPower(ruinId: RuinId, depth: number, room: number): number {
+  const def = depthDef(ruinId, depth);
+  if (def === undefined) return 0;
+  return def.powerStart + def.powerStep * (Math.max(1, room) - 1);
+}
 
 // ------------------------------------------------------------------ heroes
 
@@ -1866,4 +1901,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 39;
+export const SAVE_VERSION = 40;

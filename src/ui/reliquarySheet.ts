@@ -19,7 +19,7 @@
 // on is which passive you are willing to go without.
 
 import {
-  ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, HEROES, RUINS,
+  ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, RUINS,
 } from '../sim/data/definitions';
 import {
   artifactEntry, attunementSlotGemCost, attunementSlots, isAttuned, isSlotLocked,
@@ -170,18 +170,9 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       iconEl('sparkle', { size: 'sm' }), passiveLabel(game, id)),
   );
 
-  // Attune OR arm. A relic underground has to SAY so on the card: `btn()` is
-  // the button without its reason line, so a disabled Attune alone would grey
-  // out with no answer to "where did my relic go?". The upkeep line above is
-  // also a half-truth while it is away — carrying costs no Mana — so the
-  // status line corrects it.
-  const bearer = game.state.delves.find((d) => d.artifactId === id);
-  if (bearer) {
-    body.append(el('div', { class: 'rel-carried' },
-      iconEl('army', { size: 'sm' }),
-      `${HEROES[bearer.heroIds[0]].name} carries it, at depth ${bearer.depth}`
-      + ' — it draws no Mana while it is away.'));
-  }
+  // ATTUNE OR ARM, and nothing is ever away: a relic goes into a room and
+  // comes back out of it in the same instant, so the only socket that can
+  // hold one is the kingdom's (Docs/features/11-expeditions.md §5).
 
   if (def.active) {
     body.append(el('div', { class: 'rel-active' },
@@ -211,9 +202,7 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       label: 'Attune',
       kind: 'primary',
       onClick: () => game.doAttune(freeSlot, id),
-      disabledReason: bearer
-        ? `${HEROES[bearer.heroIds[0]].name} carries it, at depth ${bearer.depth}`
-        : freeSlot === -1
+      disabledReason: freeSlot === -1
           ? 'Every socket is full'
           : isSlotLocked(game.state, freeSlot, now)
             ? 'That socket is still settling'

@@ -23,12 +23,12 @@
 import { describe, expect, it } from 'vitest';
 import { getWallet } from '../src/sim/state';
 import {
-  DELVE, HARVEST, LANDMARKS, RUINS, TECHNOLOGIES,
+  HARVEST, LANDMARKS, RUINS, TECHNOLOGIES, roomPower,
 } from '../src/sim/data/definitions';
 import { armyCap, trainCost } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import {
-  depthMs, drillOf, effectiveHaulLoss, launchDelve, supplyCost,
+  drillOf, enterRoom, roomReward, supplyCost,
 } from '../src/sim/expeditions';
 import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
@@ -43,7 +43,6 @@ import {
 import { addHeroXp } from '../src/sim/heroes';
 import { grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import type { GameState, HarvestSourceId } from '../src/sim/state';
-import { advance } from '../src/sim/commands';
 import {
   addBuilt, bonusLadders, completeRanks, freshGame, fund, ladders, map, openRuin, reveal, T0,
 } from './helpers';
@@ -94,24 +93,25 @@ function probeState(): GameState {
 }
 
 /**
- * The Stardust one depth of a ruin pays.
+ * The Stardust ONE ROOM of a ruin pays.
  *
- * `depthHaul` is private and stays private — a reward function is not an API —
- * so the only honest way to read it is to send a party down. On a CLONE: the
- * launch spends supplies out of the wallet, and a probe must not be the thing
- * that changes what the next probe measures.
+ * `roomReward` is not private, but reading it through the command is what
+ * proves the ladder reaches the sim: a room is entered, the wallets move, and
+ * the difference is what the ladder bought. On a CLONE — the attempt spends
+ * supplies, and a probe must not change what the next probe measures.
  */
-function stardustOneDepth(state: GameState): number {
+function stardustOneRoom(state: GameState): number {
   const probe = structuredClone(state);
   openRuin(probe, 'HollowBarrow');
-  // A COMPANY: one soldier clears no depth now, so a probe of one would read
-  // every Stardust ladder as inert (Docs/features/combat.md §14).
-  probe.army = Array.from({ length: 60 }, (_, i) => (
+  probe.army = Array.from({ length: 200 }, (_, i) => (
     { uniqueId: `probe_${i}`, definitionId: 'Warrior' as const }));
-  const slots = [{ unitId: 'Warrior' as const, count: 60 }];
-  if (launchDelve(probe, map, 'HollowBarrow', ['Scout'], slots, T0) !== 'Launched') return -1;
-  advance(probe, map, T0 + depthMs(probe, 'HollowBarrow', 1) + 1000);
-  return probe.delves[0]?.haul.Stardust ?? -1;
+  probe.city.wallet.Gold = 100_000;
+  probe.city.wallet.Food = 100_000;
+  const before = getWallet(probe.kingdom.wallet, 'Stardust');
+  const report = enterRoom(probe, map, 'HollowBarrow', ['Scout'],
+    [{ unitId: 'Warrior', count: 200 }]);
+  if (report.result !== 'Cleared') return -1;
+  return getWallet(probe.kingdom.wallet, 'Stardust') - before;
 }
 
 /** Every player-visible number a ladder could plausibly move. */
@@ -167,12 +167,15 @@ function probe(state: GameState): Record<string, number> {
   put('armyCap', armyCap(state));
   const warrior = trainCost(state, 'Warrior');
   for (const [c, n] of Object.entries(warrior)) put(`trainCost.Warrior.${c}`, n as number);
-  const supplies = supplyCost(state, 'HollowBarrow', []);
+  const supplies = supplyCost(state, 'HollowBarrow', 1, []);
   for (const [c, n] of Object.entries(supplies)) put(`supplyCost.${c}`, n as number);
-  put('haulLoss', effectiveHaulLoss(state));
-  put('depthMs.1', depthMs(state, 'HollowBarrow', 1));
-  put('depthMs.3', depthMs(state, 'HollowBarrow', 3));
-  put('stardust.oneDepth', stardustOneDepth(state));
+  put('stardust.oneRoom', stardustOneRoom(state));
+  // …and a DEEP room, read straight off the reward. The Barrow's first room
+  // pays two Stardust and +5% of two is two, so a ladder that moves the line
+  // by a fraction is invisible on it — the probe needs a number big enough to
+  // round differently, and the deepest boss in the game is that number.
+  put('stardust.deepRoom',
+    roomReward(state, 'StarObservatory', 3, 18).wallet.Stardust ?? 0);
   const drill = drillOf(state);
   put('drill.atk.all', drill.atk.all ?? 0);
   put('drill.atk.Distance', drill.atk.Distance ?? 0);
@@ -188,10 +191,9 @@ function probe(state: GameState): Record<string, number> {
   put('heroXp.per100', getWallet(state.kingdom.wallet, 'HeroXp') - before);
   state.kingdom.wallet.HeroXp = before;
 
-  // A control that no ladder may move: the ruin's own clock and the depth
-  // price the sheet authors.
-  put('control.depthSeconds', RUINS.HollowBarrow.baseDepthSeconds);
-  put('control.failHaulLoss', DELVE.failHaulLoss);
+  // A control that no ladder may move: what a room fields, which is authored
+  // and belongs to nobody's ladder.
+  put('control.roomPower', roomPower('HollowBarrow', 1, 1));
   return out;
 }
 
@@ -221,9 +223,23 @@ const movements = (): Record<string, Record<string, Record<string, number>>> => 
 };
 
 describe('every rank ladder in the tree', () => {
+  /**
+   * Ladders whose RULE was retired and whose cards have not been repointed
+   * yet. Each one is a promise on a card the sim cannot keep, so the list is
+   * debt, not an exemption — and it is here, in the guard, so it cannot be
+   * forgotten (Docs/implementation-plan.md H8).
+   *
+   * `Bearers` bought back part of a failed delve's haul, and `Pathfinders`
+   * hurried a depth's clock. The room model has neither: a failed room grants
+   * nothing and deducts nothing, and a room resolves the instant it is
+   * entered (Docs/features/11-expeditions.md §5).
+   */
+  const RETIRED_RULES = ['Bearers', 'Pathfinders'];
+
   it('moves at least one number a player can see', () => {
     const moved = movements();
     const inert = bonusLadders.filter((ladder) => {
+      if (RETIRED_RULES.includes(ladder)) return false;
       const top = String(ladders[ladder].length);
       return Object.keys(moved[ladder][top] ?? {}).length === 0;
     });

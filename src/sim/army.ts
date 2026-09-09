@@ -401,12 +401,14 @@ export function armyRoster(state: GameState): Record<UnitId, number> {
   return roster;
 }
 
-/** Units committed to a delve are not at home; this is what is available to
- *  send somewhere else. */
-export function availableRoster(state: GameState): Record<UnitId, number> {
-  const roster = armyRoster(state);
-  for (const delve of state.delves) {
-    for (const slot of delve.party) roster[slot.unitId] -= slot.count;
-  }
-  return roster;
-}
+/**
+ * What is available to send.
+ *
+ * The whole roster: a room resolves the instant it is entered, so no soldier
+ * is ever away from home between two fights
+ * (Docs/features/11-expeditions.md §5). What leaves the roster leaves it for
+ * good — a garrison's casualties
+ * (Docs/features/18-garrisons-and-raids.md §5).
+ */
+export const availableRoster = (state: GameState): Record<UnitId, number> =>
+  armyRoster(state);

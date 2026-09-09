@@ -1,16 +1,12 @@
-// Combat: a SCORING PASS, not a simulation (Docs/features/11-expeditions.md §4).
+// Combat: a SCORING PASS, not a simulation (Docs/features/combat.md).
 //
-// There is no battle screen and there never will be. Resolving a depth is one
-// deterministic pass over the party:
+// One room is one fight and it resolves the instant the player enters it:
 //
-//   ATK × the type chart  vs  the threat   → did you clear it?
-//   the threat            vs  DEF          → damage, absorbed by party HP
+//   ATK × the type chart  vs  what the room fields  → cleared, or not
 //
-// and HP does not regenerate between depths. That is the attrition, and it is
-// what makes the risk curve EMERGENT rather than authored: the deeper you go
-// the more worn the party, so danger rises visibly on a depleting bar instead
-// of following a probability curve someone invented. It is also what earns DEF
-// and HP their place — a pure power score would not need them.
+// and nothing carries out of it. No timer, no attrition, no journey — the
+// decision the player makes is WHICH TROOPS, and it is made before they press
+// the button (Docs/features/11-expeditions.md §5).
 //
 // The type chart therefore does its work at COMPOSITION time, which is where
 // the decision belongs in a management game. A tactical resolution would move
@@ -19,15 +15,13 @@
 // simulating combat in detail without showing it means the player sees only
 // win or lose and learns nothing from all that machinery.
 //
-// EVERYTHING HERE IS DETERMINISTIC. "A well-prepared run never fails" is not a
-// slogan, it is a property: `guaranteedDepth` below computes exactly how far a
-// party is safe, and the expedition sheet shows it before launch. The gamble
-// is INFORMATION, not dice — you do not know the next depth's threat type
-// until you commit to it.
+// EVERYTHING HERE IS DETERMINISTIC. Two identical parties in the same room
+// always get the same answer, and the answer is knowable before committing:
+// the room sheet shows the two numbers it compares.
 
 import type { UnitTag } from './data/definitions';
-import { ARMY, ARTIFACTS, HEROES, RUINS, UNITS } from './data/definitions';
-import type { ArtifactId, HeroId, RuinId, UnitId } from './state';
+import { ARMY, ARTIFACTS, HEROES, UNITS } from './data/definitions';
+import type { ArtifactId, HeroId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
 export const BEATS: Record<UnitId, UnitId> = {
@@ -135,9 +129,8 @@ export interface PartyStats {
  *
  * EVERY party-wide bonus belongs here and nowhere else. A trait applied after
  * the fact decorates the number the launch screen shows without changing the
- * number the sim fights with, which is the same fault `guaranteedDepth` had:
- * a promise on the sheet the descent does not keep. One function, one set of
- * stats, every caller equal.
+ * number the sim fights with: a promise on the sheet the fight does not keep.
+ * One function, one set of stats, every caller equal.
  */
 export function partyStats(party: Party): PartyStats {
   let atk = 0;
@@ -239,107 +232,39 @@ export function enemyFormation(power: number, threat: UnitId | 'Any'): EnemySqua
 export const formationPower = (squads: readonly EnemySquad[]): number =>
   squads.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
 
-// ------------------------------------------------------------------ threats
+// ------------------------------------------------------------------ rooms
 
 /**
- * How strong depth `depth` is. The bottom depth is exactly the ruin's authored
- * difficulty and the first is a fraction of it, so "Tier III is clearable with
- * the right composition and not with the wrong one" is arithmetic rather than
- * a hope.
+ * Resolve one ROOM. Pure, total, and the only place a fight's outcome is
+ * decided until the tick resolver lands (Docs/features/combat.md).
+ *
+ * A room is one fight and it happens the INSTANT the player enters it: there
+ * is no journey, no timer and no attrition carried anywhere. The party's
+ * attack after the type chart against what the room fields, and that is the
+ * whole of it (Docs/features/11-expeditions.md §5, §6).
  */
-export function threatStrength(ruinId: RuinId, depth: number): number {
-  const ruin = RUINS[ruinId];
-  const span = Math.max(1, ruin.maxDepth - 1);
-  const t = Math.min(1, Math.max(0, (depth - 1) / span));
-  const floor = ARMY.threatFloorFraction;
-  return Math.max(1, Math.round(ruin.difficulty * (floor + (1 - floor) * t)));
-}
-
-/** How long depth `depth` takes. Time grows with depth INSIDE a run, not only
- *  across tiers — that is what makes "one more depth" a real escalation, and
- *  it naturally caps how far anyone pushes in one sitting. */
-export function depthDurationMs(ruinId: RuinId, depth: number): number {
-  const ruin = RUINS[ruinId];
-  return Math.round(ruin.baseDepthSeconds * ruin.depthGrowth ** (depth - 1)) * 1000;
-}
-
-/** Seconds to clear every depth of a ruin, for the site card. */
-export function fullClearSeconds(ruinId: RuinId): number {
-  let total = 0;
-  for (let d = 1; d <= RUINS[ruinId].maxDepth; d++) total += depthDurationMs(ruinId, d) / 1000;
-  return total;
-}
-
-// --------------------------------------------------------------- resolution
-
-export interface DepthOutcome {
+export interface RoomOutcome {
   cleared: boolean;
-  /** HP the depth took off the party, whether or not it was cleared. */
-  damage: number;
-  /** The party's ATK after the matchup, and what it had to beat. */
+  /** The party's attack after the matchup, and what it had to beat. */
   attack: number;
-  strength: number;
+  power: number;
 }
 
-/**
- * Resolve one depth. Pure, total, and the ONLY place combat maths lives.
- *
- * Damage is what the threat gets past DEF; it always lands at least 1, so a
- * party can never be immortal at any depth — the deep push has to end
- * somewhere, and it should end because the bar ran out rather than because a
- * rule said so.
- */
-export function resolveDepth(
+export function resolveRoom(
   party: Party,
-  ruinId: RuinId,
-  depth: number,
+  power: number,
   threat: UnitId | 'Any',
-): DepthOutcome {
-  const strength = threatStrength(ruinId, depth);
+): RoomOutcome {
   const attack = effectiveAttack(party, threat);
-  const { def } = partyStats(party);
-  const damage = Math.max(
-    1,
-    Math.round(strength * ARMY.damagePerStrength - def * ARMY.damageAbsorbedPerDefence),
-  );
-  return { cleared: attack >= strength, damage, attack, strength };
-}
-
-/**
- * The deepest depth this party is SAFE to reach — assuming the worst matchup
- * at every step, because the player does not know what is down there.
- *
- * This is the number the expedition sheet shows before launch, and it is what
- * makes "your economy decides how deep you go safely; everything past that is
- * a gamble you opt into" a promise rather than a slogan.
- */
-export function guaranteedDepth(party: Party, ruinId: RuinId): number {
-  const ruin = RUINS[ruinId];
-  let hp = partyStats(party).hp;
-  if (hp <= 0) return 0;
-  let safe = 0;
-  for (let depth = 1; depth <= ruin.maxDepth; depth++) {
-    // The worst case: whatever type this party answers WORST.
-    const worst = worstThreatFor(party, ruin.affinity);
-    const outcome = resolveDepth(party, ruinId, depth, worst);
-    if (!outcome.cleared) break;
-    hp -= outcome.damage;
-    if (hp <= 0) break;
-    safe = depth;
-  }
-  return safe;
+  return { cleared: attack >= power, attack, power };
 }
 
 /**
  * The threat type this party scores worst against.
  *
- * EVERY type is on the table, whatever the ruin's affinity. A ruin's affinity
- * dominates its depths without owning all of them — `rollThreat` weights the
- * draw toward it but can produce any of the four — so a "guaranteed" depth
- * computed against the affinity alone would be a guarantee the sim does not
- * actually make. Getting this wrong is the difference between "safe to depth
- * 9" and a party that dies at 6, which is precisely the promise the whole
- * design rests on.
+ * EVERY type is on the table, whatever the ruin's affinity: a room's threat
+ * is drawn with a bias toward it and can be any of the four, so a promise
+ * computed against the affinity alone would be one the sim does not make.
  */
 export function worstThreatFor(party: Party, affinity: UnitId | 'Any'): UnitId | 'Any' {
   void affinity;

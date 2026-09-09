@@ -124,8 +124,7 @@ function gateBand(game: Game, def: RuinDef, gate: GateView): HTMLElement {
 }
 
 function ruinCard(game: Game, def: RuinDef): HTMLElement {
-  const fullTime = Array.from({ length: def.maxDepth }, (_, i) =>
-    def.baseDepthSeconds * def.depthGrowth ** i).reduce((a, b) => a + b, 0);
+  const at = game.ruinProgress(def.id);
 
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },
@@ -134,16 +133,20 @@ function ruinCard(game: Game, def: RuinDef): HTMLElement {
         el('div', { class: 'site-name' }, def.name),
         el('div', { class: 'site-kind' }, `Tier ${def.tier} ruin`))),
     el('div', { class: 'site-desc' }, def.description),
+    // Progress is the card's headline once the gate is down: a ruin is a
+    // path, and what a player wants to know is how far along it they are.
     el('div', { class: 'site-stats' },
-      stat('dungeon', String(def.maxDepth), 'depths'),
-      stat('hourglass', formatDuration(fullTime), 'to the bottom'),
+      stat('dungeon', `${at.cleared}/${at.rooms}`, 'rooms'),
+      stat('sparkle', at.done ? 'cleared' : `${at.depth}·${at.room}`, 'frontier'),
       stat(def.affinity === 'Any' ? 'army' : def.affinity, def.affinity === 'Any'
         ? 'anything' : `${def.affinity}s`, 'answer best')),
   );
 
-  body.append(el('div', { class: 'site-note' },
-    'A dungeon, not a chest: it can be delved again and again. The first party '
-    + 'to reach the bottom brings back its relic.'));
+  body.append(el('div', { class: 'site-note' }, at.done
+    ? 'Every room has fallen. Its relic is home and its rooms are spent — a '
+      + 'ruin is climbed once.'
+    : 'A path of rooms, fought one at a time and never twice. The last room of '
+      + 'the last depth gives up its relic.'));
 
   // While the garrison stands it IS the card's decision, and the depths
   // behind it are not offered at all.
@@ -156,7 +159,7 @@ function ruinCard(game: Game, def: RuinDef): HTMLElement {
   // The launch control is expeditions' to own; everything above is content
   // the player can read the moment the fog comes off it.
   body.append(action({
-    label: 'Send a party',
+    label: at.done ? 'Nothing left down there' : `Enter Depth ${at.depth} · Room ${at.room}`,
     kind: 'primary',
     onClick: () => game.openExpedition(def.id),
     disabledReason: game.expeditionBlock(def.id) ?? undefined,

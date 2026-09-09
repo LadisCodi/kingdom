@@ -159,8 +159,13 @@ export const isAttuned = (state: GameState, id: ArtifactId): boolean =>
  * artifact, and because `attune` below has to ask it — the other direction of
  * the same rule.
  */
-export const artifactIsCarried = (state: GameState, id: ArtifactId): boolean =>
-  state.delves.some((d) => d.artifactId === id);
+export const artifactIsCarried = (state: GameState, id: ArtifactId): boolean => {
+  // NOTHING IS EVER CARRIED BETWEEN FIGHTS. A relic goes into a room and
+  // comes back out of it in the same instant, so the only socket that can
+  // hold one is the kingdom's (Docs/features/11-expeditions.md §5).
+  void state; void id;
+  return false;
+};
 
 /** Attuned to the kingdom, or in a party's pack. Neither socket is free. */
 export const artifactIsCommitted = (state: GameState, id: ArtifactId): boolean =>

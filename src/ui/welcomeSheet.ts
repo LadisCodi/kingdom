@@ -5,7 +5,7 @@
 // finishes — and the player saw none of it. The game's strongest retention
 // beat was invisible, and its AdvanceResult was dropped on the floor.
 
-import { DISTRICTS, RUINS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
+import { DISTRICTS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
 import type { UnitId } from '../sim/state';
 import type { CatchUpReport } from '../sim/save';
 import { spriteUrl } from '../render/sprites';
@@ -81,16 +81,6 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     finished.push(el('div', { class: 'wel-done' },
       iconEl('sparkle', { size: 'lg' }),
       el('span', {}, `${event.title} — ${event.detail}`)));
-  }
-  for (const event of report.result.delveEvents) {
-    const ruin = RUINS[event.ruinId];
-    finished.push(el('div', { class: 'wel-done' },
-      iconEl(event.kind === 'failed' ? 'unknown' : 'star', { size: 'lg' }),
-      el('span', {}, event.kind === 'failed'
-        ? `Your party was driven out of ${ruin.name} at depth ${event.depth}`
-        : event.kind === 'bottom'
-          ? `Your party reached the bottom of ${ruin.name}`
-          : `Your party waits at depth ${event.depth} of ${ruin.name}`)));
   }
   for (const m of report.result.expiredModifiers) {
     if (m.source !== 'artifact') continue;

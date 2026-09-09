@@ -24,7 +24,6 @@
 
 import { COLLECTION, HERO_ORDER, HEROES } from '../sim/data/definitions';
 import type { HeroDef, HeroRarity } from '../sim/data/definitions';
-import { heroIsBusy } from '../sim/expeditions';
 import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
 } from '../sim/heroes';
@@ -244,9 +243,6 @@ function detail(game: Game, id: HeroId): HTMLElement {
   body.append(el('div', { class: 'hero-passive' },
     iconEl('sparkle', { size: 'sm' }), def.traitText));
 
-  if (owned && heroIsBusy(game.state, id)) {
-    body.append(el('div', { class: 'hero-note' }, 'Currently underground.'));
-  }
 
   // THE FOOT WIDGET: one reading and one button, whichever pair is true.
   //

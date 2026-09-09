@@ -7,7 +7,7 @@
 > [`combat.md`](combat.md); the screens are [`11a-ruins-ui.md`](11a-ruins-ui.md).
 >
 > **Status: built 2026-09-09.** The clock, the raid, the hoard, the fight and
-> the screens all ship. The fight resolves on the delve's scoring pass
+> the screens all ship. The fight is scored the way a room is
 > ([`11-expeditions.md`](11-expeditions.md) §5) until the tick resolver
 > ([`combat.md`](combat.md)) lands; `power` is the number it is scored
 > against either way.
@@ -136,8 +136,9 @@ take = floor( min(base, banked × take_fraction_max) )
 - **A hero alone is a legal board.** Troops are welcome and never required,
   which is what lets the first fight in the game be fought before the player
   owns an army.
-- **No hero is ever busy here.** The fight resolves on entry, so the hero
-  parked in a delve still leads it ([`10-heroes.md`](10-heroes.md) §2.5).
+- **No hero is ever busy.** Every fight in the game resolves the instant it is
+  entered, so a hero is never away and never unavailable
+  ([`10-heroes.md`](10-heroes.md) §2.5).
 - **Supplies** are a flat cost per tier, paid on entry and never refunded.
 - The fight resolves on entry, the player attacking
   ([`11-expeditions.md`](11-expeditions.md) §5). A power shortfall warns,

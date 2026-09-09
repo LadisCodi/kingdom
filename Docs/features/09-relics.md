@@ -16,7 +16,7 @@
 - A relic grants one **passive** while attuned to the kingdom. That is all it
   does at home.
 - The passive scales with the relic's **level**.
-- A relic is **attuned to the kingdom** *or* **carried by a hero into a delve**
+- A relic is **attuned to the kingdom** *or* **carried by a hero into a fight**
   — never both (§5).
 - **Levels cost Stardust.** Unlocking a relic, and each tier after, needs nine
   ingredients (§4).
@@ -92,7 +92,7 @@
 
 | Rarity | Source | Role |
 |---|---|---|
-| **1★** | province ruins, delve hauls, the daily chest | plentiful — carries a relic to level 2–3 alone |
+| **1★** | province ruins, room rewards, the daily chest | plentiful — carries a relic to level 2–3 alone |
 | **2★** | hard province content and **temporary event provinces** | uncommon |
 | **3★** | **the world map only**: contested ruins, siege spoils, guild chests | rare — the only tier that is really traded |
 
@@ -114,10 +114,10 @@
 - **Swapping applies immediately, then locks that slot for 5 minutes.** The
   lock stops a passive being attuned for one transaction (pay a frontier cell
   at −15%, swap back).
-- **A relic is attuned to the kingdom, or carried by a hero into a delve.
+- **A relic is attuned to the kingdom, or carried by a hero into a fight.
   Never both.** Exclusivity is the whole cost; there is no upkeep.
-- Both directions refuse: a launch will not take an attuned relic, and the
-  Reliquary will not take back one that is underground.
+- Both directions refuse: a room attempt will not take an attuned relic, and
+  the Reliquary will not take back one that is out.
 - One item pool, one equip screen.
 
 ### 5.1 A relic underground
@@ -126,16 +126,15 @@
   is worth about one good unit at level 1 and about two at level 10.**
 - **Carried ATK is type-neutral**: a relic has no unit type, so its ATK lands
   whole against any matchup.
-- A relic is **excluded from the launch sheet's matchup chip**.
-- Reference: in the Drowned Ironworks a four-Warrior party under the Warden is
-  safe to **depth 2**, and to **depth 7** carrying the Foreman's Sigil (the
-  floor is depth 9). The Verdant Seal does not move the safe depth (the wall
-  there is ATK-limited); it buys survival past the floor.
-- **The launch sheet shows stat deltas as well as the safe depth.**
-- **The relic's level is snapshotted at launch.** Levelling it at home does not
-  re-arm a party already underground.
-- A relic is committed for exactly as long as its delve lasts; hero and relic
-  are released together.
+- A relic is **excluded from the battle screen's matchup chip**.
+- **The battle screen shows the stat deltas, and what the carried ATK is worth
+  against this room's number.**
+- **The relic's level is read at the moment the fight is scored**, like every
+  other stat on the board.
+- A relic is committed for exactly as long as the fight lasts — which is no
+  time at all, since a room resolves on entry
+  ([`11-expeditions.md`](11-expeditions.md) §5). It is back on the shelf, and
+  attunable again, the moment the screen redraws.
 
 ### 5.2 Three states with the world map
 

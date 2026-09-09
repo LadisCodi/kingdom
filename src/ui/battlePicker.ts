@@ -19,7 +19,6 @@
 // purse or the way out.
 
 import { HEROES, UNITS, type UnitDef } from '../sim/data/definitions';
-import { heroIsBusy } from '../sim/expeditions';
 import { heroStats, rosterView } from '../sim/heroes';
 import { spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
@@ -123,11 +122,10 @@ function heroCards(game: Game): HTMLElement[] {
   }
   return owned.map((view) => {
     const def = HEROES[view.id];
+    // Already on the board is the only reason a hero cannot be picked: no
+    // hero is ever BUSY, because every fight resolves on entry
+    // (Docs/features/10-heroes.md §2.5).
     const inParty = game.partyHeroes.includes(view.id);
-    // A hero is never busy for a fight that resolves on entry
-    // (Docs/features/10-heroes.md §2.5); a DELVE is the exception, and it is
-    // the delve's own screen that says so.
-    const busy = game.battleHeroesAreCommitted() && heroIsBusy(game.state, view.id);
     const line = heroStats(game.state, view.id);
     return pickerCard({
       cls: 'is-hero',
@@ -144,8 +142,8 @@ function heroCards(game: Game): HTMLElement[] {
       ],
       // A hero's power is its attack, the same rule a soldier's power follows.
       power: line.atk,
-      note: inParty ? 'Already with the party' : busy ? 'Underground' : `Level ${view.entry.level}`,
-      disabled: inParty || busy,
+      note: inParty ? 'Already with the party' : `Level ${view.entry.level}`,
+      disabled: inParty,
       onPick: () => game.assignHero(view.id),
     });
   });

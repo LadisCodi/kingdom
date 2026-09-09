@@ -9,7 +9,7 @@ import {
 } from './sim/commands';
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST,
-  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE,
+  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
 import { formatDuration } from './ui/format';
@@ -41,9 +41,9 @@ import { availableRoster } from './sim/army';
 import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  attemptGate, delveById, discoveredRuins, extract, freeHeroes, gateBlock,
-  launchBlock, launchDelve, previewExpedition, previewGate, pushDeeper, supplyCost, troopSlots,
-  type ExpeditionPreview, type GateBlock, type GatePreview, type LaunchBlock,
+  attemptGate, discoveredRuins, enterRoom, freeHeroes, frontier, gateBlock,
+  previewGate, previewRoom, roomBlock, roomsCleared, troopSlots,
+  type GateBlock, type GatePreview, type RoomBlock, type RoomPreview,
 } from './sim/expeditions';
 import {
   dismissRaidReports, gateCreature, gateIsCleared, gateSupplies, gateView, nextGateToRaid,
@@ -84,7 +84,7 @@ import { pullPrice } from './sim/heroes';
 import type { PayerProfile, StoreSkuId } from './sim/state';
 import {
   builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
-  type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
+  type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
   type Wallet,
@@ -123,7 +123,7 @@ export type Mode =
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
   | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'heroes' | 'expedition' | 'gate' | 'checkpoint' | 'mana' | 'builder'
+  | 'reliquary' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
 
 /** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
@@ -232,8 +232,6 @@ export class Game {
   /** The relic the player has chosen to send DOWN rather than wear. Null is
    *  the common case and always a valid party. */
   expeditionArtifact: ArtifactId | null = null;
-  /** The delve whose checkpoint sheet is open. */
-  openCheckpoint: string | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
@@ -1469,8 +1467,9 @@ export class Game {
       // an ascension.
       this.walletValue('HeroXp'),
       this.walletValue('Stardust'),
-      // The card's one line from outside the roster: who is underground.
-      this.state.delves.map((d) => `${d.heroIds.join('+')}:${d.phase}`).join(','),
+      // Who is on the board right now — the one line the roster reads from
+      // outside itself.
+      this.partyHeroes.join(','),
     ].join('|');
   }
 
@@ -1719,13 +1718,7 @@ export class Game {
       }
       case 'ReachDepth':
       case 'ClearRuins': {
-        // A party already underground is the answer; otherwise the nearest
-        // ruin they could be sent into.
-        const waiting = this.waitingDelves()[0];
-        if (waiting) {
-          this.openCheckpointFor(waiting.id);
-          break;
-        }
+        // The nearest ruin with a room still to fight.
         const found = discoveredRuins(this.state, this.map)
           .sort((a, b) =>
             townhallDistance(this.map, RUINS[a].location)
@@ -1860,18 +1853,32 @@ export class Game {
 
   // ----------------------------------------------------------- expeditions
 
-  /** Why this ruin cannot be delved right now, in plain words; null = it can. */
+  /** Why this ruin cannot be entered right now, in plain words; null = it can. */
   expeditionBlock(ruinId: RuinId): string | null {
-    const running = this.state.delves.find((d) => d.ruinId === ruinId && d.phase !== 'done');
-    if (running) return 'Your party is already down there';
-    if (freeHeroes(this.state).length === 0) {
-      return this.state.heroes.owned.length === 0
-        ? 'You have no hero to lead a party'
-        : 'Every hero is already underground';
-    }
+    if (this.ruinIsDone(ruinId)) return 'Every room of this ruin has fallen';
+    if (this.state.heroes.owned.length === 0) return 'You have no hero to lead a party';
     if (armyCap(this.state) === 0) return 'Build a Barracks — you have no army to send';
     if (this.state.army.length === 0) return 'Train some units first';
     return null;
+  }
+
+  /** Where the player stands in a ruin: the frontier, and the rooms behind
+   *  it. What the ruin's card and the room sheet both read. */
+  ruinProgress(ruinId: RuinId): {
+    depth: number; room: number; cleared: number; rooms: number; done: boolean;
+  } {
+    const at = frontier(this.state, ruinId);
+    return {
+      depth: at.depth,
+      room: at.room,
+      cleared: roomsCleared(this.state, ruinId),
+      rooms: roomCount(ruinId),
+      done: at.done,
+    };
+  }
+
+  ruinIsDone(ruinId: RuinId): boolean {
+    return frontier(this.state, ruinId).done;
   }
 
   /** Open the launch sheet, pre-filled with the best guess: the free hero and
@@ -2225,27 +2232,28 @@ export class Game {
     return id;
   }
 
-  /** The launch read-out: what this party is, and how deep it is SAFE. */
-  expeditionPreview(): ExpeditionPreview | null {
+  /** The room read-out: what the frontier room fields, and what this party
+   *  is worth against it. */
+  expeditionPreview(): RoomPreview | null {
     if (this.expeditionRuin === null) return null;
-    return previewExpedition(
+    return previewRoom(
       this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty,
       this.sendableArtifact());
   }
 
   /** The same party WITHOUT the relic, so the sheet can show what socketing it
-   *  actually bought. A defensive relic may not move the safe depth at all —
-   *  it buys survival past the floor rather than a deeper floor — so the
-   *  stat deltas have to be shown too, or it reads as doing nothing. */
-  expeditionPreviewUnarmed(): ExpeditionPreview | null {
+   *  actually bought. */
+  expeditionPreviewUnarmed(): RoomPreview | null {
     if (this.expeditionRuin === null || this.sendableArtifact() === null) return null;
-    return previewExpedition(
+    return previewRoom(
       this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
   }
 
   expeditionLaunchBlock(): string | null {
     if (this.expeditionRuin === null) return 'No ruin chosen';
-    const block = launchBlock(
+    // The RAW choice, not the sendable one: the read-out drops a relic the
+    // game would not really send, and this is the line that says why it did.
+    const block = roomBlock(
       this.state, this.map, this.expeditionRuin, this.partyHeroes, this.expeditionParty,
       this.expeditionArtifact);
     if (block === null) return null;
@@ -2253,62 +2261,30 @@ export class Game {
     // paid (§6.4), so saying it again in words beside it is nagging. The
     // button still refuses — the red is what disables it.
     if (block === 'NotEnoughSupplies') return null;
-    return LAUNCH_BLOCK_TEXT[block];
+    return ROOM_BLOCK_TEXT[block];
   }
 
+  /**
+   * ENTER THE ROOM. The whole of an expedition, in one tap.
+   *
+   * There is no journey to start and nothing to wait for: the fight resolves
+   * here, the screen redraws on the next room, and the player decides again
+   * (Docs/features/11-expeditions.md §5).
+   */
   doLaunchExpedition(): void {
     if (this.expeditionRuin === null || this.partyHeroes.length === 0) return;
-    const result = launchDelve(
-      this.state, this.map, this.expeditionRuin, this.partyHeroes,
-      this.expeditionParty, this.now(), this.expeditionOrder, this.expeditionArtifact,
+    const ruinId = this.expeditionRuin;
+    const report = enterRoom(
+      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty,
+      this.expeditionArtifact,
     );
-    if (result === 'Launched') {
-      playSfx('unitTrained');
-      this.toast('Your party sets off');
-      this.expeditionRuin = null;
-      this.setOverlay(null);
-    } else if (result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(
-        supplyCost(this.state, this.expeditionRuin, this.partyHeroes)) as CurrencyId[]);
-    } else {
-      this.toast(LAUNCH_BLOCK_TEXT[result]);
-    }
-    this.notify();
-  }
-
-  // ----------------------------------------------------------- checkpoints
-
-  /** Parties waiting for an answer — the return hook the design asks for. */
-  waitingDelves(): Delve[] {
-    return this.state.delves.filter((d) => d.phase === 'checkpoint' || d.phase === 'done');
-  }
-
-  openCheckpointFor(delveId: string): void {
-    this.openCheckpoint = delveId;
-    this.setOverlay('checkpoint');
-  }
-
-  checkpointDelve(): Delve | undefined {
-    return this.openCheckpoint === null
-      ? undefined : delveById(this.state, this.openCheckpoint);
-  }
-
-  doPushDeeper(): void {
-    if (this.openCheckpoint === null) return;
-    const result = pushDeeper(this.state, this.openCheckpoint, this.now());
-    if (result === 'Descending') {
-      playSfx('click');
-      this.setOverlay(null);
-      this.openCheckpoint = null;
-    }
-    this.notify();
-  }
-
-  doExtract(): void {
-    if (this.openCheckpoint === null) return;
-    const report = extract(this.state, this.openCheckpoint);
-    if (report.result === 'Extracted') {
-      playSfx('quest');
+    if (report.result === 'Cleared') {
+      playSfx(report.depthCompleted ? 'questComplete' : 'quest');
+      const paid = Object.entries(report.wallet)
+        .filter(([, n]) => n > 0).map(([c, n]) => `${n} ${c}`).join(', ');
+      this.toast(report.depthCompleted
+        ? `Depth ${report.depth} is yours — ${paid}`
+        : `Room ${report.room} cleared — ${paid}`);
       if (report.artifact !== null) {
         const relic = ARTIFACTS[report.artifact];
         this.queueBanner({
@@ -2321,10 +2297,21 @@ export class Game {
           sfx: 'chainFinished',
         });
       }
-      this.toast(`Banked from depth ${report.depth}`);
+      // The sheet stays open on the NEXT room, because the decision the
+      // player just made is the one they are about to make again — and it
+      // closes itself when the ruin runs out.
+      if (previewRoom(this.state, ruinId, this.partyHeroes, this.expeditionParty).done) {
+        this.expeditionRuin = null;
+        this.setOverlay(null);
+      }
+    } else if (report.result === 'Repelled') {
+      playSfx('error');
+      this.toast('Driven back. The supplies are gone — try again, or bring more.');
+    } else if (report.result === 'NotEnoughSupplies') {
+      this.shake(Object.keys(report.supplies) as CurrencyId[]);
+    } else {
+      this.toast(ROOM_BLOCK_TEXT[report.result]);
     }
-    this.openCheckpoint = null;
-    this.setOverlay(null);
     this.notify();
   }
 
@@ -2470,7 +2457,6 @@ export class Game {
     this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
-    this.openCheckpoint = null;
     this.pendingSku = null;
     this.notify();
   }
@@ -3153,22 +3139,20 @@ function trainerName(unitId: UnitId): string {
 }
 
 
-/** Why a launch is blocked, in words the player can act on. */
-const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
+/** Why a room cannot be entered, in words the player can act on. */
+const ROOM_BLOCK_TEXT: Record<RoomBlock, string> = {
   RuinNotFound: 'You have not found this ruin yet',
   GateStanding: 'The garrison at the gate has to come down first',
+  Finished: 'Every room of this ruin has fallen',
   NoHero: 'Pick a hero to lead them',
-  HeroBusy: 'That hero is already underground',
   TooManyHeroes: 'More heroes than you have slots for',
-  EmptyParty: 'Send at least one unit with them',
-  TooManySlots: 'Too many kinds of unit — buy another party slot',
+  TooManySlots: 'Too many kinds of unit for the board',
   NotEnoughUnits: 'You do not have that many at home',
-  NotEnoughSupplies: 'Not enough supplies for the trip',
+  NotEnoughSupplies: 'Not enough supplies for the attempt',
   ArtifactNotOwned: 'You do not have that relic',
   // Naming the passive being given up is the whole point of the message: the
   // choice is the feature, so the refusal has to read as one.
   ArtifactAttuned: 'That relic is attuned — unsocket it from the Reliquary first',
-  ArtifactCarried: 'That relic is already with another party',
 };
 
 /** Why a gate attempt is refused. A power shortfall is NOT one of these: it

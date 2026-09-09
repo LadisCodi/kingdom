@@ -157,8 +157,8 @@ and every rank is an ordinary card gated by the row above it like any other.
 
 | Major | Unlocks |
 |---|---|
-| **Salvage** | a failed delve loses **35%** of the haul, not 50% |
-| **Vanguard** *(planned)* | depth 1 of a ruin you have already cleared resolves instantly |
+| **Salvage** *(inert — the rule it prices was retired with the delve)* | — |
+| **Vanguard** *(planned)* | the first depth of a ruin you have already cleared is walked in one tap |
 | **Standards** *(planned)* | army power cap rises with military hall level |
 | **Conquest** | +3 Knowledge/h per cleared ruin, on top of the cleared rate ([`07-research.md`](07-research.md) §3) |
 
@@ -170,14 +170,14 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Shield Wall I–III** | +1 DEF to Melee units | I / II / III |
 | **Fletching I–III** | +1 ATK to Distance units | I / II / III |
 | **Barding I–III** | +1 DEF to Mounted units | I / II / III |
-| **Poultices I–III** *(designed, not built)* | +5% HP recovered between depths | I / II / III |
-| **Rations I–III** | −5% expedition supply cost | I / II / III |
+| **Poultices I–III** *(designed, not built)* | +5% HP recovered between rooms | I / II / III |
+| **Rations I–III** | −5% room supply cost | I / II / III |
 | **Muster Drill I–III** | −10% unit recruit cost | I / II / III |
 | **Drillmaster I–III** | +5% hero XP | — / I / II |
 | **Manoeuvre I–III** | +2% off the type-disadvantage penalty | — / I / II |
-| **Bearers I–III** | −3% haul lost on a failed delve, floor 20% | — / I / II |
+| **Bearers I–III** *(inert — a failed room loses nothing to buy back)* | — | — / I / II |
 | **Warhorns I–III** | +1 ATK to all units | — / — / I |
-| **Pathfinders I–III** | −10% expedition duration | — / — / I |
+| **Pathfinders I–III** *(inert — a room has no duration)* | — | — / — / I |
 
 ## 4. Tome III — Magic — 57 nodes
 
@@ -241,7 +241,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Pitons I–II** | −10% Gold to clear a cell of fog | — / I / II |
 | **Scriptorium I–III** | +5% Knowledge drip rate | — / I / II |
 | **Wayposts I–III** | +1 Knowledge/h per claimed landmark | — / I / II |
-| **Reliquary I–III** *(designed, not built)* | +5% ingredient drops from delve hauls | — / I / II |
+| **Reliquary I–III** *(designed, not built)* | +5% ingredient drops from rooms | — / I / II |
 | **Pilgrimage I–III** | −5% landmark claim cost | — / I / II |
 | **Confluence I–III** *(designed, not built)* | +5% to the Sanctum adjacency bonus | — / I / II |
 | **Thrift I–III** *(designed, not built)* | +10% chance a tap costs no Mana | — / I / II |
@@ -249,7 +249,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Vigils I–III** | +1 Knowledge/h per cleared ruin | — / — / I |
 | **Focus I–III** *(designed, not built)* | +10% relic active duration | — / — / I |
 | **Tempest I–III** *(designed, not built)* | +5 min Ley Storm duration | — / — / I |
-| **Prospecting I–III** | +5% Stardust from delves | — / — / I |
+| **Prospecting I–III** | +5% Stardust from rooms | — / — / I |
 
 ## 5. Prices, in bands
 
@@ -336,7 +336,7 @@ names the one call site that owns its number, and
 | `recruitCost` | Muster Drill | |
 | `unitAtk` · `unitDef` | Warhorns, Fletching, Shield Wall, Barding | **aimed at a unit tag**, so a Cavalry reads its two tags plus the unaimed term once. `combat.ts` stays pure; resolved in `expeditions.ts` into a `Drill` carried on the `Party` |
 | `typeDisadvantage` | Manoeuvre | never softens past neutral. `Tactics` moves the same number and stays a `mechanic`: as an effect it would re-associate the sum, and float addition is not associative |
-| `supplyCost` · `delveSpeed` · `haulLoss` | Rations, Pathfinders, Bearers | `haulLoss` floors at one fifth |
+| `supplyCost` | Rations | `delveSpeed` and `haulLoss` are **retired**: nothing reads them, and the two ladders that name them (Pathfinders, Bearers) are inert until they are re-pointed |
 | `heroXp` · `stardustYield` | Drillmaster, Prospecting | |
 | `populationCapacity` | **Communities** | +1 bed globally, which is what "every district that houses anyone" means: a district with no capacity table is not a house. Aimable at one kind of house |
 

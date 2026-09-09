@@ -9,7 +9,7 @@
 // unit of which comes home when the gate falls. There is no room reward and
 // no loot table: the ruin behind it is the prize.
 
-import { RUINS, UNITS } from '../sim/data/definitions';
+import { RUINS, UNITS, depthCount } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { el, formatDuration } from './format';
@@ -66,7 +66,7 @@ export function renderGateSheet(game: Game): HTMLElement {
     ],
     rewardNote: hoard.length > 0
       ? 'Everything they took comes home with it.'
-      : `The way into ${ruin.name}, and its ${ruin.maxDepth} depths.`,
+      : `The way into ${ruin.name}, and its ${depthCount(ruinId)} depths.`,
     actionLabel: 'Clear the gate',
     // A garrison fights back. The screen says what the attempt costs before
     // it is made: supplies, and soldiers, win or lose.
