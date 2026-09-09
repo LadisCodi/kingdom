@@ -8,7 +8,7 @@ import {
 } from '../src/sim/data/definitions';
 import { grantArtifact } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
-import { effectiveDiscoverRadius, revealCostForCell, revealPerTap } from '../src/sim/fog';
+import { effectiveDiscoverRadius, revealCostForCell, revealTapCost } from '../src/sim/fog';
 import { collectTap } from '../src/sim/harvest';
 import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
@@ -257,30 +257,29 @@ describe('every ladder reaches the number it claims to', () => {
       .toBeCloseTo(tapWorkSeconds(state) / HARVEST.Forest.secondsPerStrike, 6);
   });
 
-  // Pitons and Surveying buy down two DIFFERENT costs — the Gold a cell wants
-  // and the taps it takes to pay it — so they have to stack without either
-  // making the other pointless.
-  it('Pitons discounts the Gold a cell costs, and stacks with Surveying', () => {
+  // Pitons is the only thing left that moves the fog: a cell is five taps at
+  // every ring, so the Gold is the whole of the price and a discount is the
+  // whole of the relief.
+  it('Pitons discounts the Gold a cell costs, and the cell is still five taps', () => {
     const state = freshGame();
     const cell = { x: 3, y: 1 };
     const full = revealCostForCell(state, map, cell);
 
     completeRanks(state, 'Pitons', 2); // −20%
     const discounted = revealCostForCell(state, map, cell);
-    expect(discounted).toBe(Math.max(FOG.goldPerTap, Math.round(full * 0.8)));
+    expect(discounted).toBe(Math.max(FOG.minCost, Math.round(full * 0.8)));
 
-    // Surveying does not touch the price, only the number of presses.
-    const tapsBefore = revealPerTap(state);
-    completeRanks(state, 'Surveying', 1);
-    expect(revealCostForCell(state, map, cell)).toBe(discounted);
-    expect(revealPerTap(state)).toBe(tapsBefore + 1);
+    // The five slices of the discounted price still add up to it exactly.
+    const charges = Array.from({ length: FOG.tapsToReveal },
+      (_, i) => revealTapCost(discounted, i));
+    expect(charges.reduce((a, b) => a + b, 0)).toBe(discounted);
   });
 
   it('Pitons can never make a cell free', () => {
     const state = freshGame();
     completeRanks(state, 'Pitons', 99); // far past max, as a modifier stack might
     expect(revealCostForCell(state, map, { x: 3, y: 1 }))
-      .toBeGreaterThanOrEqual(FOG.goldPerTap);
+      .toBeGreaterThanOrEqual(FOG.minCost);
   });
 
   it('Resonance buys down what a relic costs to cast', () => {

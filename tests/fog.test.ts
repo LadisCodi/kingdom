@@ -3,8 +3,9 @@ import {
   DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
-  explorationGate, fogState, isReachable, recordVisibleSites, revealAroundDistrict,
-  revealCost, revealPerTap, revealTap,
+  explorationGate, fogState, isReachable, nextRevealTapCost, recordVisibleSites,
+  revealAroundDistrict, revealCost, revealCostForCell, revealTap, revealTapCost,
+  revealTapsDone,
 } from '../src/sim/fog';
 import { buildMapData, townhallDistance, TOWNHALL_ORIGIN } from '../src/sim/grid';
 import { newGame } from '../src/sim/newGame';
@@ -12,7 +13,7 @@ import { siteDiscoveryKey } from '../src/sim/discovery';
 import { claimLandmark, landmarkClaimCost } from '../src/sim/landmarks';
 import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
-import { addBuilt, reveal, T0, completeRanks } from './helpers';
+import { addBuilt, reveal, T0 } from './helpers';
 import { coordKey, getWallet, parseCoordKey, type Coord } from '../src/sim/state';
 
 const map = buildMapData();
@@ -69,9 +70,19 @@ describe('map data', () => {
 });
 
 describe('reveal cost curve (balance.xlsx FogRings)', () => {
-  it('d 1–10 → 1,3,5,10,20,40,80,160,320,640 (doubling from d4)', () => {
-    const expected = [1, 3, 5, 10, 20, 40, 80, 160, 320, 640];
+  it('d 1–10 → 1,3,10,50,100,200,400,800,1600,3200 (doubling from d4)', () => {
+    const expected = [1, 3, 10, 50, 100, 200, 400, 800, 1600, 3200];
     expected.forEach((cost, i) => expect(revealCost(i + 1)).toBe(cost));
+  });
+  // Five taps a cell, so a ring price five does not divide charges uneven
+  // fifths. Every ring from 3 out — the whole of the province a player really
+  // buys — is a multiple of five; rings 1 and 2 are pennies inside the
+  // Townhall's own shadow and stay pennies.
+  it('prices every ring past the opening in whole fifths', () => {
+    for (const ring of FOG.rings) {
+      if (ring.distance <= 2) continue;
+      expect(ring.cost % FOG.tapsToReveal, `ring ${ring.distance}`).toBe(0);
+    }
   });
 });
 
@@ -91,14 +102,15 @@ describe('fog state & seeding', () => {
 });
 
 describe('paying to reveal', () => {
-  it('accumulates 1 Gold per tap and reveals when total cost is met', () => {
+  it('counts the taps and reveals on the fifth', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 50; // the start has 0 Gold
-    // Distance 2 from the footprint → cost 3, on ungated ground.
+    // Distance 2 from the footprint → 3 Gold, on ungated ground.
     const cell = { x: 3, y: 1 };
-    expect(revealTap(state, map, cell)).toBe('Paid');
-    expect(revealTap(state, map, cell)).toBe('Paid');
-    expect(state.fog.progress[coordKey(cell)]).toBe(2);
+    for (let tap = 1; tap < FOG.tapsToReveal; tap += 1) {
+      expect(revealTap(state, map, cell)).toBe('Paid');
+      expect(state.fog.progress[coordKey(cell)]).toBe(tap);
+    }
     expect(revealTap(state, map, cell)).toBe('Revealed');
     expect(state.fog.revealed[coordKey(cell)]).toBe(true);
     expect(state.fog.progress[coordKey(cell)]).toBeUndefined();
@@ -151,7 +163,7 @@ describe('the frontier stays connected', () => {
 describe('exploration gates (Sailing / Scaling Tools)', () => {
   it('sea cells are locked until Sailing is researched', () => {
     const state = newGame(map, NOW);
-    state.city.wallet.Gold = 5000;
+    state.city.wallet.Gold = 999_999; // the shore can be a dozen rings out
     // Water is the ONE remaining reveal gate (mountains became a feature, so
     // Scaling Tools gates working one instead — see explorationGate). The
     // cell is found rather than pinned: the coastline moves whenever the
@@ -196,8 +208,10 @@ describe('exploring pays in ground, not in currency', () => {
     // edit that puts the tree out of reach fails here rather than in
     // playtest.
     //
-    // 519,830 in Gold. It was 6,600 before the 15 levelled upgrades became
-    // ranked technologies, 520,165 when the three tomes added their
+    // 518,955 in Gold, down 875 when Cartography and Surveying I–II left the
+    // tree with the fog's tap ladder (01-map-and-fog.md §5). It was 6,600
+    // before the 15 levelled upgrades became ranked technologies, 520,165
+    // when the three tomes added their
     // keystones, 485,330 when Civics became a whole book (2026-09-08: 67
     // cards, two planned ones cut, the ranks re-priced for their rows), and
     // it went back up by 34,500 when the four decoration technologies joined
@@ -205,7 +219,7 @@ describe('exploring pays in ground, not in currency', () => {
     // chain funds twice over "not a sink, a formality"; this is the other
     // side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(519_830);
+    expect(tree).toBe(518_955);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree
@@ -218,65 +232,97 @@ describe('exploring pays in ground, not in currency', () => {
   });
 });
 
-// Docs/features/12-quests.md §2 (quest 27) — the point where exploring stops being a chore.
+// Docs/features/01-map-and-fog.md §5 — a cell is FIVE taps at every ring.
 //
-// Surveying does NOT make a cell cheaper. The Gold is unchanged; what it buys
-// back is the player's TIME, which is what exploring actually spends once the
-// far rings cost 320 and 640 Gold at one Gold a tap. That distinction is the
-// whole design of the upgrade, so it is what the test asserts.
-describe('Surveying makes a tap on the fog go further', () => {
-  const payFor = (state: ReturnType<typeof newGame>, cell: { x: number; y: number }) => {
-    let taps = 0;
+// The tap used to be the unit of money AND time: one Gold a press, so the far
+// rings cost hundreds of presses and the thumb, not the purse, was what
+// rationed exploring. A fixed five puts the whole price in the Gold, and what
+// the ring decides is what each of the five charges.
+describe('a cell is five taps at every ring', () => {
+  /** Clear a cell the way a player does, reporting the taps and the Gold. */
+  const payFor = (state: ReturnType<typeof newGame>, cell: Coord) => {
+    const before = getWallet(state.city.wallet, 'Gold');
+    const charges: number[] = [];
     let r: string = 'Paid';
-    while (r === 'Paid') { r = revealTap(state, map, cell); taps += 1; }
+    while (r === 'Paid') {
+      charges.push(nextRevealTapCost(state, map, cell));
+      r = revealTap(state, map, cell);
+    }
     expect(r).toBe('Revealed');
-    return taps;
+    return { taps: charges.length, charges, spent: before - getWallet(state.city.wallet, 'Gold') };
   };
 
-  it('Cartography alone doubles a tap, before any upgrade is bought', () => {
-    const state = newGame(map, NOW);
-    expect(revealPerTap(state)).toBe(1);
-    state.research.completed.push('Cartography');
-    expect(revealPerTap(state)).toBe(2);
-    // ...and Surveying stacks on top of it: x2 -> x3 -> x4.
-    completeRanks(state, 'Surveying', 1);
-    expect(revealPerTap(state)).toBe(3);
-    completeRanks(state, 'Surveying', 2);
-    expect(revealPerTap(state)).toBe(4);
+  it('takes exactly fog.tapsToReveal taps, near ring and far ring alike', () => {
+    const near = newGame(map, NOW);
+    near.city.wallet.Gold = 99_999;
+    reveal(near, [{ x: 0, y: 3 }]);
+    const cheap = payFor(near, { x: 0, y: 4 }); // ring 3
+    expect(cheap.taps).toBe(FOG.tapsToReveal);
+    expect(cheap.spent).toBe(revealCost(3));
+
+    // The dearest cell the frontier can reach from the same seed, walked out
+    // one ring at a time so the far price is a real one and not a fixture.
+    const far = newGame(map, NOW);
+    far.city.wallet.Gold = 999_999;
+    let last = { x: 0, y: 3 };
+    reveal(far, [last]);
+    for (let step = 0; step < 4; step += 1) {
+      const next = { x: last.x, y: last.y + 1 };
+      if (map.terrain.get(coordKey(next)) === undefined) break;
+      if (explorationGate(map, next) !== null) break;
+      const walked = payFor(far, next);
+      expect(walked.taps, `ring ${townhallDistance(map, next)} took ${walked.taps} taps`)
+        .toBe(FOG.tapsToReveal);
+      expect(walked.spent).toBe(revealCost(townhallDistance(map, next)));
+      last = next;
+    }
   });
 
-  it('costs the same Gold at every level, and takes a third of the taps at level 2', () => {
-    const cell = { x: 0, y: 4 }; // ring 3 — 5 Gold
-    const plain = newGame(map, NOW);
-    plain.city.wallet.Gold = 500;
-    reveal(plain, [{ x: 0, y: 3 }]);
-    const goldBefore = getWallet(plain.city.wallet, 'Gold');
-    const plainTaps = payFor(plain, cell);
-    const spent = goldBefore - getWallet(plain.city.wallet, 'Gold');
-    expect(plainTaps).toBe(revealCost(3));
-
-    const surveyed = newGame(map, NOW);
-    surveyed.city.wallet.Gold = 500;
-    reveal(surveyed, [{ x: 0, y: 3 }]);
-    completeRanks(surveyed, 'Surveying', 2); // one tap does the work of three
-    expect(revealPerTap(surveyed)).toBe(3); // Cartography not researched here
-    const before2 = getWallet(surveyed.city.wallet, 'Gold');
-    const fastTaps = payFor(surveyed, cell);
-
-    expect(fastTaps).toBe(Math.ceil(plainTaps / 3));
-    // Same price. Only the number of taps moved.
-    expect(before2 - getWallet(surveyed.city.wallet, 'Gold')).toBe(spent);
-  });
-
-  it('never overpays the last tap of a cell', () => {
+  it('charges a fifth a tap, and the five sum to the price exactly', () => {
     const state = newGame(map, NOW);
-    state.city.wallet.Gold = 500;
-    completeRanks(state, 'Surveying', 2);
+    state.city.wallet.Gold = 99_999;
     reveal(state, [{ x: 0, y: 3 }]);
-    const cell = { x: 0, y: 4 }; // 5 Gold, which 3 does not divide
-    const before = getWallet(state.city.wallet, 'Gold');
-    payFor(state, cell);
-    expect(before - getWallet(state.city.wallet, 'Gold')).toBe(revealCost(3));
+    const cell = { x: 0, y: 4 };
+    const total = revealCostForCell(state, map, cell);
+    const { charges, spent } = payFor(state, cell);
+
+    expect(spent).toBe(total);
+    expect(charges.reduce((a, b) => a + b, 0)).toBe(total);
+    // Every ring price is a multiple of five, so the fifths come out whole.
+    expect(charges).toEqual(charges.map(() => total / FOG.tapsToReveal));
+  });
+
+  // A discount is the one thing that can break the divisibility, and a price
+  // it cannot divide must still be charged to the last Gold — never rounded
+  // up into the player's purse, never rounded down into free ground.
+  it('splits a price five does not divide without losing a Gold either way', () => {
+    for (const total of [1, 3, 7, 14, 999]) {
+      const charges = Array.from({ length: FOG.tapsToReveal },
+        (_, i) => revealTapCost(total, i));
+      expect(charges.reduce((a, b) => a + b, 0), `${total} split five ways`).toBe(total);
+      expect(charges.every((c) => c >= 0)).toBe(true);
+    }
+  });
+
+  it('counts taps, not Gold, so the bar means the same on every cell', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 99_999;
+    reveal(state, [{ x: 0, y: 3 }]);
+    const cell = { x: 0, y: 4 };
+    expect(revealTapsDone(state, cell)).toBe(0);
+    revealTap(state, map, cell);
+    revealTap(state, map, cell);
+    expect(revealTapsDone(state, cell)).toBe(2);
+    expect(fogState(state, map, cell)).toBe('Discovered');
+  });
+
+  it('refuses the tap the purse cannot cover, and takes nothing', () => {
+    const state = newGame(map, NOW);
+    reveal(state, [{ x: 0, y: 3 }]);
+    const cell = { x: 0, y: 4 };
+    state.city.wallet.Gold = nextRevealTapCost(state, map, cell) - 1;
+    expect(revealTap(state, map, cell)).toBe('NotEnoughGold');
+    expect(revealTapsDone(state, cell)).toBe(0);
   });
 });
 

@@ -26,7 +26,8 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     let now = T0;
 
     // --- Reveal 3 fog cells: two at distance 2 (3 Gold) and one at
-    // distance 3 (5 Gold — 4-neighbor BFS, diagonals don't shortcut).
+    // distance 3 (10 Gold — 4-neighbor BFS, diagonals don't shortcut).
+    // Five taps each, whatever the ring, and the five split the price.
     // A new kingdom is handed a small purse for exactly this; top it to a
     // round 50 so the arithmetic below stays readable.
     state.city.wallet.Gold = 0;
@@ -38,7 +39,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r).toBe('Revealed');
     }
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 16);
 
     // --- The Forest is seed-revealed and REFUSES until Forestry is in: the
     // opening beat of the whole game (Docs/features/12-quests.md §2 (quests 2-3)).
@@ -58,7 +59,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // --- No taxes yet: villagers without a roof pay nothing.
     now += 60_000;
     tickAt(state, now);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 16);
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500, Knowledge: 500 });

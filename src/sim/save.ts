@@ -311,6 +311,24 @@ const MIGRATIONS: readonly Migration[] = [
       if (kingdom !== undefined) delete kingdom.Daily;
     },
   },
+  {
+    // v36 — a half-cleared cell stopped counting the GOLD paid into it and
+    // started counting TAPS, because a cell is five taps at every ring now
+    // (Docs/features/01-map-and-fog.md §5). The two numbers cannot be
+    // converted: 300 meant "300 Gold down" on a cell whose price the save does
+    // not carry, and read as taps it would be a cell already cleared five
+    // times over — the fifth tap would open it for nothing.
+    //
+    // So the part-paid cells are dropped and the reader defaults them to
+    // untouched. It costs at most four taps of Gold on each cell the player
+    // happened to leave half-open, and it is the only reading that cannot hand
+    // out ground nobody paid for.
+    to: 36,
+    migrate: (modules) => {
+      const fog = modules['kingdom.fogOfWar'] as { Progress?: unknown } | undefined;
+      if (fog !== undefined) delete fog.Progress;
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.
@@ -396,9 +414,9 @@ export function serialize(state: GameState, now: number): SaveFile {
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
         Discovered: Object.keys(state.fog.discovered).map(parseCoordKey),
-        Progress: Object.entries(state.fog.progress).map(([k, gold]) => ({
+        Progress: Object.entries(state.fog.progress).map(([k, taps]) => ({
           Coord: parseCoordKey(k),
-          Gold: gold,
+          Taps: taps,
         })),
       },
       'kingdom.features': {
@@ -701,8 +719,8 @@ export function deserialize(
     state.fog = { revealed: {}, discovered: {}, progress: {} };
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
     for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
-    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Gold: number }[]) {
-      state.fog.progress[coordKey(p.Coord)] = p.Gold;
+    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Taps: number }[]) {
+      state.fog.progress[coordKey(p.Coord)] = p.Taps ?? 0;
     }
   }
 

@@ -3605,10 +3605,10 @@
     {
       "id": "Mapmakers",
       "name": "Mapmakers",
-      "description": "Research Cartography — there are better ways to survey ground.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Cartography",
-      "goalAmount": 1,
+      "description": "Reveal 20 more cells — a map is drawn by walking it.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 20,
       "goalLevel": null,
       "reward": {
         "Gold": 200
@@ -3621,10 +3621,10 @@
     {
       "id": "Surveyors",
       "name": "Surveyors",
-      "description": "Research Surveying twice. Each tap on the fog will count for three.",
-      "goalType": "CompleteTech",
-      "goalTarget": "SurveyingII",
-      "goalAmount": 1,
+      "description": "Reveal 25 more — the far rings are dearer, and worth it.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 25,
       "goalLevel": null,
       "reward": {
         "Gold": 250
@@ -4043,39 +4043,40 @@
       },
       {
         "distance": 3,
-        "cost": 5
-      },
-      {
-        "distance": 4,
         "cost": 10
       },
       {
+        "distance": 4,
+        "cost": 50
+      },
+      {
         "distance": 5,
-        "cost": 20
+        "cost": 100
       },
       {
         "distance": 6,
-        "cost": 40
+        "cost": 200
       },
       {
         "distance": 7,
-        "cost": 80
+        "cost": 400
       },
       {
         "distance": 8,
-        "cost": 160
+        "cost": 800
       },
       {
         "distance": 9,
-        "cost": 320
+        "cost": 1600
       },
       {
         "distance": 10,
-        "cost": 640
+        "cost": 3200
       }
     ],
     "fallbackGrowth": 1.25,
-    "goldPerTap": 1,
+    "tapsToReveal": 5,
+    "minCost": 1,
     "claimDiscoverRadius": 5
   },
   "city": {

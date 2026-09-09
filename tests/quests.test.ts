@@ -117,10 +117,12 @@ describe('the quest chain', () => {
   // The two goal kinds the onboarding rewrite needed and the sim did not have.
   it('reads the new goal kinds off real state', () => {
     const state = freshGame();
-    const surveyors = QUESTS.find((q) => q.id === 'Surveyors')!;
-    expect(questValue(state, surveyors)).toBe(0);
-    completeRanks(state, 'Surveying', 2);
-    expect(isQuestComplete(state, surveyors)).toBe(true);
+    // A RANK as a target: the chain points at `SawpitsI` by id, which is the
+    // only way a minor is ever asked for.
+    const sawpits = QUESTS.find((q) => q.id === 'Sawpits')!;
+    expect(questValue(state, sawpits)).toBe(0);
+    completeRanks(state, 'Sawpits', 1);
+    expect(isQuestComplete(state, sawpits)).toBe(true);
 
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
     expect(questValue(state, summon)).toBe(1); // the starting hero
@@ -373,17 +375,18 @@ describe('quests fund the research tree', () => {
     // 11,725: three opening beats pay Mana instead of Gold (2026-09-08) —
     // the pool is what the opening is short of, not coin.
     expect(chain).toBe(11_725);
-    expect(tree).toBe(519_830); // the same sum tests/fog.test.ts freezes, and why
+    expect(tree).toBe(518_955); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
       .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    // 2,530 across 19 era-1 majors, since Civics became a whole book
-    // (2026-09-08) and its opening fans out — Masonry and the Market split
-    // it, Bureaucracy gathers it.
-    expect(opening).toBe(2530);
+    // 2,330 across 18 era-1 majors: Civics became a whole book (2026-09-08)
+    // and its opening fans out — Masonry and the Market split it, Bureaucracy
+    // gathers it — and Cartography left the tree with the fog's tap ladder
+    // (01-map-and-fog.md §5).
+    expect(opening).toBe(2330);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

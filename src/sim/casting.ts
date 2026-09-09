@@ -11,7 +11,7 @@
 // the moment an effect can only be replayed by re-running the UI.
 
 import { ARTIFACTS, FEATURES, type ArtifactActiveId } from './data/definitions';
-import { fogState, revealCostForCell } from './fog';
+import { fogState, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
 import { effectiveStock, harvestSourceAt, harvestSpecAt } from './harvest';
 import { mana, payMana } from './mana';
@@ -119,8 +119,10 @@ export function cast(
       // so its value grows with depth — exactly where the pain is. This is the
       // relic that turns the fog from a chore into a real question.
       const key = coordKey(target!);
-      const total = revealCostForCell(state, map, target!);
-      report.goldSaved = total - (state.fog.progress[key] ?? 0);
+      // What is left of the price, not the whole of it: the taps already
+      // spent on this cell were paid, and Divination does not refund them.
+      report.goldSaved = revealCostForCell(state, map, target!)
+        - revealPaidSoFar(state, map, target!);
       delete state.fog.progress[key];
       delete state.fog.discovered[key];
       state.fog.revealed[key] = true;
@@ -184,7 +186,7 @@ export function cast(
 
 /** Divination's value at a glance: the Gold this cast would save right here. */
 export const divinationSaving = (state: GameState, map: MapData, cell: Coord): number =>
-  Math.max(0, revealCostForCell(state, map, cell) - (state.fog.progress[coordKey(cell)] ?? 0));
+  Math.max(0, revealCostForCell(state, map, cell) - revealPaidSoFar(state, map, cell));
 
 /** Cells Bloom would touch from this centre, for the placement preview. */
 export const bloomPreview = (state: GameState, map: MapData, centre: Coord, radius: number): Coord[] =>

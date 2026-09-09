@@ -1809,4 +1809,4 @@ export const GAME_VERSION = '0.1.0';
 // count means something different from the step count, so this one HAS a
 // migrator (save.ts) — it drops the old block and lands the player in the
 // running season owing nothing.
-export const SAVE_VERSION = 35;
+export const SAVE_VERSION = 36;

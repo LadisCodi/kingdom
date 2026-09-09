@@ -188,7 +188,8 @@ carry   = max(0, owed + carry − paid)
 - The Townhall does not answer a tap. The first villager takes its 20 seconds
   unaided.
 - Paying fog is outside the convention: it costs Gold, not Mana, and buys
-  cells, not production. `Surveying` is unaffected.
+  cells, not production. A cell is five taps at every ring, so `tap.workSeconds`
+  never touches it ([`01-map-and-fog.md`](01-map-and-fog.md) §5).
 
 ### 3.3 What a full pool is worth
 

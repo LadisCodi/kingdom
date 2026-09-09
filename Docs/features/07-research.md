@@ -173,8 +173,8 @@ A `bonus` names its effects, and each is four fields:
 - Which tome a technology is in is **shape, not a number**: it is a drag in
   `?dev=tree`, not a column in the workbook
   ([`../tech-tree-editor.md`](../tech-tree-editor.md)).
-- Exploration — Cartography, Sailing, Scaling Tools, Fishing, Shipbuilding,
-  the Docks — lives in Magic. Scaling Tools gates *working* a mountain, not
+- Exploration — Sailing, Scaling Tools, Fishing, Shipbuilding, the Docks —
+  lives in Magic. Scaling Tools gates *working* a mountain, not
   reaching it ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
 - A ruin pays the tree in Knowledge (§7).
 - **Two tomes may aim at the same outcome; they may never move the same

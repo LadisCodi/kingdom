@@ -356,7 +356,7 @@ export interface GameState {
     /** coordKey → discovered by a building's discover radius. (Cells adjacent
      *  to a revealed cell are ALSO Discovered — that part stays derived.) */
     discovered: Record<string, true>;
-    progress: Record<string, number>; // coordKey → gold paid so far
+    progress: Record<string, number>; // coordKey → taps spent so far, 1..4
   };
   features: Record<string, FeatureId>; // coordKey → feature at its CURRENT cell
   /** Respawning features: current cell → its map-authored ORIGIN + respawn

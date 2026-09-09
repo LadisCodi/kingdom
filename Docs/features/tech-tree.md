@@ -198,11 +198,10 @@ and every rank is an ordinary card gated by the row above it like any other.
 - `Attunement` names the Magic ladder; the quest `Attuned` targets
   `Consecration`.
 
-### 4.1 Era 1 · The Awakening — 13 nodes
+### 4.1 Era 1 · The Awakening — 12 nodes
 
 | Major | Unlocks |
 |---|---|
-| **Cartography** | every tap on the fog counts **double** |
 | **Consecration** | the Sanctum |
 | **Meditation** | raises the base Mana ceiling (+30) |
 | **Ley Reading** *(planned)* | a landmark shows what it grants **before** you pay for it |
@@ -236,7 +235,6 @@ and every rank is an ordinary card gated by the row above it like any other.
 | Ladder | Effect per rank | Ranks by era |
 |---|---|---|
 | **Deep Wells I–V** | +10 max Mana | I·II / III·IV / V |
-| **Surveying I–II** | +1 Gold of reveal progress per tap on the fog | I / II |
 | **Resonance I–III** | −20% Mana to cast a relic | I / II / III |
 | **Ley Taps I–III** | +1 Mana/h per claimed landmark | I / II / III |
 | **Farsight I–III** | +1 discover radius | I / II / III |
@@ -298,15 +296,15 @@ and every rank is an ordinary card gated by the row above it like any other.
 
 - **Stopgap parents.** A ladder whose intended major is planned hangs off the
   nearest built major and moves when its own arrives: Deep Wells and
-  Scriptorium under Consecration, Ley Taps and Wayposts under Cartography,
+  Scriptorium under Consecration, Ley Taps and Wayposts under Meditation,
   Vigils under Scaling Tools, Pilgrimage under Sailing, Prospecting under
   Shipbuilding, Scriveners under Architecture, Cartage under Roadworks.
 - Every rank has a slot of its own on the page, so nothing limits how many
   ladders hang off one major any more; what a ladder still needs is a MAJOR at
   its root, not another ladder's rank (`tests/upgrades.test.ts`).
-- Quest targets: `Surveyors` → `SurveyingII` (goal type `CompleteTech`; a rank
+- Quest targets: `Sawpits` → `SawpitsI` (goal type `CompleteTech`; a rank
   implies the ones below it), `Attuned` → `Consecration`, `ArmedMen` →
-  `Warrior`, `Mapmakers` → `Cartography`, `Architect` → `Architecture`
+  `Warrior`, `Architect` → `Architecture`
   ([`12-quests.md`](12-quests.md)).
 
 ### 6.2 The stats a ladder moves
@@ -332,7 +330,7 @@ names the one call site that owns its number, and
 | `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
 | `knowledgeYield` | Scriptorium | |
 | `activeCost` | Resonance | |
-| `revealCost` · `fogRevealPerTap` · `discoverRadius` | Pitons, Surveying, Farsight, **Cartography** | Cartography is +100% on `fogRevealPerTap` like a Surveying rank, so the ×1 → ×2 → ×3 → ×4 ladder is four rows of data and nothing names it in code. `discoverRadius` is every building's fog-**discover** radius, never its reveal radius; a rank landing re-applies every standing building's radii inside `advance()` |
+| `revealCost` · `discoverRadius` | Pitons, Farsight | `revealCost` is the fog's only dial: a cell is five taps at every ring, so nothing buys a press back ([`01-map-and-fog.md`](01-map-and-fog.md) §5). `discoverRadius` is every building's fog-**discover** radius, never its reveal radius; a rank landing re-applies every standing building's radii inside `advance()` |
 | `claimCost` | Pilgrimage | |
 | `armyCap` | Colours | adds to the cap the halls provide; nothing to a kingdom with no hall |
 | `recruitCost` | Muster Drill | |

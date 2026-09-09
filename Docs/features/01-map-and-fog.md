@@ -130,17 +130,21 @@ Authored per ring, doubling from ring 4, with a ×1.25 fallback past ring 10.
 
 | Distance | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11+ |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **Gold** | 1 | 3 | 5 | 10 | 20 | 40 | 80 | 160 | 320 | 640 | ×1.25/ring |
+| **Gold** | 1 | 3 | 10 | 50 | 100 | 200 | 400 | 800 | 1,600 | 3,200 | ×1.25/ring |
 
-- `fog.goldPerTap` is **1**, so a cell costs as many taps as Gold. A distance-9
-  cell is 320 Gold *and* 320 taps.
+- **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
+  decides is what each tap CHARGES: a fifth of the cell's Gold.
+- Every ring from 3 out is a multiple of five, so the fifths come out whole.
+  Rings 1 and 2 sit inside the Townhall's own shadow and are pennies. A price
+  five does not divide — a discounted one, or one of those two — is split into
+  slices that still sum to it exactly, never rounded either way.
+- A cell never costs less than `fog.minCost`, however deep the discounts go.
 - Hold-to-repeat covers reveal taps.
-- **Cartography** and **Surveying** make one tap do the work of two, three or
-  four. They do **not** make a cell cheaper.
-- **Pitons** discounts the Gold (−10%/level). The two stack.
-- **The whole map is 28,517,245 Gold across 1,466 priced cells.** It is the
+- **Pitons** discounts the Gold (−10%/level), and it is the only thing that
+  moves the fog: nothing buys a tap back.
+- **The whole map is 142,585,875 Gold across 1,466 priced cells.** It is the
   largest Gold sink in the game by two orders of magnitude, and what limits
-  how fast it is spent is the tapping, not the purse
+  how fast it is spent is the purse
   ([`02-map-scopes.md`](02-map-scopes.md)).
 
 ## 6. What the fog holds
@@ -210,8 +214,9 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 | Dial | Value | Where |
 |---|---|---|
-| Fog price per ring | 1 → 640, ×1.25 past ring 10 | `FogRings` sheet |
-| Gold per reveal tap | 1 | `fog.gold_per_tap` |
+| Fog price per ring | 1 → 3,200, ×1.25 past ring 10 | `FogRings` sheet |
+| Taps to clear a cell | 5 | `fog.taps_to_reveal` |
+| The floor under a cell's price | 1 | `fog.min_cost` |
 | Claim discover radius | 5 | `fog.claim_discover_radius` |
 | A building's reveal / discover radius | 1 / 2 | `Districts` sheet |
 | Landmark claim costs | 2,000 / 25,000 / 100,000 | the map editor |
@@ -228,6 +233,8 @@ Costs are **authored per sanctuary**, not derived from distance.
 - A `Mountain` terrain or a `Rocks` feature.
 - A Mine district.
 - A `base × growth^distance` curve for landmark costs.
+- A technology that buys reveal taps back. A cell is five presses at every
+  ring, so there is no tap ladder left to climb.
 
 **Open questions:** OQ-49, OQ-50 in
 [`../open-questions.md`](../open-questions.md).

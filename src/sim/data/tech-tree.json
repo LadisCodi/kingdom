@@ -1043,15 +1043,6 @@
       "gold": 400, "knowledge": 2, "seconds": 120,
       "unlocks": [{"district":"Sanctum"}]
     },
-    "Cartography": {
-      "name": "Cartography", "glyph": "🗺️", "kind": "bonus",
-      "tome": "Magic", "era": 1, "row": 1, "col": 1,
-      "requires": [],
-      "gold": 200, "knowledge": 2, "seconds": 45,
-      "effects": [
-        {"stat":"fogRevealPerTap","op":"percent","value":100}
-      ]
-    },
     "Invocation": {
       "name": "Invocation", "glyph": "✨", "kind": "mechanic",
       "description": "Spoken twice — a relic's active gains a second charge.",
@@ -1071,7 +1062,7 @@
       "name": "Ley Reading", "glyph": "🔮", "kind": "mechanic",
       "description": "Reading the lines — a landmark shows what it grants before you pay.",
       "tome": "Magic", "era": 1, "row": 2, "col": 1,
-      "requires": ["Cartography"],
+      "requires": ["Consecration"],
       "gold": 150, "knowledge": 2, "seconds": 120,
       "planned": true
     },
@@ -1079,7 +1070,7 @@
       "name": "Scrying", "glyph": "🪞", "kind": "mechanic",
       "description": "Seeing into stone — a ruin shows its tier before you commit a party.",
       "tome": "Magic", "era": 1, "row": 2, "col": 2,
-      "requires": ["Consecration", "Cartography"],
+      "requires": ["Consecration"],
       "gold": 150, "knowledge": 2, "seconds": 120,
       "planned": true
     },
@@ -1119,15 +1110,6 @@
         {"stat":"knowledgeYield","op":"percent","value":5}
       ]
     },
-    "SurveyingI": {
-      "name": "Surveying I", "glyph": "🧭", "kind": "bonus",
-      "tome": "Magic", "era": 1, "row": 4, "col": 1,
-      "requires": ["LeyTapsI"],
-      "gold": 150, "knowledge": 1, "seconds": 20,
-      "effects": [
-        {"stat":"fogRevealPerTap","op":"percent","value":100}
-      ]
-    },
     "WaypostsI": {
       "name": "Wayposts I", "glyph": "🪧", "kind": "bonus",
       "tome": "Magic", "era": 1, "row": 4, "col": 2,
@@ -1149,7 +1131,7 @@
     "AttunementII": {
       "name": "Attunement II", "glyph": "🔯", "kind": "unlock",
       "tome": "Magic", "era": 2, "row": 5, "col": 1,
-      "requires": ["SurveyingI"],
+      "requires": ["WaypostsI"],
       "gold": 800, "knowledge": 1, "seconds": 900,
       "unlocks": [{"districtLevel":{"id":"Sanctum","level":4}}, {"district":"RuneCarver"}]
     },
@@ -1180,15 +1162,6 @@
         {"stat":"activeCost","op":"percent","value":-20}
       ]
     },
-    "SurveyingII": {
-      "name": "Surveying II", "glyph": "🧭", "kind": "bonus",
-      "tome": "Magic", "era": 2, "row": 6, "col": 2,
-      "requires": ["LeyTapsII"],
-      "gold": 525, "knowledge": 2, "seconds": 330,
-      "effects": [
-        {"stat":"fogRevealPerTap","op":"percent","value":100}
-      ]
-    },
     "FrugalRites": {
       "name": "Frugal Rites", "glyph": "🕯️", "kind": "mechanic",
       "description": "Economy of gesture — some taps cost no Mana.",
@@ -1210,7 +1183,7 @@
       "name": "Ley Lines", "glyph": "🕸️", "kind": "mechanic",
       "description": "The land's own current — a district beside the Sanctum produces a tenth more.",
       "tome": "Magic", "era": 2, "row": 7, "col": 2,
-      "requires": ["SurveyingII"],
+      "requires": ["ResonanceII"],
       "gold": 2200, "knowledge": 9, "seconds": 1620,
       "planned": true
     },

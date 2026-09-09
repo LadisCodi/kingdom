@@ -30,7 +30,7 @@ import { castCost } from '../src/sim/casting';
 import {
   depthMs, drillOf, effectiveHaulLoss, launchDelve, supplyCost,
 } from '../src/sim/expeditions';
-import { effectiveDiscoverRadius, revealCostForCell, revealPerTap } from '../src/sim/fog';
+import { effectiveDiscoverRadius, revealCostForCell } from '../src/sim/fog';
 import { landmarkClaimCost } from '../src/sim/landmarks';
 import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
 import { cityGoldPerMinute, districtCapacity, maxPopulation } from '../src/sim/population';
@@ -144,8 +144,8 @@ function probe(state: GameState): Record<string, number> {
     put(`capacity.${d.definitionId}`, districtCapacity(state, d));
   }
 
-  // The fog.
-  put('revealPerTap', revealPerTap(state));
+  // The fog. Only the Gold: the taps are five at every ring and nothing in
+  // the tree can buy one back.
   put('revealCost.near', revealCostForCell(state, map, { x: 4, y: 0 }));
   put('revealCost.far', revealCostForCell(state, map, { x: 9, y: 6 }));
   put('discoverRadius.1', effectiveDiscoverRadius(state, 1));

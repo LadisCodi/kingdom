@@ -268,12 +268,6 @@ export const TECH_STATS = {
     says: { percent: '{v} Gold to clear a cell of fog' },
     reads: 'fog.ts#revealCostForCell',
   },
-  fogRevealPerTap: {
-    what: 'the reveal progress one tap on the fog buys',
-    ops: ['percent'], targets: ['global'], unit: '×',
-    says: { percent: '{v} progress from every tap on the fog' },
-    reads: 'fog.ts#revealPerTap',
-  },
   discoverRadius: {
     what: 'how far a building sees into the fog — never how far it REVEALS',
     ops: ['flat'], targets: ['global', 'district'], unit: 'tiles',

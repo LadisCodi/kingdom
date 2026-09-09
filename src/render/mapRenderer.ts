@@ -3,11 +3,11 @@
 // 155 cells is trivial.
 
 import {
-  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, HARVEST, LANDMARK_ART,
+  CROPS_EXHAUSTED_GLYPH, DISTRICTS, FEATURES, FOG, HARVEST, LANDMARK_ART,
 } from '../sim/data/definitions';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { trainingProgress, unitInTraining } from '../sim/army';
-import { fogState, isReachable, revealCostForCell } from '../sim/fog';
+import { fogState, isReachable } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, stockFraction } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
@@ -310,10 +310,12 @@ export function drawMap(
           ctx.fillRect(x, y, size, size);
         }
         // Reveal progress only — the total cost is deliberately not shown.
-        const paid = state.fog.progress[key] ?? 0;
-        if (paid > 0) {
-          const total = revealCostForCell(state, map, cell);
-          drawBar(ctx, x + size * 0.15, y + size * 0.62, size * 0.7, 5, paid / total, PALETTE.progressFill);
+        // Five taps at every ring, so the bar fills in the same five steps
+        // wherever the player is standing.
+        const taps = state.fog.progress[key] ?? 0;
+        if (taps > 0) {
+          drawBar(ctx, x + size * 0.15, y + size * 0.62, size * 0.7, 5,
+            taps / FOG.tapsToReveal, PALETTE.progressFill);
         }
       }
     }

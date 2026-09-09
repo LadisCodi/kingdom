@@ -142,7 +142,14 @@ const SETTINGS = [
   // against the payroll. TapPower buys this duration up, +20% a level.
   ['tap.work_seconds', 'tap.workSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
-  ['fog.gold_per_tap', 'fog.goldPerTap'],
+  // A cell is FIVE taps whatever it costs, and each tap charges a fifth of
+  // its Gold (01-map-and-fog.md §5). Every ring from 3 out is a multiple of
+  // five, so the fifths come out whole; rings 1 and 2 are pennies inside the
+  // Townhall's own shadow.
+  ['fog.taps_to_reveal', 'fog.tapsToReveal'],
+  // The floor under a cell's price, however deep the discounts go — never
+  // free ground, and never a tap that charges nothing.
+  ['fog.min_cost', 'fog.minCost'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
   // Claiming a sanctuary lifts the fog around it: every cell within this many
   // rings becomes DISCOVERED, never revealed. A claim buys you a place to

@@ -58,10 +58,11 @@ const DAYS = Number(process.env.KINGDOM_DAYS ?? 30);
  *  eleven hours, so every night crosses the 8 h offline cap on purpose. */
 const VISIT_HOURS = [8, 14, 21];
 const TAPS_PER_VISIT = 120; // a thumb budget: Mana runs out first anyway
-/** The thumb's budget for FOG, which is what actually paces exploration: the
- *  purse is never the limit (this player ends on millions of Gold), the
- *  tapping is. A visit is ~10 minutes and a tap is half a second, so a
- *  thousand of them is a generous reading of the design's session length. */
+/** The thumb's budget for FOG. It used to be what paced exploration — a cell
+ *  cost one tap a Gold, so the far rings were hundreds of presses — and it no
+ *  longer is: a cell is five taps at every ring, so this budget is a ceiling
+ *  the purse now hits first (01-map-and-fog.md §5). Kept as the session's
+ *  outer bound: a visit is ~10 minutes and a tap is half a second. */
 const FOG_TAPS_PER_VISIT = 1_000;
 
 /** What the scripted player builds, in the order they reach for it. Each
@@ -626,19 +627,30 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     expect(milestones.TH10, 'TH10 is the month\'s last week, not its middle').toBeGreaterThanOrEqual(18);
     expect(end.townhall).toBe(DISTRICTS.Townhall.maxLevel);
 
-    // 2. The purse is never what stops the ladder: this player ends on
-    //    millions, with the whole tree costing 519,830.
-    expect(end.gold, 'Gold in hand at day 30').toBeGreaterThan(1_000_000);
+    // 2. THE PURSE IS NOW WHAT PACES EXPLORING, and this is the measurement
+    //    that says so. The player used to end on millions of idle Gold
+    //    because clearing fog was rationed by the thumb — one tap a Gold, so
+    //    a distance-9 cell was 320 presses. A cell is five taps at every ring
+    //    now (01-map-and-fog.md §5) and the rings from 4 out are five times
+    //    dearer, so the ground absorbs the surplus instead: 17,860 in hand at
+    //    day 30, against a tree costing 518,955.
+    //
+    //    The bound is an upper one for that reason. This bot reserves half
+    //    each visit for the tree and spends the rest on the border, so what
+    //    it holds at the end is what the frontier could not take — and a
+    //    million idle Gold would mean the sink stopped draining again.
+    expect(end.gold, 'Gold in hand at day 30').toBeLessThan(100_000);
 
-    // 4. What actually starves is the ground. A player at the designed
-    //    session length uncovers well under half the province in a month, so
-    //    they meet a minority of the ruins and landmarks the Knowledge drip
-    //    is made of — and the drip is what the late city is gated behind.
+    // 4. The ground still starves, and now it starves on money. A player at
+    //    the designed session length uncovers about half the province in a
+    //    month — 715 of 1,470 cells, measured with the five-tap fog — so they
+    //    still meet only some of the ruins and landmarks the Knowledge drip
+    //    is made of, and the drip is what the late city is gated behind.
     const revealed = map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length;
     expect(revealed / map.cells.length, 'share of the province uncovered by day 30')
-      .toBeLessThan(0.5);
+      .toBeLessThan(0.55);
     expect(end.ruins, 'ruins cleared by day 30').toBeLessThan(3);
-    expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThan(5);
+    expect(end.landmarks, 'landmarks claimed by day 30').toBeLessThanOrEqual(5);
     expect(end.knowledge, 'Knowledge in hand at day 30').toBeLessThan(10_000);
 
     // 5. The late weeks still buy levels, and the ladder reaches its top:

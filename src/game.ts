@@ -19,7 +19,7 @@ import {
   maxDistrictCount, nextBuildCost, placementBlock, validPlacementCells,
 } from './sim/districts';
 import {
-  explorationGate, fogState, revealCostForCell, revealTap,
+  explorationGate, fogState, nextRevealTapCost, revealCostForCell, revealTap,
 } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
@@ -474,6 +474,9 @@ export class Game {
         const fog = fogState(this.state, this.map, cell);
         if (fog === 'Undiscovered') return true; // swallowed
         if (fog !== 'Discovered') return false;
+        // Read BEFORE the tap: a tap charges a fifth of the cell's price now,
+        // not one Gold, so the floater has to be told what it cost.
+        const charged = nextRevealTapCost(this.state, this.map, cell);
         const result = revealTap(this.state, this.map, cell);
         if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'NotReachable') {
@@ -491,7 +494,7 @@ export class Game {
           // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
-          this.floaters.add(cell, '\u22121', 'Gold');
+          this.floaters.add(cell, `\u2212${charged}`, 'Gold');
         }
         this.notify();
         return true;
@@ -680,6 +683,7 @@ export class Game {
   private revealHold(cell: Coord): boolean {
     const now = this.now();
     if (now - this.state.lastCollectTapAt < effectiveAutoTapCooldownMs(this.state)) return false;
+    const charged = nextRevealTapCost(this.state, this.map, cell);
     const result = revealTap(this.state, this.map, cell);
     if (result !== 'Paid' && result !== 'Revealed') return false;
     this.state.lastCollectTapAt = now;
@@ -689,7 +693,7 @@ export class Game {
       this.floaters.add(cell, 'Revealed!');
     } else {
       playSfx('revealPaid');
-      this.floaters.add(cell, '\u22121', 'Gold');
+      this.floaters.add(cell, `\u2212${charged}`, 'Gold');
     }
     this.notify();
     return true;

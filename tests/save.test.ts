@@ -264,13 +264,13 @@ describe('save versions', () => {
   // open for the same reason a new one's are — there is nothing to open.
   it('leaves a pre-tome save with every book open and nothing granted', () => {
     const state = freshGame();
-    state.research.completed = ['Cartography', 'Warrior'];
+    state.research.completed = ['Forestry', 'Warrior'];
     const save = serialize(state, T0);
     save.SaveVersion = 24;
     const restored = deserialize(save, map, T0)!;
     for (const tome of TOME_ORDER) expect(isTomeOpen(restored, tome), tome).toBe(true);
     // Exactly what the save held, and not one id more.
-    expect(restored.research.completed).toEqual(['Cartography', 'Warrior']);
+    expect(restored.research.completed).toEqual(['Forestry', 'Warrior']);
   });
 
   it('leaves a v23 save alone — the swap runs once, not on every load', () => {
