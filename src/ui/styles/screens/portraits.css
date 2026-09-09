@@ -23,6 +23,7 @@
  */
 img[src*='hero_elven_princess'],
 img[src*='hero_necromancer'],
-img[src*='hero_scout'] {
+img[src*='hero_scout'],
+img[src*='hero_golden_dragon'] {
   image-rendering: auto;
 }
