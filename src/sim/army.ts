@@ -54,6 +54,59 @@ export const queuedTroops = (state: GameState): number =>
 export const committedTroops = (state: GameState): number =>
   armySize(state) + queuedTroops(state);
 
+/**
+ * WHO DOES NOT COME BACK.
+ *
+ * A garrison fights back, so a gate costs soldiers whether it falls or not
+ * (Docs/features/18-garrisons-and-raids.md §5). The damage is spread across
+ * the committed squads by their share of the party's own hit points — the
+ * biggest squad takes the most, which is what makes a wide party a way of
+ * absorbing a fight as well as winning it — and only whole troops are lost.
+ *
+ * Heroes are never in it: a hero can fall in a fight and is whole again when
+ * it ends (Docs/features/10-heroes.md §2.3). What dies here is soldiers.
+ */
+export function casualtiesFor(
+  slots: readonly { unitId: UnitId; count: number }[],
+  damage: number,
+): Array<{ unitId: UnitId; count: number }> {
+  const totalHp = slots.reduce((sum, s) => sum + UNITS[s.unitId].hp * s.count, 0);
+  if (totalHp <= 0 || damage <= 0) return [];
+  const out: Array<{ unitId: UnitId; count: number }> = [];
+  for (const slot of slots) {
+    const hp = UNITS[slot.unitId].hp;
+    const share = (hp * slot.count) / totalHp;
+    const lost = Math.min(slot.count, Math.floor((damage * share) / hp));
+    if (lost > 0) out.push({ unitId: slot.unitId, count: lost });
+  }
+  // A fight that killed nobody still killed somebody: the smallest loss the
+  // game can express is one soldier, taken from the biggest squad.
+  if (out.length === 0) {
+    const biggest = [...slots].sort((a, b) => b.count - a.count)[0];
+    if (biggest !== undefined && biggest.count > 0) out.push({ unitId: biggest.unitId, count: 1 });
+  }
+  return out;
+}
+
+/** Take them off the roster. The units removed are the plainest ones of their
+ *  type — a soldier is a soldier, and nothing on an `ArmyUnit` tells them
+ *  apart — so this is a count, not a choice. */
+export function takeCasualties(
+  state: GameState,
+  slots: readonly { unitId: UnitId; count: number }[],
+  damage: number,
+): Array<{ unitId: UnitId; count: number }> {
+  const losses = casualtiesFor(slots, damage);
+  for (const loss of losses) {
+    let left = loss.count;
+    state.army = state.army.filter((u) => {
+      if (left > 0 && u.definitionId === loss.unitId) { left -= 1; return false; }
+      return true;
+    });
+  }
+  return losses;
+}
+
 /** The military buildings, in city order. */
 export const militaryBuildings = (state: GameState): District[] =>
   state.city.districts.filter((d) => DISTRICTS[d.definitionId].armyCapPerLevel.length > 0);

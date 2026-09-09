@@ -190,10 +190,13 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
       : `And ${relic.name} itself, at the bottom. None of it is yours until they come back up.`,
     extras: [artifactBand(game), orderBand(game, ruin.maxDepth, preview.safeDepth)],
     actionLabel: 'Set off',
-    // A delve's small print is not a gate's: the haul is the thing at risk,
-    // and it is not the player's until they bring it up.
-    actionNote: 'Supplies are spent on the way in. A push that fails costs half '
-      + 'of what the party is carrying — never anything you already own.',
+    // A delve's small print is not a gate's. What is at risk is the HAUL,
+    // and the haul is not the player's until they bring it up — so the line
+    // states the promise rather than a fraction: nothing you already own is
+    // ever taken, and every depth is a separate decision.
+    actionNote: 'Supplies are spent on the way in. Everything the party finds '
+      + 'is theirs to lose until they bring it up — nothing you already own is '
+      + 'ever at risk.',
     onFight: () => game.doLaunchExpedition(),
     blocked: game.expeditionLaunchBlock(),
   };

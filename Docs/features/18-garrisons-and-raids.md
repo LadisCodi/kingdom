@@ -144,7 +144,21 @@ take = floor( min(base, banked × take_fraction_max) )
   never blocks. Retry is unlimited and identical to a first attempt.
   - **Win:** the gate is cleared, its counter stops, its hoard is paid, and
     `Depth 1 · Room 1` becomes the frontier.
-  - **Lose:** nothing is lost but the supplies; the gate stands.
+  - **Lose:** the supplies are gone and the gate stands.
+- **A GARRISON FIGHTS BACK: the attempt costs soldiers, win or lose.** The
+  dead are gone for good — the one place in the game where a fight has
+  permanent casualties ([`combat.md`](combat.md) §4).
+  - The damage is the gate's power against the party's defence, the same
+    arithmetic a depth uses, spread across the committed squads by their share
+    of the party's hit points. Only whole troops die, and never fewer than one.
+  - **A rout costs less than a repulse.** A party that wins takes the damage
+    in proportion to how outmatched the garrison was, so bringing more than
+    enough buys fewer funerals as well as a win; a party that is driven off
+    pays it in full.
+  - Heroes are never among the dead: a hero can fall in a fight and is whole
+    when it ends ([`10-heroes.md`](10-heroes.md) §2.3).
+  - **The screen says the price before it is paid** — the expected losses sit
+    under the button, beside the supplies.
 - **What it pays:** the hoard, in full, banked immediately; Hero XP by the
   ruin's tier; event points ([`13-events.md`](13-events.md) §2.2); the
   `ClearGarrisons` quest goal ([`12-quests.md`](12-quests.md) §1.1). No room
@@ -203,7 +217,7 @@ take = floor( min(base, banked × take_fraction_max) )
 - **Garrisons on landmarks.** A landmark is claimed for its Gold
   ([`01-map-and-fog.md`](01-map-and-fog.md) §6); the world map's siege is the
   contested landmark ([`15-social.md`](15-social.md) §6).
-- Casualties; escalating waves; re-infestation of a cleared gate.
+- Escalating waves; re-infestation of a cleared gate.
 - An authored formation per gate — the generator builds it from `guard`, as
   it builds a room. Named villains belong to bosses.
 - One raid clock for the whole city; counters in hours or days; a counter in

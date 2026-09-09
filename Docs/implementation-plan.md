@@ -97,6 +97,7 @@ each has an answer, or has one waiting in a doc.
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue is **empty** since the Conjunction was retired — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
+| **H8** | **The staged delve still halves the haul on a failed push**, and four technologies price that rule — `Bearers I–III` (−3% each) and `Salvage` (half becomes 35%). The room model retired it: **a room grants nothing and deducts nothing when it fails**, and every room is a separate decision ([`11`](features/11-expeditions.md) §5). The battle screen's small print already states the promise that survives the rewrite — *nothing you already own is ever at risk* — and says nothing about a fraction. **The four cards go with the rewrite, not before it.** | [`11`](features/11-expeditions.md) §5 |
 | **H7** | **No new sounds.** Casting, claiming, delving and the checkpoint all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
 ## 4. What is next, and what blocks it

@@ -260,7 +260,27 @@ describe('clearing the gate', () => {
     expect(state.raidReports).toHaveLength(0);
   });
 
-  it('costs the supplies and nothing else when it fails', () => {
+  it('costs soldiers, win or lose — a garrison fights back', () => {
+    const state = readyToFight();
+    const before = state.army.length;
+    const report = attemptGate(state, map, BARROW, ['Warden'], company);
+    expect(report.result).toBe('Cleared');
+    expect(report.losses.length).toBeGreaterThan(0);
+    const dead = report.losses.reduce((n, l) => n + l.count, 0);
+    expect(state.army.length).toBe(before - dead);
+
+    // Being driven off costs MORE than winning: the garrison had all the time
+    // it needed. Same party, a gate it cannot beat.
+    const beaten = readyToFight();
+    reveal(beaten, [RUINS.SunkenChapel.location]);
+    advance(beaten, map, T0);
+    fund(beaten, { Gold: 20_000, Food: 5000 });
+    const repulse = attemptGate(beaten, map, 'SunkenChapel', ['Warden'], company);
+    expect(repulse.result).toBe('Repelled');
+    expect(repulse.losses.reduce((n, l) => n + l.count, 0)).toBeGreaterThan(dead);
+  });
+
+  it('costs the supplies and the fallen when it fails, and nothing else', () => {
     // The Observatory's drake, answered by one hero from the first hour.
     const state = readyToFight();
     reveal(state, [RUINS.StarObservatory.location]);
@@ -296,7 +316,12 @@ describe('the door', () => {
     const party = [{ unitId: 'Warrior' as const, count: 24 }];
     expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('GateStanding');
     expect(attemptGate(state, map, BARROW, ['Warden'], party).result).toBe('Cleared');
-    expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('Launched');
+    // …and the company that took it is smaller than the one that marched, so
+    // the delve goes in with the survivors (§5).
+    const left = state.army.length;
+    expect(left).toBeLessThan(24);
+    expect(launchDelve(state, map, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: left }], T0)).toBe('Launched');
   });
 });
 

@@ -32,7 +32,7 @@
 // queue and research.
 
 import {
-  ARTIFACTS, DELVE, HEROES, PARTY, RUINS,
+  ARMY, ARTIFACTS, DELVE, HEROES, PARTY, RUINS,
 } from './data/definitions';
 import {
   addArtifactFragments, artifactEntry, artifactIsCarried, grantArtifact, isAttuned,
@@ -45,7 +45,7 @@ import {
   matchupAgainst, partyStats, resolveDepth, threatStrength, worstThreatFor,
   type CarriedArtifact, type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
-import { availableRoster } from './army';
+import { availableRoster, casualtiesFor, takeCasualties } from './army';
 import {
   gateFormation, gateIsCleared, gatePower, gateSupplies, markGateCleared,
 } from './gates';
@@ -337,6 +337,25 @@ export interface GateReport {
   /** Everything the garrison had taken, banked on the way out. */
   hoard: Wallet;
   supplies: Wallet;
+  /** Who did not come back. A garrison fights: it costs soldiers whether it
+   *  falls or not (§5). */
+  losses: Array<{ unitId: UnitId; count: number }>;
+}
+
+/**
+ * What the garrison deals back.
+ *
+ * Its power against the party's defence, the same arithmetic a depth uses —
+ * and then **a rout costs less than a repulse**: a party that beats the gate
+ * takes it in proportion to how outmatched the garrison was, so bringing more
+ * than enough buys fewer funerals as well as a win. Bringing exactly enough
+ * pays the full price.
+ */
+export function gateDamage(power: number, partyDef: number, attack: number): number {
+  const raw = Math.max(1, Math.round(
+    power * ARMY.damagePerStrength - partyDef * ARMY.damageAbsorbedPerDefence));
+  if (attack < power) return raw; // driven off: they had all the time they needed
+  return Math.max(1, Math.round(raw * Math.min(1, power / Math.max(1, attack))));
 }
 
 /**
@@ -360,20 +379,23 @@ export function attemptGate(
   const supplies = gateSupplies(ruinId);
   const block = gateBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) {
-    return { result: block, attack: 0, power, hoard: {}, supplies };
+    return { result: block, attack: 0, power, hoard: {}, supplies, losses: [] };
   }
   pay(state.city.wallet, supplies);
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const party = partyOf(state, committed, heroIds);
   const attack = effectiveAttack(party, guard.threat);
+  // The garrison swings back either way, and the dead are gone for good.
+  const losses = takeCasualties(
+    state, committed, gateDamage(power, partyStats(party).def, attack));
   if (attack < power) {
-    return { result: 'Repelled', attack, power, hoard: {}, supplies };
+    return { result: 'Repelled', attack, power, hoard: {}, supplies, losses };
   }
   const hoard = markGateCleared(state, ruinId);
   // The fight taught the party something whether or not the garrison was
   // holding anything, and a tier-5 gate teaches more than the Barrow's.
   addHeroXp(state, RUINS[ruinId].tier);
-  return { result: 'Cleared', attack, power, hoard, supplies };
+  return { result: 'Cleared', attack, power, hoard, supplies, losses };
 }
 
 /** What the room sheet shows before the player commits: the threat is always
@@ -390,6 +412,9 @@ export interface GatePreview {
   /** True when the party already beats the gate on paper. A shortfall warns,
    *  it never blocks. */
   enough: boolean;
+  /** Soldiers this attempt is expected to cost — the price of the fight,
+   *  shown before it is paid. */
+  losses: Array<{ unitId: UnitId; count: number }>;
 }
 
 export function previewGate(
@@ -404,15 +429,17 @@ export function previewGate(
   const attack = effectiveAttack(party, guard.threat);
   const enemy = gateFormation(ruinId);
   const power = formationPower(enemy);
+  const stats = partyStats(party);
   return {
     ruinId,
     threat: guard.threat,
     enemy,
     power,
     attack,
-    stats: partyStats(party),
+    stats,
     supplies: gateSupplies(ruinId),
     enough: attack >= power,
+    losses: casualtiesFor(committed, gateDamage(power, stats.def, attack)),
   };
 }
 

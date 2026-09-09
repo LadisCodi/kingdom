@@ -9,7 +9,7 @@
 // unit of which comes home when the gate falls. There is no room reward and
 // no loot table: the ruin behind it is the prize.
 
-import { RUINS } from '../sim/data/definitions';
+import { RUINS, UNITS } from '../sim/data/definitions';
 import type { Game } from '../game';
 import { renderBattleSheet, type BattleView } from './battleSheet';
 import { el, formatDuration } from './format';
@@ -38,6 +38,11 @@ export function renderGateSheet(game: Game): HTMLElement {
   }
 
   const hoard = Object.entries(gate?.hoard ?? {}).filter(([, n]) => n > 0);
+  // What the fight is expected to cost in bodies, spelled out before it is
+  // paid — the same rule the supplies follow.
+  const losses = preview.losses
+    .map((l) => `${l.count} ${UNITS[l.unitId].name}${l.count === 1 ? '' : 's'}`)
+    .join(', ');
   if (hoard.length > 0) {
     info.push(el('div', { class: 'bt-info-line is-soft' },
       'Cleared, every unit of what they took comes home.'));
@@ -63,8 +68,14 @@ export function renderGateSheet(game: Game): HTMLElement {
       ? 'Everything they took comes home with it.'
       : `The way into ${ruin.name}, and its ${ruin.maxDepth} depths.`,
     actionLabel: 'Clear the gate',
-    actionNote: 'Supplies are spent whether you win or lose. Nobody dies, and '
-      + 'you can come back as many times as you like.',
+    // A garrison fights back. The screen says what the attempt costs before
+    // it is made: supplies, and soldiers, win or lose.
+    actionNote: losses === ''
+      ? 'Supplies are spent whether you win or lose, and so are soldiers — a '
+        + 'garrison fights back. You can come back as many times as you like.'
+      : `Expect to lose about ${losses}, win or lose — a garrison fights back. `
+        + 'The supplies go either way too, and you can come back as many times '
+        + 'as you like.',
     onFight: () => game.doClearGate(),
     blocked: game.gateBlockText(),
   };

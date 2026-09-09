@@ -45,8 +45,13 @@ and the army cap; hero slots one free, the rest Gems
   full squad is the ceiling, never the entry price — a player with eleven
   Archers sends eleven.
 - `hp_pool = count × hp_unit`; `alive = ceil(hp_pool / hp_unit)`.
-- **No permanent casualties.** Troops are restored in full when the fight ends,
-  win or lose. HP does not carry between rooms.
+- **The resolver keeps no casualties.** Hit points are spent inside a fight
+  and restored when it ends, win or lose; HP does not carry between rooms.
+- **What an ATTEMPT costs is the caller's rule, not the resolver's.** A room
+  charges supplies ([`11-expeditions.md`](11-expeditions.md) §5); **a gate
+  charges supplies and soldiers, win or lose**
+  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5) — a garrison
+  fights back, and that is the one place a fight is paid for in bodies.
 
 ## 5. Unit stats — Tier 1
 
@@ -290,7 +295,7 @@ The co-op siege on the world map is [`15-social.md`](15-social.md) §6.
 - Heroes inside troop slots, or bonuses to non-matching types
 - Villains with levels or ascension — their stats are authored
 - Villain buffs crossing sides
-- Permanent casualties, healing timers, permanent garrisons
+- Casualties *inside* the resolver, healing timers, permanent garrisons
 - RNG in resolution
 - Draws
 
