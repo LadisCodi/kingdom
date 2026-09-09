@@ -3620,6 +3620,86 @@
       "rewardMana": 0
     },
     {
+      "id": "ArmedMen",
+      "name": "Armed men",
+      "description": "There is a barrow west of your fields, and it is not empty. Research Warriors.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Warrior",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 220
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 1,
+      "rewardMana": 0
+    },
+    {
+      "id": "Mustered",
+      "name": "Mustered",
+      "description": "Build a Barracks. You will need Stone — there is rock to the east.",
+      "goalType": "BuildDistrict",
+      "goalTarget": "Barracks",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 350
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 1,
+      "rewardMana": 0
+    },
+    {
+      "id": "FirstSoldier",
+      "name": "First soldier",
+      "description": "Train your first soldier.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 350
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 1,
+      "rewardMana": 0
+    },
+    {
+      "id": "FirstSummon",
+      "name": "A hero answers",
+      "description": "Summon at the banner. The first call is free.",
+      "goalType": "OwnHeroes",
+      "goalTarget": null,
+      "goalAmount": 2,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 150
+      },
+      "rewardGems": 0,
+      "rewardStardust": 20,
+      "rewardKnowledge": 1,
+      "rewardMana": 0
+    },
+    {
+      "id": "DriveThemOut",
+      "name": "Drive them out",
+      "description": "Orcs hold the mouth of the Hollow Barrow, and they are counting down. Clear the gate.",
+      "goalType": "ClearGarrisons",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 1,
+      "rewardMana": 0
+    },
+    {
       "id": "OldStones",
       "name": "Old stones",
       "description": "Claim the shrine east of the Townhall. It will hold your magic.",
@@ -3713,86 +3793,6 @@
       "rewardGems": 0,
       "rewardStardust": 0,
       "rewardKnowledge": 4,
-      "rewardMana": 0
-    },
-    {
-      "id": "ArmedMen",
-      "name": "Armed men",
-      "description": "There is a barrow west of your fields, and it is not empty. Research Warriors.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Warrior",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 220
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "Mustered",
-      "name": "Mustered",
-      "description": "Build a Barracks. You will need Stone — there is rock to the east.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Barracks",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 350
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "FirstSoldier",
-      "name": "First soldier",
-      "description": "Train your first soldier.",
-      "goalType": "TrainArmy",
-      "goalTarget": null,
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 350
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "FirstSummon",
-      "name": "A hero answers",
-      "description": "Summon at the banner. The first call is free.",
-      "goalType": "OwnHeroes",
-      "goalTarget": null,
-      "goalAmount": 2,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 150
-      },
-      "rewardGems": 0,
-      "rewardStardust": 20,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "DriveThemOut",
-      "name": "Drive them out",
-      "description": "Orcs hold the mouth of the Hollow Barrow, and they are counting down. Clear the gate.",
-      "goalType": "ClearGarrisons",
-      "goalTarget": null,
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 250
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
       "rewardMana": 0
     },
     {

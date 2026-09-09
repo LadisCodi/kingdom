@@ -78,11 +78,25 @@ describe('the quest chain', () => {
                                                   //   made there be one. Research,
                                                   //   THEN build — the same shape
                                                   //   as Saws -> TheSawmill.
-      'FurtherAfield', 'OldStones', 'Attuned',    // 28-30 explore, claim the shrine
-      'Mapmakers', 'Surveyors',                   // 31-32 exploration becomes a system
-      'Highlands', 'PutToSea',                    // 33-34 the terrain gates
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 35-37 something worth killing
-      'FirstSummon', 'IntoTheDark',               // 38-39 a hero, and the first depth
+      'FurtherAfield',                            // 28   the shrine and the Barrow
+                                                  //   come into view — and
+                                                  //   FINDING the Barrow starts
+                                                  //   its gate's thirty minutes
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 29-31 something worth killing
+      'FirstSummon',                              // 32   a hero, who is mandatory
+      'DriveThemOut',                             // 33   THE FIRST FIGHT, on a
+                                                  //   clock the reveal started.
+                                                  //   It sits five beats after
+                                                  //   the discovery on purpose:
+                                                  //   anything between them is
+                                                  //   time the garrison spends
+                                                  //   raiding a city that cannot
+                                                  //   answer yet
+      'OldStones', 'Attuned',                     // 34-35 claim the shrine
+      'Mapmakers', 'Surveyors',                   // 36-37 exploration becomes a system
+      'Highlands', 'PutToSea',                    // 38-39 the terrain gates
+      'IntoTheDark',                              // 40   the first depth, behind
+                                                  //   the gate that fell at 33
     );
 
     // 40+: the rest of the city economy the tutorial defers, then the long game.
