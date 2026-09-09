@@ -280,8 +280,16 @@
 /* The line, as faces rather than a number: what you are waiting for, not just
  * how many. It scrolls rather than wrapping, so a long queue never pushes the
  * Train button off the card. */
+/* RIGHT TO LEFT: the batch being worked on sits at the right end, hard against
+   the bar's own end, and the waiting ones queue away to its left — the shape a
+   line of people has when you are standing at the front of it.
+   `row-reverse` rather than a reversed array, so the DOM keeps the head of the
+   line first: that is the order a screen reader should hear it in, and it is
+   also what puts the ACTIVE batch in view when a long queue overflows, since
+   a reversed flex container starts scrolled to its own start. */
 .tr-queue {
   display: flex;
+  flex-direction: row-reverse;
   gap: 5px;
   overflow-x: auto;
   padding-bottom: 2px;
