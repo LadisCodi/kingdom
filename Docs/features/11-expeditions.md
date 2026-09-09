@@ -86,13 +86,16 @@ own state, distinct from *locked*. Depths 4–5 sit behind Guild 8+.
 2. Room sheet shows threat (if Scout unlocked), `power_req` vs. party power,
    supply cost.
 3. Compose party — hero mandatory ([`combat.md`](combat.md)).
-4. Deduct supplies. Enter. Resolve the fight.
+4. Deduct supplies. Enter. Resolve the fight. Take the casualties.
 5. **Cleared:** grant rewards, mark room, advance frontier.
-   **Failed:** nothing granted, nothing else deducted, room stays unclaimed.
+   **Failed:** nothing granted, room stays unclaimed.
 
 Rules:
 
 - Supplies are deducted on entry and **never refunded**.
+- **The room fights back: the attempt costs soldiers, win or lose, and the
+  dead are gone** ([`combat.md`](combat.md) §4). Supplies and bodies are the
+  whole price — nothing the player has banked is ever taken.
 - A power shortfall **warns, never blocks**.
 - No attempt cap, no cooldown.
 - Party HP does not carry between rooms.

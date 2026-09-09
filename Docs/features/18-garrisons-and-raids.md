@@ -146,16 +146,9 @@ take = floor( min(base, banked × take_fraction_max) )
   - **Win:** the gate is cleared, its counter stops, its hoard is paid, and
     `Depth 1 · Room 1` becomes the frontier.
   - **Lose:** the supplies are gone and the gate stands.
-- **A GARRISON FIGHTS BACK: the attempt costs soldiers, win or lose.** The
-  dead are gone for good — the one place in the game where a fight has
-  permanent casualties ([`combat.md`](combat.md) §4).
-  - The damage is the gate's power against the party's defence, the same
-    arithmetic a depth uses, spread across the committed squads by their share
-    of the party's hit points. Only whole troops die, and never fewer than one.
-  - **A rout costs less than a repulse.** A party that wins takes the damage
-    in proportion to how outmatched the garrison was, so bringing more than
-    enough buys fewer funerals as well as a win; a party that is driven off
-    pays it in full.
+- **The attempt costs soldiers, win or lose**, by the rule every fight
+  follows ([`combat.md`](combat.md) §4): the gate's power against the party's
+  defence, and the dead are gone for good.
   - Heroes are never among the dead: a hero can fall in a fight and is whole
     when it ends ([`10-heroes.md`](10-heroes.md) §2.3).
   - **The screen says the price before it is paid** — the expected losses sit

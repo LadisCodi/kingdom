@@ -106,8 +106,8 @@ describe('entering a room', () => {
     expect(game.expeditionBlock(BARROW)).toBeNull();
   });
 
-  it('spends the supplies on the way in, and nothing else, when it goes badly', () => {
-    const game = freshPresenter(ready({ Warrior: 1 }));
+  it('spends supplies and soldiers on the way in, and nothing banked', () => {
+    const game = freshPresenter(ready({ Warrior: 20 }));
     game.openExpedition(BARROW);
     const preview = game.expeditionPreview()!;
     expect(preview.enough).toBe(false);
@@ -117,18 +117,28 @@ describe('entering a room', () => {
     expect(game.ruinProgress(BARROW).cleared).toBe(0); // the room is still there
     expect(getWallet(game.state.city.wallet, 'Food'))
       .toBe(food - (preview.supplies.Food ?? 0));
-    // A room charges supplies, never bodies — that is the gate's rule, not
-    // this one (Docs/features/combat.md §4).
-    expect(game.state.army).toHaveLength(army);
+    // The room fights back, and the dead do not come home
+    // (Docs/features/combat.md §4).
+    expect(game.state.army.length).toBeLessThan(army);
   });
 
-  it('keeps every soldier when it goes well, too', () => {
+  it('costs soldiers when it goes well, too, and re-forms the board', () => {
     const game = freshPresenter(ready(HOST));
     game.openExpedition(BARROW);
     const army = game.state.army.length;
     game.doLaunchExpedition();
     expect(game.ruinProgress(BARROW).cleared).toBe(1);
-    expect(game.state.army).toHaveLength(army);
+    expect(game.state.army.length).toBeLessThan(army);
+    // The squads on the board came down with the roster, so the next room is
+    // enterable without the player touching a slot.
+    const roster = game.availableTroops();
+    const board = game.expeditionParty
+      .reduce((sum, s) => sum + s.count, 0);
+    expect(board).toBe(game.state.army.length);
+    for (const slot of game.expeditionParty) {
+      expect(slot.count).toBeLessThanOrEqual(roster[slot.unitId]);
+    }
+    expect(game.expeditionLaunchBlock()).toBeNull();
   });
 
   it('clearing the last room of a depth opens the next one', () => {

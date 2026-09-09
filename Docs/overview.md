@@ -146,8 +146,11 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
 - Rooms are cleared **in order and never replayed**. Clearing the last room of
   a depth opens the next one.
 - **A room pays the moment it falls**, so nothing is ever carried and nothing
-  can be lost on the way home. A room that beats the party costs the supplies
-  and nothing else, and it is still there to try again.
+  can be lost on the way home.
+- **A fight costs soldiers, win or lose, and the dead do not come back.**
+  Supplies and bodies are the whole price of an attempt; a room that beats the
+  party takes nothing the player has banked, and it is still there to try
+  again.
 
 > **Enter the room, or go and train?**
 

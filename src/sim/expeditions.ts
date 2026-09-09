@@ -221,15 +221,17 @@ export interface GateReport {
 }
 
 /**
- * What the garrison deals back.
+ * What the enemy deals back, in any fight — a gate or a room.
  *
- * Its power against the party's defence, the same arithmetic a depth uses —
- * and then **a rout costs less than a repulse**: a party that beats the gate
- * takes it in proportion to how outmatched the garrison was, so bringing more
- * than enough buys fewer funerals as well as a win. Bringing exactly enough
- * pays the full price.
+ * Its power against the party's defence, and then **a rout costs less than a
+ * repulse**: a party that wins takes it in proportion to how outmatched the
+ * enemy was, so bringing more than enough buys fewer funerals as well as a
+ * win. Bringing exactly enough pays the full price.
+ *
+ * **The dead do not come back.** Every fight is paid for in bodies, win or
+ * lose ([`combat.md`](../../Docs/features/combat.md) §4).
  */
-export function gateDamage(power: number, partyDef: number, attack: number): number {
+export function battleDamage(power: number, partyDef: number, attack: number): number {
   const raw = Math.max(1, Math.round(
     power * ARMY.damagePerStrength - partyDef * ARMY.damageAbsorbedPerDefence));
   if (attack < power) return raw; // driven off: they had all the time they needed
@@ -265,7 +267,7 @@ export function attemptGate(
   const attack = effectiveAttack(party, guard.threat);
   // The garrison swings back either way, and the dead are gone for good.
   const losses = takeCasualties(
-    state, committed, gateDamage(power, partyStats(party).def, attack));
+    state, committed, battleDamage(power, partyStats(party).def, attack));
   if (attack < power) {
     return { result: 'Repelled', attack, power, hoard: {}, supplies, losses };
   }
@@ -317,7 +319,7 @@ export function previewGate(
     stats,
     supplies: gateSupplies(ruinId),
     enough: attack >= power,
-    losses: casualtiesFor(committed, gateDamage(power, stats.def, attack)),
+    losses: casualtiesFor(committed, battleDamage(power, stats.def, attack)),
   };
 }
 
@@ -437,9 +439,12 @@ export interface RoomReport {
   attack: number;
   power: number;
   supplies: Wallet;
-  /** What the room paid. Empty on a repulse: a failed room grants nothing and
-   *  deducts nothing beyond the supplies (§5). */
+  /** What the room paid. Empty on a repulse: a failed room grants nothing
+   *  beyond what the fight itself cost (§5). */
   wallet: Wallet;
+  /** Who did not come back. The enemy fights: a room costs soldiers whether
+   *  it falls or not (combat.md §4). */
+  losses: Array<{ unitId: UnitId; count: number }>;
   heroXp: number;
   fragments: number;
   /** Set when this room was the last of its depth. */
@@ -454,7 +459,10 @@ export interface RoomReport {
  * The fight resolves here and now — there is no journey to wait out, and
  * nothing is left in flight when this returns. Cleared: the room pays, the
  * frontier advances, and a depth that runs out opens the next one. Repelled:
- * the supplies are gone and the same room is still there.
+ * the same room is still there.
+ *
+ * **Either way the fallen are gone.** Supplies and soldiers are what an
+ * attempt costs; nothing the player already banked is ever taken.
  */
 export function enterRoom(
   state: GameState,
@@ -467,7 +475,7 @@ export function enterRoom(
   const at = frontier(state, ruinId);
   const empty: RoomReport = {
     result: 'Cleared', depth: at.depth, room: at.room, attack: 0,
-    power: roomPower(ruinId, at.depth, at.room), supplies: {},
+    power: roomPower(ruinId, at.depth, at.room), supplies: {}, losses: [],
     wallet: {}, heroXp: 0, fragments: 0, depthCompleted: false, artifact: null,
   };
   const block = roomBlock(state, map, ruinId, heroIds, slots, artifactId);
@@ -482,9 +490,13 @@ export function enterRoom(
   const party = partyOf(state, committed, heroIds, artifact);
   const power = roomPower(ruinId, at.depth, at.room);
   const outcome = resolveRoom(party, power, RUINS[ruinId].affinity);
+  // What lives in the room swings back, and the dead are gone for good —
+  // win or lose, the same rule the gate follows (combat.md §4).
+  const losses = takeCasualties(
+    state, committed, battleDamage(power, partyStats(party).def, outcome.attack));
   if (!outcome.cleared) {
     return {
-      ...empty, result: 'Repelled', attack: outcome.attack, power, supplies,
+      ...empty, result: 'Repelled', attack: outcome.attack, power, supplies, losses,
     };
   }
 
@@ -534,6 +546,7 @@ export function enterRoom(
     attack: outcome.attack,
     power,
     supplies,
+    losses,
     wallet: reward.wallet,
     heroXp: reward.heroXp,
     fragments: reward.fragments,
@@ -566,6 +579,9 @@ export interface RoomPreview {
   matchup: number;
   worstThreat: UnitId | 'Any';
   supplies: Wallet;
+  /** Soldiers this attempt is expected to cost — the price of the fight,
+   *  known before it is paid. */
+  losses: Array<{ unitId: UnitId; count: number }>;
   reward: { wallet: Wallet; heroXp: number; fragments: number };
   /** True when the party already beats the room on paper. A shortfall warns,
    *  it never blocks (§5). */
@@ -588,6 +604,7 @@ export function previewRoom(
   const enemy = roomFormation(ruinId, at.depth, at.room);
   const power = formationPower(enemy);
   const attack = effectiveAttack(party, affinity);
+  const stats = partyStats(party);
   return {
     ruinId,
     depth: at.depth,
@@ -600,10 +617,11 @@ export function previewRoom(
     power,
     threat: affinity,
     attack,
-    stats: partyStats(party),
+    stats,
     matchup: matchupAgainst(party, affinity),
     worstThreat: worstThreatFor(party, affinity),
     supplies: supplyCost(state, ruinId, at.depth, heroIds),
+    losses: casualtiesFor(committed, battleDamage(power, stats.def, attack)),
     reward: roomReward(state, ruinId, at.depth, at.room),
     enough: attack >= power,
   };

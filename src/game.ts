@@ -2038,12 +2038,16 @@ export class Game {
       });
     } else if (report.result === 'Repelled') {
       playSfx('error');
-      this.toast('Driven off. The supplies are gone — come back stronger.');
+      const fallen = report.losses.reduce((sum, l) => sum + l.count, 0);
+      this.toast(fallen === 0
+        ? 'Driven off. The supplies are gone — come back stronger.'
+        : `Driven off, and ${fallen} did not come home. Come back stronger.`);
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(gateSupplies(ruinId)) as CurrencyId[]);
     } else {
       this.toast(GATE_BLOCK_TEXT[report.result]);
     }
+    this.reconcileParty();
     this.notify();
   }
 
@@ -2054,6 +2058,20 @@ export class Game {
   // here is a stepper: the player picks a TYPE and the game works out the
   // count, which is the whole difference between composing a party and doing
   // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
+
+  /**
+   * Put the board back in step with the roster.
+   *
+   * A fight kills soldiers, so the squads standing in the slots can outrun
+   * what is left at home. Clamping here rather than refusing at the button is
+   * the honest reading: the player did not change their mind, the army did.
+   */
+  private reconcileParty(): void {
+    const roster = availableRoster(this.state);
+    this.expeditionParty = this.expeditionParty
+      .map((slot) => ({ ...slot, count: Math.min(slot.count, roster[slot.unitId]) }))
+      .filter((slot) => slot.count > 0);
+  }
 
   /**
    * Troop slots on the board — all of them, always.
@@ -2278,13 +2296,18 @@ export class Game {
       this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty,
       this.expeditionArtifact,
     );
+    // The dead are off the roster now, so the squads on the board have to
+    // come back down to what is left of them.
+    this.reconcileParty();
+    const fallen = report.losses.reduce((sum, l) => sum + l.count, 0);
+    const cost = fallen === 0 ? '' : `, ${fallen} lost`;
     if (report.result === 'Cleared') {
       playSfx(report.depthCompleted ? 'questComplete' : 'quest');
       const paid = Object.entries(report.wallet)
         .filter(([, n]) => n > 0).map(([c, n]) => `${n} ${c}`).join(', ');
       this.toast(report.depthCompleted
-        ? `Depth ${report.depth} is yours — ${paid}`
-        : `Room ${report.room} cleared — ${paid}`);
+        ? `Depth ${report.depth} is yours — ${paid}${cost}`
+        : `Room ${report.room} cleared — ${paid}${cost}`);
       if (report.artifact !== null) {
         const relic = ARTIFACTS[report.artifact];
         this.queueBanner({
@@ -2306,7 +2329,9 @@ export class Game {
       }
     } else if (report.result === 'Repelled') {
       playSfx('error');
-      this.toast('Driven back. The supplies are gone — try again, or bring more.');
+      this.toast(fallen === 0
+        ? 'Driven back. The supplies are gone — try again, or bring more.'
+        : `Driven back, and ${fallen} did not come home. Try again, or bring more.`);
     } else if (report.result === 'NotEnoughSupplies') {
       this.shake(Object.keys(report.supplies) as CurrencyId[]);
     } else {

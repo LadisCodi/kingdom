@@ -310,14 +310,48 @@ describe('entering a room', () => {
 
   it('advances the frontier one room, in order, and never replays one', () => {
     const state = readyToDelve({ Warrior: 60 });
-    enterRoom(state, map, BARROW, ['Warden'], company);
+    // The board is re-formed between attempts, because the first one killed
+    // some of it: the same squad twice is a party the city no longer has.
+    const whatIsLeft = () => [{ unitId: 'Warrior' as UnitId, count: state.army.length }];
+    enterRoom(state, map, BARROW, ['Warden'], whatIsLeft());
     expect(frontier(state, BARROW)).toEqual({ depth: 1, room: 2, done: false });
-    enterRoom(state, map, BARROW, ['Warden'], company);
+    enterRoom(state, map, BARROW, ['Warden'], whatIsLeft());
     expect(frontier(state, BARROW)).toEqual({ depth: 1, room: 3, done: false });
     expect(roomsCleared(state, BARROW)).toBe(2);
   });
 
-  it('costs the supplies and nothing else when the party is beaten', () => {
+  it('costs soldiers, win or lose, and the fallen never come back', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const won = enterRoom(state, map, BARROW, ['Warden'], company);
+    expect(won.result).toBe('Cleared');
+    const lostWinning = won.losses.reduce((sum, l) => sum + l.count, 0);
+    expect(lostWinning).toBeGreaterThan(0);
+    expect(state.army).toHaveLength(60 - lostWinning);
+
+    // …and a beating costs more than a win, because a party that is driven
+    // off gives the enemy all the time it needs.
+    const beaten = readyToDelve({ Warrior: 2 });
+    openRuin(beaten, 'StarObservatory');
+    reveal(beaten, [RUINS.StarObservatory.location]);
+    fund(beaten, { Gold: 20_000, Food: 5000, Stone: 2000 });
+    const report = enterRoom(beaten, map, 'StarObservatory', ['Warden'],
+      [{ unitId: 'Warrior', count: 2 }]);
+    expect(report.result).toBe('Repelled');
+    expect(report.losses.reduce((sum, l) => sum + l.count, 0)).toBeGreaterThan(0);
+    expect(beaten.army.length).toBeLessThan(2);
+  });
+
+  it('says what an attempt will cost in bodies before it is made', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const preview = previewRoom(state, BARROW, ['Warden'], company);
+    const expected = preview.losses.reduce((sum, l) => sum + l.count, 0);
+    expect(expected).toBeGreaterThan(0);
+    const report = enterRoom(state, map, BARROW, ['Warden'], company);
+    expect(report.losses).toEqual(preview.losses);
+    expect(state.army).toHaveLength(60 - expected);
+  });
+
+  it('costs the supplies and nothing the player has banked when beaten', () => {
     // Two soldiers against the first room of the deepest ruin.
     const state = readyToDelve({ Warrior: 2 });
     openRuin(state, 'StarObservatory');

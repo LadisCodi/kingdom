@@ -31,7 +31,7 @@ import { spriteUrl } from '../render/sprites';
 import type { CurrencyId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { action, btn, iconEl, sheet } from './kit';
+import { action, iconEl, sheet } from './kit';
 
 /** Everything the screen needs that is not the player's own army. */
 export interface BattleView {
@@ -49,9 +49,6 @@ export interface BattleView {
     squads: readonly EnemySquad[];
     power: number;
     threat: UnitId | 'Any';
-    /** What the box says under the squads. A gate's threat is a fact; a
-     *  depth's is a bias, and the line has to be able to say which. */
-    note?: string;
   };
   /** The party's attack after the matchup, and what it is up against. */
   attack: number;
@@ -73,9 +70,9 @@ export interface BattleView {
    */
   extras?: HTMLElement[];
   actionLabel: string;
-  /** The small print under the button. Each kind of fight has its own: a gate
-   *  costs only its supplies, a delve costs half a haul it has not banked. */
-  actionNote: string;
+  /** The small print under the button, when this kind of fight has something
+   *  to say that the board does not already show. Most do not. */
+  actionNote?: string;
   onFight: () => void;
   /** Why the fight cannot start. A power SHORTFALL is never one of these: it
    *  warns and lets the player go anyway. */
@@ -109,12 +106,9 @@ function enemyBox(view: BattleView): HTMLElement {
     row.append(el('div', { class: 'bt-slot is-filled' }, squadFace(squad.unitId, squad.count)));
   }
   box.append(row);
-  // The type is the whole decision this screen asks the player to make, so it
-  // is spelled out rather than left to four similar silhouettes.
-  box.append(el('div', { class: 'bt-army-note' }, view.enemy.note ?? (
-    view.enemy.threat === 'Any'
-      ? 'A mixed warband — no single type answers it.'
-      : `${view.enemy.threat}s. Bring what beats them.`)));
+  // No line under the squads: the faces say what is standing there and the
+  // number on the right says what it is worth. Prose that restates both is
+  // what the screen was cut down to remove.
   return box;
 }
 
@@ -206,9 +200,6 @@ function partyBox(game: Game, view: BattleView): HTMLElement {
     troopSlots(game),
     el('div', { class: 'bt-army-label' }, 'Heroes'),
     heroSlots(game),
-    el('div', { class: 'bt-army-note' }, view.enough
-      ? 'Enough to win it.'
-      : 'Short of them — you may still go, and lose only the supplies.'),
   );
 }
 
@@ -249,11 +240,10 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     have: (c) => game.walletValue(c),
     disabledReason: view.blocked ?? undefined,
   }));
-  body.append(el('div', { class: 'bt-note' }, view.actionNote));
+  if (view.actionNote !== undefined) {
+    body.append(el('div', { class: 'bt-note' }, view.actionNote));
+  }
 
-  const close = btn({ label: 'Not yet', onClick: () => game.dismiss() });
-  close.setAttribute('data-own-close', '');
-  body.append(el('div', { class: 'bt-back' }, close));
-
+  // No second way out: the sheet's own knob, top right, is the way back.
   return sheet({ title: view.title, onClose: () => game.dismiss() }, body);
 }

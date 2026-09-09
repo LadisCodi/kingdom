@@ -45,13 +45,21 @@ and the army cap; hero slots one free, the rest Gems
   full squad is the ceiling, never the entry price — a player with eleven
   Archers sends eleven.
 - `hp_pool = count × hp_unit`; `alive = ceil(hp_pool / hp_unit)`.
-- **The resolver keeps no casualties.** Hit points are spent inside a fight
-  and restored when it ends, win or lose; HP does not carry between rooms.
-- **What an ATTEMPT costs is the caller's rule, not the resolver's.** A room
-  charges supplies ([`11-expeditions.md`](11-expeditions.md) §5); **a gate
-  charges supplies and soldiers, win or lose**
-  ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5) — a garrison
-  fights back, and that is the one place a fight is paid for in bodies.
+- **Hit points do not carry between fights.** They are spent inside one and
+  reset when it ends; a squad's HP pool is its count times `hp_unit` every
+  time.
+- **EVERY FIGHT COSTS SOLDIERS, WIN OR LOSE. The dead are gone for good.**
+  What kills them is the enemy's power against the party's defence, spread
+  across the committed squads by their share of the party's hit points. Only
+  whole troops die, and never fewer than one.
+- **A rout costs less than a repulse.** A party that wins takes the damage in
+  proportion to how outmatched the enemy was, so bringing more than enough
+  buys fewer funerals as well as a win; a party that is driven off pays it in
+  full.
+- **What else an ATTEMPT costs is the caller's rule.** A room and a gate both
+  charge supplies on the way in ([`11-expeditions.md`](11-expeditions.md) §5,
+  [`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §5). Nothing the
+  player has already banked is ever taken.
 
 ## 5. Unit stats — Tier 1
 

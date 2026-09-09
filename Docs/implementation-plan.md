@@ -97,7 +97,7 @@ each has an answer, or has one waiting in a doc.
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue is **empty** since the Conjunction was retired — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
 | **H6** | **The dev primitive gallery does not show the newer UI primitives.** | — |
-| **H8** | **Two rank ladders price rules the room model retired.** `Bearers I–III` buys back part of a haul (`haulLoss`) and `Pathfinders I–III` hurries a depth's clock (`delveSpeed`); a room has neither — it pays the instant it falls, and a failed one grants nothing and deducts nothing ([`11`](features/11-expeditions.md) §5). Both stats are marked `retired` in `techEffectRules.ts`, which is what keeps the cards valid and legible while nothing reads them, and `tests/ladderEffects.test.ts` names the two ladders so the debt cannot be forgotten. **The fix is to re-point them in `?dev=tree`** — the tree is authored, not code. | [`11`](features/11-expeditions.md) §5 |
+| **H8** | **Two rank ladders price rules the room model retired.** `Bearers I–III` buys back part of a haul (`haulLoss`) and `Pathfinders I–III` hurries a depth's clock (`delveSpeed`); a room has neither — it pays the instant it falls, and a failed one takes nothing the player has banked ([`11`](features/11-expeditions.md) §5). Both stats are marked `retired` in `techEffectRules.ts`, which is what keeps the cards valid and legible while nothing reads them, and `tests/ladderEffects.test.ts` names the two ladders so the debt cannot be forgotten. **The fix is to re-point them in `?dev=tree`** — the tree is authored, not code. | [`11`](features/11-expeditions.md) §5 |
 | **H7** | **No new sounds.** Casting, claiming, clearing a room and taking a depth all reuse existing SFX. | [`audio-wishlist.md`](audio-wishlist.md) |
 
 ## 4. What is next, and what blocks it
@@ -575,9 +575,10 @@ depth and no haul to carry home or lose.
   been.
 - **What is asserted:** the tier ladder walked room by room at the worst
   matchup (24 troops take half the Barrow, 60 finish it, 600 still cannot
-  bottom the Observatory); a failed room grants nothing and deducts nothing
-  but the supplies; no room is replayable; a depth opens only when the one
-  before it runs out (`tests/expeditions.test.ts` 47,
+  bottom the Observatory); every room costs soldiers, win or lose, and the
+  preview says how many before the tap; a failed room takes nothing the
+  player has banked; no room is replayable; a depth opens only when the one
+  before it runs out (`tests/expeditions.test.ts` 49,
   `tests/expeditionFlow.test.ts` 18).
 - **Left open:** the Adventurers' Guild does not exist, so `guild_req` gates
   nothing yet and finishing a depth is the only key there is; the boss chest

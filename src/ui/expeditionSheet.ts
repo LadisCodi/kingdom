@@ -100,12 +100,6 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
   const bare = game.expeditionPreviewUnarmed();
   const relicAttack = bare === null ? 0 : preview.attack - bare.attack;
 
-  const matchup = preview.matchup > 1.05
-    ? `well matched against what lives here (×${preview.matchup.toFixed(2)})`
-    : preview.matchup < 0.95
-      ? `the wrong tools for this place (×${preview.matchup.toFixed(2)})`
-      : 'an even match against what lives here';
-
   // THE WIDGET: where the player is standing. A room is one fight and the
   // address is the whole of the context — how far in, how far left, and
   // whether the thing behind this door is the depth's boss.
@@ -137,15 +131,7 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
     sprite: ruin.sprite,
     glyph: ruin.glyph,
     info,
-    enemy: {
-      squads: preview.enemy,
-      power: preview.power,
-      threat: preview.threat,
-      // The ruin's bias is public; what this room drew is not, until the
-      // Guild's scouting exists to buy it (§3).
-      note: `${preview.threat === 'Any' ? 'A mixed warband' : `Mostly ${preview.threat}s`}`
-        + ` — this ruin's own. You are ${matchup}.`,
-    },
+    enemy: { squads: preview.enemy, power: preview.power, threat: preview.threat },
     attack: preview.attack,
     enough: preview.enough,
     supplies: preview.supplies,
@@ -162,10 +148,6 @@ export function renderExpeditionSheet(game: Game): HTMLElement {
       : 'Paid the moment the room falls — there is nothing to carry home.',
     extras: [artifactBand(game)],
     actionLabel: preview.isBoss ? 'Fight the boss' : 'Enter the room',
-    // Supplies are the whole price of an attempt: a room that goes badly
-    // grants nothing and deducts nothing else (§5).
-    actionNote: 'Supplies are spent on the way in, win or lose. Nothing else is '
-      + 'at risk — a room that beats you is still there to try again.',
     onFight: () => game.doLaunchExpedition(),
     blocked: game.expeditionLaunchBlock(),
   };

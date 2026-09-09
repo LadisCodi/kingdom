@@ -69,7 +69,7 @@ under the board.
 | Data | Battle name and place, a **dynamic band** for whatever this kind of fight has to say, the enemy squads and their power, the party's slots and its attack, supply cost, reward preview |
 | Elements | Two army boxes of the same shape — theirs cold, ours warm — each with its power on the right; the party's slots; the reward chips; one primary button |
 | States | Party over power · party under power (the box warns, the button still goes) · supplies unaffordable (the button blocks) |
-| Rules | A power shortfall **warns, never blocks**. Supplies are labelled as spent win or lose. **The enemy squads are what the fight is scored against** — the formation is derived from the authored budget and the budget is not shown |
+| Rules | A power shortfall **warns, never blocks**. **The enemy squads are what the fight is scored against** — the formation is derived from the authored budget and the budget is not shown. **The screen carries no prose that restates its own numbers**: the two armies' faces and their two power figures are the comparison, and the only way out is the sheet's own knob |
 
 **What each fight puts in the widget:**
 
