@@ -199,7 +199,8 @@ export interface CurrencyDef {
   start: number;
   /** Shown as a widget in the top resource bar. */
   primary: boolean;
-  /** The Market sells 1 unit for this much Gold; null = not sellable. */
+  /** What one unit is worth in Gold, for the cards that price it;
+   *  null = it has no Gold price at all. */
   goldValue: number | null;
 }
 
@@ -246,7 +247,7 @@ export const GOODS: Record<GoodId, GoodDef> = {
 
 export const GOOD_ORDER: readonly GoodId[] = Object.keys(GOODS) as GoodId[];
 
-// Object order = header widget order AND the Market's sell order.
+// Object order = header widget order.
 export const CURRENCIES: Record<CurrencyId, CurrencyDef> = {
   Gold: currency('city', balance.currencies.Gold),
   Food: currency('city', balance.currencies.Food),
@@ -406,7 +407,7 @@ export type AdjacencyStat = 'goldPerMinute' | 'workTime' | 'trainTime';
  * Who a rule's `neighbour` may name: one district, or a GROUP of them.
  *
  * Groups exist because the rules are written by kind — "a hall beside another
- * hall", "the Market beside a workshop" — and spelling those as directed pairs
+ * hall", "a producer beside a workshop" — and spelling those as directed pairs
  * costs twelve rows for the halls alone, plus a rewrite of the block every
  * time a building joins the kind. Membership is DERIVED from what a district
  * already is, so nothing is authored twice.
@@ -448,13 +449,13 @@ export const OFFLINE_CAP_HOURS = balance.offlineCapHours;
 export type QuestGoalType =
   | 'BuildDistrict' | 'UpgradeDistrict' | 'HoldResource' | 'ReachPopulation'
   | 'CompleteTech' | 'CompleteTechs' | 'AssignWorkers' | 'TrainArmy'
-  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature' | 'SellGoods'
+  | 'CollectResource' | 'CollectTaps' | 'DiscoverCells' | 'DiscoverFeature'
   | 'ClaimLandmarks' | 'ReachDepth' | 'ClearRuins' | 'ClearGarrisons' | 'OwnArtifacts'
   | 'OwnHeroes';
 
 export const RELATIVE_QUEST_TYPES: ReadonlySet<QuestGoalType> =
   new Set([
-    'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature', 'SellGoods',
+    'CollectResource', 'CollectTaps', 'DiscoverCells', 'DiscoverFeature',
   ]);
 
 export interface QuestDef {
@@ -585,9 +586,6 @@ export interface DistrictDef {
    *  building's own level and never re-expressed as a modifier. */
   extraUnitsPerDeliveryPerLevel: readonly number[];
   strikeSpeedPerLevel: readonly number[];
-  /** What a sold unit pays, by the level of the best Market in the city. A
-   *  multiplier, empty = 1.0 — the Market is the only building with one. */
-  salePricePerLevel: readonly number[];
   /** How many items may be queued at once, by level. Empty = not a workshop.
    *  A longer queue is a longer absence covered, never more goods per hour —
    *  that is the crew (Docs/plans/builder-30-days.md §2.2). */
@@ -694,15 +692,6 @@ const DISTRICT_CONTENT = {
     sprite: 'sawmill',
     harvestSources: ['Forest'],
     ...districtBalance(balance.districts.Sawmill),
-  },
-  Market: {
-    ...rules,
-    id: 'Market',
-    name: 'Market',
-    description: 'Trade surplus goods for Gold — tap it to open the trade screen.',
-    glyph: '🏪',
-    sprite: 'market',
-    ...districtBalance(balance.districts.Market),
   },
   Quarry: {
     ...rules,
@@ -840,7 +829,7 @@ const DISTRICT_CONTENT = {
 };
 
 export const BUILDABLE_DISTRICTS: DistrictId[] = [
-  'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks', 'Market',
+  'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks',
   'Sanctum',
   'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables', 'Infirmary',
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
@@ -1915,4 +1904,4 @@ export const GAME_VERSION = '0.1.0';
 // only — so there is no migrator; the bump exists so a build without hero
 // slots refuses a save that holds them rather than dropping what the player
 // paid Gems for.
-export const SAVE_VERSION = 41;
+export const SAVE_VERSION = 42;

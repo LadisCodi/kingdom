@@ -139,7 +139,7 @@ A `bonus` names its effects, and each is four fields:
   middle stage and an empty stack are the exact identity.
 - A technology may carry several effects; most carry one.
 - **A new kind of bonus is data.** "+5% gold income at Housing" and "+8% at
-  Market" are one stat with two targets — no new code. A new *number* is code:
+  the Townhall" are one stat with two targets — no new code. A new *number* is code:
   one registry entry plus the call site that owns it.
 
 ### 1.3 Planned nodes

@@ -63,7 +63,6 @@ import {
   watchedRefillsLeft,
 } from './sim/manaRefill';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
-import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
   availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
@@ -123,7 +122,7 @@ export type Mode =
  *  `tsc` — the only real gate this project has over the view layer — catches
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
-  | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
+  | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
   | 'reliquary' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
   | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
 
@@ -527,11 +526,6 @@ export class Game {
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
-        // Market: tapping the built Market opens its trade screen.
-        if (district?.definitionId === 'Market' && district.state === 'Built') {
-          this.setOverlay('market');
-          return true;
-        }
         // Housing: tapping fast-forwards tax collection (and opens the card).
         if (district && district.state === 'Built' &&
           districtCapacity(this.state, district) > 0) {
@@ -1382,17 +1376,6 @@ export class Game {
 
   // -------------------------------------------------------------- UI commands
 
-  doSell(c: CurrencyId, amount: number): void {
-    const { result, gold } = sellGoods(this.state, c, amount);
-    if (result === 'Sold') {
-      playSfx('coinSale');
-      const market = this.state.city.districts.find(
-        (d) => d.definitionId === 'Market' && d.state === 'Built');
-      if (market) this.floaters.add(market.location, `+${gold}`, 'Gold');
-    }
-    this.notify();
-  }
-
   doQueueTraining(): void {
     const result = trainUnit(this.state, 'Villager', this.now());
     if (result === 'NotEnoughResources') this.shake(['Food']);
@@ -1660,15 +1643,6 @@ export class Game {
         }
         break;
       }
-      case 'SellGoods':
-        if (hasMarket(this.state)) {
-          this.setUiHint('market');
-          overlay('market');
-        } else {
-          this.setUiHint('build:Market');
-          overlay('build');
-        }
-        break;
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
@@ -2799,10 +2773,6 @@ export class Game {
 
   residentsIn(district: District): number {
     return residentsOf(this.state, district);
-  }
-
-  marketPayout(c: CurrencyId, amount: number): number {
-    return salePayout(this.state, c, amount);
   }
 
   // --------------------------------------------------------- dragging a ghost

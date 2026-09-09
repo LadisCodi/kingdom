@@ -83,7 +83,7 @@ describe('the shipped tech tree', () => {
           const { id: district, level } = unlock.districtLevel;
           expect(DISTRICTS[district as 'Housing'].requiredTechPerLevel[level - 2]).toBe(id);
         } else if ('districtCount' in unlock) {
-          expect(DISTRICTS[unlock.districtCount as 'Market'].extraCountTech).toBe(id);
+          expect(DISTRICTS[unlock.districtCount as 'Housing'].extraCountTech).toBe(id);
         } else if ('unit' in unlock) {
           expect(UNITS[unlock.unit as 'Archer'].requiredTech).toBe(id);
         } else if ('harvest' in unlock) {

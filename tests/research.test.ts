@@ -261,12 +261,11 @@ describe('research slots', () => {
     const state = freshGame();
     state.player.wallet.Gems = 2500;
     fund(state, { Gold: 5000, Knowledge: 500 });
-    // Urban Planning asks for the row above it — Masonry AND the Market —
-    // and the Warrior is a first-row card of another book, so the two are
-    // independent. Agriculture would not do: Market's own chain already
-    // completes it.
-    completeTech(state, 'Market');
-    completeTech(state, 'Masonry');
+    // Urban Planning asks for the two cards on the row above it, and the
+    // Warrior is a first-row card of another book, so the two are
+    // independent.
+    completeTech(state, 'Sickles01');
+    completeTech(state, 'Reforesting01');
     buySlot(state);
     expect(startTech(state, 'UrbanPlanning', T0)).toBe('Started'); // 60s
     expect(startTech(state, 'Warrior', T0 + 5_000)).toBe('Started'); // 30s → done at 35s

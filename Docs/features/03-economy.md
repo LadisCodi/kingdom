@@ -1,7 +1,7 @@
-# 3 · The economy — currencies, taxes and the Market
+# 3 · The economy — currencies and taxes
 
-> **Scope.** Every currency and its job, where the city's Gold comes from, and
-> the Market. Mana is [`08-magic.md`](08-magic.md); Stardust and ingredients
+> **Scope.** Every currency and its job, and where the city's Gold comes from.
+> Mana is [`08-magic.md`](08-magic.md); Stardust and ingredients
 > are [`09-relics.md`](09-relics.md); Knowledge as a research clock is
 > [`07-research.md`](07-research.md).
 >
@@ -17,7 +17,7 @@
 
 | Currency | Source | Buys | Scope | On the plank? |
 |---|---|---|---|---|
-| **Gold** | housing taxes, **gold mountains**, quests, the Market | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
+| **Gold** | housing taxes, **gold mountains**, quests | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
 | **Food** | berries, game, shoals, crops | villagers, expedition supplies | city | yes |
 | **Wood** | forest | buildings | city | yes |
 | **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
@@ -43,8 +43,7 @@
   way every other price in the game does. Two rows rather than one because
   the two banners must be able to cost differently
   ([`10-heroes.md`](10-heroes.md) §6.1).
-- A key never reaches the plank and never reaches the Market: it has no gold
-  value, so nothing can trade it.
+- A key never reaches the plank: it is spent at the banner and nowhere else.
 - **Refined goods follow that rule**: Planks, Cut Stone, Iron and Runestone
   are a stockpile counter, not a wallet row
   ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §1).
@@ -168,24 +167,7 @@ A full pool buys about the same slice of progress at every stage:
 | 1 Sawmill L1, 3 workers, `TapPower` 0, pool 100 | 1 Wood | 100 Wood | **5.6 min** |
 | 30 workers, `TapPower` 10, pool 332 | 3 Wood | ~1,000 Wood | **5.5 min** |
 
-## 6. The Market
-
-- A buildable district gated behind the **Market** technology. No navbar
-  entry: tap the built Market to open it.
-- Arrives at onboarding steps 13–15.
-- Selling is instant: an amount selector (×1 / ×10 / ×100 / ×1000 / All), one
-  Sell per sellable currency, Gold on the spot.
-- Price: `floor(units × goldValue × (marketLevelBonus + 5% per MarketStall
-  level))`, where the Market's own level pays +3% a level to +27% at ten
-  ([`buildings.md`](buildings.md) §4.7). Two Markets do not stack: the better
-  one sets the price.
-- Three crates: **Food 1, Stone 2, Wood 3** Gold a unit.
-- The Market is not a sink: it converts a surplus into Gold. Gold buys
-  **Wonder levels**, which have no last one ([`16-wonders.md`](16-wonders.md)).
-- **Refined goods are not sellable here**, at any level
-  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §10).
-
-## 7. Where Gold goes
+## 6. Where Gold goes
 
 Flow: **housing taxes → Gold → fog, buildings and research**.
 
@@ -204,7 +186,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
   claims **527,000**, roughly 780,000 Gold of finite sink.
 - The only unbounded sink is Wonder levels ([`16-wonders.md`](16-wonders.md)).
 
-## 8. Dials, in the order to reach for them
+## 7. Dials, in the order to reach for them
 
 | Dial | Value | Key |
 |---|---|---|
@@ -217,7 +199,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `Currencies.gold_value` |
 | Adjacency rules | §3.1 | `Adjacency` sheet — `district`, `neighbor`, `stat`, `magnitude` |
 
-## 9. Deliberately not in this design
+## 8. Deliberately not in this design
 
 - Berries, Meat and Fish as wallet rows.
 - A currency-equivalence engine: cheapest-first payment order, change-making,
@@ -227,7 +209,6 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 - Generators and vaults; building storage of any kind.
 - Silver.
 - A library district or a scholar assignment as Knowledge sources.
-- A drip-sell queue, sale timers or a Gem rush at the Market.
 - A Townhall tap that hurries villager training.
 
 **Open questions:** OQ-46 in [`../open-questions.md`](../open-questions.md).

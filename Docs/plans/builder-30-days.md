@@ -9,7 +9,8 @@
 > [`../open-questions.md`](../open-questions.md).
 >
 > **Status: steps 1–7 done; steps 8–11 are next and independent of each
-> other. Step 8 shrank on 2026-09-08 — the Reliquary is not a building.** Save version 31. The designs live in `features/` —
+> other. The Market left the game on 2026-09-09, so its half of step 2 and
+> its goods tab are void — read the rest as written. Step 8 shrank on 2026-09-08 — the Reliquary is not a building.** Save version 31. The designs live in `features/` —
 > [`18-harmony.md`](../features/18-harmony.md) for step 6,
 > [`buildings.md`](../features/buildings.md) §3.1 for step 7 — and §6–§7 below
 > are the record of how they landed.

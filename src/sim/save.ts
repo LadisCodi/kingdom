@@ -356,6 +356,50 @@ const MIGRATIONS: readonly Migration[] = [
       delete modules['kingdom.delves'];
     },
   },
+  {
+    // v42 — the Market left the game: the building, its technology and the
+    // three quests that named it. A save can be holding a built Market, a
+    // Market in the build queue, and a research or quest pointed at a card
+    // that no longer exists — and every one of those would be read as a
+    // district id the tables have no row for.
+    //
+    // So they are dropped rather than converted: there is nothing to convert
+    // them INTO. The plot the Market stood on is simply free again, which is
+    // the honest outcome of a building being retired, and the quest chain is
+    // shorter by three beats — `activeQuest` reads the index against the
+    // CURRENT chain, so a player past the Market beats lands on the same beat
+    // by name, and one standing on them lands on the beat that replaced them.
+    to: 42,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: any[] } | undefined)?.Cities?.[0];
+      if (city !== undefined) {
+        const markets = new Set<string>();
+        city.Districts = (city.Districts ?? []).filter((d: any) => {
+          if (d.DefinitionID !== 'Market') return true;
+          markets.add(d.UniqueID);
+          return false;
+        });
+        // A queue item points at a DISTRICT, and `QueueKinds` is a PARALLEL
+        // array — so a build or an upgrade of a Market goes with it, and both
+        // sides are filtered together or every later item changes kind.
+        const kinds: string[] = city.QueueKinds ?? [];
+        const keep: boolean[] = (city.QueueItems ?? [])
+          .map((q: any) => !markets.has(q.DistrictID));
+        city.QueueItems = (city.QueueItems ?? []).filter((_: unknown, i: number) => keep[i]);
+        if (kinds.length > 0) city.QueueKinds = kinds.filter((_, i) => keep[i]);
+        // A worker cannot be assigned to a Market, so nothing else in the
+        // city points at one.
+      }
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; Active?: any[] } | undefined;
+      if (research !== undefined) {
+        const dead = new Set(['Market', 'Guildhalls', 'MarketStallI', 'MarketStallII',
+          'MarketStallIII', 'MarketStallIV']);
+        research.Completed = (research.Completed ?? []).filter((id) => !dead.has(id));
+        research.Active = (research.Active ?? []).filter((a: any) => !dead.has(a?.ID));
+      }
+    },
+  },
 ];
 
 /** Bring `save` up to SAVE_VERSION in place, or return false if it cannot be.

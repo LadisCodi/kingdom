@@ -79,67 +79,42 @@
         {"stat":"harvestRecovery","op":"percent","value":-5,"target":{"harvest":"Forest"}}
       ]
     },
+    "UrbanPlanning": {
+      "name": "Urban Planning", "glyph": "🏘️", "kind": "unlock",
+      "tome": "Civics", "era": 1, "row": 6, "col": 1,
+      "requires": ["Sickles01", "Reforesting01"],
+      "gold": 200, "knowledge": 2, "seconds": 60,
+      "unlocks": [{"districtLevel":{"id":"Housing","level":2}}]
+    },
     "Masonry": {
       "name": "Masonry", "glyph": "🧱", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 6, "col": 0,
-      "requires": ["Sickles01"],
+      "tome": "Civics", "era": 1, "row": 7, "col": 1,
+      "requires": ["UrbanPlanning"],
       "gold": 100, "knowledge": 2, "seconds": 45,
       "unlocks": [{"district":"Quarry"}]
     },
-    "Market": {
-      "name": "Market", "glyph": "🤝", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 6, "col": 2,
-      "requires": ["Reforesting01"],
-      "gold": 150, "knowledge": 2, "seconds": 45,
-      "unlocks": [{"district":"Market"}]
+    "CarpentryI": {
+      "name": "Carpentry I", "glyph": "🧰", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 8, "col": 0,
+      "requires": ["Masonry"],
+      "gold": 60, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"buildTime","op":"percent","value":-5}
+      ]
     },
     "StonecuttingI": {
       "name": "Stonecutting I", "glyph": "🪨", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 7, "col": 0,
+      "tome": "Civics", "era": 1, "row": 8, "col": 1,
       "requires": ["Masonry"],
       "gold": 100, "knowledge": 1, "seconds": 20,
       "effects": [
         {"stat":"harvestUnitsPerStrike","op":"flat","value":1,"target":{"harvest":"Stone"}}
       ]
     },
-    "UrbanPlanning": {
-      "name": "Urban Planning", "glyph": "🏘️", "kind": "unlock",
-      "tome": "Civics", "era": 1, "row": 7, "col": 1,
-      "requires": ["Masonry", "Market"],
-      "gold": 200, "knowledge": 2, "seconds": 60,
-      "unlocks": [{"districtLevel":{"id":"Housing","level":2}}]
-    },
-    "MarketStallI": {
-      "name": "Market Stall I", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 7, "col": 2,
-      "requires": ["Market"],
-      "gold": 100, "knowledge": 1, "seconds": 20,
-      "effects": [
-        {"stat":"salePrice","op":"flat","value":0.05}
-      ]
-    },
-    "CarpentryI": {
-      "name": "Carpentry I", "glyph": "🧰", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 8, "col": 0,
-      "requires": ["StonecuttingI"],
-      "gold": 60, "knowledge": 1, "seconds": 20,
-      "effects": [
-        {"stat":"buildTime","op":"percent","value":-5}
-      ]
-    },
-    "WorkerLoadI": {
-      "name": "Worker Load I", "glyph": "🎒", "kind": "bonus",
-      "tome": "Civics", "era": 1, "row": 8, "col": 1,
-      "requires": ["UrbanPlanning"],
-      "gold": 200, "knowledge": 1, "seconds": 20,
-      "effects": [
-        {"stat":"workerStrikeUnits","op":"flat","value":1}
-      ]
-    },
     "TradeRoutesI": {
       "name": "Trade Routes I", "glyph": "⛵", "kind": "bonus",
       "tome": "Civics", "era": 1, "row": 8, "col": 2,
-      "requires": ["MarketStallI"],
+      "requires": ["Masonry"],
       "gold": 150, "knowledge": 1, "seconds": 20,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
@@ -148,16 +123,25 @@
     "TapPowerI": {
       "name": "Tap Power I", "glyph": "👆", "kind": "bonus",
       "tome": "Civics", "era": 1, "row": 9, "col": 0,
-      "requires": ["CarpentryI", "WorkerLoadI"],
+      "requires": ["CarpentryI"],
       "gold": 50, "knowledge": 1, "seconds": 20,
       "effects": [
         {"stat":"tapWorkSeconds","op":"percent","value":20}
       ]
     },
+    "WorkerLoadI": {
+      "name": "Worker Load I", "glyph": "🎒", "kind": "bonus",
+      "tome": "Civics", "era": 1, "row": 9, "col": 1,
+      "requires": ["CarpentryI", "TradeRoutesI", "StonecuttingI"],
+      "gold": 200, "knowledge": 1, "seconds": 20,
+      "effects": [
+        {"stat":"workerStrikeUnits","op":"flat","value":1}
+      ]
+    },
     "QuickHandsI": {
       "name": "Quick Hands I", "glyph": "⚡", "kind": "bonus",
       "tome": "Civics", "era": 1, "row": 9, "col": 2,
-      "requires": ["TradeRoutesI", "WorkerLoadI"],
+      "requires": ["TradeRoutesI"],
       "gold": 75, "knowledge": 1, "seconds": 20,
       "effects": [
         {"stat":"autoTapCooldown","op":"flat","value":-0.05}
@@ -256,15 +240,6 @@
         {"stat":"buildTime","op":"percent","value":-5}
       ]
     },
-    "MarketStallII": {
-      "name": "Market Stall II", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 2, "row": 14, "col": 2,
-      "requires": ["IronPicksII", "QuickHandsII"],
-      "gold": 525, "knowledge": 2, "seconds": 330,
-      "effects": [
-        {"stat":"salePrice","op":"flat","value":0.05}
-      ]
-    },
     "Infirmary": {
       "name": "Infirmary", "glyph": "⛑️", "kind": "unlock",
       "tome": "Civics", "era": 2, "row": 15, "col": 0,
@@ -275,7 +250,7 @@
     "WorkerLoadII": {
       "name": "Worker Load II", "glyph": "🎒", "kind": "bonus",
       "tome": "Civics", "era": 2, "row": 15, "col": 1,
-      "requires": ["CarpentryII", "MarketStallII"],
+      "requires": ["CarpentryII"],
       "gold": 525, "knowledge": 2, "seconds": 330,
       "effects": [
         {"stat":"workerStrikeUnits","op":"flat","value":1}
@@ -411,24 +386,17 @@
       "gold": 8570, "knowledge": 43, "seconds": 5640,
       "unlocks": [{"harvest":"MountainGold"}]
     },
-    "Guildhalls": {
-      "name": "Guildhalls", "glyph": "🏪", "kind": "unlock",
-      "tome": "Civics", "era": 3, "row": 24, "col": 2,
-      "requires": ["IrrigationIII"],
-      "gold": 11145, "knowledge": 56, "seconds": 7740,
-      "unlocks": [{"districtCount":"Market"}]
-    },
     "Roadworks": {
       "name": "Roadworks", "glyph": "🛤️", "kind": "mechanic",
       "description": "Paved ways — every worker walks a quarter faster.",
       "tome": "Civics", "era": 3, "row": 25, "col": 1,
-      "requires": ["DeepMining", "Guildhalls"],
+      "requires": ["DeepMining"],
       "gold": 12430, "knowledge": 62, "seconds": 8760
     },
     "Paving": {
       "name": "Paving", "glyph": "⛲", "kind": "unlock",
       "tome": "Civics", "era": 3, "row": 25, "col": 2,
-      "requires": ["Guildhalls"],
+      "requires": ["DeepMining"],
       "gold": 9000, "knowledge": 45, "seconds": 6000,
       "unlocks": [{"district":"Plaza"}]
     },
@@ -556,15 +524,6 @@
         {"stat":"researchTime","op":"percent","value":-5}
       ]
     },
-    "MarketStallIII": {
-      "name": "Market Stall III", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 31, "col": 0,
-      "requires": ["CartageIII"],
-      "gold": 1500, "knowledge": 8, "seconds": 1200,
-      "effects": [
-        {"stat":"salePrice","op":"flat","value":0.05}
-      ]
-    },
     "TradeRoutesIII": {
       "name": "Trade Routes III", "glyph": "⛵", "kind": "bonus",
       "tome": "Civics", "era": 3, "row": 31, "col": 1,
@@ -572,15 +531,6 @@
       "gold": 1500, "knowledge": 8, "seconds": 1200,
       "effects": [
         {"stat":"taxRate","op":"percent","value":10}
-      ]
-    },
-    "MarketStallIV": {
-      "name": "Market Stall IV", "glyph": "🛒", "kind": "bonus",
-      "tome": "Civics", "era": 3, "row": 31, "col": 2,
-      "requires": ["ScrivenersIII"],
-      "gold": 5000, "knowledge": 20, "seconds": 2700,
-      "effects": [
-        {"stat":"salePrice","op":"flat","value":0.05}
       ]
     },
     "QuickHandsV": {

@@ -12,7 +12,7 @@
 ## 1. A good is not a currency
 
 - The city keeps a **counter per good**, like the collection's ingredients.
-  No coin on the plank, no cap, no Market price.
+  No coin on the plank, no cap, no Gold price.
 - A good is read where it is spent: a workshop's queue, and the price of a
   building level — **every** level from 6 upward, on every building that has
   one ([`buildings.md`](buildings.md) §4.11), so no city reaches level 10
@@ -127,10 +127,8 @@
 - **A good as a wallet row.** Four coins on the plank is the ceiling; a
   counter beside the thing it belongs to is the answer
   ([`03-economy.md`](03-economy.md) §1).
-- **Selling goods at the Market**, at any Market level. The Market trades raw
-  surplus for Gold; a refined good has one use, which is being spent on the
-  city — and a city with millions of unspent Gold would be trading the scarce
-  thing for the abundant one.
+- **Selling goods for Gold.** A refined good has one use, which is being
+  spent on the city — and nothing in the game buys a resource for coin.
 - **Hand production and a collect tap.** The villager is the only engine.
 - **A level that shortens the work.** Speed is villagers, so housing them is
   the pressure the workshops exist to create.

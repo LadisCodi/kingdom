@@ -114,7 +114,7 @@ describe('every upgradable building has something to show for the level', () => 
     // What a producer's LATE level buys, since crew and reach stop growing at
     // five (Docs/plans/builder-30-days.md §4).
     'extraUnitsPerDeliveryPerLevel', 'strikeSpeedPerLevel',
-    'queueLengthPerLevel', 'salePricePerLevel',
+    'queueLengthPerLevel',
   ] as const;
 
   // The Sanctum carries its per-level numbers in the Mana table rather than

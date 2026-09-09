@@ -1,5 +1,5 @@
 // Headless end-to-end smoke: reveal → harvest → build → workers → exhaust →
-// recover → research → housing taxes → training queue → market → army →
+// recover → research → housing taxes → training queue → army →
 // upgrade → offline.
 import { describe, expect, it } from 'vitest';
 import { armySize, armyCap, trainUnit, lineFor } from '../src/sim/army';
@@ -8,7 +8,6 @@ import {
 } from '../src/sim/commands';
 import { TAXES } from '../src/sim/data/definitions';
 import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
-import { sellGoods } from '../src/sim/market';
 import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
 import { isTechComplete, startTech } from '../src/sim/research';
@@ -152,18 +151,15 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     tickAt(state, now);
     expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThanOrEqual(goldBeforeTaxes + 7);
 
-    // --- The Market building (Market tech): instant selling.
-    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 1 })).toBe('InvalidCell'); // locked
-    completeTech(state, 'Market');
+    // --- A building is gated by its technology, and by the ground.
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 3, y: 1 })).toBe('InvalidCell'); // locked
+    completeTech(state, 'Consecration');
     reveal(state, [{ x: 6, y: 0 }]); // open water east of the isle
-    expect(enqueueBuild(state, map, 'Market', { x: 6, y: 0 })).toBe('InvalidCell'); // water
-    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 1 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 6, y: 0 })).toBe('InvalidCell'); // water
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 3, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);
-    const goldBeforeSale = getWallet(state.city.wallet, 'Gold');
-    expect(sellGoods(state, 'Wood', 10)).toMatchObject({ result: 'Sold', gold: 30 });
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBeforeSale + 30);
 
     // --- Army: a unit sits behind a technology AND behind its own building,
     // and the cap comes from the buildings rather than from the Townhall.

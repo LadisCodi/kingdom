@@ -24,7 +24,6 @@ Every other Gold sink is one-time ([`03-economy.md`](03-economy.md) §7):
 
 - Expedition supplies (50 → 2,000 a launch) repeat, but are gated by the army
   cap and delve frequency: a drip, not a sink for a surplus.
-- The Market is not a sink: it converts a surplus into Gold.
 - A Wonder is the upgrade ladder with `maxLevel` removed, standing on the map.
 
 ## 2. What a Wonder is
@@ -60,9 +59,8 @@ Both are structural, not numerical.
 ### 3.1 A Wonder's effect is never denominated in Gold
 
 - A Wonder that raises `taxRate` is forbidden.
-- A production Wonder pays materials; the Market converts materials into Gold,
-  so that loop closes through the Market. It is bounded by the ladder's shape
-  (§6.1), not by the Market's spread.
+- A production Wonder pays materials, and nothing in the city turns materials
+  back into Gold — so there is no loop to close at all.
 
 ### 3.2 One of each; the level is the only ladder
 
@@ -158,9 +156,9 @@ shape is fixed here.
   `tap.work_seconds`. It decides whether a Wonder is a sink or a formality.
 - Cost compounds; effect does not. The marginal level gets worse forever.
 - A Wonder is a place to park a surplus, never a Gold investment.
-- The Market loop (§3.1) has a payback period of `cost(L)` over a linear
-  return, which grows without bound. Whether early levels sit on the wrong side
-  of that line is a number (**OQ-58**).
+- A production Wonder's payback is `cost(L)` over a linear return, which
+  grows without bound. Whether early levels sit on the wrong side of that
+  line is a number (**OQ-58**).
 
 ### 6.2 An unbounded effect
 

@@ -26,7 +26,6 @@ Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 | `build_placed` | Confirming Build (construction starts) | Single hammer thunk + wood knock |
 | `quest_complete` | The quest pill turns green (goal met, BEFORE claiming) | Bright objective "ding" — distinct from `quest_claimed` |
 | `villager_trained` | +1 👥 lands | Small cheer / cork-pop / bell |
-| `coin_sale` | Selling at the Market | Coin pouch / register "ka-ching" |
 
 ## Tier 2 — flavor
 

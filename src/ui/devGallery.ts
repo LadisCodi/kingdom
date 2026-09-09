@@ -145,10 +145,10 @@ export function mountGallery(root: HTMLElement): void {
     specimen('cards', grid(
       card({ icon: 'Housing', name: 'Housing', desc: 'Villagers live here and pay taxes' },
         el('div', {}, costChips({ Wood: 20 }))),
-      card({ icon: 'Market', name: 'Market', desc: 'Trade surplus for Gold', locked: true },
+      card({ icon: 'Sanctum', name: 'Sanctum', desc: 'Holds the city\'s Mana', locked: true },
         el('div', {}, iconEl('padlock', { size: 'sm' }))),
     )),
-    specimen('sheet', sheet({ title: 'Market', onClose: noop },
+    specimen('sheet', sheet({ title: 'Sanctum', onClose: noop },
       el('p', {}, 'A bottom sheet: grab handle, titled plank, its own close knob.'))),
   ));
 

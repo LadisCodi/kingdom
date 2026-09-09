@@ -23,7 +23,6 @@ import type {
 export type ModifierStat =
   | 'tapYield'
   | 'workerYield'
-  | 'salePrice'
   | 'taxRate'
   | 'autoTapCooldown'
   | 'manaRegen'

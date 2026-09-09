@@ -151,8 +151,6 @@ describe('one technology, one line', () => {
   // A value authored as a fraction is read to the player as a percentage,
   // because "+0.05 ×" is not a thing anyone can price a research against.
   it('reads a fraction as a percentage where the number is one', () => {
-    expect(effectSentence({ stat: 'salePrice', op: 'flat', value: 0.05 }))
-      .toBe('+5% on Market prices');
     expect(effectSentence({ stat: 'haulLoss', op: 'flat', value: -0.03 }))
       .toBe('−3% of the haul lost on a bad depth');
   });

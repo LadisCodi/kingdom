@@ -35,7 +35,6 @@ import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderSiteCard } from './ui/siteCard';
-import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
@@ -159,7 +158,6 @@ async function boot(): Promise<void> {
 
   const OVERLAYS: Record<OverlayName, (g: Game) => HTMLElement> = {
     build: renderBuildMenu,
-    market: renderMarketMenu,
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,

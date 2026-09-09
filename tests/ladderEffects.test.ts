@@ -36,7 +36,7 @@ import { knowledgePerHour, manaCap, manaProduction } from '../src/sim/mana';
 import { cityGoldPerMinute, districtCapacity, maxPopulation } from '../src/sim/population';
 import {
   cityGatherPerSecond, effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
-  effectiveResearchTimeMultiplier, effectiveSalePriceMultiplier, effectiveTaxRate,
+  effectiveResearchTimeMultiplier, effectiveTaxRate,
   effectiveUnitsPerStrike, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds, workerStrikeMs,
 } from '../src/sim/upgrades';
@@ -70,7 +70,7 @@ function probeState(): GameState {
   addBuilt(state, 'Housing', { x: 2, y: 3 });
   addBuilt(state, 'Farm', { x: 4, y: 2 });
   addBuilt(state, 'Sawmill', { x: 5, y: 2 });
-  addBuilt(state, 'Market', { x: 6, y: 2 });
+  addBuilt(state, 'Infirmary', { x: 6, y: 2 });
   addBuilt(state, 'Quarry', { x: 7, y: 2 });
   addBuilt(state, 'Barracks', { x: 8, y: 2 });
   addBuilt(state, 'Sanctum', { x: 9, y: 2 });
@@ -141,7 +141,6 @@ function probe(state: GameState): Record<string, number> {
   // The city's own numbers.
   put('buildTimeMultiplier', effectiveBuildTimeMultiplier(state));
   put('researchTimeMultiplier', effectiveResearchTimeMultiplier(state));
-  put('salePriceMultiplier', effectiveSalePriceMultiplier(state));
   put('taxRate', effectiveTaxRate(state));
   put('cityGoldPerMinute', cityGoldPerMinute(state));
   put('maxPopulation', maxPopulation(state));

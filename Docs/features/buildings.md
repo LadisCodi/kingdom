@@ -8,12 +8,11 @@
 > [`06-construction.md`](06-construction.md); what workers do is
 > [`04-harvest.md`](04-harvest.md).
 >
-> **Status.** Built: the nineteen districts below are `Districts` rows in the
-> workbook — the fourteen of the province economy, the Infirmary (§4.10), and
-> the four workshops (§4.11), which the count cap opens at Townhall 5.
-> Designed, not built:
-> Townhall 5, and the three Wonders (§5,
-> [`16-wonders.md`](16-wonders.md)).
+> **Status.** Built: every district below is a `Districts` row in the
+> workbook — the twelve of the province economy, the Infirmary (§4.9), the
+> four workshops (§4.10), whose count cap opens at Townhall 5, and the six
+> decorations (§4.12). Designed, not built: Townhall 5, and the three Wonders
+> (§5, [`16-wonders.md`](16-wonders.md)).
 
 ## 1. Reading the tables
 
@@ -21,9 +20,9 @@
   which reach level 10, are authored as far as TH10.
 - **Gate** on a level is what must be true to *start* that upgrade: a Townhall
   level, a technology, or both — and from level 6 a price in refined goods
-  (§4.12). Level 1 is the build; its gate is the unlock technology.
+  (§4.11). Level 1 is the build; its gate is the unlock technology.
 - **The tables below stop at level 5.** Every building that goes on to 10 has
-  the same late ladder, and it is written once, in §4.12.
+  the same late ladder, and it is written once, in §4.11.
 - Costs are the base of the curve; the curves are
   [`05-city-and-districts.md`](05-city-and-districts.md) §3.
 - Every building has a fog ring: reveal 1, discover 2 (the four halls discover
@@ -41,7 +40,6 @@
 | **Sawmill** | 1×1 | Saws | 1 / 2 / 3 / 4 | **10** | crew works forests in reach |
 | **Quarry** | 1×1 | Masonry | 1 / 2 / 3 / 4 | **10** | crew works mountains in reach — rock and metal |
 | **Docks** | 2×1 pier | Fishing | 1 / 2 / 3 / 4 | **10** | boats work shoals in reach |
-| **Market** | 1×1 | Market | 1 (+1 with `Guildhalls`) | **10** | sells surplus for Gold |
 | **Sanctum** | 1×1 | Consecration | 1 (+1 with `Second Sanctum`) | **10** | Mana capacity and regeneration |
 | **Barracks** | 1×1 | Warrior | 1 | **10** | army cap; trains Warrior, Lancer, Archer |
 | **Spear Hall** | 1×1 | Spears | 1 | **10** | army cap; trains Lancer |
@@ -116,7 +114,7 @@
 - Housing next to Housing: −1 Gold/min per neighbour.
 - `Communities` (Civics era 2) adds +1 resident to every Housing.
 - Build 10 Wood, 20 s. Upgrade 30 Wood + 10 Stone, 20 s, ×1.5 per level.
-- Levels 6–10 add two residents each, to 20 (§4.12).
+- Levels 6–10 add two residents each, to 20 (§4.11).
 
 | Level | Residents | Gate |
 |---|---|---|
@@ -189,27 +187,7 @@
 | 4 | 9 | 7 | TH3 |
 | 5 | 11 | 7 | TH4 |
 
-### 4.7 Market
-
-- Sells surplus resources for Gold ([`03-economy.md`](03-economy.md) §6).
-- Build 40 Wood, 30 s. Upgrade 200 Gold + 60 Wood, 60 s, ×1.6 per level.
-- One per city; `Guildhalls` (Civics era 3) allows a second. **The better
-  Market sets the price** — a second one is another doorway, not a bigger
-  bonus.
-- **A level buys the price and nothing else**: +3% a sold unit, to +27% at ten.
-  It stacks with `MarketStall`'s +5% a rank.
-
-| Level | Sale price | Gate |
-|---|---|---|
-| 1 | — | — |
-| 2 | +3% | — |
-| 3 | +6% | TH3 |
-| 4 | +9% | TH3 |
-| 5 | +12% | TH4 |
-
-Levels 6–10 continue at +3% a level, to +27% (§4.12).
-
-### 4.8 Sanctum
+### 4.7 Sanctum
 
 - The Mana engine: each level adds capacity and regeneration
   ([`08-magic.md`](08-magic.md) §2). Unlocked by `Consecration` (Magic era 1).
@@ -228,7 +206,7 @@ Levels 6–10 continue at +3% a level, to +27% (§4.12).
 Levels 6–10 continue the curve: capacity +168, +208, +252, +300, +352 and
 regeneration +20, +25, +30, +36, +42 an hour.
 
-### 4.9 The four military halls
+### 4.8 The four military halls
 
 - Each hall raises the **army cap** and trains its units, queued at that hall
   ([`combat.md`](combat.md) §14). The cap is the sum over the four; all four at
@@ -257,7 +235,7 @@ same for all four:
 Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten field
 272.
 
-### 4.10 The Infirmary
+### 4.9 The Infirmary
 
 - **Beds for the soldiers who came back hurt.** With no Infirmary built, every
   casualty of every fight is a death; with one, `army.wounded_share` of them
@@ -271,7 +249,7 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
   recruiting.
 - 1×1, 80 Wood + 40 Stone to build.
 
-### 4.11 The four workshops
+### 4.10 The four workshops
 
 - Each makes one refined good from a queue its crew works; nothing is made
   without a villager assigned. Full design:
@@ -290,7 +268,7 @@ Levels 6–10 add eight each — 36, 44, 52, 60, 68 — so four halls at ten fie
 
 Upgrades grow ×1.6 in cost and ×1.6 in time per level.
 
-### 4.12 The late ladder — levels 6 to 10
+### 4.11 The late ladder — levels 6 to 10
 
 Every building above that reaches level 10 climbs the same way, so it is
 written once. The Townhall's own ladder is §3.
@@ -305,7 +283,7 @@ written once. The Townhall's own ladder is §3.
 
 | Building | Levels 6 → 10 pay |
 |---|---|
-| Housing · Farm · Mason's Yard · Market | 2 → 6 **Planks** |
+| Housing · Farm · Mason's Yard | 2 → 6 **Planks** |
 | Sawmill · Docks | 3 → 7 **Planks** |
 | Carpenter | 2 → 6 **Cut Stone** |
 | Quarry · Smelter | 3 → 7 **Cut Stone** |
@@ -326,13 +304,12 @@ written once. The Townhall's own ladder is §3.
 | the four military halls | army cap in TROOPS, 150 at level 1 to 2,600 at ten ([`combat.md`](combat.md) §14) |
 | the Infirmary | beds for the wounded, 30 at level 1 to 400 at ten |
 | Sanctum | the Mana curve, to 352 held and 42 an hour |
-| Market | +3% on a sold unit a level, to +27% |
-| the four workshops | crew and queue as §4.11 |
+| the four workshops | crew and queue as §4.10 |
 
 - **Levels 8, 9 and 10 also demand Harmony** — 2, 4 and 6 in total — which
   the decorations supply ([`18-harmony.md`](18-harmony.md)).
 
-### 4.13 The six decorations
+### 4.12 The six decorations
 
 One level, no crew, no tap, no fog ring; movable. Each supplies Harmony and
 does nothing else, and every piece past the Garden is priced in a refined
@@ -360,7 +337,7 @@ Full design: [`16-wonders.md`](16-wonders.md).
 ## 6. The last technology on each ladder
 
 Research owns the early half of every ladder and nothing above it: past these
-levels a building is bought with a Townhall level and goods (§4.12).
+levels a building is bought with a Townhall level and goods (§4.11).
 
 **Where these are authored.** On the TECHNOLOGY, not here: a card in `?dev=tree` says `unlocks: [{ districtLevel: { id: 'Townhall', level: 4 } }]` and `DISTRICTS.Townhall.requiredTechPerLevel` is derived from it ([`../tech-tree-editor.md`](../tech-tree-editor.md) §3).
 
@@ -374,7 +351,7 @@ levels a building is bought with a Townhall level and goods (§4.12).
 | Docks 2 | `Shipbuilding` (Magic era 3) |
 | Sanctum 5 | TH4 · `Attunement III` (Magic era 3) |
 | the four halls 5 | TH3 · `Warband III` (Warfare era 3) |
-| the four workshops · the Market | none — their unlock technology is the only one |
+| the four workshops · the Infirmary | none — their unlock technology is the only one |
 
 ## 7. Dials, in the order to reach for them
 
@@ -386,12 +363,11 @@ levels a building is bought with a Townhall level and goods (§4.12).
 | The unlock technology | the card's `unlocks` in `?dev=tree` — derived onto `requiredTech` |
 | What a piece supplies, and what a level demands | `Districts.harmony_supply`, `harmony_cost_per_level` — [`18-harmony.md`](18-harmony.md) |
 | What a build costs in refined goods | `Districts.build_cost_goods` |
-| Residents, workers, radius, army cap per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level` |
+| Residents, workers, radius, army cap, beds per level | `Districts.population_capacity_per_level`, `max_workers_per_level`, `influence_radius_per_level`, `army_cap_per_level`, `beds_per_level` |
 | Which good a workshop makes, and its queue per level | `Districts.produces`, `queue_length_per_level` |
-| What a Market level pays for a sold unit | `Districts.sale_price_per_level` |
 | What a level costs in refined goods | `Districts.upgrade_cost_goods_per_level` |
 | Sanctum capacity and regen per level | `mana.sanctum_cap_per_level`, `mana.sanctum_per_hour_per_level` |
-| A second Market or Sanctum | `Districts.extra_count_tech` |
+| A second Sanctum | `Districts.extra_count_tech` |
 | Costs and times | `Districts.build_*`, `upgrade_*` — [`05-city-and-districts.md`](05-city-and-districts.md) §3 |
 | The late half of both curves | `Districts.upgrade_cost_late_level_growth`, `upgrade_duration_late_seconds`, `upgrade_duration_late_level_growth`, and `city.late_upgrade_from_level` for where it starts |
 | What a late level adds to a haul, and to the swing | `Districts.extra_units_per_delivery_per_level`, `strike_speed_per_level` |

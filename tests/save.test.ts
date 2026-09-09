@@ -282,3 +282,45 @@ describe('save versions', () => {
     expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(40);
   });
 });
+
+// The Market left the game on 2026-09-09 — the building, its technology and
+// the three quests that named it. A save can be holding all three, and every
+// one of them would be read against a table that no longer has the row.
+describe('the Market, retired', () => {
+  it('drops a built Market, its queue item and its technologies', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 3, y: 2 });
+    const save = serialize(state, T0);
+    const city = (save.Modules as any)['kingdom.cities'].Cities[0];
+    city.Districts.push({
+      UniqueID: 'd_market', DefinitionID: 'Market', VisualVariant: 1,
+      AssignedWorkers: 0, Level: 3, GridLocation: { x: 5, y: 5 },
+      ConstructionState: 'Built',
+    });
+    city.Districts.push({
+      UniqueID: 'd_market_2', DefinitionID: 'Market', VisualVariant: 1,
+      AssignedWorkers: 0, Level: 1, GridLocation: { x: 6, y: 5 },
+      ConstructionState: 'UnderConstruction',
+    });
+    const house = city.Districts.find((d: any) => d.DefinitionID === 'Housing');
+    city.QueueItems = [
+      { UniqueID: 'q_market', DistrictID: 'd_market_2', DurationSeconds: 30,
+        StartedAtUtc: null },
+      { UniqueID: 'q_house', DistrictID: house.UniqueID, DurationSeconds: 20,
+        StartedAtUtc: null, TargetLevel: 2 },
+    ];
+    city.QueueKinds = ['build', 'upgrade'];
+    const research = (save.Modules as any)['kingdom.research'];
+    research.Completed = ['Forestry', 'Market', 'MarketStallII', 'Guildhalls'];
+    save.SaveVersion = 41;
+
+    const back = deserialize(save, map, T0)!;
+    expect(back.city.districts.map((d) => d.definitionId)).not.toContain('Market');
+    expect(back.city.districts.some((d) => d.definitionId === 'Housing')).toBe(true);
+    // The queue and its parallel kinds stay in step — one item, still a build.
+    expect(back.city.queue).toHaveLength(1);
+    expect(back.city.queue[0].uniqueId).toBe('q_house');
+    expect(back.city.queue[0].kind).toBe('upgrade');
+    expect(back.research.completed).toEqual(['Forestry']);
+  });
+});

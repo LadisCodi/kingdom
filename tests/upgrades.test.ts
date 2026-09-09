@@ -10,12 +10,11 @@ import { grantArtifact } from '../src/sim/artifacts';
 import { castCost } from '../src/sim/casting';
 import { effectiveDiscoverRadius, revealCostForCell, revealTapCost } from '../src/sim/fog';
 import { collectTap } from '../src/sim/harvest';
-import { salePayout, sellGoods } from '../src/sim/market';
 import { getWallet } from '../src/sim/state';
 import { advance } from '../src/sim/commands';
 import { canStartTech, startTech, techCompletesAt } from '../src/sim/research';
 import {
-  effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier, effectiveSalePriceMultiplier,
+  effectiveAutoTapCooldownMs, effectiveBuildTimeMultiplier,
   effectiveTaxRate, effectiveWorkerSpeed, effectiveWorkerStrike, tapDraw,
   tapWorkSeconds,
 } from '../src/sim/upgrades';
@@ -148,17 +147,6 @@ describe('effects reach the sim', () => {
     // A held repeat still waits, just less than it used to.
     expect(collectTap(state, map, FOREST, T0 + 2, true)).toBe('OnCooldown');
     expect(collectTap(state, map, FOREST, T0 + 1 + 250, true)).toBe('Harvested');
-  });
-
-  it('MarketStall raises the Market sale prices', () => {
-    const state = freshGame();
-    addBuilt(state, 'Market', { x: 2, y: 0 });
-    fund(state, { Gold: 1000, Wood: 100 });
-    completeTech(state, 'Market');
-    expect(salePayout(state, 'Wood', 100)).toBe(300);
-    completeRanks(state, 'MarketStall', 1); // +5%
-    expect(effectiveSalePriceMultiplier(state)).toBeCloseTo(1.05);
-    expect(sellGoods(state, 'Wood', 100).gold).toBe(315);
   });
 
   it('TradeRoutes boosts the passive tax rate', () => {
@@ -603,13 +591,10 @@ describe('the era-2/3 majors that are live', () => {
       .toBeGreaterThan(levelIndexed(DISTRICTS.Housing.populationCapacityPerLevel, 2));
   });
 
-  it('Guildhalls and Second Sanctum each let one more of their district stand', () => {
+  it('Second Sanctum lets one more of its district stand', () => {
     const state = freshGame();
-    const market = maxDistrictCount(state, DISTRICTS.Market);
     const sanctum = maxDistrictCount(state, DISTRICTS.Sanctum);
-    completeTech(state, 'Guildhalls');
     completeTech(state, 'SecondSanctum');
-    expect(maxDistrictCount(state, DISTRICTS.Market)).toBe(market + 1);
     expect(maxDistrictCount(state, DISTRICTS.Sanctum)).toBe(sanctum + 1);
   });
 

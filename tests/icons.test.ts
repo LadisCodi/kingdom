@@ -41,7 +41,8 @@ const AWAITING_ART: readonly string[] = [
   // so it needs the small cell too.
   'video',
   // The Infirmary (2026-09-09). Its WORLD sprite is drawn; the 16 px cell is
-  // one more crop on the next UI sheet.
+  // one more crop on the next UI sheet — and there is a free slot for it now
+  // that the Market has left the game.
   'Infirmary',
 ];
 

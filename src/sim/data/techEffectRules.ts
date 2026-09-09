@@ -136,9 +136,9 @@ export interface StatDef {
  * wording; nothing here can guess it.
  *
  * The names say WHERE the number enters, not what it feels like. "More gold"
- * is deliberately not one stat: gold arrives as tax (`taxRate`), as a sale
- * (`salePrice`) and out of the ground (`harvestUnitsPerStrike`), and those are
- * three numbers in three functions. One stat is one number in one place.
+ * is deliberately not one stat: gold arrives as tax (`taxRate`) and out of the
+ * ground (`harvestUnitsPerStrike`), and those are two numbers in two
+ * functions. One stat is one number in one place.
  */
 /**
  * Harvest sources that grow back IN PLACE, and so have a recovery clock at
@@ -208,12 +208,6 @@ export const TECH_STATS = {
     ops: ['percent'], targets: ['global'], unit: '×',
     says: { percent: '{v} time to finish a research' },
     reads: 'upgrades.ts#effectiveResearchTimeMultiplier',
-  },
-  salePrice: {
-    what: 'multiplier POINTS added to the best Market’s level multiplier — not a percentage of it',
-    ops: ['flat'], targets: ['global'], unit: '×',
-    says: { flat: '{pct} on Market prices' },
-    reads: 'upgrades.ts#effectiveSalePriceMultiplier',
   },
   taxRate: {
     what: 'Gold a housed villager pays a minute',

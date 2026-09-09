@@ -25,11 +25,10 @@ export type QuestEvent =
    *  Carried on the event rather than looked up afterwards because the reveal
    *  is the only moment that knows it: a finite feature can be tapped away
    *  minutes later, and the quest should still have counted. */
-  | { kind: 'reveal'; feature: FeatureId | null }
-  | { kind: 'sell'; units: number };
+  | { kind: 'reveal'; feature: FeatureId | null };
 
 /** Feed one sim event to the ACTIVE quest (no-op unless it's a matching
- *  relative goal). Cheap enough to call from every tap/deposit/sale. */
+ *  relative goal). Cheap enough to call from every tap and deposit. */
 export function recordQuestEvent(state: GameState, event: QuestEvent): void {
   const quest = activeQuest(state);
   if (!quest) return;
@@ -49,9 +48,6 @@ export function recordQuestEvent(state: GameState, event: QuestEvent): void {
       if (event.kind === 'reveal' && event.feature === quest.goalTarget) {
         state.quests.progress += 1;
       }
-      break;
-    case 'SellGoods':
-      if (event.kind === 'sell') state.quests.progress += event.units;
       break;
     default: // absolute goal — events are irrelevant
   }

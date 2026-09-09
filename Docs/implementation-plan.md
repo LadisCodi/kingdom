@@ -65,7 +65,7 @@ Two more that are design-visible:
 | Feature | Doc | State |
 |---|---|---|
 | The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** |
-| Currencies, taxes, the Market, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats |
+| Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, cost curves, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
@@ -327,7 +327,7 @@ player's magic away.
 
 | Tome | At | The work |
 |---|---|---|
-| **Civics** | 18 nodes | **splitting, not writing** — and the derived layering already produces the bands: `Forestry` / `UrbanPlanning · Saws · Hunting · Agriculture · Cartography · ScalingTools` / `Communities · Farming · Market · Masonry · Sailing` / `Architecture · Mining · Engineering · Fishing` / `DeepMining · Shipbuilding`. **Start here** — it is the opening game and the only tome authorable without inventing anything |
+| **Civics** | 18 nodes | **splitting, not writing** — and the derived layering already produces the bands: `Forestry` / `UrbanPlanning · Saws · Hunting · Agriculture · Cartography · ScalingTools` / `Communities · Farming · Masonry · Sailing` / `Architecture · Mining · Engineering · Fishing` / `DeepMining · Shipbuilding`. **Start here** — it is the opening game and the only tome authorable without inventing anything |
 | **Warfare** | 5 nodes | **one more tier.** Unit bonuses are the easiest honest nodes in the game: the stat exists and the sentence needs no explanation |
 | **Magic** | 5 with the spells folded in | **the most invention.** Every enchanted route to an economic outcome is a legal node and none is written |
 

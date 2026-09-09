@@ -34,11 +34,12 @@ const XLSX_PATH = join(ROOT, 'balance/balance.xlsx');
 const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
 
 const DISTRICT_IDS = [
-  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks',
+  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks',
   'Sanctum',
   // Military: each unit type is trained by its own building, and building and
-  // upgrading them is what raises the army cap.
-  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+  // upgrading them is what raises the army cap. The Infirmary is the one that
+  // holds no soldiers of its own — it holds the wounded (combat.md §4).
+  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables', 'Infirmary',
   // Workshops: each turns raw resources into ONE refined good.
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
   // Decorations: they SUPPLY Harmony and do nothing else. Each has its own
@@ -383,7 +384,6 @@ const DISTRICT_COLUMNS = [
   'upgrade_duration_late_seconds', 'upgrade_duration_late_level_growth',
   'upgrade_cost_goods_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level',
-  'sale_price_per_level',
   'produces', 'queue_length_per_level',
   'harmony_supply', 'harmony_cost_per_level',
 ];
@@ -392,7 +392,7 @@ const DISTRICT_LIST_COLUMNS = [
   'influence_radius_per_level', 'required_townhall_level_per_level',
   'army_cap_per_level', 'beds_per_level',
   'upgrade_cost_goods_per_level', 'queue_length_per_level',
-  'extra_units_per_delivery_per_level', 'strike_speed_per_level', 'sale_price_per_level',
+  'extra_units_per_delivery_per_level', 'strike_speed_per_level',
   'build_cost_goods', 'harmony_cost_per_level',
 ];
 
@@ -743,7 +743,6 @@ async function importXlsx() {
       strikeSpeedPerLevel: list(r, 'strike_speed_per_level'),
       // The Market's own ladder: what its level pays for a sold unit. Blank =
       // 1.0, which is every other building.
-      salePricePerLevel: list(r, 'sale_price_per_level'),
       // A workshop makes ONE good. Which one is its identity, the way a
       // Sawmill's identity is the forest.
       produces: (r.produces === '' || r.produces === undefined) ? null : r.produces,
@@ -1156,7 +1155,7 @@ async function exportXlsx() {
       d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
-      listCell(d.armyCapPerLevel),
+      listCell(d.armyCapPerLevel), listCell(d.bedsPerLevel),
       ...costCells(d.buildCost),
       goodsCell(Object.keys(d.buildCostGoods).length > 0 ? [d.buildCostGoods] : []),
       d.buildCostMultiplier, d.buildCostExponentialGrowth,
@@ -1167,7 +1166,6 @@ async function exportXlsx() {
       d.upgradeDurationLateSeconds || '', d.upgradeDurationLateLevelGrowth || '',
       goodsCell(d.upgradeCostGoodsPerLevel),
       listCell(d.extraUnitsPerDeliveryPerLevel), listCell(d.strikeSpeedPerLevel),
-      listCell(d.salePricePerLevel),
       d.produces ?? '', listCell(d.queueLengthPerLevel),
       d.harmonySupply || '', listCell(d.harmonyCostPerLevel),
     ];

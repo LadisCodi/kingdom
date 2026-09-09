@@ -70,8 +70,8 @@ const FOG_TAPS_PER_VISIT = 1_000;
 /** What the scripted player builds, in the order they reach for it. Each
  *  entry is tried while the count cap, the technology and the purse allow. */
 const BUILD_ORDER: DistrictId[] = [
-  'Sawmill', 'Housing', 'FarmLands', 'Farm', 'Quarry', 'Market', 'Housing',
-  'Sanctum', 'Docks', 'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+  'Sawmill', 'Housing', 'FarmLands', 'Farm', 'Quarry', 'Housing',
+  'Sanctum', 'Docks', 'Barracks', 'Infirmary', 'SpearHall', 'ShootingGrounds', 'Stables',
   // The workshops, once their cards and Townhall 5 allow: every level from 6
   // is priced in what they make, and the Townhall's own from 5.
   'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',

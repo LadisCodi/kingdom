@@ -33,7 +33,7 @@ export type GoodId = 'Planks' | 'CutStone' | 'Iron' | 'Runestone';
 export type GoodsStock = Partial<Record<GoodId, number>>;
 
 export type DistrictId =
-  | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill' | 'Market'
+  | 'Townhall' | 'Housing' | 'Farm' | 'FarmLands' | 'Sawmill'
   | 'Quarry' | 'Docks' | 'Sanctum'
   | 'Barracks' | 'SpearHall' | 'ShootingGrounds' | 'Stables' | 'Infirmary' // military
   | 'Carpenter' | 'MasonsYard' | 'Smelter' | 'RuneCarver' // workshops

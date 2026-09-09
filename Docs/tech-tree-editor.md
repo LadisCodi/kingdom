@@ -108,7 +108,7 @@ the game is derived from that (`GATES`, `definitions.ts`):
 |---|---|
 | `{ "district": "Sawmill" }` | `DISTRICTS.Sawmill.requiredTech` |
 | `{ "districtLevel": { "id": "Housing", "level": 3 } }` | `DISTRICTS.Housing.requiredTechPerLevel[1]` |
-| `{ "districtCount": "Market" }` | `DISTRICTS.Market.extraCountTech` — one more may stand |
+| `{ "districtCount": "Sanctum" }` | `DISTRICTS.Sanctum.extraCountTech` — one more may stand |
 | `{ "unit": "Archer" }` | `UNITS.Archer.requiredTech` |
 | `{ "harvest": "Forest" }` | `HARVEST.Forest.requiredTech` |
 | `{ "terrain": "Water" }` | `terrainGate('Water')` — what `explorationGate` reads |

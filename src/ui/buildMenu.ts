@@ -28,7 +28,6 @@ const PROMISE: Partial<Record<string, string>> = {
   Farm: 'Workers harvest crops nearby',
   FarmLands: 'A crop plot you can tap for food',
   Sawmill: 'Workers fell the forest around it',
-  Market: 'Turn surplus goods into gold',
   Quarry: 'Workers cut stone from nearby rock',
   Docks: 'Boats bring in fish',
   Mine: 'Workers dig iron from nearby veins',

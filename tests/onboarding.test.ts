@@ -22,7 +22,6 @@ import {
 } from '../src/sim/fog';
 import { placementBlock } from '../src/sim/districts';
 import { collectTap } from '../src/sim/harvest';
-import { sellGoods } from '../src/sim/market';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
 import { maxPopulation } from '../src/sim/population';
@@ -30,7 +29,7 @@ import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { isTechComplete, startTech, techCost } from '../src/sim/research';
 import {
-  coordKey, getWallet, parseCoordKey, townhall, type Coord, type CurrencyId,
+  coordKey, getWallet, parseCoordKey, townhall, type Coord,
   type DistrictId, type TechId,
 } from '../src/sim/state';
 import { BERRIES, FOREST, map, T0 } from './helpers';
@@ -39,7 +38,7 @@ const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
-  it('runs steps 1-27 on nothing but what the game gives them', () => {
+  it('runs steps 1-24 on nothing but what the game gives them', () => {
     const state = newGame(map, T0);
     let now = T0;
 
@@ -228,11 +227,11 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
     finish('Crewed');
 
-    // ---- steps 22-24: the three cards between Saws and the Market ----
+    // ---- steps 22-24: the three cards after Saws ----
     // A requirement is the row above (2026-09-08), so the book puts Taxes,
-    // Sawpits and Reforesting on the way to the Market. The chain asks for
-    // them in row order rather than leaving the player to find out at the
-    // research sheet why the Market will not start.
+    // Sawpits and Reforesting next. The chain asks for them in row order
+    // rather than leaving the player to find out at the research sheet why
+    // the card after them will not start.
     research('Taxes01');
     finish('Levies');
     research('SawpitsI');
@@ -240,39 +239,8 @@ describe('a player can actually play the onboarding', () => {
     research('Reforesting01');
     finish('Regrowth');
 
-    // ---- steps 25-27: somewhere for the surplus to go ----
-    // This is the beat that has to hold up: 150 Gold for the technology and
-    // 40 Wood for the building, out of nothing but what the chain has paid so
-    // far. Research, then build, then use — the same three-beat shape the
-    // chain uses for every other building worth explaining.
-    research('Market');
-    finish('Trade');
-    chop(Math.max(0, DISTRICTS.Market.buildCost.Wood! - wood()));
-    // Found rather than authored, like `clearNearest` above: a hardcoded cell
-    // is a test that breaks when the map is re-authored, and this beat is
-    // about affording the Market, not about where it goes.
-    const spot = [...map.terrain.keys()].map(parseCoordKey)
-      .find((c) => placementBlock(state, map, 'Market', c) === null);
-    expect(spot, 'nowhere legal to put the Market').toBeDefined();
-    build('Market', spot!);
-    finish('ToMarket');
-
-    // And there has to be something to sell. Whatever the plots and the trees
-    // have piled up, sold down to the twenty the quest asks for.
-    let sold = 0;
-    let guard = 0;
-    while (sold < 20) {
-      expect(guard++, 'nothing left to sell').toBeLessThan(200);
-      for (const c of ['Food', 'Wood'] as CurrencyId[]) {
-        if (sold >= 20) break;
-        const { result, units } = sellGoods(state, c, 20 - sold);
-        if (result === 'Sold') sold += units;
-      }
-      if (sold < 20) tick(30); // let the plots and the forest come back
-    }
-    finish('Merchant');
-
-    // The player is now twenty-seven beats in and has never been handed anything.
+    // The player is now twenty-four beats in and has never been handed
+    // anything.
     expect(activeQuest(state)!.id).toBe('FurtherAfield');
 
     // And the energy held out. Mana is what every tap is paid from, so an
@@ -288,19 +256,17 @@ describe('a player can actually play the onboarding', () => {
   it('never demands an OPENING technology the chain has not already paid for', () => {
     // Research is Gold now, so the purse counted here is the CITY's, and it
     // is counted at its floor: the opening grant plus the quest rewards, and
-    // nothing else. Housing taxes, the Market and the harvest all pay on top
-    // of this, so a chain that works on rewards alone works for anyone.
+    // nothing else. Housing taxes and the harvest pay on top of this, so a
+    // chain that works on rewards alone works for anyone.
     //
     // THE GUARANTEE COVERS THE OPENING — every era-1 technology and the
     // keystone that closes era 1 — and stops there on purpose. Since the tree
     // was repriced to tech-tree.md §5's bands (2026-09-04) an era-2 major
     // costs 1,000–2,500 Gold, and the chain's later asks (Sailing, Scaling
     // Tools, Surveying II) are meant to be paid out of a RUNNING city: by
-    // then the player has a Market, taxes and workers, and the doc's own
-    // words are "the depth is the city's to earn". Funding them from rewards
-    // would mean 1,000-Gold quests at beat 25, which would double the early
-    // economy — the exact distortion balancing-v3 pulled the Market beats back
-    // from.
+    // then the player has taxes and workers, and the doc's own words are "the
+    // depth is the city's to earn". Funding them from rewards would mean
+    // 1,000-Gold quests at beat 25, which would double the early economy.
     //
     // Fog is charged against the same purse, at its floor too — a
     // DiscoverCells quest cannot cost less than its cells at the nearest ring

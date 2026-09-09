@@ -71,7 +71,7 @@
 
 - `ratio = supply / demand`, and three tiers on the tax rate: **110% → +5%**,
   **125% → +10%**, **150% → +15%** — the last tier the ratio reaches.
-- A base-stage term in the rate, beside the Market's level multiplier, never a
+- A base-stage term in the rate, never a
   modifier.
 - **A city that demands nothing has no ratio and no bonus.** Otherwise one
   Garden at Townhall 5 would pay the top tier for the whole midgame, for free.

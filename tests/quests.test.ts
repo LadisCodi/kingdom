@@ -67,18 +67,13 @@ describe('the quest chain', () => {
                                                   //   (+ the Townhall, woven in)
       'SawTeeth', 'TheSawmill', 'Crewed',         // 19-21 automate the wood
       'Levies', 'Sawpits', 'Regrowth',            // 22-24 the three cards the book
-                                                  //   puts between Saws and the
-                                                  //   Market — a requirement is
-                                                  //   the row above (2026-09-08),
-                                                  //   so the chain walks the rows
-                                                  //   rather than leaving the
-                                                  //   player to find them
-      'Trade', 'ToMarket', 'Merchant',            // 25-27 somewhere for the surplus
-                                                  //   to go, once the Sawmill has
-                                                  //   made there be one. Research,
-                                                  //   THEN build — the same shape
-                                                  //   as Saws -> TheSawmill.
-      'FurtherAfield',                            // 28   the shrine and the Barrow
+                                                  //   puts after Saws — a
+                                                  //   requirement is the row above
+                                                  //   (2026-09-08), so the chain
+                                                  //   walks the rows rather than
+                                                  //   leaving the player to find
+                                                  //   them
+      'FurtherAfield',                            // 25   the shrine and the Barrow
                                                   //   come into view — and
                                                   //   FINDING the Barrow starts
                                                   //   its gate's thirty minutes
@@ -393,19 +388,20 @@ describe('quests fund the research tree', () => {
     // (Docs/features/18-garrisons-and-raids.md §6).
     // 12,375: and `MusterCompany` at 400 in front of it, because twenty orcs
     // in the doorway are a company's job and the chain pays for the company.
-    expect(chain).toBe(12_375);
-    expect(tree).toBe(518_955); // the same sum tests/fog.test.ts freezes, and why
+    // 12,175: the three Market beats leave with the Market (2026-09-09).
+    expect(chain).toBe(12_175);
+    expect(tree).toBe(502_335); // the same sum tests/fog.test.ts freezes, and why
     // Still enough to carry the player through the OPENING — every era-1
     // major, which is the whole of the tree as it stood before the eras. The
     // majors of eras 2 and 3 are the depth the city has to earn for itself.
     const opening = TECH_ORDER
       .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
       .reduce((sum, id) => sum + techCost(id), 0);
-    // 2,330 across 18 era-1 majors: Civics became a whole book (2026-09-08)
-    // and its opening fans out — Masonry and the Market split it, Bureaucracy
-    // gathers it — and Cartography left the tree with the fog's tap ladder
-    // (01-map-and-fog.md §5).
-    expect(opening).toBe(2330);
+    // 2,180 across 17 era-1 majors: Civics became a whole book (2026-09-08)
+    // and its opening walks a single column down to Bureaucracy, and both
+    // Cartography (with the fog's tap ladder, 01-map-and-fog.md §5) and the
+    // Market (2026-09-09) have left the tree since.
+    expect(opening).toBe(2180);
     expect(chain).toBeGreaterThan(opening);
     expect(chain).toBeLessThan(tree);
   });

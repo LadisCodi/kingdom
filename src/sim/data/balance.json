@@ -15,6 +15,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {},
       "buildCostGoods": {},
       "buildCostMultiplier": 2,
@@ -68,7 +69,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -83,8 +83,7 @@
         10,
         20,
         30
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Housing": {
       "size": {
@@ -132,6 +131,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 10
       },
@@ -174,7 +174,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -189,8 +188,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Farm": {
       "size": {
@@ -249,6 +247,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 30
       },
@@ -312,7 +311,6 @@
         1.4,
         1.5
       ],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -327,8 +325,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "FarmLands": {
       "size": {
@@ -355,6 +352,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 10
       },
@@ -374,12 +372,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     },
     "Sawmill": {
       "size": {
@@ -438,6 +434,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 20
       },
@@ -501,7 +498,6 @@
         1.4,
         1.5
       ],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -516,105 +512,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
-    },
-    "Market": {
-      "size": {
-        "x": 1,
-        "y": 1
-      },
-      "maxLevel": 10,
-      "populationCapacityPerLevel": [],
-      "fogRevealRadius": 1,
-      "fogDiscoverRadius": 2,
-      "maxWorkersPerLevel": [],
-      "maxCountPerTownhallLevel": [
-        1
-      ],
-      "influenceRadiusPerLevel": [],
-      "requiredTownhallLevelPerLevel": [
-        0,
-        0,
-        3,
-        4,
-        6,
-        7,
-        8,
-        9,
-        10
-      ],
-      "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 40
-      },
-      "buildCostGoods": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
-      "buildDurationSeconds": 30,
-      "buildDurationDistrictGrowth": 1.2,
-      "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Gold": 200,
-        "Wood": 60
-      },
-      "upgradeCostLevelGrowth": 1.6,
-      "upgradeDurationSeconds": 60,
-      "upgradeDurationLevelGrowth": 1.6,
-      "upgradeCostLateLevelGrowth": 1.7,
-      "upgradeDurationLateSeconds": 7200,
-      "upgradeDurationLateLevelGrowth": 1.7,
-      "upgradeCostGoodsPerLevel": [
-        {},
-        {},
-        {},
-        {},
-        {
-          "Planks": 2
-        },
-        {
-          "Planks": 3
-        },
-        {
-          "Planks": 4
-        },
-        {
-          "Planks": 5
-        },
-        {
-          "Planks": 6
-        }
-      ],
-      "extraUnitsPerDeliveryPerLevel": [],
-      "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [
-        1,
-        1.03,
-        1.06,
-        1.09,
-        1.12,
-        1.15,
-        1.18,
-        1.21,
-        1.24,
-        1.27
-      ],
-      "produces": null,
-      "queueLengthPerLevel": [],
-      "harmonySupply": 0,
-      "harmonyCostPerLevel": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        2,
-        4,
-        6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Quarry": {
       "size": {
@@ -673,6 +571,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 30
       },
@@ -736,7 +635,6 @@
         1.4,
         1.5
       ],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -751,8 +649,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Docks": {
       "size": {
@@ -811,6 +708,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 25
       },
@@ -874,7 +772,6 @@
         1.4,
         1.5
       ],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -889,8 +786,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Sanctum": {
       "size": {
@@ -918,6 +814,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Gold": 300,
         "Stone": 40
@@ -961,7 +858,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -976,8 +872,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Barracks": {
       "size": {
@@ -1016,6 +911,7 @@
         2150,
         2600
       ],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 60,
         "Stone": 20
@@ -1059,7 +955,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -1074,8 +969,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "SpearHall": {
       "size": {
@@ -1114,6 +1008,7 @@
         2150,
         2600
       ],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 80,
         "Stone": 30
@@ -1157,7 +1052,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -1172,8 +1066,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "ShootingGrounds": {
       "size": {
@@ -1212,6 +1105,7 @@
         2150,
         2600
       ],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 80,
         "Stone": 30
@@ -1255,7 +1149,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -1270,8 +1163,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Stables": {
       "size": {
@@ -1310,6 +1202,7 @@
         2150,
         2600
       ],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 120,
         "Stone": 70
@@ -1353,7 +1246,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -1368,8 +1260,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Infirmary": {
       "size": {
@@ -1397,6 +1288,18 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [
+        30,
+        50,
+        75,
+        105,
+        140,
+        180,
+        225,
+        275,
+        330,
+        400
+      ],
       "buildCost": {
         "Wood": 80,
         "Stone": 40
@@ -1440,7 +1343,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 0,
@@ -1455,18 +1357,6 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": [
-        30,
-        50,
-        75,
-        105,
-        140,
-        180,
-        225,
-        275,
-        330,
-        400
       ]
     },
     "Carpenter": {
@@ -1515,6 +1405,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 120
       },
@@ -1556,7 +1447,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": "Planks",
       "queueLengthPerLevel": [
         3,
@@ -1582,8 +1472,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "MasonsYard": {
       "size": {
@@ -1631,6 +1520,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 100,
         "Stone": 60
@@ -1674,7 +1564,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": "CutStone",
       "queueLengthPerLevel": [
         3,
@@ -1700,8 +1589,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Smelter": {
       "size": {
@@ -1749,6 +1637,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Gold": 400,
         "Stone": 120
@@ -1792,7 +1681,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": "Iron",
       "queueLengthPerLevel": [
         3,
@@ -1818,8 +1706,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "RuneCarver": {
       "size": {
@@ -1867,6 +1754,7 @@
         10
       ],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Gold": 800,
         "Stone": 200
@@ -1910,7 +1798,6 @@
       ],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": "Runestone",
       "queueLengthPerLevel": [
         3,
@@ -1936,8 +1823,7 @@
         2,
         4,
         6
-      ],
-      "bedsPerLevel": []
+      ]
     },
     "Garden": {
       "size": {
@@ -1964,6 +1850,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Wood": 200,
         "Food": 100
@@ -1984,12 +1871,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 4,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     },
     "Well": {
       "size": {
@@ -2016,6 +1901,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Stone": 200
       },
@@ -2037,12 +1923,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 6,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     },
     "Orchard": {
       "size": {
@@ -2069,6 +1953,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Food": 500
       },
@@ -2090,12 +1975,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 12,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     },
     "Statue": {
       "size": {
@@ -2122,6 +2005,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Gold": 5000
       },
@@ -2143,12 +2027,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 10,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     },
     "Plaza": {
       "size": {
@@ -2175,6 +2057,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Stone": 800
       },
@@ -2197,12 +2080,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 30,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     },
     "Shrine": {
       "size": {
@@ -2229,6 +2110,7 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
       "armyCapPerLevel": [],
+      "bedsPerLevel": [],
       "buildCost": {
         "Gold": 20000
       },
@@ -2250,12 +2132,10 @@
       "upgradeCostGoodsPerLevel": [],
       "extraUnitsPerDeliveryPerLevel": [],
       "strikeSpeedPerLevel": [],
-      "salePricePerLevel": [],
       "produces": null,
       "queueLengthPerLevel": [],
       "harmonySupply": 40,
-      "harmonyCostPerLevel": [],
-      "bedsPerLevel": []
+      "harmonyCostPerLevel": []
     }
   },
   "goods": {
@@ -3448,7 +3328,7 @@
       "carriedAtk": 100,
       "carriedDef": 0,
       "carriedHp": 250,
-      "carriedAtkPerLevel": 10.0,
+      "carriedAtkPerLevel": 10,
       "carriedDefPerLevel": 0,
       "carriedHpPerLevel": 25
     },
@@ -3462,7 +3342,7 @@
       "carriedDef": 150,
       "carriedHp": 625,
       "carriedAtkPerLevel": 0,
-      "carriedDefPerLevel": 15.0,
+      "carriedDefPerLevel": 15,
       "carriedHpPerLevel": 62.5
     },
     "ForemansSigil": {
@@ -3474,8 +3354,8 @@
       "carriedAtk": 200,
       "carriedDef": 50,
       "carriedHp": 0,
-      "carriedAtkPerLevel": 20.0,
-      "carriedDefPerLevel": 5.0,
+      "carriedAtkPerLevel": 20,
+      "carriedDefPerLevel": 5,
       "carriedHpPerLevel": 0
     },
     "GildedLedger": {
@@ -3487,8 +3367,8 @@
       "carriedAtk": 50,
       "carriedDef": 100,
       "carriedHp": 375,
-      "carriedAtkPerLevel": 5.0,
-      "carriedDefPerLevel": 10.0,
+      "carriedAtkPerLevel": 5,
+      "carriedDefPerLevel": 10,
       "carriedHpPerLevel": 37.5
     },
     "WanderersCompass": {
@@ -3878,54 +3758,6 @@
       "goalLevel": null,
       "reward": {
         "Gold": 90
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "Trade",
-      "name": "Trade",
-      "description": "Your plots make more than your people eat. Research the Market — a surplus is only wealth once someone will buy it.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Market",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 60
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "ToMarket",
-      "name": "To market",
-      "description": "Now build the Market. It is where the surplus goes.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Market",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 70
-      },
-      "rewardGems": 0,
-      "rewardStardust": 0,
-      "rewardKnowledge": 1,
-      "rewardMana": 0
-    },
-    {
-      "id": "Merchant",
-      "name": "Merchant",
-      "description": "Sell twenty goods at the Market.",
-      "goalType": "SellGoods",
-      "goalTarget": null,
-      "goalAmount": 20,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 70
       },
       "rewardGems": 0,
       "rewardStardust": 0,

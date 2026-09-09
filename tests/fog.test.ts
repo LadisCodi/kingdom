@@ -218,18 +218,20 @@ describe('exploring pays in ground, not in currency', () => {
     // edit that puts the tree out of reach fails here rather than in
     // playtest.
     //
-    // 518,955 in Gold, down 875 when Cartography and Surveying I–II left the
-    // tree with the fog's tap ladder (01-map-and-fog.md §5). It was 6,600
-    // before the 15 levelled upgrades became ranked technologies, 520,165
-    // when the three tomes added their
-    // keystones, 485,330 when Civics became a whole book (2026-09-08: 67
-    // cards, two planned ones cut, the ranks re-priced for their rows), and
-    // it went back up by 34,500 when the four decoration technologies joined
-    // Civics' third band the same day. 07-research.md calls a tree the quest
-    // chain funds twice over "not a sink, a formality"; this is the other
-    // side of that.
+    // 502,335 in Gold, down 16,620 when the Market left the game
+    // (2026-09-09): its own card, the four Market Stall ranks and Guildhalls,
+    // which existed only to allow a second one. Before that it was 518,955,
+    // down 875 when Cartography and Surveying I–II left the tree with the
+    // fog's tap ladder (01-map-and-fog.md §5). It was 6,600 before the 15
+    // levelled upgrades became ranked technologies, 520,165 when the three
+    // tomes added their keystones, 485,330 when Civics became a whole book
+    // (2026-09-08: 67 cards, two planned ones cut, the ranks re-priced for
+    // their rows), and it went back up by 34,500 when the four decoration
+    // technologies joined Civics' third band the same day. 07-research.md
+    // calls a tree the quest chain funds twice over "not a sink, a
+    // formality"; this is the other side of that.
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(tree).toBe(518_955);
+    expect(tree).toBe(502_335);
     // Every tech is Gold AND Knowledge, era 1 included since the clock gained
     // a base rate (2026-09-08) — the research clock, 07-research.md §3. Never
     // materials: a full quarry buys no research, which is what keeps the tree

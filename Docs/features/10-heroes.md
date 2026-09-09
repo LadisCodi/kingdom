@@ -367,7 +367,7 @@ the rewarded video.
   hero tile would promise a roster entry that is already there.
 - **The banners live in the Tavern** (*designed, not built*): heroes are
   unlocked by that building and **tapping it is how one is called**, the way
-  tapping the Market opens the trade screen
+  tapping the Tavern opens the banner
   ([`14-monetization.md`](14-monetization.md) §2.1).
 - **The keys stay in the store**, one Gem-priced card each. The store is where
   a currency is bought; the Tavern is where a key is spent.

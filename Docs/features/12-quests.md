@@ -25,7 +25,7 @@
 
 | Absolute | Relative |
 |---|---|
-| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · **ClearGarrisons** *(designed)* · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature · SellGoods |
+| BuildDistrict · UpgradeDistrict · HoldResource · ReachPopulation · CompleteTech · CompleteTechs · AssignWorkers · TrainArmy · ClaimLandmarks · ReachDepth · ClearRuins · **ClearGarrisons** *(designed)* · OwnArtifacts · OwnHeroes · BuyUpgrade | CollectResource · CollectTaps · DiscoverCells · DiscoverFeature |
 
 - **Goal types are code; goals are data.** A new type is a code change; a new
   quest is a row.
@@ -52,17 +52,16 @@
 | **16–17** | `GrowingTown` · `Neighbors` | A second House, a third villager. |
 | **18** | `ProperCapital` | **Townhall 2.** TH1 caps the city at 2 Houses and 1 Sawmill; quest 16 reaches the cap. |
 | **19–21** | `SawTeeth` · `TheSawmill` · `Crewed` | **Saws → the Sawmill → two workers on it.** |
-| **22–24** | `Levies` · `Sawpits` · `Regrowth` | **Taxes I → Sawpits I → Reforesting I** — the three cards the book puts between Saws and the Market. A requirement is the row above, so the chain walks the rows in order rather than pointing past them. |
-| **25–27** | `Trade` · `ToMarket` · `Merchant` | Research, build and use the Market — once the Sawmill has made there be a surplus to sell. |
-| **28** | `FurtherAfield` | Fifteen more cells — the near shrine and the Hollow Barrow come into view. **Discovering the Barrow starts its gate's counter: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
-| **29–31** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 41. |
-| **32** | `FirstSummon` | **Summon at the banner. The first call is free.** |
-| **33** | `MusterCompany` | **Twenty-four soldiers.** One is a guard; a company is what takes a gate. Pays 400 Gold — the beat is priced to cover most of the muster. |
-| **34** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** Twenty orcs, on the surface, in view: the company just mustered wins it at any matchup. The first fight is guaranteed by authoring, not by the hero's own stats. Pays Gold. |
-| **35–36** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
-| **37–38** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 20 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
-| **39–40** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. |
-| **41** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 34. |
+| **22–24** | `Levies` · `Sawpits` · `Regrowth` | **Taxes I → Sawpits I → Reforesting I** — the three cards the book puts after Saws. A requirement is the row above, so the chain walks the rows in order rather than pointing past them. |
+| **25** | `FurtherAfield` | Fifteen more cells — the near shrine and the Hollow Barrow come into view. **Discovering the Barrow starts its gate's counter: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
+| **26–28** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 39. |
+| **29** | `FirstSummon` | **Summon at the banner. The first call is free.** |
+| **30** | `MusterCompany` | **Twenty-four soldiers.** One is a guard; a company is what takes a gate. Pays 400 Gold — the beat is priced to cover most of the muster. |
+| **31** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** Twenty orcs, on the surface, in view: the company just mustered wins it at any matchup. The first fight is guaranteed by authoring, not by the hero's own stats. Pays Gold. |
+| **32–33** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
+| **34–35** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 20 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
+| **36–37** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. |
+| **38** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 31. |
 
 - **Quests 42–56:** the Quarry, Urban Planning, Townhall 3 and Mining, then
   Attunement, the Sanctum, a warband, the first full ruin clear, attuning a
@@ -97,16 +96,13 @@
   Forestry.
 - A pull costs 1,000 Gems. The first call on the standard banner is free,
   tracked on the pity counter.
-- The Market beats (`Trade` · `ToMarket` · `Merchant`) sit at quests 25–27 and
-  pay 60 / 70 / 70 Gold; the three research beats before them (`Levies` ·
-  `Sawpits` · `Regrowth`) pay 80 / 90 / 90, so each funds the card the next
-  one asks for. The Market's Gold sink is
-  [`16-wonders.md`](16-wonders.md).
+- The three research beats at 22–24 (`Levies` · `Sawpits` · `Regrowth`) pay
+  80 / 90 / 90 Gold, so each funds the card the next one asks for.
 - Numbers the opening fixes elsewhere:
   - a crop plot costs **10 Wood**;
   - the first chop asks for **25 Wood** (a roof and a plot);
   - a level-1 House holds **2**, so the second villager needs no second roof;
-  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 41).
+  - Townhall L1→L2 costs **60 Wood**, no Stone (the Quarry is quest 39).
 - The opening is played through the real sim with **no funding at all** — only
   what the game grants and what it earns.
 
@@ -312,7 +308,7 @@ and the thing you press are the same object.
 - A daily limit on Royal cells. The free cell is one a day; the paid column is
   not rationed twice.
 - A second quest chain. Branching quests.
-- **Generated orders** — daily fetch-quests in a Market tab. The open-ended
+- **Generated orders** — daily fetch-quests on a board of their own. The open-ended
   Gold sink is [`16-wonders.md`](16-wonders.md) §1; a sink never pays back
   what it asked for ([`16-wonders.md`](16-wonders.md) §3.1). An order reroll
   as an ad placement or pass reward ([`14-monetization.md`](14-monetization.md))

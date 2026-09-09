@@ -196,29 +196,6 @@ export const effectiveResearchTimeMultiplier = (state: GameState): number =>
   Math.max(0.25, resolve(state, 'researchTime', techValue(state, 'researchTime', 1)));
 
 /**
- * Multiplier on Market sale prices: the BUILDING's level, then MarketStall's
- * ranks (+5% each), then the modifier stack.
- *
- * The best Market in the city speaks for the city — two Markets are a second
- * doorway, not a better price, so a city with `Guildhalls` gets reach rather
- * than a stacked bonus.
- */
-export const marketSaleLevelMultiplier = (state: GameState): number => {
-  let best = 1;
-  for (const d of state.city.districts) {
-    if (d.state !== 'Built') continue;
-    const list = DISTRICTS[d.definitionId].salePricePerLevel;
-    if (list.length === 0) continue;
-    best = Math.max(best, levelIndexed(list, d.level) ?? 1);
-  }
-  return best;
-};
-
-export const effectiveSalePriceMultiplier = (state: GameState): number =>
-  Math.max(0, resolve(state, 'salePrice',
-    techValue(state, 'salePrice', marketSaleLevelMultiplier(state))));
-
-/**
  * Tax gold per housed villager per minute.
  *
  * `district` is the house being taxed, so the tree can aim a rate at one kind

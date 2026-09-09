@@ -146,13 +146,6 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
     const to = term(def.strikeSpeedPerLevel, next, 1);
     if (to !== from) delta('swing', `×${from}`, `×${to}`);
   }
-  // The Market's whole ladder is the price it pays for a unit.
-  if (def.salePricePerLevel.length > 0) {
-    const pct = (n: number) => `+${Math.round((n - 1) * 100)}%`;
-    const from = term(def.salePricePerLevel, district.level, 1);
-    const to = term(def.salePricePerLevel, next, 1);
-    if (to !== from) delta('sale price', pct(from), pct(to));
-  }
   if (def.armyCapPerLevel.length > 0) {
     delta('army cap',
       levelIndexed(def.armyCapPerLevel, district.level),

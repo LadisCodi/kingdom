@@ -28,7 +28,7 @@
   in the workbook.
 - A technology never requires a technology in another tome.
 
-## 2. Tome I — Civics — 71 nodes
+## 2. Tome I — Civics — 66 nodes
 
 > *The city and its purse.* Open, like every book.
 
@@ -43,7 +43,7 @@ door.
 
 Civics runs to **three bands**; Warfare and Magic run to four.
 
-### 2.1 Era 1 · Settlement — 19 nodes
+### 2.1 Era 1 · Settlement — 17 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -52,14 +52,13 @@ Civics runs to **three bands**; Warfare and Magic run to four.
 | **Saws** | the Sawmill |
 | **Farming** | the Farm that works the plots |
 | **Masonry** | the Quarry |
-| **Market** | the Market |
 | **Urban Planning** | Housing level 2 |
 
-The band opens on one root and fans twice: Masonry and the Market split the
-page, and Urban Planning gathers them again before the three thumb ladders
+The band opens on one root and walks down a single column: Urban Planning
+gathers the two harvest ladders before Masonry and the three thumb ladders
 hang off it.
 
-### 2.2 Era 2 · Township — 18 nodes
+### 2.2 Era 2 · Township — 17 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -69,7 +68,7 @@ hang off it.
 | **Communities** | +1 resident in every Housing |
 | **Infirmary** | the Infirmary — beds for the wounded, who die without them ([`combat.md`](combat.md) §4) |
 
-### 2.3 Era 3 · Borough — 35 nodes
+### 2.3 Era 3 · Borough — 32 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -78,11 +77,10 @@ hang off it.
 | **Aqueducts** | Housing L3 |
 | **Architecture** | Sawmill L4, Quarry L3 |
 | **Deep Mining** | the gold mountain — the Quarry works it for Gold |
-| **Guildhalls** | a second Market (`extra_count_tech` on the district) |
 | **Roadworks** | workers move faster — `worker.moveSpeedTilesPerSecond` 1 → 1.25 |
 | **Gardening** | the Garden and the Orchard — the first decorations, under Engineering |
 | **Sculpture** | the Well and the Statue — cut stone for the eye, under Architecture |
-| **Paving** | the Plaza, under Guildhalls |
+| **Paving** | the Plaza, under Deep Mining |
 | **Sacred Grounds** | the Shrine, under Scriveners II — the last thing the band opens |
 
 The four decoration cards sit where their pieces' Townhall gates fall
@@ -106,7 +104,6 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Tap Power I–V** | +20% of what a tap is worth | I / II / III·IV·V |
 | **Quick Hands I–V** | −0.05 s between auto-taps while holding | I / II / III·IV·V |
 | **Trade Routes I–V** | +10% tax income | I / II / III·IV·V |
-| **Market Stall I–IV** | +5% Market prices | I / II / III·IV |
 | **Worker Load I–III** | +1 on every worker delivery | I / II / III |
 | **Stonecutting I–III** | +1 Stone per tap and delivery on a mountain | I / II / III |
 | **Carpentry I–III** | −5% time to build and upgrade | I / II / III |
@@ -119,7 +116,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Foraging I–II** *(designed, not built)* | +1 Food per tap on a berry bush | — |
 | **Almshouses I–II** *(designed, not built)* | +1 further resident in every Housing | — |
 | **Load-Bearing I–III** *(designed, not built)* | +1 Stone per tap on rocks | — |
-## 3. Tome II — Warfare — 52 nodes
+## 3. Tome II — Warfare — 51 nodes
 
 > *The army, and what it goes into the ground for.* Opens on your first
 > discovered ruin.
@@ -136,7 +133,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 - A unit tier arrives with the army
   cap that fields it.
 
-### 3.1 Era 1 · The Levy — 9 nodes
+### 3.1 Era 1 · The Levy — 8 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -180,7 +177,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 | **Warhorns I–III** | +1 ATK to all units | — / — / I |
 | **Pathfinders I–III** *(inert — a room has no duration)* | — | — / — / I |
 
-## 4. Tome III — Magic — 57 nodes
+## 4. Tome III — Magic — 53 nodes
 
 > *The land's magic, and what you can see of it.* Opens on your first paid
 > reveal.
@@ -199,7 +196,7 @@ and every rank is an ordinary card gated by the row above it like any other.
 - `Attunement` names the Magic ladder; the quest `Attuned` targets
   `Consecration`.
 
-### 4.1 Era 1 · The Awakening — 12 nodes
+### 4.1 Era 1 · The Awakening — 10 nodes
 
 | Major | Unlocks |
 |---|---|
@@ -325,7 +322,6 @@ names the one call site that owns its number, and
 | `workerSpeed` | Cartage | |
 | `buildTime` | Carpentry | |
 | `researchTime` | Scriveners | fixed at research start ([`07-research.md`](07-research.md) §1) |
-| `salePrice` | Market Stall | **multiplier POINTS**, not a percentage of the level multiplier |
 | `taxRate` | Trade Routes | aimable at a kind of house; the shipped ladder is unaimed |
 | `manaCap` | Deep Wells | |
 | `manaPerClaimedLandmark` · `knowledgePerClaimedLandmark` · `knowledgePerClearedRuin` | Ley Taps, Wayposts, Vigils | a per-site term the call site multiplies by the count it holds |
@@ -378,8 +374,8 @@ Era-2/3 majors whose mechanics do not exist yet are on the tree, flagged.
 Scouting, Vanguard, Standards · Ley Reading, Scrying, Invocation,
 Lorekeeping, Wayshrines, Ley Lines, Frugal Rites, Ritual Casting, Ley Storm.
 
-**Live era-2/3 majors (9):** Aqueducts, Guildhalls, Roadworks, Tactics,
-Salvage, Conquest, Meditation, Sanctified Ruins, Second Sanctum.
+**Live era-2/3 majors (8):** Aqueducts, Roadworks, Tactics, Salvage,
+Conquest, Meditation, Sanctified Ruins, Second Sanctum.
 
 ## 8. Dials, in the order to reach for them
 
