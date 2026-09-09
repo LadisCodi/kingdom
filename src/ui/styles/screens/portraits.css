@@ -1,0 +1,26 @@
+/* Hero portraits, mid-repaint.
+ *
+ * Every selector that draws a hero — `.hero-art` on the roster and the card,
+ * `.bt-portrait` and `.bt-card-portrait` in battle, `.exp-portrait` on the
+ * expedition sheet, the gacha reveal and the banner — sets
+ * `image-rendering: pixelated`, and it is RIGHT for the roster the build ships
+ * with: thirty-one placeholder cards at 42×74, drawn at up to 200px. Smoothing
+ * a 5× upscale of chunky pixel art is mush.
+ *
+ * The portraits being generated to replace them (Docs/art/portraits/) are the
+ * opposite: 512×768 smooth 3D renders that the browser DOWNscales, and
+ * nearest-neighbour downsampling speckles a face — visibly, at card size, on
+ * the hair and the eyes.
+ *
+ * So the repainted ones opt out, keyed on the asset's own file name, because
+ * the file is the only thing that knows which kind it is. Vite's hash is
+ * appended to the stem, so the substring survives the build.
+ *
+ * ONE LINE PER HERO, and this whole file goes away when the last placeholder
+ * is gone: at that point delete it and drop `pixelated` from the hero
+ * selectors instead. The attribute selector outranks a single class, so this
+ * wins wherever the portrait is drawn, whatever the barrel's order.
+ */
+img[src*='hero_elven_princess'] {
+  image-rendering: auto;
+}
