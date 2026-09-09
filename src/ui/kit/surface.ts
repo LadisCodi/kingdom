@@ -31,6 +31,16 @@ export function sheet(
      *  are still using) is the wrong metaphor. */
     centred?: boolean;
     /**
+     * Take the whole height the frame has, rather than only as much as the
+     * content needs.
+     *
+     * For a screen the player WORKS in — the battle board, where the room and
+     * the party have to be read against each other — because a drawer that
+     * grows and shrinks as squads are added moves its own buttons around, and
+     * because the space is what pays for slots big enough to tap.
+     */
+    tall?: boolean;
+    /**
      * Drop the grab handle and the plank.
      *
      * For a sheet whose CONTENT already names it — a hero's card carries the
@@ -50,7 +60,10 @@ export function sheet(
   close.setAttribute('data-own-close', '');
   return el(
     'div',
-    { class: `k-sheet${opts.centred ? ' is-centred' : ''}${opts.bare ? ' is-bare' : ''}` },
+    {
+      class: `k-sheet${opts.centred ? ' is-centred' : ''}`
+        + `${opts.bare ? ' is-bare' : ''}${opts.tall ? ' is-tall' : ''}`,
+    },
     el(
       'div',
       { class: 'k-panel' },

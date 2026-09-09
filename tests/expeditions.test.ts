@@ -17,7 +17,7 @@ import { advance } from '../src/sim/commands';
 import { techKnowledgeCost } from '../src/sim/research';
 import {
   ARMY, CURRENCIES, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
-  RUIN_ORDER, TECH_ORDER, UNITS, depthDef, depthsOf, roomCount, roomPower,
+  RUIN_ORDER, TECH_ORDER, UNITS, depthCount, depthDef, depthsOf, roomCount, roomPower,
 } from '../src/sim/data/definitions';
 import {
   enterRoom, frontier, previewRoom, roomBlock, roomBoard, roomReward, roomsCleared,
@@ -27,7 +27,7 @@ import { claimLandmark } from '../src/sim/landmarks';
 import { knowledgePerHour } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  getWallet, townhall, type ArtifactId, type GameState, type RuinId, type UnitId,
+  getWallet, townhall, type GameState, type RuinId, type UnitId,
 } from '../src/sim/state';
 import {
   addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openRuin, reveal, T0,
@@ -524,38 +524,45 @@ describe('the read-out', () => {
     state.ruins[BARROW] = { depth: 1, cleared: rooms - 1 };
     expect(previewRoom(state, BARROW, ['Warden'], []).isBoss).toBe(true);
   });
+
+  // The two bars the sheet draws (Docs/features/11a-ruins-ui.md §2.5) are only
+  // as honest as their denominators: the depth ladder is the RUIN's, the room
+  // ladder is THIS DEPTH's, and mixing the two would draw a bar that fills at
+  // the wrong pace and puts the boss in the wrong place.
+  it('carries both ladders the widget draws a bar for', () => {
+    const state = readyToDelve();
+    const first = previewRoom(state, BARROW, ['Warden'], []);
+    expect(first.depths).toBe(depthCount(BARROW));
+    expect(first.roomsInDepth).toBe(depthDef(BARROW, 1)!.rooms);
+    // The room ladder is the depth's, never the ruin's.
+    expect(first.roomsInDepth).toBeLessThan(first.rooms);
+    // …and it follows the player down.
+    state.ruins[BARROW] = { depth: 2, cleared: 0 };
+    const deeper = previewRoom(state, BARROW, ['Warden'], []);
+    expect(deeper.roomsInDepth).toBe(depthDef(BARROW, 2)!.rooms);
+    // The boss is the last room of the depth, which is where the bar puts it.
+    state.ruins[BARROW] = { depth: 2, cleared: deeper.roomsInDepth - 1 };
+    const atBoss = previewRoom(state, BARROW, ['Warden'], []);
+    expect(atBoss.room).toBe(atBoss.roomsInDepth);
+    expect(atBoss.isBoss).toBe(true);
+  });
 });
 
-describe('attune or arm', () => {
+// A relic is the kingdom's or it is on the shelf: nothing carries one into a
+// room any more (Docs/features/09-relics.md §5).
+describe('a relic is no part of a room', () => {
   const troops = [{ unitId: 'Warrior' as UnitId, count: 60 }];
-  const armed = (relic: ArtifactId = 'ForemansSigil') => {
+
+  it('neither blocks an attempt nor arms one', () => {
     const state = readyToDelve({ Warrior: 60 });
-    grantArtifact(state, relic);
+    grantArtifact(state, 'ForemansSigil');
     normaliseSlots(state);
-    return state;
-  };
-
-  it('refuses to send a relic the kingdom is wearing', () => {
-    const state = armed();
-    attune(state, 0, 'ForemansSigil', T0);
-    expect(roomBlock(state, map, BARROW, ['Warden'], troops, 'ForemansSigil'))
-      .toBe('ArtifactAttuned');
-    expect(roomBlock(state, map, BARROW, ['Warden'], troops)).toBeNull();
-  });
-
-  it('is worth attack in the room it walks into', () => {
-    const state = armed();
     const bare = previewRoom(state, BARROW, ['Warden'], troops);
-    const withRelic = previewRoom(state, BARROW, ['Warden'], troops, 'ForemansSigil');
-    expect(withRelic.attack).toBeGreaterThan(bare.attack);
-    expect(withRelic.stats.atk).toBeGreaterThan(bare.stats.atk);
-  });
-
-  it('comes straight back out — a room is over the moment it is entered', () => {
-    const state = armed();
-    enterRoom(state, map, BARROW, ['Warden'], troops, 'ForemansSigil');
-    // Nothing holds it, so the kingdom can wear it again immediately.
-    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Attuned');
+    attune(state, 0, 'ForemansSigil', T0);
+    expect(roomBlock(state, map, BARROW, ['Warden'], troops)).toBeNull();
+    const worn = previewRoom(state, BARROW, ['Warden'], troops);
+    expect(worn.attack).toBe(bare.attack);
+    expect(worn.stats.atk).toBe(bare.stats.atk);
   });
 });
 

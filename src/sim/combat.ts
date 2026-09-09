@@ -2,8 +2,8 @@
 //
 // The fight itself moved out. `battle.ts` is the resolver — ticks, rows,
 // frontage, targeting, an event stream — and this file is what it is handed:
-// the shape of a party, the type chart both sides read, what a carried relic
-// adds, and the POWER ESTIMATE the screens print before anyone commits.
+// the shape of a party, the type chart both sides read, and the POWER
+// ESTIMATE the screens print before anyone commits.
 //
 // The estimate and the outcome are deliberately two different numbers. A sum
 // of `power_per_troop` is what a player can be shown and can compare; who
@@ -17,8 +17,8 @@
 // the resolver plays out what that choice was worth.
 
 import type { UnitTag } from './data/definitions';
-import { ARMY, ARTIFACTS, COMBAT, HEROES, UNITS } from './data/definitions';
-import type { ArtifactId, HeroId, UnitId } from './state';
+import { ARMY, COMBAT, HEROES, UNITS } from './data/definitions';
+import type { HeroId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
 export const BEATS: Record<UnitId, UnitId> = {
@@ -50,20 +50,12 @@ export interface PartySlot {
   count: number;
 }
 
-/** The relic a hero carried down, at the level it went down AT. Combat stays
- *  pure — no `GameState` reaches this module — so the level is passed in the
- *  same way `heroLevel` is. */
-export interface CarriedArtifact {
-  id: ArtifactId;
-  level: number;
-}
-
 /**
  * What the kingdom's research adds to the soldiers it sends — the Warfare
  * lines Shield Wall, Fletching, Barding, Warhorns and Manoeuvre, resolved OUT
  * HERE by expeditions.ts and carried in on the Party, exactly the way the
- * hero's level and the carried relic travel. Combat stays pure: no GameState
- * ever reaches this module, so a fight can be replayed from its inputs alone.
+ * hero's level travels. Combat stays pure: no GameState ever reaches this
+ * module, so a fight can be replayed from its inputs alone.
  */
 export interface Drill {
   /** Flat ATK per unit, by tag; `all` applies to every unit. */
@@ -97,22 +89,8 @@ export interface Party {
    *  hero (Docs/features/10-heroes.md §2.6). */
   heroes: readonly PartyHero[];
   slots: readonly PartySlot[];
-  /** Carried into the delve, and therefore NOT attuned to the kingdom. */
-  artifact?: CarriedArtifact | null;
   /** The kingdom's drill, resolved by the caller. Absent = none. */
   drill?: Drill;
-}
-
-/** A carried relic's contribution at its level. */
-export function carriedStats(artifact: CarriedArtifact | null | undefined): PartyStats {
-  if (!artifact) return { atk: 0, def: 0, hp: 0 };
-  const c = ARTIFACTS[artifact.id].carried;
-  const levels = artifact.level - 1;
-  return {
-    atk: c.atk + c.atkPerLevel * levels,
-    def: c.def + c.defPerLevel * levels,
-    hp: c.hp + c.hpPerLevel * levels,
-  };
 }
 
 export interface PartyStats {
@@ -151,12 +129,6 @@ export function partyStats(party: Party): PartyStats {
     // heroes of one type stack everywhere else.
     if (h.trait === 'PartyDefence') def *= 1 + h.traitValue;
   }
-  // The relic rides on top of the party, INCLUDING past a party-wide trait —
-  // the Warden shields the soldiers it commands, not the stone in its pack.
-  const relic = carriedStats(party.artifact);
-  atk += relic.atk;
-  def += relic.def;
-  hp += relic.hp;
   return { atk: Math.round(atk), def: Math.round(def), hp: Math.round(hp) };
 }
 
@@ -178,8 +150,6 @@ export function partyPower(party: Party): number {
     const h = HEROES[hero.id];
     power += (h.dmg + h.dmgPerLevel * (hero.level - 1)) * COMBAT.heroPowerPerDmg;
   }
-  // A carried relic arms the hero, so it is worth what a hero's damage is.
-  power += carriedStats(party.artifact).atk * COMBAT.heroPowerPerDmg;
   return Math.round(power);
 }
 

@@ -123,11 +123,11 @@ Paid fog is the mechanic the game is built around. It pays back three ways:
   **A relic is what you wear; a spell is what you know**
   ([`features/07-research.md`](features/07-research.md) §6).
 
-> **A relic is attuned to the kingdom, or carried by a hero into a fight. Never
-> both.**
+> **A relic is worn by the kingdom, or it is on the shelf. It never goes
+> anywhere.**
 
-- Example: wear the Foreman's Sigil for +1 worker yield, or send it down to
-  take a room the party could not otherwise hold.
+- The scarce thing is SLOTS: wearing the Foreman's Sigil for +1 worker yield
+  is a slot the Dowsing Rod's cheaper fog is not in.
 - Unlocking and levelling a relic needs a **nine-piece ingredient set** with
   1★/2★/3★ rarities from three different sources.
 

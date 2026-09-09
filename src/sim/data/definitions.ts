@@ -1187,10 +1187,9 @@ export const LANDMARKS: LandmarkDef[] = (regionMap.landmarks as Array<{
  * removed once Mana became the energy every tap is paid from — the two jobs
  * fought, and a player wearing the set had no pool left to play with.
  *
- * Attune-or-arm survives that intact, because the rule was never really about
- * price: a relic is attuned to the kingdom OR carried down by a hero, never
- * both, so the question is still "which do I need right now" — an economy
- * passive at home, or combat stats below.
+ * A relic has no battlefield stats: nothing carries one into a fight, so the
+ * only question a relic asks is which passive the kingdom wears
+ * (Docs/features/09-relics.md §5).
  */
 export interface ArtifactDef {
   id: ArtifactId;
@@ -1217,7 +1216,6 @@ export interface ArtifactDef {
    * but "which do I need right now" — a standing economic benefit against a
    * burst of delve power.
    */
-  carried: CarriedStats;
   active: ArtifactActive | null;
   /** The ruin whose full clear grants it. */
   source: RuinId;
@@ -1238,33 +1236,12 @@ export interface ArtifactActive {
   radius: number;
 }
 
-/** A relic's contribution to a party, before any matchup. */
-export interface CarriedStats {
-  atk: number;
-  def: number;
-  hp: number;
-  atkPerLevel: number;
-  defPerLevel: number;
-  hpPerLevel: number;
-}
-
 type ArtifactBalance = {
   passiveBase: number; passivePerLevel: number;
   activeManaCost: number; activeDurationSeconds: number; activeRadius: number;
-  carriedAtk: number; carriedDef: number; carriedHp: number;
-  carriedAtkPerLevel: number; carriedDefPerLevel: number; carriedHpPerLevel: number;
 };
 const ab = (id: ArtifactId): ArtifactBalance =>
   (balance.artifacts as Record<ArtifactId, ArtifactBalance>)[id];
-
-const carried = (id: ArtifactId): CarriedStats => ({
-  atk: ab(id).carriedAtk,
-  def: ab(id).carriedDef,
-  hp: ab(id).carriedHp,
-  atkPerLevel: ab(id).carriedAtkPerLevel,
-  defPerLevel: ab(id).carriedDefPerLevel,
-  hpPerLevel: ab(id).carriedHpPerLevel,
-});
 
 export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
   DowsingRod: {
@@ -1274,7 +1251,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'revealCost', scope: null, op: 'mul',
       base: ab('DowsingRod').passiveBase, perLevel: ab('DowsingRod').passivePerLevel,
     },
-    carried: carried('DowsingRod'),
     active: {
       id: 'Divination', name: 'Divination', targeted: true,
       manaCost: ab('DowsingRod').activeManaCost, durationSeconds: 0, radius: 0,
@@ -1292,7 +1268,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'cellRecovery', scope: null, op: 'mul',
       base: ab('VerdantSeal').passiveBase, perLevel: ab('VerdantSeal').passivePerLevel,
     },
-    carried: carried('VerdantSeal'),
     active: {
       id: 'Bloom', name: 'Bloom', targeted: true,
       manaCost: ab('VerdantSeal').activeManaCost, durationSeconds: 0,
@@ -1308,7 +1283,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'workerYield', scope: null, op: 'add',
       base: ab('ForemansSigil').passiveBase, perLevel: ab('ForemansSigil').passivePerLevel,
     },
-    carried: carried('ForemansSigil'),
     active: {
       id: 'Haste', name: 'Haste', targeted: false,
       manaCost: ab('ForemansSigil').activeManaCost,
@@ -1326,7 +1300,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'taxRate', scope: null, op: 'mul',
       base: ab('GildedLedger').passiveBase, perLevel: ab('GildedLedger').passivePerLevel,
     },
-    carried: carried('GildedLedger'),
     // No active at all, deliberately: the clearest proof that the SLOT rather
     // than the ability is the constraint.
     active: null,
@@ -1340,7 +1313,6 @@ export const ARTIFACTS: Record<ArtifactId, ArtifactDef> = {
       stat: 'knowledgeYield', scope: null, op: 'mul',
       base: ab('WanderersCompass').passiveBase, perLevel: ab('WanderersCompass').passivePerLevel,
     },
-    carried: carried('WanderersCompass'),
     active: {
       id: 'Beckon', name: 'Beckon', targeted: true,
       manaCost: ab('WanderersCompass').activeManaCost, durationSeconds: 0, radius: 0,

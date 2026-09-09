@@ -1,9 +1,18 @@
 /* The screen before a fight (Docs/features/11a-ruins-ui.md §2.5) — the board,
  * the slots, and the card panels that fill them. The gate's own band is
- * screens/gates.css; the party pickers the DELVE still uses are
- * screens/expedition.css. */
+ * screens/gates.css; the room's widget is screens/expedition.css. */
 
-.bt { display: flex; flex-direction: column; gap: 12px; }
+/* The sheet is TALL (kit.css `.k-sheet.is-tall`), so the screen takes the
+   whole frame whatever is on it. */
+.bt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* …and the height goes to the two BOARDS, because the slots are what the
+   thumb is aimed at. Everything else keeps the size it asked for, so nothing
+   moves as the party changes. */
+.bt-army > .bt-slots { flex: 1; align-content: center; }
 
 /* ------------------------------------------------------------ the header */
 
@@ -45,6 +54,7 @@
   border: 2px solid var(--wood-dark);
   border-radius: 8px;
 }
+.bt-army { flex: 1 1 auto; }
 /* Theirs reads cold, ours warm — the two boxes are the same shape, so colour
    is what tells them apart at a glance. */
 .bt-army.is-enemy { background: rgba(122, 52, 44, 0.14); }
@@ -86,14 +96,19 @@
    see all of is the point of a board. */
 .bt-slots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 
+/* THE SIZE OF THE BARRACKS PICKER (`.tr-pick`, screens/district.css), on
+   purpose: a squad on this board and a unit on that one are the same kind of
+   choice, and picking one is the same gesture. Six of them wrap to two rows
+   of three on a phone, which is the shape the board itself has
+   (Docs/features/combat.md §3). */
 .bt-slot {
   position: relative; /* the clear badge hangs off the corner */
   appearance: none;
   display: grid;
   place-items: center;
   gap: 2px;
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
   padding: 4px;
   border: 2px solid var(--wood-dark);
   border-radius: 10px;
@@ -106,15 +121,29 @@
 .bt-slot.is-filled { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.25); }
 .bt-slot:hover { filter: brightness(1.05); }
 
-.bt-face { display: grid; place-items: center; }
+.bt-face { position: relative; display: grid; place-items: center; }
+/* The count rides ON the bust rather than under it, the way the training
+   queue's does (`.tr-slot-count`): at this size the figure is the thing being
+   read and a line of its own under it would have cost the portrait the
+   height it was given. */
 .bt-count {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--wood-dark);
+  color: var(--parchment);
   font-family: var(--font-body);
   font-weight: 700;
   font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
 }
-.bt-portrait { width: 40px; height: 40px; image-rendering: pixelated; object-fit: contain; }
-.bt-portrait.is-glyph { display: grid; place-items: center; font-size: 24px; }
+.bt-portrait { width: 64px; height: 64px; image-rendering: pixelated; object-fit: contain; }
+.bt-portrait.is-glyph { display: grid; place-items: center; font-size: 36px; }
+/* A hero's slot spends some of its height on the one word that matters on it
+   — which type its passive buffs — so the portrait gives that room back. */
+.bt-slot.is-hero .bt-portrait { width: 54px; height: 54px; }
 .bt-slot-name { font-family: var(--font-body); font-size: 12px; color: var(--ink-soft); }
 .bt-price {
   display: flex;

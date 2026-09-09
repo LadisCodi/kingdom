@@ -130,7 +130,7 @@ overridden by hand.
 ### 7.2 Boss — authored chest
 
 Ignores the formula. Contains: a named relic
-([`09-relics.md`](09-relics.md) §5.1), a Gem lump, and **hero fragments** from a
+([`09-relics.md`](09-relics.md)), a Gem lump, and **hero fragments** from a
 per-boss pool ([`10-heroes.md`](10-heroes.md) §5).
 
 ### 7.3 Depth completion — permanent generation

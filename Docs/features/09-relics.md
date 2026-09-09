@@ -1,10 +1,10 @@
 # 9 · Relics
 
 > **Scope.** The five relics, their passives, how they are levelled, the
-> nine-piece **ingredient set** that gates tiers, and the attune-or-arm rule.
+> nine-piece **ingredient set** that gates tiers, and attunement.
 > Heroes share the same substrate — [`10-heroes.md`](10-heroes.md).
 >
-> **Status.** Relics, attunement and attune-or-arm are **built**. The nav tab
+> **Status.** Relics and attunement are **built**. The nav tab
 > that carries them is shown from the first relic owned (§1.1). Ingredients
 > and trading (§4, §6) are **designed, not built**; the build gates tiers with
 > **Fragments**, a per-collectible counter. Spells as tome nodes
@@ -16,8 +16,8 @@
 - A relic grants one **passive** while attuned to the kingdom. That is all it
   does at home.
 - The passive scales with the relic's **level**.
-- A relic is **attuned to the kingdom** *or* **carried by a hero into a fight**
-  — never both (§5).
+- A relic is **worn by the kingdom or it is on the shelf**. It never goes
+  anywhere: nothing carries one into a fight (§5).
 - **Levels cost Stardust.** Unlocking a relic, and each tier after, needs nine
   ingredients (§4).
 - No random stat rolls: every relic is named and hand-authored, with one effect.
@@ -107,40 +107,22 @@
 - **3★ slots are unique and named per relic.**
 - Art: ~20 shared pieces plus 10–20 uniques. **OQ-8.**
 
-## 5. Attunement, and attune-or-arm
+## 5. Attunement
 
 - **Slots:** 1 at start → a second through research → up to **5** with Gems, at
   `20 × 2.5^purchased` each.
 - **Swapping applies immediately, then locks that slot for 5 minutes.** The
   lock stops a passive being attuned for one transaction (pay a frontier cell
   at −15%, swap back).
-- **A relic is attuned to the kingdom, or carried by a hero into a fight.
-  Never both.** Exclusivity is the whole cost; there is no upkeep.
-- Both directions refuse: a room attempt will not take an attuned relic, and
-  the Reliquary will not take back one that is out.
+- **A relic is worn by the kingdom or it sits on the shelf.** The socket is the
+  only claim on one: there is no upkeep, and nothing takes a relic anywhere.
+- **A relic has no battlefield stats.** It is not part of a party, it is not on
+  the board, and it changes nothing about entering a room
+  ([`11-expeditions.md`](11-expeditions.md) §5). What a fight is decided by is
+  troops and heroes ([`combat.md`](combat.md)).
+- The scarce thing is **slots**, and choosing which passives the kingdom wears
+  is the whole of the decision.
 - One item pool, one equip screen.
-
-### 5.1 A relic underground
-
-- Units are ATK 3–7 / DEF 1–3 / HP 6–12; a level-1 Warden is 4/6/24. **A relic
-  is worth about one good unit at level 1 and about two at level 10.**
-- **Carried ATK is type-neutral**: a relic has no unit type, so its ATK lands
-  whole against any matchup.
-- A relic is **excluded from the battle screen's matchup chip**.
-- **The battle screen shows the stat deltas, and what the carried ATK is worth
-  against this room's number.**
-- **The relic's level is read at the moment the fight is scored**, like every
-  other stat on the board.
-- A relic is committed for exactly as long as the fight lasts — which is no
-  time at all, since a room resolves on entry
-  ([`11-expeditions.md`](11-expeditions.md) §5). It is back on the shelf, and
-  attunable again, the moment the screen redraws.
-
-### 5.2 Three states with the world map
-
-- With the world map, exclusivity is three states: **home, underground, or
-  abroad**.
-- The 5-minute swap lock is unchanged.
 
 ## 6. Trading
 
@@ -176,7 +158,6 @@
 | Level cost | `round(20 × 1.6^level)`, max 10 → **3,612** to max one | `collection.level_cost_*` |
 | Tier ladder | 5 tiers, 2 levels each | `collection.max_tier`, `levels_per_tier` |
 | Passive base and per-level | per relic | `Artifacts` sheet |
-| Carried ATK / DEF / HP and per-level | per relic | `Artifacts` sheet |
 | **Ingredients per tier, and the 1★/2★/3★ split** | undecided | — |
 
 ## 9. Deliberately not in this design
@@ -185,7 +166,10 @@
 - An active on a relic.
 - Casting gated on a loadout slot.
 - Relics with random stat rolls.
-- A second item system for hero equipment — relics are dual-purpose.
+- **A relic carried into a fight.** It was one more decision in front of a
+  room that already asks which troops and which heroes, and it made every
+  relic two things at once. A relic is a passive the kingdom wears.
+- A second item system for hero equipment.
 - Standalone equipment with duplicate fusion.
 - A relic reachable through an upgrade, or vice versa
   ([`07-research.md`](07-research.md) §1.1).

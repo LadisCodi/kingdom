@@ -447,6 +447,20 @@
 /* A sheet fits the screen and scrolls inside itself, so its plank — and the
  * close knob in it — stay put however long the content is. */
 .k-sheet { width: 100%; max-height: 100%; display: flex; }
+/* …and a TALL one takes all of it, whether it needs it or not: a working
+ * screen whose height follows its content moves its own buttons every time
+ * something is added to it.
+ *
+ * The body becomes a column so the screen inside it can be told to fill what
+ * it was given — a percentage height would resolve against nothing here, and
+ * `flex: 1 0 auto` still lets a long screen scroll past the bottom. */
+.k-sheet.is-tall { height: 100%; }
+.k-sheet.is-tall > .k-panel > .k-sheet-body {
+  flex: 1;             /* the scroller takes the panel, not just its content */
+  display: flex;
+  flex-direction: column;
+}
+.k-sheet.is-tall > .k-panel > .k-sheet-body > * { flex: 1 0 auto; }
 .k-sheet > .k-panel {
   flex: 1;
   /* BOTH of these are load-bearing, and min-WIDTH was the one missing.

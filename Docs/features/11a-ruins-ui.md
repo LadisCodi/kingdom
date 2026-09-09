@@ -68,21 +68,33 @@ under the board.
 |---|---|
 | Data | Battle name and place, a **dynamic band** for whatever this kind of fight has to say, the enemy squads and their power, the party's slots and its attack, supply cost, reward preview |
 | Elements | Two army boxes of the same shape — theirs cold, ours warm — each with its power on the right; the party's slots; the reward chips; one primary button |
+| Height | The sheet takes the **whole frame**, whatever is on it. The spare height goes to the two army boxes, so the slots are the size of the barracks picker and the button never moves as the party changes |
 | States | Party over power · party under power (the box warns, the button still goes) · supplies unaffordable (the button blocks) |
 | Rules | A power shortfall **warns, never blocks**. **The enemy squads are what the fight is scored against** — the formation is derived from the authored budget and the budget is not shown. **The screen carries no prose that restates its own numbers**: the two armies' faces and their two power figures are the comparison, and the only way out is the sheet's own knob |
 
 **What each fight puts in the widget:**
 
-| Fight | The widget carries | Bands under the board |
-|---|---|---|
-| **A gate** | the raid countdown, trips left, the hoard | — |
-| **A room** | the address (`Depth 2 · Room 5`), rooms cleared of the ruin's total, whether this one is the depth's **boss**, and the relic waiting at the bottom | the relic the hero carries |
+| Fight | The widget carries |
+|---|---|
+| **A gate** | the raid countdown, trips left, the hoard |
+| **A room** | the address (`Depth 2 · Room 5`), **two progress bars**, and the relic waiting at the bottom |
+
+**The room's two bars.** One for the **depth**, one for the **room inside it**,
+with a **skull at the end of the room bar** — the boss of this depth, dim until
+the player is standing at it.
+
+- The **fill is what is behind them** and the **label is where they are**:
+  room 1 of 8 with nothing cleared is an empty bar, and should be.
+- Nothing else counts rooms: the bars replaced the line that said *22 of 30
+  cleared*.
 
 - A room's enemy box is sized from that room's `power_req` and typed by the
   ruin's **bias**: what a room drew is not shown until the Guild's scouting
   buys it, so the box says *mostly*, never *is*.
-- The relic does not stand in a slot, which is why it is a band rather than
-  part of the party box.
+- **No band under the board.** A room used to carry one for the relic the hero
+  took down; relics never leave the Reliquary
+  ([`09-relics.md`](09-relics.md) §5), and there is nothing else a room decides
+  that is not a slot.
 - There is no "how far will you go" control: one room, one fight, resolved on
   the tap ([`11-expeditions.md`](11-expeditions.md) §5). The button reads
   *Enter the room*, or *Fight the boss* on the last room of a depth.

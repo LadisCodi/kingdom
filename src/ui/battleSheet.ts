@@ -60,16 +60,6 @@ export interface BattleView {
   rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment'; label: string }>;
   /** One line under the chips: what winning is really for. */
   rewardNote?: string;
-  /**
-   * Bands this KIND of fight adds under the board, in order.
-   *
-   * A gate has none: it is one room, resolved on entry. A delve has two, and
-   * they are the two decisions a delve makes that a room does not — what the
-   * hero carries down, and how far to go without being asked. They live here
-   * rather than in the party box because they are not part of the BOARD:
-   * nothing in them stands in a slot.
-   */
-  extras?: HTMLElement[];
   actionLabel: string;
   /** The small print under the button, when this kind of fight has something
    *  to say that the board does not already show. Most do not. */
@@ -218,7 +208,6 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     el('div', { class: 'bt-info' }, ...view.info),
     enemyBox(view),
     partyBox(game, view),
-    ...(view.extras ?? []),
   );
 
   const rewards = el('div', { class: 'bt-rewards' },
@@ -246,5 +235,9 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
   }
 
   // No second way out: the sheet's own knob, top right, is the way back.
-  return sheet({ title: view.title, onClose: () => game.dismiss() }, body);
+  // TALL, because this is a screen the player works in: the board has to be
+  // readable against the room's, and a drawer that grew a row every time a
+  // squad was added would move the button they are reaching for.
+  return sheet(
+    { title: view.title, onClose: () => game.dismiss(), tall: true }, body);
 }

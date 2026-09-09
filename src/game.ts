@@ -30,9 +30,7 @@ import {
   armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
   trainingCompletesAt,
 } from './sim/army';
-import {
-  artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
-} from './sim/artifacts';
+import { attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier } from './sim/artifacts';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
@@ -267,9 +265,6 @@ export class Game {
    *  per slot, at most `heroSlots(state)` of them. */
   partyHeroes: HeroId[] = [];
   expeditionOrder: number | null = null;
-  /** The relic the player has chosen to send DOWN rather than wear. Null is
-   *  the common case and always a valid party. */
-  expeditionArtifact: ArtifactId | null = null;
   /** The store SKU whose confirmation sheet is open. */
   pendingSku: StoreSkuId | null = null;
   /** Which sheet the confirmation was opened from, and returns to. */
@@ -1905,10 +1900,6 @@ export class Game {
     this.expeditionRuin = ruinId;
     this.partyHeroes = freeHeroes(this.state).slice(0, heroSlots(this.state));
     this.expeditionOrder = null;
-    // Never pre-filled, unlike the party. Arming a hero means giving up a
-    // passive the player is living off, and the sheet must not make that
-    // choice on their behalf — an empty socket is the only honest default.
-    this.expeditionArtifact = null;
     this.prefillParty(RUINS[ruinId].affinity);
     this.setOverlay('expedition');
   }
@@ -2012,7 +2003,6 @@ export class Game {
     this.gateRuin = ruinId;
     // A gate resolves on entry, so nobody is busy: the roster is the party.
     this.partyHeroes = this.state.heroes.owned.slice(0, heroSlots(this.state));
-    this.expeditionArtifact = null;
     this.prefillParty(RUINS[ruinId].guard.threat);
     this.setOverlay('gate');
   }
@@ -2233,31 +2223,9 @@ export class Game {
     this.notify();
   }
 
-  /** Tapping the socketed relic again takes it back out — the choice has to be
-   *  reversible right up until the party leaves. */
-  setExpeditionArtifact(artifactId: ArtifactId | null): void {
-    this.expeditionArtifact = this.expeditionArtifact === artifactId ? null : artifactId;
-    this.notify();
-  }
-
   setStandingOrder(depth: number | null): void {
     this.expeditionOrder = depth;
     this.notify();
-  }
-
-  /**
-   * The relic this party would actually leave with. A relic that has since
-   * been attuned, or sent down with someone else, is NOT one of them.
-   *
-   * The block message still names the raw choice, so the player is told why —
-   * but the numbers must only ever describe a party the game would really
-   * send. A sheet that shows the stats of a party it is simultaneously
-   * refusing reads as the game arguing with itself.
-   */
-  private sendableArtifact(): ArtifactId | null {
-    const id = this.expeditionArtifact;
-    if (id === null || artifactIsCommitted(this.state, id)) return null;
-    return id;
   }
 
   /** The room read-out: what the frontier room fields, and what this party
@@ -2265,25 +2233,13 @@ export class Game {
   expeditionPreview(): RoomPreview | null {
     if (this.expeditionRuin === null) return null;
     return previewRoom(
-      this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty,
-      this.sendableArtifact());
-  }
-
-  /** The same party WITHOUT the relic, so the sheet can show what socketing it
-   *  actually bought. */
-  expeditionPreviewUnarmed(): RoomPreview | null {
-    if (this.expeditionRuin === null || this.sendableArtifact() === null) return null;
-    return previewRoom(
       this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
   }
 
   expeditionLaunchBlock(): string | null {
     if (this.expeditionRuin === null) return 'No ruin chosen';
-    // The RAW choice, not the sendable one: the read-out drops a relic the
-    // game would not really send, and this is the line that says why it did.
     const block = roomBlock(
-      this.state, this.map, this.expeditionRuin, this.partyHeroes, this.expeditionParty,
-      this.expeditionArtifact);
+      this.state, this.map, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
     if (block === null) return null;
     // The supplies are printed in the button and turn clay when they cannot be
     // paid (§6.4), so saying it again in words beside it is nagging. The
@@ -2304,7 +2260,6 @@ export class Game {
     const ruinId = this.expeditionRuin;
     const report = enterRoom(
       this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty,
-      this.expeditionArtifact,
     );
     // The dead are off the roster now, so the squads on the board have to
     // come back down to what is left of them.
@@ -3323,10 +3278,6 @@ const ROOM_BLOCK_TEXT: Record<RoomBlock, string> = {
   TooManySlots: 'Too many kinds of unit for the board',
   NotEnoughUnits: 'You do not have that many at home',
   NotEnoughSupplies: 'Not enough supplies for the attempt',
-  ArtifactNotOwned: 'You do not have that relic',
-  // Naming the passive being given up is the whole point of the message: the
-  // choice is the feature, so the refusal has to read as one.
-  ArtifactAttuned: 'That relic is attuned — unsocket it from the Reliquary first',
 };
 
 /** Why a gate attempt is refused. A power shortfall is NOT one of these: it

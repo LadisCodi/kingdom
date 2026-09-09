@@ -147,33 +147,18 @@ export const isAttuned = (state: GameState, id: ArtifactId): boolean =>
   state.artifacts.attuned.includes(id);
 
 /**
- * Relics currently underground — the "arm" half of attune-or-arm.
+ * THE KINGDOM'S SOCKET IS THE ONLY CLAIM ON A RELIC.
  *
- * A relic is carried for exactly as long as its delve is in `state.delves`,
- * the same span `heroIsBusy` uses. It therefore comes home when the player
- * COLLECTS, including after a failed push, rather than the moment the sim
- * decides the run is over. A hero and the relic it carried are committed and
- * released together, which is the only rule explicable in one line.
- *
- * It lives HERE rather than in `expeditions.ts` because it is a fact about an
- * artifact, and because `attune` below has to ask it — the other direction of
- * the same rule.
+ * Nothing takes a relic anywhere: a relic is worn by the kingdom or it is on
+ * the shelf (Docs/features/09-relics.md §5). Kept as its own name because the
+ * question — "is this one spoken for?" — is asked from several screens and
+ * reads better than the socket it happens to be answered by.
  */
-export const artifactIsCarried = (state: GameState, id: ArtifactId): boolean => {
-  // NOTHING IS EVER CARRIED BETWEEN FIGHTS. A relic goes into a room and
-  // comes back out of it in the same instant, so the only socket that can
-  // hold one is the kingdom's (Docs/features/11-expeditions.md §5).
-  void state; void id;
-  return false;
-};
-
-/** Attuned to the kingdom, or in a party's pack. Neither socket is free. */
 export const artifactIsCommitted = (state: GameState, id: ArtifactId): boolean =>
-  isAttuned(state, id) || artifactIsCarried(state, id);
+  isAttuned(state, id);
 
 export type AttuneResult =
-  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned'
-  | 'Carried';
+  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned';
 
 /**
  * Put `id` in `slot` (or empty it with null). The swap is IMMEDIATE — the new
@@ -192,12 +177,6 @@ export function attune(
     if (!ownsArtifact(state, id)) return 'NotOwned';
     const existing = state.artifacts.attuned.indexOf(id);
     if (existing !== -1 && existing !== slot) return 'AlreadyAttuned';
-    // The other direction of attune-OR-arm. A relic in a party's pack cannot
-    // also be feeding the kingdom a passive, and the sim will not recall it
-    // from underground to settle the question — it comes home when the party
-    // does. Checked HERE rather than in the caller so no route into the
-    // socket can miss it.
-    if (artifactIsCarried(state, id)) return 'Carried';
   }
   const was = state.artifacts.attuned[slot];
   if (was === id) return id === null ? 'Unattuned' : 'Attuned';

@@ -7,7 +7,7 @@
 // socket.
 import { describe, expect, it } from 'vitest';
 import {
-  artifactEntry, artifactIsCarried, artifactIsCommitted, attune, attunementSlots,
+  artifactEntry, artifactIsCommitted, attune, attunementSlots,
   attunementSlotGemCost, buyAttunementSlot, grantArtifact, isAttuned, isSlotLocked,
   levelUpArtifact, normaliseSlots, ownsArtifact, passiveValue, raiseArtifactTier,
   slotUnlocksIn, syncArtifactModifiers,
@@ -302,27 +302,20 @@ describe('the fog discount reaches both the bar and the charge', () => {
   });
 });
 
-// The socket half of attune-or-arm (Docs/features/10-heroes.md §2).
-//
-// A relic is committed only by the KINGDOM now: a room resolves the instant
-// it is entered (Docs/features/11-expeditions.md §5), so a relic goes into a
-// fight and is out of it again before anything else can ask for it. Nothing
-// is ever "underground".
+// The kingdom's socket is the only claim on a relic
+// (Docs/features/09-relics.md §5). Nothing carries one anywhere: a relic is
+// worn or it is on the shelf.
 describe('a relic is committed by the kingdom, and by nothing else', () => {
   it('is free until it is attuned, and the socket is the only claim on it', () => {
     const state = withRelic('DowsingRod');
-    expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
-
     expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
-    // …and it is the socket that says so, not a party somewhere.
-    expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
   });
 });
 
-describe('a relic cannot be worn and carried at once', () => {
-  it('an attuned relic still un-attunes normally — the rule only blocks the way in', () => {
+describe('the socket lets go as readily as it takes', () => {
+  it('an attuned relic still un-attunes normally', () => {
     const state = withRelic('DowsingRod');
     expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);

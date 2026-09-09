@@ -25,15 +25,12 @@ import {
   ARTIFACTS, COLLECTION, COMBAT, DELVE, HEROES, PARTY, RUINS, UNITS,
   depthCount, depthDef, depthsOf, roomPower,
 } from './data/definitions';
-import {
-  addArtifactFragments, artifactEntry, artifactIsCarried, grantArtifact, isAttuned,
-  ownsArtifact,
-} from './artifacts';
+import { addArtifactFragments, grantArtifact } from './artifacts';
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  carriedStats, partyPower, partyStats,
-  type CarriedArtifact, type EnemySquad, type Party, type PartySlot, type Drill,
+  partyPower, partyStats,
+  type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
 import {
   boardPower, buildBoard, generateEnemy, resolveBattle, survivorsOf,
@@ -138,36 +135,29 @@ export function drillOf(state: GameState): Drill {
  */
 export const partyOf = (
   state: GameState, slots: readonly PartySlot[], heroIds: readonly HeroId[] = [],
-  artifact: CarriedArtifact | null = null,
 ): Party => ({
   heroes: heroIds.map((id) => ({ id, level: heroLevel(state, id) })),
   slots,
-  artifact,
   drill: drillOf(state),
 });
 
 /**
  * OUR SIDE OF THE BOARD (Docs/features/combat.md §3, §9).
  *
- * Every hero in the party is a fighter with its level's numbers, and the one
- * carrying a relic wears it: the stone arms the arm that holds it rather than
- * being sprinkled over the soldiers, which is what "attune or arm" means when
- * there is a board to stand on.
+ * Every hero in the party is a fighter with its level's numbers.
  */
 export function partyBoard(party: Party): Board {
   const drill = party.drill ?? { atk: {}, def: {}, disadvantageOffset: 0 };
-  const relic = carriedStats(party.artifact);
-  const fighters: FighterSpec[] = party.heroes.map((h, i) => {
+  const fighters: FighterSpec[] = party.heroes.map((h) => {
     const def = HEROES[h.id];
     const step = h.level - 1;
     return {
       id: h.id,
       name: def.name,
       type: def.unitType,
-      // The relic rides on the FIRST hero — the one who carried it down.
-      dmg: def.dmg + def.dmgPerLevel * step + (i === 0 ? relic.atk : 0),
-      def: def.def + def.defPerLevel * step + (i === 0 ? relic.def : 0),
-      hp: def.hp + def.hpPerLevel * step + (i === 0 ? relic.hp : 0),
+      dmg: def.dmg + def.dmgPerLevel * step,
+      def: def.def + def.defPerLevel * step,
+      hp: def.hp + def.hpPerLevel * step,
       cooldown: def.cooldown,
       power: Math.round((def.dmg + def.dmgPerLevel * step) * COMBAT.heroPowerPerDmg),
       troopDmgMult: def.troopDmgMult,
@@ -461,8 +451,7 @@ export const roomFormation = (
 
 export type RoomBlock =
   | 'RuinNotFound' | 'GateStanding' | 'Finished' | 'NoHero' | 'TooManyHeroes'
-  | 'TooManySlots' | 'NotEnoughUnits' | 'NotEnoughSupplies'
-  | 'ArtifactNotOwned' | 'ArtifactAttuned';
+  | 'TooManySlots' | 'NotEnoughUnits' | 'NotEnoughSupplies';
 
 export function roomBlock(
   state: GameState,
@@ -470,7 +459,6 @@ export function roomBlock(
   ruinId: RuinId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
-  artifactId: ArtifactId | null = null,
 ): RoomBlock | null {
   if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
   // Nothing in the ruin can be entered until the gate is cleared: the
@@ -484,13 +472,6 @@ export function roomBlock(
   const available = availableRoster(state);
   for (const s of committed) {
     if (s.count > available[s.unitId]) return 'NotEnoughUnits';
-  }
-  if (artifactId !== null) {
-    if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
-    // Attune OR arm. Refusing here rather than silently un-attuning is the
-    // point: the player gives up a passive they are living off to arm a hero,
-    // so the sim must never make that choice on their behalf.
-    if (isAttuned(state, artifactId)) return 'ArtifactAttuned';
   }
   const { depth } = frontier(state, ruinId);
   if (!canAfford(state.city.wallet, supplyCost(state, ruinId, depth, heroIds))) {
@@ -542,7 +523,6 @@ export function enterRoom(
   ruinId: RuinId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
-  artifactId: ArtifactId | null = null,
 ): RoomReport {
   const at = frontier(state, ruinId);
   const empty: RoomReport = {
@@ -551,16 +531,14 @@ export function enterRoom(
     losses: [], wounded: [],
     wallet: {}, heroXp: 0, fragments: 0, depthCompleted: false, artifact: null,
   };
-  const block = roomBlock(state, map, ruinId, heroIds, slots, artifactId);
+  const block = roomBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) return { ...empty, result: block };
 
   const supplies = supplyCost(state, ruinId, at.depth, heroIds);
   pay(state.city.wallet, supplies);
 
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
-  const artifact: CarriedArtifact | null = artifactId === null
-    ? null : { id: artifactId, level: artifactEntry(state, artifactId).level };
-  const party = partyOf(state, committed, heroIds, artifact);
+  const party = partyOf(state, committed, heroIds);
   const ours = partyBoard(party);
   const theirs = roomBoard(state, ruinId, at.depth, at.room);
   const power = boardPower(theirs);
@@ -642,6 +620,10 @@ export interface RoomPreview {
   /** Rooms cleared in the whole ruin, and how many there are. */
   cleared: number;
   rooms: number;
+  /** The two ladders the sheet draws a bar for: how many depths this ruin
+   *  has, and how many rooms are in the one being stood in (§5). */
+  depths: number;
+  roomsInDepth: number;
   done: boolean;
   isBoss: boolean;
   /** What is standing in the room, and what it is worth. */
@@ -665,13 +647,10 @@ export function previewRoom(
   ruinId: RuinId,
   heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
-  artifactId: ArtifactId | null = null,
 ): RoomPreview {
   const at = frontier(state, ruinId);
   const committed = slots.filter((s) => s.count > 0);
-  const artifact: CarriedArtifact | null = artifactId === null
-    ? null : { id: artifactId, level: artifactEntry(state, artifactId).level };
-  const party = partyOf(state, committed, heroIds, artifact);
+  const party = partyOf(state, committed, heroIds);
   const affinity = RUINS[ruinId].affinity;
   const theirs = roomBoard(state, ruinId, at.depth, at.room);
   const power = boardPower(theirs);
@@ -682,6 +661,8 @@ export function previewRoom(
     room: at.room,
     cleared: roomsCleared(state, ruinId),
     rooms: depthsOf(ruinId).reduce((sum, d) => sum + d.rooms, 0),
+    depths: depthCount(ruinId),
+    roomsInDepth: depthDef(ruinId, at.depth)?.rooms ?? 0,
     done: at.done,
     isBoss: !at.done && isBossRoom(ruinId, at.depth, at.room),
     enemy: boardSquads(theirs),
@@ -704,7 +685,3 @@ export const discoveredRuins = (state: GameState, map: MapData): RuinId[] =>
 /** Relic art for a ruin's prize, for the room sheet. */
 export const ruinPrize = (ruinId: RuinId): ArtifactId => ARTIFACTS[RUINS[ruinId].artifact].id;
 
-/** A relic already carried by nobody: with no party underground, the only
- *  thing that keeps a relic out of a pack is the kingdom wearing it. */
-export const artifactIsAway = (state: GameState, id: ArtifactId): boolean =>
-  artifactIsCarried(state, id);

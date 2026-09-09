@@ -197,12 +197,13 @@ describe('the pre-filled party is always launchable', () => {
   });
 });
 
-// The socket next to the hero (Docs/features/10-heroes.md §2).
+// A relic never leaves the shelf (Docs/features/09-relics.md §5).
 //
-// The rule is in the sim; what these prove is that the SHEET presents it as a
-// choice — the socket starts empty, a worn relic is visible-but-refused rather
-// than missing, and the read-out shows what socketing one actually bought.
-describe('arming a hero from the expedition sheet', () => {
+// Sending one down was a whole band of this sheet and a whole decision in
+// front of a room; it is gone, and the only socket a relic can sit in is the
+// kingdom's. What is left to prove is that owning one changes nothing about
+// entering a room, in either direction.
+describe('a relic the player owns is no part of a room', () => {
   const armed = () => {
     const state = ready();
     grantArtifact(state, 'ForemansSigil');
@@ -212,52 +213,17 @@ describe('arming a hero from the expedition sheet', () => {
     return game;
   };
 
-  it('opens with an empty socket — the game never spends your passive for you', () => {
+  it('does not block, arm, or otherwise reach the room', () => {
     const game = armed();
-    expect(game.expeditionArtifact).toBe(null);
-    expect(game.expeditionPreviewUnarmed()).toBe(null);
+    const bare = game.expeditionPreview()!.stats.atk;
     expect(game.expeditionLaunchBlock()).toBeNull();
-  });
-
-  it('socketing one is reversible right up until the party leaves', () => {
-    const game = armed();
-    game.setExpeditionArtifact('ForemansSigil');
-    expect(game.expeditionArtifact).toBe('ForemansSigil');
-    // Tapping the same relic again takes it back out.
-    game.setExpeditionArtifact('ForemansSigil');
-    expect(game.expeditionArtifact).toBe(null);
-  });
-
-  it('shows what the relic bought, against the same party without it', () => {
-    const game = armed();
-    game.setExpeditionArtifact('ForemansSigil');
-    const armedPreview = game.expeditionPreview()!;
-    const bare = game.expeditionPreviewUnarmed()!;
-    expect(armedPreview.stats.atk).toBeGreaterThan(bare.stats.atk);
-  });
-
-  it('refuses a relic the kingdom is wearing, and says which', () => {
-    const game = armed();
+    // Attuned or on the shelf, the party that walks in is the same party.
     attune(game.state, 0, 'ForemansSigil', game.now());
-    game.setExpeditionArtifact('ForemansSigil');
-    expect(game.expeditionLaunchBlock()).toMatch(/attuned/i);
-    game.doLaunchExpedition();
-    expect(game.ruinProgress(BARROW).cleared).toBe(0);
+    expect(game.expeditionLaunchBlock()).toBeNull();
+    expect(game.expeditionPreview()!.stats.atk).toBe(bare);
   });
 
-  it('never shows the stats of a party it is refusing to send', () => {
-    const game = armed();
-    game.setExpeditionArtifact('ForemansSigil');
-    const armedStats = game.expeditionPreview()!.stats.atk;
-    // Attuning it behind the sheet's back must take the relic OUT of the
-    // read-out, not leave the numbers arguing with the blocked launch button.
-    attune(game.state, 0, 'ForemansSigil', game.now());
-    expect(game.expeditionLaunchBlock()).toMatch(/attuned/i);
-    expect(game.expeditionPreview()!.stats.atk).toBeLessThan(armedStats);
-    expect(game.expeditionPreviewUnarmed()).toBe(null);
-  });
-
-  it('carries it into the room, and hands it straight back', () => {
+  it('is still the kingdom\'s to wear after a room is fought', () => {
     const game = freshPresenter((() => {
       const state = ready(HOST);
       grantArtifact(state, 'ForemansSigil');
@@ -265,11 +231,8 @@ describe('arming a hero from the expedition sheet', () => {
       return state;
     })());
     game.openExpedition(BARROW);
-    game.setExpeditionArtifact('ForemansSigil');
     game.doLaunchExpedition();
     expect(game.ruinProgress(BARROW).cleared).toBe(1);
-    // The fight is over the instant it is fought, so the Reliquary can take
-    // the relic back on the next tap — nothing is away.
     expect(attune(game.state, 0, 'ForemansSigil', game.now())).toBe('Attuned');
   });
 });
