@@ -8,8 +8,8 @@
 > [`open-questions.md`](open-questions.md). Where this file names a question it
 > names it by id (`OQ-n`).
 >
-> **State: 43 test suites, 606 tests, all green** (verified 2026-09-03, after
-> the province redraw closed the ten map-content assertions).
+> **State: 56 test suites, 960 tests, all green** (verified 2026-09-09, with
+> the gate's 29).
 >
 > **2026-09-03 was a design day and changed no code.** Four things were settled
 > and written: **generated orders were cut** and replaced by
@@ -77,7 +77,7 @@ Two more that are design-visible:
 | The quest chain, the onboarding, the daily chest | [`12`](features/12-quests.md) | **built** — orders were cut from the design 2026-09-03. The chest's **season, second track and Royal chest** ([`12`](features/12-quests.md) §3) landed 2026-09-09 |
 | The timeline, the save migration chain | [`13`](features/13-events.md) | **the machinery is built** — the catalogue is **empty**: the weekly Conjunction was retired 2026-09-08 and events are being redesigned |
 | The map editor, the shared map rules | [`map-editor.md`](map-editor.md) | **built** |
-| **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **designed 2026-09-08**, unbuilt — Step 7 |
+| **The gate — a garrison with a clock** | [`18`](features/18-garrisons-and-raids.md) | **built 2026-09-09** — the counter, the raid, the hoard, the fight and the screens. The fight rides the delve's scoring pass until the resolver lands |
 | **Wonders — the ladder with no top** | [`16`](features/16-wonders.md) | **designed, reviewed and closed 2026-09-03.** Unstarted and deliberately unsequenced — late-game by construction, and the game's only unbounded sink |
 
 **The load-bearing assertion holds at every step** — across a research
@@ -92,7 +92,7 @@ each has an answer, or has one waiting in a doc.
 | # | Hole | Where |
 |---|---|---|
 | ~~**H0**~~ | ~~**The tap mints matter, and the economy has no ceiling.**~~ **FIXED 2026-09-03** — §4 step 0. | [`04`](features/04-harvest.md) |
-| **H1** | **Four of ten landmarks cannot be claimed.** `defended` is authored and claiming is gated on a cleared flag, but **nothing ever writes that field** — the encounter does not exist. **Design closed 2026-09-08 by deletion** — `defended` is retired and every landmark is claimed for Gold; the fight with a clock moves to the ruin's **gate**, built by **Step 7**. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
+| ~~**H1**~~ | ~~**Four of ten landmarks cannot be claimed.**~~ **FIXED 2026-09-09.** `defended` is gone from the map, the code and the save; every sanctuary is claimed for Gold. The fight with a clock lives on the ruins' gates. | [`18`](features/18-garrisons-and-raids.md); **OQ-35 closed** |
 | ~~**H2**~~ | ~~**Hero XP is written and never read.**~~ **FIXED 2026-09-08.** It is a kingdom wallet row that buys any hero's levels; Stardust moved to the ascension toll. `SAVE_VERSION` 33 folds every save's per-hero tally into the one counter — nothing was ever spent from it, so every point is still owed. | [`10`](features/10-heroes.md) §4 |
 | **H3** | **No gacha banner is authored.** The timeline carries a banner payload and the activation query exists, but the catalogue is **empty** since the Conjunction was retired — **so rate-up is untested code.** | [`10`](features/10-heroes.md) §11 |
 | **H4** | **The event cap behaviour was decided rather than flagged.** A window fires in the post-cap tail, so a long absence spanning it pays in full. Consistent with invariant 2, but it should be a written rule with a test rather than an accident. | needs **OQ-24** (ratify) |
@@ -436,7 +436,7 @@ evaporating.**
 3. Guilds and membership.
 4. The guild week: the bar, contributions, threshold chests.
 5. **The siege** — the world map's co-op encounter. (The province's
-   garrisons and H1 are Step 7.)
+   garrisons shipped with Step 7.)
 
 - **Design:** [`15-social.md`](features/15-social.md) — complete.
 - **Blocked on: OQ-33** (guild
@@ -497,58 +497,49 @@ their systems.
   banner's home (`14-monetization.md` §2.1) for the Tavern.
 - **Size:** weeks; steps 2–4 alone are about two.
 
-### Step 7 · The gate — a garrison with a clock
+### Step 7 · The gate — a garrison with a clock — **DONE 2026-09-09**
 
 **The doorway to combat, and the clock that sends the player to it.** Every
-ruin opens with one garrison room before Depth 1; discovering the ruin starts
-a minute-scale counter; when it runs out the garrison takes a bounded,
+ruin opens with one garrison before Depth 1; discovering the ruin starts a
+minute-scale counter; when it runs out the garrison takes a bounded,
 recoverable slice of the banked materials, with no fight; a hero and a party
 clear the gate as a room. **This is the step that reopened promise 1**, on
-purpose and in writing ([`overview.md`](overview.md)), and it closes **H1** by
+purpose and in writing ([`overview.md`](overview.md)), and it closed **H1** by
 deletion — `defended` is retired and every landmark is claimed for Gold.
 
-- **Design:** [`18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md) — complete.
-- **Blocked on: the resolver** ([`combat.md`](features/combat.md)) — the gate
-  is a room on its board. Every number is **OQ-72** and needs the playtest;
-  **OQ-74** (full or partial restitution) does not change the shape.
-- **What it costs, and where invariant 1 has to hold:**
-  - state: a `gates` module — per ruin `{nextRaidAt, trips, hoard, cleared}`,
-    the raid reports; `landmarks.cleared` and `defended` go. `SAVE_VERSION`
-    bump. A save whose ruins are already visible stamps `nextRaidAt` **inside
-    `advance()`** from `state.lastAdvance` (invariant 3), with the full
-    warning.
-  - the counter starts where `recordSiteDiscovery` already sweeps, stamped
-    with that boundary's `t`.
-  - `nextBoundary`: the earliest `nextRaidAt`; one `applyDueAt` branch that
-    takes and writes the report. Minute-scale periods with a three-trip cap
-    stay far under `MAX_BOUNDARY_STEPS`.
-  - the city's rate per material: the crews' gather rate the harvest module
-    already exposes, plus the tax rate the daily chest already prices against
-    for Gold — no third rate.
-  - the resolver: the gate is generated from `guard` by the room generator,
-    seeded by ruin id; clearing it is a room attempt whose win writes
-    `cleared`, stops the counter and pays the hoard. The delve launch reads
-    `gates.cleared`; the landmark claim reads nothing.
-  - `mapRules.ts` and `?dev=map`: the `guard` field on every ruin — a unit
-    type or `Any`, a `power` of at least 1, two counters in minutes; the
-    landmark `defended` field removed.
-  - the workbook: a `Garrisons` sheet (take seconds, supplies per tier) and
-    `raid.*` settings; the importer schema.
-  - quests: the `ClearGarrisons` goal type, the `DriveThemOut` row on the
-    Barrow's gate, the onboarding reordered ([`12-quests.md`](features/12-quests.md) §2)
-    and its beat test renumbered.
-  - UI: the raid widget in the Mana-refill offer's slot (z 4) opening the
-    ruin sheet, the gate band above the depth stack, the countdown badge on
-    the map marker, the room sheet on a gate with **Clear the gate** for
-    *Descend*, five camp sprites.
-- **Gate:** the replay assertion holds across a raid landing during an
-  absence; a week away with three gates open is nine raids and never more;
-  the reordered onboarding plays through `DriveThemOut` and `OldStones`
-  unfunded with `Mapmakers` still affordable; the free hero alone clears the
-  Barrow's gate; a cleared gate never raids again and its hoard is back in the
-  purse.
-- **Size:** three to four days once the resolver exists — the sim half is
-  small, the widget and the gate band are most of it.
+- **Design:** [`18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md).
+- **What landed:** a `gates` module — per ruin `{nextRaidAt, trips, hoard,
+  cleared}` plus the raid reports, `SAVE_VERSION` 37, and no migrator (both
+  are additive and their readers default). The counter is armed by a **sweep
+  inside `advance()`**, stamped with a boundary's `t`, so a save that predates
+  the feature gets its whole warning from where the sim left off rather than a
+  raid already overdue. One `consider()` in `nextBoundary`, one branch in
+  `applyDueAt`. The take reads the crews' gather rate plus rent for Gold — no
+  third rate. `guard { threat, power, warningMinutes, periodMinutes }` is
+  authored per ruin in `?dev=map` and checked by `mapRules.ts`; a `Garrisons`
+  sheet keys the take and the supplies off the ruin's tier and `raid.*` bounds
+  the rest. Clearing is a party command beside the delve launch, **and a hero
+  alone is a legal board** — the first fight in the game needs no army. The
+  quest chain gained `ClearGarrisons` and `DriveThemOut`, and the military
+  block moved up behind the reveal that starts the Barrow's counter
+  ([`12-quests.md`](features/12-quests.md) §2). UI: the raid tab on the right
+  edge, the gate band that replaces *Send a party* on the ruin's card, the
+  room sheet with the power comparison, and the minutes on the map marker.
+- **What it rides on:** the fight is scored on the **delve's existing pass**
+  ([`combat.md`](features/combat.md) is unbuilt) — the party's attack after the
+  type chart against the gate's `power`, no attrition, nothing lost on a
+  defeat but the supplies. When the resolver lands, `power` becomes the
+  generator's budget and nothing else about this step moves.
+- **What is asserted:** the replay assertion across an absence with three
+  raids in it; a week away is three raids and never more; a raid takes only
+  what the city produces and at most a tenth of the purse; clearing returns
+  the hoard in full and stops the counter for good; no ruin is enterable while
+  its gate stands; and every authored gate is weaker than the first depth of
+  the ruin it guards (`tests/gates.test.ts`, 29 tests).
+- **Left open:** every number is **OQ-72** and needs the playtest — the
+  Barrow's thirty minutes first. **OQ-74 closed**: the hoard comes back whole.
+  Two `planned` technologies still describe the retired defended landmark
+  (`Siegecraft`, `Wayshrines`) and want retiring in `?dev=tree`.
 
 ### Step 8 · Heroes onto the resolver
 

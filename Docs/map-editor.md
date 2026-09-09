@@ -55,11 +55,10 @@ ruins     { <RuinId>: {x, y, tier, difficulty, baseDepthSeconds,
 guard     { threat, power, warningMinutes, periodMinutes }   on every ruin
 ```
 
-*(`guard` is designed, not built — today a landmark carries `defended: boolean`,
-which is retired, and a ruin carries nothing.
-[`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
-§2; the validator will ask for a unit type or `Any`, a `power` of at least 1
-and both counters of at least one minute.)*
+*(`guard` is the garrison that holds the ruin's door and the clock discovering
+it starts — [`features/18-garrisons-and-raids.md`](features/18-garrisons-and-raids.md)
+§2. The validator asks for a unit type or `Any`, a `power` of at least 1, and
+both counters of at least one minute.)*
 
 `definitions.ts` reads `LANDMARKS` and `RUINS` from here rather than from
 `balance.json`; `grid.ts` reads terrain and features as before. The file is

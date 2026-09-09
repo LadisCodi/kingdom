@@ -6,8 +6,11 @@
 > is [`11-expeditions.md`](11-expeditions.md); the fight is
 > [`combat.md`](combat.md); the screens are [`11a-ruins-ui.md`](11a-ruins-ui.md).
 >
-> **Status: designed 2026-09-08.** Not built. Nothing writes a cleared flag
-> today.
+> **Status: built 2026-09-09.** The clock, the raid, the hoard, the fight and
+> the screens all ship. The fight resolves on the delve's scoring pass
+> ([`11-expeditions.md`](11-expeditions.md) §5) until the tick resolver
+> ([`combat.md`](combat.md)) lands; `power` is the number it is scored
+> against either way.
 
 ## 1. The rules, up front
 
@@ -50,10 +53,12 @@ guard { threat, power, warningMinutes, periodMinutes }
 | Cavalry | **Wolf riders** | all Cavalry | Lancers |
 | Any | **a Drake** | even across the four | none — a raw power check |
 
-- `power` is the gate's budget, on the same scale as a room's `power_req`
-  ([`11-expeditions.md`](11-expeditions.md) §6). The generator turns
-  `(power, threat_mix)` into squads, seeded from the ruin id
-  ([`combat.md`](combat.md) §11). Same ruin, same gate, every time.
+- `power` is what the party has to beat: its attack after the type chart,
+  scored against this number. It is on the same scale as a room's `power_req`
+  ([`11-expeditions.md`](11-expeditions.md) §6), so when the resolver arrives
+  the same figure becomes the budget the generator spends on squads, seeded
+  from the ruin id ([`combat.md`](combat.md) §11). Same ruin, same gate, every
+  time.
 - **The gate's `threat` is the ruin's affinity**, so the first fight teaches
   the matchup the whole ruin is built on.
 - **Recommended `power`: below the ruin's `power_start(D1)`.** The gate is
@@ -64,13 +69,16 @@ guard { threat, power, warningMinutes, periodMinutes }
 - A ruin's **tier** keys the workbook rows that are not per site: take seconds
   and gate supplies (§8).
 
-| Ruin | Gate | `power` ≈ | Warning · period | Board that beats it |
+| Ruin | Gate | `power` | Warning · period | Board that beats it |
 |---|---|---|---|---|
-| Hollow Barrow | Orcs | below the free hero's `hero_power` at L1 | **30 · 30 min** | the free hero alone — the first fight |
-| Sunken Chapel | Harpies | under Chapel D1 room 1 | 90 · 90 min | hero + two squads |
-| Drowned Ironworks | Goblins | under Ironworks D1 room 1 | 120 · 120 min | hero + four T1 squads |
-| The Counting House | Wolf riders | under Counting House D1 room 1 | 180 · 180 min | four squads at T2 |
-| Star Observatory | Drake | under Observatory D1 room 1 | 240 · 240 min | four squads at T3; no type answer |
+| Hollow Barrow | Orcs | **1** | **30 · 30 min** | the free hero alone — the first fight |
+| Sunken Chapel | Harpies | 5 | 90 · 90 min | hero + two squads |
+| Drowned Ironworks | Goblins | 8 | 120 · 120 min | hero + four T1 squads |
+| The Counting House | Wolf riders | 12 | 180 · 180 min | four squads at T2 |
+| Star Observatory | Drake | 17 | 240 · 240 min | four squads at T3; no type answer |
+
+- Every one of them is under the strength of the ruin's own first depth, and
+  `tests/gates.test.ts` holds them there.
 
 ## 3. The counter
 
@@ -118,6 +126,9 @@ take = floor( min(base, banked × take_fraction_max) )
   sheet like any room ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.5) — threat in
   view without the Guild's scouting, `power` against party power, supplies,
   party, **Clear the gate** in place of *Descend*.
+- **A hero alone is a legal board.** Troops are welcome and never required,
+  which is what lets the first fight in the game be fought before the player
+  owns an army.
 - **Supplies** are a flat cost per tier, paid on entry and never refunded.
 - The fight resolves on entry, the player attacking
   ([`11-expeditions.md`](11-expeditions.md) §5). A power shortfall warns,
@@ -125,10 +136,10 @@ take = floor( min(base, banked × take_fraction_max) )
   - **Win:** the gate is cleared, its counter stops, its hoard is paid, and
     `Depth 1 · Room 1` becomes the frontier.
   - **Lose:** nothing is lost but the supplies; the gate stands.
-- **What it pays:** the hoard, in full, banked immediately; event points
-  ([`13-events.md`](13-events.md) §2.2); the `ClearGarrisons` quest goal
-  ([`12-quests.md`](12-quests.md) §1.1). No room reward, no loot table — the
-  ruin behind it is the reward.
+- **What it pays:** the hoard, in full, banked immediately; Hero XP by the
+  ruin's tier; event points ([`13-events.md`](13-events.md) §2.2); the
+  `ClearGarrisons` quest goal ([`12-quests.md`](12-quests.md) §1.1). No room
+  reward, no loot table — the ruin behind it is the reward.
 - No technology gates the gate.
 
 ## 6. The doorway to combat
@@ -151,10 +162,11 @@ take = floor( min(base, banked × take_fraction_max) )
   in 27 min* — with a count when more are open. After a raid it carries the
   report until dismissed; several raids in one absence are one summary.
   Tapping it opens the ruin sheet. It never opens itself.
-- **The ruin sheet** ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.3) shows the
-  gate above the depth stack while it stands: the creature and its type, the
-  countdown, trips left, and the hoard if any — *they hold 320 Gold and 90
-  Food; cleared, it comes back*. One tap into the room sheet.
+- **The ruin's card** ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.3) leads with
+  the gate while it stands: the creature and its type, the countdown, trips
+  left, and the hoard if any — *they hold 320 Gold and 90 Food; cleared, it
+  comes back*. One tap into the room sheet, and **no way past it** — the
+  depths behind are not offered at all.
 - **The map marker** carries the countdown badge while a gate is open.
 - **The room sheet, on a gate**: threat always visible, power comparison,
   supplies, party, **Clear the gate**.
@@ -165,10 +177,10 @@ take = floor( min(base, banked × take_fraction_max) )
 | Dial | Recommended | Where |
 |---|---|---|
 | a ruin's gate: threat, power, warning and period in minutes | §2 | `?dev=map` |
-| take seconds per tier | 300 × tier | `Garrisons` sheet |
-| take fraction max | 0.10 | `raid.take_fraction_max` |
-| max raids per gate | 3 | `raid.max_raids` |
-| gate supplies per tier | half the tier's Depth 1 room supplies | `Garrisons` sheet |
+| take seconds per tier | 300 × tier | `Garrisons` sheet, one row per tier |
+| take fraction max | 0.10 | `raid.take_fraction_max` (Settings) |
+| max raids per gate | 3 | `raid.max_raids` (Settings) |
+| gate supplies per tier | half the ruin's own supplies | `Garrisons` sheet |
 
 ## 9. Deliberately not in this design
 

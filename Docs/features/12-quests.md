@@ -12,7 +12,7 @@
   is chain order.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **55 quests** once `DriveThemOut` lands (54 today), paying 11,725 Gold plus its reward, 100 Mana, 750 Gems, 158 Stardust and **Knowledge on every single one**.
+- **55 quests**, paying 11,975 Gold, 100 Mana, 750 Gems, 158 Stardust and **Knowledge on every single one**.
 
 ### 1.1 Goal types
 
