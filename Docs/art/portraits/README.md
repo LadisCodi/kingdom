@@ -16,6 +16,7 @@ forms, saturated palette.
 | File | What |
 |---|---|
 | [`prompt-template.md`](prompt-template.md) | **the reusable prompt** — the generic block, the per-character block, how to get the alpha, how to land it in the build |
+| [`roster-blocks.md`](roster-blocks.md) | **the thirty-two character blocks**, one per hero, derived from its own row |
 | [`alpha_from_pair.py`](alpha_from_pair.py) | **the tool that solved the background** — alpha from a black/white pair, and the check that says whether it may |
 | `hero_elven_princess.png` | 1024×1536 master, true alpha |
 | `hero_necromancer.png` | 1024×1536 master, alpha from the pair |
