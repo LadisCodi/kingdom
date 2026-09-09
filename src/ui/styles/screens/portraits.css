@@ -22,6 +22,7 @@
  * wins wherever the portrait is drawn, whatever the barrel's order.
  */
 img[src*='hero_elven_princess'],
-img[src*='hero_necromancer'] {
+img[src*='hero_necromancer'],
+img[src*='hero_scout'] {
   image-rendering: auto;
 }
