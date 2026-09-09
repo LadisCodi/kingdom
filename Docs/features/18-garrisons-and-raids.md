@@ -25,7 +25,7 @@
 4. **A raid is not a fight.** Nothing defends. The garrison takes, the city
    keeps what it makes, and the only answer is to go and clear the gate.
 5. **A raid steals banked materials, and only materials.** Gold, Food, Wood,
-   Stone. Never Gems, Mana, Knowledge, Stardust, Hero XP, goods, relics, heroes
+   Stone. Never Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes
    or units.
 6. **A raid is priced in production, not in units**, capped by a fraction of the
    purse, and **a garrison makes at most three trips**, then sits on what it
@@ -217,7 +217,7 @@ take = floor( min(base, banked × take_fraction_max) )
 - One raid clock for the whole city; counters in hours or days; a counter in
   the workbook.
 - Rousing conditions beyond discovery — a hall, a hero, an army.
-- Raids on Gems, Mana, Knowledge, Stardust, Hero XP, goods, relics, heroes or
+- Raids on Gems, Mana, Knowledge, Stardust, Hero XP, goods, cards, relics, heroes or
   units.
 - Buying protection: a Gem shield, an ad that repels a raid, a "peace" SKU.
 - A base hoard, a hoard cap in production-seconds, a loot table, a room reward

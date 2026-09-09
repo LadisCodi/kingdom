@@ -561,11 +561,11 @@
         6
       ],
       "influenceRadiusPerLevel": [
+        1,
         2,
         3,
         4,
         4,
-        5,
         5,
         5,
         5,
@@ -741,11 +741,11 @@
         6
       ],
       "influenceRadiusPerLevel": [
+        1,
         2,
         3,
         4,
         4,
-        5,
         5,
         5,
         5,
@@ -839,7 +839,7 @@
       ],
       "instanceLinearGrowth": 2.5,
       "instanceExponentialGrowth": 1.2,
-      "buildDurationSeconds": 20,
+      "buildDurationSeconds": 120,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeDurationSeconds": 30,
@@ -1326,7 +1326,7 @@
       ],
       "instanceLinearGrowth": 1,
       "instanceExponentialGrowth": 1.2,
-      "buildDurationSeconds": 45,
+      "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeDurationSeconds": 90,
@@ -1474,7 +1474,7 @@
       ],
       "instanceLinearGrowth": 1,
       "instanceExponentialGrowth": 1.2,
-      "buildDurationSeconds": 60,
+      "buildDurationSeconds": 120,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeDurationSeconds": 120,
@@ -1622,7 +1622,7 @@
       ],
       "instanceLinearGrowth": 1,
       "instanceExponentialGrowth": 1.2,
-      "buildDurationSeconds": 60,
+      "buildDurationSeconds": 300,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
       "upgradeDurationSeconds": 120,
@@ -4585,22 +4585,6 @@
       "rewardMana": 0
     },
     {
-      "id": "ProperCapital",
-      "name": "A proper capital",
-      "description": "Your Townhall is full. Upgrade it for room to build.",
-      "goalType": "UpgradeDistrict",
-      "goalTarget": "Townhall",
-      "goalAmount": 1,
-      "goalLevel": 2,
-      "reward": {
-        "Gold": 180
-      },
-      "rewardGems": 150,
-      "rewardStardust": 0,
-      "rewardKnowledge": 2,
-      "rewardMana": 0
-    },
-    {
       "id": "SawTeeth",
       "name": "Saw teeth",
       "description": "Research Saws. Hand-chopping has taken you as far as it goes.",
@@ -4644,6 +4628,22 @@
         "Gold": 140
       },
       "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
+    },
+    {
+      "id": "ProperCapital",
+      "name": "A proper capital",
+      "description": "Your Townhall is full. Upgrade it for room to build.",
+      "goalType": "UpgradeDistrict",
+      "goalTarget": "Townhall",
+      "goalAmount": 1,
+      "goalLevel": 2,
+      "reward": {
+        "Gold": 180
+      },
+      "rewardGems": 150,
       "rewardStardust": 0,
       "rewardKnowledge": 2,
       "rewardMana": 0

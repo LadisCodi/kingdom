@@ -49,7 +49,8 @@ Every resource cell carries:
 - Recovery is timestamp-based: it works offline and costs exactly one boundary.
 - **The wait is priced once, at the moment the cell runs dry.** The tech tree
   can shorten it — `harvestRecovery`, aimed at a source, so "trees grow back
-  20% faster" leaves the crops alone — and so can a relic (`cellRecovery`).
+  20% faster" leaves the crops alone — and so does the **Dowsing Rod** relic,
+  on every in-place clock at once ([`09-relics.md`](09-relics.md) §2).
   Neither wakes a cell already sleeping: the stamp is a fact about the cell,
   not a live query, and a bonus that repriced a stretch already elapsed would
   hand the player a windfall for finishing a research at the right moment. It
@@ -58,7 +59,8 @@ Every resource cell carries:
   Stone and the two mountains. A berry bush, a herd and a shoal are consumed
   and reappear on another tile instead (`respawnSeconds`, §3), which is a
   different number the tree cannot move — so aiming a recovery bonus at one
-  is refused rather than sold.
+  is refused rather than sold. The **Verdant Seal** relic is what moves it
+  ([`09-relics.md`](09-relics.md) §2).
 - The chunk and the rhythm are per cell: iron is a heavy swing, crops a light
   tick, and two cells can pay the same per minute and feel different.
 
@@ -73,7 +75,7 @@ Every resource cell carries:
 - The law authors the cell; the trip belongs to where the shed sits. The rate
   column below varies with distance; the cell's numbers do not.
 - `tap.workSeconds` = 10 makes a ten-unit tree about ten taps.
-- The worker column is a round trip, quoted at both ends of a level-3 radius.
+- The worker column is a round trip, quoted at both ends of a level-4 radius.
 
 | Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker, next door → radius 4 | workers/cell |
 |---|---|---|---|---|---|---|---|---|

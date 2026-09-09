@@ -15,7 +15,7 @@
 
 | Extension | Built | Designed, not built |
 |---|---|---|
-| **Modifier stats** | 12 values, including Stardust yield, active cost, delve speed and attunement slots | **build speed**, **research speed**, **training speed**, **ingredient yield** |
+| **Modifier stats** | 12 values, including Stardust yield, active cost, delve speed and attunement slots | **build speed**, **research speed**, **training speed**, **card yield** |
 | **Schedule payloads** | a banner | **`grantModifier`**, **`eventTrack`**, **`eventShop`** |
 | **Where schedules live** | in code, beside the definitions | a hand-written events file (live-ops content with wall-clock dates) |
 
@@ -46,8 +46,8 @@ Six parts. Every authored event is a skin on them.
 - Event points live in the event's own state.
 - They are shown on the event screen only; they never reach the plank or the
   purse. No wallet row.
-- Same pattern as Fragments: a per-collectible counter shown in the Reliquary,
-  not a wallet row.
+- Same pattern as Fragments and the collection's stars: a counter shown where
+  it is spent, not a wallet row.
 - **OQ-18.**
 
 ### 2.2 Point sources
@@ -82,14 +82,16 @@ Six parts. Every authored event is a skin on them.
 ```
 threshold   free reward         paid reward
    100      Gold                Gold ×2
-   250      ingredients         ingredients + a shop refresh
+   250      a Silver card pack  a Gold pack + a shop refresh
    500      Gems                Gems ×2
    ...
-  final     the grand prize     the grand prize + a relic level
+  final     the grand prize     the grand prize + a Star pack
 ```
 
-- The grand prize is a collectible: a relic or a hero. Not a building, not a
-  currency lump. A seasonal hero is one hero row and one banner row.
+- The grand prize is a collectible: a hero, or a Star pack. Not a building,
+  not a currency lump, and never a relic — a relic comes only from its album
+  ([`09-relics.md`](09-relics.md) §1). A seasonal hero is one hero row and one
+  banner row.
 - The free track reaches the grand prize. Slower, but reachable.
 - Paid claims are gated on a flag. How the flag is set is
   [`14-monetization.md`](14-monetization.md).

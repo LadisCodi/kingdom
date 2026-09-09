@@ -158,11 +158,11 @@
 
 | Level | Workers | Radius | Gate |
 |---|---|---|---|
-| 1 | 3 | 2 | — |
-| 2 | 5 | 3 | TH1 |
-| 3 | 7 | 4 | TH2 · `Engineering` |
+| 1 | 3 | 1 | — |
+| 2 | 5 | 2 | TH1 |
+| 3 | 7 | 3 | TH2 · `Engineering` |
 | 4 | 9 | 4 | TH3 · `Architecture` |
-| 5 | 11 | 5 | TH4 |
+| 5 | 11 | 4 | TH4 |
 
 ### 4.5 Quarry
 
@@ -170,15 +170,15 @@
   pays Stone; an iron vein pays Stone once `Mining` is researched; a gold
   mountain pays Gold once `Deep Mining` is researched
   ([`01-map-and-fog.md`](01-map-and-fog.md) §3).
-- Build 30 Wood, 20 s. Upgrade 40 Wood, 30 s, ×1.5 per level.
+- Build 30 Wood, 120 s. Upgrade 40 Wood, 30 s, ×1.5 per level.
 
 | Level | Workers | Radius | Gate |
 |---|---|---|---|
-| 1 | 3 | 2 | — |
-| 2 | 5 | 3 | TH2 · `Engineering` |
-| 3 | 7 | 4 | TH3 · `Architecture` |
+| 1 | 3 | 1 | — |
+| 2 | 5 | 2 | TH2 · `Engineering` |
+| 3 | 7 | 3 | TH3 · `Architecture` |
 | 4 | 9 | 4 | TH3 |
-| 5 | 11 | 5 | TH4 |
+| 5 | 11 | 4 | TH4 |
 
 ### 4.6 Docks
 
@@ -223,9 +223,9 @@ regeneration +20, +25, +30, +36, +42 an hour.
 
 | Hall | Trains | Unlock | Build | Upgrade base |
 |---|---|---|---|---|
-| **Barracks** | Warrior · Lancer · Archer | `Warrior` | 60 W + 20 S, 45 s | 180 W + 60 S, 90 s |
-| **Spear Hall** | Lancer | `Spears` | 80 W + 30 S, 60 s | 240 W + 90 S, 120 s |
-| **Shooting Grounds** | Archer | `Archery` | 80 W + 30 S, 60 s | 240 W + 90 S, 120 s |
+| **Barracks** | Warrior · Lancer · Archer | `Warrior` | 60 W + 20 S, 60 s | 180 W + 60 S, 90 s |
+| **Spear Hall** | Lancer | `Spears` | 80 W + 30 S, 120 s | 240 W + 90 S, 120 s |
+| **Shooting Grounds** | Archer | `Archery` | 80 W + 30 S, 300 s | 240 W + 90 S, 120 s |
 | **Stables** | Cavalry | `Cavalry` | 120 W + 70 S, 90 s | 360 W + 210 S, 180 s |
 
 Upgrades grow ×1.6 in time per level; what each level costs is authored on the

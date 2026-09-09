@@ -289,7 +289,7 @@ A `bonus` names its effects, and each is four fields:
 | `SanctifiedRuins` | ×2 on the per-ruin drip | — | a `mechanic` |
 | `Vigils` · `Wayposts` | + per ruin · + per landmark, per rank | — | `bonus` ladders |
 | `Scriptorium` | +% on the whole rate, per rank | — | a `bonus` ladder |
-| `knowledgeYield` modifier | × on the whole rate | — | Wanderer's Compass relic passive; the `insight` delve boon (×3) |
+| `knowledgeYield` modifier | × on the whole rate | — | the `insight` delve boon (×3) |
 | the **quest chain** | — | 27 across eleven quests | `rewardKnowledge` (Quests sheet) |
 
 - **The balance rides on the game's own plank while the research screen is
@@ -335,7 +335,7 @@ A `bonus` names its effects, and each is four fields:
 | Currency | Buys | Source | Scope | Shown in |
 |---|---|---|---|---|
 | **Knowledge** | technologies | claimed landmarks, cleared ruins, quest lumps | kingdom | the Research header, with its rate |
-| **Stardust** | relic levels and the hero ascension toll (`src/sim/collection.ts`, `src/sim/artifacts.ts`; [`10-heroes.md`](10-heroes.md) §4) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the Reliquary and hero screens |
+| **Stardust** | the hero ascension toll (`src/sim/collection.ts`; [`10-heroes.md`](10-heroes.md) §4) — relic levels left it 2026-09-09 ([`09-relics.md`](09-relics.md)) | delves (`delve.stardustPerDepthPerTier` 6, `delve.firstClearStardust` 150), pulls (`gacha.pullStardust` 50), the chain (`rewardStardust`, 158 total) | kingdom | the hero screens |
 
 - One job each. `knowledgeYield` multiplies the drip; `stardustYield`
   multiplies what a depth pays.
@@ -458,8 +458,9 @@ in the same units.
 - A spell may not require a node in another tome. Its sheet may **name** a
   related node as a tappable thumbnail without requiring it.
 - Magic also holds `Resonance` (cast cost) and what raises the Mana cap.
-- Relic passives stay the delve's reward ([`09-relics.md`](09-relics.md)
-  §1). A player who never delves can discover, cast and upgrade spells
+- Relic levels come from the collection's albums, and the delve's reward is
+  the card pack ([`09-relics.md`](09-relics.md) §6). A player who never delves
+  can discover, cast and upgrade spells
   (**OQ-41**).
 
 | Spell | Effect | Relic active it replaces |
