@@ -51,8 +51,8 @@
 | **8** | `Explorer` | Reveal eight cells, in any direction. |
 | **9–15** | `Fields` → `ToWork` | **Agriculture** (crop plots) → two plots → tap them → Wood for a Farm → **Farming** (the Farm, one row down) → a Farm → **assign a worker**. |
 | **16–17** | `GrowingTown` · `Neighbors` | A second House, a third villager. |
-| **18** | `ProperCapital` | **Townhall 2.** TH1 caps the city at 2 Houses and 1 Sawmill; quest 16 reaches the cap. |
-| **19–21** | `SawTeeth` · `TheSawmill` · `Crewed` | **Saws → the Sawmill → two workers on it.** |
+| **18–20** | `SawTeeth` · `TheSawmill` · `Crewed` | **Saws → the Sawmill → two workers on it.** TH1 allows the one Sawmill. |
+| **21** | `ProperCapital` | **Townhall 2.** TH1 caps the city at 2 Houses and 1 Sawmill; quests 16 and 19 reach both caps. |
 | **22–24** | `Levies` · `Sawpits` · `Regrowth` | **Taxes I → Sawpits I → Reforesting I** — the three cards the book puts after Saws. A requirement is the row above, so the chain walks the rows in order rather than pointing past them. |
 | **25** | `FurtherAfield` | Fifteen more cells — the near shrine and the Hollow Barrow come into view. **Discovering the Barrow starts its gate's counter: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
 | **26–28** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 39. |

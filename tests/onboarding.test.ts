@@ -206,14 +206,7 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Neighbors');
 
-    // ---- step 18: a proper capital ----
-    chop(Math.max(0, DISTRICTS.Townhall.costPerLevel[1].cost.Wood! - wood()));
-    expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
-    tick(120);
-    expect(townhall(state).level).toBe(2);
-    finish('ProperCapital');
-
-    // ---- steps 19-21: the wood, automated ----
+    // ---- steps 18-20: the wood, automated — TH1 allows the one Sawmill ----
     research('Saws');
     finish('SawTeeth');
     chop(Math.max(0, DISTRICTS.Sawmill.costPerLevel[0].cost.Wood! - wood()));
@@ -226,6 +219,13 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
     expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
     finish('Crewed');
+
+    // ---- step 21: a proper capital — both TH1 caps are reached ----
+    chop(Math.max(0, DISTRICTS.Townhall.costPerLevel[1].cost.Wood! - wood()));
+    expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
+    tick(120);
+    expect(townhall(state).level).toBe(2);
+    finish('ProperCapital');
 
     // ---- steps 22-24: the three cards after Saws ----
     // A requirement is the row above (2026-09-08), so the book puts Taxes,

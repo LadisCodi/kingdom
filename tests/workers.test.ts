@@ -21,8 +21,8 @@ import {
 // precise number of workable cells.
 const SAWMILL_CELL = { x: 3, y: 1 };
 const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes it
-const FOREST_B = { x: 2, y: 3 }; // radius 2 — still in the L1 area
-const FOREST_C = { x: 0, y: 3 }; // radius 3 — needs a level-2 sawmill
+const FOREST_B = { x: 2, y: 3 }; // radius 2 — needs a level-2 sawmill
+const FOREST_C = { x: 0, y: 3 }; // radius 3 — needs a level-3 sawmill
 
 // One harvest cycle from an adjacent (orthogonal) cell: out, one strike, and
 // home again. The units leave the DEPOT at the strike and reach the WALLET on
@@ -31,7 +31,10 @@ const MOVE_MS = (1 / WORKER.moveSpeedTilesPerSecond) * 1000;
 const STRIKE_MS = HARVEST.Forest.secondsPerStrike * 1000;
 const CYCLE_MS = 2 * MOVE_MS + STRIKE_MS;
 
-const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
+// `level` is stamped after the build: the L1 area is radius 1, which is also
+// the fog ring the finished mill reveals, so a test that wants a SECOND
+// workable tree without revealing every neighbour asks for level 2.
+const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B], level = 1) => {
   fund(state, { Gold: 500, Wood: 500 });
   // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
   // it for you (Docs/features/12-quests.md §2 steps 3 and 15).
@@ -48,18 +51,21 @@ const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   tickAt(state, T0 + 30_000); // build takes 23s
   const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
   expect(sawmill.state).toBe('Built');
+  sawmill.level = level;
   return sawmill;
 };
 
 describe('area of influence & worker limit', () => {
-  it('radius by level: L1 reaches the two near forests; L2 also the far one', () => {
+  it('radius by level: L1 reaches the adjacent forest; L2 the near one; L3 the far one', () => {
     const state = freshGame();
     const sawmill = builtSawmill(state, [FOREST_A, FOREST_B, FOREST_C]);
-    expect(workableCells(state, map, sawmill)).toHaveLength(2);
+    expect(workableCells(state, map, sawmill)).toHaveLength(1);
     expect(assignableWorkerLimit(sawmill)).toBe(3); // per-level cap — cells don't limit
     sawmill.level = 2;
-    expect(workableCells(state, map, sawmill)).toHaveLength(3);
+    expect(workableCells(state, map, sawmill)).toHaveLength(2);
     expect(assignableWorkerLimit(sawmill)).toBe(5);
+    sawmill.level = 3;
+    expect(workableCells(state, map, sawmill)).toHaveLength(3);
   });
 
   it('workers beyond the workable cells are assignable and wait Idle', () => {
@@ -78,7 +84,7 @@ describe('area of influence & worker limit', () => {
   it('unrevealed forest cells do not count', () => {
     const state = freshGame();
     const sawmill = builtSawmill(state);
-    sawmill.level = 3; // radius 4 reaches many authored Trees, but only revealed ones count
+    sawmill.level = 3; // radius 3 reaches many authored Trees, but only revealed ones count
     expect(workableCells(state, map, sawmill)).toHaveLength(2);
   });
 });
@@ -206,7 +212,7 @@ describe('the harvest cycle', () => {
   it('a worker whose cell is emptied under it takes nothing and migrates', () => {
     const state = freshGame();
     state.city.population = 3;
-    const sawmill = builtSawmill(state);
+    const sawmill = builtSawmill(state, [FOREST_A, FOREST_B], 2); // L2 reaches both forests
     const start = state.lastAdvance;
     const woodBefore = getWallet(state.city.wallet, 'Wood');
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
@@ -231,7 +237,7 @@ describe('the harvest cycle', () => {
   it('two workers claim distinct cells', () => {
     const state = freshGame();
     state.city.population = 5;
-    const sawmill = builtSawmill(state); // L1 reaches both forests
+    const sawmill = builtSawmill(state, [FOREST_A, FOREST_B], 2); // L2 reaches both forests
     const start = state.lastAdvance;
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
     changeWorkers(state, map, sawmill.uniqueId, 1, start);

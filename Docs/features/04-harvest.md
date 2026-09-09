@@ -75,7 +75,7 @@ Every resource cell carries:
 - The law authors the cell; the trip belongs to where the shed sits. The rate
   column below varies with distance; the cell's numbers do not.
 - `tap.workSeconds` = 10 makes a ten-unit tree about ten taps.
-- The worker column is a round trip, quoted at both ends of a level-3 radius.
+- The worker column is a round trip, quoted at both ends of a level-4 radius.
 
 | Cell | `unitsPerStrike` | `secondsPerStrike` | `stock` | `recoverySeconds` | a tap pays | taps to empty | worker, next door → radius 4 | workers/cell |
 |---|---|---|---|---|---|---|---|---|

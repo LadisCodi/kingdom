@@ -62,10 +62,12 @@ describe('the quest chain', () => {
                                                   //   the Farm is one research
                                                   //   under the plots, and the
                                                   //   chain asks for it
-      'GrowingTown', 'Neighbors', 'ProperCapital',// 16-18 a House FIRST, then the
+      'GrowingTown', 'Neighbors',                 // 16-17 a House FIRST, then the
                                                   //   citizen it makes room for
-                                                  //   (+ the Townhall, woven in)
-      'SawTeeth', 'TheSawmill', 'Crewed',         // 19-21 automate the wood
+      'SawTeeth', 'TheSawmill', 'Crewed',         // 18-20 automate the wood — TH1
+                                                  //   allows the one Sawmill
+      'ProperCapital',                            // 21   the Townhall, now that
+                                                  //   both its caps are reached
       'Levies', 'Sawpits', 'Regrowth',            // 22-24 the three cards the book
                                                   //   puts after Saws — a
                                                   //   requirement is the row above
