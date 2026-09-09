@@ -27,11 +27,12 @@ import {
   trainingProgress,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
+import { maxPopulation } from '../sim/population';
 import { isTechComplete } from '../sim/research';
 import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, iconEl, progress, stat } from './kit';
+import { action, iconEl, progress } from './kit';
 import type { IconName } from './kit/icon';
 import { unitBody, unitBust } from './unitArt';
 
@@ -45,28 +46,24 @@ const picked = new Map<string, TrainableId>();
  *  roster. One place, and it reads like the others. */
 const VILLAGER = {
   name: 'Villager',
-  glyph: '🧑‍🌾',
-  icon: 'population' as const,
   tag: 'Worker',
   description: 'Works your buildings and pays rent. Everything else needs them.',
 };
 
 /**
- * One of the four numbers a soldier is chosen ON, at a size that can be read
- * across the panel: the mark and the word on top, the value under them.
+ * One number a thing is judged ON, at a size that can be read across a panel:
+ * the mark and the word on top, the value under them.
  *
  * The inline `stat()` shape — icon, value, word, all on one line — is right in
- * a card the width of a thumb, and wrong here: this panel now has a band of
- * its own for these, and four of them in a row is the comparison the player is
- * actually making between three units.
+ * a card the width of a thumb, and wrong here: a panel has a band of its own
+ * for these, and several in a row is the comparison the player is actually
+ * making. Exported because the upgrade block reads the same way — a level is
+ * judged on what it buys, one tile per number, `before → after`.
  */
-const figure = (icon: IconName, label: string, value: string): HTMLElement =>
+export const figure = (icon: IconName, label: string, value: string): HTMLElement =>
   el('div', { class: 'tr-fig' },
     el('div', { class: 'tr-fig-head' }, iconEl(icon, { size: 'sm' }), label),
     el('div', { class: 'tr-fig-value' }, value));
-
-const iconFor = (trainee: TrainableId) =>
-  (trainee === 'Villager' ? VILLAGER.icon : trainee);
 
 const nameFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.name : UNITS[trainee].name);
@@ -118,9 +115,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
             ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
             : name,
         },
-          run.trainee === 'Villager'
-            ? iconEl(iconFor(run.trainee), { size: 'lg' })
-            : unitBust(run.trainee, 'tr-slot-art'),
+          unitBust(run.trainee, 'tr-slot-art'),
           ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
       }));
 
@@ -207,9 +202,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
           class: `tr-pick${t === selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}`,
           type: 'button',
           title: nameFor(t),
-        }, t === 'Villager'
-          ? iconEl(iconFor(t), { size: 'lg', locked })
-          : unitBust(t, 'tr-pick-art'));
+        }, unitBust(t, 'tr-pick-art'));
         b.addEventListener('click', () => {
           picked.set(district.uniqueId, t);
           game.notify();
@@ -224,79 +217,112 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
   return root;
 }
 
-function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
-  const cost = trainCost(game.state, trainee);
-  // What it will take HERE, neighbours included — the number the player is
-  // about to commit to, not the one on the sheet.
-  const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
-  const info = el('div', { class: 'tr-info' });
+/** What the detail panel says about one trainee. The PANEL is the same for a
+ *  villager and a soldier — portrait, heading with the button, a line of
+ *  copy, a band of figures — and only these parts differ. Keeping the two in
+ *  one shape is what stops the Townhall's card drifting from the halls' again:
+ *  it had, and the villager's own layout grew taller than the card and put
+ *  the Train button under the fold. */
+interface TraineeCopy {
+  name: string;
+  tag: string;
+  description: string;
+  /** The one phrase under the copy, when there is one — a soldier's place in
+   *  the type chart. A villager has no chart. */
+  note: HTMLElement | null;
+  /** Why the button is off, or nothing when it is on. */
+  disabledReason: string | undefined;
+  /** The figures a trainee is chosen on. A soldier has four; a villager three. */
+  figures: HTMLElement[];
+}
 
-  if (trainee === 'Villager') {
-    const room = game.trainingInfo();
-    info.append(
-      el('div', { class: 'tr-portrait' }, iconEl('population', { size: 'lg' })),
-      el('div', { class: 'tr-body' },
-        el('div', { class: 'tr-name' }, VILLAGER.name),
-        el('div', { class: 'tr-tag' }, VILLAGER.tag),
-        el('div', { class: 'tr-desc' }, VILLAGER.description),
-        // No duration here: it already sits beside the Train button, where
-        // every other card puts a wait (§6.4).
-        el('div', { class: 'tr-stats' },
-          stat('population', String(game.state.city.population), 'living here')),
-        el('div', { class: 'tr-wait' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(seconds))),
-      action({
-        label: 'Train',
-        kind: 'primary',
-        onClick: () => game.doTrain(trainee, district),
-        cost,
-        have: (c) => game.walletValue(c),
-        disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
-      }),
-    );
-    return info;
-  }
+function villagerCopy(game: Game, seconds: number): TraineeCopy {
+  const room = game.trainingInfo();
+  const living = game.state.city.population;
+  return {
+    ...VILLAGER,
+    note: null,
+    disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
+    // A villager is judged on where it goes rather than what it hits: how
+    // many are already here, how much room the houses leave — the number the
+    // disabled button is about — and how long the next one takes.
+    figures: [
+      figure('population', 'Living here', String(living)),
+      figure('Housing', 'Room', `${living + room.queued} / ${maxPopulation(game.state)}`),
+      figure('hourglass', 'Time', formatDuration(seconds)),
+    ],
+  };
+}
 
-  const unit = UNITS[trainee];
+function soldierCopy(game: Game, unitId: UnitId, seconds: number): TraineeCopy {
+  const unit = UNITS[unitId];
   const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
   const army = game.armyRoom();
-  // The button shares its row with the NAME, not with the description: a name
-  // and a tag are short, so a fixed-width button beside them still leaves the
-  // description its full measure on a 390px phone. Beside the description it
-  // would have squeezed it to a sliver.
-  const buy = action({
-    label: 'Train',
-    kind: 'primary',
-    onClick: () => game.doTrain(trainee, district),
-    cost,
-    have: (c) => game.walletValue(c),
+  return {
+    name: unit.name,
+    tag: tagFor(unit),
+    description: unit.description,
+    // The chart, in one phrase, rather than a table the player has to read.
+    note: el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[unitId]].name}`),
     disabledReason: !techOk
       ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
       : army.used + 1 > army.cap
         ? 'Your army is full — upgrade this hall'
         : undefined,
-  });
-  info.append(
-    el('div', { class: 'tr-portrait is-body' }, unitBody(trainee as UnitId, 'tr-portrait-art')),
-    el('div', { class: 'tr-body' },
-      el('div', { class: 'tr-top' },
-        el('div', { class: 'tr-heading' },
-          el('div', { class: 'tr-name' }, unit.name),
-          el('div', { class: 'tr-tag' }, tagFor(unit))),
-        buy),
-      el('div', { class: 'tr-desc' }, unit.description),
-      // The chart, in one phrase, rather than a table the player has to read.
-      el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`)),
     // The four numbers a soldier is chosen on, in the band the button used to
     // waste: what it hits for, what it takes, what it has, and what it costs
     // in time. The atlas grew dedicated marks for the first three
     // (Docs/art/ui/icon_stat_*.png), so they stop borrowing the army sword,
     // the padlock and a villager's head.
-    el('div', { class: 'tr-figures' },
+    figures: [
       figure('atk', 'Damage', String(unit.dmg)),
       figure('def', 'Defence', String(unit.def)),
       figure('hp', 'Health', String(unit.hp)),
-      figure('hourglass', 'Time', formatDuration(seconds))),
+      figure('hourglass', 'Time', formatDuration(seconds)),
+    ],
+  };
+}
+
+function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
+  const cost = trainCost(game.state, trainee);
+  // What it will take HERE, neighbours included — the number the player is
+  // about to commit to, not the one on the sheet.
+  const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
+  const copy = trainee === 'Villager'
+    ? villagerCopy(game, seconds)
+    : soldierCopy(game, trainee, seconds);
+
+  // The button shares its row with the NAME, not with the description: a name
+  // and a tag are short, so a fixed-width button beside them still leaves the
+  // description its full measure on a 390px phone. Beside the description it
+  // would have squeezed it to a sliver.
+  //
+  // A GATE takes the button's place. When something other than money is in
+  // the way — no room, a technology, a full army — a dead button with a
+  // caption is two things saying one thing, and the caption was wrapping
+  // around it. So the slot holds the reason alone, in the padlock's colour,
+  // and the button comes back when the gate opens. Being short of coin is not
+  // a gate: the button stays and its red price says so (§6.4).
+  const buy = copy.disabledReason !== undefined
+    ? el('div', { class: 'tr-blocked' },
+      iconEl('padlock', { size: 'sm' }), copy.disabledReason)
+    : action({
+      label: 'Train',
+      kind: 'primary',
+      onClick: () => game.doTrain(trainee, district),
+      cost,
+      have: (c) => game.walletValue(c),
+    });
+  return el('div', { class: 'tr-info' },
+    el('div', { class: 'tr-portrait is-body' }, unitBody(trainee, 'tr-portrait-art')),
+    el('div', { class: 'tr-body' },
+      el('div', { class: 'tr-top' },
+        el('div', { class: 'tr-heading' },
+          el('div', { class: 'tr-name' }, copy.name),
+          el('div', { class: 'tr-tag' }, copy.tag)),
+        buy),
+      el('div', { class: 'tr-desc' }, copy.description),
+      ...(copy.note ? [copy.note] : [])),
+    el('div', { class: 'tr-figures' }, ...copy.figures),
   );
-  return info;
 }
