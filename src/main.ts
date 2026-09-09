@@ -359,6 +359,12 @@ async function boot(): Promise<void> {
       }
       for (const a of game.state.research.active) a.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
+      // The gates' counters, so the warp demos a raid landing during an
+      // absence the way it demos the rest of it.
+      for (const gate of Object.values(game.state.gates)) {
+        if (gate !== undefined && gate.nextRaidAt !== null) gate.nextRaidAt -= delta;
+      }
+      for (const report of game.state.raidReports) report.at -= delta;
       runTick();
     };
     const allTechs = () => {
