@@ -184,16 +184,18 @@ Costs are **authored per sanctuary**, not derived from distance.
 
 ### The five ruins
 
-| Ruin | Tier | Artifact |
-|---|---|---|
-| Hollow Barrow | I | Dowsing Rod |
-| Sunken Chapel | II | Verdant Seal |
-| Drowned Ironworks | III | Foreman's Sigil |
-| The Counting House | IV | Gilded Ledger |
-| Star Observatory | V | Wanderer's Compass |
+| Ruin | Tier | Artifact | Ring |
+|---|---|---|---|
+| Hollow Barrow | I | Dowsing Rod | 6 |
+| Sunken Chapel | II | Verdant Seal | 11 |
+| Drowned Ironworks | III | Foreman's Sigil | 34 |
+| The Counting House | IV | Gilded Ledger | 21 |
+| Star Observatory | V | Wanderer's Compass | 30 |
 
-- Placed at BFS distance ~3 to ~12, so the tier ladder and the fog curve are the
-  same ladder.
+- The first two are the ones a month of play reaches, and they sit on the fog
+  curve's near half. The last three are deep province: past ring 20 a single
+  cell costs six figures (§5), so meeting them is a late-game project and
+  their order is not the tier order.
 - Full ruin design: [`11-expeditions.md`](11-expeditions.md); the fights are
   [`combat.md`](combat.md).
 

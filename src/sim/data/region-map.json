@@ -1666,14 +1666,14 @@
   ],
   "ruins": {
     "HollowBarrow": {
-      "x": -4, "y": 5,
+      "x": 7, "y": 1,
       "tier": 1, "difficulty": 6,
       "baseDepthSeconds": 180, "depthGrowth": 1.15, "maxDepth": 5,
       "supplies": { "Food": 20, "Gold": 50 },
       "affinity": "Warrior", "artifact": "DowsingRod"
     },
     "SunkenChapel": {
-      "x": -3, "y": 12,
+      "x": -3, "y": 9,
       "tier": 2, "difficulty": 14,
       "baseDepthSeconds": 300, "depthGrowth": 1.2, "maxDepth": 7,
       "supplies": { "Food": 40, "Gold": 150 },
