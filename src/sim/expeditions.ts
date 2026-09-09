@@ -38,7 +38,7 @@ import {
   addArtifactFragments, artifactEntry, artifactIsCarried, grantArtifact, isAttuned,
   ownsArtifact,
 } from './artifacts';
-import { addHeroXp } from './heroes';
+import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
   depthDurationMs, effectiveAttack, guaranteedDepth, matchupAgainst, partyStats,
@@ -100,10 +100,14 @@ export function buyPartySlot(state: GameState): BuyPartySlotResult {
 /** Supplies are a FLAT cost at launch, not per depth, so the depth decision is
  *  purely risk against reward with nothing else muddying it. The
  *  Quartermaster's whole trait is a discount on this. */
-export function supplyCost(state: GameState, ruinId: RuinId, heroId: HeroId | null): Wallet {
+export function supplyCost(
+  state: GameState, ruinId: RuinId, heroIds: readonly HeroId[],
+): Wallet {
   const base = RUINS[ruinId].supplies;
-  const discount = heroId !== null && HEROES[heroId].trait === 'SupplyDiscount'
-    ? HEROES[heroId].traitValue : 0;
+  // The best quartermaster in the party, not the sum of them: two of them
+  // would otherwise stack to a free trip.
+  const discount = heroIds.reduce((best, id) => (HEROES[id].trait === 'SupplyDiscount'
+    ? Math.max(best, HEROES[id].traitValue) : best), 0);
   // Rations stacks with the Quartermaster's trait the way a rank and a relic
   // stack everywhere else: the trait is a discount, the line is a discount,
   // and the modifier stack rides on the product.
@@ -154,12 +158,20 @@ export function drillOf(state: GameState): Drill {
   };
 }
 
-/** A Party as combat sees it, with the kingdom's drill attached. The one
- *  place a Party is assembled, so no launch or preview can forget the drill. */
+/**
+ * A Party as combat sees it, with the kingdom's drill attached and every hero
+ * resolved to the level it fights at. The one place a Party is assembled, so
+ * no launch or preview can forget either.
+ */
 export const partyOf = (
-  state: GameState, slots: readonly PartySlot[], heroId: HeroId | null = null,
+  state: GameState, slots: readonly PartySlot[], heroIds: readonly HeroId[] = [],
   artifact: CarriedArtifact | null = null,
-): Party => ({ heroId, slots, artifact, drill: drillOf(state) });
+): Party => ({
+  heroes: heroIds.map((id) => ({ id, level: heroLevel(state, id) })),
+  slots,
+  artifact,
+  drill: drillOf(state),
+});
 
 /** The fraction of the haul a failed depth costs (Bearers: −3%/rank, floor
  *  20%). Half by default — enough that a bad push is a real loss, never so
@@ -179,7 +191,7 @@ export const ownsHero = (state: GameState, id: HeroId): boolean => state.heroes.
 /** A hero already underground cannot lead a second party. One hero means one
  *  delve at a time, which is what makes the second hero a genuine prize. */
 export const heroIsBusy = (state: GameState, id: HeroId): boolean =>
-  state.delves.some((d) => d.heroId === id && d.phase !== 'done');
+  state.delves.some((d) => d.heroIds.includes(id) && d.phase !== 'done');
 
 /** What a delve's relic contributes, at the level it went down at. */
 export const carriedOf = (delve: Delve): CarriedArtifact | null =>
@@ -191,7 +203,8 @@ export const freeHeroes = (state: GameState): HeroId[] =>
 // ------------------------------------------------------------------ launch
 
 export type LaunchBlock =
-  | 'RuinNotFound' | 'GateStanding' | 'NoHero' | 'HeroBusy' | 'EmptyParty' | 'TooManySlots'
+  | 'RuinNotFound' | 'GateStanding' | 'NoHero' | 'HeroBusy' | 'TooManyHeroes'
+  | 'EmptyParty' | 'TooManySlots'
   | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies'
   | 'ArtifactNotOwned' | 'ArtifactAttuned' | 'ArtifactCarried';
 
@@ -199,7 +212,7 @@ export function launchBlock(
   state: GameState,
   map: MapData,
   ruinId: RuinId,
-  heroId: HeroId | null,
+  heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
   artifactId: ArtifactId | null = null,
 ): LaunchBlock | null {
@@ -207,8 +220,13 @@ export function launchBlock(
   // Nothing in the ruin can be entered until the gate is cleared: the garrison
   // is standing in the doorway (Docs/features/18-garrisons-and-raids.md §1).
   if (!gateIsCleared(state, ruinId)) return 'GateStanding';
-  if (heroId === null || !ownsHero(state, heroId)) return 'NoHero';
-  if (heroIsBusy(state, heroId)) return 'HeroBusy';
+  if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
+  if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
+  // A DELVE parks its party underground, so its hero really is committed
+  // until the run ends. A gate does not (`gateBlock`): it resolves on entry,
+  // and a hero is never busy for a fight like that
+  // (Docs/features/10-heroes.md §2.5).
+  if (heroIds.some((id) => heroIsBusy(state, id))) return 'HeroBusy';
   const committed = slots.filter((s) => s.count > 0);
   if (committed.length === 0) return 'EmptyParty';
   if (committed.length > unitSlots(state)) return 'TooManySlots';
@@ -218,7 +236,7 @@ export function launchBlock(
   }
   const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
   if (power > maxArmyPower(state)) return 'OverArmyCap';
-  if (!canAfford(state.city.wallet, supplyCost(state, ruinId, heroId))) return 'NotEnoughSupplies';
+  if (!canAfford(state.city.wallet, supplyCost(state, ruinId, heroIds))) return 'NotEnoughSupplies';
   if (artifactId !== null) {
     if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
     // Attune OR arm. Refusing here rather than silently un-attuning is the
@@ -236,24 +254,24 @@ export function launchDelve(
   state: GameState,
   map: MapData,
   ruinId: RuinId,
-  heroId: HeroId,
+  heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
   now: number,
   standingOrder: number | null = null,
   artifactId: ArtifactId | null = null,
 ): LaunchResult {
-  const block = launchBlock(state, map, ruinId, heroId, slots, artifactId);
+  const block = launchBlock(state, map, ruinId, heroIds, slots, artifactId);
   if (block !== null) return block;
-  pay(state.city.wallet, supplyCost(state, ruinId, heroId));
+  pay(state.city.wallet, supplyCost(state, ruinId, heroIds));
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
   const artifactLevel = artifactId === null ? 1 : artifactEntry(state, artifactId).level;
   const artifact = artifactId === null ? null : { id: artifactId, level: artifactLevel };
-  const party = partyOf(state, committed, heroId, artifact);
-  const hp = partyStats(party, heroLevel(state, heroId)).hp;
+  const party = partyOf(state, committed, heroIds, artifact);
+  const hp = partyStats(party).hp;
   state.delves.push({
     id: newId(state, 'delve'),
     ruinId,
-    heroId,
+    heroIds: [...heroIds],
     artifactId,
     artifactLevel,
     party: committed,
@@ -289,21 +307,25 @@ export function launchDelve(
  * a retry is identical to a first attempt: nothing is lost but the supplies.
  */
 export type GateBlock =
-  | 'RuinNotFound' | 'AlreadyCleared' | 'NoHero' | 'HeroBusy' | 'TooManySlots'
+  | 'RuinNotFound' | 'AlreadyCleared' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
   | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies';
 
 export function gateBlock(
   state: GameState,
   map: MapData,
   ruinId: RuinId,
-  heroId: HeroId | null,
+  heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
 ): GateBlock | null {
   if (fogState(state, map, RUINS[ruinId].location) !== 'Revealed') return 'RuinNotFound';
   if (gateIsCleared(state, ruinId)) return 'AlreadyCleared';
-  if (heroId === null || !ownsHero(state, heroId)) return 'NoHero';
-  if (heroIsBusy(state, heroId)) return 'HeroBusy';
-  // A hero alone is a legal board, so there is no EmptyParty here.
+  if (heroIds.length === 0 || heroIds.some((id) => !ownsHero(state, id))) return 'NoHero';
+  if (heroIds.length > heroSlots(state)) return 'TooManyHeroes';
+  // NO 'HeroBusy'. A gate resolves on ENTRY, so a hero is never busy for it —
+  // the same hero leads every room the player enters
+  // (Docs/features/10-heroes.md §2.5). Only a DELVE parks a party
+  // underground, and only `launchBlock` asks.
+  // A hero alone is a legal board, so there is no EmptyParty here either.
   const committed = slots.filter((s) => s.count > 0);
   if (committed.length > unitSlots(state)) return 'TooManySlots';
   const available = availableRoster(state);
@@ -337,19 +359,19 @@ export function attemptGate(
   state: GameState,
   map: MapData,
   ruinId: RuinId,
-  heroId: HeroId,
+  heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
 ): GateReport {
   const guard = RUINS[ruinId].guard;
   const supplies = gateSupplies(ruinId);
-  const block = gateBlock(state, map, ruinId, heroId, slots);
+  const block = gateBlock(state, map, ruinId, heroIds, slots);
   if (block !== null) {
     return { result: block, attack: 0, power: guard.power, hoard: {}, supplies };
   }
   pay(state.city.wallet, supplies);
   const committed = slots.filter((s) => s.count > 0).map((s) => ({ ...s }));
-  const party = partyOf(state, committed, heroId);
-  const attack = effectiveAttack(party, guard.threat, heroLevel(state, heroId));
+  const party = partyOf(state, committed, heroIds);
+  const attack = effectiveAttack(party, guard.threat);
   if (attack < guard.power) {
     return { result: 'Repelled', attack, power: guard.power, hoard: {}, supplies };
   }
@@ -377,20 +399,19 @@ export interface GatePreview {
 export function previewGate(
   state: GameState,
   ruinId: RuinId,
-  heroId: HeroId | null,
+  heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
 ): GatePreview {
   const guard = RUINS[ruinId].guard;
   const committed = slots.filter((s) => s.count > 0);
-  const party = partyOf(state, committed, heroId);
-  const level = heroId === null ? 1 : heroLevel(state, heroId);
-  const attack = effectiveAttack(party, guard.threat, level);
+  const party = partyOf(state, committed, heroIds);
+  const attack = effectiveAttack(party, guard.threat);
   return {
     ruinId,
     threat: guard.threat,
     power: guard.power,
     attack,
-    stats: partyStats(party, level),
+    stats: partyStats(party),
     supplies: gateSupplies(ruinId),
     enough: attack >= guard.power,
   };
@@ -424,13 +445,16 @@ export interface DelveEvent {
 
 /** The haul one depth pays, before the hero's traits. Scales with depth AND
  *  tier, so pushing deeper is worth more than delving a shallow ruin twice. */
-function depthHaul(state: GameState, ruinId: RuinId, depth: number, heroId: HeroId): {
-  wallet: Wallet; fragments: number;
-} {
+function depthHaul(
+  state: GameState, ruinId: RuinId, depth: number, heroIds: readonly HeroId[],
+): { wallet: Wallet; fragments: number } {
   const ruin = RUINS[ruinId];
-  const hero = HEROES[heroId];
-  const stardustBonus = hero.trait === 'KnowledgeBonus' ? 1 + hero.traitValue : 1;
-  const fragmentBonus = hero.trait === 'FragmentBonus' ? 1 + hero.traitValue : 1;
+  // The best of each trait in the party, never the sum: a bonus that stacked
+  // per hero would make a hero slot a yield purchase rather than a board one.
+  const best = (trait: string): number => heroIds.reduce(
+    (n, id) => (HEROES[id].trait === trait ? Math.max(n, HEROES[id].traitValue) : n), 0);
+  const stardustBonus = 1 + best('KnowledgeBonus');
+  const fragmentBonus = 1 + best('FragmentBonus');
   const wallet: Wallet = {
     Gold: Math.round(DELVE.goldPerDepthPerTier * ruin.tier * depth),
     Stardust: Math.round(resolve(state, 'stardustYield', techValue(state, 'stardustYield',
@@ -468,12 +492,8 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
     while (delve.phase === 'descending' && delve.depthEndsAt <= toTime) {
       const ruin = RUINS[delve.ruinId];
       const depth = delve.depth + 1;
-      const party: Party = {
-        heroId: delve.heroId, slots: delve.party, artifact: carriedOf(delve),
-        drill: drillOf(state),
-      };
-      const level = heroLevel(state, delve.heroId);
-      const outcome = resolveDepth(party, delve.ruinId, depth, delve.threat, level);
+      const party = partyOf(state, delve.party, delve.heroIds, carriedOf(delve));
+      const outcome = resolveDepth(party, delve.ruinId, depth, delve.threat);
       const survived = outcome.cleared && delve.partyHp - outcome.damage > 0;
 
       if (!survived) {
@@ -496,7 +516,7 @@ export function advanceDelves(state: GameState, toTime: number): DelveEvent[] {
       delve.partyHp -= outcome.damage;
       delve.depth = depth;
       state.deepestDepth = Math.max(state.deepestDepth, depth);
-      const paid = depthHaul(state, delve.ruinId, depth, delve.heroId);
+      const paid = depthHaul(state, delve.ruinId, depth, delve.heroIds);
       addHaul(delve, paid.wallet, paid.fragments);
 
       if (depth >= ruin.maxDepth) {
@@ -638,7 +658,7 @@ export interface ExpeditionPreview {
 export function previewExpedition(
   state: GameState,
   ruinId: RuinId,
-  heroId: HeroId | null,
+  heroIds: readonly HeroId[],
   slots: readonly PartySlot[],
   artifactId: ArtifactId | null = null,
 ): ExpeditionPreview {
@@ -646,14 +666,13 @@ export function previewExpedition(
   const artifact: CarriedArtifact | null = artifactId === null
     ? null
     : { id: artifactId, level: artifactEntry(state, artifactId).level };
-  const party = partyOf(state, committed, heroId, artifact);
-  const level = heroId === null ? 1 : heroLevel(state, heroId);
-  const stats = partyStats(party, level);
+  const party = partyOf(state, committed, heroIds, artifact);
+  const stats = partyStats(party);
   return {
     ruinId,
-    supplies: supplyCost(state, ruinId, heroId),
+    supplies: supplyCost(state, ruinId, heroIds),
     stats,
-    safeDepth: guaranteedDepth(party, ruinId, level),
+    safeDepth: guaranteedDepth(party, ruinId),
     maxDepth: RUINS[ruinId].maxDepth,
     matchup: matchupAgainst(party, RUINS[ruinId].affinity),
     worstThreat: worstThreatFor(party, RUINS[ruinId].affinity),
@@ -667,8 +686,8 @@ export function nextDepthIntel(state: GameState, delve: Delve): {
   depth: number; threat: UnitId | 'Any' | null; strengthKnown: boolean;
 } {
   const next = delve.depth + 1;
-  const hero = HEROES[delve.heroId];
-  const knows = hero.trait === 'RevealNextDepth';
+  // Any Ranger in the party reads the next room, not only the one leading it.
+  const knows = delve.heroIds.some((id) => HEROES[id].trait === 'RevealNextDepth');
   return {
     depth: next,
     threat: knows ? rollThreat(state, delve.ruinId, next) : null,

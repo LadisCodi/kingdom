@@ -218,16 +218,16 @@ describe('clearing the gate', () => {
   it('is beatable by the free hero, alone, at the Barrow', () => {
     const state = readyToFight();
     // No troops at all: the first fight in the game asks for no army.
-    const preview = previewGate(state, BARROW, 'Warden', []);
+    const preview = previewGate(state, BARROW, ['Warden'], []);
     expect(preview.enough).toBe(true);
-    expect(attemptGate(state, map, BARROW, 'Warden', []).result).toBe('Cleared');
+    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Cleared');
     expect(gateIsCleared(state, BARROW)).toBe(true);
     expect(clearedGateCount(state)).toBe(1);
   });
 
   it('stops the counter for good', () => {
     const state = readyToFight();
-    attemptGate(state, map, BARROW, 'Warden', []);
+    attemptGate(state, map, BARROW, ['Warden'], []);
     expect(state.gates[BARROW]!.nextRaidAt).toBeNull();
     expect(nextRaidBoundary(state, T0)).toBeNull();
     const purse = getWallet(state.city.wallet, 'Gold');
@@ -242,7 +242,7 @@ describe('clearing the gate', () => {
     const hoard = { ...state.gates[BARROW]!.hoard };
     expect(hoard.Gold).toBeGreaterThan(0);
     const before = getWallet(state.city.wallet, 'Gold');
-    const report = attemptGate(state, map, BARROW, 'Warden', []);
+    const report = attemptGate(state, map, BARROW, ['Warden'], []);
     expect(report.result).toBe('Cleared');
     expect(report.hoard).toEqual(hoard);
     // Every coin of it, less what the supplies cost on the way in.
@@ -259,20 +259,20 @@ describe('clearing the gate', () => {
     const supplies = gateSupplies('StarObservatory');
     fund(state, { Gold: 20_000, Food: 5000, Stone: 2000 });
     const gold = getWallet(state.city.wallet, 'Gold');
-    const report = attemptGate(state, map, 'StarObservatory', 'Warden', []);
+    const report = attemptGate(state, map, 'StarObservatory', ['Warden'], []);
     expect(report.result).toBe('Repelled');
     expect(report.attack).toBeLessThan(report.power);
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
     expect(gateIsCleared(state, 'StarObservatory')).toBe(false);
     // …and a retry is identical to a first attempt.
-    expect(attemptGate(state, map, 'StarObservatory', 'Warden', []).result).toBe('Repelled');
+    expect(attemptGate(state, map, 'StarObservatory', ['Warden'], []).result).toBe('Repelled');
   });
 
   it('refuses a ruin still under the fog, and one already cleared', () => {
     const state = readyToFight();
-    expect(attemptGate(state, map, 'SunkenChapel', 'Warden', []).result).toBe('RuinNotFound');
-    attemptGate(state, map, BARROW, 'Warden', []);
-    expect(attemptGate(state, map, BARROW, 'Warden', []).result).toBe('AlreadyCleared');
+    expect(attemptGate(state, map, 'SunkenChapel', ['Warden'], []).result).toBe('RuinNotFound');
+    attemptGate(state, map, BARROW, ['Warden'], []);
+    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('AlreadyCleared');
   });
 });
 
@@ -285,9 +285,9 @@ describe('the door', () => {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
     const party = [{ unitId: 'Warrior' as const, count: 2 }];
-    expect(launchDelve(state, map, BARROW, 'Warden', party, T0)).toBe('GateStanding');
-    expect(attemptGate(state, map, BARROW, 'Warden', []).result).toBe('Cleared');
-    expect(launchDelve(state, map, BARROW, 'Warden', party, T0)).toBe('Launched');
+    expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('GateStanding');
+    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Cleared');
+    expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('Launched');
   });
 });
 
@@ -304,7 +304,7 @@ describe('a save', () => {
   it('carries a cleared gate, so nothing re-infests it', () => {
     const state = watched();
     addAllTrainers(state);
-    attemptGate(state, map, BARROW, 'Warden', []);
+    attemptGate(state, map, BARROW, ['Warden'], []);
     const restored = deserialize(serialize(state, T0), map, T0 + 7 * 24 * HOUR)!;
     expect(gateIsCleared(restored, BARROW)).toBe(true);
     expect(restored.gates[BARROW]!.nextRaidAt).toBeNull();
@@ -331,7 +331,7 @@ describe('the route to a gate', () => {
     expect(game.openOverlay).toBe('gate');
     // A hero alone, and the sheet is ready to go: the first fight asks for
     // no army.
-    expect(game.expeditionHero).not.toBeNull();
+    expect(game.partyHeroes).toEqual(['Warden']);
     expect(game.gateBlockText()).toBeNull();
     expect(game.gatePreview()!.enough).toBe(true);
   });

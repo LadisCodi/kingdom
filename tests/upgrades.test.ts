@@ -473,9 +473,9 @@ describe('the Warfare lines reach their numbers', () => {
 
   it('Rations cuts the provisioning, and stacks with the Quartermaster', () => {
     const state = freshGame();
-    const full = supplyCost(state, 'HollowBarrow', null);
+    const full = supplyCost(state, 'HollowBarrow', []);
     completeRanks(state, 'Rations', 2); // −10%
-    const cut = supplyCost(state, 'HollowBarrow', null);
+    const cut = supplyCost(state, 'HollowBarrow', []);
     for (const c of Object.keys(full) as Array<keyof typeof full>) {
       expect(cut[c]).toBe(Math.max(1, Math.round(full[c]! * 0.9)));
     }

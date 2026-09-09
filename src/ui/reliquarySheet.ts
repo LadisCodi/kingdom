@@ -179,7 +179,7 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
   if (bearer) {
     body.append(el('div', { class: 'rel-carried' },
       iconEl('army', { size: 'sm' }),
-      `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
+      `${HEROES[bearer.heroIds[0]].name} carries it, at depth ${bearer.depth}`
       + ' — it draws no Mana while it is away.'));
   }
 
@@ -212,7 +212,7 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
       kind: 'primary',
       onClick: () => game.doAttune(freeSlot, id),
       disabledReason: bearer
-        ? `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
+        ? `${HEROES[bearer.heroIds[0]].name} carries it, at depth ${bearer.depth}`
         : freeSlot === -1
           ? 'Every socket is full'
           : isSlotLocked(game.state, freeSlot, now)

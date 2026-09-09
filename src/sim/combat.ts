@@ -89,8 +89,22 @@ export const NO_DRILL: Drill = { atk: {}, def: {}, disadvantageOffset: 0 };
 const drillFor = (table: Drill['atk'], tags: readonly UnitTag[]): number =>
   (table.all ?? 0) + tags.reduce((n, t) => n + (table[t] ?? 0), 0);
 
+/**
+ * A hero on the board, at the level it fights at.
+ *
+ * The LEVEL travels with the hero rather than being a parameter, because a
+ * party fields several and they are rarely the same level. It also keeps
+ * combat pure: a fight replays from its inputs, and the level is an input.
+ */
+export interface PartyHero {
+  id: HeroId;
+  level: number;
+}
+
 export interface Party {
-  heroId: HeroId | null;
+  /** One per HERO SLOT, and at least one always — there is no fight without a
+   *  hero (Docs/features/10-heroes.md §2.5). */
+  heroes: readonly PartyHero[];
   slots: readonly PartySlot[];
   /** Carried into the delve, and therefore NOT attuned to the kingdom. */
   artifact?: CarriedArtifact | null;
@@ -125,7 +139,7 @@ export interface PartyStats {
  * a promise on the sheet the descent does not keep. One function, one set of
  * stats, every caller equal.
  */
-export function partyStats(party: Party, heroLevel = 1): PartyStats {
+export function partyStats(party: Party): PartyStats {
   let atk = 0;
   let def = 0;
   let hp = 0;
@@ -136,14 +150,15 @@ export function partyStats(party: Party, heroLevel = 1): PartyStats {
     def += (u.def + drillFor(drill.def, u.tags)) * slot.count;
     hp += u.hp * slot.count;
   }
-  if (party.heroId !== null) {
-    const h = HEROES[party.heroId];
-    atk += h.atk + h.atkPerLevel * (heroLevel - 1);
-    def += h.def + h.defPerLevel * (heroLevel - 1);
-    hp += h.hp + h.hpPerLevel * (heroLevel - 1);
+  for (const hero of party.heroes) {
+    const h = HEROES[hero.id];
+    atk += h.atk + h.atkPerLevel * (hero.level - 1);
+    def += h.def + h.defPerLevel * (hero.level - 1);
+    hp += h.hp + h.hpPerLevel * (hero.level - 1);
     // The Warden's trait is party-wide DEF, which reads to the player as "we
     // all stay standing longer" — so it multiplies the assembled party rather
-    // than the hero's own line.
+    // than the hero's own line. Two Wardens multiply twice, the way two
+    // heroes of one type stack everywhere else.
     if (h.trait === 'PartyDefence') def *= 1 + h.traitValue;
   }
   // The relic rides on top of the party, INCLUDING past a party-wide trait —
@@ -157,7 +172,7 @@ export function partyStats(party: Party, heroLevel = 1): PartyStats {
 
 /** ATK after the matchup — the number that actually clears a depth. A hero
  *  carries a unit type of its own, so the hero choice feeds the same chart. */
-export function effectiveAttack(party: Party, threat: UnitId | 'Any', heroLevel = 1): number {
+export function effectiveAttack(party: Party, threat: UnitId | 'Any'): number {
   const drill = party.drill ?? NO_DRILL;
   let atk = 0;
   for (const slot of party.slots) {
@@ -165,9 +180,11 @@ export function effectiveAttack(party: Party, threat: UnitId | 'Any', heroLevel 
     atk += (u.atk + drillFor(drill.atk, u.tags)) * slot.count
       * typeMultiplier(slot.unitId, threat, drill.disadvantageOffset);
   }
-  if (party.heroId !== null) {
-    const h = HEROES[party.heroId];
-    atk += (h.atk + h.atkPerLevel * (heroLevel - 1))
+  // Every hero carries a type of its own, so a second hero is coverage of a
+  // second matchup as well as a second body.
+  for (const hero of party.heroes) {
+    const h = HEROES[hero.id];
+    atk += (h.atk + h.atkPerLevel * (hero.level - 1))
       * typeMultiplier(h.unitType, threat, drill.disadvantageOffset);
   }
   // A relic has no unit type, so its ATK is TYPE-NEUTRAL: it lands whole
@@ -234,11 +251,10 @@ export function resolveDepth(
   ruinId: RuinId,
   depth: number,
   threat: UnitId | 'Any',
-  heroLevel = 1,
 ): DepthOutcome {
   const strength = threatStrength(ruinId, depth);
-  const attack = effectiveAttack(party, threat, heroLevel);
-  const { def } = partyStats(party, heroLevel);
+  const attack = effectiveAttack(party, threat);
+  const { def } = partyStats(party);
   const damage = Math.max(
     1,
     Math.round(strength * ARMY.damagePerStrength - def * ARMY.damageAbsorbedPerDefence),
@@ -254,15 +270,15 @@ export function resolveDepth(
  * makes "your economy decides how deep you go safely; everything past that is
  * a gamble you opt into" a promise rather than a slogan.
  */
-export function guaranteedDepth(party: Party, ruinId: RuinId, heroLevel = 1): number {
+export function guaranteedDepth(party: Party, ruinId: RuinId): number {
   const ruin = RUINS[ruinId];
-  let hp = partyStats(party, heroLevel).hp;
+  let hp = partyStats(party).hp;
   if (hp <= 0) return 0;
   let safe = 0;
   for (let depth = 1; depth <= ruin.maxDepth; depth++) {
     // The worst case: whatever type this party answers WORST.
     const worst = worstThreatFor(party, ruin.affinity);
-    const outcome = resolveDepth(party, ruinId, depth, worst, heroLevel);
+    const outcome = resolveDepth(party, ruinId, depth, worst);
     if (!outcome.cleared) break;
     hp -= outcome.damage;
     if (hp <= 0) break;
@@ -309,7 +325,7 @@ export function worstThreatFor(party: Party, affinity: UnitId | 'Any'): UnitId |
  */
 export function matchupAgainst(party: Party, affinity: UnitId | 'Any'): number {
   if (affinity === 'Any') return 1;
-  const troops: Party = { heroId: party.heroId, slots: party.slots };
+  const troops: Party = { heroes: party.heroes, slots: party.slots };
   const plain = partyStats(troops).atk;
   return plain === 0 ? 1 : effectiveAttack(troops, affinity) / plain;
 }

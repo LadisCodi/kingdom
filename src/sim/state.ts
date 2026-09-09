@@ -276,7 +276,10 @@ export type DelvePhase = 'descending' | 'checkpoint' | 'done';
 export interface Delve {
   id: string;
   ruinId: RuinId;
-  heroId: HeroId;
+  /** Who leads. A party fields one hero per HERO SLOT and at least one
+   *  always (Docs/features/10-heroes.md §2.5); a save written when a party
+   *  was one hero reads as a party of one. */
+  heroIds: HeroId[];
   /** The relic that went down with them, or null. An artifact is attuned to
    *  the kingdom OR carried by a hero — never both, which is the rule that
    *  welds the city half of the game to the delve half. */
@@ -426,8 +429,12 @@ export interface GameState {
     levels: Partial<Record<HeroId, number>>;
     tiers: Partial<Record<HeroId, number>>;
     fragments: Partial<Record<HeroId, number>>;
-    /** Extra party slots bought with Gems. */
+    /** Extra TROOP slots bought with Gems. */
     partySlotsPurchased: number;
+    /** Extra HERO slots bought with Gems: one is free and every further one
+     *  is Gems, always, up to the board's three
+     *  (Docs/features/10-heroes.md §3). */
+    heroSlotsPurchased: number;
   };
   /** Pull counters, per banner. Persisted because pity depends on them — and
    *  because the counter IS the rng key, which is what lets a hash beat a

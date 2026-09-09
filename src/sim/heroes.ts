@@ -30,7 +30,7 @@
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
 import {
-  BANNERS, COLLECTION, HERO_ORDER, HEROES, heroesOfRarity,
+  BANNERS, COLLECTION, HERO_ORDER, HEROES, PARTY, heroesOfRarity,
   type BannerId, type HeroRarity,
 } from './data/definitions';
 import { recordResourceDiscovery } from './discovery';
@@ -166,6 +166,38 @@ export function heroStats(state: GameState, id: HeroId): { atk: number; def: num
     def: Math.round(def.def + def.defPerLevel * (level - 1)),
     hp: Math.round(def.hp + def.hpPerLevel * (level - 1)),
   };
+}
+
+// ---------------------------------------------------------- the hero slots
+
+/**
+ * How many heroes the player may put on a board.
+ *
+ * **One is free and every further one is Gems, always**
+ * (Docs/features/10-heroes.md §3), up to the board's three
+ * (Docs/features/combat.md §3). The Adventurers' Guild opens DEPTHS, never
+ * slots — which is what keeps a hero slot the one thing in the party that is
+ * bought rather than earned, and the party's TROOP slots the one thing that
+ * is earned rather than bought.
+ */
+export const heroSlots = (state: GameState): number =>
+  Math.min(PARTY.heroSlots, 1 + state.heroes.heroSlotsPurchased);
+
+/** The next one's price: the party-slot ladder with a higher base, because a
+ *  hero slot carries a type buff as well as a body. */
+export const heroSlotGemCost = (state: GameState): number => Math.round(
+  PARTY.heroSlotGemCostBase * PARTY.heroSlotGemCostGrowth ** state.heroes.heroSlotsPurchased,
+);
+
+export type BuyHeroSlotResult = 'Purchased' | 'AtMax' | 'NotEnoughGems';
+
+export function buyHeroSlot(state: GameState): BuyHeroSlotResult {
+  if (heroSlots(state) >= PARTY.heroSlots) return 'AtMax';
+  const cost = heroSlotGemCost(state);
+  if (getWallet(state.player.wallet, 'Gems') < cost) return 'NotEnoughGems';
+  addToWallet(state.player.wallet, 'Gems', -cost);
+  state.heroes.heroSlotsPurchased += 1;
+  return 'Purchased';
 }
 
 /**

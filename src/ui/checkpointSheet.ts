@@ -48,7 +48,9 @@ export function renderCheckpointSheet(game: Game): HTMLElement {
       el('div', { class: 'chk-note' }, 'That party has already come home.'));
   }
   const ruin = RUINS[delve.ruinId];
-  const hero = HEROES[delve.heroId];
+  // Who leads, when a party fields several: the first slot is the one the
+  // sheet names, and the rest are with them.
+  const hero = HEROES[delve.heroIds[0]];
   const atBottom = delve.depth >= ruin.maxDepth;
   const failed = delve.outcome === 'failed';
 

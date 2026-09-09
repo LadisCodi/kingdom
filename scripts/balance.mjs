@@ -323,6 +323,16 @@ const SETTINGS = [
   ['party.max_slots', 'party.maxSlots'],
   ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
   ['party.slot_gem_cost_growth', 'party.slotGemCostGrowth'],
+  // THE HERO SLOTS (Docs/features/10-heroes.md §3): one is free and every
+  // further one is Gems, always, up to the board's three
+  // (Docs/features/combat.md §3). The doc calls these `heroes.*`; they live
+  // here because `heroes` is the Heroes SHEET's key — thirty-two rows — and a
+  // setting written into it would be a thirty-third hero with no stats. The
+  // base is above the party-slot ladder's on purpose: a hero slot carries a
+  // type buff as well as a body.
+  ['party.hero_slots', 'party.heroSlots'],
+  ['party.hero_slot_gem_cost_base', 'party.heroSlotGemCostBase'],
+  ['party.hero_slot_gem_cost_growth', 'party.heroSlotGemCostGrowth'],
   // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
   // the player can plan around; `eligible_below_fraction` is what keeps it an
   // answer to being short rather than an interruption.
@@ -380,7 +390,10 @@ const DISTRICT_LIST_COLUMNS = [
 
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
-  Units: ['id', 'power', 'atk', 'def', 'hp',
+  // `squad_size` is how many troops of the type ONE squad holds — the cap on
+  // a party slot's count, and the ceiling the battle screen fills a slot to
+  // (Docs/features/combat.md §4, §5).
+  Units: ['id', 'power', 'atk', 'def', 'hp', 'squad_size',
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'train_duration_seconds'],
   // What the ground under a cell does to what comes out of it. A multiplier
@@ -812,11 +825,14 @@ async function importXlsx() {
     // A unit's POWER — what it costs against the army cap — equals its ATK,
     // so the cap table reads directly as attack potential.
     if (num(r, 'power') !== atk) fail(where(r), `power must equal atk (${atk})`);
+    const squadSize = num(r, 'squad_size');
+    if (squadSize < 1) fail(where(r), 'squad_size must be 1 or more');
     out.units[id] = {
       power: atk,
       atk,
       def: num(r, 'def'),
       hp: num(r, 'hp'),
+      squadSize,
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
@@ -1096,7 +1112,7 @@ async function exportXlsx() {
 
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
-    return [id, u.power, u.atk, u.def, u.hp, ...costCells(u.recruitCost), u.trainDurationSeconds];
+    return [id, u.power, u.atk, u.def, u.hp, u.squadSize, ...costCells(u.recruitCost), u.trainDurationSeconds];
   }));
 
   addSheet(workbook, 'Terrain', TERRAIN_IDS.map((id) => {

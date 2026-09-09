@@ -105,7 +105,7 @@ function stardustOneDepth(state: GameState): number {
   const probe = structuredClone(state);
   openRuin(probe, 'HollowBarrow');
   const slots = [{ unitId: 'Warrior' as const, count: 1 }];
-  if (launchDelve(probe, map, 'HollowBarrow', 'Scout', slots, T0) !== 'Launched') return -1;
+  if (launchDelve(probe, map, 'HollowBarrow', ['Scout'], slots, T0) !== 'Launched') return -1;
   advance(probe, map, T0 + depthMs(probe, 'HollowBarrow', 1) + 1000);
   return probe.delves[0]?.haul.Stardust ?? -1;
 }
@@ -163,7 +163,7 @@ function probe(state: GameState): Record<string, number> {
   put('maxArmyPower', maxArmyPower(state));
   const warrior = trainCost(state, 'Warrior');
   for (const [c, n] of Object.entries(warrior)) put(`trainCost.Warrior.${c}`, n as number);
-  const supplies = supplyCost(state, 'HollowBarrow', null);
+  const supplies = supplyCost(state, 'HollowBarrow', []);
   for (const [c, n] of Object.entries(supplies)) put(`supplyCost.${c}`, n as number);
   put('haulLoss', effectiveHaulLoss(state));
   put('depthMs.1', depthMs(state, 'HollowBarrow', 1));

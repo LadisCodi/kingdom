@@ -396,7 +396,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     if (!best) break;
     const room = Math.floor(maxArmyPower(state) / UNITS[best].power);
     const count = Math.max(1, Math.min(roster[best], room));
-    if (launchDelve(state, map, ruin, heroId, [{ unitId: best, count }], t) === 'Launched') {
+    if (launchDelve(state, map, ruin, [heroId], [{ unitId: best, count }], t) === 'Launched') {
       acted = true;
       launched += 1;
     } else break;

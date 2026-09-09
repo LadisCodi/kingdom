@@ -314,7 +314,7 @@ describe('a relic cannot be worn and carried at once', () => {
 
     // Standing in for a launch: what the sim records is a delve holding it.
     state.delves.push({
-      id: 'd1', ruinId: 'HollowBarrow', heroId: 'Warden',
+      id: 'd1', ruinId: 'HollowBarrow', heroIds: ['Warden'],
       artifactId: 'DowsingRod', artifactLevel: 1,
       party: [{ unitId: 'Warrior', count: 1 }], depth: 0, partyHp: 10, maxPartyHp: 10,
       haul: {}, haulFragments: 0, phase: 'descending', depthEndsAt: T0 + 1000,

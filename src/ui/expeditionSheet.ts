@@ -84,7 +84,7 @@ export function heroPicker(game: Game): HTMLElement {
   for (const id of game.state.heroes.owned) {
     const hero = HEROES[id];
     const busy = !free.includes(id);
-    const chosen = game.expeditionHero === id;
+    const chosen = game.partyHeroes.includes(id);
     const b = el('button', {
       class: `exp-hero${chosen ? ' is-chosen' : ''}${busy ? ' is-busy' : ''}`,
       type: 'button',
@@ -93,7 +93,7 @@ export function heroPicker(game: Game): HTMLElement {
       el('div', { class: 'exp-hero-name' }, hero.name),
       el('div', { class: 'exp-hero-trait' }, busy ? 'Already underground' : hero.traitText));
     if (busy) b.disabled = true;
-    else b.addEventListener('click', () => game.setExpeditionHero(id));
+    else b.addEventListener('click', () => game.toggleHero(id));
     row.append(b);
   }
   return row;

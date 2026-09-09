@@ -56,6 +56,9 @@ export function newGame(map: MapData, now: number): GameState {
     // access, so the system has to be reachable without it.
     heroes: {
       owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
+      // One hero slot is free; the second and third are Gems, always
+      // (Docs/features/10-heroes.md §3).
+      heroSlotsPurchased: 0,
       fragments: {}, partySlotsPurchased: 0,
     },
     gacha: { pullCounts: {}, pityCounters: {}, legendaryPity: {}, freePulls: {} },

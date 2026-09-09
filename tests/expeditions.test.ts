@@ -57,7 +57,7 @@ function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 2 }): 
 }
 
 const party = (slots: Array<{ unitId: UnitId; count: number }>): Party =>
-  ({ heroId: 'Warden', slots });
+  ({ heroes: [{ id: 'Warden', level: 1 }], slots });
 
 describe('the type chart', () => {
   it('is a cycle, and nothing beats itself', () => {
@@ -138,7 +138,7 @@ describe('the army cap is a city decision', () => {
         const count = Math.floor(cap / UNITS[u].power);
         if (count === 0) continue;
         best = Math.max(best, guaranteedDepth(
-          { heroId: 'Warden', slots: [{ unitId: u, count }] }, ruinId));
+          { heroes: [{ id: 'Warden', level: 1 }], slots: [{ unitId: u, count }] }, ruinId));
       }
       return best;
     };
@@ -302,12 +302,12 @@ describe('launching', () => {
   it('needs a hero, units, supplies, and a ruin you have actually found', () => {
     const state = readyToDelve();
     const slots = [{ unitId: 'Warrior' as UnitId, count: 2 }];
-    expect(launchBlock(state, map, BARROW, null, slots)).toBe('NoHero');
-    expect(launchBlock(state, map, BARROW, 'Warden', [])).toBe('EmptyParty');
-    expect(launchBlock(state, map, BARROW, 'Warden', slots)).toBeNull();
+    expect(launchBlock(state, map, BARROW, [], slots)).toBe('NoHero');
+    expect(launchBlock(state, map, BARROW, ['Warden'], [])).toBe('EmptyParty');
+    expect(launchBlock(state, map, BARROW, ['Warden'], slots)).toBeNull();
 
     const unfound = freshGame();
-    expect(launchBlock(unfound, map, 'StarObservatory', 'Warden', slots)).toBe('RuinNotFound');
+    expect(launchBlock(unfound, map, 'StarObservatory', ['Warden'], slots)).toBe('RuinNotFound');
   });
 
   it('refuses more unit TYPES than there are slots — breadth is the limit', () => {
@@ -322,18 +322,18 @@ describe('launching', () => {
       { unitId: 'Archer' as UnitId, count: 1 },
       { unitId: 'Lancer' as UnitId, count: 1 },
     ];
-    expect(launchBlock(state, map, BARROW, 'Warden', three)).toBe('TooManySlots');
-    expect(launchBlock(state, map, BARROW, 'Warden', three.slice(0, 2))).toBeNull();
+    expect(launchBlock(state, map, BARROW, ['Warden'], three)).toBe('TooManySlots');
+    expect(launchBlock(state, map, BARROW, ['Warden'], three.slice(0, 2))).toBeNull();
   });
 
   it('pays supplies once, up front, and the Quartermaster packs lighter', () => {
     const state = readyToDelve();
-    const full = supplyCost(state, BARROW, 'Warden');
-    const light = supplyCost(state, BARROW, 'Quartermaster');
+    const full = supplyCost(state, BARROW, ['Warden']);
+    const light = supplyCost(state, BARROW, ['Quartermaster']);
     expect(light.Food!).toBeLessThan(full.Food!);
 
     const food = getWallet(state.city.wallet, 'Food');
-    expect(launchDelve(state, map, BARROW, 'Warden', [{ unitId: 'Warrior', count: 2 }], T0))
+    expect(launchDelve(state, map, BARROW, ['Warden'], [{ unitId: 'Warrior', count: 2 }], T0))
       .toBe('Launched');
     expect(getWallet(state.city.wallet, 'Food')).toBe(food - full.Food!);
     expect(state.delves).toHaveLength(1);
@@ -342,21 +342,21 @@ describe('launching', () => {
   it('one hero means one delve at a time', () => {
     const state = readyToDelve({ Warrior: 4 });
     const slots = [{ unitId: 'Warrior' as UnitId, count: 2 }];
-    launchDelve(state, map, BARROW, 'Warden', slots, T0);
-    expect(launchBlock(state, map, BARROW, 'Warden', slots)).toBe('HeroBusy');
+    launchDelve(state, map, BARROW, ['Warden'], slots, T0);
+    expect(launchBlock(state, map, BARROW, ['Warden'], slots)).toBe('HeroBusy');
   });
 
   it('units underground cannot be sent somewhere else', () => {
     const state = readyToDelve({ Warrior: 2 });
     state.heroes.owned.push('Scout');
     const slots = [{ unitId: 'Warrior' as UnitId, count: 2 }];
-    launchDelve(state, map, BARROW, 'Warden', slots, T0);
-    expect(launchBlock(state, map, BARROW, 'Scout', slots)).toBe('NotEnoughUnits');
+    launchDelve(state, map, BARROW, ['Warden'], slots, T0);
+    expect(launchBlock(state, map, BARROW, ['Scout'], slots)).toBe('NotEnoughUnits');
   });
 
   it('the preview tells the player everything before they commit', () => {
     const state = readyToDelve({ Warrior: 4 });
-    const preview = previewExpedition(state, BARROW, 'Warden',
+    const preview = previewExpedition(state, BARROW, ['Warden'],
       [{ unitId: 'Warrior', count: 4 }]);
     expect(preview.safeDepth).toBeGreaterThan(0);
     expect(preview.maxDepth).toBe(RUINS[BARROW].maxDepth);
@@ -364,7 +364,7 @@ describe('launching', () => {
     // The Warden's trait is party-wide defence, and the sheet shows it.
     expect(HEROES.Warden.trait).toBe('PartyDefence');
     const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
-    const untraited = partyStats({ heroId: 'Scholar', slots: troops });
+    const untraited = partyStats({ heroes: [{ id: 'Scholar', level: 1 }], slots: troops });
     expect(preview.stats.def).toBeGreaterThan(untraited.def + HEROES.Scholar.def);
   });
 
@@ -378,8 +378,8 @@ describe('launching', () => {
     // every defensive difference behind that floor.
     const deep = 'DrownedIronworks' as const;
     const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
-    const warden = resolveDepth({ heroId: 'Warden', slots: troops }, deep, 9, 'Warrior');
-    const scholar = resolveDepth({ heroId: 'Scholar', slots: troops }, deep, 9, 'Warrior');
+    const warden = resolveDepth({ heroes: [{ id: 'Warden', level: 1 }], slots: troops }, deep, 9, 'Warrior');
+    const scholar = resolveDepth({ heroes: [{ id: 'Scholar', level: 1 }], slots: troops }, deep, 9, 'Warrior');
     expect(warden.damage).toBeGreaterThan(1);
     expect(HEROES.Warden.trait).toBe('PartyDefence');
     expect(HEROES.Scholar.trait).not.toBe('PartyDefence');
@@ -389,7 +389,7 @@ describe('launching', () => {
 
 describe('the descent', () => {
   const launch = (state: GameState, order: number | null = null) =>
-    launchDelve(state, map, BARROW, 'Warden', [{ unitId: 'Warrior', count: 2 }], T0, order);
+    launchDelve(state, map, BARROW, ['Warden'], [{ unitId: 'Warrior', count: 2 }], T0, order);
 
   it('stops at a checkpoint after every depth, and the checkpoint never expires', () => {
     const state = readyToDelve();
@@ -451,9 +451,9 @@ describe('the descent', () => {
   it('a failed push costs half the haul and ends the run', () => {
     // A party far too small for the depth it is standing on.
     const state = readyToDelve({ Archer: 1 });
-    launchDelve(state, map, 'SunkenChapel', 'Warden', [{ unitId: 'Archer', count: 1 }], T0, 7);
+    launchDelve(state, map, 'SunkenChapel', ['Warden'], [{ unitId: 'Archer', count: 1 }], T0, 7);
     reveal(state, [RUINS.SunkenChapel.location]);
-    launchDelve(state, map, 'SunkenChapel', 'Warden', [{ unitId: 'Archer', count: 1 }], T0, 7);
+    launchDelve(state, map, 'SunkenChapel', ['Warden'], [{ unitId: 'Archer', count: 1 }], T0, 7);
     advance(state, map, T0 + 30 * 86_400_000);
     const delve = state.delves[0];
     if (delve) {
@@ -469,7 +469,7 @@ describe('the descent', () => {
   it('the bottom grants the ruin’s relic, guaranteed, on the first clear', () => {
     const state = readyToDelve({ Warrior: 8 });
     // Enough party to walk to the bottom of the shallowest ruin.
-    launchDelve(state, map, BARROW, 'Warden',
+    launchDelve(state, map, BARROW, ['Warden'],
       [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
     const gems = getWallet(state.player.wallet, 'Gems');
     const stardust = getWallet(state.kingdom.wallet, 'Stardust');
@@ -496,7 +496,7 @@ describe('the descent', () => {
     const state = readyToDelve({ Warrior: 8 });
     state.ruinsCleared[BARROW] = true;
     state.artifacts.owned.push(RUINS[BARROW].artifact);
-    launchDelve(state, map, BARROW, 'Warden',
+    launchDelve(state, map, BARROW, ['Warden'],
       [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
     advance(state, map, T0 + 86_400_000);
     const report = extract(state, state.delves[0].id);
@@ -548,17 +548,17 @@ describe('attune or arm', () => {
   it('refuses to send a relic the kingdom is wearing', () => {
     const state = armed();
     expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Attuned');
-    expect(launchBlock(state, map, BARROW, 'Warden', troops, 'ForemansSigil'))
+    expect(launchBlock(state, map, BARROW, ['Warden'], troops, 'ForemansSigil'))
       .toBe('ArtifactAttuned');
     // And the launch itself refuses, not just the preview of it.
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+    expect(launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil'))
       .toBe('ArtifactAttuned');
     expect(state.delves).toHaveLength(0);
   });
 
   it('refuses to attune a relic that is underground', () => {
     const state = armed();
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+    expect(launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil'))
       .toBe('Launched');
     expect(artifactIsCarried(state, 'ForemansSigil')).toBe(true);
     expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Carried');
@@ -569,7 +569,7 @@ describe('attune or arm', () => {
   it('costs nothing to carry, and nothing to wear — the trade is exclusivity', () => {
     const state = armed();
     const before = mana(state);
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+    expect(launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil'))
       .toBe('Launched');
     // Relic upkeep is gone, so neither half of attune-or-arm has a price. What
     // makes it a question is that you cannot do both: an economy passive at
@@ -580,22 +580,22 @@ describe('attune or arm', () => {
 
   it('a relic in the pack takes the party deeper', () => {
     const state = armed();
-    const bare = previewExpedition(state, BARROW, 'Warden', troops);
-    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
+    const bare = previewExpedition(state, BARROW, ['Warden'], troops);
+    const withRelic = previewExpedition(state, BARROW, ['Warden'], troops, 'ForemansSigil');
     expect(withRelic.stats.atk).toBeGreaterThan(bare.stats.atk);
     // The promise the whole feature sells: "wear it, or send it down to reach
     // depth 6". A relic that did not move this number would not be a choice.
     const deep = 'DrownedIronworks' as const;
     reveal(state, [RUINS[deep].location]);
-    const bareDeep = previewExpedition(state, deep, 'Warden', troops);
-    const armedDeep = previewExpedition(state, deep, 'Warden', troops, 'ForemansSigil');
+    const bareDeep = previewExpedition(state, deep, ['Warden'], troops);
+    const armedDeep = previewExpedition(state, deep, ['Warden'], troops, 'ForemansSigil');
     expect(armedDeep.safeDepth).toBeGreaterThan(bareDeep.safeDepth);
   });
 
   it('the matchup chip still answers "did I bring the right troops"', () => {
     const state = armed();
-    const troopsOnly = previewExpedition(state, BARROW, 'Warden', troops);
-    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
+    const troopsOnly = previewExpedition(state, BARROW, ['Warden'], troops);
+    const withRelic = previewExpedition(state, BARROW, ['Warden'], troops, 'ForemansSigil');
     // A type-neutral relic would otherwise pull the ratio toward 1, so adding
     // one would make a GOOD matchup read worse while the party got stronger.
     expect(withRelic.matchup).toBe(troopsOnly.matchup);
@@ -606,10 +606,10 @@ describe('attune or arm', () => {
     const slots = [{ unitId: 'Warrior' as UnitId, count: 4 }];
     const relic = { id: 'ForemansSigil' as ArtifactId, level: 1 };
     // A relic has no unit type, so the same ATK lands whatever is down there.
-    const good = effectiveAttack({ heroId: 'Warden', slots, artifact: relic }, 'Lancer')
-      - effectiveAttack({ heroId: 'Warden', slots }, 'Lancer');
-    const bad = effectiveAttack({ heroId: 'Warden', slots, artifact: relic }, 'Archer')
-      - effectiveAttack({ heroId: 'Warden', slots }, 'Archer');
+    const good = effectiveAttack({ heroes: [{ id: 'Warden', level: 1 }], slots, artifact: relic }, 'Lancer')
+      - effectiveAttack({ heroes: [{ id: 'Warden', level: 1 }], slots }, 'Lancer');
+    const bad = effectiveAttack({ heroes: [{ id: 'Warden', level: 1 }], slots, artifact: relic }, 'Archer')
+      - effectiveAttack({ heroes: [{ id: 'Warden', level: 1 }], slots }, 'Archer');
     expect(good).toBe(bad);
     expect(good).toBe(ARTIFACTS.ForemansSigil.carried.atk);
   });
@@ -617,7 +617,7 @@ describe('attune or arm', () => {
   it('scales with the level it went down at, and never re-arms mid-run', () => {
     const state = armed();
     state.artifacts.levels.ForemansSigil = 5;
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
+    expect(launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil'))
       .toBe('Launched');
     expect(state.delves[0].artifactLevel).toBe(5);
 
@@ -629,7 +629,7 @@ describe('attune or arm', () => {
 
   it('comes home when the party does — on a good run and a bad one', () => {
     const state = armed();
-    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
+    launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil');
     advance(state, map, T0 + depthDurationMs(BARROW, 1));
     // Still committed while the party waits at the checkpoint.
     expect(artifactIsCarried(state, 'ForemansSigil')).toBe(true);
@@ -642,7 +642,7 @@ describe('attune or arm', () => {
 
   it('survives a save round-trip with the relic aboard', () => {
     const state = armed();
-    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
+    launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil');
     state.delves[0].artifactLevel = 4;
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(restored.delves[0].artifactId).toBe('ForemansSigil');
@@ -652,7 +652,7 @@ describe('attune or arm', () => {
 
   it('a save written before the rule existed reads as a party carrying nothing', () => {
     const state = armed();
-    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
+    launchDelve(state, map, BARROW, ['Warden'], troops, T0, null, 'ForemansSigil');
     const save = serialize(state, T0);
     // Exactly what an older save looks like: the keys simply are not there.
     const dto = (save.Modules['kingdom.delves'] as any).Delves[0];
@@ -670,7 +670,7 @@ describe('attune or arm', () => {
   it('one-call offline replay equals stepped ticking with a relic aboard', () => {
     const run = (step: number) => {
       const state = armed('VerdantSeal', { Warrior: 4 });
-      launchDelve(state, map, BARROW, 'Warden', troops, T0, RUINS[BARROW].maxDepth,
+      launchDelve(state, map, BARROW, ['Warden'], troops, T0, RUINS[BARROW].maxDepth,
         'VerdantSeal');
       const end = T0 + 6 * 3_600_000;
       if (step === 0) advance(state, map, end);
@@ -914,7 +914,7 @@ describe('Knowledge is the research clock, and cleared ruins drive it', () => {
       const s = readyToDelve({ Warrior: 8 });
       s.kingdom.lastKnowledgeAt = T0;
       s.landmarks.claimed.Deepwell = true; // a rate is already running
-      launchDelve(s, map, BARROW, 'Warden',
+      launchDelve(s, map, BARROW, ['Warden'],
         [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
       return s;
     };

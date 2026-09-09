@@ -1039,6 +1039,11 @@ export interface UnitDef {
   atk: number;
   def: number;
   hp: number;
+  /** Troops of this type in ONE squad — the cap on a party slot's count, and
+   *  the size the battle screen fills a slot to (Docs/features/combat.md §4).
+   *  Fixed at every tier: a tier multiplies what a troop is worth, never how
+   *  many of them stand together. */
+  squadSize: number;
   tags: UnitTag[];
   recruitCost: Wallet; // city currencies
   trainDurationSeconds: number; // authored but unused — training is instant
@@ -1853,4 +1858,10 @@ export const GAME_VERSION = '0.1.0';
 // count means something different from the step count, so this one HAS a
 // migrator (save.ts) — it drops the old block and lands the player in the
 // running season owing nothing.
-export const SAVE_VERSION = 37;
+// v38 predates the party of heroes: a delve carried ONE `HeroID` and the
+// roster had no `HeroSlotsPurchased`. Both readers default — a one-hero save
+// reads as a party of one, and a roster with no purchases has the free slot
+// only — so there is no migrator; the bump exists so a build without hero
+// slots refuses a save that holds them rather than dropping what the player
+// paid Gems for.
+export const SAVE_VERSION = 38;

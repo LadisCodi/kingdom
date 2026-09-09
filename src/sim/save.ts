@@ -489,7 +489,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Delves: state.delves.map((d) => ({
           ID: d.id,
           RuinID: d.ruinId,
-          HeroID: d.heroId,
+          HeroIDs: d.heroIds,
           ArtifactID: d.artifactId,
           ArtifactLevel: d.artifactLevel,
           Party: d.party.map((p) => ({ UnitID: p.unitId, Count: p.count })),
@@ -513,6 +513,7 @@ export function serialize(state: GameState, now: number): SaveFile {
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
         PartySlotsPurchased: state.heroes.partySlotsPurchased,
+        HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
       },
       'kingdom.gacha': {
         PullCounts: state.gacha.pullCounts,
@@ -846,7 +847,9 @@ export function deserialize(
     state.delves = ((delvesDto.Delves ?? []) as any[]).map((d) => ({
       id: d.ID,
       ruinId: d.RuinID,
-      heroId: d.HeroID,
+      // A save written when a party was ONE hero reads as a party of one:
+      // additive, so no migrator (Docs/implementation-plan.md §1).
+      heroIds: (d.HeroIDs ?? (d.HeroID ? [d.HeroID] : [])) as GameState['delves'][number]['heroIds'],
       // A save written before attune-or-arm shipped has no relic aboard, and
       // reads back as a party that carried nothing — which is exactly what it
       // was. Additive, so no migrator; see Docs/implementation-plan.md §1
@@ -879,6 +882,7 @@ export function deserialize(
       tiers: { ...(heroesDto.Tiers ?? {}) },
       fragments: { ...(heroesDto.Fragments ?? {}) },
       partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
+      heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
     };
   }
 

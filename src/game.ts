@@ -9,7 +9,7 @@ import {
 } from './sim/commands';
 import {
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST,
-  LANDMARK_ART, LANDMARKS, MANA, RUINS, STORE,
+  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
 import { formatDuration } from './ui/format';
@@ -50,7 +50,8 @@ import {
   openGates, type GateView,
 } from './sim/gates';
 import {
-  claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft, levelUpHero,
+  buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
+  heroSlotGemCost, heroSlots, levelUpHero,
   pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
 } from './sim/heroes';
 import {
@@ -213,6 +214,8 @@ export class Game {
   inspectedDistrictId: string | null = null;
   /** The ruin the expedition sheet is being composed for. */
   expeditionRuin: RuinId | null = null;
+  /** Which card panel is open over the battle screen, if any. */
+  battlePicker: 'troops' | 'heroes' | null = null;
   /** The ruin whose GATE the room sheet is being composed for. The party
    *  fields below are shared with the expedition sheet on purpose: it is the
    *  same board, and the gate is the ruin's frontier room while it stands
@@ -222,7 +225,9 @@ export class Game {
    *  rather than in the view because it survives the per-tick rebuild and is
    *  node-testable. */
   expeditionParty: PartySlotState[] = [];
-  expeditionHero: HeroId | null = null;
+  /** The heroes the player has put in the hero slots, in slot order — one
+   *  per slot, at most `heroSlots(state)` of them. */
+  partyHeroes: HeroId[] = [];
   expeditionOrder: number | null = null;
   /** The relic the player has chosen to send DOWN rather than wear. Null is
    *  the common case and always a valid party. */
@@ -1465,7 +1470,7 @@ export class Game {
       this.walletValue('HeroXp'),
       this.walletValue('Stardust'),
       // The card's one line from outside the roster: who is underground.
-      this.state.delves.map((d) => `${d.heroId}:${d.phase}`).join(','),
+      this.state.delves.map((d) => `${d.heroIds.join('+')}:${d.phase}`).join(','),
     ].join('|');
   }
 
@@ -1874,7 +1879,7 @@ export class Game {
    *  to assemble a party from nothing to see what a ruin would take. */
   openExpedition(ruinId: RuinId): void {
     this.expeditionRuin = ruinId;
-    this.expeditionHero = freeHeroes(this.state)[0] ?? null;
+    this.partyHeroes = freeHeroes(this.state).slice(0, heroSlots(this.state));
     this.expeditionOrder = null;
     // Never pre-filled, unlike the party. Arming a hero means giving up a
     // passive the player is living off, and the sheet must not make that
@@ -1980,7 +1985,8 @@ export class Game {
    *  this never opens pre-blocked for want of an army. */
   openGate(ruinId: RuinId): void {
     this.gateRuin = ruinId;
-    this.expeditionHero = freeHeroes(this.state)[0] ?? null;
+    // A gate resolves on entry, so nobody is busy: the roster is the party.
+    this.partyHeroes = this.state.heroes.owned.slice(0, heroSlots(this.state));
     this.expeditionArtifact = null;
     this.prefillParty(RUINS[ruinId].guard.threat);
     this.setOverlay('gate');
@@ -1988,7 +1994,7 @@ export class Game {
 
   gatePreview(): GatePreview | null {
     if (this.gateRuin === null) return null;
-    return previewGate(this.state, this.gateRuin, this.expeditionHero, this.expeditionParty);
+    return previewGate(this.state, this.gateRuin, this.partyHeroes, this.expeditionParty);
   }
 
   /** Why the attempt cannot be made, in words. A power SHORTFALL is not here:
@@ -1996,15 +2002,15 @@ export class Game {
   gateBlockText(): string | null {
     if (this.gateRuin === null) return 'No gate chosen';
     const block = gateBlock(
-      this.state, this.map, this.gateRuin, this.expeditionHero, this.expeditionParty);
+      this.state, this.map, this.gateRuin, this.partyHeroes, this.expeditionParty);
     return block === null ? null : GATE_BLOCK_TEXT[block];
   }
 
   doClearGate(): void {
-    if (this.gateRuin === null || this.expeditionHero === null) return;
+    if (this.gateRuin === null || this.partyHeroes.length === 0) return;
     const ruinId = this.gateRuin;
     const report = attemptGate(
-      this.state, this.map, ruinId, this.expeditionHero, this.expeditionParty);
+      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty);
     if (report.result === 'Cleared') {
       playSfx('questComplete');
       this.setOverlay(null);
@@ -2033,8 +2039,129 @@ export class Game {
     this.notify();
   }
 
-  setExpeditionHero(heroId: HeroId): void {
-    this.expeditionHero = heroId;
+  // ------------------------------------------------- the party, slot by slot
+  //
+  // THE BATTLE SCREEN'S MODEL. A slot is tapped, a panel of cards opens, and
+  // a card fills the first free slot with as much as it legally can. Nothing
+  // here is a stepper: the player picks a TYPE and the game works out the
+  // count, which is the whole difference between composing a party and doing
+  // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
+
+  /** Troop slots the player may fill, and the ceiling the rest are locked
+   *  against. Today the ladder is Gems; the design's Adventurers' Guild will
+   *  take it over (11-expeditions.md §3) and this number is where it lands. */
+  troopSlotsOpen(): number {
+    return unitSlots(this.state);
+  }
+
+  troopSlotCeiling(): number {
+    return PARTY.maxSlots - 1;
+  }
+
+  heroSlotsOpen(): number {
+    return heroSlots(this.state);
+  }
+
+  heroSlotCeiling(): number {
+    return PARTY.heroSlots;
+  }
+
+  /**
+   * How many of this type would go into a slot right now: a whole squad, or
+   * everything that is left of them, or everything the army cap still allows —
+   * whichever runs out first (Docs/features/combat.md §4).
+   */
+  troopsAvailableFor(unitId: UnitId): number {
+    const roster = availableRoster(this.state);
+    const committed = this.expeditionParty.reduce(
+      (sum, slot) => sum + slot.count, 0);
+    const owned = Math.max(0, roster[unitId] - this.expeditionParty
+      .filter((slot) => slot.unitId === unitId)
+      .reduce((sum, slot) => sum + slot.count, 0));
+    void committed;
+    const power = UNITS[unitId].power;
+    const spent = this.expeditionParty.reduce(
+      (sum, slot) => sum + UNITS[slot.unitId].power * slot.count, 0);
+    const budget = Math.max(0, maxArmyPower(this.state) - spent);
+    return Math.max(0, Math.min(UNITS[unitId].squadSize, owned, Math.floor(budget / power)));
+  }
+
+  /** Fill the first free troop slot with as big a squad of this type as the
+   *  roster and the cap allow. */
+  assignTroop(unitId: UnitId): void {
+    if (this.expeditionParty.length >= this.troopSlotsOpen()) {
+      this.toast('Every troop slot is full — clear one first');
+      return;
+    }
+    const count = this.troopsAvailableFor(unitId);
+    if (count <= 0) {
+      this.toast(`No ${UNITS[unitId].name}s left to send`);
+      return;
+    }
+    this.expeditionParty.push({ unitId, count });
+    playSfx('click');
+    this.notify();
+  }
+
+  clearTroopSlot(index: number): void {
+    if (index < 0 || index >= this.expeditionParty.length) return;
+    this.expeditionParty.splice(index, 1);
+    playSfx('click');
+    this.notify();
+  }
+
+  /** Put a hero in the first free hero slot. */
+  assignHero(heroId: HeroId): void {
+    if (this.partyHeroes.includes(heroId)) return;
+    if (this.partyHeroes.length >= this.heroSlotsOpen()) {
+      this.toast('Every hero slot is full — clear one first');
+      return;
+    }
+    this.partyHeroes.push(heroId);
+    playSfx('click');
+    this.notify();
+  }
+
+  clearHeroSlot(index: number): void {
+    if (index < 0 || index >= this.partyHeroes.length) return;
+    this.partyHeroes.splice(index, 1);
+    playSfx('click');
+    this.notify();
+  }
+
+  /** The expedition sheet's hero row is a set of toggles rather than slots,
+   *  because a delve is composed on one screen with no panel over it. */
+  toggleHero(heroId: HeroId): void {
+    const at = this.partyHeroes.indexOf(heroId);
+    if (at >= 0) this.clearHeroSlot(at);
+    else this.assignHero(heroId);
+  }
+
+  /** The picker panel over the battle screen: troops, heroes, or nothing. */
+  openBattlePicker(kind: 'troops' | 'heroes'): void {
+    this.battlePicker = kind;
+    playSfx('click');
+    this.notify();
+  }
+
+  closeBattlePicker(): void {
+    this.battlePicker = null;
+    this.notify();
+  }
+
+  heroSlotOffer(): { cost: number; slots: number; ceiling: number } {
+    return {
+      cost: heroSlotGemCost(this.state),
+      slots: this.heroSlotsOpen(),
+      ceiling: this.heroSlotCeiling(),
+    };
+  }
+
+  doBuyHeroSlot(): void {
+    const result = buyHeroSlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    else this.toast('Three heroes is the whole board');
     this.notify();
   }
 
@@ -2079,7 +2206,7 @@ export class Game {
   expeditionPreview(): ExpeditionPreview | null {
     if (this.expeditionRuin === null) return null;
     return previewExpedition(
-      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
+      this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty,
       this.sendableArtifact());
   }
 
@@ -2090,13 +2217,13 @@ export class Game {
   expeditionPreviewUnarmed(): ExpeditionPreview | null {
     if (this.expeditionRuin === null || this.sendableArtifact() === null) return null;
     return previewExpedition(
-      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
+      this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
   }
 
   expeditionLaunchBlock(): string | null {
     if (this.expeditionRuin === null) return 'No ruin chosen';
     const block = launchBlock(
-      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
+      this.state, this.map, this.expeditionRuin, this.partyHeroes, this.expeditionParty,
       this.expeditionArtifact);
     if (block === null) return null;
     // The supplies are printed in the button and turn clay when they cannot be
@@ -2107,9 +2234,9 @@ export class Game {
   }
 
   doLaunchExpedition(): void {
-    if (this.expeditionRuin === null || this.expeditionHero === null) return;
+    if (this.expeditionRuin === null || this.partyHeroes.length === 0) return;
     const result = launchDelve(
-      this.state, this.map, this.expeditionRuin, this.expeditionHero,
+      this.state, this.map, this.expeditionRuin, this.partyHeroes,
       this.expeditionParty, this.now(), this.expeditionOrder, this.expeditionArtifact,
     );
     if (result === 'Launched') {
@@ -2118,7 +2245,8 @@ export class Game {
       this.expeditionRuin = null;
       this.setOverlay(null);
     } else if (result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(supplyCost(this.state, this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
+      this.shake(Object.keys(
+        supplyCost(this.state, this.expeditionRuin, this.partyHeroes)) as CurrencyId[]);
     } else {
       this.toast(LAUNCH_BLOCK_TEXT[result]);
     }
@@ -3001,6 +3129,7 @@ const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
   GateStanding: 'The garrison at the gate has to come down first',
   NoHero: 'Pick a hero to lead them',
   HeroBusy: 'That hero is already underground',
+  TooManyHeroes: 'More heroes than you have slots for',
   EmptyParty: 'Send at least one unit with them',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
@@ -3019,7 +3148,7 @@ const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
   RuinNotFound: 'Clear a path to the ruin first',
   AlreadyCleared: 'That gate is already down',
   NoHero: 'Pick a hero to lead them',
-  HeroBusy: 'That hero is already underground',
+  TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
   OverArmyCap: 'More than your army can field',

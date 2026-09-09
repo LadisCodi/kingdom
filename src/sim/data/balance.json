@@ -2346,6 +2346,7 @@
       "atk": 3,
       "def": 3,
       "hp": 12,
+      "squadSize": 100,
       "recruitCost": {
         "Gold": 50,
         "Wood": 10,
@@ -2358,6 +2359,7 @@
       "atk": 5,
       "def": 2,
       "hp": 8,
+      "squadSize": 100,
       "recruitCost": {
         "Gold": 100,
         "Wood": 30,
@@ -2370,6 +2372,7 @@
       "atk": 6,
       "def": 1,
       "hp": 6,
+      "squadSize": 80,
       "recruitCost": {
         "Gold": 60,
         "Wood": 30
@@ -2381,6 +2384,7 @@
       "atk": 7,
       "def": 2,
       "hp": 10,
+      "squadSize": 60,
       "recruitCost": {
         "Gold": 150,
         "Food": 40,
@@ -2665,7 +2669,10 @@
     "baseSlots": 2,
     "maxSlots": 5,
     "slotGemCostBase": 1500,
-    "slotGemCostGrowth": 2
+    "slotGemCostGrowth": 2,
+    "heroSlots": 3,
+    "heroSlotGemCostBase": 2500,
+    "heroSlotGemCostGrowth": 2
   },
   "heroes": {
     "Warden": {

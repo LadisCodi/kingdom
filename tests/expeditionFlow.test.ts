@@ -50,7 +50,7 @@ describe('the route into a ruin', () => {
     const game = freshPresenter(ready({ Warrior: 3 }));
     game.openExpedition(BARROW);
     expect(game.openOverlay).toBe('expedition');
-    expect(game.expeditionHero).not.toBeNull();
+    expect(game.partyHeroes.length).toBeGreaterThan(0);
     // A player should never have to assemble a party from nothing just to see
     // what a ruin would take.
     expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 3 }]);
