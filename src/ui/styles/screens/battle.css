@@ -217,6 +217,10 @@
 }
 .bt-rail-empty { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-soft); }
 
+/* Big enough to read the three numbers on: art, name, what it is worth, and
+   what it is made of. A card the thumb picks a COMPOSITION from has to be
+   readable without opening anything else, so it is a card rather than a row.
+   The rail scrolls, so width is the only thing being spent here. */
 .bt-card {
   position: relative;
   appearance: none;
@@ -224,9 +228,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  width: 104px;
-  padding: 8px 6px;
+  gap: 3px;
+  width: 148px;
+  padding: 22px 8px 10px;
   border: 2px solid var(--wood-dark);
   border-radius: 10px;
   background: var(--parchment-shade);
@@ -236,9 +240,9 @@
 }
 .bt-card:hover { filter: brightness(1.05); }
 .bt-card.is-out { opacity: 0.45; cursor: default; }
-.bt-card-art { display: grid; place-items: center; height: 44px; }
-.bt-card-portrait { width: 44px; height: 44px; image-rendering: pixelated; object-fit: contain; }
-.bt-card-portrait.is-glyph { display: grid; place-items: center; font-size: 24px; }
+.bt-card-art { display: grid; place-items: center; height: 64px; }
+.bt-card-portrait { width: 64px; height: 64px; image-rendering: pixelated; object-fit: contain; }
+.bt-card-portrait.is-glyph { display: grid; place-items: center; font-size: 36px; }
 .bt-card-name {
   font-family: var(--font-body);
   font-weight: 700;
@@ -246,23 +250,55 @@
   text-align: center;
   line-height: 1.1;
 }
+
+/* The headline number: the one that compares to the enemy box behind. */
+.bt-card-power {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+.bt-card-power b {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-body);
+  font-variant-numeric: tabular-nums;
+}
+.bt-card-power span { font-size: 12px; color: var(--ink-soft); }
+
+/* What it is made of. One row, three numbers, the same icons the party
+   read-out uses everywhere else. */
+.bt-card-stats {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.bt-card-stats .k-stat { gap: 2px; }
+.bt-card-stats .k-stat-value { font-size: 12px; }
+
 .bt-card-note {
   font-family: var(--font-body);
   font-size: 12px;
   color: var(--ink-soft);
   text-align: center;
+  line-height: 1.2;
 }
 /* The one fact that decides whether this card belongs in the party: its
    type, as the WORD — four unit icons at 16px are four similar silhouettes.
-   Same call the roster tile makes. */
+   Same call the roster tile makes. Across the top, because on a hero card it
+   is what the player is scanning for. */
 .bt-card-tag {
   position: absolute;
-  top: 4px;
-  left: 4px;
-  padding: 1px 4px;
-  border-radius: 4px;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 6px;
+  border-radius: 8px 8px 0 0;
   background: rgba(60, 36, 18, 0.14);
   font-family: var(--font-body);
   font-size: 12px;
   color: var(--ink-soft);
+  text-align: center;
 }

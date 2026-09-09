@@ -18,14 +18,14 @@
 // stack is load-bearing (CLAUDE.md), and a panel is not a reason to cover the
 // purse or the way out.
 
-import { HEROES, UNITS } from '../sim/data/definitions';
+import { HEROES, UNITS, type UnitDef } from '../sim/data/definitions';
 import { heroIsBusy } from '../sim/expeditions';
-import { rosterView } from '../sim/heroes';
+import { heroStats, rosterView } from '../sim/heroes';
 import { spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
-import { iconEl, knob } from './kit';
+import { iconEl, knob, stat } from './kit';
 
 const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
   const url = spriteUrl(sprite);
@@ -34,14 +34,27 @@ const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
     : el('div', { class: `${cls} is-glyph` }, glyph);
 };
 
-/** A card: art, a name, and one line about what tapping it does. The heroes
- *  screen's card, in a horizontal rail. */
+/**
+ * A card: art, a name, the three numbers, the POWER it would put on the
+ * board, and one line about what tapping it does.
+ *
+ * The power is the headline of the three, because it is the only one that
+ * compares to the enemy box's number on the screen behind — the stats say
+ * WHAT the thing is, the power says what choosing it is worth. Both are here
+ * because a squad's power is its count times a stat the player cannot see
+ * anywhere else on this screen.
+ */
 function pickerCard(opts: {
   cls: string;
   art: HTMLElement;
+  /** The unit type, as a word. Four icons at 16px are four similar
+   *  silhouettes, and this is the fact the type chart turns on. */
+  type: string;
   name: string;
+  stats: Array<{ icon: 'atk' | 'def' | 'hp'; value: number }>;
+  /** What it adds to the party's power, all of it. */
+  power: number;
   note: string;
-  tag?: string;
   disabled?: boolean;
   onPick: () => void;
 }): HTMLElement {
@@ -49,15 +62,23 @@ function pickerCard(opts: {
     class: `bt-card ${opts.cls}${opts.disabled === true ? ' is-out' : ''}`,
     type: 'button',
   },
-    opts.tag === undefined ? '' : el('span', { class: 'bt-card-tag' }, opts.tag),
+    el('span', { class: 'bt-card-tag' }, opts.type),
     opts.art,
     el('span', { class: 'bt-card-name' }, opts.name),
+    el('span', { class: 'bt-card-power' },
+      el('b', {}, String(opts.power)), el('span', {}, 'power')),
+    el('span', { class: 'bt-card-stats' },
+      ...opts.stats.map((n) => stat(n.icon, String(n.value)))),
     el('span', { class: 'bt-card-note' }, opts.note),
   );
   if (opts.disabled === true) card.disabled = true;
   else card.addEventListener('click', opts.onPick);
   return card;
 }
+
+/** What KIND of soldier this is, in the words the targeting rules use. */
+const kindOf = (unit: UnitDef): string => (unit.tags.includes('Distance')
+  ? 'Ranged' : unit.tags.includes('Mounted') ? 'Mounted' : 'Melee');
 
 function troopCards(game: Game): HTMLElement[] {
   const roster = game.availableTroops();
@@ -80,9 +101,18 @@ function troopCards(game: Game): HTMLElement[] {
     return pickerCard({
       cls: 'is-troop',
       art: el('span', { class: 'bt-card-art' }, iconEl(unitId, { size: 'lg' })),
+      // The card's NAME is the type — Warrior, Lancer, Archer, Cavalry — so
+      // the chip carries the kind instead of saying the same word twice.
+      type: kindOf(unit),
       name: unit.name,
+      stats: [
+        { icon: 'atk', value: unit.atk },
+        { icon: 'def', value: unit.def },
+        { icon: 'hp', value: unit.hp },
+      ],
+      // The whole squad's worth, not one soldier's: what tapping this adds.
+      power: would * unit.power,
       note,
-      tag: `atk ${unit.atk}`,
       disabled: would <= 0,
       onPick: () => game.assignTroop(unitId),
     });
@@ -101,12 +131,23 @@ function heroCards(game: Game): HTMLElement[] {
     // (Docs/features/10-heroes.md §2.5); a DELVE is the exception, and it is
     // the delve's own screen that says so.
     const busy = game.battleHeroesAreCommitted() && heroIsBusy(game.state, view.id);
+    const line = heroStats(game.state, view.id);
     return pickerCard({
       cls: 'is-hero',
       art: art(def.sprite, def.glyph, 'bt-card-portrait'),
+      // A hero's type is the one fact that decides whether it belongs in this
+      // party: it fights on the chart with it, and it buffs the troops that
+      // share it (Docs/features/10-heroes.md §2.4).
+      type: def.unitType,
       name: def.name,
-      note: inParty ? 'Already with the party' : busy ? 'Underground' : `Lv ${view.entry.level}`,
-      tag: def.unitType,
+      stats: [
+        { icon: 'atk', value: line.atk },
+        { icon: 'def', value: line.def },
+        { icon: 'hp', value: line.hp },
+      ],
+      // A hero's power is its attack, the same rule a soldier's power follows.
+      power: line.atk,
+      note: inParty ? 'Already with the party' : busy ? 'Underground' : `Level ${view.entry.level}`,
       disabled: inParty || busy,
       onPick: () => game.assignHero(view.id),
     });
