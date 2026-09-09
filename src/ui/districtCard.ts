@@ -32,7 +32,8 @@ import { mana } from '../sim/mana';
 import { harvestSourceAt } from '../sim/harvest';
 import { isTechComplete } from '../sim/research';
 import { spriteUrl } from '../render/sprites';
-import { trainingSection } from './trainingSection';
+import { figure, trainingSection } from './trainingSection';
+import type { IconName } from './kit/icon';
 import { workshopSection } from './workshopSection';
 import {
   coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
@@ -109,23 +110,23 @@ function influenceThumb(game: Game, district: District): HTMLElement {
 }
 
 /**
- * What a level actually buys, as a list of before → after.
+ * What a level actually buys, one tile per number, `before → after`.
  *
  * Every per-level number in the sim is here, and it is the ONLY reason to
  * press Upgrade — so a building with nothing to say is a bug in the balance
- * data rather than a card that quietly shows an empty row.
+ * data rather than a card that quietly shows an empty row. The tiles are the
+ * training panel's `figure()`: a level is judged the way a soldier is, on a
+ * band of numbers under the thing that spends.
  */
 function upgradeDeltas(game: Game, district: District, next: number): HTMLElement[] {
   const def = DISTRICTS[district.definitionId];
   const out: HTMLElement[] = [];
-  const delta = (label: string, from: number | string, to: number | string) =>
-    out.push(el('span', { class: 'dc-delta' },
-      el('span', { class: 'dc-delta-what' }, label),
-      el('b', {}, `${from} \u2192 ${to}`)));
+  const delta = (icon: IconName, label: string, from: number | string, to: number | string) =>
+    out.push(figure(icon, label, `${from} → ${to}`));
 
   if (def.influenceRadiusPerLevel.length > 0) {
-    delta('reach', influenceRadius(district), levelIndexed(def.influenceRadiusPerLevel, next));
-    delta('workers', assignableWorkerLimit(district), levelIndexed(def.maxWorkersPerLevel, next));
+    delta('showme', 'Reach', influenceRadius(district), levelIndexed(def.influenceRadiusPerLevel, next));
+    delta('workers', 'Workers', assignableWorkerLimit(district), levelIndexed(def.maxWorkersPerLevel, next));
   }
   // A hall's level IS its army cap, and until now the only place that number
   // appeared was a note further up the card — nowhere near the button that
@@ -138,28 +139,30 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   if (def.extraUnitsPerDeliveryPerLevel.length > 0) {
     const from = term(def.extraUnitsPerDeliveryPerLevel, district.level, 0);
     const to = term(def.extraUnitsPerDeliveryPerLevel, next, 0);
-    if (to !== from) delta('per delivery', `+${from}`, `+${to}`);
+    if (to !== from) delta('plus', 'Per delivery', `+${from}`, `+${to}`);
   }
   if (def.strikeSpeedPerLevel.length > 0) {
     const from = term(def.strikeSpeedPerLevel, district.level, 1);
     const to = term(def.strikeSpeedPerLevel, next, 1);
-    if (to !== from) delta('swing', `×${from}`, `×${to}`);
+    if (to !== from) delta('clock', 'Swing', `×${from}`, `×${to}`);
   }
   if (def.armyCapPerLevel.length > 0) {
-    delta('army cap',
+    delta('army', 'Army cap',
       levelIndexed(def.armyCapPerLevel, district.level),
       levelIndexed(def.armyCapPerLevel, next));
   }
   // The Infirmary's whole ladder: how many wounded can wait for a bed before
   // the rest of them die (Docs/features/combat.md §4).
   if (def.bedsPerLevel.length > 0) {
-    delta('beds',
+    delta('hp', 'Beds',
       levelIndexed(def.bedsPerLevel, district.level),
       levelIndexed(def.bedsPerLevel, next));
   }
   if (def.populationCapacityPerLevel.length > 0) {
     const capNow = districtCapacity(game.state, district);
-    delta('homes', capNow, capNow
+    // The house mark, the same one the villager's "Room" tile wears: both are
+    // the number of beds the city has.
+    delta('Housing', 'Homes', capNow, capNow
       + levelIndexed(def.populationCapacityPerLevel, next)
       - levelIndexed(def.populationCapacityPerLevel, district.level));
   }
@@ -169,7 +172,7 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
     const pct = (level: number) =>
       `+${Math.round(levelIndexed(def.taxBonusPerLevel, level) * 100)}%`;
     if (pct(next) !== pct(district.level)) {
-      delta('rent each', pct(district.level), pct(next));
+      delta('Gold', 'Rent each', pct(district.level), pct(next));
     }
   }
   // Mana is a per-level number too, on exactly two buildings — and neither
@@ -177,10 +180,10 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   // The Sanctum owns BOTH Mana numbers now — it is the engine as well as the
   // reservoir, since the Townhall stopped producing (08-magic.md §2).
   if (district.definitionId === 'Sanctum') {
-    delta('Mana held',
+    delta('Mana', 'Mana held',
       levelIndexed(MANA.sanctumCapPerLevel, district.level),
       levelIndexed(MANA.sanctumCapPerLevel, next));
-    delta('Mana/h',
+    delta('Mana', 'Mana/h',
       levelIndexed(MANA.sanctumPerHourPerLevel, district.level),
       levelIndexed(MANA.sanctumPerHourPerLevel, next));
   }
@@ -191,7 +194,7 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
       .reduce((n, d) => n + maxCountForTownhallLevel(d, level), 0);
     const before = room(district.level);
     const after = room(next);
-    if (after > before) delta('buildings allowed', before, after);
+    if (after > before) delta('build', 'Buildings', before, after);
   }
   return out;
 }
@@ -468,36 +471,42 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       }]
       : [];
 
-    const upgrade = action({
-      label: 'Upgrade',
-      kind: 'primary',
-      onClick: () => game.doUpgrade(district.uniqueId),
-      disabledReason: reason,
-      cost,
-      costExtra: [...goodsTerms, ...harmonyTerm],
-      have: (c) => game.walletValue(c),
-      // What is left beside the button is the WAIT, which is a consequence
-      // rather than a price and has no business inside the press-target.
-      info: el('span', { class: 'dc-uptime' },
-        iconEl('hourglass', { size: 'sm' }),
-        formatDuration(upgradeDuration(game.state, district.definitionId, district.level))),
-    });
+    // A GATE takes the button's place, as it does on the training panel: a
+    // Townhall level, a technology or Harmony in the way is one fact, and a
+    // dead button with a caption was two things saying it. Being short of the
+    // price is not a gate — the button stays and turns clay (§6.4).
+    const upgrade = reason !== undefined
+      ? el('div', { class: 'tr-blocked' }, iconEl('padlock', { size: 'sm' }), reason)
+      : action({
+        label: 'Upgrade',
+        kind: 'primary',
+        onClick: () => game.doUpgrade(district.uniqueId),
+        cost,
+        costExtra: [...goodsTerms, ...harmonyTerm],
+        have: (c) => game.walletValue(c),
+      });
     if (game.uiHint() === 'card:upgrade') upgrade.classList.add('hinted');
 
-    // One row, the same shape as the training panel above it: a mark on the
-    // left, what you are buying in the middle, the button that spends on the
-    // right. It replaced a before/after pair of building portraits, which
-    // drew the eye hardest while carrying the least — the two pictures are
-    // nearly identical, and the numbers underneath were the whole point.
+    // The same shape as the training panel above it: the mark, the level and
+    // the button that spends on one row, and under them a band of tiles — one
+    // per number the level buys, `before → after`, and the wait last, the way
+    // a soldier's Time closes its row. The wait used to sit alone beside the
+    // button; it is a number the level costs, so it belongs with the others.
+    // It replaced a before/after pair of building portraits, which drew the
+    // eye hardest while carrying the least — the two pictures are nearly
+    // identical, and the numbers underneath were the whole point.
     foot.append(el('div', { class: 'dc-up' },
       // Default size, not lg: the 48px variant overflowed its own 40px well,
       // and the mark is a symbol rather than a portrait — it has no business
       // shouting louder than the unit art above it.
       el('div', { class: 'dc-up-mark' }, iconEl('star')),
-      el('div', { class: 'dc-up-body' },
+      el('div', { class: 'dc-up-top' },
         el('div', { class: 'dc-up-title' }, `Level ${next}`),
-        el('div', { class: 'dc-deltas' }, ...upgradeDeltas(game, district, next))),
-      upgrade));
+        upgrade),
+      el('div', { class: 'tr-figures dc-up-figures' },
+        ...upgradeDeltas(game, district, next),
+        figure('hourglass', 'Time',
+          formatDuration(upgradeDuration(game.state, district.definitionId, district.level))))));
   }
 
   // Moving is not an upgrade path, so it does not belong in the footer's

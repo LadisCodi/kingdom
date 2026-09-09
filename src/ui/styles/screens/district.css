@@ -13,12 +13,21 @@
  * A definite height fixes the resolution; `justify-content: flex-end` keeps
  * the card hugging the nav bar instead of the sky, and `pointer-events` hands
  * the empty space above it back to the map, which is what the old
- * content-sized box did for free. */
+ * content-sized box did for free.
+ *
+ * The height is EVERYTHING between the header and the nav, not a share of the
+ * screen. The card is content-sized and pinned to the bottom, so a short card
+ * stays short whatever this says; what the cap decides is when `.dc-body`
+ * starts to scroll, and it was 62% — which on a 390px phone folded the
+ * Townhall's training panel and hid its Train button. A panel the player is
+ * meant to read is not a thing to scroll: the card grows to hold it, and the
+ * scroller stays as the safety net for the one card that would otherwise run
+ * under the header. */
 #panel:has(.dc) {
   padding: 0;
   background: none;
   border: none;
-  height: 62%;
+  height: calc(100% - var(--hud-h) - var(--nav-h));
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -84,8 +93,10 @@
 }
 .dc-note { color: var(--ink-muted); line-height: 1.3; margin: 4px 0; }
 
-/* The upgrade row: a mark, what the level buys, and the button that spends —
- * the same three-column shape as the training panel above it. It replaced a
+/* The upgrade block: the training panel's shape in miniature. The mark and
+ * the level on the first row with the button that spends (or the gate that
+ * stops it) in the same 164px slot the Train button uses; under them the
+ * band of tiles, one per number the level buys, the wait last. It replaced a
  * pair of before/after building portraits that drew the eye hardest while
  * carrying the least: the two pictures are nearly identical, and the numbers
  * underneath were the whole point. */
@@ -93,8 +104,8 @@
 .dc-up {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 6px 10px;
-  align-items: center;
+  gap: 8px 10px;
+  align-items: start;
   padding: 8px;
   border-radius: 8px;
   background: var(--parchment-shade);
@@ -109,19 +120,29 @@
   background: var(--gold);
   border: 2px solid var(--gold-dark);
 }
-.dc-up-body { min-width: 0; }
-.dc-up-title { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
-.dc-up > .k-action { grid-column: 1 / -1; }
-.dc-deltas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 10px;
+.dc-up-heading { min-width: 0; }
+.dc-up-title {
   font-family: var(--font-body);
-  font-size: var(--text-helper);
-  color: var(--leaf-dark);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.2;
 }
-.dc-delta { display: inline-flex; align-items: baseline; gap: 4px; }
-.dc-delta-what { color: var(--ink-muted); }
+/* One line of why, under the title, in the room the button leaves — the
+   button is as tall as a label over a price, so two short lines of helper
+   fit beside it without adding a pixel to the block. */
+.dc-up-sub {
+  margin-top: 2px;
+  font-size: var(--text-helper);
+  line-height: 1.25;
+  color: var(--ink-muted);
+}
+/* The band runs the FULL width, under the mark too: the mark is a 40px
+   symbol, not a portrait that owns its column, and a band that started at the
+   second column left a well of nothing beneath it — the empty space this
+   block used to be mostly made of. */
+/* `.dc-up >` for specificity: `.tr-figures` below pins itself to column 2 for
+   the training panel's portrait, and a bare class here loses to it. */
+.dc-up > .dc-up-figures { grid-column: 1 / -1; align-self: auto; }
 .dc-uptime {
   display: inline-flex;
   align-items: center;
@@ -446,14 +467,19 @@
    its row with the name. It used to stretch the whole column, which made the
    loudest thing on the panel its own width rather than its label, and left the
    band underneath empty. */
-.tr-top {
+/* `.dc-up-top` is the upgrade block's row of the same shape — the level where
+   the name is, Upgrade where Train is — so every rule here names both. */
+.tr-top,
+.dc-up-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 .tr-heading { min-width: 0; }
-.tr-top > .k-action {
+.tr-top > .k-action,
+.dc-up-top > .k-action {
   flex: none;
   /* Wide enough for "Train" over three costs without squeezing them — the
      button's own natural width, pinned so it stops growing with the panel. */
@@ -462,10 +488,36 @@
 /* The width has to reach the BUTTON, not just its wrapper: `k-action` is a
    wrapper around a `k-btn` whose padding and costs set a min-width of their
    own, and it was overflowing the panel by those few pixels. */
-.tr-top > .k-action .k-btn {
+.tr-top > .k-action .k-btn,
+.dc-up-top > .k-action .k-btn {
   width: 100%;
   min-width: 0;
 }
+/* The upgrade row has no 10px of heading above its button to clear: the mark
+   beside it is 40px and the title is centred on that, so the button sits flush
+   with the top of the row. */
+.dc-up-top > .k-action { margin-top: 0; }
+/* A gate in the button's slot: the same 164px, so the heading keeps its
+   measure whether the hall can train or not. The padlock's colour and the
+   helper size are `.k-reason.is-blocked`'s, without its row layout — inside a
+   box this narrow the sentence wrapped around the dead button it captioned,
+   "Nowhere" above and "Housing" below, and a button that cannot be pressed
+   was not earning the room. */
+.tr-top > .tr-blocked,
+.dc-up-top > .tr-blocked {
+  flex: none;
+  width: 164px;
+  margin-top: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  line-height: 1.3;
+  color: var(--clay);
+}
+.tr-blocked .icon { flex: none; margin-top: 2px; }
+.dc-up-top > .tr-blocked { margin-top: 4px; }
 
 /* The band the button gave back: four figures, read left to right in the order
    a soldier is judged in — what it hits for, what it takes, what it has, and
