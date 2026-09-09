@@ -32,6 +32,7 @@ import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
 import { action, iconEl, progress, stat } from './kit';
+import type { IconName } from './kit/icon';
 import { unitBody, unitBust } from './unitArt';
 
 /** Which trainee each building's card is showing. Module-level so it survives
@@ -49,6 +50,20 @@ const VILLAGER = {
   tag: 'Worker',
   description: 'Works your buildings and pays rent. Everything else needs them.',
 };
+
+/**
+ * One of the four numbers a soldier is chosen ON, at a size that can be read
+ * across the panel: the mark and the word on top, the value under them.
+ *
+ * The inline `stat()` shape — icon, value, word, all on one line — is right in
+ * a card the width of a thumb, and wrong here: this panel now has a band of
+ * its own for these, and four of them in a row is the comparison the player is
+ * actually making between three units.
+ */
+const figure = (icon: IconName, label: string, value: string): HTMLElement =>
+  el('div', { class: 'tr-fig' },
+    el('div', { class: 'tr-fig-head' }, iconEl(icon, { size: 'sm' }), label),
+    el('div', { class: 'tr-fig-value' }, value));
 
 const iconFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.icon : trainee);
@@ -227,35 +242,43 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
   const unit = UNITS[trainee];
   const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
   const army = game.armyRoom();
+  // The button shares its row with the NAME, not with the description: a name
+  // and a tag are short, so a fixed-width button beside them still leaves the
+  // description its full measure on a 390px phone. Beside the description it
+  // would have squeezed it to a sliver.
+  const buy = action({
+    label: 'Train',
+    kind: 'primary',
+    onClick: () => game.doTrain(trainee, district),
+    cost,
+    have: (c) => game.walletValue(c),
+    disabledReason: !techOk
+      ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
+      : army.used + 1 > army.cap
+        ? 'Your army is full — upgrade this hall'
+        : undefined,
+  });
   info.append(
     el('div', { class: 'tr-portrait is-body' }, unitBody(trainee as UnitId, 'tr-portrait-art')),
     el('div', { class: 'tr-body' },
-      el('div', { class: 'tr-name' }, unit.name),
-      el('div', { class: 'tr-tag' }, tagFor(unit)),
+      el('div', { class: 'tr-top' },
+        el('div', { class: 'tr-heading' },
+          el('div', { class: 'tr-name' }, unit.name),
+          el('div', { class: 'tr-tag' }, tagFor(unit))),
+        buy),
       el('div', { class: 'tr-desc' }, unit.description),
-      el('div', { class: 'tr-stats' },
-        stat('army', String(unit.dmg), 'damage'),
-        stat('padlock', String(unit.def), 'defence'),
-        stat('population', String(unit.hp), 'health'),
-        // The chart, in one phrase, rather than a table the player has to read.
-        el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`)),
-      // The wait sits WITH the numbers it belongs to. It used to hang in the
-      // action's info slot, which parked it alone at the bottom-left of the
-      // panel and cost a whole empty band to say "15s".
-      el('div', { class: 'tr-wait' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(seconds))),
-    action({
-      label: 'Train',
-      kind: 'primary',
-      onClick: () => game.doTrain(trainee, district),
-      cost,
-      have: (c) => game.walletValue(c),
-      disabledReason: !techOk
-        ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
-        : army.used + 1 > army.cap
-          ? 'Your army is full — upgrade this hall'
-          : undefined,
-    }),
+      // The chart, in one phrase, rather than a table the player has to read.
+      el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`)),
+    // The four numbers a soldier is chosen on, in the band the button used to
+    // waste: what it hits for, what it takes, what it has, and what it costs
+    // in time. The atlas grew dedicated marks for the first three
+    // (Docs/art/ui/icon_stat_*.png), so they stop borrowing the army sword,
+    // the padlock and a villager's head.
+    el('div', { class: 'tr-figures' },
+      figure('atk', 'Damage', String(unit.dmg)),
+      figure('def', 'Defence', String(unit.def)),
+      figure('hp', 'Health', String(unit.hp)),
+      figure('hourglass', 'Time', formatDuration(seconds))),
   );
   return info;
 }

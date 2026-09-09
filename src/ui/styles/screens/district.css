@@ -429,18 +429,70 @@
 }
 /* The Train button spans both columns, so it is the full width of the panel
  * and unmistakably the thing that spends. */
-/* Column 2, so it sits under the text rather than under the portrait — which
-   is what lets the portrait have the height of both rows. */
-.tr-info > .k-action { grid-column: 2; }
-/* The wait, with the numbers it belongs to. */
-.tr-wait {
+/* The button rides in the panel's top-right corner at a FIXED width, sharing
+   its row with the name. It used to stretch the whole column, which made the
+   loudest thing on the panel its own width rather than its label, and left the
+   band underneath empty. */
+.tr-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tr-heading { min-width: 0; }
+.tr-top > .k-action {
+  flex: none;
+  /* Wide enough for "Train" over three costs without squeezing them — the
+     button's own natural width, pinned so it stops growing with the panel. */
+  width: 164px;
+}
+/* The width has to reach the BUTTON, not just its wrapper: `k-action` is a
+   wrapper around a `k-btn` whose padding and costs set a min-width of their
+   own, and it was overflowing the panel by those few pixels. */
+.tr-top > .k-action .k-btn {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The band the button gave back: four figures, read left to right in the order
+   a soldier is judged in — what it hits for, what it takes, what it has, and
+   what it costs in time. */
+/* FLEX-WRAP, not four fixed columns: at 390px the four labelled tiles need
+   346px and the band has 314, so a rigid `repeat(4, 1fr)` cannot shrink past
+   its labels and the panel scrolls sideways instead. Wrapping keeps the order
+   and gives a phone 2+2 rather than an overflow. */
+.tr-figures {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: end;
+}
+.tr-fig { flex: 1 1 70px; }
+.tr-fig {
+  display: grid;
+  gap: 2px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+}
+.tr-fig-head {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
   font-family: var(--font-body);
   font-size: var(--text-helper);
   color: var(--ink-soft);
+  white-space: nowrap;
+}
+/* The number is the thing being compared across four tiles, so it is the
+   biggest ink in the block and it lines up under its own mark. */
+.tr-fig-value {
+  padding-left: 2px;
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  color: var(--ink);
 }
 
 /* The ward: the same panel, in the colour of a thing that is waiting rather
