@@ -1,4 +1,4 @@
-// Docs/onboarding.md — the authored first-user experience, PLAYED.
+// Docs/features/12-quests.md §2 — the authored first-user experience, PLAYED.
 //
 // The quest-order test in `quests.test.ts` asserts the chain lists the right
 // beats in the right sequence. This one asserts something stronger and much
@@ -16,10 +16,11 @@ import { describe, expect, it } from 'vitest';
 import {
   CITY_DEF, DISTRICTS, FEATURES, FOG, HARVEST, QUESTS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { advance, changeWorkers, enqueueBuild } from '../src/sim/commands';
+import { advance, changeWorkers, enqueueBuild, upgradeDistrict } from '../src/sim/commands';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
+import { placementBlock } from '../src/sim/districts';
 import { collectTap } from '../src/sim/harvest';
 import { mana } from '../src/sim/mana';
 import { newGame } from '../src/sim/newGame';
@@ -28,7 +29,8 @@ import { trainUnit } from '../src/sim/army';
 import { activeQuest, claimQuest, isQuestComplete } from '../src/sim/quests';
 import { isTechComplete, startTech, techCost } from '../src/sim/research';
 import {
-  coordKey, getWallet, parseCoordKey, type Coord, type TechId,
+  coordKey, getWallet, parseCoordKey, townhall, type Coord,
+  type DistrictId, type TechId,
 } from '../src/sim/state';
 import { BERRIES, FOREST, map, T0 } from './helpers';
 
@@ -36,7 +38,7 @@ const PLOT: Coord = { x: -1, y: 1 }; // open grass beside the Townhall, revealed
 const PLOT_B: Coord = { x: -1, y: 0 }; // and its neighbour
 
 describe('a player can actually play the onboarding', () => {
-  it('runs steps 1-14 on nothing but what the game gives them', () => {
+  it('runs steps 1-24 on nothing but what the game gives them', () => {
     const state = newGame(map, T0);
     let now = T0;
 
@@ -93,7 +95,7 @@ describe('a player can actually play the onboarding', () => {
         if (!any) tick(30); // every reachable cell is spent — wait for recovery
       }
     };
-    const build = (id: 'Housing' | 'FarmLands' | 'Farm', cell: Coord) => {
+    const build = (id: DistrictId, cell: Coord) => {
       expect(enqueueBuild(state, map, id, cell), `could not queue ${id}`).toBe('Started');
       tick(600); // long enough for anything this early
       expect(state.city.districts.some((d) => d.definitionId === id && d.state === 'Built'))
@@ -123,7 +125,7 @@ describe('a player can actually play the onboarding', () => {
     chop(QUESTS.find((q) => q.id === 'Timber')!.goalAmount);
     finish('Timber');
 
-    expect(wood()).toBeGreaterThanOrEqual(DISTRICTS.Housing.buildCost.Wood!);
+    expect(wood()).toBeGreaterThanOrEqual(DISTRICTS.Housing.costPerLevel[0].cost.Wood!);
     build('Housing', { x: 2, y: 0 });
     finish('ARoof');
 
@@ -177,6 +179,12 @@ describe('a player can actually play the onboarding', () => {
     chop(Math.max(0, 30 - wood()));
     finish('Lumber');
 
+    // Step 13: the Farm is one research down from the plots (Farming, the
+    // row under Agriculture), and the chain asks for it rather than leaving
+    // the player to find out at the build sheet.
+    research('Farming');
+    finish('Tillage');
+
     build('Farm', { x: -2, y: 0 });
     finish('Farmhand');
 
@@ -184,8 +192,8 @@ describe('a player can actually play the onboarding', () => {
     expect(changeWorkers(state, map, farm.uniqueId, 1, now)).toBe('Assigned');
     finish('ToWork');
 
-    // ---- steps 13-14: a second House, and the villager it makes room for ----
-    chop(Math.max(0, DISTRICTS.Housing.buildCost.Wood! * 3 - wood()));
+    // ---- steps 16-17: a second House, and the villager it makes room for ----
+    chop(Math.max(0, DISTRICTS.Housing.costPerLevel[0].cost.Wood! * 3 - wood()));
     build('Housing', { x: 0, y: -1 });
     finish('GrowingTown');
 
@@ -198,8 +206,42 @@ describe('a player can actually play the onboarding', () => {
     }
     finish('Neighbors');
 
-    // The player is now fourteen beats in and has never been handed anything.
-    expect(activeQuest(state)!.id).toBe('ProperCapital');
+    // ---- step 18: a proper capital ----
+    chop(Math.max(0, DISTRICTS.Townhall.costPerLevel[1].cost.Wood! - wood()));
+    expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
+    tick(120);
+    expect(townhall(state).level).toBe(2);
+    finish('ProperCapital');
+
+    // ---- steps 19-21: the wood, automated ----
+    research('Saws');
+    finish('SawTeeth');
+    chop(Math.max(0, DISTRICTS.Sawmill.costPerLevel[0].cost.Wood! - wood()));
+    const millSpot = [...map.terrain.keys()].map(parseCoordKey)
+      .find((c) => placementBlock(state, map, 'Sawmill', c) === null);
+    expect(millSpot, 'nowhere legal to put the Sawmill').toBeDefined();
+    build('Sawmill', millSpot!);
+    finish('TheSawmill');
+    const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
+    expect(changeWorkers(state, map, sawmill.uniqueId, 1, now)).toBe('Assigned');
+    finish('Crewed');
+
+    // ---- steps 22-24: the three cards after Saws ----
+    // A requirement is the row above (2026-09-08), so the book puts Taxes,
+    // Sawpits and Reforesting next. The chain asks for them in row order
+    // rather than leaving the player to find out at the research sheet why
+    // the card after them will not start.
+    research('Taxes01');
+    finish('Levies');
+    research('SawpitsI');
+    finish('Sawpits');
+    research('Reforesting01');
+    finish('Regrowth');
+
+    // The player is now twenty-four beats in and has never been handed
+    // anything.
+    expect(activeQuest(state)!.id).toBe('FurtherAfield');
 
     // And the energy held out. Mana is what every tap is paid from, so an
     // opening that drains the pool is an opening that stops dead in front of
@@ -211,24 +253,46 @@ describe('a player can actually play the onboarding', () => {
   // running for minutes, an army, and a delve. What CAN be checked is the
   // thing most likely to be wrong: that every technology the chain demands is
   // still affordable out of what the chain itself pays, in the order it asks.
-  it('never demands a technology the chain has not already paid for', () => {
+  it('never demands an OPENING technology the chain has not already paid for', () => {
     // Research is Gold now, so the purse counted here is the CITY's, and it
     // is counted at its floor: the opening grant plus the quest rewards, and
-    // nothing else. Housing taxes, the Market and the harvest all pay on top
-    // of this, so a chain that works on rewards alone works for anyone.
+    // nothing else. Housing taxes and the harvest pay on top of this, so a
+    // chain that works on rewards alone works for anyone.
+    //
+    // THE GUARANTEE COVERS THE OPENING — every era-1 technology and the
+    // keystone that closes era 1 — and stops there on purpose. Since the tree
+    // was repriced to tech-tree.md §5's bands (2026-09-04) an era-2 major
+    // costs 1,000–2,500 Gold, and the chain's later asks (Sailing, Scaling
+    // Tools, Surveying II) are meant to be paid out of a RUNNING city: by
+    // then the player has taxes and workers, and the doc's own words are "the
+    // depth is the city's to earn". Funding them from rewards would mean
+    // 1,000-Gold quests at beat 25, which would double the early economy.
     //
     // Fog is charged against the same purse, at its floor too — a
     // DiscoverCells quest cannot cost less than its cells at the nearest ring
     // the player can ever be standing at, which is 2 (the Townhall's own
     // radius already covers ring 1).
     const DEAREST_CELL = FOG.rings[1].cost;
+    // THE OPENING, as the chain funds it: every era-1 target, plus the few in
+    // the band below that the chain still pays for outright. Past these the
+    // city's own economy is what buys the tree, and chain-only accounting
+    // stops saying anything.
+    //
+    // A hand-kept list, and it has to be: it used to be the three keystones
+    // (`CharterII` and its siblings) matched by name, and the spine that made
+    // that a rule is gone — a book is not opened by a technology any more.
+    // Rearranging the chain in the workbook means revisiting this.
+    const FIRST_DOWN: string[] = ['Bureaucracy', 'WarbandII', 'AttunementII'];
     let purse = CITY_DEF.initialCurrencies.Gold ?? 0;
     for (const quest of QUESTS) {
       if (quest.goalType === 'CompleteTech') {
         const id = quest.goalTarget as TechId;
-        expect(purse, `the chain asks for ${id} before it can afford it`)
-          .toBeGreaterThanOrEqual(techCost(id));
-        purse -= techCost(id);
+        const opening = TECHNOLOGIES[id].era === 1 || FIRST_DOWN.includes(id);
+        if (opening) {
+          expect(purse, `the chain asks for ${id} before it can afford it`)
+            .toBeGreaterThanOrEqual(techCost(id));
+          purse -= techCost(id);
+        }
       }
       if (quest.goalType === 'DiscoverCells' || quest.goalType === 'DiscoverFeature') {
         purse -= quest.goalAmount * DEAREST_CELL;
@@ -260,26 +324,33 @@ describe('the chain never asks for a building the city cannot hold', () => {
   });
 });
 
-// Every rock and every iron vein now sits on MOUNTAIN terrain, which cannot be
-// revealed — and so cannot be tapped or worked — until Scaling Tools. That
-// makes Stone and Iron mid-game materials, and it makes the chain's ORDER
-// load-bearing in a way it was not before: a quest asking for a building
-// priced in Stone before that research is a wall the player cannot see coming.
+// Stone comes out of mountains, and a mountain does not answer a pick until
+// Scaling Tools — the same shape as Forestry on the forest. That makes Stone a
+// mid-game material and it makes the chain's ORDER load-bearing: a quest asking
+// for a building priced in Stone before that research is a wall the player
+// cannot see coming.
 //
-// Derived from the map's own terrain rather than a hand-written list, so
-// moving a feature onto or off a mountain re-checks the whole chain by itself.
+// Derived from the map and the harvest table rather than a hand-written list,
+// so re-gating a source or moving a feature re-checks the whole chain by
+// itself.
 describe('the chain never asks for a material the map cannot yet yield', () => {
   it('orders every gated material cost after the research that opens it', () => {
     // currency -> the tech you need before ANY cell yields it. A single
     // ungated cell anywhere means no gate at all.
     const gate = new Map<string, TechId | null>();
+    // Rent pays Gold from the first villager and no research gates a house, so
+    // Gold is ungated however deep in the tree its MAP source sits. Without
+    // this the loop below infers "Gold needs Deep Mining" from the gold
+    // mountain and then demands that every Gold-priced building come after it.
+    gate.set('Gold', null);
     for (const [key, feature] of map.initialFeatures) {
       const source = FEATURES[feature].source;
       if (source === null) continue;
       const currency = HARVEST[source].currencyId;
-      const terrain = map.terrain.get(key);
-      const tech: TechId | null = terrain === 'Mountain' ? 'ScalingTools'
-        : terrain === 'Water' ? 'Sailing' : null;
+      // Two gates can stand between a player and a cell: the source's own
+      // research (working it) and the terrain's (reaching it at all).
+      const tech: TechId | null = HARVEST[source].requiredTech
+        ?? (map.terrain.get(key) === 'Water' ? 'Sailing' : null);
       if (tech === null || gate.get(currency) === null) gate.set(currency, null);
       else if (!gate.has(currency)) gate.set(currency, tech);
     }
@@ -289,8 +360,10 @@ describe('the chain never asks for a material the map cannot yet yield', () => {
 
     QUESTS.forEach((quest, i) => {
       const id = quest.goalTarget as keyof typeof DISTRICTS;
-      const cost = quest.goalType === 'BuildDistrict' ? DISTRICTS[id].buildCost
-        : quest.goalType === 'UpgradeDistrict' ? DISTRICTS[id].upgradeCost
+      // Level 1 is the build; level 2 is the cheapest upgrade a quest asks
+      // for, and the first that could name a currency the map cannot pay.
+      const cost = quest.goalType === 'BuildDistrict' ? DISTRICTS[id].costPerLevel[0].cost
+        : quest.goalType === 'UpgradeDistrict' ? DISTRICTS[id].costPerLevel[1].cost
           : null;
       if (cost === null) return;
       for (const currency of Object.keys(cost)) {

@@ -1,4 +1,4 @@
-// Ad offers (Docs/features/ad-economy.md): the rewarded-video refill, and the
+// Ad offers (Docs/features/08-magic.md §6): the rewarded-video refill, and the
 // thing the Mana pool was made scarce for.
 //
 // Two claims are load-bearing. First, that `advance()` NEVER touches an
@@ -163,19 +163,13 @@ describe('the route through the offer', () => {
     expect(game.adOffer()!.reward).toBe(manaCap(game.state));
   });
 
-  it('declining closes the popup and leaves the offer standing', () => {
+  it('closing the sheet leaves the offer standing', () => {
     const game = offered();
-    game.openAdOffer();
-    expect(game.openOverlay).toBe('adOffer');
-    game.declineAdOffer();
+    game.openMana();
+    expect(game.openOverlay).toBe('mana');
+    game.dismiss();
     expect(game.openOverlay).toBe(null);
     expect(game.adOffer()).not.toBeNull(); // still there to take later
-  });
-
-  it('will not open a popup when nothing is offered', () => {
-    const game = freshPresenter(freshGame()); // full pool, no offer
-    game.openAdOffer();
-    expect(game.openOverlay).toBe(null);
   });
 
   it('counts the ad down and refuses the reward until it finishes', () => {

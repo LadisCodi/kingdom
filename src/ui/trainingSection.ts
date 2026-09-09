@@ -23,7 +23,8 @@
 import type { Game } from '../game';
 import { DISTRICTS, UNITS, type UnitDef } from '../sim/data/definitions';
 import {
-  lineFor, lineRushCost, trainCost, trainSeconds, trainingCompletesAt, trainingProgress,
+  itemCount, lineFor, lineRushCost, trainCost, trainSecondsAt, trainingCompletesAt,
+  trainingProgress,
 } from '../sim/army';
 import { BEATS } from '../sim/combat';
 import { isTechComplete } from '../sim/research';
@@ -31,6 +32,8 @@ import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
 import { action, iconEl, progress, stat } from './kit';
+import type { IconName } from './kit/icon';
+import { unitBody, unitBust } from './unitArt';
 
 /** Which trainee each building's card is showing. Module-level so it survives
  *  the per-tick rebuild — the same reason the research tree keeps its
@@ -48,6 +51,20 @@ const VILLAGER = {
   description: 'Works your buildings and pays rent. Everything else needs them.',
 };
 
+/**
+ * One of the four numbers a soldier is chosen ON, at a size that can be read
+ * across the panel: the mark and the word on top, the value under them.
+ *
+ * The inline `stat()` shape — icon, value, word, all on one line — is right in
+ * a card the width of a thumb, and wrong here: this panel now has a band of
+ * its own for these, and four of them in a row is the comparison the player is
+ * actually making between three units.
+ */
+const figure = (icon: IconName, label: string, value: string): HTMLElement =>
+  el('div', { class: 'tr-fig' },
+    el('div', { class: 'tr-fig-head' }, iconEl(icon, { size: 'sm' }), label),
+    el('div', { class: 'tr-fig-value' }, value));
+
 const iconFor = (trainee: TrainableId) =>
   (trainee === 'Villager' ? VILLAGER.icon : trainee);
 
@@ -63,7 +80,10 @@ const tagFor = (unit: UnitDef): string =>
 export function trainingSection(game: Game, district: District): HTMLElement | null {
   const def = DISTRICTS[district.definitionId];
   const offers = def.trains;
-  if (offers.length === 0) return null;
+  // A building with BEDS runs the same block with no picker: its line mends
+  // rather than recruits (Docs/features/combat.md §4).
+  const isWard = def.bedsPerLevel.length > 0;
+  if (offers.length === 0 && !isWard) return null;
 
   const now = game.now();
   const line = lineFor(game.state, district.uniqueId);
@@ -71,22 +91,51 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
 
   // ---------------------------------------------------------- the queue
   if (line.length > 0) {
+    // CONSECUTIVE RUNS, not one slot each and not one slot per type. Four
+    // warriors in a row is one fact — "four warriors" — and four identical
+    // faces spent four slots saying it. Collapsing by type ALONE would be
+    // wrong for the opposite reason: the line is ordered, and a queue of
+    // Warrior, Lancer, Warrior, Warrior shown as "Warrior x3, Lancer x1"
+    // lies about what comes out next. So: runs.
+    //
+    // A ward is already one item that hands over many, so a run adds those
+    // counts up rather than counting items.
+    const runs: Array<{ trainee: TrainableId; count: number; first: number }> = [];
+    line.forEach((item, i) => {
+      const last = runs[runs.length - 1];
+      if (last !== undefined && last.trainee === item.trainee) last.count += itemCount(item);
+      else runs.push({ trainee: item.trainee, count: itemCount(item), first: i });
+    });
+
     const strip = el('div', { class: 'tr-queue' },
-      ...line.map((item, i) => el('div', {
-        class: `tr-slot${i === 0 ? ' is-active' : ''}`,
-        title: nameFor(item.trainee),
-      }, iconEl(iconFor(item.trainee), { size: 'lg' }))));
+      ...runs.map((run) => {
+        const name = nameFor(run.trainee);
+        return el('div', {
+          // The run that holds the HEAD of the line is the one being worked
+          // on, which is what the bar underneath is counting down.
+          class: `tr-slot${run.first === 0 ? ' is-active' : ''}`,
+          title: run.count > 1
+            ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
+            : name,
+        },
+          run.trainee === 'Villager'
+            ? iconEl(iconFor(run.trainee), { size: 'lg' })
+            : unitBust(run.trainee, 'tr-slot-art'),
+          ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
+      }));
 
     const head = line[0];
     const bar = progress('gold');
     const left = head.startedAt === null
-      ? trainSeconds(head.trainee)
+      ? (head.kind === 'heal'
+        ? game.healWait(head.trainee as UnitId, itemCount(head))
+        : trainSecondsAt(game.state, district.uniqueId, head.trainee))
       : Math.max(0, (trainingCompletesAt(head) - now) / 1000);
     bar.set(trainingProgress(game.state, district.uniqueId, now), formatDuration(Math.ceil(left)));
 
     const rush = lineRushCost(game.state, district.uniqueId, now);
     root.append(
-      el('div', { class: 'tr-head' }, 'Training queue'),
+      el('div', { class: 'tr-head' }, isWard ? 'On the table' : 'Training queue'),
       el('div', { class: 'tr-queue-row' },
         el('div', { class: 'tr-queue-col' }, strip, bar.root),
         action({
@@ -104,6 +153,45 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
     );
   }
 
+  // ------------------------------------------------------------- the ward
+  //
+  // Every wounded soldier in the city, on the building that has the beds.
+  // Empty is worth drawing: the ward's size is what the level buys, and a
+  // player looking at the card wants to know how much of it is spoken for.
+  if (isWard) {
+    const ward = game.woundedInfo();
+    root.append(el('div', { class: 'tr-head' }, `The ward — ${ward.used} of ${ward.cap} beds`));
+    if (ward.byUnit.length === 0) {
+      root.append(el('div', { class: 'tr-desc' },
+        'Nobody in the beds. Soldiers hurt in a fight wait here instead of dying.'));
+    }
+    for (const { unitId, count } of ward.byUnit) {
+      const seconds = game.healWait(unitId, count);
+      root.append(el('div', { class: 'tr-info is-ward' },
+        el('div', { class: 'tr-portrait' }, unitBust(unitId, 'tr-portrait-art')),
+        el('div', { class: 'tr-body' },
+          el('div', { class: 'tr-name' }, `${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'}`),
+          el('div', { class: 'tr-tag' }, 'Wounded'),
+          el('div', { class: 'tr-desc' },
+            'Off the roster until they are back on their feet. Cheaper to mend '
+            + 'than to replace.')),
+        action({
+          label: 'Heal',
+          kind: 'primary',
+          onClick: () => game.doHealWounded(unitId, count, district),
+          cost: game.healPrice(unitId, count),
+          have: (c) => game.walletValue(c),
+          disabledReason: game.armyRoom().used + count > game.armyRoom().cap
+            ? 'No room in the ranks — upgrade this hall'
+            : undefined,
+          info: el('span', { class: 'dc-uptime' },
+            iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
+        }),
+      ));
+    }
+  }
+  if (offers.length === 0) return root;
+
   // --------------------------------------------------------- the picker
   const current = picked.get(district.uniqueId) ?? offers[0];
   const selected = offers.includes(current) ? current : offers[0];
@@ -119,7 +207,9 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
           class: `tr-pick${t === selected ? ' is-on' : ''}${locked ? ' is-locked' : ''}`,
           type: 'button',
           title: nameFor(t),
-        }, iconEl(iconFor(t), { size: 'lg', locked }));
+        }, t === 'Villager'
+          ? iconEl(iconFor(t), { size: 'lg', locked })
+          : unitBust(t, 'tr-pick-art'));
         b.addEventListener('click', () => {
           picked.set(district.uniqueId, t);
           game.notify();
@@ -136,7 +226,9 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
 
 function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
   const cost = trainCost(game.state, trainee);
-  const seconds = trainSeconds(trainee);
+  // What it will take HERE, neighbours included — the number the player is
+  // about to commit to, not the one on the sheet.
+  const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
   const info = el('div', { class: 'tr-info' });
 
   if (trainee === 'Villager') {
@@ -150,7 +242,9 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         // No duration here: it already sits beside the Train button, where
         // every other card puts a wait (§6.4).
         el('div', { class: 'tr-stats' },
-          stat('population', String(game.state.city.population), 'living here'))),
+          stat('population', String(game.state.city.population), 'living here')),
+        el('div', { class: 'tr-wait' },
+          iconEl('hourglass', { size: 'sm' }), formatDuration(seconds))),
       action({
         label: 'Train',
         kind: 'primary',
@@ -158,8 +252,6 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
         cost,
         have: (c) => game.walletValue(c),
         disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
-        info: el('span', { class: 'dc-uptime' },
-          iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
       }),
     );
     return info;
@@ -168,32 +260,43 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
   const unit = UNITS[trainee];
   const techOk = unit.requiredTech === null || isTechComplete(game.state, unit.requiredTech);
   const army = game.armyRoom();
+  // The button shares its row with the NAME, not with the description: a name
+  // and a tag are short, so a fixed-width button beside them still leaves the
+  // description its full measure on a 390px phone. Beside the description it
+  // would have squeezed it to a sliver.
+  const buy = action({
+    label: 'Train',
+    kind: 'primary',
+    onClick: () => game.doTrain(trainee, district),
+    cost,
+    have: (c) => game.walletValue(c),
+    disabledReason: !techOk
+      ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
+      : army.used + 1 > army.cap
+        ? 'Your army is full — upgrade this hall'
+        : undefined,
+  });
   info.append(
-    el('div', { class: 'tr-portrait' }, iconEl(trainee, { size: 'lg' })),
+    el('div', { class: 'tr-portrait is-body' }, unitBody(trainee as UnitId, 'tr-portrait-art')),
     el('div', { class: 'tr-body' },
-      el('div', { class: 'tr-name' }, unit.name),
-      el('div', { class: 'tr-tag' }, tagFor(unit)),
+      el('div', { class: 'tr-top' },
+        el('div', { class: 'tr-heading' },
+          el('div', { class: 'tr-name' }, unit.name),
+          el('div', { class: 'tr-tag' }, tagFor(unit))),
+        buy),
       el('div', { class: 'tr-desc' }, unit.description),
-      el('div', { class: 'tr-stats' },
-        stat('army', String(unit.atk), 'attack'),
-        stat('padlock', String(unit.def), 'defence'),
-        stat('population', String(unit.hp), 'health'),
-        // The chart, in one phrase, rather than a table the player has to read.
-        el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`))),
-    action({
-      label: 'Train',
-      kind: 'primary',
-      onClick: () => game.doTrain(trainee, district),
-      cost,
-      have: (c) => game.walletValue(c),
-      disabledReason: !techOk
-        ? `Research ${TECHNOLOGIES[unit.requiredTech!].name} first`
-        : army.used + unit.power > army.cap
-          ? 'Your army is full — upgrade this hall'
-          : undefined,
-      info: el('span', { class: 'dc-uptime' },
-        iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)),
-    }),
+      // The chart, in one phrase, rather than a table the player has to read.
+      el('span', { class: 'tr-beats' }, `Strong vs ${UNITS[BEATS[trainee as UnitId]].name}`)),
+    // The four numbers a soldier is chosen on, in the band the button used to
+    // waste: what it hits for, what it takes, what it has, and what it costs
+    // in time. The atlas grew dedicated marks for the first three
+    // (Docs/art/ui/icon_stat_*.png), so they stop borrowing the army sword,
+    // the padlock and a villager's head.
+    el('div', { class: 'tr-figures' },
+      figure('atk', 'Damage', String(unit.dmg)),
+      figure('def', 'Defence', String(unit.def)),
+      figure('hp', 'Health', String(unit.hp)),
+      figure('hourglass', 'Time', formatDuration(seconds))),
   );
   return info;
 }

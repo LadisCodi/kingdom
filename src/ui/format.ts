@@ -27,6 +27,27 @@ export function formatDuration(seconds: number): string {
   return h > 0 ? `${d}d ${h}h` : `${d}d`;
 }
 
+/**
+ * A wallet number, short enough to live in the HUD.
+ *
+ * The resource plank has to hold four coins, the Mana gauge and Gems inside
+ * 402px, and a late-game Gold of 248_610 is 42px of digits on its own — so
+ * the row's width was a function of how well the player was doing, and the
+ * coins at the end of it got clipped away as they did better. Rolling up at
+ * ten thousand caps every coin at four characters forever.
+ *
+ * Only ever a DISPLAY form: nothing rounds, and tapping any coin opens the
+ * purse, which prints the exact figure.
+ */
+export function formatCount(n: number): string {
+  const abs = Math.abs(n);
+  if (abs < 10_000) return String(n);
+  if (abs < 1_000_000) return `${Math.floor(n / 1000)}k`;
+  // One decimal past a million, dropped when it is a zero: "1.2M", "14M".
+  const millions = n / 1_000_000;
+  return `${millions.toFixed(millions < 10 ? 1 : 0).replace(/\.0$/, '')}M`;
+}
+
 export function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attrs: Record<string, string> = {},

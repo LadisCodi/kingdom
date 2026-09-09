@@ -1,0 +1,96 @@
+/* The gate (Docs/features/18-garrisons-and-raids.md §7): the edge widget with
+ * the countdown, the band on the ruin card, and the room sheet the band
+ * opens. The party pickers inside that sheet are the expedition's —
+ * screens/expedition.css. */
+
+/* ------------------------------------------------------------ the widget */
+
+/* Top of the right-edge column (`#edge`, style.css), above the Mana offer's
+ * tab: the two are the same kind of thing — a slab that slides in with
+ * something waiting on it — and they stack rather than swap, because a raid
+ * counting down does not stop a refill being worth taking. The column places
+ * it, so all this needs is a ceiling on how wide the sentence may get. */
+#raids { max-width: 100%; min-width: 0; }
+
+.raid-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 7px 10px 7px 11px;
+  text-align: left;
+  color: var(--parchment);
+  background: linear-gradient(160deg, #6d3535, #401f24);
+  border: var(--outline) solid #29131a;
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  box-shadow: -2px 2px 0 rgba(20, 28, 50, 0.4);
+  cursor: pointer;
+  transform: translateX(110%);
+}
+.raid-tab.is-in { animation: raid-tab-in var(--motion-sheet) ease-out forwards; }
+@keyframes raid-tab-in {
+  from { transform: translateX(110%); }
+  to { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .raid-tab { transform: none; }
+  .raid-tab.is-in { animation: none; }
+}
+.raid-tab:hover { filter: brightness(1.08); }
+/* After it has happened, rather than before: warmer, so a report reads as
+   news and a countdown reads as a warning. */
+.raid-tab.is-hit { background: linear-gradient(160deg, #8a4a2a, #4a2418); }
+
+.raid-tab-mark { display: grid; place-items: center; }
+.raid-tab-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.raid-tab-line {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-helper);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.raid-tab-sub {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -------------------------------------------------- the band on the card */
+
+.site-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+  background: rgba(122, 52, 44, 0.14);
+}
+.site-gate-head { display: flex; align-items: center; gap: 10px; }
+/* The body face, bold: the display face is legal only at --text-title
+   (tests/fonts.test.ts), and a band heading is not a title. */
+.site-gate-name {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.site-gate-sub,
+.site-gate-trips,
+.site-gate-hoard {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink-soft);
+}
+.site-gate-trips { display: flex; align-items: center; gap: 6px; }
+.site-gate-hoard { color: var(--ink); }
+
+/* The room sheet on a gate is the BATTLE screen (screens/battle.css); what
+ * the gate adds to it is the clock, and that rides in the dynamic band. */

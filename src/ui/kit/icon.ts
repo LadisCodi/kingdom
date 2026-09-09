@@ -16,7 +16,7 @@
 // need a string.
 
 import { CURRENCIES } from '../../sim/data/definitions';
-import type { CurrencyId, DistrictId, UnitId, Wallet } from '../../sim/state';
+import type { CurrencyId, DistrictId, GoodId, UnitId, Wallet } from '../../sim/state';
 import { el } from '../format';
 import { ATLAS_CELLS } from './atlas.generated';
 
@@ -28,12 +28,32 @@ import { ATLAS_CELLS } from './atlas.generated';
  *  atlas still holds their art — so the names survive as icons. */
 export type UiIconName =
   | 'Berries' | 'Meat' | 'Fish' | 'Iron'
-  | 'population' | 'builders' | 'workers'
+  | 'population' | 'builders' | 'workers' | 'harmony'
   | 'build' | 'army' | 'research' | 'settings'
   | 'quest' | 'showme' | 'padlock' | 'hourglass' | 'clock' | 'tick'
-  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star';
+  | 'close' | 'plus' | 'minus' | 'sparkle' | 'unknown' | 'star' | 'video'
+  // The collection's own marks. `ascension` is the star on a hero's card and
+  // is NOT `star`: that one is a generic highlight the district pips already
+  // use, and a rung of a ladder should not change shape when a decoration
+  // does. `fragment` is a hero SHARD — the relics keep `sparkle`, because the
+  // art is a person and a relic is not one. (Hero XP needs no name here: it
+  // is a `CurrencyId`, so it is already an `IconName`.)
+  | 'ascension' | 'fragment'
+  // The three a hero fights with. They were borrowing `army`, `padlock` and
+  // `population` — a shield for attack, a padlock for defence and a crowd for
+  // health — which is three wrong pictures in one row.
+  | 'atk' | 'def' | 'hp'
+  // Four destinations that were borrowing a picture of something else. `relics`
+  // is the tab, which wore the Mana orb until the pool got a sheet of its own;
+  // `dungeon` is a ruin mouth, which the delve pill drew as a quest scroll.
+  // `chest` and `daily` are two halves of one screen and stay two cells: the
+  // chest is the PRIZE and the calendar page is the DAY.
+  | 'relics' | 'dungeon' | 'chest' | 'daily'
+  // The mark the battle screen paints over a squad that is gone. It is the
+  // one icon that is drawn ON something rather than beside it.
+  | 'skull';
 
-export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
+export type IconName = CurrencyId | DistrictId | UnitId | GoodId | UiIconName;
 
 /** The fallback glyph for every icon, and — once the atlas lands — the
  *  checklist of cells it must contain. Exhaustive by construction: adding a
@@ -41,22 +61,37 @@ export type IconName = CurrencyId | DistrictId | UnitId | UiIconName;
 export const ICON_EMOJI: Record<IconName, string> = {
   // currencies
   Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-  Knowledge: '📜', Gems: '💎',
+  Knowledge: '📜', Stardust: '🌟', HeroXp: '📘', Gems: '💎',
+  SilverKey: '🗝️', GoldKey: '🔑',
   // harvest cells that pay one of the above
   Berries: '🫐', Meat: '🍖', Fish: '🐟', Iron: '⚙️',
+  // Refined goods. `Iron` is both a good and one of the retired cell icons
+  // above, and shares the one cell: the ore and the ingot are the same
+  // picture at 16 px.
+  Planks: '🪵', CutStone: '🧱', Runestone: '🔯',
   // districts
   Townhall: '🏛️', Housing: '🏠', Farm: '🌾', FarmLands: '🟩', Sawmill: '🪚',
-  Market: '🏪', Quarry: '⛏️', Docks: '⚓', Mine: '⚒️', Sanctum: '🔯',
+  Quarry: '⛏️', Docks: '⚓', Sanctum: '🔯',
   Barracks: '🛖', SpearHall: '🏚️', ShootingGrounds: '🎯', Stables: '🐴',
+  Infirmary: '⛑️',
+  Carpenter: '🔨', MasonsYard: '🧱', Smelter: '🔥', RuneCarver: '🔯',
+  Garden: '🌷', Well: '🪣', Orchard: '🌳', Statue: '🗿', Plaza: '⛲', Shrine: '⛩️',
   // units
   Warrior: '⚔️', Lancer: '🔱', Archer: '🏹', Cavalry: '🐎',
   // destinations
   build: '🔨', army: '🛡️', research: '🔬', settings: '⚙️',
   // city status + affordances
-  population: '👥', builders: '👷', workers: '🧑‍🌾',
+  population: '👥', builders: '👷', workers: '🧑‍🌾', harmony: '🌸',
   quest: '📜', showme: '👉', padlock: '🔒', hourglass: '⏳', clock: '🕐',
   tick: '✓', close: '✕', plus: '+', minus: '−', sparkle: '✨', unknown: '?',
   star: '★', // district card level pips (Phase 3)
+  video: '▶', // a rewarded video — the mark on any button an ad pays for
+  // the collection
+  ascension: '★', fragment: '🧩',
+  // destinations that are not nav tabs
+  relics: '🔮', dungeon: '🏚️', chest: '🎁', daily: '📅', skull: '💀',
+  // a hero's three numbers
+  atk: '🗡️', def: '🛡️', hp: '❤️',
 };
 
 export interface IconOpts {

@@ -2,6 +2,7 @@
 // fog seed, authored map features.
 
 import { CITY_DEF, CURRENCIES, KINGDOM_DEF } from './data/definitions';
+import { dayIndex } from './daily';
 import { seedFog } from './fog';
 import { manaCap } from './mana';
 import { reconcileSchedule } from './timeline';
@@ -22,19 +23,23 @@ export function newGame(map: MapData, now: number): GameState {
     city: {
       name: CITY_DEF.name,
       wallet: { ...CITY_DEF.initialCurrencies },
+      goods: {},
       population: CITY_DEF.initialPopulation,
       districts: [],
       queue: [],
       trainingQueue: [],
+      workshops: {},
+      wounded: {},
       lastTaxAt: now,
       lastManaAt: now,
     },
     kingdom: {
-      maxBuilders: KINGDOM_DEF.startBuilders,
+      builders: KINGDOM_DEF.startBuilders,
       wallet: kingdomWallet,
+      daily: { season: -1, rung: 0, lastClaimedDay: null, royalSeason: null, royalClaimed: [] },
       lastKnowledgeAt: now,
     },
-    player: { wallet: playerWallet },
+    player: { wallet: playerWallet, payer: null },
     fog: { revealed: {}, discovered: {}, progress: {} },
     features: {},
     featureMeta: {},
@@ -42,27 +47,40 @@ export function newGame(map: MapData, now: number): GameState {
     harvest: {},
     workers: [],
     army: [],
+    // Nothing is researched, and nothing is granted. Every book is open from
+    // the first minute (sim/research.ts `isTomeOpen`); what paces one is the
+    // era bars, which ask for revealed cells.
     research: { completed: [], active: [], slotsPurchased: 0 },
     schedule: [],
-    delves: [],
-    // One hero free at the start — the gacha sells breadth and speed, never
+    ruins: {},
+    // One hero free at the start — a wallet may buy power, but never sole
     // access, so the system has to be reachable without it.
     heroes: {
       owned: ['Warden'], levels: { Warden: 1 }, tiers: { Warden: 1 },
-      fragments: {}, xp: {}, partySlotsPurchased: 0,
+      // One hero slot is free; the second and third are Gems, always
+      // (Docs/features/10-heroes.md §3).
+      heroSlotsPurchased: 0,
+      fragments: {},
     },
-    gacha: { pullCounts: {}, pityCounters: {} },
+    gacha: { pullCounts: {}, pityCounters: {}, legendaryPity: {}, freePulls: {} },
     // Ready from the first minute: a new kingdom starts with a full pool, so
     // the offer simply waits for the player to spend down to half.
-    ads: { readyAt: now, claims: 0, pending: false },
+    ads: {
+      readyAt: now,
+      claims: 0,
+      pending: false,
+      refills: { day: dayIndex(now), watched: 0, bought: 0 },
+    },
     deepestDepth: 0,
     ruinsCleared: {},
-    landmarks: { claimed: {}, cleared: {} },
+    landmarks: { claimed: {} },
+    // No ruin has been seen yet, so nothing is counting (sim/gates.ts).
+    gates: {},
+    raidReports: [],
     artifacts: {
       owned: [], levels: {}, tiers: {}, fragments: {},
       attuned: [null], slotsPurchased: 0, lockedUntil: [0],
     },
-    upgrades: {},
     modifiers: [],
     quests: { index: 0, progress: 0 },
     discoveries: {},
@@ -71,6 +89,7 @@ export function newGame(map: MapData, now: number): GameState {
     nextId: 1,
     lastAdvance: now,
     lastCollectTapAt: 0,
+    tapCarry: {},
   };
 
   // Authored features from the map (static under the harvest model).
@@ -82,12 +101,12 @@ export function newGame(map: MapData, now: number): GameState {
   state.city.districts.push({
     uniqueId: `district_Townhall_${state.nextId++}`,
     definitionId: 'Townhall',
+    ordinal: 1,
     level: 1,
     assignedWorkers: 0,
     location: TOWNHALL_ORIGIN,
     state: 'Built',
     visualVariant: 1,
-    lastTapAt: 0,
   });
 
   // A new kingdom starts with a FULL pool, not an empty one. Mana is what
@@ -97,7 +116,9 @@ export function newGame(map: MapData, now: number): GameState {
   // is read from it.
   state.city.wallet.Mana = manaCap(state);
 
-  reconcileSchedule(state, now);
+  // `fresh`: a kingdom created this instant did not live through a window
+  // that is already open, so it is not paid for one.
+  reconcileSchedule(state, now, { fresh: true });
   seedFog(state, map);
 
   if (!state.fog.revealed[coordKey(TOWNHALL_ORIGIN)]) {

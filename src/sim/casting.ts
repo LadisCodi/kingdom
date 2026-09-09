@@ -1,4 +1,4 @@
-// The four artifact ACTIVES (Docs/features/magic.md §2).
+// The four artifact ACTIVES (Docs/features/08-magic.md §2).
 //
 // Cast mode reuses PLACEMENT mode wholesale: select → valid cells highlight →
 // tap to commit is exactly what placementInfo(), markers() and the priority-300
@@ -11,16 +11,16 @@
 // the moment an effect can only be replayed by re-running the UI.
 
 import { ARTIFACTS, FEATURES, type ArtifactActiveId } from './data/definitions';
-import { fogState, revealCostForCell } from './fog';
+import { fogState, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
-import { harvestSourceAt } from './harvest';
+import { effectiveStock, harvestSourceAt, harvestSpecAt } from './harvest';
 import { mana, payMana } from './mana';
 import { addModifier, resolve } from './modifiers';
 import {
   coordKey, districtAt, newId, type ArtifactId, type Coord, type GameState,
 } from './state';
 import { isAttuned, ownsArtifact } from './artifacts';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 
 export type CastBlock =
   | 'NotOwned' | 'NoActive' | 'NotEnoughMana' | 'InvalidTarget' | 'NotAttuned';
@@ -42,11 +42,11 @@ export function castBlock(state: GameState, id: ArtifactId): CastBlock | null {
 }
 
 /** What casting actually costs right now — Resonance buys it down permanently,
- *  a Conjunction can halve it on top. */
+ *  a timed boon can halve it on top. */
 export function castCost(state: GameState, id: ArtifactId): number {
   const active = ARTIFACTS[id].active;
   if (active === null) return 0;
-  const bought = active.manaCost * Math.max(0, 1 - effect(state, 'Resonance'));
+  const bought = active.manaCost * Math.max(0, techValue(state, 'activeCost', 1));
   return Math.max(0, Math.round(resolve(state, 'activeCost', bought)));
 }
 
@@ -119,8 +119,10 @@ export function cast(
       // so its value grows with depth — exactly where the pain is. This is the
       // relic that turns the fog from a chore into a real question.
       const key = coordKey(target!);
-      const total = revealCostForCell(state, map, target!);
-      report.goldSaved = total - (state.fog.progress[key] ?? 0);
+      // What is left of the price, not the whole of it: the taps already
+      // spent on this cell were paid, and Divination does not refund them.
+      report.goldSaved = revealCostForCell(state, map, target!)
+        - revealPaidSoFar(state, map, target!);
       delete state.fog.progress[key];
       delete state.fog.discovered[key];
       state.fog.revealed[key] = true;
@@ -134,9 +136,14 @@ export function cast(
       for (const c of cells) {
         if (harvestSourceAt(state, c) === null) continue;
         if (state.fog.revealed[coordKey(c)] !== true) continue;
+        const spec = harvestSpecAt(state, c)!;
+        // Refill to what the GROUND holds, not to the authored stock: a Bloom
+        // on grassland puts back more than one on sand, which is the same rule
+        // recovery follows (04-harvest.md §2).
+        const full = effectiveStock(map, c, spec);
         const cell = state.harvest[coordKey(c)];
-        if (cell === undefined || (cell.taps === 0 && cell.exhaustedUntil === null)) continue;
-        cell.taps = 0;
+        if (cell === undefined || (cell.units >= full && cell.exhaustedUntil === null)) continue;
+        cell.units = full;
         cell.exhaustedUntil = null;
         report.affected.push(c);
       }
@@ -179,7 +186,7 @@ export function cast(
 
 /** Divination's value at a glance: the Gold this cast would save right here. */
 export const divinationSaving = (state: GameState, map: MapData, cell: Coord): number =>
-  Math.max(0, revealCostForCell(state, map, cell) - (state.fog.progress[coordKey(cell)] ?? 0));
+  Math.max(0, revealCostForCell(state, map, cell) - revealPaidSoFar(state, map, cell));
 
 /** Cells Bloom would touch from this centre, for the placement preview. */
 export const bloomPreview = (state: GameState, map: MapData, centre: Coord, radius: number): Coord[] =>

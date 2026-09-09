@@ -31,8 +31,30 @@ export interface Screen {
  * `onClose` adds a floating dismiss knob. Every legacy screen needs one now
  * that the nav bar no longer turns into a Close button — without it they
  * would be unreachable to leave. Kit sheets carry their own and pass nothing.
+ *
+ * `signature` is the opt-out from rebuilding at all.
+ *
+ * The rebuild runs on every notify() — once a second from the tick — whether
+ * or not anything the screen draws has moved. For most screens that is merely
+ * wasteful. For one that draws IMAGES it is visible: an `<img>` created fresh
+ * each second is a new element that has to decode before its first paint, so
+ * a grid of portraits blinks once a second. (It also resets `:hover` under
+ * the cursor and restarts any CSS transition.)
+ *
+ * A screen with no time-dependent content can hand over a cheap string of
+ * everything it reads. Same string, no rebuild — so the DOM, and the decoded
+ * images in it, simply stay.
+ *
+ * **The contract is one-directional and unforgiving**: anything the render
+ * reads and the signature omits will go stale on screen. Prefer a signature
+ * that is coarse and automatic (a whole state module stringified) to one that
+ * lists fields and rots the next time the screen grows a line.
  */
-export function legacy(render: () => HTMLElement, onClose?: () => void): Screen {
+export function legacy(
+  render: () => HTMLElement,
+  onClose?: () => void,
+  signature?: () => string,
+): Screen {
   const root = document.createElement('div');
   root.className = 'legacy-screen';
   let knob: HTMLElement | undefined;
@@ -45,9 +67,17 @@ export function legacy(render: () => HTMLElement, onClose?: () => void): Screen 
     b.addEventListener('click', onClose);
     knob = b;
   }
+  let lastSignature: string | null = null;
   return {
     root,
     refresh: () => {
+      if (signature !== undefined) {
+        const now = signature();
+        // `lastSignature` starts null, which no signature can equal, so the
+        // first refresh always builds.
+        if (now === lastSignature) return;
+        lastSignature = now;
+      }
       // Rebuilding the subtree throws away scroll position, once a second,
       // which makes a scrollable screen impossible to read — you get pulled
       // back to the top mid-scroll. Containers opt in with data-keep-scroll

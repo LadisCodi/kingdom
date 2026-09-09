@@ -1,19 +1,18 @@
 // Worker units: claims, the harvest cycle, exhaustion interplay, determinism,
 // plus Townhall villager training that shares the unified advance.
 import { describe, expect, it } from 'vitest';
-import { changeWorkers, enqueueBuild, townhallTap } from '../src/sim/commands';
+import { changeWorkers, enqueueBuild } from '../src/sim/commands';
 import { populationCost } from '../src/sim/population';
 import { cancelTraining, lineFor, trainCost, trainUnit } from '../src/sim/army';
 import { HARVEST, WORKER } from '../src/sim/data/definitions';
-import { isExhausted, tapCell } from '../src/sim/harvest';
+import { harvestSourceAt, isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
 import {
   getWallet, townhall, type DistrictId, type GameState, coordKey,
 } from '../src/sim/state';
-import { assignableWorkerLimit, workableCells } from '../src/sim/workers';
-import { effectiveTapYield, effectiveWorkerYield } from '../src/sim/upgrades';
+import { advanceWorkers, assignableWorkerLimit, workableCells } from '../src/sim/workers';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0, tickAt,
+  addAllTrainers, addBuilt, canGather, completeTech, freshGame, fund, map, reveal, T0, tickAt,
 } from './helpers';
 
 // Sawmill at (3,1), chosen so its own completion re-reveals exactly ONE tree
@@ -25,14 +24,17 @@ const FOREST_A = { x: 3, y: 2 }; // orthogonally ADJACENT — CYCLE_MS assumes i
 const FOREST_B = { x: 2, y: 3 }; // radius 2 — still in the L1 area
 const FOREST_C = { x: 0, y: 3 }; // radius 3 — needs a level-2 sawmill
 
-// One harvest cycle from an adjacent (orthogonal) cell:
-// 2 × (1 / speed) move + workSeconds.
-const CYCLE_MS = 2 * (1 / WORKER.moveSpeedTilesPerSecond) * 1000 + WORKER.workSeconds * 1000;
+// One harvest cycle from an adjacent (orthogonal) cell: out, one strike, and
+// home again. The units leave the DEPOT at the strike and reach the WALLET on
+// arrival, so a cycle is what the wallet waits for.
+const MOVE_MS = (1 / WORKER.moveSpeedTilesPerSecond) * 1000;
+const STRIKE_MS = HARVEST.Forest.secondsPerStrike * 1000;
+const CYCLE_MS = 2 * MOVE_MS + STRIKE_MS;
 
 const builtSawmill = (state: GameState, forests = [FOREST_A, FOREST_B]) => {
   fund(state, { Gold: 500, Wood: 500 });
   // Forestry opens the forest to the TAP; Saws opens the Sawmill that works
-  // it for you (Docs/onboarding.md steps 3 and 15).
+  // it for you (Docs/features/12-quests.md §2 steps 3 and 15).
   completeTech(state, 'Forestry');
   completeTech(state, 'Saws');
   // Fog-independent setup: the Townhall's fog radius would reveal every tree
@@ -92,12 +94,53 @@ describe('the harvest cycle', () => {
     const w = state.workers[0];
     expect(w.activity).toBe('MovingToCell');
     expect(w.claimedCell).toEqual(FOREST_A);
-    tickAt(state, start + CYCLE_MS - 100);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // still walking home
+    // The units leave the DEPOT when the swing lands, one move-and-strike in…
+    tickAt(state, start + MOVE_MS + STRIKE_MS + 100);
+    expect(state.harvest[coordKey(FOREST_A)].units).toBe(HARVEST.Forest.stock - 1);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore); // …still walking
+    expect(w.carrying).toBe(1); // matter in transit, and it is real
+    // …and reach the WALLET only when the worker gets home.
     tickAt(state, start + CYCLE_MS + 100);
     expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 1);
-    expect(state.harvest[coordKey(FOREST_A)].taps).toBe(1);
+    expect(w.carrying).toBe(0);
     expect(w.activity).toBe('MovingToCell'); // straight back out
+  });
+
+  // The reason the depot is debited at the SWING and not on arrival. The old
+  // model credited the wallet on delivery but debited the cell by a tap count,
+  // so the player and the worker could take the same wood twice and the
+  // counter never matched the matter (04-harvest.md §4).
+  it('a load in transit is already out of the ground — nobody takes it twice', () => {
+    const state = canGather(freshGame());
+    state.city.population = 3;
+    const sawmill = builtSawmill(state, [FOREST_A]);
+    const start = state.lastAdvance;
+    changeWorkers(state, map, sawmill.uniqueId, 1, start);
+    const woodBefore = getWallet(state.city.wallet, 'Wood'); // the fixture funds it
+
+    // Catch the worker on its way home with a load.
+    tickAt(state, start + MOVE_MS + STRIKE_MS + 100);
+    const w = state.workers[0];
+    expect(w.activity).toBe('MovingHome');
+    expect(w.carrying).toBeGreaterThan(0);
+    const inHand = w.carrying;
+    const inGround = state.harvest[coordKey(FOREST_A)].units;
+    expect(inGround).toBe(HARVEST.Forest.stock - inHand); // already debited
+
+    // Drain the cell by hand while the load is still walking. The thumb can
+    // only get what is LEFT — the carried units are gone from the ground.
+    let byHand = 0;
+    while (tapCell(state, map, FOREST_A, start + MOVE_MS + STRIKE_MS + 200) === 'Harvested') {
+      byHand += 1;
+      if (byHand > 50) throw new Error('cell never drained');
+    }
+    expect(getWallet(state.city.wallet, 'Wood') - woodBefore)
+      .toBe(inGround); // the thumb got the remainder and no more
+
+    // And the load still lands, so the tree paid its stock exactly once.
+    tickAt(state, start + CYCLE_MS + 200);
+    expect(getWallet(state.city.wallet, 'Wood') - woodBefore)
+      .toBe(HARVEST.Forest.stock);
   });
 
   it('one-call replay equals second-by-second ticking (determinism)', () => {
@@ -123,17 +166,21 @@ describe('the harvest cycle', () => {
     state.city.population = 3;
     const sawmill = builtSawmill(state, [FOREST_A]);
     const start = state.lastAdvance;
-    // Player taps the forest 9 times; the worker's delivery is the 10th.
-    for (let i = 0; i < 9; i++) expect(tapCell(state, map, FOREST_A, start)).toBe('Harvested');
+    // Leave exactly one unit in the ground; the worker's first strike takes it.
+    const perTap = tapYieldAt(state, map, FOREST_A, start);
+    for (let i = 0; i < (HARVEST.Forest.stock - 1) / perTap; i++) {
+      expect(tapCell(state, map, FOREST_A, start)).toBe('Harvested');
+    }
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
     tickAt(state, start + CYCLE_MS + 100);
-    expect(isExhausted(state, FOREST_A, start + CYCLE_MS + 100)).toBe(true);
+    expect(isExhausted(state, map, FOREST_A, start + CYCLE_MS + 100)).toBe(true);
     const w = state.workers[0];
     expect(w.activity).toBe('Idle');
     // It resumes automatically after the 90s recovery.
     const resumeBy = start + CYCLE_MS + HARVEST.Forest.recoverySeconds * 1000 + CYCLE_MS + 1000;
     tickAt(state, resumeBy);
-    expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThanOrEqual(11); // 9 taps + 2 deliveries
+    expect(getWallet(state.city.wallet, 'Wood'))
+      .toBeGreaterThan(HARVEST.Forest.stock); // the depot, plus what regrew
   });
 
   it('cell exhausted en route: worker returns empty-handed', () => {
@@ -143,32 +190,42 @@ describe('the harvest cycle', () => {
     const start = state.lastAdvance;
     const woodBefore = getWallet(state.city.wallet, 'Wood');
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
-    // Exhaust the cell while the worker is walking (move takes ~1.4s).
+    // Empty the cell while the worker is walking (move takes ~1.4s). The
+    // depot is the ceiling: the thumb gets exactly what was in the ground,
+    // however many times it asks, because a tap cannot mint.
     for (let i = 0; i < 10; i++) tapCell(state, map, FOREST_A, start + 500);
     tickAt(state, start + CYCLE_MS + 100);
-    // Player's taps only. A tap is worth boostSeconds of production now, and
-    // this sawmill is staffed, so that is well above the authored floor of 1.
-    const perTap = effectiveTapYield(state, HARVEST.Forest);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10 * perTap);
+    expect(getWallet(state.city.wallet, 'Wood'))
+      .toBe(woodBefore + HARVEST.Forest.stock);
     expect(state.workers[0].activity).toBe('Idle');
   });
 
-  it('race rule: exhaustion mid-work still yields the worker its unit', () => {
+  // There is no "secured unit" race any more, and that is the point: a strike
+  // takes what the depot HOLDS, so the player emptying a cell out from under
+  // their own woodcutter simply sends them looking elsewhere. Nobody mints.
+  it('a worker whose cell is emptied under it takes nothing and migrates', () => {
     const state = freshGame();
     state.city.population = 3;
     const sawmill = builtSawmill(state);
     const start = state.lastAdvance;
     const woodBefore = getWallet(state.city.wallet, 'Wood');
     changeWorkers(state, map, sawmill.uniqueId, 1, start);
-    tickAt(state, start + 3000); // arrived, working (move ≈ 1.4s)
+    tickAt(state, start + 3000); // arrived, striking (move ≈ 1.4s)
     expect(state.workers[0].activity).toBe('Working');
-    for (let i = 0; i < 10; i++) tapCell(state, map, FOREST_A, start + 3000);
-    expect(isExhausted(state, FOREST_A, start + 3000)).toBe(true);
+    const claimed = state.workers[0].claimedCell!;
+    for (let i = 0; i < 10; i++) tapCell(state, map, claimed, start + 3000);
+    expect(isExhausted(state, map, claimed, start + 3000)).toBe(true);
+    const afterTaps = getWallet(state.city.wallet, 'Wood');
+    expect(afterTaps).toBe(woodBefore + HARVEST.Forest.stock);
+
     tickAt(state, start + CYCLE_MS + 2000);
-    // 10 player taps + the one delivery the worker had already secured.
-    const perTap = effectiveTapYield(state, HARVEST.Forest);
-    const perWorker = effectiveWorkerYield(state, HARVEST.Forest);
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(woodBefore + 10 * perTap + perWorker);
+    // Whatever it earned came out of the OTHER tree, not out of nothing.
+    const w = state.workers[0];
+    if (w.claimedCell !== null) {
+      expect(coordKey(w.claimedCell)).not.toBe(coordKey(claimed));
+    }
+    expect(getWallet(state.city.wallet, 'Wood') - afterTaps)
+      .toBeLessThanOrEqual(HARVEST.Forest.stock);
   });
 
   it('two workers claim distinct cells', () => {
@@ -205,22 +262,49 @@ describe('Townhall villager training', () => {
     expect(lineFor(state, townhall(state).uniqueId)).toHaveLength(0);
   });
 
-  it('taps boost the CURRENT villager; the next starts at its completion', () => {
+  // The renderer hangs the strike feedback off these: the cell that was struck
+  // (so the hit lands on the tree, not on the shed) and the ground it was
+  // struck on (so the foley matches). Worth a test because the punch and the
+  // sound are invisible to every other one.
+  it('a strike reports the cell it hit and the ground it hit', () => {
+    const state = freshGame();
+    state.city.population = 3;
+    const sawmill = builtSawmill(state);
+    const start = state.lastAdvance;
+    changeWorkers(state, map, sawmill.uniqueId, 1, start);
+    tickAt(state, start + MOVE_MS + 100);
+    const { strikes, deposits } = advanceWorkers(state, map, start + 4 * CYCLE_MS);
+    // The STRIKE lands on the tree, and names the ground so the foley matches.
+    expect(strikes.length).toBeGreaterThan(0);
+    for (const s of strikes) {
+      expect(s.source).toBe('Forest');
+      expect(harvestSourceAt(state, s.cell)).toBe('Forest'); // the TREE
+    }
+    // The HAUL lands at the mill, and that is where the number pops.
+    expect(deposits.length).toBeGreaterThan(0);
+    for (const d of deposits) {
+      expect(coordKey(d.cell)).toBe(coordKey(sawmill.location)); // the SHED
+      expect(d.amount).toBeGreaterThan(0);
+    }
+  });
+
+  it('trains one villager at a time; the next starts at the last completion', () => {
     const state = freshGame();
     addBuilt(state, 'Housing', { x: 2, y: 0 });
     addBuilt(state, 'Housing', { x: 0, y: -1 });
     fund(state, { Food: 100 });
-    expect(townhallTap(state, T0)).toBe('NoTraining');
     trainUnit(state, 'Villager', T0);
     trainUnit(state, 'Villager', T0);
-    tickAt(state, T0 + 10_000); // halfway through villager 1
-    for (let i = 0; i < 4; i++) expect(townhallTap(state, T0 + 10_000)).toBe('Boosted');
-    expect(townhallTap(state, T0 + 10_000)).toBe('TrainingComplete'); // 10s + 5 × 2s
+    // Nothing the player can do hurries this — the queue is a timer, and a
+    // tap buys work rather than time (04-harvest.md §3.2).
+    tickAt(state, T0 + 19_000);
+    expect(state.city.population).toBe(0);
+    tickAt(state, T0 + 20_000);
     expect(state.city.population).toBe(1);
-    // Villager 2 started at the boosted completion, not back at T0.
-    tickAt(state, T0 + 29_000);
+    // Villager 2 started at villager 1's completion, not back at T0.
+    tickAt(state, T0 + 39_000);
     expect(state.city.population).toBe(1);
-    tickAt(state, T0 + 30_000);
+    tickAt(state, T0 + 40_000);
     expect(state.city.population).toBe(2);
   });
 
@@ -271,13 +355,16 @@ describe('one training line per building', () => {
     completeTech(state, 'Warrior');
     fund(state, { Food: 500, Gold: 500, Wood: 500 });
     trainUnit(state, 'Villager', T0); // 20s
-    trainUnit(state, 'Warrior', T0); // 30s
+    trainUnit(state, 'Warrior', T0); // 15s
 
+    // The soldier is the FASTER of the two now, so it is the villager that
+    // lands second — which is the same proof, from the other side: neither
+    // line waits on the other.
+    tickAt(state, T0 + 16_000);
+    expect(state.army).toHaveLength(1); // the soldier landed
+    expect(state.city.population).toBe(0); // the villager has not
     tickAt(state, T0 + 21_000);
-    expect(state.city.population).toBe(1); // the villager landed
-    expect(state.army).toHaveLength(0); // the soldier has not
-    tickAt(state, T0 + 31_000);
-    expect(state.army).toHaveLength(1);
+    expect(state.city.population).toBe(1);
   });
 
   it('prices a villager at its place in the line, and refunds what it charged', () => {

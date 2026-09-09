@@ -1,0 +1,221 @@
+# 3 · The economy — currencies and taxes
+
+> **Scope.** Every currency and its job, and where the city's Gold comes from.
+> Mana is [`08-magic.md`](08-magic.md); Stardust and ingredients
+> are [`09-relics.md`](09-relics.md); Knowledge as a research clock is
+> [`07-research.md`](07-research.md).
+>
+> **Status: built**, except the Knowledge ↔ Stardust split (§1.1), which is
+> designed, not built.
+
+## 1. One job each
+
+- The city runs on Gold, Food, Wood and Stone.
+- Mana is what magic costs.
+- Stardust comes out of dungeons and levels the collection.
+- Knowledge is a clock that paces research.
+
+| Currency | Source | Buys | Scope | On the plank? |
+|---|---|---|---|---|
+| **Gold** | housing taxes, **gold mountains**, quests | fog, buildings, upgrades, expedition supplies, landmark claims | city | yes |
+| **Food** | berries, game, shoals, crops | villagers, expedition supplies | city | yes |
+| **Wood** | forest | buildings | city | yes |
+| **Stone** | mountains, iron mountains | buildings, deep supplies | city | yes |
+| **Mana** | time, capped | every player tap · **casting a spell** | city | a gauge, not a coin |
+| **Knowledge** | time, capped | committing technologies · investing in guild structures | city | no — read where it is spent |
+| **Stardust** | dungeons | relic levels · the toll on a hero's ascension | kingdom | no — reads in the Reliquary and on the roster |
+| **Hero XP** | dungeons · the daily chest's Royal track | hero levels, on any hero | kingdom | no — reads on the roster |
+| **Ingredients** | 1★ province · 2★ events · 3★ world | each relic's tier gate | kingdom | no — a grid, not a row |
+| **Gems** | quests, first clears, the daily chest (both tracks), the simulated store | power, comfort and breadth | player | yes |
+| **Silver key** | 500 Gems, or a free call's ad | one call on the common banner | player | no — a price on a button |
+| **Gold key** | 1,500 Gems, a free call's ad, or the daily chest's Royal track | one call on the golden banner | player | no — a price on a button |
+
+- Eleven wallet rows; five on the plank; three of them for the whole first hour.
+- Adding a wallet row needs an argument. The usual alternatives: a
+  per-collectible counter (the Fragments precedent) or event points as a
+  counter ([`13-events.md`](13-events.md) §2.1).
+- **Hero XP took a row** because it is spent on *any* hero: a per-hero counter
+  would leave a freshly pulled hero at level 1 with nothing to level it
+  ([`10-heroes.md`](10-heroes.md) §4).
+- **The keys took the row.** A counter would have worked for holding them, but
+  a key is a **price**, and a price is what a wallet row is for: the button
+  that spends one renders its cost and its short state from the wallet, the
+  way every other price in the game does. Two rows rather than one because
+  the two banners must be able to cost differently
+  ([`10-heroes.md`](10-heroes.md) §6.1).
+- A key never reaches the plank: it is spent at the banner and nowhere else.
+- **Refined goods follow that rule**: Planks, Cut Stone, Iron and Runestone
+  are a stockpile counter, not a wallet row
+  ([`17-workshops-and-goods.md`](17-workshops-and-goods.md) §1).
+
+### 1.1 Knowledge and Stardust (designed, not built)
+
+| Name | Job | Source | Scope |
+|---|---|---|---|
+| **Knowledge** | the research clock | time, capped | **city** |
+| **Stardust** | levels of relics; the toll on a hero's ascension | dungeons | **kingdom** |
+| **Hero XP** | levels of heroes | dungeons | **kingdom** |
+
+- Knowledge is city-scoped, like Mana; it does not survive a region reset.
+- Stardust and Hero XP are kingdom-scoped; they survive a region reset.
+- In docs and code the key is `Stardust`; *Polvo estelar* is the localised
+  string.
+
+## 2. Feature identity and currency
+
+- A cell's feature is not its currency: `HarvestSpec.id` vs
+  `HarvestSpec.currencyId`.
+- Berry bushes, wild game and fish shoals all pay **Food**: 1, 3 and 2 a tap.
+- A bare mountain pays **Stone** at 1; an iron mountain pays Stone at 5; a gold
+  mountain pays **Gold**.
+- The feature keeps its own art, tech gates, taps-to-exhaust, respawn timers and
+  whether it is finite.
+- Cell-scoped upgrades hang on the feature id: **Butchery** on game, **Big
+  Nets** on shoals. Both move Food.
+- Four city materials is the ceiling, not the floor.
+
+## 3. Housing taxes
+
+- Every housed villager pays `taxes.goldPerPopulationPerMinute` = 30 Gold/min,
+  continuously.
+- Accrued in whole units against an anchor; replayed exactly offline within
+  the 8 h cap.
+- Residents are auto-assigned: houses fill in build order as population grows.
+  The only effect is which house the player taps.
+- Roofless villagers pay nothing; empty minutes are never banked.
+- A lived-in house is a tappable Gold cell (§5).
+- **TradeRoutes** raises the rate +10%/level. The **Gilded Ledger** relic adds
+  +20% while attuned, through the modifier layer.
+- Housing capacity per level: `populationCapacityPerLevel = [2, 4, 6]` (OQ-46).
+- **A house's own level raises the rent its residents pay.**
+  `Districts.tax_bonus_per_level` is a fraction of the base rate and a
+  **total** at each level, indexed from level 1: +0% at 1, then +25% a level to
+  +225% at 10. It scales the residents' rent only — adjacency stays flat Gold a
+  minute — and a tap on the house is worth the same more (§5), because a tap
+  sells that house's own rent.
+- Reference: a Townhall-1 city with two level-1 Houses = 4 villagers ≈ 120
+  Gold/min idle.
+
+### 3.1 Adjacency
+
+**Adjacency is the only thing that guides a layout.** Placement itself is free
+— anywhere revealed, no plot bound, no building required next to another
+([`05-city-and-districts.md`](05-city-and-districts.md) §4) — so every rule
+here pays or charges, and none refuses.
+
+- A rule is `(district, neighbour, stat, magnitude)`, computed from locations
+  on read. Footprints must share an **edge**; diagonal corner contact does not
+  count.
+- **Either side may name a kind instead of a building**: `AnyHall`,
+  `AnyWorkshop`, `AnyProducer`, `AnyDecoration`. Membership is what a district
+  already is, so a new hall needs no new row.
+- Units are the stat's: `goldPerMinute` is flat Gold a minute, everything else
+  is a **fraction** of the base. For a duration a negative magnitude is the
+  good one.
+- **No stat moves more than ±25%**, whatever piles up next door. That is what
+  keeps a layout better-or-worse instead of right-or-wrong.
+- A house's rent clamps at 0, never negative.
+- While placing, every affected neighbour and the ghost itself show a compact
+  signed label; a built card lists what its neighbours are doing to it.
+
+| District | Next to | Moves | By |
+|---|---|---|---|
+| **Housing** | Housing | Gold a minute | **−1** each |
+| **Housing** | a decoration | Gold a minute | **+1** each — the mirror of the row above ([`18-harmony.md`](18-harmony.md) §6) |
+| **a hall** | another hall | training time | **−10%** each |
+| **Carpenter** | Sawmill | work time | −10% |
+| **Mason's Yard** | Quarry | work time | −10% |
+| **Smelter** | Quarry | work time | −10% |
+| **Rune Carver** | Sanctum | work time | −10% |
+
+**When a rule is priced.** A rate read on demand — Gold a minute — is computed
+every time it is read, so moving a house changes its rent at once. A **timer**
+is priced when it STARTS and stored on the thing waiting: a trainee's seconds
+and a workshop item's work are stamped when they are queued, so a neighbour
+that arrives, moves or is replaced later never repriced a wait already
+running. Research already worked this way.
+
+- More rules arrive as rows; a new **stat** is one line in `AdjacencyStat`
+  plus one call site.
+
+## 4. Villager training
+
+- The Townhall trains villagers in a queue.
+- Each press of Train pays its Food cost up front, priced as if everything
+  already queued had delivered, and appends one villager.
+- Villagers complete sequentially at `training.seconds` = 20 s each.
+- The queue is limited only by Food and housing capacity; queued villagers
+  count against the cap.
+- Cost: authored for the first six (`5, 20, 100, 300, 500, 1000`), then `×1.45`
+  per villager beyond.
+- No tap hurries the queue.
+- Timers take Gems ([`04-harvest.md`](04-harvest.md) §3.2).
+
+## 5. A tap is priced in production, not in units
+
+- A tap hands the player `tap.workSeconds` = 10 seconds of work on the thing
+  tapped, floored at one unit.
+- A house tap pulls that share of the house's own rent forward.
+- The rate a tap reads is the cell's own measured rate — its chunk over its
+  rhythm ([`04-harvest.md`](04-harvest.md) §4) — never the city-wide total for
+  that resource. Full design: [`04-harvest.md`](04-harvest.md) §3.
+- `TapPower` buys the tap's duration: +20% a level over ten levels.
+- Every player tap costs 1 Mana, except paying fog, which costs Gold. A tap
+  refused by a tech gate costs no Mana.
+- Every new reward follows the same rule: priced as a duration of the player's
+  own production, not as an absolute amount. Quest rewards are currently
+  absolute Gold amounts.
+
+A full pool buys about the same slice of progress at every stage:
+
+| City | tap | full pool | = production |
+|---|---|---|---|
+| 1 Sawmill L1, 3 workers, `TapPower` 0, pool 100 | 1 Wood | 100 Wood | **5.6 min** |
+| 30 workers, `TapPower` 10, pool 332 | 3 Wood | ~1,000 Wood | **5.5 min** |
+
+## 6. Where Gold goes
+
+Flow: **housing taxes → Gold → fog, buildings and research**.
+
+| Sink | Size |
+|---|---|
+| The whole map's fog | 4,729,789,354 |
+| The technology tree, 24 techs | 6,600 |
+| Expedition supplies, per launch | 50 → 2,000 by tier, recurring |
+| Landmark claims | 2,000 · 25,000 ×5 · 100,000 ×4 |
+| Buildings and upgrades | on a count and level curve; the fifteen upgrades total **51,926** |
+| **Wonder levels** | **unbounded** — [`16-wonders.md`](16-wonders.md) |
+
+- The quest chain pays **11,865 Gold across 50 quests**: 1.80× the whole
+  technology tree ([`07-research.md`](07-research.md) §1).
+- Every row except Wonder levels is one-time: upgrades **51,926** plus landmark
+  claims **527,000**, roughly 780,000 Gold of finite sink.
+- The only unbounded sink is Wonder levels ([`16-wonders.md`](16-wonders.md)).
+
+## 7. Dials, in the order to reach for them
+
+| Dial | Value | Key |
+|---|---|---|
+| Tax rate | 30 Gold/pop/min | `taxes.gold_per_population_per_minute` |
+| House rent bonus per level | +0% then +25% a level, to +225% | `Districts.tax_bonus_per_level` |
+| Seconds a tap is worth | **10 s of work** | `tap.work_seconds` |
+| Tap Mana cost | 1 | `tap.mana_cost` |
+| Housing capacity per level | [2, 4] — contested, OQ-46 | `Districts` sheet |
+| Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.45 | `training.*`, `city.population_cost_*` |
+| Collect cooldown | 0.5 s | `tap.collect_cooldown_seconds` |
+| Sale prices | Food 1 · Stone 2 · Wood 3 | `Currencies.gold_value` |
+| Adjacency rules | §3.1 | `Adjacency` sheet — `district`, `neighbor`, `stat`, `magnitude` |
+
+## 8. Deliberately not in this design
+
+- Berries, Meat and Fish as wallet rows.
+- A currency-equivalence engine: cheapest-first payment order, change-making,
+  a Food breakdown in the purse.
+- Iron as a wallet row.
+- A second purse for research.
+- Generators and vaults; building storage of any kind.
+- Silver.
+- A library district or a scholar assignment as Knowledge sources.
+- A Townhall tap that hurries villager training.
+
+**Open questions:** OQ-46 in [`../open-questions.md`](../open-questions.md).

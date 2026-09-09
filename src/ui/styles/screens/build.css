@@ -58,7 +58,16 @@
   line-height: 1.25;
   min-height: 2.5em; /* keeps the cost row aligned across cards */
 }
-.bld-cost { margin-top: 2px; }
+/* Currencies, refined goods and Harmony all sit in one wrapping row: they
+ * are one price, told apart by their marks rather than by their position. */
+.bld-cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
 .bld-cost .k-chips { justify-content: center; }
 .bld-meta {
   display: flex;
@@ -67,6 +76,39 @@
   gap: 6px;
   margin-top: 4px;
   font-family: var(--font-body);
+  color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------- harmony ---
+ * `supply / demand` above the grid, and what a surplus is paying. It reads
+ * as a fact about the city rather than as a warning — until supply falls
+ * behind demand, when the number is the thing standing between the player
+ * and the next level. */
+
+.bld-harmony {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  font-size: var(--text-helper);
+  color: var(--ink);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+}
+.bld-harmony.is-short { border-color: var(--clay); color: var(--clay); }
+.bld-harmony-note { margin-left: auto; color: var(--ink-muted); }
+.bld-harmony.is-short .bld-harmony-note { color: var(--clay); }
+
+/* A category heading between two grids. Decorations buy a different thing
+ * from every building above them, so they are found by the category. */
+.bld-section {
+  margin: 14px 0 8px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink-muted);
 }
 
@@ -88,3 +130,48 @@
 /* The menu grows silently as techs land; this says where from. */
 .bld-more { background: var(--parchment); border-style: dashed; }
 .bld-more .bld-art { opacity: 0.55; }
+
+/* --------------------------------------------------- the builder offer ---
+ * Raised by a refused build, not opened from a menu (builderSheet.ts). Same
+ * shape as the ad offer's popup — a mark, a line of copy, one decision, two
+ * buttons — because they are the same kind of thing: a short modal that asks
+ * one question about something the player has just tried to do. */
+
+.bld-offer { display: flex; flex-direction: column; gap: 12px; }
+.bld-offer-line { display: flex; align-items: center; gap: 12px; }
+.bld-offer-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  background: var(--parchment-shade);
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: 10px;
+}
+.bld-offer-copy { flex: 1; min-width: 0; }
+.bld-offer-head { font-family: var(--font-body); font-size: var(--text-body); }
+.bld-offer-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+
+/* The crew as pips: filled = owned, hollow = room left. The ceiling is a
+ * thing to SEE, so that "4 is as large as a crew gets" lands as a fact the
+ * player already knew rather than as a refusal they are hearing first here. */
+.bld-offer-crew { display: flex; gap: 8px; }
+.bld-offer-pip {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+  border: 2px dashed var(--wood-dark);
+}
+.bld-offer-pip.is-on {
+  background: var(--gold);
+  border-style: solid;
+  border-color: var(--gold-dark);
+}
+.bld-offer-pip:not(.is-on) .icon { opacity: 0.35; }
+
+.bld-offer-actions { display: flex; gap: 10px; }
+.bld-offer-actions .k-btn { flex: 1; }

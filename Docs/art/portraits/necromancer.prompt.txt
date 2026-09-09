@@ -1,0 +1,48 @@
+Ignora todo lo que te haya dicho de generar imágenes. Genera esta sin fondo y en png.
+
+Genera una sola imagen. Encuadre vertical, relación de aspecto 2:3. Fondo completamente transparente — un personaje recortado, sin ningún tipo de telón de fondo.
+
+Usa la imagen adjunta como REFERENCIA ESTRICTA DE ESTILO ARTÍSTICO. La imagen nueva debe parecer del mismo juego, hecha por el mismo equipo de arte, con el mismo motor de render, los mismos materiales, la misma paleta, la misma iluminación y el mismo nivel de detalle. Usa la referencia SOLO PARA EL ESTILO — es un diorama de un asentamiento y esto no lo es; no copies nada de su composición, ni sus edificios, ni su terreno.
+
+Esto es una ILUSTRACIÓN DE PERSONAJE para la pantalla de colección de héroes de un juego móvil de gestión / 4X ligero — el arte que rellena la carta de un héroe. No es key art de marketing.
+
+=== EXCEPCIÓN IMPORTANTE A LA REFERENCIA ===
+En la referencia, los personajes son figuras diminutas a escala de juego, integradas en el entorno. Esa regla NO se aplica aquí. Esto es un personaje único, solo, llenando el encuadre, dibujado para leerse a tamaño de carta — porque solo se muestra en grande, dentro de un marco, nunca sobre el mapa.
+
+=== EL PERSONAJE ===
+La Nigromante — heroína legendaria, una joven que interroga a los muertos y vuelve sabiendo más de lo que debería. Lanzadora a distancia: frágil, y la que más daño hace de todo el plantel.
+
+Delgada, un poco inclinada hacia delante por curiosidad, cabeza ladeada, media sonrisa divertida. Traviesa y lista, no malvada, no siniestra, no sensual, y sin posar para la cámara. Con encanto antes que dando miedo — este es un juego alegre.
+
+Melena negra corta tipo bob con un mechón violeta, piel muy pálida, ojos violeta oscuro, un pequeño pasador de hueso en el pelo.
+
+Túnica con capucha violeta profundo, la capucha caída sobre los hombros, con forro crema y bajo deshilachado; cinturón tipo corsé negro con un pequeño cierre de hueso, mallas oscuras, botas negras altas con hebillas, una esclavina sobre un hombro. Una bolsa estrecha de pergaminos en la cadera, y nada más de equipaje.
+
+Su arma es un BÁCULO que sostiene en la mano izquierda, vertical, con el extremo apoyado en el suelo: madera oscura envuelta en hueso claro, coronado por un pequeño cristal violeta redondo sujeto por una garra de hueso. Es el báculo de una lanzadora de hechizos, no una guadaña. En su mano derecha abierta, extendida hacia el lado a la altura de la cintura, flota UNA sola llama de alma verde pálido, del tamaño de una manzana, con dos o tres motas diminutas siguiéndola: eso es lo que lanza, y es el único elemento flotante de la imagen.
+
+Las dos manos y los dos pies visibles y claramente legibles. El báculo debe quedar entero dentro del encuadre, punta y extremo incluidos.
+
+=== ESTILO VISUAL BLOQUEADO ===
+Render 3D estilizado de videojuego, luminoso y alegre. Paleta de fantasía muy saturada: violetas ricos, crema hueso, verde pálido y frío para la magia y tela azul-negra profunda, con pequeños toques dorados. Luz suave de mediodía desde arriba a la izquierda, con sombras suaves, oclusión ambiental discreta, luz de contorno contenida y una atmósfera limpia y luminosa. Aquí incluso una nigromante está iluminada como en una tarde de sol.
+
+Silueta redondeada, robusta e inmediatamente legible. Proporciones compactas y con encanto, con la cabeza, el pelo, las manos y las botas algo sobredimensionados, con el mismo espíritu artesanal que los edificios de la referencia — simpático y acogedor, y estructuralmente comprensible.
+
+Materiales suaves y simplificados con una variación de superficie discreta — sin texturas fotográficas, sin trama de tejido, sin capas de suciedad, sin grano, sin micro-detalle excesivo. Formas suavemente biseladas, bordes limpios, detalles decorativos usados con moderación. Cada elemento debe seguir siendo distinguible a tamaño de miniatura: jerarquía clara, poco ruido visual.
+
+La figura debe parecer una figura de colección pulida de un juego móvil, del mismo mundo que la referencia.
+
+=== COMPOSICIÓN ===
+El personaje centrado, ocupando alrededor del 85% de la altura del encuadre, con aire cómodo por los cuatro lados y sin nada cortado. De pie y de frente al espectador, estable y legible — se mostrará dentro de un marco con elementos de interfaz superpuestos sobre su borde inferior, así que mantén sus piernas y sus pies simples y despejados.
+
+=== EL FONDO — ESTO ES UN REQUISITO ESTRICTO ===
+Sin plataforma de suelo, sin hierba, sin pedestal, sin sombra proyectada en el suelo, sin resplandor detrás, sin viñeteado, sin degradado, sin ningún color detrás — solo el personaje, con sus propias sombras suaves sobre sí mismo.
+
+=== EVITAR ===
+Sin texto, letras, números, etiquetas, carteles, interfaz, marco, borde, logotipo, marca de agua, tratamiento de título ni maquetación publicitaria.
+
+Sin encuadre cinematográfico dramático, sin pose de acción, sin destellos de cámara, sin destellos de lente, sin bloom fuerte, sin sombras duras, sin niebla, sin realismo sucio, sin fotorrealismo, sin ilustración pictórica, sin pinceladas visibles, sin pixel art, sin arte vectorial plano, sin línea de anime y sin ruido visual excesivo.
+
+Sin mascotas ni monturas, sin segunda arma, sin personajes adicionales, sin elementos flotantes salvo la única llama de alma, y sin calaveras apiladas a sus pies, sin esqueletos, sin sirvientes no-muertos, sin objetos de cementerio, sin murciélagos, sin cuervos, sin guadaña, sin sangre y sin carne podrida.
+
+=== EXPORTACIÓN ===
+Genera el PNG sin fondo y dame el enlace de descarga del archivo en el cuerpo del mensaje.

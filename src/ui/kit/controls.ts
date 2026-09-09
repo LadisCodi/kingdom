@@ -41,6 +41,11 @@ export interface ActionOpts {
   /** Present ⇒ the action is unavailable for a reason that is NOT simply the
    *  price, and this says so in plain words. */
   disabledReason?: string;
+  /** A small line ABOVE the label, inside the button. For a fact about the
+   *  button ITSELF that the label has no room for — when this press will
+   *  become free, chiefly. Not a caption beside the button and not a reason
+   *  it is dead: `disabledReason` owns that. */
+  note?: string;
 }
 
 const wire = (b: HTMLButtonElement, onClick: () => void): HTMLButtonElement => {
@@ -63,9 +68,13 @@ export function btn(opts: ActionOpts): HTMLButtonElement {
   const kind = opts.kind ?? 'secondary';
   const blocked = isBlocked(opts);
   const terms = costTerms(opts.cost, opts.have, opts.costExtra);
+  const stacked = terms !== null || opts.note !== undefined;
   const b = el(
     'button',
-    { class: `k-btn k-btn--${kind}${terms ? ' has-cost' : ''}`, type: 'button' },
+    { class: `k-btn k-btn--${kind}${stacked ? ' has-cost' : ''}`, type: 'button' },
+    ...(opts.note !== undefined
+      ? [el('span', { class: 'k-btn-note' }, opts.note)]
+      : []),
     el(
       'span',
       { class: 'k-btn-label' },

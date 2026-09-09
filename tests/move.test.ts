@@ -39,13 +39,39 @@ describe('what may be moved', () => {
     expect(moveDistrict(state, map, townhall(state).uniqueId, FAR_CELL, T0)).toBe('Immovable');
   });
 
-  it('an unfinished building may not — Cancel is what that card offers', () => {
+  // A build cannot be cancelled, so moving is the ONLY remedy for a
+  // misplacement (Docs/features/06-construction.md §1).
+  it('an unfinished building may too, and its wait is not repriced', () => {
     const state = freshGame();
     const house = houseAt(state, HOUSE_CELL);
     house.state = 'UnderConstruction';
-    expect(canMoveDistrict(house)).toBe(false);
-    expect(moveDistrict(state, map, house.uniqueId, NEIGHBOUR_CELL, T0)).toBe('Immovable');
-    expect(house.location).toEqual(HOUSE_CELL);
+    state.city.queue.push({
+      uniqueId: 'q', kind: 'build', districtUniqueId: house.uniqueId,
+      durationSeconds: 26, startedAt: T0,
+    });
+    expect(canMoveDistrict(house)).toBe(true);
+    expect(moveDistrict(state, map, house.uniqueId, NEIGHBOUR_CELL, T0)).toBe('Moved');
+    expect(house.location).toEqual(NEIGHBOUR_CELL);
+    // The wait is stamped on the queue item when the builder starts it, so
+    // the new address cannot make it longer or shorter.
+    expect(state.city.queue[0].durationSeconds).toBe(26);
+  });
+
+  it('reveals no fog for an unfinished building — its ring waits for the build', () => {
+    const state = freshGame();
+    reveal(state, [FAR_CELL]);
+    const house = houseAt(state, HOUSE_CELL);
+    house.state = 'UnderConstruction';
+    const before = Object.keys(state.fog.revealed).length;
+    expect(moveDistrict(state, map, house.uniqueId, FAR_CELL, T0)).toBe('Moved');
+    expect(Object.keys(state.fog.revealed).length).toBe(before);
+
+    // And the guard is what does it: the same move, finished, pushes the ring
+    // out at the new address.
+    house.state = 'Built';
+    expect(moveDistrict(state, map, house.uniqueId, HOUSE_CELL, T0)).toBe('Moved');
+    expect(moveDistrict(state, map, house.uniqueId, FAR_CELL, T0)).toBe('Moved');
+    expect(Object.keys(state.fog.revealed).length).toBeGreaterThan(before);
   });
 });
 
@@ -78,15 +104,16 @@ describe('where it may go', () => {
     expect(placementBlock(state, map, 'Housing', NEIGHBOUR_CELL, house.uniqueId)).toBe(null);
   });
 
-  it('a house cannot anchor its own move on itself', () => {
+  // Housing used to need a Townhall or another house edge-to-edge, which made
+  // a lone house unable to shift one cell sideways. That rule is gone: a
+  // building goes anywhere revealed, and adjacency pays or charges for its
+  // neighbours rather than deciding who may stand where.
+  it('a lone house may move wherever it likes', () => {
     const state = freshGame();
-    // A lone house far from the Townhall, with no other building near it.
     reveal(state, [FAR_CELL, { x: 4, y: 5 }]);
     const lonely = houseAt(state, FAR_CELL);
-    // Standing next to where you already are is not neighbourliness: shifting
-    // one cell sideways leaves it with nothing to be adjacent to.
-    expect(placementBlock(state, map, 'Housing', { x: 4, y: 5 }, lonely.uniqueId))
-      .toBe('NeedsHousingAdjacency');
+    expect(placementBlock(state, map, 'Housing', { x: 4, y: 5 }, lonely.uniqueId)).toBe(null);
+    expect(moveDistrict(state, map, lonely.uniqueId, { x: 4, y: 5 }, T0)).toBe('Moved');
   });
 
   it('every other placement rule still applies', () => {
@@ -172,40 +199,43 @@ describe('the crew comes with it', () => {
     return { state, mill };
   };
 
-  it('a worker mid-walk is re-homed and keeps working', () => {
+  it('an empty-handed worker mid-walk is re-homed and picks a cell in range', () => {
     const { state, mill } = staffedSawmill();
-    advance(state, map, T0 + 2_000); // out on the trip
+    advance(state, map, T0 + 2_000); // out on the trip, nothing in hand yet
     const worker = state.workers.find((w) => w.buildingId === mill.uniqueId)!;
     expect(worker.claimedCell).not.toBeNull();
+    expect(worker.carrying).toBe(0);
 
     expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + 2_000)).toBe('Moved');
-    // Not carrying: the claim is released, because the cell it was walking to
-    // may be outside the radius the building now has.
+    // Empty-handed: the claim goes, because the cell it was walking to may sit
+    // outside the radius the building now has.
     expect(worker.claimedCell).toBeNull();
     expect(worker.activity).toBe('Idle');
-    // And it goes back to work from the new address rather than stalling.
+    // And it works from the new address rather than stalling.
     advance(state, map, T0 + 120_000);
     expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(0);
   });
 
+  // The units left the ground when the swing landed, so confiscating them on
+  // a move would destroy matter AND charge the player for a trip they had
+  // already worked for (04-harvest.md §4, 05-city §4).
   it('a worker carrying a load still delivers it — a move costs no trip', () => {
     const { state, mill } = staffedSawmill();
-    // Walk it forward until it is on its way home with a load.
-    let carrying = false;
-    for (let t = 1_000; t <= 60_000 && !carrying; t += 500) {
+    let carried = false;
+    for (let t = 1_000; t <= 60_000 && !carried; t += 500) {
       advance(state, map, T0 + t);
       const w = state.workers.find((x) => x.buildingId === mill.uniqueId)!;
-      carrying = w.carrying && w.activity === 'MovingHome';
-      if (carrying) {
-        const before = getWallet(state.city.wallet, 'Wood');
-        expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + t)).toBe('Moved');
-        expect(w.carrying).toBe(true); // the load is not confiscated
-        expect(w.activity).toBe('MovingHome'); // just to a new address
-        advance(state, map, T0 + t + 120_000);
-        expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
-      }
+      if (w.carrying === 0 || w.activity !== 'MovingHome') continue;
+      carried = true;
+      const load = w.carrying;
+      const before = getWallet(state.city.wallet, 'Wood');
+      expect(moveDistrict(state, map, mill.uniqueId, { x: 2, y: 2 }, T0 + t)).toBe('Moved');
+      expect(w.carrying).toBe(load); // not confiscated
+      expect(w.activity).toBe('MovingHome'); // just to a new address
+      advance(state, map, T0 + t + 120_000);
+      expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThan(before);
     }
-    expect(carrying, 'the worker never picked anything up').toBe(true);
+    expect(carried, 'the worker never picked anything up').toBe(true);
   });
 });
 

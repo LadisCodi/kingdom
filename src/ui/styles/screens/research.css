@@ -1,9 +1,10 @@
-/* Research (§5.9) — an illuminated manuscript, not a node graph on a grid.
+/* Research (§5.9) — an illuminated manuscript, one page per book.
  *
- * The TOPOLOGY is unchanged: same authored grid, same horizontal-then-
- * vertical connectors, so the layout invariant in tests/research.test.ts
- * still holds. Only the materials change — which is the whole point, and why
- * the doc's "most expensive item" turned out to be mostly CSS. */
+ * The page is a FLOW read top to bottom: three columns of cards, an era bar
+ * across the width wherever the next band begins, connectors running in the
+ * gutter between rows or out into the side channel. Every size that has to
+ * agree with the geometry is set inline from src/ui/research/layout.ts — this
+ * file is materials only, so the two cannot drift. */
 
 /* Reserves the two bars itself rather than leaning on #overlay's padding: an
    absolutely positioned child resolves `inset` against the containing block's
@@ -15,18 +16,27 @@
   position: absolute;
   top: var(--hud-h);
   right: 0;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  bottom: var(--nav-h); /* measured; the nav's own padding holds the inset */
   left: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
+/* TWO ROWS, because four things do not fit one 402px line.
+ *
+ * The title, the lectern row, the Hire button and the close knob were laid
+ * out side by side; on the phone that squeezed "1 scholar idle" into a
+ * two-line column two words wide and pressed the Hire slab against the knob.
+ * The title and the way out are the fixed pair, so they keep the top line —
+ * the same place every other sheet's plank puts them — and the scholars, who
+ * are what this screen is actually about, get a line of their own. */
 .research-topbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 8px 12px;
+  padding: 8px 14px 10px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   box-shadow: inset 0 2px 0 var(--wood-light);
@@ -38,104 +48,163 @@
   font-weight: 400;
   color: var(--parchment);
 }
+/* The knob keeps the top-right cell; the slots take the whole second row. */
+.research-topbar > .k-knob { grid-row: 1; grid-column: 2; }
+.research-topbar > .res-slots { grid-row: 2; grid-column: 1 / -1; }
 
-/* Scholars at lecterns: a concurrency limit made picturable. */
-.res-scholars { flex: 1; display: flex; align-items: center; gap: 8px; }
-.res-desks { display: flex; gap: 4px; }
-.res-desk {
-  width: 28px;
-  height: 28px;
+/* THE SLOTS. Left-anchored and horizontal: a row of desks the player can
+   point at, in place of the sentence ("2 of 3 at work") and the Hire button
+   that used to sit beside it. Every unlocked slot, plus one locked one while
+   there are more to buy — never the whole ladder, because an empty slot is an
+   invitation and four of them is a shop. */
+.res-slots {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.res-slot { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 66px; }
+.res-slot-box {
+  width: 56px;
+  height: 42px;
   display: grid;
   place-items: center;
+  padding: 0;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
-  border-radius: 6px;
-  opacity: 0.55;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 var(--lip) 0 var(--wood-dark);
 }
-.res-desk.is-busy { background: var(--parchment); opacity: 1; }
-.res-desk-label { font-size: var(--text-helper); color: var(--parchment); }
+button.res-slot-box { cursor: pointer; }
+button.res-slot-box:hover { filter: brightness(1.06); }
+button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none; }
+
+/* A free desk is an invitation, so it is drawn open rather than filled. */
+.res-slot.is-free .res-slot-box {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.75;
+}
+/* One at work carries what is on it. */
+.res-slot.is-busy .res-slot-box { background: var(--parchment); }
+.res-slot-glyph { font-size: 22px; line-height: 1; }
+/* One still to buy is the only slab with the gem tone on this row. */
+.res-slot.is-locked .res-slot-box { background: var(--sky); border-color: var(--wood-dark); }
+.res-slot.is-locked .res-slot-box.is-short { filter: grayscale(0.5) brightness(0.9); }
+
+.res-slot-note {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--parchment);
+  white-space: nowrap;
+}
+.res-slot-note.is-short { color: var(--clay); }
 .research-topbar .k-btn { min-height: 40px; padding: 8px 14px; margin-bottom: 0; }
 
-/* Aged parchment ground, faintly stained. */
-.tech-tree {
+/* Aged parchment ground, faintly stained. Vertical scroll only: the page is
+   sized to the phone's width by construction, so there is nothing to pan to
+   sideways and a horizontal drag would only ever lose the reader. */
+.tech-page {
   flex: 1;
-  overflow: auto;
-  display: grid;
-  touch-action: none;
-  cursor: grab;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   scrollbar-width: none;
   background:
     radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
     radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
     var(--parchment);
 }
-.tech-tree::-webkit-scrollbar { display: none; }
-.tech-canvas { position: relative; margin: auto; }
-.tech-edges { position: absolute; inset: 0; }
+.tech-page::-webkit-scrollbar { display: none; }
+.tech-flow { position: relative; margin: 10px auto 28px; }
+.tech-edges { position: absolute; inset: 0; pointer-events: none; }
 
 /* Inked trails; a finished one is gold-inked. */
 .tech-edge { fill: none; stroke: #a98a5c; stroke-width: 3; stroke-dasharray: 4 6; stroke-linecap: round; }
 .tech-edge.open { stroke: var(--gold-dark); stroke-dasharray: none; stroke-width: 4; }
 .tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
 
-/* Wax-seal medallions. */
-/* SHAPE carries the kind, so the two never have to be told apart by size
- * alone: a technology is a rounded SQUARE — a thing you research once — and an
- * upgrade is a small CIRCLE hanging off it, a thing you buy again and again.
- * At a glance the tree now reads as trunks with beads on them. */
-.tech-node {
+/* ---------------------------------------------------------- the cards --- */
+
+/* A card, not a medallion: it carries the NAME, which is what lets a player
+   find a technology someone told them about and read the page as a flow. What
+   it DOES is a sentence, and a sentence belongs in the panel a tap opens.
+   Width and height come from layout.ts, inline. */
+.tech-card {
   position: absolute;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  font-size: 24px;
-  padding: 0;
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 5px;
+  padding: 6px 7px;
+  margin: 0;
+  text-align: center;
+  border-radius: 10px;
   background: var(--parchment-shade);
   border: 3px solid var(--wood-dark);
   box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
+  color: var(--ink);
+  font-family: var(--font-body);
   cursor: pointer;
+  overflow: hidden;
 }
-.tech-node.done { background: var(--leaf); border-color: var(--leaf-dark); }
-.tech-node.available { background: var(--gold); border-color: var(--gold-dark); }
-.tech-node.active { background: var(--sky); border-color: #2f7d9c; }
-.tech-node.selected { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
+/* A GLYPH AND A NAME, and nothing else. What a technology does is a sentence,
+   and a sentence on a 120px card is three clipped lines that have to be tapped
+   to be read anyway — so the card is an emblem and the panel does the talking.
+   The name gets two lines because the card no longer competes for them. */
+.tech-card-glyph { font-size: 26px; line-height: 1; }
+.tech-card-name {
+  font-size: var(--text-helper);
+  line-height: 1.15;
+  font-weight: 700;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.tech-card.done { background: var(--leaf); border-color: var(--leaf-dark); }
+.tech-card.available { background: var(--gold); border-color: var(--gold-dark); }
+.tech-card.active { background: var(--sky); border-color: #2f7d9c; }
+.tech-card.selected { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
+/* Behind an era bar the player has not earned: legible, and plainly not yet
+   pressable. The bar itself carries the reason.
 
-/* A fold in the parchment: the next tech along, not yet legible. */
-.tech-node.silhouette {
+   Drained of colour, NOT made transparent: `opacity` would let the connectors
+   under the card show through it, which reads as a line drawn across the
+   card's face. */
+.tech-card.era-locked {
+  filter: saturate(0.25) brightness(0.94);
+  color: var(--ink-muted);
+  box-shadow: none;
+}
+
+/* A fold in the parchment: the next card along, not yet legible. */
+.tech-card.silhouette {
+  display: grid;
+  place-items: center;
   background: var(--parchment);
   border-style: dashed;
   border-color: rgba(92, 58, 30, 0.5);
   color: rgba(92, 58, 30, 0.5);
   box-shadow: none;
   cursor: default;
-  font-family: var(--font-body);
   font-size: 22px;
 }
 
-/* Upgrades: small round badges pinned below their parent. */
-.tech-node.upgrade {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  font-size: 16px;
-  border-width: 2px;
-  background: var(--parchment);
-}
-.tech-node.upgrade.done { background: var(--leaf); }
-.tech-node.upgrade.available { background: var(--gold); }
-.tech-node.upgrade.locked { background: var(--locked); opacity: 1; }
-/* "You can press this, now." The tree shows a lot of nodes the player cannot
- * act on — done, running, unaffordable, prerequisite missing — and the
- * `available` styling only means the prerequisites are met. The dot is the
- * difference, and it sits top-right so it never collides with the level badge
- * at bottom-right on an upgrade node. */
+/* "You can press this, now." The page shows a lot of cards the player cannot
+ * act on — done, running, unaffordable, prerequisite missing, band locked —
+ * and the `available` styling only means the prerequisites are met. The dot
+ * is the difference. */
 .node-dot {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: -4px;
+  right: -4px;
   width: 14px;
   height: 14px;
   border-radius: 50%;
@@ -144,43 +213,66 @@
   box-shadow: 0 1px 0 rgba(60, 36, 18, 0.4);
   pointer-events: none;
 }
-.tech-node.upgrade .node-dot { width: 12px; height: 12px; top: -2px; right: -2px; }
-
-.tech-node.upgrade .lvl {
+.tech-card .node-bar {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: var(--wood-dark);
-  color: var(--parchment);
-  font-family: var(--font-body);
-  font-size: var(--text-helper);
-  line-height: 17px;
-  text-align: center;
-}
-.tech-node .node-bar {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 6px;
+  left: 7px;
+  right: 7px;
+  bottom: 5px;
   height: 4px;
   background: rgba(60, 36, 18, 0.4);
   border-radius: 2px;
   overflow: hidden;
 }
-.tech-node .node-bar .fill { height: 100%; background: var(--parchment); }
+.tech-card .node-bar .fill { height: 100%; background: var(--parchment); }
 
-/* The floating card, on parchment like everything else. */
-.tech-info {
+/* ------------------------------------------------------- the era bars --- */
+
+/* Not a node: it spans the page, nothing requires it, and it cannot be
+   researched. It is the door between two bands, with the price written on
+   it (Docs/features/07-research.md §2.1). */
+.res-era {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));
-  max-height: 46%;
-  overflow-y: auto;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 3px solid var(--wood-dark);
+  background: var(--wood);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}
+.res-era-name { font-weight: 700; }
+.res-era-gate { opacity: 0.85; }
+.res-era.is-open { background: var(--leaf-dark); border-color: var(--leaf-dark); }
+/* Era 4 is one keystone and no content: the book says there is more, and
+   does not pretend it is reachable. */
+.res-era.is-sealed { background: rgba(92, 58, 30, 0.35); border-style: dashed; }
+
+/* A MODAL over the book, not a shelf resting on the bottom of it. The panel
+   had to stay short enough to leave the page usable behind it, which is the
+   wrong constraint on the one surface that has to say what a card does, what
+   it needs, what it costs and how long it takes. */
+.tech-modal {
+  position: absolute;
+  inset: 0;
   z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--hud-h) + 12px) 12px calc(var(--nav-h) + 12px);
+  background: var(--scrim);
+}
+.tech-info {
+  width: 100%;
+  max-width: 420px;
+  max-height: 100%;
+  overflow-y: auto;
   padding: 12px 14px;
   color: var(--ink);
   font-family: var(--font-body);
@@ -190,13 +282,41 @@
   border-radius: var(--radius);
   box-shadow: 0 6px 0 rgba(60, 36, 18, 0.3), 0 12px 26px rgba(60, 36, 18, 0.35);
 }
-.tech-info h3 { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; margin-bottom: 4px; }
+/* The title takes the row and the way out takes its end. */
+.tech-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.tech-info-head h3 { flex: 1; min-width: 0; }
+.tech-info-head .k-knob { flex: 0 0 auto; width: 36px; height: 36px; min-height: 36px; }
+.tech-info h3 { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
 .tech-info .muted { color: var(--ink-muted); }
 .tech-info .blocked { color: var(--clay); }
 .tech-info .delta { color: var(--leaf-dark); font-weight: 700; }
 .tech-info .rows { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
 .tech-info .action-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .tech-info .action-row .info { flex: 1; }
+
+/* A property of the card, with the other properties. */
+.res-duration {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--ink-muted);
+}
+
+/* The two ways to have the same thing, side by side: choosing between them is
+   comparing two prices, and a price under a price is a list. Equal widths so
+   neither reads as the afterthought. */
+.tech-info-actions { display: flex; gap: 8px; margin-top: 8px; }
+.tech-info-actions > .k-btn { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
+/* One reason for the pair, above it — saying it twice between two buttons is
+   a wall of the same sentence. */
+.tech-info-blocked {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--clay);
+}
 .tech-info .progress { position: relative; height: 16px; margin: 8px 0; border-radius: 8px;
   overflow: hidden; background: var(--parchment-shade); border: 2px solid var(--wood-dark); }
 .tech-info .progress .fill { position: absolute; inset: 0; background: var(--sky); }
@@ -207,22 +327,107 @@
   background: var(--parchment-shade); border: 1px solid var(--wood-dark); }
 .tech-info .pip.on { background: var(--gold); border-color: var(--gold-dark); }
 
-/* What this technology is FOR — the line the old screen never had. */
-.res-unlocks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
-.res-unlocks-label {
+/* WHAT IT DOES, whole. The card is a glyph and a name, so this is where the
+ * generated sentence is read — given its own panel so it reads as the answer
+ * to the tap rather than as a caption. */
+.res-says {
+  margin: 8px 0;
+  padding: 6px 9px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm, 8px);
+}
+
+/* --------------------------------------------------------- the shelf --- */
+
+/* One tab per tome the player has opened. It appears only when there is more
+ * than one book to choose between: a single tab is a label, not a choice. */
+.res-shelf {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 8px;
+  background: var(--wood);
+}
+.res-tome {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 10px 10px 0 0;
+  border: 3px solid var(--wood-dark);
+  border-bottom: none;
+  background: var(--wood-dark);
+  color: var(--parchment);
   font-family: var(--font-body);
   font-size: var(--text-helper);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-muted);
+  cursor: pointer;
 }
-.res-unlock {
+/* The open book sits forward and shares the page's colour, so the tab and the
+ * parchment below it read as one surface rather than two. */
+.res-tome.active {
+  background: var(--parchment);
+  color: var(--wood-dark);
+  transform: translateY(1px);
+}
+.res-blurb {
+  margin: 0;
+  padding: 8px 14px 0;
+  background: var(--parchment);
+  color: rgba(92, 58, 30, 0.75);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}
+
+/* ------------------------------------------------------- the clock --- */
+
+/* Knowledge, in the one screen it is spent. Balance in bold, rate beside it. */
+.res-clock {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 9px 3px 4px;
-  background: var(--parchment-shade);
-  border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(60, 36, 18, 0.25);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
 }
-.res-unlock img { width: 22px; height: 22px; object-fit: contain; image-rendering: pixelated; }
+/* The rate is the whole of this pill now — the balance moved to the plank
+   while the screen is open — so it is no longer the dimmed half of a pair. */
+.res-clock-rate { opacity: 1; }
+.res-wait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ------------------------------------------------------- planned nodes --- */
+
+/* On the tree for its shape; does nothing yet. Dashed like the fog's `?`, so
+ * it reads as "not here yet" rather than "locked" — and never as pressable
+ * content that quietly turns out to be a no-op. */
+.tech-card.planned { border-style: dashed; opacity: 0.85; }
+.tech-card.planned::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(45deg, transparent 0 6px, rgba(92, 58, 30, 0.10) 6px 8px);
+  pointer-events: none;
+}
+.res-planned {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(92, 58, 30, 0.10);
+  color: var(--wood-dark);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+}

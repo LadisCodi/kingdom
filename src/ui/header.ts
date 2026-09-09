@@ -5,12 +5,14 @@
 // plus a save-mode badge — wrapping onto two rows on a phone, so none of
 // them read. The currency pass since cut the wallet from eleven rows to
 // seven: berries, game and shoals pay Food and veins pay Stone, so the coins
-// the plank can ever hold are Gold, Food, Wood and Stone. Knowledge left too
-// — it buys heroes and relics and nothing else, so it reads in the Reliquary
-// next to what it pays for. Now:
+// the plank can ever hold are Gold, Food, Wood and Stone. Stardust and
+// Knowledge are off it too — each is spent in exactly one screen, so each
+// reads in that screen's header instead. Now:
 //
 //   * three coins that gate the early game, with Stone appearing only once
-//     it means something;
+//     it means something — and the whole set SWAPS on a screen that spends
+//     something else: the roster shows Hero XP and Stardust instead, because
+//     neither is on any plank and the city's four buy nothing there;
 //   * MANA, then Gems past the rope. Mana is the energy every tap is paid
 //     from, so it is never hidden and never contextual — a player who cannot
 //     see it cannot tell why a tap just refused;
@@ -19,7 +21,8 @@
 //     player looks when they want more of them. The header is for things you
 //     spend from anywhere; population is a property of one building;
 //   * the plaque under the plank keeps only the CONTEXTUAL read-outs
-//     (workers while staffing, builders while building);
+//     (workers while staffing, builders while building, the army cap while
+//     looking at a hall that trains soldiers);
 //   * the save badge moved to Settings, where it belongs.
 //
 // The presenter decides all of it (visibleCurrencies, hudSlot) — this file
@@ -27,13 +30,16 @@
 
 import type { Game } from '../game';
 import type { CurrencyId } from '../sim/state';
-import { el } from './format';
+import { el, formatCount } from './format';
 import { currencyIcon, iconEl } from './kit';
 
 /** What the plaque shows, per kind. */
-const SLOT_ICON = { population: 'population', workers: 'workers', builders: 'builders' } as const;
+const SLOT_ICON = {
+  population: 'population', workers: 'workers', builders: 'builders', army: 'army',
+} as const;
 const SLOT_LABEL = {
   population: 'Population', workers: 'Workers at work', builders: 'Builders free',
+  army: 'Army',
 } as const;
 
 export function mountHeader(game: Game, root: HTMLElement): void {
@@ -53,7 +59,7 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const manaValue = el('b', {}, '');
   const manaRate = el('span', { class: 'hud-mana-rate' }, '');
   manaGauge.append(manaFill, currencyIcon('Mana', { size: 'sm' }), manaValue, manaRate);
-  manaGauge.addEventListener('click', () => game.setOverlay('reliquary'));
+  manaGauge.addEventListener('click', () => game.openMana());
   plank.append(coins, manaGauge, el('span', { class: 'hud-divider' }), gems);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
 
@@ -68,19 +74,36 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     coins.replaceChildren(...list.map((c) => {
       const value = el('b', {}, '0');
       values.set(c, value);
+      // 'sm' (16px), not the 32px default. The plank is the tightest row in
+      // the game — four coins, Mana and Gems inside 402px — and at 32 they
+      // did not fit, so two of the four coins were being clipped away
+      // entirely. 16 is the atlas's half-cell and the -sm art is authored at
+      // it, so this is 1:1 rather than the downscale 24 would be.
+      //
       // Tapping any coin opens the purse — the only place the game explains
       // that berries, meat and fish all count as Food.
       const coin = el('button', {
         class: 'hud-coin', type: 'button', 'data-currency': c, 'aria-label': c,
-      }, currencyIcon(c), value);
+      }, currencyIcon(c, { size: 'sm' }), value);
+      // A coin that is a CLOCK carries its speed beside its number — a drip
+      // you cannot see the speed of is a drip you cannot plan against, and
+      // the presenter decides which coin that is and when.
+      const rate = game.coinRate(c);
+      if (rate !== null) coin.append(el('span', { class: 'hud-coin-rate' }, rate));
       coin.addEventListener('click', () => game.setOverlay('purse'));
       return coin;
     }));
   };
 
-  gems.append(currencyIcon('Gems'), el('b', {}, '0'), el('span', { class: 'hud-plus' }, '+'));
+  gems.append(
+    currencyIcon('Gems', { size: 'sm' }),
+    el('b', {}, '0'),
+    el('span', { class: 'hud-plus' }, '+'),
+  );
   const gemValue = gems.querySelector('b')!;
-  gems.addEventListener('click', () => game.setOverlay('purse'));
+  // The Gems plaque IS the store's door: its `+` was a no-op for the whole
+  // life of the prototype (14-monetization.md §1.1). Coins still open the purse.
+  gems.addEventListener('click', () => game.setOverlay('store'));
 
   const plaqueIcon = el('span', { class: 'hud-plaque-icon' });
   const plaqueValue = el('b', {}, '');
@@ -101,13 +124,19 @@ export function mountHeader(game: Game, root: HTMLElement): void {
 
   const refresh = () => {
     const list = game.visibleCurrencies();
-    const key = list.join(',');
+    // The rate is baked into the coin ELEMENT, so it belongs in the key that
+    // decides whether the coins are rebuilt — otherwise it would be drawn
+    // once and then never move.
+    const key = list.map((c) => `${c}${game.coinRate(c) ?? ''}`).join(',');
     if (key !== shown) {
       shown = key;
       buildCoins(list);
     }
-    for (const [c, node] of values) node.textContent = String(game.walletValue(c));
-    gemValue.textContent = String(game.walletValue('Gems'));
+    // Rolled up past ten thousand: the plank is 402px wide and a six-digit
+    // Gold used to push the coins after it off the end of it. The purse (one
+    // tap away, on any coin) is where the exact figure lives.
+    for (const [c, node] of values) node.textContent = formatCount(game.walletValue(c));
+    gemValue.textContent = formatCount(game.walletValue('Gems'));
 
     const slot = game.hudSlot();
     // Population is drawn on the world now, over the Townhall, so the plaque
@@ -126,7 +155,12 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // met magic, which was right when it only paid for relics; it now pays
     // for every tap, so hiding it would hide the reason a tap refused.
     const m = game.manaInfo();
-    manaValue.textContent = `${m.value}/${m.cap}`;
+    // The POOL, not "pool/cap". The gauge already draws the ratio as a fill
+    // and turns its rim gold when it is spilling, so "/100" was the same fact
+    // twice — and it was the four characters that pushed Stone off the end of
+    // the plank. The full reading stays in the aria-label and in the
+    // Reliquary, which is what this gauge opens.
+    manaValue.textContent = formatCount(m.value);
     manaRate.textContent = `+${m.net}/h`;
     manaFill.style.width = `${m.cap === 0 ? 0 : Math.min(100, (m.value / m.cap) * 100)}%`;
     // Full and OVERCHARGED are different states: full means the next hour is

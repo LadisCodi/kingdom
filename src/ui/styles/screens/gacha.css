@@ -1,0 +1,196 @@
+/* The gacha reveal: a plaque, a grid that deals itself, and the hero
+ * interstitial that interrupts it.
+ *
+ * The whole surface is dark rather than parchment. Every other screen in the
+ * game is a sheet drawn OVER the kingdom, and the kingdom stays readable
+ * behind it on purpose; this one is the opposite — for a few seconds nothing
+ * else is happening, and the tiles have to be the brightest thing on screen. */
+
+.gr-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px 16px;
+  background:
+    radial-gradient(90% 60% at 50% 38%, rgba(242, 178, 51, 0.22), transparent 70%),
+    rgba(24, 15, 8, 0.93);
+  cursor: pointer;
+  overflow-y: auto;
+}
+
+/* The banner ribbon. Display face at --text-title, which is the only size it
+   is crisp at (tests/fonts.test.ts). */
+.gr-plaque {
+  padding: 6px 28px;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--gold), var(--gold-dark));
+  border: 2px solid var(--wood-dark);
+  box-shadow: 0 var(--lip) 0 var(--wood-dark);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- the grid */
+
+.gr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 76px);
+  gap: 10px;
+  justify-content: center;
+}
+/* A ten-call condenses into more tiles than three across can hold without
+   scrolling, so past six it goes four across and smaller. */
+.gr-grid.is-dense { grid-template-columns: repeat(4, 68px); gap: 8px; }
+
+.gr-tile {
+  position: relative;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.24)),
+    var(--tile, var(--parchment-shade));
+  overflow: hidden;
+}
+.gr-tile.is-common { --tile: var(--rarity-common); }
+.gr-tile.is-rare { --tile: var(--rarity-rare); }
+.gr-tile.is-legendary { --tile: var(--rarity-legendary); }
+.gr-tile.is-currency { --tile: var(--parchment-shade); }
+
+/* A hero is not a bigger stack of the tile beside it. The light frame and the
+   glow are the whole difference, and they have to read at a glance. */
+.gr-tile.is-hero {
+  border-color: var(--parchment);
+  box-shadow: 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(244, 228, 193, 0.75);
+}
+
+.gr-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  image-rendering: pixelated;
+}
+.gr-art.is-glyph { display: grid; place-items: center; font-size: 32px; }
+
+/* Bottom-right, the way every collection game counts a stack. */
+.gr-count {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: rgba(24, 15, 8, 0.78);
+  color: var(--ink-inverse);
+  font-size: 12px;
+  line-height: 1.5;
+}
+/* The mark that says FRAGMENTS rather than the hero — without it a stack of
+   four and a hero read as the same prize with a different number on it. */
+.gr-mark {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  display: grid;
+  place-items: center;
+  padding: 1px;
+  border-radius: 4px;
+  background: rgba(24, 15, 8, 0.7);
+}
+.gr-tag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1px 3px;
+  background: rgba(24, 15, 8, 0.75);
+  color: var(--ink-inverse);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --------------------------------------------------------- the deal itself */
+
+/* Hidden means NOT LAID OUT DIFFERENTLY: the grid is its final size from the
+   first frame, so tiles land in place instead of the whole block reflowing
+   under the player's eye with every reveal. */
+.gr-tile.is-hidden { visibility: hidden; }
+.gr-tile { animation: gr-pop var(--motion-snap) steps(2); }
+@keyframes gr-pop {
+  from { transform: scale(0.6); }
+  to { transform: scale(1); }
+}
+/* A hidden tile must not burn its animation before it is shown. */
+.gr-tile.is-hidden { animation: none; }
+
+.gr-calls { color: var(--locked); font-size: var(--text-helper); }
+
+/* The way out, and it appears only when there is nothing left to deal. */
+.gr-prompt {
+  color: var(--ink-inverse);
+  font-size: var(--text-helper);
+  text-align: center;
+  animation: gr-breathe 1.8s ease-in-out infinite;
+}
+.gr-prompt.is-hidden { visibility: hidden; animation: none; }
+@keyframes gr-breathe { 50% { opacity: 0.45; } }
+
+/* --------------------------------------------------------- the interstitial */
+
+.gr-curtain-slot:empty { display: none; }
+.gr-curtain-slot { position: absolute; inset: 0; }
+
+.gr-curtain {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--ink-inverse);
+  background:
+    radial-gradient(70% 45% at 50% 42%, var(--tile, var(--rarity-common)), transparent 72%),
+    rgba(18, 11, 6, 0.97);
+  animation: gr-curtain-in var(--motion-sheet) ease-out;
+}
+.gr-curtain.is-common { --tile: var(--rarity-common); }
+.gr-curtain.is-rare { --tile: var(--rarity-rare); }
+.gr-curtain.is-legendary { --tile: var(--rarity-legendary); }
+@keyframes gr-curtain-in { from { opacity: 0; } to { opacity: 1; } }
+
+.gr-curtain-kicker { color: var(--gold); font-size: var(--text-helper); letter-spacing: 0.08em; }
+.gr-curtain-art {
+  width: 60%;
+  max-width: 260px;
+  height: 260px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 18px rgba(255, 240, 200, 0.45));
+}
+.gr-curtain-art.is-glyph { display: grid; place-items: center; font-size: 96px; }
+.gr-curtain-name { font-family: var(--font-display); font-size: var(--text-title); }
+.gr-curtain-title { color: var(--locked); font-size: var(--text-helper); }
+.gr-curtain-rarity {
+  padding: 2px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(24, 15, 8, 0.6);
+  font-size: var(--text-helper);
+  letter-spacing: 0.06em;
+}
+.gr-curtain .gr-prompt { margin-top: 8px; }

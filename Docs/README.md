@@ -1,61 +1,121 @@
-# Kingdom — Complete Game Specification
+# Kingdom — the design documentation
 
-Self-contained documentation of the **Kingdom** prototype ("mini civ" — a cozy hex
-city-builder / idle game) exactly as built in the Unity project on branch
-`feature/back-to-hex`, snapshot **2026-08-17**. It exists so the game can be
-reimplemented on another platform (e.g. the web) without access to the Unity project:
-all mechanics, formulas, balancing values, UI behavior, and the full map layout are
-in these files.
+**Kingdom** is a cozy square-grid city-builder / idle-management game on a
+fog-shrouded fantasy map, built for the web. **This folder is the design.** It
+describes the game as currently designed — not its history, and not how it is
+coded.
 
-## Reading order
+## Start here
 
-| # | File | What it covers |
-|---|---|---|
-| 0 | [00-design-intent.md](00-design-intent.md) | **The current design intent for the web build, and the canonical backlog.** Rewritten 2026-09-02; it supersedes this Unity snapshot wherever they disagree. |
-| 1 | [01-overview.md](01-overview.md) | Pitch, entity hierarchy, core loop, currency summary, status |
-| 2 | [02-map-and-fog.md](02-map-and-fog.md) | Hex grid & adjacency, terrain/features, fog of war & reveal costs |
-| 3 | [03-economy-and-production.md](03-economy-and-production.md) | Currencies, generator model, accrual algorithm, worked units, vaults |
-| 4 | [04-districts.md](04-districts.md) | District types, all balancing data, placement rules, cost/time formulas |
-| 5 | [05-city-population-workers.md](05-city-population-workers.md) | City, population buying, worker pool, builders |
-| 6 | [06-construction-queue.md](06-construction-queue.md) | Build queue engine, offline cascade, cancel/refund, gem rush |
-| 8 | [08-army.md](08-army.md) | Units, recruiting, power cap |
-| 9 | [09-ui-and-input.md](09-ui-and-input.md) | Every screen's data & behavior, world UI, the tap-handler chain |
-| 10 | [10-persistence.md](10-persistence.md) | Save format, autosave, load order, offline progress |
-| 11 | [11-gaps-and-discrepancies.md](11-gaps-and-discrepancies.md) | Stubs, data gaps, quirks — the deliberate-decision list for a port |
-| — | [data/region-map.json](data/region-map.json) | The full Region_01 tile layout (155 terrain cells, 13 Trees), extracted from the Unity scene |
+| File | What it is |
+|---|---|
+| **[`overview.md`](overview.md)** | **The game in five minutes** — the pitch, the promises, the loops, the scopes. Read this first. |
+| [`open-questions.md`](open-questions.md) | **Every decision still to make**, and every known soft spot, with a stable id (`OQ-n`) that the feature docs point at. |
+| [`implementation-plan.md`](implementation-plan.md) | **What is built, what is not, and what design has to answer before the next thing can start.** |
 
-## The web build
+## The design intentions
 
-Files `01`–`11` above are a frozen Unity snapshot. The web reimplementation has
-diverged substantially (square grid, the harvest loop, housing taxes, no spells
-as-shipped), and its own design docs are the live source of truth:
+Every feature below is shaped by these.
+
+**The three promises**
+
+1. **No other player can ever touch your city.** The only thing that ever
+   takes from you is a garrison you have seen and left standing — three raids
+   per camp at most, a tenth of the purse each, and handed back in full when
+   you clear it. Every other pressure is *opportunity that expires* — a pool
+   that overflows, a window that closes, a haul you chose to risk.
+2. **The best-managed economy wins.** Combat is a sink for the economy, not a
+   test of reflexes. There is no battle screen.
+3. **Wallets buy power, comfort and breadth — but never exclusivity.**
+   Nothing is purchase-only that cannot also be earned, and every paid ladder
+   is earned first.
+
+**The five working rules**
+
+1. **It is played in visits, not sittings** — ~30 minutes a day across two or
+   three check-ins. **If a feature needs more, the feature is wrong.**
+2. **Price every reward in a duration of the player's own production**, never in
+   absolute amounts. A tap pays seconds of WORK on what you tapped; a daily
+   chest pays a fraction of the pool. A ladder is relative too: a Wonder's cost
+   is a curve, not a table.
+3. **The offline cap limits what the city produces, never what a timer does.**
+4. **Adding a wallet row needs an argument.** Ten rows, five things on the
+   plank. A counter beside the thing it belongs to usually beats a coin — the
+   argument that wins is that the thing is a *price* on a button, which is
+   what the two gacha keys are.
+5. **One job per currency.**
+
+**The paid fog is the differentiator.** It pays back three ways: resources,
+landmarks that make exploration compound, and ruins that are places you return
+to ([`01`](features/01-map-and-fog.md)) — and every ruin opens with a gate
+the army has to clear before the ruin pays
+([`18`](features/18-garrisons-and-raids.md)).
+
+## The features
+
+One file per feature, in the order a player meets them.
+
+| # | Feature | Covers | State |
+|---|---|---|---|
+| 1 | [The map and the fog](features/01-map-and-fog.md) | the grid, terrain, features, the three fog states, the reveal curve, what the fog holds | built |
+| 2 | [Map scopes](features/02-map-scopes.md) | **structural** — the bounded province, temporary provinces as the event format, the world map as a **hex lattice** with two zoom registers and per-player fog, travel time as its pacing dial, and how much PvP the promises allow | designed |
+| 3 | [The economy](features/03-economy.md) | every currency and its one job, housing taxes, adjacency, villager training, what a tap is worth | built |
+| 4 | [Harvest](features/04-harvest.md) | **the cell as a depot, the tap as a duration**, the strike, migration, the map's production ceiling | built |
+| 5 | [The city](features/05-city-and-districts.md) | all fourteen districts, the Townhall as era gate, **every level's cost authored and multiplied by the building's instance ordinal**, placement, moving a building; the building list is [`buildings.md`](features/buildings.md) | built |
+| 6 | [Construction](features/06-construction.md) | no waiting line, builders, and the offer a refused build raises | built |
+| 7 | [Research](features/07-research.md) | **three tomes — Civics, Warfare, Magic — one flow-chart page each, eras opened by exploring, minor ranks in place of upgrades, and Knowledge as the research clock**; the node list is [`tech-tree.md`](features/tech-tree.md) | built |
+| 8 | [Magic](features/08-magic.md) | Mana and its cap, the Sanctum, landmarks, and the rewarded ad as one loop | built |
+| 9 | [Relics](features/09-relics.md) | the five relics as **passives only**, attunement, and the **nine-piece ingredient set** | built / designed |
+| 10 | [Heroes and the gacha](features/10-heroes.md) | thirty-two heroes as **a body and a type buff** on the battle board, XP-bought levels, Fragment-plus-Stardust ascension, Gem-bought hero slots, the two-banner gacha with pity and no dead pulls | gacha built; **hero reworked 2026-09-08** |
+| 11 | [Ruins](features/11-expeditions.md) | ruins as **depths of numbered rooms**, opened by the Adventurers' Guild, a boss at the end of every depth, per-room rewards and permanent generation on a clear; the resolver is [`combat.md`](features/combat.md), the screens are [`11a-ruins-ui.md`](features/11a-ruins-ui.md) | **rooms built 2026-09-09**; the tick resolver and the Guild are ahead |
+| 11 | [Combat](features/combat.md) | **the resolver every fight goes through** — a deterministic tick auto-battler on a six-slot board, squads by unit type and tier, heroes and villains in slots of their own, and the event stream the renderer replays; the army cap and the four military halls | designed 2026-09-08 |
+| 12 | [Quests and the daily habit](features/12-quests.md) | the 50-quest chain, the 34-quest authored onboarding, the daily chest — a 20-day season of 14 rungs, free track and Royal track | built |
+| 13 | [Events](features/13-events.md) | **the archetype we author ten times a year** — points, the fog island, the track that is also the pass, the shop, the deadline | machinery built, **catalogue empty** |
+| 14 | [Monetisation](features/14-monetization.md) | what a wallet may buy, five ad placements, and a **simulated** store that never charges — payer profiles with a monthly budget, Gem packs, builders, the hero banner | partly built |
+| 15 | [The social layer](features/15-social.md) | identity, neighbours and capped daily help, a guild, a weekly collective bar, and the siege that clears the world map's landmarks | designed |
+| 16 | [Wonders](features/16-wonders.md) | **the ladder with no top** — buildings whose upgrade curve never ends | designed |
+| 17 | [Workshops and refined goods](features/17-workshops-and-goods.md) | the four goods, the four buildings that make them, and the queue a villager works — the first producer that is a crew from the start | built |
+| 18 | [Harmony and the decorations](features/18-harmony.md) | the city stat six decorations supply and the levels from 8 demand — a gate, never a drain, priced in variety and the workshop queue | built, waiting on the Townhall ladder |
+| 18 | [The gate](features/18-garrisons-and-raids.md) | **a garrison with a clock** — one garrison room before every ruin's Depth 1, the minute-scale counter discovery starts, the bounded and recoverable raid it makes if the gate still stands, and the room fight that clears it: the doorway to combat | built |
+
+## Reference
+
+Not features — how content and art are made.
 
 | File | What it covers |
 |---|---|
-| [features/harvest-loop.md](features/harvest-loop.md) | Tappable resource cells, exhaustion/recovery, workers as walking units |
-| [features/economy-taxes-and-market.md](features/economy-taxes-and-market.md) | Housing taxes, villager training, the Market |
-| [features/research-and-upgrades.md](features/research-and-upgrades.md) | The one tech/upgrade tree and its fog |
-| [features/resource-expansion.md](features/resource-expansion.md) | Stone, Fish and Iron lines; the archipelago |
-| [features/quests.md](features/quests.md) | The onboarding chain (27 quests to Townhall 3, then 11 more into the long game) |
-| [features/balancing-v1.md](features/balancing-v1.md) | The three-era Townhall arc |
-| **[features/magic.md](features/magic.md)** | **Built 2026-09-02** — Mana, artifacts, attunement, landmarks (contested landmarks outstanding) |
-| **[features/expeditions.md](features/expeditions.md)** | **Built 2026-09-02** — ruins as dungeons, staged delves, unit stats |
-| **[features/heroes-and-gacha.md](features/heroes-and-gacha.md)** | **Built 2026-09-02** — the collection substrate and the gacha (attune-or-arm outstanding). Supersedes `managers.md` |
-| **[features/engine-seams.md](features/engine-seams.md)** | **Built 2026-09-02** — the sim groundwork all of the above needed, and the build order it prescribed |
-| **[features/ad-economy.md](features/ad-economy.md)** | **Built 2026-09-02** — Mana, taps and rewarded ads tuned as one loop; a tap pulls production forward |
-| **[features/balancing-v2.md](features/balancing-v2.md)** | **Built 2026-09-02** — unblockers, military buildings, every new number |
-| **[features/knowledge.md](features/knowledge.md)** | **Built 2026-09-02, rewritten the same day** — Knowledge is a dungeon reward and levels relics and heroes; the technology tree is Gold |
-| **[features/currency-simplification.md](features/currency-simplification.md)** | **Built 2026-09-02** — eleven wallet rows down to seven; four coins on the plank; how the competition does it |
-| **[features/moving-buildings.md](features/moving-buildings.md)** | **Built 2026-09-02** — relocating a built building, and dragging the placement ghost instead of panning |
-| **[onboarding.md](onboarding.md)** | **Built 2026-09-02** — the authored first-user experience, 26 steps; the quest chain and the tech gates that serve it |
+| [`proposals/builder-30-days.md`](proposals/builder-30-days.md) | a **proposal**, not a spec: the building content that gives the city thirty days — levels 6–10, workshops, Harmony, the Watchtower, Reliquary, Tavern and Dragon's Nest |
+| [`plans/builder-30-days.md`](plans/builder-30-days.md) | the step-by-step plan for that proposal — data, then logic, then UI, per building |
+| [`map-editor.md`](map-editor.md) | the `?dev=map` tool the world is painted in, and the one module that says what a legal map is |
+| [`tech-tree-editor.md`](tech-tree-editor.md) | the `?dev=tree` tool technologies are created and arranged in, and the one module that says what a legal tree is |
+| [`audio-wishlist.md`](audio-wishlist.md) | the sounds the build wants and what each one is for |
+| [`art/ui-menus-redesign.md`](art/ui-menus-redesign.md) | the parchment-and-carved-wood UI system, its palette and its shapes |
+| [`art/ui-long-game.md`](art/ui-long-game.md) | screens for the systems that arrived after the first UI pass |
+| [`art/sprite-prompts.md`](art/sprite-prompts.md) | how the world and UI art was generated, and the prompts that did it |
+| [`art/world-map-mockup-prompts.md`](art/world-map-mockup-prompts.md) | the world-map mockups: what two rounds of renders settled, and the three prompts |
+| [`art/portraits/prompt-template.md`](art/portraits/prompt-template.md) | the hero-portrait prompt: the generic style block, the per-character block, and how to verify the alpha |
 
-## Ground rules used throughout
+## House rules for these docs
 
-- All numbers were read from the raw data assets and all formulas from the source
-  code at the snapshot date — nothing is from memory or inferred.
-- Times are wall-clock UTC; rates are **per real-time minute**; the game ticks once
-  per second.
-- "TH*n*" = Townhall level *n*. Lists indexed "per level" are 0-indexed by
-  `level − 1` and clamp to their last entry.
-- Art direction reference: pixel-art (Aseprite), mockup `miniciv-mockup.ase` in the
-  Unity project; art assets are not part of this spec.
+- **These are DESIGN documents.** They specify HOW the game works. No
+  implementation detail unless a decision turns on it; code-level contracts
+  live in `CLAUDE.md` and in [`implementation-plan.md`](implementation-plan.md)
+  §1.
+- **Specification, not design process.** Write what the feature does, not why
+  it does it that way, and not the alternatives that were considered.
+- **The current design only.** No history: not how a feature has changed, not
+  when, not why.
+- **As simple as possible.** Prefer bullet lists and tables to prose. Less is
+  more.
+- **A feature doc opens with a scope-and-status blockquote**, uses numbered `##`
+  sections referenced elsewhere as `§n`, carries a **dials table in the order to
+  reach for them**, and ends with a **deliberately not in this design** list —
+  one line per exclusion.
+- **Open questions live in one file**, not scattered. A feature doc names them by
+  id.
+- **When a doc and the code disagree, the code is usually right and the doc is
+  stale.** Fix the doc in the same commit, and prefer a test over a paragraph
+  for any number that has now been argued twice.
+- **The workbook is the source of truth for every number**, the map editor for
+  the map. A doc quoting a number is a convenience, never the authority.
+- **Docs are written in English.** Keep it that way.

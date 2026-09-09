@@ -1,0 +1,181 @@
+/* The battle playback (src/ui/battleScreen.ts, Docs/features/11a-ruins-ui.md
+   §2.5). A full-bleed board: the bar at the top, six rows of slots, and
+   nothing else — the fight is the content, so the frame gets out of its way.
+
+   Everything here snaps. `steps(2)` on the flash and no transition on the
+   skull: a pixel-art fight reads as a series of states, and a slot that fades
+   between them looks like a bug in the sprite rather than a hit. */
+
+.bs {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  /* OPAQUE, with no alpha at all. The sheet that launched the fight is still
+     standing behind this — it has to be, so the player lands back on the
+     next room — and even a few per cent of parchment showing through turns
+     the board into a ghost of a menu. */
+  background:
+    radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.12), transparent 70%),
+    #150d07;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------- the power bar
+
+   One trough, two numbers and a split fill. It is not the kit's `progress`:
+   that one is a fraction of something, and this is a TUG between two totals —
+   the fill IS the boundary, and both ends carry a number that falls. */
+.bs-bar {
+  position: relative;
+  width: 100%;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: 999px;
+  background: var(--clay);
+  overflow: hidden;
+  flex: none;
+}
+.bs-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--sky);
+  transition: width 120ms linear;
+}
+.bs-bar-mine,
+.bs-bar-theirs {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--parchment);
+  padding: 0 12px;
+}
+.bs-bar-mine { margin-right: auto; }
+
+.bs-where {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  text-align: center;
+  flex: none;
+}
+.bs-where b { font-size: var(--text-body); }
+
+/* ------------------------------------------------------------- the board */
+
+.bs-board {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+/* The two armies facing each other. The one piece of empty space on the
+   screen that is doing a job. */
+.bs-gap { height: 36px; flex: none; }
+
+.bs-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  min-height: 12px;
+}
+/* The back rank sits behind the front one, and says so by being smaller —
+   the row is what decides who gets hit (Docs/features/combat.md §8). */
+.bs-row.is-back .bs-slot { transform: scale(0.88); }
+
+.bs-slot {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: var(--radius-sm);
+  background: var(--parchment-shade);
+  box-shadow: 0 var(--lip) 0 rgba(60, 36, 18, 0.35);
+}
+.bs-slot.is-hero { background: var(--parchment); border-color: var(--gold-dark); }
+
+.bs-portrait {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.bs-portrait.is-glyph {
+  display: grid;
+  place-items: center;
+  font-size: var(--text-body);
+}
+.bs-count {
+  position: absolute;
+  right: 2px;
+  bottom: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink);
+  text-shadow: 0 1px 0 var(--parchment), 0 -1px 0 var(--parchment),
+    1px 0 0 var(--parchment), -1px 0 0 var(--parchment);
+}
+
+/* HURT: a white frame for two frames. */
+@keyframes bs-hit {
+  from { background: var(--parchment); filter: brightness(2.4); }
+  to { background: var(--parchment-shade); filter: none; }
+}
+.bs-slot.is-hit { animation: bs-hit 180ms steps(2); }
+
+/* DEAD: the colour goes out of it and the skull goes on top. Not a fade —
+   the slot is simply a different thing from the next frame on. */
+.bs-slot.is-dead {
+  filter: grayscale(1) brightness(0.8);
+  box-shadow: none;
+}
+/* The mark, not a lid: it sits on the portrait rather than replacing it, so
+   the player can still see WHICH squad is gone. */
+.bs-skull {
+  position: absolute;
+  inset: auto 0 2px 0;
+  display: none;
+  place-items: center;
+}
+.bs-slot.is-dead .bs-skull { display: grid; }
+.bs-slot.is-dead .bs-skull .icon { transform: scale(0.7); filter: brightness(1.8); }
+.bs-slot.is-dead .bs-portrait { opacity: 0.55; }
+
+/* ------------------------------------------------------- how it turned out */
+
+/* The verdict lands OVER the board, in the middle of it — a sign at the
+   bottom of a screen is a caption, and this is the answer to the question the
+   player asked when they pressed the button. */
+.bs-plaque {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  color: var(--parchment);
+  padding: 12px 36px;
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: var(--radius);
+  background: var(--wood);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+}
+.bs-plaque.is-won { background: var(--leaf); }
+.bs-plaque.is-lost { background: var(--clay); }
+.bs-exit { width: 100%; flex: none; }
+.bs-exit .k-btn { width: 100%; }
+.bs .is-hidden { visibility: hidden; }

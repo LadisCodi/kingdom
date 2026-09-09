@@ -1,32 +1,24 @@
-// Combat: a SCORING PASS, not a simulation (Docs/features/expeditions.md §4).
+// What a party IS, before it fights (Docs/features/combat.md §4, §12).
 //
-// There is no battle screen and there never will be. Resolving a depth is one
-// deterministic pass over the party:
+// The fight itself moved out. `battle.ts` is the resolver — ticks, rows,
+// frontage, targeting, an event stream — and this file is what it is handed:
+// the shape of a party, the type chart both sides read, and the POWER
+// ESTIMATE the screens print before anyone commits.
 //
-//   ATK × the type chart  vs  the threat   → did you clear it?
-//   the threat            vs  DEF          → damage, absorbed by party HP
+// The estimate and the outcome are deliberately two different numbers. A sum
+// of `power_per_troop` is what a player can be shown and can compare; who
+// actually wins depends on which rank stands in front, how many troops can
+// reach at once, and what dies first — and a sheet that promised to know that
+// in advance would be promising to make the fight pointless. The doc says it
+// in one line: "This is an estimate; the resolver decides the outcome."
 //
-// and HP does not regenerate between depths. That is the attrition, and it is
-// what makes the risk curve EMERGENT rather than authored: the deeper you go
-// the more worn the party, so danger rises visibly on a depleting bar instead
-// of following a probability curve someone invented. It is also what earns DEF
-// and HP their place — a pure power score would not need them.
-//
-// The type chart therefore does its work at COMPOSITION time, which is where
-// the decision belongs in a management game. A tactical resolution would move
-// the decision inside a fight — a different genre, and one that eats the
-// thirty-minute session budget. The middle option is the worst of the three:
-// simulating combat in detail without showing it means the player sees only
-// win or lose and learns nothing from all that machinery.
-//
-// EVERYTHING HERE IS DETERMINISTIC. "A well-prepared run never fails" is not a
-// slogan, it is a property: `guaranteedDepth` below computes exactly how far a
-// party is safe, and the expedition sheet shows it before launch. The gamble
-// is INFORMATION, not dice — you do not know the next depth's threat type
-// until you commit to it.
+// The type chart still does its work at COMPOSITION time, which is where the
+// decision belongs in a management game: the player picks WHICH TROOPS, and
+// the resolver plays out what that choice was worth.
 
-import { ARMY, ARTIFACTS, HEROES, RUINS, UNITS } from './data/definitions';
-import type { ArtifactId, HeroId, RuinId, UnitId } from './state';
+import type { UnitTag } from './data/definitions';
+import { ARMY, COMBAT, HEROES, UNITS } from './data/definitions';
+import type { HeroId, UnitId } from './state';
 
 /** X beats Y. Lancer → Cavalry → Archer → Warrior → Lancer. */
 export const BEATS: Record<UnitId, UnitId> = {
@@ -38,10 +30,14 @@ export const BEATS: Record<UnitId, UnitId> = {
 
 /** What `attacker` scores against a depth whose threat is `threat`.
  *  'Any' is neutral — the Star Observatory answers to nothing in particular. */
-export function typeMultiplier(attacker: UnitId, threat: UnitId | 'Any'): number {
+export function typeMultiplier(
+  attacker: UnitId, threat: UnitId | 'Any', disadvantageOffset = 0,
+): number {
   if (threat === 'Any') return 1;
   if (BEATS[attacker] === threat) return ARMY.typeAdvantage;
-  if (BEATS[threat] === attacker) return ARMY.typeDisadvantage;
+  // Manoeuvre softens the penalty, never past neutral: a bad matchup stays a
+  // bad matchup, it just stops being a wasted trip.
+  if (BEATS[threat] === attacker) return Math.min(1, ARMY.typeDisadvantage + disadvantageOffset);
   return 1;
 }
 
@@ -54,31 +50,47 @@ export interface PartySlot {
   count: number;
 }
 
-/** The relic a hero carried down, at the level it went down AT. Combat stays
- *  pure — no `GameState` reaches this module — so the level is passed in the
- *  same way `heroLevel` is. */
-export interface CarriedArtifact {
-  id: ArtifactId;
+/**
+ * What the kingdom's research adds to the soldiers it sends — the Warfare
+ * lines Shield Wall, Fletching, Barding, Warhorns and Manoeuvre, resolved OUT
+ * HERE by expeditions.ts and carried in on the Party, exactly the way the
+ * hero's level travels. Combat stays pure: no GameState ever reaches this
+ * module, so a fight can be replayed from its inputs alone.
+ */
+export interface Drill {
+  /** Flat ATK per unit, by tag; `all` applies to every unit. */
+  atk: Partial<Record<UnitTag, number>> & { all?: number };
+  /** Flat DEF per unit, by tag; `all` applies to every unit. */
+  def: Partial<Record<UnitTag, number>> & { all?: number };
+  /** Added to the type-disadvantage multiplier (0.75 + 0.06 at Manoeuvre III). */
+  disadvantageOffset: number;
+}
+
+export const NO_DRILL: Drill = { atk: {}, def: {}, disadvantageOffset: 0 };
+
+/** The flat bonus a unit of these tags gets from a Drill's atk or def table. */
+const drillFor = (table: Drill['atk'], tags: readonly UnitTag[]): number =>
+  (table.all ?? 0) + tags.reduce((n, t) => n + (table[t] ?? 0), 0);
+
+/**
+ * A hero on the board, at the level it fights at.
+ *
+ * The LEVEL travels with the hero rather than being a parameter, because a
+ * party fields several and they are rarely the same level. It also keeps
+ * combat pure: a fight replays from its inputs, and the level is an input.
+ */
+export interface PartyHero {
+  id: HeroId;
   level: number;
 }
 
 export interface Party {
-  heroId: HeroId | null;
+  /** One per HERO SLOT, and at least one always — there is no fight without a
+   *  hero (Docs/features/10-heroes.md §2.6). */
+  heroes: readonly PartyHero[];
   slots: readonly PartySlot[];
-  /** Carried into the delve, and therefore NOT attuned to the kingdom. */
-  artifact?: CarriedArtifact | null;
-}
-
-/** A carried relic's contribution at its level. */
-export function carriedStats(artifact: CarriedArtifact | null | undefined): PartyStats {
-  if (!artifact) return { atk: 0, def: 0, hp: 0 };
-  const c = ARTIFACTS[artifact.id].carried;
-  const levels = artifact.level - 1;
-  return {
-    atk: c.atk + c.atkPerLevel * levels,
-    def: c.def + c.defPerLevel * levels,
-    hp: c.hp + c.hpPerLevel * levels,
-  };
+  /** The kingdom's drill, resolved by the caller. Absent = none. */
+  drill?: Drill;
 }
 
 export interface PartyStats {
@@ -92,190 +104,63 @@ export interface PartyStats {
  *
  * EVERY party-wide bonus belongs here and nowhere else. A trait applied after
  * the fact decorates the number the launch screen shows without changing the
- * number the sim fights with, which is the same fault `guaranteedDepth` had:
- * a promise on the sheet the descent does not keep. One function, one set of
- * stats, every caller equal.
+ * number the sim fights with: a promise on the sheet the fight does not keep.
+ * One function, one set of stats, every caller equal.
  */
-export function partyStats(party: Party, heroLevel = 1): PartyStats {
+export function partyStats(party: Party): PartyStats {
   let atk = 0;
   let def = 0;
   let hp = 0;
+  const drill = party.drill ?? NO_DRILL;
   for (const slot of party.slots) {
     const u = UNITS[slot.unitId];
-    atk += u.atk * slot.count;
-    def += u.def * slot.count;
+    atk += (u.dmg + drillFor(drill.atk, u.tags)) * slot.count;
+    def += (u.def + drillFor(drill.def, u.tags)) * slot.count;
     hp += u.hp * slot.count;
   }
-  if (party.heroId !== null) {
-    const h = HEROES[party.heroId];
-    atk += h.atk + h.atkPerLevel * (heroLevel - 1);
-    def += h.def + h.defPerLevel * (heroLevel - 1);
-    hp += h.hp + h.hpPerLevel * (heroLevel - 1);
+  for (const hero of party.heroes) {
+    const h = HEROES[hero.id];
+    atk += h.dmg + h.dmgPerLevel * (hero.level - 1);
+    def += h.def + h.defPerLevel * (hero.level - 1);
+    hp += h.hp + h.hpPerLevel * (hero.level - 1);
     // The Warden's trait is party-wide DEF, which reads to the player as "we
     // all stay standing longer" — so it multiplies the assembled party rather
-    // than the hero's own line.
+    // than the hero's own line. Two Wardens multiply twice, the way two
+    // heroes of one type stack everywhere else.
     if (h.trait === 'PartyDefence') def *= 1 + h.traitValue;
   }
-  // The relic rides on top of the party, INCLUDING past a party-wide trait —
-  // the Warden shields the soldiers it commands, not the stone in its pack.
-  const relic = carriedStats(party.artifact);
-  atk += relic.atk;
-  def += relic.def;
-  hp += relic.hp;
   return { atk: Math.round(atk), def: Math.round(def), hp: Math.round(hp) };
 }
 
-/** ATK after the matchup — the number that actually clears a depth. A hero
- *  carries a unit type of its own, so the hero choice feeds the same chart. */
-export function effectiveAttack(party: Party, threat: UnitId | 'Any', heroLevel = 1): number {
-  let atk = 0;
-  for (const slot of party.slots) {
-    atk += UNITS[slot.unitId].atk * slot.count * typeMultiplier(slot.unitId, threat);
-  }
-  if (party.heroId !== null) {
-    const h = HEROES[party.heroId];
-    atk += (h.atk + h.atkPerLevel * (heroLevel - 1)) * typeMultiplier(h.unitType, threat);
-  }
-  // A relic has no unit type, so its ATK is TYPE-NEUTRAL: it lands whole
-  // whatever is down there. That is deliberate, and it is what a relic is FOR
-  // — it is worth most in exactly the run where the matchup went against you,
-  // which makes socketing one a real answer to uncertainty rather than a flat
-  // power bump you would always take.
-  atk += carriedStats(party.artifact).atk;
-  return Math.round(atk);
-}
-
-// ------------------------------------------------------------------ threats
-
 /**
- * How strong depth `depth` is. The bottom depth is exactly the ruin's authored
- * difficulty and the first is a fraction of it, so "Tier III is clearable with
- * the right composition and not with the wrong one" is arithmetic rather than
- * a hope.
- */
-export function threatStrength(ruinId: RuinId, depth: number): number {
-  const ruin = RUINS[ruinId];
-  const span = Math.max(1, ruin.maxDepth - 1);
-  const t = Math.min(1, Math.max(0, (depth - 1) / span));
-  const floor = ARMY.threatFloorFraction;
-  return Math.max(1, Math.round(ruin.difficulty * (floor + (1 - floor) * t)));
-}
-
-/** How long depth `depth` takes. Time grows with depth INSIDE a run, not only
- *  across tiers — that is what makes "one more depth" a real escalation, and
- *  it naturally caps how far anyone pushes in one sitting. */
-export function depthDurationMs(ruinId: RuinId, depth: number): number {
-  const ruin = RUINS[ruinId];
-  return Math.round(ruin.baseDepthSeconds * ruin.depthGrowth ** (depth - 1)) * 1000;
-}
-
-/** Seconds to clear every depth of a ruin, for the site card. */
-export function fullClearSeconds(ruinId: RuinId): number {
-  let total = 0;
-  for (let d = 1; d <= RUINS[ruinId].maxDepth; d++) total += depthDurationMs(ruinId, d) / 1000;
-  return total;
-}
-
-// --------------------------------------------------------------- resolution
-
-export interface DepthOutcome {
-  cleared: boolean;
-  /** HP the depth took off the party, whether or not it was cleared. */
-  damage: number;
-  /** The party's ATK after the matchup, and what it had to beat. */
-  attack: number;
-  strength: number;
-}
-
-/**
- * Resolve one depth. Pure, total, and the ONLY place combat maths lives.
+ * THE ESTIMATE (Docs/features/combat.md §12) — the number the launch screen
+ * prints beside the room's own, and the bar at the top of the battle screen.
  *
- * Damage is what the threat gets past DEF; it always lands at least 1, so a
- * party can never be immortal at any depth — the deep push has to end
- * somewhere, and it should end because the bar ran out rather than because a
- * rule said so.
+ * It is a sum, and it is honest about being one: `power_per_troop` is a
+ * scale, not a swing. What decides a fight is the resolver (`battle.ts`),
+ * which cares about frontage, rows, cooldowns and the order things die in —
+ * none of which a sum can express. So this is deliberately NOT `dmg`: a
+ * Cavalry hits for 22 and is worth 7, and a party that reads stronger here
+ * can still lose to a board that answers it.
  */
-export function resolveDepth(
-  party: Party,
-  ruinId: RuinId,
-  depth: number,
-  threat: UnitId | 'Any',
-  heroLevel = 1,
-): DepthOutcome {
-  const strength = threatStrength(ruinId, depth);
-  const attack = effectiveAttack(party, threat, heroLevel);
-  const { def } = partyStats(party, heroLevel);
-  const damage = Math.max(
-    1,
-    Math.round(strength * ARMY.damagePerStrength - def * ARMY.damageAbsorbedPerDefence),
-  );
-  return { cleared: attack >= strength, damage, attack, strength };
-}
-
-/**
- * The deepest depth this party is SAFE to reach — assuming the worst matchup
- * at every step, because the player does not know what is down there.
- *
- * This is the number the expedition sheet shows before launch, and it is what
- * makes "your economy decides how deep you go safely; everything past that is
- * a gamble you opt into" a promise rather than a slogan.
- */
-export function guaranteedDepth(party: Party, ruinId: RuinId, heroLevel = 1): number {
-  const ruin = RUINS[ruinId];
-  let hp = partyStats(party, heroLevel).hp;
-  if (hp <= 0) return 0;
-  let safe = 0;
-  for (let depth = 1; depth <= ruin.maxDepth; depth++) {
-    // The worst case: whatever type this party answers WORST.
-    const worst = worstThreatFor(party, ruin.affinity);
-    const outcome = resolveDepth(party, ruinId, depth, worst, heroLevel);
-    if (!outcome.cleared) break;
-    hp -= outcome.damage;
-    if (hp <= 0) break;
-    safe = depth;
+export function partyPower(party: Party): number {
+  let power = 0;
+  for (const slot of party.slots) power += UNITS[slot.unitId].power * slot.count;
+  for (const hero of party.heroes) {
+    const h = HEROES[hero.id];
+    power += (h.dmg + h.dmgPerLevel * (hero.level - 1)) * COMBAT.heroPowerPerDmg;
   }
-  return safe;
+  return Math.round(power);
 }
 
-/**
- * The threat type this party scores worst against.
- *
- * EVERY type is on the table, whatever the ruin's affinity. A ruin's affinity
- * dominates its depths without owning all of them — `rollThreat` weights the
- * draw toward it but can produce any of the four — so a "guaranteed" depth
- * computed against the affinity alone would be a guarantee the sim does not
- * actually make. Getting this wrong is the difference between "safe to depth
- * 9" and a party that dies at 6, which is precisely the promise the whole
- * design rests on.
- */
-export function worstThreatFor(party: Party, affinity: UnitId | 'Any'): UnitId | 'Any' {
-  void affinity;
-  const candidates: Array<UnitId | 'Any'> = Object.keys(BEATS) as UnitId[];
-  let worst: UnitId | 'Any' = candidates[0];
-  let lowest = Infinity;
-  for (const c of candidates) {
-    const score = effectiveAttack(party, c);
-    if (score < lowest) {
-      lowest = score;
-      worst = c;
-    }
-  }
-  return worst;
+// -------------------------------------------------------- enemy formations
+
+/** One enemy stack, the same shape as a party slot. */
+export interface EnemySquad {
+  unitId: UnitId;
+  count: number;
 }
 
-/**
- * How this party reads against a ruin's affinity, for the launch screen:
- * 1.5 is a strong answer, 0.75 is the wrong tool.
- *
- * The carried relic is deliberately EXCLUDED. This number answers "did I bring
- * the right troops", and a relic's ATK is type-neutral — so counting it would
- * pull the ratio toward 1 and socketing a relic would make a good matchup read
- * WORSE while the party got stronger. The relic's contribution is already
- * shown, honestly, in the safe depth and the stat deltas.
- */
-export function matchupAgainst(party: Party, affinity: UnitId | 'Any'): number {
-  if (affinity === 'Any') return 1;
-  const troops: Party = { heroId: party.heroId, slots: party.slots };
-  const plain = partyStats(troops).atk;
-  return plain === 0 ? 1 : effectiveAttack(troops, affinity) / plain;
-}
+/** What a formation is worth — and therefore what a party has to beat. */
+export const formationPower = (squads: readonly EnemySquad[]): number =>
+  squads.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);

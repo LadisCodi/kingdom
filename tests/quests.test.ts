@@ -3,7 +3,7 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, QUESTS, TECH_ORDER, type QuestDef,
+  DISTRICTS, ERA_UNLOCK_CELLS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -12,19 +12,18 @@ import { tapCell } from '../src/sim/harvest';
 import {
   activeQuest, claimQuest, isQuestComplete, questValue, recordQuestEvent,
 } from '../src/sim/quests';
-import { techCost } from '../src/sim/research';
+import { techCost, techKnowledgeCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
-  type FeatureId, type GameState,
-} from '../src/sim/state';
+  type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
-  addBuilt, BERRIES, canGather, FOREST, freshGame, fund, map, T0, tickAt,
-} from './helpers';
+  addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf,
+  map, T0, tickAt } from './helpers';
 
 
 describe('the quest chain', () => {
-  // CLAIM: the chain IS Docs/onboarding.md, in order. That document is the
+  // CLAIM: the chain IS Docs/features/12-quests.md §2, in order. That document is the
   // authored first-user experience, and a chain that drifts from it is the
   // one bug nobody notices until a playtest — so the order is asserted here
   // beat by beat rather than described in prose that cannot fail.
@@ -58,32 +57,81 @@ describe('the quest chain', () => {
       'Rations', 'FirstVillager',                 // 5-6  a meal, then a neighbour —
                                                   //   a roof is what permits one
       'TaxDay', 'Explorer',                       // 7    rent pays for more fog
-      'Fields', 'FirstPlot', 'ByHand',            // 9-10 farming, by hand
-      'Lumber', 'Farmhand', 'ToWork',             // 11-12 and then not by hand
-      'GrowingTown', 'Neighbors', 'ProperCapital',// 13-14 a House FIRST, then the
+      'Fields', 'FirstPlot', 'ByHand',            // 9-11 farming, by hand
+      'Lumber', 'Tillage', 'Farmhand', 'ToWork',  // 12-15 and then not by hand —
+                                                  //   the Farm is one research
+                                                  //   under the plots, and the
+                                                  //   chain asks for it
+      'GrowingTown', 'Neighbors', 'ProperCapital',// 16-18 a House FIRST, then the
                                                   //   citizen it makes room for
                                                   //   (+ the Townhall, woven in)
-      'SawTeeth', 'TheSawmill', 'Crewed',         // 15-17 automate the wood
-      'FurtherAfield', 'OldStones',               // 18-19 explore, claim the shrine
-      'Mapmakers', 'Surveyors',                   // 20    exploration becomes a system
-      'Highlands', 'PutToSea',                    // 21-22 the terrain gates
-      'ArmedMen', 'Mustered', 'FirstSoldier',     // 23-24 something worth killing
-      'FirstSummon', 'IntoTheDark',               // 25-26 a hero, and the first depth
+      'SawTeeth', 'TheSawmill', 'Crewed',         // 19-21 automate the wood
+      'Levies', 'Sawpits', 'Regrowth',            // 22-24 the three cards the book
+                                                  //   puts after Saws — a
+                                                  //   requirement is the row above
+                                                  //   (2026-09-08), so the chain
+                                                  //   walks the rows rather than
+                                                  //   leaving the player to find
+                                                  //   them
+      'FurtherAfield',                            // 25   the shrine and the Barrow
+                                                  //   come into view — and
+                                                  //   FINDING the Barrow starts
+                                                  //   its gate's thirty minutes
+      'ArmedMen', 'Mustered', 'FirstSoldier',     // 29-31 something worth killing
+      'FirstSummon',                              // 32   a hero, who is mandatory
+      'DriveThemOut',                             // 33   THE FIRST FIGHT, on a
+                                                  //   clock the reveal started.
+                                                  //   It sits five beats after
+                                                  //   the discovery on purpose:
+                                                  //   anything between them is
+                                                  //   time the garrison spends
+                                                  //   raiding a city that cannot
+                                                  //   answer yet
+      'OldStones', 'Attuned',                     // 34-35 claim the shrine
+      'Mapmakers', 'Surveyors',                   // 36-37 exploration becomes a system
+      'Highlands', 'PutToSea',                    // 38-39 the terrain gates
+      'IntoTheDark',                              // 40   the first depth, behind
+                                                  //   the gate that fell at 33
     );
 
-    // 27+: the city economy the tutorial deferred, then the long game.
-    inOrder('IntoTheDark', 'ToMarket', 'Stoneworks', 'TheMine', 'GrandCapital');
+    // 40+: the rest of the city economy the tutorial defers, then the long game.
+    inOrder('IntoTheDark', 'Stoneworks', 'DeepSeams', 'GrandCapital');
     expect(QUESTS.at(-1)).toMatchObject(
       { id: 'TheReliquary', goalType: 'OwnArtifacts', goalAmount: 3 });
+  });
+
+  // THE CHAIN MAY NOT ASK FOR A TECHNOLOGY BEHIND A BAR IT HAS NOT ASKED THE
+  // PLAYER TO OPEN.
+  //
+  // A band past the first is a gate in the world now
+  // (Docs/features/07-research.md §2.1), so a `CompleteTech` quest pointing
+  // at one is only answerable once the region is open enough — and the chain
+  // is what teaches exploring. `DiscoverCells` goals count reveals FROM THE
+  // START OF THAT QUEST, so their amounts add up to a lower bound on how
+  // much the player has actually revealed by the time the chain gets here.
+  it('never points at a technology behind an era bar it has not opened', () => {
+    // The opening fog is already lifted around the Townhall, and that counts:
+    // it is what the first bands are priced against.
+    let revealed = Object.keys(freshGame().fog.revealed).length;
+    for (const quest of QUESTS) {
+      if (quest.goalType === 'DiscoverCells') revealed += quest.goalAmount;
+      if (quest.goalType !== 'CompleteTech') continue;
+      const def = TECHNOLOGIES[quest.goalTarget as TechId];
+      const gate = ERA_UNLOCK_CELLS[def.tome][def.era];
+      expect(gate, `${quest.id} asks for ${def.id}, behind ${gate} revealed cells`)
+        .toBeLessThanOrEqual(revealed);
+    }
   });
 
   // The two goal kinds the onboarding rewrite needed and the sim did not have.
   it('reads the new goal kinds off real state', () => {
     const state = freshGame();
-    const surveyors = QUESTS.find((q) => q.id === 'Surveyors')!;
-    expect(questValue(state, surveyors)).toBe(0);
-    state.upgrades.Surveying = 2;
-    expect(isQuestComplete(state, surveyors)).toBe(true);
+    // A RANK as a target: the chain points at `SawpitsI` by id, which is the
+    // only way a minor is ever asked for.
+    const sawpits = QUESTS.find((q) => q.id === 'Sawpits')!;
+    expect(questValue(state, sawpits)).toBe(0);
+    completeRanks(state, 'Sawpits', 1);
+    expect(isQuestComplete(state, sawpits)).toBe(true);
 
     const summon = QUESTS.find((q) => q.id === 'FirstSummon')!;
     expect(questValue(state, summon)).toBe(1); // the starting hero
@@ -121,7 +169,7 @@ describe('the quest chain', () => {
     expect(activeQuest(state)!.id).toBe('ARoof');
     // Enough for the roof AND the crop plot that comes six beats later.
     expect(getWallet(state.city.wallet, 'Wood')).toBeGreaterThanOrEqual(
-      DISTRICTS.Housing.buildCost.Wood! + DISTRICTS.FarmLands.buildCost.Wood!);
+      DISTRICTS.Housing.costPerLevel[0].cost.Wood! + DISTRICTS.FarmLands.costPerLevel[0].cost.Wood!);
   });
 
   it('absolute goals complete instantly when the work was already done', () => {
@@ -176,6 +224,30 @@ describe('the quest chain', () => {
   });
 });
 
+// A worker's strike looks exactly like the player's tap on screen now, and the
+// only thing keeping them apart is which quest event each path banks: both bank
+// a `collect`, and ONLY the thumb banks a `tap`. Unifying them would complete
+// every "tap N times" goal with the city standing idle, so the predicate that
+// depends on it gets a test rather than a comment
+// (Docs/features/04-harvest.md §4).
+describe('a tap and a strike are different asks', () => {
+  it('CollectTaps counts tap events and nothing else', () => {
+    const state = canGather(freshGame());
+    // Any quest will do as a carrier; what is under test is the predicate.
+    const carrier = QUESTS.findIndex((q) => q.goalType === 'CollectResource');
+    state.quests.index = carrier;
+    const goal = QUESTS[carrier];
+    state.quests.progress = 0;
+
+    // A collect moves a CollectResource goal…
+    recordQuestEvent(state, { kind: 'collect', currency: goal.goalTarget as never, amount: 1 });
+    const afterCollect = state.quests.progress;
+    // …and a bare tap event does not, because it carries no amount.
+    recordQuestEvent(state, { kind: 'tap' });
+    expect(state.quests.progress).toBe(afterCollect);
+  });
+});
+
 describe('first-time discoveries', () => {
   it('announces a resource ONCE, ever — persisted across saves', () => {
     const state = canGather(freshGame());
@@ -191,47 +263,157 @@ describe('first-time discoveries', () => {
     expect(restored.pendingDiscoveries).toEqual([]); // never re-announced
   });
 
+  // Timber is a tapping beat and pays MANA, so Mana is what it announces.
+  // Knowledge is not in the list because Knowledge is not on this quest: the
+  // clock is seeded by quest 1 and then by the beats that stand in front of a
+  // research, not by every beat in the chain (§2.1).
   it('quest rewards discover their currencies too', () => {
     const state = canGather(freshGame());
     state.quests.index = QUESTS.findIndex((q) => q.id === 'Timber');
     state.quests.progress = QUESTS.find((q) => q.id === 'Timber')!.goalAmount;
     tapCell(state, map, FOREST, T0);
     state.pendingDiscoveries = [];
-    expect(claimQuest(state)).toBe('Claimed'); // pays Gold
-    // Gold alone. The early chain pays no Knowledge now — that would announce
-    // a currency hours before the player owns anything to spend it on.
-    expect(state.pendingDiscoveries).toEqual(['resource:Gold']);
+    expect(claimQuest(state)).toBe('Claimed');
+    // Mana, not Gold: this is one of the tapping beats, and the reward that
+    // buys taps arrives where the pool is empty.
+    expect(state.pendingDiscoveries).toEqual(['resource:Mana']);
+  });
+
+  // Quest 1 pays the first card outright, because nothing is handed over at
+  // the title screen (Docs/features/12-quests.md §2.1).
+  it('the first quest pays the first research', () => {
+    expect(QUESTS[0].rewardKnowledge).toBeGreaterThanOrEqual(techKnowledgeCost('Forestry'));
+    expect(CURRENCIES.Knowledge.start).toBe(0);
+    // The clock the back half leans on instead of the chain (§3) — if this
+    // ever went to zero, nothing else in the game would fund a technology.
+    expect(KNOWLEDGE.basePerHour).toBeGreaterThan(0);
+  });
+
+  // Some of the opening pays MANA instead of Gold: the pool is what the
+  // opening is short of, not coin. Only the tapping beats, and only early.
+  it('pays Mana on a few opening beats and nowhere else', () => {
+    const manaQuests = QUESTS.filter((q) => q.rewardMana > 0);
+    expect(manaQuests.map((q) => q.id)).toEqual(['Timber', 'Rations', 'ByHand']);
+    // A Mana reward replaces the Gold rather than sitting on top of it.
+    for (const q of manaQuests) expect(q.reward.Gold ?? 0).toBe(0);
   });
 });
 
-// Docs/features/knowledge.md — the steady half of the research budget.
+// Docs/features/10-heroes.md §4 — the steady half of the research budget.
 //
-// CLAIM: quests pay Knowledge into the KINGDOM purse, and the chain pays out
-// more than the whole tech tree costs. Exploring is the half that scales;
+// CLAIM: quests pay Stardust into the KINGDOM purse, and the chain pays out
+// more Gold than the whole tech tree costs. Exploring is the half that scales;
 // this is the half that arrives on rails, so a player who follows the chain
 // is never hard-stuck behind a technology they cannot afford.
 describe('quests fund the research tree', () => {
-  it('pays its Knowledge into the kingdom purse, not the city', () => {
+  it('pays its Stardust into the kingdom purse, not the city', () => {
     const state = freshGame();
     const explorer = QUESTS.findIndex((q) => q.id === 'Explorer');
     state.quests.index = explorer;
     state.quests.progress = QUESTS[explorer].goalAmount;
     expect(claimQuest(state)).toBe('Claimed');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(QUESTS[explorer].rewardKnowledge);
-    expect(getWallet(state.city.wallet, 'Knowledge')).toBe(0);
+    expect(getWallet(state.kingdom.wallet, 'Stardust'))
+      .toBe(QUESTS[explorer].rewardStardust);
+    expect(getWallet(state.city.wallet, 'Stardust')).toBe(0);
   });
 
-  // The chain carries MOST of the tree in Gold and deliberately not all of
-  // it: a player who follows the guided path still has to have run a city to
-  // finish researching. The gap is a nudge rather than a wall — housing taxes
-  // and the Market close it.
-  it('the chain covers most of the tech tree, but never all of it', () => {
+  // THE CHAIN SEEDS THE CLOCK, THROUGH THE OPENING ONLY. Knowledge drips
+  // from territory, and a player early in the chain holds none — so every
+  // technology the OPENING asks for, prerequisites included, has to be
+  // affordable out of what the chain itself has paid, with NO drip at all.
+  // Zero drip is the worst case: the player who does the whole opening in one
+  // sitting. The one thing this may lean on is the lump a claim pays, because
+  // `OldStones` IS a claim.
+  //
+  // NARROWED 2026-09-09 to end at `Attuned`. Past the Sanctum the chain stops
+  // funding its own research and the base rate takes over (§3): a player at
+  // `Highlands` has a province dripping, and by then the wait is the content
+  // rather than a wall. The cut is by CHAIN POSITION, not by era — `MoreRoom`
+  // asks for an era-1 card at quest 40, long after the drip is the funding.
+  const OPENING_ENDS_AT = 'Attuned';
+
+  it('pays enough Knowledge that the OPENING is never stuck, with zero drip', () => {
+    // Nothing starts researched: every book is open from the first minute and
+    // no cover page is granted, so the chain-follower pays for all of it.
+    const done = new Set<TechId>();
+    const need = (id: TechId): number => {
+      if (done.has(id)) return 0;
+      done.add(id);
+      return techKnowledgeCost(id) + TECHNOLOGIES[id].requires.reduce((n, r) => n + need(r), 0);
+    };
+    // The opening's grant is the game's, so the chain-follower holds it; the
+    // base drip is not counted — zero drip stays the worst case.
+    let held = CURRENCIES.Knowledge.start;
+    let asked = 0;
+    for (const q of QUESTS) {
+      if (q.goalType === 'ClaimLandmarks') held += KNOWLEDGE.landmarkClaimLump;
+      if (q.goalType === 'CompleteTech') {
+        const demand = need(q.goalTarget as TechId);
+        expect(held, `${q.id} asks for ${q.goalTarget} (${demand} Knowledge) with ${held} in hand`)
+          .toBeGreaterThanOrEqual(demand);
+        if (demand > 0) asked++;
+        held -= demand;
+      }
+      held += q.rewardKnowledge;
+      if (q.id === OPENING_ENDS_AT) break;
+    }
+    // The opening asks for nine cards, and the guarantee is worth nothing if a
+    // re-scoped chain quietly stops covering most of them.
+    expect(asked).toBe(9);
+  });
+
+  it('pays its Knowledge into the kingdom purse, where the tree spends it', () => {
+    const state = freshGame();
+    // A CompleteTech quest, so the goal can be met by completing its tech.
+    const i = QUESTS.findIndex((q) => q.rewardKnowledge > 0 && q.goalType === 'CompleteTech');
+    state.quests.index = i;
+    completeTech(state, QUESTS[i].goalTarget as TechId);
+    expect(claimQuest(state)).toBe('Claimed');
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(CURRENCIES.Knowledge.start + QUESTS[i].rewardKnowledge);
+  });
+
+  // THE RATIO INVERTED ON 2026-09-04, on purpose.
+  //
+  // The chain used to pay 1.8x the whole tree, which
+  // Docs/features/07-research.md names as the problem: "the tree is
+  // not a sink, it is a formality". Collapsing the upgrades into 49 ranked
+  // technologies took the tree from 6,600 to 26,625, so the chain now covers
+  // a little under half of it and the rest has to be earned by running a
+  // city. That is the point — but it is also the number most likely to make
+  // the early game feel poor, so it is asserted rather than assumed.
+  it('the chain no longer covers the tree — the tree is a real sink now', () => {
     const chain = QUESTS.reduce((sum, q) => sum + (q.reward.Gold ?? 0), 0);
     const tree = TECH_ORDER.reduce((sum, id) => sum + techCost(id), 0);
-    expect(chain).toBe(12_075);
-    expect(chain).toBeGreaterThan(tree * 0.75);
-    expect(chain).toBeLessThan(tree * 2);
+    // 11,865: the two Market beats moved into the opening and were re-priced
+    // to their new position (250/290 -> 110/120, since 540 Gold at quest 15
+    // would have nearly doubled the early economy), and a third beat —
+    // `Trade`, the research that opens them — was added in front at 100.
+    // 11,725: three opening beats pay Mana instead of Gold (2026-09-08) —
+    // the pool is what the opening is short of, not coin.
+    // 11,975: `DriveThemOut` joins the military block at 250 — the beat that
+    // sends the player at the Barrow's gate before it raids them
+    // (Docs/features/18-garrisons-and-raids.md §6).
+    // 12,375: and `MusterCompany` at 400 in front of it, because twenty orcs
+    // in the doorway are a company's job and the chain pays for the company.
+    // 12,175: the three Market beats leave with the Market (2026-09-09).
+    expect(chain).toBe(12_175);
+    expect(tree).toBe(504_430); // the same sum tests/fog.test.ts freezes, and why
+    // Still enough to carry the player through the OPENING — every era-1
+    // major, which is the whole of the tree as it stood before the eras. The
+    // majors of eras 2 and 3 are the depth the city has to earn for itself.
+    const opening = TECH_ORDER
+      .filter((id) => ladderOf[id] === undefined && TECHNOLOGIES[id].era === 1)
+      .reduce((sum, id) => sum + techCost(id), 0);
+    // 1,850 across 17 era-1 majors: Civics became a whole book (2026-09-08)
+    // and its opening walks a single column down to Bureaucracy, and
+    // Cartography (with the fog's tap ladder, 01-map-and-fog.md §5), the
+    // Market and `Field Medicine` — now a ranked ladder, not a major
+    // (2026-09-09) — have left the count since. `Hunting` joined it coming
+    // back to era 1, and the first four cards stopped costing Gold.
+    expect(opening).toBe(1850);
+    expect(chain).toBeGreaterThan(opening);
+    expect(chain).toBeLessThan(tree);
   });
 
   // CLAIM: Knowledge appears with the Reliquary, not before it. Every quest
@@ -241,16 +423,16 @@ describe('quests fund the research tree', () => {
   it('only the long-game quests pay Knowledge at all', () => {
     const LONG_GAME = ['ClearRuins', 'ReachDepth', 'OwnArtifacts', 'OwnHeroes'];
     for (const q of QUESTS) {
-      if (q.rewardKnowledge > 0) expect(LONG_GAME).toContain(q.goalType);
+      if (q.rewardStardust > 0) expect(LONG_GAME).toContain(q.goalType);
     }
-    expect(QUESTS.filter((q) => q.rewardKnowledge > 0).length).toBeGreaterThan(0);
+    expect(QUESTS.filter((q) => q.rewardStardust > 0).length).toBeGreaterThan(0);
   });
 
   /**
    * The opening's one arithmetic dependency, and the whole game hangs off it:
    * quest 2 DEMANDS Forestry, quest 1 is the only thing before it, and both
    * the fog quest 1 asks for and Forestry itself are paid out of the same
-   * fixed opening purse (Docs/onboarding.md).
+   * fixed opening purse (Docs/features/12-quests.md §2).
    *
    * So the sum that has to work is: (the cells quest 1 asks for, at their
    * DEAREST) + Forestry ≤ the opening grant + what quest 1 pays back.
@@ -300,7 +482,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
   const questWith = (target: FeatureId, amount: number): QuestDef => ({
     id: 'test', name: 'test', description: '',
     goalType: 'DiscoverFeature', goalTarget: target, goalAmount: amount, goalLevel: null,
-    reward: {}, rewardGems: 0, rewardKnowledge: 0,
+    reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
   });
 
   /** Put a made-up quest in the chain's active slot. */
@@ -315,7 +497,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, questWith('Trees', 2));
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null }); // bare ground
-      recordQuestEvent(state, { kind: 'reveal', feature: 'Rocks' }); // wrong one
+      recordQuestEvent(state, { kind: 'reveal', feature: 'Mountain' }); // wrong one
       expect(state.quests.progress).toBe(0);
       recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
       expect(state.quests.progress).toBe(1);
@@ -372,7 +554,7 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
     const restore = activate(state, {
       id: 'test', name: 'test', description: '',
       goalType: 'DiscoverCells', goalTarget: null, goalAmount: 2, goalLevel: null,
-      reward: {}, rewardGems: 0, rewardKnowledge: 0,
+      reward: {}, rewardGems: 0, rewardStardust: 0, rewardKnowledge: 0, rewardMana: 0
     });
     try {
       recordQuestEvent(state, { kind: 'reveal', feature: null });

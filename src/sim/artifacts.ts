@@ -1,4 +1,4 @@
-// Artifacts (Docs/features/magic.md §2, §3): the relics won from ruins, the
+// Artifacts (Docs/features/08-magic.md §2): the relics won from ruins, the
 // slots they compete for, and the four abilities they cast.
 //
 // WHY RELICS AND NOT A SPELLBOOK. A loadout limit only has weight when the
@@ -17,7 +17,6 @@
 import { ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, RUINS } from './data/definitions';
 import { emptyEntry, levelBlock, levelCost, tierBlock, tierCost, type CollectionEntry } from './collection';
 import { addModifier, resolve, type Modifier } from './modifiers';
-import { isTechComplete } from './research';
 import {
   addToWallet, getWallet, type ArtifactId, type GameState, type RuinId,
 } from './state';
@@ -56,18 +55,19 @@ export function addArtifactFragments(state: GameState, id: ArtifactId, amount: n
   state.artifacts.fragments[id] = (state.artifacts.fragments[id] ?? 0) + amount;
 }
 
-export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughKnowledge';
+export type LevelUpResult = 'Levelled' | 'NotOwned' | 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
 
-/** Spend Knowledge for one level. Knowledge is KINGDOM-scoped deliberately: it
+/** Spend Stardust for one level. Stardust is KINGDOM-scoped deliberately: it
  *  survives a region reset, so it still works when regions become the content
- *  treadmill. */
+ *  treadmill. Knowledge used to do this job and now buys technologies out of
+ *  the CITY purse instead — see Docs/features/07-research.md §4. */
 export function levelUpArtifact(state: GameState, id: ArtifactId): LevelUpResult {
   if (!ownsArtifact(state, id)) return 'NotOwned';
   const entry = artifactEntry(state, id);
-  const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
-  const block = levelBlock(entry, knowledge);
+  const stardust = getWallet(state.kingdom.wallet, 'Stardust');
+  const block = levelBlock(entry, stardust);
   if (block !== null) return block;
-  addToWallet(state.kingdom.wallet, 'Knowledge', -levelCost(entry.level));
+  addToWallet(state.kingdom.wallet, 'Stardust', -levelCost(entry.level));
   state.artifacts.levels[id] = entry.level + 1;
   syncArtifactModifiers(state); // the passive scales with level
   return 'Levelled';
@@ -87,11 +87,13 @@ export function raiseArtifactTier(state: GameState, id: ArtifactId): RaiseTierRe
 
 // ------------------------------------------------------------------- slots
 
-/** One at start, one from research, the rest with Gems — earned breadth first,
- *  so the paid gate is never the only thing between a player and the system. */
+/** One at start, the rest with Gems. No technology grants a socket: slots are
+ *  bought with Gems everywhere and by nothing else
+ *  (Docs/features/07-research.md §4). Promise 3 survives because Gems
+ *  are earnable — the chain pays 75 and a first clear pays 10 — so the earning
+ *  moved off the tree rather than disappearing. */
 export function attunementSlots(state: GameState): number {
-  const fromResearch = isTechComplete(state, 'Attunement') ? 1 : 0;
-  const base = ATTUNEMENT.baseSlots + fromResearch + state.artifacts.slotsPurchased;
+  const base = ATTUNEMENT.baseSlots + state.artifacts.slotsPurchased;
   // A season can LEND a socket for its window. It goes through the modifier
   // layer like everything else, so it retires itself when the window closes.
   return Math.max(1, Math.min(Math.round(resolve(state, 'attunementSlots', base)), ATTUNEMENT.maxSlots));
@@ -145,28 +147,18 @@ export const isAttuned = (state: GameState, id: ArtifactId): boolean =>
   state.artifacts.attuned.includes(id);
 
 /**
- * Relics currently underground — the "arm" half of attune-or-arm.
+ * THE KINGDOM'S SOCKET IS THE ONLY CLAIM ON A RELIC.
  *
- * A relic is carried for exactly as long as its delve is in `state.delves`,
- * the same span `heroIsBusy` uses. It therefore comes home when the player
- * COLLECTS, including after a failed push, rather than the moment the sim
- * decides the run is over. A hero and the relic it carried are committed and
- * released together, which is the only rule explicable in one line.
- *
- * It lives HERE rather than in `expeditions.ts` because it is a fact about an
- * artifact, and because `attune` below has to ask it — the other direction of
- * the same rule.
+ * Nothing takes a relic anywhere: a relic is worn by the kingdom or it is on
+ * the shelf (Docs/features/09-relics.md §5). Kept as its own name because the
+ * question — "is this one spoken for?" — is asked from several screens and
+ * reads better than the socket it happens to be answered by.
  */
-export const artifactIsCarried = (state: GameState, id: ArtifactId): boolean =>
-  state.delves.some((d) => d.artifactId === id);
-
-/** Attuned to the kingdom, or in a party's pack. Neither socket is free. */
 export const artifactIsCommitted = (state: GameState, id: ArtifactId): boolean =>
-  isAttuned(state, id) || artifactIsCarried(state, id);
+  isAttuned(state, id);
 
 export type AttuneResult =
-  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned'
-  | 'Carried';
+  | 'Attuned' | 'Unattuned' | 'NotOwned' | 'NoSuchSlot' | 'SlotLocked' | 'AlreadyAttuned';
 
 /**
  * Put `id` in `slot` (or empty it with null). The swap is IMMEDIATE — the new
@@ -185,12 +177,6 @@ export function attune(
     if (!ownsArtifact(state, id)) return 'NotOwned';
     const existing = state.artifacts.attuned.indexOf(id);
     if (existing !== -1 && existing !== slot) return 'AlreadyAttuned';
-    // The other direction of attune-OR-arm. A relic in a party's pack cannot
-    // also be feeding the kingdom a passive, and the sim will not recall it
-    // from underground to settle the question — it comes home when the party
-    // does. Checked HERE rather than in the caller so no route into the
-    // socket can miss it.
-    if (artifactIsCarried(state, id)) return 'Carried';
   }
   const was = state.artifacts.attuned[slot];
   if (was === id) return id === null ? 'Unattuned' : 'Attuned';

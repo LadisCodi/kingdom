@@ -29,6 +29,15 @@ body {
   position: relative; width: 100%; height: 100%; overflow: hidden;
   max-width: calc(100vh * 9 / 16);
   background: #10151c; box-shadow: 0 0 0 1px var(--wood-dark);
+  /* THE FRAME IS THE VIEWPORT, as far as any screen inside it is concerned.
+     A `@media (max-width: …)` reads the BROWSER window, which on desktop is
+     wider than this 9:16 frame by however much is pillarboxed — so the phone
+     layout the game actually ships never fired while anyone was looking at
+     it. Naming #app a query container lets the HUD ask how wide the FRAME is
+     (`@container frame (…)`), which is the only width that exists on the
+     device. */
+  container-type: inline-size;
+  container-name: frame;
 }
 
 /* Canvas is a replaced element: inset alone doesn't stretch it, and without a
@@ -53,16 +62,55 @@ body {
 #ad:empty { display: none; }
 #ad { position: absolute; inset: 0; z-index: 200; }
 
-/* The offer tab, flush to the right edge of the FRAME (#app), not the
-   viewport — everything inside positions against the 9:16 frame. */
-#adoffer[hidden] { display: none; }
-#adoffer {
+/* The gacha reveal, on the same argument and just under the video: what a
+   call paid has to be read before the game comes back, and a reward the
+   player can tap around is not a reward. `:empty` is load-bearing here for
+   the same reason it is above. */
+#gacha:empty { display: none; }
+#gacha { position: absolute; inset: 0; z-index: 100; }
+
+/* The battle, one layer under the reveal — because a cleared room's spoils
+   are dealt by the reveal, OVER the board that just won them. Same mount
+   argument as the two above, and the same `:empty` rule. */
+#battle:empty { display: none; }
+#battle { position: absolute; inset: 0; z-index: 90; }
+
+/* THE RIGHT-EDGE COLUMN: every slab that slides in from the right lives here,
+   in one vertical stack, flush to the right edge of the FRAME (#app) rather
+   than the viewport — everything inside positions against the 9:16 frame.
+
+   A column rather than two absolutely-positioned widgets, because each one
+   has to know whether the others are there: two slabs pinned to `top: 50%`
+   land on top of each other, and nudging one by a hand-measured offset breaks
+   the moment either changes height or the other is hidden. Here a hidden slab
+   is `display: none`, so the stack closes up and what is left stays centred.
+
+   Order is urgency: the raid countdown first, the rewarded offer under it.
+   `pointer-events` is off on the column and back on for each slab, so the gap
+   between them is still map the player can tap. */
+#edge {
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
   z-index: 4; /* under the overlay scrim, over the map */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 82%;
+  pointer-events: none;
 }
+#edge > * { pointer-events: auto; }
+#adoffer[hidden], #raids[hidden] { display: none; }
+
+/* The battle screen's card panel. A sibling of #overlay at the same z-index
+   and AFTER it in the markup, so it stacks over the sheet it belongs to while
+   the header (8) and the nav (10) still outrank it — a panel is not a reason
+   to cover the purse or the way out. It is hidden rather than emptied, so an
+   inset:0 element never swallows a tap on the map. */
+#picker[hidden] { display: none; }
+#picker { position: absolute; inset: 0; z-index: 7; }
 
 /* The header and the nav bar outrank EVERY menu — full-screen ones included.
    A menu is something you opened over the game, never a replacement for it:
@@ -76,9 +124,10 @@ body {
    that covers everything is the rewarded video (#ad, z 200), which has to be
    inescapable to be worth anything.
 
-   The stack, bottom to top: map · ad-offer tab (4) · district card (6) ·
-   menus and sheets (7) · header (8) · nav bar (10) · settings knob (20) ·
-   the video (200). */
+   The stack, bottom to top: map · the right-edge column (4) · district card (6) ·
+   menus and sheets, then the battle picker over them (7) · header (8) ·
+   nav bar (10) · settings knob (20) ·
+   the gacha reveal (100) · the video (200). */
 #header { position: relative; z-index: 8; }
 
 #overlay:empty { display: none; }
@@ -89,12 +138,27 @@ body {
   position: absolute; inset: 0; z-index: 7;
   background: var(--scrim);
   overflow-y: auto;
-  padding: var(--hud-h) 16px calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));
+  /* --nav-h is MEASURED (ui/chromeMetrics.ts) and the nav bar pads itself by
+     the safe-area inset, so that inset is already inside this number. Adding
+     env() again — as this used to — reserved it twice. */
+  padding: var(--hud-h) 16px calc(var(--nav-h) + 16px);
 }
 
 /* ---------- the quest hint ---------- */
-/* Not screen-specific: any element the quest points at wears this. */
-.hinted { box-shadow: 0 0 0 3px var(--gold) !important; position: relative; }
+/* Not screen-specific: any element the quest points at wears this.
+ *
+ * TWO RINGS, dark inside gold, and that is not decoration. A single gold ring
+ * is invisible on a gold ground — and the commonest thing the hint points at
+ * is a research card the player can start RIGHT NOW, which `.tech-card
+ * .available` paints in exactly `--gold`. So every `CompleteTech` quest in
+ * the chain has been pointing at a card with a gold ring around a gold
+ * card, which is nothing at all. The dark ring separates the gold from
+ * whatever is under it, so the mark now reads on parchment, on wood and on
+ * the gold card alike. */
+.hinted {
+  box-shadow: 0 0 0 3px var(--wood-dark), 0 0 0 6px var(--gold) !important;
+  position: relative;
+}
 .hinted::after {
   content: '';
   position: absolute; top: -26px; left: 50%; margin-left: -9px;

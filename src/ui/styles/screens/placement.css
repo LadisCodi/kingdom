@@ -13,7 +13,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  /* The nav bar below holds the safe-area inset in its own padding, and
+     --nav-h is measured, so this bar sits clear of it already. */
+  padding: 8px 10px;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);

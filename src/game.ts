@@ -2,72 +2,101 @@
 // the tap-handler chain, and change notification.
 
 import {
-  advance, canAfford, cancelQueueItem, changeWorkers, collectTap,
-  enqueueBuild, finishWithGems, moveDistrict, townhallTap, upgradeDistrict,
+  advance, builderGemCost, buyBuilder, canAfford, changeWorkers, collectTap,
+  buyKeys, enqueueBuild, finishWithGems, moveDistrict, upgradeDistrict,
   wakeIdleWorkersAt,
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
-  AD, ARTIFACTS, BUILDABLE_DISTRICTS, CURRENCIES, DISTRICTS, HARVEST, HEROES,
-  LANDMARK_ART, LANDMARKS, RUINS,
-  TECHNOLOGIES, TRAINING, UNITS, levelIndexed,
+  AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST,
+  LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
+  TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
 } from './sim/data/definitions';
+import { formatDuration } from './ui/format';
+import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
-  maxCountForTownhallLevel, nextBuildCost, placementBlock, validPlacementCells,
+  maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
 } from './sim/districts';
 import {
-  explorationGate, fogState, revealCostForCell, revealTap,
+  explorationGate, fogState, nextRevealTapCost, revealCostForCell, revealTap,
 } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
-import { harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
+import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
 import { placementAdjacency } from './sim/adjacency';
+import { harmonyBlock } from './sim/harmony';
 import {
-  committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
-  trainingCompletesAt, trainingTap, unitInTraining,
+  committedTroops, finishLineWithGems, healCost, healSeconds, healWounded, lineFor,
+  armyCap, trainUnit, woundedCap, woundedCount, woundedOf,
+  trainingCompletesAt,
 } from './sim/army';
-import {
-  artifactIsCommitted, attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier,
-} from './sim/artifacts';
+import { attune, buyAttunementSlot, levelUpArtifact, raiseArtifactTier } from './sim/artifacts';
 import { bloomPreview, cast, castBlock, divinationSaving, validCastCells } from './sim/casting';
 import { claimLandmark, visibleLandmarks } from './sim/landmarks';
 import {
-  adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
+  adOfferEligible, adOfferPending, adOfferReward, claimAdOffer, refreshAdOffer,
 } from './sim/adOffers';
 import { availableRoster } from './sim/army';
+import { cancelWorkshopItem, finishItemWithGems, queueGood } from './sim/workshops';
 import { typeMultiplier } from './sim/combat';
 import {
-  buyPartySlot, delveById, discoveredRuins, extract, freeHeroes, launchBlock, launchDelve,
-  previewExpedition, pushDeeper, supplyCost, unitSlots,
-  type ExpeditionPreview, type LaunchBlock,
+  attemptGate, discoveredRuins, enterRoom, freeHeroes, frontier, gateBlock,
+  previewGate, previewRoom, roomBlock, roomsCleared, troopSlots,
+  type GateBlock, type GatePreview, type RoomBlock, type RoomPreview,
 } from './sim/expeditions';
-import { levelUpHero, pull, raiseHeroTier } from './sim/heroes';
 import {
-  mana, manaCap, manaNetRegen, manaProduction, refillManaWithGems,
+  dismissRaidReports, gateCreature, gateIsCleared, gateSupplies, gateView, nextGateToRaid,
+  openGates, type GateView,
+} from './sim/gates';
+import {
+  buyHeroSlot, claimFreePull, freePullAvailable, freePullReadyAt, freePullsLeft,
+  heroSlotGemCost, heroSlots, levelUpHero,
+  pull, pullMany, raiseHeroTier, STANDARD_BANNER, unlockHero, type PullResult,
+} from './sim/heroes';
+import {
+  mana, manaCap, manaNetRegen, manaProduction, knowledgePerHour,
 } from './sim/mana';
+import {
+  boughtRefillsLeft, manaRefillGemCost, nextRefillRung, refillManaWithGems,
+  watchedRefillsLeft,
+} from './sim/manaRefill';
 import { landmarkDefAt, ruinDefAt } from './sim/sites';
-import { hasMarket, salePayout, sellGoods } from './sim/market';
 import {
   availableWorkers, districtCapacity, houseTap, maxPopulation, populationCost, residentsOf,
 } from './sim/population';
 import { activeQuest, claimQuest, isQuestComplete, questValue } from './sim/quests';
 import {
-  anyResearchActionable, buySlot, isTechComplete, startTech, techUnlocks,
+  anyResearchActionable, buySlot, eraShortfall, isTechComplete, startTech, techUnlocks,
+  finishTechWithGems, techRushCost,
+  buyTechInstantly, instantTechGems,
 } from './sim/research';
+import { describeTech } from './sim/techProse';
 import {
-  anyUpgradeActionable, buyUpgrade, effectiveAutoTapCooldownMs, effectiveWorkerYield,
+  effectiveAutoTapCooldownMs,
 } from './sim/upgrades';
 import {
-  coordKey, districtAt, districtById, getWallet, sameCell, townhall,
-  type ArtifactId, type Coord, type CurrencyId, type Delve, type District, type DistrictId,
+  PROFILE_LABEL, budgetRemainingCents, buySku, canAffordSku, choosePayerProfile,
+  monthResetsAt, monthlyBudgetCents,
+} from './sim/store';
+import { pullPrice } from './sim/heroes';
+import type { PayerProfile, StoreSkuId } from './sim/state';
+import {
+  builderCount, coordKey, districtAt, districtById, getWallet, sameCell, townhall,
+  type ArtifactId, type Coord, type CurrencyId, type District, type DistrictId,
   type FeatureId, type TrainableId,
   type GameState, type HeroId, type PartySlotState, type RuinId, type TechId, type UnitId,
-  type UpgradeId, type Wallet,
+  type Wallet,
 } from './sim/state';
+import {
+  anyRoyalPending, buyRoyalChest, chestAvailable, chestSheetOpen, claimFreeRung,
+  claimRoyalRung, freeReward, ladderLength, nextRung, royalOwned, royalPending,
+  royalReward, rungsClaimed, seasonEndsAt,
+} from './sim/daily';
+import type { BattleLog } from './sim/battle';
 import { influenceCells, workableCells } from './sim/workers';
 import { playSfx, type SfxName } from './audio/sfx';
 import type { HarvestSourceId } from './sim/state';
-import { QUESTS, type QuestDef } from './sim/data/definitions';
+import { KINGDOM_DEF, QUESTS, type QuestDef } from './sim/data/definitions';
 import { Camera } from './render/camera';
 import { Floaters } from './render/floaters';
 import { Villagers } from './render/villagers';
@@ -92,8 +121,14 @@ export type Mode =
  *  `tsc` — the only real gate this project has over the view layer — catches
  *  an overlay that nothing renders, instead of it silently drawing nothing. */
 export type OverlayName =
-  | 'build' | 'market' | 'research' | 'settings' | 'purse' | 'welcome'
-  | 'reliquary' | 'expedition' | 'checkpoint' | 'adOffer';
+  | 'build' | 'research' | 'settings' | 'purse' | 'welcome'
+  | 'reliquary' | 'heroes' | 'expedition' | 'gate' | 'mana' | 'builder'
+  | 'daily' | 'store' | 'payerProfile' | 'iapConfirm';
+
+/** Why a refill cannot be taken right now, or `Ready`. The Mana sheet turns
+ *  each one into a sentence — nothing is greyed out without a reason. */
+export type RefillBlock =
+  | 'Ready' | 'PoolFull' | 'AboveHalf' | 'Cooling' | 'NoneLeftToday';
 
 /** A transient attention hint: a UI element (by key) or a world cell gets an
  *  arrow until it's interacted with or HINT_MS passes. */
@@ -118,25 +153,134 @@ export interface Banner {
   sfx?: SfxName;
 }
 
+/**
+ * One thing a call paid, as the reveal screen shows it.
+ *
+ * A `PullResult` is a record of a ROLL — hit or miss, which pity moved, what
+ * it charged. That is the wrong shape to draw: ten of them are ten rows of
+ * bookkeeping, and the player asked "what did I get". So a batch collapses
+ * into prizes, which is the only thing the screen knows about.
+ */
+export type GachaPrize =
+  | { kind: 'hero'; heroId: HeroId }
+  | { kind: 'fragments'; heroId: HeroId; amount: number }
+  | { kind: 'relicFragments'; artifactId: ArtifactId; amount: number }
+  | { kind: 'currency'; currency: CurrencyId; amount: number };
+
+/**
+ * A sequence of prizes, dealt one at a time.
+ *
+ * It was built for the gacha and it is not the gacha's alone any more: a
+ * cleared room hands it what the room paid (Docs/features/11a-ruins-ui.md
+ * §2.5). Hence the optional half — a banner and a call count are what a PULL
+ * has to say about itself, and a fight says something else.
+ */
+export interface GachaReveal {
+  banner?: BannerId;
+  /** How many calls this was — the screen says "×10" rather than counting
+   *  prizes, which condense and would undercount. */
+  calls?: number;
+  /** The line under the grid, when it is not a call count. */
+  caption?: string;
+  prizes: GachaPrize[];
+}
+
+/**
+ * Collapse a batch into prizes.
+ *
+ * Two rules do all the work. **Same thing, one widget with a count**: ten
+ * calls that each paid 50 Stardust are one 500, and four fragments of the
+ * same hero are one stack of four — otherwise a ten-call is a wall of
+ * identical tiles nobody reads. And **heroes last**, because they are what
+ * the player called for: the sequence should arrive at them rather than open
+ * with them and then spend nine tiles winding down.
+ */
+export function gachaPrizes(pulls: readonly PullResult[]): GachaPrize[] {
+  const heroes: GachaPrize[] = [];
+  const fragments = new Map<HeroId, number>();
+  let stardust = 0;
+  for (const p of pulls) {
+    // A duplicate is not a hero prize — it already paid its fragments, and
+    // showing it as a hero would promise a roster entry that is already there.
+    if (p.heroId !== null && !p.duplicate) heroes.push({ kind: 'hero', heroId: p.heroId });
+    if (p.fragmentsOf !== null && p.fragments > 0) {
+      fragments.set(p.fragmentsOf, (fragments.get(p.fragmentsOf) ?? 0) + p.fragments);
+    }
+    stardust += p.stardust;
+  }
+  return [
+    ...(stardust > 0
+      ? [{ kind: 'currency', currency: 'Stardust', amount: stardust } as GachaPrize]
+      : []),
+    ...[...fragments].map(([heroId, amount]): GachaPrize => ({
+      kind: 'fragments', heroId, amount,
+    })),
+    ...heroes,
+  ];
+}
+
+/**
+ * A FIGHT BEING WATCHED (Docs/features/combat.md §13).
+ *
+ * The fight itself is over before this exists: the resolver ran, the rewards
+ * were paid and the fallen were taken off the roster the instant the player
+ * tapped. What is left is a replay, and a replay can be interrupted by
+ * anything — a closed tab, a reload — without costing the player a thing.
+ *
+ * The phase walks one way and is driven by the clock the caller passes in, so
+ * the whole machine is testable without a DOM: `playing` while the log has
+ * events left, `result` for the two seconds the plaque needs, `rewards` while
+ * the prize sequence deals, `done` when only the way out is left.
+ */
+export interface BattlePlayback {
+  log: BattleLog;
+  title: string;
+  subtitle: string;
+  prizes: GachaPrize[];
+  /** Wall clock at the first tick — everything else is derived from it. */
+  startedAt: number;
+  phase: 'playing' | 'result' | 'rewards' | 'done';
+}
+
+/** How long the plaque waits after the last blow. */
+export const BATTLE_RESULT_DELAY_MS = 2000;
+
 export class Game {
   mode: Mode = { kind: 'normal' };
   inspectedDistrictId: string | null = null;
   /** The ruin the expedition sheet is being composed for. */
   expeditionRuin: RuinId | null = null;
+  /** Which card panel is open over the battle screen, if any. */
+  battlePicker: 'troops' | 'heroes' | null = null;
+  /** The ruin whose GATE the room sheet is being composed for. The party
+   *  fields below are shared with the expedition sheet on purpose: it is the
+   *  same board, and the gate is the ruin's frontier room while it stands
+   *  (Docs/features/18-garrisons-and-raids.md §5). */
+  gateRuin: RuinId | null = null;
   /** What the player has picked so far, by unit type. Lives on the presenter
    *  rather than in the view because it survives the per-tick rebuild and is
    *  node-testable. */
   expeditionParty: PartySlotState[] = [];
-  expeditionHero: HeroId | null = null;
+  /** The heroes the player has put in the hero slots, in slot order — one
+   *  per slot, at most `heroSlots(state)` of them. */
+  partyHeroes: HeroId[] = [];
   expeditionOrder: number | null = null;
-  /** The relic the player has chosen to send DOWN rather than wear. Null is
-   *  the common case and always a valid party. */
-  expeditionArtifact: ArtifactId | null = null;
-  /** The delve whose checkpoint sheet is open. */
-  openCheckpoint: string | null = null;
+  /** The store SKU whose confirmation sheet is open. */
+  pendingSku: StoreSkuId | null = null;
+  /** Which sheet the confirmation was opened from, and returns to. */
+  pendingSkuFrom: OverlayName = 'store';
+  /** What was asked for while the payer-profile sheet had the screen. The
+   *  profile sheet is modal in the strong sense (14-monetization.md §3), so
+   *  whatever wanted to open — the welcome report, chiefly — waits here and
+   *  opens the moment a profile is chosen. */
+  afterProfileOverlay: OverlayName | null = null;
   /** When the fake ad started playing. A UI moment, not sim state — a reload
    *  mid-ad simply drops back to the offer, which is still standing. */
   adWatchStartedAt: number | null = null;
+  /** WHAT the ad being watched pays for. The Mana refill was the only
+   *  placement until the banners got their free call (2026-09-08), and the
+   *  screen is the same screen — only the payout differs. */
+  adWatchPurpose: 'mana' | BannerId = 'mana';
   /** The map SITE whose card is open — a landmark or a ruin. Sites are not
    *  districts (they are authored content on a cell, not something the player
    *  built), so they get their own slot rather than being squeezed into
@@ -144,6 +288,23 @@ export class Game {
   inspectedSite: Coord | null = null;
   private hint: Hint | null = null;
   openOverlay: OverlayName | null = null;
+  /** What a call just paid, while the reveal screen is showing it. Not an
+   *  overlay: `#overlay` is a stacking context under the nav, and a reward
+   *  the player can tap around is not a reward — the same reason the
+   *  rewarded video has a mount of its own. */
+  gachaReveal: GachaReveal | null = null;
+  /** The fight being replayed, or null when none is. Its own mount for the
+   *  same reason the reveal has one — and the reveal plays OVER it, which is
+   *  why it sits one layer below (Docs/features/11a-ruins-ui.md §2.5). */
+  battle: BattlePlayback | null = null;
+  /** The hero whose card is open on the roster screen, or null for the grid.
+   *  On the presenter rather than in the view for the reason `expeditionRuin`
+   *  is: it survives the per-tick rebuild, and it is node-testable. */
+  openHeroId: HeroId | null = null;
+  /** The relic whose card is open on the Reliquary screen, or null for the
+   *  grid. Same shape and same reason as `openHeroId`: the two screens are
+   *  one pattern — a collection, and one piece of it opened. */
+  openRelicId: ArtifactId | null = null;
   readonly floaters = new Floaters();
   readonly villagers = new Villagers();
   readonly tapChain = new TapChain();
@@ -222,21 +383,25 @@ export class Game {
 
   tick(): void {
     const result = advance(this.state, this.map, this.now());
+    // A strike hits the CELL and a haul lands at the BUILDING, which is the
+    // whole reason the trip is worth watching: the hit is where the work
+    // happened and the number is where it arrived.
+    for (const s of result.strikes) this.strikeFeedback(s.cell, s.source);
     for (const d of result.deposits) {
-      this.floaters.add(d.cell, `+${d.amount} ${icon(d.currencyId)}`);
+      this.floaters.add(d.cell, `+${d.amount}`, d.currencyId);
     }
     if (result.goldEarned > 0) {
-      this.floaters.add(townhall(this.state).location, `+${result.goldEarned} ${icon('Gold')}`);
+      this.floaters.add(townhall(this.state).location, `+${result.goldEarned}`, 'Gold');
     }
     if (result.trainedPopulation > 0) {
       playSfx('villagerTrained');
-      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation} 👥`);
+      this.floaters.add(townhall(this.state).location, `+${result.trainedPopulation}`, 'population');
     }
     // A quiet splash when a fishing boat sets out (one per tick, max).
     let splashed = false;
     for (const w of this.state.workers) {
       const b = districtById(this.state, w.buildingId);
-      const isBoat = b !== undefined && DISTRICTS[b.definitionId].harvestSource === 'Fish';
+      const isBoat = b !== undefined && DISTRICTS[b.definitionId].harvestSources.includes('Fish');
       const out = w.activity === 'MovingToCell';
       if (isBoat && out && !this.boatsOut.has(w.id) && !splashed) {
         playSfx('boatSplash');
@@ -261,15 +426,24 @@ export class Game {
           sprite: `${def.sprite}_l${district.level}`, sfx: 'constructionComplete'
         });
     }
+    // A raid landing while the player is HERE gets a line: the widget carries
+    // the report, but a purse that quietly shrinks is the one thing this
+    // feature must never do silently. An absence is summarised by the widget
+    // instead — the welcome sheet already owns "while you were away".
+    for (const raid of result.raids) {
+      if (Object.keys(raid.took).length === 0) continue;
+      const took = Object.entries(raid.took).map(([c, n]) => `${n} ${c}`).join(', ');
+      this.toast(`${gateCreature(raid.ruinId)} raided the city — ${took}`);
+    }
     for (const id of result.completedResearch) {
       const tech = TECHNOLOGIES[id];
       this.queueBanner({
         title: 'Research complete!', icon: tech.glyph, name: tech.name,
-        desc: tech.description, tone: 'sky', sfx: 'researchComplete',
+        desc: describeTech(tech), tone: 'sky', sfx: 'researchComplete',
       });
       // Everything this tech just unlocked gets its own card, queued behind.
-      // Upgrades are deliberately not announced — they appear as the fan of
-      // circles under the tech, which is the reward being made visible.
+      // A minor RANK unlocks nothing and announces nothing: its reward is the
+      // number in its own description, and a banner per rank would be noise.
       for (const unlock of techUnlocks(id)) {
         if (unlock.kind === 'district') {
           const def = DISTRICTS[unlock.id];
@@ -362,6 +536,9 @@ export class Game {
         const fog = fogState(this.state, this.map, cell);
         if (fog === 'Undiscovered') return true; // swallowed
         if (fog !== 'Discovered') return false;
+        // Read BEFORE the tap: a tap charges a fifth of the cell's price now,
+        // not one Gold, so the floater has to be told what it cost.
+        const charged = nextRevealTapCost(this.state, this.map, cell);
         const result = revealTap(this.state, this.map, cell);
         if (result === 'NotEnoughGold') this.shake(['Gold']);
         else if (result === 'NotReachable') {
@@ -379,7 +556,7 @@ export class Game {
           // buys is the ground itself, which the player can now see.
         } else if (result === 'Paid') {
           playSfx('revealPaid');
-          this.floaters.add(cell, `-1 ${icon('Gold')}`);
+          this.floaters.add(cell, `\u2212${charged}`, 'Gold');
         }
         this.notify();
         return true;
@@ -390,18 +567,14 @@ export class Game {
       priority: 0,
       handle: (cell) => {
         const district = districtAt(this.state, cell);
-        // Market: tapping the built Market opens its trade screen.
-        if (district?.definitionId === 'Market' && district.state === 'Built') {
-          this.setOverlay('market');
-          return true;
-        }
         // Housing: tapping fast-forwards tax collection (and opens the card).
         if (district && district.state === 'Built' &&
           districtCapacity(this.state, district) > 0) {
           const { result, gold } = houseTap(this.state, district, this.now());
           if (result === 'Collected') {
             this.tapFeedback(district.location, 'tapHouse');
-            this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+            if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
+            else this.floaters.add(cell, '⏩');
           } else if (result === 'NoMana') {
             this.outOfMana(cell);
           }
@@ -417,33 +590,12 @@ export class Game {
         // truthy. Testing it as a boolean sent every non-trainer down this
         // branch — which swallowed the tap on a crop plot, because a plot is
         // a district that trains nothing and the harvest branch is below.
+        // A training building answers a tap only by opening its card. There is
+        // no tap that hurries a queue: a queue is a FIXED duration and a tap is
+        // a scaling one, so a maxed thumb would finish a villager in one press
+        // (Docs/features/04-harvest.md §3.2). Timers take Gems.
         if (district && district.state === 'Built'
           && DISTRICTS[district.definitionId].trains.length > 0) {
-          // Read the trainee BEFORE the tap: a tap that completes the unit
-          // clears the line, and the floater has to name what came out.
-          const trainee = unitInTraining(this.state, district.uniqueId)?.trainee;
-          const tap = trainingTap(this.state, district, this.now());
-          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
-          if (tap === 'Complete') {
-            playSfx('unitTrained');
-            this.floaters.add(cell, `+1 ${trainee ?? ''}`.trim());
-          } else if (tap === 'Boosted') {
-            this.floaters.add(cell, '⏩');
-          } else if (tap === 'NoMana') {
-            this.outOfMana(cell);
-          }
-          this.inspectedDistrictId = district.uniqueId;
-          this.notify();
-          return true;
-        }
-        // Townhall: tapping adds cycle progress (and opens/keeps its card).
-        if (district?.definitionId === 'Townhall' && district.state === 'Built') {
-          const tap = townhallTap(this.state, this.now());
-          if (tap !== 'NoTraining' && tap !== 'NoMana') this.tapFeedback(district.location);
-          if (tap === 'TrainingComplete') playSfx('villagerTrained');
-          if (tap === 'TrainingComplete') this.floaters.add(cell, '+1 👥');
-          else if (tap === 'Boosted') this.floaters.add(cell, '⏩');
-          else if (tap === 'NoMana') this.outOfMana(cell);
           this.inspectedDistrictId = district.uniqueId;
           this.notify();
           return true;
@@ -475,13 +627,40 @@ export class Game {
     playSfx(sfx);
   }
 
+  /**
+   * A WORKER's strike: the player's own gesture, performed by somebody else.
+   *
+   * The same hit on the same cell with the same foley — **no white flash**,
+   * which stays the player's signature, and half the volume. That is the whole
+   * point of the strike model: automation should look like your hands, slower
+   * (`Docs/features/04-harvest.md` §4).
+   *
+   * Three rules keep thirty woodcutters from becoming a machine gun, and all
+   * three are presentation only — dropping a sound or a punch can never change
+   * what the sim did, which is what makes it safe to gate them on the camera:
+   *
+   * - **Only what is on screen.** A hit you cannot see makes no sound.
+   * - **Silent zoomed out.** Past the threshold you are looking at a city, not
+   *   at a tree, and every cell being audible at once is noise.
+   * - **At most three voices**, with extra pitch jitter so two strikes landing
+   *   together do not phase-lock into a drone.
+   */
+  private strikeFeedback(cell: Coord, source: HarvestSourceId): void {
+    if (!this.camera.isCellVisible(cell)) return;
+    this.tapFx.add(coordKey(cell), STRIKE_PUNCH);
+    if (this.camera.zoom < STRIKE_AUDIBLE_ZOOM) return;
+    playSfx(TAP_SOUNDS[source], {
+      gain: 0.5, jitter: 0.05, group: 'strike', limit: 3,
+    });
+  }
+
   /** Out of energy, said once and in one place: every tap that spends Mana
    *  refuses the same way, so the player learns one refusal rather than four.
    *  Names the pool, because a silent no reads as a broken tap. */
   private outOfMana(cell: Coord): void {
     playSfx('error');
     this.shake(['Mana']);
-    this.floaters.add(cell, `${icon('Mana')} empty`);
+    this.floaters.add(cell, 'empty', 'Mana');
   }
 
   /** One collect on a resource cell, with feedback. `autoRepeat` marks the
@@ -489,11 +668,11 @@ export class Game {
    *  taps are not. 'OnCooldown' is silent: the hold retries until it opens. */
   private collectAt(cell: Coord, autoRepeat = false): CollectTapResult {
     const source = harvestSourceAt(this.state, cell);
-    const units = tapYieldAt(this.state, cell); // before the tap — it may consume the cell
+    const units = tapYieldAt(this.state, this.map, cell, this.now()); // before the tap — it may empty the cell
     const result = collectTap(this.state, this.map, cell, this.now(), autoRepeat);
     if (result === 'Harvested' && source !== null) {
       this.tapFeedback(districtAt(this.state, cell)?.location ?? cell, TAP_SOUNDS[source]);
-      this.floaters.add(cell, `+${units} ${icon(HARVEST[source].currencyId)}`);
+      this.floaters.add(cell, `+${units}`, HARVEST[source].currencyId);
     } else if (result === 'Exhausted') {
       playSfx('tapEmpty');
       this.floaters.add(cell, '💤');
@@ -541,14 +720,15 @@ export class Game {
       }
       if (result !== 'Collected') return false;
       this.tapFeedback(district.location, 'tapHouse');
-      this.floaters.add(cell, gold > 0 ? `+${gold} ${icon('Gold')}` : '⏩');
+      if (gold > 0) this.floaters.add(cell, `+${gold}`, 'Gold');
+            else this.floaters.add(cell, '⏩');
       this.notify();
       return true;
     }
     if (fogState(this.state, this.map, cell) === 'Discovered') return this.revealHold(cell);
     if (harvestSourceAt(this.state, cell) === null) return false;
     if (!this.state.fog.revealed[coordKey(cell)]) return false;
-    if (isExhausted(this.state, cell, this.now())) return false; // quiet — no 💤 spam
+    if (isExhausted(this.state, this.map, cell, this.now())) return false; // quiet — no 💤 spam
     if (this.collectAt(cell, true) !== 'Harvested') return false;
     this.notify();
     return true;
@@ -560,6 +740,7 @@ export class Game {
   private revealHold(cell: Coord): boolean {
     const now = this.now();
     if (now - this.state.lastCollectTapAt < effectiveAutoTapCooldownMs(this.state)) return false;
+    const charged = nextRevealTapCost(this.state, this.map, cell);
     const result = revealTap(this.state, this.map, cell);
     if (result !== 'Paid' && result !== 'Revealed') return false;
     this.state.lastCollectTapAt = now;
@@ -569,7 +750,7 @@ export class Game {
       this.floaters.add(cell, 'Revealed!');
     } else {
       playSfx('revealPaid');
-      this.floaters.add(cell, `-1 ${icon('Gold')}`);
+      this.floaters.add(cell, `\u2212${charged}`, 'Gold');
     }
     this.notify();
     return true;
@@ -690,6 +871,10 @@ export class Game {
     }
     this.mode = { kind: 'casting', artifactId, selected };
     this.openOverlay = null;
+    // Cast mode closes the sheet without going through `setOverlay`, so the
+    // open card has to be forgotten here as well — otherwise the next visit
+    // to the Reliquary lands inside whatever was last cast.
+    this.openRelicId = null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
     if (selected) this.camera.centerOnCell(selected);
@@ -714,7 +899,7 @@ export class Game {
     this.mode = { kind: 'normal' };
     for (const c of report.affected) this.tapFx.add(coordKey(c));
     if (report.goldSaved > 0 && target) {
-      this.floaters.add(target, `Saved ${report.goldSaved} ${icon('Gold')}`);
+      this.floaters.add(target, `Saved ${report.goldSaved}`, 'Gold');
     }
     if (report.activeId === 'Bloom' && target) {
       this.floaters.add(target, `${report.affected.length} cells renewed`);
@@ -759,7 +944,7 @@ export class Game {
   doLevelArtifact(id: ArtifactId): void {
     const result = levelUpArtifact(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
     this.notify();
   }
@@ -778,11 +963,63 @@ export class Game {
     this.notify();
   }
 
+  /** Buy a whole pool at today's rung. The Mana sheet's other button. */
   doRefillMana(): void {
-    const result = refillManaWithGems(this.state);
-    if (result === 'Refilled') playSfx('gemSpend');
+    const result = refillManaWithGems(this.state, this.now());
+    if (result === 'Refilled') {
+      playSfx('gemSpend');
+      this.floaters.add(townhall(this.state).location, `+${manaCap(this.state)}`, 'Mana');
+    }
     if (result === 'NotEnoughGems') this.shake(['Gems']);
+    if (result === 'NoneLeft') this.toast('No more Gem refills today');
     this.notify();
+  }
+
+  /**
+   * Everything the Mana sheet draws besides the pool: the two allowances, the
+   * rung the next purchase stands on, and whether a video is on offer.
+   *
+   * Both counters are the SIM's — the sheet asks, it does not decide — so a
+   * refill refused by the day is refused the same way whether the player
+   * reached it from the tab or from the header gauge.
+   */
+  manaRefills(): {
+    reward: number;
+    full: boolean;
+    video: RefillBlock;
+    watchedLeft: number;
+    watchedPerDay: number;
+    gems: RefillBlock;
+    gemCost: number | null;
+    rung: number;
+    boughtLeft: number;
+    boughtPerDay: number;
+  } {
+    const now = this.now();
+    const full = mana(this.state) >= manaCap(this.state);
+    const watchedLeft = watchedRefillsLeft(this.state, now);
+    const boughtLeft = boughtRefillsLeft(this.state, now);
+    return {
+      reward: manaCap(this.state),
+      full,
+      // The video's THREE conditions, told apart: the day's allowance, the
+      // cooldown, and the shortage the offer answers. One "not available"
+      // covering all three would leave the player guessing which one.
+      video: watchedLeft <= 0 ? 'NoneLeftToday'
+        : this.adOffer() !== null ? 'Ready'
+          : full ? 'PoolFull'
+            : !adOfferEligible(this.state) ? 'AboveHalf'
+              : 'Cooling',
+      watchedLeft,
+      watchedPerDay: AD.manaRefillsPerDay,
+      // Gems answer no shortage, so they have no cooldown and no half-pool
+      // gate: the ladder and a pool with room in it are the whole of it.
+      gems: boughtLeft <= 0 ? 'NoneLeftToday' : full ? 'PoolFull' : 'Ready',
+      gemCost: manaRefillGemCost(this.state, now),
+      rung: nextRefillRung(this.state, now),
+      boughtLeft,
+      boughtPerDay: MANA.gemRefillCosts.length,
+    };
   }
 
   /** Everything the header's Mana gauge shows: a pool and ONE net rate.
@@ -804,23 +1041,146 @@ export class Game {
   // ------------------------------------------------------------- ad offers
 
   /** The standing offer, or null. Drives the widget and the popup. */
+  // ------------------------------------------------------------ daily chest
+
+  /**
+   * The season: the whole ladder, both tracks, and how long is left.
+   *
+   * Never null. The sheet has to render after the last rung is taken, because
+   * the Royal chest stays buyable until the window closes — the PILL decides
+   * whether there is a reason to open it, not this.
+   *
+   * Every cell carries its OWN `claimable` and `claimed`, because every cell
+   * is its own button (Docs/features/12-quests.md §3.2). Nothing else on the
+   * sheet decides what can be taken.
+   */
+  dailySeason(): {
+    rung: number;
+    claimed: number;
+    length: number;
+    available: boolean;
+    complete: boolean;
+    royal: boolean;
+    royalPriceUsd: number;
+    endsIn: string;
+    ladder: Array<{
+      rung: number;
+      free: { reward: Wallet; claimed: boolean; claimable: boolean };
+      royal: { reward: Wallet; claimed: boolean; claimable: boolean; locked: boolean };
+    }>;
+  } {
+    const now = this.now();
+    const length = ladderLength();
+    const claimed = rungsClaimed(this.state, now);
+    const available = chestAvailable(this.state, now);
+    const rung = nextRung(this.state, now);
+    const owned = royalOwned(this.state, now);
+    return {
+      rung,
+      claimed,
+      length,
+      available,
+      complete: claimed >= length,
+      royal: owned,
+      royalPriceUsd: STORE.RoyalChest.priceUsd,
+      endsIn: formatDuration((seasonEndsAt(now) - now) / 1000),
+      ladder: Array.from({ length }, (_, i) => {
+        const n = i + 1;
+        const pending = royalPending(this.state, n, now);
+        return {
+          rung: n,
+          free: {
+            reward: freeReward(this.state, n),
+            claimed: n <= claimed,
+            claimable: available && n === rung,
+          },
+          royal: {
+            reward: royalReward(this.state, n),
+            // Reached, owned and not pending means it has been taken.
+            claimed: owned && n <= claimed && !pending,
+            claimable: pending,
+            locked: !owned,
+          },
+        };
+      }),
+    };
+  }
+
+  /** Is there a reason to show the pill at all? A rung waiting, a Royal cell
+   *  waiting, or a Royal chest still on the table (§3.4). */
+  dailyPillState(): { showing: boolean; glowing: boolean; label: string } | null {
+    const now = this.now();
+    if (!chestSheetOpen(this.state, now)) return null;
+    const ready = chestAvailable(this.state, now);
+    const pending = anyRoyalPending(this.state, now);
+    const season = this.dailySeason();
+    return {
+      showing: true,
+      glowing: ready || pending,
+      label: ready
+        ? `Day ${season.rung} of ${season.length}`
+        : pending
+          ? 'Rewards waiting'
+          : `Ends in ${season.endsIn}`,
+    };
+  }
+
+  /** The free cell of today's rung — the tap that advances the ladder. */
+  doClaimFreeRung(): void {
+    const now = this.now();
+    if (!chestAvailable(this.state, now)) return;
+    // Read the haul BEFORE the claim: after it, this rung is behind us.
+    const haul = freeReward(this.state, nextRung(this.state, now));
+    if (claimFreeRung(this.state, now) !== 'Claimed') return;
+    this.announceChest(haul);
+  }
+
+  /** One Royal cell, of a rung already climbed. */
+  doClaimRoyalRung(rung: number): void {
+    const now = this.now();
+    if (!royalPending(this.state, rung, now)) return;
+    const haul = royalReward(this.state, rung);
+    if (claimRoyalRung(this.state, rung, now) !== 'Claimed') return;
+    this.announceChest(haul);
+  }
+
+  /** The sheet STAYS OPEN after a claim — there are thirteen more cells on it,
+   *  and closing it after every tap would make taking a bought season a
+   *  thirteen-round trip through the pill. */
+  private announceChest(haul: Wallet): void {
+    playSfx('quest');
+    const parts = (Object.entries(haul) as Array<[CurrencyId, number]>)
+      .map(([c, n]) => `+${n} ${c}`);
+    this.toast(parts.join(' · '));
+    this.notify();
+  }
+
+  /** The Royal chest goes through the same confirmation every other real-money
+   *  SKU does — the price meets the budget in exactly one place (iapSheet.ts). */
+  doBuyRoyalChest(): void {
+    this.openIap('RoyalChest', 'daily');
+  }
+
   adOffer(): { reward: number } | null {
     return adOfferPending(this.state) ? { reward: adOfferReward(this.state) } : null;
   }
 
-  openAdOffer(): void {
-    if (this.adOffer() === null) return;
-    this.setOverlay('adOffer');
-  }
-
-  /** "No thanks" and the X do the same thing: close the popup and leave the
-   *  offer standing. Only claiming consumes it. */
-  declineAdOffer(): void {
-    this.setOverlay(null);
+  /**
+   * The Mana sheet — the pool, what fills it, and the two ways to refill it.
+   *
+   * Always openable, from the header gauge as well as from the offer tab:
+   * the Gem ladder is not an ad, so a player who has spent the day's videos
+   * (or never watches one) still has somewhere to read the arithmetic and
+   * somewhere to buy a pool. Closing it leaves any standing offer standing —
+   * only claiming consumes one.
+   */
+  openMana(): void {
+    this.setOverlay('mana');
   }
 
   startAdWatch(): void {
     if (this.adOffer() === null) return;
+    this.adWatchPurpose = 'mana';
     this.adWatchStartedAt = this.now();
     this.setOverlay(null); // the ad is its own surface, above everything
     this.notify();
@@ -836,13 +1196,44 @@ export class Game {
     return { secondsLeft: left, ready: left === 0 };
   }
 
+  /** Watch an ad for a banner's free call. The allowance is the sim's — this
+   *  only refuses early so the screen is never opened on a pull that would
+   *  then be turned down. */
+  startFreePullWatch(banner: BannerId): void {
+    if (!freePullAvailable(this.state, banner, this.now())) return;
+    this.adWatchPurpose = banner;
+    this.adWatchStartedAt = this.now();
+    this.setOverlay(null); // the ad is its own surface, above everything
+    this.notify();
+  }
+
+  /** What a banner's free call is waiting on, for its button. */
+  freePull(banner: BannerId): { left: number; readyAt: number; ready: boolean } {
+    return {
+      left: freePullsLeft(this.state, banner, this.now()),
+      readyAt: freePullReadyAt(this.state, banner),
+      ready: freePullAvailable(this.state, banner, this.now()),
+    };
+  }
+
   doClaimAdReward(): void {
     const watch = this.adWatch();
     if (watch === null || !watch.ready) return;
+    if (this.adWatchPurpose !== 'mana') {
+      const banner = this.adWatchPurpose;
+      const claimed = claimFreePull(this.state, banner, this.now());
+      if (claimed.result === 'Pulled') {
+        playSfx('gemSpend');
+        this.openReveal(banner, [claimed.pull]);
+      }
+      this.adWatchStartedAt = null;
+      this.setOverlay(null);
+      return;
+    }
     const reward = adOfferReward(this.state);
     if (claimAdOffer(this.state, this.now()) === 'Claimed') {
       playSfx('questComplete');
-      this.floaters.add(townhall(this.state).location, `+${reward} ${icon('Mana')}`);
+      this.floaters.add(townhall(this.state).location, `+${reward}`, 'Mana');
     }
     this.adWatchStartedAt = null;
     this.setOverlay(null);
@@ -858,24 +1249,177 @@ export class Game {
       this.mode = { kind: 'normal' };
     } else if (result === 'NotEnoughResources') {
       this.shake(Object.keys(cost) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      this.offerBuilder();
     } else {
-      this.toast(result === 'QueueFull' ? 'Build queue is full' : result);
+      this.toast(this.refusalWords(result, definitionId, 1));
     }
     this.notify();
+  }
+
+  /**
+   * A refusal in plain words, and — where there is one — the errand that
+   * answers it. Three of them are a different trip each: the map, a workshop
+   * queue, a decoration. A bare enum name told the player none of that.
+   */
+  private refusalWords(
+    result: string, definitionId: DistrictId, targetLevel: number, district?: District,
+  ): string {
+    if (result === 'NotEnoughGoods') {
+      return 'Not enough refined goods — queue some at a workshop';
+    }
+    if (result === 'NeedsHarmony') {
+      const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
+      return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+    }
+    return result;
+  }
+
+  /** What a key costs, and what the player holds — the store card's whole
+   *  content. One card per banner, because the two keys are two prices. */
+  keyOffer(banner: BannerId): { cost: number; held: number; key: CurrencyId } {
+    const def = BANNERS[banner];
+    return { cost: def.keyGemCost, held: this.walletValue(def.key), key: def.key };
+  }
+
+  doBuyKeys(banner: BannerId, count = 1): void {
+    if (buyKeys(this.state, banner, count) === 'Purchased') {
+      playSfx('gemSpend');
+      const kind = BANNERS[banner].key === 'GoldKey' ? 'gold' : 'silver';
+      this.toast(`+${count} ${kind} key${count === 1 ? '' : 's'}`);
+    } else {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
+  /**
+   * Every builder is busy. Offer one more for Gems.
+   *
+   * The popup is raised from the REFUSAL rather than from a store tab,
+   * because that is the only moment the player has already decided they want
+   * the thing — `Docs/features/06-construction.md`. It opens at the ceiling too: the
+   * sheet then explains why there is nothing to buy, which is a better answer
+   * than a toast the player has to read in the corner of their eye.
+   *
+   * Placement mode is deliberately LEFT OPEN behind it. Dismissing the offer
+   * puts the player back on the ghost they had positioned, so declining costs
+   * them nothing they had already done.
+   */
+  offerBuilder(): void {
+    playSfx('error');
+    this.setOverlay('builder');
+  }
+
+  builderOffer(): { builders: number; ceiling: number; cost: number; affordable: boolean } {
+    const cost = builderGemCost(this.state);
+    return {
+      builders: builderCount(this.state),
+      ceiling: KINGDOM_DEF.maxBuilders,
+      cost,
+      affordable: this.walletValue('Gems') >= cost,
+    };
+  }
+
+  doBuyBuilder(opts: { closeSheet?: boolean } = {}): void {
+    const result = buyBuilder(this.state);
+    if (result === 'Purchased') {
+      playSfx('gemSpend');
+      // The refused-build offer closes on purchase — the player was placing
+      // something. The store stays open: they came to shop.
+      if (opts.closeSheet !== false) this.setOverlay(null);
+      this.toast('A builder joins your kingdom');
+    } else if (result === 'NotEnoughGems') {
+      this.shake(['Gems']);
+    }
+    this.notify();
+  }
+
+  // ----------------------------------------------------------- the store
+
+  /** The simulated payer, for the store's budget line and the confirmation
+   *  sheet. Null until a profile is chosen. Cents, never dollars. */
+  payerInfo(): {
+    profile: PayerProfile; label: string; budgetCents: number; remainingCents: number;
+    resetsIn: string;
+  } | null {
+    const payer = this.state.player.payer;
+    if (payer === null) return null;
+    const now = this.now();
+    return {
+      profile: payer.profile,
+      label: PROFILE_LABEL[payer.profile],
+      budgetCents: monthlyBudgetCents(payer.profile),
+      remainingCents: budgetRemainingCents(this.state, now) ?? 0,
+      resetsIn: describeWait(monthResetsAt(now) - now),
+    };
+  }
+
+  canAffordSku(id: StoreSkuId): boolean {
+    return canAffordSku(this.state, id, this.now());
+  }
+
+  /** What the next call on a banner costs: one key of its own kind, or
+   *  nothing at all for the free first call on the basic one. */
+  pullPrice(banner: BannerId = STANDARD_BANNER): { currency: CurrencyId; amount: number } {
+    return pullPrice(this.state, banner);
+  }
+
+  /** Choosing a profile is the one command that runs with no profile chosen.
+   *  It hands the screen to whatever was waiting behind the sheet. */
+  doChoosePayerProfile(profile: PayerProfile): void {
+    if (choosePayerProfile(this.state, profile, this.now()) !== 'Chosen') return;
+    playSfx('click');
+    const next = this.afterProfileOverlay;
+    this.afterProfileOverlay = null;
+    this.openOverlay = next;
+    this.notify();
+  }
+
+  /** A price was tapped: open the confirmation, which is where the price meets
+   *  the budget. Nothing is granted from the store card itself.
+   *
+   *  `from` is where "Not now" and a completed purchase go back to — the store
+   *  for a Gem pack, the daily chest for the Royal one. A confirmation that
+   *  always returned to the store would take a player who tapped a price on
+   *  the chest somewhere they never asked to go. */
+  openIap(id: StoreSkuId, from: OverlayName = 'store'): void {
+    this.pendingSku = id;
+    this.pendingSkuFrom = from;
+    this.setOverlay('iapConfirm');
+  }
+
+  /** Where the confirmation came from, and where it returns. */
+  iapReturn(): OverlayName {
+    return this.pendingSkuFrom;
+  }
+
+  confirmIap(): void {
+    const id = this.pendingSku;
+    if (id === null) return;
+    // The Royal chest is not a grant, it is an unlock plus a back-pay, so it
+    // goes through its own command — which still spends the budget through
+    // `buySku` (sim/daily.ts).
+    const result = id === 'RoyalChest'
+      ? buyRoyalChest(this.state, this.now())
+      : buySku(this.state, id, this.now());
+    if (result === 'Purchased' || result === 'AlreadyOwned') {
+      playSfx('gemSpend');
+      const back = this.pendingSkuFrom;
+      this.pendingSku = null;
+      this.toast(id === 'RoyalChest'
+        ? 'The Royal chest is yours for the season'
+        : 'Gems added to your purse');
+      this.setOverlay(back);
+    } else {
+      // A refusal is data (store.ts) and a denial (the shake). The sheet
+      // stays put so the player can read the numbers that said no.
+      this.shake(['Gems']);
+      this.notify();
+    }
   }
 
   // -------------------------------------------------------------- UI commands
-
-  doSell(c: CurrencyId, amount: number): void {
-    const { result, gold } = sellGoods(this.state, c, amount);
-    if (result === 'Sold') {
-      playSfx('coinSale');
-      const market = this.state.city.districts.find(
-        (d) => d.definitionId === 'Market' && d.state === 'Built');
-      if (market) this.floaters.add(market.location, `+${gold} ${icon('Gold')}`);
-    }
-    this.notify();
-  }
 
   doQueueTraining(): void {
     const result = trainUnit(this.state, 'Villager', this.now());
@@ -896,12 +1440,89 @@ export class Game {
     const result = upgradeDistrict(this.state, districtId);
     if (result === 'NotEnoughResources') {
       const d = districtById(this.state, districtId)!;
-      this.shake(Object.keys(DISTRICTS[d.definitionId].upgradeCost) as CurrencyId[]);
+      this.shake(Object.keys(upgradeCost(d.definitionId, d.ordinal, d.level)) as CurrencyId[]);
+    } else if (result === 'NoBuilderFree') {
+      // An upgrade occupies a builder exactly as a build does, so it hits the
+      // same wall and deserves the same offer rather than a bare refusal.
+      this.offerBuilder();
     } else if (result !== 'Started') {
-      this.toast(result);
+      const d = districtById(this.state, districtId);
+      this.toast(d === undefined
+        ? result
+        : this.refusalWords(result, d.definitionId, d.level + 1, d));
     }
     this.notify();
     return result;
+  }
+
+  /** A new hero gets the pennant; anything else gets a line. Shared by the
+   *  paid call and the one an ad pays for, because a hero found for free is
+   *  still a hero found. */
+  /**
+   * Hand a batch to the reveal screen.
+   *
+   * This used to be a top banner for a hero and a toast for fragments, which
+   * had the ten-call announcing itself in a single line of summary — a call
+   * is the one moment in the game the player paid for a surprise, and a
+   * one-line receipt is the opposite of one. The screen owns it now
+   * (Docs/features/10-heroes.md §8.3); nothing is queued, so there is no
+   * second announcement to collide with it.
+   */
+  private openReveal(banner: BannerId, pulls: readonly PullResult[]): void {
+    const prizes = gachaPrizes(pulls);
+    if (prizes.length === 0) return;
+    this.gachaReveal = { banner, calls: pulls.length, prizes };
+  }
+
+  /**
+   * Everything the roster screen reads, as one string.
+   *
+   * The screen draws thirty-two `<img>` portraits and the overlay is rebuilt
+   * on every notify() — once a second from the tick — so without this the
+   * images are recreated every second and blink as each new element decodes.
+   * Nothing on that screen is time-dependent: it only moves when the player
+   * moves it (`src/ui/kit/host.ts`).
+   *
+   * **Deliberately coarse.** `state.heroes` goes in whole rather than field
+   * by field, so a screen that grows a new line tomorrow is covered without
+   * anybody remembering to come back here. A signature that misses an input
+   * does not flicker — it goes stale, which is the worse bug.
+   */
+  heroesSignature(): string {
+    return [
+      this.openHeroId ?? '-',
+      JSON.stringify(this.state.heroes),
+      // Both purses the screen spends from: XP buys a level, Stardust tolls
+      // an ascension.
+      this.walletValue('HeroXp'),
+      this.walletValue('Stardust'),
+      // Who is on the board right now — the one line the roster reads from
+      // outside itself.
+      this.partyHeroes.join(','),
+    ].join('|');
+  }
+
+  /** The player has read it. */
+  dismissGachaReveal(): void {
+    this.gachaReveal = null;
+    this.notify();
+  }
+
+  /** Ten calls at once. The banner card shows the ten results; the presenter
+   *  only announces the heroes among them, because ten toasts is not a
+   *  reward, it is a queue. */
+  doPullMany(banner: BannerId = STANDARD_BANNER, count = 10): void {
+    const batch = pullMany(this.state, banner, count);
+    if (batch.result === 'NotEnoughKeys') {
+      this.shake([BANNERS[banner].key]);
+      this.notify();
+      return;
+    }
+    if (batch.result === 'Pulled') {
+      playSfx('gemSpend');
+      this.openReveal(banner, batch.pulls);
+    }
+    this.notify();
   }
 
   doRush(itemId: string): void {
@@ -911,9 +1532,30 @@ export class Game {
     this.notify();
   }
 
-  doCancelItem(itemId: string): void {
-    cancelQueueItem(this.state, itemId);
-    this.inspectedDistrictId = null;
+  /** Gems to finish this research now, or null when it is not running. */
+  techRushGems(id: TechId): number | null {
+    return techRushCost(this.state, id, this.now());
+  }
+
+  /** Gems to have this technology now — the Knowledge it is short of, priced
+   *  through its own drip, plus the research itself. Null when it is not
+   *  something the player could start. */
+  techInstantGems(id: TechId): number | null {
+    return instantTechGems(this.state, id, knowledgePerHour(this.state));
+  }
+
+  doBuyTechInstant(id: TechId): void {
+    const result = buyTechInstantly(this.state, id, knowledgePerHour(this.state));
+    if (result === 'Researched') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    else if (result === 'NotEnoughGold') this.shake(['Gold']);
+    this.notify();
+  }
+
+  doFinishTech(id: TechId): void {
+    const result = finishTechWithGems(this.state, id, this.now());
+    if (result === 'Finished') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
   }
 
@@ -926,14 +1568,10 @@ export class Game {
       this.toast('All research slots are busy');
     } else if (result === 'MissingRequirement') {
       this.toast('Requires another technology first');
+    } else if (result === 'EraLocked') {
+      const def = TECHNOLOGIES[id];
+      this.toast(`Reveal ${eraShortfall(this.state, def.tome, def.era)} more cells to read on`);
     }
-    this.notify();
-  }
-
-  doBuyUpgrade(id: UpgradeId): void {
-    const result = buyUpgrade(this.state, id);
-    if (result === 'Purchased') playSfx('upgradeBought');
-    if (result === 'NotEnoughResources') this.shake(['Gold']);
     this.notify();
   }
 
@@ -1013,15 +1651,11 @@ export class Game {
       case 'CompleteTechs':
         overlay('research');
         break;
-      case 'BuyUpgrade':
-        this.setUiHint(`upgrade:${quest.goalTarget}`);
-        overlay('research');
-        break;
       case 'OwnHeroes':
-        // The banner lives on the Reliquary's heroes tab; the sheet opens
-        // there on its own when the roster is what was asked for.
+        // The banner is the first thing on the store, and the hint lights
+        // its Call button.
         this.setUiHint('banner');
-        overlay('reliquary');
+        overlay('store');
         break;
       case 'AssignWorkers': {
         const target = built((d) => DISTRICTS[d.definitionId].maxWorkersPerLevel.length > 0);
@@ -1048,15 +1682,6 @@ export class Game {
         }
         break;
       }
-      case 'SellGoods':
-        if (hasMarket(this.state)) {
-          this.setUiHint('market');
-          overlay('market');
-        } else {
-          this.setUiHint('build:Market');
-          overlay('build');
-        }
-        break;
       case 'DiscoverCells':
         centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
         break;
@@ -1096,15 +1721,18 @@ export class Game {
         }
         break;
       }
+      case 'ClearGarrisons': {
+        // The gate whose counter is nearest, which is the one the quest
+        // means; failing that, the frontier — the answer is "go and find
+        // one".
+        const open = this.openGateViews()[0];
+        if (open) this.showRuin(open.ruinId);
+        else centerCell(this.nearestCell((c) => fogState(this.state, this.map, c) === 'Discovered'));
+        break;
+      }
       case 'ReachDepth':
       case 'ClearRuins': {
-        // A party already underground is the answer; otherwise the nearest
-        // ruin they could be sent into.
-        const waiting = this.waitingDelves()[0];
-        if (waiting) {
-          this.openCheckpointFor(waiting.id);
-          break;
-        }
+        // The nearest ruin with a room still to fight.
         const found = discoveredRuins(this.state, this.map)
           .sort((a, b) =>
             townhallDistance(this.map, RUINS[a].location)
@@ -1178,9 +1806,12 @@ export class Game {
       // The LAST claim gets the victory sting instead of the usual chime.
       const finished = activeQuest(this.state) === null;
       playSfx(finished ? 'chainFinished' : 'quest');
-      const parts = Object.entries(quest.reward)
-        .map(([c, n]) => `+${n} ${icon(c as CurrencyId)}`);
-      this.floaters.add(townhall(this.state).location, parts.join(' '));
+      // One floater per currency rather than one string listing them all:
+      // each carries its own atlas icon, and an emoji in a joined string is
+      // exactly the fallback the art rules refuse.
+      for (const [c, n] of Object.entries(quest.reward)) {
+        this.floaters.add(townhall(this.state).location, `+${n}`, c);
+      }
       // Finishing the chain used to just make the tracker vanish, which reads
       // as a bug rather than an ending. Say something.
       if (finished) {
@@ -1219,7 +1850,7 @@ export class Game {
     const result = claimLandmark(this.state, this.map, cell);
     if (result === 'Claimed') {
       playSfx('upgradeBought');
-      this.floaters.add(cell, `+${manaProduction(this.state) - before} ${icon('Mana')}/h`);
+      this.floaters.add(cell, `+${manaProduction(this.state) - before}/h`, 'Mana');
       this.queueBanner({
         title: 'Landmark claimed!',
         icon: LANDMARK_ART[def.kind].glyph,
@@ -1230,26 +1861,38 @@ export class Game {
       });
     } else if (result === 'NotEnoughGold') {
       this.shake(['Gold']);
-    } else if (result === 'Defended') {
-      this.toast('An enemy warband holds this place — clear it first');
     }
     this.notify();
   }
 
   // ----------------------------------------------------------- expeditions
 
-  /** Why this ruin cannot be delved right now, in plain words; null = it can. */
+  /** Why this ruin cannot be entered right now, in plain words; null = it can. */
   expeditionBlock(ruinId: RuinId): string | null {
-    const running = this.state.delves.find((d) => d.ruinId === ruinId && d.phase !== 'done');
-    if (running) return 'Your party is already down there';
-    if (freeHeroes(this.state).length === 0) {
-      return this.state.heroes.owned.length === 0
-        ? 'You have no hero to lead a party'
-        : 'Every hero is already underground';
-    }
-    if (maxArmyPower(this.state) === 0) return 'Build a Barracks — you have no army to send';
+    if (this.ruinIsDone(ruinId)) return 'Every room of this ruin has fallen';
+    if (this.state.heroes.owned.length === 0) return 'You have no hero to lead a party';
+    if (armyCap(this.state) === 0) return 'Build a Barracks — you have no army to send';
     if (this.state.army.length === 0) return 'Train some units first';
     return null;
+  }
+
+  /** Where the player stands in a ruin: the frontier, and the rooms behind
+   *  it. What the ruin's card and the room sheet both read. */
+  ruinProgress(ruinId: RuinId): {
+    depth: number; room: number; cleared: number; rooms: number; done: boolean;
+  } {
+    const at = frontier(this.state, ruinId);
+    return {
+      depth: at.depth,
+      room: at.room,
+      cleared: roomsCleared(this.state, ruinId),
+      rooms: roomCount(ruinId),
+      done: at.done,
+    };
+  }
+
+  ruinIsDone(ruinId: RuinId): boolean {
+    return frontier(this.state, ruinId).done;
   }
 
   /** Open the launch sheet, pre-filled with the best guess: the free hero and
@@ -1257,35 +1900,318 @@ export class Game {
    *  to assemble a party from nothing to see what a ruin would take. */
   openExpedition(ruinId: RuinId): void {
     this.expeditionRuin = ruinId;
-    this.expeditionHero = freeHeroes(this.state)[0] ?? null;
+    this.partyHeroes = freeHeroes(this.state).slice(0, heroSlots(this.state));
     this.expeditionOrder = null;
-    // Never pre-filled, unlike the party. Arming a hero means giving up a
-    // passive the player is living off, and the sheet must not make that
-    // choice on their behalf — an empty socket is the only honest default.
-    this.expeditionArtifact = null;
-    const roster = availableRoster(this.state);
-    const affinity = RUINS[ruinId].affinity;
-    // Best-answering type first, then whatever else is on hand — a sensible
-    // default the player can immediately override, not a recommendation.
-    const order = (Object.keys(roster) as UnitId[])
-      .filter((u) => roster[u] > 0)
-      .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
-    // Clamped to the army cap. Proposing a party the player cannot field is
-    // worse than proposing a small one: the sheet would open pre-filled AND
-    // pre-blocked, which reads as the game refusing its own suggestion.
-    let budget = maxArmyPower(this.state);
-    this.expeditionParty = [];
-    for (const unitId of order.slice(0, unitSlots(this.state))) {
-      const affordable = Math.min(roster[unitId], Math.floor(budget / UNITS[unitId].power));
-      if (affordable <= 0) continue;
-      budget -= affordable * UNITS[unitId].power;
-      this.expeditionParty.push({ unitId, count: affordable });
-    }
+    this.prefillParty(RUINS[ruinId].affinity);
     this.setOverlay('expedition');
   }
 
-  setExpeditionHero(heroId: HeroId): void {
-    this.expeditionHero = heroId;
+  /** The party a sheet opens with: the best-answering types on hand, clamped
+   *  to the army cap. Proposing a party the player cannot field is worse than
+   *  proposing a small one — the sheet would open pre-filled AND pre-blocked,
+   *  which reads as the game refusing its own suggestion. */
+  private prefillParty(affinity: UnitId | 'Any'): void {
+    const roster = availableRoster(this.state);
+    const order = (Object.keys(roster) as UnitId[])
+      .filter((u) => roster[u] > 0)
+      .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
+    this.expeditionParty = [];
+    for (const unitId of order.slice(0, troopSlots())) {
+      // Everything of that type that is at home, up to a squad. The army cap
+      // bounds what the city OWNS (Docs/features/combat.md §14), so there is
+      // no second budget to spend here.
+      const count = Math.min(roster[unitId], UNITS[unitId].squadSize);
+      if (count <= 0) continue;
+      this.expeditionParty.push({ unitId, count });
+    }
+  }
+
+  // ------------------------------------------------------------- the gate
+
+  /** Gates the player has found and not yet cleared, nearest raid first. */
+  openGateViews(): GateView[] {
+    return openGates(this.state)
+      .map((id) => gateView(this.state, id)!)
+      .sort((a, b) => (a.nextRaidAt ?? Infinity) - (b.nextRaidAt ?? Infinity));
+  }
+
+  gateFor(ruinId: RuinId): GateView | null {
+    return gateView(this.state, ruinId);
+  }
+
+  gateIsCleared(ruinId: RuinId): boolean {
+    return gateIsCleared(this.state, ruinId);
+  }
+
+  /**
+   * The raid widget, in the slot the Mana offer uses.
+   *
+   * It never opens itself: it says which garrison is closest to coming down
+   * the hill, or what the last one took, and waits to be tapped.
+   */
+  raidWidget(): {
+    ruinId: RuinId; creature: string; raidsAt: number | null; others: number;
+    took: Wallet | null; reports: number;
+  } | null {
+    if (this.state.raidReports.length > 0) {
+      const last = this.state.raidReports[this.state.raidReports.length - 1];
+      const took: Wallet = {};
+      // Several raids in one absence are ONE summary, not a stack of pills.
+      for (const r of this.state.raidReports) {
+        for (const [c, n] of Object.entries(r.took)) {
+          took[c as CurrencyId] = (took[c as CurrencyId] ?? 0) + n;
+        }
+      }
+      return {
+        ruinId: last.ruinId,
+        creature: gateCreature(last.ruinId),
+        raidsAt: null,
+        others: 0,
+        took,
+        reports: this.state.raidReports.length,
+      };
+    }
+    const soonest = nextGateToRaid(this.state);
+    if (soonest === null) return null;
+    const gate = this.gateFor(soonest)!;
+    return {
+      ruinId: soonest,
+      creature: gate.creature,
+      raidsAt: gate.nextRaidAt,
+      others: this.openGateViews().filter((g) => g.nextRaidAt !== null).length - 1,
+      took: null,
+      reports: 0,
+    };
+  }
+
+  dismissRaids(): void {
+    dismissRaidReports(this.state);
+    this.notify();
+  }
+
+  /** Fly to a ruin and open its card. The widget's only action, and the
+   *  quest chain's when it points at a garrison. */
+  showRuin(ruinId: RuinId): void {
+    this.setOverlay(null);
+    this.inspectedSite = RUINS[ruinId].location;
+    this.inspectedDistrictId = null;
+    this.camera.centerOnCell(RUINS[ruinId].location);
+    this.notify();
+  }
+
+  /** Open the room sheet on a gate. A hero ALONE is a legal board here, so
+   *  this never opens pre-blocked for want of an army. */
+  openGate(ruinId: RuinId): void {
+    this.gateRuin = ruinId;
+    // A gate resolves on entry, so nobody is busy: the roster is the party.
+    this.partyHeroes = this.state.heroes.owned.slice(0, heroSlots(this.state));
+    this.prefillParty(RUINS[ruinId].guard.threat);
+    this.setOverlay('gate');
+  }
+
+  gatePreview(): GatePreview | null {
+    if (this.gateRuin === null) return null;
+    return previewGate(this.state, this.gateRuin, this.partyHeroes, this.expeditionParty);
+  }
+
+  /** Why the attempt cannot be made, in words. A power SHORTFALL is not here:
+   *  it warns on the sheet and lets the player go anyway. */
+  gateBlockText(): string | null {
+    if (this.gateRuin === null) return 'No gate chosen';
+    const block = gateBlock(
+      this.state, this.map, this.gateRuin, this.partyHeroes, this.expeditionParty);
+    return block === null ? null : GATE_BLOCK_TEXT[block];
+  }
+
+  doClearGate(): void {
+    if (this.gateRuin === null || this.partyHeroes.length === 0) return;
+    const ruinId = this.gateRuin;
+    const report = attemptGate(
+      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty);
+    if (report.result === 'Cleared') {
+      this.setOverlay(null);
+      this.gateRuin = null;
+    } else if (report.result === 'NotEnoughSupplies') {
+      this.shake(Object.keys(gateSupplies(ruinId)) as CurrencyId[]);
+      this.reconcileParty();
+      this.notify();
+      return;
+    } else if (report.log === null) {
+      this.toast(GATE_BLOCK_TEXT[report.result as GateBlock]);
+      this.reconcileParty();
+      this.notify();
+      return;
+    }
+    this.reconcileParty();
+    // What the garrison was holding comes back as the prize sequence, so the
+    // hoard arrives as things rather than as a sentence.
+    this.openBattle(report.log!, {
+      title: `${gateView(this.state, ruinId)?.creature ?? 'A warband'} at the gate`,
+      subtitle: RUINS[ruinId].name,
+      prizes: report.result === 'Cleared' ? walletPrizes(report.hoard) : [],
+    });
+    this.notify();
+  }
+
+  // ------------------------------------------------- the party, slot by slot
+  //
+  // THE BATTLE SCREEN'S MODEL. A slot is tapped, a panel of cards opens, and
+  // a card fills the first free slot with as much as it legally can. Nothing
+  // here is a stepper: the player picks a TYPE and the game works out the
+  // count, which is the whole difference between composing a party and doing
+  // arithmetic (Docs/features/11a-ruins-ui.md §2.6).
+
+  /**
+   * Put the board back in step with the roster.
+   *
+   * A fight kills soldiers, so the squads standing in the slots can outrun
+   * what is left at home. Clamping here rather than refusing at the button is
+   * the honest reading: the player did not change their mind, the army did.
+   */
+  private reconcileParty(): void {
+    const roster = availableRoster(this.state);
+    this.expeditionParty = this.expeditionParty
+      .map((slot) => ({ ...slot, count: Math.min(slot.count, roster[slot.unitId]) }))
+      .filter((slot) => slot.count > 0);
+  }
+
+  /**
+   * Troop slots on the board — all of them, always.
+   *
+   * There is no locked troop slot and nothing to buy: what limits a party is
+   * the army at home and the army cap, both of which are earned in the city.
+   * The pair of readers stays because the HERO row has two different numbers
+   * and the screen draws both rows the same way.
+   */
+  troopSlotsOpen(): number {
+    return troopSlots();
+  }
+
+  troopSlotCeiling(): number {
+    return troopSlots();
+  }
+
+  heroSlotsOpen(): number {
+    return heroSlots(this.state);
+  }
+
+  heroSlotCeiling(): number {
+    return PARTY.heroSlots;
+  }
+
+  /**
+   * How many of this type would go into a slot right now: a whole squad, or
+   * everything of them that is still at home — whichever runs out first
+   * (Docs/features/combat.md §4). A partial squad is legal, so the roster is
+   * a floor on nothing: eleven Archers send eleven.
+   */
+  troopsAvailableFor(unitId: UnitId): number {
+    return Math.max(0, Math.min(UNITS[unitId].squadSize, this.troopsLeftAtHome(unitId)));
+  }
+
+  /** Of this type, how many are still at home — the roster minus what the
+   *  party has already committed. */
+  troopsLeftAtHome(unitId: UnitId): number {
+    const roster = availableRoster(this.state);
+    return Math.max(0, roster[unitId] - this.expeditionParty
+      .filter((slot) => slot.unitId === unitId)
+      .reduce((sum, slot) => sum + slot.count, 0));
+  }
+
+  /** Fill the first free troop slot with as big a squad of this type as the
+   *  roster and the cap allow. */
+  assignTroop(unitId: UnitId): void {
+    if (this.expeditionParty.length >= this.troopSlotsOpen()) {
+      this.toast('Every troop slot is full — clear one first');
+      return;
+    }
+    const count = this.troopsAvailableFor(unitId);
+    if (count <= 0) {
+      this.toast(`No ${UNITS[unitId].name}s left to send`);
+      return;
+    }
+    this.expeditionParty.push({ unitId, count });
+    playSfx('click');
+    // The panel stays up while there is another slot to fill, and gets out of
+    // the way the moment there is not: a list of cards over a full board is a
+    // panel asking a question the player has already answered.
+    if (this.expeditionParty.length >= this.troopSlotsOpen()) this.battlePicker = null;
+    this.notify();
+  }
+
+  clearTroopSlot(index: number): void {
+    if (index < 0 || index >= this.expeditionParty.length) return;
+    this.expeditionParty.splice(index, 1);
+    playSfx('click');
+    this.notify();
+  }
+
+  /** Put a hero in the first free hero slot. */
+  assignHero(heroId: HeroId): void {
+    if (this.partyHeroes.includes(heroId)) return;
+    if (this.partyHeroes.length >= this.heroSlotsOpen()) {
+      this.toast('Every hero slot is full — clear one first');
+      return;
+    }
+    this.partyHeroes.push(heroId);
+    playSfx('click');
+    if (this.partyHeroes.length >= this.heroSlotsOpen()) this.battlePicker = null;
+    this.notify();
+  }
+
+  clearHeroSlot(index: number): void {
+    if (index < 0 || index >= this.partyHeroes.length) return;
+    this.partyHeroes.splice(index, 1);
+    playSfx('click');
+    this.notify();
+  }
+
+  /** The expedition sheet's hero row is a set of toggles rather than slots,
+   *  because a delve is composed on one screen with no panel over it. */
+  toggleHero(heroId: HeroId): void {
+    const at = this.partyHeroes.indexOf(heroId);
+    if (at >= 0) this.clearHeroSlot(at);
+    else this.assignHero(heroId);
+  }
+
+  /** The picker panel over the battle screen: troops, heroes, or nothing. */
+  openBattlePicker(kind: 'troops' | 'heroes'): void {
+    this.battlePicker = kind;
+    playSfx('click');
+    this.notify();
+  }
+
+  closeBattlePicker(): void {
+    this.battlePicker = null;
+    this.notify();
+  }
+
+  /** The troop roster the picker rail draws, minus nothing: a type with none
+   *  left still shows, saying so, because an absent card reads as a bug. */
+  availableTroops(): Record<UnitId, number> {
+    return availableRoster(this.state);
+  }
+
+  /** Whether THIS battle screen has to respect a hero being underground.
+   *  A gate resolves on entry, so it does not (Docs/features/10-heroes.md
+   *  §2.5); the delve's own launch does. */
+  battleHeroesAreCommitted(): boolean {
+    return this.gateRuin === null;
+  }
+
+  heroSlotOffer(): { cost: number; slots: number; ceiling: number } {
+    return {
+      cost: heroSlotGemCost(this.state),
+      slots: this.heroSlotsOpen(),
+      ceiling: this.heroSlotCeiling(),
+    };
+  }
+
+  doBuyHeroSlot(): void {
+    const result = buyHeroSlot(this.state);
+    if (result === 'Purchased') playSfx('gemSpend');
+    else if (result === 'NotEnoughGems') this.shake(['Gems']);
+    else this.toast('Three heroes is the whole board');
     this.notify();
   }
 
@@ -1299,116 +2225,48 @@ export class Game {
     this.notify();
   }
 
-  /** Tapping the socketed relic again takes it back out — the choice has to be
-   *  reversible right up until the party leaves. */
-  setExpeditionArtifact(artifactId: ArtifactId | null): void {
-    this.expeditionArtifact = this.expeditionArtifact === artifactId ? null : artifactId;
-    this.notify();
-  }
-
   setStandingOrder(depth: number | null): void {
     this.expeditionOrder = depth;
     this.notify();
   }
 
-  /**
-   * The relic this party would actually leave with. A relic that has since
-   * been attuned, or sent down with someone else, is NOT one of them.
-   *
-   * The block message still names the raw choice, so the player is told why —
-   * but the numbers must only ever describe a party the game would really
-   * send. A sheet that shows the stats of a party it is simultaneously
-   * refusing reads as the game arguing with itself.
-   */
-  private sendableArtifact(): ArtifactId | null {
-    const id = this.expeditionArtifact;
-    if (id === null || artifactIsCommitted(this.state, id)) return null;
-    return id;
-  }
-
-  /** The launch read-out: what this party is, and how deep it is SAFE. */
-  expeditionPreview(): ExpeditionPreview | null {
+  /** The room read-out: what the frontier room fields, and what this party
+   *  is worth against it. */
+  expeditionPreview(): RoomPreview | null {
     if (this.expeditionRuin === null) return null;
-    return previewExpedition(
-      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
-      this.sendableArtifact());
-  }
-
-  /** The same party WITHOUT the relic, so the sheet can show what socketing it
-   *  actually bought. A defensive relic may not move the safe depth at all —
-   *  it buys survival past the floor rather than a deeper floor — so the
-   *  stat deltas have to be shown too, or it reads as doing nothing. */
-  expeditionPreviewUnarmed(): ExpeditionPreview | null {
-    if (this.expeditionRuin === null || this.sendableArtifact() === null) return null;
-    return previewExpedition(
-      this.state, this.expeditionRuin, this.expeditionHero, this.expeditionParty);
+    return previewRoom(
+      this.state, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
   }
 
   expeditionLaunchBlock(): string | null {
     if (this.expeditionRuin === null) return 'No ruin chosen';
-    const block = launchBlock(
-      this.state, this.map, this.expeditionRuin, this.expeditionHero, this.expeditionParty,
-      this.expeditionArtifact);
+    const block = roomBlock(
+      this.state, this.map, this.expeditionRuin, this.partyHeroes, this.expeditionParty);
     if (block === null) return null;
     // The supplies are printed in the button and turn clay when they cannot be
     // paid (§6.4), so saying it again in words beside it is nagging. The
     // button still refuses — the red is what disables it.
     if (block === 'NotEnoughSupplies') return null;
-    return LAUNCH_BLOCK_TEXT[block];
+    return ROOM_BLOCK_TEXT[block];
   }
 
+  /**
+   * ENTER THE ROOM. The whole of an expedition, in one tap.
+   *
+   * There is no journey to start and nothing to wait for: the fight resolves
+   * here, the screen redraws on the next room, and the player decides again
+   * (Docs/features/11-expeditions.md §5).
+   */
   doLaunchExpedition(): void {
-    if (this.expeditionRuin === null || this.expeditionHero === null) return;
-    const result = launchDelve(
-      this.state, this.map, this.expeditionRuin, this.expeditionHero,
-      this.expeditionParty, this.now(), this.expeditionOrder, this.expeditionArtifact,
+    if (this.expeditionRuin === null || this.partyHeroes.length === 0) return;
+    const ruinId = this.expeditionRuin;
+    const report = enterRoom(
+      this.state, this.map, ruinId, this.partyHeroes, this.expeditionParty,
     );
-    if (result === 'Launched') {
-      playSfx('unitTrained');
-      this.toast('Your party sets off');
-      this.expeditionRuin = null;
-      this.setOverlay(null);
-    } else if (result === 'NotEnoughSupplies') {
-      this.shake(Object.keys(supplyCost(this.expeditionRuin, this.expeditionHero)) as CurrencyId[]);
-    } else {
-      this.toast(LAUNCH_BLOCK_TEXT[result]);
-    }
-    this.notify();
-  }
-
-  // ----------------------------------------------------------- checkpoints
-
-  /** Parties waiting for an answer — the return hook the design asks for. */
-  waitingDelves(): Delve[] {
-    return this.state.delves.filter((d) => d.phase === 'checkpoint' || d.phase === 'done');
-  }
-
-  openCheckpointFor(delveId: string): void {
-    this.openCheckpoint = delveId;
-    this.setOverlay('checkpoint');
-  }
-
-  checkpointDelve(): Delve | undefined {
-    return this.openCheckpoint === null
-      ? undefined : delveById(this.state, this.openCheckpoint);
-  }
-
-  doPushDeeper(): void {
-    if (this.openCheckpoint === null) return;
-    const result = pushDeeper(this.state, this.openCheckpoint, this.now());
-    if (result === 'Descending') {
-      playSfx('click');
-      this.setOverlay(null);
-      this.openCheckpoint = null;
-    }
-    this.notify();
-  }
-
-  doExtract(): void {
-    if (this.openCheckpoint === null) return;
-    const report = extract(this.state, this.openCheckpoint);
-    if (report.result === 'Extracted') {
-      playSfx('quest');
+    // The dead are off the roster now, so the squads on the board have to
+    // come back down to what is left of them.
+    this.reconcileParty();
+    if (report.result === 'Cleared') {
       if (report.artifact !== null) {
         const relic = ARTIFACTS[report.artifact];
         this.queueBanner({
@@ -1421,52 +2279,133 @@ export class Game {
           sfx: 'chainFinished',
         });
       }
-      this.toast(`Banked from depth ${report.depth}`);
+      // The sheet stays open on the NEXT room, because the decision the
+      // player just made is the one they are about to make again — and it
+      // closes itself when the ruin runs out.
+      if (previewRoom(this.state, ruinId, this.partyHeroes, this.expeditionParty).done) {
+        this.expeditionRuin = null;
+        this.setOverlay(null);
+      }
+    } else if (report.result === 'NotEnoughSupplies') {
+      this.shake(Object.keys(report.supplies) as CurrencyId[]);
+      this.notify();
+      return;
+    } else if (report.log === null) {
+      this.toast(ROOM_BLOCK_TEXT[report.result as RoomBlock]);
+      this.notify();
+      return;
     }
-    this.openCheckpoint = null;
-    this.setOverlay(null);
+    // The fight already happened — every wallet and every roster is where the
+    // resolver left them. What opens now is a REPLAY of it.
+    this.openBattle(report.log!, {
+      title: RUINS[ruinId].name,
+      subtitle: report.depthCompleted
+        ? `Depth ${report.depth} is yours`
+        : `Depth ${report.depth} · Room ${report.room}`,
+      prizes: report.result === 'Cleared' ? roomPrizes(report, RUINS[ruinId].artifact) : [],
+    });
     this.notify();
   }
 
-  doBuyPartySlot(): void {
-    const result = buyPartySlot(this.state);
-    if (result === 'Purchased') playSfx('gemSpend');
-    if (result === 'NotEnoughGems') this.shake(['Gems']);
+  // -------------------------------------------------------------- the fight
+
+  /** Start replaying a fight that has already happened. */
+  private openBattle(
+    log: BattleLog,
+    about: { title: string; subtitle: string; prizes: GachaPrize[] },
+  ): void {
+    this.battle = {
+      log,
+      title: about.title,
+      subtitle: about.subtitle,
+      prizes: about.prizes,
+      startedAt: this.now(),
+      phase: 'playing',
+    };
+  }
+
+  /** Which tick of the fight the screen should be drawing at `now`. Past the
+   *  end it stays at the end, so a slow frame cannot skip the last blow. */
+  battleTick(now: number): number {
+    const b = this.battle;
+    if (b === null) return 0;
+    return Math.min(b.log.ticks, Math.floor((now - b.startedAt) / COMBAT.tickMs));
+  }
+
+  /**
+   * Walk the playback forward. Called from the screen's own timer, because
+   * the game's one-second tick is far too coarse for a fight — but every
+   * decision it makes is here rather than in the DOM.
+   */
+  advanceBattle(now: number): void {
+    const b = this.battle;
+    if (b === null) return;
+    const elapsed = now - b.startedAt;
+    const fight = b.log.ticks * COMBAT.tickMs;
+    let moved = false;
+    // A LOOP, not a step: a frame the browser skipped, or a test that jumps
+    // the clock, must land on the phase the clock says rather than one
+    // behind it.
+    for (;;) {
+      if (b.phase === 'playing' && elapsed >= fight) {
+        b.phase = 'result';
+        playSfx(b.log.winner === 'ours' ? 'questComplete' : 'error');
+        moved = true;
+        continue;
+      }
+      if (b.phase === 'result' && elapsed >= fight + BATTLE_RESULT_DELAY_MS) {
+        // The prizes deal on the reveal screen, over the board — the one
+        // place in the game that already knows how to hand things over one
+        // at a time.
+        b.phase = b.prizes.length > 0 ? 'rewards' : 'done';
+        if (b.phase === 'rewards') this.gachaReveal = { prizes: b.prizes, caption: 'Spoils' };
+        moved = true;
+        continue;
+      }
+      // The reveal owns the screen until the player dismisses it; when it
+      // does, the way out appears underneath.
+      if (b.phase === 'rewards' && this.gachaReveal === null) {
+        b.phase = 'done';
+        moved = true;
+        continue;
+      }
+      break;
+    }
+    if (moved) this.notify();
+  }
+
+  dismissBattle(): void {
+    this.battle = null;
     this.notify();
   }
 
   // --------------------------------------------------------------- heroes
 
-  doPull(): void {
-    const before = this.state.heroes.owned.length;
-    const result = pull(this.state);
-    if (result.result === 'NotEnoughGems') {
-      this.shake(['Gems']);
+  doPull(banner: BannerId = STANDARD_BANNER): void {
+    const result = pull(this.state, banner);
+    if (result.result === 'NotEnoughKeys') {
+      this.shake([BANNERS[banner].key]);
     } else if (result.result === 'Pulled') {
       playSfx('gemSpend');
-      if (result.heroId !== null && this.state.heroes.owned.length > before) {
-        const hero = HEROES[result.heroId];
-        this.queueBanner({
-          title: 'A new hero answers!',
-          icon: hero.glyph,
-          name: hero.name,
-          desc: hero.traitText,
-          sprite: hero.sprite,
-          tone: 'gold',
-          sfx: 'chainFinished',
-        });
-      } else if (result.fragmentsOf !== null) {
-        this.toast(`+${result.fragments} ${HEROES[result.fragmentsOf].name} fragments`);
-      }
+      this.openReveal(banner, [result]);
     }
+    this.notify();
+  }
+
+  /** Ten fragments buy a hero the banner has not offered
+   *  (Docs/features/10-heroes.md §4). */
+  doUnlockHero(id: HeroId): void {
+    const result = unlockHero(this.state, id);
+    if (result === 'Unlocked') playSfx('chainFinished');
+    else if (result === 'NotEnoughFragments') this.toast('Not enough fragments yet');
     this.notify();
   }
 
   doLevelHero(id: HeroId): void {
     const result = levelUpHero(this.state, id);
     if (result === 'Levelled') playSfx('upgradeBought');
-    else if (result === 'NotEnoughKnowledge') this.shake(['Knowledge']);
-    else if (result === 'TierCapped') this.toast('Raise its tier with Fragments first');
+    else if (result === 'NotEnoughXp') this.shake(['HeroXp']);
+    else if (result === 'TierCapped') this.toast('Their ascension holds them back');
     this.notify();
   }
 
@@ -1474,6 +2413,7 @@ export class Game {
     const result = raiseHeroTier(this.state, id);
     if (result === 'Raised') playSfx('upgradeBought');
     else if (result === 'NotEnoughFragments') this.toast('Not enough Fragments yet');
+    else if (result === 'NotEnoughStardust') this.shake(['Stardust']);
     this.notify();
   }
 
@@ -1486,7 +2426,7 @@ export class Game {
 
   /** Army headroom, for the card's blocked reason. */
   armyRoom(): { used: number; cap: number } {
-    return { used: committedArmyPower(this.state), cap: maxArmyPower(this.state) };
+    return { used: committedTroops(this.state), cap: armyCap(this.state) };
   }
 
   doFinishTraining(district: District): void {
@@ -1494,6 +2434,40 @@ export class Game {
     if (result === 'Success') playSfx('gemSpend');
     else if (result === 'NotEnoughGems') this.shake(['Gems']);
     this.notify();
+  }
+
+  /** Put a ward's worth of wounded back in the ranks. One order, one wait,
+   *  in the hall the player pressed it on. */
+  doHealWounded(unitId: UnitId, count: number, at?: District): void {
+    const result = healWounded(this.state, unitId, count, this.now(), at);
+    if (result === 'Queued') {
+      playSfx('unitTrained');
+      this.toast(`${count} ${UNITS[unitId].name}${count === 1 ? '' : 's'} on the mend`);
+    } else if (result === 'NotEnoughResources') {
+      this.shake(Object.keys(healCost(this.state, unitId, count)) as CurrencyId[]);
+    } else if (result === 'ArmyAtCapacity') {
+      this.toast('No room in the ranks — upgrade a military hall');
+    } else if (result === 'NoBuilding') {
+      this.toast('No hall here can look after them');
+    }
+    this.notify();
+  }
+
+  /** The infirmary, for the card that draws it: who is waiting, and how full
+   *  the ward is. */
+  woundedInfo(): { byUnit: Array<{ unitId: UnitId; count: number }>; used: number; cap: number } {
+    const byUnit = (Object.keys(UNITS) as UnitId[])
+      .map((unitId) => ({ unitId, count: woundedOf(this.state, unitId) }))
+      .filter((w) => w.count > 0);
+    return { byUnit, used: woundedCount(this.state), cap: woundedCap(this.state) };
+  }
+
+  healPrice(unitId: UnitId, count: number): Record<string, number> {
+    return healCost(this.state, unitId, count);
+  }
+
+  healWait(unitId: UnitId, count: number): number {
+    return healSeconds(unitId, count);
   }
 
   doTrain(unitId: TrainableId, at?: District): void {
@@ -1506,17 +2480,54 @@ export class Game {
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
     }
     if (result === 'ArmyAtCapacity') {
-      this.toast(`Army at capacity (${committedArmyPower(this.state)}/${maxArmyPower(this.state)}) — build or upgrade a military building`);
+      this.toast(`Army at capacity (${committedTroops(this.state)}/${armyCap(this.state)}) — build or upgrade a military building`);
     }
     this.notify();
   }
 
+  /** Queue one of this workshop's good. The crew does the rest. */
+  doQueueGood(districtUniqueId: string): void {
+    const result = queueGood(this.state, districtUniqueId, this.now());
+    if (result === 'Queued') playSfx('click');
+    if (result === 'NotEnoughResources') this.shake(['Gold', 'Wood', 'Stone']);
+    if (result === 'NotEnoughMana') this.shake(['Mana']);
+    if (result === 'NotEnoughGoods') this.toast('Not enough refined goods for that');
+    if (result === 'QueueFull') this.toast('The queue is full — upgrade the workshop for a longer one');
+    this.notify();
+  }
+
+  doCancelWorkshopItem(districtUniqueId: string, index: number): void {
+    cancelWorkshopItem(this.state, districtUniqueId, index, this.now());
+    this.notify();
+  }
+
+  doRushWorkshopItem(districtUniqueId: string): void {
+    const result = finishItemWithGems(this.state, districtUniqueId, this.now());
+    if (result === 'NotEnoughGems') this.shake(['Gems']);
+    this.notify();
+  }
+
   setOverlay(name: OverlayName | null): void {
+    // No payer profile, no game: the profile sheet has the screen until one
+    // is chosen (14-monetization.md §3). Whatever was asked for waits.
+    if (this.state.player.payer === null && name !== 'payerProfile') {
+      if (name !== null) this.afterProfileOverlay = name;
+      name = 'payerProfile';
+    }
+    // A card panel belongs to the screen that opened it, and it lives in its
+    // own mount — so leaving that screen has to close it here rather than
+    // letting it fall off with the sheet's DOM.
+    const leaving = this.openOverlay;
     this.openOverlay = name;
+    if (name !== leaving) this.battlePicker = null;
     if (name !== null) {
       this.inspectedDistrictId = null;
       this.inspectedSite = null;
     }
+    // Leaving the roster forgets which hero was open, so coming back lands on
+    // the grid rather than inside whoever was last read.
+    if (name !== 'heroes') this.openHeroId = null;
+    if (name !== 'reliquary') this.openRelicId = null;
     this.notify();
   }
 
@@ -1532,10 +2543,20 @@ export class Game {
   /** The one Close affordance: dismiss whatever menu, panel, or mode is on screen. */
   dismiss(): void {
     this.mode = { kind: 'normal' };
-    this.openOverlay = null;
+    // A picker panel is a layer INSIDE the battle screen, so the first
+    // dismissal closes it and leaves the screen behind it standing — the same
+    // way tapping outside the panel does.
+    if (this.battlePicker !== null) {
+      this.battlePicker = null;
+      this.notify();
+      return;
+    }
+    this.battlePicker = null;
+    // The profile sheet cannot be dismissed — there is nothing behind it yet.
+    this.openOverlay = this.state.player.payer === null ? 'payerProfile' : null;
     this.inspectedDistrictId = null;
     this.inspectedSite = null;
-    this.openCheckpoint = null;
+    this.pendingSku = null;
     this.notify();
   }
 
@@ -1546,7 +2567,7 @@ export class Game {
     return BUILDABLE_DISTRICTS.some((id) => {
       const def = DISTRICTS[id];
       const capped =
-        districtCount(this.state, id) >= maxCountForTownhallLevel(def, townhall(this.state).level);
+        districtCount(this.state, id) >= maxDistrictCount(this.state, def);
       if (capped) return false;
       const cells = validPlacementCells(this.state, this.map, id);
       if (cells.length === 0) return false;
@@ -1554,11 +2575,14 @@ export class Game {
     });
   }
 
-  /** Per-second Research CTA: some tech can be started, or some upgrade
-   *  bought. The same shape as `buildCtaLit` — the tab only lights when the
-   *  screen behind it has something the player can actually press. */
+  /** Per-second Research CTA: some technology can be started. The same shape
+   *  as `buildCtaLit` — the tab only lights when the screen behind it has
+   *  something the player can actually press.
+   *
+   *  It used to be two questions, because an upgrade was a different kind of
+   *  purchase. Every node is a technology now, so it is one. */
   researchCtaLit(): boolean {
-    return anyResearchActionable(this.state) || anyUpgradeActionable(this.state);
+    return anyResearchActionable(this.state);
   }
 
   /** Resource cells a worker building at `cell` (level 1) would capture. */
@@ -1567,12 +2591,14 @@ export class Game {
    *  previewing it at level 1 would understate the spot it is being moved to. */
   capturedCells(definitionId: DistrictId, cell: Coord, level = 1): Coord[] {
     const def = DISTRICTS[definitionId];
-    if (!def.harvestSource || def.influenceRadiusPerLevel.length === 0) return [];
+    if (def.harvestSources.length === 0 || def.influenceRadiusPerLevel.length === 0) return [];
     const radius = levelIndexed(def.influenceRadiusPerLevel, level);
     return cellsWithinRadiusOfRect(this.map, cell, def.size, radius).filter(
-      (c) =>
-        this.state.fog.revealed[coordKey(c)] === true &&
-        harvestSourceAt(this.state, c) === def.harvestSource,
+      (c) => {
+        if (this.state.fog.revealed[coordKey(c)] !== true) return false;
+        const here = harvestSourceAt(this.state, c);
+        return here !== null && def.harvestSources.includes(here);
+      },
     );
   }
 
@@ -1615,30 +2641,27 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatAdjacency(g.goldPerMinute),
-            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+            ...adjacencyReadout(g.stat, g.magnitude),
           });
         }
-        if (adj.received !== 0) {
-          layer.yieldCells.push({
-            cell: this.mode.selected,
-            label: formatAdjacency(adj.received),
-            tone: adj.received < 0 ? 'bad' : 'good',
-          });
+        for (const r of adj.received) {
+          layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
+      }
+      // A crop plot IS the resource, so what it would hold goes on the ghost.
+      if (this.mode.selected) {
+        const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
+        if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
       }
       if (this.mode.selected && def.influenceRadiusPerLevel.length > 0) {
         layer.influenceCells = cellsWithinRadiusOfRect(
           this.map, this.mode.selected, def.size, def.influenceRadiusPerLevel[0],
         );
-        if (def.harvestSource) {
-          const spec = HARVEST[def.harvestSource];
+        if (def.harvestSources.length > 0) {
           layer.yieldCells = this.capturedCells(this.mode.definitionId, this.mode.selected).map(
-            // The placement preview shows what WORKERS will fetch per delivery.
-            (cell) => ({
-              cell,
-              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
-            }),
+            // What each captured cell HOLDS, so a Sawmill's radius shows which
+            // trees are worth more before the shed is paid for.
+            (cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }),
           );
         }
       }
@@ -1665,31 +2688,24 @@ export class Game {
         for (const g of adj.given) {
           layer.yieldCells.push({
             cell: g.district.location,
-            label: formatAdjacency(g.goldPerMinute),
-            tone: g.goldPerMinute < 0 ? 'bad' : 'good',
+            ...adjacencyReadout(g.stat, g.magnitude),
           });
         }
-        if (adj.received !== 0) {
-          layer.yieldCells.push({
-            cell: this.mode.selected,
-            label: formatAdjacency(adj.received),
-            tone: adj.received < 0 ? 'bad' : 'good',
-          });
+        for (const r of adj.received) {
+          layer.yieldCells.push({ cell: this.mode.selected, ...adjacencyReadout(r.stat, r.total) });
         }
+        const provided = providedYieldLabel(this.map, this.mode.definitionId, this.mode.selected);
+        if (provided) layer.yieldCells.push({ cell: this.mode.selected, ...provided });
         if (def.influenceRadiusPerLevel.length > 0) {
           const district = districtById(this.state, this.mode.districtUniqueId);
           layer.influenceCells = cellsWithinRadiusOfRect(
             this.map, this.mode.selected, def.size,
             levelIndexed(def.influenceRadiusPerLevel, district?.level ?? 1),
           );
-          if (def.harvestSource) {
-            const spec = HARVEST[def.harvestSource];
+          if (def.harvestSources.length > 0) {
             layer.yieldCells = this.capturedCells(
               this.mode.definitionId, this.mode.selected, district?.level ?? 1,
-            ).map((cell) => ({
-              cell,
-              label: `+${effectiveWorkerYield(this.state, spec)} ${icon(spec.currencyId)}`,
-            }));
+            ).map((cell) => ({ cell, ...cellYieldLabel(this.state, this.map, cell) }));
           }
         }
       }
@@ -1710,7 +2726,8 @@ export class Game {
         if (active.id === 'Divination') {
           layer.yieldCells = [{
             cell: this.mode.selected,
-            label: `${divinationSaving(this.state, this.map, this.mode.selected)} ${icon('Gold')}`,
+            label: String(divinationSaving(this.state, this.map, this.mode.selected)),
+            icon: 'Gold',
             tone: 'good',
           }];
         }
@@ -1824,10 +2841,6 @@ export class Game {
     return residentsOf(this.state, district);
   }
 
-  marketPayout(c: CurrencyId, amount: number): number {
-    return salePayout(this.state, c, amount);
-  }
-
   // --------------------------------------------------------- dragging a ghost
 
   /** The footprint the ghost currently occupies, or null when there is no
@@ -1897,12 +2910,16 @@ export class Game {
     this.tapChain.dispatch(cell);
   }
 
-  /** The one accessor that knows about the three purses: Gems are the
-   *  player's, Knowledge is the kingdom's, everything else is the city's. */
+  /** The one accessor that knows about the three purses. It reads the scope
+   *  off `CURRENCIES` rather than naming currencies here, so a currency that
+   *  changes purse — as Knowledge and Stardust did on 2026-09-03 — cannot
+   *  desync the presenter from the sim. */
   walletValue(c: CurrencyId): number {
-    if (c === 'Gems') return getWallet(this.state.player.wallet, c);
-    if (c === 'Knowledge') return getWallet(this.state.kingdom.wallet, c);
-    return getWallet(this.state.city.wallet, c);
+    switch (CURRENCIES[c].scope) {
+      case 'player': return getWallet(this.state.player.wallet, c);
+      case 'kingdom': return getWallet(this.state.kingdom.wallet, c);
+      default: return getWallet(this.state.city.wallet, c);
+    }
   }
 
   // ------------------------------------------------------------------ the HUD
@@ -1912,7 +2929,7 @@ export class Game {
    *  a tech or moving a resource behind a different one can't desync it. */
   private techForCurrency(c: CurrencyId): TechId | null {
     for (const def of Object.values(DISTRICTS)) {
-      if (def.harvestSource && HARVEST[def.harvestSource].currencyId === c) {
+      if (def.harvestSources.some((s) => HARVEST[s].currencyId === c)) {
         return def.requiredTech;
       }
     }
@@ -1930,11 +2947,49 @@ export class Game {
    * The tech clause is what makes it STICKY: keyed on the balance alone, a
    * counter would vanish the moment the player spent back to zero.
    *
-   * Knowledge is NOT here. It buys heroes and relics and nothing else, so it
-   * lives in the Reliquary next to what it pays for — like Fragments, and for
-   * the same reason. A coin on the plank is a coin you spend from anywhere.
+   * Stardust and Knowledge are NOT here. Each is spent in exactly one screen
+   * — Stardust in the Reliquary next to the levels it buys, Knowledge in the
+   * Research screen next to the tomes — so each reads there, like Fragments
+   * and for the same reason. A coin on the plank is a coin you spend from
+   * anywhere; neither of those is one.
    */
+  /**
+   * The small line a coin carries beside its number, or null.
+   *
+   * ONE coin has one today: Knowledge is a CLOCK rather than a pile, and a
+   * drip you cannot see the speed of is a drip you cannot plan against. It
+   * only appears on the screen that spends it, which is also the only screen
+   * the coin appears on at all.
+   *
+   * Rounded here, not in the view: the rate is a sum of fractions and binary
+   * floating point renders some of them with a long tail — one reached a
+   * screenshot as `+2.4000000000000004/h`.
+   */
+  coinRate(c: CurrencyId): string | null {
+    if (c !== 'Knowledge' || this.openOverlay !== 'research') return null;
+    const rate = knowledgePerHour(this.state);
+    return rate > 0 ? `+${Math.round(rate * 10) / 10}/h` : null;
+  }
+
   visibleCurrencies(): CurrencyId[] {
+    // THE PLANK CARRIES WHAT THE OPEN SCREEN SPENDS.
+    //
+    // The roster spends neither Gold nor timber, and it spends two coins that
+    // are on no plank anywhere: Hero XP buys a level, Stardust tolls an
+    // ascension. A price with no purse in sight is the bug this fixes, and
+    // the refusal shake now has a coin to land on.
+    //
+    // A SWAP rather than an addition. The plank is the tightest row in the
+    // game — four coins, Mana and Gems inside 402px — so six coins would
+    // clip two of them away, and the city's four are exactly the ones that
+    // buy nothing here. Same move the plaque under it already makes
+    // (`hudSlot`): show the reading the player can act on, not all of them.
+    if (this.openOverlay === 'heroes') return ['HeroXp', 'Stardust'];
+    // The tree spends Gold AND the clock, so unlike the roster this one keeps
+    // a city coin: a technology's price has two halves and a plank showing
+    // one of them is worse than a plank showing neither. Food and timber buy
+    // no research, so they stand down.
+    if (this.openOverlay === 'research') return ['Gold', 'Knowledge'];
     const always: CurrencyId[] = ['Gold', 'Food', 'Wood'];
     const contextual: CurrencyId[] = ['Stone'];
     return [
@@ -1961,16 +3016,27 @@ export class Game {
     return { value: this.state.city.population, max: maxPopulation(this.state) };
   }
 
-  hudSlot(): { kind: 'population' | 'workers' | 'builders'; value: number; max: number } {
+  hudSlot(): {
+    kind: 'population' | 'workers' | 'builders' | 'army'; value: number; max: number;
+  } {
     // Queueing something → builders.
     if (this.openOverlay === 'build' || this.mode.kind === 'placing') {
-      const max = this.state.kingdom.maxBuilders;
+      const max = builderCount(this.state);
       return { kind: 'builders', value: max - Math.min(this.state.city.queue.length, max), max };
     }
-    // Staffing something → workers assigned vs. the whole workforce.
     const inspected = this.inspectedDistrictId === null
       ? undefined
       : districtById(this.state, this.inspectedDistrictId);
+    // Looking at a hall that turns out SOLDIERS → the army cap. It is the
+    // number that explains a refused Train, and it is about the city rather
+    // than the building, which is exactly what the plaque is for: it used to
+    // sit inside the card, where a city-wide ceiling read as a property of
+    // whichever hall you happened to have open.
+    if (inspected && DISTRICTS[inspected.definitionId].trains.some((t) => t !== 'Villager')) {
+      const army = this.armyRoom();
+      return { kind: 'army', value: army.used, max: army.cap };
+    }
+    // Staffing something → workers assigned vs. the whole workforce.
     if (inspected && DISTRICTS[inspected.definitionId].maxWorkersPerLevel.length > 0) {
       const working = this.state.city.districts.reduce((n, d) => n + d.assignedWorkers, 0);
       return { kind: 'workers', value: working, max: working + this.freeWorkers() };
@@ -2010,13 +3076,60 @@ export class Game {
 }
 
 /** What a collect tap on each harvest source sounds like. */
+/** What one worker delivery from THIS cell is worth, as the placement preview
+ *  writes it. Per cell rather than per building, because a Quarry's radius can
+ *  hold iron and gold at once and they do not pay the same coin.
+ *
+ *  It reports what is IN the cell — its whole depot — rather than what one
+ *  delivery fetches, and the reason is that only one of the two carries any
+ *  information at placement time. A delivery is the same on every cell in
+ *  range; a depot is the ground times what the ground does to it, so **the
+ *  label changes as the ghost crosses a biome**, which is the decision the
+ *  player is actually making (`Docs/features/04-harvest.md` §2.2). */
+/** For a district that BECOMES a resource cell — a crop plot — what it would
+ *  hold on the ground it is standing on. The plot is the resource, so there is
+ *  no radius to preview and nothing on the cell to read yet: the number has to
+ *  come from the definition plus the terrain under the ghost. It is the whole
+ *  reason to show it, since dragging a plot from grass to sand takes it from
+ *  13 Food to 5 and there is otherwise nothing on screen that says so. */
+function providedYieldLabel(
+  map: MapData, definitionId: DistrictId, cell: Coord,
+): YieldLabel | null {
+  const provides = DISTRICTS[definitionId].providesHarvestSource;
+  if (provides === null) return null;
+  const spec = HARVEST[provides];
+  const held = effectiveStock(map, cell, spec);
+  const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
+  return { label: String(held), icon: spec.currencyId, tone };
+}
+
+function cellYieldLabel(state: GameState, map: MapData, cell: Coord): YieldLabel {
+  const source = harvestSourceAt(state, cell);
+  if (source === null) return { label: '' };
+  const spec = HARVEST[source];
+  const held = effectiveStock(map, cell, spec);
+  // Toned against the authored stock, so richer and poorer ground read at a
+  // glance rather than needing the player to remember the baseline.
+  const tone = held > spec.stock ? 'good' : held < spec.stock ? 'bad' : undefined;
+  return { label: String(held), icon: spec.currencyId, tone };
+}
+
+/** How hard a worker's strike punches the cell, against the player's 1. Enough
+ *  to read as the same gesture, not enough to compete with it. */
+const STRIKE_PUNCH = 0.55;
+
+/** Below this zoom a strike is silent: at that scale you are reading the city,
+ *  and every worked cell chiming at once is noise rather than feedback. */
+const STRIKE_AUDIBLE_ZOOM = 0.8;
+
 const TAP_SOUNDS: Record<HarvestSourceId, SfxName> = {
   Forest: 'tapTree',
   Berries: 'tapBerries',
   Crops: 'tapBerries', // same gathering foley until a distinct take lands
   Meat: 'tapAnimals',
   Stone: 'tapStone',
-  Iron: 'tapIron',
+  MountainIron: 'tapIron',
+  MountainGold: 'tapIron',
   Fish: 'tapFish',
 };
 
@@ -2050,9 +3163,7 @@ function siteBanner(id: string): Banner | null {
       icon: art.glyph,
       name: art.name,
       // What it is FOR, in one line — the site card carries the detail.
-      desc: landmark.defended
-        ? 'Something holds it. Clear a path, then clear the guard.'
-        : 'Clear a path to it and claim it.',
+      desc: 'Clear a path to it and claim it.',
       sprite: art.sprite,
       tone: 'sky',
     };
@@ -2071,17 +3182,57 @@ function siteBanner(id: string): Banner | null {
   return null;
 }
 
-/** "+2 🪙" / "−1 🪙" — the gold/min adjacency modifier, compact. */
-export function formatAdjacency(goldPerMinute: number): string {
-  const n = Math.abs(Number.isInteger(goldPerMinute)
-    ? goldPerMinute : Number(goldPerMinute.toFixed(1)));
-  return `${goldPerMinute > 0 ? '+' : '\u2212'}${n} 🪙`;
+/** A map label: the amount as text, the icon as an ATLAS NAME. Never an emoji
+ *  in a string — the pill draws the icon from the same atlas the HUD uses
+ *  (`Docs/features/05-city-and-districts.md` §4). */
+export interface YieldLabel {
+  label: string;
+  icon?: CurrencyId;
+  tone?: 'good' | 'bad';
 }
 
+/** "+2" / "−1" — a signed gold/min adjacency modifier, without its icon. */
+export function formatSigned(goldPerMinute: number): string {
+  const n = Math.abs(Number.isInteger(goldPerMinute)
+    ? goldPerMinute : Number(goldPerMinute.toFixed(1)));
+  return `${goldPerMinute > 0 ? '+' : '\u2212'}${n}`;
+}
+
+/** "+2 🪙" / "−1 🪙" — for the DOM, which sets its own icon beside the text. */
+export const formatAdjacency = (goldPerMinute: number): string =>
+  `${formatSigned(goldPerMinute)} 🪙`;
+
+/**
+ * How one adjacency effect reads: its text, the icon beside it, and whether
+ * it is good news.
+ *
+ * The tone is NOT the sign. `workTime` and `trainTime` are durations, so a
+ * negative magnitude is the happy one — a rule that says −10% is a tenth
+ * faster, and painting that red would be exactly backwards.
+ */
+export const adjacencyReadout = (
+  stat: AdjacencyStat, total: number,
+): { label: string; icon: IconName; tone: 'good' | 'bad' } => {
+  if (stat === 'goldPerMinute') {
+    return { label: formatSigned(total), icon: 'Gold', tone: total < 0 ? 'bad' : 'good' };
+  }
+  const pct = `${formatSigned(Math.round(total * 100))}%`;
+  return { label: pct, icon: 'hourglass', tone: total > 0 ? 'bad' : 'good' };
+};
+
+/**
+ * A currency's emoji, as a STRING.
+ *
+ * The last legitimate callers are DOM banners that have not moved to `iconEl`
+ * yet. **Nothing on the canvas may use this** — the map draws its icons from
+ * the UI atlas through `drawIcon`, because an emoji renders from the system
+ * face and sits visibly outside the art (`CLAUDE.md`: no emoji fallbacks).
+ */
 export function icon(c: CurrencyId): string {
   const icons: Record<CurrencyId, string> = {
     Gold: '🪙', Food: '🍎', Wood: '🪵', Stone: '🪨', Mana: '🔮',
-    Knowledge: '📜', Gems: '💎',
+    Knowledge: '📜', Stardust: '🌟', HeroXp: '📘', Gems: '💎',
+    SilverKey: '🔑', GoldKey: '🗝️',
   };
   return icons[c];
 }
@@ -2094,24 +3245,68 @@ function trainerName(unitId: UnitId): string {
 }
 
 
-/** Why a launch is blocked, in words the player can act on. */
-const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
+/** Why a room cannot be entered, in words the player can act on. */
+/**
+ * What a cleared room paid, as a sequence of prizes.
+ *
+ * The wallet rows first, then the hero XP, then the relic shards — the same
+ * order the reveal deals them in, and the shards last because they are the
+ * thing a player is collecting toward rather than spending.
+ */
+function roomPrizes(
+  report: { wallet: Wallet; heroXp: number; fragments: number },
+  artifactId: ArtifactId,
+): GachaPrize[] {
+  const prizes = walletPrizes(report.wallet);
+  if (report.heroXp > 0) {
+    prizes.push({ kind: 'currency', currency: 'HeroXp', amount: report.heroXp });
+  }
+  if (report.fragments > 0) {
+    prizes.push({ kind: 'relicFragments', artifactId, amount: report.fragments });
+  }
+  return prizes;
+}
+
+const walletPrizes = (wallet: Wallet): GachaPrize[] => (Object.entries(wallet) as
+  Array<[CurrencyId, number]>)
+  .filter(([, n]) => n > 0)
+  .map(([currency, amount]): GachaPrize => ({ kind: 'currency', currency, amount }));
+
+const ROOM_BLOCK_TEXT: Record<RoomBlock, string> = {
   RuinNotFound: 'You have not found this ruin yet',
+  GateStanding: 'The garrison at the gate has to come down first',
+  Finished: 'Every room of this ruin has fallen',
   NoHero: 'Pick a hero to lead them',
-  HeroBusy: 'That hero is already underground',
-  EmptyParty: 'Send at least one unit with them',
+  TooManyHeroes: 'More heroes than you have slots for',
+  TooManySlots: 'Too many kinds of unit for the board',
+  NotEnoughUnits: 'You do not have that many at home',
+  NotEnoughSupplies: 'Not enough supplies for the attempt',
+};
+
+/** Why a gate attempt is refused. A power shortfall is NOT one of these: it
+ *  warns on the sheet and the player may go anyway. */
+const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
+  RuinNotFound: 'Clear a path to the ruin first',
+  AlreadyCleared: 'That gate is already down',
+  NoHero: 'Pick a hero to lead them',
+  TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
-  OverArmyCap: 'More than your army can field',
-  NotEnoughSupplies: 'Not enough supplies for the trip',
-  ArtifactNotOwned: 'You do not have that relic',
-  // Naming the passive being given up is the whole point of the message: the
-  // choice is the feature, so the refusal has to read as one.
-  ArtifactAttuned: 'That relic is attuned — unsocket it from the Reliquary first',
-  ArtifactCarried: 'That relic is already with another party',
+  NotEnoughSupplies: 'Not enough supplies to march',
 };
 
 /** How well a unit type answers a ruin's affinity — used only to pre-fill a
  *  sensible party, never to decide anything. */
 const scoreAgainst = (unitId: UnitId, affinity: UnitId | 'Any'): number =>
-  typeMultiplier(unitId, affinity) * UNITS[unitId].atk;
+  typeMultiplier(unitId, affinity) * UNITS[unitId].dmg;
+
+/** "in 3 days" / "in 5 hours" / "in 12 minutes" — coarse on purpose; the
+ *  budget refills on the first of the month, not on a stopwatch. */
+function describeWait(ms: number): string {
+  const minutes = Math.max(1, Math.round(ms / 60_000));
+  if (minutes < 60) return `in ${minutes} minute${minutes === 1 ? '' : 's'}`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `in ${hours} hour${hours === 1 ? '' : 's'}`;
+  const days = Math.round(hours / 24);
+  return `in ${days} day${days === 1 ? '' : 's'}`;
+}

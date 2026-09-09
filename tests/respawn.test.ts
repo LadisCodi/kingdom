@@ -19,12 +19,16 @@ const bushCells = (state: GameState): Coord[] =>
     .filter(([, id]) => id === 'BerryBush')
     .map(([k]) => parseCoordKey(k));
 
+// Tap until the bush stops answering. Written against the DEPOT rather than a
+// tap count, so it survives a change to `tap.work_seconds` or to Berries' stock.
 const drain = (state: GameState, cell: Coord, t: number) => {
   reveal(state, [cell]);
   canGather(state); // berries sit behind Forestry now
-  for (let i = 0; i < HARVEST.Berries.tapsToExhaust; i++) {
-    expect(tapCell(state, map, cell, t)).toBe('Harvested');
+  let taken = 0;
+  while (tapCell(state, map, cell, t) === 'Harvested') {
+    if (++taken > 100) throw new Error('bush never drained');
   }
+  expect(taken).toBeGreaterThan(0);
 };
 
 describe('feature respawning', () => {

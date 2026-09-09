@@ -1,4 +1,4 @@
-// The modifier layer (Docs/features/engine-seams.md §2).
+// The modifier layer (Docs/implementation-plan.md §1).
 //
 // Before this, effects came only from upgrade LEVELS, read through the five
 // effectiveX helpers in upgrades.ts. Nothing could apply a temporary or
@@ -23,7 +23,6 @@ import type {
 export type ModifierStat =
   | 'tapYield'
   | 'workerYield'
-  | 'salePrice'
   | 'taxRate'
   | 'autoTapCooldown'
   | 'manaRegen'
@@ -32,7 +31,31 @@ export type ModifierStat =
   | 'knowledgeYield'
   | 'activeCost'      // Mana an artifact ability costs to cast
   | 'delveSpeed'      // how fast a depth resolves
-  | 'attunementSlots'; // sockets, for a season that lends you one
+  | 'attunementSlots' // sockets, for a season that lends you one
+  // The era-2/3 hooks (Docs/features/tech-tree.md §6.2). Each is reached by
+  // the tech tree (a `stat` in `data/techEffectRules.ts`) AND by this stack,
+  // in the helper that owns the number — three stages, one place, like
+  // everything above.
+  | 'buildTime'       // seconds to raise or upgrade a building
+  | 'researchTime'    // seconds to complete a research, fixed at start
+  | 'workerSpeed'     // tiles per second a worker walks
+  | 'manaCap'         // the ceiling of the pool
+  | 'claimCost'       // Gold to claim a landmark
+  | 'stardustYield'   // Stardust a depth pays
+  // The Warfare batch. Pathfinders reuses `delveSpeed` above rather than
+  // adding a twin of it.
+  | 'armyCap'         // power the halls can field
+  | 'supplyCost'      // what an expedition costs to provision
+  | 'haulLoss'        // the fraction a failed depth loses
+  | 'heroXp'          // XP a delve pays a hero
+  | 'recruitCost'     // what a unit costs to recruit
+  // Combat. combat.ts stays PURE — these are resolved in expeditions.ts into a
+  // `Drill` carried on the Party, the way the hero's level and the carried
+  // relic already travel in.
+  | 'unitAtk'         // flat ATK on every unit
+  | 'unitDef'         // flat DEF on every unit
+  | 'typeDisadvantage' // the multiplier a bad matchup applies
+  | 'discoverRadius';  // how far a building sees into the fog
 
 export type ModifierSource = 'artifact' | 'season' | 'event' | 'hero' | 'debug';
 
@@ -73,7 +96,7 @@ const applies = (m: Modifier, stat: ModifierStat, scope: ModifierScope): boolean
  *
  * Expiry is read off `state.lastAdvance` — the sim's own clock — rather than a
  * `now` parameter. Threading `now` was rejected deliberately: effectiveTaxRate
- * is reached from accrueTaxes and from three UI files, effectiveTapYield from
+ * is reached from accrueTaxes and from three UI files, tapWorkSeconds from
  * tapCell and game.ts, and so on. It would be a wide, noisy diff across six
  * sim files and several ui/ ones, and it would introduce two notions of "now"
  * that can disagree.

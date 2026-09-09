@@ -47,3 +47,55 @@ export function drawSprite(
   ctx.drawImage(s.img, x, y, w, h);
   return true;
 }
+
+// ---------------------------------------------------------------- UI atlas
+
+// The UI icon atlas, on the CANVAS. The DOM has had these since the atlas
+// landed (src/ui/kit/icon.ts); the map was still drawing emoji into strings,
+// which is the one thing `CLAUDE.md` says never to do quietly — an emoji
+// renders from the system face and is visibly not pixel art next to the
+// world's own sprites.
+//
+// `atlas.generated.ts` is DOM-free by design (its own header says so, because
+// tests import it under node), so reading it here costs nothing.
+import atlasUrl from '../ui/assets/ui-atlas.png?url';
+import { ATLAS_CELL, ATLAS_COLS, ICON_INDEX } from '../ui/kit/atlas.generated';
+
+const atlas: Entry = { img: new Image(), ready: false };
+atlas.img.onload = () => { atlas.ready = true; };
+atlas.img.src = atlasUrl;
+
+/** Below this draw size the atlas's small variants read better — the same
+ *  call the DOM makes with `size: 'sm'`. */
+const SMALL_ICON_PX = 22;
+
+/**
+ * Draw UI icon `name` into a `size`x`size` box at (x, y).
+ *
+ * Returns false when the atlas has no such cell or has not loaded — same
+ * contract as `drawSprite`, so a caller can fall back to its glyph and art
+ * can land one sheet at a time.
+ */
+export function drawIcon(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  x: number,
+  y: number,
+  size: number,
+): boolean {
+  if (!atlas.ready) return false;
+  const key = size <= SMALL_ICON_PX && `${name}-sm` in ICON_INDEX ? `${name}-sm` : name;
+  const index = (ICON_INDEX as Record<string, number>)[key];
+  if (index === undefined) return false;
+  const col = index % ATLAS_COLS;
+  const row = Math.floor(index / ATLAS_COLS);
+  // Nearest-neighbour, or a 32px cell scaled to 16 turns to mush.
+  const smoothing = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(
+    atlas.img, col * ATLAS_CELL, row * ATLAS_CELL, ATLAS_CELL, ATLAS_CELL,
+    Math.round(x), Math.round(y), size, size,
+  );
+  ctx.imageSmoothingEnabled = smoothing;
+  return true;
+}

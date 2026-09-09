@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`determinism > matches the golden log 1`] = `
+[
+  "start",
+  "10 o0→t0 30×270",
+  "10 t0 left 9",
+  "10 t0→o0 9×47",
+  "10 o0 left 28",
+  "12 o1→t0 20×100",
+  "12 t0 left 2",
+  "12 o2→t0 1×57",
+  "12 t0 left 0",
+  "12 t0 wiped",
+  "15 t1→o1 8×252",
+  "15 o1 left 0",
+  "15 o1 wiped",
+  "20 o0→t1 28×168",
+  "20 t1 left 1",
+  "24 o2→t1 1×38",
+  "24 t1 left 0",
+  "24 t1 wiped",
+  "end 24 ours wiped",
+]
+`;

@@ -7,13 +7,19 @@
 // views hold nothing but markup once the decisions live here.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lineFor } from '../src/sim/army';
-import { QUESTS, TRAINING } from '../src/sim/data/definitions';
+import { HARVEST, QUESTS, TRAINING } from '../src/sim/data/definitions';
 import { validPlacementCells } from '../src/sim/districts';
+import { effectiveStock, harvestSourceAt } from '../src/sim/harvest';
 import { townhallDistance } from '../src/sim/grid';
-import { getWallet, townhall, type CurrencyId } from '../src/sim/state';
 import {
-  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map, screenAt,
+  coordKey, getWallet, townhall, type Coord, type CurrencyId, type TerrainId,
+} from '../src/sim/state';
+import {
+  addBuilt, canGather, completeTech, FOREST, freshGame, freshPresenter, fund, map,
+  reveal, screenAt,
 } from './helpers';
+import { grantHero } from '../src/sim/heroes';
+import { addToWallet } from '../src/sim/state';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -312,15 +318,16 @@ describe('the HUD', () => {
     expect(game.visibleCurrencies()).toContain('Stone');
   });
 
-  // Knowledge buys heroes and relics and nothing else, so it reads in the
+  // Stardust buys heroes and relics and nothing else, so it reads in the
   // Reliquary next to what it pays for. A coin on the plank is a coin you
-  // spend from anywhere; this is not one.
-  it('never puts Knowledge on the plank, however much the kingdom holds', () => {
+  // spend from anywhere; this is not one — and neither is Knowledge, which
+  // reads in the Research screen (Docs/features/07-research.md §4).
+  it('never puts Stardust on the plank, however much the kingdom holds', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    fund(state, { Knowledge: 5000 });
+    fund(state, { Stardust: 5000 });
 
-    expect(game.visibleCurrencies()).not.toContain('Knowledge');
+    expect(game.visibleCurrencies()).not.toContain('Stardust');
     expect(game.visibleCurrencies()).toEqual(['Gold', 'Food', 'Wood']);
   });
 
@@ -404,12 +411,12 @@ describe('shortfall', () => {
   it('reads each purse where it lives — city, kingdom, player', () => {
     const state = freshGame();
     const game = freshPresenter(state);
-    fund(state, { Food: 7, Knowledge: 4, Gems: 2 });
+    fund(state, { Food: 7, Stardust: 4, Gems: 2 });
 
     expect(game.shortfall({ Food: 7 })).toEqual({});
     expect(game.shortfall({ Food: 10 })).toEqual({ Food: 3 });
-    expect(game.shortfall({ Knowledge: 4, Gems: 2 })).toEqual({});
-    expect(game.shortfall({ Knowledge: 9 })).toEqual({ Knowledge: 5 });
+    expect(game.shortfall({ Stardust: 4, Gems: 2 })).toEqual({});
+    expect(game.shortfall({ Stardust: 9 })).toEqual({ Stardust: 5 });
   });
 });
 
@@ -469,5 +476,145 @@ describe('villager training', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBeLessThan(before);
     expect(game.trainingInfo().active).toBe(true);
     expect(game.trainingInfo().remainingSeconds).toBeLessThanOrEqual(TRAINING.seconds);
+  });
+});
+
+// Terrain multiplies what a cell HOLDS (04-harvest.md §2.2), and a placement
+// is the one moment that number is a decision — so the ghost has to say it.
+// Dragging a crop plot from grass to sand takes it from 13 Food to 5 and there
+// is otherwise nothing on screen that admits it.
+describe('placement labels read the ground', () => {
+  const cellOf = (kind: TerrainId): Coord | undefined =>
+    map.cells.find((c) => map.terrain.get(coordKey(c)) === kind
+      && harvestSourceAt(freshGame(), c) === null);
+
+  it('a crop plot labels its own ghost, and the number moves with the biome', () => {
+    const state = freshGame();
+    completeTech(state, 'Farming');
+    const game = freshPresenter(state);
+    game.startPlacement('FarmLands');
+
+    const seen: Array<{ kind: TerrainId; label: string; tone?: string }> = [];
+    for (const kind of ['Grassland', 'Plains', 'Desert', 'Snow'] as TerrainId[]) {
+      const cell = cellOf(kind);
+      if (!cell) continue;
+      reveal(state, [cell]);
+      (game.mode as { selected: Coord }).selected = cell;
+      const mine = game.markers().yieldCells.find((y) => coordKey(y.cell) === coordKey(cell));
+      expect(mine, `${kind} has no label`).toBeDefined();
+      seen.push({ kind, label: mine!.label, tone: mine!.tone });
+    }
+    // Whatever the province happens to paint, richer ground reads higher and
+    // is toned for it — that is the whole job of the label.
+    const grass = seen.find((s) => s.kind === 'Grassland');
+    const sand = seen.find((s) => s.kind === 'Desert');
+    if (grass && sand) {
+      expect(parseInt(grass.label, 10)).toBeGreaterThan(parseInt(sand.label, 10));
+      expect(grass.tone).toBe('good');
+      expect(sand.tone).toBe('bad');
+    }
+    const plains = seen.find((s) => s.kind === 'Plains');
+    if (plains) expect(plains.tone).toBeUndefined(); // the baseline is untoned
+  });
+
+  it('a Sawmill labels every tree in reach with what is in it', () => {
+    const state = freshGame();
+    completeTech(state, 'Saws');
+    // Stand the ghost next to a known tree, so "in reach" is not the map's
+    // business — the subject is what the label SAYS, not which cells qualify.
+    const shed = { x: FOREST.x + 1, y: FOREST.y - 1 };
+    reveal(state, [FOREST, shed]);
+    const game = freshPresenter(state);
+    game.startPlacement('Sawmill');
+    (game.mode as { selected: Coord }).selected = shed;
+
+    const labels = game.markers().yieldCells;
+    expect(labels.length).toBeGreaterThan(0);
+    for (const y of labels) {
+      // Every label sits on a tree, and says the tree's whole depot.
+      expect(harvestSourceAt(state, y.cell)).toBe('Forest');
+      expect(parseInt(y.label, 10))
+        .toBe(effectiveStock(map, y.cell, HARVEST.Forest));
+    }
+  });
+});
+
+// The heroes screen opts out of the per-tick rebuild by declaring what it
+// reads (src/ui/kit/host.ts). A signature that misses an input does not
+// flicker — it goes stale — so these assert the two halves of the contract:
+// a bare second changes nothing, and every hero-facing move changes it.
+// The plank carries what the OPEN SCREEN spends. The roster's two coins are
+// on no plank anywhere, and the city's four buy nothing there — so it is a
+// swap, not an addition, which is also what keeps the row from clipping.
+describe('the plank follows the screen', () => {
+  it('carries the city coins on the map', () => {
+    const game = freshPresenter();
+    expect(game.visibleCurrencies()).toContain('Gold');
+    expect(game.visibleCurrencies()).not.toContain('HeroXp');
+  });
+
+  it('swaps to Hero XP and Stardust while the roster is open', () => {
+    const game = freshPresenter();
+    game.setOverlay('heroes');
+
+    expect(game.visibleCurrencies()).toEqual(['HeroXp', 'Stardust']);
+  });
+
+  it('keeps Gold beside the clock on the research screen', () => {
+    const game = freshPresenter();
+    game.setOverlay('research');
+
+    // Not the roster's clean swap: a technology is priced in Gold AND
+    // Knowledge, and a plank showing one half of a price is worse than one
+    // showing neither.
+    expect(game.visibleCurrencies()).toEqual(['Gold', 'Knowledge']);
+  });
+
+  it('gives the coins back when the roster closes', () => {
+    const game = freshPresenter();
+    game.setOverlay('heroes');
+    game.setOverlay(null);
+
+    expect(game.visibleCurrencies()).toContain('Gold');
+  });
+});
+
+describe('the heroes screen signature', () => {
+  it('does not move on a tick that changed nothing it draws', () => {
+    const game = freshPresenter();
+    const before = game.heroesSignature();
+    game.tick();
+    expect(game.heroesSignature()).toBe(before);
+  });
+
+  it('moves when a hero is granted, levelled, ascended or paid fragments', () => {
+    const game = freshPresenter();
+    // Funded up front, so each move below is the hero action and not the
+    // funding: a level spends Hero XP, an ascension spends both fragments and
+    // the Stardust toll.
+    addToWallet(game.state.kingdom.wallet, 'HeroXp', 50_000);
+    addToWallet(game.state.kingdom.wallet, 'Stardust', 5_000);
+
+    const seen = new Set<string>([game.heroesSignature()]);
+
+    grantHero(game.state, 'Bard');
+    seen.add(game.heroesSignature());
+
+    game.state.heroes.fragments.Bard = 40;
+    seen.add(game.heroesSignature());
+
+    game.openHeroId = 'Bard';
+    seen.add(game.heroesSignature());
+
+    game.doLevelHero('Bard');
+    expect(game.state.heroes.levels.Bard).toBe(2); // it really happened
+    seen.add(game.heroesSignature());
+
+    game.doRaiseHeroTier('Bard');
+    expect(game.state.heroes.tiers.Bard).toBe(2);
+    seen.add(game.heroesSignature());
+
+    // Five moves, five distinct readings: none of them collide.
+    expect(seen.size).toBe(6);
   });
 });

@@ -130,24 +130,43 @@ function bands(values, minGap = 4) {
 // ---------------------------------------------------------------- verifying
 
 /**
- * Alpha has to be checked two ways. A sheet whose transparency was faked as a
- * painted checkerboard still reports a transparent corner if the very first
- * pixel happens to be a light square — the mean is what actually proves it.
+ * Alpha has to be checked more than one way. A file whose transparency was
+ * faked as a painted checkerboard still reports a transparent corner if the
+ * very first pixel happens to be a light square.
+ *
+ * Three tests, and each answers a different question:
+ *
+ *   * the CORNER is transparent — the cheap one, and the one that catches a
+ *     sheet exported with its background painted in;
+ *   * SOMETHING is transparent (`minima === 0`) — the decisive one. A baked
+ *     checkerboard is opaque in every pixel, so an alpha channel with a real
+ *     zero in it cannot be one;
+ *   * the MEAN is under half — only for a file that is mostly gutter, which
+ *     is to say a grid of icons on a canvas.
+ *
+ * That last one used to run on everything, and it is wrong for a single
+ * hand-authored 16px icon: a chunky one legitimately inks four fifths of its
+ * box, and the check called the art a checkerboard for filling the space it
+ * was drawn to fill. `sparse` is what the caller knows and this does not.
  */
-function checkAlpha(file, label) {
+function checkAlpha(file, label, { sparse = true } = {}) {
   const corner = magick(file, '-format', '%[pixel:p{0,0}]', 'info:');
-  const mean = Number(magick(file, '-alpha', 'extract', '-format', '%[fx:mean]', 'info:'));
+  const alpha = magick(
+    file, '-alpha', 'extract', '-format', '%[fx:mean] %[fx:minima]', 'info:',
+  ).split(/\s+/).map(Number);
+  const [mean, minima] = alpha;
   const problems = [];
   if (!/^srgba?\(0,0,0,0\)$/.test(corner.replace(/\s/g, ''))) {
     problems.push(`corner is ${corner}, expected srgba(0,0,0,0)`);
   }
-  if (!(mean < 0.5)) {
-    problems.push(
-      `alpha mean ${mean.toFixed(3)} — the sheet is opaque. This is what a baked-in ` +
-      'checkerboard looks like: re-ask for the true-alpha correction, and take the ' +
-      '"Download the corrected PNG" link in the message, NOT the image editor\'s ' +
-      'download button (which exports what it displays).',
-    );
+  const baked =
+    'This is what a baked-in checkerboard looks like: re-ask for the true-alpha '
+    + 'correction, and take the "Download the corrected PNG" link in the message, '
+    + 'NOT the image editor\'s download button (which exports what it displays).';
+  if (!(minima < 1)) {
+    problems.push(`no pixel is transparent anywhere. ${baked}`);
+  } else if (sparse && !(mean < 0.5)) {
+    problems.push(`alpha mean ${mean.toFixed(3)} — the sheet is opaque. ${baked}`);
   }
   if (problems.length) fail(`${label}: ${problems.join('; ')}`);
   return { corner, mean };
@@ -314,7 +333,7 @@ function sliceDenseSheet(sheet, cell, outDir) {
 function sliceWorldSheet(sheet, outDir, size) {
   const file = join(UI_DIR, sheet.file);
   if (!existsSync(file)) fail(`${sheet.file} not found`);
-  checkAlpha(file, sheet.file);
+  checkAlpha(file, sheet.file, { sparse: (sheet.dense?.cols ?? 2) > 1 });
 
   const { rows, cols } = sheet.grid;
   const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
@@ -496,7 +515,9 @@ const worldSheets = (manifest.worldSheets ?? []).filter((s) => !only || s.file.i
 if (sheets.length === 0 && worldSheets.length === 0) fail(`no sheet matches --only ${only}`);
 
 if (mode === 'check') {
-  for (const s of [...sheets, ...worldSheets]) checkAlpha(join(UI_DIR, s.file), s.file);
+  for (const s of [...sheets, ...worldSheets]) {
+    checkAlpha(join(UI_DIR, s.file), s.file, { sparse: (s.dense?.cols ?? 2) > 1 });
+  }
   console.log(`ui-atlas: ${sheets.length + worldSheets.length} sheet(s) pass the alpha check`);
   process.exit(0);
 }

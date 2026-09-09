@@ -1,7 +1,7 @@
-// The timeline (Docs/features/engine-seams.md §5, §7).
+// The timeline (Docs/implementation-plan.md §1).
 //
 // Everything that HAPPENS ON A SCHEDULE or STOPS BEING TRUE goes through here:
-// seasons, events, gacha banners, and the Conjunction. It exists so that
+// seasons, events and gacha banners. It exists so that
 // content with a wall-clock lifetime is DATA rather than code.
 //
 // It is deliberately built WITH its first two consumers rather than before
@@ -27,13 +27,8 @@
 // moment an effect can only be replayed by re-running the UI, the determinism
 // argument the whole sim rests on collapses.
 
-import { CONJUNCTION_BOONS, EVENTS } from './data/definitions';
-import { recordResourceDiscovery } from './discovery';
-import { addModifier } from './modifiers';
-import { pick } from './rng';
-import {
-  addToWallet, type GameState, type ScheduledEntry, type SchedulePayload,
-} from './state';
+import { EVENTS } from './data/definitions';
+import type { GameState, ScheduledEntry, SchedulePayload } from './state';
 
 /** How far ahead and behind reconciliation materialises occurrences. Thirty
  *  days each way covers any plausible absence without turning a recurring
@@ -52,7 +47,14 @@ const occurrenceId = (templateId: string, n: number): string => `${templateId}#$
  * every load — which is exactly what makes a content drop reach an existing
  * save.
  */
-export function reconcileSchedule(state: GameState, now: number): void {
+export function reconcileSchedule(
+  state: GameState,
+  now: number,
+  /** A kingdom that did not exist a moment ago. A window ALREADY IN PROGRESS
+   *  opened before it, so it never happened TO this player and must not pay
+   *  its opening lump — see `entryFor`. */
+  opts: { fresh?: boolean } = {},
+): void {
   const known = new Set(state.schedule.map((e) => e.id));
   for (const template of EVENTS) {
     const period = template.periodMs;
@@ -61,8 +63,8 @@ export function reconcileSchedule(state: GameState, now: number): void {
       // old save still learns it happened.
       const id = occurrenceId(template.id, 0);
       if (!known.has(id)) {
-        state.schedule.push(
-          entryFor(template.id, id, template.startsAt, template.durationMs, 0, now));
+        state.schedule.push(entryFor(
+          template.id, id, template.startsAt, template.durationMs, 0, now, opts.fresh === true));
       }
       continue;
     }
@@ -71,9 +73,10 @@ export function reconcileSchedule(state: GameState, now: number): void {
     for (let n = Math.max(0, first); n <= last; n++) {
       const id = occurrenceId(template.id, n);
       if (known.has(id)) continue;
-      state.schedule.push(
-        entryFor(template.id, id, template.startsAt + n * period, template.durationMs, n, now),
-      );
+      state.schedule.push(entryFor(
+        template.id, id, template.startsAt + n * period, template.durationMs, n, now,
+        opts.fresh === true,
+      ));
     }
   }
   // Occurrences that have been done for longer than the horizon are dead
@@ -91,6 +94,7 @@ function entryFor(
   durationMs: number,
   occurrence: number,
   reference: number,
+  fresh: boolean,
 ): ScheduledEntry {
   const endsAt = durationMs > 0 ? startsAt + durationMs : null;
   return {
@@ -98,40 +102,28 @@ function entryFor(
     templateId,
     startsAt,
     endsAt,
-    payload: { kind: templateId === 'conjunction' ? 'conjunction' : 'banner', occurrence },
-    // A window that had ALREADY CLOSED when this timeline began never happened
-    // for this player, and must not pay out retroactively. `reference` is the
-    // moment the player's timeline starts or resumes — the new game's clock, or
-    // the save's LastSaved — so a window that opened and closed during a real
-    // absence is still pending here and still fires during the replay. That
-    // distinction is the whole of point 2 in the header.
-    phase: endsAt !== null && endsAt <= reference ? 'done' : 'pending',
+    payload: { kind: 'banner', occurrence },
+    // `templateId` is kept on the entry so a future payload kind can be told
+    // apart without a migration; nothing reads it to branch today.
+    // WHAT COUNTS AS ALREADY OVER depends on whether this timeline is
+    // resuming or beginning.
+    //
+    // A RESUMED save missed the window while the player was away, so a window
+    // that opened before `reference` is still pending and fires during the
+    // replay — that is the absence being paid out, and it is point 2 of the
+    // header. Only a window that had already CLOSED never happened.
+    //
+    // A NEW kingdom missed nothing, because it did not exist. A window in
+    // progress opened before there was anyone to open it for, so it starts
+    // done: an event is something that happens to you while you play, and a
+    // window firing on turn zero used to hand a brand-new game a lump and a
+    // week-long boon it never played through — a starting grant wearing an
+    // event's clothes.
+    phase: (fresh ? startsAt <= reference : endsAt !== null && endsAt <= reference)
+      ? 'done'
+      : 'pending',
   };
 }
-
-// ------------------------------------------------------------------ the boons
-
-/**
- * The Conjunction: a 48-hour window every seven days whose boon is drawn from
- * a fixed list, keyed by the OCCURRENCE — so every player on earth gets the
- * same week's boon, and a replayed window draws the same one it did live.
- *
- * The free-attunement-slot boon earns its keep by making this week's loadout
- * decision different from last week's, which is the entire point of an event
- * that returns.
- */
-export const conjunctionBoon = (state: GameState, occurrence: number) =>
-  pick(state.seed, CONJUNCTION_BOONS, 'conjunction', occurrence);
-
-/** The window the player is standing in, if any. */
-export const activeConjunction = (state: GameState): ScheduledEntry | undefined =>
-  state.schedule.find((e) => e.payload.kind === 'conjunction' && e.phase === 'active');
-
-/** The next one to open — the thing a "closes in" pill counts down to. */
-export const nextConjunction = (state: GameState, now: number): ScheduledEntry | undefined =>
-  state.schedule
-    .filter((e) => e.payload.kind === 'conjunction' && e.phase === 'pending' && e.startsAt > now)
-    .sort((a, b) => a.startsAt - b.startsAt)[0];
 
 /** Gacha banners currently running. */
 export const activeBanners = (state: GameState): ScheduledEntry[] =>
@@ -149,34 +141,8 @@ export interface ScheduleEvent {
 }
 
 function open(state: GameState, entry: ScheduledEntry, t: number): ScheduleEvent {
-  if (entry.payload.kind === 'conjunction') {
-    const boon = conjunctionBoon(state, entry.payload.occurrence);
-    // The boon is a MODIFIER with the window's own end as its expiry, so the
-    // boundary loop retires it at exactly the right instant even if the player
-    // is not here — the same mechanism a Haste uses.
-    addModifier(state, {
-      id: `season:${entry.id}`,
-      source: 'season',
-      stat: boon.stat,
-      scope: null,
-      op: boon.op,
-      value: boon.value,
-      expiresAt: entry.endsAt,
-    });
-    // Opening pays a lump, so a player who logs in inside the window is
-    // rewarded for showing up rather than only for playing through it.
-    addToWallet(state.kingdom.wallet, 'Knowledge', boon.knowledge);
-    recordResourceDiscovery(state, 'Knowledge');
-    addToWallet(state.player.wallet, 'Gems', boon.gems);
-    void t;
-    return {
-      entryId: entry.id,
-      kind: 'conjunction',
-      transition: 'opened',
-      title: 'The Conjunction',
-      detail: boon.text,
-    };
-  }
+  void state;
+  void t;
   return {
     entryId: entry.id,
     kind: 'banner',
@@ -195,7 +161,7 @@ function close(state: GameState, entry: ScheduledEntry): ScheduleEvent {
     entryId: entry.id,
     kind: entry.payload.kind,
     transition: 'closed',
-    title: entry.payload.kind === 'conjunction' ? 'The Conjunction has passed' : 'A banner closed',
+    title: 'A banner closed',
     detail: 'It will come round again.',
   };
 }
@@ -237,9 +203,9 @@ export function nextScheduleBoundary(state: GameState, after: number): number | 
   return best;
 }
 
-/** Debug/dev only: force the next Conjunction open right now. */
-export function forceConjunction(state: GameState, now: number): void {
-  const next = state.schedule.find((e) => e.payload.kind === 'conjunction' && e.phase === 'pending');
+/** Debug/dev only: force the next scheduled window open right now. */
+export function forceNextWindow(state: GameState, now: number): void {
+  const next = state.schedule.find((e) => e.phase === 'pending');
   if (!next) return;
   const span = (next.endsAt ?? next.startsAt + 86_400_000) - next.startsAt;
   next.startsAt = now;

@@ -14,7 +14,9 @@ import { SaveManager } from './persist/saveManager';
 import { ARTIFACT_ORDER, TECH_ORDER } from './sim/data/definitions';
 import { grantArtifact, normaliseSlots } from './sim/artifacts';
 import { addMana, manaCap } from './sim/mana';
-import { forceConjunction } from './sim/timeline';
+import { grantBuilder } from './sim/commands';
+import { addGood } from './sim/goods';
+import { GOOD_ORDER } from './sim/data/definitions';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
 import { coordKey } from './sim/state';
 import { newGame } from './sim/newGame';
@@ -23,29 +25,58 @@ import { mountHeader } from './ui/header';
 import { mountNavbar, mountTools } from './ui/navbar';
 import { mountAdOfferPill } from './ui/adOfferPill';
 import { mountAdScreen } from './ui/adScreen';
-import { renderAdOfferSheet } from './ui/adOfferSheet';
+import { mountBattleScreen } from './ui/battleScreen';
+import { mountGachaScreen } from './ui/gachaScreen';
+import { renderManaSheet } from './ui/manaSheet';
+import { renderBuilderSheet } from './ui/builderSheet';
+import { renderDailySheet } from './ui/dailySheet';
+import { mountDailyPill } from './ui/dailyPill';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
 import { renderDistrictCard } from './ui/districtCard';
 import { renderSiteCard } from './ui/siteCard';
-import { renderMarketMenu } from './ui/marketMenu';
 import { renderResearchMenu } from './ui/researchMenu';
 import { renderSettingsMenu } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
+import { renderHeroesSheet } from './ui/heroesSheet';
 import { renderExpeditionSheet } from './ui/expeditionSheet';
-import { renderCheckpointSheet } from './ui/checkpointSheet';
+import { renderGateSheet } from './ui/gateSheet';
 import { renderWelcomeSheet, WELCOME_MIN_MS } from './ui/welcomeSheet';
+import { renderStoreSheet } from './ui/storeSheet';
+import { renderPayerSheet } from './ui/payerSheet';
+import { renderIapSheet } from './ui/iapSheet';
 import { mountQuestPill } from './ui/questPill';
-import { mountDelvePill } from './ui/delvePill';
+import { mountRaidPill } from './ui/raidPill';
+import { mountBattlePicker } from './ui/battlePicker';
 import { mountBanner } from './ui/banner';
+import { watchChromeMetrics } from './ui/chromeMetrics';
 import { button, el } from './ui/format';
 import { legacy, ScreenSlot } from './ui/kit/host';
 
 const AUTOSAVE_TICKS = 30;
 
 async function boot(): Promise<void> {
+  // ?dev=map — the map editor, INSTEAD of the game. Checked before anything
+  // else boots: it needs no save, no tick and no supabase, and the game's
+  // 9:16 phone frame is the wrong shape for looking at a region. `?dev=tree`
+  // below is the same deal for the tech tree.
+  if (new URLSearchParams(location.search).get('dev') === 'map') {
+    const { mountEditor } = await import('./editor/mount');
+    mountEditor();
+    return;
+  }
+
+  // ?dev=tree — the tech tree editor, on the same terms as the map's
+  // (Docs/tech-tree-editor.md): no save, no tick, no supabase, and a shape
+  // that wants a desk rather than a phone frame.
+  if (new URLSearchParams(location.search).get('dev') === 'tree') {
+    const { mountEditor } = await import('./editor/tree/mount');
+    mountEditor();
+    return;
+  }
+
   const map = buildMapData();
   const saveManager = new SaveManager();
   await saveManager.init();
@@ -98,12 +129,28 @@ async function boot(): Promise<void> {
 
   mountHeader(game, document.getElementById('header')!);
   mountQuestPill(game, document.getElementById('quest')!);
-  mountDelvePill(game, document.getElementById('delves')!);
+  mountDailyPill(game, document.getElementById('daily')!);
+  mountRaidPill(game, document.getElementById('raids')!);
+  // The battle screen's card panel. Its own mount, because the sheet it
+  // belongs to rebuilds on the tick and this must not (ui/battlePicker.ts).
+  mountBattlePicker(game, document.getElementById('picker')!);
   mountBanner(game, document.getElementById('notice')!);
   mountNavbar(game, document.getElementById('navbar')!);
   mountTools(game, document.getElementById('tools')!);
   mountAdOfferPill(game, document.getElementById('adoffer')!);
+  // The fight, under the reveal that deals what it paid.
+  mountBattleScreen(game, document.getElementById('battle')!);
+  mountGachaScreen(game, document.getElementById('gacha')!);
   mountAdScreen(game, document.getElementById('ad')!);
+  // The two bars publish their REAL heights as --hud-h / --nav-h, which is
+  // what every other screen positions against. The tokens are only the
+  // pre-paint fallback; see ui/chromeMetrics.ts for what went wrong when the
+  // numbers were hand-written.
+  watchChromeMetrics({
+    header: document.getElementById('header')!,
+    navbar: document.getElementById('navbar')!,
+    quest: document.getElementById('quest')!,
+  });
   const saveModeLabel = saveManager.cloudActive ? '☁️ cloud save' : '💾 local save only';
   // Wipe both stores, keep the reload's pagehide save disarmed, start fresh.
   const resetSave = () => void saveManager.reset().then(() => location.reload());
@@ -114,15 +161,35 @@ async function boot(): Promise<void> {
 
   const OVERLAYS: Record<OverlayName, (g: Game) => HTMLElement> = {
     build: renderBuildMenu,
-    market: renderMarketMenu,
     research: renderResearchMenu,
     settings: (g) => renderSettingsMenu(g, { saveModeLabel, onReset: resetSave }),
     purse: renderPurseSheet,
     reliquary: renderReliquarySheet,
+    heroes: renderHeroesSheet,
     expedition: renderExpeditionSheet,
-    checkpoint: renderCheckpointSheet,
-    adOffer: renderAdOfferSheet,
+    gate: renderGateSheet,
+    mana: renderManaSheet,
+    builder: renderBuilderSheet,
+    daily: renderDailySheet,
     welcome: (g) => renderWelcomeSheet(g, catchUp!),
+    store: renderStoreSheet,
+    payerProfile: renderPayerSheet,
+    // The confirmation needs a SKU; with none pending it falls back to the
+    // store rather than drawing an empty sheet.
+    iapConfirm: (g) => (g.pendingSku !== null ? renderIapSheet(g, g.pendingSku) : renderStoreSheet(g)),
+  };
+
+  /**
+   * Screens that opt OUT of the per-tick rebuild, by saying what they read.
+   *
+   * A screen with no countdown on it has nothing to redraw a second later,
+   * and one that draws images pays for the rebuild visibly — a fresh `<img>`
+   * decodes before its first paint, so a grid of portraits blinks once a
+   * second. Anything absent from this map keeps rebuilding, which is the
+   * safe default.
+   */
+  const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
+    heroes: () => game.heroesSignature(),
   };
 
   // Each mount point holds one keyed screen: same key → re-render in place,
@@ -163,13 +230,14 @@ async function boot(): Promise<void> {
     if (overlay !== null) {
       // Kit sheets bring their own close knob; legacy overlays get one added.
       const KIT_SHEETS: OverlayName[] = [
-        'purse', 'reliquary', 'expedition', 'checkpoint', 'welcome', 'settings',
-        'adOffer',
+        'purse', 'reliquary', 'heroes', 'expedition', 'gate', 'welcome', 'settings',
+        'mana', 'builder', 'daily', 'store', 'payerProfile', 'iapConfirm',
       ];
       const needsKnob = !KIT_SHEETS.includes(overlay);
       overlaySlot.show(overlay, () => legacy(
         () => OVERLAYS[overlay](game),
         needsKnob ? () => game.dismiss() : undefined,
+        OVERLAY_SIGNATURES[overlay],
       ));
     }
     else overlaySlot.clear();
@@ -179,6 +247,11 @@ async function boot(): Promise<void> {
   if (catchUp !== null && (catchUp as CatchUpReport).elapsedMs >= WELCOME_MIN_MS) {
     game.setOverlay('welcome');
   }
+  // A save with no payer profile stops here until one is chosen
+  // (Docs/features/14-monetization.md §3). setOverlay already forces the
+  // profile sheet over anything else asked for, so this only matters when
+  // nothing else was — a fresh game with no welcome report.
+  if (game.state.player.payer === null) game.setOverlay('payerProfile');
 
   game.onChange(refreshScreens);
 
@@ -224,7 +297,7 @@ async function boot(): Promise<void> {
     const terrain = map.terrain.get(coordKey(center));
     if (terrain === undefined) return lastBiome;
     lastBiome = terrain === 'Water' ? 'coast'
-      : terrain === 'Snow' || terrain === 'Tundra' || terrain === 'Mountain' ? 'snow' : 'meadow';
+      : terrain === 'Snow' || terrain === 'Tundra' ? 'snow' : 'meadow';
     return lastBiome;
   };
 
@@ -287,6 +360,12 @@ async function boot(): Promise<void> {
       }
       for (const a of game.state.research.active) a.startedAt -= delta;
       for (const r of game.state.featureRespawns) r.readyAt -= delta;
+      // The gates' counters, so the warp demos a raid landing during an
+      // absence the way it demos the rest of it.
+      for (const gate of Object.values(game.state.gates)) {
+        if (gate !== undefined && gate.nextRaidAt !== null) gate.nextRaidAt -= delta;
+      }
+      for (const report of game.state.raidReports) report.at -= delta;
       runTick();
     };
     const allTechs = () => {
@@ -301,7 +380,7 @@ async function boot(): Promise<void> {
     const allRelics = () => {
       for (const id of ARTIFACT_ORDER) grantArtifact(game.state, id);
       normaliseSlots(game.state);
-      game.state.kingdom.wallet.Knowledge = 5000;
+      game.state.kingdom.wallet.Stardust = 5000;
       addMana(game.state, manaCap(game.state));
       runTick();
     };
@@ -316,7 +395,25 @@ async function boot(): Promise<void> {
       '🛠 dev', button('⏪ 5 min', () => warp(5)), button('⏪ 1 h', () => warp(60)),
       button('💤 6 h + reload', () => warpReload(360)),
       button('🔬 all techs', allTechs), button('🔮 all relics', allRelics),
-      button('✨ conjunction', () => { forceConjunction(game.state, game.now()); runTick(); }),
+      // The only way to raise the builder count until the store exists
+      // (Phase 3). See grantBuilder() for why it is unpriced.
+      button('👷 +1 builder', () => {
+        if (grantBuilder(game.state) === 'AtCeiling') game.toast('Builders are at the ceiling');
+        runTick();
+      }),
+      // The Townhall ladder is step 7; until it lands, the buildings gated
+      // behind TH5+ — the workshops first — are only reachable from here.
+      button('🏛 +1 Townhall', () => {
+        const th = game.state.city.districts.find((d) => d.definitionId === 'Townhall');
+        if (th && th.level < 10) th.level += 1;
+        runTick();
+      }),
+      // Goods, until a workshop can make them (Docs/plans/builder-30-days.md
+      // §3): the prices that name them ship before the producer does.
+      button('📦 +10 goods', () => {
+        for (const id of GOOD_ORDER) addGood(game.state.city.goods, id, 10);
+        runTick();
+      }),
       // Force an offer: drain the pool under the gate and clear the cooldown.
       button('📺 ad offer', () => {
         game.state.ads.readyAt = 0;
@@ -324,6 +421,11 @@ async function boot(): Promise<void> {
         game.state.city.wallet.Mana = 1;
         runTick();
       }),
+      // The two authoring tools, from the bar rather than from the URL. Both
+      // mount INSTEAD of the game (see the top of boot), so this is a real
+      // navigation — and the `pagehide` handler above saves on the way out.
+      button('🗺 map editor', () => { location.search = '?dev=map'; }),
+      button('🌳 tree editor', () => { location.search = '?dev=tree'; }),
       button('🗑 reset save', resetSave));
     document.getElementById('ui')!.append(devBar);
   }

@@ -5,17 +5,23 @@ import { CITY_DEF, DISTRICTS, TAP, levelIndexed } from './data/definitions';
 import { districtAdjacency } from './adjacency';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
-import { isTechComplete } from './research';
-import { effectiveAutoTapCooldownMs, effectiveTaxRate } from './upgrades';
+import { techValue } from './techEffects';
+import { effectiveAutoTapCooldownMs, effectiveTaxRate, tapWorkSeconds } from './upgrades';
 import { payMana } from './mana';
 import { addToWallet, type District, type GameState } from './state';
 
-/** Capacity of ONE district at its CURRENT level (0 = houses nobody).
- *  The Communities tech adds +1 to every district that houses anyone. */
+/**
+ * Capacity of ONE district at its CURRENT level (0 = houses nobody).
+ *
+ * The guard is what makes a bed the tree grants mean what `Communities`
+ * always said — *every district that houses anyone*. A district with no
+ * capacity table is not a house, and no bonus turns it into one.
+ */
 export function districtCapacity(state: GameState, district: District): number {
   const list = DISTRICTS[district.definitionId].populationCapacityPerLevel;
   if (list.length === 0) return 0;
-  return levelIndexed(list, district.level) + (isTechComplete(state, 'Communities') ? 1 : 0);
+  return techValue(state, 'populationCapacity', levelIndexed(list, district.level),
+    { district: district.definitionId });
 }
 
 /** Max population = Σ capacity over active (Built) districts. */
@@ -41,13 +47,40 @@ export function availableWorkers(state: GameState): number {
 export const housedPopulation = (state: GameState): number =>
   Math.min(state.city.population, maxPopulation(state));
 
-/** Gold per minute ONE house pays: residents × the (TradeRoutes-boosted)
- *  rate, plus flat adjacency bonuses/penalties from its built neighbors.
- *  Empty (or fully crowded-out) houses pay nothing — clamped at 0. */
+/**
+ * What this house's LEVEL adds to its residents' rent, as a fraction of the
+ * base rate: `Districts.tax_bonus_per_level`, a total at each level.
+ *
+ * A level fact, so it is read off the building at the base stage and never
+ * re-expressed as a modifier — the same rule `armyCapPerLevel` and
+ * `strikeSpeedPerLevel` follow. Every building that houses nobody returns 0.
+ */
+export const houseTaxBonus = (district: District): number => {
+  const list = DISTRICTS[district.definitionId].taxBonusPerLevel;
+  return list.length === 0 ? 0 : levelIndexed(list, district.level);
+};
+
+/**
+ * Gold per minute ONE house pays: residents × the rate the tree has left it
+ * × what the house's own level adds, plus flat adjacency bonuses and
+ * penalties from its built neighbours. Empty (or fully crowded-out) houses
+ * pay nothing — clamped at 0.
+ *
+ * The house is passed to the RATE as well as to the adjacency, which is what
+ * makes "+5% gold income at Housing" a thing a technology can say: an aimed
+ * effect reaches only the kind of building it names, and an unaimed one every
+ * roof. This is the one reader that knows which house is paying.
+ *
+ * A level's bonus scales the RENT and not the neighbourhood: adjacency is
+ * flat Gold a minute, and a crowded row of houses is worth the same −1 each
+ * whatever the levels standing in it.
+ */
 export function houseGoldPerMinute(state: GameState, district: District): number {
   const residents = residentsOf(state, district);
   if (residents === 0) return 0;
-  return Math.max(0, residents * effectiveTaxRate(state) + districtAdjacency(state, district));
+  return Math.max(0, residents * effectiveTaxRate(state, district.definitionId)
+    * (1 + houseTaxBonus(district))
+    + districtAdjacency(state, district));
 }
 
 /** City-wide tax income, gold per minute, over every built house. */
@@ -108,7 +141,7 @@ export const populationCost = (currentPopulation: number): number => {
 // ---------------------------------------------------------------- house tap
 
 /**
- * The house tap (Docs/features/balancing-v2.md §1.1, revised 2026-09-02).
+ * The house tap (Docs/features/03-economy.md §5, revised 2026-09-02).
  *
  * A house taps like a TREE: as many times as you like, as fast as you like.
  * What bounds it is **Mana** — one per tap — so the ceiling is the size of the
@@ -121,10 +154,22 @@ export const populationCost = (currentPopulation: number): number => {
  * refill — and it puts the city's most-used verb on the one currency the
  * design already builds pressure with.
  *
- * The boost is still scaled by this house's SHARE of city income, which is
- * what stops a large city minting more per tap than a small one: a full sweep
- * pulls forward one tapBoostSeconds of the WHOLE city's income and costs one
- * Mana per house, whatever the city's size.
+ * The pull is scaled by this house's SHARE of city income, which is what
+ * stops a large city minting more per tap than a small one: a full sweep of
+ * the neighbourhood sells one `tap.workSeconds` of the WHOLE city's income
+ * and costs one Mana a house, whatever the city's size.
+ *
+ * **The Mana pool is the only bound, and that is a decision.** A per-house
+ * advance budget was built and then REMOVED on playtest: capping how far a
+ * house could be pulled forward made the neighbourhood a once-a-minute round,
+ * and it read as an arbitrary refusal on the one building the player taps
+ * most. A house may be tapped as often as the pool allows.
+ *
+ * What that leaves live is the ratio: a house tap mints (§4.1 of
+ * `Docs/features/04-harvest.md` — an advance against a continuous accrual
+ * would otherwise be a no-op) and there are far fewer houses than workers, so
+ * Mana spent on rent is worth several times Mana spent on trees. Watching
+ * whether that makes the harvest tap vestigial is OQ-55.
  *
  * Holding is paced by the same auto-tap cooldown a held tree uses, and a
  * DELIBERATE tap is never paced — the asymmetry `effectiveAutoTapCooldownMs`
@@ -150,12 +195,12 @@ export function houseTap(
   }
   const cityRate = cityGoldPerMinute(state);
   if (cityRate <= 0) return { result: 'NoResidents', gold: 0 };
+  const seconds = tapWorkSeconds(state);
   // Charged LAST, so a tap that could not have paid out never takes the Mana.
   if (!payMana(state, TAP.manaCost)) return { result: 'NoMana', gold: 0 };
   const share = houseGoldPerMinute(state, district) / cityRate;
-  district.lastTapAt = now;
   state.lastCollectTapAt = now;
-  state.city.lastTaxAt -= TAP.boostSeconds * 1000 * share;
+  state.city.lastTaxAt -= seconds * 1000 * share;
   return { result: 'Collected', gold: advanceCityLife(state, now).gold };
 }
 

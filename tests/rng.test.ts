@@ -1,4 +1,4 @@
-// Seeded randomness (Docs/features/engine-seams.md §3).
+// Seeded randomness (Docs/implementation-plan.md §1).
 //
 // The hardcoded expectation below is the point of this file, not decoration:
 // the mixer is the thing that decides where every player's berry bush

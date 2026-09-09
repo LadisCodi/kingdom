@@ -22,7 +22,7 @@ used.
 
 | System | Where it lives | Why |
 |---|---|---|
-| Mana, relics, heroes, the banner | **Reliquary** — a nav tab | Visited every session: Mana fills on a clock and relics are swapped against it |
+| Mana, relics, heroes (the banner moved to the store, 2026-09-04) | **Reliquary** — a nav tab | Visited every session: Mana fills on a clock and relics are swapped against it |
 | Delves | **The ruin's own card**, then a sheet | You go to a ruin because you are looking at it on the map |
 | A party waiting | **A pill under the quest tracker** | It is a return hook, not a destination |
 | Recruiting units | **The military building's card** | Where villagers are recruited is the Townhall; where soldiers are recruited is the Barracks |
@@ -55,9 +55,9 @@ One line was added and it is deliberately the smallest possible one:
 ```
 
 **A pool and ONE net rate.** Never `+6/h base −4/h upkeep = +2/h`. That
-breakdown is genuinely interesting, and it belongs in the Reliquary, on tap,
-where the player asked for it — in a status bar it is exactly the spreadsheet
-chrome the redesign exists to kill.
+breakdown is genuinely interesting, and it belongs in the Mana sheet the gauge
+opens, on tap, where the player asked for it — in a status bar it is exactly
+the spreadsheet chrome the redesign exists to kill.
 
 Two details carry the mechanic:
 
@@ -77,10 +77,12 @@ true, the same rule Stone and Iron use in the coin row.
 
 Three stacked sections, in the order of how often they change:
 
-1. **The pool**, with the breakdown the header refuses to show:
-   *Drawn from the land +6/h · Sustaining your relics −4/h · Filling at +2/h*.
-   A Gem refill sits under it, priced on what is missing so a full pool costs
-   nothing.
+1. **The pool**, with the breakdown the header refuses to show, and a refill
+   under it. *(Superseded 2026-09-08: the pool and both refills are the Mana
+   sheet, which the header gauge and the ad tab open —
+   [`../features/08-magic.md`](../features/08-magic.md) §6. The Reliquary
+   neither spends the pool nor fills it, so it keeps the socket and lets the
+   arithmetic stand where the refill is sold.)*
 2. **The sockets**, large and first, because **the slot is the constraint the
    whole magic design turns on.** An empty socket has to read as an
    opportunity, not a gap — so it is a big dashed frame with a gem outline,
@@ -89,7 +91,9 @@ Three stacked sections, in the order of how often they change:
 3. **Relics and Heroes**, as two tabs of ONE screen, because they share one
    set of rules: Fragments raise a tier cap, Knowledge buys levels within it.
    Two screens would teach the player the same lesson twice and neither would
-   feel special.
+   feel special. *(Superseded 2026-09-08: heroes took a nav tab and a roster
+   grid of their own — [`../features/10-heroes.md`](../features/10-heroes.md)
+   §8. They share the ladder, not the job.)*
 
 ### An unfound relic is a signpost, not a locked box
 
@@ -124,7 +128,7 @@ a forest, with a small corner badge saying what it still wants:
 | Badge | Means |
 |---|---|
 | ✦ | Unclaimed landmark — pay Gold and it is yours |
-| ! | Defended landmark — an enemy warband holds it |
+| ! | A garrison holds it — its camp and countdown open the raid sheet ([`../features/18-garrisons-and-raids.md`](../features/18-garrisons-and-raids.md) §9) |
 | `3` | A ruin, and its tier |
 
 Tapping opens a **site card** in the bottom panel, in the same slot a district
@@ -141,7 +145,7 @@ every future ad — permanently bigger has learned the opposite.
 
 (Capacity, not rate. A flat +1/h was worth most on the day you found it and
 less every day after; against a pool the ad reward is measured in, a claim
-compounds. See [`../features/magic.md`](../features/magic.md).)
+compounds. See [`../features/08-magic.md`](../features/08-magic.md).)
 
 The ruin card names the relic waiting at the bottom, its depth count, its full
 clear time, and which unit type answers it best — everything the player can
@@ -263,7 +267,7 @@ rather than a number going up:
 
 - Mana and Knowledge join the resource rows.
 - Units that finished training get a row each, counted by type.
-- **Things that happened**, in their own list: a Conjunction opened, a party
+- **Things that happened**, in their own list: a window opened, a party
   reached depth 4, a spell you cast ran its course.
 
 That last group is the point. Deposits and taxes are an amount; a window

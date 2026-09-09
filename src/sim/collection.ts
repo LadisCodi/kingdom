@@ -1,4 +1,4 @@
-// The collection substrate (Docs/features/heroes-and-gacha.md §"The
+// The collection substrate (Docs/features/10-heroes.md §"The
 // load-bearing constraint").
 //
 // Heroes-with-a-gacha and artifacts are structurally the same thing: collect →
@@ -7,11 +7,12 @@
 // there is ONE set of rules here, and heroes and artifacts are two kinds of
 // thing rather than two systems with two vocabularies:
 //
-//   FRAGMENTS raise a tier cap.   KNOWLEDGE buys levels within it.
+//   FRAGMENTS raise a tier cap.   A CURRENCY buys levels within it —
+//   Hero XP for a hero, Stardust for a relic.
 //
 // Fragments come from repeat delves AND from gacha duplicates, which is what
-// makes "every gacha drop has a play-based route" true: the wallet buys speed
-// and breadth, never access.
+// makes "every gacha drop has a play-based route" true: the wallet buys the
+// same collectible sooner, never alone.
 
 import { COLLECTION } from './data/definitions';
 
@@ -24,30 +25,52 @@ export interface CollectionEntry {
 
 export const emptyEntry = (): CollectionEntry => ({ level: 1, tier: 1, fragments: 0 });
 
-/** Knowledge for the NEXT level. `round(base × growth^level)` — the same
+/** Stardust for a RELIC's next level. `round(base × growth^level)` — the same
  *  formula the gold upgrades already use, reused rather than reinvented. */
 export const levelCost = (level: number): number =>
   Math.round(COLLECTION.levelCostBase * COLLECTION.levelCostGrowth ** level);
+
+/** Hero XP for a HERO's next level — the same curve in the other currency.
+ *  Two ladders of one shape, because a hero and a relic are two kinds of
+ *  thing rather than two systems (Docs/features/10-heroes.md §1). */
+export const xpLevelCost = (level: number): number =>
+  Math.round(COLLECTION.xpLevelCostBase * COLLECTION.xpLevelCostGrowth ** level);
 
 /** Fragments to raise the tier cap from `tier` to `tier + 1`. */
 export const tierCost = (tier: number): number =>
   Math.round(COLLECTION.fragmentsPerTierBase * COLLECTION.fragmentsPerTierGrowth ** (tier - 1));
 
-/** The highest level this tier allows. A tier is worth exactly two levels, so
- *  a chase for Fragments always converts into somewhere for Knowledge to go. */
+/** The highest level a RELIC's tier allows. A tier is worth exactly two
+ *  levels, so a chase for ingredients always converts into somewhere for
+ *  Stardust to go. */
 export const levelCapForTier = (tier: number): number =>
   Math.min(COLLECTION.maxLevel, tier * COLLECTION.levelsPerTier);
 
+/**
+ * The highest level a HERO's ascension allows — ten of them, against a
+ * relic's two.
+ *
+ * The two ladders share a SHAPE, not a length. A relic is one passive the
+ * player wears and forgets; a hero is a roster of thirty-two that the whole
+ * collection arc is spent on, so its ascension has to be worth more than a
+ * pair of levels to be worth chasing at all.
+ */
+export const heroLevelCapForTier = (tier: number): number =>
+  Math.min(COLLECTION.heroMaxLevel, tier * COLLECTION.heroLevelsPerTier);
+
 export const isMaxLevel = (e: CollectionEntry): boolean => e.level >= COLLECTION.maxLevel;
+
+export const isHeroMaxLevel = (e: CollectionEntry): boolean =>
+  e.level >= COLLECTION.heroMaxLevel;
 export const isMaxTier = (e: CollectionEntry): boolean => e.tier >= COLLECTION.maxTier;
 
 /** Everything the UI needs to explain why a level-up button is grey. */
-export type LevelBlock = 'AtMaxLevel' | 'TierCapped' | 'NotEnoughKnowledge';
+export type LevelBlock = 'AtMaxLevel' | 'TierCapped' | 'NotEnoughStardust';
 
-export function levelBlock(e: CollectionEntry, knowledge: number): LevelBlock | null {
+export function levelBlock(e: CollectionEntry, stardust: number): LevelBlock | null {
   if (isMaxLevel(e)) return 'AtMaxLevel';
   if (e.level >= levelCapForTier(e.tier)) return 'TierCapped';
-  if (knowledge < levelCost(e.level)) return 'NotEnoughKnowledge';
+  if (stardust < levelCost(e.level)) return 'NotEnoughStardust';
   return null;
 }
 
@@ -59,7 +82,7 @@ export function tierBlock(e: CollectionEntry): TierBlock | null {
   return null;
 }
 
-/** Total Knowledge from level 1 to the cap — the runway, in one number. */
+/** Total Stardust from level 1 to the cap — the runway, in one number. */
 export const totalLevelCost = (): number => {
   let sum = 0;
   for (let l = 1; l < COLLECTION.maxLevel; l++) sum += levelCost(l);

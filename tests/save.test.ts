@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { changeWorkers, enqueueBuild } from '../src/sim/commands';
-import { SAVE_VERSION } from '../src/sim/data/definitions';
+import { HARVEST, SAVE_VERSION, TAP, TOME_ORDER } from '../src/sim/data/definitions';
 import {
   deserialize, migrate, serialize, MIN_MIGRATABLE_VERSION,
 } from '../src/sim/save';
-import { getWallet } from '../src/sim/state';
+import { getWallet, parseCoordKey, type DistrictId } from '../src/sim/state';
+import { effectiveStock } from '../src/sim/harvest';
+import { isTechComplete, isTomeOpen } from '../src/sim/research';
+import { tapWorkSeconds } from '../src/sim/upgrades';
 import {
-  addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0, tickAt,
+  addBuilt, completeTech, FOREST, freshGame, fund, map, rankOf, reveal, T0, tickAt,
 } from './helpers';
 
 const SAWMILL = { x: 1, y: 2 }; // (1,1) is inside the 2x2 Townhall footprint
@@ -36,7 +39,8 @@ describe('save round-trip', () => {
     // reveals more than one tree, so naming it here would only be a guess.
     const worked = Object.keys(state.harvest)[0];
     expect(worked, 'no cell was harvested').toBeDefined();
-    expect(state.harvest[worked].taps).toBeGreaterThan(0);
+    expect(state.harvest[worked].units)
+      .toBeLessThan(effectiveStock(map, parseCoordKey(worked), HARVEST.Forest));
 
     const restored = deserialize(serialize(state, t), map, t)!;
     expect(restored).not.toBeNull();
@@ -47,7 +51,7 @@ describe('save round-trip', () => {
     expect(restored.workers[0].activity).toBe(state.workers[0].activity);
     expect(restored.harvest[worked]).toEqual(state.harvest[worked]);
     expect(restored.army).toEqual([{ uniqueId: 'unit_1', definitionId: 'Archer' }]);
-    expect(restored.player.wallet.Gems).toBe(10);
+    expect(restored.player.wallet.Gems).toBe(500);
     expect(getWallet(restored.city.wallet, 'Wood')).toBe(woodAtSave); // zero-time load adds nothing
   });
 
@@ -97,7 +101,7 @@ describe('save round-trip', () => {
   });
 });
 
-// The migration chain (Docs/features/engine-seams.md §4). Additive changes
+// The migration chain (Docs/implementation-plan.md §1). Additive changes
 // need no migrator — a version bump plus the defensive readers is enough —
 // so this covers the two gates that DO have to hold on every bump.
 describe('save versions', () => {
@@ -144,11 +148,205 @@ describe('save versions', () => {
     }
   });
 
+  // v23: the Mine stopped being a building. A player who already paid for one
+  // keeps it — as a Quarry, which does the Mine's whole job now. Deleting it
+  // would take away something they own, which is the one thing the design
+  // promises never to do.
+  it('turns a standing Mine into a Quarry rather than deleting it', () => {
+    const state = freshGame();
+    addBuilt(state, 'Quarry', { x: 4, y: -1 });
+    const save = serialize(state, T0);
+    const city = (save.Modules['kingdom.cities'] as any).Cities[0];
+    // Re-label it as the building that no longer exists, the way a save
+    // written before this change would have it on disk.
+    const standing = city.Districts.find((d: any) => d.DefinitionID === 'Quarry');
+    expect(standing).toBeDefined();
+    standing.DefinitionID = 'Mine';
+    standing.AssignedWorkers = 2;
+    save.SaveVersion = 22;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    const moved = restored.city.districts.find((d) => d.location.x === 4 && d.location.y === -1)!;
+    expect(moved.definitionId).toBe('Quarry');
+    // The crew came with the building; nobody was sent home.
+    expect(moved.assignedWorkers).toBe(2);
+    expect(restored.city.districts.some((d) => (d.definitionId as string) === 'Mine')).toBe(false);
+  });
+
   it('leaves a v21 save alone — the fold runs once, not on every load', () => {
     const state = freshGame();
     fund(state, { Food: 5, Stone: 3 });
     const restored = deserialize(serialize(state, T0), map, T0)!;
     expect(getWallet(restored.city.wallet, 'Food')).toBe(5);
     expect(getWallet(restored.city.wallet, 'Stone')).toBe(3);
+  });
+
+  // v43: a building carries the ORDINAL it was placed with, and that ordinal
+  // prices every level of it for ever. An old save has none, and defaulting
+  // to 1 would make every building in a grown city the cheap first one — so
+  // the migrator numbers each kind in the order the save lists it, which IS
+  // the order the player built them.
+  it('numbers an old save\'s buildings in the order they were placed', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 2, y: 0 });
+    addBuilt(state, 'Sawmill', { x: 4, y: 0 });
+    addBuilt(state, 'Housing', { x: 2, y: 2 });
+    addBuilt(state, 'Housing', { x: 4, y: 2 });
+    const save = serialize(state, T0);
+    for (const d of (save.Modules['kingdom.cities'] as any).Cities[0].Districts) {
+      delete d.Ordinal;
+    }
+    save.SaveVersion = 42;
+
+    const restored = deserialize(save, map, T0)!;
+    const kind = (id: DistrictId) => restored.city.districts
+      .filter((d) => d.definitionId === id).map((d) => d.ordinal);
+    expect(kind('Housing')).toEqual([1, 2, 3]);
+    expect(kind('Sawmill')).toEqual([1]);
+    // Each kind counts on its own — the Townhall is not Housing #0.
+    expect(kind('Townhall')).toEqual([1]);
+  });
+
+  // v33: Hero XP stopped being a tally beside each hero and became a kingdom
+  // wallet row that buys ANY hero's levels. It was written and never read
+  // until then, so nothing was ever spent from it and every point a save
+  // holds is still owed — the whole per-hero map folds into the one counter.
+  it('folds every hero\'s XP tally into one kingdom counter', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    (save.Modules['kingdom.heroes'] as any).Xp = { Warden: 120, Bard: 30, Scholar: 7 };
+    save.SaveVersion = 32;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    expect(getWallet(restored.kingdom.wallet, 'HeroXp')).toBe(157);
+  });
+
+  // …and a save that never banked any is not handed a phantom balance.
+  it('gives a hero-less save no XP at all', () => {
+    const save = serialize(freshGame(), T0);
+    (save.Modules['kingdom.heroes'] as any).Xp = {};
+    save.SaveVersion = 32;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(getWallet(restored.kingdom.wallet, 'HeroXp')).toBe(0);
+  });
+
+  // v23: Knowledge and Stardust swapped jobs. Every Knowledge a live save
+  // holds was earned as COLLECTION currency, so it must keep buying relics
+  // and heroes — it becomes Stardust. This is the whole point of the migrator
+  // and the one thing a bare key rename would have got catastrophically
+  // wrong: it would hand the entire research tree to anybody with a balance.
+  it('converts a banked Knowledge balance into Stardust, not into research', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const kingdom = (save.Modules['kingdom.kingdoms'] as any);
+    kingdom.Currencies = { ...kingdom.Currencies, Knowledge: 4200 };
+    save.SaveVersion = 22;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    // It buys what it was earned for.
+    expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(4200);
+    // And it buys no research at all: the clock starts at zero and is earned
+    // back from the ground the player holds. Same purse, different job.
+    expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(0);
+    expect(restored.kingdom.wallet).not.toHaveProperty('Knowledge');
+  });
+
+  // v24: upgrades stopped being a separate kind of thing. A player mid-flight
+  // holds `UpgradeLevels: { TapPower: 3 }` and must come back holding three
+  // COMPLETED technologies — every level they paid for, and no research time
+  // charged for them a second time.
+  it('turns banked upgrade levels into completed ranks', () => {
+    const state = freshGame();
+    const save = serialize(state, T0);
+    const research = (save.Modules['kingdom.research'] as any);
+    research.UpgradeLevels = { TapPower: 3, Resonance: 1 };
+    save.SaveVersion = 23;
+
+    const restored = deserialize(save, map, T0)!;
+    expect(restored).not.toBeNull();
+    expect(rankOf(restored, 'TapPower')).toBe(3);
+    expect(rankOf(restored, 'Resonance')).toBe(1);
+    // Exactly the ranks paid for, and not one more.
+    expect(isTechComplete(restored, 'TapPowerIII')).toBe(true);
+    expect(isTechComplete(restored, 'TapPowerIV')).toBe(false);
+    // And the effect the player had actually bought still reaches the SIM —
+    // asserted on the number, not on the tree, because that is the whole
+    // point of restoring the ranks. TapPower buys tap DURATION at +20% a
+    // rank, so three ranks turn 10 seconds into 16.
+    expect(tapWorkSeconds(restored)).toBeCloseTo(TAP.workSeconds * 1.6, 6);
+  });
+
+  // v25: tomes have cover pages, granted rather than researched. A save from
+  // before they existed has none, so every era-1 technology hides behind a
+  // requirement nothing will ever complete — the Civics page showed one
+  // lonely scroll. Found by loading a real save in the browser.
+  // The v25 migrator GRANTED cover pages a pre-tome save never had, so its
+  // books would not sit shut behind a card it had no way to hold. It is inert
+  // now: tome openness stopped being a technology, so an old save's books are
+  // open for the same reason a new one's are — there is nothing to open.
+  it('leaves a pre-tome save with every book open and nothing granted', () => {
+    const state = freshGame();
+    state.research.completed = ['Forestry', 'Warrior'];
+    const save = serialize(state, T0);
+    save.SaveVersion = 24;
+    const restored = deserialize(save, map, T0)!;
+    for (const tome of TOME_ORDER) expect(isTomeOpen(restored, tome), tome).toBe(true);
+    // Exactly what the save held, and not one id more.
+    expect(restored.research.completed).toEqual(['Forestry', 'Warrior']);
+  });
+
+  it('leaves a v23 save alone — the swap runs once, not on every load', () => {
+    const state = freshGame();
+    state.kingdom.wallet.Stardust = 900;
+    state.kingdom.wallet.Knowledge = 40;
+    const restored = deserialize(serialize(state, T0), map, T0)!;
+    expect(getWallet(restored.kingdom.wallet, 'Stardust')).toBe(900);
+    expect(getWallet(restored.kingdom.wallet, 'Knowledge')).toBe(40);
+  });
+});
+
+// The Market left the game on 2026-09-09 — the building, its technology and
+// the three quests that named it. A save can be holding all three, and every
+// one of them would be read against a table that no longer has the row.
+describe('the Market, retired', () => {
+  it('drops a built Market, its queue item and its technologies', () => {
+    const state = freshGame();
+    addBuilt(state, 'Housing', { x: 3, y: 2 });
+    const save = serialize(state, T0);
+    const city = (save.Modules as any)['kingdom.cities'].Cities[0];
+    city.Districts.push({
+      UniqueID: 'd_market', DefinitionID: 'Market', VisualVariant: 1,
+      AssignedWorkers: 0, Level: 3, GridLocation: { x: 5, y: 5 },
+      ConstructionState: 'Built',
+    });
+    city.Districts.push({
+      UniqueID: 'd_market_2', DefinitionID: 'Market', VisualVariant: 1,
+      AssignedWorkers: 0, Level: 1, GridLocation: { x: 6, y: 5 },
+      ConstructionState: 'UnderConstruction',
+    });
+    const house = city.Districts.find((d: any) => d.DefinitionID === 'Housing');
+    city.QueueItems = [
+      { UniqueID: 'q_market', DistrictID: 'd_market_2', DurationSeconds: 30,
+        StartedAtUtc: null },
+      { UniqueID: 'q_house', DistrictID: house.UniqueID, DurationSeconds: 20,
+        StartedAtUtc: null, TargetLevel: 2 },
+    ];
+    city.QueueKinds = ['build', 'upgrade'];
+    const research = (save.Modules as any)['kingdom.research'];
+    research.Completed = ['Forestry', 'Market', 'MarketStallII', 'Guildhalls'];
+    save.SaveVersion = 41;
+
+    const back = deserialize(save, map, T0)!;
+    expect(back.city.districts.map((d) => d.definitionId)).not.toContain('Market');
+    expect(back.city.districts.some((d) => d.definitionId === 'Housing')).toBe(true);
+    // The queue and its parallel kinds stay in step — one item, still a build.
+    expect(back.city.queue).toHaveLength(1);
+    expect(back.city.queue[0].uniqueId).toBe('q_house');
+    expect(back.city.queue[0].kind).toBe('upgrade');
+    expect(back.research.completed).toEqual(['Forestry']);
   });
 });

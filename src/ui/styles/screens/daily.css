@@ -1,0 +1,199 @@
+/* The daily chest: the pill that waits, and the two-track ladder it opens.
+ *
+ * Docs/features/12-quests.md §3. There is exactly ONE clock on this screen,
+ * at the head of the sheet, because the season really does end. Everything
+ * below it is built the other way round from most progress UI: rungs behind
+ * you stay LIT rather than greying out, nothing is red, and no cell counts
+ * down on its own. What the player should read off the ladder is "look how far
+ * I have got", never "look what I am about to lose".
+ *
+ * The two columns share their rows on purpose. A free player is meant to read
+ * the Royal column as the same ladder they are already climbing — which is
+ * what makes the price legible with no sales copy anywhere on the sheet. */
+
+/* --------------------------------------------------------------- the pill */
+
+/* Under the header, above the quest scroll's corner — its own row in the #ui
+ * flex column, so it never lands on the settings knob (which is why #delves
+ * carries a right padding; this one is narrow enough not to need one). */
+#daily { padding: 6px 12px 0; align-self: flex-start; max-width: 100%; }
+#daily[hidden] { display: none; }
+
+.dly-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 10px;
+  border: 3px solid var(--gold-dark);
+  background: var(--parchment);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  /* A glow, not a bob: the quest scroll already bobs when it is claimable and
+     two things bobbing at once is a busy screen. */
+  animation: dly-glow 2s ease-in-out infinite;
+}
+.dly-pill:hover { filter: brightness(1.04); }
+.dly-pill:active { transform: translateY(2px); box-shadow: none; }
+@keyframes dly-glow {
+  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 14px rgba(242, 178, 51, 0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dly-pill { animation: none; }
+}
+/* Every rung taken, the season still running: the pill stays as the door to a
+   purchase, and stops asking for anything. */
+.dly-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.85; }
+.dly-pill-body { display: flex; flex-direction: column; }
+.dly-pill-title { font-family: var(--font-body); font-size: var(--text-body); }
+.dly-pill-day { font-size: var(--text-helper); color: var(--ink-muted); }
+
+/* -------------------------------------------------------------- the sheet */
+
+.dly { display: flex; flex-direction: column; gap: 10px; }
+.dly-note { font-size: var(--text-helper); color: var(--ink-muted); line-height: 1.35; }
+
+/* The one clock. Stated plainly and once, at the top, in ink rather than in
+   red: the window is a fact about the season, not a threat. */
+.dly-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.dly-progress { margin-left: auto; font-family: var(--font-body); color: var(--ink); }
+
+/* ---- the two column headers, and the price on the thing it buys */
+
+/* One grid template shared by the headers and every rung, declared once so the
+   columns cannot drift apart: free · the rung number · Royal. The Royal side
+   is wider because it carries up to three prizes. */
+.dly-heads,
+.dly-row {
+  display: grid;
+  grid-template-columns: 1fr 26px 1.5fr;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.dly-heads { position: sticky; top: 0; z-index: 1; padding-bottom: 4px; background: var(--parchment); }
+.dly-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink);
+  text-align: center;
+}
+.dly-head.is-free { background: var(--parchment-shade); }
+/* The paid column's header IS the buy button while the season is unbought. */
+.dly-head.is-royal { background: var(--gold); border-color: var(--gold-dark); }
+.dly-head.is-buy { cursor: pointer; box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35); }
+.dly-head.is-buy:hover { filter: brightness(1.05); }
+.dly-head.is-buy:active { transform: translateY(2px); box-shadow: none; }
+.dly-head.is-owned { background: var(--leaf); border-color: var(--leaf-dark); }
+.dly-price {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--parchment);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- the ladder */
+
+/* Fourteen rows do not fit a phone, so this one scrolls — unlike the seven-rung
+   version it replaces. The headers stay pinned above it so a prize is never
+   read against the wrong column. */
+.dly-ladder { display: flex; flex-direction: column; gap: 4px; }
+
+.dly-row { min-height: 44px; }
+
+/* A cell is the button. Three states, and they are the whole read of the
+   screen: WAITING (lit and pulsing — press this), TAKEN (green with a tick,
+   and it stays lit, because a day you took is something you have), LOCKED
+   (dimmed but fully legible — the price has to show exactly what it buys, on
+   the rows the player is already climbing). */
+.dly-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--wood-dark);
+  background: var(--parchment-shade);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+}
+.dly-cell.is-royal { background: #f6e2b0; border-color: var(--gold-dark); }
+.dly-cell.is-locked { opacity: 0.5; }
+
+/* Taken. Lit, never greyed. */
+.dly-cell.is-taken { background: var(--leaf); border-color: var(--leaf-dark); }
+
+/* Waiting. The only thing on the sheet that moves, so there is never a
+   question about where the tap goes. */
+button.dly-cell {
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  animation: dly-ready 1.6s ease-in-out infinite;
+}
+button.dly-cell:hover { filter: brightness(1.05); }
+button.dly-cell:active { transform: translateY(2px); box-shadow: none; }
+button.dly-cell:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+@keyframes dly-ready {
+  50% { box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35), 0 0 12px rgba(242, 178, 51, 0.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.dly-cell { animation: none; }
+}
+
+/* The rung number, between the columns: it belongs to the row, not to either
+   track. It darkens once the row has been climbed, which is what draws the
+   line between where the player has been and where they have not. */
+.dly-rung {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--wood-dark);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+}
+.dly-row.is-climbed .dly-rung { opacity: 1; }
+
+.dly-prize {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Where the season stands. Not a button — pressing the day is what takes the
+   day, so there is nothing at the foot to press. */
+.dly-foot {
+  position: sticky;
+  bottom: 0;
+  padding-top: 6px;
+  background: var(--parchment);
+  text-align: center;
+}

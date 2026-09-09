@@ -9,7 +9,6 @@ export const TERRAIN_COLORS: Record<TerrainId, string> = {
   Snow: '#dfe7ec',
   Tundra: '#8b9a94',
   Water: '#2e5d8a',
-  Mountain: '#6b6f78',
 };
 
 export const PALETTE = {
@@ -19,6 +18,10 @@ export const PALETTE = {
   siteBadge: '#f4e2b8',
   siteBadgeEdge: '#5a3d24',
   siteBadgeInk: '#3a2716',
+  // The same badge while a garrison is counting down on a ruin: the minutes
+  // left, in the colour of the thing that is about to happen.
+  siteBadgeRaid: '#d8613f',
+  siteBadgeRaidInk: '#2a120c',
   gridLine: 'rgba(0, 0, 0, 0.18)',
   fogUndiscovered: '#0c1017',
   fogDiscovered: 'rgba(10, 13, 18, 0.55)',
@@ -27,10 +30,17 @@ export const PALETTE = {
   workedTile: 'rgba(255, 226, 122, 0.75)',
   influenceFill: 'rgba(255, 255, 255, 0.16)',
   influenceBorder: 'rgba(255, 255, 255, 0.85)',
-  yieldPositive: '#7fd07f',
-  yieldNegative: '#ff8a7a',
-  labelPill: 'rgba(0, 0, 0, 0.5)',
-  exhaustedOverlay: 'rgba(40, 30, 20, 0.45)',
+  // Brighter than the old #7fd07f / #ff8a7a: these sit on the label pill,
+  // which is drawn over the influence wash, and pale ink on a washed pill is
+  // what made the placement labels unreadable.
+  yieldPositive: '#9dff9d',
+  yieldNegative: '#ff9a86',
+  /** Near-opaque on purpose. A translucent pill borrows whatever it is over,
+   *  and these are drawn on top of the influence highlight — the brightest
+   *  thing on the map. The thin light edge keeps it from melting into a dark
+   *  background too. */
+  labelPill: 'rgba(18, 16, 14, 0.88)',
+  labelPillEdge: 'rgba(255, 255, 255, 0.35)',
   recoveryFill: '#8ab4d8',
   progressBg: 'rgba(0, 0, 0, 0.55)',
   progressFill: '#d9a536',

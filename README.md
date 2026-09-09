@@ -5,9 +5,9 @@ resource cells to harvest them (they exhaust and recover), build districts
 whose workers walk out to harvest for you, and grow a population that pays
 taxes. Progress continues while away (simulated, capped at 8h).
 
-Web reimplementation of the Unity prototype, built from the spec in [`Docs/`](Docs/),
-with the harvest-loop rework described in
-[`Docs/features/harvest-loop.md`](Docs/features/harvest-loop.md).
+The design lives in [`Docs/`](Docs/) — start with
+[`Docs/overview.md`](Docs/overview.md) for the game in five minutes, or
+[`Docs/README.md`](Docs/README.md) for the full feature index.
 Vite + TypeScript, Canvas 2D, no framework. The simulation core (`src/sim/`) is
 pure TS — no DOM, no clock, injectable randomness — so it can later run
 server-side (e.g. to validate player-to-player trades).
@@ -53,7 +53,7 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
 
 | Path | What |
 |---|---|
-| `Docs/` | `00`–`11`: the Unity as-built spec the port was built from. `Docs/features/`: the web build's own design docs — the live source of truth |
+| `Docs/` | `00-design-intent.md`: what the game is, and the canonical backlog. `road-to-mvp.md`: the ordered plan for the pillars still missing. `01`–`11`: the frozen Unity as-built spec the port was built from. `Docs/features/`: the web build's own design docs — the live source of truth |
 | `balance/` | Editable balance workbook (`balance.xlsx`) — tweak, then `npm run balance` |
 | `src/sim/` | Pure simulation core (state, economy, queue, fog, research, army, save format) |
 | `src/sim/data/` | Definitions + generated `balance.json` + the region map |
@@ -79,14 +79,14 @@ with playtesters. If the repo is renamed, update `base` in `vite.config.ts`.
   building for selling surplus: an **instant bulk sale**, not a drip
   (`src/sim/market.ts:26-43`). The Townhall trains villagers over time
   (tap-boostable), replacing the instant population purchase. See
-  [`Docs/features/economy-taxes-and-market.md`](Docs/features/economy-taxes-and-market.md).
+  [`Docs/features/03-economy.md`](Docs/features/03-economy.md).
 - **Four city coins, not six.** Berry bushes, game and shoals all pay **Food**
   (1, 3 and 2 a tap) and an iron vein is a rich **Stone** node (3 a tap), so
   Berries, Meat, Fish and Iron are cells rather than currencies. The wallet is
   Gold · Food · Wood · Stone, plus Mana (the capped tap budget), Knowledge
   (kingdom-scoped, won from dungeons, spent only on relic and hero levels) and
   Gems. The technology tree is priced in Gold from the city purse. See
-  [`Docs/features/currency-simplification.md`](Docs/features/currency-simplification.md).
+  [`Docs/features/03-economy.md`](Docs/features/03-economy.md).
 - **Single tick driver** (the Unity build double-ticked its timer).
 - Save format v2; incompatible older saves start a fresh game.
 - Placeholder art: flat-color tiles + emoji glyphs; state-driven rendering so

@@ -1,0 +1,160 @@
+// The tech tree editor's save button, server side.
+//
+// A browser cannot write to the repo, so `?dev=tree` POSTs its document here
+// and this writes src/sim/data/tech-tree.json. It is a DEV-ONLY plugin
+// (`apply: 'serve'`), so the endpoint cannot exist in a build — the editor is
+// a tool for the repo, not a feature of the game.
+//
+// The same two things make it safe to trust as the map's twin:
+//   1. it validates with src/sim/data/techTreeRules.ts — the very module the
+//      editor and tests/techTree.test.ts use — loaded through Vite so there
+//      is one copy of the rules, in TypeScript, and no chance of the server
+//      accepting what the editor rejected;
+//   2. it writes one technology per line, ordered down the page, so a change
+//      shows up in `git diff` as the cards that moved rather than as a
+//      reflowed 200-line blob.
+
+import { writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const TREE_PATH = join(ROOT, 'src/sim/data/tech-tree.json');
+
+const NOTE = 'Every technology in the game: its name, what KIND it '
+  + 'is and what it unlocks or moves, its price and clock, and its slot on its '
+  + 'tome page with what it needs before it — plus each book\'s BANDS and what '
+  + 'each one asks for in revealed cells. What a card SAYS is generated from '
+  + 'its unlocks or effects (src/sim/techProse.ts); only a mechanic, whose '
+  + 'effect is code, carries a written description. Authored in ?dev=tree '
+  + '(Docs/tech-tree-editor.md) — the Technologies and Eras sheets are gone, '
+  + 'and the districts, units and harvest sources no longer name their own '
+  + 'gate. Ordered by tome, then down the page, then left to right.';
+
+/** Reading order: book by book, then down the page and across it — with
+ *  anything OFF THE PAGE last, since it belongs to no book yet. */
+const inReadingOrder = (nodes, tomes) => Object.keys(nodes).sort((a, b) => {
+  const place = (n) => (n.tome === undefined ? tomes.length : tomes.indexOf(n.tome));
+  return place(nodes[a]) - place(nodes[b])
+    || (nodes[a].row ?? 0) - (nodes[b].row ?? 0)
+    || (nodes[a].col ?? 0) - (nodes[b].col ?? 0)
+    || a.localeCompare(b);
+});
+
+const json = (v) => JSON.stringify(v);
+
+/**
+ * One technology, as the lines it is worth reading in a diff.
+ *
+ * Grouped the way a designer thinks about it — what it is, what it says, where
+ * it sits, what it needs, what it costs, what it opens — and a field that
+ * carries no information (no Knowledge, no unlocks, not planned) is left out
+ * rather than written as a zero.
+ */
+const nodeBlock = (id, n) => {
+  const lines = [
+    `      "name": ${json(n.name)}, "glyph": ${json(n.glyph)}, "kind": ${json(n.kind)}`,
+  ];
+  // PROSE is a `mechanic`'s alone. Every other card's line is generated from
+  // its unlocks or effects (`src/sim/techProse.ts`), so a description beside
+  // them is a second answer nothing keeps in step — the rules refuse one, and
+  // this is what stops a stale string surviving a round-trip.
+  if ((n.description ?? '').trim() !== '') {
+    lines.push(`      "description": ${json(n.description)}`);
+  }
+  // All four slot fields, or none: a technology taken off the page keeps
+  // everything else and simply says nothing about where it sits.
+  if (n.tome !== undefined) {
+    lines.push(
+      `      "tome": ${json(n.tome)}, "era": ${n.era}, "row": ${n.row}, "col": ${n.col}`,
+    );
+  }
+  lines.push(
+    `      "requires": [${(n.requires ?? []).map(json).join(', ')}]`,
+    `      "gold": ${n.gold ?? 0}`
+      + (n.knowledge ? `, "knowledge": ${n.knowledge}` : '')
+      + `, "seconds": ${n.seconds ?? 0}`,
+  );
+  if ((n.unlocks ?? []).length > 0) {
+    lines.push(`      "unlocks": [${n.unlocks.map((u) => json(u)).join(', ')}]`);
+  }
+  // What the technology MOVES. One effect per line, because a diff of a
+  // rebalanced ladder should read as the values that changed.
+  if ((n.effects ?? []).length > 0) {
+    lines.push(`      "effects": [\n${n.effects
+      .map((e) => `        ${json(e)}`)
+      .join(',\n')}\n      ]`);
+  }
+  if (n.planned === true) lines.push('      "planned": true');
+  return `    ${json(id)}: {\n${lines.join(',\n')}\n    }`;
+};
+
+export function serialiseTechTree(doc, tomes) {
+  const nodes = doc.technologies;
+  // The BANDS: one line per book, `[cells to open era 1, era 2, …]`, so the
+  // length is how many bands the book has and the numbers read as the ladder
+  // they are.
+  const eras = tomes
+    .map((tome) => `    ${json(tome)}: [${(doc.eras?.[tome] ?? [0]).join(', ')}]`)
+    .join(',\n');
+  const text = '{\n'
+    + `  ${json('_note')}: ${json(NOTE)},\n`
+    + `  "eras": {\n${eras}\n  },\n`
+    + '  "technologies": {\n'
+    + inReadingOrder(nodes, tomes).map((id) => nodeBlock(id, nodes[id])).join(',\n')
+    + '\n  }\n}\n';
+  // Hand-rolled formatting earns a parse check before it reaches the repo.
+  JSON.parse(text);
+  return text;
+}
+
+const readBody = (req) => new Promise((resolve, reject) => {
+  let raw = '';
+  req.on('data', (chunk) => { raw += chunk; });
+  req.on('end', () => resolve(raw));
+  req.on('error', reject);
+});
+
+export function treeEditorPlugin() {
+  return {
+    name: 'kingdom-tree-editor',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__tree/save', async (req, res) => {
+        const send = (status, body) => {
+          res.statusCode = status;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(body));
+        };
+        if (req.method !== 'POST') return send(405, { error: 'POST only' });
+        try {
+          const doc = JSON.parse(await readBody(req));
+          // The editor's own rules, not a second copy of them.
+          const rules = await server.ssrLoadModule('/src/sim/data/techTreeRules.ts');
+          // NOTHING IS REFUSED. The endpoint validates so it can say what is
+          // wrong, not so it can withhold the file: a page mid-rearrangement
+          // is when the work most needs writing down, and a save that says no
+          // is a save that loses an afternoon. What ships is held by CI
+          // (`tests/techTree.test.ts`), which is the right place for it —
+          // there a broken tree fails a build, here it is a Tuesday.
+          const { errors, warnings, offPage } = rules.validateTechTree(doc);
+          writeFileSync(TREE_PATH, serialiseTechTree(doc, rules.TOME_IDS));
+          const count = Object.keys(doc.technologies).length;
+          // Off the page is a holding pen, and it ships: a book half
+          // rearranged has to survive being written down. The game leaves
+          // those cards out (`definitions.ts`), so the log says how many so
+          // an unfinished tree does not go quiet.
+          server.config.logger.info(
+            `tree editor: wrote tech-tree.json (${count} technologies, `
+            + `${errors.length} errors, ${warnings.length} warnings, `
+            + `${offPage.length} off the page)`,
+          );
+          send(200, { ok: true, technologies: count, errors, warnings });
+        } catch (err) {
+          server.config.logger.error(`tree editor: save failed — ${err.stack ?? err}`);
+          send(500, { error: String(err.message ?? err) });
+        }
+      });
+    },
+  };
+}

@@ -1,10 +1,10 @@
-// Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/02).
+// Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, RUINS } from './data/definitions';
+import { DISTRICTS, FOG, LANDMARKS, RUINS, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
-import { effect } from './upgrades';
+import { techValue } from './techEffects';
 import { recordQuestEvent } from './quests';
 import { isTechComplete } from './research';
 import {
@@ -40,7 +40,7 @@ export function revealCost(d: number): number {
       cost = Math.round(last.cost * Math.max(1, FOG.fallbackGrowth) ** (d - last.distance));
     }
   }
-  return Math.max(cost, FOG.goldPerTap);
+  return Math.max(cost, FOG.minCost);
 }
 
 /** The cost the PLAYER actually pays, after the Dowsing Rod and anything else
@@ -48,13 +48,14 @@ export function revealCost(d: number): number {
  *  so a discount can never apply to the bar but not the charge. */
 export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): number =>
   Math.max(
-    FOG.goldPerTap,
+    FOG.minCost,
     Math.round(resolve(
       state,
       'revealCost',
-      // Pitons discount the GOLD; Surveying buys back the taps. Two different
-      // costs, so the two upgrades stack without either making the other moot.
-      revealCost(townhallDistance(map, cell)) * Math.max(0, 1 - effect(state, 'Pitons')),
+      // Pitons is the ONE thing that moves what a cell costs. Nothing buys
+      // the taps back any more: a cell is five presses at every ring, so the
+      // only dial left on the fog is its Gold.
+      revealCost(townhallDistance(map, cell)) * Math.max(0, techValue(state, 'revealCost', 1)),
     )),
   );
 
@@ -75,36 +76,65 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
 export const isReachable = (state: GameState, map: MapData, cell: Coord): boolean =>
   neighbors(map, cell).some((n) => state.fog.revealed[coordKey(n)] === true);
 
-/** Exploration gates: sea and mountain cells need their tech before the
- *  player can pay to reveal them (building fog radii ignore this). */
+/** Exploration gate: sea cells need Sailing before the player can pay to
+ *  reveal them (building fog radii ignore this).
+ *
+ *  Mountains used to be gated here too, as a TERRAIN. They are a feature
+ *  now, so Scaling Tools gates WORKING one rather than reaching it — the
+ *  same shape as Forestry on the forest, and a refused tap costs no Mana.
+ *  See Docs/features/01-map-and-fog.md §3. */
 export function explorationGate(map: MapData, cell: Coord): TechId | null {
   const terrain = map.terrain.get(coordKey(cell));
-  if (terrain === 'Water') return 'Sailing';
-  if (terrain === 'Mountain') return 'ScalingTools';
-  return null;
+  // Which technology crosses which ground is the TECHNOLOGY's to say —
+  // Sailing carries `unlocks: [{ terrain: 'Water' }]` — so this is a lookup
+  // rather than the hardcoded `if (terrain === 'Water') return 'Sailing'` it
+  // used to be (Docs/tech-tree-editor.md §2).
+  return terrain === undefined ? null : terrainGate(terrain);
 }
 
 /**
- * How much reveal progress ONE tap on the fog buys.
+ * **A cell is FIVE taps, whatever ring it sits in.** What the ring decides is
+ * how much each of those taps CHARGES — a fifth of the cell's Gold.
  *
- * None of this makes a cell CHEAPER — the Gold a cell costs never moves. What
- * it buys back is the player's TIME, which is what exploring actually spends
- * once the far rings cost 320 and 640 Gold and a single cell wants hundreds
- * of taps.
+ * The tap used to be the unit of both money and time: one Gold a press, so a
+ * distance-9 cell was 1,600 Gold *and* 1,600 presses, and clearing the far
+ * fog was rationed by the thumb rather than by the purse. A fixed five makes
+ * the Gold the whole of the price, which is the one thing a player can plan
+ * against, and it makes the progress bar mean the same thing on every cell.
  *
- * Two sources, and they stack: **Cartography** doubles a tap on its own (a
- * tech with an effect rather than a gate, the same shape as Communities
- * adding +1 to every bed), and **Surveying** adds one more per level. So the
- * ladder a player climbs is ×1 → ×2 on the research → ×3 → ×4.
+ * `fog.tapsToReveal` is the count, and every ring price from 3 out is a
+ * multiple of it so the fifths come out whole. When that does not divide — the
+ * two penny rings in the Townhall's own shadow, or a price Pitons has taken
+ * 10% off — the slices are the DIFFERENCES of a running floor, so they still
+ * sum to exactly the price and never round a cell up or down.
  */
-export const revealPerTap = (state: GameState): number =>
-  FOG.goldPerTap
-  * (1 + (isTechComplete(state, 'Cartography') ? 1 : 0) + effect(state, 'Surveying'));
+export const revealPaidGold = (total: number, taps: number): number =>
+  Math.floor((total * Math.min(Math.max(taps, 0), FOG.tapsToReveal)) / FOG.tapsToReveal);
+
+/** What the tap after `taps` charges: this slice of the price and no more. */
+export const revealTapCost = (total: number, taps: number): number =>
+  revealPaidGold(total, taps + 1) - revealPaidGold(total, taps);
+
+/** Taps already spent on a cell, 0 to `fog.tapsToReveal` − 1. */
+export const revealTapsDone = (state: GameState, cell: Coord): number =>
+  state.fog.progress[coordKey(cell)] ?? 0;
+
+/** What the NEXT tap on this cell will cost — the floater and the tile card
+ *  read it before the tap, so the number the player sees is the number the
+ *  purse loses. */
+export const nextRevealTapCost = (state: GameState, map: MapData, cell: Coord): number =>
+  revealTapCost(revealCostForCell(state, map, cell), revealTapsDone(state, cell));
+
+/** Gold already sunk into a cell — what abandoning it would waste, and what
+ *  Divination does NOT have to pay. */
+export const revealPaidSoFar = (state: GameState, map: MapData, cell: Coord): number =>
+  revealPaidGold(revealCostForCell(state, map, cell), revealTapsDone(state, cell));
 
 export type RevealTapResult =
   | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';
 
-/** One tap on a Discovered cell: pay min(goldPerTap, remaining) toward its reveal. */
+/** One tap on a Discovered cell: pay this tap's fifth of its price. The fifth
+ *  one clears it. */
 export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTapResult {
   if (fogState(state, map, cell) !== 'Discovered') return 'NotDiscovered';
   // Checked before the tech gate: "you cannot reach it yet" is the more
@@ -114,13 +144,15 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   const gate = explorationGate(map, cell);
   if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
   const key = coordKey(cell);
+  // Read fresh every tap. A cell whose price moved mid-clear — Pitons landing
+  // between two presses — reprices the taps still to come and leaves the ones
+  // already paid alone, which is the same rule a running timer follows.
   const total = revealCostForCell(state, map, cell);
-  const paid = state.fog.progress[key] ?? 0;
-  const payment = Math.min(revealPerTap(state), total - paid);
+  const done = state.fog.progress[key] ?? 0;
+  const payment = revealTapCost(total, done);
   if (getWallet(state.city.wallet, 'Gold') < payment) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -payment);
-  const nowPaid = paid + payment;
-  if (nowPaid >= total) {
+  if (done + 1 >= FOG.tapsToReveal) {
     delete state.fog.progress[key];
     delete state.fog.discovered[key];
     state.fog.revealed[key] = true;
@@ -133,7 +165,7 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
     recordVisibleSites(state, map);
     return 'Revealed'; // caller must trigger a production recalc
   }
-  state.fog.progress[key] = nowPaid;
+  state.fog.progress[key] = done + 1;
   return 'Paid';
 }
 
@@ -156,7 +188,8 @@ export function recordVisibleSites(state: GameState, map: MapData): void {
     if (fogState(state, map, l.location) !== 'Undiscovered') recordSiteDiscovery(state, l.id);
   }
   for (const r of Object.values(RUINS)) {
-    if (fogState(state, map, r.location) !== 'Undiscovered') recordSiteDiscovery(state, r.id);
+    if (fogState(state, map, r.location) === 'Undiscovered') continue;
+    recordSiteDiscovery(state, r.id);
   }
 }
 
@@ -171,11 +204,19 @@ export function revealAroundDistrict(state: GameState, map: MapData, district: D
   for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogRevealRadius)) {
     state.fog.revealed[coordKey(cell)] = true;
   }
-  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size, def.fogDiscoverRadius)) {
+  for (const cell of cellsWithinRadiusOfRect(map, district.location, def.size,
+    effectiveDiscoverRadius(state, def.fogDiscoverRadius))) {
     if (!state.fog.revealed[coordKey(cell)]) state.fog.discovered[coordKey(cell)] = true;
   }
   recordVisibleSites(state, map);
 }
+
+/** How far a building marks the fog Discovered (Farsight: +1/rank). Reveal
+ *  radius is untouched: seeing farther is not the same as owning farther, and
+ *  the paid reveal stays the economy's main sink. */
+export const effectiveDiscoverRadius = (state: GameState, base: number): number =>
+  Math.max(0, Math.round(resolve(state, 'discoverRadius',
+    techValue(state, 'discoverRadius', base))));
 
 /** New-game seed: every district applies its fog radii. */
 export function seedFog(state: GameState, map: MapData): void {

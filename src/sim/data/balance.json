@@ -6,41 +6,157 @@
         "x": 2,
         "y": 2
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
       "maxCountPerTownhallLevel": [],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
-      "requiredTechPerLevel": [
-        null,
-        "Architecture"
-      ],
       "armyCapPerLevel": [],
-      "buildCost": {},
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {},
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 234
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 912
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 3559
+          },
+          "goods": {
+            "Planks": 2,
+            "CutStone": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6050
+          },
+          "goods": {
+            "Planks": 4,
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 10285
+          },
+          "goods": {
+            "Planks": 6,
+            "CutStone": 6,
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 17486
+          },
+          "goods": {
+            "Planks": 10,
+            "CutStone": 10,
+            "Iron": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 29726
+          },
+          "goods": {
+            "Planks": 14,
+            "CutStone": 14,
+            "Iron": 10,
+            "Runestone": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 50534
+          },
+          "goods": {
+            "Planks": 20,
+            "CutStone": 20,
+            "Iron": 14,
+            "Runestone": 4
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 0,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 60
-      },
-      "upgradeCostLevelGrowth": 3.9,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 4
+      "upgradeDurationLevelGrowth": 4,
+      "upgradeDurationLateSeconds": 21600,
+      "upgradeDurationLateLevelGrowth": 2,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        10,
+        20,
+        30
+      ]
     },
     "Housing": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [
         2,
-        4
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        18,
+        20
+      ],
+      "taxBonusPerLevel": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1,
+        1.25,
+        1.5,
+        1.75,
+        2,
+        2.25
       ],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
@@ -48,73 +164,316 @@
       "maxCountPerTownhallLevel": [
         2,
         4,
-        6
+        6,
+        9,
+        11,
+        13,
+        15,
+        17,
+        19,
+        21
       ],
       "influenceRadiusPerLevel": [],
-      "requiredTownhallLevelPerLevel": [],
-      "requiredTechPerLevel": [
-        "UrbanPlanning"
+      "requiredTownhallLevelPerLevel": [
+        0,
+        0,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 10
-      },
-      "buildCostMultiplier": 1.25,
-      "buildCostExponentialGrowth": 1.1,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 10
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 30,
+            "Stone": 10
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 45,
+            "Stone": 15
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 67,
+            "Stone": 22
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 101,
+            "Stone": 33
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 172,
+            "Stone": 57
+          },
+          "goods": {
+            "Planks": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 292,
+            "Stone": 97
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 497,
+            "Stone": 165
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 845,
+            "Stone": 281
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1437,
+            "Stone": 479
+          },
+          "goods": {
+            "Planks": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1.25,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 30,
-        "Stone": 10
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 20,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Farm": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [
         3,
-        5
+        5,
+        7,
+        9,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11
       ],
       "maxCountPerTownhallLevel": [
         1,
         1,
-        2
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        5
       ],
       "influenceRadiusPerLevel": [
         1,
-        2
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
       ],
       "requiredTownhallLevelPerLevel": [
-        2
-      ],
-      "requiredTechPerLevel": [
-        "Farming"
+        2,
+        3,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 30
-      },
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.5,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 50
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 75
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 112
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 168
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 286
+          },
+          "goods": {
+            "Planks": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 487
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 829
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1409
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 2396
+          },
+          "goods": {
+            "Planks": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 50
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "strikeSpeedPerLevel": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "FarmLands": {
       "size": {
@@ -123,250 +482,598 @@
       },
       "maxLevel": 1,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
       "maxCountPerTownhallLevel": [
         6,
         6,
-        12
+        12,
+        16,
+        18,
+        20,
+        22,
+        24,
+        26,
+        28
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
-      "requiredTechPerLevel": [],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 10
-      },
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 10
+          },
+          "goods": {}
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 10,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 0,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": []
     },
     "Sawmill": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [
         3,
         5,
-        7
+        7,
+        9,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11
       ],
       "maxCountPerTownhallLevel": [
         1,
         2,
-        3
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        6
       ],
       "influenceRadiusPerLevel": [
         2,
         3,
-        4
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
       ],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
-      ],
-      "requiredTechPerLevel": [
-        null,
-        "Engineering"
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 20
-      },
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 20
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 150
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 375
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 937
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1593
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 2709
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4605
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 7830
+          },
+          "goods": {
+            "Planks": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 13311
+          },
+          "goods": {
+            "Planks": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2.5,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 60
-      },
-      "upgradeCostLevelGrowth": 2.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
-    },
-    "Market": {
-      "size": {
-        "x": 1,
-        "y": 1
-      },
-      "maxLevel": 1,
-      "populationCapacityPerLevel": [],
-      "fogRevealRadius": 1,
-      "fogDiscoverRadius": 2,
-      "maxWorkersPerLevel": [],
-      "maxCountPerTownhallLevel": [
-        1
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
       ],
-      "influenceRadiusPerLevel": [],
-      "requiredTownhallLevelPerLevel": [],
-      "requiredTechPerLevel": [],
-      "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 40
-      },
-      "buildCostMultiplier": 2,
-      "buildCostExponentialGrowth": 1.2,
-      "buildDurationSeconds": 30,
-      "buildDurationDistrictGrowth": 1.2,
-      "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {},
-      "upgradeCostLevelGrowth": 1.5,
-      "upgradeDurationSeconds": 0,
-      "upgradeDurationLevelGrowth": 1.5
+      "strikeSpeedPerLevel": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Quarry": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [
         3,
-        5
+        5,
+        7,
+        9,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11
       ],
       "maxCountPerTownhallLevel": [
         1,
         2,
-        3
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6,
+        6
       ],
       "influenceRadiusPerLevel": [
         2,
         3,
-        4
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
       ],
       "requiredTownhallLevelPerLevel": [
-        2
-      ],
-      "requiredTechPerLevel": [
-        "Engineering"
+        2,
+        3,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 30
-      },
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 40
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 90
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 135
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 229
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 390
+          },
+          "goods": {
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 663
+          },
+          "goods": {
+            "CutStone": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1127
+          },
+          "goods": {
+            "CutStone": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1916
+          },
+          "goods": {
+            "CutStone": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2.5,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 40
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "strikeSpeedPerLevel": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5
+      ],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Docks": {
       "size": {
         "x": 2,
         "y": 1
       },
-      "maxLevel": 2,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [
         3,
-        5
+        5,
+        7,
+        9,
+        11,
+        11,
+        11,
+        11,
+        11,
+        11
       ],
       "maxCountPerTownhallLevel": [
         1,
         2,
-        3
+        3,
+        4,
+        4,
+        5,
+        5,
+        5,
+        6,
+        6
       ],
       "influenceRadiusPerLevel": [
         4,
-        6
+        6,
+        6,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7
       ],
-      "requiredTownhallLevelPerLevel": [],
-      "requiredTechPerLevel": [
-        "Shipbuilding"
+      "requiredTownhallLevelPerLevel": [
+        0,
+        3,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 25
-      },
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 25
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 35
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 52
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 78
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 118
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 200
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 341
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 580
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 986
+          },
+          "goods": {
+            "Planks": 6
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1677
+          },
+          "goods": {
+            "Planks": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2.5,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 20,
       "buildDurationDistrictGrowth": 1.2,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 35
-      },
-      "upgradeCostLevelGrowth": 1.5,
       "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
-    },
-    "Mine": {
-      "size": {
-        "x": 1,
-        "y": 1
-      },
-      "maxLevel": 2,
-      "populationCapacityPerLevel": [],
-      "fogRevealRadius": 1,
-      "fogDiscoverRadius": 2,
-      "maxWorkersPerLevel": [
-        3,
-        5
-      ],
-      "maxCountPerTownhallLevel": [
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
         1,
         2,
-        3
-      ],
-      "influenceRadiusPerLevel": [
-        2,
         3,
-        4
+        4,
+        5
       ],
-      "requiredTownhallLevelPerLevel": [
-        2
+      "strikeSpeedPerLevel": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5
       ],
-      "requiredTechPerLevel": [
-        "DeepMining"
-      ],
-      "armyCapPerLevel": [],
-      "buildCost": {
-        "Wood": 40,
-        "Stone": 20
-      },
-      "buildCostMultiplier": 2.5,
-      "buildCostExponentialGrowth": 1.15,
-      "buildDurationSeconds": 30,
-      "buildDurationDistrictGrowth": 1.2,
-      "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 50,
-        "Stone": 25
-      },
-      "upgradeCostLevelGrowth": 1.5,
-      "upgradeDurationSeconds": 30,
-      "upgradeDurationLevelGrowth": 1.5
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Sanctum": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 2,
       "maxWorkersPerLevel": [],
@@ -376,37 +1083,134 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         2,
-        3
-      ],
-      "requiredTechPerLevel": [
-        null,
-        null
+        3,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [],
-      "buildCost": {
-        "Gold": 300,
-        "Stone": 40
-      },
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 300,
+            "Stone": 40
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 500,
+            "Stone": 80
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 900,
+            "Stone": 144
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1620,
+            "Stone": 259
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 2916,
+            "Stone": 466
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 4957,
+            "Stone": 793
+          },
+          "goods": {
+            "CutStone": 2
+          }
+        },
+        {
+          "cost": {
+            "Gold": 8427,
+            "Stone": 1348
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 14326,
+            "Stone": 2292
+          },
+          "goods": {
+            "Runestone": 2
+          }
+        },
+        {
+          "cost": {
+            "Gold": 24354,
+            "Stone": 3896
+          },
+          "goods": {
+            "Runestone": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 41403,
+            "Stone": 6624
+          },
+          "goods": {
+            "Runestone": 4
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 90,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Gold": 500,
-        "Stone": 80
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Barracks": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
       "maxWorkersPerLevel": [],
@@ -416,41 +1220,145 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
-      ],
-      "requiredTechPerLevel": [
-        null,
-        null
+        2,
+        3,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
-      "buildCost": {
-        "Wood": 60,
-        "Stone": 20
-      },
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 60,
+            "Stone": 20
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 180,
+            "Stone": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 324,
+            "Stone": 108
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 583,
+            "Stone": 194
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1049,
+            "Stone": 349
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1784,
+            "Stone": 594
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 3033,
+            "Stone": 1011
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 5157,
+            "Stone": 1719
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 8767,
+            "Stone": 2922
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 14905,
+            "Stone": 4968
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 45,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 180,
-        "Stone": 60
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 90,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "SpearHall": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
       "maxWorkersPerLevel": [],
@@ -460,41 +1368,145 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
-      ],
-      "requiredTechPerLevel": [
-        null,
-        null
+        2,
+        3,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
-      "buildCost": {
-        "Wood": 80,
-        "Stone": 30
-      },
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 80,
+            "Stone": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 240,
+            "Stone": 90
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 432,
+            "Stone": 162
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 777,
+            "Stone": 291
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1399,
+            "Stone": 524
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2379,
+            "Stone": 892
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4045,
+            "Stone": 1516
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6876,
+            "Stone": 2578
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11690,
+            "Stone": 4383
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 19873,
+            "Stone": 7452
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 240,
-        "Stone": 90
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "ShootingGrounds": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
       "maxWorkersPerLevel": [],
@@ -504,41 +1516,145 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
-      ],
-      "requiredTechPerLevel": [
-        null,
-        null
+        2,
+        3,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
-      "buildCost": {
-        "Wood": 80,
-        "Stone": 30
-      },
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 80,
+            "Stone": 30
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 240,
+            "Stone": 90
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 432,
+            "Stone": 162
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 777,
+            "Stone": 291
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1399,
+            "Stone": 524
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2379,
+            "Stone": 892
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4045,
+            "Stone": 1516
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6876,
+            "Stone": 2578
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11690,
+            "Stone": 4383
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 19873,
+            "Stone": 7452
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 60,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 240,
-        "Stone": 90
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 120,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
     },
     "Stables": {
       "size": {
         "x": 1,
         "y": 1
       },
-      "maxLevel": 3,
+      "maxLevel": 10,
       "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
       "fogRevealRadius": 1,
       "fogDiscoverRadius": 1,
       "maxWorkersPerLevel": [],
@@ -548,91 +1664,1399 @@
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [
         1,
-        2
-      ],
-      "requiredTechPerLevel": [
-        null,
-        null
+        2,
+        3,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
-      "buildCost": {
-        "Wood": 120,
-        "Stone": 70
-      },
-      "buildCostMultiplier": 1,
-      "buildCostExponentialGrowth": 1,
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 120,
+            "Stone": 70
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 360,
+            "Stone": 210
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 648,
+            "Stone": 378
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1166,
+            "Stone": 680
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2099,
+            "Stone": 1224
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 3569,
+            "Stone": 2082
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6067,
+            "Stone": 3539
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 10314,
+            "Stone": 6017
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 17535,
+            "Stone": 10228
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 29810,
+            "Stone": 17389
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
       "buildDurationSeconds": 90,
       "buildDurationDistrictGrowth": 1,
       "buildDurationDistanceGrowth": 1.15,
-      "upgradeCost": {
-        "Wood": 360,
-        "Stone": 210
-      },
-      "upgradeCostLevelGrowth": 1.8,
       "upgradeDurationSeconds": 180,
-      "upgradeDurationLevelGrowth": 1.6
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
+    },
+    "Infirmary": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 1,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        1
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [
+        30,
+        50,
+        75,
+        105,
+        140,
+        180,
+        225,
+        275,
+        330,
+        400
+      ],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 80,
+            "Stone": 40
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 240,
+            "Stone": 120
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 432,
+            "Stone": 216
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 777,
+            "Stone": 388
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1399,
+            "Stone": 699
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 2379,
+            "Stone": 1189
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4045,
+            "Stone": 2022
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6876,
+            "Stone": 3438
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11690,
+            "Stone": 5845
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 19873,
+            "Stone": 9936
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 1,
+      "instanceExponentialGrowth": 1.2,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
+    },
+    "Carpenter": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 120
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 200
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 320
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 512
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 819
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1392
+          },
+          "goods": {
+            "CutStone": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 2367
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 4024
+          },
+          "goods": {
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 6842
+          },
+          "goods": {
+            "CutStone": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 11631
+          },
+          "goods": {
+            "CutStone": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 120,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": "Planks",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
+    },
+    "MasonsYard": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 100,
+            "Stone": 60
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 160,
+            "Stone": 100
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 256,
+            "Stone": 160
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 409,
+            "Stone": 256
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 655,
+            "Stone": 409
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Wood": 1114,
+            "Stone": 696
+          },
+          "goods": {
+            "Planks": 2
+          }
+        },
+        {
+          "cost": {
+            "Wood": 1893,
+            "Stone": 1183
+          },
+          "goods": {
+            "Planks": 3
+          }
+        },
+        {
+          "cost": {
+            "Wood": 3219,
+            "Stone": 2012
+          },
+          "goods": {
+            "Planks": 4
+          }
+        },
+        {
+          "cost": {
+            "Wood": 5473,
+            "Stone": 3421
+          },
+          "goods": {
+            "Planks": 5
+          }
+        },
+        {
+          "cost": {
+            "Wood": 9305,
+            "Stone": 5815
+          },
+          "goods": {
+            "Planks": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
+      "buildDurationSeconds": 90,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 180,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": "CutStone",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
+    },
+    "Smelter": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 400,
+            "Stone": 120
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 600,
+            "Stone": 200
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 960,
+            "Stone": 320
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1536,
+            "Stone": 512
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 2457,
+            "Stone": 819
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 4177,
+            "Stone": 1392
+          },
+          "goods": {
+            "CutStone": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 7102,
+            "Stone": 2367
+          },
+          "goods": {
+            "CutStone": 4
+          }
+        },
+        {
+          "cost": {
+            "Gold": 12074,
+            "Stone": 4024
+          },
+          "goods": {
+            "CutStone": 5
+          }
+        },
+        {
+          "cost": {
+            "Gold": 20526,
+            "Stone": 6842
+          },
+          "goods": {
+            "CutStone": 6
+          }
+        },
+        {
+          "cost": {
+            "Gold": 34894,
+            "Stone": 11631
+          },
+          "goods": {
+            "CutStone": 7
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
+      "buildDurationSeconds": 120,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 240,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": "Iron",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
+    },
+    "RuneCarver": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 10,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 1,
+      "fogDiscoverRadius": 2,
+      "maxWorkersPerLevel": [
+        1,
+        2,
+        3,
+        3,
+        4,
+        4,
+        5,
+        5,
+        6,
+        6
+      ],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 800,
+            "Stone": 200
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1200,
+            "Stone": 300
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 1920,
+            "Stone": 480
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 3072,
+            "Stone": 768
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 4915,
+            "Stone": 1228
+          },
+          "goods": {}
+        },
+        {
+          "cost": {
+            "Gold": 8355,
+            "Stone": 2088
+          },
+          "goods": {
+            "Iron": 2
+          }
+        },
+        {
+          "cost": {
+            "Gold": 14204,
+            "Stone": 3551
+          },
+          "goods": {
+            "Iron": 3
+          }
+        },
+        {
+          "cost": {
+            "Gold": 24148,
+            "Stone": 6037
+          },
+          "goods": {
+            "Iron": 4
+          }
+        },
+        {
+          "cost": {
+            "Gold": 41052,
+            "Stone": 10263
+          },
+          "goods": {
+            "Iron": 5
+          }
+        },
+        {
+          "cost": {
+            "Gold": 69788,
+            "Stone": 17447
+          },
+          "goods": {
+            "Iron": 6
+          }
+        }
+      ],
+      "instanceLinearGrowth": 2,
+      "instanceExponentialGrowth": 1.2,
+      "buildDurationSeconds": 180,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 360,
+      "upgradeDurationLevelGrowth": 1.6,
+      "upgradeDurationLateSeconds": 7200,
+      "upgradeDurationLateLevelGrowth": 1.7,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": "Runestone",
+      "queueLengthPerLevel": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "harmonySupply": 0,
+      "harmonyCostPerLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6
+      ]
+    },
+    "Garden": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Wood": 200,
+            "Food": 100
+          },
+          "goods": {}
+        }
+      ],
+      "instanceLinearGrowth": 0.35,
+      "instanceExponentialGrowth": 1,
+      "buildDurationSeconds": 60,
+      "buildDurationDistrictGrowth": 1.1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 4,
+      "harmonyCostPerLevel": []
+    },
+    "Well": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Stone": 200
+          },
+          "goods": {
+            "CutStone": 1
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.35,
+      "instanceExponentialGrowth": 1,
+      "buildDurationSeconds": 90,
+      "buildDurationDistrictGrowth": 1.1,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 6,
+      "harmonyCostPerLevel": []
+    },
+    "Orchard": {
+      "size": {
+        "x": 2,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Food": 500
+          },
+          "goods": {
+            "Planks": 2
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.4,
+      "instanceExponentialGrowth": 1,
+      "buildDurationSeconds": 180,
+      "buildDurationDistrictGrowth": 1.15,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 12,
+      "harmonyCostPerLevel": []
+    },
+    "Statue": {
+      "size": {
+        "x": 1,
+        "y": 1
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 5000
+          },
+          "goods": {
+            "CutStone": 2
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.4,
+      "instanceExponentialGrowth": 1,
+      "buildDurationSeconds": 180,
+      "buildDurationDistrictGrowth": 1.15,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 10,
+      "harmonyCostPerLevel": []
+    },
+    "Plaza": {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2,
+        3
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Stone": 800
+          },
+          "goods": {
+            "Planks": 4,
+            "CutStone": 4
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.5,
+      "instanceExponentialGrowth": 1,
+      "buildDurationSeconds": 420,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 30,
+      "harmonyCostPerLevel": []
+    },
+    "Shrine": {
+      "size": {
+        "x": 2,
+        "y": 2
+      },
+      "maxLevel": 1,
+      "populationCapacityPerLevel": [],
+      "taxBonusPerLevel": [],
+      "fogRevealRadius": 0,
+      "fogDiscoverRadius": 0,
+      "maxWorkersPerLevel": [],
+      "maxCountPerTownhallLevel": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        2
+      ],
+      "influenceRadiusPerLevel": [],
+      "requiredTownhallLevelPerLevel": [],
+      "armyCapPerLevel": [],
+      "bedsPerLevel": [],
+      "costPerLevel": [
+        {
+          "cost": {
+            "Gold": 20000
+          },
+          "goods": {
+            "Runestone": 2
+          }
+        }
+      ],
+      "instanceLinearGrowth": 0.5,
+      "instanceExponentialGrowth": 1,
+      "buildDurationSeconds": 600,
+      "buildDurationDistrictGrowth": 1.2,
+      "buildDurationDistanceGrowth": 1.15,
+      "upgradeDurationSeconds": 0,
+      "upgradeDurationLevelGrowth": 1.5,
+      "upgradeDurationLateSeconds": 0,
+      "upgradeDurationLateLevelGrowth": 0,
+      "extraUnitsPerDeliveryPerLevel": [],
+      "strikeSpeedPerLevel": [],
+      "produces": null,
+      "queueLengthPerLevel": [],
+      "harmonySupply": 40,
+      "harmonyCostPerLevel": []
+    }
+  },
+  "goods": {
+    "Planks": {
+      "name": "Planks",
+      "tier": 1,
+      "input": {
+        "Wood": 10
+      },
+      "inputMana": 0,
+      "inputGood": null,
+      "inputGoodAmount": 0,
+      "workSeconds": 1200
+    },
+    "CutStone": {
+      "name": "Cut Stone",
+      "tier": 1,
+      "input": {
+        "Stone": 10
+      },
+      "inputMana": 0,
+      "inputGood": null,
+      "inputGoodAmount": 0,
+      "workSeconds": 1800
+    },
+    "Iron": {
+      "name": "Iron",
+      "tier": 1,
+      "input": {
+        "Gold": 200,
+        "Stone": 20
+      },
+      "inputMana": 0,
+      "inputGood": null,
+      "inputGoodAmount": 0,
+      "workSeconds": 3600
+    },
+    "Runestone": {
+      "name": "Runestone",
+      "tier": 2,
+      "input": {},
+      "inputMana": 20,
+      "inputGood": "CutStone",
+      "inputGoodAmount": 2,
+      "workSeconds": 10800
+    }
+  },
+  "terrain": {
+    "Grassland": {
+      "Food": 1.25,
+      "Wood": 1.25,
+      "Stone": 1
+    },
+    "Plains": {
+      "Food": 1,
+      "Wood": 1,
+      "Stone": 1
+    },
+    "Desert": {
+      "Food": 0.5,
+      "Wood": 0.5,
+      "Stone": 1.5
+    },
+    "Snow": {
+      "Food": 0.75,
+      "Wood": 0.75,
+      "Stone": 1
+    },
+    "Tundra": {
+      "Food": 0.75,
+      "Wood": 1.5,
+      "Stone": 1.5
+    },
+    "Water": {
+      "Food": 1,
+      "Wood": 1,
+      "Stone": 1
     }
   },
   "harvest": {
     "Forest": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 10,
+      "stock": 10,
       "recoverySeconds": 90,
-      "respawnSeconds": 0,
-      "requiredTech": "Forestry"
+      "respawnSeconds": 0
     },
     "Crops": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 8,
+      "stock": 10,
       "recoverySeconds": 60,
-      "respawnSeconds": 0,
-      "requiredTech": null
+      "respawnSeconds": 0
     },
     "Berries": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 10,
+      "stock": 10,
       "recoverySeconds": 0,
-      "respawnSeconds": 120,
-      "requiredTech": "Forestry"
+      "respawnSeconds": 120
     },
     "Meat": {
-      "yieldPerTap": 3,
-      "yieldPerWorker": 3,
-      "tapsToExhaust": 10,
+      "unitsPerStrike": 3,
+      "secondsPerStrike": 20,
+      "stock": 30,
       "recoverySeconds": 0,
-      "respawnSeconds": 180,
-      "requiredTech": "Hunting"
+      "respawnSeconds": 180
     },
     "Stone": {
-      "yieldPerTap": 1,
-      "yieldPerWorker": 1,
-      "tapsToExhaust": 5,
+      "unitsPerStrike": 1,
+      "secondsPerStrike": 26,
+      "stock": 5,
       "recoverySeconds": 120,
-      "respawnSeconds": 0,
-      "requiredTech": null
+      "respawnSeconds": 0
     },
     "Fish": {
-      "yieldPerTap": 2,
-      "yieldPerWorker": 2,
-      "tapsToExhaust": 5,
+      "unitsPerStrike": 2,
+      "secondsPerStrike": 20,
+      "stock": 10,
       "recoverySeconds": 0,
-      "respawnSeconds": 90,
-      "requiredTech": null
+      "respawnSeconds": 90
     },
-    "Iron": {
-      "yieldPerTap": 3,
-      "yieldPerWorker": 3,
-      "tapsToExhaust": 5,
+    "MountainIron": {
+      "unitsPerStrike": 5,
+      "secondsPerStrike": 60,
+      "stock": 25,
       "recoverySeconds": 300,
-      "respawnSeconds": 0,
-      "requiredTech": null
+      "respawnSeconds": 0
+    },
+    "MountainGold": {
+      "unitsPerStrike": 3,
+      "secondsPerStrike": 60,
+      "stock": 15,
+      "recoverySeconds": 300,
+      "respawnSeconds": 0
     }
   },
   "currencies": {
@@ -672,403 +3096,154 @@
       "primary": false,
       "goldValue": null
     },
+    "Stardust": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "goldValue": null
+    },
+    "HeroXp": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "goldValue": null
+    },
     "Gems": {
       "cap": null,
-      "start": 10,
+      "start": 500,
       "primary": true,
+      "goldValue": null
+    },
+    "SilverKey": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
+      "goldValue": null
+    },
+    "GoldKey": {
+      "cap": null,
+      "start": 0,
+      "primary": false,
       "goldValue": null
     }
   },
   "units": {
     "Warrior": {
       "power": 3,
-      "atk": 3,
+      "dmg": 8,
       "def": 3,
-      "hp": 12,
+      "hp": 20,
+      "squadSize": 100,
+      "frontage": 50,
+      "cooldown": 10,
       "recruitCost": {
-        "Gold": 50,
-        "Wood": 10,
-        "Food": 20
+        "Gold": 20,
+        "Wood": 5,
+        "Food": 8
       },
-      "trainDurationSeconds": 30
+      "trainDurationSeconds": 15
     },
     "Lancer": {
-      "power": 5,
-      "atk": 5,
+      "power": 4,
+      "dmg": 10,
       "def": 2,
-      "hp": 8,
+      "hp": 16,
+      "squadSize": 100,
+      "frontage": 60,
+      "cooldown": 10,
       "recruitCost": {
-        "Gold": 100,
-        "Wood": 30,
-        "Food": 10
+        "Gold": 40,
+        "Wood": 12,
+        "Food": 4
       },
-      "trainDurationSeconds": 40
+      "trainDurationSeconds": 20
     },
     "Archer": {
-      "power": 6,
-      "atk": 6,
+      "power": 4,
+      "dmg": 7,
       "def": 1,
-      "hp": 6,
+      "hp": 10,
+      "squadSize": 80,
+      "frontage": 80,
+      "cooldown": 12,
       "recruitCost": {
-        "Gold": 60,
-        "Wood": 30
+        "Gold": 25,
+        "Wood": 12
       },
-      "trainDurationSeconds": 25
+      "trainDurationSeconds": 12
     },
     "Cavalry": {
       "power": 7,
-      "atk": 7,
+      "dmg": 22,
       "def": 2,
-      "hp": 10,
+      "hp": 24,
+      "squadSize": 60,
+      "frontage": 30,
+      "cooldown": 15,
       "recruitCost": {
-        "Gold": 150,
-        "Food": 40,
-        "Stone": 60
+        "Gold": 60,
+        "Food": 16,
+        "Stone": 24
       },
-      "trainDurationSeconds": 60
+      "trainDurationSeconds": 30
     }
   },
-  "technologies": {
-    "Forestry": {
-      "cost": {
-        "Gold": 25
-      },
-      "durationSeconds": 3,
-      "requires": []
+  "store": {
+    "GemsPouch": {
+      "priceUsd": 0.99,
+      "gems": 500
     },
-    "UrbanPlanning": {
-      "cost": {
-        "Gold": 200
-      },
-      "durationSeconds": 60,
-      "requires": [
-        "Forestry"
-      ]
+    "GemsPurse": {
+      "priceUsd": 4.99,
+      "gems": 2500
     },
-    "Communities": {
-      "cost": {
-        "Gold": 450
-      },
-      "durationSeconds": 90,
-      "requires": [
-        "UrbanPlanning"
-      ]
+    "GemsChest": {
+      "priceUsd": 9.99,
+      "gems": 5000
     },
-    "Architecture": {
-      "cost": {
-        "Gold": 600
-      },
-      "durationSeconds": 120,
-      "requires": [
-        "Communities"
-      ]
+    "GemsVault": {
+      "priceUsd": 19.99,
+      "gems": 10000
     },
-    "Saws": {
-      "cost": {
-        "Gold": 175
-      },
-      "durationSeconds": 20,
-      "requires": [
-        "Forestry"
-      ]
+    "GemsHoard": {
+      "priceUsd": 49.99,
+      "gems": 25000
     },
-    "Hunting": {
-      "cost": {
-        "Gold": 150
-      },
-      "durationSeconds": 30,
-      "requires": [
-        "Forestry"
-      ]
+    "GemsTreasury": {
+      "priceUsd": 99.99,
+      "gems": 50000
     },
-    "Agriculture": {
-      "cost": {
-        "Gold": 100
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Forestry"
-      ]
-    },
-    "Farming": {
-      "cost": {
-        "Gold": 250
-      },
-      "durationSeconds": 60,
-      "requires": [
-        "Agriculture"
-      ]
-    },
-    "Market": {
-      "cost": {
-        "Gold": 150
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Agriculture"
-      ]
-    },
-    "Masonry": {
-      "cost": {
-        "Gold": 100
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Forestry"
-      ]
-    },
-    "Mining": {
-      "cost": {
-        "Gold": 250
-      },
-      "durationSeconds": 60,
-      "requires": [
-        "Masonry"
-      ]
-    },
-    "Engineering": {
-      "cost": {
-        "Gold": 500
-      },
-      "durationSeconds": 90,
-      "requires": [
-        "Masonry"
-      ]
-    },
-    "DeepMining": {
-      "cost": {
-        "Gold": 800
-      },
-      "durationSeconds": 120,
-      "requires": [
-        "Mining"
-      ]
-    },
-    "Cartography": {
-      "cost": {
-        "Gold": 200
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Forestry"
-      ]
-    },
-    "Sailing": {
-      "cost": {
-        "Gold": 150
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Cartography"
-      ]
-    },
-    "Fishing": {
-      "cost": {
-        "Gold": 100
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Sailing"
-      ]
-    },
-    "Shipbuilding": {
-      "cost": {
-        "Gold": 400
-      },
-      "durationSeconds": 90,
-      "requires": [
-        "Fishing"
-      ]
-    },
-    "ScalingTools": {
-      "cost": {
-        "Gold": 200
-      },
-      "durationSeconds": 60,
-      "requires": [
-        "Cartography"
-      ]
-    },
-    "Warrior": {
-      "cost": {
-        "Gold": 100
-      },
-      "durationSeconds": 30,
-      "requires": [
-        "Forestry"
-      ]
-    },
-    "Spears": {
-      "cost": {
-        "Gold": 150
-      },
-      "durationSeconds": 45,
-      "requires": [
-        "Warrior"
-      ]
-    },
-    "Archery": {
-      "cost": {
-        "Gold": 150
-      },
-      "durationSeconds": 60,
-      "requires": [
-        "Warrior"
-      ]
-    },
-    "Cavalry": {
-      "cost": {
-        "Gold": 400
-      },
-      "durationSeconds": 90,
-      "requires": [
-        "Warrior"
-      ]
-    },
-    "Attunement": {
-      "cost": {
-        "Gold": 400
-      },
-      "durationSeconds": 120,
-      "requires": [
-        "Forestry"
-      ]
-    },
-    "Warband": {
-      "cost": {
-        "Gold": 600
-      },
-      "durationSeconds": 180,
-      "requires": [
-        "Archery"
-      ]
+    "RoyalChest": {
+      "priceUsd": 9.99,
+      "gems": 0
     }
   },
-  "upgrades": {
-    "TapPower": {
-      "costBase": 50,
-      "costGrowth": 2.2,
-      "maxLevel": 5,
-      "effectPerLevel": 1,
-      "requiredTech": "Forestry"
-    },
-    "QuickHands": {
-      "costBase": 75,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Forestry"
-    },
-    "WorkerLoad": {
-      "costBase": 200,
-      "costGrowth": 2.5,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Forestry"
-    },
-    "Sawpits": {
-      "costBase": 120,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Saws"
-    },
-    "Butchery": {
-      "costBase": 80,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Hunting"
-    },
-    "Irrigation": {
-      "costBase": 120,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Agriculture"
-    },
-    "Scythes": {
-      "costBase": 90,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Farming"
-    },
-    "Surveying": {
-      "costBase": 150,
-      "costGrowth": 3,
-      "maxLevel": 2,
-      "effectPerLevel": 1,
-      "requiredTech": "Cartography"
-    },
-    "Pitons": {
-      "costBase": 200,
-      "costGrowth": 2.5,
-      "maxLevel": 2,
-      "effectPerLevel": 0.1,
-      "requiredTech": "ScalingTools"
-    },
-    "MarketStall": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 4,
-      "effectPerLevel": 0.05,
-      "requiredTech": "Market"
-    },
-    "TradeRoutes": {
-      "costBase": 150,
-      "costGrowth": 2,
-      "maxLevel": 5,
-      "effectPerLevel": 0.1,
-      "requiredTech": "Market"
-    },
-    "Stonecutting": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Masonry"
-    },
-    "BigNets": {
-      "costBase": 100,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Fishing"
-    },
-    "IronPicks": {
-      "costBase": 150,
-      "costGrowth": 2,
-      "maxLevel": 3,
-      "effectPerLevel": 1,
-      "requiredTech": "Mining"
-    },
-    "Resonance": {
-      "costBase": 250,
-      "costGrowth": 2.5,
-      "maxLevel": 2,
-      "effectPerLevel": 0.2,
-      "requiredTech": "Attunement"
-    }
+  "payer": {
+    "f2pMonthlyUsd": 0,
+    "minnowMonthlyUsd": 10,
+    "dolphinMonthlyUsd": 50,
+    "whaleMonthlyUsd": 250,
+    "superWhaleMonthlyUsd": 2000
   },
   "research": {
     "techSlots": 1,
     "maxSlots": 3,
-    "slotGemCostBase": 10,
-    "slotGemCostGrowth": 3
+    "slotGemCostBase": 2500,
+    "slotGemCostGrowth": 2
+  },
+  "rush": {
+    "secondsPerGem": 5
   },
   "worker": {
-    "moveSpeedTilesPerSecond": 1,
-    "workSeconds": 8
+    "moveSpeedTilesPerSecond": 1
   },
   "tap": {
     "collectCooldownSeconds": 0.5,
     "manaCost": 1,
-    "boostSeconds": 45
+    "workSeconds": 10
   },
   "training": {
-    "seconds": 20,
-    "tapBoostSeconds": 2
+    "seconds": 20
   },
   "taxes": {
     "goldPerPopulationPerMinute": 30
@@ -1077,303 +3252,1021 @@
     {
       "district": "Housing",
       "neighbor": "Housing",
-      "goldPerMinute": -1
+      "stat": "goldPerMinute",
+      "magnitude": -1
+    },
+    {
+      "district": "Housing",
+      "neighbor": "AnyDecoration",
+      "stat": "goldPerMinute",
+      "magnitude": 1
+    },
+    {
+      "district": "AnyHall",
+      "neighbor": "AnyHall",
+      "stat": "trainTime",
+      "magnitude": -0.1
+    },
+    {
+      "district": "Carpenter",
+      "neighbor": "Sawmill",
+      "stat": "workTime",
+      "magnitude": -0.1
+    },
+    {
+      "district": "MasonsYard",
+      "neighbor": "Quarry",
+      "stat": "workTime",
+      "magnitude": -0.1
+    },
+    {
+      "district": "Smelter",
+      "neighbor": "Quarry",
+      "stat": "workTime",
+      "magnitude": -0.1
+    },
+    {
+      "district": "RuneCarver",
+      "neighbor": "Sanctum",
+      "stat": "workTime",
+      "magnitude": -0.1
     }
   ],
   "mana": {
-    "productionPerTownhallLevel": [
-      10,
-      13,
-      16
-    ],
-    "baseCapPerTownhallLevel": [
-      100,
-      130,
-      160
-    ],
+    "baseCap": 100,
+    "basePerHour": 12,
     "sanctumCapPerLevel": [
       24,
       48,
-      72
+      72,
+      100,
+      132,
+      168,
+      208,
+      252,
+      300,
+      352
+    ],
+    "sanctumPerHourPerLevel": [
+      3,
+      6,
+      9,
+      12,
+      16,
+      20,
+      25,
+      30,
+      36,
+      42
     ],
     "landmarkCap": 10,
-    "gemRefillPerGem": 4
+    "meditationCap": 30,
+    "gemRefillCosts": [
+      400,
+      600,
+      800,
+      1000,
+      2000
+    ]
   },
   "attunement": {
     "baseSlots": 1,
     "maxSlots": 5,
-    "slotGemCostBase": 20,
-    "slotGemCostGrowth": 2.5,
+    "slotGemCostBase": 1000,
+    "slotGemCostGrowth": 2,
     "swapLockSeconds": 300
   },
   "collection": {
+    "xpTricklePerTierDepth": 10,
     "levelCostBase": 20,
     "levelCostGrowth": 1.6,
     "maxLevel": 10,
     "levelsPerTier": 2,
     "maxTier": 5,
     "fragmentsPerTierBase": 10,
-    "fragmentsPerTierGrowth": 2
+    "fragmentsPerTierGrowth": 2,
+    "ascensionStardustBase": 50,
+    "ascensionStardustGrowth": 2,
+    "xpLevelCostBase": 100,
+    "xpLevelCostGrowth": 1.09,
+    "heroLevelsPerTier": 10,
+    "heroMaxLevel": 50
   },
   "knowledge": {
-    "dripPerClearedRuinPerHour": 2
+    "basePerHour": 1,
+    "dripPerClearedRuinPerHour": 0.2,
+    "perClaimedLandmarkPerHour": 0.2,
+    "landmarkClaimLump": 5,
+    "conquestPerClearedRuinPerHour": 0.3
   },
   "army": {
-    "trainTapBoostSeconds": 3,
     "typeAdvantage": 1.5,
     "typeDisadvantage": 0.75,
     "threatFloorFraction": 0.4,
-    "damagePerStrength": 0.9,
-    "damageAbsorbedPerDefence": 0.5
+    "woundedShare": 0.1,
+    "healCostShare": 0.3,
+    "healTimeShare": 0.25
+  },
+  "daily": {
+    "seasonDays": 20,
+    "manaFractions": [
+      0.34,
+      0.34,
+      0.5,
+      0.34,
+      0.5,
+      0.34,
+      1,
+      0.34,
+      0.5,
+      0.34,
+      0.5,
+      0.34,
+      0.5,
+      1
+    ],
+    "gems": [
+      0,
+      0,
+      200,
+      0,
+      0,
+      400,
+      0,
+      0,
+      600,
+      0,
+      0,
+      800,
+      0,
+      1000
+    ],
+    "premiumGems": [
+      500,
+      500,
+      800,
+      800,
+      1000,
+      1000,
+      3000,
+      1200,
+      1200,
+      1500,
+      1500,
+      2000,
+      2000,
+      8000
+    ],
+    "premiumGoldKeys": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      2,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      2
+    ],
+    "premiumXpHours": [
+      0,
+      0,
+      12,
+      0,
+      0,
+      12,
+      0,
+      0,
+      12,
+      0,
+      0,
+      12,
+      0,
+      12
+    ],
+    "premiumXpFloor": 20000
   },
   "delve": {
-    "goldPerDepthPerTier": 25,
-    "materialPerDepthPerTier": 4,
-    "knowledgePerDepthPerTier": 6,
-    "fragmentsPerDepth": 1,
-    "failHaulLoss": 0.5,
-    "firstClearGems": 10,
-    "firstClearKnowledge": 150
+    "firstClearGems": 500,
+    "firstClearKnowledge": 15,
+    "firstClearStardust": 150
   },
   "party": {
-    "baseSlots": 2,
-    "maxSlots": 5,
-    "slotGemCostBase": 25,
-    "slotGemCostGrowth": 2.2
-  },
-  "gacha": {
-    "pullGemCost": 30,
-    "heroChance": 0.06,
-    "softPityAt": 40,
-    "hardPityAt": 60,
-    "duplicateFragments": 20,
-    "fragmentsPerMiss": 3,
-    "pullKnowledge": 50
+    "troopSlots": 6,
+    "heroSlots": 3,
+    "heroSlotGemCostBase": 2500,
+    "heroSlotGemCostGrowth": 2
   },
   "heroes": {
     "Warden": {
+      "rarity": "Common",
       "unitType": "Warrior",
       "trait": "PartyDefence",
       "traitValue": 0.2,
-      "atk": 4,
-      "def": 6,
-      "hp": 24,
-      "atkPerLevel": 1,
-      "defPerLevel": 1,
-      "hpPerLevel": 6
+      "dmg": 80,
+      "def": 3,
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 20,
+      "defPerLevel": 0.25,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
     },
     "Quartermaster": {
+      "rarity": "Common",
       "unitType": "Lancer",
       "trait": "SupplyDiscount",
       "traitValue": 0.25,
-      "atk": 6,
-      "def": 3,
-      "hp": 16,
-      "atkPerLevel": 1.5,
-      "defPerLevel": 0.5,
-      "hpPerLevel": 4
+      "dmg": 120,
+      "def": 2,
+      "hp": 256,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
     },
     "Scholar": {
+      "rarity": "Rare",
       "unitType": "Archer",
       "trait": "KnowledgeBonus",
       "traitValue": 0.5,
-      "atk": 7,
-      "def": 2,
-      "hp": 12,
-      "atkPerLevel": 1.5,
-      "defPerLevel": 0.4,
-      "hpPerLevel": 3
+      "dmg": 140,
+      "def": 1,
+      "hp": 192,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.1,
+      "hpPerLevel": 48,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
     },
     "RelicHunter": {
+      "rarity": "Rare",
       "unitType": "Cavalry",
       "trait": "FragmentBonus",
       "traitValue": 0.5,
-      "atk": 8,
-      "def": 3,
-      "hp": 18,
-      "atkPerLevel": 2,
-      "defPerLevel": 0.5,
-      "hpPerLevel": 4
+      "dmg": 160,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 40,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
     },
     "Scout": {
+      "rarity": "Legendary",
       "unitType": "Archer",
-      "trait": "RevealNextDepth",
-      "traitValue": 1,
-      "atk": 6,
+      "trait": "SupplyDiscount",
+      "traitValue": 0.4,
+      "dmg": 120,
+      "def": 2,
+      "hp": 224,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 48,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2
+    },
+    "Adventurer": {
+      "rarity": "Common",
+      "unitType": "Lancer",
+      "trait": "FragmentBonus",
+      "traitValue": 0.25,
+      "dmg": 120,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Bard": {
+      "rarity": "Common",
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.25,
+      "dmg": 140,
+      "def": 1,
+      "hp": 208,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.1,
+      "hpPerLevel": 48,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "BeastkinHunter": {
+      "rarity": "Common",
+      "unitType": "Cavalry",
+      "trait": "SupplyDiscount",
+      "traitValue": 0.15,
+      "dmg": 140,
+      "def": 2,
+      "hp": 272,
+      "cooldown": 12,
+      "dmgPerLevel": 40,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Cleric": {
+      "rarity": "Common",
+      "unitType": "Warrior",
+      "trait": "WoundedRecovery",
+      "traitValue": 0.15,
+      "dmg": 80,
       "def": 3,
-      "hp": 14,
-      "atkPerLevel": 1.5,
-      "defPerLevel": 0.5,
-      "hpPerLevel": 3
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 20,
+      "defPerLevel": 0.25,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Cook": {
+      "rarity": "Common",
+      "unitType": "Lancer",
+      "trait": "SupplyDiscount",
+      "traitValue": 0.15,
+      "dmg": 120,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Gardener": {
+      "rarity": "Common",
+      "unitType": "Warrior",
+      "trait": "PartyDefence",
+      "traitValue": 0.2,
+      "dmg": 80,
+      "def": 3,
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 20,
+      "defPerLevel": 0.25,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Joker": {
+      "rarity": "Common",
+      "unitType": "Archer",
+      "trait": "FragmentBonus",
+      "traitValue": 0.25,
+      "dmg": 140,
+      "def": 1,
+      "hp": 208,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.1,
+      "hpPerLevel": 48,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Merchant": {
+      "rarity": "Common",
+      "unitType": "Lancer",
+      "trait": "SupplyDiscount",
+      "traitValue": 0.15,
+      "dmg": 120,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Priest": {
+      "rarity": "Common",
+      "unitType": "Warrior",
+      "trait": "WoundedRecovery",
+      "traitValue": 0.15,
+      "dmg": 80,
+      "def": 3,
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 20,
+      "defPerLevel": 0.25,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Rogue": {
+      "rarity": "Common",
+      "unitType": "Cavalry",
+      "trait": "FragmentBonus",
+      "traitValue": 0.25,
+      "dmg": 140,
+      "def": 2,
+      "hp": 272,
+      "cooldown": 12,
+      "dmgPerLevel": 40,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 64,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "ThreeMice": {
+      "rarity": "Common",
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.25,
+      "dmg": 140,
+      "def": 1,
+      "hp": 208,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.1,
+      "hpPerLevel": 48,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "Sellsword": {
+      "rarity": "Common",
+      "unitType": "Warrior",
+      "trait": "PartyDefence",
+      "traitValue": 0.2,
+      "dmg": 80,
+      "def": 3,
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 20,
+      "defPerLevel": 0.25,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1
+    },
+    "DarkKnight": {
+      "rarity": "Rare",
+      "unitType": "Warrior",
+      "trait": "PartyDefence",
+      "traitValue": 0.3,
+      "dmg": 100,
+      "def": 4,
+      "hp": 512,
+      "cooldown": 12,
+      "dmgPerLevel": 24,
+      "defPerLevel": 0.3,
+      "hpPerLevel": 115,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "Paladin": {
+      "rarity": "Rare",
+      "unitType": "Warrior",
+      "trait": "WoundedRecovery",
+      "traitValue": 0.25,
+      "dmg": 100,
+      "def": 4,
+      "hp": 512,
+      "cooldown": 12,
+      "dmgPerLevel": 24,
+      "defPerLevel": 0.3,
+      "hpPerLevel": 115,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "Wizard": {
+      "rarity": "Rare",
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.5,
+      "dmg": 180,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 36,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 58,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "Witch": {
+      "rarity": "Rare",
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.5,
+      "dmg": 180,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 36,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 58,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "Druid": {
+      "rarity": "Rare",
+      "unitType": "Lancer",
+      "trait": "WoundedRecovery",
+      "traitValue": 0.25,
+      "dmg": 160,
+      "def": 2,
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 36,
+      "defPerLevel": 0.15,
+      "hpPerLevel": 77,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "IceLancer": {
+      "rarity": "Rare",
+      "unitType": "Lancer",
+      "trait": "PartyDefence",
+      "traitValue": 0.3,
+      "dmg": 160,
+      "def": 2,
+      "hp": 384,
+      "cooldown": 12,
+      "dmgPerLevel": 36,
+      "defPerLevel": 0.15,
+      "hpPerLevel": 77,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "HolyWarrior": {
+      "rarity": "Rare",
+      "unitType": "Cavalry",
+      "trait": "FragmentBonus",
+      "traitValue": 0.5,
+      "dmg": 180,
+      "def": 2,
+      "hp": 368,
+      "cooldown": 12,
+      "dmgPerLevel": 48,
+      "defPerLevel": 0.15,
+      "hpPerLevel": 77,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "SavageWarrior": {
+      "rarity": "Rare",
+      "unitType": "Cavalry",
+      "trait": "FragmentBonus",
+      "traitValue": 0.5,
+      "dmg": 180,
+      "def": 2,
+      "hp": 368,
+      "cooldown": 12,
+      "dmgPerLevel": 48,
+      "defPerLevel": 0.15,
+      "hpPerLevel": 77,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "Spymaster": {
+      "rarity": "Rare",
+      "unitType": "Archer",
+      "trait": "SupplyDiscount",
+      "traitValue": 0.25,
+      "dmg": 180,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 36,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 58,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "ElectricArcher": {
+      "rarity": "Rare",
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.5,
+      "dmg": 180,
+      "def": 2,
+      "hp": 288,
+      "cooldown": 12,
+      "dmgPerLevel": 36,
+      "defPerLevel": 0.12,
+      "hpPerLevel": 58,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1
+    },
+    "GoldenDragon": {
+      "rarity": "Legendary",
+      "unitType": "Cavalry",
+      "trait": "PartyDefence",
+      "traitValue": 0.45,
+      "dmg": 260,
+      "def": 2,
+      "hp": 496,
+      "cooldown": 12,
+      "dmgPerLevel": 60,
+      "defPerLevel": 0.2,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2
+    },
+    "VampireLord": {
+      "rarity": "Legendary",
+      "unitType": "Cavalry",
+      "trait": "FragmentBonus",
+      "traitValue": 0.85,
+      "dmg": 260,
+      "def": 2,
+      "hp": 496,
+      "cooldown": 12,
+      "dmgPerLevel": 60,
+      "defPerLevel": 0.2,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2
+    },
+    "Necromancer": {
+      "rarity": "Legendary",
+      "unitType": "Archer",
+      "trait": "KnowledgeBonus",
+      "traitValue": 0.85,
+      "dmg": 260,
+      "def": 2,
+      "hp": 368,
+      "cooldown": 12,
+      "dmgPerLevel": 44,
+      "defPerLevel": 0.15,
+      "hpPerLevel": 72,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2
+    },
+    "Pharao": {
+      "rarity": "Legendary",
+      "unitType": "Warrior",
+      "trait": "WoundedRecovery",
+      "traitValue": 0.4,
+      "dmg": 140,
+      "def": 6,
+      "hp": 688,
+      "cooldown": 12,
+      "dmgPerLevel": 30,
+      "defPerLevel": 0.38,
+      "hpPerLevel": 144,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2
+    },
+    "ElvenPrincess": {
+      "rarity": "Legendary",
+      "unitType": "Lancer",
+      "trait": "SupplyDiscount",
+      "traitValue": 0.4,
+      "dmg": 220,
+      "def": 4,
+      "hp": 512,
+      "cooldown": 12,
+      "dmgPerLevel": 44,
+      "defPerLevel": 0.2,
+      "hpPerLevel": 96,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2
     }
   },
   "ads": {
     "cooldownMinSeconds": 30,
     "cooldownMaxSeconds": 90,
     "eligibleBelowFraction": 0.5,
-    "watchSeconds": 5
+    "watchSeconds": 5,
+    "manaRefillsPerDay": 5
   },
-  "landmarks": [
+  "depths": [
     {
-      "id": "ThornedShrine",
-      "kind": "Shrine",
-      "x": 3,
-      "y": 4,
-      "defended": false,
-      "claimCost": 2000
+      "ruin": "HollowBarrow",
+      "depth": 1,
+      "rooms": 10,
+      "guildReq": 0,
+      "powerStart": 50,
+      "powerStep": 5,
+      "rewardBase": 1,
+      "villainPool": "BarrowThane",
+      "bossVillain": "BarrowThane",
+      "supplies": {
+        "Gold": 25,
+        "Food": 10
+      }
     },
     {
-      "id": "WhisperingStones",
-      "kind": "StandingStones",
-      "x": -4,
-      "y": 5,
-      "defended": false,
-      "claimCost": 25000
+      "ruin": "HollowBarrow",
+      "depth": 2,
+      "rooms": 12,
+      "guildReq": 2,
+      "powerStart": 95,
+      "powerStep": 5,
+      "rewardBase": 2,
+      "villainPool": "BarrowThane",
+      "bossVillain": "BarrowThane",
+      "supplies": {
+        "Gold": 40,
+        "Food": 15
+      }
     },
     {
-      "id": "BrightLeyspring",
-      "kind": "Leyspring",
-      "x": -1,
-      "y": 6,
-      "defended": false,
-      "claimCost": 25000
+      "ruin": "HollowBarrow",
+      "depth": 3,
+      "rooms": 8,
+      "guildReq": 3,
+      "powerStart": 150,
+      "powerStep": 5,
+      "rewardBase": 3,
+      "villainPool": "BarrowThane",
+      "bossVillain": "BarrowThane",
+      "supplies": {
+        "Gold": 60,
+        "Food": 20
+      }
     },
     {
-      "id": "OldOakShrine",
-      "kind": "Shrine",
-      "x": -2,
-      "y": -5,
-      "defended": false,
-      "claimCost": 25000
+      "ruin": "SunkenChapel",
+      "depth": 1,
+      "rooms": 8,
+      "guildReq": 0,
+      "powerStart": 240,
+      "powerStep": 10,
+      "rewardBase": 2,
+      "villainPool": "DrownedChoir",
+      "bossVillain": "DrownedChoir",
+      "supplies": {
+        "Gold": 75,
+        "Food": 20
+      }
     },
     {
-      "id": "CircleOfNine",
-      "kind": "StandingStones",
-      "x": 8,
-      "y": 4,
-      "defended": true,
-      "claimCost": 100000
+      "ruin": "SunkenChapel",
+      "depth": 2,
+      "rooms": 12,
+      "guildReq": 2,
+      "powerStart": 330,
+      "powerStep": 10,
+      "rewardBase": 3,
+      "villainPool": "DrownedChoir",
+      "bossVillain": "DrownedChoir",
+      "supplies": {
+        "Gold": 110,
+        "Food": 30
+      }
     },
     {
-      "id": "SunkenLeyspring",
-      "kind": "Leyspring",
-      "x": 5,
-      "y": 2,
-      "defended": false,
-      "claimCost": 25000
+      "ruin": "SunkenChapel",
+      "depth": 3,
+      "rooms": 12,
+      "guildReq": 3,
+      "powerStart": 450,
+      "powerStep": 10,
+      "rewardBase": 4,
+      "villainPool": "DrownedChoir",
+      "bossVillain": "DrownedChoir",
+      "supplies": {
+        "Gold": 150,
+        "Food": 40
+      }
     },
     {
-      "id": "CliffShrine",
-      "kind": "Shrine",
-      "x": 3,
-      "y": -9,
-      "defended": true,
-      "claimCost": 100000
+      "ruin": "DrownedIronworks",
+      "depth": 1,
+      "rooms": 10,
+      "guildReq": 0,
+      "powerStart": 580,
+      "powerStep": 10,
+      "rewardBase": 3,
+      "villainPool": "SlagWarden",
+      "bossVillain": "SlagWarden",
+      "supplies": {
+        "Gold": 200,
+        "Food": 30,
+        "Stone": 15
+      }
     },
     {
-      "id": "FallenStones",
-      "kind": "StandingStones",
-      "x": -5,
-      "y": -3,
-      "defended": false,
-      "claimCost": 25000
+      "ruin": "DrownedIronworks",
+      "depth": 2,
+      "rooms": 12,
+      "guildReq": 2,
+      "powerStart": 700,
+      "powerStep": 10,
+      "rewardBase": 4,
+      "villainPool": "SlagWarden",
+      "bossVillain": "SlagWarden",
+      "supplies": {
+        "Gold": 280,
+        "Food": 45,
+        "Stone": 25
+      }
     },
     {
-      "id": "MirrorLeyspring",
-      "kind": "Leyspring",
-      "x": -3,
-      "y": -10,
-      "defended": true,
-      "claimCost": 100000
+      "ruin": "DrownedIronworks",
+      "depth": 3,
+      "rooms": 14,
+      "guildReq": 3,
+      "powerStart": 830,
+      "powerStep": 10,
+      "rewardBase": 5,
+      "villainPool": "SlagWarden",
+      "bossVillain": "SlagWarden",
+      "supplies": {
+        "Gold": 380,
+        "Food": 60,
+        "Stone": 35
+      }
     },
     {
-      "id": "WindwardShrine",
-      "kind": "Shrine",
-      "x": 10,
-      "y": 2,
-      "defended": true,
-      "claimCost": 100000
+      "ruin": "CountingHouse",
+      "depth": 1,
+      "rooms": 12,
+      "guildReq": 0,
+      "powerStart": 980,
+      "powerStep": 10,
+      "rewardBase": 4,
+      "villainPool": "LedgerKeeper",
+      "bossVillain": "LedgerKeeper",
+      "supplies": {
+        "Gold": 450,
+        "Food": 50,
+        "Stone": 30
+      }
+    },
+    {
+      "ruin": "CountingHouse",
+      "depth": 2,
+      "rooms": 14,
+      "guildReq": 2,
+      "powerStart": 1110,
+      "powerStep": 10,
+      "rewardBase": 5,
+      "villainPool": "LedgerKeeper",
+      "bossVillain": "LedgerKeeper",
+      "supplies": {
+        "Gold": 600,
+        "Food": 70,
+        "Stone": 45
+      }
+    },
+    {
+      "ruin": "CountingHouse",
+      "depth": 3,
+      "rooms": 16,
+      "guildReq": 3,
+      "powerStart": 1260,
+      "powerStep": 10,
+      "rewardBase": 6,
+      "villainPool": "LedgerKeeper",
+      "bossVillain": "LedgerKeeper",
+      "supplies": {
+        "Gold": 800,
+        "Food": 95,
+        "Stone": 60
+      }
+    },
+    {
+      "ruin": "StarObservatory",
+      "depth": 1,
+      "rooms": 12,
+      "guildReq": 0,
+      "powerStart": 1420,
+      "powerStep": 12,
+      "rewardBase": 5,
+      "villainPool": "StarSeer",
+      "bossVillain": "StarSeer",
+      "supplies": {
+        "Gold": 1000,
+        "Food": 75,
+        "Stone": 60
+      }
+    },
+    {
+      "ruin": "StarObservatory",
+      "depth": 2,
+      "rooms": 16,
+      "guildReq": 2,
+      "powerStart": 1570,
+      "powerStep": 12,
+      "rewardBase": 6,
+      "villainPool": "StarSeer",
+      "bossVillain": "StarSeer",
+      "supplies": {
+        "Gold": 1300,
+        "Food": 100,
+        "Stone": 80
+      }
+    },
+    {
+      "ruin": "StarObservatory",
+      "depth": 3,
+      "rooms": 18,
+      "guildReq": 3,
+      "powerStart": 1770,
+      "powerStep": 12,
+      "rewardBase": 7,
+      "villainPool": "StarSeer",
+      "bossVillain": "StarSeer",
+      "supplies": {
+        "Gold": 1700,
+        "Food": 130,
+        "Stone": 105
+      }
     }
   ],
-  "ruins": {
-    "HollowBarrow": {
-      "x": 1,
-      "y": 6,
+  "garrisons": [
+    {
       "tier": 1,
-      "difficulty": 6,
-      "baseDepthSeconds": 180,
-      "depthGrowth": 1.15,
-      "maxDepth": 5,
+      "takeSeconds": 300,
       "supplies": {
-        "Food": 20,
-        "Gold": 50
-      },
-      "affinity": "Warrior",
-      "artifact": "DowsingRod"
+        "Gold": 25,
+        "Food": 10
+      }
     },
-    "SunkenChapel": {
-      "x": 5,
-      "y": 3,
+    {
       "tier": 2,
-      "difficulty": 14,
-      "baseDepthSeconds": 300,
-      "depthGrowth": 1.2,
-      "maxDepth": 7,
+      "takeSeconds": 600,
       "supplies": {
-        "Food": 40,
-        "Gold": 150
-      },
-      "affinity": "Archer",
-      "artifact": "VerdantSeal"
+        "Gold": 75,
+        "Food": 20
+      }
     },
-    "DrownedIronworks": {
-      "x": -3,
-      "y": 6,
+    {
       "tier": 3,
-      "difficulty": 24,
-      "baseDepthSeconds": 480,
-      "depthGrowth": 1.25,
-      "maxDepth": 9,
+      "takeSeconds": 900,
       "supplies": {
-        "Food": 60,
-        "Gold": 400,
-        "Stone": 30
-      },
-      "affinity": "Lancer",
-      "artifact": "ForemansSigil"
+        "Gold": 200,
+        "Food": 30,
+        "Stone": 15
+      }
     },
-    "CountingHouse": {
-      "x": 8,
-      "y": -3,
+    {
       "tier": 4,
-      "difficulty": 36,
-      "baseDepthSeconds": 720,
-      "depthGrowth": 1.3,
-      "maxDepth": 11,
+      "takeSeconds": 1200,
       "supplies": {
-        "Food": 100,
-        "Gold": 900,
-        "Stone": 60
-      },
-      "affinity": "Cavalry",
-      "artifact": "GildedLedger"
+        "Gold": 450,
+        "Food": 50,
+        "Stone": 30
+      }
     },
-    "StarObservatory": {
-      "x": -2,
-      "y": -10,
+    {
       "tier": 5,
-      "difficulty": 50,
-      "baseDepthSeconds": 1080,
-      "depthGrowth": 1.35,
-      "maxDepth": 13,
+      "takeSeconds": 1500,
       "supplies": {
-        "Food": 150,
-        "Gold": 2000,
-        "Stone": 120
-      },
-      "affinity": "Any",
-      "artifact": "WanderersCompass"
+        "Gold": 1000,
+        "Food": 75,
+        "Stone": 60
+      }
     }
+  ],
+  "raid": {
+    "takeFractionMax": 0.1,
+    "maxRaids": 3
   },
   "artifacts": {
     "DowsingRod": {
@@ -1381,65 +4274,35 @@
       "passivePerLevel": -0.015,
       "activeManaCost": 8,
       "activeDurationSeconds": 0,
-      "activeRadius": 0,
-      "carriedAtk": 4,
-      "carriedDef": 0,
-      "carriedHp": 10,
-      "carriedAtkPerLevel": 0.4,
-      "carriedDefPerLevel": 0,
-      "carriedHpPerLevel": 1
+      "activeRadius": 0
     },
     "VerdantSeal": {
       "passiveBase": 0.75,
       "passivePerLevel": -0.02,
       "activeManaCost": 6,
       "activeDurationSeconds": 0,
-      "activeRadius": 2,
-      "carriedAtk": 0,
-      "carriedDef": 6,
-      "carriedHp": 25,
-      "carriedAtkPerLevel": 0,
-      "carriedDefPerLevel": 0.6,
-      "carriedHpPerLevel": 2.5
+      "activeRadius": 2
     },
     "ForemansSigil": {
       "passiveBase": 1,
       "passivePerLevel": 0.2,
       "activeManaCost": 10,
       "activeDurationSeconds": 3600,
-      "activeRadius": 0,
-      "carriedAtk": 8,
-      "carriedDef": 2,
-      "carriedHp": 0,
-      "carriedAtkPerLevel": 0.8,
-      "carriedDefPerLevel": 0.2,
-      "carriedHpPerLevel": 0
+      "activeRadius": 0
     },
     "GildedLedger": {
       "passiveBase": 1.2,
       "passivePerLevel": 0.03,
       "activeManaCost": 0,
       "activeDurationSeconds": 0,
-      "activeRadius": 0,
-      "carriedAtk": 2,
-      "carriedDef": 4,
-      "carriedHp": 15,
-      "carriedAtkPerLevel": 0.2,
-      "carriedDefPerLevel": 0.4,
-      "carriedHpPerLevel": 1.5
+      "activeRadius": 0
     },
     "WanderersCompass": {
       "passiveBase": 1.5,
       "passivePerLevel": 0.1,
       "activeManaCost": 5,
       "activeDurationSeconds": 0,
-      "activeRadius": 0,
-      "carriedAtk": 5,
-      "carriedDef": 3,
-      "carriedHp": 5,
-      "carriedAtkPerLevel": 0.5,
-      "carriedDefPerLevel": 0.3,
-      "carriedHpPerLevel": 0.5
+      "activeRadius": 0
     }
   },
   "quests": [
@@ -1455,7 +4318,9 @@
         "Gold": 10
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "Woodcraft",
@@ -1469,7 +4334,9 @@
         "Gold": 15
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Timber",
@@ -1479,11 +4346,11 @@
       "goalTarget": "Wood",
       "goalAmount": 25,
       "goalLevel": null,
-      "reward": {
-        "Gold": 35
-      },
+      "reward": {},
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 30
     },
     {
       "id": "ARoof",
@@ -1497,7 +4364,9 @@
         "Gold": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Rations",
@@ -1507,11 +4376,11 @@
       "goalTarget": "Food",
       "goalAmount": 5,
       "goalLevel": null,
-      "reward": {
-        "Gold": 35
-      },
+      "reward": {},
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 30
     },
     {
       "id": "FirstVillager",
@@ -1525,7 +4394,9 @@
         "Gold": 55
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "TaxDay",
@@ -1539,7 +4410,9 @@
         "Gold": 50
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Explorer",
@@ -1553,12 +4426,14 @@
         "Gold": 80
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "Fields",
       "name": "Fields",
-      "description": "Research Agriculture: crop plots, and the Farm that works them.",
+      "description": "Research Agriculture: crop plots you can tap for Food.",
       "goalType": "CompleteTech",
       "goalTarget": "Agriculture",
       "goalAmount": 1,
@@ -1567,7 +4442,9 @@
         "Gold": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 6,
+      "rewardMana": 0
     },
     {
       "id": "FirstPlot",
@@ -1581,7 +4458,9 @@
         "Gold": 55
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "ByHand",
@@ -1591,11 +4470,11 @@
       "goalTarget": "Food",
       "goalAmount": 20,
       "goalLevel": null,
-      "reward": {
-        "Gold": 70
-      },
+      "reward": {},
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 40
     },
     {
       "id": "Lumber",
@@ -1606,10 +4485,28 @@
       "goalAmount": 30,
       "goalLevel": null,
       "reward": {
-        "Gold": 70
+        "Gold": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "Tillage",
+      "name": "Tillage",
+      "description": "Research Farming: a Farm that works the plots for you.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Farming",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 30
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Farmhand",
@@ -1623,7 +4520,9 @@
         "Gold": 85
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "ToWork",
@@ -1637,7 +4536,9 @@
         "Gold": 85
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "GrowingTown",
@@ -1651,7 +4552,9 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Neighbors",
@@ -1665,7 +4568,9 @@
         "Gold": 90
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "ProperCapital",
@@ -1678,8 +4583,10 @@
       "reward": {
         "Gold": 180
       },
-      "rewardGems": 3,
-      "rewardKnowledge": 0
+      "rewardGems": 150,
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "SawTeeth",
@@ -1693,7 +4600,9 @@
         "Gold": 110
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "TheSawmill",
@@ -1707,7 +4616,9 @@
         "Gold": 140
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "Crewed",
@@ -1721,7 +4632,57 @@
         "Gold": 140
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
+    },
+    {
+      "id": "Levies",
+      "name": "Levies",
+      "description": "Research Taxes. A settled town pays its hall a little more.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Taxes01",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 80
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
+    },
+    {
+      "id": "Sawpits",
+      "name": "Sawpits",
+      "description": "Research Sawpits. Every swing at a tree brings back a little more.",
+      "goalType": "CompleteTech",
+      "goalTarget": "SawpitsI",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 90
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "Regrowth",
+      "name": "Regrowth",
+      "description": "Research Reforesting. The stumps come back sooner.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Reforesting01",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 90
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "FurtherAfield",
@@ -1732,80 +4693,12 @@
       "goalAmount": 15,
       "goalLevel": null,
       "reward": {
-        "Gold": 200
+        "Gold": 150
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "OldStones",
-      "name": "Old stones",
-      "description": "Claim the shrine east of the Townhall. It will hold your magic.",
-      "goalType": "ClaimLandmarks",
-      "goalTarget": null,
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 250
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Mapmakers",
-      "name": "Mapmakers",
-      "description": "Research Cartography — there are better ways to survey ground.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Cartography",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 200
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Surveyors",
-      "name": "Surveyors",
-      "description": "Buy Surveying twice. Each tap on the fog will count for three.",
-      "goalType": "BuyUpgrade",
-      "goalTarget": "Surveying",
-      "goalAmount": 2,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 250
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Highlands",
-      "name": "Into the highlands",
-      "description": "Research Scaling Tools to climb the mountains.",
-      "goalType": "CompleteTech",
-      "goalTarget": "ScalingTools",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 220
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "PutToSea",
-      "name": "Put to sea",
-      "description": "Research Sailing to cross open water.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Sailing",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 270
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "ArmedMen",
@@ -1819,7 +4712,9 @@
         "Gold": 220
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Mustered",
@@ -1833,7 +4728,9 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "FirstSoldier",
@@ -1847,7 +4744,9 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "FirstSummon",
@@ -1861,7 +4760,137 @@
         "Gold": 150
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardStardust": 20,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "MusterCompany",
+      "name": "A company",
+      "description": "Train twenty-four soldiers. One is a guard; a company is what takes a gate.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 24,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 400
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "DriveThemOut",
+      "name": "Drive them out",
+      "description": "Orcs hold the mouth of the Hollow Barrow, and they are counting down. Clear the gate.",
+      "goalType": "ClearGarrisons",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "OldStones",
+      "name": "Old stones",
+      "description": "Claim the shrine east of the Townhall. It will hold your magic.",
+      "goalType": "ClaimLandmarks",
+      "goalTarget": null,
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 170
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 3,
+      "rewardMana": 0
+    },
+    {
+      "id": "Attuned",
+      "name": "Attunement",
+      "description": "Consecrate a Sanctum. The stones you claimed hum with something the city can hold.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Consecration",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 450
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "Mapmakers",
+      "name": "Mapmakers",
+      "description": "Reveal 20 more cells — a map is drawn by walking it.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 20,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 200
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "Surveyors",
+      "name": "Surveyors",
+      "description": "Reveal 25 more — the far rings are dearer, and worth it.",
+      "goalType": "DiscoverCells",
+      "goalTarget": null,
+      "goalAmount": 25,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 250
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "Highlands",
+      "name": "Into the highlands",
+      "description": "Research Scaling Tools to climb the mountains.",
+      "goalType": "CompleteTech",
+      "goalTarget": "ScalingTools",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 220
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "PutToSea",
+      "name": "Put to sea",
+      "description": "Research Sailing to cross open water.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Sailing",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 270
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "IntoTheDark",
@@ -1874,36 +4903,10 @@
       "reward": {
         "Gold": 200
       },
-      "rewardGems": 3,
-      "rewardKnowledge": 25
-    },
-    {
-      "id": "ToMarket",
-      "name": "To market",
-      "description": "Build a Market and turn surplus into Gold.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Market",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 250
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Merchant",
-      "name": "Merchant",
-      "description": "Sell twenty goods at the Market.",
-      "goalType": "SellGoods",
-      "goalTarget": null,
-      "goalAmount": 20,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 290
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardGems": 150,
+      "rewardStardust": 25,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "Stoneworks",
@@ -1917,7 +4920,9 @@
         "Gold": 290
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 2,
+      "rewardMana": 0
     },
     {
       "id": "MoreRoom",
@@ -1931,7 +4936,9 @@
         "Gold": 240
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "SecondStory",
@@ -1946,7 +4953,9 @@
         "Stone": 20
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "FullHouse",
@@ -1961,7 +4970,9 @@
         "Food": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "IronRoad",
@@ -1975,35 +4986,41 @@
         "Gold": 380
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "TheMine",
-      "name": "The Mine",
-      "description": "Build a Mine on the iron.",
-      "goalType": "BuildDistrict",
-      "goalTarget": "Mine",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 380
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Architect",
       "name": "The architect",
-      "description": "Research Architecture — the capital can go higher.",
+      "description": "Set the city's clerks to work. With them the Townhall may stand a level higher.",
       "goalType": "CompleteTech",
-      "goalTarget": "Architecture",
+      "goalTarget": "Bureaucracy",
       "goalAmount": 1,
       "goalLevel": null,
       "reward": {
         "Gold": 450
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
+    },
+    {
+      "id": "DeepSeams",
+      "name": "Deep seams",
+      "description": "The peaks give up ordinary stone. Research Mining and your quarrymen bring the iron out of them too.",
+      "goalType": "CompleteTech",
+      "goalTarget": "Mining",
+      "goalAmount": 1,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 380
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "GrandCapital",
@@ -2016,22 +5033,10 @@
       "reward": {
         "Gold": 600
       },
-      "rewardGems": 5,
-      "rewardKnowledge": 0
-    },
-    {
-      "id": "Attuned",
-      "name": "Attunement",
-      "description": "Research Attunement and learn to wear a relic.",
-      "goalType": "CompleteTech",
-      "goalTarget": "Attunement",
-      "goalAmount": 1,
-      "goalLevel": null,
-      "reward": {
-        "Gold": 450
-      },
-      "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardGems": 250,
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "TheSanctum",
@@ -2046,22 +5051,26 @@
         "Stone": 40
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "AWarband",
       "name": "A warband",
-      "description": "Muster four soldiers.",
+      "description": "Sixty soldiers under arms. The deeper ruins are fought by companies.",
       "goalType": "TrainArmy",
       "goalTarget": null,
-      "goalAmount": 4,
+      "goalAmount": 60,
       "goalLevel": null,
       "reward": {
         "Gold": 450,
         "Food": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "TheBarrowsPrize",
@@ -2075,7 +5084,9 @@
         "Gold": 400
       },
       "rewardGems": 0,
-      "rewardKnowledge": 20
+      "rewardStardust": 20,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "WornWell",
@@ -2089,7 +5100,9 @@
         "Gold": 350
       },
       "rewardGems": 0,
-      "rewardKnowledge": 18
+      "rewardStardust": 18,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "Leylines",
@@ -2104,7 +5117,9 @@
         "Stone": 60
       },
       "rewardGems": 0,
-      "rewardKnowledge": 0
+      "rewardStardust": 0,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "DeeperStill",
@@ -2119,7 +5134,9 @@
         "Stone": 90
       },
       "rewardGems": 0,
-      "rewardKnowledge": 30
+      "rewardStardust": 30,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     },
     {
       "id": "TheReliquary",
@@ -2132,60 +5149,141 @@
       "reward": {
         "Gold": 900
       },
-      "rewardGems": 4,
-      "rewardKnowledge": 45
+      "rewardGems": 200,
+      "rewardStardust": 45,
+      "rewardKnowledge": 0,
+      "rewardMana": 0
     }
   ],
+  "banners": {
+    "basic": {
+      "key": "SilverKey",
+      "keyGemCost": 500,
+      "heroChance": 0.06,
+      "softPityAt": 40,
+      "hardPityAt": 60,
+      "legendaryPityAt": 0,
+      "weights": {
+        "Common": 80,
+        "Rare": 20,
+        "Legendary": 0
+      },
+      "duplicateFragments": 20,
+      "fragmentsPerMiss": 3,
+      "pullStardust": 50,
+      "freePerDay": 5,
+      "freeCooldownSeconds": 300
+    },
+    "advanced": {
+      "key": "GoldKey",
+      "keyGemCost": 1500,
+      "heroChance": 0.12,
+      "softPityAt": 30,
+      "hardPityAt": 50,
+      "legendaryPityAt": 40,
+      "weights": {
+        "Common": 0,
+        "Rare": 75,
+        "Legendary": 25
+      },
+      "duplicateFragments": 40,
+      "fragmentsPerMiss": 6,
+      "pullStardust": 150,
+      "freePerDay": 1,
+      "freeCooldownSeconds": 0
+    }
+  },
   "fog": {
     "rings": [
       {
         "distance": 1,
-        "cost": 1
-      },
-      {
-        "distance": 2,
         "cost": 3
       },
       {
-        "distance": 3,
+        "distance": 2,
         "cost": 5
       },
       {
-        "distance": 4,
+        "distance": 3,
         "cost": 10
       },
       {
-        "distance": 5,
+        "distance": 4,
         "cost": 20
       },
       {
-        "distance": 6,
+        "distance": 5,
         "cost": 40
       },
       {
+        "distance": 6,
+        "cost": 75
+      },
+      {
         "distance": 7,
-        "cost": 80
+        "cost": 120
       },
       {
         "distance": 8,
-        "cost": 160
+        "cost": 250
       },
       {
         "distance": 9,
-        "cost": 320
+        "cost": 500
       },
       {
         "distance": 10,
-        "cost": 640
+        "cost": 1000
+      },
+      {
+        "distance": 11,
+        "cost": 2000
+      },
+      {
+        "distance": 12,
+        "cost": 4000
+      },
+      {
+        "distance": 13,
+        "cost": 8000
+      },
+      {
+        "distance": 14,
+        "cost": 16000
+      },
+      {
+        "distance": 15,
+        "cost": 32000
+      },
+      {
+        "distance": 16,
+        "cost": 64000
+      },
+      {
+        "distance": 17,
+        "cost": 128000
+      },
+      {
+        "distance": 18,
+        "cost": 256000
+      },
+      {
+        "distance": 19,
+        "cost": 512000
+      },
+      {
+        "distance": 20,
+        "cost": 1024000
       }
     ],
     "fallbackGrowth": 1.25,
-    "goldPerTap": 1,
+    "tapsToReveal": 5,
+    "minCost": 1,
     "claimDiscoverRadius": 5
   },
   "city": {
     "initialCurrencies": {
-      "Gold": 50,
+      "Gold": 100,
       "Food": 0
     },
     "initialPopulation": 0,
@@ -2198,11 +5296,115 @@
       1000
     ],
     "populationCostGrowth": 1.45,
-    "buildQueueCapacity": 1
+    "lateUpgradeFromLevel": 6
   },
   "kingdom": {
     "startBuilders": 1,
-    "maxBuilders": 4
+    "maxBuilders": 4,
+    "builderGemCostBase": 2500,
+    "builderGemCostGrowth": 2
   },
-  "offlineCapHours": 8
+  "harmony": {
+    "surplusTiers": [
+      {
+        "at": 1.1,
+        "bonus": 0.05
+      },
+      {
+        "at": 1.25,
+        "bonus": 0.1
+      },
+      {
+        "at": 1.5,
+        "bonus": 0.15
+      }
+    ]
+  },
+  "offlineCapHours": 8,
+  "villains": {
+    "BarrowThane": {
+      "name": "Barrow Thane",
+      "glyph": "💀",
+      "sprite": "villain_barrow_thane",
+      "unitType": "Warrior",
+      "dmg": 120,
+      "def": 3,
+      "hp": 520,
+      "cooldown": 12,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1,
+      "power": 60
+    },
+    "DrownedChoir": {
+      "name": "Drowned Choir",
+      "glyph": "🎶",
+      "sprite": "villain_drowned_choir",
+      "unitType": "Archer",
+      "dmg": 150,
+      "def": 1,
+      "hp": 320,
+      "cooldown": 12,
+      "troopDmgMult": 1.15,
+      "troopHpMult": 1,
+      "troopDefBonus": 0,
+      "power": 75
+    },
+    "SlagWarden": {
+      "name": "Slag Warden",
+      "glyph": "🔥",
+      "sprite": "villain_slag_warden",
+      "unitType": "Lancer",
+      "dmg": 180,
+      "def": 2,
+      "hp": 600,
+      "cooldown": 13,
+      "troopDmgMult": 1.1,
+      "troopHpMult": 1.1,
+      "troopDefBonus": 1,
+      "power": 90
+    },
+    "LedgerKeeper": {
+      "name": "The Ledger Keeper",
+      "glyph": "📕",
+      "sprite": "villain_ledger_keeper",
+      "unitType": "Cavalry",
+      "dmg": 260,
+      "def": 2,
+      "hp": 700,
+      "cooldown": 14,
+      "troopDmgMult": 1.2,
+      "troopHpMult": 1.05,
+      "troopDefBonus": 1,
+      "power": 130
+    },
+    "StarSeer": {
+      "name": "The Star Seer",
+      "glyph": "🌠",
+      "sprite": "villain_star_seer",
+      "unitType": "Archer",
+      "dmg": 320,
+      "def": 2,
+      "hp": 820,
+      "cooldown": 12,
+      "troopDmgMult": 1.25,
+      "troopHpMult": 1.15,
+      "troopDefBonus": 2,
+      "power": 160
+    }
+  },
+  "combat": {
+    "tickMs": 100,
+    "timeoutTicks": 600,
+    "typeAdvantageNum": 3,
+    "typeAdvantageDen": 2,
+    "typeDisadvantageNum": 3,
+    "typeDisadvantageDen": 4,
+    "genSlotsMin": 2,
+    "genSlotsMax": 6,
+    "genVillainThreshold": 400,
+    "genVillainShare": 0.3,
+    "genVillainSlots": 3,
+    "heroPowerPerDmg": 0.5
+  }
 }

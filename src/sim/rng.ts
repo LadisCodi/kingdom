@@ -1,4 +1,4 @@
-// Seeded, replay-safe randomness (Docs/features/engine-seams.md §3).
+// Seeded, replay-safe randomness (Docs/implementation-plan.md §1).
 //
 // A counter/HASH, not a stateful stream, and the reason is structural rather
 // than stylistic:

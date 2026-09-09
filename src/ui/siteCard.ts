@@ -10,6 +10,7 @@
 import {
   FOG, LANDMARK_ART, MANA, type LandmarkDef, type RuinDef,
 } from '../sim/data/definitions';
+import type { GateView } from '../sim/gates';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
@@ -30,8 +31,7 @@ function art(sprite: string, glyph: string): HTMLElement {
 function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
   const look = LANDMARK_ART[def.kind];
   const claimed = game.state.landmarks.claimed[def.id] === true;
-  const cleared = !def.defended || game.state.landmarks.cleared[def.id] === true;
-  const cost = landmarkClaimCost(def);
+  const cost = landmarkClaimCost(game.state, def);
 
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },
@@ -76,14 +76,55 @@ function landmarkCard(game: Game, def: LandmarkDef): HTMLElement {
     onClick: () => game.doClaimLandmark(def.location),
     cost: { Gold: cost },
     have: (c) => game.walletValue(c),
-    disabledReason: !cleared ? 'An enemy warband holds this place' : undefined,
   }));
   return panel(body);
 }
 
+/**
+ * The gate, above everything else the ruin has to say.
+ *
+ * While it stands, the ruin behind it is not the decision — the garrison is,
+ * and it is on a clock. So the band carries the creature, the countdown, how
+ * many trips are left in them and what they are holding, and the only button
+ * on the card is the one that goes at them
+ * (Docs/features/18-garrisons-and-raids.md §7).
+ */
+function gateBand(game: Game, def: RuinDef, gate: GateView): HTMLElement {
+  const left = gate.nextRaidAt === null
+    ? null : Math.max(0, (gate.nextRaidAt - game.now()) / 1000);
+  const hoard = Object.entries(gate.hoard).filter(([, n]) => n > 0);
+
+  const band = el('div', { class: 'site-gate' },
+    el('div', { class: 'site-gate-head' },
+      iconEl(gate.threat === 'Any' ? 'army' : gate.threat, { size: 'md' }),
+      el('div', {},
+        el('div', { class: 'site-gate-name' }, `${gate.creature} hold the way in`),
+        el('div', { class: 'site-gate-sub' }, left !== null
+          ? `They raid the city in ${formatDuration(left)}`
+          : 'They have taken all they came for'))),
+  );
+
+  if (left !== null) {
+    band.append(el('div', { class: 'site-gate-trips' },
+      iconEl('hourglass', { size: 'sm' }),
+      `${gate.tripsLeft} raid${gate.tripsLeft === 1 ? '' : 's'} left in them, `
+      + 'and each takes a slice of what the city has banked.'));
+  }
+  if (hoard.length > 0) {
+    band.append(el('div', { class: 'site-gate-hoard' },
+      hoard.map(([c, n]) => `${n} ${c}`).join(', ')
+      + ' — cleared, it all comes back.'));
+  }
+  band.append(action({
+    label: 'Clear the gate',
+    kind: 'primary',
+    onClick: () => game.openGate(def.id),
+  }));
+  return band;
+}
+
 function ruinCard(game: Game, def: RuinDef): HTMLElement {
-  const fullTime = Array.from({ length: def.maxDepth }, (_, i) =>
-    def.baseDepthSeconds * def.depthGrowth ** i).reduce((a, b) => a + b, 0);
+  const at = game.ruinProgress(def.id);
 
   const body = el('div', { class: 'site' },
     el('div', { class: 'site-head' },
@@ -92,21 +133,33 @@ function ruinCard(game: Game, def: RuinDef): HTMLElement {
         el('div', { class: 'site-name' }, def.name),
         el('div', { class: 'site-kind' }, `Tier ${def.tier} ruin`))),
     el('div', { class: 'site-desc' }, def.description),
+    // Progress is the card's headline once the gate is down: a ruin is a
+    // path, and what a player wants to know is how far along it they are.
     el('div', { class: 'site-stats' },
-      stat('unknown', String(def.maxDepth), 'depths'),
-      stat('hourglass', formatDuration(fullTime), 'to the bottom'),
+      stat('dungeon', `${at.cleared}/${at.rooms}`, 'rooms'),
+      stat('sparkle', at.done ? 'cleared' : `${at.depth}·${at.room}`, 'frontier'),
       stat(def.affinity === 'Any' ? 'army' : def.affinity, def.affinity === 'Any'
         ? 'anything' : `${def.affinity}s`, 'answer best')),
   );
 
-  body.append(el('div', { class: 'site-note' },
-    'A dungeon, not a chest: it can be delved again and again. The first party '
-    + 'to reach the bottom brings back its relic.'));
+  body.append(el('div', { class: 'site-note' }, at.done
+    ? 'Every room has fallen. Its relic is home and its rooms are spent — a '
+      + 'ruin is climbed once.'
+    : 'A path of rooms, fought one at a time and never twice. The last room of '
+      + 'the last depth gives up its relic.'));
+
+  // While the garrison stands it IS the card's decision, and the depths
+  // behind it are not offered at all.
+  const gate = game.gateFor(def.id);
+  if (gate !== null && !gate.cleared) {
+    body.append(gateBand(game, def, gate));
+    return panel(body);
+  }
 
   // The launch control is expeditions' to own; everything above is content
   // the player can read the moment the fog comes off it.
   body.append(action({
-    label: 'Send a party',
+    label: at.done ? 'Nothing left down there' : `Enter Depth ${at.depth} · Room ${at.room}`,
     kind: 'primary',
     onClick: () => game.openExpedition(def.id),
     disabledReason: game.expeditionBlock(def.id) ?? undefined,

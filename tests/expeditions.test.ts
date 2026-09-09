@@ -1,46 +1,51 @@
-// Combat as a scoring pass, and delves as staged pushes
-// (Docs/features/expeditions.md §2, §4, §5).
+// Combat as a scoring pass, and a ruin as a path of rooms
+// (Docs/features/11-expeditions.md §1, §5, §6).
 //
-// The claim these tests exist to protect is "a well-prepared run never fails".
-// It is not a slogan: `guaranteedDepth` computes exactly how far a party is
-// safe assuming the WORST matchup at every step, and the launch screen shows
-// it. Everything past that is a gamble the player opted into, on information
-// they chose not to wait for.
+// The claim these tests exist to protect is that a room is a DECISION and not
+// a wait: it is entered, it resolves, and the player decides again. Nothing
+// is ever in flight, nothing is carried, and what a room asks for is on the
+// screen before it is entered — the two numbers it compares.
 import { describe, expect, it } from 'vitest';
 import {
-  finishLineWithGems, lineFor, lineRemainingSeconds, lineRushCost, maxArmyPower, trainUnit,
+  armyCap, finishLineWithGems, lineFor, lineRemainingSeconds, lineRushCost, trainUnit,
+  woundedOf,
 } from '../src/sim/army';
-import {
-  BEATS, depthDurationMs, effectiveAttack, fullClearSeconds, guaranteedDepth,
-  partyStats, resolveDepth, threatStrength, typeMultiplier, worstThreatFor,
-  type Party,
-} from '../src/sim/combat';
+import { BEATS, typeMultiplier } from '../src/sim/combat';
+import { buildBoard, resolveBattle } from '../src/sim/battle';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { advance } from '../src/sim/commands';
+import { techKnowledgeCost } from '../src/sim/research';
 import {
-  ARMY, ARTIFACTS, COLLECTION, DELVE, DISTRICTS, HEROES, KNOWLEDGE, RUINS, UNITS,
+  ARMY, CURRENCIES, DISTRICTS, HEROES, KNOWLEDGE, LANDMARKS, RUINS,
+  RUIN_ORDER, TECH_ORDER, UNITS, depthCount, depthDef, depthsOf, roomCount, roomPower,
 } from '../src/sim/data/definitions';
 import {
-  advanceDelves, extract, launchBlock, launchDelve, previewExpedition, partySlots,
-  pushDeeper, supplyCost, unitSlots,
+  enterRoom, frontier, previewRoom, roomBlock, roomBoard, roomReward, roomsCleared,
+  ruinIsFinished, supplyCost,
 } from '../src/sim/expeditions';
-import { artifactIsCarried } from '../src/sim/artifacts';
-import { levelCost } from '../src/sim/collection';
-import { knowledgePerHour, mana, manaNetRegen, manaProduction } from '../src/sim/mana';
+import { claimLandmark } from '../src/sim/landmarks';
+import { knowledgePerHour } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
 import {
-  getWallet, townhall, type ArtifactId, type GameState, type UnitId,
+  getWallet, townhall, type GameState, type RuinId, type UnitId,
 } from '../src/sim/state';
-import { addAllTrainers, addBuilt, completeTech, freshGame, fund, map, reveal, T0 } from './helpers';
+import {
+  addAllTrainers, addBuilt, completeTech, freshGame, fund, map, openRuin, reveal, T0,
+} from './helpers';
 
 const BARROW = 'HollowBarrow' as const;
 
-/** A kingdom that can actually send a party into the shallowest ruin. */
-function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 2 }): GameState {
+/** A kingdom that can actually send a party into the shallowest ruin — which
+ *  now means a COMPANY, not a pair: a depth is fought by dozens
+ *  (Docs/features/combat.md §14, the cap is a headcount). */
+function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameState {
   const state = freshGame();
   addAllTrainers(state);
   fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
   reveal(state, [RUINS[BARROW].location]);
+  // The gate is tests/gates.test.ts's subject; every delve test starts on the
+  // far side of it (Docs/features/18-garrisons-and-raids.md §1).
+  for (const id of RUIN_ORDER) openRuin(state, id);
   for (const [unitId, n] of Object.entries(units)) {
     for (let i = 0; i < n!; i++) {
       state.army.push({ uniqueId: `u_${unitId}_${i}`, definitionId: unitId as UnitId });
@@ -49,8 +54,6 @@ function readyToDelve(units: Partial<Record<UnitId, number>> = { Warrior: 2 }): 
   return state;
 }
 
-const party = (slots: Array<{ unitId: UnitId; count: number }>): Party =>
-  ({ heroId: 'Warden', slots });
 
 describe('the type chart', () => {
   it('is a cycle, and nothing beats itself', () => {
@@ -75,85 +78,134 @@ describe('the type chart', () => {
     expect(ARMY.typeDisadvantage).toBeGreaterThanOrEqual(0.75);
   });
 
-  it('does its work at COMPOSITION time', () => {
-    const lancers = party([{ unitId: 'Lancer', count: 4 }]);
-    const plain = partyStats(lancers).atk;
-    expect(effectiveAttack(lancers, 'Cavalry')).toBeGreaterThan(plain);
-    expect(effectiveAttack(lancers, 'Archer')).toBeLessThan(plain);
+  it('does its work inside the FIGHT, on the swing (§7)', () => {
+    // Four Lancers against a Cavalry squad and against an Archer one: the
+    // same troops, the same swing, three halves against a quarter less.
+    const swing = (against: UnitId): number => {
+      const log = resolveBattle(
+        buildBoard([{ unitId: 'Lancer', count: 4 }], []),
+        buildBoard([{ unitId: against, count: 40 }], []),
+      );
+      const first = log.events.find((e) => e.kind === 'attack' && e.from.side === 'ours');
+      return first?.kind === 'attack' ? first.dealt : 0;
+    };
+    // Lancer beats Cavalry, loses to Warrior, and is neutral to an Archer.
+    expect(swing('Cavalry')).toBeGreaterThan(swing('Archer'));
+    expect(swing('Warrior')).toBeLessThan(swing('Archer'));
   });
 });
 
 describe('unit stats make a real trade', () => {
-  it('Archers buy attack, Warriors buy survival — neither is right alone', () => {
+  it('Archers buy reach, Warriors buy survival — neither is right alone', () => {
     const archer = UNITS.Archer;
     const warrior = UNITS.Warrior;
-    const goldOf = (u: typeof archer) => u.recruitCost.Gold ?? 0;
-    expect(archer.atk / goldOf(archer)).toBeGreaterThan(warrior.atk / goldOf(warrior));
+    // An archer line puts more troops in range of the enemy than any other
+    // type; a warrior line outlasts it.
+    expect(archer.frontage).toBeGreaterThan(warrior.frontage);
     expect(warrior.hp).toBeGreaterThan(archer.hp);
     expect(warrior.def).toBeGreaterThan(archer.def);
   });
 
-  it('power equals attack, so the cap table reads as attack potential', () => {
-    for (const u of Object.values(UNITS)) expect(u.power).toBe(u.atk);
+  it('prices POWER apart from damage, because they answer different questions', () => {
+    // `power` is what a troop costs against the army cap and what a room's
+    // budget is written in; `dmg` is what it hits for. They were one number
+    // while combat was a scoring pass, and the resolver made them two
+    // (Docs/features/combat.md §5, §12).
+    for (const u of Object.values(UNITS)) {
+      expect(u.power).toBeGreaterThan(0);
+      expect(u.dmg).toBeGreaterThan(u.power);
+      expect(u.frontage).toBeLessThanOrEqual(u.squadSize);
+      expect(u.cooldown).toBeGreaterThan(0);
+    }
   });
 });
 
 describe('the army cap is a city decision', () => {
   it('comes from military buildings, not from the Townhall', () => {
     const state = freshGame();
-    expect(maxArmyPower(state)).toBe(0);
+    expect(armyCap(state)).toBe(0);
     state.city.districts.find((d) => d.definitionId === 'Townhall')!.level = 3;
-    expect(maxArmyPower(state)).toBe(0); // levelling the hall buys no soldiers
+    expect(armyCap(state)).toBe(0); // levelling the hall buys no soldiers
 
     addBuilt(state, 'Barracks', { x: 3, y: 2 });
     const perLevel = DISTRICTS.Barracks.armyCapPerLevel;
-    expect(maxArmyPower(state)).toBe(perLevel[0]);
+    expect(armyCap(state)).toBe(perLevel[0]);
     state.city.districts.find((d) => d.definitionId === 'Barracks')!.level = 3;
-    expect(maxArmyPower(state)).toBe(perLevel[2]);
+    expect(armyCap(state)).toBe(perLevel[2]);
   });
 
-  it('lines up with the five ruins: all four at L1 clears Tier III', () => {
+  it('holds companies, not pairs: a first hall is a hundred and a half', () => {
     const state = freshGame();
+    addBuilt(state, 'Barracks', { x: 3, y: 2 });
+    // The number a player reads on their first hall. It used to be six —
+    // two Warriors — which is not an army in a game about fielding one.
+    expect(armyCap(state)).toBe(150);
     addAllTrainers(state);
-    expect(maxArmyPower(state)).toBe(24);
-    expect(RUINS.DrownedIronworks.difficulty).toBeLessThanOrEqual(24);
-    expect(RUINS.CountingHouse.difficulty).toBeGreaterThan(24);
+    expect(armyCap(state)).toBeGreaterThan(600);
   });
 
+  // The arc Docs/features/11-expeditions.md §6 promises, asserted rather than
+  // hoped for: each rung of ARMY opens more of the path and leaves the ruin
+  // after it a real stretch. Measured by FIGHTING every room in order with
+  // the resolver — the only thing that can answer it now, and the reason the
+  // authored ladder was rewritten when it landed.
   it('the tier ladder actually holds at the authored numbers', () => {
-    // The arc balancing-v2 Part 2 promises, asserted rather than hoped for:
-    // each rung of military development opens the next tier and leaves the one
-    // after it as a real stretch. `guaranteedDepth` assumes the WORST matchup,
-    // so these are floors, not best cases.
-    const bestSafe = (cap: number, ruinId: Parameters<typeof guaranteedDepth>[1]): number => {
-      let best = 0;
-      for (const u of Object.keys(UNITS) as UnitId[]) {
-        const count = Math.floor(cap / UNITS[u].power);
-        if (count === 0) continue;
-        best = Math.max(best, guaranteedDepth(
-          { heroId: 'Warden', slots: [{ unitId: u, count }] }, ruinId));
+    const state = freshGame();
+    const reach = (troops: number, heroes: number, ruinId: RuinId): number => {
+      const per = Math.ceil(troops / 4);
+      const squads = (Object.keys(UNITS) as UnitId[])
+        .map((u) => ({ unitId: u, count: Math.min(UNITS[u].squadSize, per) }));
+      const h = HEROES.Warden;
+      const ours = buildBoard(squads, Array.from({ length: heroes }, (_, i) => ({
+        id: `h${i}`, name: h.name, type: h.unitType, dmg: h.dmg, def: h.def, hp: h.hp,
+        cooldown: h.cooldown, power: Math.round(h.dmg / 2),
+        troopDmgMult: h.troopDmgMult, troopHpMult: h.troopHpMult, troopDefBonus: h.troopDefBonus,
+      })));
+      let rooms = 0;
+      for (const d of depthsOf(ruinId)) {
+        for (let r = 1; r <= d.rooms; r++) {
+          const theirs = roomBoard(state, ruinId, d.depth, r);
+          if (resolveBattle(ours, theirs).winner !== 'ours') return rooms;
+          rooms += 1;
+        }
       }
-      return best;
+      return rooms;
     };
-    // One hall at L1 clears Tier I outright and stalls partway into Tier II.
-    expect(bestSafe(6, 'HollowBarrow')).toBe(RUINS.HollowBarrow.maxDepth);
-    expect(bestSafe(6, 'SunkenChapel')).toBeGreaterThan(0);
-    expect(bestSafe(6, 'SunkenChapel')).toBeLessThan(RUINS.SunkenChapel.maxDepth);
-    // Two halls, one levelled: Tier II outright, Tier III a stretch.
-    expect(bestSafe(16, 'SunkenChapel')).toBe(RUINS.SunkenChapel.maxDepth);
-    expect(bestSafe(16, 'DrownedIronworks')).toBeLessThan(RUINS.DrownedIronworks.maxDepth);
-    // All four at L3 — the top of the city — still leaves the deepest depth of
-    // the deepest ruin as something you choose to gamble on.
-    expect(bestSafe(60, 'CountingHouse')).toBe(RUINS.CountingHouse.maxDepth);
-    expect(bestSafe(60, 'StarObservatory')).toBeLessThan(RUINS.StarObservatory.maxDepth);
-    expect(bestSafe(60, 'StarObservatory')).toBeGreaterThan(RUINS.StarObservatory.maxDepth - 3);
+    // The company the quest chain musters, behind the one free hero: most of
+    // the Barrow, and the next ruin a wall rather than a door.
+    const barrow = reach(24, 1, 'HollowBarrow');
+    expect(barrow).toBeGreaterThan(roomCount('HollowBarrow') * 0.4);
+    expect(barrow).toBeLessThan(roomCount('HollowBarrow'));
+    expect(reach(24, 1, 'SunkenChapel')).toBeLessThan(roomCount('SunkenChapel') * 0.3);
+    // Sixty under arms — the chain's later warband — walks the Barrow out and
+    // gets most of the way through the Chapel.
+    expect(reach(60, 1, 'HollowBarrow')).toBe(roomCount('HollowBarrow'));
+    const chapel = reach(60, 1, 'SunkenChapel');
+    expect(chapel).toBeGreaterThan(roomCount('SunkenChapel') * 0.5);
+    expect(chapel).toBeLessThan(roomCount('SunkenChapel'));
+    // A hundred and fifty behind three heroes finishes the Chapel and stalls
+    // inside the Ironworks.
+    expect(reach(150, 3, 'SunkenChapel')).toBe(roomCount('SunkenChapel'));
+    const ironworks = reach(150, 3, 'DrownedIronworks');
+    expect(ironworks).toBeGreaterThan(0);
+    expect(ironworks).toBeLessThan(roomCount('DrownedIronworks'));
+    // A FULL board — every squad at its size, every hero slot bought — takes
+    // the Ironworks and gets a long way into the Counting House, and the
+    // deepest ruin stays out of reach. What is left after that is hero levels
+    // and unit tiers, not more bodies: six slots is six slots.
+    expect(reach(340, 3, 'DrownedIronworks')).toBe(roomCount('DrownedIronworks'));
+    const counting = reach(340, 3, 'CountingHouse');
+    expect(counting).toBeGreaterThan(roomCount('CountingHouse') * 0.5);
+    expect(counting).toBeLessThan(roomCount('CountingHouse'));
+    expect(reach(340, 3, 'StarObservatory')).toBeGreaterThan(0);
+    expect(reach(340, 3, 'StarObservatory')).toBeLessThan(roomCount('StarObservatory'));
   });
 
   it('an unfinished building contributes nothing', () => {
     const state = freshGame();
     addBuilt(state, 'Barracks', { x: 3, y: 2 });
     state.city.districts.find((d) => d.definitionId === 'Barracks')!.state = 'UnderConstruction';
-    expect(maxArmyPower(state)).toBe(0);
+    expect(armyCap(state)).toBe(0);
   });
 });
 
@@ -172,25 +224,29 @@ describe('training takes time now', () => {
     expect(trainUnit(state, 'Archer', T0, grounds)).toBe('Queued');
     expect(state.army).toHaveLength(0);
 
-    // The Archer (25s) lands before the first Warrior (30s); the SECOND
+    // The Archer (12s) lands before the first Warrior (15s); the SECOND
     // Warrior starts when the first finished, not when the window did.
-    advance(state, map, T0 + 26_000);
+    advance(state, map, T0 + 13_000);
     expect(state.army.map((u) => u.definitionId)).toEqual(['Archer']);
-    advance(state, map, T0 + 31_000);
+    advance(state, map, T0 + 16_000);
     expect(state.army).toHaveLength(2);
-    advance(state, map, T0 + 61_000);
+    advance(state, map, T0 + 31_000);
     expect(state.army).toHaveLength(3);
   });
 
   it('queued units count against the cap, so the queue is not a loophole', () => {
     const state = readyToDelve({});
     completeTech(state, 'Warrior');
-    // Barracks L1 caps at 6; a Warrior is 3 power.
     state.city.districts = state.city.districts.filter(
       (d) => d.definitionId === 'Townhall' || d.definitionId === 'Barracks');
-    expect(maxArmyPower(state)).toBe(6);
-    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
-    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    // A Barracks holds TROOPS, not power: one soldier is one place in it,
+    // whatever it is worth in a fight (Docs/features/combat.md §14).
+    const cap = armyCap(state);
+    expect(cap).toBe(DISTRICTS.Barracks.armyCapPerLevel[0]);
+    fund(state, { Gold: 100_000, Wood: 100_000, Food: 100_000 });
+    for (let i = 0; i < cap; i++) {
+      expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    }
     expect(trainUnit(state, 'Warrior', T0)).toBe('ArmyAtCapacity');
   });
 
@@ -222,461 +278,294 @@ describe('training takes time now', () => {
   });
 });
 
-describe('threats and depths', () => {
-  it('the bottom depth is exactly the ruin’s difficulty', () => {
-    for (const ruin of Object.values(RUINS)) {
-      expect(threatStrength(ruin.id, ruin.maxDepth)).toBe(ruin.difficulty);
-      expect(threatStrength(ruin.id, 1)).toBeLessThan(ruin.difficulty);
+describe('a ruin is a path of rooms', () => {
+  it('is depths of rooms, and the ladder never steps backwards', () => {
+    for (const id of RUIN_ORDER) {
+      const depths = depthsOf(id);
+      expect(depths.length).toBeGreaterThan(0);
+      depths.forEach((d, i) => {
+        expect(d.depth).toBe(i + 1);
+        expect(d.rooms).toBeGreaterThanOrEqual(8); // §2: 8-18 rooms a depth
+        expect(d.rooms).toBeLessThanOrEqual(18);
+        const prev = depths[i - 1];
+        if (prev === undefined) return;
+        // §2's validation: a depth may not open easier than the one above it
+        // finished.
+        expect(d.powerStart)
+          .toBeGreaterThanOrEqual(prev.powerStart + prev.powerStep * (prev.rooms - 1));
+      });
     }
   });
 
-  it('time grows with depth INSIDE a run, not only across tiers', () => {
-    const first = depthDurationMs(BARROW, 1);
-    const last = depthDurationMs(BARROW, RUINS[BARROW].maxDepth);
-    expect(last).toBeGreaterThan(first);
-    // Tier I teaches the loop inside a single visit.
-    expect(fullClearSeconds(BARROW)).toBeLessThan(30 * 60);
-    // Tier V is a multi-day project held together by its checkpoints.
-    expect(fullClearSeconds('StarObservatory')).toBeGreaterThan(24 * 3600);
+  it('climbs room by room inside a depth', () => {
+    const d = depthDef('HollowBarrow', 1)!;
+    expect(roomPower('HollowBarrow', 1, 1)).toBe(d.powerStart);
+    expect(roomPower('HollowBarrow', 1, 2)).toBe(d.powerStart + d.powerStep);
+    expect(roomPower('HollowBarrow', 1, d.rooms))
+      .toBe(d.powerStart + d.powerStep * (d.rooms - 1));
+  });
+
+  it('starts every player at Depth 1 · Room 1', () => {
+    const state = readyToDelve();
+    expect(frontier(state, BARROW)).toEqual({ depth: 1, room: 1, done: false });
+    expect(roomsCleared(state, BARROW)).toBe(0);
+    expect(ruinIsFinished(state, BARROW)).toBe(false);
   });
 });
 
-describe('resolution', () => {
-  it('clears when effective attack meets the threat, and always costs HP', () => {
-    const p = party([{ unitId: 'Warrior', count: 2 }]);
-    const outcome = resolveDepth(p, BARROW, 1, 'Any');
-    expect(outcome.cleared).toBe(true);
-    // At least 1, always: a party can never be immortal at any depth.
-    expect(outcome.damage).toBeGreaterThanOrEqual(1);
-  });
+describe('entering a room', () => {
+  /** A company big enough to walk into the Barrow's first rooms. */
+  const company = [{ unitId: 'Warrior' as UnitId, count: 60 }];
 
-  it('is deterministic — the same party and depth always score the same', () => {
-    const p = party([{ unitId: 'Archer', count: 3 }]);
-    const a = resolveDepth(p, BARROW, 3, 'Warrior');
-    const b = resolveDepth(p, BARROW, 3, 'Warrior');
-    expect(a).toEqual(b);
-  });
-
-  it('guaranteedDepth assumes the worst of ALL FOUR types, not just the affinity', () => {
-    // A ruin's affinity dominates its depths without owning all of them, so a
-    // guarantee computed against the affinity alone is a guarantee the sim
-    // does not make. Warriors beat Lancers; the Ironworks is Lancer-affine;
-    // the worst case there is still an Archer.
-    expect(RUINS.DrownedIronworks.affinity).toBe('Lancer');
-    const warriors = party([{ unitId: 'Warrior', count: 8 }]);
-    expect(worstThreatFor(warriors, 'Lancer')).toBe('Archer');
-  });
-
-  it('guaranteedDepth is a floor: the worst matchup never breaks it', () => {
-    const p = party([{ unitId: 'Warrior', count: 2 }]);
-    const safe = guaranteedDepth(p, BARROW);
-    expect(safe).toBeGreaterThan(0);
-    expect(safe).toBeLessThanOrEqual(RUINS[BARROW].maxDepth);
-    // Resolving with the worst threat down to `safe` must never fail.
-    const worst = worstThreatFor(p, RUINS[BARROW].affinity);
-    let hp = partyStats(p).hp;
-    for (let d = 1; d <= safe; d++) {
-      const outcome = resolveDepth(p, BARROW, d, worst);
-      expect(outcome.cleared).toBe(true);
-      hp -= outcome.damage;
-      expect(hp).toBeGreaterThan(0);
-    }
-  });
-
-  it('a bigger, better-matched party is safe deeper — the economy decides', () => {
-    const small = party([{ unitId: 'Warrior', count: 2 }]);
-    const large = party([{ unitId: 'Warrior', count: 6 }, { unitId: 'Lancer', count: 4 }]);
-    expect(guaranteedDepth(large, 'SunkenChapel'))
-      .toBeGreaterThan(guaranteedDepth(small, 'SunkenChapel'));
-  });
-});
-
-describe('launching', () => {
-  it('needs a hero, units, supplies, and a ruin you have actually found', () => {
-    const state = readyToDelve();
-    const slots = [{ unitId: 'Warrior' as UnitId, count: 2 }];
-    expect(launchBlock(state, map, BARROW, null, slots)).toBe('NoHero');
-    expect(launchBlock(state, map, BARROW, 'Warden', [])).toBe('EmptyParty');
-    expect(launchBlock(state, map, BARROW, 'Warden', slots)).toBeNull();
-
-    const unfound = freshGame();
-    expect(launchBlock(unfound, map, 'StarObservatory', 'Warden', slots)).toBe('RuinNotFound');
-  });
-
-  it('refuses more unit TYPES than there are slots — breadth is the limit', () => {
-    const state = readyToDelve({ Warrior: 2, Archer: 2, Lancer: 2 });
-    completeTech(state, 'Warband');
-    expect(partySlots(state)).toBe(3);
-    expect(unitSlots(state)).toBe(2); // the hero takes one
-    const three = [
-      { unitId: 'Warrior' as UnitId, count: 1 },
-      { unitId: 'Archer' as UnitId, count: 1 },
-      { unitId: 'Lancer' as UnitId, count: 1 },
-    ];
-    expect(launchBlock(state, map, BARROW, 'Warden', three)).toBe('TooManySlots');
-    expect(launchBlock(state, map, BARROW, 'Warden', three.slice(0, 2))).toBeNull();
-  });
-
-  it('pays supplies once, up front, and the Quartermaster packs lighter', () => {
-    const state = readyToDelve();
-    const full = supplyCost(BARROW, 'Warden');
-    const light = supplyCost(BARROW, 'Quartermaster');
-    expect(light.Food!).toBeLessThan(full.Food!);
-
-    const food = getWallet(state.city.wallet, 'Food');
-    expect(launchDelve(state, map, BARROW, 'Warden', [{ unitId: 'Warrior', count: 2 }], T0))
-      .toBe('Launched');
-    expect(getWallet(state.city.wallet, 'Food')).toBe(food - full.Food!);
-    expect(state.delves).toHaveLength(1);
-  });
-
-  it('one hero means one delve at a time', () => {
-    const state = readyToDelve({ Warrior: 4 });
-    const slots = [{ unitId: 'Warrior' as UnitId, count: 2 }];
-    launchDelve(state, map, BARROW, 'Warden', slots, T0);
-    expect(launchBlock(state, map, BARROW, 'Warden', slots)).toBe('HeroBusy');
-  });
-
-  it('units underground cannot be sent somewhere else', () => {
-    const state = readyToDelve({ Warrior: 2 });
-    state.heroes.owned.push('Scout');
-    const slots = [{ unitId: 'Warrior' as UnitId, count: 2 }];
-    launchDelve(state, map, BARROW, 'Warden', slots, T0);
-    expect(launchBlock(state, map, BARROW, 'Scout', slots)).toBe('NotEnoughUnits');
-  });
-
-  it('the preview tells the player everything before they commit', () => {
-    const state = readyToDelve({ Warrior: 4 });
-    const preview = previewExpedition(state, BARROW, 'Warden',
-      [{ unitId: 'Warrior', count: 4 }]);
-    expect(preview.safeDepth).toBeGreaterThan(0);
-    expect(preview.maxDepth).toBe(RUINS[BARROW].maxDepth);
-    expect(preview.stats.hp).toBeGreaterThan(0);
-    // The Warden's trait is party-wide defence, and the sheet shows it.
-    expect(HEROES.Warden.trait).toBe('PartyDefence');
-    const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
-    const untraited = partyStats({ heroId: 'Scholar', slots: troops });
-    expect(preview.stats.def).toBeGreaterThan(untraited.def + HEROES.Scholar.def);
-  });
-
-  // The trait used to be applied to the preview's DEF and nowhere else, so the
-  // launch sheet promised a shield the descent never handed out. That is the
-  // `guaranteedDepth` fault again: a number on the sheet the sim does not
-  // honour. Asserting the DAMAGE, not the displayed stat, is what stops it
-  // coming back — every party-wide bonus now lives in `partyStats`.
-  it("the Warden's shield actually stops something", () => {
-    // A tier-III depth, because damage floors at 1 and a shallow barrow hides
-    // every defensive difference behind that floor.
-    const deep = 'DrownedIronworks' as const;
-    const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
-    const warden = resolveDepth({ heroId: 'Warden', slots: troops }, deep, 9, 'Warrior');
-    const scholar = resolveDepth({ heroId: 'Scholar', slots: troops }, deep, 9, 'Warrior');
-    expect(warden.damage).toBeGreaterThan(1);
-    expect(HEROES.Warden.trait).toBe('PartyDefence');
-    expect(HEROES.Scholar.trait).not.toBe('PartyDefence');
-    expect(warden.damage).toBeLessThan(scholar.damage);
-  });
-});
-
-describe('the descent', () => {
-  const launch = (state: GameState, order: number | null = null) =>
-    launchDelve(state, map, BARROW, 'Warden', [{ unitId: 'Warrior', count: 2 }], T0, order);
-
-  it('stops at a checkpoint after every depth, and the checkpoint never expires', () => {
-    const state = readyToDelve();
-    launch(state);
-    advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    const delve = state.delves[0];
-    expect(delve.phase).toBe('checkpoint');
-    expect(delve.depth).toBe(1);
-
-    // A week later it is still exactly where it was: no timer, no auto-fail.
+  it('resolves THE INSTANT it is entered — nothing is left in flight', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const report = enterRoom(state, map, BARROW, ['Warden'], company);
+    expect(report.result).toBe('Cleared');
+    // Nothing to wait for, nothing parked, and the advance has no work.
+    const before = JSON.stringify(state.ruins);
     advance(state, map, T0 + 7 * 86_400_000);
-    expect(state.delves[0].phase).toBe('checkpoint');
-    expect(state.delves[0].depth).toBe(1);
+    expect(JSON.stringify(state.ruins)).toBe(before);
   });
 
-  it('the haul accumulates per depth and banks only on extraction', () => {
-    const state = readyToDelve();
-    launch(state);
-    const goldBefore = getWallet(state.city.wallet, 'Gold');
-    advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    expect(Object.keys(state.delves[0].haul).length).toBeGreaterThan(0);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBefore); // nothing yet
-
-    const report = extract(state, state.delves[0].id);
-    expect(report.result).toBe('Extracted');
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBefore + report.wallet.Gold!);
-    expect(state.delves).toHaveLength(0); // the hero and the units come home
+  it('pays the room the moment it falls — there is no haul to carry home', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const gold = getWallet(state.city.wallet, 'Gold');
+    const stardust = getWallet(state.kingdom.wallet, 'Stardust');
+    const supplies = supplyCost(state, BARROW, 1, ['Warden']);
+    const report = enterRoom(state, map, BARROW, ['Warden'], company);
+    expect(report.result).toBe('Cleared');
+    expect(getWallet(state.city.wallet, 'Gold'))
+      .toBe(gold - (supplies.Gold ?? 0) + report.wallet.Gold!);
+    // Stardust is the KINGDOM's, where it survives a region reset.
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(stardust + report.wallet.Stardust!);
   });
 
-  it('Knowledge from a delve goes to the KINGDOM wallet, where it survives a reset', () => {
-    const state = readyToDelve();
-    launch(state);
-    advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    const before = getWallet(state.kingdom.wallet, 'Knowledge');
-    const report = extract(state, state.delves[0].id);
-    expect(report.wallet.Knowledge).toBeGreaterThan(0);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + report.wallet.Knowledge!);
+  it('advances the frontier one room, in order, and never replays one', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    // The board is re-formed between attempts, because the first one killed
+    // some of it: the same squad twice is a party the city no longer has.
+    const whatIsLeft = () => [{ unitId: 'Warrior' as UnitId, count: state.army.length }];
+    enterRoom(state, map, BARROW, ['Warden'], whatIsLeft());
+    expect(frontier(state, BARROW)).toEqual({ depth: 1, room: 2, done: false });
+    enterRoom(state, map, BARROW, ['Warden'], whatIsLeft());
+    expect(frontier(state, BARROW)).toEqual({ depth: 1, room: 3, done: false });
+    expect(roomsCleared(state, BARROW)).toBe(2);
   });
 
-  it('pushing deeper rolls the next threat only when the party commits', () => {
-    const state = readyToDelve();
-    launch(state);
-    advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    const at = T0 + depthDurationMs(BARROW, 1);
-    expect(pushDeeper(state, state.delves[0].id, at)).toBe('Descending');
-    expect(state.delves[0].phase).toBe('descending');
-    expect(state.delves[0].depthEndsAt).toBe(at + depthDurationMs(BARROW, 2));
-  });
-
-  it('a standing order resolves the whole run offline, with no prompts', () => {
-    const state = readyToDelve();
-    launch(state, 3); // "delve to depth 3, then come back"
-    advance(state, map, T0 + 86_400_000);
-    const delve = state.delves[0];
-    expect(delve.depth).toBe(3);
-    expect(delve.phase).toBe('checkpoint');
-  });
-
-  it('a failed push costs half the haul and ends the run', () => {
-    // A party far too small for the depth it is standing on.
-    const state = readyToDelve({ Archer: 1 });
-    launchDelve(state, map, 'SunkenChapel', 'Warden', [{ unitId: 'Archer', count: 1 }], T0, 7);
-    reveal(state, [RUINS.SunkenChapel.location]);
-    launchDelve(state, map, 'SunkenChapel', 'Warden', [{ unitId: 'Archer', count: 1 }], T0, 7);
-    advance(state, map, T0 + 30 * 86_400_000);
-    const delve = state.delves[0];
-    if (delve) {
-      expect(['done', 'checkpoint']).toContain(delve.phase);
-      if (delve.outcome === 'failed') {
-        // Half, floored — and the party is alive, because nothing you OWN is
-        // taken. You declined a sure thing.
-        expect(delve.partyHp).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it('the bottom grants the ruin’s relic, guaranteed, on the first clear', () => {
-    const state = readyToDelve({ Warrior: 8 });
-    // Enough party to walk to the bottom of the shallowest ruin.
-    launchDelve(state, map, BARROW, 'Warden',
-      [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
-    const gems = getWallet(state.player.wallet, 'Gems');
-    const knowledge = getWallet(state.kingdom.wallet, 'Knowledge');
-    advance(state, map, T0 + 86_400_000);
-    expect(state.ruinsCleared[BARROW]).toBe(true);
-    // The recurring Gem faucet the design needs — one per ruin, once.
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(gems + DELVE.firstClearGems);
-    // And the lump that opens the levelling arc. Banked immediately, not on
-    // extraction: a party parked at the bottom has already earned it.
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBeGreaterThanOrEqual(knowledge + DELVE.firstClearKnowledge);
-
-    const report = extract(state, state.delves[0].id);
-    expect(report.artifact).toBe(RUINS[BARROW].artifact);
-    expect(state.artifacts.owned).toContain(RUINS[BARROW].artifact);
-  });
-
-  it('a repeat clear pays fragments instead of a duplicate relic', () => {
-    const state = readyToDelve({ Warrior: 8 });
-    state.ruinsCleared[BARROW] = true;
-    state.artifacts.owned.push(RUINS[BARROW].artifact);
-    launchDelve(state, map, BARROW, 'Warden',
-      [{ unitId: 'Warrior', count: 8 }], T0, RUINS[BARROW].maxDepth);
-    advance(state, map, T0 + 86_400_000);
-    const report = extract(state, state.delves[0].id);
-    expect(report.artifact).toBeNull();
-    expect(report.fragments).toBeGreaterThan(0);
-    expect(state.artifacts.fragments[RUINS[BARROW].artifact]).toBeGreaterThan(0);
-  });
-
-  it('delve timers never pause — the offline cap is for city production', () => {
-    const state = readyToDelve();
-    launch(state, 5);
-    const save = serialize(state, T0);
-    // Twenty hours away: far past the 8h cap, and the run resolves in full.
-    const restored = deserialize(save, map, T0 + 20 * 3_600_000)!;
-    expect(restored.delves[0].depth).toBeGreaterThan(1);
-  });
-
-  it('survives a save round-trip mid-descent', () => {
-    const state = readyToDelve();
-    launch(state);
-    advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    const restored = deserialize(serialize(state, T0 + depthDurationMs(BARROW, 1)), map,
-      T0 + depthDurationMs(BARROW, 1))!;
-    expect(restored.delves).toHaveLength(1);
-    expect(restored.delves[0].depth).toBe(state.delves[0].depth);
-    expect(restored.delves[0].haul).toEqual(state.delves[0].haul);
-    expect(restored.delves[0].phase).toBe('checkpoint');
-  });
-});
-
-// Attune OR arm (Docs/features/heroes-and-gacha.md §2).
-//
-// The claim these tests protect is the one the design calls "the best decision
-// in the design": an artifact is attuned to the kingdom OR carried by a hero,
-// never both. It only reads as a decision if BOTH halves bite — if the sim
-// would quietly un-attune a relic to arm a hero, there is no trade, only a
-// convenience. So each direction is asserted separately, and the asymmetry
-// that makes the trade interesting (attuning costs Mana every hour, carrying
-// costs none) is asserted too.
-describe('attune or arm', () => {
-  const armed = (relic: ArtifactId = 'ForemansSigil', units = { Warrior: 4 }) => {
+  /** A room deep enough to actually hit back, for the tests about bodies. */
+  const bloodyRoom = (units: Partial<Record<UnitId, number>>): GameState => {
     const state = readyToDelve(units);
-    grantArtifact(state, relic);
-    normaliseSlots(state);
+    fund(state, { Gold: 40_000, Food: 9000, Stone: 4000 });
+    reveal(state, [RUINS.SunkenChapel.location]);
+    // A tier-II room, five rooms into its second depth: deep enough that the
+    // Chapel's own creature gets its swings in.
+    state.ruins.SunkenChapel = { depth: 2, cleared: 4 };
     return state;
   };
-  const troops = [{ unitId: 'Warrior' as UnitId, count: 4 }];
 
-  it('refuses to send a relic the kingdom is wearing', () => {
-    const state = armed();
-    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Attuned');
-    expect(launchBlock(state, map, BARROW, 'Warden', troops, 'ForemansSigil'))
-      .toBe('ArtifactAttuned');
-    // And the launch itself refuses, not just the preview of it.
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
-      .toBe('ArtifactAttuned');
-    expect(state.delves).toHaveLength(0);
+  it('sends most of the fallen to the infirmary, and the rest nowhere', () => {
+    const state = bloodyRoom({ Warrior: 60 });
+    // Only a city that BUILT one has a ward; without it they simply die
+    // (tests/infirmary.test.ts).
+    addBuilt(state, 'Infirmary', { x: 4, y: 8 });
+    const report = enterRoom(state, map, 'SunkenChapel', ['Warden'], company);
+    const fell = report.losses.reduce((sum, l) => sum + l.count, 0);
+    const hurt = report.wounded.reduce((sum, l) => sum + l.count, 0);
+    expect(fell).toBeGreaterThan(0);
+    // A bad room is a bill rather than a loss: what the ward catches can be
+    // bought back at a military hall (tests/infirmary.test.ts).
+    expect(hurt).toBe(Math.round(fell * ARMY.woundedShare));
+    expect(woundedOf(state, 'Warrior')).toBe(hurt);
+    expect(state.army).toHaveLength(60 - fell);
   });
 
-  it('refuses to attune a relic that is underground', () => {
-    const state = armed();
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
-      .toBe('Launched');
-    expect(artifactIsCarried(state, 'ForemansSigil')).toBe(true);
-    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Carried');
-    // The socket is still empty — the refusal cost the player nothing.
-    expect(state.artifacts.attuned[0]).toBe(null);
+  it('charges the fight\'s own dead, so a rout is free and a scrape is not', () => {
+    // OVERWHELMING FORCE COSTS NOTHING. Sixty against the first room of the
+    // first ruin wipe it before it swings, and the roster is untouched —
+    // which is the whole reason to bring more than enough.
+    const rout = readyToDelve({ Warrior: 60 });
+    const easy = enterRoom(rout, map, BARROW, ['Warden'], company);
+    expect(easy.result).toBe('Cleared');
+    expect(easy.losses).toEqual([]);
+    expect(rout.army).toHaveLength(60);
+
+    // A fight that lasts costs bodies, win or lose, and they leave the ranks.
+    const state = bloodyRoom({ Warrior: 60 });
+    const hard = enterRoom(state, map, 'SunkenChapel', ['Warden'], company);
+    const fell = hard.losses.reduce((sum, l) => sum + l.count, 0);
+    expect(fell).toBeGreaterThan(0);
+    expect(state.army).toHaveLength(60 - fell);
+
+    // And a party that is driven off pays with everyone who was standing
+    // there: the fight only ends when one side is gone.
+    const beaten = readyToDelve({ Warrior: 2 });
+    openRuin(beaten, 'StarObservatory');
+    reveal(beaten, [RUINS.StarObservatory.location]);
+    fund(beaten, { Gold: 20_000, Food: 5000, Stone: 2000 });
+    const report = enterRoom(beaten, map, 'StarObservatory', ['Warden'],
+      [{ unitId: 'Warrior', count: 2 }]);
+    expect(report.result).toBe('Repelled');
+    expect(report.losses.reduce((sum, l) => sum + l.count, 0)).toBe(2);
+    expect(beaten.army).toHaveLength(0);
   });
 
-  it('costs nothing to carry, and nothing to wear — the trade is exclusivity', () => {
-    const state = armed();
-    const before = mana(state);
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
-      .toBe('Launched');
-    // Relic upkeep is gone, so neither half of attune-or-arm has a price. What
-    // makes it a question is that you cannot do both: an economy passive at
-    // home, or combat stats below.
-    expect(mana(state)).toBe(before);
-    expect(manaNetRegen(state)).toBe(manaProduction(state));
+  it('shows the room it is about to fight, and nothing it cannot know', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const preview = previewRoom(state, BARROW, ['Warden'], company);
+    // The squads on the sheet ARE the board the resolver will use — the same
+    // seeded room, asked twice.
+    expect(preview.enemy).toEqual(
+      roomBoard(state, BARROW, 1, 1).slots
+        .filter((s) => s.unitId !== null)
+        .map((s) => ({ unitId: s.unitId, count: s.count })));
+    // …and the two numbers beside them are an ESTIMATE, which is all a sheet
+    // can honestly be now (Docs/features/combat.md §12).
+    expect(preview.attack).toBeGreaterThan(0);
+    expect(preview.enough).toBe(preview.attack >= preview.power);
   });
 
-  it('a relic in the pack takes the party deeper', () => {
-    const state = armed();
-    const bare = previewExpedition(state, BARROW, 'Warden', troops);
-    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
-    expect(withRelic.stats.atk).toBeGreaterThan(bare.stats.atk);
-    // The promise the whole feature sells: "wear it, or send it down to reach
-    // depth 6". A relic that did not move this number would not be a choice.
-    const deep = 'DrownedIronworks' as const;
-    reveal(state, [RUINS[deep].location]);
-    const bareDeep = previewExpedition(state, deep, 'Warden', troops);
-    const armedDeep = previewExpedition(state, deep, 'Warden', troops, 'ForemansSigil');
-    expect(armedDeep.safeDepth).toBeGreaterThan(bareDeep.safeDepth);
+  it('costs the supplies and nothing the player has banked when beaten', () => {
+    // Two soldiers against the first room of the deepest ruin.
+    const state = readyToDelve({ Warrior: 2 });
+    openRuin(state, 'StarObservatory');
+    reveal(state, [RUINS.StarObservatory.location]);
+    fund(state, { Gold: 20_000, Food: 5000, Stone: 2000 });
+    const gold = getWallet(state.city.wallet, 'Gold');
+    const supplies = supplyCost(state, 'StarObservatory', 1, ['Warden']);
+    const report = enterRoom(state, map, 'StarObservatory', ['Warden'],
+      [{ unitId: 'Warrior', count: 2 }]);
+    expect(report.result).toBe('Repelled');
+    expect(report.wallet).toEqual({});
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
+    // …and the room is still there.
+    expect(frontier(state, 'StarObservatory')).toEqual({ depth: 1, room: 1, done: false });
   });
 
-  it('the matchup chip still answers "did I bring the right troops"', () => {
-    const state = armed();
-    const troopsOnly = previewExpedition(state, BARROW, 'Warden', troops);
-    const withRelic = previewExpedition(state, BARROW, 'Warden', troops, 'ForemansSigil');
-    // A type-neutral relic would otherwise pull the ratio toward 1, so adding
-    // one would make a GOOD matchup read worse while the party got stronger.
-    expect(withRelic.matchup).toBe(troopsOnly.matchup);
-    expect(withRelic.stats.atk).toBeGreaterThan(troopsOnly.stats.atk);
+  it('opens the next depth when the last room of one falls', () => {
+    const state = readyToDelve({ Warrior: 200 });
+    const rooms = depthDef(BARROW, 1)!.rooms;
+    state.ruins[BARROW] = { depth: 1, cleared: rooms - 1 };
+    const report = enterRoom(state, map, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: 200 }]);
+    expect(report.result).toBe('Cleared');
+    expect(report.depthCompleted).toBe(true);
+    expect(frontier(state, BARROW)).toEqual({ depth: 2, room: 1, done: false });
+    expect(state.deepestDepth).toBe(1);
   });
 
-  it("a relic's attack is type-neutral, so it is worth most in the wrong matchup", () => {
-    const slots = [{ unitId: 'Warrior' as UnitId, count: 4 }];
-    const relic = { id: 'ForemansSigil' as ArtifactId, level: 1 };
-    // A relic has no unit type, so the same ATK lands whatever is down there.
-    const good = effectiveAttack({ heroId: 'Warden', slots, artifact: relic }, 'Lancer')
-      - effectiveAttack({ heroId: 'Warden', slots }, 'Lancer');
-    const bad = effectiveAttack({ heroId: 'Warden', slots, artifact: relic }, 'Archer')
-      - effectiveAttack({ heroId: 'Warden', slots }, 'Archer');
-    expect(good).toBe(bad);
-    expect(good).toBe(ARTIFACTS.ForemansSigil.carried.atk);
+  it('pays a boss four times a room', () => {
+    const state = readyToDelve();
+    const rooms = depthDef(BARROW, 1)!.rooms;
+    const plain = roomReward(state, BARROW, 1, rooms - 1).wallet.Gold!;
+    const boss = roomReward(state, BARROW, 1, rooms).wallet.Gold!;
+    expect(boss).toBeGreaterThan(plain * 3);
   });
 
-  it('scales with the level it went down at, and never re-arms mid-run', () => {
-    const state = armed();
-    state.artifacts.levels.ForemansSigil = 5;
-    expect(launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil'))
-      .toBe('Launched');
-    expect(state.delves[0].artifactLevel).toBe(5);
-
-    // Levelling the relic back home does not reach a party already below: the
-    // level is snapshotted beside maxPartyHp, exactly like the party itself.
-    state.artifacts.levels.ForemansSigil = 9;
-    expect(state.delves[0].artifactLevel).toBe(5);
+  it('gives up the ruin’s relic when its last room falls, once', () => {
+    const state = readyToDelve({ Warrior: 400 });
+    const last = depthsOf(BARROW).length;
+    state.ruins[BARROW] = { depth: last, cleared: depthDef(BARROW, last)!.rooms - 1 };
+    const gems = getWallet(state.player.wallet, 'Gems');
+    const report = enterRoom(state, map, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: 400 }]);
+    expect(report.result).toBe('Cleared');
+    expect(report.artifact).toBe(RUINS[BARROW].artifact);
+    expect(state.ruinsCleared[BARROW]).toBe(true);
+    expect(ruinIsFinished(state, BARROW)).toBe(true);
+    // The recurring Gem faucet the design needs: one per ruin, once.
+    expect(getWallet(state.player.wallet, 'Gems')).toBeGreaterThan(gems);
+    // …and there is nothing left to enter.
+    expect(enterRoom(state, map, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: 400 }]).result).toBe('Finished');
   });
 
-  it('comes home when the party does — on a good run and a bad one', () => {
-    const state = armed();
-    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
-    advance(state, map, T0 + depthDurationMs(BARROW, 1));
-    // Still committed while the party waits at the checkpoint.
-    expect(artifactIsCarried(state, 'ForemansSigil')).toBe(true);
-    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Carried');
-
-    extract(state, state.delves[0].id);
-    expect(artifactIsCarried(state, 'ForemansSigil')).toBe(false);
-    expect(attune(state, 0, 'ForemansSigil', T0)).toBe('Attuned');
+  it('refuses a ruin whose gate still stands', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    state.gates[BARROW] = { nextRaidAt: null, trips: 0, hoard: {}, cleared: false };
+    expect(enterRoom(state, map, BARROW, ['Warden'], company).result).toBe('GateStanding');
   });
 
-  it('survives a save round-trip with the relic aboard', () => {
-    const state = armed();
-    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
-    state.delves[0].artifactLevel = 4;
+  it('survives a save round-trip, frontier and all', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    enterRoom(state, map, BARROW, ['Warden'], company);
+    enterRoom(state, map, BARROW, ['Warden'], company);
     const restored = deserialize(serialize(state, T0), map, T0)!;
-    expect(restored.delves[0].artifactId).toBe('ForemansSigil');
-    expect(restored.delves[0].artifactLevel).toBe(4);
-    expect(artifactIsCarried(restored, 'ForemansSigil')).toBe(true);
-  });
-
-  it('a save written before the rule existed reads as a party carrying nothing', () => {
-    const state = armed();
-    launchDelve(state, map, BARROW, 'Warden', troops, T0, null, 'ForemansSigil');
-    const save = serialize(state, T0);
-    // Exactly what an older save looks like: the keys simply are not there.
-    const dto = (save.Modules['kingdom.delves'] as any).Delves[0];
-    delete dto.ArtifactID;
-    delete dto.ArtifactLevel;
-    const restored = deserialize(save, map, T0)!;
-    expect(restored.delves[0].artifactId).toBe(null);
-    expect(restored.delves[0].artifactLevel).toBe(1);
-  });
-
-  // The assertion repeated at every step of this design pass. A relic changes
-  // DEF, which changes damage, which changes whether a depth is survived — so
-  // it is exactly the kind of thing that could make replay disagree with
-  // ticking, and exactly why it is asserted again here.
-  it('one-call offline replay equals stepped ticking with a relic aboard', () => {
-    const run = (step: number) => {
-      const state = armed('VerdantSeal', { Warrior: 4 });
-      launchDelve(state, map, BARROW, 'Warden', troops, T0, RUINS[BARROW].maxDepth,
-        'VerdantSeal');
-      const end = T0 + 6 * 3_600_000;
-      if (step === 0) advance(state, map, end);
-      else for (let t = T0 + step; t <= end; t += step) advance(state, map, t);
-      const d = state.delves[0];
-      return { depth: d.depth, hp: d.partyHp, phase: d.phase, haul: d.haul, out: d.outcome };
-    };
-    expect(run(60_000)).toEqual(run(0));
-    expect(run(997)).toEqual(run(0));
+    expect(restored.ruins[BARROW]).toEqual(state.ruins[BARROW]);
+    expect(restored.deepestDepth).toBe(state.deepestDepth);
   });
 });
 
-describe('advanceDelves is total', () => {
-  it('touches nothing when there is nothing underground', () => {
-    const state = freshGame();
-    expect(advanceDelves(state, T0 + 86_400_000)).toEqual([]);
+describe('the read-out', () => {
+  it('tells the player everything before they commit', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const preview = previewRoom(state, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: 60 }]);
+    expect(preview.depth).toBe(1);
+    expect(preview.room).toBe(1);
+    expect(preview.rooms).toBe(roomCount(BARROW));
+    expect(preview.power).toBeGreaterThan(0);
+    expect(preview.attack).toBeGreaterThan(0);
+    expect(preview.enough).toBe(preview.attack >= preview.power);
+    // What it is worth, and what it costs to try.
+    expect(preview.reward.wallet.Gold).toBeGreaterThan(0);
+    expect(Object.keys(preview.supplies).length).toBeGreaterThan(0);
+  });
+
+  it('shows the squads the room is scored against', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    const preview = previewRoom(state, BARROW, ['Warden'], []);
+    const shown = preview.enemy.reduce((n, s) => n + UNITS[s.unitId].power * s.count, 0);
+    expect(shown).toBe(preview.power);
+  });
+
+  it('marks the boss room as one', () => {
+    const state = readyToDelve();
+    const rooms = depthDef(BARROW, 1)!.rooms;
+    state.ruins[BARROW] = { depth: 1, cleared: rooms - 1 };
+    expect(previewRoom(state, BARROW, ['Warden'], []).isBoss).toBe(true);
+  });
+
+  // The two bars the sheet draws (Docs/features/11a-ruins-ui.md §2.5) are only
+  // as honest as their denominators: the depth ladder is the RUIN's, the room
+  // ladder is THIS DEPTH's, and mixing the two would draw a bar that fills at
+  // the wrong pace and puts the boss in the wrong place.
+  it('carries both ladders the widget draws a bar for', () => {
+    const state = readyToDelve();
+    const first = previewRoom(state, BARROW, ['Warden'], []);
+    expect(first.depths).toBe(depthCount(BARROW));
+    expect(first.roomsInDepth).toBe(depthDef(BARROW, 1)!.rooms);
+    // The room ladder is the depth's, never the ruin's.
+    expect(first.roomsInDepth).toBeLessThan(first.rooms);
+    // …and it follows the player down.
+    state.ruins[BARROW] = { depth: 2, cleared: 0 };
+    const deeper = previewRoom(state, BARROW, ['Warden'], []);
+    expect(deeper.roomsInDepth).toBe(depthDef(BARROW, 2)!.rooms);
+    // The boss is the last room of the depth, which is where the bar puts it.
+    state.ruins[BARROW] = { depth: 2, cleared: deeper.roomsInDepth - 1 };
+    const atBoss = previewRoom(state, BARROW, ['Warden'], []);
+    expect(atBoss.room).toBe(atBoss.roomsInDepth);
+    expect(atBoss.isBoss).toBe(true);
   });
 });
 
-// The Barracks turns out every foot soldier (2026-09-02); Cavalry keeps the
+// A relic is the kingdom's or it is on the shelf: nothing carries one into a
+// room any more (Docs/features/09-relics.md §5).
+describe('a relic is no part of a room', () => {
+  const troops = [{ unitId: 'Warrior' as UnitId, count: 60 }];
+
+  it('neither blocks an attempt nor arms one', () => {
+    const state = readyToDelve({ Warrior: 60 });
+    grantArtifact(state, 'ForemansSigil');
+    normaliseSlots(state);
+    const bare = previewRoom(state, BARROW, ['Warden'], troops);
+    attune(state, 0, 'ForemansSigil', T0);
+    expect(roomBlock(state, map, BARROW, ['Warden'], troops)).toBeNull();
+    const worn = previewRoom(state, BARROW, ['Warden'], troops);
+    expect(worn.attack).toBe(bare.attack);
+    expect(worn.stats.atk).toBe(bare.stats.atk);
+  });
+});
+
 // Stables. Each unit is still behind its own technology, so the choice fills
 // in as the player researches rather than arriving all at once.
 describe('a hall can turn out more than one unit', () => {
@@ -699,13 +588,13 @@ describe('a hall can turn out more than one unit', () => {
     expect(trainUnit(state, 'Lancer', T0, barracks)).toBe('Queued');
     expect(lineFor(state, barracks.uniqueId).map((i) => i.trainee)).toEqual(['Archer', 'Lancer']);
 
-    // One bench: the Archer (25s) finishes first because it was queued first,
+    // One bench: the Archer (12s) finishes first because it was queued first,
     // and the Lancer starts only when the slot frees.
-    advance(state, map, T0 + 26_000);
+    advance(state, map, T0 + 13_000);
     expect(state.army.map((u) => u.definitionId)).toEqual(['Archer']);
-    advance(state, map, T0 + 60_000);
-    expect(state.army).toHaveLength(1); // the Lancer's 40s began at 25s
-    advance(state, map, T0 + 66_000);
+    advance(state, map, T0 + 30_000);
+    expect(state.army).toHaveLength(1); // the Lancer's 20s began at 12s
+    advance(state, map, T0 + 33_000);
     expect(state.army.map((u) => u.definitionId)).toEqual(['Archer', 'Lancer']);
   });
 
@@ -724,7 +613,7 @@ describe('a hall can turn out more than one unit', () => {
 });
 
 // Buying the wait (2026-09-02). The FINISH button on the training card takes
-// the WHOLE line, priced at the build queue's rate — ten seconds a gem — so
+// the WHOLE line, priced at the build queue's rate (`rush.secondsPerGem`) — so
 // the player meets one rule for buying time wherever they meet it.
 describe('finishing a training line with gems', () => {
   const barracksOf = (state: GameState) =>
@@ -734,14 +623,14 @@ describe('finishing a training line with gems', () => {
     const state = readyToDelve({});
     completeTech(state, 'Warrior');
     const hall = barracksOf(state);
-    trainUnit(state, 'Warrior', T0, hall); // 30s, started
-    trainUnit(state, 'Warrior', T0, hall); // 30s, waiting
+    trainUnit(state, 'Warrior', T0, hall); // 15s, started
+    trainUnit(state, 'Warrior', T0, hall); // 15s, waiting
 
-    // Ten seconds in: 20 left on the bench + a full 30 behind it.
-    expect(lineRemainingSeconds(state, hall.uniqueId, T0 + 10_000)).toBe(50);
-    expect(lineRushCost(state, hall.uniqueId, T0 + 10_000)).toBe(5);
+    // Five seconds in: 10 left on the bench + a full 15 behind it.
+    expect(lineRemainingSeconds(state, hall.uniqueId, T0 + 5_000)).toBe(25);
+    expect(lineRushCost(state, hall.uniqueId, T0 + 5_000)).toBe(5); // 25 s at 5 s a Gem
     // ...and it falls as the bench empties.
-    expect(lineRushCost(state, hall.uniqueId, T0 + 25_000)).toBe(4);
+    expect(lineRushCost(state, hall.uniqueId, T0 + 12_000)).toBe(4); // 18 s
   });
 
   it('delivers every unit in the line and charges once', () => {
@@ -750,13 +639,13 @@ describe('finishing a training line with gems', () => {
     const hall = barracksOf(state);
     trainUnit(state, 'Warrior', T0, hall);
     trainUnit(state, 'Warrior', T0, hall);
-    state.player.wallet.Gems = 100;
+    state.player.wallet.Gems = 1000;
 
     const cost = lineRushCost(state, hall.uniqueId, T0);
     expect(finishLineWithGems(state, hall.uniqueId, T0)).toBe('Success');
     expect(state.army).toHaveLength(2);
     expect(lineFor(state, hall.uniqueId)).toHaveLength(0);
-    expect(getWallet(state.player.wallet, 'Gems')).toBe(100 - cost);
+    expect(getWallet(state.player.wallet, 'Gems')).toBe(1000 - cost);
 
     // And the advance cannot hand them over a second time.
     advance(state, map, T0 + 120_000);
@@ -816,54 +705,132 @@ describe('finishing a training line with gems', () => {
   });
 });
 
-// Docs/features/knowledge.md — where Knowledge actually comes from now.
+// Docs/features/07-research.md §3 — Knowledge is the research clock,
+// it is kingdom-scoped, and its rate is the ground you have taken.
 //
 // CLAIM: dungeons and the gacha, and nothing else. Clearing fog pays none
 // (tests/fog.test.ts), the early quest chain pays none (tests/quests.test.ts),
 // and the standing drip is earned one dungeon at a time rather than handed
 // out for spotting one through the fog.
-describe('Knowledge comes out of dungeons', () => {
+describe('Knowledge is the research clock, and cleared ruins drive it', () => {
   it('a ruin drips nothing until it has been CLEARED', () => {
     const state = readyToDelve();
-    // The Barrow is discovered — readyToDelve can launch into it — and still
-    // pays nothing per hour.
-    expect(knowledgePerHour(state)).toBe(0);
-    advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(0);
+    // The Barrow is discovered — readyToDelve can launch into it — and adds
+    // nothing yet: only the base rate runs, and it is a rate a DAY.
+    const base = KNOWLEDGE.basePerHour;
+    expect(knowledgePerHour(state)).toBe(base);
+    // The rate is a FRACTION of one an hour, so a day is the unit that banks
+    // whole Knowledge: 0.8 an hour is one every four and a half hours.
+    const before = getWallet(state.kingdom.wallet, 'Knowledge');
+    advance(state, map, T0 + 86_400_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + Math.floor(24 * base));
 
     state.ruinsCleared[BARROW] = true;
-    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.dripPerClearedRuinPerHour);
+    expect(knowledgePerHour(state)).toBe(base + KNOWLEDGE.dripPerClearedRuinPerHour);
+  });
+
+  // The other half of the rate, and the reason the fog compounds into the
+  // tree: a claimed landmark is territory too. Docs §3 — "Knowledge is not a
+  // wage for existing, it is what the land teaches you once you have taken
+  // some of it."
+  it('a claimed landmark drips too, and pays a lump for taking the ground', () => {
+    const state = freshGame();
+    fund(state, { Gold: 1_000_000 });
+    const def = LANDMARKS[0];
+    reveal(state, [def.location]);
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour); // no territory: the floor
+
+    const held = getWallet(state.kingdom.wallet, 'Knowledge');
+    expect(claimLandmark(state, map, def.location)).toBe('Claimed');
+    // The lump lands the moment the ground is taken.
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(held + KNOWLEDGE.landmarkClaimLump);
+    // …and the rate has territory on top of the floor.
+    expect(knowledgePerHour(state))
+      .toBe(KNOWLEDGE.basePerHour + KNOWLEDGE.perClaimedLandmarkPerHour);
+  });
+
+  // There IS a base rate (2026-09-08): the tree opens on the calendar, and
+  // the province makes it open faster. A player who has taken no ground
+  // learns the floor and nothing more — and starts with the opening's grant.
+  it('pays a player who has taken no ground the floor, and only the floor', () => {
+    const state = freshGame();
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(CURRENCIES.Knowledge.start);
+    expect(knowledgePerHour(state)).toBe(KNOWLEDGE.basePerHour);
+    advance(state, map, T0 + 86_400_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
+      .toBe(CURRENCIES.Knowledge.start + Math.floor(24 * KNOWLEDGE.basePerHour));
+  });
+
+  // THE LOAD-BEARING ASSERTION, for a rate that CHANGES mid-window.
+  //
+  // The drip banks whole units against an anchor, and the obvious worry is
+  // that a rate change mid-walk re-measures the leftover remainder against
+  // the new rate, landing the anchor somewhere the other path never puts it.
+  //
+  // It does not, and the reason is worth writing down because it looks like
+  // an accident and is not: `advance` runs `runContinuous` UP TO a boundary
+  // before `applyDueAt` does the discrete work at it, so the drip is always
+  // settled at the exact instant before anything can change the rate. The
+  // anchor is therefore `T0 + k × msPer` in both paths, and `floor` makes the
+  // granularity of every observation in between irrelevant.
+  //
+  // What this test guards is narrower, and worth being honest about: the
+  // ORDERING in `advance` is already held by `taxes.test.ts` and
+  // `workers.test.ts`, which fail loudly if it moves. This one holds that the
+  // Knowledge drip specifically stays replay-identical when its own rate
+  // changes mid-window — the case those two do not exercise, because taxes
+  // and training rates do not move underneath them.
+  // A CLEARED RUIN CHANGES THE RATE, and it changes it at the instant the
+  // last room falls — which is a player's tap, not a boundary. So the replay
+  // assertion has nothing to prove here any more: the clock cannot move
+  // between two advances on its own (Docs/features/11-expeditions.md §5).
+  it('a cleared ruin lifts the rate from the moment its last room falls', () => {
+    const state = readyToDelve({ Warrior: 400 });
+    state.kingdom.lastKnowledgeAt = T0;
+    const before = knowledgePerHour(state);
+    const last = depthsOf(BARROW).length;
+    state.ruins[BARROW] = { depth: last, cleared: depthDef(BARROW, last)!.rooms - 1 };
+    expect(enterRoom(state, map, BARROW, ['Warden'],
+      [{ unitId: 'Warrior', count: 400 }]).result).toBe('Cleared');
+    expect(state.ruinsCleared[BARROW]).toBe(true);
+    expect(knowledgePerHour(state)).toBeGreaterThan(before);
   });
 
   it('every cleared ruin adds its own hour rate, and the drip banks in whole units', () => {
     const state = readyToDelve();
     state.ruinsCleared[BARROW] = true;
     state.ruinsCleared.SunkenChapel = true;
-    expect(knowledgePerHour(state)).toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+    const rate = KNOWLEDGE.basePerHour + 2 * KNOWLEDGE.dripPerClearedRuinPerHour;
+    expect(knowledgePerHour(state)).toBeCloseTo(rate, 10);
 
     state.kingdom.lastKnowledgeAt = T0;
-    advance(state, map, T0 + 3_600_000);
-    expect(getWallet(state.kingdom.wallet, 'Knowledge'))
-      .toBe(2 * KNOWLEDGE.dripPerClearedRuinPerHour);
+    const before = getWallet(state.kingdom.wallet, 'Knowledge');
+    advance(state, map, T0 + 86_400_000);
+    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(before + Math.floor(24 * rate));
   });
 
   // The runway that replaces the old "the map holds more Knowledge than the
   // tree costs" assertion in fog.test.ts. Demand is the collection; supply is
   // what five cleared ruins pay while the player is away.
-  it('five cleared ruins carry the levelling arc on a scale of weeks', () => {
+  it('five cleared ruins carry the TREE on a scale of weeks', () => {
     const state = readyToDelve();
     for (const id of Object.keys(RUINS) as Array<keyof typeof RUINS>) {
       state.ruinsCleared[id] = true;
     }
+    for (const l of LANDMARKS) state.landmarks.claimed[l.id] = true;
     const perDay = knowledgePerHour(state) * 24;
-    const oneCollectible = Array.from(
-      { length: COLLECTION.maxLevel - 1 },
-      (_, i) => levelCost(i + 1),
-    ).reduce((a, b) => a + b, 0);
+    const tree = TECH_ORDER.reduce((sum, id) => sum + techKnowledgeCost(id), 0);
 
-    expect(perDay).toBe(240);
-    // Meaningful progress inside a month, an endgame horizon past it.
-    expect(oneCollectible / perDay).toBeGreaterThan(7);
-    expect(oneCollectible / perDay).toBeLessThan(30);
+    // The floor plus what the whole province holds.
+    expect(perDay).toBeCloseTo((KNOWLEDGE.basePerHour
+      + Object.keys(RUINS).length * KNOWLEDGE.dripPerClearedRuinPerHour
+      + LANDMARKS.length * KNOWLEDGE.perClaimedLandmarkPerHour) * 24, 10);
+    // …and it buys the tree in weeks, not days and not seasons. It used to
+    // read a COLLECTIBLE's arc against this rate, which stopped meaning
+    // anything when the collection moved to Stardust (2026-09-03) — the tree
+    // is what a Knowledge rate actually buys (07-research.md §3).
+    expect(tree / perDay).toBeGreaterThan(14);
+    expect(tree / perDay).toBeLessThan(70);
   });
 });

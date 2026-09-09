@@ -8,18 +8,71 @@
 // free, so test setup and the sim can harvest without minting energy; only
 // `collectTap`, the thing a finger drives, pays.
 import { describe, expect, it } from 'vitest';
-import { DISTRICTS, HARVEST, TAP } from '../src/sim/data/definitions';
+import { DISTRICTS, FEATURES, HARVEST, TAP } from '../src/sim/data/definitions';
 import { mana, manaCap } from '../src/sim/mana';
+import { addModifier } from '../src/sim/modifiers';
 import {
-  collectTap, harvestSourceAt, isExhausted, tapCell, tapFraction,
+  collectTap, effectiveStock, harvestSourceAt, isExhausted, stockFraction, tapCell,
+  tapYieldAt,
 } from '../src/sim/harvest';
-import { getWallet, type Coord } from '../src/sim/state';
+import {
+  coordKey, getWallet, parseCoordKey, type Coord, type TerrainId,
+} from '../src/sim/state';
 import { effectiveAutoTapCooldownMs } from '../src/sim/upgrades';
 import {
   addBuilt, BERRIES, canGather, completeTech, FOREST, freshGame, freshPresenter, map,
   reveal, screenAt, T0,
 } from './helpers';
 
+
+describe('how long a cell stays a stump', () => {
+  /** Drain a Forest cell dry at `at`, and say when it is due back. */
+  const drain = (state: ReturnType<typeof freshGame>, at: number): void => {
+    reveal(state, [FOREST]);
+    while (!isExhausted(state, map, FOREST, at)) {
+      expect(tapCell(state, map, FOREST, at)).toBe('Harvested');
+    }
+  };
+
+  const shorten = (state: ReturnType<typeof freshGame>, by: number): void => {
+    addModifier(state, {
+      id: 'quicker', source: 'artifact', stat: 'cellRecovery', scope: null,
+      op: 'mul', value: by, expiresAt: null,
+    });
+  };
+
+  it('prices the wait ONCE, at the moment the cell runs dry', () => {
+    // The rule the whole timer rests on, and what makes a technology aimed at
+    // `harvestRecovery` safe to read here: one-call replay and stepped
+    // ticking both stamp at the same instant, so both read the same tree. A
+    // bonus that arrived later would have to reprice a stretch already
+    // elapsed — the hazard `repriceTaxAnchor` exists to close elsewhere.
+    const state = canGather(freshGame());
+    drain(state, T0);
+    const due = T0 + HARVEST.Forest.recoverySeconds * 1000;
+
+    shorten(state, 0.5); // a relic attuned, or a technology finished, AFTER
+    expect(isExhausted(state, map, FOREST, due - 1)).toBe(true);
+    expect(isExhausted(state, map, FOREST, due)).toBe(false);
+  });
+
+  it('gives the shorter wait to a cell drained after the bonus lands', () => {
+    const state = canGather(freshGame());
+    shorten(state, 0.5);
+    drain(state, T0);
+    const half = T0 + (HARVEST.Forest.recoverySeconds / 2) * 1000;
+    expect(isExhausted(state, map, FOREST, half - 1)).toBe(true);
+    expect(isExhausted(state, map, FOREST, half)).toBe(false);
+  });
+
+  it('never lets a bonus take the wait below a second', () => {
+    const state = canGather(freshGame());
+    shorten(state, 0); // everything at once
+    drain(state, T0);
+    expect(isExhausted(state, map, FOREST, T0 + 999)).toBe(true);
+    expect(isExhausted(state, map, FOREST, T0 + 1000)).toBe(false);
+  });
+});
 
 describe('harvest sources', () => {
   it('Trees cells are Forest; built FarmLands are Crops; districts block', () => {
@@ -32,22 +85,34 @@ describe('harvest sources', () => {
 });
 
 describe('tapping', () => {
-  it('a tap yields 1 Wood; the 10th tap exhausts the cell for 90 s', () => {
+  // A tap takes `tap.work_seconds` of the cell's own work out of its depot —
+  // two Wood on a forest — so five taps empty a tree and the tree's total is
+  // its STOCK however hard the thumb is upgraded. Nobody mints.
+  it('drains the depot and cannot take more than the cell holds', () => {
     const state = canGather(freshGame());
     reveal(state, [FOREST]);
-    for (let i = 1; i <= 9; i++) {
+    // One Forest strike takes 10 s, and a tap is worth `tap.workSeconds` of
+    // it — so the tree's stock over that is how many taps it stands.
+    const perTap = tapYieldAt(state, map, FOREST, T0);
+    expect(perTap).toBe(Math.max(1, Math.floor(
+      TAP.workSeconds * HARVEST.Forest.unitsPerStrike / HARVEST.Forest.secondsPerStrike)));
+    // What the tree actually holds is its authored stock times the GROUND
+    // under it — a grassland tree is richer than a desert one.
+    const held = effectiveStock(map, FOREST, HARVEST.Forest);
+    const taps = Math.ceil(held / perTap);
+    for (let i = 1; i < taps; i++) {
       expect(tapCell(state, map, FOREST, T0)).toBe('Harvested');
-      expect(isExhausted(state, FOREST, T0)).toBe(false);
+      expect(isExhausted(state, map, FOREST, T0)).toBe(false);
     }
-    expect(tapCell(state, map, FOREST, T0)).toBe('Harvested'); // 10th
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(10);
-    expect(isExhausted(state, FOREST, T0)).toBe(true);
+    expect(tapCell(state, map, FOREST, T0)).toBe('Harvested'); // the last one
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(held);
+    expect(isExhausted(state, map, FOREST, T0)).toBe(true);
     expect(tapCell(state, map, FOREST, T0)).toBe('Exhausted');
     // Lazy recovery after recoverySeconds.
     const recoverAt = T0 + HARVEST.Forest.recoverySeconds * 1000;
-    expect(isExhausted(state, FOREST, recoverAt - 1)).toBe(true);
-    expect(isExhausted(state, FOREST, recoverAt)).toBe(false);
-    expect(tapFraction(state, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // taps reset
+    expect(isExhausted(state, map, FOREST, recoverAt - 1)).toBe(true);
+    expect(isExhausted(state, map, FOREST, recoverAt)).toBe(false);
+    expect(stockFraction(state, map, FOREST, HARVEST.Forest, recoverAt)).toBe(1); // depot refilled
     expect(tapCell(state, map, FOREST, recoverAt)).toBe('Harvested');
   });
 
@@ -56,25 +121,27 @@ describe('tapping', () => {
   // repeats are paced.
   it('manual taps are never gated — the player can tap as fast as they like', () => {
     const state = canGather(freshGame());
+    const perTap = tapYieldAt(state, map, FOREST, T0);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 1)).toBe('Harvested');
     expect(collectTap(state, map, FOREST, T0 + 2)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(3);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(3 * perTap);
   });
 
   it('held-pointer repeats wait out the auto-tap cooldown', () => {
     const state = canGather(freshGame());
     const cooldownMs = effectiveAutoTapCooldownMs(state);
+    const perTap = tapYieldAt(state, map, FOREST, T0);
     expect(collectTap(state, map, FOREST, T0)).toBe('Harvested');
     // The input layer retries every 100ms; those land as autoRepeat…
     expect(collectTap(state, map, FOREST, T0 + 100, true)).toBe('OnCooldown');
     expect(collectTap(state, map, FOREST, T0 + cooldownMs - 1, true)).toBe('OnCooldown');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(1); // nothing collected meanwhile
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(perTap); // nothing meanwhile
     // …and the first retry at/after the cooldown collects again.
     expect(collectTap(state, map, FOREST, T0 + cooldownMs, true)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(2);
-    // A failed collect (exhausted cell) does NOT reset the cooldown anchor.
-    for (let i = 0; i < 8; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // exhaust (10 taps total)
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(2 * perTap);
+    // A failed collect (an empty cell) does NOT reset the cooldown anchor.
+    for (let i = 0; i < 20; i++) tapCell(state, map, FOREST, T0 + cooldownMs); // drain it
     expect(collectTap(state, map, FOREST, T0 + 2 * cooldownMs, true)).toBe('Exhausted');
     expect(state.lastCollectTapAt).toBe(T0 + cooldownMs);
   });
@@ -84,6 +151,69 @@ describe('tapping', () => {
     // (2,5) is a tree beyond the Townhall's fog reveal radius (3).
     expect(tapCell(state, map, { x: 2, y: 5 }, T0)).toBe('NotRevealed');
     expect(tapCell(state, map, { x: 2, y: 0 }, T0)).toBe('NotHarvestable'); // revealed empty grass
+  });
+});
+
+// The ground under a cell decides how much is IN it. The multiplier lands on
+// the depot rather than on a single extraction, and it has to: a chunk is 1
+// unit on most cells and 1 x 0.75 rounds straight back to 1, so a percentage
+// on the chunk would be a no-op (04-harvest.md §2.3).
+describe('the ground under a cell', () => {
+  const cellOf = (kind: TerrainId): Coord | null =>
+    map.cells.find((c) => map.terrain.get(coordKey(c)) === kind) ?? null;
+
+  it('scales what a cell holds, by currency, and never below one unit', () => {
+    const state = freshGame();
+    for (const [kind, food, wood] of [
+      ['Grassland', 1.25, 1.25], ['Plains', 1, 1],
+      ['Desert', 0.5, 0.5], ['Snow', 0.75, 0.75], ['Tundra', 0.75, 1.5],
+    ] as const) {
+      const cell = cellOf(kind);
+      if (cell === null) continue; // the province may not paint every biome
+      expect(effectiveStock(map, cell, HARVEST.Forest), `${kind} wood`)
+        .toBe(Math.max(1, Math.round(HARVEST.Forest.stock * wood)));
+      expect(effectiveStock(map, cell, HARVEST.Crops), `${kind} food`)
+        .toBe(Math.max(1, Math.round(HARVEST.Crops.stock * food)));
+    }
+    void state;
+  });
+
+  it('is a DESERT that gives up stone: poor in food and wood, rich in rock', () => {
+    const sand = cellOf('Desert');
+    if (sand === null) return; // no desert painted yet
+    expect(effectiveStock(map, sand, HARVEST.Forest))
+      .toBeLessThan(HARVEST.Forest.stock);
+    expect(effectiveStock(map, sand, HARVEST.Stone))
+      .toBeGreaterThan(HARVEST.Stone.stock);
+  });
+
+  it('is a TUNDRA that pays in materials: hungry, and the best timber there is', () => {
+    const cold = cellOf('Tundra');
+    if (cold === null) return; // no tundra painted yet
+    expect(effectiveStock(map, cold, HARVEST.Crops))
+      .toBeLessThan(HARVEST.Crops.stock);
+    // Better timber than the grassland that grows the food, which is the whole
+    // trade: you go there for materials and you do not eat there.
+    const grass = cellOf('Grassland');
+    if (grass !== null) {
+      expect(effectiveStock(map, cold, HARVEST.Forest))
+        .toBeGreaterThan(effectiveStock(map, grass, HARVEST.Forest));
+    }
+    expect(effectiveStock(map, cold, HARVEST.Stone))
+      .toBeGreaterThan(HARVEST.Stone.stock);
+  });
+
+  it('leaves Water alone, because shoals sit on it and pay Food', () => {
+    const wet = cellOf('Water');
+    expect(wet).not.toBeNull();
+    expect(effectiveStock(map, wet!, HARVEST.Fish)).toBe(HARVEST.Fish.stock);
+  });
+
+  it('does not touch bedrock, which has no depot to scale', () => {
+    const sand = cellOf('Desert');
+    if (sand === null) return;
+    const bedrock = { ...HARVEST.Stone, stock: 0 };
+    expect(effectiveStock(map, sand, bedrock)).toBe(0);
   });
 });
 
@@ -106,8 +236,8 @@ describe('the energy a tap is paid from', () => {
     const state = canGather(freshGame());
     reveal(state, [FOREST]);
     // Exhaust it with the free primitive so the pool is untouched.
-    for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) tapCell(state, map, FOREST, T0);
-    expect(isExhausted(state, FOREST, T0)).toBe(true);
+    while (tapCell(state, map, FOREST, T0) === 'Harvested') { /* drain it */ }
+    expect(isExhausted(state, map, FOREST, T0)).toBe(true);
 
     const before = mana(state);
     expect(collectTap(state, map, FOREST, T0)).toBe('Exhausted');
@@ -127,7 +257,7 @@ describe('the energy a tap is paid from', () => {
   });
 });
 
-// Docs/onboarding.md steps 2-3, revised: Forestry gates BOTH the woods and
+// Docs/features/12-quests.md §2 (quests 2-3), revised: Forestry gates BOTH the woods and
 // the berry bushes, so during the first-time experience the only thing a
 // player can do is tap fog. That is the point — it is what stops Food (and
 // therefore a villager, and therefore rent) arriving before it is meant to,
@@ -185,6 +315,13 @@ describe('Forestry is the only door out of the opening', () => {
       Forest: 'Forestry',
       Berries: 'Forestry',
       Meat: 'Hunting',
+      // One landform, two depths of skill. A bare peak answers a pick from
+      // the first second — Scaling Tools sits in the Magic tome now, far too
+      // late to hold era-1 Stone — Mining gets the iron out of it and Deep
+      // Mining reaches the gold. One building works all three: the ladder is
+      // in the research, not in the buildings.
+      MountainIron: 'Mining',
+      MountainGold: 'DeepMining',
     });
   });
 });
@@ -247,5 +384,84 @@ describe('tapping a crop plot', () => {
     expect(getWallet(state.city.wallet, 'Food')).toBe(before);
     const district = state.city.districts.find((d) => d.definitionId === 'Barracks')!;
     expect(game.inspectedDistrictId).toBe(district.uniqueId);
+  });
+});
+
+// Mountains used to be a TERRAIN gated by Scaling Tools at REVEAL time. They
+// are a feature now, and the gate moved to WORKING one — the same shape
+// Forestry has on the forest, and for the same reason: the mountain is visible
+// and refusing from the first second, so the research is something the player
+// wants rather than a chore. Docs/features/01-map-and-fog.md §3. The bare
+// peak itself is free to tap since the tome tree (Scaling Tools sits in Magic
+// era 2, far too late to hold era-1 Stone); the gate that remains is on the
+// METAL.
+describe('an iron mountain does not answer a pick until Mining', () => {
+  /** Found rather than pinned: the region is repainted often, and a moved
+   *  mountain is not a broken gate. */
+  const someMountain = (kind: 'Mountain' | 'MountainIron' = 'Mountain'): Coord | null => {
+    for (const [key, feature] of [...map.initialFeatures].sort()) {
+      if (feature === kind) return parseCoordKey(key);
+    }
+    return null;
+  };
+
+  it('refuses the tap, charges no Mana, then works once researched', () => {
+    const peak = someMountain('MountainIron');
+    expect(peak, 'the map holds no MountainIron feature to test the gate with').not.toBeNull();
+    const state = freshGame();
+    reveal(state, [peak!]);
+
+    const before = mana(state);
+    expect(collectTap(state, map, peak!, T0)).toBe('TechLocked');
+    // A tap a technology refused is a tap that cost nothing.
+    expect(mana(state)).toBe(before);
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(0);
+
+    completeTech(state, 'Mining');
+    expect(collectTap(state, map, peak!, T0)).toBe('Harvested');
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(tapYieldAt(state, map, peak!, T0));
+    expect(mana(state)).toBe(before - TAP.manaCost);
+  });
+
+  it('gives out after five strikes and comes back on a timer', () => {
+    const peak = someMountain();
+    expect(peak).not.toBeNull();
+    const state = freshGame();
+    reveal(state, [peak!]);
+
+    const spec = HARVEST.Stone;
+    for (let i = 0; i < spec.stock; i++) {
+      expect(tapCell(state, map, peak!, T0), `strike ${i + 1}`).toBe('Harvested');
+    }
+    expect(isExhausted(state, map, peak!, T0)).toBe(true);
+    expect(tapCell(state, map, peak!, T0)).toBe('Exhausted');
+    expect(isExhausted(state, map, peak!, T0 + spec.recoverySeconds * 1000)).toBe(false);
+  });
+
+  // A rich node is throttled by how long it stays dead, not only by what it
+  // pays: iron and gold recover in five minutes against a bare peak's two.
+  // Written down because the value was silently halved once already, when
+  // MountainIron was created by copying the plain mountain's spec.
+  it('makes the metal mountains slower to come back than a bare one', () => {
+    expect(HARVEST.Stone.recoverySeconds).toBe(120);
+    expect(HARVEST.MountainIron.recoverySeconds).toBe(300);
+    expect(HARVEST.MountainGold.recoverySeconds).toBe(300);
+    // And a metal peak is RICHER as well as slower: more units in the ground,
+    // not merely a bigger number per swing.
+    expect(HARVEST.Stone.stock).toBe(5);
+    expect(HARVEST.MountainIron.stock).toBeGreaterThan(HARVEST.Stone.stock);
+    expect(HARVEST.MountainGold.stock).toBeGreaterThan(HARVEST.Stone.stock);
+  });
+
+  it('is worked by the Quarry — the one building that goes after every peak', () => {
+    // One building, three sources. The Mine was deleted rather than kept as a
+    // second quarry pointed at a second rock: what separates ordinary stone
+    // from metal is a technology, not a different shed.
+    expect(DISTRICTS.Quarry.harvestSources)
+      .toEqual(['Stone', 'MountainIron', 'MountainGold']);
+    expect(FEATURES.Mountain.source).toBe('Stone');
+    expect(FEATURES.MountainIron.source).toBe('MountainIron');
+    expect(FEATURES.MountainGold.source).toBe('MountainGold');
+    expect(Object.keys(DISTRICTS)).not.toContain('Mine');
   });
 });

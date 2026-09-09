@@ -38,10 +38,9 @@
         "Farm",
         "FarmLands",
         "Sawmill",
-        "Market",
+        null,
         "Quarry",
-        "Docks",
-        "Mine"
+        "Docks"
       ]
     },
     {
@@ -115,6 +114,25 @@
       ]
     },
     {
+      "file": "sheets/ui-h-goods.png",
+      "grid": {
+        "rows": 2,
+        "cols": 4
+      },
+      "fill": 0.92,
+      "names": [
+        "Planks",
+        "CutStone",
+        "Runestone",
+        "Carpenter",
+        "MasonsYard",
+        "Smelter",
+        "RuneCarver",
+        null
+      ],
+      "note": "The refined goods of the builder programme, and the four workshops that make them: a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel. The eighth cell was never drawn. Iron is NOT here: the ore icon from ui-a doubles as the ingot, which at 16px is the same picture."
+    },
+    {
       "file": "sheets/currencies-16.png",
       "dense": {
         "size": 16,
@@ -136,37 +154,223 @@
         null,
         "army"
       ]
+    },
+    {
+      "file": "icon_currency_silver_key.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "One hand-authored 16px key, its own file rather than a cell on a pack: the two keys were drawn separately and a two-cell sheet would only be a container. Dense, so it is point-doubled into the 32px grid untouched.",
+      "names": [
+        "SilverKey"
+      ]
+    },
+    {
+      "file": "icon_currency_golden_key.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "GoldKey"
+      ]
+    },
+    {
+      "file": "icon_currency_stardust.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "The collection currency. Drawn at 13px and padded to the 16px grid rather than resampled: 13 does not divide the 32px cell, and a rescale would have softened every pixel of it.",
+      "names": [
+        "Stardust"
+      ]
+    },
+    {
+      "file": "icon_ascendancy_star.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "ascension"
+      ]
+    },
+    {
+      "file": "icon_currency_xp.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "HeroXp"
+      ]
+    },
+    {
+      "file": "icon_hero_fragment.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "fragment"
+      ]
+    },
+    {
+      "file": "icon_stat_attack.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "atk"
+      ]
+    },
+    {
+      "file": "icon_stat_defense.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "def"
+      ]
+    },
+    {
+      "file": "icon_stat_hp.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "names": [
+        "hp"
+      ]
+    },
+    {
+      "file": "icon_gems.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "Hand-authored 16px. LISTED AFTER currencies-16, which is what makes it win: slices are written by name, so the last sheet to name a cell owns it.",
+      "names": [
+        "Gems"
+      ]
+    },
+    {
+      "file": "icon_quests.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "Supersedes the scroll in ui-c-symbols, by the same last-one-wins rule.",
+      "names": [
+        "quest"
+      ]
+    },
+    {
+      "file": "icon_settings.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "Supersedes the cog in ui-d-ui.",
+      "names": [
+        "settings"
+      ]
+    },
+    {
+      "file": "icon_relics.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "The Relics tab. It used to borrow the Mana orb, which now belongs to the pool alone — the gauge opens a Mana sheet of its own (08-magic.md §6).",
+      "names": [
+        "relics"
+      ]
+    },
+    {
+      "file": "icon_dungeon.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "A ruin mouth: the delve pill and anything that points underground. Was the quest scroll, which said \"an errand\" rather than \"a dungeon\".",
+      "names": [
+        "dungeon"
+      ]
+    },
+    {
+      "file": "icon_chest.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "The daily chest itself — the pill was borrowing the quest scroll.",
+      "names": [
+        "chest"
+      ]
+    },
+    {
+      "file": "icon_daily_rewards.png",
+      "dense": {
+        "size": 16,
+        "cols": 1
+      },
+      "note": "A calendar page: one rung of the daily ladder. The chest is the PRIZE and this is the DAY, which is why they are two cells.",
+      "names": [
+        "daily"
+      ]
     }
   ],
   "locked": {
     "except": [
-      "padlock",
-      "sparkle",
+      "atk",
+      "chest",
       "close",
-      "plus",
+      "daily",
+      "def",
+      "dungeon",
+      "fragment",
+      "hp",
       "minus",
-      "tick",
-      "unknown",
+      "padlock",
+      "plus",
+      "relics",
       "showme",
-      "star"
+      "sparkle",
+      "star",
+      "tick",
+      "unknown"
     ]
   },
   "tiny": {
     "only": [
-      "Gold",
-      "Food",
-      "Wood",
-      "Stone",
-      "Iron",
-      "Mana",
-      "Gems",
-      "Knowledge",
       "Berries",
       "Fish",
+      "Food",
+      "Gems",
+      "Gold",
+      "GoldKey",
+      "HeroXp",
+      "Iron",
+      "Knowledge",
+      "Mana",
       "Meat",
+      "SilverKey",
+      "Stardust",
+      "Stone",
+      "Wood",
+      "ascension",
+      "atk",
+      "builders",
+      "def",
+      "fragment",
+      "hp",
       "padlock",
       "population",
-      "builders",
       "workers"
     ]
   },

@@ -1,38 +1,47 @@
-// The Reliquary (Docs/features/magic.md §5) — where relics live.
+// The Reliquary (Docs/features/09-relics.md §7) — a grid of cards, and one
+// card opened.
 //
-// The screen has one job the HUD deliberately refuses to do: explain the Mana
-// arithmetic. The header shows a pool and ONE net rate, because
-// "+6/h base −4/h upkeep = +2/h" in a status bar is exactly the spreadsheet
-// chrome the redesign exists to kill. Here, where the player has asked, the
-// breakdown is the point.
+// It follows the roster (src/ui/heroesSheet.ts), because a relic and a hero
+// are the same shape of thing: a collection the player is filling in, where
+// the gaps are as much of the content as the pieces. A list of rows, each
+// carrying every button that relic has, put five decisions on screen at once
+// and gave the SOCKETS — the constraint the whole magic design turns on —
+// less room than the least of them.
 //
-// The other job is to make the SLOT feel like the constraint. Sockets come
-// first, before the collection, and an empty one reads as an opportunity
-// rather than an absence — because the decision the whole magic design turns
-// on is which passive you are willing to go without.
+// So: sockets first and large, then three cards to a row, and the decision a
+// card carries lives behind it. Two views, one overlay — the nav tab stays
+// put and `game.openRelicId` decides which of them draws. That lives on the
+// presenter for the reason `openHeroId` does: it survives the per-tick
+// rebuild and it is node-testable.
+//
+// THE SCREEN DOES REBUILD ON THE TICK, unlike the roster: a settling socket
+// counts down on it. Five relics is five images, not thirty-two.
+//
+// Heroes used to be a second tab here. They left on 2026-09-08 for a nav tab
+// of their own: the two share one collection LADDER, which was the argument
+// for one screen, but they do not share a job. The Mana arithmetic left the
+// same day, for the Mana sheet (src/ui/manaSheet.ts) — this screen neither
+// spends the pool nor fills it.
 
 import {
-  ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, HEROES, RUINS,
+  ARTIFACTS, ARTIFACT_ORDER, ATTUNEMENT, COLLECTION, RUINS,
 } from '../sim/data/definitions';
-import { heroIsBusy } from '../sim/expeditions';
-import {
-  heroChanceAt, heroStats, pityCount, pullCost, pullsToGuarantee, rosterView, STANDARD_BANNER,
-} from '../sim/heroes';
 import {
   artifactEntry, attunementSlotGemCost, attunementSlots, isAttuned, isSlotLocked,
   ownsArtifact, passiveValue, slotUnlocksIn,
 } from '../sim/artifacts';
 import { castBlock } from '../sim/casting';
 import { levelCapForTier, levelCost, tierCost } from '../sim/collection';
-import { manaRefillGemCost } from '../sim/mana';
 import { resourceDiscoveryKey } from '../sim/discovery';
 import { spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
-import { action, btn, card, iconEl, pips, progress, sheet, stat } from './kit';
+import { action, btn, iconEl, knob, pips, sheet, type ActionOpts } from './kit';
 
-/** Relic art at card size — sprite if it exists, glyph if not. */
+/** Relic art — sprite if it exists, glyph if not. Every relic's sheet is a
+ *  128² square, so it is contained in whatever box it is given and the five
+ *  line up across a row whatever that box is. */
 function relicArt(id: ArtifactId, locked: boolean): HTMLElement {
   const def = ARTIFACTS[id];
   const url = spriteUrl(def.sprite);
@@ -53,77 +62,69 @@ function passiveLabel(game: Game, id: ArtifactId): string {
   return `${def.passiveText} (+${n})`;
 }
 
-// ------------------------------------------------------------------ the pool
-
-function manaPanel(game: Game): HTMLElement {
-  const m = game.manaInfo();
-  const bar = progress('sky');
-  bar.set(m.cap === 0 ? 0 : m.value / m.cap, `${m.value} / ${m.cap}`);
-
-  const refillCost = manaRefillGemCost(game.state);
-  // One line, not three. The breakdown existed to reconcile production against
-  // relic upkeep; nothing draws against the pool any more, so a subtraction
-  // that always reads "−0/h" is exactly the spreadsheet chrome this screen was
-  // built to remove.
-  const rows = el('div', { class: 'rel-breakdown' },
-    el('div', { class: 'rel-line is-total' },
-      el('span', {}, 'Drawn from the land'),
-      el('b', {}, `+${m.production}/h`)),
-  );
-
-  return el('div', { class: 'rel-mana' },
-    el('div', { class: 'rel-mana-head' },
-      iconEl('Mana', { size: 'lg' }),
-      el('div', { class: 'rel-mana-title' }, 'Mana'),
-      el('div', { class: 'rel-mana-hint' }, m.over
-        ? `Overcharged — ${m.value - m.cap} past the ceiling`
-        : m.value >= m.cap
-          ? 'Full — anything more is spilling'
-          : `Full in about ${formatDuration(((m.cap - m.value) / Math.max(1, m.net)) * 3600)}`)),
-    bar.root,
-    rows,
-    refillCost > 0
-      ? action({
-        label: 'Refill',
-        kind: 'gem',
-        onClick: () => game.doRefillMana(),
-        cost: { Gems: refillCost },
-        have: (c) => game.walletValue(c),
-      })
-      : el('div', { class: 'rel-note' }, 'The pool is full.'),
-  );
+/** Can this relic take a level or a tier right now? The tile's green mark —
+ *  the grid's job is to point at the one card worth opening, which is the
+ *  same job the roster's does. */
+function ready(game: Game, id: ArtifactId): boolean {
+  if (!ownsArtifact(game.state, id)) return false;
+  const entry = artifactEntry(game.state, id);
+  const canStudy = entry.level < levelCapForTier(entry.tier)
+    && entry.level < COLLECTION.maxLevel
+    && game.walletValue('Stardust') >= levelCost(entry.level);
+  const canRaise = entry.tier < COLLECTION.maxTier
+    && entry.fragments >= tierCost(entry.tier);
+  return canStudy || canRaise;
 }
 
-// ------------------------------------------------------------- the Knowledge
+// -------------------------------------------------------------- the Stardust
 
 /**
  * The purse for this screen.
  *
- * Knowledge is the one currency with no coin on the plank: it buys levels for
- * relics and heroes and nothing else, so it reads here, beside the Study
- * buttons that spend it, the way Fragments do. A price with no purse in sight
- * is the same bug as a purse with nothing to spend it on — this is the half
- * that has to be here.
+ * Stardust has no coin on the plank: it buys levels for relics and heroes and
+ * nothing else, so it reads here, beside the Study buttons that spend it, the
+ * way Fragments do. The roster screen carries the same line, for the same
+ * reason — a price with no purse in sight is a bug on whichever screen the
+ * price is on.
  *
- * It is hidden until the player has met it. Knowledge only ever comes out of
- * a dungeon or a banner, so a zero row would advertise a system they have not
- * reached yet.
+ * It is hidden until the player has met it. Stardust only ever comes out of a
+ * dungeon or a banner, so a zero row would advertise a system they have not
+ * reached yet. (Knowledge used to be this currency; it is the research clock
+ * now and reads in the Research screen — 07-research.md §4.)
  */
-function knowledgePanel(game: Game): HTMLElement | null {
-  const held = game.walletValue('Knowledge');
-  if (held === 0 && game.state.discoveries[resourceDiscoveryKey('Knowledge')] !== true) {
+function stardustPanel(game: Game): HTMLElement | null {
+  const held = game.walletValue('Stardust');
+  if (held === 0 && game.state.discoveries[resourceDiscoveryKey('Stardust')] !== true) {
     return null;
   }
   return el('div', { class: 'rel-purse' },
-    iconEl('Knowledge', { size: 'lg' }),
+    iconEl('Stardust', { size: 'lg' }),
     el('div', { class: 'rel-purse-body' },
-      el('div', { class: 'rel-purse-title' }, 'Knowledge'),
+      el('div', { class: 'rel-purse-title' }, 'Stardust'),
       el('div', { class: 'rel-purse-hint' }, 'Won from dungeons and the banner')),
     el('b', { class: 'rel-purse-value' }, String(held)));
 }
 
 // ----------------------------------------------------------------- the slots
 
+/**
+ * THE SOCKETS, as a row of boxes with a line under each.
+ *
+ * Three states, and the next one to buy is a FOURTH BOX rather than a button
+ * under the row — the shape the research desks and the expedition's hero
+ * slots already use. The thing being bought is a socket, so it is drawn as
+ * one, and the Gems it costs read where the other sockets' names do.
+ *
+ *   empty    — drawn open, an invitation
+ *   filled   — the relic's art, and tapping it opens that relic's card
+ *   to buy   — the gem tone, the plus, and the price underneath
+ *
+ * Either of the first two can also be SETTLING from a swap, which is a wait
+ * on the socket rather than a fourth state of it.
+ *
+ * A filled socket has no Remove on it any more. Wearing and taking off are
+ * one decision about one relic, and that decision lives on the relic's card.
+ */
 function slots(game: Game): HTMLElement {
   const now = game.now();
   const count = attunementSlots(game.state);
@@ -131,30 +132,59 @@ function slots(game: Game): HTMLElement {
 
   for (let i = 0; i < count; i++) {
     const worn = game.state.artifacts.attuned[i] ?? null;
-    const locked = isSlotLocked(game.state, i, now);
-    const socket = el('button', {
-      class: `rel-socket${worn ? ' is-filled' : ''}${locked ? ' is-locked' : ''}`,
+    const settling = isSlotLocked(game.state, i, now)
+      ? formatDuration(slotUnlocksIn(game.state, i, now))
+      : null;
+
+    // AN EMPTY SOCKET CAN STILL BE SETTLING — that is what taking a relic off
+    // leaves behind. Its line says how long rather than "Empty", so the wait
+    // is read here instead of discovered by pressing Attune on a card.
+    if (worn === null) {
+      row.append(el('div', { class: `rel-slot is-free${settling ? ' is-settling' : ''}` },
+        el('div', { class: 'rel-socket' }, el('span', { class: 'rel-socket-empty' }, '◇')),
+        settling === null
+          ? el('div', { class: 'rel-slot-note' }, 'Empty')
+          : el('div', { class: 'rel-slot-note' },
+            iconEl('hourglass', { size: 'sm' }), settling)));
+      continue;
+    }
+
+    const box = el('button', {
+      class: 'rel-socket is-filled',
       type: 'button',
-      'aria-label': worn ? `Remove ${ARTIFACTS[worn].name}` : 'Empty socket',
+      'aria-label': `Open ${ARTIFACTS[worn].name}`,
+    }, relicArt(worn, false));
+    // A filled socket's line is already spoken for by the relic's name, so its
+    // wait rides on the box.
+    if (settling !== null) {
+      box.append(el('span', { class: 'rel-socket-settle' },
+        iconEl('hourglass', { size: 'sm' }), settling));
+    }
+    box.addEventListener('click', () => {
+      game.openRelicId = worn;
+      game.notify();
     });
-    if (worn) {
-      socket.append(relicArt(worn, false), el('span', { class: 'rel-socket-name' }, ARTIFACTS[worn].name));
-      socket.addEventListener('click', () => game.doAttune(i, null));
-    } else {
-      socket.append(
-        el('span', { class: 'rel-socket-empty' }, '◇'),
-        el('span', { class: 'rel-socket-name' }, 'Empty'));
-      socket.disabled = true;
-    }
-    if (locked) {
-      socket.append(el('span', { class: 'rel-socket-lock' },
-        iconEl('hourglass', { size: 'sm' }), `${Math.ceil(slotUnlocksIn(game.state, i, now))}s`));
-    }
-    row.append(socket);
+    row.append(el('div', { class: 'rel-slot is-filled' },
+      box,
+      el('div', { class: 'rel-slot-note' }, ARTIFACTS[worn].name)));
   }
 
-  const gemCost = attunementSlotGemCost(game.state);
-  const body = el('div', { class: 'rel-section' },
+  if (count < ATTUNEMENT.maxSlots) {
+    const cost = attunementSlotGemCost(game.state);
+    const short = game.walletValue('Gems') < cost;
+    const box = el('button', {
+      class: `rel-socket is-buy${short ? ' is-short' : ''}`,
+      type: 'button',
+      'aria-label': `Open another socket for ${cost} Gems`,
+    }, iconEl('plus', { size: 'md' }));
+    box.addEventListener('click', () => game.doBuyAttunementSlot());
+    row.append(el('div', { class: 'rel-slot is-buy' },
+      box,
+      el('div', { class: `rel-slot-note${short ? ' is-short' : ''}` },
+        iconEl('Gems', { size: 'sm' }), String(cost))));
+  }
+
+  return el('div', { class: 'rel-section' },
     el('div', { class: 'rel-heading' },
       el('span', {}, 'Attuned'),
       el('span', { class: 'rel-heading-note' }, `${count} of ${ATTUNEMENT.maxSlots} sockets`)),
@@ -163,124 +193,218 @@ function slots(game: Game): HTMLElement {
       'A relic works while you wear it. Swapping takes hold at once, then the '
       + `socket settles for ${Math.round(ATTUNEMENT.swapLockSeconds / 60)} minutes.`),
   );
-
-  if (count < ATTUNEMENT.maxSlots) {
-    body.append(action({
-      label: 'Open a socket',
-      kind: 'gem',
-      onClick: () => game.doBuyAttunementSlot(),
-      cost: { Gems: gemCost },
-      have: (c) => game.walletValue(c),
-    }));
-  }
-  return body;
 }
 
-// ------------------------------------------------------------ the collection
+// ------------------------------------------------------------------ the grid
 
-function relicCard(game: Game, id: ArtifactId): HTMLElement {
+function tile(game: Game, id: ArtifactId): HTMLElement {
   const def = ARTIFACTS[id];
   const owned = ownsArtifact(game.state, id);
   const entry = artifactEntry(game.state, id);
   const worn = isAttuned(game.state, id);
 
-  if (!owned) {
+  const t = el('button', {
+    class: `rel-tile${owned ? '' : ' is-locked'}${worn ? ' is-worn' : ''}`,
+    type: 'button',
+    'aria-label': def.name,
+  }, relicArt(id, !owned));
+
+  if (owned) {
+    t.append(el('span', { class: 'rel-tile-foot' },
+      el('span', { class: 'rel-tile-name' }, def.name),
+      el('span', { class: 'rel-tile-line' },
+        el('span', { class: 'rel-tile-level' }, `Lv ${entry.level}`),
+        pips(entry.tier, COLLECTION.maxTier))));
+    // Worn beats ready: a relic in a socket is where the player put it, and a
+    // green plus on it would read as a second thing to do about the same card.
+    if (worn) {
+      t.append(el('span', { class: 'rel-tile-worn' }, iconEl('tick', { size: 'sm' })));
+    } else if (ready(game, id)) {
+      t.append(el('span', { class: 'rel-tile-ready' }, iconEl('plus', { size: 'sm' })));
+    }
+  } else {
     // An unfound relic is a SIGNPOST, not a locked box: it names the ruin, so
-    // the fog has somewhere specific to go.
-    return card({
-      art: relicArt(id, true),
-      name: def.name,
-      desc: `Waiting in ${RUINS[def.source].name}`,
-      locked: true,
-    }, el('span', { class: 'rel-locked-tag' }, iconEl('padlock', { size: 'sm' })));
+    // the fog has somewhere specific to go. Same treatment the roster's gaps
+    // get, and the reason the card behind it opens too.
+    t.append(el('span', { class: 'rel-tile-foot is-where' },
+      el('span', { class: 'rel-tile-name' }, def.name),
+      el('span', { class: 'rel-tile-line' },
+        iconEl('padlock', { size: 'sm' }), RUINS[def.source].name)));
   }
 
-  const body = el('div', { class: 'rel-card' },
-    el('div', { class: 'rel-card-head' },
-      relicArt(id, false),
-      el('div', {},
-        el('div', { class: 'rel-name' }, def.name),
-        el('div', { class: 'rel-tier' },
-          pips(entry.tier, COLLECTION.maxTier),
-          el('span', {}, `Level ${entry.level} / ${levelCapForTier(entry.tier)}`)))),
+  t.addEventListener('click', () => {
+    game.openRelicId = id;
+    game.notify();
+  });
+  return t;
+}
+
+function collection(game: Game): HTMLElement {
+  const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
+  const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
+  // Owned first, then the gaps, both in roster order — the sort the reference
+  // screens reach a dropdown for, and it needs no control at all.
+  const ordered = [...owned, ...missing];
+
+  const relics = el('div', { class: 'rel-section' },
+    el('div', { class: 'rel-heading' },
+      el('span', {}, 'Relics'),
+      el('span', { class: 'rel-heading-note' },
+        `${owned.length} of ${ARTIFACT_ORDER.length} found`)),
+    ...(owned.length === 0
+      ? [el('div', { class: 'rel-note' },
+        `Relics are won from ruins. There are ${Object.keys(RUINS).length} out there, `
+        + 'and each holds exactly one — no luck involved.')]
+      : []),
+    el('div', { class: 'rel-grid' }, ...ordered.map((id) => tile(game, id))),
+  );
+
+  const purse = stardustPanel(game);
+  return el('div', { class: 'rel' },
+    ...(purse === null ? [] : [purse]),
+    slots(game),
+    relics,
+  );
+}
+
+// ---------------------------------------------------------------- the detail
+
+/** Step to the relic before or after this one, wrapping. Comparing two
+ *  passives is most of what the card is for, and a trip back through the grid
+ *  to do it is three taps where this is one. */
+function step(id: ArtifactId, by: 1 | -1): ArtifactId {
+  const i = ARTIFACT_ORDER.indexOf(id);
+  return ARTIFACT_ORDER[(i + by + ARTIFACT_ORDER.length) % ARTIFACT_ORDER.length]!;
+}
+
+function detail(game: Game, id: ArtifactId): HTMLElement {
+  const def = ARTIFACTS[id];
+  const owned = ownsArtifact(game.state, id);
+  const entry = artifactEntry(game.state, id);
+  const worn = isAttuned(game.state, id);
+  const now = game.now();
+
+  // A CLOSE, top-right, where every sheet in the game puts one. The card is a
+  // modal over the grid, and the two arrows own the other corners.
+  const close = knob('✕', () => { game.openRelicId = null; game.notify(); }, {
+    label: 'Close',
+  });
+  close.classList.add('rel-close');
+
+  const arrow = (by: 1 | -1) => knob(by === 1 ? '›' : '‹', () => {
+    game.openRelicId = step(id, by);
+    game.notify();
+  }, { label: by === 1 ? 'Next relic' : 'Previous relic' });
+
+  const stage = el('div', { class: `rel-stage${worn ? ' is-worn' : ''}` },
+    close,
+    ...(worn ? [el('span', { class: 'rel-stage-worn' },
+      iconEl('tick', { size: 'sm' }), 'Attuned')] : []),
+    arrow(-1),
+    relicArt(id, !owned),
+    arrow(1),
+    el('div', { class: 'rel-stage-foot' }, pips(entry.tier, COLLECTION.maxTier)),
+  );
+
+  const body = el('div', { class: 'rel' },
+    stage,
+    el('div', { class: 'rel-title' },
+      el('div', { class: 'rel-detail-name' }, def.name),
+      el('div', { class: 'rel-detail-sub' },
+        owned
+          ? `Level ${entry.level} of ${levelCapForTier(entry.tier)}`
+          : `Waiting in ${RUINS[def.source].name}`)),
     el('div', { class: 'rel-passive' },
       iconEl('sparkle', { size: 'sm' }), passiveLabel(game, id)),
   );
-
-  // Attune OR arm. A relic underground has to SAY so on the card: `btn()` is
-  // the button without its reason line, so a disabled Attune alone would grey
-  // out with no answer to "where did my relic go?". The upkeep line above is
-  // also a half-truth while it is away — carrying costs no Mana — so the
-  // status line corrects it.
-  const bearer = game.state.delves.find((d) => d.artifactId === id);
-  if (bearer) {
-    body.append(el('div', { class: 'rel-carried' },
-      iconEl('army', { size: 'sm' }),
-      `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
-      + ' — it draws no Mana while it is away.'));
-  }
 
   if (def.active) {
     body.append(el('div', { class: 'rel-active' },
       el('div', { class: 'rel-active-name' }, def.active.name),
       el('div', { class: 'rel-active-text' }, def.active.text)));
   } else {
-    // Stated, not hidden: the slot rather than the ability is the constraint,
-    // and this relic is the clearest proof of it.
-    body.append(el('div', { class: 'rel-note' }, 'No ability — it simply works, always.'));
+    // Stated, not hidden: the socket rather than the ability is the
+    // constraint, and this relic is the clearest proof of it.
+    body.append(el('div', { class: 'rel-note' }, 'No spell — it simply works, always.'));
   }
 
-  const controls = el('div', { class: 'rel-controls' });
+  // AN UNFOUND RELIC GETS THE SAME CARD, for the reason an unfound hero does:
+  // what the player is deciding is whether to go and get this one, and that
+  // is a question about the passive above — not about a button it has not
+  // earned yet.
+  if (!owned) {
+    body.append(el('div', { class: 'rel-note' },
+      `Clear ${RUINS[def.source].name} to the bottom and it is yours. `
+      + 'Each ruin holds exactly one — no luck involved.'));
+    return body;
+  }
 
-  // Wear / remove.
+  // ATTUNE OR LEAVE IT ON THE SHELF, and nothing is ever away: a relic goes
+  // into a room and comes back out of it in the same instant, so the only
+  // socket that can hold one is the kingdom's
+  // (Docs/features/11-expeditions.md §5).
+  const controls = el('div', { class: 'rel-controls' });
   const slotIndex = game.state.artifacts.attuned.indexOf(id);
   const freeSlot = game.state.artifacts.attuned.indexOf(null);
-  const now = game.now();
+
+  // The two live side by side, so neither can carry `action()`'s reason slot.
+  // They share ONE line under the row instead, and a reason both of them give
+  // is printed once — the shape the Mana sheet's two routes already use.
+  const options: ActionOpts[] = [];
   if (worn) {
-    controls.append(btn({
+    options.push({
       label: 'Remove',
       onClick: () => game.doAttune(slotIndex, null),
       disabledReason: isSlotLocked(game.state, slotIndex, now)
         ? 'That socket is still settling' : undefined,
-    }));
+    });
   } else {
-    controls.append(btn({
+    options.push({
       label: 'Attune',
       kind: 'primary',
       onClick: () => game.doAttune(freeSlot, id),
-      disabledReason: bearer
-        ? `${HEROES[bearer.heroId].name} carries it, at depth ${bearer.depth}`
-        : freeSlot === -1
-          ? 'Every socket is full'
-          : isSlotLocked(game.state, freeSlot, now)
-            ? 'That socket is still settling'
-            : undefined,
-    }));
+      disabledReason: freeSlot === -1
+        ? 'Every socket is full'
+        : isSlotLocked(game.state, freeSlot, now)
+          ? 'That socket is still settling'
+          : undefined,
+    });
   }
 
   if (def.active) {
     const block = castBlock(game.state, id);
-    controls.append(btn({
+    options.push({
       label: `Cast ${def.active.name}`,
       onClick: () => game.startCast(id),
       // The Mana price used to live ONLY in the blocked reason, so it was
       // visible exactly when it could not be paid and invisible the rest of
-      // the time. Inside the button it is always readable.
+      // the time. Inside the button it is always readable — and because the
+      // red number is itself a reason, being unable to afford it says nothing
+      // on the line below.
       cost: { Mana: def.active.manaCost },
       have: (c) => game.walletValue(c),
       disabledReason: block === 'NotAttuned' ? 'Wear it first' : undefined,
-    }));
+    });
   }
+  controls.append(...options.map((o) => btn(o)));
   body.append(controls);
 
-  // Levelling: Knowledge buys levels, Fragments raise the ceiling.
+  const reasons = [...new Set(
+    options.map((o) => o.disabledReason).filter((r): r is string => r !== undefined),
+  )];
+  if (reasons.length > 0) {
+    body.append(el('div', { class: 'rel-blocked' },
+      iconEl('padlock', { size: 'sm' }), reasons.join(' · ')));
+  }
+
+  // Levelling: Stardust buys levels, Fragments raise the ceiling.
   const atLevelCap = entry.level >= levelCapForTier(entry.tier);
   const maxed = entry.level >= COLLECTION.maxLevel;
   if (!maxed) {
     body.append(action({
       label: 'Study',
       onClick: () => game.doLevelArtifact(id),
-      cost: { Knowledge: levelCost(entry.level) },
+      cost: { Stardust: levelCost(entry.level) },
       have: (c) => game.walletValue(c),
       disabledReason: atLevelCap
         ? 'Its tier holds it back — raise it with Fragments'
@@ -304,192 +428,30 @@ function relicCard(game: Game, id: ArtifactId): HTMLElement {
         : undefined,
     }));
   }
-  return el('div', { class: 'rel-entry' }, body);
+  return body;
 }
-
-// -------------------------------------------------------------- the heroes
-//
-// Heroes and relics are TWO TABS OF ONE SCREEN because they share one set of
-// rules — Fragments raise a tier cap, Knowledge buys levels within it. Two
-// screens would teach the player the same lesson twice and neither would feel
-// special.
-
-function heroCard(game: Game, view: ReturnType<typeof rosterView>[number]): HTMLElement {
-  const hero = HEROES[view.id];
-  const stats = heroStats(game.state, view.id);
-  const busy = heroIsBusy(game.state, view.id);
-
-  const art = spriteUrl(hero.sprite);
-
-  if (!view.owned) {
-    // The SILHOUETTE, desaturated — not a stand-in glyph. A locked hero the
-    // player can already see is something to want; a padlock over a box is
-    // not. Same treatment the locked relics get.
-    return card({
-      art: art
-        ? el('img', { class: 'rel-art is-locked', src: art, alt: '' })
-        : el('div', { class: 'rel-art rel-art--glyph is-locked' }, hero.glyph),
-      name: hero.name,
-      desc: view.entry.fragments > 0
-        ? 'Not yet found — their fragments are adding up'
-        : 'Not yet found — the banner might bring them',
-      locked: true,
-    }, el('span', { class: 'rel-frag' },
-      iconEl('sparkle', { size: 'sm' }),
-      `${view.entry.fragments}`));
-  }
-  const body = el('div', { class: 'rel-card' },
-    el('div', { class: 'rel-card-head' },
-      art ? el('img', { class: 'rel-art', src: art, alt: '' })
-        : el('div', { class: 'rel-art rel-art--glyph' }, hero.glyph),
-      el('div', {},
-        el('div', { class: 'rel-name' }, hero.name),
-        el('div', { class: 'rel-tier' },
-          pips(view.entry.tier, COLLECTION.maxTier),
-          el('span', {}, `Level ${view.entry.level} / ${view.levelCap}`)))),
-    el('div', { class: 'rel-passive' }, iconEl('sparkle', { size: 'sm' }), hero.traitText),
-    el('div', { class: 'rel-hero-stats' },
-      stat('army', String(stats.atk), 'atk'),
-      stat('padlock', String(stats.def), 'def'),
-      stat('population', String(stats.hp), 'hp'),
-      stat(hero.unitType, hero.unitType, 'fights as')),
-    ...(busy ? [el('div', { class: 'rel-note' }, 'Currently underground.')] : []),
-  );
-
-  if (view.entry.level < COLLECTION.maxLevel) {
-    const cost = levelCost(view.entry.level);
-    body.append(action({
-      label: 'Train',
-      onClick: () => game.doLevelHero(view.id),
-      cost: { Knowledge: cost },
-      have: (c) => game.walletValue(c),
-      disabledReason: view.entry.level >= view.levelCap
-        ? 'Their tier holds them back — raise it with Fragments'
-        : undefined,
-    }));
-  }
-  if (view.entry.tier < COLLECTION.maxTier) {
-    body.append(action({
-      label: 'Raise their tier',
-      onClick: () => game.doRaiseHeroTier(view.id),
-      costExtra: [{
-        icon: 'sparkle',
-        amount: `${view.entry.fragments} / ${tierCost(view.entry.tier)}`,
-        short: view.entry.fragments < tierCost(view.entry.tier),
-      }],
-      info: view.entry.fragments < tierCost(view.entry.tier)
-        ? 'Pull for them, or delve again' : undefined,
-    }));
-  }
-  return el('div', { class: 'rel-entry' }, body);
-}
-
-/**
- * The banner. Reachable from the reliquary rather than from the nav bar,
- * deliberately: a gacha with its own permanent tab is a different game from
- * the one this is.
- *
- * The pity counter is ALWAYS visible. A hidden pity counter is the same as no
- * pity counter — it is the single thing that makes a gacha read as fair rather
- * than predatory, and it only works if the player can see it working.
- */
-function bannerPanel(game: Game): HTMLElement {
-  const cost = pullCost(game.state, STANDARD_BANNER);
-  const pity = pityCount(game.state, STANDARD_BANNER);
-  const toGuarantee = pullsToGuarantee(game.state, STANDARD_BANNER);
-  const chance = heroChanceAt(pity);
-
-  return el('div', { class: 'rel-banner' },
-    el('div', { class: 'rel-banner-head' },
-      iconEl('Gems', { size: 'lg' }),
-      el('div', {},
-        el('div', { class: 'rel-mana-title' }, 'Call for aid'),
-        el('div', { class: 'rel-mana-hint' },
-          'Every miss still pays fragments. There are no wasted calls.'))),
-    el('div', { class: 'rel-breakdown' },
-      el('div', { class: 'rel-line' },
-        el('span', {}, 'Chance of a hero right now'),
-        el('b', {}, `${Math.round(chance * 100)}%`)),
-      el('div', { class: 'rel-line is-total' },
-        el('span', {}, 'Guaranteed within'),
-        el('b', {}, `${toGuarantee} call${toGuarantee === 1 ? '' : 's'}`))),
-    callAction(game, cost),
-    el('div', { class: 'rel-note' },
-      'Heroes can also be found by delving: fragments come back from every ruin, '
-      + 'and enough of them raise anyone you already have.'),
-  );
-}
-
-/** The summon button, split out so the quest hint can light it — `action()`
- *  builds a whole row, so the class goes on afterwards rather than through a
- *  new option nothing else would use. */
-function callAction(game: Game, cost: number): HTMLElement {
-  const row = action({
-    // A price of zero is not a price. The free first call says so on the
-    // button rather than rendering "0 💎", which reads as a bug.
-    label: cost === 0 ? 'Call — free' : 'Call',
-    kind: 'gem',
-    onClick: () => game.doPull(),
-    cost: cost === 0 ? undefined : { Gems: cost },
-    have: (c) => game.walletValue(c),
-  });
-  if (game.uiHint() === 'banner') row.classList.add('hinted');
-  return row;
-}
-
-/** Which tab is open. Module-level so it survives the per-tick rebuild — the
- *  same reason the market's amount selector lives outside its render. */
-let openTab: 'relics' | 'heroes' = 'relics';
 
 export function renderReliquarySheet(game: Game): HTMLElement {
-  // "Go summon a hero" has to LAND on the banner. The sheet remembers its tab
-  // across rebuilds, so a quest that points here would otherwise open on
-  // whatever the player last looked at — usually the relics.
-  if (game.uiHint() === 'banner') openTab = 'heroes';
-  const owned = ARTIFACT_ORDER.filter((id) => ownsArtifact(game.state, id));
-  const missing = ARTIFACT_ORDER.filter((id) => !ownsArtifact(game.state, id));
-
-  const tabs = el('div', { class: 'rel-tabs' },
-    ...(['relics', 'heroes'] as const).map((tab) => {
-      const b = el('button', {
-        class: `rel-tab${openTab === tab ? ' is-active' : ''}`, type: 'button',
-      }, tab === 'relics' ? 'Relics' : 'Heroes');
-      b.addEventListener('click', () => {
-        openTab = tab;
-        game.notify();
-      });
-      return b;
-    }));
-
-  const relics = el('div', { class: 'rel-section' },
-    el('div', { class: 'rel-heading' },
-      el('span', {}, 'Relics'),
-      el('span', { class: 'rel-heading-note' },
-        `${owned.length} of ${ARTIFACT_ORDER.length} found`)),
-    ...(owned.length === 0
-      ? [el('div', { class: 'rel-note' },
-        `Relics are won from ruins. There are ${Object.keys(RUINS).length} out there, `
-        + 'and each holds exactly one — no luck involved.')]
-      : owned.map((id) => relicCard(game, id))),
-    ...missing.map((id) => relicCard(game, id)));
-
-  const roster = rosterView(game.state);
-  const heroes = el('div', { class: 'rel-section' },
-    el('div', { class: 'rel-heading' },
-      el('span', {}, 'Heroes'),
-      el('span', { class: 'rel-heading-note' },
-        `${roster.filter((h) => h.owned).length} of ${roster.length} found`)),
-    ...roster.map((view) => heroCard(game, view)),
-    bannerPanel(game));
-
-  const purse = knowledgePanel(game);
-  const body = el('div', { class: 'rel' },
-    manaPanel(game),
-    ...(purse === null ? [] : [purse]),
-    slots(game),
-    tabs,
-    openTab === 'relics' ? relics : heroes,
+  // A relic the save no longer knows cannot be open — the roster is fixed,
+  // but a reset save is not, and a stale id would draw a card for nothing.
+  if (game.openRelicId !== null && !(game.openRelicId in ARTIFACTS)) game.openRelicId = null;
+  const open = game.openRelicId;
+  if (open === null) {
+    return sheet({ title: 'Reliquary', onClose: () => game.dismiss() }, collection(game));
+  }
+  // The card is BARE: its art and its name are the title, and a plank above
+  // them would print the name twice. The close knob on the stage is the way
+  // back, and tapping beside the sheet still closes the screen.
+  return sheet(
+    {
+      title: ARTIFACTS[open].name,
+      onClose: () => game.dismiss(),
+      bare: true,
+      // Centred, not anchored to the bottom edge. A drawer is something you
+      // pull up over a screen you are still working with; the card is the
+      // whole of what the player is doing, so it sits in the middle.
+      centred: true,
+    },
+    detail(game, open),
   );
-
-  return sheet({ title: 'Reliquary', onClose: () => game.dismiss() }, body);
 }

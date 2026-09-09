@@ -1,4 +1,4 @@
-// Landmarks (Docs/features/magic.md §4): small, numerous, passive map sites
+// Landmarks (Docs/features/08-magic.md §3): small, numerous, passive map sites
 // that raise Mana CAPACITY permanently when claimed.
 //
 // They are what makes exploration compound rather than merely pay:
@@ -16,18 +16,18 @@
 // being the primary economic sink — the sink has to buy something that makes
 // the next stretch of it cheaper.
 //
-// Claiming comes in two flavours, which is what keeps them from being a
-// formality:
-//
-//  - UNDEFENDED — a one-off Gold cost scaling with distance. A pure economic
-//    decision, and another sink on the fog's own curve.
-//  - DEFENDED — an enemy army holds it. Clear the encounter, then claim. This
-//    gives combat a second job outside dungeons, and it is a ONE-OFF encounter
-//    rather than a permanent commitment: the army is never locked up holding
-//    ground.
+// A sanctuary is claimed for GOLD and nothing else — an authored price, and
+// another sink on the fog's own curve. Nothing holds one: the fight with a
+// clock belongs to the ruins, where a garrison camps on the door and raids
+// the city until a party clears it (sim/gates.ts). A defended landmark was
+// a second, weaker copy of that encounter, so it was deleted rather than
+// built (Docs/features/18-garrisons-and-raids.md §9).
 
-import { FOG, LANDMARKS, type LandmarkDef } from './data/definitions';
+import { FOG, KNOWLEDGE, LANDMARKS, type LandmarkDef } from './data/definitions';
+import { recordResourceDiscovery } from './discovery';
 import { fogState, recordVisibleSites } from './fog';
+import { resolve } from './modifiers';
+import { techValue } from './techEffects';
 import { cellsWithinRadiusOfRect, type MapData } from './grid';
 import { allLandmarkCells, landmarkDefAt } from './sites';
 import { addToWallet, coordKey, getWallet, type Coord, type GameState } from './state';
@@ -40,10 +40,6 @@ export const landmarkById = (id: string): LandmarkDef | undefined =>
 export const isLandmarkClaimed = (state: GameState, id: string): boolean =>
   state.landmarks.claimed[id] === true;
 
-/** A defended landmark whose guard has been beaten (or that never had one). */
-export const isLandmarkClear = (state: GameState, def: LandmarkDef): boolean =>
-  !def.defended || state.landmarks.cleared[def.id] === true;
-
 /**
  * Gold to claim, authored per sanctuary.
  *
@@ -54,21 +50,26 @@ export const isLandmarkClear = (state: GameState, def: LandmarkDef): boolean =>
  * and 100,000. A curve cannot land on those numbers, and a claim the player
  * has been staring at for a week should cost what the designer said.
  */
-export const landmarkClaimCost = (def: LandmarkDef): number => def.claimCost;
+export const landmarkClaimCost = (state: GameState, def: LandmarkDef): number =>
+  Math.max(1, Math.round(resolve(
+    state, 'claimCost', def.claimCost * Math.max(0, techValue(state, 'claimCost', 1)),
+  )));
 
 export type ClaimResult =
-  | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'Defended' | 'NotEnoughGold' | 'NoLandmark';
+  | 'Claimed' | 'AlreadyClaimed' | 'NotRevealed' | 'NotEnoughGold' | 'NoLandmark';
 
 export function claimLandmark(state: GameState, map: MapData, cell: Coord): ClaimResult {
   const def = landmarkAt(cell);
   if (!def) return 'NoLandmark';
   if (isLandmarkClaimed(state, def.id)) return 'AlreadyClaimed';
   if (fogState(state, map, def.location) !== 'Revealed') return 'NotRevealed';
-  if (!isLandmarkClear(state, def)) return 'Defended';
-  const cost = landmarkClaimCost(def);
+  const cost = landmarkClaimCost(state, def);
   if (getWallet(state.city.wallet, 'Gold') < cost) return 'NotEnoughGold';
   addToWallet(state.city.wallet, 'Gold', -cost);
   state.landmarks.claimed[def.id] = true;
+  // Taking ground is an event, not a rate change nobody is looking at.
+  addToWallet(state.kingdom.wallet, 'Knowledge', KNOWLEDGE.landmarkClaimLump);
+  recordResourceDiscovery(state, 'Knowledge');
   discoverAroundLandmark(state, map, def);
   return 'Claimed';
 }

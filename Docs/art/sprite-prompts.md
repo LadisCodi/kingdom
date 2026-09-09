@@ -42,13 +42,19 @@ What actually worked when generating the full v2 set with ChatGPT:
 2. **Generate in 2×2 vignette sheets**, four assets per image — massively
    better style/scale consistency than one-off sprites, and 4× fewer
    generations. Describe each vignette by grid position (TOP-LEFT …).
-3. **ChatGPT bakes a fake checkerboard instead of real alpha.** Ask it,
-   in the same message, to *"apply the true-alpha transparency correction
-   and give me the download link for the corrected PNG"* — after being
-   called out once it reliably runs its own alpha extraction + channel
-   verification and hands back a genuinely transparent PNG. Verify
-   locally anyway: `magick sheet.png -format "%[pixel:p{0,0}]" info:`
-   must print `srgba(0,0,0,0)`.
+3. **ChatGPT bakes a fake checkerboard instead of real alpha, always.** No
+   wording prevents it — the v2 set asked for "true alpha", the 2026-09-09
+   sheet asked only for *"el PNG sin fondo"*, and both came back opaque.
+   **Do not ask the model to fix its own channel**: that starts a code-
+   interpreter loop that has cost eleven minutes and delivered nothing
+   (`originals/v3-sheets/LOG.md`, SPR-S). Tell it *not* to check or
+   post-process the file, take the link, and repair it locally in seconds:
+
+   ```sh
+   python3 Docs/art/originals/v3-sheets/unbake_checkerboard.py sheet.png sheet_alpha.png
+   magick sheet_alpha.png -format "%[pixel:p{0,0}]" info:            # srgba(0,0,0,0)
+   magick sheet_alpha.png -alpha extract -format "%[fx:mean]" info:  # < 0.5
+   ```
 4. **Full-bleed tiles (farmlands, terrain) go in their own sheets** where
    each quadrant is completely filled, flat and self-wrapping — never mix
    them with vignettes, and say "no rotation, no diamond shape, no 3D
@@ -367,7 +373,7 @@ Same treatment as the existing district and feature art.
 | `sanctum_l1..l3` | Mana capacity | standing stone → shrine → domed observatory |
 | `ruin` / `ruin_cleared` | Dungeon entrance | the single most important new sprite — see below |
 | `landmark` / `landmark_claimed` | Mana source | unclaimed reads dormant; claimed glows faintly |
-| `landmark_defended` | Contested landmark | an enemy banner or camp on it |
+| `camp_orcs` · `camp_goblins` · `camp_harpies` · `camp_wolfriders` · `camp_drake` | A garrison's camp beside its site, one per threat type ([`../features/18-garrisons-and-raids.md`](../features/18-garrisons-and-raids.md) §2) | tents and a banner; the creature reads from the silhouette |
 
 **The ruin carries unusual weight.** The positioning audit singles out paid fog
 as the one uncontested mechanic and notes it is *filmable*; a relic pulled out
@@ -381,13 +387,18 @@ Nothing in the current set is a character portrait, and two systems now need
 them. This is a **larger job than it looks** and should be scoped before either
 system is scheduled:
 
-- **5 heroes** — the roster in `features/heroes-and-gacha.md`. Portraits, not
+- **5 heroes** — the roster in `Docs/features/10-heroes.md`. Portraits, not
   tiles: they appear in the reliquary, the expedition sheet and the gacha reveal.
 - **4 unit types** — Warrior, Lancer, Archer, Cavalry. Already flagged as open
   question 2 in `ui-menus-redesign.md` §8, and now firmly required: units have
   ATK/DEF/HP and a matchup chart, so the player has to tell them apart at a
   glance.
 - **5 artifacts** — relic icons, readable at both inventory and slot size.
+
+**A first probe exists** — [`portraits/`](portraits/), one Legendary generated
+against the stylized-3D [`style-reference.png`](style-reference.png) with the
+reusable prompt in [`portraits/prompt-template.md`](portraits/prompt-template.md).
+It settles the pipeline, not the style.
 
 Portraits need a style decision the world art does not answer: the world is
 zoomed-out and impersonal by design, and a face is the opposite of that. Resolve

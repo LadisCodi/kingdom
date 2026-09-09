@@ -26,7 +26,6 @@ Also in: `pop-06` (collect/boost taps) · `button_click` (all UI buttons)
 | `build_placed` | Confirming Build (construction starts) | Single hammer thunk + wood knock |
 | `quest_complete` | The quest pill turns green (goal met, BEFORE claiming) | Bright objective "ding" — distinct from `quest_claimed` |
 | `villager_trained` | +1 👥 lands | Small cheer / cork-pop / bell |
-| `coin_sale` | Selling at the Market | Coin pouch / register "ka-ching" |
 
 ## Tier 2 — flavor
 
@@ -60,7 +59,7 @@ that feedback. If we ever want them, they need heavy rate-limiting.
 Grouped by the doc that introduces them. Nothing here blocks implementation; the
 existing SFX fallback behaviour applies.
 
-### Magic — [`features/magic.md`](features/magic.md)
+### Magic — [`features/08-magic.md`](features/08-magic.md)
 
 | Cue | When |
 |---|---|
@@ -72,7 +71,7 @@ existing SFX fallback behaviour applies.
 | `artifact_locked` | A swap is refused because the slot is still in its 5-minute lock |
 | `landmark_claimed` | Mana production rises |
 
-### Expeditions — [`features/expeditions.md`](features/expeditions.md)
+### Expeditions — [`features/11-expeditions.md`](features/11-expeditions.md)
 
 | Cue | When |
 |---|---|
@@ -83,7 +82,7 @@ existing SFX fallback behaviour applies.
 | `ruin_discovered` | A ruin comes out of the fog |
 | `unit_recruited` | Replaces the instant-recruit cue once training takes time |
 
-### Heroes and gacha — [`features/heroes-and-gacha.md`](features/heroes-and-gacha.md)
+### Heroes and gacha — [`features/10-heroes.md`](features/10-heroes.md)
 
 | Cue | When |
 |---|---|
@@ -96,7 +95,7 @@ existing SFX fallback behaviour applies.
 
 | Cue | When |
 |---|---|
-| `conjunction_open` / `conjunction_close` | The weekly window |
+| `window_open` / `window_close` | A scheduled window — no event is authored today |
 
 **Tone note.** The audit's positioning is cozy: nothing here should read as a
 threat. `delve_failed` and `mana_full` are the two cues most likely to be

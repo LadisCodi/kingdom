@@ -1,14 +1,15 @@
 // Headless end-to-end smoke: reveal → harvest → build → workers → exhaust →
-// recover → research → housing taxes → training queue → market → army →
+// recover → research → housing taxes → training queue → army →
 // upgrade → offline.
 import { describe, expect, it } from 'vitest';
-import { armyPower, maxArmyPower, trainUnit, lineFor } from '../src/sim/army';
+import { armySize, armyCap, trainUnit, lineFor } from '../src/sim/army';
 import {
-  changeWorkers, enqueueBuild, finishWithGems, townhallTap, upgradeDistrict,
+  changeWorkers, enqueueBuild, finishWithGems, upgradeDistrict,
 } from '../src/sim/commands';
-import { isExhausted, tapCell } from '../src/sim/harvest';
-import { sellGoods } from '../src/sim/market';
-import { maxPopulation } from '../src/sim/population';
+import { DISTRICTS, TAXES } from '../src/sim/data/definitions';
+import { isExhausted, tapCell, tapYieldAt } from '../src/sim/harvest';
+import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
+import { techMultiplier } from '../src/sim/techEffects';
 import { isTechComplete, startTech } from '../src/sim/research';
 import { revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
@@ -23,8 +24,9 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     state.city.population = 2; // test setup: enough workers on hand
     let now = T0;
 
-    // --- Reveal 3 fog cells: two at distance 2 (3 Gold) and one at
-    // distance 3 (5 Gold — 4-neighbor BFS, diagonals don't shortcut).
+    // --- Reveal 3 fog cells: two at distance 2 (5 Gold) and one at
+    // distance 3 (10 Gold — 4-neighbor BFS, diagonals don't shortcut).
+    // Five taps each, whatever the ring, and the five split the price.
     // A new kingdom is handed a small purse for exactly this; top it to a
     // round 50 so the arithmetic below stays readable.
     state.city.wallet.Gold = 0;
@@ -36,27 +38,34 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r).toBe('Revealed');
     }
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 20);
 
     // --- The Forest is seed-revealed and REFUSES until Forestry is in: the
-    // opening beat of the whole game (Docs/onboarding.md steps 2-3).
+    // opening beat of the whole game (Docs/features/12-quests.md §2 (quests 2-3)).
     reveal(state, [FOREST]);
     expect(tapCell(state, map, FOREST, now)).toBe('TechLocked');
     completeTech(state, 'Forestry');
+    // --- Crop plots are gated behind Agriculture, one row down. Asserted HERE
+    // because the Sawmill's own technology, a few beats on, asks for the row
+    // above it all the way back to Agriculture — so past that point the plot
+    // is already open.
+    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('InvalidCell'); // locked
+    // Five taps of `tap.work_seconds` each, out of the tree's depot.
+    const perTap = tapYieldAt(state, map, FOREST, now);
     for (let i = 0; i < 5; i++) expect(tapCell(state, map, FOREST, now)).toBe('Harvested');
-    expect(getWallet(state.city.wallet, 'Wood')).toBe(5);
+    expect(getWallet(state.city.wallet, 'Wood')).toBe(5 * perTap);
 
     // --- No taxes yet: villagers without a roof pay nothing.
     now += 60_000;
     tickAt(state, now);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 11);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 20);
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500, Knowledge: 500 });
     expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('InvalidCell'); // behind Saws
     completeTech(state, 'Saws');
     expect(enqueueBuild(state, map, 'Sawmill', { x: 1, y: 2 })).toBe('Started');
-    expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('QueueFull');
+    expect(enqueueBuild(state, map, 'Housing', { x: 2, y: 0 })).toBe('NoBuilderFree');
     tickAt(state, now);
     expect(finishWithGems(state, map, state.city.queue[0].uniqueId, now)).toBe('Success');
     const sawmill = state.city.districts.find((d) => d.definitionId === 'Sawmill')!;
@@ -70,19 +79,17 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(woodAfterCycles).toBeGreaterThan(5); // deliveries landed
     // Player finishes off the cell's remaining taps.
     while (tapCell(state, map, FOREST, now) === 'Harvested') { /* drain */ }
-    expect(isExhausted(state, FOREST, now)).toBe(true);
+    expect(isExhausted(state, map, FOREST, now)).toBe(true);
 
     // --- The cell recovers on its own after 90s; the worker resumes after.
     now += 91_000;
     tickAt(state, now);
-    expect(isExhausted(state, FOREST, now)).toBe(false);
+    expect(isExhausted(state, map, FOREST, now)).toBe(false);
 
-    // --- Crop plots are gated behind Agriculture.
-    expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('InvalidCell'); // locked
-    expect(startTech(state, 'Agriculture', now)).toBe('Started');
-    now += 60_000; // research takes 45s
-    tickAt(state, now);
+    // --- Agriculture came in with the Sawmill's chain (a requirement is the
+    // row above, and Saws sits two rows under it), so the plot is open.
     expect(isTechComplete(state, 'Agriculture')).toBe(true);
+    expect(startTech(state, 'Agriculture', now)).toBe('AlreadyDone');
     expect(enqueueBuild(state, map, 'FarmLands', { x: -1, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
@@ -91,8 +98,13 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(tapCell(state, map, { x: -1, y: 1 }, now)).toBe('Harvested');
     expect(getWallet(state.city.wallet, 'Food')).toBe(foodBeforeTap + 1);
 
-    // --- Agriculture already opened the Farm too, so automating the plot is
-    // the very next thing the player can do (Docs/onboarding.md steps 9-12).
+    // --- The Farm is one research further down: Farming, the row under
+    // Agriculture (Docs/features/12-quests.md §2 steps 9-15).
+    expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('InvalidCell'); // locked
+    expect(startTech(state, 'Farming', now)).toBe('Started');
+    now += 60_000;
+    tickAt(state, now);
+    expect(isTechComplete(state, 'Farming')).toBe(true);
     expect(enqueueBuild(state, map, 'Farm', { x: -1, y: 0 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
@@ -139,48 +151,52 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     tickAt(state, now);
     expect(getWallet(state.city.wallet, 'Gold')).toBeGreaterThanOrEqual(goldBeforeTaxes + 7);
 
-    // --- The Market building (Market tech): instant selling.
-    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 1 })).toBe('InvalidCell'); // locked
-    completeTech(state, 'Market');
+    // --- A building is gated by its technology, and by the ground.
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 3, y: 1 })).toBe('InvalidCell'); // locked
+    completeTech(state, 'Consecration');
     reveal(state, [{ x: 6, y: 0 }]); // open water east of the isle
-    expect(enqueueBuild(state, map, 'Market', { x: 6, y: 0 })).toBe('InvalidCell'); // water
-    expect(enqueueBuild(state, map, 'Market', { x: 3, y: 1 })).toBe('Started');
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 6, y: 0 })).toBe('InvalidCell'); // water
+    expect(enqueueBuild(state, map, 'Sanctum', { x: 3, y: 1 })).toBe('Started');
     tickAt(state, now);
     now += 60_000;
     tickAt(state, now);
-    const goldBeforeSale = getWallet(state.city.wallet, 'Gold');
-    expect(sellGoods(state, 'Wood', 10)).toMatchObject({ result: 'Sold', gold: 30 });
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(goldBeforeSale + 30);
 
     // --- Army: a unit sits behind a technology AND behind its own building,
     // and the cap comes from the buildings rather than from the Townhall.
     expect(trainUnit(state, 'Warrior', now)).toBe('TechRequired');
     completeTech(state, 'Warrior');
     expect(trainUnit(state, 'Warrior', now)).toBe('NoBuilding');
-    expect(maxArmyPower(state)).toBe(0);
+    expect(armyCap(state)).toBe(0);
     addAllTrainers(state);
-    expect(maxArmyPower(state)).toBe(24); // four buildings at level 1
+    // Four halls at level 1, in TROOPS: the cap counts soldiers, not what
+    // they are worth (Docs/features/combat.md §14).
+    expect(armyCap(state)).toBe(600);
     expect(trainUnit(state, 'Cavalry', now)).toBe('TechRequired');
     completeTech(state, 'Archery');
     completeTech(state, 'Cavalry');
     expect(trainUnit(state, 'Cavalry', now)).toBe('Queued');
     expect(trainUnit(state, 'Cavalry', now)).toBe('Queued');
     // Training takes real time now, and a building runs ONE line: two Cavalry
-    // is 2 x 60s at the Stables, not 60s in parallel.
-    now += 61_000;
+    // is 2 x 30s at the Stables, not 30s in parallel.
+    now += 31_000;
     tickAt(state, now);
-    expect(armyPower(state)).toBe(7); // the first one only
-    now += 60_000;
+    expect(armySize(state)).toBe(1); // the first one only
+    now += 30_000;
     tickAt(state, now);
-    expect(armyPower(state)).toBe(14);
+    expect(armySize(state)).toBe(2);
 
     // --- The Townhall upgrade (30 s) raises the Housing count, not the army.
+    // Relative, not a frozen 24: the unit technologies above pulled `Colours
+    // I` (+2 cap) in with them, since a requirement is the row above and that
+    // card sits on the way — what the army cap IS here is the tree's business,
+    // what this asserts is that the Townhall does not move it.
+    const armyBefore = armyCap(state);
     expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
     tickAt(state, now);
     now += 31_000;
     tickAt(state, now);
     expect(townhall(state).level).toBe(2);
-    expect(maxArmyPower(state)).toBe(24); // unchanged — it is a city decision
+    expect(armyCap(state)).toBe(armyBefore); // unchanged — it is a city decision
 
     // --- Two more houses at TH2, then queue BOTH new villagers up front.
     for (const cell of [{ x: -1, y: -1 }, { x: 2, y: 1 }]) {
@@ -192,7 +208,6 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(maxPopulation(state)).toBe(12); // two L2 houses (4 each) + two L1 (2 each)
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
     expect(trainUnit(state, 'Villager', now)).toBe('Queued');
-    expect(townhallTap(state, now)).toBe('Boosted'); // taps speed the current one
     now += 20_000;
     tickAt(state, now);
     expect(state.city.population).toBe(5);
@@ -208,10 +223,20 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     const earned = getWallet(restored.city.wallet, 'Gold') - gold;
     // Six villagers across four houses, filled in BUILD ORDER: the two L2
     // houses (capacity 4) take 4 and 2, the two L1 houses stand empty and pay
-    // nothing. Each occupied house has exactly one crowding neighbour:
-    // (4 × 30 − 1) + (2 × 30 − 1) = 178/min.
-    expect(earned).toBeGreaterThanOrEqual(1779);
-    expect(earned).toBeLessThanOrEqual(1781);
+    // nothing. A level buys rent as well as room, so each of those residents
+    // pays the L2 house's +25% (`Districts.tax_bonus_per_level`). Each
+    // occupied house has exactly one crowding neighbour, and the rate per
+    // villager is the sheet's 30 lifted by whatever tax rank the Market's
+    // chain pulled in on the way (`Taxes I`, +5% at Housing — a requirement
+    // is the row above, and that card sits on it):
+    // (4 × 37.5 − 1) + (2 × 37.5 − 1) = 223/min.
+    const perVillager = TAXES.goldPerPopulationPerMinute
+      * techMultiplier(state, 'taxRate', { district: 'Housing' })
+      * (1 + DISTRICTS.Housing.taxBonusPerLevel[1]); // both occupied houses are L2
+    const perMinute = (4 * perVillager - 1) + (2 * perVillager - 1);
+    expect(perMinute).toBe(cityGoldPerMinute(state));
+    expect(earned).toBeGreaterThanOrEqual(perMinute * 10 - 1);
+    expect(earned).toBeLessThanOrEqual(perMinute * 10 + 1);
     expect(getWallet(restored.city.wallet, 'Wood'))
       .toBeGreaterThan(getWallet(state.city.wallet, 'Wood'));
   });

@@ -1,15 +1,15 @@
 // Balance data bridge:
 //   balance/balance.xlsx  ⇄  src/sim/data/balance.json  (data sheets)
-//   balance/balance.xlsx  ⇄  src/sim/data/region-map.json  (the Map sheet)
 //
 //   node scripts/balance.mjs import   xlsx → json (validates; the normal flow)
 //   node scripts/balance.mjs export   json → xlsx (regenerate the workbook)
 //
-// The Map sheet IS the world: row 1 holds x labels, column A holds y labels,
-// and each grid cell is one map cell — lowercase terrain code, uppercase
-// feature code (feature alone implies Grassland), blank = void:
-//   g Grassland  w Water  p Plains  d Desert  s Snow  u Tundra
-//   T Trees  B BerryBush  A WildAnimals   (compound like "pT" also works)
+// MAP content is NOT here. Terrain, features, landmarks and ruins are authored
+// by coordinate, which a spreadsheet expresses badly and a painting tool
+// expresses well, so they live in src/sim/data/region-map.json and are edited
+// in the map editor (npm run dev, then ?dev=map). Their rules are enforced by
+// src/sim/data/mapRules.ts and gated by tests/regionMap.test.ts.
+// See Docs/map-editor.md.
 //
 // The workbook is the human-edited source of truth (Excel / LibreOffice /
 // Google Sheets); the JSON is generated and consumed by definitions.ts.
@@ -32,46 +32,60 @@ import ExcelJS from 'exceljs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const XLSX_PATH = join(ROOT, 'balance/balance.xlsx');
 const JSON_PATH = join(ROOT, 'src/sim/data/balance.json');
-const MAP_PATH = join(ROOT, 'src/sim/data/region-map.json');
-
-const TERRAIN_CODES = {
-  g: 'Grassland', w: 'Water', p: 'Plains', d: 'Desert', s: 'Snow', u: 'Tundra', m: 'Mountain',
-};
-const FEATURE_CODES = {
-  T: 'Trees', B: 'BerryBush', A: 'WildAnimals', R: 'Rocks', F: 'FishShoal', I: 'IronVein',
-};
-const MAP_COLORS = { // conditional-formatting fills, keyed by code
-  g: 'FF6FA84F', w: 'FF3D6F9E', p: 'FF9AA34F', d: 'FFC9B26A', s: 'FFDFE7EC', u: 'FF8B9A94',
-  m: 'FF6B6F78',
-  T: 'FF2E6B2E', B: 'FF7A4FA8', A: 'FF8A5A34', R: 'FF7A7F87', F: 'FF2E86AB', I: 'FF4A4E57',
-};
-// The Townhall footprint — must be feature-free Grassland (anchor 0,0; 2x2).
-const TOWNHALL_CELLS = [[0, 0], [1, 0], [0, 1], [1, 1]];
 
 const DISTRICT_IDS = [
-  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Market', 'Quarry', 'Docks', 'Mine',
+  'Townhall', 'Housing', 'Farm', 'FarmLands', 'Sawmill', 'Quarry', 'Docks',
   'Sanctum',
   // Military: each unit type is trained by its own building, and building and
-  // upgrading them is what raises the army cap.
-  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables',
+  // upgrading them is what raises the army cap. The Infirmary is the one that
+  // holds no soldiers of its own — it holds the wounded (combat.md §4).
+  'Barracks', 'SpearHall', 'ShootingGrounds', 'Stables', 'Infirmary',
+  // Workshops: each turns raw resources into ONE refined good.
+  'Carpenter', 'MasonsYard', 'Smelter', 'RuneCarver',
+  // Decorations: they SUPPLY Harmony and do nothing else. Each has its own
+  // count cap, so a Townhall's demand needs several KINDS, and each kind is
+  // priced in a different good (Docs/plans/builder-30-days.md §6.3).
+  'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
 ];
-const TECH_IDS = [
-  'Forestry',
-  'UrbanPlanning', 'Communities', 'Architecture', // civics
-  'Saws', 'Hunting', 'Agriculture', 'Farming', 'Market', // economics: farm side
-  'Masonry', 'Mining', 'Engineering', 'DeepMining', // economics: stone side
-  'Cartography', 'Sailing', 'Fishing', 'Shipbuilding', 'ScalingTools', // exploration
-  'Warrior', 'Spears', 'Archery', 'Cavalry', // military
-  'Attunement', 'Warband', // the magic and expedition leaves
-];
-const UPGRADE_IDS = [
-  'TapPower', 'QuickHands', 'WorkerLoad',
-  'Sawpits', 'Butchery', 'Irrigation', 'Scythes',
-  'Surveying', 'Pitons', 'MarketStall', 'TradeRoutes',
-  'Stonecutting', 'BigNets', 'IronPicks', 'Resonance',
-];
+// Refined goods: what a workshop turns raw resources into, and what an
+// advanced building level is priced in. They are NOT wallet rows — the city
+// keeps a stockpile, the way the collection keeps ingredients
+// (Docs/plans/builder-30-days.md §2).
+const GOOD_IDS = ['Planks', 'CutStone', 'Iron', 'Runestone'];
+
+// The technologies are not the workbook's any more: a technology is one
+// object in src/sim/data/tech-tree.json — identity, kind, unlocks, price,
+// clock and slot — authored in `?dev=tree` (Docs/tech-tree-editor.md). This
+// reads that file for the ONE thing the importer still needs from it: the id
+// list, so a quest that names a technology can be checked.
+const TECH_IDS = Object.keys(JSON.parse(
+  readFileSync(join(ROOT, 'src/sim/data/tech-tree.json'), 'utf8'),
+).technologies);
+
 const UNIT_IDS = ['Warrior', 'Lancer', 'Archer', 'Cavalry'];
-const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'Iron'];
+// A ruin's TIER keys the garrison numbers that are not authored per site: what
+// a raid takes, and what clearing the gate costs in supplies. The gate itself
+// — its creature, its power and its two counters — is authored by coordinate
+// in `?dev=map`, like the rest of the map
+// (Docs/features/18-garrisons-and-raids.md §2).
+const RUIN_TIERS = [1, 2, 3, 4, 5];
+// The five ruins, in code order. `RuinId` is a union in state.ts, so this is
+// the same fixed roster the map editor may retune but never extend.
+const RUIN_IDS = ['HollowBarrow', 'SunkenChapel', 'DrownedIronworks',
+  'CountingHouse', 'StarObservatory'];
+const HARVEST_IDS = ['Forest', 'Crops', 'Berries', 'Meat', 'Stone', 'Fish', 'MountainIron', 'MountainGold'];
+const TERRAIN_IDS = ['Grassland', 'Plains', 'Desert', 'Snow', 'Tundra', 'Water'];
+// The SIMULATED store's real-money SKUs (Docs/features/14-monetization.md §2).
+// Row order is the order the store shows them in.
+const STORE_IDS = [
+  'GemsPouch', 'GemsPurse', 'GemsChest', 'GemsVault', 'GemsHoard', 'GemsTreasury',
+  // Not a Gem pack: the Royal chest grants nothing on purchase, it unlocks the
+  // daily chest's paid column for the season and pays out a rung at a time
+  // (Docs/features/12-quests.md §3.3). It is a Store row because the BUDGET is
+  // the instrument — the purchase log, the refusal and the monthly allowance
+  // all have to see it.
+  'RoyalChest',
+];
 // Order matters: it is the Currencies sheet order AND the Market's sell order.
 const QUEST_GOAL_TYPES = {
   // absolute — goal_target validated against the named id list (null = none)
@@ -80,7 +94,10 @@ const QUEST_GOAL_TYPES = {
   AssignWorkers: null, TrainArmy: null,
   // The long game: magic and expeditions.
   ClaimLandmarks: null, ReachDepth: null, ClearRuins: null, OwnArtifacts: null,
-  OwnHeroes: null, BuyUpgrade: 'upgrade',
+  OwnHeroes: null,
+  // Gates beaten. The doorway to combat, and the beat that teaches the room
+  // sheet before a depth adds the power ladder.
+  ClearGarrisons: null,
   // relative
   CollectResource: 'currency', CollectTaps: null, DiscoverCells: null, SellGoods: null,
   // "clear two cells with forest on them" — a DiscoverCells that cares WHAT
@@ -89,38 +106,68 @@ const QUEST_GOAL_TYPES = {
   DiscoverFeature: 'feature',
 };
 
-const LANDMARK_KINDS = ['Shrine', 'StandingStones', 'Leyspring'];
-const RUIN_IDS = [
-  'HollowBarrow', 'SunkenChapel', 'DrownedIronworks', 'CountingHouse', 'StarObservatory',
+// Quest `DiscoverFeature` targets. Mirrors `FEATURES` in definitions.ts.
+const FEATURE_IDS = [
+  'Trees', 'Mountain', 'MountainIron', 'MountainGold', 'BerryBush', 'WildAnimals', 'FishShoal',
 ];
-const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout'];
+const HERO_IDS = ['Warden', 'Quartermaster', 'Scholar', 'RelicHunter', 'Scout',
+  'Adventurer', 'Bard', 'BeastkinHunter', 'Cleric', 'Cook', 'Gardener', 'Joker',
+  'Merchant', 'Priest', 'Rogue', 'ThreeMice', 'Sellsword', 'DarkKnight', 'Paladin',
+  'Wizard', 'Witch', 'Druid', 'IceLancer', 'HolyWarrior', 'SavageWarrior', 'Spymaster',
+  'ElectricArcher', 'GoldenDragon', 'VampireLord', 'Necromancer', 'Pharao',
+  'ElvenPrincess'];
+/** What a hero's rarity is worth: its stats, its trait magnitude, and WHICH
+ *  banner can roll it. A banner weights each rarity, and a weight of 0 is what
+ *  keeps a rarity off a banner — so there is no `pool` column, because the
+ *  weights already are the pool (Docs/features/10-heroes.md §5). */
+const HERO_RARITIES = ['Common', 'Rare', 'Legendary'];
+const BANNER_IDS = ['basic', 'advanced'];
 const HERO_TRAITS = [
-  'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus', 'RevealNextDepth',
+  'PartyDefence', 'SupplyDiscount', 'KnowledgeBonus', 'FragmentBonus',
+  // What share of the fallen a hero carries home (Docs/features/combat.md §4).
+  // It replaced `RevealNextDepth`, which read the next depth's threat — a
+  // thing rooms stopped having when they started showing their own squads.
+  'WoundedRecovery',
 ];
 const ARTIFACT_IDS = [
   'DowsingRod', 'VerdantSeal', 'ForemansSigil', 'GildedLedger', 'WanderersCompass',
 ];
 
+const TOME_IDS = ['Civics', 'Warfare', 'Magic'];
 const CURRENCY_IDS = [
-  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Gems',
+  'Gold', 'Food', 'Wood', 'Stone', 'Mana', 'Knowledge', 'Stardust', 'HeroXp', 'Gems',
+  // The two gacha keys. Player-scoped like Gems, bought with them, and spent
+  // on one banner each — a PRICE on a button, which is the argument for a
+  // wallet row over a counter (Docs/features/03-economy.md §1).
+  'SilverKey', 'GoldKey',
 ];
 const COST_CURRENCIES = ['Gold', 'Wood', 'Food', 'Stone'];
 
 const SETTINGS = [
   // [sheet key, json path, kind]
   ['worker.move_speed_tiles_per_second', 'worker.moveSpeedTilesPerSecond'],
-  ['worker.work_seconds', 'worker.workSeconds'],
   ['tap.collect_cooldown_seconds', 'tap.collectCooldownSeconds'],
   ['training.seconds', 'training.seconds'],
-  ['training.tap_boost_seconds', 'training.tapBoostSeconds'],
   ['taxes.gold_per_population_per_minute', 'taxes.goldPerPopulationPerMinute'],
   ['tap.mana_cost', 'tap.manaCost'],
-  // The one number behind every tap in the game: a tap hands you this many
-  // seconds of whatever you tapped is producing. Houses have always worked
-  // this way; resource cells now join them.
-  ['tap.boost_seconds', 'tap.boostSeconds'],
+  // Buying time: one Gem finishes this many seconds of a build or a training
+  // line. One rule wherever the player meets it. Kingshot charges 800 Gems an
+  // hour; 5 s a Gem is 720 (14-monetization.md §9).
+  ['rush.seconds_per_gem', 'rush.secondsPerGem'],
+  // The one number behind every tap in the game: a tap advances whatever you
+  // tapped by this many SECONDS OF ITS OWN WORK — a woodcutter's swing at a
+  // tree, a house's rent. Priced against the ground and the thumb, never
+  // against the payroll. TapPower buys this duration up, +20% a level.
+  ['tap.work_seconds', 'tap.workSeconds'],
   ['offline_cap_hours', 'offlineCapHours'],
-  ['fog.gold_per_tap', 'fog.goldPerTap'],
+  // A cell is FIVE taps whatever it costs, and each tap charges a fifth of
+  // its Gold (01-map-and-fog.md §5). Every ring from 3 out is a multiple of
+  // five, so the fifths come out whole; rings 1 and 2 are pennies inside the
+  // Townhall's own shadow.
+  ['fog.taps_to_reveal', 'fog.tapsToReveal'],
+  // The floor under a cell's price, however deep the discounts go — never
+  // free ground, and never a tap that charges nothing.
+  ['fog.min_cost', 'fog.minCost'],
   ['fog.fallback_growth', 'fog.fallbackGrowth'],
   // Claiming a sanctuary lifts the fog around it: every cell within this many
   // rings becomes DISCOVERED, never revealed. A claim buys you a place to
@@ -135,9 +182,50 @@ const SETTINGS = [
   // made to say 5, 20, 100 without deforming everything past it.
   ['city.population_cost_first', 'city.populationCostFirst', 'list'],
   ['city.population_cost_growth', 'city.populationCostGrowth'],
-  ['city.build_queue_capacity', 'city.buildQueueCapacity'],
+  // Where the LATE city starts. Below it a level is priced and timed by the
+  // row's own curve, tuned for the opening; from it the late columns take
+  // over (`upgrade_cost_late_level_growth`, `upgrade_duration_late_*`), so
+  // levels 6-10 can be a multi-hour ladder without deforming levels 2-5.
+  ['city.late_upgrade_from_level', 'city.lateUpgradeFromLevel'],
+  // NO `city.build_queue_capacity`. There is no waiting line: a build either
+  // starts because a builder is free or it does not start at all, so the
+  // queue's length IS the builder count and a second dial for it could only
+  // ever disagree. See src/sim/state.ts `buildQueueCapacity`.
   ['kingdom.start_builders', 'kingdom.startBuilders'],
   ['kingdom.max_builders', 'kingdom.maxBuilders'],
+  // Buying the Nth builder, on the same escalating-slot curve as research,
+  // party and attunement slots: round(base x growth^purchased).
+  ['kingdom.builder_gem_cost_base', 'kingdom.builderGemCostBase'],
+  ['kingdom.builder_gem_cost_growth', 'kingdom.builderGemCostGrowth'],
+  // The simulated wallet (14-monetization.md §3): what each payer profile may
+  // spend a MONTH, in dollars. A profile is chosen once per save, and the
+  // budget is what turns a free tap into a preference — with money that is
+  // scarce, buying one thing means not buying another.
+  // A raid is bounded twice: `take_seconds` (the Garrisons sheet) bounds it on
+  // a large purse, this fraction bounds it on a small one — and a garrison
+  // makes at most `max_raids` trips before it sits on what it took
+  // (Docs/features/18-garrisons-and-raids.md §4).
+  ['raid.take_fraction_max', 'raid.takeFractionMax'],
+  ['raid.max_raids', 'raid.maxRaids'],
+  ['payer.f2p_monthly_usd', 'payer.f2pMonthlyUsd'],
+  ['payer.minnow_monthly_usd', 'payer.minnowMonthlyUsd'],
+  ['payer.dolphin_monthly_usd', 'payer.dolphinMonthlyUsd'],
+  ['payer.whale_monthly_usd', 'payer.whaleMonthlyUsd'],
+  ['payer.super_whale_monthly_usd', 'payer.superWhaleMonthlyUsd'],
+  // The daily chest season (Docs/features/12-quests.md §3). Parallel lists,
+  // one per reward kind, so a rung is a column rather than a sheet — and so
+  // the ladder's LENGTH is the length of these lists. The first two are the
+  // free track, the `premium_*` ones the Royal track.
+  ['daily.season_days', 'daily.seasonDays'],
+  ['daily.mana_fractions', 'daily.manaFractions', 'list'],
+  ['daily.gems', 'daily.gems', 'list'],
+  ['daily.premium_gems', 'daily.premiumGems', 'list'],
+  ['daily.premium_gold_keys', 'daily.premiumGoldKeys', 'list'],
+  // Hero XP is priced in HOURS of the player's own delve trickle, floored —
+  // an absolute XP number goes stale by era three. The floor is what pays a
+  // city that has never delved, which is most of them.
+  ['daily.premium_xp_hours', 'daily.premiumXpHours', 'list'],
+  ['daily.premium_xp_floor', 'daily.premiumXpFloor'],
   ['research.tech_slots', 'research.techSlots'],
   ['research.max_slots', 'research.maxSlots'],
   ['research.slot_gem_cost_base', 'research.slotGemCostBase'],
@@ -145,11 +233,21 @@ const SETTINGS = [
   // Mana. The ceiling is DYNAMIC (Townhall level + Sanctum levels), so the
   // Currencies sheet's static `cap` column stays blank for Mana and these are
   // the numbers that actually decide it — see src/sim/mana.ts.
-  ['mana.production_per_townhall_level', 'mana.productionPerTownhallLevel', 'list'],
-  ['mana.base_cap_per_townhall_level', 'mana.baseCapPerTownhallLevel', 'list'],
+  // The Townhall produces no Mana and sets no ceiling — it gates and nothing
+  // else (Docs/features/08-magic.md §2). A flat floor, then the Sanctum,
+  // then the sanctuaries: the whole curve lives in the Magic tome now.
+  ['mana.base_cap', 'mana.baseCap'],
+  ['mana.base_per_hour', 'mana.basePerHour'],
   ['mana.sanctum_cap_per_level', 'mana.sanctumCapPerLevel', 'list'],
+  ['mana.sanctum_per_hour_per_level', 'mana.sanctumPerHourPerLevel', 'list'],
   ['mana.landmark_cap', 'mana.landmarkCap'],
-  ['mana.gem_refill_per_gem', 'mana.gemRefillPerGem'],
+  ['mana.meditation_cap', 'mana.meditationCap'],
+  // The Gem price of a refill, as a LADDER indexed by how many refills have
+  // already been bought TODAY — one entry per rung, so the list's length is
+  // also the daily cap (src/sim/manaRefill.ts). A refill is always a whole
+  // pool, so the price is never per Mana: what rises is the rung, not the
+  // pool.
+  ['mana.gem_refill_costs', 'mana.gemRefillCosts', 'list'],
   ['attunement.base_slots', 'attunement.baseSlots'],
   ['attunement.max_slots', 'attunement.maxSlots'],
   ['attunement.slot_gem_cost_base', 'attunement.slotGemCostBase'],
@@ -157,6 +255,9 @@ const SETTINGS = [
   ['attunement.swap_lock_seconds', 'attunement.swapLockSeconds'],
   // The COLLECTION substrate: one set of rules shared by artifacts and heroes.
   // Fragments raise a tier cap; Knowledge buys levels within it.
+  // The completed-depth XP trickle, per tier per depth per hour
+  // (Docs/features/10-heroes.md §5). Read by the daily chest's Royal track.
+  ['collection.xp_trickle_per_tier_depth', 'collection.xpTricklePerTierDepth'],
   ['collection.level_cost_base', 'collection.levelCostBase'],
   ['collection.level_cost_growth', 'collection.levelCostGrowth'],
   ['collection.max_level', 'collection.maxLevel'],
@@ -164,45 +265,108 @@ const SETTINGS = [
   ['collection.max_tier', 'collection.maxTier'],
   ['collection.fragments_per_tier_base', 'collection.fragmentsPerTierBase'],
   ['collection.fragments_per_tier_growth', 'collection.fragmentsPerTierGrowth'],
+  // The Stardust TOLL on an ascension, which only HEROES pay: a relic's tier
+  // is ingredients and nothing else (Docs/features/10-heroes.md §4). It lives
+  // in the shared block rather than under `heroes.` because that key is the
+  // Heroes SHEET — thirty-two rows — and a setting written into it would be a
+  // thirty-third hero with no stats.
+  ['collection.ascension_stardust_base', 'collection.ascensionStardustBase'],
+  ['collection.ascension_stardust_growth', 'collection.ascensionStardustGrowth'],
+  // A HERO's levels are bought with Hero XP, a relic's with Stardust
+  // (Docs/features/10-heroes.md §4) — so the substrate carries two level
+  // curves of the same shape in two currencies. The XP one is FIVE TIMES the
+  // Stardust one because its faucet is: a room pays x10 XP against x2
+  // Stardust and the completed-depth trickle keeps the same ratio
+  // (11-expeditions.md §7). Same pacing, bigger numbers. **OQ-79 owns
+  // whether that holds up in play.**
+  ['collection.xp_level_cost_base', 'collection.xpLevelCostBase'],
+  ['collection.xp_level_cost_growth', 'collection.xpLevelCostGrowth'],
+  // A HERO's ladder is longer than a relic's and has its own two numbers.
+  // `levels_per_tier` and `max_level` above stay the relics': ten levels an
+  // ascension is a roster the player grinds for weeks, and a relic is not
+  // that shape. **The XP growth is what pays for the length** — 1.6 a level
+  // is fine over ten and absurd over fifty (level 50 alone would cost 4e11),
+  // so the curve flattens as the ladder stretches and the TOTAL is what is
+  // held roughly steady. **OQ-79.**
+  ['collection.hero_levels_per_tier', 'collection.heroLevelsPerTier'],
+  ['collection.hero_max_level', 'collection.heroMaxLevel'],
   // Knowledge per hour per ruin the player has CLEARED. Discovery pays
   // nothing: taking a dungeon to its bottom is what turns it into a faucet.
+  // The floor under the clock: what a kingdom holding no ground still learns
+  // an hour. Territory adds to it; it never replaces it. **Fractions are the
+  // point**: Knowledge is the slowest currency in the game, so a rate per
+  // hour is a fraction of one and a research is priced in tens rather than
+  // thousands (2026-09-08).
+  ['knowledge.base_per_hour', 'knowledge.basePerHour'],
   ['knowledge.drip_per_cleared_ruin_per_hour', 'knowledge.dripPerClearedRuinPerHour'],
-  // Combat is a SCORING PASS, not a simulation — these six numbers are the
-  // whole of it. Sharper type values (x2/x0.5) are more dramatic but make one
-  // bad guess feel like a wasted trip, which is the un-cozy end of the dial.
-  ['army.train_tap_boost_seconds', 'army.trainTapBoostSeconds'],
+  // The research clock's rate is the ground you have taken, and nothing else:
+  // there is deliberately NO base term, so a player who claims nothing
+  // generates nothing. Era 1 of the tree costs no Knowledge, which is what
+  // keeps that from being a wall (Docs/features/07-research.md §3).
+  ['knowledge.per_claimed_landmark_per_hour', 'knowledge.perClaimedLandmarkPerHour'],
+  // Taking ground is an EVENT, not just a rate change a nobody is looking at.
+  ['knowledge.landmark_claim_lump', 'knowledge.landmarkClaimLump'],
+  ['knowledge.conquest_per_cleared_ruin_per_hour', 'knowledge.conquestPerClearedRuinPerHour'],
+  // What a bad matchup is worth on the SHEET — the estimate the player reads
+  // before committing. The FIGHT itself uses the integer fractions below, so
+  // these two only colour a preview (Docs/features/combat.md §12).
   ['army.type_advantage', 'army.typeAdvantage'],
   ['army.type_disadvantage', 'army.typeDisadvantage'],
   ['army.threat_floor_fraction', 'army.threatFloorFraction'],
-  ['army.damage_per_strength', 'army.damagePerStrength'],
-  ['army.damage_absorbed_per_defence', 'army.damageAbsorbedPerDefence'],
+  // THE RESOLVER (Docs/features/combat.md §7, §8, §10, §11). A tick is
+  // logical, not a frame: the fight is resolved before the first one is
+  // drawn, and the screen replays the event stream it emitted. The type
+  // fractions are INTEGER pairs on purpose — the whole resolver is integer
+  // arithmetic so a replay is bit-identical wherever it runs, which is what
+  // makes a server-resolved PvP fight possible later (§16).
+  ['combat.tick_ms', 'combat.tickMs'],
+  ['combat.timeout_ticks', 'combat.timeoutTicks'],
+  ['combat.type_advantage_num', 'combat.typeAdvantageNum'],
+  ['combat.type_advantage_den', 'combat.typeAdvantageDen'],
+  ['combat.type_disadvantage_num', 'combat.typeDisadvantageNum'],
+  ['combat.type_disadvantage_den', 'combat.typeDisadvantageDen'],
+  // The generator: how many squads a room fields, and when it spends part of
+  // the budget on a villain instead (§11).
+  ['combat.gen_slots_min', 'combat.genSlotsMin'],
+  ['combat.gen_slots_max', 'combat.genSlotsMax'],
+  ['combat.gen_villain_threshold', 'combat.genVillainThreshold'],
+  ['combat.gen_villain_share', 'combat.genVillainShare'],
+  ['combat.gen_villain_slots', 'combat.genVillainSlots'],
+  // What a hero is worth in the POWER estimate, as a share of what it hits
+  // for. A hero has no `power_per_troop` of its own — this is the one number
+  // that makes it comparable to the squads beside it.
+  ['combat.hero_power_per_dmg', 'combat.heroPowerPerDmg'],
+  // WHAT A FIGHT COSTS IN BODIES, and how much of it comes back. Every fight
+  // takes casualties (Docs/features/combat.md §4); `wounded_share` of them
+  // are carried to the Infirmary instead of the grave — and only as many as
+  // it has BEDS for, which is `Districts.beds_per_level` and nothing here,
+  // because the ward is a building the player chose to place. Healing is
+  // priced against RECRUITING the same soldier: cheaper in both coins and
+  // clock, or nobody would bother.
+  ['army.wounded_share', 'army.woundedShare'],
+  ['army.heal_cost_share', 'army.healCostShare'],
+  ['army.heal_time_share', 'army.healTimeShare'],
   // Delves. `fail_haul_loss` is the number that most needs playtest rather
   // than argument: lower is gentler and may make pushing automatic, higher
   // bites but starts to feel like the loss aversion the positioning rules out.
-  ['delve.gold_per_depth_per_tier', 'delve.goldPerDepthPerTier'],
-  ['delve.material_per_depth_per_tier', 'delve.materialPerDepthPerTier'],
-  ['delve.knowledge_per_depth_per_tier', 'delve.knowledgePerDepthPerTier'],
-  ['delve.fragments_per_depth', 'delve.fragmentsPerDepth'],
-  ['delve.fail_haul_loss', 'delve.failHaulLoss'],
   ['delve.first_clear_gems', 'delve.firstClearGems'],
   // The lump a first clear pays. Together with the drip above and the gacha,
   // this is where ALL Knowledge comes from — clearing fog pays none.
   ['delve.first_clear_knowledge', 'delve.firstClearKnowledge'],
-  ['party.base_slots', 'party.baseSlots'],
-  ['party.max_slots', 'party.maxSlots'],
-  ['party.slot_gem_cost_base', 'party.slotGemCostBase'],
-  ['party.slot_gem_cost_growth', 'party.slotGemCostGrowth'],
-  // The gacha. Pity is MANDATORY: it is the single thing that makes a gacha
-  // read as fair rather than predatory, and it matters more in a cozy game.
-  ['gacha.pull_gem_cost', 'gacha.pullGemCost'],
-  ['gacha.hero_chance', 'gacha.heroChance'],
-  ['gacha.soft_pity_at', 'gacha.softPityAt'],
-  ['gacha.hard_pity_at', 'gacha.hardPityAt'],
-  ['gacha.duplicate_fragments', 'gacha.duplicateFragments'],
-  ['gacha.fragments_per_miss', 'gacha.fragmentsPerMiss'],
-  // Every pull pays this, hero or not — Fragments only ever point at one
-  // hero, but Knowledge levels whoever the player already has.
-  ['gacha.pull_knowledge', 'gacha.pullKnowledge'],
+  ['delve.first_clear_stardust', 'delve.firstClearStardust'],
+  // THE BOARD, and it is not for sale. Every troop slot is open from the
+  // start: there is no ladder, nothing to buy and nothing to unlock, so what
+  // limits a party is the ARMY at home and the type chart, never a purchase
+  // (Docs/features/combat.md §3).
+  ['party.troop_slots', 'party.troopSlots'],
+  // THE HERO SLOTS are the exception, and the only one
+  // (Docs/features/10-heroes.md §3): one is free and every further one is
+  // Gems, always, up to the board's three. They live here rather than under
+  // `heroes.*` because that key is the Heroes SHEET — thirty-two rows — and a
+  // setting written into it would be a thirty-third hero with no stats.
+  ['party.hero_slots', 'party.heroSlots'],
+  ['party.hero_slot_gem_cost_base', 'party.heroSlotGemCostBase'],
+  ['party.hero_slot_gem_cost_growth', 'party.heroSlotGemCostGrowth'],
   // Ad offers. The cooldown is a RANGE so the offer never becomes a metronome
   // the player can plan around; `eligible_below_fraction` is what keeps it an
   // answer to being short rather than an interruption.
@@ -210,54 +374,150 @@ const SETTINGS = [
   ['ads.cooldown_max_seconds', 'ads.cooldownMaxSeconds'],
   ['ads.eligible_below_fraction', 'ads.eligibleBelowFraction'],
   ['ads.watch_seconds', 'ads.watchSeconds'],
+  // How many refills a day a video may pay for. Its own counter, independent
+  // of the Gem ladder's, and both roll at UTC midnight.
+  ['ads.mana_refills_per_day', 'ads.manaRefillsPerDay'],
+  // Harmony's surplus bonus: `supply / demand` thresholds and what each pays
+  // on the tax rate. A THRESHOLD AND ITS BONUS ARE ONE FACT, so they travel
+  // in one cell rather than two parallel lists. There is deliberately no
+  // `harmony.surplus_stat` beside it: the stat a bonus moves is a call site,
+  // so a setting whose only legal value is `taxRate` would be a knob that
+  // cannot turn (Docs/plans/builder-30-days.md §6.5).
+  ['harmony.surplus_tiers', 'harmony.surplusTiers', 'tiers'],
 ];
 
+/** Kept in step with `AdjacencyStat` and `ADJACENCY_GROUPS` in
+ *  src/sim/data/definitions.ts, and with the ±clamp the resolver applies. */
+const ADJACENCY_STATS = ['goldPerMinute', 'workTime', 'trainTime'];
+const ADJACENCY_GROUPS = ['AnyHall', 'AnyWorkshop', 'AnyProducer', 'AnyDecoration'];
+const ADJACENCY_CLAMP = 0.25;
+
+// NO PRICES. What a building costs is the DistrictCosts sheet, one row per
+// level (Docs/features/05-city-and-districts.md §3); this row carries only
+// what it IS and how much dearer a later copy of it is.
 const DISTRICT_COLUMNS = [
   'id', 'size_x', 'size_y', 'max_level', 'population_capacity',
+  'tax_bonus_per_level',
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level',
-  'build_cost_gold', 'build_cost_wood', 'build_cost_food',
-  'build_cost_stone',
-  'build_cost_multiplier', 'build_cost_exponential_growth',
+  'army_cap_per_level', 'beds_per_level',
+  'instance_linear_growth', 'instance_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
-  'upgrade_cost_gold', 'upgrade_cost_wood', 'upgrade_cost_food',
-  'upgrade_cost_stone',
-  'upgrade_cost_level_growth', 'upgrade_duration_seconds', 'upgrade_duration_level_growth',
+  'upgrade_duration_seconds', 'upgrade_duration_level_growth',
+  'upgrade_duration_late_seconds', 'upgrade_duration_late_level_growth',
+  'extra_units_per_delivery_per_level', 'strike_speed_per_level',
+  'produces', 'queue_length_per_level',
+  'harmony_supply', 'harmony_cost_per_level',
 ];
 const DISTRICT_LIST_COLUMNS = [
-  'population_capacity', 'max_workers_per_level', 'max_count_per_townhall_level',
+  'population_capacity', 'tax_bonus_per_level', 'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
-  'required_tech_per_level', 'army_cap_per_level',
+  'army_cap_per_level', 'beds_per_level',
+  'queue_length_per_level',
+  'extra_units_per_delivery_per_level', 'strike_speed_per_level',
+  'harmony_cost_per_level',
 ];
+/** The snake_case column each good is priced in on DistrictCosts. */
+const GOOD_COLUMNS = { Planks: 'planks', CutStone: 'cut_stone', Iron: 'iron', Runestone: 'runestone' };
 
 const SHEETS = {
   Districts: DISTRICT_COLUMNS,
-  Units: ['id', 'power', 'atk', 'def', 'hp',
+  // ONE ROW PER BUILDING PER LEVEL, and the whole price is on it: the four
+  // currencies and the four refined goods. Level 1 is what the BUILD costs.
+  // Prices the FIRST instance; a later one multiplies the currencies by the
+  // instance curve and leaves the goods alone
+  // (Docs/features/05-city-and-districts.md §3).
+  DistrictCosts: ['district', 'level', 'gold', 'wood', 'food', 'stone',
+    'planks', 'cut_stone', 'iron', 'runestone'],
+  // `squad_size` is how many troops of the type ONE squad holds — the cap on
+  // a party slot's count, and the ceiling the battle screen fills a slot to
+  // (Docs/features/combat.md §4, §5).
+  Units: ['id', 'power', 'dmg', 'def', 'hp', 'squad_size', 'frontage', 'cooldown',
     'recruit_cost_gold', 'recruit_cost_wood', 'recruit_cost_food',
     'recruit_cost_stone', 'train_duration_seconds'],
-  Harvest: ['source', 'yield_per_tap', 'yield_per_worker', 'taps_to_exhaust', 'recovery_seconds',
-    'respawn_seconds', 'required_tech'],
+  // What the ground under a cell does to what comes out of it. A multiplier
+  // per currency, applied to the cell's STOCK — the only quantity with room
+  // for a ±25% in whole units, since a chunk of 1 rounds any percentage away.
+  // Blank = 1. Water is authored at 1 on purpose: fish shoals sit on it and
+  // pay Food, and nobody asked for wet fields to change fishing.
+  Terrain: ['terrain', 'food', 'wood', 'stone'],
+  // A cell is a DEPOT: `stock` units, drawn `units_per_strike` at a time,
+  // one strike every `seconds_per_strike`. A tap is priced in SECONDS of that
+  // same work, so nobody mints matter. stock 0 = bedrock, never runs down.
+  // NO `required_tech`: which technology opens a cell is the TECHNOLOGY's to
+  // say (`unlocks: [{ harvest: 'Forest' }]`), like every other gate.
+  Harvest: ['source', 'units_per_strike', 'seconds_per_strike', 'stock', 'recovery_seconds',
+    'respawn_seconds'],
+  // A workshop turns raw resources into one good, one queue item at a time,
+  // and `work_seconds` is the work ONE villager does — a second worker halves
+  // it (Docs/plans/builder-30-days.md §3). `input_good` is the tier-2 recipe:
+  // Runestone is cut stone with Mana poured into it.
+  Goods: ['id', 'name', 'tier',
+    'input_gold', 'input_wood', 'input_food', 'input_stone', 'input_mana',
+    'input_good', 'input_good_amount', 'work_seconds'],
   Currencies: ['id', 'cap', 'start', 'primary', 'gold_value'],
   FogRings: ['distance', 'cost'],
-  // Research is paid in Gold and nothing else — one column, not a
-  // four-currency wallet. See the tech importer for why.
-  Technologies: ['id', 'cost_gold', 'duration_seconds', 'requires'],
-  Upgrades: ['id', 'cost_base', 'cost_growth', 'max_level', 'effect_per_level', 'required_tech'],
-  Adjacency: ['district', 'neighbor', 'gold_per_minute'],
+  // A rule is (district, neighbour) → one STAT moved by one MAGNITUDE. The
+  // Gold column it replaced could only ever say one thing; this can say ten,
+  // which is the whole of OQ-48. `neighbor` takes a district id or a group
+  // token (AnyHall, AnyWorkshop, AnyProducer).
+  Adjacency: ['district', 'neighbor', 'stat', 'magnitude'],
   Quests: ['id', 'name', 'description', 'goal_type', 'goal_target', 'goal_amount',
     'goal_level', 'reward_gold', 'reward_wood', 'reward_food', 'reward_stone',
-    'reward_gems', 'reward_knowledge'],
+    'reward_gems', 'reward_stardust', 'reward_knowledge', 'reward_mana'],
+  // A relic is WORN by the kingdom or it is on the shelf, so it has no
+  // battlefield stats of its own (Docs/features/09-relics.md §5).
   Artifacts: ['id', 'passive_base', 'passive_per_level', 'active_mana_cost',
-    'active_duration_seconds', 'active_radius',
-    'carried_atk', 'carried_def', 'carried_hp',
-    'carried_atk_per_level', 'carried_def_per_level', 'carried_hp_per_level'],
-  Heroes: ['id', 'unit_type', 'trait', 'trait_value', 'atk', 'def', 'hp',
-    'atk_per_level', 'def_per_level', 'hp_per_level'],
-  Landmarks: ['id', 'kind', 'x', 'y', 'defended', 'claim_cost'],
-  Ruins: ['id', 'x', 'y', 'tier', 'difficulty', 'base_depth_seconds', 'depth_growth',
-    'max_depth', 'supply_food', 'supply_gold', 'supply_stone', 'affinity', 'artifact'],
+    'active_duration_seconds', 'active_radius'],
+  // A hero is a BODY on the board (Docs/features/combat.md §9): it hits for
+  // `dmg` every `cooldown` ticks with `frontage` 1, and its PASSIVE multiplies
+  // every squad of its own type on that side, applied at battle start and
+  // surviving its death.
+  Heroes: ['id', 'rarity', 'unit_type', 'trait', 'trait_value',
+    'dmg', 'def', 'hp', 'cooldown',
+    'dmg_per_level', 'def_per_level', 'hp_per_level',
+    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus'],
+  // A VILLAIN is an enemy hero: same schema, same slots, same rules — only
+  // where the stats come from differs, and a villain's are authored (§9).
+  Villains: ['id', 'name', 'glyph', 'sprite', 'unit_type',
+    'dmg', 'def', 'hp', 'cooldown', 'power',
+    'troop_dmg_mult', 'troop_hp_mult', 'troop_def_bonus'],
+  // Real-money SKUs of the simulated store. `price_usd` is what the purchase
+  // deducts from the player's monthly budget; `gems` is what it grants ON
+  // PURCHASE, which is 0 for a SKU that pays out over a season. Builders and
+  // the hero banner are priced in Gems (Settings), so the store shows them
+  // without owning them.
+  Store: ['id', 'price_usd', 'gems'],
+  // One row per banner. Odds and prices are numbers a designer tunes, so they
+  // belong here — unlike a banner SCHEDULE, which is a wall-clock live-ops
+  // date and stays out of the workbook (balance/README.md).
+  Banners: ['id', 'key', 'key_gem_cost', 'hero_chance', 'soft_pity_at', 'hard_pity_at',
+    'legendary_pity_at', 'weight_common', 'weight_rare', 'weight_legendary',
+    'duplicate_fragments', 'fragments_per_miss', 'pull_stardust',
+    'free_per_day', 'free_cooldown_seconds'],
+  // ONE ROW PER DEPTH (Docs/features/11-expeditions.md §2). A ruin is depths
+  // of rooms, a room is one fight, and a room's enemy power is
+  // `power_start + power_step x (room - 1)`. `reward_base` scales what a room
+  // pays (§7.1); the supply columns are what ONE ROOM ATTEMPT costs in this
+  // depth, paid on entry and never refunded.
+  //
+  // `villain_pool` is who the generator may spend budget on above the
+  // threshold, and `boss_villain` is who the last room of the depth always
+  // fields (Docs/features/combat.md §11).
+  //
+  // NOT here yet, and each needs a system that does not exist: `threat_mix`
+  // (the generator's weights beyond the ruin's affinity), `room_rewards`
+  // overrides, `boss_reward` (chests) and `passive_on_complete` (the idle
+  // reservoir).
+  Depths: ['ruin', 'depth', 'rooms', 'guild_req', 'power_start', 'power_step',
+    'reward_base', 'villain_pool', 'boss_villain',
+    'supply_gold', 'supply_wood', 'supply_food', 'supply_stone'],
+  // One row per ruin TIER. `take_seconds` is how many seconds of the city's
+  // own production a raid takes of each material; the supply columns are what
+  // clearing that tier's gate costs, paid on entry and never refunded.
+  Garrisons: ['tier', 'take_seconds',
+    'supply_gold', 'supply_wood', 'supply_food', 'supply_stone'],
   Settings: ['key', 'value'],
 };
 
@@ -334,7 +594,8 @@ function num(row, col, { blankAs = null } = {}) {
   return n;
 }
 
-/** A map coordinate: any integer, including negative ones. */
+/** A tree-page coordinate: any integer, including negative ones (a page is
+ *  centred on its spine, so x is negative left of the trunk). */
 function coord(row, col) {
   const raw = row[col];
   if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
@@ -370,32 +631,70 @@ function list(row, col) {
   });
 }
 
-/** Per-level tech list: comma-separated tech ids, "-" (or blank entry) = no
- *  requirement at that level. Blank cell = no requirements at all. */
-function techList(row, col) {
-  const raw = row[col];
-  if (raw === '' || raw === undefined) return [];
-  return String(raw).split(/[,|;]/).map((part) => {
-    const id = part.trim();
-    if (id === '' || id === '-') return null;
-    if (!TECH_IDS.includes(id)) fail(where(row), `"${col}" has an unknown tech ("${id}")`);
-    return id;
-  });
-}
-
-function techOrBlank(row, column) {
-  const v = row[column];
-  if (v === '' || v === undefined) return null;
-  if (!TECH_IDS.includes(String(v))) fail(where(row), `unknown technology "${v}"`);
-  return String(v);
-}
-
 function wallet(row, prefix) {
   const out = {};
   for (const c of COST_CURRENCIES) {
     const v = num(row, `${prefix}_${c.toLowerCase()}`, { blankAs: 0 });
     if (v > 0) out[c] = v;
   }
+  return out;
+}
+
+/**
+ * A per-level goods price: levels separated by `|`, the goods of one level by
+ * `,`, each written `Good:amount`. Entry 0 is what it costs to reach level 2,
+ * the same indexing every other per-level district column uses.
+ *
+ *   `|Planks:2|Planks:4,CutStone:2`  →  [{}, {Planks:2}, {Planks:4,CutStone:2}]
+ */
+function goodsList(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) return [];
+  return String(raw).split('|').map((level) => {
+    const out = {};
+    for (const part of level.split(',')) {
+      const entry = part.trim();
+      if (entry === '' || entry === '-') continue;
+      const [id, amount] = entry.split(':').map((x) => x.trim());
+      if (!GOOD_IDS.includes(id)) fail(where(row), `"${col}" has an unknown good ("${id}")`);
+      const n = Number(amount);
+      if (!Number.isFinite(n) || n <= 0) {
+        fail(where(row), `"${col}" has a bad amount for ${id} ("${amount}")`);
+      }
+      if (out[id] !== undefined) fail(where(row), `"${col}" names ${id} twice in one level`);
+      out[id] = n;
+    }
+    return out;
+  });
+}
+
+/**
+ * A ladder of thresholds and what each one pays, written
+ * `1.10:0.05|1.25:0.10|1.50:0.15` — read as "at 110% of demand, +5%".
+ * Ascending, because a reader takes the LAST tier reached and a ladder that
+ * doubled back would silently pay the wrong one.
+ */
+function tiers(row, col) {
+  const raw = row[col];
+  if (raw === '' || raw === undefined) fail(where(row), `"${col}" is blank`);
+  const out = [];
+  for (const part of String(raw).split('|')) {
+    const entry = part.trim();
+    if (entry === '') continue;
+    const [at, bonus] = entry.split(':').map((x) => Number(String(x).trim()));
+    if (!Number.isFinite(at) || at < 1) {
+      fail(where(row), `"${col}" has a threshold below 1 ("${entry}") — it is a RATIO of demand`);
+    }
+    if (!Number.isFinite(bonus) || bonus === 0) {
+      fail(where(row), `"${col}" has no bonus for the ${at} tier ("${entry}")`);
+    }
+    const last = out[out.length - 1];
+    if (last && at <= last.at) {
+      fail(where(row), `"${col}" is not ascending (${last.at} then ${at})`);
+    }
+    out.push({ at, bonus });
+  }
+  if (out.length === 0) fail(where(row), `"${col}" names no tier`);
   return out;
 }
 
@@ -413,139 +712,6 @@ function byId(rows, expectedIds, idColumn = 'id') {
   return seen;
 }
 
-// ---------------------------------------------------------------- Map sheet
-
-/** Read the Map sheet's coordinate labels: row 1 → x per column, col A → y per row. */
-function readMapLabels(ws) {
-  const xByCol = new Map();
-  const yByRow = new Map();
-  ws.getRow(1).eachCell({ includeEmpty: false }, (cell, col) => {
-    if (col === 1) return;
-    const v = cellValue(cell.value);
-    if (v === '') return;
-    if (typeof v !== 'number' || !Number.isInteger(v)) fail('Map', `row 1: bad x label "${v}"`);
-    xByCol.set(col, v);
-  });
-  ws.eachRow((row, rowNumber) => {
-    if (rowNumber === 1) return;
-    const v = cellValue(row.getCell(1).value);
-    if (v === '') return;
-    if (typeof v !== 'number' || !Number.isInteger(v)) fail('Map', `column A: bad y label "${v}"`);
-    yByRow.set(rowNumber, v);
-  });
-  if (xByCol.size === 0 || yByRow.size === 0) fail('Map', 'missing coordinate labels');
-  return { xByCol, yByRow };
-}
-
-/** Map sheet → region-map.json. */
-function importMap(workbook) {
-  const ws = workbook.getWorksheet('Map');
-  if (!ws) fail('Map', 'sheet not found — run "npm run balance:export" to regenerate the workbook');
-  const { xByCol, yByRow } = readMapLabels(ws);
-
-  const terrain = [];
-  const features = [];
-  const byCoord = new Map();
-  ws.eachRow((row, rowNumber) => {
-    const y = yByRow.get(rowNumber);
-    if (y === undefined) return;
-    row.eachCell({ includeEmpty: false }, (cell, col) => {
-      const x = xByCol.get(col);
-      if (x === undefined) return;
-      const code = String(cellValue(cell.value)).trim();
-      if (code === '') return;
-      const m = code.match(/^([a-z])?([A-Z])?$/);
-      if (!m || (!m[1] && !m[2])) fail('Map', `cell (${x},${y}): unknown code "${code}"`);
-      const terrainId = m[1] ? TERRAIN_CODES[m[1]] : 'Grassland'; // bare feature = grass
-      if (m[1] && !terrainId) fail('Map', `cell (${x},${y}): unknown terrain code "${m[1]}"`);
-      const featureId = m[2] ? FEATURE_CODES[m[2]] : null;
-      if (m[2] && !featureId) fail('Map', `cell (${x},${y}): unknown feature code "${m[2]}"`);
-      terrain.push({ x, y, id: terrainId });
-      if (featureId) features.push({ x, y, id: featureId });
-      byCoord.set(`${x},${y}`, { terrainId, featureId });
-    });
-  });
-  if (terrain.length === 0) fail('Map', 'the map is empty');
-
-  for (const [x, y] of TOWNHALL_CELLS) {
-    const c = byCoord.get(`${x},${y}`);
-    if (!c || c.terrainId !== 'Grassland' || c.featureId) {
-      fail('Map', `the Townhall footprint cell (${x},${y}) must be feature-free Grassland ("g")`);
-    }
-  }
-
-  const order = (a, b) => a.y - b.y || a.x - b.x;
-  terrain.sort(order);
-  features.sort(order);
-  writeFileSync(MAP_PATH, JSON.stringify(
-    { terrain: { cells: terrain }, features: { cells: features } }, null, 2) + '\n');
-  console.log(`balance: wrote ${MAP_PATH} (${terrain.length} cells, ${features.length} features)`);
-  return byCoord;
-}
-
-/** Every landmark and ruin has to sit on a real, walkable, empty cell. Getting
- *  this wrong authors a site nobody can ever reach, which is invisible until a
- *  player fails to find it. */
-function checkSites(out, cells) {
-  const townhall = new Set(TOWNHALL_CELLS.map(([x, y]) => `${x},${y}`));
-  const check = (what, x, y) => {
-    const c = cells.get(`${x},${y}`);
-    if (!c) fail('sites', `${what} is on (${x},${y}), which is not a map cell`);
-    if (c.terrainId === 'Water') fail('sites', `${what} is on water at (${x},${y})`);
-    if (c.featureId) fail('sites', `${what} shares (${x},${y}) with a ${c.featureId}`);
-    if (townhall.has(`${x},${y}`)) fail('sites', `${what} is under the Townhall at (${x},${y})`);
-  };
-  for (const l of out.landmarks) check(`landmark ${l.id}`, l.x, l.y);
-  for (const [id, r] of Object.entries(out.ruins)) check(`ruin ${id}`, r.x, r.y);
-  console.log(`balance: ${out.landmarks.length} landmarks and ${Object.keys(out.ruins).length} ruins check out`);
-}
-
-/** region-map.json → Map sheet (with live color rules per code). */
-function exportMap(workbook) {
-  const m = JSON.parse(readFileSync(MAP_PATH, 'utf8'));
-  const featureAt = new Map(m.features.cells.map((c) => [`${c.x},${c.y}`, c.id]));
-  const xs = m.terrain.cells.map((c) => c.x);
-  const ys = m.terrain.cells.map((c) => c.y);
-  const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
-  const [y0, y1] = [Math.min(...ys), Math.max(...ys)];
-
-  const ws = workbook.addWorksheet('Map', { views: [{ state: 'frozen', xSplit: 1, ySplit: 1 }] });
-  ws.getColumn(1).width = 4;
-  for (let x = x0; x <= x1; x++) {
-    ws.getRow(1).getCell(x - x0 + 2).value = x;
-    ws.getColumn(x - x0 + 2).width = 3.5;
-  }
-  ws.getRow(1).font = { bold: true };
-  for (let y = y0; y <= y1; y++) {
-    const row = ws.getRow(y - y0 + 2);
-    row.getCell(1).value = y;
-    row.getCell(1).font = { bold: true };
-  }
-  const terrainLetter = Object.fromEntries(
-    Object.entries(TERRAIN_CODES).map(([k, v]) => [v, k]));
-  const featureLetter = Object.fromEntries(
-    Object.entries(FEATURE_CODES).map(([k, v]) => [v, k]));
-  for (const c of m.terrain.cells) {
-    const feature = featureAt.get(`${c.x},${c.y}`);
-    const code = feature
-      ? (c.id === 'Grassland' ? '' : terrainLetter[c.id]) + featureLetter[feature]
-      : terrainLetter[c.id];
-    const cell = ws.getRow(c.y - y0 + 2).getCell(c.x - x0 + 2);
-    cell.value = code;
-    cell.numFmt = '@';
-    cell.alignment = { horizontal: 'center' };
-  }
-  // Live colors: the fill follows the code as you type.
-  const ref = `B2:${ws.getColumn(x1 - x0 + 2).letter}${y1 - y0 + 2}`;
-  ws.addConditionalFormatting({
-    ref,
-    rules: Object.entries(MAP_COLORS).map(([code, argb], i) => ({
-      type: 'cellIs', operator: 'equal', formulae: [`"${code}"`], priority: i + 1,
-      style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb } } },
-    })),
-  });
-}
-
 // ------------------------------------------------------------------- import
 
 async function importXlsx() {
@@ -558,15 +724,17 @@ async function importXlsx() {
 
   const out = {
     _note: 'GENERATED from balance/balance.xlsx — edit the workbook and run: npm run balance',
-    districts: {}, harvest: {}, currencies: {}, units: {}, technologies: {}, upgrades: {},
-    research: {},
+    districts: {}, goods: {}, terrain: {}, harvest: {}, currencies: {}, units: {},
+    store: {}, payer: {},
+    research: {}, rush: {},
     worker: {}, tap: {}, training: {}, taxes: {}, adjacency: [],
     mana: {}, attunement: {}, collection: {}, knowledge: {}, army: {},
-    delve: {}, party: {}, gacha: {}, heroes: {}, ads: {},
-    landmarks: [], ruins: {}, artifacts: {},
-    quests: [],
+    daily: {},
+    delve: {}, party: {}, heroes: {}, ads: {}, depths: [], garrisons: [], raid: {},
+    artifacts: {},
+    quests: [], banners: {},
     fog: { rings: [], fallbackGrowth: 0 },
-    city: { initialCurrencies: {} }, kingdom: {},
+    city: { initialCurrencies: {} }, kingdom: {}, harmony: {},
     offlineCapHours: 0,
   };
 
@@ -575,39 +743,180 @@ async function importXlsx() {
       size: { x: num(r, 'size_x'), y: num(r, 'size_y') },
       maxLevel: num(r, 'max_level'),
       populationCapacityPerLevel: list(r, 'population_capacity'),
+      // What a house's LEVEL does to the rent its residents pay: a fraction
+      // of the base rate, the TOTAL at that level rather than an increment,
+      // indexed from level 1 like `army_cap_per_level`. Blank = +0%, which is
+      // every building that houses nobody.
+      taxBonusPerLevel: list(r, 'tax_bonus_per_level'),
       fogRevealRadius: num(r, 'fog_reveal_radius'),
       fogDiscoverRadius: num(r, 'fog_discover_radius'),
       maxWorkersPerLevel: list(r, 'max_workers_per_level'),
       maxCountPerTownhallLevel: list(r, 'max_count_per_townhall_level'),
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
-      requiredTechPerLevel: techList(r, 'required_tech_per_level'),
       armyCapPerLevel: list(r, 'army_cap_per_level'),
-      buildCost: wallet(r, 'build_cost'),
-      buildCostMultiplier: num(r, 'build_cost_multiplier'),
-      buildCostExponentialGrowth: num(r, 'build_cost_exponential_growth'),
+      // The infirmary's beds: how many wounded the city can hold at once
+      // (Docs/features/combat.md §4). Only the Infirmary has any, which is
+      // what makes healing a building rather than a rule.
+      bedsPerLevel: list(r, 'beds_per_level'),
+      // What every level costs is DistrictCosts, filled in below. These two
+      // are how much dearer a LATER instance of the building is:
+      // M(N) = linear × (N − 1) + growth^(N − 1), which is 1 at N = 1, so the
+      // first one pays the table exactly.
+      costPerLevel: [],
+      instanceLinearGrowth: num(r, 'instance_linear_growth'),
+      instanceExponentialGrowth: num(r, 'instance_exponential_growth'),
       buildDurationSeconds: num(r, 'build_duration_seconds'),
       buildDurationDistrictGrowth: num(r, 'build_duration_district_growth'),
       buildDurationDistanceGrowth: num(r, 'build_duration_distance_growth'),
-      upgradeCost: wallet(r, 'upgrade_cost'),
-      upgradeCostLevelGrowth: num(r, 'upgrade_cost_level_growth'),
       upgradeDurationSeconds: num(r, 'upgrade_duration_seconds'),
       upgradeDurationLevelGrowth: num(r, 'upgrade_duration_level_growth'),
+      // The late WAIT. 0 = "this row has no late levels", and every level is
+      // timed by the two columns above it. There is no late COST curve: a
+      // late level is dear because a designer typed a big number into
+      // DistrictCosts.
+      upgradeDurationLateSeconds: num(r, 'upgrade_duration_late_seconds', { blankAs: 0 }),
+      upgradeDurationLateLevelGrowth:
+        num(r, 'upgrade_duration_late_level_growth', { blankAs: 0 }),
+      // What a producer's late level buys instead of crew: units ADDED to a
+      // delivery (the shape WorkerLoad already uses, because a chunk is 1-5
+      // units and a percentage of that rounds away), and a multiplier on the
+      // swing. Blank = 0 added, 1.0 speed.
+      extraUnitsPerDeliveryPerLevel: list(r, 'extra_units_per_delivery_per_level'),
+      strikeSpeedPerLevel: list(r, 'strike_speed_per_level'),
+      // The Market's own ladder: what its level pays for a sold unit. Blank =
+      // 1.0, which is every other building.
+      // A workshop makes ONE good. Which one is its identity, the way a
+      // Sawmill's identity is the forest.
+      produces: (r.produces === '' || r.produces === undefined) ? null : r.produces,
+      queueLengthPerLevel: list(r, 'queue_length_per_level'),
+      // Harmony. A decoration SUPPLIES; everything else DEMANDS, and the
+      // demand is the TOTAL at that level rather than an increment — indexed
+      // from level 1 like `army_cap_per_level`, so one column states the
+      // build gate (entry 0) and every upgrade gate, and nothing anywhere has
+      // to sum a prefix (Docs/plans/builder-30-days.md §6.1).
+      harmonySupply: num(r, 'harmony_supply', { blankAs: 0 }),
+      harmonyCostPerLevel: list(r, 'harmony_cost_per_level'),
+    };
+    const made = out.districts[id].produces;
+    if (made !== null && !GOOD_IDS.includes(made)) {
+      fail(where(r), `"produces" is not a good ("${made}")`);
+    }
+    if ((made === null) !== (out.districts[id].queueLengthPerLevel.length === 0)) {
+      fail(where(r), 'a workshop needs both "produces" and "queue_length_per_level"');
+    }
+    const d = out.districts[id];
+    // A decoration has no level, no crew, no residents, no queue and nothing
+    // it trains. Its whole contribution is the number in `harmony_supply`, so
+    // a row that supplies AND does something else is a row whose author meant
+    // two different buildings.
+    if (d.harmonySupply > 0) {
+      if (!Number.isInteger(d.harmonySupply)) {
+        fail(where(r), '"harmony_supply" is not a whole number');
+      }
+      if (d.maxLevel !== 1) fail(where(r), 'a decoration has no ladder — "max_level" must be 1');
+      for (const col of ['max_workers_per_level', 'population_capacity',
+        'army_cap_per_level', 'beds_per_level', 'influence_radius_per_level',
+        'queue_length_per_level']) {
+        if (list(r, col).length > 0) fail(where(r), `a decoration has no "${col}"`);
+      }
+      if (made !== null) fail(where(r), 'a decoration makes nothing — clear "produces"');
+      if (d.harmonyCostPerLevel.length > 0) {
+        fail(where(r), 'a decoration supplies Harmony; it does not demand it');
+      }
+    }
+    // Demand is a TOTAL at each level, so it can stand still but never fall.
+    d.harmonyCostPerLevel.forEach((n, i) => {
+      if (i > 0 && n < d.harmonyCostPerLevel[i - 1]) {
+        fail(where(r), '"harmony_cost_per_level" falls at level '
+          + `${i + 1} (${d.harmonyCostPerLevel[i - 1]} then ${n}) — it is a total, not an increment`);
+      }
+    });
+    // The rent bonus is a HOUSE's ladder: a row that houses nobody has no
+    // rent for it to move, so a number there is an author who meant a
+    // different column.
+    if (d.taxBonusPerLevel.length > 0 && d.populationCapacityPerLevel.length === 0) {
+      fail(where(r), '"tax_bonus_per_level" on a row that houses nobody');
+    }
+    // A total at each level too, and for the same reason.
+    d.taxBonusPerLevel.forEach((n, i) => {
+      if (i > 0 && n < d.taxBonusPerLevel[i - 1]) {
+        fail(where(r), '"tax_bonus_per_level" falls at level '
+          + `${i + 1} (${d.taxBonusPerLevel[i - 1]} then ${n}) — it is a total, not an increment`);
+      }
+    });
+  }
+
+  // What every building costs: one row per level, level 1 being the build.
+  // A building has exactly as many rows as it has levels, and the rows are
+  // read by their `level` rather than by their position, so the sheet may be
+  // sorted any way a designer likes.
+  const costSeen = new Map();
+  for (const r of readSheet(workbook, 'DistrictCosts')) {
+    const id = r.district;
+    if (!DISTRICT_IDS.includes(id)) fail(where(r), `unknown district "${id}"`);
+    const level = num(r, 'level');
+    if (!Number.isInteger(level) || level < 1) fail(where(r), `"level" is not a level (${level})`);
+    if (level > out.districts[id].maxLevel) {
+      fail(where(r), `${id} level ${level} is past its "max_level" (${out.districts[id].maxLevel})`);
+    }
+    if (!costSeen.has(id)) costSeen.set(id, new Map());
+    if (costSeen.get(id).has(level)) fail(where(r), `${id} level ${level} is priced twice`);
+    const cost = {};
+    for (const c of COST_CURRENCIES) {
+      const v = num(r, c.toLowerCase(), { blankAs: 0 });
+      if (v > 0) cost[c] = v;
+    }
+    const goods = {};
+    for (const g of GOOD_IDS) {
+      const v = num(r, GOOD_COLUMNS[g], { blankAs: 0 });
+      if (v > 0) goods[g] = v;
+    }
+    costSeen.get(id).set(level, { cost, goods });
+  }
+  for (const id of DISTRICT_IDS) {
+    const rows = costSeen.get(id);
+    const max = out.districts[id].maxLevel;
+    if (!rows) fail('DistrictCosts', `"${id}" has no rows — every level needs a price`);
+    for (let level = 1; level <= max; level += 1) {
+      if (!rows.has(level)) fail('DistrictCosts', `"${id}" has no row for level ${level}`);
+    }
+    out.districts[id].costPerLevel =
+      Array.from({ length: max }, (unused, i) => rows.get(i + 1));
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Goods'), GOOD_IDS)) {
+    const inputGood = (r.input_good === '' || r.input_good === undefined) ? null : r.input_good;
+    if (inputGood !== null && !GOOD_IDS.includes(inputGood)) {
+      fail(where(r), `"input_good" is not a good ("${inputGood}")`);
+    }
+    if (inputGood === id) fail(where(r), 'a good cannot be made of itself');
+    out.goods[id] = {
+      name: String(r.name),
+      tier: num(r, 'tier'),
+      input: wallet(r, 'input'),
+      inputMana: num(r, 'input_mana', { blankAs: 0 }),
+      inputGood,
+      inputGoodAmount: inputGood === null ? 0 : num(r, 'input_good_amount'),
+      workSeconds: num(r, 'work_seconds'),
+    };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Terrain'), TERRAIN_IDS, 'terrain')) {
+    out.terrain[id] = {
+      Food: num(r, 'food', { blankAs: 1 }),
+      Wood: num(r, 'wood', { blankAs: 1 }),
+      Stone: num(r, 'stone', { blankAs: 1 }),
     };
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Harvest'), HARVEST_IDS, 'source')) {
     out.harvest[id] = {
-      yieldPerTap: num(r, 'yield_per_tap'),
-      yieldPerWorker: num(r, 'yield_per_worker'),
-      tapsToExhaust: num(r, 'taps_to_exhaust'),
+      unitsPerStrike: num(r, 'units_per_strike'),
+      secondsPerStrike: num(r, 'seconds_per_strike'),
+      stock: num(r, 'stock'),
       recoverySeconds: num(r, 'recovery_seconds'),
       respawnSeconds: num(r, 'respawn_seconds', { blankAs: 0 }),
-      // Blank = anyone can tap it. A gate here is a TUTORIAL beat: the trees
-      // around the Townhall are visible from the first second and refuse the
-      // tap until Forestry is in, which is what makes the first research
-      // something the player wants rather than something they are told to do.
-      requiredTech: techOrBlank(r, 'required_tech'),
     };
   }
 
@@ -630,68 +939,112 @@ async function importXlsx() {
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Units'), UNIT_IDS)) {
-    const atk = num(r, 'atk');
-    // A unit's POWER — what it costs against the army cap — equals its ATK,
-    // so the cap table reads directly as attack potential.
-    if (num(r, 'power') !== atk) fail(where(r), `power must equal atk (${atk})`);
+    // POWER is not damage. `power_per_troop` is the scale the ARMY CAP and
+    // every room's `power_req` are written in; `dmg` is what the resolver
+    // hits with (Docs/features/combat.md §5, §12). They were one number while
+    // combat was a scoring pass, and a room that reads "72" would mean
+    // something else if it followed the damage table.
+    const squadSize = num(r, 'squad_size');
+    if (squadSize < 1) fail(where(r), 'squad_size must be 1 or more');
+    const frontage = num(r, 'frontage');
+    if (frontage < 1) fail(where(r), 'frontage must be 1 or more');
+    if (frontage > squadSize) fail(where(r), 'frontage cannot exceed squad_size');
+    const cooldown = num(r, 'cooldown');
+    if (cooldown < 1) fail(where(r), 'cooldown is in TICKS and must be 1 or more');
     out.units[id] = {
-      power: atk,
-      atk,
+      power: num(r, 'power'),
+      dmg: num(r, 'dmg'),
       def: num(r, 'def'),
       hp: num(r, 'hp'),
+      squadSize,
+      frontage,
+      cooldown,
       recruitCost: wallet(r, 'recruit_cost'),
       trainDurationSeconds: num(r, 'train_duration_seconds'),
     };
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Technologies'), TECH_IDS)) {
-    const requires = (r.requires === '' || r.requires === undefined)
-      ? [] : String(r.requires).split(/[,;]/).map((part) => part.trim());
-    for (const req of requires) {
-      if (!TECH_IDS.includes(req)) fail(where(r), `unknown required tech "${req}"`);
-      if (req === id) fail(where(r), 'a technology cannot require itself');
-    }
-    // Gold, alone. Research is paid out of the CITY purse, so the tree
-    // competes with clearing fog and raising a building for one budget —
-    // which is the decision the economy is built around. Instant upgrades
-    // are Gold too; what separates them is that an upgrade is permanent and
-    // stacking while a technology is a one-time unlock.
-    const gold = num(r, 'cost_gold');
-    if (gold < 1) fail(where(r), 'cost_gold must be at least 1');
-    out.technologies[id] = {
-      cost: { Gold: gold },
-      durationSeconds: num(r, 'duration_seconds'),
-      requires,
-    };
+  for (const r of readSheet(workbook, 'Depths')) {
+    if (!RUIN_IDS.includes(r.ruin)) fail(where(r), `unknown ruin "${r.ruin}"`);
+    const depth = num(r, 'depth');
+    const rooms = num(r, 'rooms');
+    if (rooms < 1) fail(where(r), 'a depth needs at least one room');
+    out.depths.push({
+      ruin: r.ruin,
+      depth,
+      rooms,
+      guildReq: num(r, 'guild_req', { blankAs: 0 }),
+      powerStart: num(r, 'power_start'),
+      powerStep: num(r, 'power_step'),
+      rewardBase: num(r, 'reward_base'),
+      villainPool: String(r.villain_pool ?? ''),
+      bossVillain: String(r.boss_villain ?? ''),
+      supplies: wallet(r, 'supply'),
+    });
+  }
+  out.depths.sort((a, b) => (a.ruin === b.ruin ? a.depth - b.depth
+    : RUIN_IDS.indexOf(a.ruin) - RUIN_IDS.indexOf(b.ruin)));
+  // The ladder has to keep climbing: a depth may never open easier than the
+  // one above it finished (Docs/features/11-expeditions.md §2).
+  for (const ruin of RUIN_IDS) {
+    const rows = out.depths.filter((d) => d.ruin === ruin);
+    if (rows.length === 0) fail('Depths', `ruin "${ruin}" has no depths`);
+    rows.forEach((d, i) => {
+      if (d.depth !== i + 1) fail('Depths', `${ruin} depth ${d.depth} is out of order`);
+      const prev = rows[i - 1];
+      if (prev === undefined) return;
+      const prevLast = prev.powerStart + prev.powerStep * (prev.rooms - 1);
+      if (d.powerStart < prevLast) {
+        fail('Depths', `${ruin} depth ${d.depth} starts at ${d.powerStart}, `
+          + `below where depth ${prev.depth} finished (${prevLast})`);
+      }
+      if (d.guildReq < prev.guildReq) {
+        fail('Depths', `${ruin} depth ${d.depth} opens before depth ${prev.depth}`);
+      }
+    });
   }
 
-  for (const [id, r] of byId(readSheet(workbook, 'Upgrades'), UPGRADE_IDS)) {
-    const requiredTech = (r.required_tech === '' || r.required_tech === undefined)
-      ? null : r.required_tech;
-    if (requiredTech !== null && !TECH_IDS.includes(requiredTech)) {
-      fail(where(r), `unknown required_tech "${requiredTech}"`);
-    }
-    out.upgrades[id] = {
-      costBase: num(r, 'cost_base'),
-      costGrowth: num(r, 'cost_growth'),
-      maxLevel: num(r, 'max_level'),
-      effectPerLevel: num(r, 'effect_per_level'),
-      requiredTech,
-    };
+  for (const [tier, r] of byId(readSheet(workbook, 'Garrisons'), RUIN_TIERS, 'tier')) {
+    out.garrisons.push({
+      tier,
+      takeSeconds: num(r, 'take_seconds'),
+      supplies: wallet(r, 'supply'),
+    });
   }
+  out.garrisons.sort((a, b) => a.tier - b.tier);
 
   const adjacencySeen = new Set();
   for (const r of readSheet(workbook, 'Adjacency')) {
+    // EITHER column may be a district or one of the group tokens, which are
+    // derived sets in definitions.ts rather than rows anywhere — so the four
+    // halls sharing a rule is one line, not twelve.
     for (const col of ['district', 'neighbor']) {
-      if (!DISTRICT_IDS.includes(r[col])) fail(where(r), `unknown ${col} "${r[col]}"`);
+      if (!DISTRICT_IDS.includes(r[col]) && !ADJACENCY_GROUPS.includes(r[col])) {
+        fail(where(r), `unknown ${col} "${r[col]}" — a district id or ` +
+          ADJACENCY_GROUPS.join('/'));
+      }
     }
-    const pair = `${r.district}+${r.neighbor}`;
-    if (adjacencySeen.has(pair)) fail(where(r), `duplicate adjacency rule ${pair}`);
-    adjacencySeen.add(pair);
+    if (!ADJACENCY_STATS.includes(r.stat)) {
+      fail(where(r), `unknown stat "${r.stat}" — one of ${ADJACENCY_STATS.join(', ')}`);
+    }
+    // One rule per (district, neighbour, stat): two rows moving the same stat
+    // for the same pair would just be one row with their sum, and reading
+    // both is how a designer double-counts by accident.
+    const key = `${r.district}+${r.neighbor}+${r.stat}`;
+    if (adjacencySeen.has(key)) fail(where(r), `duplicate adjacency rule ${key}`);
+    adjacencySeen.add(key);
+    const magnitude = signedNum(r, 'magnitude');
+    if (magnitude === 0) fail(where(r), 'a rule with magnitude 0 does nothing — delete the row');
+    // A fraction is a fraction: anything past the clamp is authored noise,
+    // because the resolver would refuse to pay it anyway.
+    if (r.stat !== 'goldPerMinute' && Math.abs(magnitude) > ADJACENCY_CLAMP) {
+      fail(where(r), `"${r.stat}" magnitude ${magnitude} is past the ±${ADJACENCY_CLAMP} clamp`);
+    }
     out.adjacency.push({
       district: r.district,
       neighbor: r.neighbor,
-      goldPerMinute: signedNum(r, 'gold_per_minute'),
+      stat: r.stat,
+      magnitude,
     });
   }
 
@@ -703,8 +1056,8 @@ async function importXlsx() {
     const targetKind = QUEST_GOAL_TYPES[r.goal_type];
     const target = (r.goal_target === '' || r.goal_target === undefined) ? null : r.goal_target;
     const lists = {
-      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS, upgrade: UPGRADE_IDS,
-      feature: Object.values(FEATURE_CODES),
+      district: DISTRICT_IDS, tech: TECH_IDS, currency: CURRENCY_IDS,
+      feature: FEATURE_IDS,
     };
     if (targetKind === null && target !== null) {
       fail(where(r), `goal_type ${r.goal_type} takes no goal_target`);
@@ -728,7 +1081,12 @@ async function importXlsx() {
       goalLevel: level,
       reward: wallet(r, 'reward'),
       rewardGems: num(r, 'reward_gems', { blankAs: 0 }),
+      rewardStardust: num(r, 'reward_stardust', { blankAs: 0 }),
       rewardKnowledge: num(r, 'reward_knowledge', { blankAs: 0 }),
+      // Mana is a city currency but not one of the four `reward_*` wallet
+      // columns, which are the materials every cost sheet shares. It gets a
+      // scalar of its own, the way Gems and Stardust do.
+      rewardMana: num(r, 'reward_mana', { blankAs: 0 }),
     });
   }
 
@@ -739,87 +1097,47 @@ async function importXlsx() {
       activeManaCost: num(r, 'active_mana_cost', { blankAs: 0 }),
       activeDurationSeconds: num(r, 'active_duration_seconds', { blankAs: 0 }),
       activeRadius: num(r, 'active_radius', { blankAs: 0 }),
-      // What the relic is worth when a hero carries it DOWN instead of the
-      // kingdom wearing it. Attuning costs Mana every hour; carrying costs
-      // none — so the trade is never "which is cheaper" but "which do I need
-      // right now". A relic with no carried stats at all would make that a
-      // non-question, so every one of them earns its keep underground.
-      carriedAtk: num(r, 'carried_atk', { blankAs: 0 }),
-      carriedDef: num(r, 'carried_def', { blankAs: 0 }),
-      carriedHp: num(r, 'carried_hp', { blankAs: 0 }),
-      carriedAtkPerLevel: num(r, 'carried_atk_per_level', { blankAs: 0 }),
-      carriedDefPerLevel: num(r, 'carried_def_per_level', { blankAs: 0 }),
-      carriedHpPerLevel: num(r, 'carried_hp_per_level', { blankAs: 0 }),
     };
   }
 
   for (const [id, r] of byId(readSheet(workbook, 'Heroes'), HERO_IDS)) {
     if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
     if (!HERO_TRAITS.includes(r.trait)) fail(where(r), `unknown trait "${r.trait}"`);
+    if (!HERO_RARITIES.includes(r.rarity)) fail(where(r), `unknown rarity "${r.rarity}"`);
     out.heroes[id] = {
+      rarity: r.rarity,
       unitType: r.unit_type,
       trait: r.trait,
       traitValue: num(r, 'trait_value'),
-      atk: num(r, 'atk'),
+      dmg: num(r, 'dmg'),
       def: num(r, 'def'),
       hp: num(r, 'hp'),
-      atkPerLevel: num(r, 'atk_per_level'),
+      cooldown: num(r, 'cooldown'),
+      dmgPerLevel: num(r, 'dmg_per_level'),
       defPerLevel: num(r, 'def_per_level'),
       hpPerLevel: num(r, 'hp_per_level'),
+      troopDmgMult: num(r, 'troop_dmg_mult'),
+      troopHpMult: num(r, 'troop_hp_mult'),
+      troopDefBonus: num(r, 'troop_def_bonus'),
     };
   }
 
-  // Landmarks and ruins are MAP content authored by coordinate. The importer
-  // is the only place that can check the cell actually exists, is land, and is
-  // not already occupied by a feature or the Townhall — so it does.
-  const siteSeen = new Map();
-  const claimSite = (r, x, y, what) => {
-    const key = `${x},${y}`;
-    if (siteSeen.has(key)) fail(where(r), `two sites on cell (${key}) — ${siteSeen.get(key)} is already there`);
-    siteSeen.set(key, what);
-    return key;
-  };
-  const landmarkIds = new Set();
-  for (const r of readSheet(workbook, 'Landmarks')) {
-    if (!LANDMARK_KINDS.includes(r.kind)) fail(where(r), `unknown landmark kind "${r.kind}"`);
-    if (landmarkIds.has(r.id)) fail(where(r), `duplicate landmark id "${r.id}"`);
-    landmarkIds.add(r.id);
-    const x = coord(r, 'x');
-    const y = coord(r, 'y');
-    claimSite(r, x, y, r.id);
-    out.landmarks.push({
-      id: String(r.id), kind: r.kind, x, y,
-      defended: num(r, 'defended', { blankAs: 0 }) === 1,
-      // Authored per sanctuary, not derived from distance. The tiers ARE the
-      // design — one in sight you save weeks for, then two rings beyond it —
-      // and a curve cannot express "5,000 / 25,000 / 100,000" exactly.
-      claimCost: num(r, 'claim_cost'),
-    });
-  }
-
-  for (const [id, r] of byId(readSheet(workbook, 'Ruins'), RUIN_IDS)) {
-    const x = coord(r, 'x');
-    const y = coord(r, 'y');
-    claimSite(r, x, y, id);
-    if (r.affinity !== 'Any' && !UNIT_IDS.includes(r.affinity)) {
-      fail(where(r), `affinity must be a unit id or "Any" (got "${r.affinity}")`);
-    }
-    if (!ARTIFACT_IDS.includes(r.artifact)) fail(where(r), `unknown artifact "${r.artifact}"`);
-    const supplies = {};
-    for (const c of ['Food', 'Gold', 'Stone']) {
-      const v = num(r, `supply_${c.toLowerCase()}`, { blankAs: 0 });
-      if (v > 0) supplies[c] = v;
-    }
-    out.ruins[id] = {
-      x, y,
-      tier: num(r, 'tier'),
-      difficulty: num(r, 'difficulty'),
-      baseDepthSeconds: num(r, 'base_depth_seconds'),
-      depthGrowth: num(r, 'depth_growth'),
-      maxDepth: num(r, 'max_depth'),
-      supplies,
-      affinity: r.affinity,
-      artifact: r.artifact,
+  out.villains = {};
+  for (const r of readSheet(workbook, 'Villains')) {
+    if (!UNIT_IDS.includes(r.unit_type)) fail(where(r), `unknown unit_type "${r.unit_type}"`);
+    out.villains[r.id] = {
+      name: r.name,
+      glyph: r.glyph,
+      sprite: r.sprite,
+      unitType: r.unit_type,
+      dmg: num(r, 'dmg'),
+      def: num(r, 'def'),
+      hp: num(r, 'hp'),
+      cooldown: num(r, 'cooldown'),
+      troopDmgMult: num(r, 'troop_dmg_mult'),
+      troopHpMult: num(r, 'troop_hp_mult'),
+      troopDefBonus: num(r, 'troop_def_bonus'),
+      power: num(r, 'power'),
     };
   }
 
@@ -831,26 +1149,104 @@ async function importXlsx() {
     out.fog.rings.push({ distance, cost: num(r, 'cost') });
   }
 
+  for (const [id, r] of byId(readSheet(workbook, 'Store'), STORE_IDS)) {
+    const priceUsd = num(r, 'price_usd');
+    const gems = num(r, 'gems');
+    if (priceUsd <= 0) fail(where(r), 'a store SKU needs a positive price');
+    if (gems < 0) fail(where(r), 'a store SKU cannot grant negative Gems');
+    out.store[id] = { priceUsd, gems };
+  }
+
+  for (const [id, r] of byId(readSheet(workbook, 'Banners'), BANNER_IDS)) {
+    if (!CURRENCY_IDS.includes(r.key)) fail(where(r), `"key" is not a currency ("${r.key}")`);
+    const weights = {
+      Common: num(r, 'weight_common', { blankAs: 0 }),
+      Rare: num(r, 'weight_rare', { blankAs: 0 }),
+      Legendary: num(r, 'weight_legendary', { blankAs: 0 }),
+    };
+    // A banner that weights nothing can roll nothing. Loudly, here, rather
+    // than as a pull that silently returns 'NothingToPull' forever.
+    if (Object.values(weights).every((w) => w <= 0)) {
+      fail(where(r), 'weights every rarity at 0 — the banner can roll nothing');
+    }
+    const chance = num(r, 'hero_chance');
+    if (chance <= 0 || chance > 1) fail(where(r), `"hero_chance" is ${chance}, not a fraction`);
+    const soft = num(r, 'soft_pity_at');
+    const hard = num(r, 'hard_pity_at');
+    if (soft >= hard) fail(where(r), `soft pity (${soft}) must come before hard pity (${hard})`);
+    // 0 = this banner has no legendary guarantee, which is right for one that
+    // weights Legendary at 0 and wrong for one that does not.
+    const legendary = num(r, 'legendary_pity_at', { blankAs: 0 });
+    if ((legendary > 0) !== (weights.Legendary > 0)) {
+      fail(where(r), 'a legendary guarantee and a legendary weight go together');
+    }
+    out.banners[id] = {
+      key: r.key,
+      keyGemCost: num(r, 'key_gem_cost'),
+      heroChance: chance,
+      softPityAt: soft,
+      hardPityAt: hard,
+      legendaryPityAt: legendary,
+      weights,
+      duplicateFragments: num(r, 'duplicate_fragments'),
+      fragmentsPerMiss: num(r, 'fragments_per_miss'),
+      pullStardust: num(r, 'pull_stardust'),
+      freePerDay: num(r, 'free_per_day', { blankAs: 0 }),
+      freeCooldownSeconds: num(r, 'free_cooldown_seconds', { blankAs: 0 }),
+    };
+  }
+
   const settings = byId(readSheet(workbook, 'Settings'), SETTINGS.map(([k]) => k), 'key');
   for (const [key, path, kind] of SETTINGS) {
     const row = settings.get(key);
-    const value = kind === 'list' ? list(row, 'value') : num(row, 'value');
+    const value = kind === 'list' ? list(row, 'value')
+      : kind === 'tiers' ? tiers(row, 'value')
+        : num(row, 'value');
     const parts = path.split('.');
     let target = out;
-    while (parts.length > 1) target = target[parts.shift()];
+    // A block whose every key is a Setting — `combat.*` is one — has no loop
+    // of its own to create it, so the first setting that names it does.
+    while (parts.length > 1) {
+      const step = parts.shift();
+      if (target[step] === undefined) target[step] = {};
+      target = target[step];
+    }
     target[parts[0]] = value;
+  }
+
+  // The late curve is checked here rather than in the Districts loop, because
+  // where the late city starts is a Setting and the settings are read last.
+  // A building that reaches past the pivot without the late columns would be
+  // priced and timed for levels 6-10 by a curve tuned for the opening, which
+  // is silently wrong rather than loudly wrong.
+  const pivot = out.city.lateUpgradeFromLevel;
+  for (const [id, d] of Object.entries(out.districts)) {
+    const late = d.maxLevel >= pivot;
+    const authored = d.upgradeCostLateLevelGrowth > 0
+      || d.upgradeDurationLateSeconds > 0 || d.upgradeDurationLateLevelGrowth > 0;
+    if (!late && authored) {
+      fail(`Districts/${id}`, `has late-curve columns but stops at level ${d.maxLevel}`);
+    }
+    if (late && !authored && Object.keys(d.upgradeCost).length > 0) {
+      fail(`Districts/${id}`,
+        `reaches level ${d.maxLevel} but authors no late curve — set ` +
+        'upgrade_cost_late_level_growth and upgrade_duration_late_*');
+    }
   }
 
   writeFileSync(JSON_PATH, JSON.stringify(out, null, 2) + '\n');
   console.log(`balance: wrote ${JSON_PATH}`);
-  const cells = importMap(workbook);
-  checkSites(out, cells);
 }
 
 // ------------------------------------------------------------------- export
 
 const listCell = (arr) => arr.join(',');
+
+const goodsCell = (levels) => levels
+  .map((m) => Object.entries(m).map(([id, n]) => `${id}:${n}`).join(','))
+  .join('|');
 const costCells = (w) => COST_CURRENCIES.map((c) => (w[c] && w[c] !== 0 ? w[c] : ''));
+const tiersCell = (ts) => ts.map((t) => `${t.at}:${t.bonus}`).join('|');
 
 /** isTextCell(colName, rowValues) marks list cells: they get Excel's Text
  *  format so a two-entry list like "3,5" can't collapse into the number 3.5. */
@@ -878,28 +1274,52 @@ async function exportXlsx() {
     const d = b.districts[id];
     return [
       id, d.size.x, d.size.y, d.maxLevel, listCell(d.populationCapacityPerLevel),
+      listCell(d.taxBonusPerLevel),
       d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
-      listCell(d.requiredTechPerLevel.map((t) => t ?? '-')),
-      listCell(d.armyCapPerLevel),
-      ...costCells(d.buildCost),
-      d.buildCostMultiplier, d.buildCostExponentialGrowth,
+      listCell(d.armyCapPerLevel), listCell(d.bedsPerLevel),
+      d.instanceLinearGrowth, d.instanceExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,
-      ...costCells(d.upgradeCost),
-      d.upgradeCostLevelGrowth, d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
+      d.upgradeDurationSeconds, d.upgradeDurationLevelGrowth,
+      d.upgradeDurationLateSeconds || '', d.upgradeDurationLateLevelGrowth || '',
+      listCell(d.extraUnitsPerDeliveryPerLevel), listCell(d.strikeSpeedPerLevel),
+      d.produces ?? '', listCell(d.queueLengthPerLevel),
+      d.harmonySupply || '', listCell(d.harmonyCostPerLevel),
     ];
   }), (col) => DISTRICT_LIST_COLUMNS.includes(col));
 
+  // One row per building per level, grouped by building and ascending — the
+  // order a designer reads a ladder in.
+  addSheet(workbook, 'DistrictCosts', DISTRICT_IDS.flatMap((id) =>
+    b.districts[id].costPerLevel.map((row, i) => [
+      id, i + 1,
+      ...costCells(row.cost),
+      ...GOOD_IDS.map((g) => row.goods[g] || ''),
+    ])));
+
   addSheet(workbook, 'Units', UNIT_IDS.map((id) => {
     const u = b.units[id];
-    return [id, u.power, u.atk, u.def, u.hp, ...costCells(u.recruitCost), u.trainDurationSeconds];
+    return [id, u.power, u.dmg, u.def, u.hp, u.squadSize, u.frontage, u.cooldown,
+      ...costCells(u.recruitCost), u.trainDurationSeconds];
+  }));
+
+  addSheet(workbook, 'Terrain', TERRAIN_IDS.map((id) => {
+    const m = b.terrain[id];
+    return [id, m.Food, m.Wood, m.Stone];
   }));
 
   addSheet(workbook, 'Harvest', HARVEST_IDS.map((id) => {
     const h = b.harvest[id];
-    return [id, h.yieldPerTap, h.yieldPerWorker, h.tapsToExhaust, h.recoverySeconds,
-      h.respawnSeconds || '', h.requiredTech ?? ''];
+    return [id, h.unitsPerStrike, h.secondsPerStrike, h.stock, h.recoverySeconds,
+      h.respawnSeconds || ''];
+  }));
+
+  addSheet(workbook, 'Goods', GOOD_IDS.map((id) => {
+    const g = b.goods[id];
+    return [id, g.name, g.tier,
+      ...costCells(g.input), g.inputMana || '',
+      g.inputGood ?? '', g.inputGoodAmount || '', g.workSeconds];
   }));
 
   addSheet(workbook, 'Currencies', CURRENCY_IDS.map((id) => {
@@ -909,56 +1329,62 @@ async function exportXlsx() {
 
   addSheet(workbook, 'FogRings', b.fog.rings.map((r) => [r.distance, r.cost]));
 
-  addSheet(workbook, 'Technologies', TECH_IDS.map((id) => {
-    const t = b.technologies[id];
-    return [id, t.cost.Gold, t.durationSeconds, t.requires.join(',')];
-  }), (col) => col === 'requires');
-
-  addSheet(workbook, 'Upgrades', UPGRADE_IDS.map((id) => {
-    const u = b.upgrades[id];
-    return [id, u.costBase, u.costGrowth, u.maxLevel, u.effectPerLevel, u.requiredTech ?? ''];
-  }));
-
   addSheet(workbook, 'Adjacency', (b.adjacency ?? []).map((a) =>
-    [a.district, a.neighbor, a.goldPerMinute]));
+    [a.district, a.neighbor, a.stat, a.magnitude]));
 
   addSheet(workbook, 'Quests', (b.quests ?? []).map((q) => [
     q.id, q.name, q.description, q.goalType, q.goalTarget ?? '', q.goalAmount,
-    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardKnowledge || '',
+    q.goalLevel ?? '', ...costCells(q.reward), q.rewardGems || '', q.rewardStardust || '',
+    q.rewardKnowledge || '', q.rewardMana || '',
   ]));
 
   addSheet(workbook, 'Artifacts', ARTIFACT_IDS.map((id) => {
     const a = b.artifacts[id];
     return [id, a.passiveBase, a.passivePerLevel, a.activeManaCost,
-      a.activeDurationSeconds || '', a.activeRadius || '',
-      a.carriedAtk || '', a.carriedDef || '', a.carriedHp || '',
-      a.carriedAtkPerLevel || '', a.carriedDefPerLevel || '', a.carriedHpPerLevel || ''];
+      a.activeDurationSeconds || '', a.activeRadius || ''];
   }));
 
   addSheet(workbook, 'Heroes', HERO_IDS.map((id) => {
     const h = b.heroes[id];
-    return [id, h.unitType, h.trait, h.traitValue, h.atk, h.def, h.hp,
-      h.atkPerLevel, h.defPerLevel, h.hpPerLevel];
+    return [id, h.rarity, h.unitType, h.trait, h.traitValue,
+      h.dmg, h.def, h.hp, h.cooldown,
+      h.dmgPerLevel, h.defPerLevel, h.hpPerLevel,
+      h.troopDmgMult, h.troopHpMult, h.troopDefBonus];
   }));
 
-  addSheet(workbook, 'Landmarks', (b.landmarks ?? []).map((l) =>
-    [l.id, l.kind, l.x, l.y, l.defended ? 1 : '', l.claimCost]));
+  addSheet(workbook, 'Villains', Object.entries(b.villains ?? {}).map(([id, v]) =>
+    [id, v.name, v.glyph, v.sprite, v.unitType,
+      v.dmg, v.def, v.hp, v.cooldown, v.power,
+      v.troopDmgMult, v.troopHpMult, v.troopDefBonus]));
 
-  addSheet(workbook, 'Ruins', RUIN_IDS.map((id) => {
-    const r = b.ruins[id];
-    return [id, r.x, r.y, r.tier, r.difficulty, r.baseDepthSeconds, r.depthGrowth, r.maxDepth,
-      r.supplies.Food ?? '', r.supplies.Gold ?? '', r.supplies.Stone ?? '',
-      r.affinity, r.artifact];
+  addSheet(workbook, 'Banners', BANNER_IDS.map((id) => {
+    const n = b.banners[id];
+    return [id, n.key, n.keyGemCost, n.heroChance, n.softPityAt, n.hardPityAt,
+      n.legendaryPityAt || '', n.weights.Common || '', n.weights.Rare || '',
+      n.weights.Legendary || '', n.duplicateFragments, n.fragmentsPerMiss,
+      n.pullStardust, n.freePerDay || '', n.freeCooldownSeconds || ''];
   }));
+
+  addSheet(workbook, 'Store', STORE_IDS.map((id) => {
+    const s = b.store[id];
+    return [id, s.priceUsd, s.gems];
+  }));
+
+  addSheet(workbook, 'Depths', (b.depths ?? []).map((d) =>
+    [d.ruin, d.depth, d.rooms, d.guildReq, d.powerStart, d.powerStep, d.rewardBase,
+      d.villainPool, d.bossVillain, ...costCells(d.supplies)]));
+
+  addSheet(workbook, 'Garrisons', (b.garrisons ?? []).map((g) =>
+    [g.tier, g.takeSeconds, ...costCells(g.supplies)]));
 
   addSheet(workbook, 'Settings', SETTINGS.map(([key, path, kind]) => {
     let value = b;
     for (const part of path.split('.')) value = value[part];
-    return [key, kind === 'list' ? listCell(value) : value];
+    return [key, kind === 'list' ? listCell(value)
+      : kind === 'tiers' ? tiersCell(value)
+        : value];
   }), (col, row) => col === 'value' &&
-    SETTINGS.some(([key, , kind]) => key === row[0] && kind === 'list'));
-
-  exportMap(workbook);
+    SETTINGS.some(([key, , kind]) => key === row[0] && kind !== undefined));
 
   await workbook.xlsx.writeFile(XLSX_PATH);
   console.log(`balance: wrote ${XLSX_PATH}`);

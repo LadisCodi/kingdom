@@ -1,295 +1,111 @@
-// Sending a party into a ruin (Docs/features/expeditions.md §8).
+// One ROOM of a ruin, on the battle screen
+// (Docs/features/11-expeditions.md §5, Docs/features/11a-ruins-ui.md §2.5).
 //
-// The screen has one job above all others: make the GUARANTEED DEPTH the
-// biggest thing on it. "A well-prepared run never fails" is a property of the
-// sim, not a slogan — but it only becomes a promise the player can act on if
-// they can see it before they commit. Everything else here is in service of
-// that number: the party you are sending, what it answers well, and what it
-// costs to set off.
+// The board, the slots and the card panels are `battleSheet.ts` — every fight
+// in the game uses them. What a room adds is THE WIDGET AT THE TOP: where the
+// player is standing, as an address and as two ladders.
 //
-// The standing-order control is the opt-out, and it is deliberately not
-// hidden. Push-your-luck is the engaged player's mode; anyone who does not
-// want to be asked sets a depth and leaves.
+//   Depth  ▓▓▓▓▓▓░░░░   how far into the ruin
+//   Room   ▓▓░░░░░░░💀  how far into this depth, and the door at the end
+//
+// Two bars rather than one count, because they are two different questions —
+// "how much ruin is left" is the campaign and "how much depth is left" is
+// tonight — and the boss on the end of the second one is what the room ladder
+// is walking towards.
+//
+// There is no "how far will you go" on this screen, because there is no
+// journey: one room, one fight, decided now (§5). What is NOT here any more,
+// and each was a whole control: the safe depth (there is no run to be safe
+// through), the standing order (there is nothing to stand), the checkpoint
+// (nothing waits), and the relic in the pack — a relic is worn by the kingdom
+// or it is on the shelf (Docs/features/09-relics.md §5). Enter, see, decide
+// again.
 
-import {
-  ARTIFACTS, HEROES, PARTY, RUINS, UNITS,
-} from '../sim/data/definitions';
-import { availableRoster } from '../sim/army';
-import { artifactEntry, isAttuned, ownedArtifacts } from '../sim/artifacts';
-import { carriedStats, depthDurationMs } from '../sim/combat';
-import { partySlotGemCost, partySlots, freeHeroes, unitSlots } from '../sim/expeditions';
-import { spriteUrl } from '../render/sprites';
-import type { UnitId } from '../sim/state';
+import { ARTIFACTS, RUINS } from '../sim/data/definitions';
+import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
-import { el, formatDuration } from './format';
-import { action, btn, iconEl, knob, pips, sheet, stat } from './kit';
-
-const portrait = (sprite: string, glyph: string, cls: string): HTMLElement => {
-  const url = spriteUrl(sprite);
-  return url
-    ? el('img', { class: cls, src: url, alt: '' })
-    : el('div', { class: `${cls} is-glyph` }, glyph);
-};
-
-/** A signed stat delta, only shown when it is non-zero. */
-const delta = (n: number): string => (n > 0 ? `+${Math.round(n)}` : String(Math.round(n)));
+import { renderBattleSheet, type BattleView } from './battleSheet';
+import { el } from './format';
+import { iconEl, progress } from './kit';
 
 /**
- * What the hero carries. This is where attune-or-arm becomes a decision the
- * player can see: every relic they own is here, and the ones the kingdom is
- * currently wearing say so rather than being quietly missing. The kit refuses
- * a bare `disabled`, which is exactly right — a relic the player cannot send
- * must explain itself, because the explanation IS the mechanic.
+ * One ladder: a word, a trough, and — on the room's — the door at the end of
+ * it.
+ *
+ * The FILL is what is behind the player and the LABEL is where they are
+ * standing, which are deliberately two different numbers: standing in room 1
+ * of 8 with nothing cleared is an empty bar, and it should be.
  */
-function artifactPicker(game: Game): HTMLElement {
-  const owned = ownedArtifacts(game.state);
-  const row = el('div', { class: 'exp-relics' });
-  if (owned.length === 0) {
-    return el('div', { class: 'exp-relics-empty' },
-      'Relics you recover can be sent down instead of worn.');
-  }
-  for (const id of owned) {
-    const def = ARTIFACTS[id];
-    const worn = isAttuned(game.state, id);
-    const chosen = game.expeditionArtifact === id;
-    const stats = carriedStats({ id, level: artifactEntry(game.state, id).level });
-    const line = [
-      stats.atk ? `${delta(stats.atk)} atk` : null,
-      stats.def ? `${delta(stats.def)} def` : null,
-      stats.hp ? `${delta(stats.hp)} hp` : null,
-    ].filter(Boolean).join(' · ');
-    const b = el('button', {
-      class: `exp-relic${chosen ? ' is-chosen' : ''}${worn ? ' is-worn' : ''}`,
-      type: 'button',
-    },
-      portrait(def.sprite, def.glyph, 'exp-relic-art'),
-      el('div', { class: 'exp-relic-name' }, def.name),
-      el('div', { class: 'exp-relic-stats' },
-        // Naming the passive being given up is the point: the trade is the
-        // feature, so the relic the kingdom is wearing has to say what it
-        // would cost to take it back.
-        worn ? `Worn — ${def.passiveText.toLowerCase()}` : (line || 'No use underground')));
-    if (worn) b.disabled = true;
-    else b.addEventListener('click', () => game.setExpeditionArtifact(id));
-    row.append(b);
-  }
-  return row;
-}
-
-/** Who leads. A hero is MANDATORY, so this is never an empty row. */
-function heroPicker(game: Game): HTMLElement {
-  const free = freeHeroes(game.state);
-  const row = el('div', { class: 'exp-heroes' });
-  for (const id of game.state.heroes.owned) {
-    const hero = HEROES[id];
-    const busy = !free.includes(id);
-    const chosen = game.expeditionHero === id;
-    const b = el('button', {
-      class: `exp-hero${chosen ? ' is-chosen' : ''}${busy ? ' is-busy' : ''}`,
-      type: 'button',
-    },
-      portrait(hero.sprite, hero.glyph, 'exp-portrait'),
-      el('div', { class: 'exp-hero-name' }, hero.name),
-      el('div', { class: 'exp-hero-trait' }, busy ? 'Already underground' : hero.traitText));
-    if (busy) b.disabled = true;
-    else b.addEventListener('click', () => game.setExpeditionHero(id));
-    row.append(b);
-  }
-  return row;
-}
-
-/** The troops. A slot holds a unit TYPE and every unit of it you send, so
- *  this is a stepper per type, and the LIMIT is how many types — which is
- *  what makes the matchup chart a real decision. */
-function troopPicker(game: Game): HTMLElement {
-  const roster = availableRoster(game.state);
-  const owned = (Object.keys(roster) as UnitId[]).filter((u) => roster[u] > 0);
-  const chosenTypes = game.expeditionParty.filter((s) => s.count > 0).length;
-  const limit = unitSlots(game.state);
-
-  const rows = owned.map((unitId) => {
-    const unit = UNITS[unitId];
-    const count = game.expeditionParty.find((s) => s.unitId === unitId)?.count ?? 0;
-    const wouldExceed = count === 0 && chosenTypes >= limit;
-    const value = el('b', { class: 'exp-count' }, `${count}`);
-    return el('div', { class: `exp-troop${wouldExceed ? ' is-blocked' : ''}` },
-      // The atlas already holds the four unit portraits (sheet UI-F), so this
-      // is an icon rather than a world sprite — there is no separate map art
-      // for a soldier, and inventing a key for one would only ever fall back.
-      el('div', { class: 'exp-troop-art' }, iconEl(unitId, { size: 'lg' })),
-      el('div', { class: 'exp-troop-body' },
-        el('div', { class: 'exp-troop-name' }, unit.name),
-        el('div', { class: 'exp-troop-stats' },
-          stat('army', String(unit.atk), 'atk'),
-          stat('padlock', String(unit.def), 'def'),
-          stat('population', String(unit.hp), 'hp'))),
-      el('div', { class: 'exp-stepper' },
-        knob('−', () => game.setExpeditionCount(unitId, count - 1), {
-          label: `One fewer ${unit.name}`, disabled: count === 0,
-        }),
-        value,
-        knob('+', () => game.setExpeditionCount(unitId, count + 1), {
-          label: `One more ${unit.name}`, disabled: count >= roster[unitId] || wouldExceed,
-        }),
-        el('span', { class: 'exp-of' }, `of ${roster[unitId]}`)),
-    );
-  });
-
-  const body = el('div', { class: 'exp-troops' },
-    el('div', { class: 'exp-slots' },
-      iconEl('army', { size: 'sm' }),
-      pips(chosenTypes, limit),
-      el('span', {}, `${chosenTypes} of ${limit} kinds of unit`)),
-    ...(rows.length > 0
-      ? rows
-      : [el('div', { class: 'exp-note' }, 'Nothing to send — train some units first.')]),
-  );
-
-  if (partySlots(game.state) < PARTY.maxSlots) {
-    const cost = partySlotGemCost(game.state);
-    body.append(action({
-      label: 'Another slot',
-      kind: 'gem',
-      onClick: () => game.doBuyPartySlot(),
-      cost: { Gems: cost },
-      have: (c) => game.walletValue(c),
-    }));
-  }
-  return body;
-}
-
-/** "Delve to depth N, then come back" — set it and walk away. */
-function standingOrder(game: Game, maxDepth: number, safeDepth: number): HTMLElement {
-  const row = el('div', { class: 'exp-orders' });
-  const choose = (value: number | null, label: string, hint: string) => {
-    const b = el('button', {
-      class: `exp-order${game.expeditionOrder === value ? ' is-chosen' : ''}`,
-      type: 'button',
-    }, el('b', {}, label), el('span', {}, hint));
-    b.addEventListener('click', () => game.setStandingOrder(value));
-    return b;
-  };
-  row.append(
-    choose(null, 'Ask me', 'Stop at every depth and decide'),
-    choose(Math.max(1, safeDepth), `To depth ${Math.max(1, safeDepth)}`, 'The safe floor, then home'),
-    choose(maxDepth, `To the bottom`, 'All the way, whatever it costs'),
-  );
-  return el('div', { class: 'exp-section' },
-    el('div', { class: 'exp-heading' }, 'While you are away'),
-    row);
+function track(
+  label: string, at: number, total: number, tone: 'sky' | 'gold', end?: HTMLElement,
+): HTMLElement {
+  const bar = progress(tone);
+  bar.set(total === 0 ? 0 : (at - 1) / total, `${Math.min(at, total)} / ${total}`);
+  return el('div', { class: 'exp-track' },
+    el('span', { class: 'exp-track-name' }, label),
+    bar.root,
+    ...(end === undefined ? [] : [end]));
 }
 
 export function renderExpeditionSheet(game: Game): HTMLElement {
   const ruinId = game.expeditionRuin!;
   const ruin = RUINS[ruinId];
   const preview = game.expeditionPreview()!;
-  const blocked = game.expeditionLaunchBlock();
   const relic = ARTIFACTS[ruin.artifact];
   const alreadyHave = game.state.ruinsCleared[ruinId] === true;
 
-  // What the relic bought, if one is socketed. The safe depth carries it when
-  // it moved; the stat read-out carries it either way — a DEFENSIVE relic buys
-  // survival past the floor rather than a deeper floor, so the headline number
-  // can legitimately not move and the relic still be the right call.
-  const bare = game.expeditionPreviewUnarmed();
-  const movedDepth = bare !== null && preview.safeDepth !== bare.safeDepth;
+  // THE WIDGET: where the player is standing. A room is one fight and the
+  // address is the whole of the context — how far in, how far left, and
+  // whether the thing behind this door is the depth's boss.
+  //
+  // Both bars count what is BEHIND the player: the room they are about to
+  // fight is the one the fill stops at, never one the bar has already eaten.
+  const boss = el('span', {
+    class: `exp-track-boss${preview.isBoss ? ' is-now' : ''}`,
+    title: 'The boss of this depth',
+  }, iconEl('skull', { size: 'md' }));
+  const info: Array<Node | string> = [
+    el('div', { class: 'exp-safe' },
+      el('b', {}, `${preview.depth}·${preview.room}`),
+      el('span', {}, preview.isBoss
+        ? `Depth ${preview.depth}, and this one is the boss`
+        : `Depth ${preview.depth} · Room ${preview.room}`)),
+    track('Depth', preview.depth, preview.depths, 'sky'),
+    track('Room', preview.room, preview.roomsInDepth, 'gold', boss),
+    el('div', { class: 'bt-info-line is-soft' },
+      'Rooms are fought one at a time, in order, and never again. Clearing the '
+      + 'last one of a depth opens the next.'),
+    el('div', { class: 'bt-info-line is-soft' }, alreadyHave
+      ? `${relic.name} is already home; the rooms still pay.`
+      : `${relic.name} is behind the last room of the last depth.`),
+  ];
 
-  // THE number. A player who can read "safe to depth 4" before committing is
-  // playing a management game; one who cannot is gambling.
-  const safety = el('div', { class: `exp-safe${preview.safeDepth === 0 ? ' is-bad' : ''}` },
-    el('div', { class: 'exp-safe-value' },
-      preview.safeDepth === 0 ? '—' : String(preview.safeDepth)),
-    el('div', { class: 'exp-safe-label' },
-      preview.safeDepth === 0
-        ? 'This party cannot clear the first depth'
-        : `Safe to depth ${preview.safeDepth} of ${preview.maxDepth}`,
-      movedDepth
-        ? el('span', { class: 'exp-safe-delta' }, `${bare!.safeDepth} without the relic`)
-        : ''),
-    el('div', { class: 'exp-safe-note' },
-      'Past that is a gamble you choose — you will be asked first.'),
-  );
+  const reward = preview.reward;
+  const view: BattleView = {
+    title: ruin.name,
+    subtitle: `Tier ${ruin.tier} ruin · Depth ${preview.depth} · Room ${preview.room}`,
+    sprite: ruin.sprite,
+    glyph: ruin.glyph,
+    info,
+    enemy: { squads: preview.enemy, power: preview.power, threat: preview.threat },
+    attack: preview.attack,
+    enough: preview.enough,
+    supplies: preview.supplies,
+    rewards: [
+      ...Object.entries(reward.wallet)
+        .filter(([, n]) => n > 0)
+        .map(([c, n]) => ({ icon: c as CurrencyId, label: String(n) })),
+      { icon: 'HeroXp' as CurrencyId, label: `+${reward.heroXp}` },
+      ...(reward.fragments > 0
+        ? [{ icon: 'fragment' as const, label: `+${reward.fragments}` }] : []),
+    ],
+    rewardNote: preview.isBoss
+      ? 'A boss pays four times a room, and the depth behind it opens on the way out.'
+      : 'Paid the moment the room falls — there is nothing to carry home.',
+    actionLabel: preview.isBoss ? 'Fight the boss' : 'Enter the room',
+    onFight: () => game.doLaunchExpedition(),
+    blocked: game.expeditionLaunchBlock(),
+  };
 
-  const statDelta = (now: number, was: number): HTMLElement | string =>
-    bare === null || now === was
-      ? ''
-      : el('span', { class: 'exp-delta' }, `${now > was ? '+' : ''}${now - was}`);
-
-  const matchupText = preview.matchup > 1.05
-    ? `Well matched against what lives here (×${preview.matchup.toFixed(2)})`
-    : preview.matchup < 0.95
-      ? `The wrong tools for this place (×${preview.matchup.toFixed(2)})`
-      : 'An even match against what lives here';
-
-  const body = el('div', { class: 'exp' },
-    el('div', { class: 'exp-head' },
-      portrait(ruin.sprite, ruin.glyph, 'exp-ruin-art'),
-      el('div', {},
-        el('div', { class: 'exp-name' }, ruin.name),
-        el('div', { class: 'exp-kind' }, `Tier ${ruin.tier} · ${ruin.maxDepth} depths`))),
-
-    safety,
-
-    el('div', { class: 'exp-readout' },
-      el('div', { class: 'exp-readout-cell' },
-        stat('army', String(preview.stats.atk), 'attack'),
-        statDelta(preview.stats.atk, bare?.stats.atk ?? preview.stats.atk)),
-      el('div', { class: 'exp-readout-cell' },
-        stat('padlock', String(preview.stats.def), 'defence'),
-        statDelta(preview.stats.def, bare?.stats.def ?? preview.stats.def)),
-      el('div', { class: 'exp-readout-cell' },
-        stat('population', String(preview.stats.hp), 'health'),
-        statDelta(preview.stats.hp, bare?.stats.hp ?? preview.stats.hp))),
-    el('div', { class: 'exp-matchup' }, iconEl('sparkle', { size: 'sm' }), matchupText),
-
-    // The haul is the whole reason to go, and it must be clear that it is not
-    // yours until you bring it back.
-    el('div', { class: 'exp-prize' },
-      portrait(relic.sprite, relic.glyph, 'exp-prize-art'),
-      el('div', {},
-        el('div', { class: 'exp-prize-name' },
-          alreadyHave ? `${relic.name} — already recovered` : relic.name),
-        el('div', { class: 'exp-prize-note' }, alreadyHave
-          ? 'Going back down pays fragments to strengthen it.'
-          : `Waiting at depth ${ruin.maxDepth}. The first party to reach it brings it home.`))),
-
-    el('div', { class: 'exp-section' },
-      el('div', { class: 'exp-heading' }, 'Who leads'),
-      heroPicker(game)),
-
-    el('div', { class: 'exp-section' },
-      el('div', { class: 'exp-heading' }, 'Who goes'),
-      troopPicker(game)),
-
-    el('div', { class: 'exp-section' },
-      el('div', { class: 'exp-heading' }, 'What they carry'),
-      el('div', { class: 'exp-subheading' },
-        'A relic goes down or stays home — never both. Carrying costs no Mana.'),
-      artifactPicker(game)),
-
-    standingOrder(game, ruin.maxDepth, preview.safeDepth),
-
-    // The supplies used to sit in a row of their own, a whole control away
-    // from the button that spends them. They are the price of setting off, so
-    // they set off with it (§6.4); the WAIT stays out here, being a
-    // consequence rather than a cost.
-    el('div', { class: 'exp-time' },
-      iconEl('hourglass', { size: 'sm' }),
-      `first depth ${formatDuration(depthDurationMs(ruinId, 1) / 1000)}`),
-
-    action({
-      label: 'Set off',
-      kind: 'primary',
-      onClick: () => game.doLaunchExpedition(),
-      cost: preview.supplies,
-      have: (c) => game.walletValue(c),
-      disabledReason: blocked ?? undefined,
-    }),
-  );
-
-  const close = btn({ label: 'Not yet', onClick: () => game.dismiss() });
-  close.setAttribute('data-own-close', '');
-  body.append(el('div', { class: 'exp-back' }, close));
-
-  return sheet({ title: 'Expedition', onClose: () => game.dismiss() }, body);
+  return renderBattleSheet(game, view);
 }

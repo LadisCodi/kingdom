@@ -30,6 +30,29 @@ export function sheet(
      *  where the bottom-sheet idiom (a drawer you pull up over a screen you
      *  are still using) is the wrong metaphor. */
     centred?: boolean;
+    /**
+     * Take the whole height the frame has, rather than only as much as the
+     * content needs.
+     *
+     * For a screen the player WORKS in — the battle board, where the room and
+     * the party have to be read against each other — because a drawer that
+     * grows and shrinks as squads are added moves its own buttons around, and
+     * because the space is what pays for slots big enough to tap.
+     */
+    tall?: boolean;
+    /**
+     * Drop the grab handle and the plank.
+     *
+     * For a sheet whose CONTENT already names it — a hero's card carries the
+     * portrait and the name, so a plank repeating the name above them spends
+     * a band of the screen saying it twice. `title` is still required and
+     * still labels the sheet for a screen reader.
+     *
+     * The caller then owns the way out. `onClose` is not wired to anything
+     * here, so a bare sheet must carry its own affordance or it is a room
+     * with no door.
+     */
+    bare?: boolean;
   },
   ...children: Array<Node | string>
 ): HTMLElement {
@@ -37,16 +60,22 @@ export function sheet(
   close.setAttribute('data-own-close', '');
   return el(
     'div',
-    { class: `k-sheet${opts.centred ? ' is-centred' : ''}` },
+    {
+      class: `k-sheet${opts.centred ? ' is-centred' : ''}`
+        + `${opts.bare ? ' is-bare' : ''}${opts.tall ? ' is-tall' : ''}`,
+    },
     el(
       'div',
       { class: 'k-panel' },
-      el('div', { class: 'k-grab' }),
-      plank(opts.title, close),
+      ...(opts.bare ? [] : [el('div', { class: 'k-grab' }), plank(opts.title, close)]),
       // The body scrolls; the plank and its close knob do not go with it.
       // data-keep-scroll asks the host to carry the scroll position across
       // the per-tick rebuild, so reading a long sheet is possible at all.
-      el('div', { class: 'k-sheet-body', 'data-keep-scroll': '' }, ...children),
+      el(
+        'div',
+        { class: 'k-sheet-body', 'data-keep-scroll': '', 'aria-label': opts.title },
+        ...children,
+      ),
     ),
   );
 }

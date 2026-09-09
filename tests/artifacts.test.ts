@@ -1,4 +1,4 @@
-// Artifacts, attunement and the four actives (Docs/features/magic.md §2, §3).
+// Artifacts, attunement and the four actives (Docs/features/08-magic.md §2).
 //
 // The load-bearing rule is that a passive is only worth a SLOT if wearing it
 // costs you the alternative. Everything here is really testing one shape:
@@ -7,7 +7,7 @@
 // socket.
 import { describe, expect, it } from 'vitest';
 import {
-  artifactEntry, artifactIsCarried, artifactIsCommitted, attune, attunementSlots,
+  artifactEntry, artifactIsCommitted, attune, attunementSlots,
   attunementSlotGemCost, buyAttunementSlot, grantArtifact, isAttuned, isSlotLocked,
   levelUpArtifact, normaliseSlots, ownsArtifact, passiveValue, raiseArtifactTier,
   slotUnlocksIn, syncArtifactModifiers,
@@ -17,10 +17,10 @@ import { levelCapForTier, levelCost, tierCost, totalLevelCost } from '../src/sim
 import { advance } from '../src/sim/commands';
 import { ARTIFACTS, ATTUNEMENT, COLLECTION, HARVEST, RUINS } from '../src/sim/data/definitions';
 import { fogState, revealCostForCell } from '../src/sim/fog';
-import { registerTap } from '../src/sim/harvest';
+import { drawFromCell, effectiveStock } from '../src/sim/harvest';
 import { addMana, mana } from '../src/sim/mana';
 import { deserialize, serialize } from '../src/sim/save';
-import { effectiveTaxRate, effectiveWorkerYield } from '../src/sim/upgrades';
+import { effectiveTaxRate, effectiveWorkerStrike } from '../src/sim/upgrades';
 import { coordKey, getWallet, type GameState } from '../src/sim/state';
 import { addBuilt, completeTech, FOREST, freshGame, fund, map, reveal, T0 } from './helpers';
 
@@ -52,11 +52,11 @@ describe('owning relics', () => {
 });
 
 describe('the collection substrate', () => {
-  it('Knowledge buys levels; Fragments raise the ceiling they run into', () => {
+  it('Stardust buys levels; Fragments raise the ceiling they run into', () => {
     const state = withRelic('DowsingRod');
-    state.kingdom.wallet.Knowledge = 100_000;
+    state.kingdom.wallet.Stardust = 100_000;
 
-    // Tier 1 allows two levels, then Knowledge has nowhere to go.
+    // Tier 1 allows two levels, then Stardust has nowhere to go.
     expect(levelUpArtifact(state, 'DowsingRod')).toBe('Levelled');
     expect(artifactEntry(state, 'DowsingRod').level).toBe(2);
     expect(levelCapForTier(1)).toBe(COLLECTION.levelsPerTier);
@@ -71,33 +71,38 @@ describe('the collection substrate', () => {
 
   it('charges the authored curve, and the runway is the documented one', () => {
     const state = withRelic('DowsingRod');
-    state.kingdom.wallet.Knowledge = 1000;
+    state.kingdom.wallet.Stardust = 1000;
     levelUpArtifact(state, 'DowsingRod');
-    expect(getWallet(state.kingdom.wallet, 'Knowledge')).toBe(1000 - levelCost(1));
-    // ~3,630 Knowledge to max one collectible (balancing-v2 §4).
+    expect(getWallet(state.kingdom.wallet, 'Stardust')).toBe(1000 - levelCost(1));
+    // ~3,630 Stardust to max one collectible (Docs/features/10-heroes.md §3).
     expect(totalLevelCost()).toBeGreaterThan(3400);
     expect(totalLevelCost()).toBeLessThan(3900);
   });
 
   it('refuses to level a relic that has not been found', () => {
     const state = freshGame();
-    state.kingdom.wallet.Knowledge = 10_000;
+    state.kingdom.wallet.Stardust = 10_000;
     expect(levelUpArtifact(state, 'DowsingRod')).toBe('NotOwned');
   });
 });
 
 describe('attunement', () => {
-  it('starts at one socket, research adds one, Gems add the rest', () => {
+  it('starts at one socket and every further one costs Gems', () => {
     const state = freshGame();
     expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots);
-    completeTech(state, 'Attunement');
-    expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots + 1);
+    // No technology grants a socket: slots are Gems everywhere and nothing
+    // else (Docs/features/07-research.md §4). Promise 3 survives
+    // because Gems are earnable — the chain pays 75 — so the earning moved
+    // off the tree rather than disappearing.
+    completeTech(state, 'Consecration');
+    expect(attunementSlots(state), 'research must not grant a socket')
+      .toBe(ATTUNEMENT.baseSlots);
 
     state.player.wallet.Gems = 10_000;
     const cost = attunementSlotGemCost(state);
     expect(buyAttunementSlot(state)).toBe('Purchased');
     expect(getWallet(state.player.wallet, 'Gems')).toBe(10_000 - cost);
-    expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots + 2);
+    expect(attunementSlots(state)).toBe(ATTUNEMENT.baseSlots + 1);
     // Escalating, so breadth stays a real purchase rather than a formality.
     expect(attunementSlotGemCost(state)).toBeGreaterThan(cost);
   });
@@ -127,7 +132,7 @@ describe('attunement', () => {
 
   it('will not wear the same relic in two sockets', () => {
     const state = withRelic();
-    completeTech(state, 'Attunement');
+    state.artifacts.slotsPurchased = 1; // Gems, not research
     normaliseSlots(state);
     expect(attune(state, 0, 'GildedLedger', T0)).toBe('Attuned');
     expect(attune(state, 1, 'GildedLedger', T0)).toBe('AlreadyAttuned');
@@ -141,15 +146,15 @@ describe('attunement', () => {
 
   it('the passive scales with level, and levelling re-applies it live', () => {
     const state = withRelic('ForemansSigil'); // worker yield +1, +0.2/level
-    state.kingdom.wallet.Knowledge = 100_000;
+    state.kingdom.wallet.Stardust = 100_000;
     attune(state, 0, 'ForemansSigil', T0);
-    const atLevel1 = effectiveWorkerYield(state, HARVEST.Forest);
+    const atLevel1 = effectiveWorkerStrike(state, HARVEST.Forest);
     expect(passiveValue(state, 'ForemansSigil')).toBe(ARTIFACTS.ForemansSigil.passive.base);
 
     levelUpArtifact(state, 'ForemansSigil');
     expect(passiveValue(state, 'ForemansSigil'))
       .toBeCloseTo(ARTIFACTS.ForemansSigil.passive.base + ARTIFACTS.ForemansSigil.passive.perLevel, 6);
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBeGreaterThanOrEqual(atLevel1);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBeGreaterThanOrEqual(atLevel1);
   });
 
   it('the modifier rebuild is idempotent — running it twice changes nothing', () => {
@@ -206,15 +211,15 @@ describe('the actives', () => {
     // opening reveal any more, so clear one first.
     reveal(state, [FOREST]);
     const forest = FOREST;
-    for (let i = 0; i < HARVEST.Forest.tapsToExhaust; i++) {
-      registerTap(state, forest, HARVEST.Forest, T0);
-    }
+    drawFromCell(state, map, forest, HARVEST.Forest,
+      effectiveStock(map, forest, HARVEST.Forest), T0);
     expect(state.harvest[coordKey(forest)].exhaustedUntil).not.toBeNull();
 
     const report = cast(state, map, 'VerdantSeal', forest, T0);
     expect(report.result).toBe('Cast');
     expect(state.harvest[coordKey(forest)].exhaustedUntil).toBeNull();
-    expect(state.harvest[coordKey(forest)].taps).toBe(0);
+    expect(state.harvest[coordKey(forest)].units)
+      .toBe(effectiveStock(map, forest, HARVEST.Forest));
   });
 
   it('Haste is a TIMED modifier that the boundary loop retires on schedule', () => {
@@ -223,14 +228,14 @@ describe('the actives', () => {
     attune(state, 0, 'ForemansSigil', T0);
     const duration = ARTIFACTS.ForemansSigil.active!.durationSeconds * 1000;
 
-    const base = effectiveWorkerYield(state, HARVEST.Forest);
+    const base = effectiveWorkerStrike(state, HARVEST.Forest);
     expect(cast(state, map, 'ForemansSigil', null, T0).result).toBe('Cast');
     advance(state, map, T0 + 1000);
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBe(base * 2);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(base * 2);
 
     const report = advance(state, map, T0 + duration + 1000);
     expect(report.expiredModifiers.some((m) => m.stat === 'workerYield')).toBe(true);
-    expect(effectiveWorkerYield(state, HARVEST.Forest)).toBe(base);
+    expect(effectiveWorkerStrike(state, HARVEST.Forest)).toBe(base);
   });
 
   it('refuses a target that is not on its own legal list', () => {
@@ -257,7 +262,7 @@ describe('the actives', () => {
 describe('persistence', () => {
   it('round-trips the whole collection, and re-derives the passives', () => {
     const state = withRelic('GildedLedger');
-    completeTech(state, 'Attunement');
+    completeTech(state, 'Consecration');
     normaliseSlots(state);
     state.artifacts.levels.GildedLedger = 3;
     state.artifacts.tiers.GildedLedger = 2;
@@ -272,13 +277,12 @@ describe('persistence', () => {
     expect(isSlotLocked(restored, 0, T0)).toBe(true);
   });
 
-  it('a save written before a socket was earned loads with the socket', () => {
+  it('a save written before a socket was bought loads with the socket', () => {
     const state = withRelic();
     const save = serialize(state, T0);
-    // The research lands between the save being written and it being read.
-    state.research.completed.push('Attunement');
+    // The purchase lands between the save being written and it being read.
     const restored = deserialize(save, map, T0)!;
-    restored.research.completed.push('Attunement');
+    restored.artifacts.slotsPurchased = 1;
     normaliseSlots(restored);
     expect(restored.artifacts.attuned).toHaveLength(2);
     expect(restored.artifacts.lockedUntil).toHaveLength(2);
@@ -298,34 +302,20 @@ describe('the fog discount reaches both the bar and the charge', () => {
   });
 });
 
-// The socket half of attune-or-arm (Docs/features/heroes-and-gacha.md §2).
-// The delve half lives in expeditions.test.ts; what matters HERE is that the
-// Reliquary cannot take back a relic the sim has already committed, and that
-// a carried relic draws no upkeep — the asymmetry the whole trade rests on.
-describe('a relic cannot be worn and carried at once', () => {
-  it('a relic underground is committed, and the socket says so', () => {
+// The kingdom's socket is the only claim on a relic
+// (Docs/features/09-relics.md §5). Nothing carries one anywhere: a relic is
+// worn or it is on the shelf.
+describe('a relic is committed by the kingdom, and by nothing else', () => {
+  it('is free until it is attuned, and the socket is the only claim on it', () => {
     const state = withRelic('DowsingRod');
-    expect(artifactIsCarried(state, 'DowsingRod')).toBe(false);
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(false);
-
-    // Standing in for a launch: what the sim records is a delve holding it.
-    state.delves.push({
-      id: 'd1', ruinId: 'HollowBarrow', heroId: 'Warden',
-      artifactId: 'DowsingRod', artifactLevel: 1,
-      party: [{ unitId: 'Warrior', count: 1 }], depth: 0, partyHp: 10, maxPartyHp: 10,
-      haul: {}, haulFragments: 0, phase: 'descending', depthEndsAt: T0 + 1000,
-      standingOrder: null, threat: 'Any', outcome: null,
-    });
-    expect(artifactIsCarried(state, 'DowsingRod')).toBe(true);
+    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);
-    expect(attune(state, 0, 'DowsingRod', T0)).toBe('Carried');
-    // Refused, so the socket is untouched AND unlocked — a refusal must never
-    // cost the player the five minutes a real swap costs.
-    expect(state.artifacts.attuned[0]).toBe(null);
-    expect(isSlotLocked(state, 0, T0)).toBe(false);
   });
+});
 
-  it('an attuned relic still un-attunes normally — the rule only blocks the way in', () => {
+describe('the socket lets go as readily as it takes', () => {
+  it('an attuned relic still un-attunes normally', () => {
     const state = withRelic('DowsingRod');
     expect(attune(state, 0, 'DowsingRod', T0)).toBe('Attuned');
     expect(artifactIsCommitted(state, 'DowsingRod')).toBe(true);

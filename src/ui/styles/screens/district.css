@@ -1,18 +1,41 @@
 /* The district card (§5.7). One shell, five personalities. */
 
+/* `height`, not `max-height`, AND a flex column that pins the card to the
+ * bottom of it.
+ *
+ * `max-height: 62%` looked like the cap and was not one: #panel has no
+ * definite height of its own, so the card's `max-height: 100%` resolved
+ * against `auto` and was ignored outright. The card grew to whatever it
+ * contained, `.dc-body` never became a scroller, and the tail of a long card
+ * — reliably the Upgrade button, the one thing worth reaching — was drawn
+ * UNDER the nav bar where it could not be tapped.
+ *
+ * A definite height fixes the resolution; `justify-content: flex-end` keeps
+ * the card hugging the nav bar instead of the sky, and `pointer-events` hands
+ * the empty space above it back to the map, which is what the old
+ * content-sized box did for free. */
 #panel:has(.dc) {
   padding: 0;
   background: none;
   border: none;
-  max-height: 62%;
+  height: 62%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   overflow: visible;
+  pointer-events: none;
 }
 
 .dc {
   display: flex;
   flex-direction: column;
+  min-height: 0;
   max-height: 100%;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  pointer-events: auto;
+  /* No env(safe-area-inset-bottom) here: #panel stops at `bottom:
+     var(--nav-h)`, --nav-h is measured, and the nav bar's own padding already
+     holds the inset — so the card is above it and would be padding twice. */
+  padding: 10px 12px;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
@@ -33,6 +56,10 @@
 /* Level as stars: a count you read rather than a fraction you parse. */
 .dc-stars { display: inline-flex; gap: 2px; margin: 1px 0 3px; }
 .dc-stars .icon.is-empty { filter: grayscale(1) brightness(1.35); opacity: 0.45; }
+/* Ten levels: one star and the count, since ten pips is a bar chart. Sizes
+   are inherited from .dc — the card's own helper size is what this is. */
+.dc-stars.is-numeral { align-items: center; gap: 3px; }
+.dc-stars.is-numeral span { opacity: 0.6; }
 
 .dc-portrait {
   flex: none;
@@ -46,7 +73,15 @@
 }
 .dc-portrait img { width: 46px; height: 46px; object-fit: contain; image-rendering: pixelated; }
 
-.dc-body { min-height: 0; overflow-y: auto; margin-top: 8px; }
+/* overflow-x: clip for the same reason as .k-sheet-body — a decoration that
+   bleeds a pixel or two must not make the card draggable sideways. */
+.dc-body {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: clip;
+  overflow-clip-margin: 6px;
+  margin-top: 8px;
+}
 .dc-note { color: var(--ink-muted); line-height: 1.3; margin: 4px 0; }
 
 /* The upgrade row: a mark, what the level buys, and the button that spends —
@@ -138,7 +173,12 @@
   margin: 6px 0;
   font-family: var(--font-body);
 }
-.dc-drip { margin: 4px 0; }
+/* The rent, and beside it what the house's own level adds to it. */
+.dc-drip {
+  display: flex; align-items: baseline; gap: 6px;
+  margin: 4px 0;
+}
+.dc-drip .dc-army-note { font-size: var(--text-helper); }
 
 /* A tap affordance on the BUILDING, pointed at rather than described. */
 /* What a tap costs, and what is left to spend it from. Replaces the cycle
@@ -219,6 +259,14 @@
 .dc-army-note { color: var(--ink-muted); }
 .dc-army-stats { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* What a decoration supplies, and — on the Townhall — what the city's whole
+ * beauty is paying for. Same shape as the army line above it: both are facts
+ * about the CITY that happen to be read on one building's card. */
+.dc-harmony {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: var(--text-helper);
+}
+
 /* ------------------------------------------------- the training section ---
  * Shared by every building that turns something out — the Townhall's
  * villagers and a hall's soldiers are one mechanic, so they are one block.
@@ -237,23 +285,52 @@
 /* The line, as faces rather than a number: what you are waiting for, not just
  * how many. It scrolls rather than wrapping, so a long queue never pushes the
  * Train button off the card. */
+/* RIGHT TO LEFT: the batch being worked on sits at the right end, hard against
+   the bar's own end, and the waiting ones queue away to its left — the shape a
+   line of people has when you are standing at the front of it.
+   `row-reverse` rather than a reversed array, so the DOM keeps the head of the
+   line first: that is the order a screen reader should hear it in, and it is
+   also what puts the ACTIVE batch in view when a long queue overflows, since
+   a reversed flex container starts scrolled to its own start. */
 .tr-queue {
   display: flex;
+  flex-direction: row-reverse;
   gap: 5px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
 }
 .tr-queue::-webkit-scrollbar { display: none; }
+/* The queue is FACES, not a number (see the header of trainingSection.ts): a
+   row of them says what you are waiting for, which is the question when a hall
+   turns out three different units. So the slot carries the bust, and it grew
+   to 48px to be read next to the picker above it rather than merely counted. */
 .tr-slot {
   flex: none;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 8px;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
+}
+/* The art is rounded rather than the slot CLIPPED, because the ward's count
+   badge hangs outside this box on purpose and `overflow: hidden` would eat it. */
+.tr-slot-art { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+/* A ward in the line hands over several at once, so its slot carries the
+ * count the way a party's squad face does. */
+.tr-slot { position: relative; }
+.tr-slot-count {
+  position: absolute;
+  right: -2px;
+  bottom: -4px;
+  padding: 0 4px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--parchment);
+  background: var(--wood-dark);
+  border-radius: 999px;
 }
 /* The one on the bench, which is the one the bar below is counting down. */
 .tr-slot.is-active {
@@ -266,13 +343,18 @@
 .tr-queue-row .k-btn { min-height: 40px; padding: 8px 12px; font-size: var(--text-helper); }
 
 /* What this hall can turn out. Only drawn when there is a choice to make. */
-.tr-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+/* The picker buttons carry a PORTRAIT now, not a 16px silhouette, so they are
+   sized to be read rather than merely tapped: 44px met the tap minimum and
+   nothing else. The art fills the button and is clipped by its radius, which
+   is what makes a row of them read as a row of faces. */
+.tr-picker { display: flex; gap: 8px; flex-wrap: wrap; }
 .tr-pick {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 84px;
+  height: 84px;
   padding: 0;
+  overflow: hidden;
   border-radius: 10px;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -284,6 +366,11 @@
 .tr-pick:active { transform: translateY(2px); box-shadow: none; }
 
 /* The detail panel: portrait, what it is, and the one button that spends. */
+/* Portrait | (what it is, then the one button that spends). The action used to
+   span the full width on a row of its own, which left a band the width of the
+   panel holding nothing but a "15s" in its corner. Putting it under the body
+   instead costs no height — the button is shorter than the text beside it was
+   tall — and hands the whole of it to the portrait. */
 .tr-info {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -302,7 +389,31 @@
   border-radius: 8px;
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
+  overflow: hidden;
 }
+/* A whole soldier is drawn at 2:3, so the slot that holds one has to be TALLER
+   than it is wide or the figure letterboxes into a thumbnail. This is the one
+   place a unit is read rather than counted, and the panel beside it is about
+   this tall anyway — name, tag, description, stats. */
+.tr-portrait.is-body {
+  grid-row: 1 / 3;
+  align-self: stretch;
+  width: 124px;
+  height: auto;
+  min-height: 150px;
+  align-items: end;
+}
+.tr-pick-art,
+.tr-portrait-art {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* Feet on the floor of the frame: the figures are normalized standing on it
+   (Docs/art/portraits/prompt-template.md §4), so bottom-aligning them lines
+   every soldier up at the same height. */
+.tr-portrait.is-body .tr-portrait-art { object-position: center bottom; }
+.tr-pick.is-locked .tr-pick-art { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 .tr-body { min-width: 0; }
 .tr-name { font-family: var(--font-body); font-size: var(--text-body); font-weight: 400; }
 .tr-tag {
@@ -331,4 +442,160 @@
 }
 /* The Train button spans both columns, so it is the full width of the panel
  * and unmistakably the thing that spends. */
-.tr-info > .k-action { grid-column: 1 / -1; }
+/* The button rides in the panel's top-right corner at a FIXED width, sharing
+   its row with the name. It used to stretch the whole column, which made the
+   loudest thing on the panel its own width rather than its label, and left the
+   band underneath empty. */
+.tr-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tr-heading { min-width: 0; }
+.tr-top > .k-action {
+  flex: none;
+  /* Wide enough for "Train" over three costs without squeezing them — the
+     button's own natural width, pinned so it stops growing with the panel. */
+  width: 164px;
+}
+/* The width has to reach the BUTTON, not just its wrapper: `k-action` is a
+   wrapper around a `k-btn` whose padding and costs set a min-width of their
+   own, and it was overflowing the panel by those few pixels. */
+.tr-top > .k-action .k-btn {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The band the button gave back: four figures, read left to right in the order
+   a soldier is judged in — what it hits for, what it takes, what it has, and
+   what it costs in time. */
+/* FLEX-WRAP, not four fixed columns: at 390px the four labelled tiles need
+   346px and the band has 314, so a rigid `repeat(4, 1fr)` cannot shrink past
+   its labels and the panel scrolls sideways instead. Wrapping keeps the order
+   and gives a phone 2+2 rather than an overflow. */
+.tr-figures {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: end;
+}
+.tr-fig { flex: 1 1 70px; }
+.tr-fig {
+  display: grid;
+  gap: 2px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  background: var(--parchment);
+  border: 2px solid var(--wood-dark);
+}
+.tr-fig-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+/* The number is the thing being compared across four tiles, so it is the
+   biggest ink in the block and it lines up under its own mark.
+   THE BODY FACE, not the display one: a number is body copy by the rule in
+   tokens.css, and BoldPixels is crisp only at 16/32/48 — at --text-body it
+   was being antialiased, which is the one thing a pixel face exists not to
+   do. --text-body still reads as the loudest line here, against the head's
+   --text-helper above it. */
+.tr-fig-value {
+  padding-left: 2px;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+/* The ward: the same panel, in the colour of a thing that is waiting rather
+ * than a thing that is for sale. One per wounded type this hall can mend. */
+.tr-info.is-ward {
+  border-color: var(--clay);
+  background: var(--parchment);
+  margin-bottom: 6px;
+}
+.tr-info.is-ward .tr-tag { background: var(--clay); }
+
+/* ------------------------------------------------------- workshops (§3)
+ * A workshop card is the training block in different materials: what it
+ * makes, who is making it, the line of what is coming, and one button. The
+ * crew line is the load-bearing one — an empty crew means an empty
+ * stockpile, and that has to read as a warning rather than as a zero. */
+.dc-workshop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--parchment-shade);
+  font-family: var(--font-body);
+}
+.dc-ws-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dc-ws-title { flex: 1; min-width: 0; }
+/* The body face, not the display one: this is a label on a block, not a
+ * title — and BoldPixels is only crisp at title size. */
+.dc-ws-name {
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.dc-ws-recipe {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+.dc-ws-held { margin-left: auto; }
+.dc-ws-crew {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  color: var(--ink-muted);
+}
+.dc-ws-crew .is-warning { color: var(--clay); }
+
+/* The line of what is coming. Empty slots are drawn, not omitted: the length
+ * of the queue is what the next level buys, so it should be visible before
+ * it is bought. */
+.dc-ws-queue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dc-ws-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 3px 5px;
+  border-radius: 8px;
+  background: var(--parchment-shade);
+  box-shadow: inset 0 1px 0 #fff6;
+}
+.dc-ws-slot.is-empty { opacity: 0.45; }
+.dc-ws-slot.is-working { background: var(--parchment); box-shadow: 0 1px 0 #a79470; }
+.dc-ws-slot .k-trough { width: 42px; }
+.dc-ws-slot .k-knob { width: 20px; height: 20px; }
+.dc-ws-eta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-helper);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+.dc-ws-eta .k-action { margin-left: auto; }

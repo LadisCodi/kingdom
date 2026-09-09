@@ -24,10 +24,28 @@ import { iconEl, type IconName } from './kit';
 // the building that trains them — exactly as villagers are trained at the
 // Townhall. The tab it vacated goes to the thing the player now visits every
 // session: their relics.
+//
+// The store sits leftmost (Docs/features/14-monetization.md §2.1): the genre
+// puts its shop at one end of the bar, and the Gems plaque in the header stays
+// as the second door. It borrows the Gems icon rather than waiting on a
+// storefront sprite — the atlas has no shop cell yet, and tests/icons.test.ts
+// refuses an emoji stand-in. Heroes borrow the shield the same way.
+//
+// Heroes got a tab of their own on 2026-09-08, out of the Reliquary's second
+// tab (Docs/features/10-heroes.md §8). A roster of thirty-two is a
+// DESTINATION — the player goes to it to spend what a delve paid — and a
+// destination reached by opening another screen and finding the right tab is
+// one the design is hiding.
+//
+// ORDER, authored 2026-09-08: the two collection tabs sit together in the
+// middle, and Build takes the right edge — the end of the bar a right thumb
+// reaches without moving, for the tab the player presses most.
 const TABS: ReadonlyArray<{ name: OverlayName; label: string; icon: IconName }> = [
-  { name: 'build', label: 'Build', icon: 'build' },
-  { name: 'reliquary', label: 'Relics', icon: 'Mana' },
+  { name: 'store', label: 'Store', icon: 'Gems' },
+  { name: 'reliquary', label: 'Relics', icon: 'relics' },
+  { name: 'heroes', label: 'Heroes', icon: 'army' },
   { name: 'research', label: 'Research', icon: 'research' },
+  { name: 'build', label: 'Build', icon: 'build' },
 ];
 
 export function mountNavbar(game: Game, root: HTMLElement): void {

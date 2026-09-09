@@ -1,0 +1,451 @@
+/* The map editor's chrome. Deliberately nothing like the game's: it is a tool
+   in the repo, not a screen in the product, and looking like a tool is what
+   stops a screenshot of it being mistaken for one. */
+
+.ed-root {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 148px 1fr 320px;
+  grid-template-rows: 1fr 34px;
+  grid-template-areas:
+    'tools stage side'
+    'status status status';
+  background: #0b0e13;
+  color: #d6dee9;
+  font: 12px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --line: #222b38;
+  --ink-dim: #7c8899;
+  --accent: #f0b429;
+}
+
+/* min-height: 0 on all three columns. A grid item defaults to min-height:auto,
+   so a long census would push the 1fr row past the viewport, the page would
+   scroll, and the absolutely-positioned canvas would grow with the stage. */
+.ed-toolbar {
+  grid-area: tools;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  border-right: 1px solid var(--line);
+  background: #10151d;
+}
+
+.ed-stage { grid-area: stage; position: relative; min-height: 0; overflow: hidden; }
+.ed-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.ed-canvas[data-mode='select'] { cursor: grab; }
+.ed-canvas[data-mode='place'] { cursor: copy; }
+.ed-canvas[data-mode='erase'] { cursor: alias; }
+
+.ed-side {
+  grid-area: side;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  border-left: 1px solid var(--line);
+  background: #10151d;
+}
+
+.ed-status {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-top: 1px solid var(--line);
+  background: #10151d;
+  font-variant-numeric: tabular-nums;
+}
+
+.ed-brand { font-weight: 700; letter-spacing: .04em; color: var(--accent); margin-bottom: 8px; }
+.ed-label { margin: 10px 0 4px; color: var(--ink-dim); text-transform: uppercase; font-size: 10px; letter-spacing: .08em; }
+.ed-spacer { flex: 1; }
+.ed-readout { color: var(--ink-dim); }
+
+/* ---------- buttons ---------- */
+
+.ed-tools, .ed-sizes { display: flex; gap: 4px; flex-wrap: wrap; }
+.ed-tool, .ed-size, .ed-toggle, .ed-btn, .ed-swatch, .ed-danger {
+  background: #1a2230;
+  color: #d6dee9;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  cursor: pointer;
+  font: inherit;
+}
+.ed-tool { width: 26px; height: 26px; font-size: 13px; line-height: 1; }
+.ed-size { width: 22px; height: 22px; }
+.ed-tool.on, .ed-size.on, .ed-toggle.on, .ed-swatch.on {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.ed-tool:hover, .ed-size:hover, .ed-toggle:hover, .ed-swatch:hover, .ed-btn:hover:not(:disabled) { background: #243044; }
+
+/* The Sites tool's three verbs. Full-width rows, not icons: "what does a
+   click do right now" is the one thing this tool has to answer out loud. */
+.ed-modes { display: flex; flex-direction: column; gap: 3px; }
+.ed-mode { padding: 4px 6px; text-align: left; }
+.ed-mode.on.place { border-color: #6fbf7f; box-shadow: inset 0 0 0 1px #6fbf7f; }
+.ed-mode.on.erase { border-color: #e0555f; box-shadow: inset 0 0 0 1px #e0555f; }
+.ed-note { margin: 6px 0 0; color: var(--ink-dim); font-size: 11px; }
+
+.ed-overlays { display: flex; flex-direction: column; gap: 3px; }
+.ed-toggle { padding: 3px 6px; text-align: left; }
+
+.ed-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.ed-swatch { aspect-ratio: 1; padding: 2px; display: grid; place-items: center; overflow: hidden; }
+.ed-swatch img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; border-radius: 3px; }
+.ed-swatch span { font-size: 13px; }
+
+.ed-btn { padding: 3px 9px; }
+.ed-btn:disabled { opacity: .4; cursor: default; }
+.ed-btn.primary { background: #2b6b3f; border-color: #3f8f57; font-weight: 600; }
+.ed-btn.primary.dirty { background: #8a6a12; border-color: var(--accent); }
+.ed-danger { margin-top: 8px; padding: 4px 8px; width: 100%; background: #55212a; border-color: #7d2f3c; }
+.ed-danger:hover { background: #6d2934; }
+
+/* ---------- side panel ---------- */
+
+.ed-card { border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin-bottom: 8px; background: #131a24; }
+.ed-card h2 { margin: 0 0 6px; font-size: 12px; letter-spacing: .03em; }
+.ed-hint { margin: 4px 0 8px; color: var(--ink-dim); }
+.ed-ok { margin: 0; color: #7fd07f; }
+
+.ed-issue {
+  display: block; width: 100%; margin-bottom: 3px; padding: 4px 6px;
+  text-align: left; border: 0; border-left: 3px solid; border-radius: 3px;
+  background: #1a2230; color: #d6dee9; cursor: pointer; font: inherit;
+}
+.ed-issue:disabled { cursor: default; }
+.ed-issue.err { border-color: #e0555f; background: #2a1a1e; }
+.ed-issue.warn { border-color: var(--accent); background: #2a2415; }
+.ed-issue:hover:not(:disabled) { filter: brightness(1.25); }
+
+.ed-field { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 6px; margin-bottom: 4px; }
+.ed-field > span { color: var(--ink-dim); }
+.ed-field input, .ed-field select {
+  width: 100%; padding: 2px 5px; background: #0e131b; color: #d6dee9;
+  border: 1px solid var(--line); border-radius: 4px; font: inherit;
+}
+.ed-field input[type='checkbox'] { width: auto; }
+
+.ed-chips { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 6px; }
+.ed-chip { padding: 1px 6px; border-radius: 9px; background: #1a2230; border: 1px solid var(--line); font-size: 11px; }
+.ed-chip.feat { background: #1b2a20; border-color: #2c4433; }
+
+.ed-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ed-table th { text-align: left; color: var(--ink-dim); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.ed-table td, .ed-table th { padding: 1px 4px 1px 0; border-bottom: 1px solid #1a212c; }
+
+/* ---------- toast ---------- */
+
+.ed-toast {
+  position: fixed; left: 50%; bottom: 48px; transform: translateX(-50%);
+  padding: 7px 14px; border-radius: 6px; z-index: 10;
+  background: #24402c; border: 1px solid #3f8f57; color: #dff3e4;
+  max-width: 60ch;
+}
+.ed-toast.bad { background: #3a1d22; border-color: #7d2f3c; color: #ffd9dd; }
+
+/* ------------------------------------------------- the tech tree editor ---
+   `?dev=tree` (Docs/tech-tree-editor.md). Same chrome as the map editor —
+   .ed-root and friends above — with a page in the middle instead of a canvas.
+   The page's own sizes come from src/ui/research/layout.ts, inline, so what a
+   designer arranges here is laid out exactly as the game lays it out. */
+
+.tre-root { grid-template-columns: 210px 1fr 320px; }
+.tre-stage { display: flex; flex-direction: column; overflow: hidden; }
+
+.tre-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  background: #10151d;
+}
+.tre-tab.on { border-color: var(--accent); color: #fff; background: #243044; }
+.tre-spacer { flex: 1; }
+.tre-link.on { border-color: #6fbf7f; background: #1b2a20; color: #cdf0d5; }
+
+.tre-page { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 0 40px; }
+.tre-flow { position: relative; margin: 0 auto; }
+.tre-edges { position: absolute; inset: 0; }
+.tre-edge {
+  fill: none;
+  stroke: #5a6b83;
+  stroke-width: 3;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+.tre-edge:hover { stroke: #e0555f; stroke-width: 5; }
+
+/* An empty slot is the drop target, and says so. */
+.tre-slot {
+  position: absolute;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #33415a;
+  border-radius: 8px;
+  color: #4d5a70;
+  font-size: 11px;
+  background: #0f141c;
+}
+.tre-slot.is-over { border-color: var(--accent); border-style: solid; color: var(--accent); }
+
+.tre-card {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 7px;
+  border: 1px solid #2f3d52;
+  border-radius: 8px;
+  background: #18202c;
+  cursor: grab;
+  /* VISIBLE, so the ports can sit over the edges they connect at. What needed
+     clipping was the text, and each line clips itself below. */
+  overflow: visible;
+}
+.tre-card > b {
+  font-size: 11px;
+  line-height: 1.25;
+  overflow: hidden;
+}
+/* What the technology SAYS it does — the field the editor exists to author. */
+.tre-card-says {
+  flex: 1;
+  font-size: 10px;
+  line-height: 1.2;
+  color: #9fb4d0;
+  overflow: hidden;
+}
+.tre-card-meta {
+  color: var(--ink-dim);
+  font-size: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* Colour is the KIND: content, a number, or something the code reads by id. */
+.tre-card.is-bonus { background: #141b26; border-style: dashed; }
+.tre-card.is-mechanic { background: #1b1826; border-color: #40365a; }
+.tre-card.is-planned { opacity: .65; }
+.tre-card.is-selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tre-card.is-bad { border-color: #e0555f; background: #241a1e; }
+.tre-card.is-over { border-color: var(--accent); border-style: solid; }
+
+/* ---- connection ports ----
+   Two per card, over the top edge and under the bottom one, where the
+   connectors already meet it: an INPUT takes a line from the row above and an
+   OUTPUT sends one to the row below. Hidden until the pointer is on the card,
+   because 180 cards' worth of permanent dots is a page of dots. */
+.tre-port {
+  position: absolute;
+  left: 50%;
+  margin-left: -7px;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border-radius: 50%;
+  background: #243044;
+  border: 1px solid #5a6b83;
+  opacity: 0;
+  cursor: crosshair;
+}
+.tre-port.is-in { top: -8px; }
+.tre-port.is-out { bottom: -8px; }
+.tre-card:hover .tre-port { opacity: 1; }
+.tre-port:hover { background: #35496b; border-color: var(--accent); }
+/* While a connection is being drawn, only the ports it could land on are
+   drawn at all — so a press cannot reach one that would refuse it. */
+.tre-flow.is-wiring .tre-card:hover .tre-port { opacity: 1; }
+.tre-port.is-open {
+  opacity: 1;
+  background: #2b6b3f;
+  border-color: #6fbf7f;
+  box-shadow: 0 0 0 3px rgba(111, 191, 127, 0.2);
+}
+.tre-port.is-active {
+  opacity: 1;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(240, 180, 41, 0.25);
+}
+
+/* The era bar: not a card, and not draggable — it is where the band changes,
+   and the band is a gate in the world (Docs/features/07-research.md §2.1). */
+.tre-era {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid #4a3a5e;
+  border-radius: 6px;
+  background: #241c33;
+  color: #c9b6e8;
+  font-size: 11px;
+  letter-spacing: .04em;
+}
+
+/* Row handles live in the side channel, where no card ever sits. */
+.tre-handles { position: absolute; left: -30px; display: flex; flex-direction: column; gap: 2px; }
+.tre-handle {
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #1a2230;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.tre-handle:hover { background: #243044; color: #fff; }
+
+/* The palette: every technology in the game, unplaced ones first. */
+.tre-search {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #0d1117;
+  color: inherit;
+}
+.tre-unplaced-note { color: #e0555f; margin-bottom: 4px; }
+.tre-list { display: flex; flex-direction: column; gap: 3px; }
+.tre-item {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #131a24;
+  cursor: grab;
+}
+.tre-item b { font-size: 11px; }
+.tre-item-where { color: var(--ink-dim); font-size: 10px; }
+/* SETTLED: in a slot, wired into its page, nothing the rules object to. The
+   green is faint on purpose — it is the resting state of 180 rows, so it has
+   to read as "fine" at a glance and never compete with the one that is not. */
+.tre-item.is-settled { background: #16241b; }
+.tre-item.is-adrift { background: #241a1e; border-color: #e0555f; }
+.tre-item.is-selected { border-color: var(--accent); }
+/* The open book, then the rest. Sticky, because the list is 180 rows long and
+   which group you are in is the thing you lose first while scrolling. */
+.tre-group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 6px 0 2px;
+  padding: 3px 6px;
+  background: #10151d;
+  border-bottom: 1px solid var(--line);
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.tre-group:first-child { margin-top: 0; }
+/* A chip that CUTS what it names — an unlock, or a requirement. It has to be
+   legible first: the borrowed census chip put dim green on dark green and the
+   label was barely there. Light text on a solid ground, and the red on hover
+   says what pressing it does. */
+.tre-cut {
+  padding: 2px 7px;
+  color: #e6edf6;
+  background: #253148;
+  border-color: #46587a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+.tre-cut.is-unlock { background: #24422f; border-color: #4a8c62; color: #ddf3e3; }
+.tre-cut:hover { background: #55212a; border-color: #e0555f; color: #ffd9dd; }
+
+/* The new-technology form, and the fields that edit an existing one. */
+.tre-new { width: 100%; margin-bottom: 6px; }
+.tre-draft { margin-top: 6px; }
+.tre-draft input, .tre-draft textarea, .tre-draft select { margin-bottom: 4px; }
+.ed-side textarea.tre-search { min-height: 44px; resize: vertical; }
+.tre-search { font: inherit; }
+select.tre-search { padding: 2px 4px; }
+/* One row: what kind of thing, which one, and (for a level) which level. */
+.tre-unlock-add { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 3px; }
+.tre-level { width: 42px; }
+
+/* ---------- the confirm dialog ----------
+   One gesture in this editor moves a dozen cards on a click (clear a band),
+   so it asks first. Deliberately a blocking overlay and not a toast with an
+   undo: the answer is cheap to give and the question is the whole point. */
+
+.ed-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: #05070ac9;
+}
+.ed-modal-card {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #141a24;
+  box-shadow: 0 18px 40px #0009;
+}
+.ed-modal-card h2 { margin: 0 0 10px; font-size: 14px; color: var(--accent); }
+.ed-modal-card .ed-note { margin: 8px 0 0; }
+
+.tre-modal-row { display: flex; gap: 8px; margin-top: 14px; }
+.tre-modal-row .ed-btn { flex: 1; }
+/* The danger button is full-width in the inspector, where it is the last
+   thing on a long card. Here it is one of two, so it shares the row. */
+.tre-modal-go { margin-top: 0; flex: 1; }
+
+/* Off the page: pending, not wrong. Amber rather than the error red, because
+   a cleared band is work in progress and the save is what waits for it. */
+.tre-pending { color: var(--accent); }
+
+/* ---------- a band's header ----------
+   In the game the era bar only exists BETWEEN bands. Here every band has one,
+   because it is also the band's handle: the threshold is the one number a band
+   carries, and this is the only place to type it. */
+
+.tre-era { gap: 8px; }
+.tre-era-cells {
+  width: 68px;
+  padding: 1px 4px;
+  text-align: right;
+  background: #191325;
+  border-color: #4a3a5e;
+  color: #e8dcff;
+}
+.tre-era .ed-note { color: #9a86bd; }
+.tre-era-drop {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  flex: none;
+  border: 1px solid #4a3a5e;
+  border-radius: 4px;
+  background: #1d1729;
+  color: #c9b6e8;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+.tre-era-drop:hover:not(:disabled) { background: #55212a; border-color: #7d2f3c; color: #ffd9dd; }
+.tre-era-drop:disabled { opacity: .35; cursor: default; }
+
+/* The foot of the page. A band is added at the END — the only place one can
+   go, since the ladder of thresholds only climbs. */
+.tre-era-add { display: block; margin: 10px auto 0; }

@@ -11,7 +11,11 @@
 // time beyond the cap pauses workers/townhall (queue timers and cell recovery
 // keep running in real time).
 
-import { GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION } from './data/definitions';
+import {
+  GAME_VERSION, OFFLINE_CAP_HOURS, SAVE_VERSION, TECHNOLOGIES,
+} from './data/definitions';
+import { harvestSpecAt } from './harvest';
+import { PAYER_PROFILES } from './store';
 import { advance, type AdvanceResult } from './commands';
 import type { MapData } from './grid';
 import { normaliseSlots } from './artifacts';
@@ -21,7 +25,9 @@ import { newGame } from './newGame';
 import {
   coordKey, parseCoordKey,
   type Coord, type District, type GameState, type QueueItem,
-  type ArtifactId, type TechId, type UpgradeId, type Wallet, type Worker,
+  type ArtifactId, type GoodId, type GoodsStock, type TechId, type Wallet, type Worker,
+  type PayerProfile, type StoreSkuId,
+  type RuinId, type UnitId,
 } from './state';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
@@ -40,12 +46,13 @@ export interface SaveFile {
 interface DistrictDto {
   UniqueID: string;
   DefinitionID: string;
+  /** Which one of its kind it is, stamped when it was placed. */
+  Ordinal?: number;
   VisualVariant: number;
   AssignedWorkers: number;
   Level: number;
   GridLocation: Coord;
   ConstructionState: string;
-  LastTapAt?: number;
 }
 
 interface QueueItemDto {
@@ -61,7 +68,8 @@ interface WorkerDto {
   BuildingID: string;
   Activity: string;
   ClaimedCell: Coord | null;
-  Carrying: boolean;
+  Carrying?: number;
+  CarriedSource?: string | null;
   StateStartedAt: string;
   StateUntil: string | null;
 }
@@ -69,6 +77,12 @@ interface WorkerDto {
 /** Below this, a save is from a game shape that no longer exists and is
  *  discarded rather than migrated. v15 and earlier predate the reshaped tech
  *  tree; v1 predates the harvest loop entirely. */
+interface WorkshopDto {
+  DistrictUniqueID: string;
+  Anchor: string;
+  Items?: Array<{ Good: string; WorkMs?: number; NeedMs?: number }>;
+}
+
 export const MIN_MIGRATABLE_VERSION = 16;
 
 interface Migration {
@@ -77,9 +91,89 @@ interface Migration {
   migrate: (modules: Record<string, any>) => void;
 }
 
+/**
+ * The levelled UPGRADE lines a save at version 23 could contain, and how many
+ * ranks each had when v24 turned them into technologies.
+ *
+ * **Frozen on purpose.** It describes a save written in the past, not the tree
+ * of today: it used to read the live `TECH_LINES`, so cutting a ladder in
+ * `?dev=tree` silently changed what an old save restored, and deleting the
+ * `line` field would have deleted the migrator's only map. A migrator is
+ * history — the shape of the world it reads stopped moving the day it shipped.
+ *
+ * No `SAVE_VERSION` bump: the saved shape (`Completed: string[]`) is unchanged.
+ */
+const LEGACY_UPGRADE_LINES: Record<string, number> = {
+  Barding: 3, Bearers: 3, BigNets: 3, Butchery: 3, Carpentry: 3, Cartage: 3,
+  Colours: 5, DeepWells: 5, Drillmaster: 3, Farsight: 3, Fletching: 3,
+  IronPicks: 3, Irrigation: 3, LeyTaps: 3, Manoeuvre: 3, MarketStall: 4,
+  MusterDrill: 3, Pathfinders: 3, Pilgrimage: 3, Pitons: 2, Prospecting: 3,
+  QuickHands: 5, Rations: 3, Resonance: 2, Sawpits: 3, Scriptorium: 3,
+  Scriveners: 3, Scythes: 3, ShieldWall: 3, Stonecutting: 3, Surveying: 2,
+  TapPower: 5, TradeRoutes: 5, Vigils: 3, Warhorns: 3, Wayposts: 3,
+  WorkerLoad: 3,
+};
+
+/** Rank ids are the stem plus a roman numeral, and five is the longest ladder
+ *  any of the lines above ever had. */
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+
 /** Ordered, gap-free, append-only. A version bump with no reshape needs NO
  *  entry here — the defensive readers below already default the new field. */
 const MIGRATIONS: readonly Migration[] = [
+  {
+    // v43 — a building carries the ORDINAL it was placed with, and that
+    // ordinal prices every level of it for ever
+    // (Docs/features/05-city-and-districts.md §3.1). An additive field would
+    // normally need no migrator, but the default is not innocent: leaving it
+    // blank would make every building in an old city the cheap #1.
+    //
+    // The saved list is placement order — nothing is ever removed from it —
+    // so numbering each kind in the order it appears reconstructs exactly
+    // what the player built.
+    to: 43,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as
+        { Cities?: { Districts?: { DefinitionID?: string; Ordinal?: number }[] }[] }
+        | undefined)?.Cities?.[0];
+      const districts = city?.Districts;
+      if (districts === undefined) return;
+      const seen = new Map<string, number>();
+      for (const d of districts) {
+        const kind = String(d.DefinitionID ?? '');
+        const n = (seen.get(kind) ?? 0) + 1;
+        seen.set(kind, n);
+        d.Ordinal = n;
+      }
+    },
+  },
+  {
+    // v33 — Hero XP stopped being a tally beside each hero and became a
+    // KINGDOM WALLET ROW that buys any hero's levels
+    // (Docs/features/10-heroes.md §4). It was written and never read until
+    // now, so nothing was ever spent from it and every point a save holds is
+    // still owed: the whole per-hero map folds into the one counter.
+    //
+    // Listed FIRST so the array stays ordered by nothing in particular but
+    // remains append-only in effect — `migrate` runs every entry whose `to`
+    // is above the save's version, in array order, and this one touches keys
+    // no other migrator does.
+    to: 33,
+    migrate: (modules) => {
+      const heroes = modules['kingdom.heroes'] as
+        { Xp?: Record<string, number> } | undefined;
+      const xp = heroes?.Xp;
+      if (xp === undefined) return;
+      const total = Object.values(xp).reduce((n, v) => n + (typeof v === 'number' ? v : 0), 0);
+      delete heroes!.Xp;
+      if (total <= 0) return;
+      const kingdom = modules['kingdom.kingdoms'] as
+        { Currencies?: Record<string, number> } | undefined;
+      if (kingdom === undefined) return;
+      kingdom.Currencies = { ...(kingdom.Currencies ?? {}) };
+      kingdom.Currencies.HeroXp = (kingdom.Currencies.HeroXp ?? 0) + total;
+    },
+  },
   {
     // v21 — Berries, Meat, Fish and Iron stopped being wallet rows. Bushes,
     // game and shoals pay Food now and veins pay Stone, so a save's balances
@@ -103,6 +197,235 @@ const MIGRATIONS: readonly Migration[] = [
       fold('Meat', 'Food', 3);
       fold('Fish', 'Food', 1);
       fold('Iron', 'Stone', 3);
+    },
+  },
+  {
+    // v23 — Knowledge and Stardust swapped jobs
+    // (Docs/features/07-research.md §4). Knowledge became the
+    // research clock; the collection currency it used to be is now Stardust.
+    // Both stay kingdom-scoped: each outlives the city that earned it.
+    //
+    // Every Knowledge a live save holds was earned as COLLECTION currency —
+    // out of a delve haul, a first clear, a pull or a quest — so it must keep
+    // buying what it was earned for. The same rule the currency-simplification
+    // migrator followed: balances convert at the rates they were earned.
+    //
+    // A bare key rename would have been the bug: it hands the whole research
+    // tree to anyone holding a collection balance. Knowledge is deliberately
+    // NOT re-seeded after the move — a returning player starts the research
+    // clock at zero and earns it back from the ground they hold.
+    to: 23,
+    migrate: (modules) => {
+      const w = (modules['kingdom.kingdoms'] as { Currencies?: Record<string, number> })
+        ?.Currencies;
+      if (w === undefined) return;
+      const held = w['Knowledge'];
+      if (typeof held === 'number' && held !== 0) {
+        w['Stardust'] = (w['Stardust'] ?? 0) + held;
+      }
+      delete w['Knowledge'];
+    },
+  },
+  {
+    // v24 — upgrades stopped being a separate kind of thing. Every level of
+    // a levelled upgrade is now its own TECHNOLOGY in a rank ladder
+    // (Docs/features/tech-tree.md §1 rule 2, §8).
+    //
+    // `Upgrades: { TapPower: 3 }` becomes three completed techs,
+    // `TapPowerI/II/III`. Ranks complete in order, so level N maps to the
+    // first N ids of the ladder and the tree reads back exactly what the
+    // player had bought. A player mid-flight keeps every level they paid
+    // for, and pays no research time for them a second time.
+    to: 24,
+    migrate: (modules) => {
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; UpgradeLevels?: Record<string, number> } | undefined;
+      if (research === undefined) return;
+      const levels = research.UpgradeLevels;
+      if (levels !== undefined) {
+        const completed = research.Completed ?? (research.Completed = []);
+        for (const [line, level] of Object.entries(levels)) {
+          const ranks = LEGACY_UPGRADE_LINES[line];
+          if (ranks === undefined) continue; // a line that save's build had and this one does not
+          for (let i = 0; i < Math.min(level, ranks); i++) {
+            const id = `${line}${ROMAN[i]}`;
+            // Filtered against TODAY's tree, because a technology may have
+            // been renamed or cut in `?dev=tree` since. An id nothing has is
+            // dropped rather than carried: `load` filters it anyway, and a
+            // migrator that writes junk makes every later one harder to read.
+            if (TECHNOLOGIES[id as TechId] !== undefined && !completed.includes(id)) {
+              completed.push(id);
+            }
+          }
+        }
+        delete research.UpgradeLevels;
+      }
+    },
+  },
+  {
+    // v25 — tomes had COVER PAGES, granted by events in the world rather than
+    // researched, and a save written before they existed had none.
+    //
+    // A NO-OP now, and kept because `MIGRATIONS` is append-only and gapless.
+    // Tome openness stopped being a technology: every book is simply open, so
+    // there is nothing to grant and nothing that can be shut. The ids this
+    // used to write no longer exist, and `load` filters ids the build does not
+    // have — so leaving the body in would put dead names in a save for one
+    // read and then drop them.
+    to: 25,
+    migrate: () => {},
+  },
+  {
+    // v26 — the Mine is gone as a building. The Quarry works every mountain
+    // now, bare rock and metal alike, so a Mine that a player already paid
+    // for BECOMES a Quarry rather than vanishing: the two had the same
+    // footprint, the same crew and the same radius, and the first promise is
+    // that nothing you own is taken from you.
+    //
+    // It can push a city one Quarry over its Townhall count cap. That is
+    // deliberate — the cap gates BUILDING one, and taking a standing building
+    // away to enforce it retroactively would be the very thing the promise
+    // forbids.
+    //
+    // Numbered AFTER the tome migrators (v23–v25) because those shipped on
+    // develop first; a save written by the harvest branch at its own v23/v24
+    // therefore skips the Knowledge→Stardust and UpgradeLevels conversions.
+    // Those saves only ever existed on a developer machine.
+    to: 26,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: Array<Record<string, any>> })
+        ?.Cities?.[0];
+      const districts = city?.Districts as Array<Record<string, any>> | undefined;
+      if (districts === undefined) return;
+      for (const d of districts) {
+        if (d.DefinitionID === 'Mine') d.DefinitionID = 'Quarry';
+      }
+    },
+  },
+  {
+    // v27 — a resource cell stopped counting TAPS and started holding UNITS
+    // (`Docs/features/04-harvest.md` §2). The old counter cannot be converted
+    // honestly: one old tap was one unit on a forest and three on a herd, and
+    // what a tap PAID scaled with the whole city's payroll, so the wear a save
+    // recorded does not mean the same thing twice.
+    //
+    // So the wear is forgiven: dropping the module makes the reader default
+    // every cell to a full depot with no exhaustion. It is worth a few seconds
+    // of production, it can only ever hand the player MORE than they had, and
+    // it is the only reading that cannot be wrong in the direction the first
+    // promise forbids.
+    //
+    // A house's `LastTapAt` goes the same way — written, persisted and never
+    // read — and its replacement `PulledUntil` defaults to a full advance
+    // budget, which is also the generous direction.
+    to: 27,
+    migrate: (modules) => {
+      delete modules['kingdom.cellHarvest'];
+    },
+  },
+  {
+    // v35 — the daily chest became a SEASON (Docs/features/12-quests.md §3).
+    // `LadderStep` counted days played on a seven-rung cycle that never ended;
+    // `Rung` counts them inside a twenty-day window, so the two numbers do not
+    // mean the same thing and the old one cannot be converted honestly — a
+    // step-11 save is on rung 4 of a cycle that no longer exists.
+    //
+    // So the block is dropped and the reader defaults it: the player lands in
+    // whatever season is running, at rung 0, owing nothing. That costs at most
+    // one season's progress on a ladder that was never a possession, and it is
+    // the only reading that cannot pay out a rung twice.
+    to: 35,
+    migrate: (modules) => {
+      const kingdom = modules['kingdom.kingdoms'] as { Daily?: unknown } | undefined;
+      if (kingdom !== undefined) delete kingdom.Daily;
+    },
+  },
+  {
+    // v36 — a half-cleared cell stopped counting the GOLD paid into it and
+    // started counting TAPS, because a cell is five taps at every ring now
+    // (Docs/features/01-map-and-fog.md §5). The two numbers cannot be
+    // converted: 300 meant "300 Gold down" on a cell whose price the save does
+    // not carry, and read as taps it would be a cell already cleared five
+    // times over — the fifth tap would open it for nothing.
+    //
+    // So the part-paid cells are dropped and the reader defaults them to
+    // untouched. It costs at most four taps of Gold on each cell the player
+    // happened to leave half-open, and it is the only reading that cannot hand
+    // out ground nobody paid for.
+    to: 36,
+    migrate: (modules) => {
+      const fog = modules['kingdom.fogOfWar'] as { Progress?: unknown } | undefined;
+      if (fog !== undefined) delete fog.Progress;
+    },
+  },
+  {
+    // v40 — `kingdom.delves` became `kingdom.ruins`. A delve was a party in
+    // flight down a ruin on a timer; a ruin is now a ladder of rooms, each one
+    // a fight resolved the instant it is entered
+    // (Docs/features/11-expeditions.md §5). A party mid-descent has nothing to
+    // become, so the flight is dropped — and the two facts that OUTLIVED the
+    // run come across: which ruins were taken to the bottom, and how deep the
+    // player has ever been.
+    //
+    // The room ladder itself is new content, so a ruin whose bottom was
+    // reached under the old model re-opens at Depth 1 Room 1. `Cleared` is
+    // what guards the once-only payout — the relic and the first-clear lump
+    // are already banked and cannot be won twice.
+    to: 40,
+    migrate: (modules) => {
+      const delves = modules['kingdom.delves'] as
+        { Cleared?: string[]; DeepestDepth?: number } | undefined;
+      if (delves === undefined) return;
+      modules['kingdom.ruins'] = {
+        Progress: [],
+        Cleared: delves.Cleared ?? [],
+        DeepestDepth: delves.DeepestDepth ?? 0,
+      };
+      delete modules['kingdom.delves'];
+    },
+  },
+  {
+    // v42 — the Market left the game: the building, its technology and the
+    // three quests that named it. A save can be holding a built Market, a
+    // Market in the build queue, and a research or quest pointed at a card
+    // that no longer exists — and every one of those would be read as a
+    // district id the tables have no row for.
+    //
+    // So they are dropped rather than converted: there is nothing to convert
+    // them INTO. The plot the Market stood on is simply free again, which is
+    // the honest outcome of a building being retired, and the quest chain is
+    // shorter by three beats — `activeQuest` reads the index against the
+    // CURRENT chain, so a player past the Market beats lands on the same beat
+    // by name, and one standing on them lands on the beat that replaced them.
+    to: 42,
+    migrate: (modules) => {
+      const city = (modules['kingdom.cities'] as { Cities?: any[] } | undefined)?.Cities?.[0];
+      if (city !== undefined) {
+        const markets = new Set<string>();
+        city.Districts = (city.Districts ?? []).filter((d: any) => {
+          if (d.DefinitionID !== 'Market') return true;
+          markets.add(d.UniqueID);
+          return false;
+        });
+        // A queue item points at a DISTRICT, and `QueueKinds` is a PARALLEL
+        // array — so a build or an upgrade of a Market goes with it, and both
+        // sides are filtered together or every later item changes kind.
+        const kinds: string[] = city.QueueKinds ?? [];
+        const keep: boolean[] = (city.QueueItems ?? [])
+          .map((q: any) => !markets.has(q.DistrictID));
+        city.QueueItems = (city.QueueItems ?? []).filter((_: unknown, i: number) => keep[i]);
+        if (kinds.length > 0) city.QueueKinds = kinds.filter((_, i) => keep[i]);
+        // A worker cannot be assigned to a Market, so nothing else in the
+        // city points at one.
+      }
+      const research = modules['kingdom.research'] as
+        { Completed?: string[]; Active?: any[] } | undefined;
+      if (research !== undefined) {
+        const dead = new Set(['Market', 'Guildhalls', 'MarketStallI', 'MarketStallII',
+          'MarketStallIII', 'MarketStallIV']);
+        research.Completed = (research.Completed ?? []).filter((id) => !dead.has(id));
+        research.Active = (research.Active ?? []).filter((a: any) => !dead.has(a?.ID));
+      }
     },
   },
 ];
@@ -132,16 +455,24 @@ export function serialize(state: GameState, now: number): SaveFile {
             Name: state.city.name,
             Population: state.city.population,
             Currencies: state.city.wallet,
+            Goods: state.city.goods,
+            Workshops: Object.entries(state.city.workshops).map(([id, line]) => ({
+              DistrictUniqueID: id,
+              Anchor: iso(line.anchor),
+              Items: line.items.map((i) => ({
+                Good: i.good, WorkMs: i.workMs, NeedMs: i.needMs,
+              })),
+            })),
             Districts: state.city.districts.map(
               (d): DistrictDto => ({
                 UniqueID: d.uniqueId,
                 DefinitionID: d.definitionId,
+                Ordinal: d.ordinal,
                 VisualVariant: d.visualVariant,
                 AssignedWorkers: d.assignedWorkers,
                 Level: d.level,
                 GridLocation: d.location,
                 ConstructionState: d.state,
-                LastTapAt: d.lastTapAt,
               }),
             ),
             QueueItems: state.city.queue.map((q): QueueItemDto => ({
@@ -158,22 +489,41 @@ export function serialize(state: GameState, now: number): SaveFile {
               Trainee: i.trainee,
               BuildingID: i.buildingId,
               StartedAtUtc: isoOrNull(i.startedAt),
+              // Stamped with the clock, so a save reads back the wait the
+              // player was promised rather than today's neighbours.
+              Seconds: i.seconds,
+              // A ward of wounded is one item that hands over many. Written
+              // only when it is one, so a recruit's row is what it always was.
+              ...(i.kind === 'heal' ? { Kind: 'heal', Count: i.count ?? 1 } : {}),
             })),
+            // The infirmary: who is waiting to be put back together.
+            Wounded: Object.entries(state.city.wounded)
+              .filter(([, n]) => (n ?? 0) > 0)
+              .map(([unitId, n]) => ({ UnitID: unitId, Count: n })),
             LastManaAt: iso(state.city.lastManaAt),
           },
         ],
       },
       'kingdom.kingdoms': {
-        MaxBuilders: state.kingdom.maxBuilders,
+        // The DTO key stays `MaxBuilders` even though the field was renamed
+        // to `builders`: changing it would need a migrator to buy nothing.
+        MaxBuilders: state.kingdom.builders,
         Currencies: state.kingdom.wallet,
         LastKnowledgeAt: iso(state.kingdom.lastKnowledgeAt),
+        Daily: {
+          Season: state.kingdom.daily.season,
+          Rung: state.kingdom.daily.rung,
+          LastClaimedDay: state.kingdom.daily.lastClaimedDay,
+          RoyalSeason: state.kingdom.daily.royalSeason,
+          RoyalClaimed: state.kingdom.daily.royalClaimed,
+        },
       },
       'kingdom.fogOfWar': {
         Revealed: Object.keys(state.fog.revealed).map(parseCoordKey),
         Discovered: Object.keys(state.fog.discovered).map(parseCoordKey),
-        Progress: Object.entries(state.fog.progress).map(([k, gold]) => ({
+        Progress: Object.entries(state.fog.progress).map(([k, taps]) => ({
           Coord: parseCoordKey(k),
-          Gold: gold,
+          Taps: taps,
         })),
       },
       'kingdom.features': {
@@ -194,10 +544,9 @@ export function serialize(state: GameState, now: number): SaveFile {
       },
       'kingdom.cellHarvest': {
         Cells: Object.entries(state.harvest)
-          .filter(([, s]) => s.taps > 0 || s.exhaustedUntil !== null)
           .map(([k, s]) => ({
             Coord: parseCoordKey(k),
-            Taps: s.taps,
+            Units: s.units,
             ExhaustedUntil: isoOrNull(s.exhaustedUntil),
           })),
       },
@@ -208,6 +557,7 @@ export function serialize(state: GameState, now: number): SaveFile {
           Activity: w.activity,
           ClaimedCell: w.claimedCell,
           Carrying: w.carrying,
+          CarriedSource: w.carriedSource,
           StateStartedAt: iso(w.stateStartedAt),
           StateUntil: isoOrNull(w.stateUntil),
         })),
@@ -227,9 +577,9 @@ export function serialize(state: GameState, now: number): SaveFile {
         Active: state.research.active.map((a) => ({
           ID: a.id,
           StartedAtUtc: iso(a.startedAt),
+          DurationMs: a.durationMs ?? null, // additive; older saves have none
         })),
         SlotsPurchased: state.research.slotsPurchased,
-        UpgradeLevels: state.upgrades,
       },
       'kingdom.schedule': {
         Entries: state.schedule.map((e) => ({
@@ -241,24 +591,12 @@ export function serialize(state: GameState, now: number): SaveFile {
           Phase: e.phase,
         })),
       },
-      'kingdom.delves': {
-        Delves: state.delves.map((d) => ({
-          ID: d.id,
-          RuinID: d.ruinId,
-          HeroID: d.heroId,
-          ArtifactID: d.artifactId,
-          ArtifactLevel: d.artifactLevel,
-          Party: d.party.map((p) => ({ UnitID: p.unitId, Count: p.count })),
-          Depth: d.depth,
-          PartyHp: d.partyHp,
-          MaxPartyHp: d.maxPartyHp,
-          Haul: d.haul,
-          HaulFragments: d.haulFragments,
-          Phase: d.phase,
-          DepthEndsAtUtc: iso(d.depthEndsAt),
-          StandingOrder: d.standingOrder,
-          Threat: d.threat,
-          Outcome: d.outcome,
+      // HOW FAR INTO EACH RUIN, and nothing in flight: a room resolves the
+      // instant it is entered, so there is no party to persist
+      // (Docs/features/11-expeditions.md §5).
+      'kingdom.ruins': {
+        Progress: Object.entries(state.ruins).map(([ruinId, p]) => ({
+          RuinID: ruinId, Depth: p!.depth, Cleared: p!.cleared,
         })),
         Cleared: Object.keys(state.ruinsCleared),
         DeepestDepth: state.deepestDepth,
@@ -268,12 +606,13 @@ export function serialize(state: GameState, now: number): SaveFile {
         Levels: state.heroes.levels,
         Tiers: state.heroes.tiers,
         Fragments: state.heroes.fragments,
-        Xp: state.heroes.xp,
-        PartySlotsPurchased: state.heroes.partySlotsPurchased,
+        HeroSlotsPurchased: state.heroes.heroSlotsPurchased,
       },
       'kingdom.gacha': {
         PullCounts: state.gacha.pullCounts,
         PityCounters: state.gacha.pityCounters,
+        LegendaryPity: state.gacha.legendaryPity,
+        FreePulls: state.gacha.freePulls,
       },
       // The ad offer. `ReadyAt` is a TIMER, so it is not shifted by the
       // offline cap below — the cap limits what the city produces, never what
@@ -283,10 +622,32 @@ export function serialize(state: GameState, now: number): SaveFile {
         ReadyAtUtc: iso(state.ads.readyAt),
         Claims: state.ads.claims,
         Pending: state.ads.pending,
+        // The day's two refill counters. `Day` is a day INDEX, so a save
+        // reloaded tomorrow rolls itself the first time anything reads it.
+        Refills: {
+          Day: state.ads.refills.day,
+          Watched: state.ads.refills.watched,
+          Bought: state.ads.refills.bought,
+        },
       },
       'kingdom.landmarks': {
         Claimed: Object.keys(state.landmarks.claimed),
-        Cleared: Object.keys(state.landmarks.cleared),
+      },
+      // The gates and what they have taken. `NextRaidAtUtc` is a TIMER, so it
+      // is not shifted by the offline cap below: the counter a discovery
+      // started runs while the player is away, and the raid it owes resolves
+      // on the next advance (Docs/features/18-garrisons-and-raids.md §3).
+      'kingdom.gates': {
+        Gates: Object.entries(state.gates).map(([ruinId, g]) => ({
+          RuinID: ruinId,
+          NextRaidAtUtc: isoOrNull(g!.nextRaidAt),
+          Trips: g!.trips,
+          Hoard: g!.hoard,
+          Cleared: g!.cleared,
+        })),
+        Reports: state.raidReports.map((r) => ({
+          ID: r.id, RuinID: r.ruinId, AtUtc: iso(r.at), Took: r.took,
+        })),
       },
       'kingdom.artifacts': {
         Owned: state.artifacts.owned,
@@ -304,6 +665,18 @@ export function serialize(state: GameState, now: number): SaveFile {
         })),
       },
       'player.currencies': state.player.wallet,
+      // The simulated payer. Additive: a save from before it has none, so the
+      // reader leaves it null and the profile sheet asks on the next launch.
+      'player.payer': state.player.payer === null ? null : {
+        Profile: state.player.payer.profile,
+        ChosenAtUtc: iso(state.player.payer.chosenAt),
+        MonthIndex: state.player.payer.monthIndex,
+        SpentCentsThisMonth: state.player.payer.spentCentsThisMonth,
+        Refusals: state.player.payer.refusals,
+        Purchases: state.player.payer.purchases.map((p) => ({
+          SKU: p.sku, PriceCents: p.priceCents, AtUtc: iso(p.at),
+        })),
+      },
       'meta.region': state.regionId,
       'meta.seed': state.seed,
       'meta.nextId': state.nextId,
@@ -348,16 +721,32 @@ export function deserialize(
   if (cityDto) {
     state.city.population = cityDto.Population ?? state.city.population;
     state.city.wallet = { ...(cityDto.Currencies as Wallet) };
+    // Additive since save 29: a save written before goods existed simply has
+    // an empty stockpile, which is what a city that never built a workshop
+    // holds anyway.
+    state.city.goods = { ...((cityDto.Goods ?? {}) as GoodsStock) };
+    state.city.workshops = {};
+    for (const w of (cityDto.Workshops ?? []) as WorkshopDto[]) {
+      state.city.workshops[w.DistrictUniqueID] = {
+        anchor: ms(w.Anchor),
+        items: (w.Items ?? []).map((i) => ({
+          good: i.Good as GoodId,
+          workMs: i.WorkMs ?? 0,
+          // Pre-30: no stamp, so the authored work is what it owes.
+          needMs: i.NeedMs,
+        })),
+      };
+    }
     state.city.districts = (cityDto.Districts as DistrictDto[]).map(
       (d): District => ({
         uniqueId: d.UniqueID,
         definitionId: d.DefinitionID as District['definitionId'],
+        ordinal: d.Ordinal ?? 1,
         level: d.Level ?? 1,
         assignedWorkers: d.AssignedWorkers ?? 0,
         location: d.GridLocation,
         state: d.ConstructionState as District['state'],
         visualVariant: d.VisualVariant ?? 1,
-        lastTapAt: d.LastTapAt ?? 0,
       }),
     );
     const kinds = (cityDto.QueueKinds ?? []) as Array<'build' | 'upgrade'>;
@@ -378,7 +767,16 @@ export function deserialize(
       trainee: i.Trainee,
       buildingId: i.BuildingID,
       startedAt: msOrNull(i.StartedAtUtc),
+      // A pre-30 save has no stamp: the authored duration is what it was
+      // running on anyway (`itemTrainSeconds`).
+      seconds: i.Seconds ?? null,
+      // A pre-41 save has no infirmary in it, so every item is a recruit.
+      ...(i.Kind === 'heal' ? { kind: 'heal' as const, count: i.Count ?? 1 } : {}),
     }));
+    state.city.wounded = {};
+    for (const w of (cityDto.Wounded ?? []) as any[]) {
+      state.city.wounded[w.UnitID as UnitId] = w.Count ?? 0;
+    }
     // ---- migrating a save written before the two queues became one ----
     // Soldiers were `ArmyQueue` with a `UnitID`; villagers were a bare count
     // and one timestamp on the city. Both become items in the single line.
@@ -390,6 +788,7 @@ export function deserialize(
         trainee: i.UnitID,
         buildingId: i.BuildingID,
         startedAt: msOrNull(i.StartedAtUtc),
+        seconds: null,
       });
     }
     if (cityDto.TrainingStartedAt) {
@@ -403,6 +802,7 @@ export function deserialize(
           trainee: 'Villager',
           buildingId: hall?.uniqueId ?? '',
           startedAt: n === 0 ? startedAt : null,
+          seconds: null,
         });
       }
     }
@@ -410,10 +810,25 @@ export function deserialize(
 
   const kingdomDto = modules['kingdom.kingdoms'];
   if (kingdomDto) {
-    state.kingdom.maxBuilders = kingdomDto.MaxBuilders ?? state.kingdom.maxBuilders;
+    state.kingdom.builders = kingdomDto.MaxBuilders ?? state.kingdom.builders;
     state.kingdom.wallet = { ...(kingdomDto.Currencies as Wallet) };
     state.kingdom.lastKnowledgeAt = kingdomDto.LastKnowledgeAt
       ? ms(kingdomDto.LastKnowledgeAt) : lastSaved;
+    // Additive: a save written before the chest existed has no Daily block and
+    // the defaults below start the season at rung zero, which is exactly right
+    // for a player meeting it for the first time. `Season: -1` matches no real
+    // season, so a missing block reads as "not in one" rather than as season 0.
+    const daily = kingdomDto.Daily as {
+      Season?: number; Rung?: number; LastClaimedDay?: number | null;
+      RoyalSeason?: number | null; RoyalClaimed?: number[];
+    };
+    if (daily) {
+      state.kingdom.daily.season = daily.Season ?? -1;
+      state.kingdom.daily.rung = daily.Rung ?? 0;
+      state.kingdom.daily.lastClaimedDay = daily.LastClaimedDay ?? null;
+      state.kingdom.daily.royalSeason = daily.RoyalSeason ?? null;
+      state.kingdom.daily.royalClaimed = [...(daily.RoyalClaimed ?? [])];
+    }
   }
 
   const fogDto = modules['kingdom.fogOfWar'];
@@ -421,8 +836,8 @@ export function deserialize(
     state.fog = { revealed: {}, discovered: {}, progress: {} };
     for (const c of (fogDto.Revealed ?? []) as Coord[]) state.fog.revealed[coordKey(c)] = true;
     for (const c of (fogDto.Discovered ?? []) as Coord[]) state.fog.discovered[coordKey(c)] = true;
-    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Gold: number }[]) {
-      state.fog.progress[coordKey(p.Coord)] = p.Gold;
+    for (const p of (fogDto.Progress ?? []) as { Coord: Coord; Taps: number }[]) {
+      state.fog.progress[coordKey(p.Coord)] = p.Taps ?? 0;
     }
   }
 
@@ -448,8 +863,12 @@ export function deserialize(
   const harvestDto = modules['kingdom.cellHarvest']?.Cells;
   if (harvestDto) {
     for (const c of harvestDto as any[]) {
+      const spec = harvestSpecAt(state, c.Coord);
       state.harvest[coordKey(c.Coord)] = {
-        taps: c.Taps ?? 0,
+        // A cell whose depot was never written is full; `Units` 0 is a real
+        // value (an emptied cell) and must survive the ?? that a missing key
+        // needs, so it is checked rather than defaulted.
+        units: typeof c.Units === 'number' ? c.Units : (spec?.stock ?? 0),
         exhaustedUntil: msOrNull(c.ExhaustedUntil),
       };
     }
@@ -463,7 +882,8 @@ export function deserialize(
         buildingId: w.BuildingID,
         activity: w.Activity as Worker['activity'],
         claimedCell: w.ClaimedCell,
-        carrying: !!w.Carrying,
+        carrying: w.Carrying ?? 0,
+        carriedSource: (w.CarriedSource ?? null) as Worker['carriedSource'],
         stateStartedAt: ms(w.StateStartedAt),
         stateUntil: msOrNull(w.StateUntil),
       }),
@@ -481,12 +901,19 @@ export function deserialize(
   const researchDto = modules['kingdom.research'];
   if (researchDto) {
     state.research = {
-      completed: [...((researchDto.Completed ?? []) as TechId[])],
-      active: ((researchDto.Active ?? []) as Array<{ ID: TechId; StartedAtUtc: string }>).map(
-        (a) => ({ id: a.ID, startedAt: ms(a.StartedAtUtc) })),
+      // Filtered against the build: a technology the tree no longer has (one
+      // deleted in `?dev=tree`) would otherwise sit in `completed` for ever,
+      // summed into every total and indexed by anything that trusts the list.
+      completed: ((researchDto.Completed ?? []) as TechId[])
+        .filter((id) => TECHNOLOGIES[id] !== undefined),
+      active: ((researchDto.Active ?? []) as
+        Array<{ ID: TechId; StartedAtUtc: string; DurationMs?: number | null }>).map(
+        (a) => ({
+          id: a.ID, startedAt: ms(a.StartedAtUtc),
+          ...(typeof a.DurationMs === 'number' ? { durationMs: a.DurationMs } : {}),
+        })),
       slotsPurchased: researchDto.SlotsPurchased ?? 0,
     };
-    state.upgrades = { ...((researchDto.UpgradeLevels ?? {}) as Partial<Record<UpgradeId, number>>) };
   }
 
   const discoveriesDto = modules['kingdom.discoveries'];
@@ -515,32 +942,15 @@ export function deserialize(
     }));
   }
 
-  const delvesDto = modules['kingdom.delves'];
-  if (delvesDto) {
-    state.delves = ((delvesDto.Delves ?? []) as any[]).map((d) => ({
-      id: d.ID,
-      ruinId: d.RuinID,
-      heroId: d.HeroID,
-      // A save written before attune-or-arm shipped has no relic aboard, and
-      // reads back as a party that carried nothing — which is exactly what it
-      // was. Additive, so no migrator; see engine-seams.md §4.
-      artifactId: d.ArtifactID ?? null,
-      artifactLevel: d.ArtifactLevel ?? 1,
-      party: ((d.Party ?? []) as any[]).map((p) => ({ unitId: p.UnitID, count: p.Count })),
-      depth: d.Depth ?? 0,
-      partyHp: d.PartyHp ?? 0,
-      maxPartyHp: d.MaxPartyHp ?? 0,
-      haul: { ...(d.Haul ?? {}) },
-      haulFragments: d.HaulFragments ?? 0,
-      phase: d.Phase ?? 'checkpoint',
-      depthEndsAt: ms(d.DepthEndsAtUtc),
-      standingOrder: d.StandingOrder ?? null,
-      threat: d.Threat ?? 'Any',
-      outcome: d.Outcome ?? null,
-    }));
-    state.deepestDepth = delvesDto.DeepestDepth ?? 0;
+  const ruinsDto = modules['kingdom.ruins'];
+  if (ruinsDto) {
+    state.ruins = {};
+    for (const p of (ruinsDto.Progress ?? []) as any[]) {
+      state.ruins[p.RuinID as RuinId] = { depth: p.Depth ?? 1, cleared: p.Cleared ?? 0 };
+    }
+    state.deepestDepth = ruinsDto.DeepestDepth ?? 0;
     state.ruinsCleared = {};
-    for (const id of (delvesDto.Cleared ?? []) as string[]) {
+    for (const id of (ruinsDto.Cleared ?? []) as string[]) {
       state.ruinsCleared[id as keyof typeof state.ruinsCleared] = true;
     }
   }
@@ -552,17 +962,28 @@ export function deserialize(
       levels: { ...(heroesDto.Levels ?? {}) },
       tiers: { ...(heroesDto.Tiers ?? {}) },
       fragments: { ...(heroesDto.Fragments ?? {}) },
-      xp: { ...(heroesDto.Xp ?? {}) },
-      partySlotsPurchased: heroesDto.PartySlotsPurchased ?? 0,
+      // `PartySlotsPurchased` is gone: every troop slot is open from the
+      // start, so an older save's count is simply not read.
+      heroSlotsPurchased: heroesDto.HeroSlotsPurchased ?? 0,
     };
   }
 
   const adsDto = modules['kingdom.adOffers'];
   if (adsDto) {
+    const refills = (adsDto.Refills ?? {}) as {
+      Day?: number; Watched?: number; Bought?: number;
+    };
     state.ads = {
       readyAt: adsDto.ReadyAtUtc ? ms(adsDto.ReadyAtUtc) : lastSaved,
       claims: adsDto.Claims ?? 0,
       pending: adsDto.Pending === true,
+      // A save written before the allowances existed reads as a fresh day,
+      // which is the generous default and the only safe one.
+      refills: {
+        day: refills.Day ?? state.ads.refills.day,
+        watched: refills.Watched ?? 0,
+        bought: refills.Bought ?? 0,
+      },
     };
   }
 
@@ -571,14 +992,34 @@ export function deserialize(
     state.gacha = {
       pullCounts: { ...(gachaDto.PullCounts ?? {}) },
       pityCounters: { ...(gachaDto.PityCounters ?? {}) },
+      legendaryPity: { ...(gachaDto.LegendaryPity ?? {}) },
+      freePulls: { ...(gachaDto.FreePulls ?? {}) },
     };
   }
 
   const landmarksDto = modules['kingdom.landmarks'];
   if (landmarksDto) {
-    state.landmarks = { claimed: {}, cleared: {} };
+    // `Cleared` was the defended landmark's flag and is gone: a sanctuary is
+    // claimed for Gold and nothing holds one. An older save still carries the
+    // key; it is simply not read.
+    state.landmarks = { claimed: {} };
     for (const id of (landmarksDto.Claimed ?? []) as string[]) state.landmarks.claimed[id] = true;
-    for (const id of (landmarksDto.Cleared ?? []) as string[]) state.landmarks.cleared[id] = true;
+  }
+
+  const gatesDto = modules['kingdom.gates'];
+  if (gatesDto) {
+    state.gates = {};
+    for (const g of (gatesDto.Gates ?? []) as any[]) {
+      state.gates[g.RuinID as RuinId] = {
+        nextRaidAt: msOrNull(g.NextRaidAtUtc),
+        trips: g.Trips ?? 0,
+        hoard: { ...(g.Hoard ?? {}) },
+        cleared: g.Cleared === true,
+      };
+    }
+    state.raidReports = ((gatesDto.Reports ?? []) as any[]).map((r) => ({
+      id: r.ID, ruinId: r.RuinID as RuinId, at: ms(r.AtUtc), took: { ...(r.Took ?? {}) },
+    }));
   }
 
   const artifactsDto = modules['kingdom.artifacts'];
@@ -618,6 +1059,25 @@ export function deserialize(
 
   const playerDto = modules['player.currencies'];
   if (playerDto) state.player.wallet = { ...(playerDto as Wallet) };
+  const payerDto = modules['player.payer'] as {
+    Profile?: string; ChosenAtUtc?: string; MonthIndex?: number; SpentCentsThisMonth?: number;
+    Refusals?: number; Purchases?: Array<{ SKU: string; PriceCents: number; AtUtc: string }>;
+  } | null | undefined;
+  // A profile this build does not know (the roster was renamed once already)
+  // reads as no profile, so the sheet asks again rather than the store
+  // drawing "undefined" over a NaN budget.
+  if (payerDto && (PAYER_PROFILES as readonly string[]).includes(payerDto.Profile ?? '')) {
+    state.player.payer = {
+      profile: payerDto.Profile as PayerProfile,
+      chosenAt: payerDto.ChosenAtUtc ? ms(payerDto.ChosenAtUtc) : lastSaved,
+      monthIndex: payerDto.MonthIndex ?? 0,
+      spentCentsThisMonth: payerDto.SpentCentsThisMonth ?? 0,
+      refusals: payerDto.Refusals ?? 0,
+      purchases: (payerDto.Purchases ?? []).map((p) => ({
+        sku: p.SKU as StoreSkuId, priceCents: p.PriceCents, at: ms(p.AtUtc),
+      })),
+    };
+  }
 
   // A save written before the seed existed keeps the fresh one newGame just
   // rolled: its world was generated by the old hash and cannot be reproduced
@@ -653,6 +1113,8 @@ export function deserialize(
     for (const item of state.city.trainingQueue) {
       if (item.startedAt !== null) item.startedAt += gap;
     }
+    // A workshop crew is production: it stops at the cap with the workers.
+    for (const line of Object.values(state.city.workshops)) line.anchor += gap;
     state.city.lastTaxAt += gap; // taxes pause beyond the cap too
     state.city.lastManaAt += gap; // and so does Mana: it is city production, not a timer
     state.kingdom.lastKnowledgeAt += gap; // the ruin drip is production too
@@ -670,9 +1132,10 @@ export function deserialize(
     report.knowledgeEarned += tail.knowledgeEarned;
     report.expiredModifiers.push(...tail.expiredModifiers);
     report.trainedUnits.push(...tail.trainedUnits);
-    // Delve and schedule events come from the TAIL by design: their timers
-    // never paused, so most of what happened past the cap happened here.
-    report.delveEvents.push(...tail.delveEvents);
+    // Schedule events come from the TAIL by design: their windows never
+    // paused, so most of what happened past the cap happened here. Nothing
+    // comes from the ruins — a room resolves on entry, so an absence never
+    // resolves one.
     report.scheduleEvents.push(...tail.scheduleEvents);
   }
   onCatchUp?.({ elapsedMs: capEnd - lastSaved, cappedOut: capEnd < now, result: report });

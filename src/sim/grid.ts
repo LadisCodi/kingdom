@@ -3,6 +3,7 @@
 // distance (user decision — diagonals do not count as adjacent).
 
 import { DISTRICTS } from './data/definitions';
+import type { RegionMapDoc } from './data/mapRules';
 import regionMap from './data/region-map.json';
 import {
   cellsOfRect, coordKey, parseCoordKey,
@@ -11,7 +12,7 @@ import {
 
 /** Authored regions, by id. One entry today; a second is a JSON file and a
  *  row, not a refactor. */
-const REGIONS: Record<RegionId, typeof regionMap> = {
+const REGIONS: Record<RegionId, RegionMapDoc> = {
   oakville: regionMap,
 };
 
@@ -29,8 +30,13 @@ export interface MapData {
 
 export const TOWNHALL_ORIGIN: Coord = { x: 0, y: 0 }; // anchor (top-left of its footprint)
 
-export function buildMapData(regionId: RegionId = 'oakville'): MapData {
-  const region = REGIONS[regionId];
+export const buildMapData = (regionId: RegionId = 'oakville'): MapData =>
+  buildMapDataFrom(REGIONS[regionId]);
+
+/** The same derivation over a document that is not (yet) the shipped one —
+ *  the map editor rebuilds this on every stroke to keep its fog-cost overlay
+ *  honest, so the numbers a designer sees are the ones the game will use. */
+export function buildMapDataFrom(region: RegionMapDoc): MapData {
   const terrain = new Map<string, TerrainId>();
   for (const c of region.terrain.cells) {
     terrain.set(coordKey({ x: c.x, y: c.y }), c.id as TerrainId);
