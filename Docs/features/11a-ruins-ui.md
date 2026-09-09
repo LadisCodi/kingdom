@@ -58,8 +58,11 @@ City HUD ─────▶ Reservoir meter
 
 ### 2.5 Room sheet — the battle screen
 
-**Built 2026-09-09**, on the gate ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
-One screen serves every fight; the caller hands it a descriptor.
+**Built 2026-09-09**, on the gate
+([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)) and on the delve
+launch. One screen serves every fight; the caller hands it a descriptor, and
+what differs between two fights is **the widget at the top** and the bands
+under the board.
 
 | | |
 |---|---|
@@ -67,6 +70,19 @@ One screen serves every fight; the caller hands it a descriptor.
 | Elements | Two army boxes of the same shape — theirs cold, ours warm — each with its power on the right; the party's slots; the reward chips; one primary button |
 | States | Party over power · party under power (the box warns, the button still goes) · supplies unaffordable (the button blocks) |
 | Rules | A power shortfall **warns, never blocks**. Supplies are labelled as spent win or lose. **The enemy squads are what the fight is scored against** — the formation is derived from the authored budget and the budget is not shown |
+
+**What each fight puts in the widget:**
+
+| Fight | The widget carries | Bands under the board |
+|---|---|---|
+| **A gate** | the raid countdown, trips left, the hoard | — |
+| **A delve** | **the safe depth**, the depth count, one depth's clock, and the relic waiting at the bottom | the relic the hero carries, and the standing order |
+
+- A delve's enemy box is sized from the **first depth's strength** and typed
+  by the ruin's **bias**: what waits at a depth is rolled when the party
+  commits to it, so the box says *mostly*, never *is*.
+- Neither the relic nor the standing order stands in a slot, which is why
+  they are bands rather than part of the party box.
 
 ### 2.6 Party composition — slots and panels
 

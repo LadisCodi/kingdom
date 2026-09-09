@@ -15,9 +15,10 @@ import { advance } from '../src/sim/commands';
 import { RAID, RUINS, RUIN_ORDER, UNITS, garrisonForTier } from '../src/sim/data/definitions';
 import { threatStrength } from '../src/sim/combat';
 import {
-  advanceRaids, cityRatePerSecond, clearedGateCount, formationPower, gateFormation,
+  advanceRaids, cityRatePerSecond, clearedGateCount, gateFormation,
   gateIsCleared, gatePower, gateSupplies, nextRaidBoundary, openGates, raidTake,
 } from '../src/sim/gates';
+import { formationPower } from '../src/sim/combat';
 import { attemptGate, launchDelve, previewGate } from '../src/sim/expeditions';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, type GameState, type RuinId } from '../src/sim/state';

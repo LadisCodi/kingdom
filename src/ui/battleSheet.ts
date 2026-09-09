@@ -26,7 +26,7 @@
 // rather than replaced.
 
 import { HEROES, UNITS } from '../sim/data/definitions';
-import type { EnemySquad } from '../sim/gates';
+import type { EnemySquad } from '../sim/combat';
 import { spriteUrl } from '../render/sprites';
 import type { CurrencyId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
@@ -49,6 +49,9 @@ export interface BattleView {
     squads: readonly EnemySquad[];
     power: number;
     threat: UnitId | 'Any';
+    /** What the box says under the squads. A gate's threat is a fact; a
+     *  depth's is a bias, and the line has to be able to say which. */
+    note?: string;
   };
   /** The party's attack after the matchup, and what it is up against. */
   attack: number;
@@ -59,7 +62,20 @@ export interface BattleView {
   rewards: Array<{ icon: CurrencyId | 'ascension' | 'fragment'; label: string }>;
   /** One line under the chips: what winning is really for. */
   rewardNote?: string;
+  /**
+   * Bands this KIND of fight adds under the board, in order.
+   *
+   * A gate has none: it is one room, resolved on entry. A delve has two, and
+   * they are the two decisions a delve makes that a room does not — what the
+   * hero carries down, and how far to go without being asked. They live here
+   * rather than in the party box because they are not part of the BOARD:
+   * nothing in them stands in a slot.
+   */
+  extras?: HTMLElement[];
   actionLabel: string;
+  /** The small print under the button. Each kind of fight has its own: a gate
+   *  costs only its supplies, a delve costs half a haul it has not banked. */
+  actionNote: string;
   onFight: () => void;
   /** Why the fight cannot start. A power SHORTFALL is never one of these: it
    *  warns and lets the player go anyway. */
@@ -95,9 +111,10 @@ function enemyBox(view: BattleView): HTMLElement {
   box.append(row);
   // The type is the whole decision this screen asks the player to make, so it
   // is spelled out rather than left to four similar silhouettes.
-  box.append(el('div', { class: 'bt-army-note' }, view.enemy.threat === 'Any'
-    ? 'A mixed warband — no single type answers it.'
-    : `${view.enemy.threat}s. Bring what beats them.`));
+  box.append(el('div', { class: 'bt-army-note' }, view.enemy.note ?? (
+    view.enemy.threat === 'Any'
+      ? 'A mixed warband — no single type answers it.'
+      : `${view.enemy.threat}s. Bring what beats them.`)));
   return box;
 }
 
@@ -209,6 +226,7 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     el('div', { class: 'bt-info' }, ...view.info),
     enemyBox(view),
     partyBox(game, view),
+    ...(view.extras ?? []),
   );
 
   const rewards = el('div', { class: 'bt-rewards' },
@@ -231,9 +249,7 @@ export function renderBattleSheet(game: Game, view: BattleView): HTMLElement {
     have: (c) => game.walletValue(c),
     disabledReason: view.blocked ?? undefined,
   }));
-  body.append(el('div', { class: 'bt-note' },
-    'Supplies are spent whether you win or lose. Nobody dies, and you can '
-    + 'come back as many times as you like.'));
+  body.append(el('div', { class: 'bt-note' }, view.actionNote));
 
   const close = btn({ label: 'Not yet', onClick: () => game.dismiss() });
   close.setAttribute('data-own-close', '');

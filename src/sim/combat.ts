@@ -196,6 +196,49 @@ export function effectiveAttack(party: Party, threat: UnitId | 'Any'): number {
   return Math.round(atk);
 }
 
+// -------------------------------------------------------- enemy formations
+
+/** One enemy stack, the same shape as a party slot. */
+export interface EnemySquad {
+  unitId: UnitId;
+  count: number;
+}
+
+/**
+ * What a power budget is standing there AS (Docs/features/combat.md §11).
+ *
+ * A named threat is one kind of creature in as many squads as the budget
+ * fills; `Any` splits it evenly across the four, which is what makes a mixed
+ * warband have no type answer. Whole troops, and never fewer than one: a
+ * share too small for a single body still puts one there.
+ *
+ * THE FORMATION IS WHAT THE PARTY FIGHTS, not a picture of it — every caller
+ * scores against `formationPower` of what it showed. A display derived from
+ * one number while the fight used another is the fault this module's header
+ * warns about: a promise on the sheet the descent does not keep.
+ */
+export function enemyFormation(power: number, threat: UnitId | 'Any'): EnemySquad[] {
+  const types: UnitId[] = threat === 'Any' ? (Object.keys(BEATS) as UnitId[]) : [threat];
+  const share = power / types.length;
+  const squads: EnemySquad[] = [];
+  for (const unitId of types) {
+    const def = UNITS[unitId];
+    let left = Math.max(1, Math.round(share / def.power));
+    // A squad holds `squad_size` and no more, so a big budget spills into a
+    // second squad of the same type rather than an impossible stack.
+    while (left > 0) {
+      const count = Math.min(def.squadSize, left);
+      squads.push({ unitId, count });
+      left -= count;
+    }
+  }
+  return squads;
+}
+
+/** What a formation is worth — and therefore what a party has to beat. */
+export const formationPower = (squads: readonly EnemySquad[]): number =>
+  squads.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
+
 // ------------------------------------------------------------------ threats
 
 /**

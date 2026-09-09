@@ -263,3 +263,51 @@
 .dv-name { font-family: var(--font-body); font-size: var(--text-helper); }
 .dv-haul { font-size: var(--text-helper); color: var(--ink-muted); }
 .dv-go { font-family: var(--font-body); font-size: var(--text-body); color: var(--ink-muted); }
+
+/* ------------------------------------------- on the battle screen (2026-09-09)
+
+   What is left of this screen after the board took it over: the safe-depth
+   headline in the top widget, and the two bands a DELVE adds under the
+   board — the relic it carries and the standing order. Everything else is
+   screens/battle.css. */
+
+/* The number the whole widget is built around. */
+.exp-safe {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.exp-safe b {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.exp-safe > span {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink);
+}
+.exp-safe-delta { color: var(--ink-soft); }
+
+.exp-band {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+  background: var(--parchment-shade);
+}
+.exp-band-head {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+.exp-band-note {
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  color: var(--ink-soft);
+}

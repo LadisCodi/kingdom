@@ -29,16 +29,15 @@
 // hoard, and it imports nothing from expeditions so that the delve can ask it
 // whether the gate still stands.
 
-import {
-  GARRISONS, RAID, RUINS, RUIN_ORDER, UNITS, UNIT_ORDER, garrisonForTier,
-} from './data/definitions';
+import { GARRISONS, RAID, RUINS, RUIN_ORDER, garrisonForTier } from './data/definitions';
+import { enemyFormation, formationPower, type EnemySquad } from './combat';
 import { fogState } from './fog';
 import type { MapData } from './grid';
 import { cityGoldPerMinute } from './population';
 import { cityGatherPerSecond } from './upgrades';
 import {
   addToWallet, getWallet, newId,
-  type GameState, type GateState, type RuinId, type UnitId, type Wallet,
+  type GameState, type GateState, type RuinId, type Wallet,
 } from './state';
 
 /** What a raid can take. Materials only — never Gems, Mana, Knowledge,
@@ -198,52 +197,17 @@ export function nextRaidBoundary(state: GameState, after: number): number | null
 
 // --------------------------------------------------------- the formation
 
-/** One enemy stack, the same shape as a party slot. */
-export interface EnemySquad {
-  unitId: UnitId;
-  count: number;
-}
-
 /**
  * What is standing in the doorway.
  *
  * Derived from the gate's `guard`, never authored: `threat` says WHICH type
  * holds it and `power` says how much of it there is
- * (Docs/features/18-garrisons-and-raids.md §2). A named type is one kind of
- * creature in as many squads as the budget fills; `Any` — the drake — splits
- * the budget evenly across the four, which is the `threat_mix` the table
- * gives it and the reason it has no type answer.
- *
- * THE FORMATION IS WHAT THE PARTY FIGHTS, not a picture of it: `gatePower`
- * below sums these squads, and that sum is the number the attempt is scored
- * against. A display derived from one number while the fight used another is
- * exactly the fault `combat.ts` warns about — a promise on the sheet the
- * fight does not keep.
+ * (Docs/features/18-garrisons-and-raids.md §2). The generator is the
+ * resolver's (`combat.ts`, combat.md §11) — a gate is a room, and a room's
+ * enemies are made one way.
  */
-export function gateFormation(ruinId: RuinId): EnemySquad[] {
-  const guard = RUINS[ruinId].guard;
-  const types: UnitId[] = guard.threat === 'Any' ? [...UNIT_ORDER] : [guard.threat];
-  const share = guard.power / types.length;
-  const squads: EnemySquad[] = [];
-  for (const unitId of types) {
-    const def = UNITS[unitId];
-    // Whole troops, and never fewer than one: a share too small for a single
-    // body still puts one there.
-    let left = Math.max(1, Math.round(share / def.power));
-    // A squad holds `squad_size` and no more, so a big budget spills into a
-    // second squad of the same type rather than an impossible stack.
-    while (left > 0) {
-      const count = Math.min(def.squadSize, left);
-      squads.push({ unitId, count });
-      left -= count;
-    }
-  }
-  return squads;
-}
-
-/** What a formation is worth — and therefore what the party has to beat. */
-export const formationPower = (squads: readonly EnemySquad[]): number =>
-  squads.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
+export const gateFormation = (ruinId: RuinId): EnemySquad[] =>
+  enemyFormation(RUINS[ruinId].guard.power, RUINS[ruinId].guard.threat);
 
 /** The gate's power, read off the squads that are actually standing there. */
 export const gatePower = (ruinId: RuinId): number =>

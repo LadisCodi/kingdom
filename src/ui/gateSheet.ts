@@ -63,6 +63,8 @@ export function renderGateSheet(game: Game): HTMLElement {
       ? 'Everything they took comes home with it.'
       : `The way into ${ruin.name}, and its ${ruin.maxDepth} depths.`,
     actionLabel: 'Clear the gate',
+    actionNote: 'Supplies are spent whether you win or lose. Nobody dies, and '
+      + 'you can come back as many times as you like.',
     onFight: () => game.doClearGate(),
     blocked: game.gateBlockText(),
   };

@@ -41,14 +41,13 @@ import {
 import { addHeroXp, heroSlots } from './heroes';
 import { recordResourceDiscovery } from './discovery';
 import {
-  depthDurationMs, effectiveAttack, guaranteedDepth, matchupAgainst, partyStats,
-  resolveDepth, worstThreatFor,
-  type CarriedArtifact, type Party, type PartySlot, type Drill,
+  depthDurationMs, effectiveAttack, enemyFormation, formationPower, guaranteedDepth,
+  matchupAgainst, partyStats, resolveDepth, threatStrength, worstThreatFor,
+  type CarriedArtifact, type EnemySquad, type Party, type PartySlot, type Drill,
 } from './combat';
 import { availableRoster } from './army';
 import {
-  formationPower, gateFormation, gateIsCleared, gatePower, gateSupplies, markGateCleared,
-  type EnemySquad,
+  gateFormation, gateIsCleared, gatePower, gateSupplies, markGateCleared,
 } from './gates';
 import { fogState } from './fog';
 import type { MapData } from './grid';
@@ -653,7 +652,29 @@ export interface ExpeditionPreview {
   /** 1.5 = a strong answer to the ruin, 0.75 = the wrong tool. */
   matchup: number;
   worstThreat: UnitId | 'Any';
+  /** What the FIRST depth is standing there as, and what it is worth. The
+   *  party is scored against exactly this number when it lands (§5). */
+  enemy: EnemySquad[];
+  enemyPower: number;
+  /** The type the first depth is BIASED to — the ruin's own affinity, which
+   *  is public. What actually waits is rolled per depth and stays unknown
+   *  until the party commits: the gamble is information, not dice. */
+  enemyThreat: UnitId | 'Any';
+  /** The party's attack against that bias — the number to read the enemy's
+   *  against. */
+  attack: number;
 }
+
+/**
+ * The squads waiting at a depth, sized from the strength the party will
+ * actually be scored against and typed by the ruin's own bias.
+ *
+ * The COUNT is honest — it is `threatStrength` spent on troops — and the TYPE
+ * is a bias rather than a promise, which is exactly the shape of what the
+ * player knows before they commit.
+ */
+export const depthFormation = (ruinId: RuinId, depth: number): EnemySquad[] =>
+  enemyFormation(threatStrength(ruinId, depth), RUINS[ruinId].affinity);
 
 export function previewExpedition(
   state: GameState,
@@ -668,14 +689,20 @@ export function previewExpedition(
     : { id: artifactId, level: artifactEntry(state, artifactId).level };
   const party = partyOf(state, committed, heroIds, artifact);
   const stats = partyStats(party);
+  const affinity = RUINS[ruinId].affinity;
+  const enemy = depthFormation(ruinId, 1);
   return {
     ruinId,
     supplies: supplyCost(state, ruinId, heroIds),
     stats,
     safeDepth: guaranteedDepth(party, ruinId),
     maxDepth: RUINS[ruinId].maxDepth,
-    matchup: matchupAgainst(party, RUINS[ruinId].affinity),
-    worstThreat: worstThreatFor(party, RUINS[ruinId].affinity),
+    matchup: matchupAgainst(party, affinity),
+    worstThreat: worstThreatFor(party, affinity),
+    enemy,
+    enemyPower: formationPower(enemy),
+    enemyThreat: affinity,
+    attack: effectiveAttack(party, affinity),
   };
 }
 

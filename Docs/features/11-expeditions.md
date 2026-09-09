@@ -168,9 +168,10 @@ Full spec: [`11a-ruins-ui.md`](11a-ruins-ui.md).
   reward visible; states: locked / open / in-progress / complete / bottomed out.
 - **Room ladder** — cleared / frontier / locked; next-carrot banner above the
   frontier; auto-scroll to frontier.
-- **Room sheet** — threat, power comparison, supply cost, party, Descend.
-- **Party composition** — entered only from the room sheet; remembers last
-  composition per ruin.
+- **Room sheet** — the battle screen: the dungeon in the widget at the top,
+  the first depth's squads against the party's, the board, and *Set off*.
+- **Party composition** — the board's slots and their card panels, the same
+  ones every fight uses ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.6).
 - **Result: cleared** — chest, passive counter increment, next-room CTA.
 - **Result: failed** — power gap and losing matchup stated; retry / recompose /
   leave.
