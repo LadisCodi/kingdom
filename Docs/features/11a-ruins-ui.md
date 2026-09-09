@@ -56,23 +56,31 @@ City HUD ─────▶ Reservoir meter
 | Banner | Two variants — next overridden reward row, next boss. Boss wins when closer. Format: *"5 rooms → the Hollowed Crown, +12 Stardust/h"* |
 | Rules | Auto-scroll to frontier on open |
 
-### 2.5 Room sheet
+### 2.5 Room sheet — the battle screen
+
+**Built 2026-09-09**, on the gate ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md)).
+One screen serves every fight; the caller hands it a descriptor.
 
 | | |
 |---|---|
-| Data | Threat type + strength, **villains present** (portrait + type), `power_req`, party power, supply cost, current Food/Gold, reward preview |
-| Elements | Power comparison as the headline, supply cost with affordability state, party strip, `Descend` |
-| States | Affordable + over power · affordable + under power (warn) · supplies unaffordable (block) |
-| Rules | A power shortfall warns and allows entry. Supply cost is labelled as spent win or lose. Without the Scout, threat shows as `?` plus `Adventurers' Guild 3` |
+| Data | Battle name and place, a **dynamic band** for whatever this kind of fight has to say, the enemy squads and their power, the party's slots and its attack, supply cost, reward preview |
+| Elements | Two army boxes of the same shape — theirs cold, ours warm — each with its power on the right; the party's slots; the reward chips; one primary button |
+| States | Party over power · party under power (the box warns, the button still goes) · supplies unaffordable (the button blocks) |
+| Rules | A power shortfall **warns, never blocks**. Supplies are labelled as spent win or lose. **The enemy squads are what the fight is scored against** — the formation is derived from the authored budget and the budget is not shown |
 
-### 2.6 Party composition
+### 2.6 Party composition — slots and panels
 
-Owned by [`combat.md`](combat.md). Entered only from the room sheet.
+Two rows of slots on the battle screen, filled from card panels.
 
 | | |
 |---|---|
-| Data | Hero roster, unit counts by type, party slots, assignments, party power, matchup vs. room threat |
-| Rules | Persists the last composition **per ruin**; one-tap reuse; power read updates live |
+| Data | Troop slots and hero slots — open, filled or **locked**; the roster behind each panel; party attack, live |
+| Flow | Tap a slot → a panel of cards rises over the bottom of the screen → tap a card → **the first free slot fills** → the panel closes when the last slot does |
+| Fill rule | A card sends **as much as it legally can**: a whole squad (`squad_size`), or everything left of that type, or everything the army cap still allows |
+| Clearing | The **X** on a slot's corner empties it. It never re-opens the panel |
+| Closing | The panel's own knob, a tap outside it, or the way out of the screen — which leaves the screen standing |
+| Locked slots | A padlock, and the Gem price on the **one a purchase would open**. Troop slots today; hero slots one free and the rest Gems ([`10-heroes.md`](10-heroes.md) §3) |
+| Cards | The heroes screen's card, in a horizontal rail: art, name, the type as a word, and one line saying what tapping it does — or which ceiling stopped it, the roster or the cap |
 
 ### 2.7 Result — cleared
 

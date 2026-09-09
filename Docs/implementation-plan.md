@@ -536,6 +536,14 @@ deletion — `defended` is retired and every landmark is claimed for Gold.
   the hoard in full and stops the counter for good; no ruin is enterable while
   its gate stands; and every authored gate is weaker than the first depth of
   the ruin it guards (`tests/gates.test.ts`, 29 tests).
+- **What came with the screen (2026-09-09):** the **battle screen**
+  ([`11a-ruins-ui.md`](features/11a-ruins-ui.md) §2.5, §2.6) — one descriptor-driven
+  screen for every fight, the enemy's squads derived from `guard` and scored
+  against, and the party composed by **slots and card panels** instead of
+  steppers. It needed two things from the sim, and both are the designed ones:
+  **hero slots** (one free, the rest Gems, three on the board) with a party
+  that carries several heroes, and **`Units.squad_size`**, the cap on what one
+  slot holds. `SAVE_VERSION` 38.
 - **Left open:** every number is **OQ-72** and needs the playtest — the
   Barrow's thirty minutes first. **OQ-74 closed**: the hoard comes back whole.
   Two `planned` technologies still describe the retired defended landmark
@@ -564,8 +572,11 @@ against the staged delve. Closes **H2**.
     **The `Scout` row becomes `Ranger`**, with its portrait
     (`hero_scout.png`).
   - ~~state: the `HeroXp` wallet row and the XP-priced level~~ **done
-    2026-09-08** (`SAVE_VERSION` 33), as is the Stardust toll on an ascension.
-    What is left here is `heroes.heroSlotsPurchased`.
+    2026-09-08** (`SAVE_VERSION` 33), as is the Stardust toll on an ascension;
+    ~~`heroes.heroSlotsPurchased`~~ **done 2026-09-09** with the battle screen,
+    along with the party that fields several heroes. What is left in this step
+    is the resolver's own half: the stat block, the type passive and the
+    ~70% share.
   - `heroes.ts`: ~~`levelUpHero` charges Hero XP; `raiseHeroTier` charges
     Fragments **and** Stardust~~ **done**; `heroStats` becomes the resolved stat block
     (rarity multiplier, level growth, passive stepped by tier); `heroIsBusy`

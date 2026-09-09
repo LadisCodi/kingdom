@@ -104,10 +104,18 @@ Each hero carries a **rarity**, a **unit type**, a **stat block**, one
 
 ## 3. The hero slots
 
+> **Built 2026-09-09.** A party fields one hero per slot, and the battle
+> screen's hero row is where they are picked
+> ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.6).
+
 - **One hero slot is free. Every further one is Gems, always** — up to the
   board's three ([`combat.md`](combat.md) §3).
-- Price: `heroes.slot_gem_cost_base × heroes.slot_gem_cost_growth^n`, the
-  party-slot ladder with a higher base, because a hero slot carries a type buff.
+- Price: `party.hero_slot_gem_cost_base × party.hero_slot_gem_cost_growth^n`,
+  the party-slot ladder with a higher base, because a hero slot carries a type
+  buff. They sit under `party.*` rather than `heroes.*` because that key is
+  the Heroes SHEET.
+- **A party trait is the best in the party, never the sum**: two
+  quartermasters do not buy a free trip.
 - The Adventurers' Guild opens **depths**, never slots
   ([`11-expeditions.md`](11-expeditions.md) §3).
 - A second hero is worth two things: a second buffed type, and a second body on

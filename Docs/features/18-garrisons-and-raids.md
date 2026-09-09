@@ -122,13 +122,19 @@ take = floor( min(base, banked × take_fraction_max) )
 ## 5. Clearing the gate
 
 - The gate is the ruin's **frontier room while it stands**: it sits at the top
-  of the room ladder, before `Depth 1 · Room 1`, and is entered from the room
-  sheet like any room ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.5) — threat in
-  view without the Guild's scouting, `power` against party power, supplies,
-  party, **Clear the gate** in place of *Descend*.
+  of the room ladder, before `Depth 1 · Room 1`, and is entered from the
+  battle screen like any room ([`11a-ruins-ui.md`](11a-ruins-ui.md) §2.5) —
+  the garrison's squads in view without the Guild's scouting, their power
+  against the party's, supplies, the slots, **Clear the gate** in place of
+  *Descend*.
+- **What the player sees is what they fight.** The squads are derived from
+  `guard` (§2) and their sum is the number the attempt is scored against, so
+  the authored budget never appears on screen and never has to be trusted.
 - **A hero alone is a legal board.** Troops are welcome and never required,
   which is what lets the first fight in the game be fought before the player
   owns an army.
+- **No hero is ever busy here.** The fight resolves on entry, so the hero
+  parked in a delve still leads it ([`10-heroes.md`](10-heroes.md) §2.5).
 - **Supplies** are a flat cost per tier, paid on entry and never refunded.
 - The fight resolves on entry, the player attacking
   ([`11-expeditions.md`](11-expeditions.md) §5). A power shortfall warns,
