@@ -21,7 +21,7 @@ import {
 } from '../src/sim/upgrades';
 import { techMultiplier } from '../src/sim/techEffects';
 import { buildDuration, maxDistrictCount, requiredTechForLevel, upgradeDuration } from '../src/sim/districts';
-import { maxArmyPower, trainCost } from '../src/sim/army';
+import { armyCap, trainCost } from '../src/sim/army';
 import { depthMs, drillOf, effectiveHaulLoss, partyOf, supplyCost } from '../src/sim/expeditions';
 import { effectiveAttack, partyStats, typeMultiplier } from '../src/sim/combat';
 import type { GameState } from '../src/sim/state';
@@ -453,10 +453,10 @@ describe('the Warfare lines reach their numbers', () => {
   it('Colours adds to what the halls can field, and nothing to a kingdom with no hall', () => {
     const state = freshGame();
     completeRanks(state, 'Colours', 3); // +6
-    expect(maxArmyPower(state), 'a banner is not a barracks').toBe(0);
+    expect(armyCap(state), 'a banner is not a barracks').toBe(0);
     addBuilt(state, 'Barracks', { x: 3, y: 1 });
     const halls = levelIndexed(DISTRICTS.Barracks.armyCapPerLevel, 1);
-    expect(maxArmyPower(state)).toBe(halls + 6);
+    expect(armyCap(state)).toBe(halls + 6);
   });
 
   it('Muster Drill discounts every coin of a recruit, floor 1', () => {

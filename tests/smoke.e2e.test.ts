@@ -2,7 +2,7 @@
 // recover → research → housing taxes → training queue → market → army →
 // upgrade → offline.
 import { describe, expect, it } from 'vitest';
-import { armyPower, maxArmyPower, trainUnit, lineFor } from '../src/sim/army';
+import { armySize, armyCap, trainUnit, lineFor } from '../src/sim/army';
 import {
   changeWorkers, enqueueBuild, finishWithGems, upgradeDistrict,
 } from '../src/sim/commands';
@@ -170,35 +170,37 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     expect(trainUnit(state, 'Warrior', now)).toBe('TechRequired');
     completeTech(state, 'Warrior');
     expect(trainUnit(state, 'Warrior', now)).toBe('NoBuilding');
-    expect(maxArmyPower(state)).toBe(0);
+    expect(armyCap(state)).toBe(0);
     addAllTrainers(state);
-    expect(maxArmyPower(state)).toBe(24); // four buildings at level 1
+    // Four halls at level 1, in TROOPS: the cap counts soldiers, not what
+    // they are worth (Docs/features/combat.md §14).
+    expect(armyCap(state)).toBe(600);
     expect(trainUnit(state, 'Cavalry', now)).toBe('TechRequired');
     completeTech(state, 'Archery');
     completeTech(state, 'Cavalry');
     expect(trainUnit(state, 'Cavalry', now)).toBe('Queued');
     expect(trainUnit(state, 'Cavalry', now)).toBe('Queued');
     // Training takes real time now, and a building runs ONE line: two Cavalry
-    // is 2 x 60s at the Stables, not 60s in parallel.
-    now += 61_000;
+    // is 2 x 30s at the Stables, not 30s in parallel.
+    now += 31_000;
     tickAt(state, now);
-    expect(armyPower(state)).toBe(7); // the first one only
-    now += 60_000;
+    expect(armySize(state)).toBe(1); // the first one only
+    now += 30_000;
     tickAt(state, now);
-    expect(armyPower(state)).toBe(14);
+    expect(armySize(state)).toBe(2);
 
     // --- The Townhall upgrade (30 s) raises the Housing count, not the army.
     // Relative, not a frozen 24: the unit technologies above pulled `Colours
     // I` (+2 cap) in with them, since a requirement is the row above and that
     // card sits on the way — what the army cap IS here is the tree's business,
     // what this asserts is that the Townhall does not move it.
-    const armyBefore = maxArmyPower(state);
+    const armyBefore = armyCap(state);
     expect(upgradeDistrict(state, townhall(state).uniqueId)).toBe('Started');
     tickAt(state, now);
     now += 31_000;
     tickAt(state, now);
     expect(townhall(state).level).toBe(2);
-    expect(maxArmyPower(state)).toBe(armyBefore); // unchanged — it is a city decision
+    expect(armyCap(state)).toBe(armyBefore); // unchanged — it is a city decision
 
     // --- Two more houses at TH2, then queue BOTH new villagers up front.
     for (const cell of [{ x: -1, y: -1 }, { x: 2, y: 1 }]) {

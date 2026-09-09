@@ -32,7 +32,7 @@
 // queue and research.
 
 import {
-  ARTIFACTS, DELVE, HEROES, PARTY, RUINS, UNITS,
+  ARTIFACTS, DELVE, HEROES, PARTY, RUINS,
 } from './data/definitions';
 import {
   addArtifactFragments, artifactEntry, artifactIsCarried, grantArtifact, isAttuned,
@@ -45,7 +45,7 @@ import {
   resolveDepth, worstThreatFor,
   type CarriedArtifact, type Party, type PartySlot, type Drill,
 } from './combat';
-import { availableRoster, maxArmyPower } from './army';
+import { availableRoster } from './army';
 import {
   formationPower, gateFormation, gateIsCleared, gatePower, gateSupplies, markGateCleared,
   type EnemySquad,
@@ -195,7 +195,7 @@ export const freeHeroes = (state: GameState): HeroId[] =>
 export type LaunchBlock =
   | 'RuinNotFound' | 'GateStanding' | 'NoHero' | 'HeroBusy' | 'TooManyHeroes'
   | 'EmptyParty' | 'TooManySlots'
-  | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies'
+  | 'NotEnoughUnits' | 'NotEnoughSupplies'
   | 'ArtifactNotOwned' | 'ArtifactAttuned' | 'ArtifactCarried';
 
 export function launchBlock(
@@ -224,8 +224,9 @@ export function launchBlock(
   for (const s of committed) {
     if (s.count > available[s.unitId]) return 'NotEnoughUnits';
   }
-  const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
-  if (power > maxArmyPower(state)) return 'OverArmyCap';
+  // No cap check: the army cap bounds what the city OWNS
+  // (Docs/features/combat.md §14), and a party is drawn from what it owns —
+  // so `NotEnoughUnits` above is the only ceiling a composition can hit.
   if (!canAfford(state.city.wallet, supplyCost(state, ruinId, heroIds))) return 'NotEnoughSupplies';
   if (artifactId !== null) {
     if (!ownsArtifact(state, artifactId)) return 'ArtifactNotOwned';
@@ -298,7 +299,7 @@ export function launchDelve(
  */
 export type GateBlock =
   | 'RuinNotFound' | 'AlreadyCleared' | 'NoHero' | 'TooManyHeroes' | 'TooManySlots'
-  | 'NotEnoughUnits' | 'OverArmyCap' | 'NotEnoughSupplies';
+  | 'NotEnoughUnits' | 'NotEnoughSupplies';
 
 export function gateBlock(
   state: GameState,
@@ -322,8 +323,9 @@ export function gateBlock(
   for (const s of committed) {
     if (s.count > available[s.unitId]) return 'NotEnoughUnits';
   }
-  const power = committed.reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
-  if (power > maxArmyPower(state)) return 'OverArmyCap';
+  // No cap check: the army cap bounds what the city OWNS
+  // (Docs/features/combat.md §14), and a party is drawn from what it owns —
+  // so `NotEnoughUnits` above is the only ceiling a composition can hit.
   if (!canAfford(state.city.wallet, gateSupplies(ruinId))) return 'NotEnoughSupplies';
   return null;
 }

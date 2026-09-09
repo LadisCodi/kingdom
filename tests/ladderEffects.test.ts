@@ -25,7 +25,7 @@ import { getWallet } from '../src/sim/state';
 import {
   DELVE, HARVEST, LANDMARKS, RUINS, TECHNOLOGIES,
 } from '../src/sim/data/definitions';
-import { maxArmyPower, trainCost } from '../src/sim/army';
+import { armyCap, trainCost } from '../src/sim/army';
 import { castCost } from '../src/sim/casting';
 import {
   depthMs, drillOf, effectiveHaulLoss, launchDelve, supplyCost,
@@ -104,7 +104,11 @@ function probeState(): GameState {
 function stardustOneDepth(state: GameState): number {
   const probe = structuredClone(state);
   openRuin(probe, 'HollowBarrow');
-  const slots = [{ unitId: 'Warrior' as const, count: 1 }];
+  // A COMPANY: one soldier clears no depth now, so a probe of one would read
+  // every Stardust ladder as inert (Docs/features/combat.md §14).
+  probe.army = Array.from({ length: 60 }, (_, i) => (
+    { uniqueId: `probe_${i}`, definitionId: 'Warrior' as const }));
+  const slots = [{ unitId: 'Warrior' as const, count: 60 }];
   if (launchDelve(probe, map, 'HollowBarrow', ['Scout'], slots, T0) !== 'Launched') return -1;
   advance(probe, map, T0 + depthMs(probe, 'HollowBarrow', 1) + 1000);
   return probe.delves[0]?.haul.Stardust ?? -1;
@@ -160,7 +164,7 @@ function probe(state: GameState): Record<string, number> {
   put('claimCost', landmarkClaimCost(state, LANDMARKS[0]));
 
   // The army and the delve.
-  put('maxArmyPower', maxArmyPower(state));
+  put('armyCap', armyCap(state));
   const warrior = trainCost(state, 'Warrior');
   for (const [c, n] of Object.entries(warrior)) put(`trainCost.Warrior.${c}`, n as number);
   const supplies = supplyCost(state, 'HollowBarrow', []);

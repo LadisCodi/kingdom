@@ -34,25 +34,33 @@ import {
 } from './state';
 import { canAfford, pay } from './wallet';
 
-export const armyPower = (state: GameState): number =>
-  state.army.reduce((sum, u) => sum + UNITS[u.definitionId].power, 0);
+/**
+ * THE ARMY CAP IS A HEADCOUNT (Docs/features/combat.md §14).
+ *
+ * It counts TROOPS OWNED, not what they are worth: a Cavalry takes one place
+ * in the barracks and a Warrior takes one, and `power` decides what each is
+ * worth in the FIGHT and nowhere else. It used to be a power budget, which
+ * read as the same thing and was not: at six points a level, a first Barracks
+ * held two Warriors, and every number a player saw on this system was a
+ * single digit in a game about fielding companies.
+ */
+export const armySize = (state: GameState): number => state.army.length;
 
 /** Units already paid for but not yet delivered still count against the cap —
  *  otherwise the queue is a way to exceed it. */
-export const queuedArmyPower = (state: GameState): number =>
-  state.city.trainingQueue.reduce(
-    (sum, i) => sum + (i.trainee === 'Villager' ? 0 : UNITS[i.trainee].power), 0);
+export const queuedTroops = (state: GameState): number =>
+  state.city.trainingQueue.filter((i) => i.trainee !== 'Villager').length;
 
-export const committedArmyPower = (state: GameState): number =>
-  armyPower(state) + queuedArmyPower(state);
+export const committedTroops = (state: GameState): number =>
+  armySize(state) + queuedTroops(state);
 
 /** The military buildings, in city order. */
 export const militaryBuildings = (state: GameState): District[] =>
   state.city.districts.filter((d) => DISTRICTS[d.definitionId].armyCapPerLevel.length > 0);
 
-/** Σ over BUILT military buildings of their cap at their current level. The
- *  contribution is a TOTAL per level, not an increment. */
-export function maxArmyPower(state: GameState): number {
+/** Σ over BUILT military buildings of their cap at their current level, in
+ *  TROOPS. The contribution is a TOTAL per level, not an increment. */
+export function armyCap(state: GameState): number {
   let cap = 0;
   for (const d of militaryBuildings(state)) {
     if (d.state !== 'Built') continue;
@@ -162,7 +170,7 @@ export function trainUnit(
   if (trainee === 'Villager') {
     const pending = state.city.trainingQueue.filter((i) => i.trainee === 'Villager').length;
     if (state.city.population + pending >= maxPopulation(state)) return 'AtMax';
-  } else if (committedArmyPower(state) + UNITS[trainee].power > maxArmyPower(state)) {
+  } else if (committedTroops(state) + 1 > armyCap(state)) {
     return 'ArmyAtCapacity';
   }
   const cost = trainCost(state, trainee);

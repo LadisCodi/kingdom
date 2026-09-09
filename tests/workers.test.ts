@@ -355,13 +355,16 @@ describe('one training line per building', () => {
     completeTech(state, 'Warrior');
     fund(state, { Food: 500, Gold: 500, Wood: 500 });
     trainUnit(state, 'Villager', T0); // 20s
-    trainUnit(state, 'Warrior', T0); // 30s
+    trainUnit(state, 'Warrior', T0); // 15s
 
+    // The soldier is the FASTER of the two now, so it is the villager that
+    // lands second — which is the same proof, from the other side: neither
+    // line waits on the other.
+    tickAt(state, T0 + 16_000);
+    expect(state.army).toHaveLength(1); // the soldier landed
+    expect(state.city.population).toBe(0); // the villager has not
     tickAt(state, T0 + 21_000);
-    expect(state.city.population).toBe(1); // the villager landed
-    expect(state.army).toHaveLength(0); // the soldier has not
-    tickAt(state, T0 + 31_000);
-    expect(state.army).toHaveLength(1);
+    expect(state.city.population).toBe(1);
   });
 
   it('prices a villager at its place in the line, and refunds what it charged', () => {

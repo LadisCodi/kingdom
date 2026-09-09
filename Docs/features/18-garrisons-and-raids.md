@@ -69,14 +69,17 @@ guard { threat, power, warningMinutes, periodMinutes }
 - A ruin's **tier** keys the workbook rows that are not per site: take seconds
   and gate supplies (§8).
 
-| Ruin | Gate | `power` | Warning · period | Board that beats it |
-|---|---|---|---|---|
-| Hollow Barrow | Orcs | **1** | **30 · 30 min** | the free hero alone — the first fight |
-| Sunken Chapel | Harpies | 5 | 90 · 90 min | hero + two squads |
-| Drowned Ironworks | Goblins | 8 | 120 · 120 min | hero + four T1 squads |
-| The Counting House | Wolf riders | 12 | 180 · 180 min | four squads at T2 |
-| Star Observatory | Drake | 17 | 240 · 240 min | four squads at T3; no type answer |
+| Ruin | Gate | `power` | Enemies | Warning · period | Board that beats it |
+|---|---|---|---|---|---|
+| Hollow Barrow | Orcs | **60** | **20** | **30 · 30 min** | the company the chain musters — 24 soldiers and the free hero |
+| Sunken Chapel | Harpies | 144 | 24 | 90 · 90 min | a company that answers Archers |
+| Drowned Ironworks | Goblins | 250 | 50 | 120 · 120 min | fifty-odd, well matched |
+| The Counting House | Wolf riders | 500 | 71 | 180 · 180 min | a hundred, or seventy that answer Cavalry |
+| Star Observatory | Drake | 1,000 | 211 | 240 · 240 min | a full board; no type answer |
 
+- **`power` is a budget in troops' worth, and the count is what the player
+  sees**: the generator spends it on `power_per_troop`, so twenty orcs is 20 ×
+  3 (§2, [`combat.md`](combat.md) §5).
 - Every one of them is under the strength of the ruin's own first depth, and
   `tests/gates.test.ts` holds them there.
 
@@ -153,10 +156,15 @@ take = floor( min(base, banked × take_fraction_max) )
 - The first fight is **the Hollow Barrow's gate: on the surface, the enemy in
   view, the outcome guaranteed by authoring.** It teaches the room sheet, the
   type chart and the board before Depth 1 adds the power ladder.
+- **Twenty orcs is a company's job, not a hero's.** The chain musters
+  twenty-four soldiers one beat before it
+  ([`12-quests.md`](12-quests.md) §2), so the fight is won by the army the
+  onboarding just built and the hero that leads it — which is what makes the
+  military block mean something.
 - Discovering the Barrow starts its thirty minutes, so the military block sits
   right after the reveal that finds it in the onboarding
   ([`12-quests.md`](12-quests.md) §2): Warrior → Barracks → first soldier →
-  free summon → **`DriveThemOut`**.
+  free summon → **a company of twenty-four** → **`DriveThemOut`**.
 - Every later gate is the argument for the next hall, the next squad, the next
   tier.
 

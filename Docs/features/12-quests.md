@@ -12,7 +12,7 @@
   is chain order.
 - Completing a quest lights the pill's **Claim**. Claim pays the reward and
   activates the next quest. The pill disappears when the chain ends.
-- **55 quests**, paying 11,975 Gold, 100 Mana, 750 Gems, 158 Stardust and **Knowledge on every single one**.
+- **56 quests**, paying 12,375 Gold, 100 Mana, 750 Gems, 158 Stardust and **Knowledge on every single one**.
 
 ### 1.1 Goal types
 
@@ -37,7 +37,7 @@
     draining the feature afterwards cannot un-complete the quest.
 - Beats overlap: the 25 Wood quest 3 chops is the Wood quests 4 and 10 spend.
 
-## 2. The onboarding — quests 1–40
+## 2. The onboarding — quests 1–41
 
 - **Quest number is beat number.** The arc is asserted beat by beat in a test.
 
@@ -57,13 +57,14 @@
 | **28** | `FurtherAfield` | Fifteen more cells — the near shrine and the Hollow Barrow come into view. **Discovering the Barrow starts its gate's counter: thirty minutes** ([`18-garrisons-and-raids.md`](18-garrisons-and-raids.md) §3). |
 | **29–31** | `ArmedMen` · `Mustered` · `FirstSoldier` | **Warrior → Barracks → the first soldier.** The Barracks needs 20 Stone, tapped by hand from the rock outcrop; the Quarry is quest 41. |
 | **32** | `FirstSummon` | **Summon at the banner. The first call is free.** |
-| **33** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** The free hero wins alone at any matchup; the first fight is on the surface, the enemy in view, the outcome guaranteed. Pays Gold. |
-| **34–35** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
-| **36–37** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 20 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
-| **38–39** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. |
-| **40** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 33. |
+| **33** | `MusterCompany` | **Twenty-four soldiers.** One is a guard; a company is what takes a gate. Pays 400 Gold — the beat is priced to cover most of the muster. |
+| **34** | `DriveThemOut` | **Clear the Hollow Barrow's gate.** Twenty orcs, on the surface, in view: the company just mustered wins it at any matchup. The first fight is guaranteed by authoring, not by the hero's own stats. Pays Gold. |
+| **35–36** | `OldStones` · `Attuned` | **Claim the near shrine** for its Gold, consecrate a Sanctum. |
+| **37–38** | `Mapmakers` · `Surveyors` | **Twenty more cells, then twenty-five.** The ladder the two earlier reveal beats started (8 → 15 → 20 → 25), out where a cell costs 20 Gold and up: exploring is paid for in Gold now, five taps a cell whatever the ring ([`01-map-and-fog.md`](01-map-and-fog.md) §5). |
+| **39–40** | `Highlands` · `PutToSea` | **Scaling Tools** and **Sailing** — mountains and water become explorable. |
+| **41** | `IntoTheDark` | **Survive one depth** of the Hollow Barrow — its gate fell at quest 34. |
 
-- **Quests 41–55:** the Quarry, Urban Planning, Townhall 3 and Mining, then
+- **Quests 42–56:** the Quarry, Urban Planning, Townhall 3 and Mining, then
   Attunement, the Sanctum, a warband, the first full ruin clear, attuning a
   relic, four landmarks, depth five, and three relics held at once.
 - `OldStones` moving after the fight moves its Knowledge lump with it; the

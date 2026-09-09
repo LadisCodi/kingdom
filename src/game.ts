@@ -26,7 +26,7 @@ import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/
 import { placementAdjacency } from './sim/adjacency';
 import { harmonyBlock } from './sim/harmony';
 import {
-  committedArmyPower, finishLineWithGems, lineFor, maxArmyPower, trainUnit,
+  committedTroops, finishLineWithGems, lineFor, armyCap, trainUnit,
   trainingCompletesAt,
 } from './sim/army';
 import {
@@ -1869,7 +1869,7 @@ export class Game {
         ? 'You have no hero to lead a party'
         : 'Every hero is already underground';
     }
-    if (maxArmyPower(this.state) === 0) return 'Build a Barracks — you have no army to send';
+    if (armyCap(this.state) === 0) return 'Build a Barracks — you have no army to send';
     if (this.state.army.length === 0) return 'Train some units first';
     return null;
   }
@@ -1898,13 +1898,14 @@ export class Game {
     const order = (Object.keys(roster) as UnitId[])
       .filter((u) => roster[u] > 0)
       .sort((a, b) => scoreAgainst(b, affinity) - scoreAgainst(a, affinity));
-    let budget = maxArmyPower(this.state);
     this.expeditionParty = [];
     for (const unitId of order.slice(0, troopSlots())) {
-      const affordable = Math.min(roster[unitId], Math.floor(budget / UNITS[unitId].power));
-      if (affordable <= 0) continue;
-      budget -= affordable * UNITS[unitId].power;
-      this.expeditionParty.push({ unitId, count: affordable });
+      // Everything of that type that is at home, up to a squad. The army cap
+      // bounds what the city OWNS (Docs/features/combat.md §14), so there is
+      // no second budget to spend here.
+      const count = Math.min(roster[unitId], UNITS[unitId].squadSize);
+      if (count <= 0) continue;
+      this.expeditionParty.push({ unitId, count });
     }
   }
 
@@ -2073,16 +2074,12 @@ export class Game {
 
   /**
    * How many of this type would go into a slot right now: a whole squad, or
-   * everything that is left of them, or everything the army cap still allows —
-   * whichever runs out first (Docs/features/combat.md §4).
+   * everything of them that is still at home — whichever runs out first
+   * (Docs/features/combat.md §4). A partial squad is legal, so the roster is
+   * a floor on nothing: eleven Archers send eleven.
    */
   troopsAvailableFor(unitId: UnitId): number {
-    const owned = this.troopsLeftAtHome(unitId);
-    const power = UNITS[unitId].power;
-    const spent = this.expeditionParty.reduce(
-      (sum, slot) => sum + UNITS[slot.unitId].power * slot.count, 0);
-    const budget = Math.max(0, maxArmyPower(this.state) - spent);
-    return Math.max(0, Math.min(UNITS[unitId].squadSize, owned, Math.floor(budget / power)));
+    return Math.max(0, Math.min(UNITS[unitId].squadSize, this.troopsLeftAtHome(unitId)));
   }
 
   /** Of this type, how many are still at home — the roster minus what the
@@ -2378,7 +2375,7 @@ export class Game {
 
   /** Army headroom, for the card's blocked reason. */
   armyRoom(): { used: number; cap: number } {
-    return { used: committedArmyPower(this.state), cap: maxArmyPower(this.state) };
+    return { used: committedTroops(this.state), cap: armyCap(this.state) };
   }
 
   doFinishTraining(district: District): void {
@@ -2398,7 +2395,7 @@ export class Game {
         `Build the ${trainerName(unitId)} first — it is where ${UNITS[unitId].name}s are trained`);
     }
     if (result === 'ArmyAtCapacity') {
-      this.toast(`Army at capacity (${committedArmyPower(this.state)}/${maxArmyPower(this.state)}) — build or upgrade a military building`);
+      this.toast(`Army at capacity (${committedTroops(this.state)}/${armyCap(this.state)}) — build or upgrade a military building`);
     }
     this.notify();
   }
@@ -3166,7 +3163,6 @@ const LAUNCH_BLOCK_TEXT: Record<LaunchBlock, string> = {
   EmptyParty: 'Send at least one unit with them',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
-  OverArmyCap: 'More than your army can field',
   NotEnoughSupplies: 'Not enough supplies for the trip',
   ArtifactNotOwned: 'You do not have that relic',
   // Naming the passive being given up is the whole point of the message: the
@@ -3184,7 +3180,6 @@ const GATE_BLOCK_TEXT: Record<GateBlock, string> = {
   TooManyHeroes: 'More heroes than you have slots for',
   TooManySlots: 'Too many kinds of unit — buy another party slot',
   NotEnoughUnits: 'You do not have that many at home',
-  OverArmyCap: 'More than your army can field',
   NotEnoughSupplies: 'Not enough supplies to march',
 };
 

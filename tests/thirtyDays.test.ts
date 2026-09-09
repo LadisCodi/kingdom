@@ -35,7 +35,7 @@ import { canStartTech, isTechComplete, startTech, techCost } from '../src/sim/re
 import { deserialize, serialize } from '../src/sim/save';
 import { choosePayerProfile } from '../src/sim/store';
 import {
-  armyPower, availableRoster, maxArmyPower, trainUnit, trainerFor,
+  armySize, availableRoster, armyCap, trainUnit, trainerFor,
 } from '../src/sim/army';
 import {
   discoveredRuins, extract, freeHeroes, launchDelve, pushDeeper,
@@ -368,7 +368,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
       .filter((u) => trainerFor(state, u) !== undefined)
       .sort((a, b) => UNITS[a].power - UNITS[b].power)[0];
     if (!cheapest) break;
-    if (armyPower(state) + UNITS[cheapest].power > maxArmyPower(state)) break;
+    if (armySize(state) + UNITS[cheapest].power > armyCap(state)) break;
     if (trainUnit(state, cheapest, t) !== 'Queued') break;
     acted = true;
   }
@@ -394,7 +394,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
       .filter((u) => roster[u] > 0)
       .sort((a, b) => UNITS[b].power - UNITS[a].power)[0];
     if (!best) break;
-    const room = Math.floor(maxArmyPower(state) / UNITS[best].power);
+    const room = Math.floor(armyCap(state) / UNITS[best].power);
     const count = Math.max(1, Math.min(roster[best], room));
     if (launchDelve(state, map, ruin, [heroId], [{ unitId: best, count }], t) === 'Launched') {
       acted = true;
@@ -556,7 +556,7 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
           techs: state.research.completed.length,
           gold: Math.round(getWallet(state.city.wallet, 'Gold')),
           knowledge: Math.round(getWallet(state.kingdom.wallet, 'Knowledge')),
-          army: maxArmyPower(state),
+          army: armyCap(state),
           // Supply over demand. Both stay 0 until the Townhall ladder past 4
           // lands: the first piece opens at TH5 and the first level that
           // demands any is 8 (Docs/features/18-harmony.md).

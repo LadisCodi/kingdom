@@ -46,8 +46,9 @@ describe('wallet math', () => {
     fund(state, { Gold: 100, Wood: 10, Food: 22 });
     completeTech(state, 'Warrior'); // the Warrior sits behind it now
     addTrainer(state, 'Warrior', { x: 3, y: 2 }); // and behind its Barracks
-    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued'); // 50 Gold + 10 Wood + 20 Food
-    expect(getWallet(state.city.wallet, 'Food')).toBe(2);
+    // A soldier is priced for a COMPANY of them now: 20 Gold + 5 Wood + 8 Food.
+    expect(trainUnit(state, 'Warrior', T0)).toBe('Queued');
+    expect(getWallet(state.city.wallet, 'Food')).toBe(14); // 22 funded, 8 spent
   });
 });
 

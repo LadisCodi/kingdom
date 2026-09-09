@@ -205,8 +205,9 @@ describe('one-call replay equals stepped ticking', () => {
 });
 
 describe('clearing the gate', () => {
-  /** A kingdom that can put a party on the Barrow's doorstep. */
-  function readyToFight(units = 0): GameState {
+  /** A kingdom that can put a party on the Barrow's doorstep — the company
+   *  the chain musters before `DriveThemOut` (12-quests.md §2). */
+  function readyToFight(units = 24): GameState {
     const state = watched();
     addAllTrainers(state);
     for (let i = 0; i < units; i++) {
@@ -215,19 +216,26 @@ describe('clearing the gate', () => {
     return state;
   }
 
-  it('is beatable by the free hero, alone, at the Barrow', () => {
+  const company = [{ unitId: 'Warrior' as const, count: 24 }];
+
+  it('is beatable by the company the chain musters, at the Barrow', () => {
     const state = readyToFight();
-    // No troops at all: the first fight in the game asks for no army.
-    const preview = previewGate(state, BARROW, ['Warden'], []);
+    const preview = previewGate(state, BARROW, ['Warden'], company);
     expect(preview.enough).toBe(true);
-    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Cleared');
+    expect(attemptGate(state, map, BARROW, ['Warden'], company).result).toBe('Cleared');
     expect(gateIsCleared(state, BARROW)).toBe(true);
     expect(clearedGateCount(state)).toBe(1);
   });
 
+  it('is NOT beatable by a hero alone — twenty orcs is a company\'s job', () => {
+    const state = readyToFight();
+    expect(previewGate(state, BARROW, ['Warden'], []).enough).toBe(false);
+    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Repelled');
+  });
+
   it('stops the counter for good', () => {
     const state = readyToFight();
-    attemptGate(state, map, BARROW, ['Warden'], []);
+    attemptGate(state, map, BARROW, ['Warden'], company);
     expect(state.gates[BARROW]!.nextRaidAt).toBeNull();
     expect(nextRaidBoundary(state, T0)).toBeNull();
     const purse = getWallet(state.city.wallet, 'Gold');
@@ -242,7 +250,7 @@ describe('clearing the gate', () => {
     const hoard = { ...state.gates[BARROW]!.hoard };
     expect(hoard.Gold).toBeGreaterThan(0);
     const before = getWallet(state.city.wallet, 'Gold');
-    const report = attemptGate(state, map, BARROW, ['Warden'], []);
+    const report = attemptGate(state, map, BARROW, ['Warden'], company);
     expect(report.result).toBe('Cleared');
     expect(report.hoard).toEqual(hoard);
     // Every coin of it, less what the supplies cost on the way in.
@@ -265,14 +273,14 @@ describe('clearing the gate', () => {
     expect(getWallet(state.city.wallet, 'Gold')).toBe(gold - supplies.Gold!);
     expect(gateIsCleared(state, 'StarObservatory')).toBe(false);
     // …and a retry is identical to a first attempt.
-    expect(attemptGate(state, map, 'StarObservatory', ['Warden'], []).result).toBe('Repelled');
+    expect(attemptGate(state, map, 'StarObservatory', ['Warden'], company).result).toBe('Repelled');
   });
 
   it('refuses a ruin still under the fog, and one already cleared', () => {
     const state = readyToFight();
-    expect(attemptGate(state, map, 'SunkenChapel', ['Warden'], []).result).toBe('RuinNotFound');
-    attemptGate(state, map, BARROW, ['Warden'], []);
-    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('AlreadyCleared');
+    expect(attemptGate(state, map, 'SunkenChapel', ['Warden'], company).result).toBe('RuinNotFound');
+    attemptGate(state, map, BARROW, ['Warden'], company);
+    expect(attemptGate(state, map, BARROW, ['Warden'], company).result).toBe('AlreadyCleared');
   });
 });
 
@@ -281,12 +289,12 @@ describe('the door', () => {
     const state = watched();
     addAllTrainers(state);
     fund(state, { Gold: 10_000, Food: 5000 });
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 24; i++) {
       state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
     }
-    const party = [{ unitId: 'Warrior' as const, count: 2 }];
+    const party = [{ unitId: 'Warrior' as const, count: 24 }];
     expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('GateStanding');
-    expect(attemptGate(state, map, BARROW, ['Warden'], []).result).toBe('Cleared');
+    expect(attemptGate(state, map, BARROW, ['Warden'], party).result).toBe('Cleared');
     expect(launchDelve(state, map, BARROW, ['Warden'], party, T0)).toBe('Launched');
   });
 });
@@ -304,7 +312,10 @@ describe('a save', () => {
   it('carries a cleared gate, so nothing re-infests it', () => {
     const state = watched();
     addAllTrainers(state);
-    attemptGate(state, map, BARROW, ['Warden'], []);
+    for (let i = 0; i < 24; i++) {
+      state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
+    }
+    attemptGate(state, map, BARROW, ['Warden'], [{ unitId: 'Warrior', count: 24 }]);
     const restored = deserialize(serialize(state, T0), map, T0 + 7 * 24 * HOUR)!;
     expect(gateIsCleared(restored, BARROW)).toBe(true);
     expect(restored.gates[BARROW]!.nextRaidAt).toBeNull();
@@ -318,6 +329,10 @@ describe('the route to a gate', () => {
   function presenterAtTheBarrow() {
     const state = watched();
     addAllTrainers(state);
+    // The company the chain musters before this fight (12-quests.md §2).
+    for (let i = 0; i < 24; i++) {
+      state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
+    }
     const game = freshPresenter(state);
     game.showRuin(BARROW);
     return game;
@@ -326,12 +341,14 @@ describe('the route to a gate', () => {
   it('offers the gate instead of a party while the garrison stands', () => {
     const game = presenterAtTheBarrow();
     expect(game.gateFor(BARROW)!.cleared).toBe(false);
-    expect(game.expeditionBlock(BARROW)).not.toBeNull();
+    // The card offers the GATE, not a delve: nothing enters the ruin while
+    // the garrison stands.
+    expect(game.gateFor(BARROW)!.cleared).toBe(false);
     game.openGate(BARROW);
     expect(game.openOverlay).toBe('gate');
-    // A hero alone, and the sheet is ready to go: the first fight asks for
-    // no army.
+    // The sheet opens with the company already in its slots, ready to go.
     expect(game.partyHeroes).toEqual(['Warden']);
+    expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 24 }]);
     expect(game.gateBlockText()).toBeNull();
     expect(game.gatePreview()!.enough).toBe(true);
   });
@@ -401,10 +418,14 @@ describe('the formation in the doorway', () => {
   it('is exactly what the attempt is scored against', () => {
     const state = watched();
     addAllTrainers(state);
-    const preview = previewGate(state, BARROW, ['Warden'], []);
+    for (let i = 0; i < 24; i++) {
+      state.army.push({ uniqueId: `u_${i}`, definitionId: 'Warrior' });
+    }
+    const company = [{ unitId: 'Warrior' as const, count: 24 }];
+    const preview = previewGate(state, BARROW, ['Warden'], company);
     expect(preview.enemy).toEqual(gateFormation(BARROW));
     expect(preview.power).toBe(formationPower(preview.enemy));
-    const report = attemptGate(state, map, BARROW, ['Warden'], []);
+    const report = attemptGate(state, map, BARROW, ['Warden'], company);
     expect(report.power).toBe(preview.power);
   });
 });

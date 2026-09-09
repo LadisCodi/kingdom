@@ -285,10 +285,10 @@ export const TECH_STATS = {
     what: 'the army power the halls can field',
     ops: ['flat', 'percent'], targets: ['global'], unit: 'power',
     says: {
-      flat: '{v} army power the halls can field',
-      percent: '{v} army power the halls can field',
+      flat: '{v} soldiers the halls can hold',
+      percent: '{v} soldiers the halls can hold',
     },
-    reads: 'army.ts#maxArmyPower',
+    reads: 'army.ts#armyCap',
   },
   recruitCost: {
     what: 'the multiplier on what a unit costs to recruit',

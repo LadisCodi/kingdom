@@ -308,7 +308,7 @@ written once. The Townhall's own ladder is §3.
 |---|---|
 | Housing | +2 residents a level, to 20 |
 | Sawmill · Quarry · Farm · Docks | **+1 unit a delivery and a 10% faster swing a level** — crew and reach stop growing at 5, because the plot has more cells than a crew can work |
-| the four military halls | +8 army cap a level, to 68 |
+| the four military halls | army cap in TROOPS, 150 at level 1 to 2,600 at ten ([`combat.md`](combat.md) §14) |
 | Sanctum | the Mana curve, to 352 held and 42 an hour |
 | Market | +3% on a sold unit a level, to +27% |
 | the four workshops | crew and queue as §4.10 |

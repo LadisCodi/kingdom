@@ -16,7 +16,7 @@ import { gemRushCost } from '../sim/commands';
 import {
   DISTRICTS, HARMONY, HARVEST, MANA, TAP, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
-import { committedArmyPower, maxArmyPower } from '../sim/army';
+import { committedTroops, armyCap } from '../sim/army';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
   canMoveDistrict, districtCount, maxCountForTownhallLevel, requiredTechForLevel,
@@ -305,7 +305,7 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     if (def.trains.some((t) => t !== 'Villager')) {
       body.append(el('div', { class: 'dc-army' },
         iconEl('army', { size: 'sm' }),
-        el('span', {}, `Army ${committedArmyPower(game.state)} of ${maxArmyPower(game.state)}`),
+        el('span', {}, `Army ${committedTroops(game.state)} of ${armyCap(game.state)}`),
         el('span', { class: 'dc-army-note' },
           `this hall holds ${levelIndexed(def.armyCapPerLevel, district.level)} of it`)));
     }

@@ -90,14 +90,11 @@ function troopCards(game: Game): HTMLElement[] {
   return owned.map((unitId) => {
     const unit = UNITS[unitId];
     const would = game.troopsAvailableFor(unitId);
-    const left = game.troopsLeftAtHome(unitId);
-    // A card that cannot be tapped says WHICH of the two ceilings stopped it,
-    // because the answers are different errands: train more, or build a hall.
+    // The only ceiling a card can hit now is the roster: the army cap bounds
+    // what the city OWNS, and every soldier it owns may be sent.
     const note = would > 0
       ? `Send ${would} of ${roster[unitId]}`
-      : left === 0
-        ? 'All of them are with the party'
-        : 'No room left in the army cap';
+      : 'All of them are with the party';
     return pickerCard({
       cls: 'is-troop',
       art: el('span', { class: 'bt-card-art' }, iconEl(unitId, { size: 'lg' })),

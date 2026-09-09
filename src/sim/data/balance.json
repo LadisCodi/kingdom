@@ -996,16 +996,16 @@
         10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15,
-        21,
-        28,
-        36,
-        44,
-        52,
-        60,
-        68
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
       "buildCost": {
         "Wood": 60,
@@ -1093,16 +1093,16 @@
         10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15,
-        21,
-        28,
-        36,
-        44,
-        52,
-        60,
-        68
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
       "buildCost": {
         "Wood": 80,
@@ -1190,16 +1190,16 @@
         10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15,
-        21,
-        28,
-        36,
-        44,
-        52,
-        60,
-        68
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
       "buildCost": {
         "Wood": 80,
@@ -1287,16 +1287,16 @@
         10
       ],
       "armyCapPerLevel": [
-        6,
-        10,
-        15,
-        21,
-        28,
-        36,
-        44,
-        52,
-        60,
-        68
+        150,
+        250,
+        400,
+        600,
+        850,
+        1100,
+        1400,
+        1750,
+        2150,
+        2600
       ],
       "buildCost": {
         "Wood": 120,
@@ -2348,11 +2348,11 @@
       "hp": 12,
       "squadSize": 100,
       "recruitCost": {
-        "Gold": 50,
-        "Wood": 10,
-        "Food": 20
+        "Gold": 20,
+        "Wood": 5,
+        "Food": 8
       },
-      "trainDurationSeconds": 30
+      "trainDurationSeconds": 15
     },
     "Lancer": {
       "power": 5,
@@ -2361,11 +2361,11 @@
       "hp": 8,
       "squadSize": 100,
       "recruitCost": {
-        "Gold": 100,
-        "Wood": 30,
-        "Food": 10
+        "Gold": 40,
+        "Wood": 12,
+        "Food": 4
       },
-      "trainDurationSeconds": 40
+      "trainDurationSeconds": 20
     },
     "Archer": {
       "power": 6,
@@ -2374,10 +2374,10 @@
       "hp": 6,
       "squadSize": 80,
       "recruitCost": {
-        "Gold": 60,
-        "Wood": 30
+        "Gold": 25,
+        "Wood": 12
       },
-      "trainDurationSeconds": 25
+      "trainDurationSeconds": 12
     },
     "Cavalry": {
       "power": 7,
@@ -2386,11 +2386,11 @@
       "hp": 10,
       "squadSize": 60,
       "recruitCost": {
-        "Gold": 150,
-        "Food": 40,
-        "Stone": 60
+        "Gold": 60,
+        "Food": 16,
+        "Stone": 24
       },
-      "trainDurationSeconds": 60
+      "trainDurationSeconds": 30
     }
   },
   "store": {
@@ -3120,12 +3120,12 @@
       "activeManaCost": 8,
       "activeDurationSeconds": 0,
       "activeRadius": 0,
-      "carriedAtk": 4,
+      "carriedAtk": 100,
       "carriedDef": 0,
-      "carriedHp": 10,
-      "carriedAtkPerLevel": 0.4,
+      "carriedHp": 250,
+      "carriedAtkPerLevel": 10.0,
       "carriedDefPerLevel": 0,
-      "carriedHpPerLevel": 1
+      "carriedHpPerLevel": 25
     },
     "VerdantSeal": {
       "passiveBase": 0.75,
@@ -3134,11 +3134,11 @@
       "activeDurationSeconds": 0,
       "activeRadius": 2,
       "carriedAtk": 0,
-      "carriedDef": 6,
-      "carriedHp": 25,
+      "carriedDef": 150,
+      "carriedHp": 625,
       "carriedAtkPerLevel": 0,
-      "carriedDefPerLevel": 0.6,
-      "carriedHpPerLevel": 2.5
+      "carriedDefPerLevel": 15.0,
+      "carriedHpPerLevel": 62.5
     },
     "ForemansSigil": {
       "passiveBase": 1,
@@ -3146,11 +3146,11 @@
       "activeManaCost": 10,
       "activeDurationSeconds": 3600,
       "activeRadius": 0,
-      "carriedAtk": 8,
-      "carriedDef": 2,
+      "carriedAtk": 200,
+      "carriedDef": 50,
       "carriedHp": 0,
-      "carriedAtkPerLevel": 0.8,
-      "carriedDefPerLevel": 0.2,
+      "carriedAtkPerLevel": 20.0,
+      "carriedDefPerLevel": 5.0,
       "carriedHpPerLevel": 0
     },
     "GildedLedger": {
@@ -3159,12 +3159,12 @@
       "activeManaCost": 0,
       "activeDurationSeconds": 0,
       "activeRadius": 0,
-      "carriedAtk": 2,
-      "carriedDef": 4,
-      "carriedHp": 15,
-      "carriedAtkPerLevel": 0.2,
-      "carriedDefPerLevel": 0.4,
-      "carriedHpPerLevel": 1.5
+      "carriedAtk": 50,
+      "carriedDef": 100,
+      "carriedHp": 375,
+      "carriedAtkPerLevel": 5.0,
+      "carriedDefPerLevel": 10.0,
+      "carriedHpPerLevel": 37.5
     },
     "WanderersCompass": {
       "passiveBase": 1.5,
@@ -3172,12 +3172,12 @@
       "activeManaCost": 5,
       "activeDurationSeconds": 0,
       "activeRadius": 0,
-      "carriedAtk": 5,
-      "carriedDef": 3,
-      "carriedHp": 5,
-      "carriedAtkPerLevel": 0.5,
-      "carriedDefPerLevel": 0.3,
-      "carriedHpPerLevel": 0.5
+      "carriedAtk": 125,
+      "carriedDef": 75,
+      "carriedHp": 125,
+      "carriedAtkPerLevel": 12.5,
+      "carriedDefPerLevel": 7.5,
+      "carriedHpPerLevel": 12.5
     }
   },
   "quests": [
@@ -3688,6 +3688,22 @@
       "rewardMana": 0
     },
     {
+      "id": "MusterCompany",
+      "name": "A company",
+      "description": "Train twenty-four soldiers. One is a guard; a company is what takes a gate.",
+      "goalType": "TrainArmy",
+      "goalTarget": null,
+      "goalAmount": 24,
+      "goalLevel": null,
+      "reward": {
+        "Gold": 400
+      },
+      "rewardGems": 0,
+      "rewardStardust": 0,
+      "rewardKnowledge": 1,
+      "rewardMana": 0
+    },
+    {
       "id": "DriveThemOut",
       "name": "Drive them out",
       "description": "Orcs hold the mouth of the Hollow Barrow, and they are counting down. Clear the gate.",
@@ -3965,10 +3981,10 @@
     {
       "id": "AWarband",
       "name": "A warband",
-      "description": "Muster four soldiers.",
+      "description": "Sixty soldiers under arms. The deeper ruins are fought by companies.",
       "goalType": "TrainArmy",
       "goalTarget": null,
-      "goalAmount": 4,
+      "goalAmount": 60,
       "goalLevel": null,
       "reward": {
         "Gold": 450,

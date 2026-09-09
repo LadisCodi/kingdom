@@ -234,8 +234,15 @@ The cap limits **total troops owned**, not party size.
 | **Shooting Grounds** | Archer | 150 / 250 / 400 / 600 / 850 |
 | **Stables** | Cavalry | 150 / 250 / 400 / 600 / 850 |
 
+- Levels 6–10 continue it: 1,100 / 1,400 / 1,750 / 2,150 / 2,600.
+- **A soldier is one place in a hall, whatever it is worth in a fight.**
+  `power_per_troop` decides what a troop DOES and never what it costs to keep,
+  so a Cavalry and a Warrior take the same room.
 - Caps sum across buildings. Each unit type is behind its own technology, as is
   each tier.
+- **What bounds a PARTY is the board** — six slots of `squad_size` (§3, §4) —
+  and what bounds the board is what the city owns. The cap is the city's
+  number; the board is the fight's.
 - Training is queued at the building the player pressed TRAIN on, takes time,
   and is boostable there.
 - The Townhall level does not affect the cap.

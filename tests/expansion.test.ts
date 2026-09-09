@@ -184,8 +184,9 @@ describe('the vein line (Mining ← Masonry) and the stone-gated army', () => {
     expect(trainUnit(state, 'Warrior', T0)).toBe('Queued'); // wood-armed now
     completeTech(state, 'Cavalry');
     expect(trainUnit(state, 'Cavalry', T0)).toBe('NotEnoughResources'); // no Stone
-    fund(state, { Gold: 1000, Wood: 500, Food: 500, Stone: 60 });
+    fund(state, { Gold: 1000, Wood: 500, Food: 500, Stone: 24 });
     expect(trainUnit(state, 'Cavalry', T0)).toBe('Queued');
-    expect(getWallet(state.city.wallet, 'Stone')).toBe(0); // 60 spent — 20 Iron × 3
+    // 24 spent: a rider is priced for a COMPANY of them now.
+    expect(getWallet(state.city.wallet, 'Stone')).toBe(0);
   });
 });

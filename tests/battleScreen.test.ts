@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
 import { PARTY, RUINS, UNITS } from '../src/sim/data/definitions';
 import { heroSlotGemCost, heroSlots } from '../src/sim/heroes';
-import { maxArmyPower } from '../src/sim/army';
+import { armyCap } from '../src/sim/army';
 import { getWallet, type GameState, type UnitId } from '../src/sim/state';
 import {
   addAllTrainers, addBuilt, freshGame, freshPresenter, fund, map, reveal, T0,
@@ -18,7 +18,7 @@ import {
 const BARROW = 'HollowBarrow' as const;
 
 /** A kingdom standing on the Barrow's doorstep, with an army at home. */
-function atTheGate(units: Partial<Record<UnitId, number>> = { Warrior: 12, Archer: 8 }) {
+function atTheGate(units: Partial<Record<UnitId, number>> = { Warrior: 30, Archer: 24 }) {
   const state: GameState = freshGame();
   addBuilt(state, 'Housing', { x: 3, y: 2 });
   state.city.population = 4;
@@ -66,7 +66,7 @@ describe('the troop slots', () => {
     const game = atTheGate({ Warrior: 12 });
     game.expeditionParty = [];
     // Twelve at home, a squad holds a hundred, and the cap is what it is.
-    const cap = Math.floor(maxArmyPower(game.state) / UNITS.Warrior.power);
+    const cap = Math.floor(armyCap(game.state) / UNITS.Warrior.power);
     expect(game.troopsAvailableFor('Warrior'))
       .toBe(Math.min(UNITS.Warrior.squadSize, 12, cap));
 
@@ -207,7 +207,8 @@ describe('what the screen adds up to', () => {
     game.state.heroes.tiers.Adventurer = 1;
     game.doBuyHeroSlot();
     game.partyHeroes = ['Warden', 'Adventurer'];
-    game.expeditionParty = [];
+    // Twenty orcs hold the Barrow, so the heroes bring the company with them.
+    game.expeditionParty = [{ unitId: 'Warrior', count: 30 }];
     game.doClearGate();
     expect(game.gateFor(BARROW)!.cleared).toBe(true);
   });

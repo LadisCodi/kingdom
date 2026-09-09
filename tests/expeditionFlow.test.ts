@@ -9,7 +9,7 @@
 // where the decisions live.
 import { describe, expect, it } from 'vitest';
 import { advance } from '../src/sim/commands';
-import { maxArmyPower } from '../src/sim/army';
+import { armyCap } from '../src/sim/army';
 import { attune, grantArtifact, normaliseSlots } from '../src/sim/artifacts';
 import { RUINS, UNITS } from '../src/sim/data/definitions';
 import { depthDurationMs } from '../src/sim/combat';
@@ -20,7 +20,9 @@ import {
 
 const BARROW = 'HollowBarrow' as const;
 
-function ready(units: Partial<Record<UnitId, number>> = { Warrior: 4 }): GameState {
+// A COMPANY, not a squad of four: a depth is fought by dozens now
+// (Docs/features/combat.md §14).
+function ready(units: Partial<Record<UnitId, number>> = { Warrior: 60 }): GameState {
   const state = freshGame();
   addAllTrainers(state);
   fund(state, { Gold: 5000, Food: 2000, Wood: 2000, Stone: 500, Iron: 500 });
@@ -47,18 +49,18 @@ describe('the route into a ruin', () => {
   });
 
   it('opens the sheet with a sensible party already in it', () => {
-    const game = freshPresenter(ready({ Warrior: 3 }));
+    const game = freshPresenter(ready({ Warrior: 60 }));
     game.openExpedition(BARROW);
     expect(game.openOverlay).toBe('expedition');
     expect(game.partyHeroes.length).toBeGreaterThan(0);
     // A player should never have to assemble a party from nothing just to see
     // what a ruin would take.
-    expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 3 }]);
+    expect(game.expeditionParty).toEqual([{ unitId: 'Warrior', count: 60 }]);
     expect(game.expeditionPreview()!.safeDepth).toBeGreaterThan(0);
   });
 
   it('never pre-fills more unit types than the board has slots', () => {
-    const game = freshPresenter(ready({ Warrior: 2, Archer: 2, Lancer: 2, Cavalry: 2 }));
+    const game = freshPresenter(ready({ Warrior: 30, Archer: 30, Lancer: 30, Cavalry: 30 }));
     game.openExpedition(BARROW);
     expect(game.expeditionParty.length).toBeLessThanOrEqual(game.troopSlotsOpen());
     // Every slot is open from the start, so the pre-fill is bounded by the
@@ -171,7 +173,7 @@ describe('the pre-filled party is always launchable', () => {
     game.openExpedition(BARROW);
     const power = game.expeditionParty
       .reduce((sum, s) => sum + UNITS[s.unitId].power * s.count, 0);
-    expect(power).toBeLessThanOrEqual(maxArmyPower(state));
+    expect(power).toBeLessThanOrEqual(armyCap(state));
     expect(game.expeditionLaunchBlock()).toBeNull();
   });
 });
