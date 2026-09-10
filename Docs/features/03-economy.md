@@ -156,8 +156,10 @@ running. Research already worked this way.
 - Villagers complete sequentially at `training.seconds` = 20 s each.
 - The queue is limited only by Food and housing capacity; queued villagers
   count against the cap.
-- Cost: authored for the first six (`5, 20, 100, 300, 500, 1000`), then `×1.45`
-  per villager beyond.
+- Cost: authored for the first six (`5, 20, 100, 300, 500, 1000`), then `×1.05`
+  per villager beyond — the Townhall's levels ask for villagers
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §1), so the curve
+  has to let a city reach seventy of them in a month.
 - No tap hurries the queue.
 - Timers take Gems ([`04-harvest.md`](04-harvest.md) §3.2).
 
@@ -212,7 +214,7 @@ Flow: **housing taxes → Gold → fog, buildings and research**.
 | Seconds a tap is worth | **10 s of work** | `tap.work_seconds` |
 | Tap Mana cost | 1 | `tap.mana_cost` |
 | Housing capacity per level | [2, 4] — contested, OQ-46 | `Districts` sheet |
-| Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.45 | `training.*`, `city.population_cost_*` |
+| Villager training | 20 s, cost `5,20,100,300,500,1000` then ×1.05 — the Townhall's levels ask for villagers ([`05-city-and-districts.md`](05-city-and-districts.md) §1) | `training.*`, `city.population_cost_*` |
 | Collect cooldown | 0.5 s | `tap.collect_cooldown_seconds` |
 | Sale prices | Food 1 · Stone 2 · Wood 3 | `Currencies.gold_value` |
 | Adjacency rules | §3.1 | `Adjacency` sheet — `district`, `neighbor`, `stat`, `magnitude` |

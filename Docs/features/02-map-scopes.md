@@ -193,8 +193,9 @@ The outer scope feeds the inner one.
 - **What guides a layout is adjacency, not permission** — a neighbour pays or
   charges ([`03-economy.md`](03-economy.md) §3.1). A placement can be better
   or worse; none is illegal.
-- So the fog is the only thing that gates ground, which keeps one price on one
-  thing: **paying the fog is what buys room.**
+- So the fog is the only thing that gates ground, and the Townhall gates how
+  far the fog can be paid for ([`01-map-and-fog.md`](01-map-and-fog.md) §4):
+  **paying the fog is what buys room.**
 - Ruins and landmarks sit at distance 3–12, and the far cells are mostly
   mountain and water, which are not buildable anyway.
 - **The save says which scope a thing is in.**

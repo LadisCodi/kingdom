@@ -123,6 +123,19 @@ Respawn:
 - Claiming a landmark discovers `fog.claimDiscoverRadius` = **5** cells around
   it: an 11×11 square, ~100 cells. **Discovered, never Revealed.**
 - Revealed outranks discovered: cells already revealed are never overwritten.
+- **The Townhall is the reach.** A cell can be paid for only within
+  `fog.reach_per_townhall_level` BFS rings of the Townhall, indexed by its
+  level: **3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40**. Level 10 reaches the
+  province's last ring.
+- A building's fog radii and a claim's discover ring ignore the reach, the way
+  they ignore Sailing. Only the player's tap and a Divination are refused, and a
+  refused tap costs nothing.
+- A Discovered cell past the reach stays visible under the scrim and draws like
+  a cell the frontier has not reached.
+- **The reach is drawn**: a dashed line along the last ring the player may pay
+  for, over the fog and across undiscovered ground, so the border is read off
+  the map before a tap is refused. It disappears once the reach holds the
+  whole province.
 
 ## 5. The price of a cell
 
@@ -140,17 +153,24 @@ reaches ring 40.
 
 - **A cell is five taps at every ring** (`fog.tapsToReveal`). What the ring
   decides is what each tap CHARGES: a fifth of the cell's Gold.
-- Every ring from 2 out is a multiple of five, so the fifths come out whole.
-  A price five does not divide — ring 1, or a discounted one — is split into
-  slices that still sum to it exactly, never rounded either way.
-- A cell never costs less than `fog.minCost`, however deep the discounts go.
+- **The map gets dearer as it is revealed.** The ring price is multiplied by
+  `fog.count_growth` (**×1.05**) once per `fog.count_step` (**10**) cells
+  already revealed. Every revealed cell counts — seeded, built around or
+  divined — the same count the era bars read
+  ([`07-research.md`](07-research.md) §2.1). A fresh kingdom's 16 seeded cells
+  already sit in the second step.
+- The order: ring price × count multiplier, then **Pitons** (−10%/level), then
+  the floor. A cell never costs less than `fog.minCost`, however deep the
+  discounts go. Nothing buys a tap back.
+- Every ring price from 2 out is a multiple of five. A price five does not
+  divide — ring 1, a multiplied one, a discounted one — is split into slices
+  that still sum to it exactly, never rounded either way.
 - Hold-to-repeat covers reveal taps.
-- **Pitons** discounts the Gold (−10%/level), and it is the only thing that
-  moves the fog: nothing buys a tap back.
-- **The whole map is 4,729,789,354 Gold across 1,466 priced cells**, and the
-  outer third of it is most of that. It is the largest Gold sink in the game
-  by three orders of magnitude, and what limits how fast it is spent is the
-  purse ([`02-map-scopes.md`](02-map-scopes.md)).
+- At ×1 the whole map is **4,729,789,354 Gold across 1,466 priced cells**, and
+  the outer third of it is most of that; the count multiplier only raises it.
+  It is the largest Gold sink in the game by three orders of magnitude. What
+  limits how fast it is spent is the Townhall's reach in the first week and the
+  purse after (`tests/thirtyDays.test.ts`).
 
 ## 6. What the fog holds
 
@@ -222,6 +242,8 @@ Costs are **authored per sanctuary**, not derived from distance.
 | Dial | Value | Where |
 |---|---|---|
 | Fog price per ring | 3 → 1,024,000, ×1.25 past ring 20 | `FogRings` sheet |
+| How far each Townhall level lets the fog be paid for | 3 · 6 · 8 · 10 · 12 · 14 · 17 · 20 · 24 · 40 rings | `fog.reach_per_townhall_level` |
+| How much dearer the map gets as it is revealed | ×1.05 every 10 cells | `fog.count_step`, `fog.count_growth` |
 | Taps to clear a cell | 5 | `fog.taps_to_reveal` |
 | The floor under a cell's price | 1 | `fog.min_cost` |
 | Claim discover radius | 5 | `fog.claim_discover_radius` |
@@ -243,5 +265,5 @@ Costs are **authored per sanctuary**, not derived from distance.
 - A technology that buys reveal taps back. A cell is five presses at every
   ring, so there is no tap ladder left to climb.
 
-**Open questions:** OQ-49, OQ-50 in
+**Open questions:** OQ-49, OQ-50, OQ-92 in
 [`../open-questions.md`](../open-questions.md).

@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { upgradeDistrict } from '../src/sim/commands';
 import {
-  LATE_FROM, requiredTechForLevel, requiredTownhallLevel, upgradeGoodsCost,
+  LATE_FROM, requiredPopulation, requiredTechForLevel, requiredTownhallLevel, upgradeGoodsCost,
 } from '../src/sim/districts';
 import { addGood, getGood } from '../src/sim/goods';
 import { effectiveWorkerStrike, tapDraw, workerStrikeMs } from '../src/sim/upgrades';
@@ -38,6 +38,7 @@ describe('tech-gated upgrades', () => {
     expect(requiredTechForLevel('Townhall', 4)).toBe('Magistracy');
     const state = freshGame();
     fund(state, { Wood: 1000, Stone: 1000 });
+    state.city.population = 99; // the people are not what this tests
     const th = townhall(state);
     expect(upgradeDistrict(state, th.uniqueId)).toBe('Started');
     tickAt(state, T0);
@@ -261,5 +262,54 @@ describe('a late producer hauls more and swings faster', () => {
     farm.level = 5;
     // Levels 1-5 buy crew and reach; the haul is the ground's until level 6.
     expect(effectiveWorkerStrike(state, HARVEST.Crops, farm)).toBe(one);
+  });
+});
+
+// Docs/features/05-city-and-districts.md §1 — a town grows when its people do.
+//
+// CLAIM: every Townhall level past the first asks for villagers, on top of
+// its technology, and the answer is Food and the training line rather than a
+// research. Total population, housed or not.
+describe('the Townhall asks for villagers', () => {
+  it('is authored per level, on the Townhall alone, and never shrinks', () => {
+    const ladder = DISTRICTS.Townhall.requiredPopulationPerLevel;
+    expect(ladder.length).toBe(DISTRICTS.Townhall.maxLevel - 1);
+    for (let i = 1; i < ladder.length; i++) expect(ladder[i]).toBeGreaterThanOrEqual(ladder[i - 1]);
+    expect(requiredPopulation('Townhall', 1)).toBe(0);
+    expect(requiredPopulation('Townhall', 2)).toBe(ladder[0]);
+    for (const id of Object.keys(DISTRICTS) as DistrictId[]) {
+      if (id !== 'Townhall') expect(requiredPopulation(id, 2), `${id} asks for villagers`).toBe(0);
+    }
+  });
+
+  it('refuses the level until the villagers are there, and says so', () => {
+    const state = freshGame();
+    fund(state, { Wood: 1000, Stone: 1000 });
+    const th = townhall(state);
+    const need = requiredPopulation('Townhall', 2);
+    expect(need).toBeGreaterThan(0);
+    state.city.population = need - 1;
+    expect(upgradeDistrict(state, th.uniqueId)).toBe('NeedsPopulation');
+    expect(state.city.queue).toHaveLength(0);
+    state.city.population = need;
+    expect(upgradeDistrict(state, th.uniqueId)).toBe('Started');
+  });
+
+  it('every level asks for fewer villagers than the houses of the level before can hold', () => {
+    // Beds the city may build at Townhall level L: the Housing count cap at L
+    // times the capacity of the highest Housing level L allows.
+    const housing = DISTRICTS.Housing;
+    const bedsAt = (th: number): number => {
+      let top = 1;
+      for (let lvl = 2; lvl <= housing.maxLevel; lvl++) {
+        if (requiredTownhallLevel('Housing', lvl) <= th) top = lvl;
+      }
+      return levelIndexed(housing.maxCountPerTownhallLevel, th)
+        * levelIndexed(housing.populationCapacityPerLevel, top);
+    };
+    for (let level = 2; level <= DISTRICTS.Townhall.maxLevel; level++) {
+      expect(requiredPopulation('Townhall', level), `Townhall ${level} against the beds of ${level - 1}`)
+        .toBeLessThan(bedsAt(level - 1));
+    }
   });
 });

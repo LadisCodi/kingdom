@@ -20,10 +20,10 @@ import {
   advance, changeWorkers, enqueueBuild, upgradeDistrict,
 } from '../src/sim/commands';
 import {
-  LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredTechForLevel,
-  requiredTownhallLevel, upgradeGoodsCost, validPlacementCells,
+  LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredPopulation,
+  requiredTechForLevel, requiredTownhallLevel, upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
-import { explorationGate, fogState, isReachable, revealCostForCell, revealTap } from '../src/sim/fog';
+import { explorationGate, fogState, isPayable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
 import { claimLandmark, isLandmarkClaimed, visibleLandmarks } from '../src/sim/landmarks';
 import { harmonyBlock, harmonyDemand, harmonySupply } from '../src/sim/harmony';
@@ -277,6 +277,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     if (state.city.queue.some((q) => q.districtUniqueId === th.uniqueId)) return false;
     const gate = requiredTechForLevel('Townhall', next);
     if (gate !== null && !isTechComplete(state, gate)) return false;
+    if (state.city.population < requiredPopulation('Townhall', next)) return false;
     return canAffordGoods(state.city.goods, upgradeGoodsCost('Townhall', next))
       && harmonyBlock(state, DISTRICTS.Townhall, next, th) === null
       && state.city.queue.length >= buildQueueCapacity(state);
@@ -302,7 +303,10 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
         if (enqueueBuild(state, map, maker.id, cell) === 'Started') { started = true; break; }
       }
     }
-    if (!started && housedPopulation(state) >= maxPopulation(state) - 1) {
+    // A Townhall refused for VILLAGERS is answered the way the card says:
+    // roofs first, then the training line fills them (step 3, next visit).
+    if (!started && (thResult === 'NeedsPopulation'
+      || housedPopulation(state) >= maxPopulation(state) - 1)) {
       const cell = cellFor(DISTRICTS.Housing);
       if (cell && builtCount(state, 'Housing') < maxDistrictCount(state, DISTRICTS.Housing)
         && enqueueBuild(state, map, 'Housing', cell) === 'Started') started = true;
@@ -461,7 +465,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   for (let i = 0; fogTaps < FOG_TAPS_PER_VISIT; i++) {
     const next = map.cells
       .filter((c) => fogState(state, map, c) === 'Discovered'
-        && isReachable(state, map, c) && explorationGate(map, c) === null)
+        && isPayable(state, map, c) && explorationGate(map, c) === null)
       .sort((a, b) => revealCostForCell(state, map, a) - revealCostForCell(state, map, b))[0];
     if (!next) break;
     let r: string = 'Paid';
@@ -611,8 +615,16 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    orientative, so each bound carries a few days of slack; the two
     //    lower bounds keep the ladder from collapsing into a week. Measured
     //    2026-09-08: 2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 · 25.
+    //
+    //    2026-09-10, the Townhall asks for villagers (05-city-and-districts.md
+    //    §1: 3 · 5 · 12 · 20 · 30 · 40 · 50 · 60 · 72, villager price growth
+    //    ×1.05): measured 3 · 7 · 8 · 10 · 11 · 13 · 16 · 22 · 30. TH3 moved
+    //    from day 3 to day 7 — five villagers at Townhall 2 are three houses
+    //    and 925 Food, and that is the coupling the gate is for — so its bound
+    //    is re-pinned to 7. Every other level landed inside its old bound,
+    //    and TH10 on the month's last day.
     const noLaterThan: Record<string, number> = {
-      TH2: 3, TH3: 4, TH4: 8, TH5: 10, TH6: 13, TH7: 17, TH8: 23, TH9: 27, TH10: 30,
+      TH2: 3, TH3: 7, TH4: 8, TH5: 10, TH6: 13, TH7: 17, TH8: 23, TH9: 27, TH10: 30,
     };
     for (const [level, day] of Object.entries(noLaterThan)) {
       expect(milestones[level], `${level} was never reached`).toBeDefined();
@@ -634,6 +646,15 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    each visit for the tree and spends the rest on the border, so what
     //    it holds at the end is what the frontier could not take — and a
     //    million idle Gold would mean the sink stopped draining again.
+    //
+    //    2026-09-10, two brakes on the fog (01-map-and-fog.md §4, §5): the
+    //    Townhall's reach caps week 1 (114 cells on day 2 against 241) and
+    //    the count multiplier prices the far rings from week 2 on. Measured
+    //    at ×1.05 every 10 cells: 509 cells, 4 landmarks and **113,428 Gold**
+    //    in hand at day 30 — the frontier stopped absorbing the purse, which
+    //    is exactly what this bound is for. ×1.02 gives 573 cells, 5
+    //    landmarks and 89,408. The bound is deliberately NOT loosened: which
+    //    dial moves is a design call (OQ-92), and this line is where it shows.
     expect(end.gold, 'Gold in hand at day 30').toBeLessThan(100_000);
 
     // 4. The ground still starves, and now it starves on money. A player at
@@ -647,6 +668,8 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    sink, the frontier, and it buys the next two landmarks in weeks 3–4
     //    — at ANY ladder, ×1.9 or ×3.25 alike, so softening it bought
     //    nothing. The Townhall's own days did not move by more than one.
+    //    2026-09-10, with the reach and the count multiplier: 509 cells and 4
+    //    landmarks at day 30; the Townhall's days did not move at all.
     const revealed = map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length;
     expect(revealed / map.cells.length, 'share of the province uncovered by day 30')
       .toBeLessThan(0.55);

@@ -30,6 +30,9 @@ export const PALETTE = {
   workedTile: 'rgba(255, 226, 122, 0.75)',
   influenceFill: 'rgba(255, 255, 255, 0.16)',
   influenceBorder: 'rgba(255, 255, 255, 0.85)',
+  // The Townhall's reach, dashed along the last ring the player may pay for.
+  // Warm and half-transparent: a border the fog is drawn under, not a wall.
+  reachBorder: 'rgba(255, 226, 122, 0.6)',
   // Brighter than the old #7fd07f / #ff8a7a: these sit on the label pill,
   // which is drawn over the influence wash, and pale ink on a washed pill is
   // what made the placement labels unreadable.

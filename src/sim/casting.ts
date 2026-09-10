@@ -11,7 +11,7 @@
 // the moment an effect can only be replayed by re-running the UI.
 
 import { ARTIFACTS, FEATURES, type ArtifactActiveId } from './data/definitions';
-import { fogState, revealCostForCell, revealPaidSoFar } from './fog';
+import { fogState, isWithinReach, revealCostForCell, revealPaidSoFar } from './fog';
 import { cellsWithinRadius, type MapData } from './grid';
 import { effectiveStock, harvestSourceAt, harvestSpecAt } from './harvest';
 import { mana, payMana } from './mana';
@@ -58,8 +58,11 @@ export function validCastCells(state: GameState, map: MapData, id: ArtifactId): 
   switch (active.id) {
     case 'Divination':
       // The frontier only: a cell you have already paid off has nothing left
-      // to buy, and one you cannot see is not a decision yet.
-      return map.cells.filter((c) => fogState(state, map, c) === 'Discovered');
+      // to buy, and one you cannot see is not a decision yet. And inside the
+      // Townhall's reach: a spell is the player exploring, and it obeys the
+      // same border a paid tap does.
+      return map.cells.filter((c) => fogState(state, map, c) === 'Discovered'
+        && isWithinReach(state, map, c));
     case 'Bloom':
       // Anywhere revealed — the radius does the work, so the player is
       // choosing a CENTRE, not a cell.

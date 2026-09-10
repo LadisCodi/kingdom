@@ -554,6 +554,10 @@ export interface DistrictDef {
   upgradeDurationLateSeconds: number;
   upgradeDurationLateLevelGrowth: number;
   requiredTownhallLevelPerLevel: readonly number[]; // index 0 = requirement to REACH level 2
+  /** Villagers the city must have to REACH each level, same indexing. Empty =
+   *  no gate. Authored on the Townhall: a town grows when its people do
+   *  (Docs/features/05-city-and-districts.md §1). */
+  requiredPopulationPerLevel: readonly number[];
   /** Technology gating each upgrade; index 0 = requirement to REACH level 2. */
   requiredTechPerLevel: readonly (TechId | null)[];
   /** One more of this district may stand once this technology is done. */

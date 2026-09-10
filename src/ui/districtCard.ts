@@ -14,11 +14,11 @@
 import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARMONY, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
+  DISTRICTS, FOG, HARMONY, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
-  canMoveDistrict, districtLabel, requiredTechForLevel,
+  canMoveDistrict, districtLabel, requiredPopulation, requiredTechForLevel,
   requiredTownhallLevel, upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from '../sim/districts';
 import { getGood } from '../sim/goods';
@@ -197,6 +197,13 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
     if (ladder.length > 0) {
       delta('Gold', 'Taxes',
         `×${levelIndexed(ladder, district.level)}`, `×${levelIndexed(ladder, next)}`);
+    }
+    // And how far the fog can be paid for (01-map-and-fog.md §4): a level
+    // that opens no new ring says nothing about it.
+    const reach = FOG.reachPerTownhallLevel;
+    if (reach.length > 0 && levelIndexed(reach, next) !== levelIndexed(reach, district.level)) {
+      delta('Townhall', 'Reach',
+        `ring ${levelIndexed(reach, district.level)}`, `ring ${levelIndexed(reach, next)}`);
     }
   }
   return out;
@@ -443,6 +450,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
       reason = `Your Townhall must reach level ${requiredTh}`;
     } else if (gateTech !== null && !isTechComplete(game.state, gateTech)) {
       reason = `Research ${TECHNOLOGIES[gateTech].name} first`;
+    } else if (game.state.city.population < requiredPopulation(district.definitionId, next)) {
+      // The one gate with a number that moves on its own: say where it
+      // stands, so the card is a goal rather than a refusal.
+      reason = `Needs ${requiredPopulation(district.definitionId, next)} villagers`
+        + ` · you have ${game.state.city.population}`;
     } else {
       // The third errand, and the only one whose answer is a building the
       // player has not thought of yet — so it says the number and the verb.

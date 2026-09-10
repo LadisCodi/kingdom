@@ -15,6 +15,17 @@
       "maxCountPerTownhallLevel": [],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [
+        3,
+        5,
+        12,
+        20,
+        30,
+        40,
+        50,
+        60,
+        72
+      ],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -185,6 +196,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -352,6 +364,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -500,6 +513,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -583,6 +597,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -763,6 +778,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -943,6 +959,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -1092,6 +1109,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -1229,6 +1247,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [
         150,
         250,
@@ -1377,6 +1396,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [
         150,
         250,
@@ -1525,6 +1545,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [
         150,
         250,
@@ -1673,6 +1694,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [
         150,
         250,
@@ -1821,6 +1843,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [
         30,
@@ -1989,6 +2012,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2147,6 +2171,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2315,6 +2340,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2483,6 +2509,7 @@
         9,
         10
       ],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2630,6 +2657,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2682,6 +2710,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2735,6 +2764,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2788,6 +2818,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2841,6 +2872,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -2895,6 +2927,7 @@
       ],
       "influenceRadiusPerLevel": [],
       "requiredTownhallLevelPerLevel": [],
+      "requiredPopulationPerLevel": [],
       "armyCapPerLevel": [],
       "bedsPerLevel": [],
       "costPerLevel": [
@@ -5291,7 +5324,21 @@
     "fallbackGrowth": 1.25,
     "tapsToReveal": 5,
     "minCost": 1,
-    "claimDiscoverRadius": 5
+    "claimDiscoverRadius": 5,
+    "reachPerTownhallLevel": [
+      3,
+      6,
+      8,
+      10,
+      12,
+      14,
+      17,
+      20,
+      24,
+      40
+    ],
+    "countStep": 10,
+    "countGrowth": 1.05
   },
   "city": {
     "initialCurrencies": {
@@ -5307,7 +5354,7 @@
       500,
       1000
     ],
-    "populationCostGrowth": 1.45,
+    "populationCostGrowth": 1.05,
     "lateUpgradeFromLevel": 6
   },
   "kingdom": {

@@ -17,9 +17,10 @@ import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
+  requiredPopulation,
 } from './sim/districts';
 import {
-  explorationGate, fogState, nextRevealTapCost, revealCostForCell, revealTap,
+  explorationGate, fogState, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
 } from './sim/fog';
 import { cellsWithinRadiusOfRect, townhallDistance, type MapData } from './sim/grid';
 import { effectiveStock, harvestSourceAt, isExhausted, tapYieldAt } from './sim/harvest';
@@ -546,6 +547,11 @@ export class Game {
           // the frontier moves outward stops trying to buy the far tile.
           playSfx('error');
           this.toast('Clear a path to it first — the fog lifts from the edges');
+        } else if (result === 'OutOfReach') {
+          // The capital is the reach: say which level opens this ring, so
+          // the refusal points at the building rather than at the fog.
+          playSfx('error');
+          this.toast(`Raise the Townhall to level ${reachLevelFor(this.map, cell)} to explore this far`);
         } else if (result === 'TechLocked') {
           const gate = explorationGate(this.map, cell);
           if (gate) this.toast(`Research ${TECHNOLOGIES[gate].name} to explore this terrain`);
@@ -1271,6 +1277,10 @@ export class Game {
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
       return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+    }
+    if (result === 'NeedsPopulation') {
+      const need = requiredPopulation(definitionId, targetLevel);
+      return `Needs ${need} villagers — you have ${this.state.city.population}. Train more at the Townhall`;
     }
     return result;
   }

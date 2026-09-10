@@ -12,7 +12,7 @@ import { cityGoldPerMinute, maxPopulation } from '../src/sim/population';
 import { techMultiplier } from '../src/sim/techEffects';
 import { townhallTaxMultiplier } from '../src/sim/upgrades';
 import { isTechComplete, startTech } from '../src/sim/research';
-import { revealTap } from '../src/sim/fog';
+import { revealCostForCell, revealTap } from '../src/sim/fog';
 import { deserialize, serialize } from '../src/sim/save';
 import { getWallet, townhall } from '../src/sim/state';
 import {
@@ -34,12 +34,17 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     fund(state, { Gold: 50 });
     // All three must be ungated terrain — (3,0) is Mountain and now needs
     // Scaling Tools before it can be revealed at all.
+    // Each price is read before it is paid: the map gets dearer as it is
+    // revealed, so the third cell is not quite the 10 its ring says.
+    let spent = 0;
     for (const cell of [{ x: 1, y: -2 }, { x: 3, y: 1 }, { x: 3, y: 2 }]) {
+      spent += revealCostForCell(state, map, cell);
       let r: string = 'Paid';
       while (r === 'Paid') r = revealTap(state, map, cell);
       expect(r).toBe('Revealed');
     }
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 20);
+    expect(spent).toBeGreaterThanOrEqual(20); // 5 + 5 + 10 at ×1
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - spent);
 
     // --- The Forest is seed-revealed and REFUSES until Forestry is in: the
     // opening beat of the whole game (Docs/features/12-quests.md §2 (quests 2-3)).
@@ -59,7 +64,7 @@ describe('full harvest-loop playthrough (headless smoke)', () => {
     // --- No taxes yet: villagers without a roof pay nothing.
     now += 60_000;
     tickAt(state, now);
-    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - 20);
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(50 - spent);
 
     // --- Build a Sawmill next to the forest; queue-full gate; gem rush.
     fund(state, { Gold: 500, Wood: 500, Knowledge: 500 });

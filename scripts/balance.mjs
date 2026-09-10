@@ -177,6 +177,17 @@ const SETTINGS = [
   // rings becomes DISCOVERED, never revealed. A claim buys you a place to
   // look, not the ground itself — the paid reveal is still the sink.
   ['fog.claim_discover_radius', 'fog.claimDiscoverRadius'],
+  // How far from the Townhall a cell may be PAID for, in BFS rings, indexed
+  // by the Townhall's level (01-map-and-fog.md §4). A building's own fog
+  // radii ignore it, the way they ignore Sailing; only the player's tap and
+  // a Divination are refused. Blank = no reach limit.
+  ['fog.reach_per_townhall_level', 'fog.reachPerTownhallLevel', 'list'],
+  // The map gets dearer as it is revealed: every cell's ring price is
+  // multiplied by `count_growth` once per `count_step` cells already revealed
+  // (01-map-and-fog.md §5), so breadth costs more than depth. A step of 0 or
+  // a growth of 1 switches it off.
+  ['fog.count_step', 'fog.countStep'],
+  ['fog.count_growth', 'fog.countGrowth'],
   ['city.initial_population', 'city.initialPopulation'],
   ['city.initial_gold', 'city.initialCurrencies.Gold'],
   ['city.initial_food', 'city.initialCurrencies.Food'],
@@ -405,6 +416,10 @@ const DISTRICT_COLUMNS = [
   'fog_reveal_radius', 'fog_discover_radius',
   'max_workers_per_level', 'max_count_per_townhall_level',
   'influence_radius_per_level', 'required_townhall_level_per_level',
+  // Villagers the city must HAVE before a level can be bought — index 0 gates
+  // level 2, like `required_townhall_level_per_level`. Authored on the
+  // Townhall alone today (05-city-and-districts.md §1); blank = no gate.
+  'required_population_per_level',
   'army_cap_per_level', 'beds_per_level',
   'instance_linear_growth', 'instance_exponential_growth',
   'build_duration_seconds', 'build_duration_district_growth', 'build_duration_distance_growth',
@@ -416,7 +431,7 @@ const DISTRICT_COLUMNS = [
 ];
 const DISTRICT_LIST_COLUMNS = [
   'population_capacity', 'tax_bonus_per_level', 'max_workers_per_level', 'max_count_per_townhall_level',
-  'influence_radius_per_level', 'required_townhall_level_per_level',
+  'influence_radius_per_level', 'required_townhall_level_per_level', 'required_population_per_level',
   'army_cap_per_level', 'beds_per_level',
   'queue_length_per_level',
   'extra_units_per_delivery_per_level', 'strike_speed_per_level',
@@ -758,6 +773,7 @@ async function importXlsx() {
       maxCountPerTownhallLevel: list(r, 'max_count_per_townhall_level'),
       influenceRadiusPerLevel: list(r, 'influence_radius_per_level'),
       requiredTownhallLevelPerLevel: list(r, 'required_townhall_level_per_level'),
+      requiredPopulationPerLevel: list(r, 'required_population_per_level'),
       armyCapPerLevel: list(r, 'army_cap_per_level'),
       // The infirmary's beds: how many wounded the city can hold at once
       // (Docs/features/combat.md §4). Only the Infirmary has any, which is
@@ -1282,6 +1298,7 @@ async function exportXlsx() {
       d.fogRevealRadius, d.fogDiscoverRadius,
       listCell(d.maxWorkersPerLevel), listCell(d.maxCountPerTownhallLevel),
       listCell(d.influenceRadiusPerLevel), listCell(d.requiredTownhallLevelPerLevel),
+      listCell(d.requiredPopulationPerLevel ?? []),
       listCell(d.armyCapPerLevel), listCell(d.bedsPerLevel),
       d.instanceLinearGrowth, d.instanceExponentialGrowth,
       d.buildDurationSeconds, d.buildDurationDistrictGrowth, d.buildDurationDistanceGrowth,

@@ -64,10 +64,10 @@ Two more that are design-visible:
 
 | Feature | Doc | State |
 |---|---|---|
-| The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** |
+| The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** — the Townhall's reach and the count multiplier on the price landed 2026-09-10; their numbers are OQ-92 |
 | Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
-| Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |
+| Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** — the Townhall's levels ask for villagers since 2026-09-10 (OQ-93) |
 | Builders, no waiting line, the priced refusal | [`06`](features/06-construction.md) | **built** |
 | The technology tree, tree fog, instant upgrades | [`07`](features/07-research.md) | **built** — Gold-priced; the **tome rework is designed and closed 2026-09-03**, blocked only on numbers |
 | Mana, the Sanctum, landmarks, the rewarded ad | [`08`](features/08-magic.md) | **built** |

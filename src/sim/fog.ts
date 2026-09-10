@@ -1,14 +1,14 @@
 // Fog of war: state derivation, reveal cost curve, pay-per-tap reveal (Docs/features/01-map-and-fog.md).
 
-import { DISTRICTS, FOG, LANDMARKS, RUINS, terrainGate } from './data/definitions';
+import { DISTRICTS, FOG, LANDMARKS, RUINS, levelIndexed, terrainGate } from './data/definitions';
 import { recordSiteDiscovery } from './discovery';
 import { cellsWithinRadiusOfRect, neighbors, townhallDistance, type MapData } from './grid';
 import { resolve } from './modifiers';
 import { techValue } from './techEffects';
 import { recordQuestEvent } from './quests';
-import { isTechComplete } from './research';
+import { isTechComplete, revealedCellCount } from './research';
 import {
-  addToWallet, coordKey, districtCells, getWallet,
+  addToWallet, coordKey, districtCells, getWallet, townhall,
   type Coord, type District, type GameState, type TechId,
 } from './state';
 
@@ -43,6 +43,28 @@ export function revealCost(d: number): number {
   return Math.max(cost, FOG.minCost);
 }
 
+/**
+ * The map gets dearer as it is revealed: ×`fog.countGrowth` once per
+ * `fog.countStep` cells already revealed, on top of the ring price
+ * (Docs/features/01-map-and-fog.md §5).
+ *
+ * Distance alone made a disc as cheap as a corridor — every near cell in
+ * every direction was the same small price — so the player never chose a
+ * direction. With the count in the price, breadth costs more than depth and
+ * "which way" becomes the decision.
+ *
+ * The count is the same one the era bars read (`revealedCellCount`): every
+ * revealed cell, seeded, built-around or divined alike, so "revealed" means
+ * one thing. Stepped, not per cell, so the price moves every `countStep`
+ * reveals rather than under every press. A step of 0 or a growth of 1 is ×1.
+ */
+export function countMultiplier(state: GameState): number {
+  const step = FOG.countStep ?? 0;
+  const growth = FOG.countGrowth ?? 1;
+  if (step <= 0 || growth <= 1) return 1;
+  return growth ** Math.floor(revealedCellCount(state) / step);
+}
+
 /** The cost the PLAYER actually pays, after the Dowsing Rod and anything else
  *  that discounts the fog. Every consumer reads this rather than revealCost(),
  *  so a discount can never apply to the bar but not the charge. */
@@ -52,10 +74,12 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
     Math.round(resolve(
       state,
       'revealCost',
-      // Pitons is the ONE thing that moves what a cell costs. Nothing buys
-      // the taps back any more: a cell is five presses at every ring, so the
-      // only dial left on the fog is its Gold.
-      revealCost(townhallDistance(map, cell)) * Math.max(0, techValue(state, 'revealCost', 1)),
+      // Two things move what a cell costs: how much of the map is already
+      // revealed (countMultiplier, at the base stage) and Pitons, which
+      // discounts the result. Nothing buys the taps back: a cell is five
+      // presses at every ring.
+      revealCost(townhallDistance(map, cell)) * countMultiplier(state)
+        * Math.max(0, techValue(state, 'revealCost', 1)),
     )),
   );
 
@@ -75,6 +99,74 @@ export const revealCostForCell = (state: GameState, map: MapData, cell: Coord): 
  */
 export const isReachable = (state: GameState, map: MapData, cell: Coord): boolean =>
   neighbors(map, cell).some((n) => state.fog.revealed[coordKey(n)] === true);
+
+/**
+ * How far from the Townhall the player may PAY for a cell, in BFS rings —
+ * the same axis the price is authored on — indexed by the Townhall's level
+ * (Docs/features/01-map-and-fog.md §4, 05-city-and-districts.md §1).
+ *
+ * The Townhall already says how many of each building the city may own and
+ * how high each may level; this makes it say how far the city may reach, so
+ * the map is met in the order the city can use it. An empty list is no
+ * limit, the way an empty count cap is.
+ */
+export const explorationReach = (state: GameState): number =>
+  FOG.reachPerTownhallLevel.length === 0
+    ? Infinity
+    : levelIndexed(FOG.reachPerTownhallLevel, townhall(state).level);
+
+/** Is this cell inside the reach of the current Townhall level? */
+export const isWithinReach = (state: GameState, map: MapData, cell: Coord): boolean =>
+  townhallDistance(map, cell) <= explorationReach(state);
+
+/** The first Townhall level whose reach holds this cell — what the refused
+ *  tap tells the player to build. `maxLevel + 1` if no level ever does. */
+export function reachLevelFor(map: MapData, cell: Coord): number {
+  const d = townhallDistance(map, cell);
+  const ladder = FOG.reachPerTownhallLevel;
+  if (ladder.length === 0) return 1;
+  const i = ladder.findIndex((r) => r >= d);
+  return i === -1 ? ladder.length + 1 : i + 1;
+}
+
+/** One side of a cell, for drawing the reach border along it. */
+export type CellSide = 'N' | 'S' | 'W' | 'E';
+
+/**
+ * Where the reach ENDS: for each of `cells` inside the reach, the sides that
+ * face a cell on the map just beyond it. The renderer strokes these, over
+ * the fog, so the player can see how far the capital lets them explore
+ * before they tap — a rule that is spatial should be visible spatially.
+ * Empty when the reach holds the whole province (nothing to draw), and a
+ * map edge is not a border: there is nothing past it to explore.
+ */
+export function reachBorder(
+  state: GameState, map: MapData, cells: Iterable<Coord>,
+): Array<{ cell: Coord; sides: CellSide[] }> {
+  const reach = explorationReach(state);
+  if (!Number.isFinite(reach)) return [];
+  const beyond = (c: Coord): boolean =>
+    map.terrain.has(coordKey(c)) && townhallDistance(map, c) > reach;
+  const out: Array<{ cell: Coord; sides: CellSide[] }> = [];
+  for (const cell of cells) {
+    if (!map.terrain.has(coordKey(cell)) || townhallDistance(map, cell) > reach) continue;
+    const sides: CellSide[] = [];
+    if (beyond({ x: cell.x, y: cell.y - 1 })) sides.push('N');
+    if (beyond({ x: cell.x, y: cell.y + 1 })) sides.push('S');
+    if (beyond({ x: cell.x - 1, y: cell.y })) sides.push('W');
+    if (beyond({ x: cell.x + 1, y: cell.y })) sides.push('E');
+    if (sides.length > 0) out.push({ cell, sides });
+  }
+  return out;
+}
+
+/**
+ * Can the player buy this cell right now, leaving the purse and the terrain
+ * aside? The connected frontier AND the Townhall's reach — the one predicate
+ * the renderer draws the border from and the harness pushes against.
+ */
+export const isPayable = (state: GameState, map: MapData, cell: Coord): boolean =>
+  isReachable(state, map, cell) && isWithinReach(state, map, cell);
 
 /** Exploration gate: sea cells need Sailing before the player can pay to
  *  reveal them (building fog radii ignore this).
@@ -131,7 +223,8 @@ export const revealPaidSoFar = (state: GameState, map: MapData, cell: Coord): nu
   revealPaidGold(revealCostForCell(state, map, cell), revealTapsDone(state, cell));
 
 export type RevealTapResult =
-  | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'NotEnoughGold' | 'TechLocked';
+  | 'Paid' | 'Revealed' | 'NotDiscovered' | 'NotReachable' | 'OutOfReach' | 'NotEnoughGold'
+  | 'TechLocked';
 
 /** One tap on a Discovered cell: pay this tap's fifth of its price. The fifth
  *  one clears it. */
@@ -141,6 +234,10 @@ export function revealTap(state: GameState, map: MapData, cell: Coord): RevealTa
   // useful thing to be told about a cell two rings out, and it is true
   // whether or not the player has the tech for that terrain.
   if (!isReachable(state, map, cell)) return 'NotReachable';
+  // The Townhall before the terrain: it is the bigger gate, and a player told
+  // to research Sailing for a cell their capital cannot reach would be sent
+  // the wrong way. Refused, it costs nothing.
+  if (!isWithinReach(state, map, cell)) return 'OutOfReach';
   const gate = explorationGate(map, cell);
   if (gate !== null && !isTechComplete(state, gate)) return 'TechLocked';
   const key = coordKey(cell);

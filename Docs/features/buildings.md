@@ -63,8 +63,9 @@
   in the tables below, and nothing else does that for all of them at once
   ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - Trains **villagers** in a queue: 20 s each, Food cost `5, 20, 100, 300,
-  500, 1000` then ×1.45 ([`03-economy.md`](03-economy.md) §4). No tap
-  hurries it.
+  500, 1000` then ×1.05 ([`03-economy.md`](03-economy.md) §4). No tap
+  hurries it. Its own levels ask for villagers
+  ([`05-city-and-districts.md`](05-city-and-districts.md) §1).
 - Is the map's origin: fog price, build cost and build time are measured from
   it. It seeds the fog (reveal 1, discover 2).
 - Does not answer a tap, does not produce Mana, does not raise the army cap,
