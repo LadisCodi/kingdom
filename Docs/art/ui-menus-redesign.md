@@ -160,7 +160,10 @@ as dirt); and the pennant flying from the quest scroll's corner in place of the
 seal once the quest is done. The header's counters are M1's plaques — rounded
 slots cut into the plank, 18px mark and a 12px bold number, the Gems slot
 parchment like the rest with its green knob — sized so four coins, the gauge,
-the rope and Gems share one 402px line (~395px at 12; 430 at 13). `border-image` forfeits `border-radius`,
+the rope and Gems share one 402px line (~395px at 12; 430 at 13). The nav's
+tabs are M1's wood plates on the wood beam — the same grain darkened, a lit
+top edge, the word in cream with a shadow, a 26px mark — and the lit tab is a
+gold plate that stands proud of the beam's top edge. `border-image` forfeits `border-radius`,
 so the frame's rounding lives in the art. Dropping the one `@import` restores
 the flat kit.
 

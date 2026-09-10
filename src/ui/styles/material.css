@@ -93,17 +93,18 @@
   background: url('../assets/deco-rope-v.png') center / contain no-repeat;
 }
 #navbar.nav { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+/* Wood plates on the wood beam (M1): the same grain, darkened, so the plate
+   reads as a block nailed on rather than a card laid down. The lit CTA keeps
+   its gold (nav.css). */
 #navbar.nav .nav-tab {
-  background: url('../assets/tex-parchment.jpg');
-  background-size: 256px 256px;
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.32), rgba(60, 36, 18, 0.32)),
+    url('../assets/tex-wood.jpg') center / 200px 200px;
 }
-/* The lit call to action keeps its gold (nav.css); only a plain active tab
-   gets the brighter parchment. */
 #navbar.nav .nav-tab.is-active:not(.is-cta) {
   background:
-    linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)),
-    url('../assets/tex-parchment.jpg');
-  background-size: auto, 256px 256px;
+    linear-gradient(rgba(60, 36, 18, 0.18), rgba(60, 36, 18, 0.18)),
+    url('../assets/tex-wood.jpg') center / 200px 200px;
 }
 
 /* ---- the district card and the quest scroll ---- */
