@@ -144,7 +144,10 @@ divider; the round knob as a picture (`deco-knob.png`); the district card in
 the same frame, open where it meets the nav; the banner as cloth dyed by its
 tone (`tex-cloth.jpg`, `background-blend-mode: multiply`); the quest scroll
 pinned with a wax seal at its free corner (§5.2); parchment under the
-research page and the build cards. `border-image` forfeits `border-radius`,
+research page and the build cards; every technology a wax medallion whose
+colour is its state (`seal-*.png`, §7.22) with the name under it; the build
+card laid out as M3 draws it — art at the left, name and promise beside it,
+the price under both (`build.css`). `border-image` forfeits `border-radius`,
 so the frame's rounding lives in the art. Dropping the one `@import` restores
 the flat kit.
 
@@ -1861,6 +1864,28 @@ each after `magick -strip -quality 85` to JPEG if opaque), decorations
 sliced by the atlas script as a smooth sheet (`ui-f2-decor.png`, 2×3), the
 frame — if it passes — to `src/ui/assets/frame-wood.png` for
 `border-image-slice: 96`.
+
+
+### 7.22 Research medallions (R1)
+
+M4 draws every technology as a wax-seal medallion; the page today draws a
+parchment card with a glyph and a name. One sheet gives the medallion its
+four states; the glyph stays the kit's icon on top, the name stays under it.
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> fully transparent background, a strict 2×2 grid of four separate round wax
+> seal medallions, one centred in each cell, none touching a boundary, all the
+> same size (~380 px): a wax disc with a softly scalloped, slightly irregular
+> rim, a raised flat centre with NO emblem, and one soft highlight. TOP-LEFT:
+> pale parchment-tan wax (#E2CCA0) — a technology not yet earned. TOP-RIGHT:
+> leaf green wax (#6FBF4A) — done. BOTTOM-LEFT: warm gold wax (#F2B233) —
+> ready to start. BOTTOM-RIGHT: sky blue wax (#4FA3C7) — in progress. Smooth
+> shading, thin dark brown outline, alpha 0 everywhere else. Then apply the
+> true-alpha transparency correction and give me the download link for the
+> corrected PNG.
+
+Lands in `src/ui/assets/seal-{plain,done,available,active}.png`, ≤ 160px,
+behind `.tech-card-glyph`.
 
 ## 8. Open questions
 

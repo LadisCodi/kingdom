@@ -163,3 +163,36 @@
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
 }
 .bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+
+/* ---- the district card's figure tiles (M2) ---- */
+.tr-fig {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.dc-portrait {
+  background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+}
+
+/* ---- the research era bar is the gold ribbon of M4 when it is open ---- */
+.res-era { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.res-era.is-open {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  color: var(--ink);
+}
+
+/* ---- research medallions are wax (R1, §7.22) ---- */
+.tech-card-glyph {
+  border: 0;
+  box-shadow: none;
+  background: url('../assets/seal-plain.png') center / 100% 100% no-repeat;
+  width: 60px;
+  height: 60px;
+}
+.tech-card.done .tech-card-glyph { background-image: url('../assets/seal-done.png'); }
+.tech-card.available .tech-card-glyph { background-image: url('../assets/seal-available.png'); }
+.tech-card.active .tech-card-glyph { background-image: url('../assets/seal-active.png'); }
+.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold); border-radius: 50%; }
