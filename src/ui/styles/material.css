@@ -207,3 +207,48 @@
 /* ---- the villagers' row ---- */
 .tr-roster-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .tr-roster-slot.is-empty { background: rgba(60, 36, 18, 0.14); }
+
+/* ---- nails, where a plank is nailed to something ----
+ * Not on the planks that carry a title (they read as dirt next to the words):
+ * on the beam the nav hangs from and on the plaque that hangs under the
+ * header — the two planks whose corners are bare. */
+#navbar.nav { position: relative; }
+#navbar.nav::before,
+#navbar.nav::after,
+.hud-plaque::before,
+.hud-plaque::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: url('../assets/deco-nail.png') center / contain no-repeat;
+  pointer-events: none;
+}
+#navbar.nav::before { top: 2px; left: 3px; }
+#navbar.nav::after { top: 2px; right: 3px; }
+.hud-plaque { position: relative; }
+.hud-plaque::before { top: 2px; left: 3px; }
+.hud-plaque::after { top: 2px; right: 3px; }
+
+/* ---- the pennant flies when a quest is done ----
+ * The seal says "sealed, in progress"; the pennant says "claim it". Same
+ * corner, so the eye finds the state where it found the seal. */
+.q-scroll.is-complete::after {
+  top: -14px;
+  right: -6px;
+  width: 30px;
+  height: 40px;
+  background: url('../assets/deco-pennant.png') center / contain no-repeat;
+  animation: q-fly 1.4s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+@keyframes q-fly {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .q-scroll.is-complete::after { animation: none; }
+}
+
+/* ---- the header's slots are parchment cut into the plank ---- */
+.hud-coin, .hud-gems { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }

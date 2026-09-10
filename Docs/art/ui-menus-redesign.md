@@ -154,7 +154,13 @@ the button; the research shelf in wood, its trails dotted sepia; the
 Townhall's villagers as M2's row of faces — one round portrait per bed the
 houses hold, the one in training under a sand-timer, free beds as empty
 sockets, "+N" past eight — with the clock on the Train button; the header's
-Mana as an orb resting on a slim gauge. `border-image` forfeits `border-radius`,
+Mana as an orb resting on a slim gauge; nails at the corners of the nav beam
+and the plaque (the two planks with bare corners — on a titled plank they read
+as dirt); and the pennant flying from the quest scroll's corner in place of the
+seal once the quest is done. The header's counters are M1's plaques — rounded
+slots cut into the plank, 18px mark and a 12px bold number, the Gems slot
+parchment like the rest with its green knob — sized so four coins, the gauge,
+the rope and Gems share one 402px line (~395px at 12; 430 at 13). `border-image` forfeits `border-radius`,
 so the frame's rounding lives in the art. Dropping the one `@import` restores
 the flat kit.
 
