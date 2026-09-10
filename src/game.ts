@@ -17,6 +17,7 @@ import type { IconName } from './ui/kit/icon';
 import {
   buildDurationForCell, canMoveDistrict, districtCount, hasPlacementRestriction,
   maxDistrictCount, nextBuildCost, placementBlock, upgradeCost, validPlacementCells,
+  requiredPopulation,
 } from './sim/districts';
 import {
   explorationGate, fogState, nextRevealTapCost, reachLevelFor, revealCostForCell, revealTap,
@@ -1276,6 +1277,10 @@ export class Game {
     if (result === 'NeedsHarmony') {
       const short = harmonyBlock(this.state, DISTRICTS[definitionId], targetLevel, district);
       return `Needs ${short?.shortBy ?? 0} more Harmony — build a decoration`;
+    }
+    if (result === 'NeedsPopulation') {
+      const need = requiredPopulation(definitionId, targetLevel);
+      return `Needs ${need} villagers — you have ${this.state.city.population}. Train more at the Townhall`;
     }
     return result;
   }

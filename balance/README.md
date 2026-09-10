@@ -39,7 +39,8 @@ would reach for them (see `Docs/features/12-quests.md` §2):
 
 | Want | Change |
 |---|---|
-| Villagers arrive too fast or too slow early | `Settings` → `city.population_cost_first` — the first six prices, authored in order (5, 20, 100, 300, 500, 1000). Past the list, `city.population_cost_growth` takes over from the LAST authored price. |
+| The Townhall levels too easily / the city never needs its people | `Districts` → the Townhall row's `required_population_per_level` — villagers each level asks for, index 0 gating level 2 |
+| Villagers arrive too fast or too slow early | `Settings` → `city.population_cost_first` — the first six prices, authored in order (5, 20, 100, 300, 500, 1000). Past the list, `city.population_cost_growth` (×1.05) takes over from the LAST authored price. |
 | The opening feels too tight / too generous with Gold | `Settings` → `city.initial_gold` (25). It buys the first five fog cells. |
 | Fog costs too many taps | `Settings` → `fog.gold_per_tap`, or the `Surveying` row in `Upgrades` (each level makes one tap count for one more) |
 | Fog costs too much Gold | `FogRings` — cost by distance ring |

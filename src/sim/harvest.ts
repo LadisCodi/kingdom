@@ -143,7 +143,17 @@ export function recoversAt(
   state: GameState, map: MapData, cell: Coord, now: number,
 ): number | null {
   const spec = harvestSpecAt(state, cell);
-  if (spec === null || isInexhaustible(spec)) return null;
+  return spec === null ? null : recoversForSpec(state, map, cell, spec, now);
+}
+
+/** `recoversAt` for a caller that already knows the cell's spec — the crew
+ *  loop asks this for every workable cell of every idle worker on every
+ *  event, and looking the spec up each time (a scan of the district list per
+ *  call) was most of an 8-hour catch-up with a big crew. Same answer. */
+export function recoversForSpec(
+  state: GameState, map: MapData, cell: Coord, spec: HarvestSpec, now: number,
+): number | null {
+  if (isInexhaustible(spec)) return null;
   const s = state.harvest[coordKey(cell)];
   if (!s) return null;
   recoverIfDue(s, map, cell, spec, now);

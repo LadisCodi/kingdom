@@ -7,7 +7,7 @@ import { RUSH } from './data/definitions';
 import {
   buildDurationForCell, buildGoodsCost, canMoveDistrict,
   nextBuildCost, nextOrdinal,
-  placementBlock, requiredTechForLevel, requiredTownhallLevel,
+  placementBlock, requiredPopulation, requiredTechForLevel, requiredTownhallLevel,
   upgradeCost, upgradeDuration, upgradeGoodsCost,
 } from './districts';
 import { advanceTraining, nextTrainingCompletion } from './army';
@@ -217,7 +217,7 @@ export function moveDistrict(
 }
 
 export type UpgradeResult =
-  | 'Started' | 'AtMaxLevel' | 'AlreadyUpgrading' | 'RequirementsNotMet'
+  | 'Started' | 'AtMaxLevel' | 'AlreadyUpgrading' | 'RequirementsNotMet' | 'NeedsPopulation'
   | 'NoBuilderFree' | 'NotEnoughResources' | 'NotEnoughGoods' | 'NeedsHarmony';
 
 export function upgradeDistrict(state: GameState, districtUniqueId: string): UpgradeResult {
@@ -233,6 +233,12 @@ export function upgradeDistrict(state: GameState, districtUniqueId: string): Upg
   }
   const gateTech = requiredTechForLevel(district.definitionId, district.level + 1);
   if (gateTech !== null && !isTechComplete(state, gateTech)) return 'RequirementsNotMet';
+  // A town grows when its people do: the Townhall's levels ask for villagers
+  // on top of the technology, and the answer is an errand of its own — Food,
+  // and the training line (05-city-and-districts.md §1).
+  if (state.city.population < requiredPopulation(district.definitionId, district.level + 1)) {
+    return 'NeedsPopulation';
+  }
   if (state.city.queue.length >= buildQueueCapacity(state)) return 'NoBuilderFree';
   const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
   // Two purses, two refusals. Goods are told apart from raw resources because

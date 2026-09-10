@@ -6,7 +6,7 @@ import {
   DISTRICTS, ERA_UNLOCK_CELLS, FOG, KNOWLEDGE, LANDMARKS, QUESTS, RUINS, TECHNOLOGIES, TECH_ORDER,
   levelIndexed, type QuestDef, CURRENCIES,
 } from '../src/sim/data/definitions';
-import { requiredTechForLevel } from '../src/sim/districts';
+import { requiredPopulation, requiredTechForLevel } from '../src/sim/districts';
 import { townhallDistance } from '../src/sim/grid';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
@@ -642,6 +642,21 @@ describe('the Townhall\'s reach holds everything the chain asks for', () => {
       expect(cellsWithin(reachAt(levels[i])),
         `by ${q.id} the chain has asked for ${asked} cells, at Townhall ${levels[i]}`)
         .toBeGreaterThanOrEqual(asked);
+    });
+  });
+});
+
+// Docs/features/05-city-and-districts.md §1 — the chain trains the villagers
+// the Townhall asks for before it asks for the Townhall.
+describe('the chain trains the villagers each Townhall level asks for', () => {
+  it('every UpgradeDistrict Townhall beat follows a ReachPopulation beat that covers it', () => {
+    let reached = 0;
+    QUESTS.forEach((q) => {
+      if (q.goalType === 'ReachPopulation') reached = Math.max(reached, q.goalAmount);
+      if (q.goalType === 'UpgradeDistrict' && q.goalTarget === 'Townhall') {
+        expect(reached, `${q.id} asks for Townhall ${q.goalLevel} with ${reached} villagers asked so far`)
+          .toBeGreaterThanOrEqual(requiredPopulation('Townhall', q.goalLevel!));
+      }
     });
   });
 });

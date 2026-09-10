@@ -9,10 +9,10 @@
 // empties releases the claim and walks to another, and that is both where the
 // distance cost lives and the visible signal that you are over-extracting.
 
-import { DISTRICTS, HARVEST, levelIndexed } from './data/definitions';
+import { DISTRICTS, HARVEST, levelIndexed, type HarvestSpec } from './data/definitions';
 import { cellsWithinRadiusOfRect, euclideanTiles, type MapData } from './grid';
 import { effectiveWorkerSpeed, effectiveWorkerStrike, workerStrikeMs } from './upgrades';
-import { drawFromCell, harvestSourceAt, isExhausted, recoversAt } from './harvest';
+import { drawFromCell, harvestSourceAt, harvestSpecAt, isExhausted, recoversForSpec } from './harvest';
 import { recordResourceDiscovery } from './discovery';
 import { recordQuestEvent } from './quests';
 import {
@@ -86,6 +86,13 @@ export function assignableWorkerLimit(district: District): number {
 function crewIndex(state: GameState, map: MapData) {
   const cells = new Map<string, Coord[]>();
   const claims = new Map<string, Worker>();
+  // What each workable cell yields, memoised beside the cells and dropped
+  // with them: the spec of a cell moves only when its feature is consumed,
+  // and that is the one event that clears the cell lists too.
+  const specs = new Map<string, HarvestSpec | null>();
+  // The district list does not change inside one advance, so the worker →
+  // building lookup is a map rather than a scan per worker per event.
+  const buildings = new Map<string, District | undefined>();
   for (const w of state.workers) {
     if (w.claimedCell !== null) claims.set(coordKey(w.claimedCell), w);
   }
@@ -96,6 +103,18 @@ function crewIndex(state: GameState, map: MapData) {
       const fresh = workableCells(state, map, district);
       cells.set(district.uniqueId, fresh);
       return fresh;
+    },
+    spec(cell: Coord): HarvestSpec | null {
+      const key = coordKey(cell);
+      const hit = specs.get(key);
+      if (hit !== undefined) return hit;
+      const fresh = harvestSpecAt(state, cell);
+      specs.set(key, fresh);
+      return fresh;
+    },
+    building(w: Worker): District | undefined {
+      if (!buildings.has(w.buildingId)) buildings.set(w.buildingId, districtById(state, w.buildingId));
+      return buildings.get(w.buildingId);
     },
     /** The worker holding `cell`, if any. At most one: a claim is taken only
      *  through `findClaimableCell`, which skips what is already held. */
@@ -114,7 +133,7 @@ function crewIndex(state: GameState, map: MapData) {
         if (claims.get(key) === w) claims.delete(key);
       }
       if (w.claimedCell !== null) claims.set(coordKey(w.claimedCell), w);
-      if (struck !== null && harvestSourceAt(state, struck) === null) cells.clear();
+      if (struck !== null && harvestSourceAt(state, struck) === null) { cells.clear(); specs.clear(); }
     },
   };
 }
@@ -223,7 +242,9 @@ function nextEventAt(
   for (const cell of index.workable(building)) {
     const by = index.claimedBy(cell);
     if (by !== undefined && by !== w) continue;
-    const at = Math.max(w.stateStartedAt, recoversAt(state, map, cell, w.stateStartedAt) ?? w.stateStartedAt);
+    const spec = index.spec(cell);
+    const recovers = spec === null ? null : recoversForSpec(state, map, cell, spec, w.stateStartedAt);
+    const at = Math.max(w.stateStartedAt, recovers ?? w.stateStartedAt);
     if (earliest === null || at < earliest) earliest = at;
   }
   return earliest;
@@ -317,7 +338,7 @@ export function advanceWorkers(state: GameState, map: MapData, toTime: number): 
     let next: Worker | null = null;
     let nextAt = Infinity;
     for (const w of state.workers) {
-      const building = districtById(state, w.buildingId);
+      const building = index.building(w);
       if (!building || building.state !== 'Built') continue;
       const at = nextEventAt(state, map, w, building, index);
       if (at !== null && at <= toTime && at < nextAt) {
@@ -326,7 +347,7 @@ export function advanceWorkers(state: GameState, map: MapData, toTime: number): 
       }
     }
     if (next === null) return out;
-    const building = districtById(state, next.buildingId)!;
+    const building = index.building(next)!;
     // Guard against zero-length loops: an Idle worker whose dispatch fails
     // advances its own reference time so the same wake isn't reprocessed.
     const before = next.activity;

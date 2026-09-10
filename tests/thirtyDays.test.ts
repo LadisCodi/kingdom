@@ -20,8 +20,8 @@ import {
   advance, changeWorkers, enqueueBuild, upgradeDistrict,
 } from '../src/sim/commands';
 import {
-  LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredTechForLevel,
-  requiredTownhallLevel, upgradeGoodsCost, validPlacementCells,
+  LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredPopulation,
+  requiredTechForLevel, requiredTownhallLevel, upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
 import { explorationGate, fogState, isPayable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
@@ -277,6 +277,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
     if (state.city.queue.some((q) => q.districtUniqueId === th.uniqueId)) return false;
     const gate = requiredTechForLevel('Townhall', next);
     if (gate !== null && !isTechComplete(state, gate)) return false;
+    if (state.city.population < requiredPopulation('Townhall', next)) return false;
     return canAffordGoods(state.city.goods, upgradeGoodsCost('Townhall', next))
       && harmonyBlock(state, DISTRICTS.Townhall, next, th) === null
       && state.city.queue.length >= buildQueueCapacity(state);
@@ -302,7 +303,10 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
         if (enqueueBuild(state, map, maker.id, cell) === 'Started') { started = true; break; }
       }
     }
-    if (!started && housedPopulation(state) >= maxPopulation(state) - 1) {
+    // A Townhall refused for VILLAGERS is answered the way the card says:
+    // roofs first, then the training line fills them (step 3, next visit).
+    if (!started && (thResult === 'NeedsPopulation'
+      || housedPopulation(state) >= maxPopulation(state) - 1)) {
       const cell = cellFor(DISTRICTS.Housing);
       if (cell && builtCount(state, 'Housing') < maxDistrictCount(state, DISTRICTS.Housing)
         && enqueueBuild(state, map, 'Housing', cell) === 'Started') started = true;
@@ -611,8 +615,16 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    orientative, so each bound carries a few days of slack; the two
     //    lower bounds keep the ladder from collapsing into a week. Measured
     //    2026-09-08: 2 · 3 · 7 · 9 · 9 · 11 · 14 · 21 · 25.
+    //
+    //    2026-09-10, the Townhall asks for villagers (05-city-and-districts.md
+    //    §1: 3 · 5 · 12 · 20 · 30 · 40 · 50 · 60 · 72, villager price growth
+    //    ×1.05): measured 3 · 7 · 8 · 10 · 11 · 13 · 16 · 22 · 30. TH3 moved
+    //    from day 3 to day 7 — five villagers at Townhall 2 are three houses
+    //    and 925 Food, and that is the coupling the gate is for — so its bound
+    //    is re-pinned to 7. Every other level landed inside its old bound,
+    //    and TH10 on the month's last day.
     const noLaterThan: Record<string, number> = {
-      TH2: 3, TH3: 4, TH4: 8, TH5: 10, TH6: 13, TH7: 17, TH8: 23, TH9: 27, TH10: 30,
+      TH2: 3, TH3: 7, TH4: 8, TH5: 10, TH6: 13, TH7: 17, TH8: 23, TH9: 27, TH10: 30,
     };
     for (const [level, day] of Object.entries(noLaterThan)) {
       expect(milestones[level], `${level} was never reached`).toBeDefined();

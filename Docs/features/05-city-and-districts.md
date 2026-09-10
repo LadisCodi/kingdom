@@ -25,8 +25,19 @@
 | Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
 | Gate to the next level | 60 Wood | `Bureaucracy` | `Magistracy` | — |
+| Villagers to reach it | — | 3 | 5 | 12 |
 | Explores to ring | 3 | 6 | 8 | 10 |
 
+- **A town grows when its people do.** Every level past the first asks for
+  villagers on top of its technology: `Districts.required_population_per_level`
+  on the Townhall row, **3 · 5 · 12 · 20 · 30 · 40 · 50 · 60 · 72**. Total
+  population, housed or not; each level asks for fewer than the houses of the
+  level before can hold, so the answer is always roofs, Food and the training
+  line. The card says the number and where the city stands: *Needs 12
+  villagers · you have 9*.
+- Villagers are priced `5, 20, 100, 300, 500, 1000` Food then **×1.05** each
+  ([`03-economy.md`](03-economy.md) §5), so a hundred of them is a month of
+  Food rather than a lifetime.
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
 - It also sets **how far the fog can be paid for**: `fog.reach_per_townhall_level`,
   in BFS rings, 3 at level 1 to the whole province at 10
@@ -244,6 +255,7 @@ What follows the building:
 | How much dearer a later instance is | `Districts.instance_linear_growth`, `instance_exponential_growth` — §3.1 |
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |
 | Per-level Townhall and tech gates | `Districts.required_*_per_level` |
+| Villagers each Townhall level asks for | `Districts.required_population_per_level` on the Townhall row — §1 |
 | Housing capacity per level | `Districts.population_capacity` — OQ-46 |
 | House rent bonus per level | `Districts.tax_bonus_per_level` — +25% a level ([`03-economy.md`](03-economy.md) §3) |
 | Influence radius and worker caps | [`04-harvest.md`](04-harvest.md) §5 |

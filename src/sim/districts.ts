@@ -306,6 +306,15 @@ export function requiredTownhallLevel(definitionId: DistrictId, targetLevel: num
   return levelIndexed(list, targetLevel - 1); // list is indexed by target level − 2
 }
 
+/** Villagers the city must have to reach `targetLevel` (same indexing); 0 = no
+ *  gate. Total population, housed or not: it is the number the player sees,
+ *  and the houses fill themselves. */
+export function requiredPopulation(definitionId: DistrictId, targetLevel: number): number {
+  const list = DISTRICTS[definitionId].requiredPopulationPerLevel;
+  if (targetLevel <= 1 || list.length === 0) return 0;
+  return levelIndexed(list, targetLevel - 1);
+}
+
 /** Technology required to reach `targetLevel`; null = none (same indexing). */
 export function requiredTechForLevel(
   definitionId: DistrictId,
