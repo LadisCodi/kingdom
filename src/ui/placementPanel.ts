@@ -16,7 +16,7 @@ import { buildGoodsCost } from '../sim/districts';
 import { getGood } from '../sim/goods';
 import { isDecoration } from '../sim/harmony';
 import type { GoodId } from '../sim/state';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
 import { btn, iconEl } from './kit';
@@ -95,7 +95,7 @@ export function renderPlacementPanel(game: Game): HTMLElement {
 
   return el('div', { class: 'plc-bar' },
     el('div', { class: 'plc-art' }, art
-      ? el('img', { src: art, alt: '' })
+      ? spriteImgAt(art)
       : iconEl(info.definitionId, { size: 'lg' })),
     el('div', { class: 'plc-body' },
       el('div', { class: 'plc-name' }, def.name),

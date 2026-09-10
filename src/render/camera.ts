@@ -17,6 +17,24 @@ export class Camera {
     this.y = (cell.y + 0.5) * TILE_SIZE;
   }
 
+  /**
+   * Centre a footprint in the band of the screen that is still MAP: between
+   * `top` and `bottom` in screen px (the header's bottom edge and a card's
+   * top edge). A card about a building used to slide up over the very thing
+   * it described; the building now moves into the sky the card leaves.
+   * `size` is the footprint in cells, anchored top-left at `cell`.
+   */
+  centerFootprintWithin(cell: Coord, size: { x: number; y: number }, top: number, bottom: number): void {
+    const h = this.canvas.clientHeight;
+    const bandMid = (Math.max(0, top) + Math.min(h, bottom)) / 2;
+    // World point of the footprint's centre.
+    const wx = (cell.x + size.x / 2) * TILE_SIZE;
+    const wy = (cell.y + size.y / 2) * TILE_SIZE;
+    // cellToScreen: sy = (wy - this.y) * zoom + h / 2  →  solve for this.y.
+    this.x = wx;
+    this.y = wy - (bandMid - h / 2) / this.zoom;
+  }
+
   panByScreen(dx: number, dy: number): void {
     this.x -= dx / this.zoom;
     this.y -= dy / this.zoom;

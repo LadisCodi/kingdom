@@ -177,7 +177,7 @@ export function renderResearchMenu(game: Game): HTMLElement {
   // Captured BEFORE pageEl is reassigned — the old element is the evidence,
   // and overwriting it first would make every render look fresh.
   const fresh = isFreshMount();
-  const page = el('div', { class: 'tech-page', 'data-keep-scroll': '' }, flow);
+  const page = el('div', { class: 'tech-page', 'data-keep-scroll': 'tech-page' }, flow);
   pageEl = page;
   // Tapping the page beside a card deselects (the info panel hides).
   page.addEventListener('click', (e) => {
@@ -366,7 +366,7 @@ function techInfoModal(game: Game, id: TechId, busy: number, slots: number): HTM
   const def = TECHNOLOGIES[id];
   const dismiss = (): void => { selected = null; game.notify(); };
 
-  const panel = el('div', { class: 'tech-info' });
+  const panel = el('div', { class: 'tech-info', 'data-keep-scroll': 'tech-info' });
   const head = el('div', { class: 'tech-info-head' },
     el('h3', {}, `${def.glyph} ${def.name}`),
     knob('✕', dismiss, { label: 'Close' }));

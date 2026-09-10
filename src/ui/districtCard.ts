@@ -31,10 +31,12 @@ import {
 import { mana } from '../sim/mana';
 import { harvestSourceAt } from '../sim/harvest';
 import { isTechComplete } from '../sim/research';
-import { spriteUrl } from '../render/sprites';
+import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { figure, trainingSection } from './trainingSection';
+import { districtCardSignature } from './districtCardSignature';
 import type { IconName } from './kit/icon';
 import { workshopSection } from './workshopSection';
+import { LiveParts, type Screen } from './kit';
 import {
   coordKey, queueProgress, remainingSeconds, townhall, type District, type GoodId,
 } from '../sim/state';
@@ -80,7 +82,7 @@ function levelStars(level: number, max: number): HTMLElement {
 function portrait(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number): HTMLElement {
   const url = spriteUrl(`${def.sprite}_l${level}`) ?? spriteUrl(def.sprite);
   return el('div', { class: 'dc-portrait' }, url
-    ? el('img', { src: url, alt: '' })
+    ? spriteImgAt(url)
     : iconEl(def.id, { size: 'lg' }));
 }
 
@@ -209,10 +211,20 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
   return out;
 }
 
-export function renderDistrictCard(game: Game, district: District): HTMLElement {
+/**
+ * The whole card, built fresh. `live` collects the handful of lines that move
+ * every second — a countdown, a trough, a stock — so the screen that owns
+ * this card can rebuild those alone (see `districtCardScreen`). Without it
+ * the card is simply static, which is what a one-shot caller wants.
+ */
+export function renderDistrictCard(game: Game, district: District, live?: LiveParts): HTMLElement {
   const def = DISTRICTS[district.definitionId];
-  const now = game.now();
-  const body = el('div', { class: 'dc-body' });
+  // A live part when the card is owned by a screen; built once otherwise.
+  const part = (sigOf: () => string, build: () => HTMLElement): HTMLElement =>
+    (live ? live.add(sigOf, build) : build());
+  // The longest scroller in the game. Kept by name across a rebuild, and —
+  // now that the card is built once — simply the same node across ticks.
+  const body = el('div', { class: 'dc-body', 'data-keep-scroll': 'dc-body' });
   const queueItem = game.state.city.queue.find((q) => q.districtUniqueId === district.uniqueId);
 
   // ------------------------------------------------------------ variant body
@@ -222,11 +234,11 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     // Every building that turns something out gets the same block — the
     // Townhall's villagers and a hall's soldiers are one mechanic now, so
     // they are one piece of UI. See trainingSection.ts.
-    const training = trainingSection(game, district);
+    const training = trainingSection(game, district, live);
     if (training) body.append(training);
 
     // A workshop turns things out too, so it gets the same kind of block.
-    const workshop = workshopSection(game, district);
+    const workshop = workshopSection(game, district, live);
     if (workshop) body.append(workshop);
 
     // A decoration is ONE number, and this is it. It has no crew, no queue
@@ -264,18 +276,31 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
 
     // A crop plot is a resource cell you tap, so show what is left in it.
     if (district.definitionId === 'FarmLands') {
-      const spec = HARVEST.Crops;
-      const left = stockAt(game.state, game.map, district.location, now);
-      const readyAt = recoversAt(game.state, game.map, district.location, now);
-      body.append(el('div', { class: 'dc-homes' },
-        iconEl('Food', { size: 'sm' }),
-        pips(left, spec.stock),
-        el('span', {}, readyAt === null
-          ? `${left} Food left in it`
-          : `regrowing — ${formatDuration((readyAt - now) / 1000)}`)));
-      body.append(el('div', { class: 'dc-tapline' },
-        iconEl('showme', { size: 'sm' }),
-        `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, now)} Food`));
+      const plot = () => {
+        const t = game.now();
+        const spec = HARVEST.Crops;
+        const left = stockAt(game.state, game.map, district.location, t);
+        const readyAt = recoversAt(game.state, game.map, district.location, t);
+        return el('div', { class: 'dc-live' },
+          el('div', { class: 'dc-homes' },
+            iconEl('Food', { size: 'sm' }),
+            pips(left, spec.stock),
+            el('span', {}, readyAt === null
+              ? `${left} Food left in it`
+              : `regrowing — ${formatDuration((readyAt - t) / 1000)}`)),
+          el('div', { class: 'dc-tapline' },
+            iconEl('showme', { size: 'sm' }),
+            `Tap the plot for +${tapYieldAt(game.state, game.map, district.location, t)} Food`));
+      };
+      body.append(part(() => {
+        const t = game.now();
+        const readyAt = recoversAt(game.state, game.map, district.location, t);
+        return JSON.stringify([
+          stockAt(game.state, game.map, district.location, t),
+          readyAt === null ? null : formatDuration((readyAt - t) / 1000),
+          tapYieldAt(game.state, game.map, district.location, t),
+        ]);
+      }, plot));
     }
 
     // A house is people and the rent they pay, so show both as such.
@@ -321,10 +346,13 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
           : `Tap to pull ${Math.round(tapWorkSeconds(game.state))}s of rent forward, `
             + 'as often as you like'));
       if (residents > 0) {
-        const pool = mana(game.state);
-        body.append(el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },
-          iconEl('Mana', { size: 'sm' }),
-          `${TAP.manaCost} per tap — ${pool} left`));
+        // The pool refills on its own, so this line is live.
+        body.append(part(() => String(mana(game.state)), () => {
+          const pool = mana(game.state);
+          return el('div', { class: `dc-tapcost${pool < TAP.manaCost ? ' is-bad' : ''}` },
+            iconEl('Mana', { size: 'sm' }),
+            `${TAP.manaCost} per tap — ${pool} left`);
+        }));
       }
     }
 
@@ -385,16 +413,19 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
 
       // What the crew is doing, aggregated — a per-worker list of emoji was
       // noise once there were more than two of them.
-      const busy = game.state.workers.filter((w) => w.buildingId === district.uniqueId);
-      if (busy.length > 0) {
+      const crewWords = () => {
         const counts = new Map<string, number>();
-        for (const w of busy) {
+        for (const w of game.state.workers) {
+          if (w.buildingId !== district.uniqueId) continue;
           const label = { Idle: 'waiting', MovingToCell: 'heading out',
             Working: 'working', MovingHome: 'carrying home' }[w.activity];
           counts.set(label, (counts.get(label) ?? 0) + 1);
         }
-        body.append(el('div', { class: 'dc-note' },
-          [...counts].map(([label, n]) => `${n} ${label}`).join(' · ')));
+        return [...counts].map(([label, n]) => `${n} ${label}`).join(' · ');
+      };
+      if (game.state.workers.some((w) => w.buildingId === district.uniqueId)) {
+        // Workers change activity many times a minute; only their words are live.
+        body.append(part(crewWords, () => el('div', { class: 'dc-note' }, crewWords())));
       } else if (district.assignedWorkers === 0) {
         body.append(el('div', { class: 'dc-tapline' },
           iconEl('showme', { size: 'sm' }), 'Nobody works here yet — add a villager'));
@@ -415,26 +446,38 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
   const foot = el('div', { class: 'dc-foot' });
 
   if (queueItem) {
-    // Scaffolding: what is happening and how to skip it.
-    const bar = progress('sky');
-    bar.set(queueProgress(queueItem, now),
-      queueItem.startedAt === null
-        ? 'waiting for a builder'
-        : `${formatDuration(remainingSeconds(queueItem, now))} left`);
-    foot.append(bar.root);
-    const rush = btn({
-      label: 'Finish',
-      kind: 'gem',
-      onClick: () => game.doRush(queueItem.uniqueId),
-      // The price used to be glued into the label with a separator. It is a
-      // cost like any other, so it goes where every other cost now goes.
-      cost: { Gems: gemRushCost(queueItem, now) },
-      have: (c) => game.walletValue(c),
-    });
-    // No Cancel: a build is paid for when it starts, and a building put in
-    // the wrong place is MOVED rather than undone
-    // (Docs/features/06-construction.md §1).
-    foot.append(el('div', { class: 'dc-actions' }, rush));
+    // Scaffolding: what is happening and how to skip it. Live — the bar and
+    // the price of skipping both move with the clock.
+    const scaffold = () => {
+      const t = game.now();
+      const bar = progress('sky');
+      bar.set(queueProgress(queueItem, t),
+        queueItem.startedAt === null
+          ? 'waiting for a builder'
+          : `${formatDuration(remainingSeconds(queueItem, t))} left`);
+      const rush = btn({
+        label: 'Finish',
+        kind: 'gem',
+        onClick: () => game.doRush(queueItem.uniqueId),
+        // The price used to be glued into the label with a separator. It is a
+        // cost like any other, so it goes where every other cost now goes.
+        cost: { Gems: gemRushCost(queueItem, t) },
+        have: (c) => game.walletValue(c),
+      });
+      // No Cancel: a build is paid for when it starts, and a building put in
+      // the wrong place is MOVED rather than undone
+      // (Docs/features/06-construction.md §1).
+      return el('div', { class: 'dc-live' }, bar.root, el('div', { class: 'dc-actions' }, rush));
+    };
+    foot.append(part(() => {
+      const t = game.now();
+      return JSON.stringify([
+        queueItem.startedAt === null ? null : formatDuration(remainingSeconds(queueItem, t)),
+        Math.round(queueProgress(queueItem, t) * 200),
+        gemRushCost(queueItem, t),
+        game.walletValue('Gems') < gemRushCost(queueItem, t),
+      ]);
+    }, scaffold));
   } else if (district.state === 'Built' && district.level < def.maxLevel) {
     const next = district.level + 1;
     const cost = upgradeCost(district.definitionId, district.ordinal, district.level);
@@ -551,4 +594,42 @@ export function renderDistrictCard(game: Game, district: District): HTMLElement 
     body,
     foot,
   );
+}
+
+/**
+ * The card as a screen that is built ONCE per building.
+ *
+ * `ScreenSlot` keys it by district, so a different building is a fresh
+ * screen. Inside one building's life the card is rebuilt only when its
+ * signature moves — a level, a queue, a crew, a price crossing the purse —
+ * and every tick in between touches nothing but the live parts. That is what
+ * lets a finger hold a knob through a tick, and an iOS fling on the body run
+ * to the end: the nodes under the finger are the same nodes a second later.
+ */
+export function districtCardScreen(game: Game, districtId: string): Screen {
+  const root = el('div', { class: 'dc' });
+  let signature: string | null = null;
+  let live = new LiveParts();
+  return {
+    root,
+    refresh: () => {
+      const district = game.state.city.districts.find((d) => d.uniqueId === districtId);
+      if (!district) {
+        releaseSprites(root);
+        root.replaceChildren();
+        signature = null;
+        return;
+      }
+      const now = districtCardSignature(game, district);
+      if (now === signature) {
+        live.refresh();
+        return;
+      }
+      signature = now;
+      live = new LiveParts();
+      releaseSprites(root);
+      const card = renderDistrictCard(game, district, live);
+      root.replaceChildren(...Array.from(card.childNodes));
+    },
+  };
 }

@@ -20,7 +20,7 @@
 
 import { HEROES, UNITS, type UnitDef } from '../sim/data/definitions';
 import { heroStats, rosterView } from '../sim/heroes';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { UnitId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
@@ -30,7 +30,7 @@ import { unitBust } from './unitArt';
 const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
   const url = spriteUrl(sprite);
   return url
-    ? el('img', { class: cls, src: url, alt: '' })
+    ? spriteImgAt(url, cls)
     : el('div', { class: `${cls} is-glyph` }, glyph);
 };
 

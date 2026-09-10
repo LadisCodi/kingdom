@@ -21,7 +21,7 @@
 
 import { ARTIFACTS, HEROES } from '../sim/data/definitions';
 import { playSfx } from '../audio/sfx';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game, GachaPrize } from '../game';
 import type { HeroId } from '../sim/state';
 import { el } from './format';
@@ -38,7 +38,7 @@ function portrait(id: HeroId, cls: string): HTMLElement {
   const def = HEROES[id];
   const url = spriteUrl(def.sprite);
   return url
-    ? el('img', { class: cls, src: url, alt: '' })
+    ? spriteImgAt(url, cls)
     : el('div', { class: `${cls} is-glyph` }, def.glyph);
 }
 
@@ -57,7 +57,7 @@ function prizeTile(prize: GachaPrize): HTMLElement {
     const relic = ARTIFACTS[prize.artifactId];
     const url = spriteUrl(relic.sprite);
     return el('div', { class: 'gr-tile is-fragment' },
-      url ? el('img', { class: 'gr-art', src: url, alt: '' })
+      url ? spriteImgAt(url, 'gr-art')
         : el('div', { class: 'gr-art is-glyph' }, relic.glyph),
       el('span', { class: 'gr-mark' }, iconEl('fragment', { size: 'sm' })),
       el('span', { class: 'gr-count' }, String(prize.amount)));

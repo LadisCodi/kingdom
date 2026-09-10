@@ -19,7 +19,7 @@
 
 import { HEROES, UNITS, VILLAINS } from '../sim/data/definitions';
 import { playSfx } from '../audio/sfx';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { BattleEvent, BattleLog, BoardSlot, Side } from '../sim/battle';
 import type { Game } from '../game';
 import { el } from './format';
@@ -35,7 +35,7 @@ function face(slot: BoardSlot): HTMLElement {
     const { sprite } = UNITS[slot.unitId];
     const url = spriteUrl(`${sprite}_avatar`) ?? spriteUrl(sprite);
     return url
-      ? el('img', { class: 'bs-portrait', src: url, alt: '' })
+      ? spriteImgAt(url, 'bs-portrait')
       : iconEl(slot.unitId, { size: 'lg' });
   }
   const def = slot.fighterId !== null && slot.fighterId in HEROES
@@ -45,7 +45,7 @@ function face(slot: BoardSlot): HTMLElement {
       : null;
   const url = def === null ? null : spriteUrl(def.sprite);
   return url
-    ? el('img', { class: 'bs-portrait', src: url, alt: '' })
+    ? spriteImgAt(url, 'bs-portrait')
     : el('div', { class: 'bs-portrait is-glyph' }, def?.glyph ?? '?');
 }
 

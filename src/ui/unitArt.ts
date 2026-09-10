@@ -22,14 +22,12 @@
 // a function from.
 
 import { UNITS } from '../sim/data/definitions';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { TrainableId } from '../sim/state';
-import { el } from './format';
 import { iconEl } from './kit';
 import type { IconName } from './kit/icon';
 
-const img = (url: string, cls: string): HTMLElement =>
-  el('img', { class: cls, src: url, alt: '' });
+const img = (url: string, cls: string): HTMLElement => spriteImgAt(url, cls);
 
 /** The asset stem a trainee's two files are named by. */
 const stemOf = (trainee: TrainableId): string =>

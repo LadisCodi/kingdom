@@ -165,7 +165,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: var(--font-display);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   color: var(--parchment);
   padding: 12px 36px;

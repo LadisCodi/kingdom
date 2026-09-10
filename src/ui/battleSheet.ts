@@ -27,7 +27,7 @@
 
 import { HEROES, UNITS } from '../sim/data/definitions';
 import type { EnemySquad } from '../sim/combat';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { CurrencyId, UnitId, Wallet } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
@@ -73,7 +73,7 @@ export interface BattleView {
 const art = (sprite: string, glyph: string, cls: string): HTMLElement => {
   const url = spriteUrl(sprite);
   return url
-    ? el('img', { class: cls, src: url, alt: '' })
+    ? spriteImgAt(url, cls)
     : el('div', { class: `${cls} is-glyph` }, glyph);
 };
 

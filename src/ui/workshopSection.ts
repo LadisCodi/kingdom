@@ -23,12 +23,14 @@ import {
 } from '../sim/workshops';
 import type { District, GoodId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, iconEl, knob, progress, stat } from './kit';
+import { action, iconEl, knob, progress, stat, type LiveParts } from './kit';
 
-/** The whole block, or null when this building is not a workshop. */
-export function workshopSection(game: Game, district: District): HTMLElement | null {
+/** The whole block, or null when this building is not a workshop. `live`
+ *  takes the queue and its countdown — the half that moves every second. */
+export function workshopSection(
+  game: Game, district: District, live?: LiveParts,
+): HTMLElement | null {
   if (!isWorkshop(district) || district.state !== 'Built') return null;
-  const now = game.now();
   const recipe = recipeOf(district);
   const line = game.state.city.workshops[district.uniqueId];
   const items = line?.items ?? [];
@@ -53,14 +55,74 @@ export function workshopSection(game: Game, district: District): HTMLElement | n
   ));
 
   // ---- the crew, which is the engine -------------------------------------
-  box.append(el('div', { class: 'dc-ws-crew' },
+  // Live: the work left per head shrinks with every strike.
+  const crewLine = () => el('div', { class: 'dc-ws-crew' },
     iconEl('workers', { size: 'sm' }),
     crew === 0
       ? el('span', { class: 'is-warning' }, 'No villagers here — nothing is being made')
       : el('span', {}, `${crew} working · `
-        + `${formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew)} each`)));
+        + `${formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew)} each`));
+  const crewSig = () => (crew === 0 ? '0'
+    : formatDuration(queuedWorkMs(game.state, district, recipe.id) / 1000 / crew));
+  box.append(live ? live.add(crewSig, crewLine) : crewLine());
 
-  // ---- the queue ----------------------------------------------------------
+  // ---- the queue, and what its front is doing -----------------------------
+  // Live: the bars and the countdown move every second, the rest of the
+  // block does not.
+  const queueSig = () => {
+    const now = game.now();
+    const its = game.state.city.workshops[district.uniqueId]?.items ?? [];
+    return JSON.stringify([
+      its.map((it, i) => [it.good, i < district.assignedWorkers
+        ? Math.round((it.workMs / (GOODS[it.good].workSeconds * 1000)) * 100) : -1]),
+      itemRemainingSeconds(game.state, district, now),
+      itemRushCost(game.state, district, now),
+    ]);
+  };
+  const queueBlock = () => workshopQueue(game, district);
+  box.append(live ? live.add(queueSig, queueBlock) : queueBlock());
+
+  // ---- add one ------------------------------------------------------------
+  const goodCost = recipe.inputGood === null
+    ? {} : { [recipe.inputGood]: recipe.inputGoodAmount };
+  const short = !canAfford(game.state.city.wallet, recipe.input)
+    || !canAffordGoods(game.state.city.goods, goodCost)
+    || (recipe.inputMana > 0 && mana(game.state) < recipe.inputMana);
+  box.append(action({
+    label: `Make ${recipe.name}`,
+    kind: 'primary',
+    icon: DISTRICTS[district.definitionId].id,
+    onClick: () => game.doQueueGood(district.uniqueId),
+    disabledReason: items.length >= capacity ? 'The queue is full' : undefined,
+    cost: recipe.input,
+    have: (c) => game.walletValue(c),
+    costExtra: [
+      ...(recipe.inputGood !== null
+        ? [{
+          icon: recipe.inputGood,
+          amount: String(recipe.inputGoodAmount),
+          short: getGood(game.state.city.goods, recipe.inputGood) < recipe.inputGoodAmount,
+        }] : []),
+      ...(recipe.inputMana > 0
+        ? [{
+          icon: 'Mana' as const,
+          amount: String(recipe.inputMana),
+          short: mana(game.state) < recipe.inputMana,
+        }] : []),
+    ],
+    info: short ? undefined : el('span', {}, `${items.length}/${capacity} queued`),
+  }));
+
+  return box;
+}
+
+/** The queue strip and the countdown under it. */
+function workshopQueue(game: Game, district: District): HTMLElement {
+  const now = game.now();
+  const items = game.state.city.workshops[district.uniqueId]?.items ?? [];
+  const capacity = queueCapacity(district);
+  const crew = district.assignedWorkers;
+  const box = el('div', { class: 'dc-ws-live' });
   const strip = el('div', { class: 'dc-ws-queue' });
   for (let i = 0; i < capacity; i++) {
     const item = items[i];
@@ -97,37 +159,6 @@ export function workshopSection(game: Game, district: District): HTMLElement | n
         have: (c) => game.walletValue(c),
       })])));
   }
-
-  // ---- add one ------------------------------------------------------------
-  const goodCost = recipe.inputGood === null
-    ? {} : { [recipe.inputGood]: recipe.inputGoodAmount };
-  const short = !canAfford(game.state.city.wallet, recipe.input)
-    || !canAffordGoods(game.state.city.goods, goodCost)
-    || (recipe.inputMana > 0 && mana(game.state) < recipe.inputMana);
-  box.append(action({
-    label: `Make ${recipe.name}`,
-    kind: 'primary',
-    icon: DISTRICTS[district.definitionId].id,
-    onClick: () => game.doQueueGood(district.uniqueId),
-    disabledReason: items.length >= capacity ? 'The queue is full' : undefined,
-    cost: recipe.input,
-    have: (c) => game.walletValue(c),
-    costExtra: [
-      ...(recipe.inputGood !== null
-        ? [{
-          icon: recipe.inputGood,
-          amount: String(recipe.inputGoodAmount),
-          short: getGood(game.state.city.goods, recipe.inputGood) < recipe.inputGoodAmount,
-        }] : []),
-      ...(recipe.inputMana > 0
-        ? [{
-          icon: 'Mana' as const,
-          amount: String(recipe.inputMana),
-          short: mana(game.state) < recipe.inputMana,
-        }] : []),
-    ],
-    info: short ? undefined : el('span', {}, `${items.length}/${capacity} queued`),
-  }));
 
   return box;
 }

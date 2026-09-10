@@ -73,7 +73,7 @@ export function sheet(
       // the per-tick rebuild, so reading a long sheet is possible at all.
       el(
         'div',
-        { class: 'k-sheet-body', 'data-keep-scroll': '', 'aria-label': opts.title },
+        { class: 'k-sheet-body', 'data-keep-scroll': 'sheet-body', 'aria-label': opts.title },
         ...children,
       ),
     ),

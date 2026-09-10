@@ -13,45 +13,31 @@
  * url() for the /kingdom/ base and content-hashes it, while a hand-written
  * <link href="/src/..."> works in dev and 404s on Pages.
  *
- * TWO FACES, AND THE SPLIT IS THE POINT. BoldPixels takes titles alone; the
- * body face takes body copy and, crucially, EVERY NUMBER.
- *
- * BOTH ARE PIXEL FACES, AND A PIXEL FACE HAS LEGAL SIZES. Each is drawn on a
- * grid, and rendering it at anything but a whole multiple of that grid puts
- * the outline between device pixels, where the rasteriser antialiases the
- * square edges into grey mush — which is the entire thing a pixel face exists
- * not to do. Measured over the 117 characters we actually ship:
- *
- *   BoldPixels   1024 upm / 64 = 16 px per em  -> 16, 32, 48
- *   m6x11plus    1152 upm / 64 = 18 px per em  -> 18, 36
- *
- * That is why --text-title is 32 and not 22, and why --text-body and
- * --text-helper are the same 18: there is no smaller size m6x11plus can be
- * set at without going soft. The helper tier is now carried by --ink-muted
- * instead of by size. tests/fonts.test.ts holds the sizes to the grids.
- *
- * The digits are tabular in both — BoldPixels 576 units across, m6x11plus 448
- * — so counters do not jitter as they tick. That was the one property the
- * previous pair was chosen for, and it survives.
- *
- * font-display: block on the title face: its metrics diverge sharply from
- * system-ui, so a swap would visibly reflow every heading; boot() waits for
- * it (with a ceiling) instead. The body face is close enough to swap benignly.
- *
- * Attribution is REQUIRED for both, and BoldPixels is ShareAlike. See
- * ../fonts/NOTICE.md — this is not the usual OFL situation. */
+ * ONE FACE, TWO WEIGHTS. PT Sans (ParaType, OFL) sets titles, body copy and
+ * every number; 700 is a real bold, so emphasis is a weight again. The pixel
+ * faces this replaces (2026-09-10) had legal sizes — whole multiples of a
+ * grid — and those sizes were what made a phone layout impossible to fit.
+ * The map keeps its pixels; the chrome does not. Tabular digits, so counters
+ * do not jitter as they tick. */
 @font-face {
-  font-family: 'Kingdom Display';
-  src: url('../fonts/boldpixels-latin.woff2') format('woff2');
+  font-family: 'PT Sans';
+  src: url('../fonts/pt-sans-400-latin.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
-  font-display: block;
+  font-display: swap;
 }
-/* One weight, one file. `font-synthesis-weight: none` below refuses the fake
- * bold a `font-weight: 700` would otherwise smear over it. */
 @font-face {
-  font-family: 'Kingdom Body';
-  src: url('../fonts/m6x11plus-latin.woff2') format('woff2');
+  font-family: 'PT Sans';
+  src: url('../fonts/pt-sans-700-latin.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+/* The title face, one weight. Chosen on the board 2026-09-11 over PT Sans
+ * 700: it reads as storybook where the bold sans read as a form. */
+@font-face {
+  font-family: 'Germania One';
+  src: url('../fonts/germania-one-400-latin.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -115,51 +101,32 @@
    *
    * --quest-h is the same trick for a widget: the toast slip stacks above the
    * quest scroll, which it can only do if it knows how tall the scroll is. */
-  --hud-h: 59px;
-  --nav-h: 84px;
+  --hud-h: 44px;
+  --nav-h: 52px;
   --quest-h: 0px;
 
   /* ---- type ----
    * `--font-display` is TITLES ONLY — headings, sheet planks, proper names,
-   * and only at --text-title. `--font-body` is body copy AND every number.
-   *
-   * The fallbacks matter more than they used to: m6x11plus ships 228 glyphs
-   * and lacks several the UI sets inline (→ · − ✓ ✕ … ’). CSS falls back per
-   * GLYPH, so those render from the system face rather than as tofu — visibly
-   * not pixel art, but present. Anything that must look drawn belongs in the
-   * atlas, not in a string. */
-  --font-display: 'Kingdom Display', Georgia, 'Times New Roman', serif;
-  --font-body: 'Kingdom Body', system-ui, -apple-system, sans-serif;
+   * and only at --text-title; every rule that uses it also sets
+   * `--font-display-weight`: Germania One has one weight, and asking it for
+   * 700 would get a synthesised smear. `--font-body` is body copy AND every
+   * number — Germania One's digits are proportional, so a number never
+   * goes in the title face. */
+  --font-display: 'Germania One', 'PT Sans', system-ui, -apple-system, sans-serif;
+  --font-display-weight: 400;
+  --font-body: 'PT Sans', system-ui, -apple-system, sans-serif;
 
-  /* The title face ships ONE weight, so a `font-weight: 700` anywhere near it
-   * — declared, or inherited from an <h2>'s user-agent default — would be
-   * faked by the browser into a smear. This refuses the fake globally: a face
-   * with a real bold (PT Sans, any system fallback) is unaffected, and a face
-   * without one renders the weight it actually has. Cheaper and far harder to
-   * forget than spelling out 400 on every title rule. */
-  font-synthesis-weight: none;
-
-  /* Sized against the DEVICE, which is what "crisp" is actually a property of.
-   * A design pixel covers (css-size x dpr) / grid device pixels, so the target
-   * device decides the legal sizes, not the CSS pixel:
-   *
-   *   m6x11plus (18 grid) @ DPR 3  ->  every multiple of 6:  18, 24, 30, 36
-   *   BoldPixels (16 grid) @ DPR 3 ->  every multiple of 16:  16, 32, 48
-   *
-   * The target is an iPhone 17 — 402x874 CSS px at DPR 3 — so 24px is exactly
-   * 4 device pixels per design pixel there. 18 and 36 are the only sizes that
-   * stay whole at EVERY dpr; 24 is a deliberate trade, because 18px body copy
-   * measured too small to read on the device and legibility outranks being
-   * pixel-exact on a desktop nobody plays on.
-   *
-   * 24px body = 14.7px caps, comfortably past the 17px-SF iOS body it sits
-   * beside. 18px helper = 11px caps, which is what PT Sans gave at 15px. */
-  --text-title: 32px;
-  --text-body: 24px;
-  --text-helper: 18px;
+  /* Sized for the phone the game is played on — 402x874 CSS px — and for
+   * nothing else: 16px body is the iOS reading size, 13px is the smallest
+   * helper line the brief allows (Docs/art/ui-menus-redesign.md §2), 22px is
+   * a title that stands over both without eating a sheet. No grid: PT Sans
+   * is an outline face and every whole pixel is legal. */
+  --text-title: 22px;
+  --text-body: 16px;
+  --text-helper: 13px;
 
   /* ---- form ---- */
-  --gutter: 24px;
+  --gutter: 12px; /* the side padding a sheet keeps from the frame */
   --radius: 10px;
   --radius-sm: 8px;
   --outline: 3px; /* panel frame outline */

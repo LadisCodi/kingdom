@@ -56,5 +56,5 @@ export function renderPayerSheet(game: Game): HTMLElement {
   // A plank with no close knob, on purpose: there is nothing to go back to.
   return el('div', { class: 'k-sheet is-centred payer-sheet' },
     panel(el('div', { class: 'k-grab' }), plank('Who are you playing as?'),
-      el('div', { class: 'k-sheet-body', 'data-keep-scroll': '' }, body)));
+      el('div', { class: 'k-sheet-body', 'data-keep-scroll': 'payer-body' }, body)));
 }

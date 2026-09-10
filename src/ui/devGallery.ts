@@ -152,6 +152,47 @@ export function mountGallery(root: HTMLElement): void {
       el('p', {}, 'A bottom sheet: grab handle, titled plank, its own close knob.'))),
   ));
 
+  // ---- the phone frame -------------------------------------------------
+  // Density is judged HERE, in one place: the header, a sheet at its cap and
+  // the nav, at the iPhone's 402×874, with a 44px ruler beside them. A kit
+  // primitive that looks fine on its own can still eat the screen in a row.
+  const phone = (width: number, height: number, ...body: HTMLElement[]) => {
+    const frame = el('div', { class: 'gal-phone', style: `width:${width}px;height:${height}px` });
+    frame.append(...body);
+    return frame;
+  };
+  const fakeHeader = () => el('div', { class: 'gal-phone-hud' },
+    el('span', { class: 'hud-coin' }, iconEl('Gold', { size: 'sm' }), '1,240'),
+    el('span', { class: 'hud-coin' }, iconEl('Food', { size: 'sm' }), '86'),
+    el('span', { class: 'hud-coin' }, iconEl('Wood', { size: 'sm' }), '312'),
+    el('span', { class: 'hud-coin' }, iconEl('Stone', { size: 'sm' }), '40'),
+    el('span', { class: 'hud-coin hud-gems' }, iconEl('Gems', { size: 'sm' }), '10'));
+  const fakeNav = () => el('div', { class: 'gal-phone-nav' },
+    ...(['Gems', 'relics', 'Warrior', 'research', 'build'] as IconName[]).map((n, i) =>
+      el('span', { class: `nav-tab${i === 4 ? ' is-cta' : ''}` }, iconEl(n),
+        el('span', { class: 'nav-label' }, ['Store', 'Relics', 'Heroes', 'Research', 'Build'][i]))));
+  const fakeSheet = () => el('div', { class: 'gal-phone-sheet' }, sheet(
+    { title: 'Build', onClose: noop },
+    grid(
+      card({ icon: 'Housing', name: 'Cottage', desc: 'Homes for your villagers' }, costChips({ Wood: 20, Stone: 10 })),
+      card({ icon: 'Farm', name: 'Wheat farm', desc: 'Grows food' }, costChips({ Wood: 30, Stone: 10 })),
+      card({ icon: 'Sawmill', name: 'Sawmill', desc: 'Turns trees into timber' }, costChips({ Wood: 40, Stone: 20 })),
+    ),
+    action({ label: 'Upgrade', kind: 'primary', onClick: noop, cost: { Wood: 40, Stone: 20 }, have: () => 999 }),
+  ));
+  const ruler = el('div', { class: 'gal-ruler' },
+    el('div', { class: 'gal-ruler-tick' }, '44'),
+    el('div', { class: 'gal-ruler-tick' }, '44'),
+    el('div', { class: 'gal-ruler-tick' }, '44'));
+  page.append(section(
+    'Phone frame — 402×874, header 44 · sheet ≤70% · nav 52',
+    el('div', { class: 'gal-row' },
+      specimen('iPhone 17', phone(402, 874, fakeHeader(), fakeSheet(), fakeNav())),
+      specimen('44px ruler', ruler),
+      specimen('380px frame — the header wraps', phone(380, 140, fakeHeader())),
+    ),
+  ));
+
   // ---- icons on every ground -----------------------------------------
   const names = Object.keys(ICON_EMOJI) as IconName[];
   const iconRow = (ground: string, cls: string) => el(

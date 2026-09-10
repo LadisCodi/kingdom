@@ -11,4 +11,8 @@ export default defineConfig({
   // behind ?dev=map and ?dev=tree. See scripts/vite-map-editor.mjs and
   // scripts/vite-tree-editor.mjs.
   plugins: [mapEditorPlugin(), treeEditorPlugin()],
+  // Every sprite ships as a cacheable URL. Vite's 4 KB default inlined the
+  // small ones as data: URIs, which iOS Safari re-decodes for every fresh
+  // <img> — the store's gem packs blinked once a second (host.ts, sprites.ts).
+  build: { assetsInlineLimit: 0 },
 });

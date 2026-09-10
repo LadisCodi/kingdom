@@ -2,7 +2,10 @@
 
 #header.hud {
   display: block;
-  padding: 0;
+  /* The ONE place the top inset lives (tests/chrome.test.ts): the header is
+     the only element that touches the top edge of the screen, and with
+     viewport-fit=cover that edge is under the notch. */
+  padding: env(safe-area-inset-top) 0 0;
   background: none;
   border: none;
 }
@@ -28,7 +31,7 @@
      should. */
   gap: 4px;
   row-gap: 4px;
-  padding: 5px 5px;
+  padding: 4px 6px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 rgba(60, 36, 18, 0.35);
@@ -115,16 +118,15 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  /* 40px, so a pill with a 16px icon in it is still a thumb-sized target.
-     The height used to be an accident of the 32px icon inside it. */
-  min-height: 40px;
+  /* 32px pills in a 44px plank: the plank is the tap target the thumb
+     finds, and the pill only has to be read. */
+  min-height: 32px;
   padding: 2px 6px;
   font-family: var(--font-body);
   /* The helper tier, not the body tier. A pill with a number in it is a
      glanceable readout, not something you read a sentence of — and this row
      is the tightest in the game, so every px here costs a resource the player
-     can see. At 18px m6x11plus these are 11px caps, the same optical size the
-     HUD had before the pixel faces landed. */
+     can see. */
   font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -165,6 +167,10 @@
   font-size: var(--text-helper);
   line-height: 1;
 }
+
+/* 20px icons in the plank pills — the atlas scales smooth now, so a size is
+   a layout choice rather than a ratio of the cell. */
+.hud-coin .icon, .hud-gems .icon, .hud-mana .icon { --icon-size: 20px; }
 
 /* The one contextual plaque, hanging under the plank. */
 .hud-plaque {
@@ -210,12 +216,11 @@
   flex-direction: column;
   justify-content: flex-end;
   /* Leaves a strip of visible sky above the sheet (§5.5), so the map is still
-   * there behind what you pulled up over it. This used to be about dodging
-   * the floating Settings knob as well; the knob now hides itself whenever a
-   * menu is open (see nav.css), so only the sky reason is left. */
+   * there behind what you pulled up over it. 24px: the sheet itself is capped
+   * at 70% of the frame, so the sky is mostly the cap's, not this strip's. */
   /* --nav-h is measured and the nav pads itself by the safe-area inset, so
      that inset is already in the number; env() here counted it twice. */
-  padding: calc(var(--hud-h) + 56px) 10px calc(var(--nav-h) + 10px);
+  padding: calc(var(--hud-h) + 24px) var(--gutter) calc(var(--nav-h) + 8px);
 }
 /* A centred sheet is a modal, not a drawer: it asks one question and the
  * player answers it, so it sits in the middle of the play area rather than
@@ -224,10 +229,12 @@
   justify-content: center;
   padding-top: calc(var(--hud-h) + 16px);
 }
-/* Only while the slot says this is a fresh mount. A legacy screen rebuilds
- * its subtree every tick, so keying the animation to the ELEMENT made it
- * replay once a second for as long as the sheet was open. */
-#overlay[data-entering] .k-sheet { animation: sheet-in var(--motion-sheet) ease-out; }
+/* Only while the slot says this is a fresh mount, AND only on the element the
+ * host built first. A legacy screen rebuilds its subtree every tick, so keying
+ * the animation to the element alone made it replay once a second; keying it
+ * to the container alone let a tap inside the 240 ms window rebuild a fresh
+ * `.k-sheet` under a still-entering container and replay it once more. */
+#overlay[data-entering] .k-sheet[data-fresh] { animation: sheet-in var(--motion-sheet) ease-out; }
 @keyframes sheet-in {
   from { transform: translateY(18px); opacity: 0; }
   to { transform: none; opacity: 1; }
@@ -286,9 +293,8 @@
    * it used to hang under the plank as a tab. */
   border-radius: 999px;
   padding: 2px 8px;
-  /* Same 40px target as the coins: it opens the Reliquary, so it is a button
-     the thumb has to be able to find, not a read-out. */
-  min-height: 40px;
+  /* Same 32px pill as the coins; the plank around it is the target. */
+  min-height: 32px;
   justify-content: center;
   cursor: pointer;
 }

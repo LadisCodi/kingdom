@@ -1,37 +1,25 @@
-# Font attribution
+# Font licensing
 
-Both pixel faces **require attribution**, and one of them is **ShareAlike**.
-Neither is OFL, so `OFL.txt` does not cover them.
+## PT Sans — SIL Open Font License 1.1
 
-## BoldPixels — Creative Commons Attribution-ShareAlike 4.0 International
+- Designers: Alexandra Korolkova, Olga Umpeleva, Vladimir Yefimov —
+  **ParaType** (2009–2011), for the Public Types of Russian Federation
+  project.
+- Licence: **OFL 1.1** — the full text is [`OFL.txt`](OFL.txt).
+- Files: `pt-sans-400-latin.woff2`, `pt-sans-700-latin.woff2` — Google
+  Fonts' latin subsets, unmodified.
 
-- Designer: **YukiPixels** — <https://yukipixels.itch.io/boldpixels>
-- Licence: **CC BY-SA 4.0** — <https://creativecommons.org/licenses/by-sa/4.0/>
-- Changes made: subset to 117 Latin characters and converted TTF → WOFF2
-  (`pyftsubset`, see *Regenerating* in `README.md`).
+## Germania One — SIL Open Font License 1.1
 
-**BY-SA is copyleft.** Setting text with a font does not make the rendered
-work a derivative, but `boldpixels-latin.woff2` **is** an adaptation of the
-font, so that file is itself licensed CC BY-SA 4.0 and must be distributed
-under those terms with this notice. Attribution has to be visible to players —
-a credits line, not only a file in the repo.
+- Designer: **John Vargas Beltrán** (2011).
+- Licence: **OFL 1.1** — the same [`OFL.txt`](OFL.txt).
+- File: `germania-one-400-latin.woff2` — Google Fonts' latin subset (v21),
+  unmodified. Titles only.
 
-If a ShareAlike obligation is unacceptable for a commercial release, this face
-has to be swapped rather than negotiated. Flag it before ship.
+The OFL permits bundling, embedding and redistribution with the software; it
+asks only that the font itself not be sold on its own and that the licence
+travel with it, which `OFL.txt` does. No credit to players is required.
 
-## m6x11plus
-
-- Designer: **Daniel Linssen** — <https://managore.itch.io/m6x11>
-- Licence, verbatim from the font's own name table: *"Free to use with
-  attribution"*. There is no formal licence document.
-- Changes made: subset and converted TTF → WOFF2, as above.
-
-Attribution is required. Because the terms are one informal sentence rather
-than a licence text, keep the credit unambiguous: **"m6x11plus by Daniel
-Linssen"**.
-
-## Where the credit goes
-
-Nothing in the game credits anyone yet. Until a credits screen exists, this
-file is the whole record — which satisfies neither licence for a public
-build.
+The pixel faces that shipped before 2026-09-10 (BoldPixels, CC BY-SA 4.0;
+m6x11plus, "free with attribution") are gone from the build, and with them the
+obligations they carried.

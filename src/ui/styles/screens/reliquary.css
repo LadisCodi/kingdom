@@ -17,7 +17,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  font-family: var(--font-display);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
 }
 .rel-heading-note { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-muted); }
@@ -38,7 +38,7 @@
   border: 2px solid rgba(160, 122, 62, 0.42);
 }
 .rel-purse-body { flex: 1; min-width: 0; }
-.rel-purse-title { font-family: var(--font-display); font-size: var(--text-title); }
+.rel-purse-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
 .rel-purse-hint { font-size: var(--text-helper); color: var(--ink-muted); }
 .rel-purse-value { font-family: var(--font-body); font-size: var(--text-title); }
 
@@ -328,7 +328,7 @@ button.rel-socket:active { transform: translateY(var(--lip)); box-shadow: none; 
 
 /* No plank above it, so the name is the card's title and carries the weight. */
 .rel-title { text-align: center; }
-.rel-detail-name { font-family: var(--font-display); font-size: var(--text-title); }
+.rel-detail-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
 .rel-detail-sub { font-size: var(--text-helper); color: var(--ink-muted); }
 
 .rel-passive {

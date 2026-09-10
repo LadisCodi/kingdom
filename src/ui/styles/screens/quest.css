@@ -20,13 +20,13 @@
   /* It is a <button>, so the inherited control styling has to go first. */
   appearance: none;
   display: block;
-  width: 250px;
+  width: 220px;
   max-width: 100%;
   text-align: left;
   cursor: pointer;
 
   position: relative;
-  padding: 9px 12px 10px;
+  padding: 6px 10px 8px;
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-helper);
@@ -58,10 +58,8 @@
   font-family: var(--font-body);
   font-size: var(--text-body);
   margin: 1px 0 2px;
-  /* Germania One ships one weight; 700 would be a synthesised smear. */
-  font-weight: 400;
 }
-.q-desc { color: var(--ink-muted); margin-bottom: 7px; }
+.q-desc { color: var(--ink-muted); margin-bottom: 5px; }
 
 /* Only ever on screen once the quest is done — it is the payout, so it
  * arrives with the payout. */

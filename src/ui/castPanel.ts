@@ -12,7 +12,7 @@
 // bar says "saves 320 Gold" while they are standing on the cell.
 
 import { ARTIFACTS } from '../sim/data/definitions';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el } from './format';
 import { btn, iconEl } from './kit';
@@ -61,7 +61,7 @@ export function renderCastPanel(game: Game): HTMLElement {
 
   return el('div', { class: 'plc-bar is-cast' },
     el('div', { class: 'plc-art' }, art
-      ? el('img', { src: art, alt: '' })
+      ? spriteImgAt(art)
       : el('span', { class: 'plc-glyph' }, def.glyph)),
     el('div', { class: 'plc-body' },
       el('div', { class: 'plc-name' }, active.name),

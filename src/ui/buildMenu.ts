@@ -17,7 +17,7 @@ import {
 import { getGood } from '../sim/goods';
 import { harmonyBlock, harmonyDemand, harmonySupply, harmonySurplusTier } from '../sim/harmony';
 import { isTechComplete } from '../sim/research';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
 import { costChips, iconEl, pips, sheet } from './kit';
@@ -108,7 +108,7 @@ function buildCard(game: Game, id: string): HTMLElement | null {
     type: 'button',
   },
     el('div', { class: 'bld-art' }, art
-      ? el('img', { src: art, alt: '' })
+      ? spriteImgAt(art)
       : iconEl(def.id, { size: 'lg' })),
     // Named with the ordinal it WOULD be, because the price on this card is
     // that instance's price (Docs/features/05-city-and-districts.md §3.1).

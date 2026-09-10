@@ -62,32 +62,15 @@ function labelFace(): string {
   return labelFontStack;
 }
 
-/**
- * Map labels are NUMBERS and short counts, so they are set in the body face,
- * not the title one — the same split the CSS makes.
- *
- * **And the body face is a PIXEL face**, which is the whole reason this
- * function exists. `m6x11plus` is drawn on an 18-per-em grid, so a design
- * pixel covers `(css size x dpr) / 18` device pixels and anything that is not
- * a whole number gets antialiased into grey — the one thing a pixel face is
- * chosen not to do. At the target dpr of 3 the legal sizes are the multiples
- * of **6**, which is exactly the rule `tests/fonts.test.ts` enforces across
- * the stylesheets.
- *
- * That test reads CSS and cannot see a canvas, so these sizes had been off the
- * grid since the faces changed: the comment here still described PT Sans, an
- * OUTLINE face with no grid to land on, and concluded that "every whole pixel
- * is now available". True of PT Sans, false since — and invisible in exactly
- * the way that test's own header warns about, because every individual number
- * looks reasonable.
- */
-const BODY_GRID_PX = 6;
-const snapPx = (px: number, floor: number): number =>
-  Math.max(floor, Math.round(px / BODY_GRID_PX) * BODY_GRID_PX);
+/** Map labels are NUMBERS and short counts, so they are set in the body face,
+ *  not the title one — the same split the CSS makes. Sizes are whole CSS
+ *  pixels with a floor under them: below 11px a count stops being legible on
+ *  the phone, whatever the zoom did to the cell. */
+const wholePx = (px: number, floor: number): number => Math.max(floor, Math.round(px));
 
 /** Canvas font string in the body face, at a whole-pixel size. */
 const labelFont = (px: number, floor: number, bold = false): string =>
-  `${bold ? 'bold ' : ''}${snapPx(px, floor)}px ${labelFace()}`;
+  `${bold ? 'bold ' : ''}${wholePx(px, floor)}px ${labelFace()}`;
 
 export function drawMap(
   canvas: HTMLCanvasElement,
@@ -169,7 +152,7 @@ export function drawMap(
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.fillStyle = alarm ? PALETTE.siteBadgeRaidInk : PALETTE.siteBadgeInk;
-    ctx.font = labelFont(r * 1.2, 12, true);
+    ctx.font = labelFont(r * 1.2, 11, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, x + size - r - 2, y + r + 3);
@@ -193,7 +176,7 @@ export function drawMap(
     text: string,
     opts: { icon?: string; ink?: string; fontScale?: number } = {},
   ): void => {
-    const fontSize = snapPx(size * (opts.fontScale ?? 0.17), 12);
+    const fontSize = wholePx(size * (opts.fontScale ?? 0.17), 12);
     ctx.font = labelFont(fontSize, 12, true);
     const padX = fontSize * 0.5;
     const iconSize = opts.icon ? Math.round(fontSize * 1.15) : 0;
@@ -685,7 +668,7 @@ export function drawMap(
   // Pass 5: floaters.
   for (const f of floaters.alive()) {
     const { x, y } = cellRect(f.cell);
-    const fontSize = snapPx(size * 0.22, 12);
+    const fontSize = wholePx(size * 0.22, 12);
     ctx.globalAlpha = 1 - f.t;
     ctx.font = labelFont(fontSize, 12, true);
     const iconSize = f.icon ? Math.round(fontSize * 1.15) : 0;

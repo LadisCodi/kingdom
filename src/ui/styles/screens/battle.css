@@ -19,7 +19,7 @@
 .bt-head { display: flex; align-items: center; gap: 12px; }
 .bt-art { width: 56px; height: 56px; image-rendering: pixelated; }
 .bt-art.is-glyph { display: grid; place-items: center; font-size: 32px; }
-.bt-name { font-family: var(--font-display); font-size: var(--text-title); color: var(--ink); }
+.bt-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); color: var(--ink); }
 .bt-where { font-family: var(--font-body); font-size: var(--text-helper); color: var(--ink-soft); }
 
 /* The dynamic band: whatever THIS kind of battle has to say. */
@@ -71,7 +71,7 @@
   color: var(--ink);
 }
 .bt-power {
-  font-family: var(--font-display);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
