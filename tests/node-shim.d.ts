@@ -11,6 +11,8 @@
 declare module 'node:fs' {
   export function readFileSync(path: string | URL, encoding: 'utf8' | 'latin1'): string;
   export function readdirSync(path: string | URL): string[];
+  // `tests/fonts.test.ts`: every @font-face must point at a file that ships.
+  export function existsSync(path: string | URL): boolean;
 }
 
 // And the one global: a slow harness reads an env knob to shorten a run while

@@ -19,6 +19,16 @@ import { action, sheet, switchCtl } from './kit';
 let armedUntil = 0;
 const ARM_MS = 4000;
 
+/** Everything the sheet draws that can change while it is open: the three
+ *  switches, whether the reset is armed (it disarms itself on the clock, so
+ *  the clock is read here rather than redrawing every tick for it), and the
+ *  payer line. `saveModeLabel` is fixed for the session. */
+export const settingsSignature = (game: Game): string => [
+  musicMuted(), sfxMuted(), ambienceMuted(),
+  Date.now() < armedUntil,
+  game.payerInfo()?.label ?? '-',
+].join('|');
+
 export function renderSettingsMenu(
   game: Game,
   opts: { saveModeLabel: string; onReset: () => void },

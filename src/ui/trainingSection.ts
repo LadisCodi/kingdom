@@ -32,14 +32,10 @@ import { isTechComplete } from '../sim/research';
 import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, iconEl, progress } from './kit';
+import { action, iconEl, progress, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
 import { unitBody, unitBust } from './unitArt';
-
-/** Which trainee each building's card is showing. Module-level so it survives
- *  the per-tick rebuild — the same reason the research tree keeps its
- *  selection and the market keeps its amount. */
-const picked = new Map<string, TrainableId>();
+import { pickedTrainee, pickTrainee } from './trainingPick';
 
 /** A villager is not in the UNITS table — no stats, no power, a price that
  *  climbs — so its card copy lives here rather than being faked into the
@@ -74,7 +70,15 @@ const tagFor = (unit: UnitDef): string =>
   (unit.tags.includes('Distance') ? 'Ranged'
     : unit.tags.includes('Mounted') ? 'Mounted' : 'Melee');
 
-export function trainingSection(game: Game, district: District): HTMLElement | null {
+/**
+ * `live` is where the block's ticking half goes: the queue's bar and its
+ * Finish price move every second, and with a live part they are the only
+ * thing that is rebuilt for it. Without one (a caller that rebuilds the
+ * whole card anyway) the block is simply built once.
+ */
+export function trainingSection(
+  game: Game, district: District, live?: LiveParts,
+): HTMLElement | null {
   const def = DISTRICTS[district.definitionId];
   const offers = def.trains;
   // A building with BEDS runs the same block with no picker: its line mends
@@ -82,72 +86,24 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
   const isWard = def.bedsPerLevel.length > 0;
   if (offers.length === 0 && !isWard) return null;
 
-  const now = game.now();
   const line = lineFor(game.state, district.uniqueId);
   const root = el('div', { class: 'tr' });
 
   // ---------------------------------------------------------- the queue
   if (line.length > 0) {
-    // CONSECUTIVE RUNS, not one slot each and not one slot per type. Four
-    // warriors in a row is one fact — "four warriors" — and four identical
-    // faces spent four slots saying it. Collapsing by type ALONE would be
-    // wrong for the opposite reason: the line is ordered, and a queue of
-    // Warrior, Lancer, Warrior, Warrior shown as "Warrior x3, Lancer x1"
-    // lies about what comes out next. So: runs.
-    //
-    // A ward is already one item that hands over many, so a run adds those
-    // counts up rather than counting items.
-    const runs: Array<{ trainee: TrainableId; count: number; first: number }> = [];
-    line.forEach((item, i) => {
-      const last = runs[runs.length - 1];
-      if (last !== undefined && last.trainee === item.trainee) last.count += itemCount(item);
-      else runs.push({ trainee: item.trainee, count: itemCount(item), first: i });
-    });
-
-    const strip = el('div', { class: 'tr-queue' },
-      ...runs.map((run) => {
-        const name = nameFor(run.trainee);
-        return el('div', {
-          // The run that holds the HEAD of the line is the one being worked
-          // on, which is what the bar underneath is counting down.
-          class: `tr-slot${run.first === 0 ? ' is-active' : ''}`,
-          title: run.count > 1
-            ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
-            : name,
-        },
-          unitBust(run.trainee, 'tr-slot-art'),
-          ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
-      }));
-
-    const head = line[0];
-    const bar = progress('gold');
-    const left = head.startedAt === null
-      ? (head.kind === 'heal'
-        ? game.healWait(head.trainee as UnitId, itemCount(head))
-        : trainSecondsAt(game.state, district.uniqueId, head.trainee))
-      : Math.max(0, (trainingCompletesAt(head) - now) / 1000);
-    bar.set(trainingProgress(game.state, district.uniqueId, now), formatDuration(Math.ceil(left)));
-
-    const rush = lineRushCost(game.state, district.uniqueId, now);
-    root.append(
-      el('div', { class: 'tr-head' }, isWard ? 'On the table' : 'Training queue'),
-      el('div', { class: 'tr-queue-row' },
-        el('div', { class: 'tr-queue-col' }, strip, bar.root),
-        action({
-          label: 'Finish',
-          kind: 'gem',
-          onClick: () => game.doFinishTraining(district),
-          cost: { Gems: rush },
-          have: (c) => game.walletValue(c),
-        })),
-      // The tap boost is an affordance on the BUILDING, so it is pointed at
-      // rather than described.
-      el('div', { class: 'dc-tapline' },
-        iconEl('showme', { size: 'sm' }),
-        `Tap the ${def.name} itself to hurry it along`),
-    );
+    const queueRow = () => queueSection(game, district, isWard);
+    const queueSig = () => {
+      const now = game.now();
+      const head = lineFor(game.state, district.uniqueId)[0];
+      return JSON.stringify([
+        lineFor(game.state, district.uniqueId).map((i) => [i.trainee, itemCount(i)]),
+        head === undefined ? null : head.startedAt === null,
+        head === undefined ? null : Math.ceil(queueLeft(game, district, head)),
+        lineRushCost(game.state, district.uniqueId, now),
+      ]);
+    };
+    root.append(live ? live.add(queueSig, queueRow) : queueRow());
   }
-
   // ------------------------------------------------------------- the ward
   //
   // Every wounded soldier in the city, on the building that has the beds.
@@ -188,7 +144,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
   if (offers.length === 0) return root;
 
   // --------------------------------------------------------- the picker
-  const current = picked.get(district.uniqueId) ?? offers[0];
+  const current = pickedTrainee(district.uniqueId) ?? offers[0];
   const selected = offers.includes(current) ? current : offers[0];
 
   if (offers.length > 1) {
@@ -204,7 +160,7 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
           title: nameFor(t),
         }, unitBust(t, 'tr-pick-art'));
         b.addEventListener('click', () => {
-          picked.set(district.uniqueId, t);
+          pickTrainee(district.uniqueId, t);
           game.notify();
         });
         return b;
@@ -214,6 +170,80 @@ export function trainingSection(game: Game, district: District): HTMLElement | n
 
   // ---------------------------------------------------- the detail panel
   root.append(detail(game, district, selected));
+  return root;
+}
+
+
+/** Seconds the head of the line still needs — the number under the bar. */
+function queueLeft(game: Game, district: District, head: ReturnType<typeof lineFor>[number]): number {
+  return head.startedAt === null
+    ? (head.kind === 'heal'
+      ? game.healWait(head.trainee as UnitId, itemCount(head))
+      : trainSecondsAt(game.state, district.uniqueId, head.trainee))
+    : Math.max(0, (trainingCompletesAt(head) - game.now()) / 1000);
+}
+
+/** The queue: who is coming, the bar under the one being worked on, and the
+ *  price of not waiting. The ticking half of the block. */
+function queueSection(game: Game, district: District, isWard: boolean): HTMLElement {
+  const def = DISTRICTS[district.definitionId];
+  const now = game.now();
+  const line = lineFor(game.state, district.uniqueId);
+  const root = el('div', { class: 'tr-queue-block' });
+  // CONSECUTIVE RUNS, not one slot each and not one slot per type. Four
+  // warriors in a row is one fact — "four warriors" — and four identical
+  // faces spent four slots saying it. Collapsing by type ALONE would be
+  // wrong for the opposite reason: the line is ordered, and a queue of
+  // Warrior, Lancer, Warrior, Warrior shown as "Warrior x3, Lancer x1"
+  // lies about what comes out next. So: runs.
+  //
+  // A ward is already one item that hands over many, so a run adds those
+  // counts up rather than counting items.
+  const runs: Array<{ trainee: TrainableId; count: number; first: number }> = [];
+  line.forEach((item, i) => {
+    const last = runs[runs.length - 1];
+    if (last !== undefined && last.trainee === item.trainee) last.count += itemCount(item);
+    else runs.push({ trainee: item.trainee, count: itemCount(item), first: i });
+  });
+
+  const strip = el('div', { class: 'tr-queue', 'data-keep-scroll': 'tr-queue' },
+    ...runs.map((run) => {
+      const name = nameFor(run.trainee);
+      return el('div', {
+        // The run that holds the HEAD of the line is the one being worked
+        // on, which is what the bar underneath is counting down.
+        class: `tr-slot${run.first === 0 ? ' is-active' : ''}`,
+        title: run.count > 1
+          ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
+          : name,
+      },
+        unitBust(run.trainee, 'tr-slot-art'),
+        ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
+    }));
+
+  const head = line[0];
+  const bar = progress('gold');
+  const left = queueLeft(game, district, head);
+  bar.set(trainingProgress(game.state, district.uniqueId, now), formatDuration(Math.ceil(left)));
+
+  const rush = lineRushCost(game.state, district.uniqueId, now);
+  root.append(
+    el('div', { class: 'tr-head' }, isWard ? 'On the table' : 'Training queue'),
+    el('div', { class: 'tr-queue-row' },
+      el('div', { class: 'tr-queue-col' }, strip, bar.root),
+      action({
+        label: 'Finish',
+        kind: 'gem',
+        onClick: () => game.doFinishTraining(district),
+        cost: { Gems: rush },
+        have: (c) => game.walletValue(c),
+      })),
+    // The tap boost is an affordance on the BUILDING, so it is pointed at
+    // rather than described.
+    el('div', { class: 'dc-tapline' },
+      iconEl('showme', { size: 'sm' }),
+      `Tap the ${def.name} itself to hurry it along`),
+  );
   return root;
 }
 

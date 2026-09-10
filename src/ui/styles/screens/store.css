@@ -76,7 +76,7 @@
   align-items: stretch;
 }
 .store-banner-calls > .k-btn { width: 100%; }
-.store-banner-title { font-family: var(--font-display); font-size: var(--text-title); }
+.store-banner-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
 .store-banner-hint { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
 
 /* ---- the gem packs: three across, two rows, upright cards */
@@ -134,7 +134,7 @@
   background: var(--parchment-shade);
 }
 .payer-copy { min-width: 0; }
-.payer-name { font-family: var(--font-display); font-size: var(--text-title); color: var(--wood-dark); }
+.payer-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); color: var(--wood-dark); }
 .payer-budget { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); }
 .payer-blurb { color: var(--ink-muted); font-size: var(--text-helper); line-height: 1.3; }
 .payer-fine {
@@ -149,7 +149,7 @@
 
 /* ---- the confirmation */
 .iap-head { display: flex; gap: 12px; align-items: center; }
-.iap-name { font-family: var(--font-display); font-size: var(--text-title); }
+.iap-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
 .iap-grant { font-family: var(--font-body); font-weight: 700; }
 .iap-rows { margin-top: 10px; font-family: var(--font-body); font-size: var(--text-body); }
 .iap-row {

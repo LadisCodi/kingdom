@@ -8,7 +8,7 @@
 import { DISTRICTS, TECHNOLOGIES, UNITS } from '../sim/data/definitions';
 import type { UnitId } from '../sim/state';
 import type { CatchUpReport } from '../sim/save';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { CurrencyId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
@@ -62,7 +62,7 @@ export function renderWelcomeSheet(game: Game, report: CatchUpReport): HTMLEleme
     const def = DISTRICTS[district.definitionId];
     const url = spriteUrl(`${def.sprite}_l${district.level}`);
     finished.push(el('div', { class: 'wel-done' },
-      url ? el('img', { src: url, alt: '' }) : iconEl(def.id, { size: 'lg' }),
+      url ? spriteImgAt(url) : iconEl(def.id, { size: 'lg' }),
       el('span', {}, def.name),
       iconEl('tick', { size: 'sm' })));
   }

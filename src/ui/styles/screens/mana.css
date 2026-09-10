@@ -7,7 +7,7 @@
 .mana-sheet { display: flex; flex-direction: column; gap: 10px; }
 
 .mana-head { display: flex; align-items: center; gap: 8px; }
-.mana-title { font-family: var(--font-display); font-size: var(--text-title); flex: 1; }
+.mana-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); flex: 1; }
 .mana-hint { font-size: var(--text-helper); color: var(--ink-muted); text-align: right; }
 
 /* The breakdown the HUD refuses to show. Here it IS the point — one line, so

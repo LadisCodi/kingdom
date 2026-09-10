@@ -13,6 +13,8 @@
 // this a different screen?" (tear down, build, mount). Nothing about the
 // rebuild gets cleverer — only the container becomes stable.
 
+import { releaseSprites } from '../../render/spritePool';
+
 /** A mounted screen. `root` must be stable for the screen's whole lifetime. */
 export interface Screen {
   root: HTMLElement;
@@ -50,6 +52,11 @@ export interface Screen {
  * that is coarse and automatic (a whole state module stringified) to one that
  * lists fields and rots the next time the screen grows a line.
  */
+/** What a scroller is matched by across rebuilds: its name, or — for the
+ *  unnamed — its position among the unnamed. */
+const keepKey = (n: Element, index: number): string =>
+  n.getAttribute('data-keep-scroll') || `#${index}`;
+
 export function legacy(
   render: () => HTMLElement,
   onClose?: () => void,
@@ -68,6 +75,7 @@ export function legacy(
     knob = b;
   }
   let lastSignature: string | null = null;
+  let built = false;
   return {
     root,
     refresh: () => {
@@ -80,14 +88,28 @@ export function legacy(
       }
       // Rebuilding the subtree throws away scroll position, once a second,
       // which makes a scrollable screen impossible to read — you get pulled
-      // back to the top mid-scroll. Containers opt in with data-keep-scroll
-      // and are matched by order, which is stable because the rebuild
-      // produces the same shape. (researchMenu.ts solves the same problem
-      // with module-level state; this retires the need for that.)
+      // back to the top mid-scroll. Containers opt in with a NAMED
+      // data-keep-scroll and are matched by that name, so a screen whose
+      // shape changes between two builds (a section that appears) cannot
+      // hand one container's position to another. An unnamed one falls back
+      // to its order. (researchMenu.ts solves the same problem with
+      // module-level state; this retires the need for that.)
       const kept = [...root.querySelectorAll<HTMLElement>('[data-keep-scroll]')]
-        .map((n) => [n.scrollTop, n.scrollLeft] as const);
+        .map((n, i) => [keepKey(n, i), n.scrollTop, n.scrollLeft] as const);
 
+      // The old subtree's sprite nodes go back to the pool BEFORE the render
+      // that will ask for them again, so the same decoded <img> moves into
+      // the new tree instead of a fresh one blinking in (render/sprites.ts).
+      releaseSprites(root);
       const content = render();
+      // The slide-in is keyed to the FIRST element the host ever built — a
+      // tick landing inside the enter window rebuilds the sheet, and a fresh
+      // element under a still-entering container would replay it.
+      if (!built) {
+        built = true;
+        content.setAttribute('data-fresh', '');
+        for (const sheet of content.querySelectorAll('.k-sheet')) sheet.setAttribute('data-fresh', '');
+      }
       // A migrated screen marks its own dismiss with data-own-close.
       // Detecting that, rather than listing which screens have migrated,
       // means the host's extra knob vanishes by itself as each one does.
@@ -98,13 +120,19 @@ export function legacy(
       root.replaceChildren(...(knob && !hasOwnClose ? [content, knob] : [content]));
 
       if (kept.length > 0) {
-        const now = root.querySelectorAll<HTMLElement>('[data-keep-scroll]');
-        kept.forEach(([top, left], i) => {
-          const n = now[i];
-          if (!n) return;
-          n.scrollTop = top;
-          n.scrollLeft = left;
-        });
+        const now = [...root.querySelectorAll<HTMLElement>('[data-keep-scroll]')];
+        const byKey = new Map(now.map((n, i) => [keepKey(n, i), n] as const));
+        for (const [key, top, left] of kept) {
+          const n = byKey.get(key);
+          if (!n) continue;
+          // Written only when it differs, so a scroller resting at the top
+          // costs nothing. A rebuilt scroller is a new node and always takes
+          // the one write; what an iOS fling needs is for the NODE to
+          // survive the tick, which is the district card's own migration
+          // (build once, mutate) and not something the host can give it.
+          if (n.scrollTop !== top) n.scrollTop = top;
+          if (n.scrollLeft !== left) n.scrollLeft = left;
+        }
       }
     },
   };

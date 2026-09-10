@@ -16,11 +16,8 @@
 .k-card,
 .gal { font-family: var(--font-body); }
 /* Titles: the sheet plank is the ONE place the display face earns its keep in
- * the kit. A card's name used to share this rule, and cannot any more —
- * BoldPixels is only crisp at 16/32/48, a list row has no business at 32, and
- * at 16 its caps (8px) would be shorter than the body face's (11px), which is
- * a title smaller than the text under it. Row names are body copy now. */
-.k-plank { font-family: var(--font-display); }
+ * the kit. Row names are body copy: a list row has no business in a title. */
+.k-plank { font-family: var(--font-display); font-weight: var(--font-display-weight); }
 /* Numbers. These used to share the rule above, back when one pixel face did
  * both jobs — which is exactly what made it have to be legible at 13px. */
 .k-chip,
@@ -36,9 +33,10 @@
  * mandates at 10px. */
 .k-panel {
   color: var(--ink);
-  border: 8px solid transparent;
+  /* 6 + 10: a 402px phone cannot spend 44px of its width on frame. */
+  border: 6px solid transparent;
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 10px;
   background:
     linear-gradient(var(--parchment), var(--parchment)) padding-box,
     linear-gradient(var(--wood), var(--wood)) border-box;
@@ -52,30 +50,32 @@
 
 /* Wooden header plank, bleeding to the frame's inner edge. */
 .k-plank {
-  margin: -14px -14px 12px;
-  padding: 10px 14px;
+  margin: -10px -10px 8px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  min-height: 40px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   border-radius: 4px 4px 0 0;
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 var(--wood-dark);
   color: var(--parchment);
   font-size: var(--text-title);
-  /* 400, not 700: BoldPixels has one weight, and `font-synthesis-weight: none`
-     refuses the fake — so 700 here was already rendering as 400 and only
-     misleading the next reader. */
-  font-weight: 400;
+  font-weight: var(--font-display-weight);
 }
+/* The title grows; the close knob sits at the strip's end, inside it, so the
+   plank is the whole of the sheet's chrome above the content. */
+.k-plank > span:first-child { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.k-plank .k-knob { width: 36px; height: 36px; min-height: 36px; margin-bottom: 0; font-size: 16px; }
 
 /* Rope grab handle on a sheet. */
 .k-grab {
-  width: 56px;
-  height: 6px;
-  margin: -6px auto 10px;
-  border-radius: 3px;
+  width: 40px;
+  height: 4px;
+  margin: -4px auto 6px;
+  border-radius: 2px;
   background: var(--wood-dark);
   opacity: 0.65;
 }
@@ -84,9 +84,9 @@
 .k-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 88px;
-  padding: 10px 12px;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 10px;
   color: var(--ink);
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -97,8 +97,8 @@
 .k-card.is-locked { background: var(--locked); }
 .k-card > .k-slot {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   background: var(--parchment);
@@ -106,11 +106,10 @@
   border-radius: 6px;
 }
 .k-card > .k-body { flex: 1; min-width: 0; }
-/* 400, not 700: the title face has one weight and would fake the bold. */
-.k-card .k-name { font-weight: 400; }
 .k-card .k-desc { font-size: var(--text-helper); color: var(--ink-muted); }
+.k-card > .k-slot .icon { --icon-size: 28px; }
 
-.k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.k-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 
 /* Warm, 35% — the kingdom stays legible behind an open sheet (§3.2). */
 .k-scrim { position: absolute; inset: 0; background: var(--scrim); }
@@ -125,14 +124,14 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 56px;
+  min-height: 44px; /* the brief's minimum target (§2), and not a pixel more */
   /* A FLOOR, so a slab's width comes from the row it sits in rather than from
      how many characters its label happens to have. "Finish 10" next to
      "Upgrade 180 60" read as two different kinds of control when one was half
-     the other's width. Knobs are excluded by name: they set an explicit 48px
+     the other's width. Knobs are excluded by name: they set an explicit
      square, and `min-width` would beat it. */
-  min-width: 120px;
-  padding: 12px 20px;
+  min-width: 96px;
+  padding: 8px 14px;
   margin-bottom: var(--lip); /* reserve the lip so rows don't sit 3px high */
   font-family: var(--font-body);
   font-size: var(--text-body);
@@ -161,8 +160,8 @@
 .k-btn-label { display: inline-flex; align-items: center; gap: 8px; }
 .k-btn.has-cost {
   flex-direction: column;
-  gap: 3px;
-  padding: 9px 18px;
+  gap: 2px;
+  padding: 6px 12px; /* label over price: ~56px, the tallest slab in the kit */
 }
 /* A fact about the button itself, riding above the label: when this press
  * turns free. Smaller and dimmer than the label so it reads as a caption on
@@ -177,8 +176,8 @@
 .k-btn-cost {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  font-size: var(--text-body);
+  gap: 10px;
+  font-size: var(--text-helper);
   font-variant-numeric: tabular-nums;
 }
 .k-cost { display: inline-flex; align-items: center; gap: 4px; }
@@ -201,14 +200,18 @@
 
 /* Round wooden knob — worker steppers, close, zoom. */
 .k-knob {
-  width: 48px;
-  height: 48px;
-  min-height: 48px;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
   min-width: 0;
   padding: 0;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 18px;
 }
+/* Drawn at 40, tapped at 44: the hit area grows past the drawing so a row of
+   knobs can sit closer than the brief's minimum target would let them. */
+.k-knob::before { content: ''; position: absolute; inset: -2px; border-radius: 50%; }
 
 /* An action and the plain-language reason it is unavailable (§6.3). */
 .k-action { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
@@ -277,8 +280,8 @@
 /* Segmented wooden toggles (the market's x1 / x10 / …). */
 .k-toggles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .k-toggles .k-btn {
-  min-height: 40px;
-  padding: 6px 12px;
+  min-height: 36px;
+  padding: 4px 10px;
   font-size: var(--text-helper);
 }
 .k-toggles .k-btn.is-selected { --slab: var(--leaf); --slab-lip: var(--leaf-dark); }
@@ -323,8 +326,8 @@
 /* A carved trough with a fill — the progress bar. */
 .k-trough {
   position: relative;
-  height: 18px;
-  border-radius: 9px;
+  height: 14px;
+  border-radius: 7px;
   overflow: hidden;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
@@ -366,26 +369,22 @@
  * can be written against the real API now and upgrade in place later —
  * exactly the contract src/render/sprites.ts uses for world art.
  *
- * THE SIZES ARE MULTIPLES OF THE ATLAS CELL, AND THAT IS NOT A STYLE CHOICE.
- * The cell is 32px (scripts/ui-atlas.mjs, ATLAS_CELL) and the background
- * scales by `--icon-size / cell`, so a size that is not a whole ratio of 32
- * makes `image-rendering: pixelated` sample some source rows twice and others
- * not at all. The default used to be 24 — a 0.75x downscale — and it visibly
- * chewed the resource chips in the header: broken coin rims, ragged outlines,
- * highlights eaten. It was read as "the icons are bad art" for months.
- *
- * 32 is 1:1 and stays whole at every DPR (2x, 3x). 16 is a clean half, and
- * the -sm cells are authored at 16 anyway, so they land 1:1. 48 is the one
- * compromise: 1.5x on a DPR-1 desktop, but a clean 3x on the phones this
- * targets, and 64 would burst the 48px slots it sits in. */
+ * A SIZE IS A LAYOUT CHOICE. The chrome stopped being pixel art on
+ * 2026-09-10: the atlas is scaled smooth, so any `--icon-size` is legal and
+ * an element sets the one its row needs (20 in the header pills, 24 in the
+ * nav, 28 in a card slot). The old rule — sizes as whole ratios of the 32px
+ * cell, for `image-rendering: pixelated` — is gone with the pixel look. */
 .icon {
-  --icon-size: 32px;
+  --icon-size: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: none;
   width: var(--icon-size);
   height: var(--icon-size);
+  /* Smooth, whatever ui-atlas.css says: the generated sheet still asks for
+     nearest-neighbour, and this is where the chrome overrules it. */
+  image-rendering: auto;
   font-size: calc(var(--icon-size) * 0.9);
   font-style: normal;
   line-height: 1;
@@ -400,7 +399,7 @@
 /* …except a cost the player is short of, which stays clay icon and all. */
 .k-btn .k-cost.is-short .icon { color: var(--clay); }
 .icon--sm { --icon-size: 16px; }
-.icon--lg { --icon-size: 48px; }
+.icon--lg { --icon-size: 40px; }
 .icon.is-locked { filter: grayscale(1) sepia(0.35) brightness(0.9); opacity: 0.7; }
 
 /* ------------------------------------------------- the ?dev=kit gallery ---
@@ -446,7 +445,9 @@
 
 /* A sheet fits the screen and scrolls inside itself, so its plank — and the
  * close knob in it — stay put however long the content is. */
-.k-sheet { width: 100%; max-height: 100%; display: flex; }
+/* 70%, not 100%: a sheet is a drawer over a game the player is still
+ * looking at (brief §3.6), and one that fits its content stops there. */
+.k-sheet { width: 100%; max-height: 70%; display: flex; }
 /* …and a TALL one takes all of it, whether it needs it or not: a working
  * screen whose height follows its content moves its own buttons every time
  * something is added to it.
@@ -454,7 +455,7 @@
  * The body becomes a column so the screen inside it can be told to fill what
  * it was given — a percentage height would resolve against nothing here, and
  * `flex: 1 0 auto` still lets a long screen scroll past the bottom. */
-.k-sheet.is-tall { height: 100%; }
+.k-sheet.is-tall { height: 100%; max-height: 100%; }
 .k-sheet.is-tall > .k-panel > .k-sheet-body {
   flex: 1;             /* the scroller takes the panel, not just its content */
   display: flex;
@@ -538,3 +539,68 @@
   }
 }
 @keyframes k-scroll-shade { to { opacity: 0; } }
+
+/* The gallery's phone frame: the three chrome bands at device size, so the
+ * density reads as a whole. `container-type` so the header's own
+ * `@container frame` rules fire inside it. */
+.gal-phone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #4a7c3f;
+  border: 2px solid var(--wood-dark);
+  border-radius: 12px;
+  container-type: inline-size;
+  container-name: frame;
+}
+.gal-phone-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 4px 6px;
+  background: var(--wood);
+  border-bottom: var(--outline) solid var(--wood-dark);
+}
+.gal-phone-hud .hud-coin {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 32px; padding: 2px 6px;
+  font-size: var(--text-helper); font-weight: 700; color: var(--ink);
+  background: var(--parchment); border: 2px solid var(--wood-dark); border-radius: 999px;
+}
+.gal-phone-hud .hud-coin .icon { --icon-size: 20px; }
+.gal-phone-sheet {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px var(--gutter) 8px;
+  background: var(--scrim);
+}
+.gal-phone-nav {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--wood);
+  border-top: var(--outline) solid var(--wood-dark);
+}
+.gal-phone-nav .nav-tab {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 3px 4px 4px;
+  font-size: 12px; color: var(--ink);
+  background: var(--parchment-shade); border: 2px solid var(--wood-dark); border-radius: var(--radius-sm);
+}
+.gal-phone-nav .nav-tab .icon { --icon-size: 24px; }
+.gal-phone-nav .nav-tab.is-cta { background: var(--gold); border-color: var(--gold-dark); }
+.gal-ruler { display: flex; flex-direction: column; gap: 4px; }
+.gal-ruler-tick {
+  display: grid; place-items: center;
+  width: 44px; height: 44px;
+  font-size: var(--text-helper);
+  background: var(--parchment); color: var(--ink);
+  border: 2px dashed var(--clay); border-radius: 4px;
+}

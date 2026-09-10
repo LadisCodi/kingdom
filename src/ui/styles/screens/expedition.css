@@ -21,7 +21,7 @@
   background: linear-gradient(160deg, rgba(126, 217, 87, 0.24), rgba(126, 217, 87, 0.08));
 }
 .exp-safe b {
-  font-family: var(--font-display);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   color: var(--ink);
   font-variant-numeric: tabular-nums;

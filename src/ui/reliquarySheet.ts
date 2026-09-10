@@ -33,7 +33,7 @@ import {
 import { castBlock } from '../sim/casting';
 import { levelCapForTier, levelCost, tierCost } from '../sim/collection';
 import { resourceDiscoveryKey } from '../sim/discovery';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { ArtifactId } from '../sim/state';
 import type { Game } from '../game';
 import { el, formatDuration } from './format';
@@ -46,7 +46,7 @@ function relicArt(id: ArtifactId, locked: boolean): HTMLElement {
   const def = ARTIFACTS[id];
   const url = spriteUrl(def.sprite);
   return url
-    ? el('img', { class: `rel-art${locked ? ' is-locked' : ''}`, src: url, alt: '' })
+    ? spriteImgAt(url, `rel-art${locked ? ' is-locked' : ''}`)
     : el('div', { class: `rel-art rel-art--glyph${locked ? ' is-locked' : ''}` }, def.glyph);
 }
 
@@ -437,7 +437,7 @@ export function renderReliquarySheet(game: Game): HTMLElement {
   if (game.openRelicId !== null && !(game.openRelicId in ARTIFACTS)) game.openRelicId = null;
   const open = game.openRelicId;
   if (open === null) {
-    return sheet({ title: 'Reliquary', onClose: () => game.dismiss() }, collection(game));
+    return sheet({ title: 'Reliquary', onClose: () => game.dismiss(), tall: true }, collection(game));
   }
   // The card is BARE: its art and its name are the title, and a plank above
   // them would print the name twice. The close knob on the stage is the way

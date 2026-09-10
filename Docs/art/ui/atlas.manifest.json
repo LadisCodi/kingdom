@@ -1,56 +1,103 @@
 {
-  "cell": 32,
+  "cell": 64,
   "atlasCols": 16,
-  "note": "Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. UI-A's slots 8-10 held illustrated characters (villagers, a builder, a farmer) that turned to mush inline; UI-D replaces them with flat symbols, so they are skipped here rather than being generated and immediately overwritten. UI-F is drawn left-to-right as spearman, swordsman, archer, horseman, which maps to Lancer, Warrior, Archer, Cavalry.",
+  "smooth": true,
+  "note": "Smooth chrome (2026-09-10, Docs/art/ui-menus-redesign.md §7.17-7.18): five 4x4 sheets drawn to be scaled, sliced Lanczos into 64px cells with the alpha left soft. Names must match IconName in src/ui/kit/icon.ts — tests/icons.test.ts holds us to it. A null entry skips that grid cell. The pixel-era sheets (ui-a..h, currencies-16, the hand-drawn 16px keys) are kept in sheets/ as provenance and are no longer sliced.",
   "sheets": [
     {
-      "file": "sheets/ui-a-resources.png",
+      "file": "sheets/ui-a2-currencies.png",
       "grid": {
-        "rows": 3,
+        "rows": 4,
         "cols": 4
       },
-      "fill": 0.88,
+      "fill": 0.86,
       "names": [
         "Gold",
         "Food",
         "Wood",
         "Stone",
-        "Iron",
+        "Mana",
         "Gems",
         "Knowledge",
-        null,
-        null,
-        null,
-        "Berries",
-        "Fish"
-      ]
+        "Stardust",
+        "HeroXp",
+        "SilverKey",
+        "GoldKey",
+        "Planks",
+        "CutStone",
+        "Iron",
+        "Runestone",
+        "Meat"
+      ],
+      "evenGrid": true
     },
     {
-      "file": "sheets/ui-b-buildings.png",
+      "file": "sheets/ui-b2-buildings.png",
       "grid": {
-        "rows": 3,
-        "cols": 3
+        "rows": 4,
+        "cols": 4
       },
-      "fill": 0.92,
+      "fill": 0.86,
       "names": [
         "Townhall",
         "Housing",
         "Farm",
         "FarmLands",
         "Sawmill",
-        null,
         "Quarry",
-        "Docks"
-      ]
+        "Docks",
+        "Sanctum",
+        "Barracks",
+        "SpearHall",
+        "ShootingGrounds",
+        "Stables",
+        "Infirmary",
+        "Carpenter",
+        "MasonsYard",
+        "Smelter"
+      ],
+      "evenGrid": true
     },
     {
-      "file": "sheets/ui-c-symbols.png",
+      "file": "sheets/ui-c2-people.png",
       "grid": {
-        "rows": 3,
+        "rows": 4,
         "cols": 4
       },
       "fill": 0.86,
       "names": [
+        "RuneCarver",
+        "Garden",
+        "Well",
+        "Orchard",
+        "Statue",
+        "Plaza",
+        "Shrine",
+        "Berries",
+        "Fish",
+        "Warrior",
+        "Lancer",
+        "Archer",
+        "Cavalry",
+        "population",
+        "builders",
+        "workers"
+      ],
+      "evenGrid": true
+    },
+    {
+      "file": "sheets/ui-d2-symbols.png",
+      "grid": {
+        "rows": 4,
+        "cols": 4
+      },
+      "fill": 0.86,
+      "names": [
+        "harmony",
+        "build",
+        "army",
+        "research",
+        "settings",
         "quest",
         "showme",
         "padlock",
@@ -61,320 +108,39 @@
         "plus",
         "minus",
         "sparkle",
-        "unknown",
-        "Meat"
-      ]
+        "unknown"
+      ],
+      "evenGrid": true
     },
     {
-      "file": "sheets/ui-d-ui.png",
+      "file": "sheets/ui-e2-marks.png",
       "grid": {
-        "rows": 2,
+        "rows": 4,
         "cols": 4
       },
       "fill": 0.86,
       "names": [
-        "build",
-        "army",
-        "research",
-        "settings",
-        "population",
-        "builders",
-        "workers",
-        "star"
-      ]
-    },
-    {
-      "file": "sheets/ui-f-units.png",
-      "grid": {
-        "rows": 1,
-        "cols": 4
-      },
-      "fill": 0.94,
-      "names": [
-        "Lancer",
-        "Warrior",
-        "Archer",
-        "Cavalry"
-      ]
-    },
-    {
-      "file": "sheets/ui-g-special.png",
-      "grid": {
-        "rows": 2,
-        "cols": 3
-      },
-      "fill": 0.92,
-      "names": [
-        "Mana",
-        "Sanctum",
-        "Barracks",
-        "SpearHall",
-        "ShootingGrounds",
-        "Stables"
-      ]
-    },
-    {
-      "file": "sheets/ui-h-goods.png",
-      "grid": {
-        "rows": 2,
-        "cols": 4
-      },
-      "fill": 0.92,
-      "names": [
-        "Planks",
-        "CutStone",
-        "Runestone",
-        "Carpenter",
-        "MasonsYard",
-        "Smelter",
-        "RuneCarver",
+        "star",
+        "video",
+        "ascension",
+        "fragment",
+        "atk",
+        "def",
+        "hp",
+        "relics",
+        "dungeon",
+        "chest",
+        "daily",
+        "skull",
+        null,
+        null,
+        null,
         null
       ],
-      "note": "The refined goods of the builder programme, and the four workshops that make them: a saw over a sawhorse, a mallet and chisel, a furnace, a rune chisel. The eighth cell was never drawn. Iron is NOT here: the ore icon from ui-a doubles as the ingot, which at 16px is the same picture."
-    },
-    {
-      "file": "sheets/currencies-16.png",
-      "dense": {
-        "size": 16,
-        "cols": 8
-      },
-      "note": "Hand-authored 16px pack, keyed by the author: row 1 Gems, Gold, Mana, Builders, Knowledge, Silver, Food, Wood; row 2 Time, Population, Population cap, Population not working, Army power. LISTED LAST ON PURPOSE: slices are written by name, so this sheet deliberately overrides the ui-a-resources cells of the same name, and the build prints every override. ui-a keeps its full names list because its scale pass measures the largest icon on the sheet — nulling entries there would silently resize the icons it still owns. Silver, the two extra population states and Time have no call site, so they are null rather than shipped as cells nothing names.",
-      "names": [
-        "Gems",
-        "Gold",
-        "Mana",
-        "builders",
-        "Knowledge",
-        null,
-        "Food",
-        "Wood",
-        null,
-        "population",
-        null,
-        null,
-        "army"
-      ]
-    },
-    {
-      "file": "icon_currency_silver_key.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "One hand-authored 16px key, its own file rather than a cell on a pack: the two keys were drawn separately and a two-cell sheet would only be a container. Dense, so it is point-doubled into the 32px grid untouched.",
-      "names": [
-        "SilverKey"
-      ]
-    },
-    {
-      "file": "icon_currency_golden_key.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "GoldKey"
-      ]
-    },
-    {
-      "file": "icon_currency_stardust.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "The collection currency. Drawn at 13px and padded to the 16px grid rather than resampled: 13 does not divide the 32px cell, and a rescale would have softened every pixel of it.",
-      "names": [
-        "Stardust"
-      ]
-    },
-    {
-      "file": "icon_ascendancy_star.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "ascension"
-      ]
-    },
-    {
-      "file": "icon_currency_xp.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "HeroXp"
-      ]
-    },
-    {
-      "file": "icon_hero_fragment.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "fragment"
-      ]
-    },
-    {
-      "file": "icon_stat_attack.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "atk"
-      ]
-    },
-    {
-      "file": "icon_stat_defense.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "def"
-      ]
-    },
-    {
-      "file": "icon_stat_hp.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "names": [
-        "hp"
-      ]
-    },
-    {
-      "file": "icon_gems.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "Hand-authored 16px. LISTED AFTER currencies-16, which is what makes it win: slices are written by name, so the last sheet to name a cell owns it.",
-      "names": [
-        "Gems"
-      ]
-    },
-    {
-      "file": "icon_quests.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "Supersedes the scroll in ui-c-symbols, by the same last-one-wins rule.",
-      "names": [
-        "quest"
-      ]
-    },
-    {
-      "file": "icon_settings.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "Supersedes the cog in ui-d-ui.",
-      "names": [
-        "settings"
-      ]
-    },
-    {
-      "file": "icon_relics.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "The Relics tab. It used to borrow the Mana orb, which now belongs to the pool alone — the gauge opens a Mana sheet of its own (08-magic.md §6).",
-      "names": [
-        "relics"
-      ]
-    },
-    {
-      "file": "icon_dungeon.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "A ruin mouth: the delve pill and anything that points underground. Was the quest scroll, which said \"an errand\" rather than \"a dungeon\".",
-      "names": [
-        "dungeon"
-      ]
-    },
-    {
-      "file": "icon_chest.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "The daily chest itself — the pill was borrowing the quest scroll.",
-      "names": [
-        "chest"
-      ]
-    },
-    {
-      "file": "icon_daily_rewards.png",
-      "dense": {
-        "size": 16,
-        "cols": 1
-      },
-      "note": "A calendar page: one rung of the daily ladder. The chest is the PRIZE and this is the DAY, which is why they are two cells.",
-      "names": [
-        "daily"
-      ]
+      "note": "Twelve of sixteen: the fourth row is empty on purpose, and with evenGrid the empty cells cost nothing.",
+      "evenGrid": true
     }
   ],
-  "locked": {
-    "except": [
-      "atk",
-      "chest",
-      "close",
-      "daily",
-      "def",
-      "dungeon",
-      "fragment",
-      "hp",
-      "minus",
-      "padlock",
-      "plus",
-      "relics",
-      "showme",
-      "sparkle",
-      "star",
-      "tick",
-      "unknown"
-    ]
-  },
-  "tiny": {
-    "only": [
-      "Berries",
-      "Fish",
-      "Food",
-      "Gems",
-      "Gold",
-      "GoldKey",
-      "HeroXp",
-      "Iron",
-      "Knowledge",
-      "Mana",
-      "Meat",
-      "SilverKey",
-      "Stardust",
-      "Stone",
-      "Wood",
-      "ascension",
-      "atk",
-      "builders",
-      "def",
-      "fragment",
-      "hp",
-      "padlock",
-      "population",
-      "workers"
-    ]
-  },
-  "spriteSize": 128,
   "worldSheets": [
     {
       "file": "sheets/spr-a-sites.png",
@@ -444,5 +210,55 @@
         null
       ]
     }
-  ]
+  ],
+  "spriteSize": 128,
+  "locked": {
+    "except": [
+      "atk",
+      "chest",
+      "close",
+      "daily",
+      "def",
+      "dungeon",
+      "fragment",
+      "hp",
+      "minus",
+      "padlock",
+      "plus",
+      "relics",
+      "showme",
+      "sparkle",
+      "star",
+      "tick",
+      "unknown"
+    ]
+  },
+  "tiny": {
+    "only": [
+      "Berries",
+      "Fish",
+      "Food",
+      "Gems",
+      "Gold",
+      "GoldKey",
+      "HeroXp",
+      "Iron",
+      "Knowledge",
+      "Mana",
+      "Meat",
+      "SilverKey",
+      "Stardust",
+      "Stone",
+      "Wood",
+      "ascension",
+      "atk",
+      "builders",
+      "def",
+      "fragment",
+      "hp",
+      "padlock",
+      "population",
+      "workers"
+    ]
+  }
 }

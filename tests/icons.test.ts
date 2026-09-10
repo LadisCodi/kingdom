@@ -6,9 +6,8 @@
 // next to a dozen pixel icons, which nobody notices in review.
 //
 // Runs in node — atlas.generated.ts is deliberately DOM-free.
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ATLAS_CELL, ICON_INDEX } from '../src/ui/kit/atlas.generated';
+import { ICON_INDEX } from '../src/ui/kit/atlas.generated';
 import { ICON_EMOJI } from '../src/ui/kit/icon';
 import { CURRENCIES, DISTRICTS } from '../src/sim/data/definitions';
 
@@ -29,23 +28,10 @@ const isDerived = (cell: string) => /-(sm|locked)$/.test(cell);
  * lands, leaving the name here fails.
  */
 const AWAITING_ART: readonly string[] = [
-  // The six decorations (2026-09-08). All six WORLD sprites are drawn — what
-  // is missing is one 16 px sheet, which is a generated sheet rather than a
-  // crop of an existing one (Docs/art/ui/CONVERSATION.md). Until it is cut
-  // they fall back to a glyph; the build menu shows their world art anyway.
-  'Garden', 'Well', 'Orchard', 'Statue', 'Plaza', 'Shrine',
-  // …and the city stat they supply, which the build sheet and the card both
-  // put a mark beside.
-  'harmony',
-  // The rewarded-video mark (2026-09-08). It rides INSIDE a button at 16 px,
-  // so it needs the small cell too.
-  'video',
-  // The Infirmary (2026-09-09). Its WORLD sprite is drawn; the 16 px cell is
-  // one more crop on the next UI sheet — and there is a free slot for it now
-  // that the Market has left the game.
-  'Infirmary',
-  // The battle screen's death mark (2026-09-09), painted over a wiped slot.
-  'skull',
+  // Empty since 2026-09-10: the smooth sheets (Docs/art/ui-menus-redesign.md
+  // §7.18) drew every name the kit knows, decorations, Infirmary, harmony,
+  // video and skull included. A name goes back on this list only while a
+  // sheet for it is being generated.
 ];
 
 const pending = new Set(AWAITING_ART);
@@ -100,38 +86,7 @@ describe('the icon atlas', () => {
   });
 });
 
-// The display sizes have to be whole ratios of the atlas cell (2026-09-02).
-//
-// `.icon` paints the atlas as a background scaled by `--icon-size / cell`, and
-// `image-rendering: pixelated` is nearest-neighbour — so a fractional ratio
-// samples some source rows twice and others not at all. The art does not
-// degrade gracefully; it degrades into mush.
-//
-// This is not hypothetical. The default was 24px against a 32px cell — a
-// 0.75x downscale — which is what the header's resource chips were drawn at.
-// Broken coin rims, ragged outlines, eaten highlights. It was read as bad art
-// for months, and nothing in the type system or the build could see it,
-// because both numbers are individually reasonable and live in files that
-// never mention each other.
-//
-// The rule is stated against DPR 2, the phone this game targets: at that
-// density 16/32/48 CSS px are 1x, 2x and 3x of a 32px cell. (On a DPR-1
-// desktop 48 is 1.5x, which is the one accepted compromise -- 64 would burst
-// the 48px slots it sits in.)
-describe('the icon display sizes', () => {
-  const kitCss = readFileSync(new URL('../src/ui/styles/kit.css', import.meta.url), 'utf8');
-
-  /** Every `--icon-size` the kit declares, whatever selector it sits on. */
-  const sizes = (): Array<[string, number]> =>
-    [...kitCss.matchAll(/(\S+)\s*\{[^}]*?--icon-size:\s*(\d+)px/gs)]
-      .map((m) => [m[1], Number(m[2])] as [string, number]);
-
-  it('declares at least the three the kit is built on', () => {
-    expect(sizes().map(([, px]) => px).sort((a, b) => a - b)).toEqual([16, 32, 48]);
-  });
-
-  it('renders every size as a whole multiple of the atlas cell at DPR 2', () => {
-    const fractional = sizes().filter(([, px]) => (px * 2) % ATLAS_CELL !== 0);
-    expect(fractional).toEqual([]);
-  });
-});
+// No rule on display sizes any more (2026-09-10). The chrome stopped being
+// pixel art: `.icon` renders the atlas smooth, so `--icon-size` is a layout
+// choice per element rather than a ratio of the 32px cell. What is still
+// checked above is coverage — every name has a cell.

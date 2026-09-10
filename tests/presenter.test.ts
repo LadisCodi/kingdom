@@ -618,3 +618,45 @@ describe('the heroes screen signature', () => {
     expect(seen.size).toBe(6);
   });
 });
+
+// ui/kit/host.ts: a screen with nothing ticking on it says what it reads and
+// is rebuilt only when that moves. Each signature below is checked the way
+// the heroes one is — still on a tick, moved on the thing the screen shows —
+// and the screens that DO tick must answer null so they keep rebuilding.
+describe('the overlay signatures', () => {
+  it('hold still on a tick that changed nothing they draw', () => {
+    const game = freshPresenter();
+    for (const name of ['builder', 'daily', 'iapConfirm', 'store', 'welcome', 'payerProfile'] as const) {
+      const before = game.overlaySignature(name);
+      expect(before, name).not.toBeNull();
+      game.tick();
+      expect(game.overlaySignature(name), name).toBe(before);
+    }
+  });
+
+  it('the store and the builder move with the Gems and the crew', () => {
+    const game = freshPresenter();
+    const store = game.overlaySignature('store');
+    const builder = game.overlaySignature('builder');
+    addToWallet(game.state.player.wallet, 'Gems', 5_000);
+    expect(game.overlaySignature('store')).not.toBe(store);
+    expect(game.overlaySignature('builder')).not.toBe(builder);
+    const hired = game.overlaySignature('builder');
+    game.doBuyBuilder({ closeSheet: false });
+    expect(game.overlaySignature('builder')).not.toBe(hired);
+  });
+
+  it('the purchase sheet moves with the pending pack', () => {
+    const game = freshPresenter();
+    const before = game.overlaySignature('iapConfirm');
+    game.pendingSku = 'gems_pouch' as typeof game.pendingSku;
+    expect(game.overlaySignature('iapConfirm')).not.toBe(before);
+  });
+
+  it('screens with a countdown or a regenerating pool are not signed', () => {
+    const game = freshPresenter();
+    for (const name of ['reliquary', 'mana', 'research', 'build', 'purse', 'expedition', 'gate'] as const) {
+      expect(game.overlaySignature(name), name).toBeNull();
+    }
+  });
+});

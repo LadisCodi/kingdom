@@ -1,0 +1,165 @@
+/* The chrome's MATERIALS — parchment, wood, rope — painted over the kit's
+ * geometry (Docs/art/ui-menus-redesign.md §3.2, §7.21).
+ *
+ * The kit draws every surface in flat colour with bevels; the mockups drew
+ * them as real parchment in real carved wood, and this file is the difference.
+ * It is one file, loaded last, and it changes only backgrounds, borders and
+ * the grab handle — no size, no spacing — so the layout the density pass
+ * measured stays exactly what it was, and the whole material layer can be
+ * switched off by dropping one @import.
+ *
+ * Textures are 512 tiles from sheets/ui-t1-textures.png (the wood as drawn;
+ * mirroring it made every knot a pair), repeated horizontally over bands no
+ * taller than a plank, so the cross-grain seam never shows. The frame is a
+ * nine-slice of sheets/ui-f1-frame.png: 600px, edge ~61, corner blocks 80,
+ * drawn at 16px so the edge lands at 12 and the corners stand a little proud,
+ * as they do on the sheet. `border-image` forfeits `border-radius` — the
+ * frame's rounded corners are in the art instead. */
+
+/* ---- panels and sheets ---- */
+.k-panel {
+  border: 12px solid transparent;
+  border-image: url('../assets/frame-wood.png') 80 / 16px / 2px round;
+  border-radius: 0;
+  padding: 10px;
+  background: url('../assets/tex-parchment.jpg') padding-box;
+  background-size: 384px 384px;
+  box-shadow:
+    0 6px 0 rgba(60, 36, 18, 0.3),
+    0 12px 26px rgba(60, 36, 18, 0.26);
+}
+.k-plank {
+  margin: -10px -10px 8px;
+  background: url('../assets/tex-wood.jpg') center / 512px 512px;
+  border-radius: 0;
+}
+/* The rope rides ON the frame's top edge — a handle on the lid — rather than
+   under the plank, which is where the flat kit's bar used to sit. */
+.k-grab {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 20px;
+  margin: -30px auto 6px;
+  border-radius: 0;
+  opacity: 1;
+  background: url('../assets/deco-rope.png') center / contain no-repeat;
+  filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.45));
+}
+
+/* ---- rows ---- */
+.k-card {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg');
+  background-size: auto, 384px 384px;
+}
+.k-card.is-locked {
+  background:
+    linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
+    url('../assets/tex-parchment.jpg');
+  background-size: auto, 384px 384px;
+}
+
+/* ---- slabs and knobs ---- */
+.k-btn--secondary {
+  background: url('../assets/tex-wood.jpg');
+  background-size: 200px 200px;
+}
+/* The round wooden knob is a picture now: rim, face and lip are in the art,
+   so the kit's border and drop-lip come off and the press moves the picture. */
+.k-btn.k-knob,
+.tools-knob,
+.legacy-close {
+  border: 0;
+  box-shadow: none;
+  color: var(--ink-inverse);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
+  background: url('../assets/deco-knob.png') center / 100% 100% no-repeat;
+}
+.k-btn.k-knob:active,
+.tools-knob:active,
+.legacy-close:active { box-shadow: none; transform: translateY(2px); }
+.tools-knob.is-active { filter: brightness(1.15) saturate(1.2); }
+
+/* ---- the header plank and the nav beam ---- */
+/* One 512 tile spans the whole frame, so the tile's seam is never on screen. */
+.hud-plank { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.hud-divider {
+  width: 12px;
+  height: 30px;
+  border-radius: 0;
+  opacity: 1;
+  background: url('../assets/deco-rope-v.png') center / contain no-repeat;
+}
+#navbar.nav { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+#navbar.nav .nav-tab {
+  background: url('../assets/tex-parchment.jpg');
+  background-size: 256px 256px;
+}
+/* The lit call to action keeps its gold (nav.css); only a plain active tab
+   gets the brighter parchment. */
+#navbar.nav .nav-tab.is-active:not(.is-cta) {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)),
+    url('../assets/tex-parchment.jpg');
+  background-size: auto, 256px 256px;
+}
+
+/* ---- the district card and the quest scroll ---- */
+/* The district card wears the same frame as a sheet, open at the bottom where
+   it meets the nav: three sides of the nine-slice, the fourth width 0. */
+.dc {
+  border: 12px solid transparent;
+  border-bottom: 0;
+  border-top-width: 12px;
+  border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
+  background: url('../assets/tex-parchment.jpg') padding-box;
+  background-size: 384px 384px;
+}
+.q-scroll {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.12), rgba(60, 36, 18, 0.12)) top / 100% 6px no-repeat,
+    linear-gradient(rgba(60, 36, 18, 0.12), rgba(60, 36, 18, 0.12)) bottom / 100% 6px no-repeat,
+    url('../assets/tex-parchment.jpg') / 384px 384px;
+}
+
+/* ---- the quest scroll is pinned with a seal (§5.2) ---- */
+.q-scroll::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  right: -9px; /* the top-left is where the chain line starts */
+  width: 30px;
+  height: 30px;
+  background: url('../assets/deco-seal.png') center / contain no-repeat;
+  filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5));
+  pointer-events: none;
+}
+
+/* ---- the banner is cloth; its tone dyes the weave ---- */
+.b-body,
+.b-tail {
+  background: var(--tone) url('../assets/tex-cloth.jpg') center / 256px 256px;
+  background-blend-mode: multiply;
+}
+
+/* ---- the research page and the build grid ---- */
+.research-topbar { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.tech-page {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
+    radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-card {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-card.is-locked {
+  background:
+    linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }

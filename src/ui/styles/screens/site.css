@@ -18,7 +18,7 @@
 }
 .site-art--glyph { display: grid; place-items: center; font-size: 34px; }
 
-.site-name { font-family: var(--font-display); font-size: var(--text-title); }
+.site-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
 .site-kind { font-size: var(--text-helper); color: var(--ink-muted); }
 
 /* The promise, stated once and large: this is what paid fog buys. */

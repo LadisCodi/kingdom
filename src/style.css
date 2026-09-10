@@ -9,10 +9,8 @@
 html, body { height: 100%; overflow: hidden; background: #14100c; }
 body {
   font-family: var(--font-body);
-  /* The base size was never declared, so every unstyled string inherited the
-   * browser's 16px default — off m6x11plus's 18px grid, which is most of the
-   * text in the game rendering soft. Declaring it is the single biggest part
-   * of the pixel-face switch. */
+  /* Declared, so every unstyled string reads the token rather than whatever
+   * the browser defaults to (tests/fonts.test.ts holds it). */
   font-size: var(--text-body);
   color: var(--ink);
   user-select: none;
@@ -27,7 +25,10 @@ body {
    positions against this frame, not the browser viewport. */
 #app {
   position: relative; width: 100%; height: 100%; overflow: hidden;
+  /* dvh, so iOS Safari's toolbar is not counted as screen; the vh line is
+     the fallback for browsers that lack it. */
   max-width: calc(100vh * 9 / 16);
+  max-width: calc(100dvh * 9 / 16);
   background: #10151c; box-shadow: 0 0 0 1px var(--wood-dark);
   /* THE FRAME IS THE VIEWPORT, as far as any screen inside it is concerned.
      A `@media (max-width: …)` reads the BROWSER window, which on desktop is

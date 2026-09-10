@@ -262,7 +262,7 @@
 }
 /* No plank above it, so the name is the card's title and carries the weight. */
 .hero-title { text-align: center; }
-.hero-name { font-family: var(--font-display); font-size: var(--text-title); }
+.hero-name { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
 .hero-subtitle { font-size: var(--text-helper); color: var(--ink-muted); }
 
 /* THE LEVEL AND ITS BUTTON ARE ONE WIDGET, at the foot of the card: one
@@ -287,7 +287,7 @@
   font-size: var(--text-helper);
 }
 .hero-level-read b {
-  font-family: var(--font-display);
+  font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   line-height: 1;
 }

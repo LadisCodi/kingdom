@@ -16,11 +16,11 @@ export const COLS = 3;
 /** One node card. Three of these plus two gaps and the two channels is the
  *  page's width, and the page's width is the phone's.
  *
- * The body face has ONE legal size — 18px on the m6x11plus grid
- * (ui/styles/tokens.css) — which is 6px a character, so these two numbers are
- * a character count: 120 wide leaves 106px of content, or 17 characters, and
- * the longest technology name in the game ("Stonecutting III") is 16. 96 tall
- * is that name on one line and three lines of what it does under it. */
+ * Sized as a character count at --text-body (16px PT Sans is ~7px a
+ * character): 120 wide leaves 106px of content, or about 15 characters, and
+ * the longest technology name in the game ("Stonecutting III") is 16 — it
+ * wraps or ellipsises, which the card allows. 96 tall is that name on one line
+ * and three lines of what it does under it. */
 export const NODE_W = 120;
 export const NODE_H = 96;
 const COL_GAP = 6;

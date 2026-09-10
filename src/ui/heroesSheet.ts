@@ -28,7 +28,7 @@ import {
   ascensionStardustCost, canUnlockHero, heroStats, heroUnlockCost, rosterView,
 } from '../sim/heroes';
 import { tierCost, xpLevelCost } from '../sim/collection';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { HeroId } from '../sim/state';
 import type { Game } from '../game';
 import { el } from './format';
@@ -46,7 +46,7 @@ function heroArt(def: HeroDef, locked: boolean): HTMLElement {
   const url = spriteUrl(def.sprite);
   const cls = `hero-art${locked ? ' is-locked' : ''}`;
   return url
-    ? el('img', { class: cls, src: url, alt: '' })
+    ? spriteImgAt(url, cls)
     : el('div', { class: `${cls} hero-art--glyph` }, def.glyph);
 }
 
@@ -323,7 +323,9 @@ export function renderHeroesSheet(game: Game): HTMLElement {
   if (game.openHeroId !== null && !(game.openHeroId in HEROES)) game.openHeroId = null;
   const open = game.openHeroId;
   if (open === null) {
-    return sheet({ title: 'Heroes', onClose: () => game.dismiss() }, grid(game));
+    // Tall: a roster is a screen the player works in, and a drawer that
+    // grew and shrank with the grid would move its own rows.
+    return sheet({ title: 'Heroes', onClose: () => game.dismiss(), tall: true }, grid(game));
   }
   // The card is BARE: its portrait and its name are the title, and a plank
   // above them would print the name twice. The back knob on the portrait is

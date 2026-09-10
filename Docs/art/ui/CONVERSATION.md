@@ -350,3 +350,83 @@ a 50 px column.
 `relics`, `dungeon`, `chest` and `daily` join `locked.except`. A derived
 `-locked` cell for a nav mark or a pill head is atlas space nothing can ask
 for.
+
+---
+
+## M1–M4 — the smooth-chrome mockups (§7.19)
+
+- **Date:** 2026-09-10
+- **Conversation:** <https://chatgpt.com/c/6aa31e50-0190-83eb-b141-99e7dec54bd5>
+  ("Diseñar UI de mapa", Codigames workspace), driven from Claude Code through
+  the Chrome extension.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `mockups/m1-map-and-chrome.png`, `mockups/m2-townhall-card.png`,
+  `mockups/m3-build-sheet.png` (852×1846 each — the viewer's export, not the
+  1080×2340 asked for; fine for a reference) and `mockups/m0-four-screens.png`
+  (853×1844), a 2×2 sheet of all four screens the model produced unasked when
+  given the M4 prompt; the Research page exists only there for now.
+- **Prompt:** §7.17 style block v2 with `reference.png` attached to the first
+  message, then §7.19 M1–M4 verbatim, one per message.
+- **What worked:** the style block's "NOT pixel art … like Township / Hay Day
+  menus" line and the percentages (header 5%, nav 6%, sheet 55–65%) landed
+  first time; every screen came back at the requested density with legible
+  labels.
+- **What to know:** the composer stuck on "generating" after the 2×2 sheet
+  and would not send again even after a reload — start a new conversation
+  when that happens. Images are downloaded from the viewer (click the image,
+  then the download icon top-right); the "Compartir" arrow under the image
+  is a share menu, not a download.
+
+---
+
+## UI-A2 … UI-E2 — the smooth icon sheets (§7.18)
+
+- **Date:** 2026-09-10
+- **Conversation:** <https://chatgpt.com/c/6aa322bc-9084-83eb-ae38-bd37d3d098c3>
+  ("Crear hoja de iconos UI", Codigames workspace), driven from Claude Code
+  through the Chrome extension; `reference.png` attached to the first message.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `sheets/ui-a2-currencies.png`, `ui-b2-buildings.png`,
+  `ui-c2-people.png`, `ui-d2-symbols.png`, `ui-e2-marks.png` — 1254×1254,
+  true alpha (`srgba(0,0,0,0)` at the corner), downloaded from the image
+  viewer's download icon. The viewer export is no longer the opaque
+  checkerboard the pixel-era entry warns about; the "corrected PNG" link
+  never appeared (the image model answered without running code), and was
+  not needed.
+- **Prompt:** §7.18 verbatim, one sheet per message, "Same style" as the
+  only anchor after the first. Every sheet came back on the strict 4×4 grid
+  with generous margins first time; E2 left its empty row genuinely empty,
+  so the manifest declares it 3×4 rather than 4×4 with nulls.
+- **Manifest:** `cell: 64`, `smooth: true` (Lanczos, alpha left soft,
+  `image-rendering: auto`); the pixel-era sheets stay in `sheets/` as
+  provenance and are no longer sliced.
+
+---
+
+## T1 · D1 · F1 — textures, decorations and the frame (§7.21)
+
+- **Date:** 2026-09-11
+- **Conversation:** <https://chatgpt.com/c/6aa32c46-bbc8-83eb-9e5a-ea10725869e2>
+  ("Generar texturas seamless", Codigames workspace), driven from Claude Code
+  through the Chrome extension; `mockups/m3-build-sheet.png` attached to the
+  first message as the material anchor instead of `reference.png` — the
+  materials, not the world, were the point.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `sheets/ui-t1-textures.png` (2×2 opaque tiles → `src/ui/assets/
+  tex-{parchment,wood,wood-dark,cloth}.jpg`; the wood tiles ship as the 512
+  quarter as drawn, since mirroring them into a seamless 1024 made every knot
+  a symmetric pair; parchment and cloth are mirrored, which on a low-contrast
+  fibre is invisible), `sheets/ui-d1-decor.png` (2×3 transparent objects →
+  `deco-{rope,rope-v,seal,knob,nail,pennant}.png`, trimmed, ≤ 256px, cut by
+  hand: they are not `IconName`s, so the atlas has no cell for them),
+  `sheets/ui-f1-frame.png` (the nine-slice experiment → `frame-wood.png`,
+  trimmed and halved to 600px: edge ~61px, corner blocks ~80px, so
+  `border-image-slice: 80`).
+- **Prompt:** §7.21 verbatim, one per message.
+- **What worked:** the frame came back genuinely nine-sliceable — identical
+  corner blocks, straight uniform edges, transparent centre — which the
+  pixel-era §7.16 said image models could not do. The smooth style is what
+  changed: no grid to misalign.
+- **What to know:** the textures' seams are fine along the grain (horizontal)
+  and faint across it; the chrome only ever repeats them horizontally over
+  40–52px bands, so the cross-grain seam never shows.

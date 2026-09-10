@@ -22,7 +22,7 @@
 import type { Game } from '../game';
 import { GEM_PACK_ORDER, KINGDOM_DEF, STORE } from '../sim/data/definitions';
 import { formatUsd } from '../sim/store';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import { bannerPanel } from './bannerPanel';
 import { BANNERS, BANNER_ORDER } from '../sim/data/definitions';
 import { el } from './format';
@@ -78,7 +78,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     // `<sprite>.png`; until it lands the Gems icon stands in.
     const url = spriteUrl(sku.sprite);
     const art = url
-      ? el('img', { class: 'store-pack-art', src: url, alt: '' })
+      ? spriteImgAt(url, 'store-pack-art')
       : el('span', { class: 'store-pack-art is-fallback' }, currencyIcon('Gems', { size: 'lg' }));
     const pack = el('div', { class: 'store-pack' },
       el('div', { class: 'store-pack-count' }, `${sku.gems} gems`),

@@ -134,6 +134,20 @@ Rule: **no pure black, no blue-grey, no #FFFFFF.** Outlines are
 - **Scrim** — when a sheet is open, the map dims to 35% warm brown
   (`rgba(60,36,18,0.35)`), never to near-black. The kingdom stays legible.
 
+*2026-09-11 — the materials are pictures now.* `src/ui/styles/material.css`,
+loaded last, paints the §7.21 sheets over the geometry above and changes
+nothing else: parchment (`tex-parchment.jpg`) inside a nine-slice carved
+frame (`frame-wood.png`, `border-image-slice: 80` at 16px, corners a little
+proud) on every `.k-panel`; wood grain (`tex-wood.jpg`) on planks, the header
+and the nav beam, parchment on the tabs; a rope grab handle and a rope
+divider; the round knob as a picture (`deco-knob.png`); the district card in
+the same frame, open where it meets the nav; the banner as cloth dyed by its
+tone (`tex-cloth.jpg`, `background-blend-mode: multiply`); the quest scroll
+pinned with a wax seal at its free corner (§5.2); parchment under the
+research page and the build cards. `border-image` forfeits `border-radius`,
+so the frame's rounding lives in the art. Dropping the one `@import` restores
+the flat kit.
+
 ### 3.3 Buttons
 
 | Kind | Look | Used for |
@@ -150,54 +164,57 @@ Pressed state: the slab drops onto its lip (3px down, lip hidden).
 
 ### 3.4 Type & numbers
 
-*Revised 2026-09-02. The original called for "one chunky pixel display face
-for titles/numbers" — Pixelify Sans shipped as that face, and giving one
-decorative face both jobs is what forced it to be legible at 13px, which it
-was not. Numbers moved to the text face and the display face was replaced.*
+*Revised 2026-09-10. The pixel faces (BoldPixels for titles, m6x11plus for
+everything else) forced 24px body copy and coarse size rungs that no phone
+layout could fit; both are gone.*
 
-- **Titles: Germania One**, and **only at 15px and up**. It is a display face
-  and is used like one — headings, sheet planks, proper names. Nothing else.
-- **Body copy AND every number: PT Sans.** A number has to be read at a glance
-  at 13px, which is a text face's job, not a display face's.
-- Titles 20–24px, body 15–16px, helper 13–14px, unchanged.
-- Counters are **tabular** — and now by construction rather than by CSS: PT
-  Sans's digits are all one width, so figures do not jitter even though the
-  font ships no `tnum` feature for `font-variant-numeric` to switch on.
-  Germania One's digits *are* proportional, which is the second reason numbers
-  never go in the title face.
-- Germania One has **one weight**; asking it for 700 gets a synthesised smear,
-  so title rules specify 400.
+- **Body copy and every number: PT Sans** 400/700, self-hosted
+  (`src/ui/fonts/`). **Titles: Germania One** 400 (decided on the board,
+  2026-09-11) — headings, sheet planks, proper names, only at `--text-title`;
+  one weight, proportional digits, so never a number. The pair
+  `--font-display` / `--font-display-weight` carries it.
+- **Scale: title 22px, body 16px, helper 13px** (`--text-title`,
+  `--text-body`, `--text-helper`) — the brief's minimums (§2), checked by
+  `tests/fonts.test.ts`, which also refuses any literal under 11px.
+- Every number is set in the text face; PT Sans's digits are one width, so
+  counters do not jitter.
 - Counters are always paired with an icon on the left.
-- Big numbers get thousands separators; never show more than one decimal
-  (taxes currently print `1.5 Gold/min` — keep that shape).
+- Big numbers get thousands separators; never show more than one decimal.
 - Durations read as words at small values: `instant`, `8s`, `2m 30s`,
   `1h 05m`. Never raw seconds above 90.
 
 ### 3.5 Icons
 
-Replace **every emoji** with a hand-made 32×32 (or 16×16 upscaled) pixel
-icon in the reference palette. The current emoji set is the placeholder
-map, and it is the single loudest reason the UI reads as a prototype:
-
-`🪙 Gold · 🍎 Food · 🪵 Wood · 🪨 Stone · 💎 Gems · 📜 Knowledge`
-`🫐 Berries · 🍖 Meat · 🐟 Fish · ⚙️ Iron` *(cells now, not currencies —
-they pay Food and Stone, but the map still needs their art)*
-`👥 Population · 👷 Builders · 🧑‍🌾 Free workers · 📜 Quest · 🔍 Show me`
-`🏛️ Townhall · 🏠 Housing · 🌾 Farm · 🟩 FarmLands · 🪚 Sawmill ·`
-`🏪 Market · ⛏️ Quarry · ⚓ Docks · ⚒️ Mine`
-
-Each needs: a normal state, a "greyed"/locked state (desaturated toward
-`locked`, plus a padlock overlay), and — for currencies — a tiny version
-for inline use in sentences.
+*Revised 2026-09-10.* Every `IconName` is drawn on the five smooth sheets of
+§7.18, sliced into a **64px-cell atlas** (`src/ui/assets/ui-atlas.png`,
+`atlas.manifest.json` `cell: 64, smooth: true`). The atlas cell is a
+**source**, not a display size: an icon is shown at whatever the layout asks
+(`--icon-size`: 20 on the header coins, 24 in the nav and by default, 28 in a
+list row, 16 inline) and is resampled smooth (`image-rendering: auto`). The
+locked variant (desaturated toward `locked`) and the inline `-sm` cell are
+still derived by the script, never drawn. No emoji anywhere —
+`tests/icons.test.ts` holds the atlas to the kit's names.
 
 ### 3.6 Layout
 
-- Portrait 9:16 (the app frame is `max-width: calc(100vh * 9 / 16)`).
-  Mockups: **1080×1920**.
-- Safe zones: 64px top (HUD), 96px bottom (nav + home indicator).
-- Bottom sheets: 40–70% of screen height, scroll inside, grab handle,
-  never cover the HUD.
-- Content gutters: 24px. Row height: 88–104px.
+- Portrait, full-bleed on the phone (`viewport-fit=cover`), pillarboxed to
+  9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`). Mockups:
+  **1080×2340** (§7.19). Measured against the iPhone 17, 402×874 CSS px.
+- Safe zones: the header is 44px plus the top inset (`env(safe-area-inset-top)`,
+  reserved once, in `hud.css`); the nav is 52px plus the bottom inset
+  (reserved once, in `nav.css`). Both are measured at runtime into `--hud-h`
+  / `--nav-h`.
+- Bottom sheets fit their content, capped at **70%** of the frame (decided on
+  the board, 2026-09-11); only the research page, the heroes roster, the
+  reliquary and the battle board are `tall`. **A card about something on the
+  map frames it**: when the district or site card mounts, the camera centres
+  the building in the band between the header and the card's top edge, once
+  (`Camera.centerFootprintWithin`). A sheet sits `hud-h + 24px` below the top and `nav-h + 8px` above
+  the bottom, with `--gutter` (12px) at the sides. Panel frame 6px + 10px
+  padding; plank 40px with the close knob inside it (board, 2026-09-11); grab
+  handle 40×4.
+- Targets: buttons `min-height: 44px` (56 with a price), knobs 40 with a
+  44px hit area, list rows 60px, grid gap 8px.
 
 ### 3.7 Motion (spec only, no mockup needed)
 
@@ -416,6 +433,14 @@ also lives.
 ---
 
 ### 5.4 Bottom nav
+
+> **2026-09-10.** The bar carries **five** tabs — Store · Relics · Heroes ·
+> Research · Build — at **52px**: a 24px icon over a 12px label, the bottom
+> inset added underneath. Store and Heroes arrived after the three-tab
+> argument below was written and each passed the "visited on its own
+> schedule" test of `ui-long-game.md` §1; what the argument still buys is the
+> size — five tabs fit a 402px frame only at this density. The rest of this
+> section is the history of the bar and stays as it was written.
 
 **Purpose.** Reach the three places; leave any of them.
 
@@ -1152,6 +1177,29 @@ pressable.
 
 ---
 
+### 6.8 A screen is built once
+
+*2026-09-10.* The tick calls `notify()` once a second and every command
+calls it too; a screen that rebuilt itself on every call blinked its images,
+lost its scroll and replayed its slide-in on the phone. The contract now:
+
+- **Sprites are pooled.** `spriteImg()` (`src/render/spritePool.ts`) hands
+  out one `<img>` per URL and `legacy().refresh()` returns every pooled image
+  in the discarded subtree before it replaces it, so a decoded bitmap moves
+  from the old tree to the new and never re-decodes. Nothing is inlined as a
+  `data:` URI (`assetsInlineLimit: 0`).
+- **Scroll is kept by name.** A scroller carries `data-keep-scroll="<name>"`
+  and its position is written back only when it differs. The district card's
+  body, the training queue, the research page and the tech card all carry one.
+- **The slide-in plays once.** `data-fresh` marks the first build's content;
+  the animation keys on it, not on the container.
+- **A screen with nothing ticking is signed.** `OVERLAY_SIGNATURES`
+  (`src/main.ts`) holds a coarse stringify of what each such screen reads;
+  same string, no rebuild. A screen that shows a countdown or the wallet
+  keeps rebuilding — the rebuild is invisible once images and scroll survive.
+- **The district card is the template for the next step**: built once per
+  building and mutated in place, like the header and the pills.
+
 ## 7. Mockup prompt pack (ChatGPT)
 
 ### 7.0 How to run the session
@@ -1588,6 +1636,231 @@ cleanly and one that clips. Do not ask for a grid finer than 4×4.
 > download link for the corrected PNG.
 
 ---
+
+
+### 7.17 The smooth chrome — style block v2 (2026-09-10)
+
+The chrome stopped being pixel art on 2026-09-10 (the world did not). The
+pixel faces forced 24px body copy and coarse size rungs that no phone layout
+could fit, and 32px icons drawn to be shown at 32px cannot be scaled. So the
+UI is redrawn **smooth**: PT Sans for every word and number, and icons that
+scale to whatever the layout asks (24px in the nav, 20px on the header
+coins, 28px in a list row). The map underneath keeps its chunky pixels; the
+contrast is deliberate — parchment and wood sitting on a pixel world.
+
+§7.1–§7.16 are the pixel-era pack and stay as provenance for the atlas the
+game shipped with. Everything generated from here on uses this block.
+
+Paste **verbatim at the top of every prompt** (with `reference.png`
+attached to the first message of the conversation):
+
+> Mobile game UI for a cozy fantasy kingdom builder, portrait phone screen.
+> The game world behind the interface is the bright top-down PIXEL art in
+> the attached reference — saturated spring greens, tiny cream cottages with
+> terracotta roofs, round tree canopies — and it stays pixel art. The
+> interface on top of it is NOT pixel art: it is clean, smooth, softly
+> shaded, like a polished modern mobile game (Township, Hay Day, Clash of
+> Clans menus), made of warm physical materials — aged parchment panels
+> (#F4E4C1) inside carved wooden frames (#A9713F face, #5C3A1E outline,
+> #C89159 top bevel), rope, cloth banners, wax seals. Text is dark brown ink
+> (#3B2412) in a clean rounded humanist sans-serif, medium weight, never
+> pixelated, never blackletter. Buttons are thick rounded slabs with a
+> darker bottom lip: leaf green (#6FBF4A) for the main action, wood brown
+> for secondary, clay red (#D4553E) for destructive; accents in warm gold
+> (#F2B233). Icons are chunky, simple, readable silhouettes with a thin dark
+> brown outline, soft two-tone shading and a small highlight — smooth
+> anti-aliased edges, no pixel grid, no emoji, no glow, no gradients heavier
+> than a gentle bevel. Cheerful, tactile, storybook — NOT a strategy HUD: no
+> grey or blue-grey panels, no hairlines, no dense tables, no glass, no
+> neon. Compact: the interface must leave most of the world visible.
+> Portrait 1080×2340 for full screens. No watermark, no logo, no phone bezel.
+
+### 7.18 Icon sheets, smooth — the atlas the phone loads
+
+Five square sheets, **4×4 cells at 1024×1024** (256px cells, icons ~180px),
+true alpha, sliced by `scripts/ui-atlas.mjs` into a **64px-cell** atlas
+(`atlas.manifest.json` `cell: 64`) and downscaled smooth, not point-sampled.
+Names are the `IconName` union in `src/ui/kit/icon.ts`; `tests/icons.test.ts`
+holds the manifest to it. Reading order, left to right, top to bottom.
+
+| Sheet | Cells | Contents (in order) |
+|---|---|---|
+| **UI-A2 currencies & goods** | 16 | Gold coin · Food (red apple) · Wood (cut logs) · Stone (grey block) · Mana (glowing violet-blue orb) · Gems (cut violet gem) · Knowledge (open book with a quill) · Stardust (pinch of glittering blue dust) · HeroXp (rising golden chevron) · SilverKey (ornate silver key) · GoldKey (ornate gold key) · Planks (bundle of sawn planks) · CutStone (dressed stone block with chisel marks) · Iron (iron ingot) · Runestone (blue-grey stone with a glowing rune) · Meat (roast leg on the bone) |
+| **UI-B2 buildings I** | 16 | Townhall (hall with a banner) · Housing (cottage) · Farm (wheat sheaf) · FarmLands (green crop plot) · Sawmill (log saw) · Quarry (pickaxe over rocks) · Docks (anchor) · Sanctum (crystal on a stone plinth) · Barracks (shield with crossed swords) · SpearHall (two crossed spears) · ShootingGrounds (bow and arrow) · Stables (horseshoe) · Infirmary (red cross on a bandage roll) · Carpenter (saw over a sawhorse) · MasonsYard (mallet and chisel) · Smelter (small furnace with flame) |
+| **UI-C2 buildings II, cells, units, people** | 16 | RuneCarver (rune chisel) · Garden (flower bed) · Well (stone well with bucket) · Orchard (fruit tree) · Statue (stone figure on a plinth) · Plaza (paved square with a fountain) · Shrine (small stone shrine with a candle) · Berries (bunch of blue berries) · Fish (silver fish) · Warrior (swordsman helmet) · Lancer (spearman helmet) · Archer (hooded archer) · Cavalry (horse head with plume) · population (three villager heads) · builders (hammer and hard hat) · workers (farmer with a hoe) |
+| **UI-D2 symbols** | 16 | harmony (two leaves in a circle) · build (hammer) · army (shield) · research (scroll with a candle) · settings (cog) · quest (rolled parchment scroll) · showme (pointing hand) · padlock · hourglass · clock · tick · close (✕) · plus · minus · sparkle (four-point star burst) · unknown (?) |
+| **UI-E2 marks** | 12 of 16 | star (five-point gold star) · video (film clapper) · ascension (rising star with a trail) · fragment (glowing shard) · atk (sword) · def (round shield) · hp (heart) · relics (reliquary chest with a glowing lid) · dungeon (dark ruin mouth) · chest (closed treasure chest) · daily (calendar page) · skull — then four EMPTY cells |
+
+Prompt, per sheet (substitute the contents list):
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> fully transparent background. Treat the canvas as a strict grid of 4 rows
+> × 4 columns of equal cells and place exactly one icon, centred, in each
+> cell, in reading order left-to-right then top-to-bottom: [contents]. Every
+> icon must fit inside the middle 70% of its own cell, with a wide empty
+> transparent margin around it; no icon may touch or cross a cell boundary.
+> All icons the same visual size, roughly 180 pixels across, drawn to read
+> clearly at 24 pixels: bold simple silhouettes, thin dark brown outline,
+> soft two-tone shading, one small highlight, smooth edges. Do not draw grid
+> lines, cell borders, labels, numbers, captions, shadows or any background.
+> The background must be alpha 0 everywhere — not white, not a checkerboard.
+> Leave any surplus cells completely empty. Then apply the true-alpha
+> transparency correction and give me the download link for the corrected
+> PNG.
+
+Locked variants and the 16px `-sm` cells are still **derived**, not drawn
+(§7.16); the derivation resamples smooth instead of point-decimating.
+
+### 7.19 Screen mockups, phone-exact
+
+Four full screens at **1080×2340** (the iPhone 17's 9:19.5; the frame in the
+game is pillarboxed to 9:16 on desktop but full-bleed on the phone). Each
+one shows the chrome at the density the pass targets: header 44px, nav 52px,
+sheets no taller than 70% of the screen, 44px targets, 16px body, 22px
+titles. Image models misspell; judge layout and material, never the words.
+
+**M1 — map and chrome**
+
+> [style block v2] Full phone screen over the bright pixel-art kingdom map.
+> Along the very top, under a thin dark safe-area strip, a slim carved
+> wooden plank bar, about 5% of the screen height, holding four compact
+> resource counters — a gold coin "1,240", an apple "86", logs "312", a
+> stone block "40" — each a small icon and a number, then, set apart by a
+> thin rope divider, a small violet mana orb with a slim gauge, and at the
+> far right a violet gem "10" with a tiny green "+" knob. Hanging just below
+> the plank on the right, a small round wooden knob with a cog. Bottom-left,
+> just above the nav, a small parchment quest scroll card about 55% of the
+> screen width: title "Timber!", one short line, a slim gold-filled trough
+> "6/10", and a small brown "Show me" slab. Along the bottom edge a slim
+> carved wooden beam, about 6% of the screen height, with FIVE small raised
+> tab plates, each a 24px-style icon above a tiny word: a gem "Store", a
+> glowing chest "Relics", a helmet "Heroes", a scroll "Research", a hammer
+> "Build"; "Build" is lit gold as the call to action. Below the beam a thin
+> dark strip for the home indicator. The map fills everything else and is
+> the hero of the image: the chrome is small and out of its way.
+
+**M2 — the Townhall card**
+
+> [style block v2] Full phone screen. The top 45% shows the kingdom map,
+> warm-dimmed, with the slim resource plank at the top and a townhall
+> building ringed in soft gold. The bottom 55%, sitting just above a slim
+> five-tab wooden nav beam, is a parchment panel in a thin carved wooden
+> frame with a small rope grab-handle. Inside, top-left, a square parchment
+> vignette with the townhall; to its right, "Townhall" in clean dark-brown
+> lettering with a small numeral "3 / 10" beside a gold star, and one short
+> line "The heart of the realm." Below, a row of five small round villager
+> portraits, two filled, one wearing a tiny sand-timer "42s", with a small
+> apple chip "20" and a compact green "Train" slab at the right. Below that,
+> a "Level up" block: two small townhall sprites with a gold arrow between
+> them, three compact stat tiles in a row — a coin "×1.5 → ×1.75", a
+> townhall "ring 8 → ring 10", villager heads "12 → 20" — and under them a
+> single line with a small padlock reading "Needs 12 villagers · you have
+> 9" where a button would be. Everything compact and evenly spaced; the
+> panel does not need to scroll.
+
+**M3 — the Build sheet**
+
+> [style block v2] Full phone screen. The kingdom map fills the top 35%,
+> warm-dimmed but visible, with the slim resource plank at the top. A bottom
+> sheet covers the lower 65%, above a slim five-tab wooden nav beam: a
+> parchment panel in a thin carved wooden frame, a small rope grab-handle,
+> and a narrow wooden header strip reading "Build" with a small round "✕"
+> knob at its right end. Below, a 2-column grid of six compact building
+> cards, each a parchment tile with a thin wood border: a small building
+> picture at the left — cottage, wheat farm, log sawmill, quarry, docks,
+> sanctum — its name, one short line, and a row of small cost chips (logs
+> "20", stone "10"). The docks card is dimmed and wears a small padlock
+> reading "Needs Sailing". All six cards fit without scrolling with room to
+> spare. Small type, tight spacing, big enough to tap.
+
+**M4 — the Research page**
+
+> [style block v2] Full phone screen, this one edge to edge: an aged
+> parchment page, faintly creased, between the slim resource plank at the
+> top and the slim five-tab nav beam at the bottom. A narrow wooden header
+> strip reads "Civics" with three small tome tabs beside it — "Civics" lit,
+> "Warfare" and "Magic" plain. On the page, a three-column grid of round
+> wax-seal medallions, five rows, connected by dotted sepia trails; two
+> trails inked gold. Each medallion carries a simple smooth symbol: an axe,
+> a wheat sheaf, a scroll, a pickaxe, a sail, a sword, a cog, a crown… The
+> top row is green wax with gold ticks; one in row two is blue with a thin
+> progress ring; one is bright gold and unsealed; the rest plain; a
+> horizontal gold "era bar" between rows three and four reads "100 cells
+> revealed". Floating over the bottom of the page, a compact parchment card:
+> a medallion thumbnail, "Bureaucracy", one line, a small book chip "12"
+> and an hourglass "2m", and a compact green "Start" slab.
+
+### 7.20 Export and where it lands
+
+- Sheets: 1024×1024, true alpha — use the **"Download the corrected PNG"**
+  link in the message body, never the image editor's download
+  (`ui/CONVERSATION.md`); verify with
+  `magick sheet.png -format "%[pixel:p{0,0}]" info:` → `srgba(0,0,0,0)` and
+  `magick identify sheet.png` → `1024x1024`. Files go to
+  `Docs/art/ui/sheets/ui-{a2,b2,c2,d2,e2}-*.png`; then
+  `node scripts/ui-atlas.mjs build` (cell 64, smooth resample) and
+  `npm run art:check`.
+- Mockups: 1080×2340 PNG, opaque, to `Docs/art/ui/mockups/m{1..4}-*.png`.
+  They are references for the board and the CSS, never assets.
+- Every generation is logged in `ui/CONVERSATION.md`: date, conversation
+  link, model, file, which prompt and which iteration phrases.
+
+
+### 7.21 Surfaces and decorations, smooth — the material the chrome is made of
+
+The mockups (§7.19) draw the panels as real parchment in real carved wood;
+the kit drew them as flat colour with bevels. These sheets close that gap.
+Textures are TILES the CSS repeats under the existing geometry (the frame
+stays a border with a radius, §3.2); decorations are loose objects placed
+by the kit; the frame sheet is an experiment — image models struggle with
+nine-slices, so it ships only if its corners register.
+
+**T1 — textures (opaque, 2×2 tiles of 512)**
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> divided into a strict 2×2 grid of four equal 512×512 tiles that touch edge
+> to edge with no gap and no separator. Each tile is a seamless, self-tiling
+> texture: its left edge continues perfectly into its right edge and its top
+> into its bottom, so it repeats as wallpaper with no visible seam. TOP-LEFT:
+> aged parchment, #F4E4C1 with faint #E2CCA0 mottling and fibre, very low
+> contrast. TOP-RIGHT: carved light wood plank grain, #A9713F with #5C3A1E
+> grooves and #C89159 highlights, soft and smooth, not pixelated. BOTTOM-LEFT:
+> the same wood, darker, in #5C3A1E with #3B2412 grooves. BOTTOM-RIGHT: plain
+> cream cloth weave, #FFF6E0, very low contrast. Smooth shading, no objects, no
+> text, no borders, fully opaque.
+
+**D1 — decorations (transparent, 2×3)**
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> fully transparent background, a strict 2 rows × 3 columns grid of six
+> separate objects, one centred in each cell, none touching a boundary,
+> reading order: (1) a short horizontal rope grab handle, two loops of tan
+> rope with a knot at each end, wide; (2) a short vertical rope divider, one
+> strand; (3) a round red wax seal with a small crown pressed into it; (4) a
+> round carved wooden knob, blank face, with a dark rim and a soft highlight;
+> (5) an iron nail head, small; (6) a cloth pennant, cream with a red
+> swallowtail edge, hanging from a short rope. Smooth shading, thin dark
+> outline, alpha 0 everywhere else. Then apply the true-alpha transparency
+> correction and give me the download link for the corrected PNG.
+
+**F1 — the frame, as a nine-slice (experiment)**
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024. A
+> carved wooden picture frame, #A9713F face with a #5C3A1E outline and a
+> #C89159 top bevel, 96 pixels thick on every side, with softly rounded outer
+> corners, drawn around a completely transparent centre. The four corners
+> must be identical to each other (rotated), and every edge must be a
+> straight, uniform run of the same grain so it can be stretched, so that the
+> image can be cut into nine slices and used as a resizable border. No
+> objects, no text, no background, alpha 0 in the centre and outside the
+> frame. Then apply the true-alpha transparency correction and give me the
+> download link for the corrected PNG.
+
+Where they land: textures to `src/ui/assets/tex-*.png` (512 tiles, ≤ 60 KB
+each after `magick -strip -quality 85` to JPEG if opaque), decorations
+sliced by the atlas script as a smooth sheet (`ui-f2-decor.png`, 2×3), the
+frame — if it passes — to `src/ui/assets/frame-wood.png` for
+`border-image-slice: 96`.
 
 ## 8. Open questions
 

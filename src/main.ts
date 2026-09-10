@@ -18,7 +18,7 @@ import { grantBuilder } from './sim/commands';
 import { addGood } from './sim/goods';
 import { GOOD_ORDER } from './sim/data/definitions';
 import { buildMapData, TOWNHALL_ORIGIN } from './sim/grid';
-import { coordKey } from './sim/state';
+import { coordKey, districtById, districtSize, type Coord } from './sim/state';
 import { newGame } from './sim/newGame';
 import { deserialize, type CatchUpReport } from './sim/save';
 import { mountHeader } from './ui/header';
@@ -34,10 +34,10 @@ import { mountDailyPill } from './ui/dailyPill';
 import { renderBuildMenu } from './ui/buildMenu';
 import { renderPlacementPanel } from './ui/placementPanel';
 import { renderCastPanel } from './ui/castPanel';
-import { renderDistrictCard } from './ui/districtCard';
+import { districtCardScreen } from './ui/districtCard';
 import { renderSiteCard } from './ui/siteCard';
 import { renderResearchMenu } from './ui/researchMenu';
-import { renderSettingsMenu } from './ui/settingsMenu';
+import { renderSettingsMenu, settingsSignature } from './ui/settingsMenu';
 import { renderPurseSheet } from './ui/purseSheet';
 import { renderReliquarySheet } from './ui/reliquarySheet';
 import { renderHeroesSheet } from './ui/heroesSheet';
@@ -118,11 +118,9 @@ async function boot(): Promise<void> {
   // puts a hard ceiling on a slow or failed download.
   await Promise.race([
     Promise.all([
-      // Germania One ships one weight, so asking for 700 would resolve to a
-      // synthesised bold and leave the real face unwaited-for.
-      document.fonts.load('400 24px "Kingdom Display"'),
-      document.fonts.load('400 16px "Kingdom Body"'),
-      document.fonts.load('700 16px "Kingdom Body"'),
+      document.fonts.load('400 16px "PT Sans"'),
+      document.fonts.load('700 16px "PT Sans"'),
+      document.fonts.load('400 22px "Germania One"'),
     ]),
     new Promise((resolve) => setTimeout(resolve, 1500)),
   ]);
@@ -189,8 +187,13 @@ async function boot(): Promise<void> {
    * safe default.
    */
   const OVERLAY_SIGNATURES: Partial<Record<OverlayName, () => string>> = {
-    heroes: () => game.heroesSignature(),
+    settings: () => settingsSignature(game),
   };
+  for (const name of Object.keys(OVERLAYS) as OverlayName[]) {
+    if (game.overlaySignature(name) !== null) {
+      OVERLAY_SIGNATURES[name] = () => game.overlaySignature(name)!;
+    }
+  }
 
   // Each mount point holds one keyed screen: same key → re-render in place,
   // different key → tear down and build. Screens still rebuild themselves
@@ -198,6 +201,22 @@ async function boot(): Promise<void> {
   // sheet animations and scroll preservation will need.
   const panelSlot = new ScreenSlot(panelRoot);
   const overlaySlot = new ScreenSlot(overlayRoot);
+
+  // A card about something ON the map moves that thing into the map the
+  // card leaves visible — the band between the header and the card's top
+  // edge — once, when the card mounts. Panning after that is the player's.
+  let framedPanelKey: string | null = null;
+  const frameOnMap = (key: string, cell: Coord, size: { x: number; y: number }) => {
+    if (framedPanelKey === key) return;
+    framedPanelKey = key;
+    const canvasTop = canvas.getBoundingClientRect().top;
+    const top = document.getElementById('header')!.getBoundingClientRect().bottom - canvasTop;
+    // The card sits at the bottom of #panel, so its top edge is the lowest
+    // top among the slot's children — not the slot's own.
+    const tops = [...panelRoot.children].map((c) => c.getBoundingClientRect().top - canvasTop);
+    const bottom = tops.length > 0 ? Math.min(...tops) : canvas.clientHeight;
+    camera.centerFootprintWithin(cell, size, top, bottom);
+  };
 
   const refreshScreens = () => {
     // Bottom panel: placement > site card > district card > empty.
@@ -215,14 +234,18 @@ async function boot(): Promise<void> {
         () => renderSiteCard(game, site) ?? el('div'),
         () => game.dismiss(),
       ));
+      frameOnMap(`site:${site.x},${site.y}`, site, { x: 1, y: 1 });
     } else if (inspectedId !== null) {
       // Keyed by district, so inspecting a different one is a real remount.
-      panelSlot.show(`district:${inspectedId}`, () => legacy(() => {
-        const district = game.state.city.districts.find((d) => d.uniqueId === inspectedId);
-        return district ? renderDistrictCard(game, district) : el('div');
-      }, () => game.dismiss()));
+      // Built once per building and mutated on the tick (districtCard.ts):
+      // the most-used panel and the longest scroller, so it is the one screen
+      // that does not go through legacy().
+      panelSlot.show(`district:${inspectedId}`, () => districtCardScreen(game, inspectedId));
+      const inspected = districtById(game.state, inspectedId);
+      if (inspected) frameOnMap(`district:${inspectedId}`, inspected.location, districtSize(inspected));
     } else {
       panelSlot.clear();
+      framedPanelKey = null;
     }
     // Overlays. Exhaustive over OverlayName, so adding a name without a
     // screen is a compile error rather than an overlay that draws nothing.

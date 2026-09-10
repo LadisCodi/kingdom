@@ -30,6 +30,20 @@ for (const [path, url] of Object.entries(urls)) {
 export const spriteUrl = (key: string): string | null =>
   urls[`./assets/${key}.png`] ?? null;
 
+import { spriteImgAt } from './spritePool';
+
+// The <img> pool lives in its own DOM-free-at-import module so the screen
+// host (ui/kit/host.ts) can import it under node; this file creates Images
+// the moment it loads.
+export { releaseSprites, spriteImgAt } from './spritePool';
+
+/** `spriteImgAt` by sprite name; null when there is no such art, so the
+ *  caller can fall back to its icon the way it always has. */
+export function spriteImg(key: string, className = ''): HTMLImageElement | null {
+  const url = spriteUrl(key);
+  return url === null ? null : spriteImgAt(url, className);
+}
+
 /**
  * Draw sprite `key` filling (x, y, w, h). Returns false when the image is
  * missing or not yet loaded — the caller draws its glyph fallback instead.

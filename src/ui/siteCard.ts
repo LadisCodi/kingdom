@@ -14,7 +14,7 @@ import type { GateView } from '../sim/gates';
 import type { Game } from '../game';
 import { landmarkClaimCost } from '../sim/landmarks';
 import { manaCap } from '../sim/mana';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Coord } from '../sim/state';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { el, formatDuration } from './format';
@@ -24,7 +24,7 @@ import { action, iconEl, panel, stat } from './kit';
 function art(sprite: string, glyph: string): HTMLElement {
   const url = spriteUrl(sprite);
   return url
-    ? el('img', { class: 'site-art', src: url, alt: '' })
+    ? spriteImgAt(url, 'site-art')
     : el('div', { class: 'site-art site-art--glyph' }, glyph);
 }
 

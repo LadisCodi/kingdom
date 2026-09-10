@@ -79,6 +79,32 @@ describe('chrome metrics', () => {
     expect(users).toEqual(['nav.css']);
   });
 
+  // The same rule at the top: viewport-fit=cover puts the header under the
+  // notch, so the header pads itself by the top inset and --hud-h (measured
+  // from it) already contains that. Anyone else adding env() on top of --hud-h
+  // would count the notch twice.
+  it('reserves the top safe-area inset exactly once, in the header', () => {
+    const users = sheets
+      .filter(([, css]) => css.includes('env(safe-area-inset-top)'))
+      .map(([name]) => name);
+    expect(users).toEqual(['hud.css']);
+    const markup = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    expect(markup, 'viewport-fit=cover is what makes the insets non-zero on iOS')
+      .toMatch(/name="viewport"[^>]*viewport-fit=cover/);
+  });
+
+  it('never adds the top safe-area inset on top of --hud-h', () => {
+    const offenders: string[] = [];
+    for (const [name, css] of sheets) {
+      for (const decl of css.split(';')) {
+        if (decl.includes('var(--hud-h)') && decl.includes('env(safe-area-inset-top)')) {
+          offenders.push(`${name}: ${decl.trim().replace(/\s+/g, ' ').slice(0, 90)}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   // THE RIGHT EDGE IS A COLUMN, not a place two widgets both aim at.
   //
   // The raid countdown and the rewarded offer are both slabs that slide in

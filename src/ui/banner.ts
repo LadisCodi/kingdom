@@ -10,7 +10,7 @@
 // burst of offline completions is readable instead of stacking.
 
 import { playSfx } from '../audio/sfx';
-import { spriteUrl } from '../render/sprites';
+import { spriteImgAt, spriteUrl } from '../render/sprites';
 import type { Banner, Game } from '../game';
 import { el } from './format';
 
@@ -21,8 +21,7 @@ const LEAVE_MS = 300;
 function subject(banner: Banner): HTMLElement {
   const url = banner.sprite ? spriteUrl(banner.sprite) : null;
   if (url === null) return el('span', { class: 'b-glyph' }, banner.icon);
-  const img = el('img', { class: 'b-art', src: url, alt: '' });
-  return img;
+  return spriteImgAt(url, 'b-art');
 }
 
 export function mountBanner(game: Game, root: HTMLElement): void {

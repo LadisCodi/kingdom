@@ -8,6 +8,7 @@ import {
   type AssignWorkerResult, type CollectTapResult, type UpgradeResult,
 } from './sim/commands';
 import {
+  BANNER_ORDER,
   AD, ARTIFACTS, BUILDABLE_DISTRICTS, COMBAT, CURRENCIES, DISTRICTS, HARVEST,
   LANDMARK_ART, LANDMARKS, MANA, PARTY, RUINS, STORE, roomCount,
   TECHNOLOGIES, TRAINING, UNITS, levelIndexed, type AdjacencyStat, BANNERS, type BannerId,
@@ -1498,6 +1499,40 @@ export class Game {
    * anybody remembering to come back here. A signature that misses an input
    * does not flicker — it goes stale, which is the worse bug.
    */
+  /**
+   * The signature of an overlay that has nothing ticking on it, or null for
+   * one that does and must keep rebuilding (a countdown, a regenerating
+   * pool). Coarse on purpose — a whole slice stringified — per the contract
+   * in ui/kit/host.ts: a missed input goes stale, which is the worse bug.
+   * `settings` is not here: it reads module state the presenter does not
+   * own (ui/settingsMenu.ts carries its own).
+   */
+  overlaySignature(name: OverlayName): string | null {
+    switch (name) {
+      case 'heroes': return this.heroesSignature();
+      // The offline report is fixed for the session; the sheet only closes.
+      case 'welcome': return 'welcome';
+      // A list of profiles and a button each. Nothing on it moves.
+      case 'payerProfile': return 'payer';
+      case 'builder': return JSON.stringify(this.builderOffer());
+      // `endsIn` is a string the season formats; when it changes, the sheet
+      // should, and not before.
+      case 'daily': return JSON.stringify(this.dailySeason());
+      case 'iapConfirm':
+        return JSON.stringify([this.pendingSku, this.payerInfo()]);
+      case 'store':
+        return JSON.stringify([
+          this.builderOffer(),
+          BANNER_ORDER.map((b) => this.keyOffer(b)),
+          this.walletValue('Gems'),
+        ]);
+      // Not signed: the reliquary counts down attunement slots and reads the
+      // Mana pool for the cast button; the rest draw prices against a purse
+      // that moves every tick.
+      default: return null;
+    }
+  }
+
   heroesSignature(): string {
     return [
       this.openHeroId ?? '-',

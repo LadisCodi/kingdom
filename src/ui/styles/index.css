@@ -38,3 +38,6 @@
 /* Last, and deliberately: it overrides the portrait rules of every screen
    above for the heroes whose art has been repainted. */
 @import './screens/portraits.css';
+/* Later still: the materials. Backgrounds, borders and the grab handle only,
+   over every rule above (material.css says why). */
+@import './material.css';
