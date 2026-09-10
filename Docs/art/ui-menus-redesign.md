@@ -150,7 +150,11 @@ card laid out as M3 draws it — art at the left, name and promise beside it,
 the price under both (`build.css`); the quest scroll with the M1 card's two
 ends — a slot with the mark of what the quest is about, and the verb the tap
 performs drawn as a slab ("Show me" / "Claim") while the whole scroll stays
-the button; the research shelf in wood, its trails dotted sepia. `border-image` forfeits `border-radius`,
+the button; the research shelf in wood, its trails dotted sepia; the
+Townhall's villagers as M2's row of faces — one round portrait per bed the
+houses hold, the one in training under a sand-timer, free beds as empty
+sockets, "+N" past eight — with the clock on the Train button; the header's
+Mana as an orb resting on a slim gauge. `border-image` forfeits `border-radius`,
 so the frame's rounding lives in the art. Dropping the one `@import` restores
 the flat kit.
 

@@ -274,31 +274,37 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  overflow: hidden;
-  padding: 2px 7px;
-  /* The BODY face for the pool, at the size it was chosen for. The pixel
-   * display face is lovely at 15px and up, but at the 13px chrome size a 2, a
-   * 5 and an 8 share most of their pixels — and "is my pool 24 or 84" is the
-   * one number in this widget that has to be unambiguous. Tabular numerals
-   * keep it from jittering as it fills. */
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: var(--text-helper);
-  font-variant-numeric: tabular-nums;
-  color: var(--parchment);
-  background: #2c3c66;
-  border: 2px solid #1b2745;
-  /* On the plank now, beside the coins, so it is a pill like they are —
-   * it used to hang under the plank as a tab. */
-  border-radius: 999px;
-  padding: 2px 8px;
-  /* Same 32px pill as the coins; the plank around it is the target. */
+  gap: 0;
+  padding: 0;
   min-height: 32px;
-  justify-content: center;
+  background: none;
+  border: 0;
   cursor: pointer;
 }
-.hud-mana > * { position: relative; }
+/* The orb overlaps the gauge's left end, a coin resting on a bar. */
+.hud-mana .icon { --icon-size: 24px; position: relative; z-index: 1; margin-right: -8px; }
+/* The gauge: slim, dark, with the fill under a small number. Tabular numerals
+ * keep the number from jittering as the pool fills. */
+.hud-mana-bar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 56px;
+  height: 18px;
+  padding: 0 6px 0 12px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #2c3c66;
+  border: 2px solid #1b2745;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--parchment);
+}
+.hud-mana-bar > * { position: relative; }
 .hud-mana-fill {
   position: absolute;
   inset: 0 auto 0 0;
@@ -308,12 +314,12 @@
 .hud-mana-rate { opacity: 0.8; }
 /* Full means spilling, and spilling is the one thing the design wants the
  * player to notice from across the room. */
-.hud-mana.is-full { border-color: var(--gold, #d9a441); }
+.hud-mana-bar.is-full { border-color: var(--gold, #d9a441); }
 .hud-mana.is-full .hud-mana-rate { color: var(--gold, #f2c46b); }
 /* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
    because full means "you are spilling" and this means "you are ahead". */
-.hud-mana.is-over { border-color: var(--leaf); background: #2f4a3a; }
-.hud-mana.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
+.hud-mana-bar.is-over { border-color: var(--leaf); background: #2f4a3a; }
+.hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
 
 /* A coin that is a clock: its speed sits beside its number, quieter than the
    balance because the balance is what a price is checked against. */

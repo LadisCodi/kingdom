@@ -203,3 +203,7 @@
 .q-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
 .q-cta { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
 .q-scroll.is-complete .q-cta { background: var(--leaf); }
+
+/* ---- the villagers' row ---- */
+.tr-roster-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.tr-roster-slot.is-empty { background: rgba(60, 36, 18, 0.14); }
