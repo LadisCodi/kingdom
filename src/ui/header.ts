@@ -58,7 +58,10 @@ export function mountHeader(game: Game, root: HTMLElement): void {
   const manaFill = el('span', { class: 'hud-mana-fill' });
   const manaValue = el('b', {}, '');
   const manaRate = el('span', { class: 'hud-mana-rate' }, '');
-  manaGauge.append(manaFill, currencyIcon('Mana', { size: 'sm' }), manaValue, manaRate);
+  // An orb and a slim gauge (mockup M1): the orb sits proud of the bar, the
+  // bar holds the fill and the number. The button is the whole pair.
+  const manaBar = el('span', { class: 'hud-mana-bar' }, manaFill, manaValue, manaRate);
+  manaGauge.append(currencyIcon('Mana', { size: 'sm' }), manaBar);
   manaGauge.addEventListener('click', () => game.openMana());
   plank.append(coins, manaGauge, el('span', { class: 'hud-divider' }), gems);
   root.replaceChildren(plank, el('div', { class: 'hud-under' }, plaque));
@@ -167,6 +170,8 @@ export function mountHeader(game: Game, root: HTMLElement): void {
     // spilling, overcharged means an ad bought a pool the ceiling cannot hold.
     manaGauge.classList.toggle('is-full', m.value >= m.cap && !m.over);
     manaGauge.classList.toggle('is-over', m.over);
+    manaBar.classList.toggle('is-full', m.value >= m.cap && !m.over);
+    manaBar.classList.toggle('is-over', m.over);
     manaGauge.setAttribute('aria-label', m.over
       ? `Mana ${m.value}, overcharged past a ceiling of ${m.cap}`
       : `Mana ${m.value} of ${m.cap}, gaining ${m.net} an hour`);

@@ -29,9 +29,9 @@
      values buy 15px back, which puts the common case on one line and leaves
      the genuinely-too-wide case (four four-digit coins) wrapping, as it
      should. */
-  gap: 4px;
+  gap: 2px;
   row-gap: 4px;
-  padding: 4px 6px;
+  padding: 4px 4px;
   background: var(--wood);
   border-bottom: var(--outline) solid var(--wood-dark);
   box-shadow: inset 0 2px 0 var(--wood-light), inset 0 -2px 0 rgba(60, 36, 18, 0.35);
@@ -61,7 +61,7 @@
 .hud-coins {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   /* `1 0 auto`: grow into spare room, size from content, and NEVER SHRINK.
      Shrinking is what turned this into a scroller that hid two of four coins
      — with `flex-shrink: 1` the row gives up width silently rather than
@@ -121,18 +121,25 @@
   /* 32px pills in a 44px plank: the plank is the tap target the thumb
      finds, and the pill only has to be read. */
   min-height: 32px;
-  padding: 2px 6px;
+  /* As tight as M1 draws them: four coins, the Mana gauge and Gems have to
+     share one 402px line, and every px of padding here is paid four times. */
+  padding: 2px 4px 2px 3px;
+  gap: 2px;
   font-family: var(--font-body);
-  /* The helper tier, not the body tier. A pill with a number in it is a
-     glanceable readout, not something you read a sentence of — and this row
-     is the tightest in the game, so every px here costs a resource the player
-     can see. */
-  font-size: var(--text-helper);
+  /* 12px, under the helper tier: a plaque with a number in it is a glanceable
+     readout, not something you read a sentence of — and this row is the
+     tightest in the game. Measured: four coins at four digits, the gauge, the
+     rope and Gems come to ~395px at 12, and to 430 at 13, on a 402px frame. */
+  font-size: 12px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
   background: var(--parchment);
   border: 2px solid var(--wood-dark);
-  border-radius: 999px;
+  /* A slot cut into the plank, not a pill: M1's counters are rounded plaques
+     with a lip, and the full round read as a chip from another game. */
+  border-radius: 10px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(60, 36, 18, 0.18);
   cursor: pointer;
 }
 .hud-coin:hover, .hud-gems:hover { filter: brightness(1.05); }
@@ -145,32 +152,37 @@
  * right. Put it on Gems instead and the rope is stranded beside Mana, which
  * reads as a divider between nothing and nothing. */
 .hud-divider {
-  margin-left: auto;
+  margin: 0 2px 0 auto;
   flex: none;
   width: 3px;
   height: 22px;
+  min-width: 3px;
   border-radius: 2px;
   background: var(--wood-dark);
   opacity: 0.6;
 }
-.hud-gems { background: linear-gradient(160deg, #dfe9ff, #cfc0f0); }
+/* Parchment like the coins (M1): what sets Gems apart is the rope and the
+   green knob, not a colour of its own. */
+.hud-gems { background: var(--parchment); padding-right: 3px; }
 .hud-plus {
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-left: 2px;
+  width: 16px;
+  height: 16px;
+  margin-left: 1px;
   border-radius: 50%;
   background: var(--leaf);
   border: 2px solid var(--leaf-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   color: var(--ink-inverse);
   font-size: var(--text-helper);
+  font-weight: 700;
   line-height: 1;
 }
 
 /* 20px icons in the plank pills — the atlas scales smooth now, so a size is
    a layout choice rather than a ratio of the cell. */
-.hud-coin .icon, .hud-gems .icon, .hud-mana .icon { --icon-size: 20px; }
+.hud-coin .icon, .hud-gems .icon { --icon-size: 18px; }
 
 /* The one contextual plaque, hanging under the plank. */
 .hud-plaque {
@@ -274,31 +286,38 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  overflow: hidden;
-  padding: 2px 7px;
-  /* The BODY face for the pool, at the size it was chosen for. The pixel
-   * display face is lovely at 15px and up, but at the 13px chrome size a 2, a
-   * 5 and an 8 share most of their pixels — and "is my pool 24 or 84" is the
-   * one number in this widget that has to be unambiguous. Tabular numerals
-   * keep it from jittering as it fills. */
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: var(--text-helper);
-  font-variant-numeric: tabular-nums;
-  color: var(--parchment);
-  background: #2c3c66;
-  border: 2px solid #1b2745;
-  /* On the plank now, beside the coins, so it is a pill like they are —
-   * it used to hang under the plank as a tab. */
-  border-radius: 999px;
-  padding: 2px 8px;
-  /* Same 32px pill as the coins; the plank around it is the target. */
+  gap: 0;
+  padding: 0;
   min-height: 32px;
-  justify-content: center;
+  background: none;
+  border: 0;
   cursor: pointer;
 }
-.hud-mana > * { position: relative; }
+/* The orb overlaps the gauge's left end, a coin resting on a bar. */
+.hud-mana .icon { --icon-size: 24px; position: relative; z-index: 1; margin-right: -8px; }
+.hud-plank > .hud-mana { margin-left: 0; }
+/* The gauge: slim, dark, with the fill under a small number. Tabular numerals
+ * keep the number from jittering as the pool fills. */
+.hud-mana-bar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 40px;
+  height: 18px;
+  padding: 0 5px 0 11px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #2c3c66;
+  border: 2px solid #1b2745;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--parchment);
+}
+.hud-mana-bar > * { position: relative; }
 .hud-mana-fill {
   position: absolute;
   inset: 0 auto 0 0;
@@ -308,12 +327,12 @@
 .hud-mana-rate { opacity: 0.8; }
 /* Full means spilling, and spilling is the one thing the design wants the
  * player to notice from across the room. */
-.hud-mana.is-full { border-color: var(--gold, #d9a441); }
+.hud-mana-bar.is-full { border-color: var(--gold, #d9a441); }
 .hud-mana.is-full .hud-mana-rate { color: var(--gold, #f2c46b); }
 /* Overcharged: an ad bought more than the ceiling holds. Distinct from full,
    because full means "you are spilling" and this means "you are ahead". */
-.hud-mana.is-over { border-color: var(--leaf); background: #2f4a3a; }
-.hud-mana.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
+.hud-mana-bar.is-over { border-color: var(--leaf); background: #2f4a3a; }
+.hud-mana-bar.is-over .hud-mana-fill { background: linear-gradient(180deg, #7fc47f, #4e8f5a); }
 
 /* A coin that is a clock: its speed sits beside its number, quieter than the
    balance because the balance is what a price is checked against. */

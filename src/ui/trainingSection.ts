@@ -169,7 +169,7 @@ export function trainingSection(
   }
 
   // ---------------------------------------------------- the detail panel
-  root.append(detail(game, district, selected));
+  root.append(detail(game, district, selected, live));
   return root;
 }
 
@@ -266,21 +266,60 @@ interface TraineeCopy {
   figures: HTMLElement[];
 }
 
-function villagerCopy(game: Game, seconds: number): TraineeCopy {
-  const room = game.trainingInfo();
+/** How many faces the roster draws before it says "+N": five reads as a
+ *  household, eight as a village; past that a row of heads is a crowd and the
+ *  number does the job. */
+const ROSTER_FACES = 8;
+
+/**
+ * The villagers' row (mockup M2, Docs/art/ui-menus-redesign.md §7.19): one
+ * round portrait per bed the houses hold — filled for a villager living here,
+ * a face under a sand-timer for the one being trained, an empty socket for a
+ * free bed — so "how many, how much room, how long" is one picture rather
+ * than three figures. The timer ticks, so the caller makes it a live part.
+ */
+function villagerRoster(game: Game, district: District): HTMLElement {
   const living = game.state.city.population;
+  const cap = maxPopulation(game.state);
+  const line = lineFor(game.state, district.uniqueId);
+  const queued = line.reduce((n, i) => n + itemCount(i), 0);
+  const shown = Math.min(cap, ROSTER_FACES);
+  const row = el('div', { class: 'tr-roster' });
+  for (let i = 0; i < shown; i++) {
+    const kind = i < living ? 'is-living' : i < living + queued ? 'is-queued' : 'is-empty';
+    const slot = el('div', { class: `tr-roster-slot ${kind}` });
+    if (kind !== 'is-empty') slot.append(unitBust('Villager', 'tr-roster-art'));
+    // The first queued face carries the clock: it is the one being trained.
+    if (kind === 'is-queued' && i === living && line[0] !== undefined) {
+      slot.append(el('span', { class: 'tr-roster-timer' },
+        formatDuration(Math.ceil(queueLeft(game, district, line[0])))));
+    }
+    row.append(slot);
+  }
+  if (cap > shown) {
+    row.append(el('span', { class: 'tr-roster-more' }, `+${cap - shown}`));
+  }
+  return row;
+}
+
+function villagerCopy(game: Game, district: District, live: LiveParts | undefined): TraineeCopy {
+  const room = game.trainingInfo();
+  const roster = () => villagerRoster(game, district);
+  const rosterSig = () => {
+    const line = lineFor(game.state, district.uniqueId);
+    return JSON.stringify([
+      game.state.city.population, maxPopulation(game.state), room.queued,
+      line[0] === undefined ? null : Math.ceil(queueLeft(game, district, line[0])),
+    ]);
+  };
   return {
     ...VILLAGER,
     note: null,
     disabledReason: room.atMax ? 'Nowhere to put them — build more Housing' : undefined,
-    // A villager is judged on where it goes rather than what it hits: how
-    // many are already here, how much room the houses leave — the number the
-    // disabled button is about — and how long the next one takes.
-    figures: [
-      figure('population', 'Living here', String(living)),
-      figure('Housing', 'Room', `${living + room.queued} / ${maxPopulation(game.state)}`),
-      figure('hourglass', 'Time', formatDuration(seconds)),
-    ],
+    // A villager is judged on where it goes rather than what it hits, and the
+    // roster says it in one row: who lives here, who is on the way, how many
+    // beds are left. The time it takes rides on the button.
+    figures: [live ? live.add(rosterSig, roster) : roster()],
   };
 }
 
@@ -313,13 +352,15 @@ function soldierCopy(game: Game, unitId: UnitId, seconds: number): TraineeCopy {
   };
 }
 
-function detail(game: Game, district: District, trainee: TrainableId): HTMLElement {
+function detail(
+  game: Game, district: District, trainee: TrainableId, live?: LiveParts,
+): HTMLElement {
   const cost = trainCost(game.state, trainee);
   // What it will take HERE, neighbours included — the number the player is
   // about to commit to, not the one on the sheet.
   const seconds = trainSecondsAt(game.state, district.uniqueId, trainee);
   const copy = trainee === 'Villager'
-    ? villagerCopy(game, seconds)
+    ? villagerCopy(game, district, live)
     : soldierCopy(game, trainee, seconds);
 
   // The button shares its row with the NAME, not with the description: a name
@@ -342,6 +383,11 @@ function detail(game: Game, district: District, trainee: TrainableId): HTMLEleme
       onClick: () => game.doTrain(trainee, district),
       cost,
       have: (c) => game.walletValue(c),
+      // The villager's clock moved off the figures band and onto the thing
+      // that starts it; a soldier keeps it among its four numbers.
+      ...(trainee === 'Villager'
+        ? { info: el('span', { class: 'dc-uptime' }, iconEl('hourglass', { size: 'sm' }), formatDuration(seconds)) }
+        : {}),
     });
   return el('div', { class: 'tr-info' },
     el('div', { class: 'tr-portrait is-body' }, unitBody(trainee, 'tr-portrait-art')),

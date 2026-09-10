@@ -14,7 +14,8 @@
   padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
   background: var(--wood);
   border-top: var(--outline) solid var(--wood-dark);
-  box-shadow: inset 0 3px 0 var(--wood-light);
+  /* Lit along the top, shadowed along the bottom: a beam, not a strip. */
+  box-shadow: inset 0 3px 0 var(--wood-light), inset 0 -4px 0 rgba(60, 36, 18, 0.35);
   position: relative;
   z-index: 10;
 }
@@ -32,45 +33,55 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  padding: 3px 4px 4px;
+  padding: 2px 4px 3px;
   font-family: var(--font-body);
   /* 12px everywhere, not only under 460px: a label is a word under a
      picture, and five of them share a phone. */
   font-size: 12px;
-  color: var(--ink);
-  background: var(--parchment-shade);
+  font-weight: 700;
+  /* A WOOD plate on the wood beam (mockup M1): darker than the beam, a lit
+     top edge, the word in cream with a shadow so it reads on the grain. The
+     parchment plate it replaced made the bar a row of cards, not a beam. */
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.75);
+  background: #8b5a2f;
   border: 2px solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 2px 0 var(--wood-dark);
+  border-radius: 10px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), 0 3px 0 var(--wood-dark);
   cursor: pointer;
   transition: transform var(--motion-snap) steps(1);
 }
 #navbar.nav .nav-tab:hover { filter: brightness(1.06); }
-#navbar.nav .nav-tab:active { transform: translateY(2px); box-shadow: none; }
+#navbar.nav .nav-tab:active { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16); }
 
-/* The open destination sits proud of the others. */
+/* The open destination stands proud of the beam — it rises past the top
+   edge, the way M1's lit tab does. */
 #navbar.nav .nav-tab.is-active {
-  background: var(--parchment);
-  transform: translateY(-3px);
-  box-shadow: 0 5px 0 var(--wood-dark);
+  transform: translateY(-5px);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), 0 8px 0 var(--wood-dark);
 }
 
-/* The one lit call to action — a warm glow, not a brightness pulse. */
+/* The one lit call to action — gold, ink on it, a warm glow, not a pulse. */
 #navbar.nav .nav-tab.is-cta {
+  color: var(--ink);
+  text-shadow: none;
   background: var(--gold);
   border-color: var(--gold-dark);
-  box-shadow: 0 2px 0 var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.75);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 3px 0 var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.75);
   animation: nav-cta 1.6s ease-in-out infinite;
 }
+#navbar.nav .nav-tab.is-active.is-cta {
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 8px 0 var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.75);
+}
 @keyframes nav-cta {
-  50% { box-shadow: 0 2px 0 var(--gold-dark), 0 0 20px rgba(242, 178, 51, 0.95); }
+  50% { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 3px 0 var(--gold-dark), 0 0 20px rgba(242, 178, 51, 0.95); }
 }
 /* The label never wraps and never truncates: a tab reading "Resear…" is
    worse than a smaller one. It steps down with the frame instead. */
 .nav-label { line-height: 1.1; white-space: nowrap; }
 /* 24px icons: the bar is 52px, and a 32px picture over a label does not fit
    it. The atlas scales smooth, so 24 is a size and not a sampling error. */
-#navbar.nav .nav-tab .icon { --icon-size: 24px; }
+#navbar.nav .nav-tab .icon { --icon-size: 26px; filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5)); }
 @container frame (max-width: 460px) {
   #navbar.nav { gap: 4px; padding-inline: 6px; }
   #navbar.nav .nav-tab { padding-inline: 2px; }

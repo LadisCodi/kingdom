@@ -430,3 +430,19 @@ for.
 - **What to know:** the textures' seams are fine along the grain (horizontal)
   and faint across it; the chrome only ever repeats them horizontally over
   40–52px bands, so the cross-grain seam never shows.
+
+---
+
+## R1 — the research medallions (§7.22)
+
+- **Date:** 2026-09-11
+- **Conversation:** <https://chatgpt.com/c/6aa3334c-10a0-83ed-8fca-36c4b072e074>
+  (Codigames workspace), driven from Claude Code through the Chrome extension;
+  `mockups/m0-four-screens.png` attached as the anchor.
+- **Model:** the workspace default, "Alta" reasoning.
+- **File:** `sheets/ui-r1-seals.png` (2×2, 1254×1254, true alpha) →
+  `src/ui/assets/seal-{plain,done,available,active}.png`, 160px, squared.
+- **Prompt:** §7.22 verbatim. First time; the "NO emblem" clause held, so the
+  kit's own icon sits on the wax.
+- **What to know:** the viewer's download icon moves with the window width —
+  find it as the "Guardar" button rather than by coordinates.

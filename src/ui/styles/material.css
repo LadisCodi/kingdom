@@ -93,17 +93,18 @@
   background: url('../assets/deco-rope-v.png') center / contain no-repeat;
 }
 #navbar.nav { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+/* Wood plates on the wood beam (M1): the same grain, darkened, so the plate
+   reads as a block nailed on rather than a card laid down. The lit CTA keeps
+   its gold (nav.css). */
 #navbar.nav .nav-tab {
-  background: url('../assets/tex-parchment.jpg');
-  background-size: 256px 256px;
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.32), rgba(60, 36, 18, 0.32)),
+    url('../assets/tex-wood.jpg') center / 200px 200px;
 }
-/* The lit call to action keeps its gold (nav.css); only a plain active tab
-   gets the brighter parchment. */
 #navbar.nav .nav-tab.is-active:not(.is-cta) {
   background:
-    linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)),
-    url('../assets/tex-parchment.jpg');
-  background-size: auto, 256px 256px;
+    linear-gradient(rgba(60, 36, 18, 0.18), rgba(60, 36, 18, 0.18)),
+    url('../assets/tex-wood.jpg') center / 200px 200px;
 }
 
 /* ---- the district card and the quest scroll ---- */
@@ -163,3 +164,92 @@
     url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
 }
 .bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+
+/* ---- the district card's figure tiles (M2) ---- */
+.tr-fig {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.dc-portrait {
+  background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+}
+
+/* ---- the research era bar is the gold ribbon of M4 when it is open ---- */
+.res-era { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.res-era.is-open {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  color: var(--ink);
+}
+
+/* ---- research medallions are wax (R1, §7.22) ---- */
+.tech-card-glyph {
+  border: 0;
+  box-shadow: none;
+  background: url('../assets/seal-plain.png') center / 100% 100% no-repeat;
+  width: 60px;
+  height: 60px;
+}
+.tech-card.done .tech-card-glyph { background-image: url('../assets/seal-done.png'); }
+.tech-card.available .tech-card-glyph { background-image: url('../assets/seal-available.png'); }
+.tech-card.active .tech-card-glyph { background-image: url('../assets/seal-active.png'); }
+.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold); border-radius: 50%; }
+
+/* ---- the research shelf and the quest slot ---- */
+.res-shelf { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.res-tome.active { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.q-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.q-cta { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.q-scroll.is-complete .q-cta { background: var(--leaf); }
+
+/* ---- the villagers' row ---- */
+.tr-roster-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.tr-roster-slot.is-empty { background: rgba(60, 36, 18, 0.14); }
+
+/* ---- nails, where a plank is nailed to something ----
+ * Not on the planks that carry a title (they read as dirt next to the words):
+ * on the beam the nav hangs from and on the plaque that hangs under the
+ * header — the two planks whose corners are bare. */
+#navbar.nav { position: relative; }
+#navbar.nav::before,
+#navbar.nav::after,
+.hud-plaque::before,
+.hud-plaque::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: url('../assets/deco-nail.png') center / contain no-repeat;
+  pointer-events: none;
+}
+#navbar.nav::before { top: 2px; left: 3px; }
+#navbar.nav::after { top: 2px; right: 3px; }
+.hud-plaque { position: relative; }
+.hud-plaque::before { top: 2px; left: 3px; }
+.hud-plaque::after { top: 2px; right: 3px; }
+
+/* ---- the pennant flies when a quest is done ----
+ * The seal says "sealed, in progress"; the pennant says "claim it". Same
+ * corner, so the eye finds the state where it found the seal. */
+.q-scroll.is-complete::after {
+  top: -14px;
+  right: -6px;
+  width: 30px;
+  height: 40px;
+  background: url('../assets/deco-pennant.png') center / contain no-repeat;
+  animation: q-fly 1.4s ease-in-out infinite alternate;
+  transform-origin: top center;
+}
+@keyframes q-fly {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .q-scroll.is-complete::after { animation: none; }
+}
+
+/* ---- the header's slots are parchment cut into the plank ---- */
+.hud-coin, .hud-gems { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }

@@ -123,7 +123,8 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-edges { position: absolute; inset: 0; pointer-events: none; }
 
 /* Inked trails; a finished one is gold-inked. */
-.tech-edge { fill: none; stroke: #a98a5c; stroke-width: 3; stroke-dasharray: 4 6; stroke-linecap: round; }
+/* Dotted sepia trails between the medallions (M4): round dots, not dashes. */
+.tech-edge { fill: none; stroke: #8b6a3e; stroke-width: 4; stroke-dasharray: 0.1 9; stroke-linecap: round; }
 .tech-edge.open { stroke: var(--gold-dark); stroke-dasharray: none; stroke-width: 4; }
 .tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
 
@@ -133,31 +134,47 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
    find a technology someone told them about and read the page as a flow. What
    it DOES is a sentence, and a sentence belongs in the panel a tap opens.
    Width and height come from layout.ts, inline. */
+/* A MEDALLION, not a card (mockup M4, Docs/art/ui-menus-redesign.md §7.19):
+   the glyph sits on a round wax seal whose colour is the technology's state,
+   and the name hangs under it in ink on the page. The node keeps its 120×96
+   box for the layout; only the paint changed. */
 .tech-card {
   position: absolute;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px 7px;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 2px 4px 0;
   margin: 0;
   text-align: center;
   border-radius: 10px;
-  background: var(--parchment-shade);
-  border: 3px solid var(--wood-dark);
-  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
+  background: none;
+  border: 0;
   color: var(--ink);
   font-family: var(--font-body);
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
 }
 /* A GLYPH AND A NAME, and nothing else. What a technology does is a sentence,
    and a sentence on a 120px card is three clipped lines that have to be tapped
    to be read anyway — so the card is an emblem and the panel does the talking.
    The name gets two lines because the card no longer competes for them. */
-.tech-card-glyph { font-size: 26px; line-height: 1; }
+.tech-card-glyph {
+  --seal: var(--parchment-shade);
+  --seal-dark: #b9a37a;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  font-size: 26px;
+  line-height: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.35), transparent 45%), var(--seal);
+  border: 3px solid var(--seal-dark);
+  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35), inset 0 -3px 0 rgba(60, 36, 18, 0.18);
+}
 .tech-card-name {
   font-size: var(--text-helper);
   line-height: 1.15;
@@ -167,10 +184,10 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-.tech-card.done { background: var(--leaf); border-color: var(--leaf-dark); }
-.tech-card.available { background: var(--gold); border-color: var(--gold-dark); }
-.tech-card.active { background: var(--sky); border-color: #2f7d9c; }
-.tech-card.selected { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
+.tech-card.done .tech-card-glyph { --seal: var(--leaf); --seal-dark: var(--leaf-dark); }
+.tech-card.available .tech-card-glyph { --seal: var(--gold); --seal-dark: var(--gold-dark); }
+.tech-card.active .tech-card-glyph { --seal: var(--sky); --seal-dark: #2f7d9c; }
+.tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold), 0 3px 0 rgba(60, 36, 18, 0.35); }
 /* Behind an era bar the player has not earned: legible, and plainly not yet
    pressable. The bar itself carries the reason.
 
@@ -187,14 +204,19 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-card.silhouette {
   display: grid;
   place-items: center;
-  background: var(--parchment);
-  border-style: dashed;
-  border-color: rgba(92, 58, 30, 0.5);
   color: rgba(92, 58, 30, 0.5);
-  box-shadow: none;
   cursor: default;
   font-size: 22px;
 }
+.tech-card.silhouette::before {
+  content: '';
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px dashed rgba(92, 58, 30, 0.5);
+  grid-area: 1 / 1;
+}
+.tech-card.silhouette > * { grid-area: 1 / 1; }
 
 /* "You can press this, now." The page shows a lot of cards the player cannot
  * act on — done, running, unaffordable, prerequisite missing, band locked —
@@ -214,9 +236,9 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 }
 .tech-card .node-bar {
   position: absolute;
-  left: 7px;
-  right: 7px;
-  bottom: 5px;
+  left: 34px;
+  right: 34px;
+  top: 52px;
   height: 4px;
   background: rgba(60, 36, 18, 0.4);
   border-radius: 2px;

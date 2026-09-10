@@ -144,7 +144,26 @@ divider; the round knob as a picture (`deco-knob.png`); the district card in
 the same frame, open where it meets the nav; the banner as cloth dyed by its
 tone (`tex-cloth.jpg`, `background-blend-mode: multiply`); the quest scroll
 pinned with a wax seal at its free corner (§5.2); parchment under the
-research page and the build cards. `border-image` forfeits `border-radius`,
+research page and the build cards; every technology a wax medallion whose
+colour is its state (`seal-*.png`, §7.22) with the name under it; the build
+card laid out as M3 draws it — art at the left, name and promise beside it,
+the price under both (`build.css`); the quest scroll with the M1 card's two
+ends — a slot with the mark of what the quest is about, and the verb the tap
+performs drawn as a slab ("Show me" / "Claim") while the whole scroll stays
+the button; the research shelf in wood, its trails dotted sepia; the
+Townhall's villagers as M2's row of faces — one round portrait per bed the
+houses hold, the one in training under a sand-timer, free beds as empty
+sockets, "+N" past eight — with the clock on the Train button; the header's
+Mana as an orb resting on a slim gauge; nails at the corners of the nav beam
+and the plaque (the two planks with bare corners — on a titled plank they read
+as dirt); and the pennant flying from the quest scroll's corner in place of the
+seal once the quest is done. The header's counters are M1's plaques — rounded
+slots cut into the plank, 18px mark and a 12px bold number, the Gems slot
+parchment like the rest with its green knob — sized so four coins, the gauge,
+the rope and Gems share one 402px line (~395px at 12; 430 at 13). The nav's
+tabs are M1's wood plates on the wood beam — the same grain darkened, a lit
+top edge, the word in cream with a shadow, a 26px mark — and the lit tab is a
+gold plate that stands proud of the beam's top edge. `border-image` forfeits `border-radius`,
 so the frame's rounding lives in the art. Dropping the one `@import` restores
 the flat kit.
 
@@ -1861,6 +1880,28 @@ each after `magick -strip -quality 85` to JPEG if opaque), decorations
 sliced by the atlas script as a smooth sheet (`ui-f2-decor.png`, 2×3), the
 frame — if it passes — to `src/ui/assets/frame-wood.png` for
 `border-image-slice: 96`.
+
+
+### 7.22 Research medallions (R1)
+
+M4 draws every technology as a wax-seal medallion; the page today draws a
+parchment card with a glyph and a name. One sheet gives the medallion its
+four states; the glyph stays the kit's icon on top, the name stays under it.
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> fully transparent background, a strict 2×2 grid of four separate round wax
+> seal medallions, one centred in each cell, none touching a boundary, all the
+> same size (~380 px): a wax disc with a softly scalloped, slightly irregular
+> rim, a raised flat centre with NO emblem, and one soft highlight. TOP-LEFT:
+> pale parchment-tan wax (#E2CCA0) — a technology not yet earned. TOP-RIGHT:
+> leaf green wax (#6FBF4A) — done. BOTTOM-LEFT: warm gold wax (#F2B233) —
+> ready to start. BOTTOM-RIGHT: sky blue wax (#4FA3C7) — in progress. Smooth
+> shading, thin dark brown outline, alpha 0 everywhere else. Then apply the
+> true-alpha transparency correction and give me the download link for the
+> corrected PNG.
+
+Lands in `src/ui/assets/seal-{plain,done,available,active}.png`, ≤ 160px,
+behind `.tech-card-glyph`.
 
 ## 8. Open questions
 
