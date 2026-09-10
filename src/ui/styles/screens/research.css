@@ -123,7 +123,8 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
 .tech-edges { position: absolute; inset: 0; pointer-events: none; }
 
 /* Inked trails; a finished one is gold-inked. */
-.tech-edge { fill: none; stroke: #a98a5c; stroke-width: 3; stroke-dasharray: 4 6; stroke-linecap: round; }
+/* Dotted sepia trails between the medallions (M4): round dots, not dashes. */
+.tech-edge { fill: none; stroke: #8b6a3e; stroke-width: 4; stroke-dasharray: 0.1 9; stroke-linecap: round; }
 .tech-edge.open { stroke: var(--gold-dark); stroke-dasharray: none; stroke-width: 4; }
 .tech-edge.dim { stroke: rgba(169, 138, 92, 0.4); }
 

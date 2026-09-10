@@ -196,3 +196,10 @@
 .tech-card.available .tech-card-glyph { background-image: url('../assets/seal-available.png'); }
 .tech-card.active .tech-card-glyph { background-image: url('../assets/seal-active.png'); }
 .tech-card.selected .tech-card-glyph { box-shadow: 0 0 0 3px var(--gold); border-radius: 50%; }
+
+/* ---- the research shelf and the quest slot ---- */
+.res-shelf { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.res-tome.active { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.q-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.q-cta { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.q-scroll.is-complete .q-cta { background: var(--leaf); }

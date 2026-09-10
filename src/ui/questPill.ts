@@ -20,9 +20,32 @@
 
 import type { Game } from '../game';
 import type { QuestDef } from '../sim/data/definitions';
-import type { CurrencyId } from '../sim/state';
+import type { CurrencyId, DistrictId } from '../sim/state';
 import { el } from './format';
-import { iconEl, progress, currencyIcon } from './kit';
+import { iconEl, progress, currencyIcon, type IconName } from './kit';
+
+/** The mark on the scroll's slot: WHAT the quest is about, in the kit's own
+ *  icon — the coin it collects, the building it raises, the book it reads —
+ *  so the card reads at a glance before its words do (mockup M1). */
+const goalIcon = (quest: QuestDef): IconName => {
+  switch (quest.goalType) {
+    case 'CollectResource': case 'HoldResource':
+      return (quest.goalTarget as CurrencyId | null) ?? 'quest';
+    case 'BuildDistrict': case 'UpgradeDistrict':
+      return (quest.goalTarget as DistrictId | null) ?? 'build';
+    case 'CompleteTech': case 'CompleteTechs': return 'research';
+    case 'ReachPopulation': return 'population';
+    case 'AssignWorkers': return 'workers';
+    case 'TrainArmy': case 'ClearGarrisons': return 'army';
+    case 'CollectTaps': return 'showme';
+    case 'DiscoverCells': case 'DiscoverFeature': return 'showme';
+    case 'ClaimLandmarks': return 'Mana';
+    case 'ReachDepth': case 'ClearRuins': return 'dungeon';
+    case 'OwnArtifacts': return 'relics';
+    case 'OwnHeroes': return 'Warrior';
+    default: return 'quest';
+  }
+};
 
 const rewardNodes = (quest: QuestDef): Node[] => {
   const parts: Node[] = [];
@@ -50,9 +73,16 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
   const desc = el('div', { class: 'q-desc' });
   const bar = progress('gold');
   const reward = el('div', { class: 'q-reward' });
+  // The slot and the slab are the M1 card: a mark for what the quest is
+  // about at the left, and the one verb the tap performs at the right. The
+  // slab is drawn, not a control — the whole scroll is still the button.
+  const slot = el('div', { class: 'q-slot' });
+  const cta = el('span', { class: 'q-cta' }, 'Show me');
 
   const scroll = el('button', { class: 'q-scroll', type: 'button' },
-    chain, name, desc, bar.root, reward);
+    el('div', { class: 'q-head' }, slot, el('div', { class: 'q-text' }, chain, name, desc)),
+    bar.root,
+    el('div', { class: 'q-foot' }, reward, cta));
   // Read the state at CLICK time, not at render time: a tap can land in the
   // same frame the goal completes, and claiming a quest that is not finished
   // is refused by the sim anyway — but pointing at a goal you just met would
@@ -79,7 +109,9 @@ export function mountQuestPill(game: Game, root: HTMLElement): void {
       name.textContent = quest.name;
       desc.textContent = quest.description;
       reward.replaceChildren(el('span', { class: 'q-reward-label' }, 'Reward'), ...rewardNodes(quest));
+      slot.replaceChildren(iconEl(goalIcon(quest), { size: 'md' }));
     }
+    cta.textContent = complete ? 'Claim' : 'Show me';
     // One read-out for every goal, large or small: a filled bar with the count
     // written inside it. Small goals used to get a row of stamps instead,
     // which meant the widget changed SHAPE from quest to quest — and the

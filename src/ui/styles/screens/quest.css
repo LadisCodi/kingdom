@@ -115,3 +115,39 @@
 @media (prefers-reduced-motion: reduce) {
   .q-scroll.is-complete { animation: none; }
 }
+
+/* ---- the M1 card: a mark at the left, the verb at the right ---- */
+.q-head { display: flex; align-items: flex-start; gap: 8px; }
+.q-slot {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  margin-top: 2px;
+  border-radius: 8px;
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+}
+.q-text { min-width: 0; flex: 1; }
+.q-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.q-foot .q-reward { flex: 1; margin-top: 0; }
+/* Drawn as a slab, but the scroll is the control: no pointer-events of its own. */
+.q-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 2px 10px;
+  font-family: var(--font-body);
+  font-size: var(--text-helper);
+  font-weight: 700;
+  color: var(--ink-inverse);
+  background: var(--wood);
+  border: 2px solid var(--wood-dark);
+  border-radius: 8px;
+  box-shadow: 0 2px 0 var(--wood-dark);
+  pointer-events: none;
+}
+.q-scroll.is-complete .q-cta { background: var(--leaf); border-color: var(--leaf-dark); box-shadow: 0 2px 0 var(--leaf-dark); }

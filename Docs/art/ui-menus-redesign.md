@@ -147,7 +147,10 @@ pinned with a wax seal at its free corner (§5.2); parchment under the
 research page and the build cards; every technology a wax medallion whose
 colour is its state (`seal-*.png`, §7.22) with the name under it; the build
 card laid out as M3 draws it — art at the left, name and promise beside it,
-the price under both (`build.css`). `border-image` forfeits `border-radius`,
+the price under both (`build.css`); the quest scroll with the M1 card's two
+ends — a slot with the mark of what the quest is about, and the verb the tap
+performs drawn as a slab ("Show me" / "Claim") while the whole scroll stays
+the button; the research shelf in wood, its trails dotted sepia. `border-image` forfeits `border-radius`,
 so the frame's rounding lives in the art. Dropping the one `@import` restores
 the flat kit.
 
