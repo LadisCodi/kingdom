@@ -134,6 +134,16 @@ Rule: **no pure black, no blue-grey, no #FFFFFF.** Outlines are
 - **Scrim** — when a sheet is open, the map dims to 35% warm brown
   (`rgba(60,36,18,0.35)`), never to near-black. The kingdom stays legible.
 
+*2026-09-11 — the materials are pictures now.* `src/ui/styles/material.css`,
+loaded last, paints the §7.21 sheets over the geometry above and changes
+nothing else: parchment (`tex-parchment.jpg`) inside a nine-slice carved
+frame (`frame-wood.png`, `border-image-slice: 80` at 16px, corners a little
+proud) on every `.k-panel`; wood grain (`tex-wood.jpg`) on planks, the header
+and the nav beam, parchment on the tabs; a rope grab handle and a rope
+divider; the round knob as a picture (`deco-knob.png`). `border-image`
+forfeits `border-radius`, so the frame's rounding lives in the art. Dropping
+the one `@import` restores the flat kit.
+
 ### 3.3 Buttons
 
 | Kind | Look | Used for |
@@ -1790,6 +1800,63 @@ titles. Image models misspell; judge layout and material, never the words.
   They are references for the board and the CSS, never assets.
 - Every generation is logged in `ui/CONVERSATION.md`: date, conversation
   link, model, file, which prompt and which iteration phrases.
+
+
+### 7.21 Surfaces and decorations, smooth — the material the chrome is made of
+
+The mockups (§7.19) draw the panels as real parchment in real carved wood;
+the kit drew them as flat colour with bevels. These sheets close that gap.
+Textures are TILES the CSS repeats under the existing geometry (the frame
+stays a border with a radius, §3.2); decorations are loose objects placed
+by the kit; the frame sheet is an experiment — image models struggle with
+nine-slices, so it ships only if its corners register.
+
+**T1 — textures (opaque, 2×2 tiles of 512)**
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> divided into a strict 2×2 grid of four equal 512×512 tiles that touch edge
+> to edge with no gap and no separator. Each tile is a seamless, self-tiling
+> texture: its left edge continues perfectly into its right edge and its top
+> into its bottom, so it repeats as wallpaper with no visible seam. TOP-LEFT:
+> aged parchment, #F4E4C1 with faint #E2CCA0 mottling and fibre, very low
+> contrast. TOP-RIGHT: carved light wood plank grain, #A9713F with #5C3A1E
+> grooves and #C89159 highlights, soft and smooth, not pixelated. BOTTOM-LEFT:
+> the same wood, darker, in #5C3A1E with #3B2412 grooves. BOTTOM-RIGHT: plain
+> cream cloth weave, #FFF6E0, very low contrast. Smooth shading, no objects, no
+> text, no borders, fully opaque.
+
+**D1 — decorations (transparent, 2×3)**
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024,
+> fully transparent background, a strict 2 rows × 3 columns grid of six
+> separate objects, one centred in each cell, none touching a boundary,
+> reading order: (1) a short horizontal rope grab handle, two loops of tan
+> rope with a knot at each end, wide; (2) a short vertical rope divider, one
+> strand; (3) a round red wax seal with a small crown pressed into it; (4) a
+> round carved wooden knob, blank face, with a dark rim and a soft highlight;
+> (5) an iron nail head, small; (6) a cloth pennant, cream with a red
+> swallowtail edge, hanging from a short rope. Smooth shading, thin dark
+> outline, alpha 0 everywhere else. Then apply the true-alpha transparency
+> correction and give me the download link for the corrected PNG.
+
+**F1 — the frame, as a nine-slice (experiment)**
+
+> [style block v2] …but instead of a screen: one square image, 1024×1024. A
+> carved wooden picture frame, #A9713F face with a #5C3A1E outline and a
+> #C89159 top bevel, 96 pixels thick on every side, with softly rounded outer
+> corners, drawn around a completely transparent centre. The four corners
+> must be identical to each other (rotated), and every edge must be a
+> straight, uniform run of the same grain so it can be stretched, so that the
+> image can be cut into nine slices and used as a resizable border. No
+> objects, no text, no background, alpha 0 in the centre and outside the
+> frame. Then apply the true-alpha transparency correction and give me the
+> download link for the corrected PNG.
+
+Where they land: textures to `src/ui/assets/tex-*.png` (512 tiles, ≤ 60 KB
+each after `magick -strip -quality 85` to JPEG if opaque), decorations
+sliced by the atlas script as a smooth sheet (`ui-f2-decor.png`, 2×3), the
+frame — if it passes — to `src/ui/assets/frame-wood.png` for
+`border-image-slice: 96`.
 
 ## 8. Open questions
 

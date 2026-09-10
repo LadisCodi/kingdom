@@ -400,3 +400,33 @@ for.
 - **Manifest:** `cell: 64`, `smooth: true` (Lanczos, alpha left soft,
   `image-rendering: auto`); the pixel-era sheets stay in `sheets/` as
   provenance and are no longer sliced.
+
+---
+
+## T1 · D1 · F1 — textures, decorations and the frame (§7.21)
+
+- **Date:** 2026-09-11
+- **Conversation:** <https://chatgpt.com/c/6aa32c46-bbc8-83eb-9e5a-ea10725869e2>
+  ("Generar texturas seamless", Codigames workspace), driven from Claude Code
+  through the Chrome extension; `mockups/m3-build-sheet.png` attached to the
+  first message as the material anchor instead of `reference.png` — the
+  materials, not the world, were the point.
+- **Model:** the workspace default, "Alta" reasoning.
+- **Files:** `sheets/ui-t1-textures.png` (2×2 opaque tiles → `src/ui/assets/
+  tex-{parchment,wood,wood-dark,cloth}.jpg`; the wood tiles ship as the 512
+  quarter as drawn, since mirroring them into a seamless 1024 made every knot
+  a symmetric pair; parchment and cloth are mirrored, which on a low-contrast
+  fibre is invisible), `sheets/ui-d1-decor.png` (2×3 transparent objects →
+  `deco-{rope,rope-v,seal,knob,nail,pennant}.png`, trimmed, ≤ 256px, cut by
+  hand: they are not `IconName`s, so the atlas has no cell for them),
+  `sheets/ui-f1-frame.png` (the nine-slice experiment → `frame-wood.png`,
+  trimmed and halved to 600px: edge ~61px, corner blocks ~80px, so
+  `border-image-slice: 80`).
+- **Prompt:** §7.21 verbatim, one per message.
+- **What worked:** the frame came back genuinely nine-sliceable — identical
+  corner blocks, straight uniform edges, transparent centre — which the
+  pixel-era §7.16 said image models could not do. The smooth style is what
+  changed: no grid to misalign.
+- **What to know:** the textures' seams are fine along the grain (horizontal)
+  and faint across it; the chrome only ever repeats them horizontally over
+  40–52px bands, so the cross-grain seam never shows.
