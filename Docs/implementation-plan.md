@@ -64,7 +64,7 @@ Two more that are design-visible:
 
 | Feature | Doc | State |
 |---|---|---|
-| The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** |
+| The map, fog, terrain, features, reveal curve | [`01`](features/01-map-and-fog.md) | **built** — the Townhall's reach and the count multiplier on the price landed 2026-09-10; their numbers are OQ-92 |
 | Currencies, taxes, adjacency | [`03`](features/03-economy.md) | **built** — six adjacency rules over three stats. The Market was **removed 2026-09-09**: nothing in the game buys a resource for Gold |
 | Harvest as a DEPOT, the tap as a duration, the strike | [`04`](features/04-harvest.md) | **rebuilt 2026-09-03** — the tap no longer mints, and the province has a stated ceiling |
 | Districts, placement, costs, moving buildings | [`05`](features/05-city-and-districts.md) | **built** |

@@ -3,8 +3,11 @@
 // reward and advance the chain, and offline replay feeds relative progress.
 import { describe, expect, it } from 'vitest';
 import {
-  DISTRICTS, ERA_UNLOCK_CELLS, KNOWLEDGE, QUESTS, TECHNOLOGIES, TECH_ORDER, type QuestDef, CURRENCIES,
+  DISTRICTS, ERA_UNLOCK_CELLS, FOG, KNOWLEDGE, LANDMARKS, QUESTS, RUINS, TECHNOLOGIES, TECH_ORDER,
+  levelIndexed, type QuestDef, CURRENCIES,
 } from '../src/sim/data/definitions';
+import { requiredTechForLevel } from '../src/sim/districts';
+import { townhallDistance } from '../src/sim/grid';
 import {
   explorationGate, fogState, isReachable, revealCostForCell, revealTap,
 } from '../src/sim/fog';
@@ -16,7 +19,7 @@ import { techCost, techKnowledgeCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import {
   addToWallet, coordKey, getWallet, parseCoordKey, townhall,
-  type FeatureId, type GameState, type TechId } from '../src/sim/state';
+  type Coord, type FeatureId, type GameState, type TechId } from '../src/sim/state';
 import {
   addBuilt, BERRIES, canGather, completeRanks, completeTech, FOREST, freshGame, fund, ladderOf,
   map, T0, tickAt } from './helpers';
@@ -563,5 +566,82 @@ describe('DiscoverFeature: revealing cells that have something on them', () => {
       recordQuestEvent(state, { kind: 'reveal', feature: 'Trees' });
       expect(isQuestComplete(state, activeQuest(state)!)).toBe(true);
     } finally { restore(); }
+  });
+});
+
+// Docs/features/01-map-and-fog.md §4, 05-city-and-districts.md §1 — the chain
+// never asks for ground the capital cannot reach.
+//
+// CLAIM: the reach ladder is read off the data, and everything the chain and
+// the tree demand between two Townhall levels sits inside the reach of the
+// level the player has at that beat. A ladder that breaks one of these would
+// strand a player with a quest that cannot be finished and a Townhall level
+// that cannot be bought — the deadlock nobody notices until a playtest.
+describe('the Townhall\'s reach holds everything the chain asks for', () => {
+  const reachAt = (level: number) =>
+    FOG.reachPerTownhallLevel.length === 0 ? Infinity
+      : levelIndexed(FOG.reachPerTownhallLevel, level);
+  const cellsWithin = (ring: number) =>
+    map.cells.filter((c) => townhallDistance(map, c) <= ring).length;
+  const nearestSite = (locations: Coord[]) =>
+    Math.min(...locations.map((l) => townhallDistance(map, l)));
+
+  /** The Townhall level the chain has reached at each quest index — level 1
+   *  until the first `UpgradeDistrict Townhall` beat is CLAIMED, and so on. */
+  const levelAtBeat = (): number[] => {
+    let level = 1;
+    return QUESTS.map((q) => {
+      const here = level;
+      if (q.goalType === 'UpgradeDistrict' && q.goalTarget === 'Townhall') level = q.goalLevel!;
+      return here;
+    });
+  };
+
+  it('every era the chain researches, and every era a Townhall level needs, fits the reach', () => {
+    const levels = levelAtBeat();
+    QUESTS.forEach((q, i) => {
+      if (q.goalType !== 'CompleteTech') return;
+      const tech = TECHNOLOGIES[q.goalTarget as TechId];
+      const cells = tech.era <= 1 ? 0 : ERA_UNLOCK_CELLS[tech.tome][tech.era];
+      expect(cellsWithin(reachAt(levels[i])),
+        `${q.id} asks for ${tech.tome} era ${tech.era} (${cells} cells) at Townhall ${levels[i]}`)
+        .toBeGreaterThanOrEqual(cells);
+    });
+    for (let level = 2; level <= DISTRICTS.Townhall.maxLevel; level++) {
+      const gate = requiredTechForLevel('Townhall', level);
+      if (gate === null) continue;
+      const tech = TECHNOLOGIES[gate];
+      const cells = tech.era <= 1 ? 0 : ERA_UNLOCK_CELLS[tech.tome][tech.era];
+      expect(cellsWithin(reachAt(level - 1)),
+        `Townhall ${level} needs ${gate}, era ${tech.era}, from level ${level - 1}`)
+        .toBeGreaterThanOrEqual(cells);
+    }
+  });
+
+  it('the nearest sanctuary and the nearest ruin are within reach when the chain points at them', () => {
+    const levels = levelAtBeat();
+    QUESTS.forEach((q, i) => {
+      if (q.goalType === 'ClaimLandmarks') {
+        expect(nearestSite(LANDMARKS.map((l) => l.location)), `${q.id} at Townhall ${levels[i]}`)
+          .toBeLessThanOrEqual(reachAt(levels[i]));
+      }
+      if (q.goalType === 'ClearGarrisons' || q.goalType === 'ReachDepth') {
+        expect(nearestSite(Object.values(RUINS).map((r) => r.location)), `${q.id} at Townhall ${levels[i]}`)
+          .toBeLessThanOrEqual(reachAt(levels[i]));
+      }
+    });
+  });
+
+  it('the cells the chain asks the player to reveal fit inside each level\'s reach', () => {
+    const levels = levelAtBeat();
+    const seeded = Object.keys(freshGame().fog.revealed).length;
+    let asked = seeded;
+    QUESTS.forEach((q, i) => {
+      if (q.goalType === 'DiscoverCells') asked += q.goalAmount;
+      if (q.goalType === 'DiscoverFeature') asked += 1;
+      expect(cellsWithin(reachAt(levels[i])),
+        `by ${q.id} the chain has asked for ${asked} cells, at Townhall ${levels[i]}`)
+        .toBeGreaterThanOrEqual(asked);
+    });
   });
 });

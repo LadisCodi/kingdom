@@ -5291,7 +5291,21 @@
     "fallbackGrowth": 1.25,
     "tapsToReveal": 5,
     "minCost": 1,
-    "claimDiscoverRadius": 5
+    "claimDiscoverRadius": 5,
+    "reachPerTownhallLevel": [
+      3,
+      6,
+      8,
+      10,
+      12,
+      14,
+      17,
+      20,
+      24,
+      40
+    ],
+    "countStep": 10,
+    "countGrowth": 1.05
   },
   "city": {
     "initialCurrencies": {

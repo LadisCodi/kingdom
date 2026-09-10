@@ -177,6 +177,17 @@ const SETTINGS = [
   // rings becomes DISCOVERED, never revealed. A claim buys you a place to
   // look, not the ground itself — the paid reveal is still the sink.
   ['fog.claim_discover_radius', 'fog.claimDiscoverRadius'],
+  // How far from the Townhall a cell may be PAID for, in BFS rings, indexed
+  // by the Townhall's level (01-map-and-fog.md §4). A building's own fog
+  // radii ignore it, the way they ignore Sailing; only the player's tap and
+  // a Divination are refused. Blank = no reach limit.
+  ['fog.reach_per_townhall_level', 'fog.reachPerTownhallLevel', 'list'],
+  // The map gets dearer as it is revealed: every cell's ring price is
+  // multiplied by `count_growth` once per `count_step` cells already revealed
+  // (01-map-and-fog.md §5), so breadth costs more than depth. A step of 0 or
+  // a growth of 1 switches it off.
+  ['fog.count_step', 'fog.countStep'],
+  ['fog.count_growth', 'fog.countGrowth'],
   ['city.initial_population', 'city.initialPopulation'],
   ['city.initial_gold', 'city.initialCurrencies.Gold'],
   ['city.initial_food', 'city.initialCurrencies.Food'],

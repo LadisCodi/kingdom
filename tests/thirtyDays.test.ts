@@ -23,7 +23,7 @@ import {
   LATE_FROM, placementBlock, maxCountForTownhallLevel, maxDistrictCount, requiredTechForLevel,
   requiredTownhallLevel, upgradeGoodsCost, validPlacementCells,
 } from '../src/sim/districts';
-import { explorationGate, fogState, isReachable, revealCostForCell, revealTap } from '../src/sim/fog';
+import { explorationGate, fogState, isPayable, revealCostForCell, revealTap } from '../src/sim/fog';
 import { collectTap, harvestSourceAt } from '../src/sim/harvest';
 import { claimLandmark, isLandmarkClaimed, visibleLandmarks } from '../src/sim/landmarks';
 import { harmonyBlock, harmonyDemand, harmonySupply } from '../src/sim/harmony';
@@ -461,7 +461,7 @@ function playVisit(state: GameState, now: number): { acted: boolean; until: numb
   for (let i = 0; fogTaps < FOG_TAPS_PER_VISIT; i++) {
     const next = map.cells
       .filter((c) => fogState(state, map, c) === 'Discovered'
-        && isReachable(state, map, c) && explorationGate(map, c) === null)
+        && isPayable(state, map, c) && explorationGate(map, c) === null)
       .sort((a, b) => revealCostForCell(state, map, a) - revealCostForCell(state, map, b))[0];
     if (!next) break;
     let r: string = 'Paid';
@@ -634,6 +634,15 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    each visit for the tree and spends the rest on the border, so what
     //    it holds at the end is what the frontier could not take — and a
     //    million idle Gold would mean the sink stopped draining again.
+    //
+    //    2026-09-10, two brakes on the fog (01-map-and-fog.md §4, §5): the
+    //    Townhall's reach caps week 1 (114 cells on day 2 against 241) and
+    //    the count multiplier prices the far rings from week 2 on. Measured
+    //    at ×1.05 every 10 cells: 509 cells, 4 landmarks and **113,428 Gold**
+    //    in hand at day 30 — the frontier stopped absorbing the purse, which
+    //    is exactly what this bound is for. ×1.02 gives 573 cells, 5
+    //    landmarks and 89,408. The bound is deliberately NOT loosened: which
+    //    dial moves is a design call (OQ-92), and this line is where it shows.
     expect(end.gold, 'Gold in hand at day 30').toBeLessThan(100_000);
 
     // 4. The ground still starves, and now it starves on money. A player at
@@ -647,6 +656,8 @@ describe.skipIf(!process.env.KINGDOM_HARNESS)('thirty days of the builder', () =
     //    sink, the frontier, and it buys the next two landmarks in weeks 3–4
     //    — at ANY ladder, ×1.9 or ×3.25 alike, so softening it bought
     //    nothing. The Townhall's own days did not move by more than one.
+    //    2026-09-10, with the reach and the count multiplier: 509 cells and 4
+    //    landmarks at day 30; the Townhall's days did not move at all.
     const revealed = map.cells.filter((c) => fogState(state, map, c) === 'Revealed').length;
     expect(revealed / map.cells.length, 'share of the province uncovered by day 30')
       .toBeLessThan(0.55);

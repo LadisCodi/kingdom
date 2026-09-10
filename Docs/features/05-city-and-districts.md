@@ -25,8 +25,13 @@
 | Sawmill / Quarry / Docks cap | 1 | 2 | 3 | 4 |
 | Farm / FarmLands cap | 1 / 6 | 1 / 6 | 2 / 12 | 3 / 16 |
 | Gate to the next level | 60 Wood | `Bureaucracy` | `Magistracy` | — |
+| Explores to ring | 3 | 6 | 8 | 10 |
 
 - Pacing target: TH2 in ~25–35 min of active play; TH3 at ~2–3 h cumulative.
+- It also sets **how far the fog can be paid for**: `fog.reach_per_townhall_level`,
+  in BFS rings, 3 at level 1 to the whole province at 10
+  ([`01-map-and-fog.md`](01-map-and-fog.md) §4). The Level Up card shows the
+  ring beside the rent.
 
 Three arcs run past TH3:
 
@@ -234,6 +239,7 @@ What follows the building:
 |---|---|
 | Count caps per Townhall level | `Districts.max_count_per_townhall_level` |
 | Townhall rent multiplier per level | `taxes.townhall_multiplier_per_level` — ×1 then +0.25 a level ([`03-economy.md`](03-economy.md) §3) |
+| How far the fog can be paid for, per Townhall level | `fog.reach_per_townhall_level` — [`01-map-and-fog.md`](01-map-and-fog.md) §4 |
 | What every level costs, build included — currencies and goods alike | the `DistrictCosts` sheet — §3 |
 | How much dearer a later instance is | `Districts.instance_linear_growth`, `instance_exponential_growth` — §3.1 |
 | Build time, and how it grows with count and distance | `Districts.build_duration_*` |

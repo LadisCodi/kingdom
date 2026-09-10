@@ -43,6 +43,8 @@ would reach for them (see `Docs/features/12-quests.md` §2):
 | The opening feels too tight / too generous with Gold | `Settings` → `city.initial_gold` (25). It buys the first five fog cells. |
 | Fog costs too many taps | `Settings` → `fog.gold_per_tap`, or the `Surveying` row in `Upgrades` (each level makes one tap count for one more) |
 | Fog costs too much Gold | `FogRings` — cost by distance ring |
+| Exploring runs ahead of the city | `Settings` → `fog.reach_per_townhall_level` — the furthest ring each Townhall level may pay for; blank = no limit |
+| A disc is as cheap as a corridor, or the far map is unaffordable | `Settings` → `fog.count_growth` once per `fog.count_step` revealed cells — the multiplier on every ring price; a step of 0 switches it off |
 | Research is too dear for the opening | `Technologies` → `Forestry.cost_gold` (25), against `city.initial_gold` (50) and what quest 1 spends on fog. `tests/quests.test.ts` asserts the sum at the dearest frontier |
 | Research is too slow / too dear | `Technologies` → `duration_seconds`, `cost_gold`. Forestry is deliberately 3 s — it is the tutorial's first research. |
 | Too much / too little tapping before the Sawmill | `Quests` → the `Timber` and `Lumber` rows' `goal_amount`; `Harvest` → `Forest.taps_to_exhaust` and `recovery_seconds` |

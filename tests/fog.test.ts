@@ -3,7 +3,8 @@ import {
   DISTRICTS, FEATURES, FOG, LANDMARKS, RUINS, TECHNOLOGIES, TECH_ORDER, CURRENCIES,
 } from '../src/sim/data/definitions';
 import {
-  explorationGate, fogState, isReachable, nextRevealTapCost, recordVisibleSites,
+  countMultiplier, explorationGate, explorationReach, fogState, isPayable, isReachable,
+  isWithinReach, nextRevealTapCost, reachBorder, reachLevelFor, recordVisibleSites,
   revealAroundDistrict, revealCost, revealCostForCell, revealTap, revealTapCost,
   revealTapsDone,
 } from '../src/sim/fog';
@@ -14,7 +15,7 @@ import { claimLandmark, landmarkClaimCost } from '../src/sim/landmarks';
 import { techCost } from '../src/sim/research';
 import { deserialize, serialize } from '../src/sim/save';
 import { addBuilt, reveal, T0 } from './helpers';
-import { coordKey, getWallet, parseCoordKey, type Coord } from '../src/sim/state';
+import { coordKey, getWallet, parseCoordKey, townhall, type Coord } from '../src/sim/state';
 
 const map = buildMapData();
 const NOW = Date.parse('2026-08-17T12:00:00Z');
@@ -154,6 +155,7 @@ describe('the frontier stays connected', () => {
   it('opens up the moment a neighbour is cleared', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 5000;
+    townhall(state).level = 2; // ring 4 is inside the capital's reach from level 2
     const far = { x: 3, y: 3 };
     expect(revealTap(state, map, far)).toBe('NotReachable');
     state.fog.revealed[coordKey({ x: 3, y: 2 })] = true;
@@ -174,6 +176,7 @@ describe('exploration gates (Sailing / Scaling Tools)', () => {
   it('sea cells are locked until Sailing is researched', () => {
     const state = newGame(map, NOW);
     state.city.wallet.Gold = 99_999_999; // the shore is thirty rings out
+    townhall(state).level = DISTRICTS.Townhall.maxLevel; // and so is the reach
     // Water is the ONE remaining reveal gate (mountains became a feature, so
     // Scaling Tools gates working one instead — see explorationGate). The
     // cell is found rather than pinned: the coastline moves whenever the
@@ -273,24 +276,28 @@ describe('a cell is five taps at every ring', () => {
     const near = newGame(map, NOW);
     near.city.wallet.Gold = 99_999;
     reveal(near, [{ x: 0, y: 3 }]);
+    const cheapPrice = revealCostForCell(near, map, { x: 0, y: 4 });
     const cheap = payFor(near, { x: 0, y: 4 }); // ring 3
     expect(cheap.taps).toBe(FOG.tapsToReveal);
-    expect(cheap.spent).toBe(revealCost(3));
+    expect(cheap.spent).toBe(cheapPrice);
 
     // The dearest cell the frontier can reach from the same seed, walked out
     // one ring at a time so the far price is a real one and not a fixture.
     const far = newGame(map, NOW);
     far.city.wallet.Gold = 999_999;
+    townhall(far).level = DISTRICTS.Townhall.maxLevel; // the reach is not what this tests
     let last = { x: 0, y: 3 };
     reveal(far, [last]);
     for (let step = 0; step < 4; step += 1) {
       const next = { x: last.x, y: last.y + 1 };
       if (map.terrain.get(coordKey(next)) === undefined) break;
       if (explorationGate(map, next) !== null) break;
+      // Read before paying: the price moves with the count of revealed cells.
+      const price = revealCostForCell(far, map, next);
       const walked = payFor(far, next);
       expect(walked.taps, `ring ${townhallDistance(map, next)} took ${walked.taps} taps`)
         .toBe(FOG.tapsToReveal);
-      expect(walked.spent).toBe(revealCost(townhallDistance(map, next)));
+      expect(walked.spent).toBe(price);
       last = next;
     }
   });
@@ -305,8 +312,11 @@ describe('a cell is five taps at every ring', () => {
 
     expect(spent).toBe(total);
     expect(charges.reduce((a, b) => a + b, 0)).toBe(total);
-    // Every ring price is a multiple of five, so the fifths come out whole.
-    expect(charges).toEqual(charges.map(() => total / FOG.tapsToReveal));
+    // Every ring price is a multiple of five; the count multiplier can break
+    // that, and then the slices are a floor or a ceiling of a fifth — never
+    // further apart than one Gold, and never a rounding either way.
+    const fifth = total / FOG.tapsToReveal;
+    for (const c of charges) expect([Math.floor(fifth), Math.ceil(fifth)]).toContain(c);
   });
 
   // A discount is the one thing that can break the divisibility, and a price
@@ -395,6 +405,7 @@ describe('a site announces itself when it comes into view', () => {
   it('fires when a paid reveal brings one into view', () => {
     const state = newGame(map, T0);
     state.city.wallet.Gold = 100_000;
+    townhall(state).level = 2; // the nearest sanctuary sits at ring 5
     const target = LANDMARKS.reduce((a, b) =>
       townhallDistance(map, a.location) <= townhallDistance(map, b.location) ? a : b);
     const toward = (c: Coord) =>
@@ -407,7 +418,7 @@ describe('a site announces itself when it comes into view', () => {
       if (state.pendingDiscoveries.some((k) => k.startsWith('site:'))) break;
       const next = [...map.terrain.keys()].map(parseCoordKey)
         .filter((c) => fogState(state, map, c) === 'Discovered'
-          && isReachable(state, map, c) && explorationGate(map, c) === null)
+          && isPayable(state, map, c) && explorationGate(map, c) === null)
         .sort((a, b) => toward(a) - toward(b))[0];
       expect(next, 'the frontier ran out').toBeDefined();
       let r: string = 'Paid';
@@ -452,5 +463,217 @@ describe('a site announces itself when it comes into view', () => {
 
     expect(fogState(state, map, ruin.location)).not.toBe('Undiscovered');
     expect(state.pendingDiscoveries).toContain(siteDiscoveryKey(ruin.id));
+  });
+});
+
+// Docs/features/01-map-and-fog.md §4 — the Townhall is the reach.
+//
+// CLAIM: a cell can be PAID for only within `fog.reach_per_townhall_level`
+// BFS rings of the Townhall, indexed by its level. The capital already says
+// how many of each building the city may own and how high each may level; it
+// now says how far the city may reach, so the map is met in the order the
+// city can use it. Buildings see and reveal past it the way they ignore
+// Sailing; only the player's own reveal is refused.
+describe('the Townhall is the reach', () => {
+  /** A Discovered, connected cell exactly one ring past the reach, on land. */
+  const justPastReach = (state: ReturnType<typeof newGame>): Coord => {
+    const reach = explorationReach(state);
+    const cell = map.cells.find((c) => townhallDistance(map, c) === reach + 1
+      && explorationGate(map, c) === null);
+    expect(cell, `no land cell at ring ${reach + 1}`).toBeDefined();
+    // Stand right next to it, so the frontier rule is satisfied and the only
+    // thing left to refuse is the reach.
+    const inside = neighborsOf(cell!).find((n) => townhallDistance(map, n) === reach);
+    expect(inside).toBeDefined();
+    reveal(state, [inside!]);
+    return cell!;
+  };
+  const neighborsOf = (c: Coord): Coord[] =>
+    [{ x: c.x + 1, y: c.y }, { x: c.x - 1, y: c.y }, { x: c.x, y: c.y + 1 }, { x: c.x, y: c.y - 1 }]
+      .filter((n) => map.terrain.has(coordKey(n)));
+
+  it('is authored per Townhall level, never shrinks, and reaches the whole province at the top', () => {
+    const ladder = FOG.reachPerTownhallLevel;
+    expect(ladder.length).toBe(DISTRICTS.Townhall.maxLevel);
+    for (let i = 1; i < ladder.length; i++) expect(ladder[i]).toBeGreaterThanOrEqual(ladder[i - 1]);
+    const furthest = Math.max(...map.cells.map((c) => townhallDistance(map, c)));
+    expect(ladder[ladder.length - 1], 'the last level must reach the last ring')
+      .toBeGreaterThanOrEqual(furthest);
+  });
+
+  it('refuses a cell one ring past the reach, and charges nothing', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    const cell = justPastReach(state);
+    expect(fogState(state, map, cell)).toBe('Discovered');
+    expect(isReachable(state, map, cell)).toBe(true);
+    expect(isWithinReach(state, map, cell)).toBe(false);
+    expect(isPayable(state, map, cell)).toBe(false);
+    expect(revealTap(state, map, cell)).toBe('OutOfReach');
+    expect(getWallet(state.city.wallet, 'Gold')).toBe(5000);
+    expect(revealTapsDone(state, cell)).toBe(0);
+  });
+
+  it('the same cell is payable the moment the Townhall stands a level higher', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 5000;
+    const cell = justPastReach(state);
+    expect(revealTap(state, map, cell)).toBe('OutOfReach');
+    // The level the refusal names is the one that opens it — no more, no less.
+    const needs = reachLevelFor(map, cell);
+    townhall(state).level = needs - 1;
+    expect(revealTap(state, map, cell)).toBe('OutOfReach');
+    townhall(state).level = needs;
+    expect(revealTap(state, map, cell)).toBe('Paid');
+  });
+
+  it('is said before the terrain: a sea cell out of reach is out of reach, not tech-locked', () => {
+    const state = newGame(map, NOW);
+    state.city.wallet.Gold = 99_999_999;
+    const shore = firstShore();
+    expect(shore).not.toBeNull();
+    const { land, sea } = shore!;
+    state.fog.revealed[coordKey(land)] = true;
+    expect(townhallDistance(map, sea)).toBeGreaterThan(explorationReach(state));
+    expect(revealTap(state, map, sea)).toBe('OutOfReach');
+  });
+
+  it('a building sees and reveals past the reach — only the player\'s tap is refused', () => {
+    const state = newGame(map, NOW);
+    const reach = explorationReach(state);
+    // A house on the last ring inside the reach: its own radius lands outside.
+    const edge = map.cells.find((c) => townhallDistance(map, c) === reach
+      && !state.features[coordKey(c)] && map.terrain.get(coordKey(c)) !== 'Water');
+    expect(edge).toBeDefined();
+    addBuilt(state, 'Housing', edge!);
+    const house = state.city.districts[state.city.districts.length - 1];
+    revealAroundDistrict(state, map, house);
+    const outside = map.cells.filter((c) => townhallDistance(map, c) > reach
+      && state.fog.revealed[coordKey(c)] === true);
+    expect(outside.length, 'the house revealed nothing past the reach').toBeGreaterThan(0);
+  });
+
+  it('draws its border along the last ring, facing the ring beyond, and none at the top', () => {
+    const state = newGame(map, NOW);
+    const reach = explorationReach(state);
+    const border = reachBorder(state, map, map.cells);
+    expect(border.length).toBeGreaterThan(0);
+    for (const { cell, sides } of border) {
+      expect(townhallDistance(map, cell), 'a border cell is inside the reach').toBeLessThanOrEqual(reach);
+      expect(sides.length).toBeGreaterThan(0);
+      for (const side of sides) {
+        const n = side === 'N' ? { x: cell.x, y: cell.y - 1 } : side === 'S' ? { x: cell.x, y: cell.y + 1 }
+          : side === 'W' ? { x: cell.x - 1, y: cell.y } : { x: cell.x + 1, y: cell.y };
+        expect(map.terrain.has(coordKey(n)), 'a map edge is not a border').toBe(true);
+        expect(townhallDistance(map, n), 'the far side is past the reach').toBeGreaterThan(reach);
+      }
+    }
+    // Every cell on the last ring that touches the next ring is on the border.
+    const lastRing = map.cells.filter((c) => townhallDistance(map, c) === reach);
+    expect(lastRing.length).toBeGreaterThan(0);
+    const drawn = new Set(border.map((b) => coordKey(b.cell)));
+    for (const c of lastRing) {
+      const touchesBeyond = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }]
+        .some((d) => townhallDistance(map, { x: c.x + d.x, y: c.y + d.y }) > reach
+          && map.terrain.has(coordKey({ x: c.x + d.x, y: c.y + d.y })));
+      if (touchesBeyond) expect(drawn.has(coordKey(c))).toBe(true);
+    }
+    // At the top the reach is the province, and there is nothing to draw.
+    townhall(state).level = DISTRICTS.Townhall.maxLevel;
+    expect(reachBorder(state, map, map.cells)).toEqual([]);
+  });
+
+  it('Divination obeys the same border', async () => {
+    const { validCastCells } = await import('../src/sim/casting');
+    const state = newGame(map, NOW);
+    const cell = justPastReach(state);
+    expect(fogState(state, map, cell)).toBe('Discovered');
+    const targets = validCastCells(state, map, 'DowsingRod').map(coordKey);
+    expect(targets).not.toContain(coordKey(cell));
+    expect(targets.every((k) => townhallDistance(map, parseCoordKey(k)) <= explorationReach(state)))
+      .toBe(true);
+  });
+});
+
+// Docs/features/01-map-and-fog.md §5 — the map gets dearer as it is revealed.
+//
+// CLAIM: a cell's price is its ring price times `count_growth` once per
+// `count_step` cells already revealed. Distance alone made a disc as cheap as
+// a corridor; with the count in the price, breadth costs more than depth.
+describe('the map gets dearer as it is revealed', () => {
+  const step = FOG.countStep;
+  const growth = FOG.countGrowth;
+  /** A state with exactly `n` cells revealed — the seed, then filled outward. */
+  const withRevealed = (n: number) => {
+    const state = newGame(map, NOW);
+    townhall(state).level = DISTRICTS.Townhall.maxLevel;
+    const seeded = Object.keys(state.fog.revealed).length;
+    expect(n).toBeGreaterThanOrEqual(seeded);
+    const more = map.cells
+      .filter((c) => state.fog.revealed[coordKey(c)] !== true)
+      .sort((a, b) => townhallDistance(map, a) - townhallDistance(map, b))
+      .slice(0, n - seeded);
+    reveal(state, more);
+    expect(Object.keys(state.fog.revealed).length).toBe(n);
+    return state;
+  };
+
+  it('multiplies by the growth once per step of revealed cells, and the dials are real', () => {
+    expect(step).toBeGreaterThan(0);
+    expect(growth).toBeGreaterThan(1);
+    const seeded = Object.keys(newGame(map, NOW).fog.revealed).length;
+    expect(countMultiplier(withRevealed(seeded))).toBe(growth ** Math.floor(seeded / step));
+    const k = Math.floor(seeded / step) + 1;
+    expect(countMultiplier(withRevealed(k * step))).toBe(growth ** k);
+    expect(countMultiplier(withRevealed(k * step + step - 1))).toBe(growth ** k);
+    expect(countMultiplier(withRevealed((k + 1) * step))).toBe(growth ** (k + 1));
+  });
+
+  it('sits under the ring price, and Pitons discounts the multiplied price', () => {
+    const state = withRevealed(3 * step);
+    const cell = { x: 0, y: -3 }; // ring 3, whichever cells were filled
+    const d = townhallDistance(map, cell);
+    expect(revealCostForCell(state, map, cell)).toBe(Math.round(revealCost(d) * growth ** 3));
+    state.research.completed.push('PitonsI');
+    expect(revealCostForCell(state, map, cell))
+      .toBe(Math.max(FOG.minCost, Math.round(revealCost(d) * growth ** 3 * 0.9)));
+  });
+
+  it('a cell half paid keeps its paid fifths and reprices the rest when the count steps', () => {
+    const seeded = Object.keys(newGame(map, NOW).fog.revealed).length;
+    // Far enough out that a 5% step is whole Gold after rounding, and one
+    // cell short of the next step, with a dear cell to pay for slowly.
+    const k = Math.floor(seeded / step) + 6;
+    const state = withRevealed(k * step - 1);
+    state.city.wallet.Gold = 99_999_999;
+    // The dearest payable cell there is, so the fifths are real Gold.
+    const target = map.cells.filter((c) => fogState(state, map, c) === 'Discovered'
+      && isPayable(state, map, c) && explorationGate(map, c) === null)
+      .sort((a, b) => townhallDistance(map, b) - townhallDistance(map, a))[0];
+    expect(target).toBeDefined();
+    const before = revealCostForCell(state, map, target);
+    const first = nextRevealTapCost(state, map, target);
+    revealTap(state, map, target);
+    revealTap(state, map, target);
+    const paid = revealTapCost(before, 0) + revealTapCost(before, 1);
+    expect(paid).toBe(first + revealTapCost(before, 1));
+    // Another cell is cleared and the count steps: every price rises.
+    const other = map.cells.find((c) => fogState(state, map, c) === 'Discovered'
+      && isPayable(state, map, c) && explorationGate(map, c) === null
+      && coordKey(c) !== coordKey(target))!;
+    reveal(state, [other]);
+    const after = revealCostForCell(state, map, target);
+    expect(after).toBeGreaterThan(before);
+    // The two paid taps stay paid; the three to come are slices of the new price.
+    expect(revealTapsDone(state, target)).toBe(2);
+    expect(nextRevealTapCost(state, map, target)).toBe(revealTapCost(after, 2));
+  });
+
+  it('the map editor still reads the bare ring price', () => {
+    for (const d of [1, 3, 10, 25]) {
+      expect(revealCost(d)).toBe(revealCost(d)); // no state, no count
+      expect(revealCost(d)).toBeGreaterThan(0);
+    }
+    expect(revealCost(3)).toBe(10);
   });
 });

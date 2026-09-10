@@ -14,7 +14,7 @@
 import { adjacencyReadout, formatAdjacency, type Game } from '../game';
 import { gemRushCost } from '../sim/commands';
 import {
-  DISTRICTS, HARMONY, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
+  DISTRICTS, FOG, HARMONY, HARVEST, MANA, TAP, TAXES, TECHNOLOGIES, levelIndexed, type AdjacencyStat,
 } from '../sim/data/definitions';
 import { adjacencyInEffect, districtAdjacency } from '../sim/adjacency';
 import {
@@ -197,6 +197,13 @@ function upgradeDeltas(game: Game, district: District, next: number): HTMLElemen
     if (ladder.length > 0) {
       delta('Gold', 'Taxes',
         `×${levelIndexed(ladder, district.level)}`, `×${levelIndexed(ladder, next)}`);
+    }
+    // And how far the fog can be paid for (01-map-and-fog.md §4): a level
+    // that opens no new ring says nothing about it.
+    const reach = FOG.reachPerTownhallLevel;
+    if (reach.length > 0 && levelIndexed(reach, next) !== levelIndexed(reach, district.level)) {
+      delta('Townhall', 'Reach',
+        `ring ${levelIndexed(reach, district.level)}`, `ring ${levelIndexed(reach, next)}`);
     }
   }
   return out;

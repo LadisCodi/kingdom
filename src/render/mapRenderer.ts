@@ -7,7 +7,7 @@ import {
 } from '../sim/data/definitions';
 import { landmarkDefAt, ruinDefAt } from '../sim/sites';
 import { trainingProgress, unitInTraining } from '../sim/army';
-import { fogState, isReachable } from '../sim/fog';
+import { fogState, isPayable, reachBorder } from '../sim/fog';
 import type { MapData } from '../sim/grid';
 import { harvestSourceAt, recoversAt, stockFraction } from '../sim/harvest';
 import { maxPopulation } from '../sim/population';
@@ -307,12 +307,13 @@ export function drawMap(
       if (fog === 'Discovered') {
         ctx.fillStyle = PALETTE.fogDiscovered;
         ctx.fillRect(x, y, size, size);
-        // A cell you can see but cannot reach yet sits under a second layer,
+        // A cell you can see but cannot buy yet — not touching cleared
+        // ground, or past the Townhall's reach — sits under a second layer,
         // so the payable frontier reads as a border rather than as every
-        // pale tile on screen. The rule is spatial, so it should be visible
-        // spatially — a toast on a refused tap is the fallback, not the
-        // teacher.
-        if (!isReachable(state, map, cell)) {
+        // pale tile on screen. Both rules are spatial, so they should be
+        // visible spatially — a toast on a refused tap is the fallback, not
+        // the teacher.
+        if (!isPayable(state, map, cell)) {
           ctx.fillStyle = PALETTE.fogDiscovered;
           ctx.fillRect(x, y, size, size);
         }
@@ -325,6 +326,37 @@ export function drawMap(
             taps / FOG.tapsToReveal, PALETTE.progressFill);
         }
       }
+    }
+  }
+
+  // Pass 1.2: the Townhall's reach (01-map-and-fog.md §4). A dashed line
+  // along the last ring the player may pay for, drawn over the fog and
+  // across undiscovered ground too, so the extent of what the capital allows
+  // is read off the map before a tap is refused. Nothing is drawn when the
+  // reach holds the whole province.
+  {
+    const visible: Coord[] = [];
+    for (let cy = topLeft.y - pad; cy <= bottomRight.y + pad; cy++) {
+      for (let cx = topLeft.x - pad; cx <= bottomRight.x + pad; cx++) visible.push({ x: cx, y: cy });
+    }
+    const border = reachBorder(state, map, visible);
+    if (border.length > 0) {
+      ctx.save();
+      ctx.strokeStyle = PALETTE.reachBorder;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([Math.max(4, size * 0.18), Math.max(3, size * 0.12)]);
+      ctx.beginPath();
+      for (const { cell, sides } of border) {
+        const { x, y } = cellRect(cell);
+        for (const side of sides) {
+          if (side === 'N') { ctx.moveTo(x, y); ctx.lineTo(x + size, y); }
+          if (side === 'S') { ctx.moveTo(x, y + size); ctx.lineTo(x + size, y + size); }
+          if (side === 'W') { ctx.moveTo(x, y); ctx.lineTo(x, y + size); }
+          if (side === 'E') { ctx.moveTo(x + size, y); ctx.lineTo(x + size, y + size); }
+        }
+      }
+      ctx.stroke();
+      ctx.restore();
     }
   }
 

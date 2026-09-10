@@ -207,6 +207,10 @@ A `bonus` names its effects, and each is four fields:
 - The count is **paid reveals only** (`revealedCellCount`): a cell a building
   merely *discovered* has been seen, not opened, and the same count is what
   the `DiscoverCells` quest goal follows.
+- The Townhall's reach bounds the count ([`01-map-and-fog.md`](01-map-and-fog.md)
+  §4): 30 cells fit inside level 1's reach, 100 inside level 2's, 220 inside
+  level 4's. `tests/quests.test.ts` asserts that every era the chain and the
+  Townhall's own gates ask for fits the reach at that beat.
 - The gate is a state condition, not a timer: no boundary source, nothing to
   settle, and it cannot be bought with Gems or Gold directly — only by
   clearing fog, which Gold pays for.
