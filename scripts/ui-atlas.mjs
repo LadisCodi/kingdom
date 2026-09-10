@@ -57,6 +57,21 @@ const fail = (msg) => {
   console.error(`ui-atlas: ${msg}`);
   process.exit(1);
 };
+
+/**
+ * Two kinds of art go through here now. The pixel sheets are point-sampled
+ * and their alpha is thresholded to a hard edge, because a pixel icon with a
+ * soft fringe looks wrong at every scale. The SMOOTH sheets (2026-09-10, the
+ * chrome stopped being pixel art — Docs/art/ui-menus-redesign.md §7.17) are
+ * the opposite: Lanczos resampling and the alpha left alone, because a
+ * smooth icon is drawn to be scaled and a thresholded edge is what would
+ * look wrong. `manifest.smooth` picks, for the whole atlas.
+ */
+const RESAMPLE = { point: ['-filter', 'point'], smooth: ['-filter', 'Lanczos'] };
+const HARD_ALPHA = ['-channel', 'A', '-threshold', '50%', '+channel'];
+let smooth = false;
+const filter = () => (smooth ? RESAMPLE.smooth : RESAMPLE.point);
+const edge = () => (smooth ? [] : HARD_ALPHA);
 const magick = (...args) =>
   execFileSync('magick', args.map(String), { encoding: 'utf8', maxBuffer: 1 << 26 }).trim();
 
@@ -191,9 +206,16 @@ function sliceSheet(sheet, cell, outDir) {
   const { rows, cols } = sheet.grid;
   const [w, h] = magick(file, '-format', '%wx%h', 'info:').split('x').map(Number);
 
-  // Read the grid off the sheet instead of assuming even spacing.
-  const colBands = bands(coverage(file, 'x', w), GUTTER_PX);
-  const rowBands = bands(coverage(file, 'y', h), GUTTER_PX);
+  // Read the grid off the sheet instead of assuming even spacing — unless
+  // the manifest says the grid IS even (`evenGrid`): the smooth sheets are
+  // asked for as a strict grid of equal cells and come back that way, and a
+  // helmet's plume touching the row below it is not a reason to fail the
+  // sheet when the cell boundaries are known.
+  const even = (n, size) => Array.from({ length: n }, (_, i) => ({
+    start: Math.round((i * size) / n), end: Math.round(((i + 1) * size) / n) - 1,
+  }));
+  const colBands = sheet.evenGrid ? even(cols, w) : bands(coverage(file, 'x', w), GUTTER_PX);
+  const rowBands = sheet.evenGrid ? even(rows, h) : bands(coverage(file, 'y', h), GUTTER_PX);
   if (colBands.length !== cols || rowBands.length !== rows) {
     fail(
       `${label}: found ${colBands.length} columns and ${rowBands.length} rows of ` +
@@ -237,10 +259,11 @@ function sliceSheet(sheet, cell, outDir) {
     const out = join(outDir, `${f.name}.png`);
     magick(
       '-size', `${cell}x${cell}`, 'xc:none',
-      '(', file, '-crop', boxStr(f.box), '+repage', '-filter', 'point', '-resize', `${w}x${h}!`, ')',
+      '(', file, '-crop', boxStr(f.box), '+repage', ...filter(), '-resize', `${w}x${h}!`, ')',
       '-gravity', 'center', '-composite',
-      // Hard pixel edges: a soft alpha fringe looks wrong at every scale.
-      '-channel', 'A', '-threshold', '50%', '+channel',
+      // Pixel art: hard edges, a soft alpha fringe looks wrong at every scale.
+      // Smooth art: the fringe IS the edge.
+      ...edge(),
       '-strip', '-define', 'png:exclude-chunk=date,time',
       out,
     );
@@ -385,7 +408,7 @@ function deriveLocked(src, dest) {
     src, '(', '+clone', '-alpha', 'extract', ')', '-alpha', 'off',
     '-modulate', '100,18', '-fill', '#CBBA96', '-colorize', '55%',
     '-compose', 'CopyOpacity', '-composite',
-    '-channel', 'A', '-threshold', '50%', '+channel',
+    ...edge(),
     '-strip', '-define', 'png:exclude-chunk=date,time', dest,
   );
 }
@@ -393,6 +416,12 @@ function deriveLocked(src, dest) {
 /** Authored at 16 logical pixels and stored doubled, so the atlas grid stays
  *  uniform while the inline variant gets genuinely chunkier pixels. */
 function deriveTiny(src, dest, cell) {
+  // A smooth icon has no "chunkier pixels" to gain: the small variant is
+  // the same cell, scaled by CSS like every other size.
+  if (smooth) {
+    magick(src, '-strip', '-define', 'png:exclude-chunk=date,time', dest);
+    return;
+  }
   magick(
     src, '-filter', 'point', '-resize', `${cell / 2}x${cell / 2}`,
     '-filter', 'point', '-resize', `${cell}x${cell}`,
@@ -411,7 +440,9 @@ function pack(names, cell, cols) {
     const y = Math.floor(i / cols) * cell;
     args.push('(', join(SLICES, `${name}.png`), ')', '-geometry', `+${x}+${y}`, '-composite');
   });
-  args.push('-strip', '-define', 'png:exclude-chunk=date,time', join(OUT_ASSETS, 'ui-atlas.png'));
+  // 8-bit: ImageMagick promotes a composite of many sources to 16-bit, which
+  // doubled the atlas to 1.8 MB for no visible gain.
+  args.push('-depth', '8', '-strip', '-define', 'png:exclude-chunk=date,time', join(OUT_ASSETS, 'ui-atlas.png'));
   magick(...args);
   return rows;
 }
@@ -432,7 +463,7 @@ function writeCss(names, cell, cols, rows) {
   background-image: url('./ui-atlas.png');
   background-repeat: no-repeat;
   background-size: calc(var(--icon-size) * ${cols}) calc(var(--icon-size) * ${rows});
-  image-rendering: pixelated;
+  image-rendering: ${smooth ? 'auto' : 'pixelated'};
 }
 /* An atlas-backed icon has no text to show. */
 .icon:not(.icon--emoji) { font-size: 0; }
@@ -508,7 +539,11 @@ const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
 const mode = process.argv[2] ?? 'build';
 const onlyArg = process.argv.indexOf('--only');
 const only = onlyArg === -1 ? null : process.argv[onlyArg + 1];
-const { cell, atlasCols: cols } = manifest;
+const cellArg = process.argv.indexOf('--cell');
+const cell = cellArg === -1 ? manifest.cell : Number(process.argv[cellArg + 1]);
+const { atlasCols: cols } = manifest;
+smooth = manifest.smooth === true;
+if (!Number.isInteger(cell) || cell <= 0) fail(`bad atlas cell ${cell}`);
 
 const sheets = manifest.sheets.filter((s) => !only || s.file.includes(only));
 const worldSheets = (manifest.worldSheets ?? []).filter((s) => !only || s.file.includes(only));
