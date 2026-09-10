@@ -107,13 +107,15 @@
 }
 
 /* ---- the district card and the quest scroll ---- */
+/* The district card wears the same frame as a sheet, open at the bottom where
+   it meets the nav: three sides of the nine-slice, the fourth width 0. */
 .dc {
-  border-top: 0;
-  background:
-    url('../assets/tex-wood.jpg') top / 512px 512px repeat-x,
-    url('../assets/tex-parchment.jpg') 0 10px / 384px 384px repeat;
-  /* The wood band is the card's top edge; content starts under it. */
-  padding-top: 18px;
+  border: 12px solid transparent;
+  border-bottom: 0;
+  border-top-width: 12px;
+  border-image: url('../assets/frame-wood.png') 80 / 16px 16px 0 / 2px round;
+  background: url('../assets/tex-parchment.jpg') padding-box;
+  background-size: 384px 384px;
 }
 .q-scroll {
   background:
@@ -121,3 +123,43 @@
     linear-gradient(rgba(60, 36, 18, 0.12), rgba(60, 36, 18, 0.12)) bottom / 100% 6px no-repeat,
     url('../assets/tex-parchment.jpg') / 384px 384px;
 }
+
+/* ---- the quest scroll is pinned with a seal (§5.2) ---- */
+.q-scroll::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  right: -9px; /* the top-left is where the chain line starts */
+  width: 30px;
+  height: 30px;
+  background: url('../assets/deco-seal.png') center / contain no-repeat;
+  filter: drop-shadow(0 1px 0 rgba(60, 36, 18, 0.5));
+  pointer-events: none;
+}
+
+/* ---- the banner is cloth; its tone dyes the weave ---- */
+.b-body,
+.b-tail {
+  background: var(--tone) url('../assets/tex-cloth.jpg') center / 256px 256px;
+  background-blend-mode: multiply;
+}
+
+/* ---- the research page and the build grid ---- */
+.research-topbar { background: url('../assets/tex-wood.jpg') center / 512px 512px; }
+.tech-page {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(160, 120, 70, 0.16), transparent 60%),
+    radial-gradient(ellipse at 75% 70%, rgba(160, 120, 70, 0.14), transparent 55%),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-card {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-card.is-locked {
+  background:
+    linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.bld-card.bld-more { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }

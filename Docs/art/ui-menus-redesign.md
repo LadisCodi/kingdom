@@ -140,9 +140,13 @@ nothing else: parchment (`tex-parchment.jpg`) inside a nine-slice carved
 frame (`frame-wood.png`, `border-image-slice: 80` at 16px, corners a little
 proud) on every `.k-panel`; wood grain (`tex-wood.jpg`) on planks, the header
 and the nav beam, parchment on the tabs; a rope grab handle and a rope
-divider; the round knob as a picture (`deco-knob.png`). `border-image`
-forfeits `border-radius`, so the frame's rounding lives in the art. Dropping
-the one `@import` restores the flat kit.
+divider; the round knob as a picture (`deco-knob.png`); the district card in
+the same frame, open where it meets the nav; the banner as cloth dyed by its
+tone (`tex-cloth.jpg`, `background-blend-mode: multiply`); the quest scroll
+pinned with a wax seal at its free corner (§5.2); parchment under the
+research page and the build cards. `border-image` forfeits `border-radius`,
+so the frame's rounding lives in the art. Dropping the one `@import` restores
+the flat kit.
 
 ### 3.3 Buttons
 
