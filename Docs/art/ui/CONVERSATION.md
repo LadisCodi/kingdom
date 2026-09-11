@@ -487,3 +487,23 @@ for.
   viewer's download button is still "Guardar"; find it by name. A hung game
   tab (a hand-edited save) drops the extension's tab group: close the tab,
   call tabs_context again.
+
+---
+
+## P1 — the plates (§7.24)
+
+- **Date:** 2026-09-11
+- **Conversation:** the M5–M18 conversation above, with
+  `mockups/m12-map-floaters.png` re-attached as the anchor.
+- **Model:** the workspace default, "Alta" reasoning.
+- **File:** `sheets/ui-p1-plates.png` (2×2, 1254×1254, true alpha) →
+  `src/ui/assets/plate-{wood,plank,parchment}.png`, `beam-wood.png`.
+- **Prompt:** §7.24 verbatim. First time.
+- **What worked:** four genuinely nine-sliceable pieces in one go — straight
+  edges, identical corners, the nails where the corners are. The parchment
+  card's frame reads as the same wood as the plates, which is what makes the
+  map's chrome one material.
+- **What to know:** the main menu is now the mockup's chrome 1:1 — numbers
+  printed on the wood in cream, two plates on a dark beam, plates on the nav,
+  nailed parchment cards, a hanging cloth pennant, a clay "!" tag on the
+  toast. The map behind it stays pixel art by design.

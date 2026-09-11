@@ -2026,3 +2026,23 @@ CONVERSATION.md`). Reading order is the file order: `art-key-silver`,
 `art-key-gold`, `art-hammer`, then `gems_pouch`, `gems_purse`, `gems_chest`,
 `gems_vault`, `gems_hoard`, `gems_treasury` — the pack files keep the names
 `definitions.ts` already gives the SKUs, so nothing but the picture changed.
+
+### 7.24 The plates the chrome is nailed together from (P1)
+
+The header's plank, the nav's beam and its tabs, and the parchment cards on
+the map (the daily pill, the builder plaque, the quest scroll) are painted
+pieces nine-sliced by CSS `border-image` — the bevel, the rim, the grain and
+the corner nails are in the art, so the flat kit's lips and highlights come
+off. Sent into the M0 conversation with `mockups/m12-map-floaters.png`
+attached as the anchor:
+
+> Same materials as the attached mockup's chrome, drawn as UI pieces to be sliced. One sheet, 1024×1024, fully TRANSPARENT background (true alpha, no checkerboard), a strict 2×2 grid of equal 512px cells, each piece centred in its cell with 40px of clear margin, straight uniform edges and identical corner blocks so each can be nine-sliced: 1 (top-left) the raised wooden PLATE the nav tabs are made of — a rounded rectangle 432×220, warm mid wood grain face, a lighter bevel along the top edge, a darker lip along the bottom, a thin dark-brown rim; 2 (top-right) the wooden HEADER PLANK segment — a rounded rectangle 432×160, the same wood a shade darker with the same bevel and rim; 3 (bottom-left) the PARCHMENT CARD the daily pill and quest scroll are made of — a rounded rectangle 432×220, aged cream parchment face inside a 12px dark wood frame with a lit inner bevel, a small iron nail head in each corner; 4 (bottom-right) the dark wood BEAM the nav sits on — a rectangle 432×200 of dark wood grain with a lit top edge and a shadowed bottom edge, seamless left to right. No text, no icons, no drop shadow on the ground, nothing outside the cells.
+
+The sheet comes back 1254×1254; cut it on an even 2×2 grid and `-fuzz 6%
+-trim` each cell (the painted shadow leaves a faint halo). Files:
+`src/ui/assets/plate-wood.png` (nav tabs, slice 44 at 12px),
+`plate-plank.png` (the header's two plates, slice 44 at 8px),
+`plate-parchment.png` (the cards, slice 64 at 16px so the nails land in the
+corners), `beam-wood.png` (the header's and the nav's beam, repeated along
+x at full height). `fill` keeps the painted face as the element's
+background.
