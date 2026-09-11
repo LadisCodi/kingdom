@@ -211,11 +211,17 @@
   padding: 12px 8px 34px;
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+  /* A parchment vignette with a soft wash of the rarity's colour (M17), and
+     the rarity ringed inside the wood like the roster's tiles. */
+  box-shadow: inset 0 0 0 2px var(--tile, transparent), inset 0 2px 0 rgba(255, 255, 255, 0.3);
   background:
-    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.32), transparent 70%),
-    var(--tile, var(--rarity-common));
+    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
+    linear-gradient(var(--wash, transparent), var(--wash, transparent)),
+    var(--parchment);
 }
+.hero-stage.is-common { --wash: rgba(95, 143, 168, 0.18); }
+.hero-stage.is-rare { --wash: rgba(138, 107, 196, 0.2); }
+.hero-stage.is-legendary { --wash: rgba(217, 154, 43, 0.22); }
 .hero-stage.is-common { --tile: var(--rarity-common); }
 .hero-stage.is-rare { --tile: var(--rarity-rare); }
 .hero-stage.is-legendary { --tile: var(--rarity-legendary); }
@@ -273,7 +279,7 @@
    belongs to the way out now. */
 .hero-rarity {
   position: absolute;
-  bottom: 8px;
+  top: 44px;
   left: 10px;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
@@ -329,12 +335,21 @@
   text-align: right;
 }
 
-.hero-statline {
+/* Three parchment tiles sharing the row, the icon over the number (M17). */
+.hero-statline { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+.hero-statline > .k-stat {
   display: flex;
-  justify-content: space-around;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 6px 4px;
+  border-radius: var(--radius-sm);
+  border: 2px solid rgba(92, 58, 30, 0.45);
+  background: var(--parchment-shade);
 }
+.hero-statline > .k-stat > .icon { --icon-size: 26px; }
 
 .hero-passive {
   display: flex;

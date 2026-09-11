@@ -396,3 +396,22 @@
     radial-gradient(90% 60% at 50% 38%, rgba(242, 178, 51, 0.22), transparent 70%),
     rgba(24, 15, 8, 0.9);
 }
+
+/* ---- the hero's and the relic's cards (M17) ---- */
+.hero-stage {
+  background:
+    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
+    linear-gradient(var(--wash, transparent), var(--wash, transparent)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.rel-stage {
+  background:
+    radial-gradient(120% 90% at 50% 20%, rgba(255, 255, 255, 0.35), transparent 70%),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.hero-statline > .k-stat,
+.hero-level {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
