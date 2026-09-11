@@ -29,7 +29,7 @@ import { harvestSourceAt } from '../sim/harvest';
 import { releaseSprites, spriteImgAt, spriteUrl } from '../render/sprites';
 import { trainingSection } from './trainingSection';
 import { districtCardSignature } from './districtCardSignature';
-import { requirements } from './upgradeStats';
+import { requirements, statsAt } from './upgradeStats';
 import { workshopSection } from './workshopSection';
 import { LiveParts, type Screen } from './kit';
 import {
@@ -50,36 +50,30 @@ const ADJACENCY_WORDS: Record<AdjacencyStat, string> = {
   trainTime: 'A military quarter — training time',
 };
 
-/** The most stars worth counting at a glance. A ten-level building gets a
- *  numeral instead: ten pips is a bar chart, not a count. */
-const MAX_STARS = 5;
 
-/** Level as stars rather than "lvl 2/3" — a count you read, not parse. Past
- *  `MAX_STARS` levels that stops being true, so the ladder becomes one star
- *  and the two numbers. */
-function levelStars(level: number, max: number): HTMLElement {
-  if (max > MAX_STARS) {
-    return el('span', { class: 'dc-stars is-numeral' },
-      iconEl('star', { size: 'sm' }),
-      el('b', {}, `${level}`),
-      el('span', {}, `/ ${max}`));
-  }
-  const row = el('span', { class: 'dc-stars' });
-  for (let i = 0; i < max; i++) {
-    const star = iconEl('star', { size: 'sm' });
-    if (i >= level) star.classList.add('is-empty');
-    row.append(star);
-  }
-  return row;
-}
 
-/** The building's own art at a given level, falling back to its icon. */
-
-function portrait(def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number): HTMLElement {
-  const url = spriteUrl(`${def.sprite}_l${level}`) ?? spriteUrl(def.sprite);
-  return el('div', { class: 'dc-portrait' }, url
-    ? spriteImgAt(url)
-    : iconEl(def.id, { size: 'lg' }));
+/**
+ * The building at its current level, in a painted well, with the level on a
+ * scroll across its corner (M2).
+ *
+ * The LEVEL RIBBON replaced a row of stars under the name. Stars answered
+ * "how far along the ladder", which is a question about the ladder; a player
+ * looking at a building asks what level it IS, and past five levels the pips
+ * stopped being countable anyway.
+ *
+ * Two sprite namings are tried because two tools write them: `townhall_lv3`
+ * from the smooth cutter (scripts/ui-cut.mjs) and `<sprite>_l3` from the
+ * older per-level map art.
+ */
+function portrait(
+  def: (typeof DISTRICTS)[keyof typeof DISTRICTS], level: number,
+): HTMLElement {
+  const url = spriteUrl(`${def.id.toLowerCase()}_lv${level}`)
+    ?? spriteUrl(`${def.sprite}_l${level}`)
+    ?? spriteUrl(def.sprite);
+  return el('div', { class: 'dc-portrait' },
+    url ? spriteImgAt(url, 'dc-portrait-art') : iconEl(def.id, { size: 'lg' }),
+    el('span', { class: 'dc-level' }, `Lv ${level}`));
 }
 
 /**
@@ -341,6 +335,10 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
 
   // ----------------------------------------------------------------- footer
   const foot = el('div', { class: 'dc-foot' });
+  // The Upgrade button is built here with the rest of the footer logic but
+  // RENDERS in the head, beside the name (M2) — so the state that decides it
+  // stays with the other build-state branches.
+  const upgradeAction: HTMLElement[] = [];
 
   if (queueItem) {
     // Scaffolding: what is happening and how to skip it. Live — the bar and
@@ -386,9 +384,8 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
     // it and names the first errand, because sending a player into a popup to
     // read a cross they could have been told about here is a wasted tap.
     const next = district.level + 1;
-    const gates = requirements(game, district, next);
-    const blocking = gates.find((r) => !r.met);
-    foot.append(el('div', { class: 'dc-upgrade' },
+    const blocking = requirements(game, district, next).find((r) => !r.met);
+    upgradeAction.push(el('div', { class: 'dc-upgrade' },
       btn({
         label: 'Upgrade',
         kind: 'primary',
@@ -411,14 +408,30 @@ export function renderDistrictCard(game: Game, district: District, live?: LivePa
   close.setAttribute('data-own-close', '');
   head.append(close);
 
+  // WHAT THIS BUILDING IS WORTH RIGHT NOW — the same model the upgrade popup
+  // reads, at this level alone (upgradeStats.ts). It used to be scattered
+  // through the body as label/value rows; a band of tiles under the name is
+  // where a player looks for it, and it is the half of the model the popup
+  // does not show.
+  const figures = statsAt(game, district, district.level);
+  const stats = figures.length === 0 ? [] : [el('div', { class: 'dc-stats' },
+    ...figures.map((f) => el('div', { class: 'dc-stat' },
+      iconEl(f.icon, { size: 'lg' }),
+      el('div', { class: 'dc-stat-body' },
+        el('div', { class: 'dc-stat-label' }, f.label),
+        el('b', { class: 'dc-stat-value' }, f.value)))))];
+
   return el('div', { class: 'dc' },
     el('div', { class: 'dc-head' },
       portrait(def, district.level),
       el('div', { class: 'dc-id' },
         el('div', { class: 'dc-name' }, districtLabel(game.state, district)),
-        levelStars(district.level, def.maxLevel),
-        el('div', { class: 'dc-what' }, def.description)),
+        el('div', { class: 'dc-what' }, def.description),
+        // The one thing you BUY for this building sits with its name and its
+        // picture, not at the bottom of everything it does (M2).
+        ...upgradeAction),
       head),
+    ...stats,
     body,
     foot,
   );

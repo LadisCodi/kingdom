@@ -32,7 +32,7 @@ import { isTechComplete } from '../sim/research';
 import { TECHNOLOGIES } from '../sim/data/definitions';
 import type { District, TrainableId, UnitId } from '../sim/state';
 import { el, formatDuration } from './format';
-import { action, iconEl, progress, type LiveParts } from './kit';
+import { action, iconEl, type LiveParts } from './kit';
 import type { IconName } from './kit/icon';
 import { unitBody, unitBust } from './unitArt';
 import { pickedTrainee, pickTrainee } from './trainingPick';
@@ -206,33 +206,59 @@ function queueSection(game: Game, district: District, isWard: boolean): HTMLElem
     else runs.push({ trainee: item.trainee, count: itemCount(item), first: i });
   });
 
+  // THE CHAIN (M2). A run is a medallion with its count on a pill, and the
+  // runs are joined by a painted link — so the line reads as an order of
+  // events rather than as a row of icons. The HEAD of the line wears the
+  // progress ring, because that is the one being worked on and the ring is
+  // the bar that used to sit underneath the whole strip.
+  const progressPct = trainingProgress(game.state, district.uniqueId, now);
   const strip = el('div', { class: 'tr-queue', 'data-keep-scroll': 'tr-queue' },
-    ...runs.map((run) => {
+    ...runs.flatMap((run, i) => {
       const name = nameFor(run.trainee);
-      return el('div', {
-        // The run that holds the HEAD of the line is the one being worked
-        // on, which is what the bar underneath is counting down.
-        class: `tr-slot${run.first === 0 ? ' is-active' : ''}`,
+      const active = run.first === 0;
+      const slot = el('div', {
+        class: `tr-slot${active ? ' is-active' : ''}`,
         title: run.count > 1
           ? `${run.count} ${name}s ${isWard ? 'mending' : 'in the line'}`
           : name,
       },
         unitBust(run.trainee, 'tr-slot-art'),
+        // The ring is a conic gradient rather than the painted `ring_progress`
+        // asset: the painted one carries ONE arc, and a progress ring has to
+        // show every angle. The asset is what the colours are matched to.
+        ...(active
+          ? [el('span', {
+            class: 'tr-slot-ring',
+            style: `--progress: ${Math.round(progressPct * 360)}deg`,
+          })]
+          : []),
         ...(run.count > 1 ? [el('span', { class: 'tr-slot-count' }, `x${run.count}`)] : []));
+      // A link BETWEEN slots, never after the last one.
+      return i === runs.length - 1 ? [slot] : [slot, el('span', { class: 'tr-link' })];
     }));
 
   const head = line[0];
-  const bar = progress('gold');
   const left = queueLeft(game, district, head);
-  bar.set(trainingProgress(game.state, district.uniqueId, now), formatDuration(Math.ceil(left)));
+  // THE WHOLE LINE, not the head of it: the heading answers "how long until
+  // this queue is empty", which is the question a player with five in the
+  // line is asking. The head's own countdown is the ring.
+  const total = line.reduce((n, item, i) => n + (i === 0
+    ? left
+    : (item.kind === 'heal'
+      ? game.healWait(item.trainee as UnitId, itemCount(item))
+      : trainSecondsAt(game.state, district.uniqueId, item.trainee) * itemCount(item))), 0);
 
   const rush = lineRushCost(game.state, district.uniqueId, now);
   root.append(
-    el('div', { class: 'tr-head' }, isWard ? 'On the table' : 'Training queue'),
+    el('div', { class: 'tr-head' },
+      el('span', { class: 'tr-head-title' }, isWard ? 'On the table' : 'Train units'),
+      el('span', { class: 'tr-head-total' },
+        iconEl('hourglass', { size: 'sm' }),
+        `${formatDuration(Math.ceil(total))} total`)),
     el('div', { class: 'tr-queue-row' },
-      el('div', { class: 'tr-queue-col' }, strip, bar.root),
+      strip,
       action({
-        label: 'Finish',
+        label: 'Finish now',
         kind: 'gem',
         onClick: () => game.doFinishTraining(district),
         cost: { Gems: rush },
