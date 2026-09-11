@@ -73,3 +73,10 @@
   color: var(--clay);
   font-weight: 700;
 }
+
+/* The words keep their measure beside two slabs: the slabs shrink to their
+   labels first, and the verdict reads as a sentence, not a column. */
+.plc-body { flex: 1 1 130px; }
+.plc-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; }
+.plc-actions .k-btn { min-width: 72px; padding: 6px 10px; }
+.plc-actions .k-btn.has-cost { padding: 4px 10px; }
