@@ -287,3 +287,17 @@
 /* The sockets are rings of wood; the lit one is gold. */
 .rel-socket { border-image: none; }
 .rel-slot.is-buy .rel-socket { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }
+
+/* ---- the daily chest (M8): parchment cells, wood and gold slabs ---- */
+.dly-clock,
+.dly-cell,
+.dly-heads,
+.dly-foot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.dly-cell {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.05), rgba(60, 36, 18, 0.05)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.dly-head.is-free { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.dly-rung { background: url('../assets/tex-wood.jpg') center / 128px 128px; }
+.dly-row:has(button.dly-cell) .dly-rung { background: var(--gold); }
