@@ -25,12 +25,14 @@
 /* The banner ribbon. Display face at --text-title, which is the only size it
    is crisp at (tests/fonts.test.ts). */
 .gr-plaque {
-  padding: 6px 28px;
+  padding: 8px 32px;
   border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--gold), var(--gold-dark));
-  border: 2px solid var(--wood-dark);
-  box-shadow: 0 var(--lip) 0 var(--wood-dark);
-  color: var(--ink);
+  /* A wooden plaque with a gold rim (M15), not a gold bar. */
+  background: var(--wood);
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
+  color: var(--parchment);
+  text-shadow: 0 1px 0 rgba(60, 36, 18, 0.6);
   font-family: var(--font-display); font-weight: var(--font-display-weight);
   font-size: var(--text-title);
   text-align: center;
@@ -55,22 +57,23 @@
   place-items: center;
   border: 2px solid var(--wood-dark);
   border-radius: var(--radius-sm);
-  box-shadow: 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
-  background:
-    linear-gradient(170deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.24)),
-    var(--tile, var(--parchment-shade));
+  /* Parchment tiles dealt onto the veil (M15); the rarity is a ring inside
+     the wood, like the roster's. */
+  box-shadow: inset 0 0 0 2px var(--tile, transparent), 0 var(--lip) 0 rgba(0, 0, 0, 0.45);
+  background: var(--parchment-shade);
   overflow: hidden;
 }
 .gr-tile.is-common { --tile: var(--rarity-common); }
 .gr-tile.is-rare { --tile: var(--rarity-rare); }
 .gr-tile.is-legendary { --tile: var(--rarity-legendary); }
-.gr-tile.is-currency { --tile: var(--parchment-shade); }
+.gr-tile.is-currency { --tile: transparent; }
+.gr-tile.is-common { --tile: transparent; }
 
 /* A hero is not a bigger stack of the tile beside it. The light frame and the
    glow are the whole difference, and they have to read at a glance. */
 .gr-tile.is-hero {
-  border-color: var(--parchment);
-  box-shadow: 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(244, 228, 193, 0.75);
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 2px var(--gold-dark), 0 var(--lip) 0 rgba(0, 0, 0, 0.45), 0 0 14px rgba(242, 178, 51, 0.75);
 }
 
 .gr-art {

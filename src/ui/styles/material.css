@@ -377,3 +377,22 @@
   border-radius: 0;
   background: url('../assets/tex-parchment.jpg') padding-box 0 0 / 384px 384px;
 }
+
+/* ---- the reveal and the battlefield (M15, M16) ---- */
+.gr-tile,
+.bs-slot,
+.bs-where,
+.bs-count { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.gr-plaque,
+.bs-plaque { background: url('../assets/tex-wood.jpg') center / 200px 200px; }
+.bs {
+  background:
+    radial-gradient(80% 50% at 50% 42%, rgba(242, 178, 51, 0.12), transparent 70%),
+    linear-gradient(rgba(20, 10, 4, 0.6), rgba(20, 10, 4, 0.6)),
+    url('../assets/tex-cloth.jpg') center / 256px 256px;
+}
+.gr-screen {
+  background:
+    radial-gradient(90% 60% at 50% 38%, rgba(242, 178, 51, 0.22), transparent 70%),
+    rgba(24, 15, 8, 0.9);
+}
