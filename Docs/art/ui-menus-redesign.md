@@ -219,21 +219,29 @@ still derived by the script, never drawn. No emoji anywhere —
 - Portrait, full-bleed on the phone (`viewport-fit=cover`), pillarboxed to
   9:16 on desktop (`max-width: calc(100dvh * 9 / 16)`). Mockups:
   **1080×2340** (§7.19). Measured against the iPhone 17, 402×874 CSS px.
-- Safe zones: the header is 44px plus the top inset (`env(safe-area-inset-top)`,
-  reserved once, in `hud.css`); the nav is 52px plus the bottom inset
-  (reserved once, in `nav.css`). Both are measured at runtime into `--hud-h`
-  / `--nav-h`.
+- Safe zones: the header is a ~34px plank (two 30px painted plates, 14px
+  figures, 18px icons — M12 measured at 402) plus the top inset
+  (`env(safe-area-inset-top)`, reserved once, in `hud.css`); the nav is a
+  beam of 57px painted plates (28px icons, 14px labels) with 4px above and
+  below, plus the bottom inset (reserved once, in `nav.css`). Both are
+  measured at runtime into `--hud-h` / `--nav-h`.
 - Bottom sheets fit their content, capped at **70%** of the frame (decided on
   the board, 2026-09-11); only the research page, the heroes roster, the
   reliquary and the battle board are `tall`. **A card about something on the
   map frames it**: when the district or site card mounts, the camera centres
   the building in the band between the header and the card's top edge, once
-  (`Camera.centerFootprintWithin`). A sheet sits `hud-h + 24px` below the top and `nav-h + 8px` above
-  the bottom, with `--gutter` (12px) at the sides. Panel frame 6px + 10px
-  padding; plank 40px with the close knob inside it (board, 2026-09-11); grab
-  handle 40×4.
-- Targets: buttons `min-height: 44px` (56 with a price), knobs 40 with a
-  44px hit area, list rows 60px, grid gap 8px.
+  (`Camera.centerFootprintWithin`). A sheet sits `hud-h + 24px` below the top
+  and `nav-h + 8px` above the bottom, with `--gutter` (12px) at the sides.
+  Panel frame 9px (the P1 nine-slice) + 8px padding; plank 38px with the
+  title centred and the close knob at its right end; rope grab handle 72×20
+  riding the frame's top edge.
+- Sizes are the mockups' at 402px (2026-09-11, measured on a 50px grid over
+  M12, M5, M2, M6 and scaled ×0.472): slabs 40px (the mockups' ~38; 48 with a
+  price), knobs 36–44, list rows 60px, store cards ~110px with a 100×88
+  vignette, the daily pill 127×47, the builder plaque 30px, the quest scroll
+  226 wide, the Townhall's portrait 104px and its villagers 40px, hero tiles
+  3 across at 6px gaps with 13px ribbons and 20px feet. Where a mockup
+  measures under 44px the mockup wins; a slab under a thumb still has 40.
 
 ### 3.7 Motion (spec only, no mockup needed)
 
