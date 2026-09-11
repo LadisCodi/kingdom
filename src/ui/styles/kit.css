@@ -609,3 +609,8 @@
   background: var(--parchment); color: var(--ink);
   border: 2px dashed var(--clay); border-radius: 4px;
 }
+
+/* A centred dialog is narrower than a drawer (M14, M18): ~82% of the frame. */
+.k-sheet.is-centred { max-width: 340px; max-height: 78%; margin-left: auto; margin-right: auto; }
+/* A tall sheet starts about 160px down (M6, M7): the map keeps its top fifth. */
+.k-sheet.is-tall { height: auto; max-height: calc(100% - 96px); margin-top: auto; }

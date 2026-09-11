@@ -109,14 +109,15 @@
 .tools-knob {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
   box-shadow: 0 3px 0 var(--wood-dark);
   cursor: pointer;
 }
+.tools-knob .icon { --icon-size: 26px; }
 .tools-knob:hover { filter: brightness(1.08); }
 .tools-knob:active { transform: translateY(3px); box-shadow: none; }
 .tools-knob.is-active { background: var(--gold); border-color: var(--gold-dark); }

@@ -204,7 +204,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 250px;
+  min-height: 220px;
   /* The bottom padding is the band the foot rides in. The stars overlap the
      art rather than clearing it, so it is deliberately less than the foot is
      tall. */
@@ -230,7 +230,7 @@
   position: static;
   inset: auto;
   width: 60%;
-  height: 200px;
+  height: 170px;
   object-position: center;
 }
 

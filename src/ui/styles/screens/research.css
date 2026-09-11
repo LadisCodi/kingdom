@@ -379,10 +379,12 @@ button.res-slot-box:active { transform: translateY(var(--lip)); box-shadow: none
  * than one book to choose between: a single tab is a label, not a choice. */
 .res-shelf {
   display: flex;
+  align-items: center;
   gap: 6px;
-  padding: 0 12px 8px;
+  padding: 6px 12px 8px;
   background: var(--wood);
 }
+.res-shelf > .k-knob { flex: none; width: 36px; height: 36px; min-height: 36px; margin: 0 0 0 4px; }
 .res-tome {
   flex: 1;
   display: flex;

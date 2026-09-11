@@ -96,9 +96,10 @@ export function renderResearchMenu(game: Game): HTMLElement {
   const tabs = shelf(game);
   // The bar, the books' plates, then the desks (M4 puts the plates first;
   // the desks are what the mockup left out, so they take the row under them).
-  root.append(el('div', { class: 'research-topbar' },
-    el('h2', {}, TOMES[activeTome].name), close));
-  if (tabs) root.append(tabs);
+  // With the books' plates on the beam the title bar says nothing the lit
+  // plate does not (M4), so the way out rides the shelf instead.
+  if (tabs) { tabs.append(close); root.append(tabs); }
+  else root.append(el('div', { class: 'research-topbar' }, el('h2', {}, TOMES[activeTome].name), close));
   root.append(el('div', { class: 'res-desks' }, bar));
   root.append(el('p', { class: 'res-blurb' }, TOMES[activeTome].blurb));
 

@@ -282,7 +282,7 @@
   font-variant-numeric: tabular-nums;
 }
 .purse-row:last-child { border-bottom: 0; }
-.purse-row > .icon { --icon-size: 28px; }
+.purse-row > .icon { --icon-size: 34px; }
 .purse-name { flex: 1; min-width: 0; font-weight: 700; }
 .purse-value { font-family: var(--font-body); font-weight: 700; }
 /* An equivalent's contribution, indented under the currency it feeds. */
