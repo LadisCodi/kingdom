@@ -253,3 +253,37 @@
 
 /* ---- the header's slots are parchment cut into the plank ---- */
 .hud-coin, .hud-gems { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+
+/* ---- the store (M5): cards are parchment in wood, the vignettes lighter ---- */
+.store-banner,
+.store-pack {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.store-banner-art,
+.store .k-card > .k-slot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.store .k-card > .k-btn:not(:disabled),
+.store-banner-calls > .k-btn:last-child:not(:disabled) {
+  background: url('../assets/tex-wood.jpg') center / 200px 200px;
+}
+.store-banner.is-advanced .store-banner-calls > .k-btn:not(:disabled) { background: var(--gold); }
+
+/* ---- the heroes' roster and the reliquary (M6, M7): parchment tiles ---- */
+.hero-tile,
+.rel-tile:not(.is-locked),
+.rel-purse {
+  background:
+    linear-gradient(rgba(60, 36, 18, 0.07), rgba(60, 36, 18, 0.07)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+.hero-purse,
+.hero-tile-foot { background: url('../assets/tex-parchment.jpg') 0 0 / 384px 384px; }
+.rel-tile.is-locked {
+  background:
+    linear-gradient(rgba(120, 100, 70, 0.45), rgba(120, 100, 70, 0.45)),
+    url('../assets/tex-parchment.jpg') 0 0 / 384px 384px;
+}
+/* The sockets are rings of wood; the lit one is gold. */
+.rel-socket { border-image: none; }
+.rel-slot.is-buy .rel-socket { background: url('../assets/tex-wood-dark.jpg') center / 128px 128px; }

@@ -22,7 +22,7 @@ import {
   heroChanceAt, pityCount, pullsToGuarantee, pullsToLegendary,
 } from '../sim/heroes';
 import { el, formatDuration } from './format';
-import { btn, iconEl } from './kit';
+import { btn } from './kit';
 
 export function bannerPanel(game: Game): HTMLElement {
   return el('div', { class: 'store-banners' },
@@ -53,11 +53,12 @@ function oneBanner(game: Game, banner: BannerId): HTMLElement {
   }
 
   return el('div', { class: `store-banner is-${banner}` },
+    // The key is a painted piece (S1), not the 64px coin from the atlas.
+    el('div', { class: 'store-banner-art' },
+      el('span', { class: `store-art is-${def.key}`, role: 'img', 'aria-label': def.key })),
     el('div', { class: 'store-banner-head' },
-      iconEl(def.key, { size: 'lg' }),
-      el('div', {},
-        el('div', { class: 'store-banner-title' }, def.name),
-        el('div', { class: 'store-banner-hint' }, hint(banner)))),
+      el('div', { class: 'store-banner-title' }, def.name),
+      el('div', { class: 'store-banner-hint' }, hint(banner))),
     el('div', { class: 'rel-breakdown' }, ...lines),
     el('div', { class: 'store-banner-calls' },
       callSlot(game, banner),

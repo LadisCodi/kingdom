@@ -35,7 +35,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
   const offer = game.builderOffer();
   const atCeiling = offer.builders >= offer.ceiling;
   const builders = card({
-    icon: 'builders',
+    art: el('span', { class: 'store-art is-hammer', role: 'img', 'aria-label': 'builders' }),
     name: 'Another builder',
     desc: atCeiling
       ? `${offer.ceiling} is as large as a crew gets.`
@@ -56,7 +56,7 @@ export function renderStoreSheet(game: Game): HTMLElement {
     const offer = game.keyOffer(banner);
     const def = BANNERS[banner];
     return card({
-      icon: offer.key,
+      art: el('span', { class: `store-art is-${offer.key}`, role: 'img', 'aria-label': offer.key }),
       name: offer.key === 'GoldKey' ? 'A gold key' : 'A silver key',
       desc: `One call on ${def.name.toLowerCase()}. You hold ${offer.held}.`,
     }, btn({
@@ -80,9 +80,10 @@ export function renderStoreSheet(game: Game): HTMLElement {
     const art = url
       ? spriteImgAt(url, 'store-pack-art')
       : el('span', { class: 'store-pack-art is-fallback' }, currencyIcon('Gems', { size: 'lg' }));
+    // Art over count over price, as M5 stacks it.
     const pack = el('div', { class: 'store-pack' },
-      el('div', { class: 'store-pack-count' }, `${sku.gems} gems`),
       art,
+      el('div', { class: 'store-pack-count' }, `${sku.gems} gems`),
       btn({
         label: formatUsd(Math.round(sku.priceUsd * 100)),
         kind: 'primary',
