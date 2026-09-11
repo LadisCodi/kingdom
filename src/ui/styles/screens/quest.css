@@ -35,8 +35,8 @@
     linear-gradient(var(--parchment-shade), var(--parchment-shade)) top / 100% 6px no-repeat,
     linear-gradient(var(--parchment-shade), var(--parchment-shade)) bottom / 100% 6px no-repeat,
     var(--parchment);
-  border: 2px solid var(--wood-dark);
-  border-radius: 6px;
+  border: 3px solid var(--wood-dark);
+  border-radius: 8px;
   box-shadow: 0 4px 0 rgba(60, 36, 18, 0.3), 0 10px 20px rgba(60, 36, 18, 0.3);
   transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
 }
@@ -56,7 +56,9 @@
 }
 .q-name {
   font-family: var(--font-body);
-  font-size: var(--text-body);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.15;
   margin: 1px 0 2px;
 }
 .q-desc { color: var(--ink-muted); margin-bottom: 5px; }
@@ -120,8 +122,8 @@
 .q-head { display: flex; align-items: flex-start; gap: 8px; }
 .q-slot {
   flex: none;
-  width: 36px;
-  height: 36px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
   margin-top: 2px;
@@ -129,6 +131,7 @@
   background: var(--parchment-shade);
   border: 2px solid var(--wood-dark);
 }
+.q-slot .icon { --icon-size: 36px; }
 .q-text { min-width: 0; flex: 1; }
 .q-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .q-foot .q-reward { flex: 1; margin-top: 0; }
@@ -151,3 +154,14 @@
   pointer-events: none;
 }
 .q-scroll.is-complete .q-cta { background: var(--leaf); border-color: var(--leaf-dark); box-shadow: 0 2px 0 var(--leaf-dark); }
+
+/* The trough on the scroll is the dark one with the gold fill and cream
+   figures (M12): taller than the kit's, so the figures fit. */
+.q-scroll .k-trough {
+  height: 22px;
+  border-radius: 11px;
+  background: var(--wood-dark);
+  border-color: #3a2412;
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+.q-scroll .k-trough .k-trough-label { color: var(--parchment); text-shadow: 0 1px 0 rgba(60, 36, 18, 0.7); }

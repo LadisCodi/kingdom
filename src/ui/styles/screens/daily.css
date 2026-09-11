@@ -23,14 +23,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px 6px 10px;
+  min-height: 52px;
+  padding: 4px 16px 4px 10px;
   border-radius: 10px;
-  border: 3px solid var(--gold-dark);
+  /* A parchment card in a wood border, nailed at the corners (M12); the
+     glow says it is waiting. */
+  border: 3px solid var(--wood-dark);
   background: var(--parchment);
   color: var(--ink);
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(60, 36, 18, 0.35);
+  position: relative;
+  box-shadow: 0 3px 0 rgba(60, 36, 18, 0.35);
   /* A glow, not a bob: the quest scroll already bobs when it is claimable and
      two things bobbing at once is a busy screen. */
   animation: dly-glow 2s ease-in-out infinite;
@@ -46,8 +50,9 @@
 /* Every rung taken, the season still running: the pill stays as the door to a
    purchase, and stops asking for anything. */
 .dly-pill.is-quiet { animation: none; border-color: var(--wood-dark); opacity: 0.85; }
+.dly-pill > .icon { --icon-size: 40px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.3)); }
 .dly-pill-body { display: flex; flex-direction: column; }
-.dly-pill-title { font-family: var(--font-body); font-size: var(--text-body); }
+.dly-pill-title { font-family: var(--font-body); font-weight: 700; font-size: var(--text-body); line-height: 1.15; }
 .dly-pill-day { font-size: var(--text-helper); color: var(--ink-muted); }
 
 /* -------------------------------------------------------------- the sheet */
