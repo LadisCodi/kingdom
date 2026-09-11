@@ -31,14 +31,16 @@
 .rel-purse {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: linear-gradient(160deg, rgba(198, 160, 96, 0.22), rgba(198, 160, 96, 0.07));
-  border: 2px solid rgba(160, 122, 62, 0.42);
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--parchment-shade);
+  border: 2px solid var(--wood-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.26), 0 2px 0 rgba(60, 36, 18, 0.22);
 }
+.rel-purse > .icon { --icon-size: 48px; filter: drop-shadow(0 2px 0 rgba(60, 36, 18, 0.25)); }
 .rel-purse-body { flex: 1; min-width: 0; }
-.rel-purse-title { font-family: var(--font-display); font-weight: var(--font-display-weight); font-size: var(--text-title); }
+.rel-purse-title { font-family: var(--font-body); font-weight: 700; font-size: 18px; line-height: 1.15; }
 .rel-purse-hint { font-size: var(--text-helper); color: var(--ink-muted); }
 .rel-purse-value { font-family: var(--font-body); font-size: var(--text-title); }
 
@@ -81,10 +83,11 @@
   width: 64px;
   height: 64px;
   padding: 0;
-  border-radius: 10px;
-  border: 2px solid var(--wood-dark);
+  /* A socket is a RING carved in the wood (M7), not a box. */
+  border-radius: 50%;
+  border: 5px solid var(--wood);
   background: var(--parchment-shade);
-  box-shadow: 0 var(--lip) 0 var(--wood-dark);
+  box-shadow: 0 0 0 2px var(--wood-dark), inset 0 0 0 2px var(--wood-dark), 0 var(--lip) 0 var(--wood-dark);
   color: var(--ink);
 }
 button.rel-socket { cursor: pointer; }
@@ -93,29 +96,34 @@ button.rel-socket:active { transform: translateY(var(--lip)); box-shadow: none; 
 
 /* An empty socket is an invitation, so it is drawn open rather than filled. */
 .rel-slot.is-free .rel-socket {
-  background: transparent;
-  border-style: dashed;
-  border-width: 3px;
+  background: rgba(60, 36, 18, 0.1);
+  border: 3px dashed rgba(92, 58, 30, 0.55);
   box-shadow: none;
-  opacity: 0.75;
+  opacity: 0.9;
 }
 .rel-socket-empty { font-size: 26px; line-height: 1; color: var(--ink-muted); }
 /* An empty socket still settling is not an invitation yet, and its line says
    how long — so the box reads shut rather than open. */
 .rel-slot.is-settling .rel-socket { opacity: 0.5; }
-/* One in use carries what is in it. */
-.rel-slot.is-filled .rel-socket { background: var(--parchment); }
-/* One still to buy is the only slab with the gem tone on this row. */
-.rel-slot.is-buy .rel-socket { background: var(--sky); }
+/* One in use carries what is in it, and the ring is lit gold (M7). */
+.rel-slot.is-filled .rel-socket {
+  background: var(--parchment);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-dark), inset 0 0 0 2px var(--gold-dark), 0 0 12px rgba(242, 178, 51, 0.55), 0 var(--lip) 0 var(--gold-dark);
+}
+/* One still to buy is a shut wooden ring with a padlock on it; its price is
+   the line under it. */
+.rel-slot.is-buy .rel-socket { background: var(--wood-dark); color: var(--parchment); }
+.rel-slot.is-buy .rel-socket .icon { --icon-size: 28px; }
 .rel-slot.is-buy .rel-socket.is-short { filter: grayscale(0.5) brightness(0.9); }
 
 /* The settle, on the socket rather than under it: the line below already
    carries the relic's name, and the wait belongs to the socket. */
 .rel-socket-settle {
   position: absolute;
-  bottom: 2px;
-  left: 2px;
-  right: 2px;
+  bottom: -4px;
+  left: 4px;
+  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,21 +163,19 @@ button.rel-socket:active { transform: translateY(var(--lip)); box-shadow: none; 
   padding: 0;
   overflow: hidden;
   border: 2px solid var(--wood-dark);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 var(--lip) 0 var(--wood-dark);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 2px var(--tile, transparent), 0 var(--lip) 0 var(--wood-dark);
   cursor: pointer;
   transition: transform var(--motion-snap) steps(1);
-  background:
-    linear-gradient(170deg, rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 0.16)),
-    var(--tile, var(--parchment-shade));
+  background: var(--parchment-shade);
 }
 .rel-tile:hover { filter: brightness(1.06); }
-.rel-tile:active { transform: translateY(var(--lip)); box-shadow: none; }
-/* Worn is a state of the TILE, not a badge on it: which passives the kingdom
-   is wearing has to be legible from the grid without reading five feet. */
-.rel-tile.is-worn { --tile: var(--rarity-legendary); }
-/* An unfound relic is warm stone, the treatment every other gated thing gets. */
-.rel-tile.is-locked { --tile: var(--locked); cursor: pointer; }
+.rel-tile:active { transform: translateY(var(--lip)); box-shadow: inset 0 0 0 2px var(--tile, transparent); }
+/* Worn is a state of the TILE, not a badge on it: a gold ring inside the wood
+   (M7), so which passives the kingdom is wearing reads from the grid. */
+.rel-tile.is-worn { --tile: var(--gold); }
+/* An unfound relic is a dim tile with a sepia silhouette on it. */
+.rel-tile.is-locked { background: var(--locked); cursor: pointer; }
 
 /* The art is CONTAINED, never cropped, and its box belongs to whatever is
    holding it — a tile, a socket or the card's stage. The tile's box is a grid
@@ -177,7 +183,7 @@ button.rel-socket:active { transform: translateY(var(--lip)); box-shadow: none; 
    two lines at three tiles to a row) takes the space it needs from the art
    instead of covering it. */
 .rel-art { object-fit: contain; image-rendering: pixelated; }
-.rel-art.is-locked { filter: grayscale(1) brightness(0.72); }
+.rel-art.is-locked { filter: brightness(0.4) sepia(1) saturate(1.6) contrast(0.9); opacity: 0.55; }
 /* No relic is without art today; this is the path that keeps a missing sheet
    from drawing a stretched box. One size for all three boxes: it is the
    never-happens fallback, and a font-size per context is three more rules
@@ -204,15 +210,16 @@ button.rel-socket:active { transform: translateY(var(--lip)); box-shadow: none; 
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  padding: 2px 4px;
-  background: rgba(59, 36, 18, 0.62);
-  color: var(--ink-inverse);
+  padding: 2px 4px 6px;
+  color: var(--ink);
   font-size: 12px;
   line-height: 1.25;
 }
+.rel-tile.is-locked .rel-tile-foot { color: var(--ink-muted); }
 .rel-tile-name {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-weight: 700;
+  font-size: 13px;
   text-align: center;
   /* Two words on one line at three to a row: the name wraps rather than
      being clipped, and the tile's height is fixed so it cannot push the art. */

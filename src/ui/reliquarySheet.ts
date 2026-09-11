@@ -176,7 +176,7 @@ function slots(game: Game): HTMLElement {
       class: `rel-socket is-buy${short ? ' is-short' : ''}`,
       type: 'button',
       'aria-label': `Open another socket for ${cost} Gems`,
-    }, iconEl('plus', { size: 'md' }));
+    }, iconEl('padlock', { size: 'md' }));
     box.addEventListener('click', () => game.doBuyAttunementSlot());
     row.append(el('div', { class: 'rel-slot is-buy' },
       box,

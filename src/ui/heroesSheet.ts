@@ -81,7 +81,7 @@ function ready(game: Game, view: RosterEntry): boolean {
 function tile(game: Game, view: RosterEntry): HTMLElement {
   const def = HEROES[view.id];
   const t = el('button', {
-    class: `hero-tile ${RARITY_CLASS[def.rarity]}${view.owned ? '' : ' is-locked'}`,
+    class: `hero-tile ${RARITY_CLASS[def.rarity]} is-${def.unitType}${view.owned ? '' : ' is-locked'}`,
     type: 'button',
     'aria-label': def.name,
   });
